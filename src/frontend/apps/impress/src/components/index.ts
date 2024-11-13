@@ -6,5 +6,6 @@ export * from './Icon';
 export * from './InfiniteScroll';
 export * from './Link';
 export * from './SideModal';
+export * from './separators/SeparatedSection';
 export * from './Text';
 export * from './TextErrors';

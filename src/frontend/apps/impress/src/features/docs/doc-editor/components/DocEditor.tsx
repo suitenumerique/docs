@@ -43,7 +43,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     <>
       <DocHeader doc={doc} />
       {!doc.abilities.partial_update && (
-        <Box $margin={{ all: 'small', top: 'none' }}>
+        <Box $width="100%" $margin={{ all: 'small', top: 'none' }}>
           <Alert type={VariantType.WARNING}>
             {t(`Read only, you cannot edit this document.`)}
           </Alert>
@@ -58,10 +58,10 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
       )}
       <Box
         $background={colorsTokens()['primary-bg']}
-        $height="100%"
         $direction="row"
+        $width="100%"
         $margin={{ all: isMobile ? 'tiny' : 'small', top: 'none' }}
-        $css="overflow-x: clip;"
+        $css="overflow-x: clip; flex: 1;"
         $position="relative"
       >
         <Card

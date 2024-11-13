@@ -1,6 +1,14 @@
 import { Text, TextType } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
+type IconProps = {
+  iconName: string;
+  className?: string;
+};
+export const Icon = ({ iconName, className }: IconProps) => {
+  return <span className={`material-icons ${className}`}>{iconName}</span>;
+};
+
 interface IconBGProps extends TextType {
   iconName: string;
 }

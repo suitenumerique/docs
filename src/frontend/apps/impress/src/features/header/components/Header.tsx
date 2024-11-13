@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, StyledLink } from '@/components/';
@@ -24,7 +23,7 @@ export const Header = () => {
       $width="100%"
       $zIndex="100"
       $padding={{ vertical: 'xtiny' }}
-      $css="box-shadow: 0 1px 4px #00000040;"
+      $css="border-bottom: 1px solid #EDEDED;"
     >
       <Box
         $margin={{
