@@ -17,8 +17,8 @@ describe('<Box />', () => {
     );
 
     expect(screen.getByText('My Box')).toHaveStyle(`
-      padding-left: 4rem;
-      padding-right: 4rem;
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
       padding-top: 3rem;
       padding-bottom: 0.5rem;`);
   });

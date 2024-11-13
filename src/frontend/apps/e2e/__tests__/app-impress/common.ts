@@ -36,7 +36,7 @@ export const createDoc = async (
 
     await page
       .getByRole('button', {
-        name: 'Create a new document',
+        name: 'New doc',
       })
       .click();
 

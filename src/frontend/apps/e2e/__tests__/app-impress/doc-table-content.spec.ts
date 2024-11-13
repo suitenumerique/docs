@@ -36,6 +36,7 @@ test.describe('Doc Table Content', () => {
     await page.getByRole('button', { name: 'Strike' }).click();
 
     await page.locator('.bn-block-outer').first().click();
+    await editor.click();
     await page.locator('.bn-block-outer').last().click();
 
     // Create space to fill the viewport

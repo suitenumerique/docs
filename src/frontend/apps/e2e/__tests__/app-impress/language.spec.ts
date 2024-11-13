@@ -6,11 +6,7 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('Language', () => {
   test('checks the language picker', async ({ page }) => {
-    await expect(
-      page.getByRole('button', {
-        name: 'Create a new document',
-      }),
-    ).toBeVisible();
+    await expect(page.getByLabel('Logout')).toBeVisible();
 
     const header = page.locator('header').first();
     await header.getByRole('combobox').getByText('English').click();
@@ -19,11 +15,7 @@ test.describe('Language', () => {
       header.getByRole('combobox').getByText('Français'),
     ).toBeVisible();
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Créer un nouveau document',
-      }),
-    ).toBeVisible();
+    await expect(page.getByLabel('Se déconnecter')).toBeVisible();
 
     await header.getByRole('combobox').getByText('Français').click();
     await header.getByRole('option', { name: 'Deutsch' }).click();
@@ -31,11 +23,7 @@ test.describe('Language', () => {
       header.getByRole('combobox').getByText('Deutsch'),
     ).toBeVisible();
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Neues Dokument erstellen',
-      }),
-    ).toBeVisible();
+    await expect(page.getByLabel('Abmelden')).toBeVisible();
   });
 
   test('checks that backend uses the same language as the frontend', async ({

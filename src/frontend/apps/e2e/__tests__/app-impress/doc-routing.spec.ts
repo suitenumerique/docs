@@ -9,7 +9,7 @@ test.describe('Doc Routing', () => {
 
   test('Check the presence of the meta tag noindex', async ({ page }) => {
     const buttonCreateHomepage = page.getByRole('button', {
-      name: 'Create a new document',
+      name: 'New doc',
     });
 
     await expect(buttonCreateHomepage).toBeVisible();
@@ -27,7 +27,7 @@ test.describe('Doc Routing', () => {
     await expect(page).toHaveURL('/');
 
     const buttonCreateHomepage = page.getByRole('button', {
-      name: 'Create a new document',
+      name: 'New doc',
     });
 
     await expect(buttonCreateHomepage).toBeVisible();
