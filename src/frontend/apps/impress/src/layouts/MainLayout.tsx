@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react';
+import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
@@ -27,7 +28,11 @@ export function MainLayout({
   return (
     <div>
       <Header />
-      <Box $direction="row" $width="100%">
+      <Box
+        $direction="row"
+        $margin={{ top: `${HEADER_HEIGHT}px` }}
+        $width="100%"
+      >
         <LeftPanel />
         <Box
           as="main"
@@ -45,10 +50,10 @@ export function MainLayout({
               ? colors['greyscale-000']
               : colors['greyscale-050']
           }
-          $css={`
-              overflow-y: auto;
-              overflow-x: clip;
-            `}
+          $css={css`
+            overflow-y: auto;
+            overflow-x: clip;
+          `}
         >
           {children}
         </Box>

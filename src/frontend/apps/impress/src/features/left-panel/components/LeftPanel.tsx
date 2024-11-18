@@ -1,34 +1,29 @@
-import { Button } from '@openfun/cunningham-react';
-import { useRouter } from 'next/navigation';
 import { PropsWithChildren } from 'react';
-import { useTranslation } from 'react-i18next';
+import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Icon, SeparatedSection } from '@/components';
+import { Box, SeparatedSection } from '@/components';
+import { ButtonLogin } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { useCreateDoc } from '@/features/docs';
 import { HEADER_HEIGHT } from '@/features/header/conf';
+import { LanguagePicker } from '@/features/language';
 import { useResponsiveStore } from '@/stores';
 
+import { useLeftPanelStore } from '../stores';
+
+import { LeftPanelHeader } from './LeftPanelHeader';
+
+const MobileLeftPanelStyle = createGlobalStyle`
+  body {
+    overflow: hidden;
+  }
+`;
+
 export const LeftPanel = ({ children }: PropsWithChildren) => {
-  const { t } = useTranslation();
-  const router = useRouter();
   const { isDesktop } = useResponsiveStore();
+  const { isPanelOpen } = useLeftPanelStore();
   const theme = useCunninghamTheme();
   const colors = theme.colorsTokens();
-
-  const { mutate: createDoc } = useCreateDoc({
-    onSuccess: (doc) => {
-      router.push(`/docs/${doc.id}`);
-    },
-  });
-
-  const goToHome = () => {
-    router.push('/');
-  };
-
-  const createNewDoc = () => {
-    createDoc({ title: t('Untitled document') });
-  };
+  const spacings = theme.spacingsTokens();
 
   return (
     <>
@@ -42,28 +37,44 @@ export const LeftPanel = ({ children }: PropsWithChildren) => {
             border-right: 1px solid ${colors['greyscale-200']};
         `}
         >
-          <div>
-            <SeparatedSection>
-              <Box
-                $padding={{ horizontal: 'sm' }}
-                $direction="row"
-                $justify="space-between"
-                $align="center"
-              >
-                <Box $direction="row" $gap="2px">
-                  <Button
-                    onClick={goToHome}
-                    size="medium"
-                    color="primary-text"
-                    icon={<Icon iconName="house" />}
-                  />
-                </Box>
-                <Button onClick={createNewDoc}>{t('New doc')}</Button>
-              </Box>
-            </SeparatedSection>
-            {children}
-          </div>
+          <LeftPanelHeader>{children}</LeftPanelHeader>
         </Box>
+      )}
+
+      {!isDesktop && (
+        <>
+          {isPanelOpen && <MobileLeftPanelStyle />}
+          <Box
+            $hasTransition
+            $css={css`
+              z-index: 999;
+              width: 100dvw;
+              height: calc(100dvh - 52px);
+              border-right: 1px solid var(--c--theme--colors--greyscale-200);
+              position: fixed;
+              transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
+              background-color: var(--c--theme--colors--greyscale-000);
+            `}
+          >
+            <Box
+              data-testid="left-panel-mobile"
+              $css={css`
+                width: 100%;
+                justify-content: center;
+                align-items: center;
+                gap: ${spacings['base']};
+              `}
+            >
+              <LeftPanelHeader>{children}</LeftPanelHeader>
+              <SeparatedSection showSeparator={false}>
+                <Box $justify="center" $align="center" $gap={spacings['sm']}>
+                  <ButtonLogin />
+                  <LanguagePicker />
+                </Box>
+              </SeparatedSection>
+            </Box>
+          </Box>
+        </>
       )}
     </>
   );
