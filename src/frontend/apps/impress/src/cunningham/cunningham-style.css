@@ -351,6 +351,11 @@ input:-webkit-autofill:focus {
   background-color: transparent;
 }
 
+.c__button--nano {
+  padding: 0 var(--c--theme--spacings--2xs) !important;
+  gap: var(--c--theme--spacings--2xs) !important;
+}
+
 .c__button--medium {
   padding: 0.9rem var(--c--theme--spacings--s);
 }
@@ -442,6 +447,7 @@ input:-webkit-autofill:focus {
 }
 
 .c__button--tertiary {
+  background-color: var(--c--components--button--tertiary--background--color);
   color: var(--c--components--button--tertiary--color);
   border: none;
 }
@@ -452,6 +458,13 @@ input:-webkit-autofill:focus {
     --c--components--button--tertiary--background--color-hover
   );
   color: var(--c--components--button--tertiary--color);
+}
+
+.c__button--tertiary:active {
+  background-color: var(
+    --c--components--button--tertiary--background--color-active
+  );
+  color: var(--c--components--button--tertiary--color-active);
 }
 
 .c__button--tertiary:disabled {

@@ -71,20 +71,26 @@
   --c--theme--colors--danger-text: var(--c--theme--colors--greyscale-000);
   --c--theme--colors--card-border: #ededed;
   --c--theme--colors--primary-bg: #fafafa;
+  --c--theme--colors--primary-050: #f5f5fe;
   --c--theme--colors--primary-150: #e5eefa;
+  --c--theme--colors--primary-950: #1b1b35;
   --c--theme--colors--info-150: #e5eefa;
   --c--theme--colors--greyscale-1000: #161616;
-  --c--theme--font--sizes--h1: 2.2rem;
-  --c--theme--font--sizes--h2: 1.7rem;
-  --c--theme--font--sizes--h3: 1.37rem;
-  --c--theme--font--sizes--h4: 1.15rem;
-  --c--theme--font--sizes--h5: 1rem;
-  --c--theme--font--sizes--h6: 0.87rem;
+  --c--theme--font--sizes--h1: 2rem;
+  --c--theme--font--sizes--h2: 1.75rem;
+  --c--theme--font--sizes--h3: 1.5rem;
+  --c--theme--font--sizes--h4: 1.375rem;
+  --c--theme--font--sizes--h5: 1.25rem;
+  --c--theme--font--sizes--h6: 1.125rem;
   --c--theme--font--sizes--l: 1rem;
   --c--theme--font--sizes--m: 0.8125rem;
   --c--theme--font--sizes--s: 0.75rem;
+  --c--theme--font--sizes--xs: 0.75rem;
+  --c--theme--font--sizes--sm: 0.875rem;
+  --c--theme--font--sizes--md: 1rem;
+  --c--theme--font--sizes--lg: 1.125rem;
   --c--theme--font--sizes--ml: 0.938rem;
-  --c--theme--font--sizes--xl: 1.5rem;
+  --c--theme--font--sizes--xl: 1.25rem;
   --c--theme--font--sizes--t: 0.6875rem;
   --c--theme--font--weights--thin: 100;
   --c--theme--font--weights--light: 300;
@@ -290,7 +296,13 @@
   --c--components--button--tertiary--color-disabled: var(
     --c--theme--colors--greyscale-600
   );
+  --c--components--button--tertiary--background--color: var(
+    --c--theme--colors--primary-100
+  );
   --c--components--button--tertiary--background--color-hover: var(
+    --c--theme--colors--primary-300
+  );
+  --c--components--button--tertiary--background--color-active: var(
     --c--theme--colors--primary-100
   );
   --c--components--button--tertiary--background--color-disabled: var(
@@ -351,18 +363,18 @@
 }
 
 .cunningham-theme--dsfr {
-  --c--theme--colors--card-border: #ededed;
+  --c--theme--colors--card-border: #e5e5e5;
   --c--theme--colors--primary-text: #000091;
-  --c--theme--colors--primary-100: #f5f5fe;
+  --c--theme--colors--primary-100: #ececfe;
   --c--theme--colors--primary-150: #f4f4fd;
-  --c--theme--colors--primary-200: #ececfe;
-  --c--theme--colors--primary-300: #e3e3fd;
-  --c--theme--colors--primary-400: #cacafb;
+  --c--theme--colors--primary-200: #e3e3fd;
+  --c--theme--colors--primary-300: #cacafb;
+  --c--theme--colors--primary-400: #8585f6;
   --c--theme--colors--primary-500: #6a6af4;
-  --c--theme--colors--primary-600: #000091;
+  --c--theme--colors--primary-600: #313178;
   --c--theme--colors--primary-700: #272747;
-  --c--theme--colors--primary-800: #21213f;
-  --c--theme--colors--primary-900: #1c1a36;
+  --c--theme--colors--primary-800: #000091;
+  --c--theme--colors--primary-900: #21213f;
   --c--theme--colors--secondary-text: #fff;
   --c--theme--colors--secondary-100: #fee9ea;
   --c--theme--colors--secondary-200: #fedfdf;
@@ -832,8 +844,16 @@
   color: var(--c--theme--colors--primary-bg);
 }
 
+.clr-primary-050 {
+  color: var(--c--theme--colors--primary-050);
+}
+
 .clr-primary-150 {
   color: var(--c--theme--colors--primary-150);
+}
+
+.clr-primary-950 {
+  color: var(--c--theme--colors--primary-950);
 }
 
 .clr-info-150 {
@@ -1132,8 +1152,16 @@
   background-color: var(--c--theme--colors--primary-bg);
 }
 
+.bg-primary-050 {
+  background-color: var(--c--theme--colors--primary-050);
+}
+
 .bg-primary-150 {
   background-color: var(--c--theme--colors--primary-150);
+}
+
+.bg-primary-950 {
+  background-color: var(--c--theme--colors--primary-950);
 }
 
 .bg-info-150 {
@@ -1215,6 +1243,26 @@
 .fs-s {
   font-size: var(--c--theme--font--sizes--s);
   letter-spacing: var(--c--theme--font--letterspacings--s);
+}
+
+.fs-xs {
+  font-size: var(--c--theme--font--sizes--xs);
+  letter-spacing: var(--c--theme--font--letterspacings--xs);
+}
+
+.fs-sm {
+  font-size: var(--c--theme--font--sizes--sm);
+  letter-spacing: var(--c--theme--font--letterspacings--sm);
+}
+
+.fs-md {
+  font-size: var(--c--theme--font--sizes--md);
+  letter-spacing: var(--c--theme--font--letterspacings--md);
+}
+
+.fs-lg {
+  font-size: var(--c--theme--font--sizes--lg);
+  letter-spacing: var(--c--theme--font--letterspacings--lg);
 }
 
 .fs-ml {
