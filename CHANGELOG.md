@@ -20,6 +20,7 @@ and this project adheres to
 - 🏗️(yjs-server) organize yjs server #528
 - ♻️(frontend) better separation collaboration process #528
 - 💄(frontend) updating the header and leftpanel for responsive #421
+- 💄(frontend) update DocsGrid component #431
 
 
 ## [1.10.0] - 2024-12-17

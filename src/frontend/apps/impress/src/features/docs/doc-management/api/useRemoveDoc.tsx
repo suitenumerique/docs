@@ -30,7 +30,7 @@ export const useRemoveDoc = (options?: UseRemoveDocOptions) => {
     mutationFn: removeDoc,
     ...options,
     onSuccess: (data, variables, context) => {
-      void queryClient.resetQueries({
+      void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC],
       });
       if (options?.onSuccess) {

@@ -17,8 +17,7 @@ export const Card = ({
       $background="white"
       $radius="4px"
       $css={css`
-        box-shadow: 2px 2px 5px ${colorsTokens()['greyscale-300']};
-        border: 1px solid ${colorsTokens()['card-border']};
+        border: 1px solid ${colorsTokens()['greyscale-200']};
         ${$css}
       `}
       {...props}

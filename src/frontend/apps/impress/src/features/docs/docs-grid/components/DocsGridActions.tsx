@@ -1,5 +1,5 @@
 import { Button } from '@openfun/cunningham-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
@@ -19,7 +19,10 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   return (
     <>
       <Button
-        onClick={() => {
+        data-testid={`docs-grid-delete-button-${doc.id}`}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
           setIsModalRemoveOpen(true);
         }}
         color="tertiary-text"

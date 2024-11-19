@@ -1,4 +1,5 @@
 import { Select } from '@openfun/cunningham-react';
+import { Settings } from 'luxon';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -34,6 +35,7 @@ const SelectStyled = styled(Select)<{ $isSmall?: boolean }>`
 export const LanguagePicker = () => {
   const { t, i18n } = useTranslation();
   const { preload: languages } = i18n.options;
+  Settings.defaultLocale = i18n.language;
 
   const optionsPicker = useMemo(() => {
     return (languages || []).map((lang) => ({

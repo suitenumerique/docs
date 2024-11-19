@@ -7,7 +7,7 @@ import { NextPageWithLayout } from '@/types/next';
 
 const Page: NextPageWithLayout = () => {
   return (
-    <Box $width="100%">
+    <Box $width="100%" $align="center">
       <DocsGrid />
     </Box>
   );

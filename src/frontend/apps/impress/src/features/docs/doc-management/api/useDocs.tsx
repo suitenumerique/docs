@@ -1,6 +1,12 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
+import {
+  APIError,
+  APIList,
+  errorCauses,
+  fetchAPI,
+  useAPIInfiniteQuery,
+} from '@/api';
 
 import { Doc } from '../types';
 
@@ -52,3 +58,7 @@ export function useDocs(
     ...queryConfig,
   });
 }
+
+export const useInfiniteDocs = (params: DocsParams) => {
+  return useAPIInfiniteQuery(KEY_LIST_DOC, getDocs, params);
+};

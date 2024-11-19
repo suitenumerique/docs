@@ -33,6 +33,7 @@ export interface TextProps extends BoxProps {
     | 'greyscale';
   $variation?:
     | 'text'
+    | '000'
     | '100'
     | '200'
     | '300'
@@ -41,7 +42,8 @@ export interface TextProps extends BoxProps {
     | '600'
     | '700'
     | '800'
-    | '900';
+    | '900'
+    | '1000';
 }
 
 export type TextType = ComponentPropsWithRef<typeof Text>;
