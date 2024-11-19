@@ -18,15 +18,12 @@ test.describe('Doc Create', () => {
     const header = page.locator('header').first();
     await header.locator('h2').getByText('Docs').click();
 
-    const datagrid = page.getByLabel('Datagrid of the documents page 1');
-    const datagridTable = datagrid.getByRole('table');
+    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
 
-    await expect(datagrid.getByLabel('Loading data')).toBeHidden({
-      timeout: 10000,
-    });
-    await expect(datagridTable.getByText(docTitle)).toBeVisible({
-      timeout: 5000,
-    });
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid).toBeVisible();
+    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(docsGrid.getByText(docTitle)).toBeVisible();
   });
 });
 

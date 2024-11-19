@@ -97,24 +97,22 @@ export const goToGridDoc = async (
   const header = page.locator('header').first();
   await header.locator('h2').getByText('Docs').click();
 
-  const datagrid = page.getByLabel('Datagrid of the documents page 1');
-  const datagridTable = datagrid.getByRole('table');
+  const docsGrid = page.getByTestId('docs-grid');
+  await expect(docsGrid).toBeVisible();
+  await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
 
-  await expect(datagrid.getByLabel('Loading data')).toBeHidden({
-    timeout: 10000,
-  });
-
-  const rows = datagridTable.getByRole('row');
+  const rows = docsGrid.getByRole('row');
+  expect(await rows.count()).toEqual(20);
   const row = title
     ? rows.filter({
         hasText: title,
       })
     : rows.nth(nthRow);
 
-  const docTitleCell = row.getByRole('cell').nth(1);
+  await expect(row).toBeVisible();
 
-  const docTitle = await docTitleCell.textContent();
-
+  const docTitleContent = row.locator('[aria-describedby="doc-title"]').first();
+  const docTitle = await docTitleContent.textContent();
   expect(docTitle).toBeDefined();
 
   await row.getByRole('link').first().click();
