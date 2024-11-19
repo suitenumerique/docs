@@ -34,6 +34,7 @@
     "react-aria-components": "1.5.0",
     "react-dom": "*",
     "react-i18next": "15.4.0",
+    "react-intersection-observer": "9.13.1",
     "react-select": "5.9.0",
     "styled-components": "6.1.13",
     "y-protocols": "1.0.6",
