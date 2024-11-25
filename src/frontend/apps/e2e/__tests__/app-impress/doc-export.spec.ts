@@ -10,6 +10,37 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Export', () => {
+  test('it check if all elements are visible', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-editor', browserName, 1);
+    await page
+      .getByRole('button', {
+        name: 'download',
+      })
+      .click();
+
+    await expect(
+      page
+        .locator('div')
+        .filter({ hasText: /^Download$/ })
+        .first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        'Upload your docs to a Microsoft Word, Open Office or PDF document',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('combobox', { name: 'Template' }),
+    ).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Close the modal' }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+  });
   test('it converts the doc to pdf with a template integrated', async ({
     page,
     browserName,
@@ -25,10 +56,9 @@ test.describe('Doc Export', () => {
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
 
-    await page.getByLabel('Open the document options').click();
     await page
       .getByRole('button', {
-        name: 'Export',
+        name: 'download',
       })
       .click();
 
@@ -62,14 +92,14 @@ test.describe('Doc Export', () => {
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
 
-    await page.getByLabel('Open the document options').click();
     await page
       .getByRole('button', {
-        name: 'Export',
+        name: 'download',
       })
       .click();
 
-    await page.getByText('Docx').click();
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'Word / Open Office' }).click();
 
     await page
       .getByRole('button', {
@@ -190,10 +220,9 @@ test.describe('Doc Export', () => {
       .click();
 
     // Download
-    await page.getByLabel('Open the document options').click();
     await page
       .getByRole('button', {
-        name: 'Export',
+        name: 'download',
       })
       .click();
 

@@ -532,6 +532,12 @@ input:-webkit-autofill:focus {
   overflow-y: auto;
 }
 
+.c__modal__title {
+  padding: 0;
+  font-size: 1.125rem;
+  margin-bottom: var(--c--theme--spacings--sm);
+}
+
 @media screen and (width <= 420px) {
   .c__modal__scroller {
     padding: 0.7rem;
