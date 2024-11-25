@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, mockedDocument } from './common';
+import {
+  createDoc,
+  goToGridDoc,
+  mockedDocument,
+  verifyDocName,
+} from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -10,7 +15,7 @@ test.describe('Doc Version', () => {
   test('it displays the doc versions', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-version', browserName, 1);
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     await page.getByLabel('Open the document options').click();
     await page
@@ -79,12 +84,12 @@ test.describe('Doc Version', () => {
 
     await goToGridDoc(page);
 
-    await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
+    await verifyDocName(page, 'Mocked document');
 
     await page.getByLabel('Open the document options').click();
     await expect(
       page.getByRole('button', { name: 'Version history' }),
-    ).toBeHidden();
+    ).toBeDisabled();
 
     await page.getByRole('button', { name: 'Table of content' }).click();
 
@@ -95,12 +100,12 @@ test.describe('Doc Version', () => {
 
   test('it restores the doc version', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-version', browserName, 1);
-
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     await page.locator('.bn-block-outer').last().click();
     await page.locator('.bn-block-outer').last().fill('Hello');
 
+    expect(true).toBe(true);
     await goToGridDoc(page, {
       title: randomDoc,
     });
@@ -152,7 +157,7 @@ test.describe('Doc Version', () => {
   }) => {
     const [randomDoc] = await createDoc(page, 'doc-version', browserName, 1);
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     const editor = page.locator('.ProseMirror');
     await editor.locator('.bn-block-outer').last().click();

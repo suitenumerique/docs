@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { waitForElementCount } from '../helpers';
 
-import { addNewMember, createDoc, goToGridDoc } from './common';
+import { addNewMember, createDoc, goToGridDoc, verifyDocName } from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -127,7 +127,7 @@ test.describe('Document list members', () => {
   test('it checks the role rules', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, 'Doc role rules', browserName, 1);
 
-    await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
 
@@ -188,7 +188,7 @@ test.describe('Document list members', () => {
   test('it checks the delete members', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, 'Doc role rules', browserName, 1);
 
-    await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
 

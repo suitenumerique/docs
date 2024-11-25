@@ -3,7 +3,7 @@ import cs from 'convert-stream';
 import jsdom from 'jsdom';
 import pdf from 'pdf-parse';
 
-import { createDoc } from './common';
+import { createDoc, verifyDocName } from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -20,7 +20,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
@@ -57,7 +57,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDoc}.docx`);
     });
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
@@ -97,7 +97,7 @@ test.describe('Doc Export', () => {
       await route.continue();
     });
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     await page.locator('.bn-block-outer').last().fill('Hello World');
     await page.locator('.bn-block-outer').last().click();

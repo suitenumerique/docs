@@ -40,12 +40,19 @@ export const createDoc = async (
       })
       .click();
 
-    await page.getByRole('heading', { name: 'Untitled document' }).click();
-    await page.keyboard.type(randomDocs[i], { delay: 100 });
-    await page.getByText('Created at ').click();
+    const input = page.getByRole('textbox', { name: 'doc title input' });
+    await input.click();
+    await input.fill(randomDocs[i]);
+    await input.blur();
   }
 
   return randomDocs;
+};
+
+export const verifyDocName = async (page: Page, docName: string) => {
+  const input = page.getByRole('textbox', { name: 'doc title input' });
+  await expect(input).toBeVisible();
+  await expect(input).toHaveText(docName);
 };
 
 export const addNewMember = async (

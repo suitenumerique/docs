@@ -2,7 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { createDoc } from './common';
+import { createDoc, verifyDocName } from './common';
 
 const config = {
   CRISP_WEBSITE_ID: null,
@@ -129,7 +129,8 @@ test.describe('Config', () => {
       browserName,
       1,
     );
-    await expect(page.locator('h2').getByText(randomDoc[0])).toBeVisible();
+
+    await verifyDocName(page, randomDoc[0]);
 
     const webSocket = await webSocketPromise;
     expect(webSocket.url()).toContain('ws://localhost:8083/collaboration/ws/');

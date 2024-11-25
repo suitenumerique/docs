@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc } from './common';
+import { createDoc, goToGridDoc, verifyDocName } from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -17,7 +17,7 @@ test.describe('Doc Table Content', () => {
       1,
     );
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
 
     await page.getByLabel('Open the document options').click();
     await page
@@ -108,7 +108,7 @@ test.describe('Doc Table Content', () => {
       1,
     );
 
-    await expect(page.locator('h2').getByText(randomDoc)).toBeVisible();
+    await verifyDocName(page, randomDoc);
     await expect(page.getByLabel('Open the panel')).toBeHidden();
 
     const editor = page.locator('.ProseMirror');

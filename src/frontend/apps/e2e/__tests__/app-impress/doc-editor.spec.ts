@@ -2,7 +2,12 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, mockedDocument } from './common';
+import {
+  createDoc,
+  goToGridDoc,
+  mockedDocument,
+  verifyDocName,
+} from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -98,7 +103,7 @@ test.describe('Doc Editor', () => {
     });
 
     const randomDoc = await createDoc(page, 'doc-editor', browserName, 1);
-    await expect(page.locator('h2').getByText(randomDoc[0])).toBeVisible();
+    await verifyDocName(page, randomDoc[0]);
 
     let webSocket = await webSocketPromise;
     expect(webSocket.url()).toContain(
@@ -153,7 +158,7 @@ test.describe('Doc Editor', () => {
   }) => {
     const randomDoc = await createDoc(page, 'doc-markdown', browserName, 1);
 
-    await expect(page.locator('h2').getByText(randomDoc[0])).toBeVisible();
+    await verifyDocName(page, randomDoc[0]);
 
     const editor = page.locator('.ProseMirror');
     await editor.click();
@@ -178,7 +183,7 @@ test.describe('Doc Editor', () => {
   }) => {
     // Check the first doc
     const [firstDoc] = await createDoc(page, 'doc-switch-1', browserName, 1);
-    await expect(page.locator('h2').getByText(firstDoc)).toBeVisible();
+    await verifyDocName(page, firstDoc);
 
     const editor = page.locator('.ProseMirror');
     await editor.click();
@@ -187,7 +192,8 @@ test.describe('Doc Editor', () => {
 
     // Check the second doc
     const [secondDoc] = await createDoc(page, 'doc-switch-2', browserName, 1);
-    await expect(page.locator('h2').getByText(secondDoc)).toBeVisible();
+    await verifyDocName(page, secondDoc);
+
     await expect(editor.getByText('Hello World Doc 1')).toBeHidden();
     await editor.click();
     await editor.fill('Hello World Doc 2');
@@ -197,7 +203,7 @@ test.describe('Doc Editor', () => {
     await goToGridDoc(page, {
       title: firstDoc,
     });
-    await expect(page.locator('h2').getByText(firstDoc)).toBeVisible();
+    await verifyDocName(page, firstDoc);
     await expect(editor.getByText('Hello World Doc 2')).toBeHidden();
     await expect(editor.getByText('Hello World Doc 1')).toBeVisible();
   });
@@ -208,7 +214,7 @@ test.describe('Doc Editor', () => {
   }) => {
     // Check the first doc
     const [doc] = await createDoc(page, 'doc-saves-change', browserName, 1);
-    await expect(page.locator('h2').getByText(doc)).toBeVisible();
+    await verifyDocName(page, doc);
 
     const editor = page.locator('.ProseMirror');
     await editor.click();
@@ -219,7 +225,7 @@ test.describe('Doc Editor', () => {
       nthRow: 2,
     });
 
-    await expect(page.locator('h2').getByText(secondDoc)).toBeVisible();
+    await verifyDocName(page, secondDoc);
 
     await goToGridDoc(page, {
       title: doc,
@@ -233,8 +239,9 @@ test.describe('Doc Editor', () => {
     test.skip(browserName === 'webkit', 'This test is very flaky with webkit');
 
     // Check the first doc
-    const [doc] = await createDoc(page, 'doc-quit-1', browserName, 1);
-    await expect(page.locator('h2').getByText(doc)).toBeVisible();
+    const doc = await goToGridDoc(page);
+
+    await verifyDocName(page, doc);
 
     const editor = page.locator('.ProseMirror');
     await editor.click();

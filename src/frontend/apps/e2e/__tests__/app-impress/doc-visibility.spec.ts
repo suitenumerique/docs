@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, keyCloakSignIn } from './common';
+import { createDoc, keyCloakSignIn, verifyDocName } from './common';
 
 const browsersName = ['chromium', 'webkit', 'firefox'];
 
@@ -85,7 +85,7 @@ test.describe('Doc Visibility: Restricted', () => {
       1,
     );
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     const urlDoc = page.url();
 
@@ -111,7 +111,7 @@ test.describe('Doc Visibility: Restricted', () => {
 
     const [docTitle] = await createDoc(page, 'Restricted auth', browserName, 1);
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     const urlDoc = page.url();
 
@@ -139,7 +139,7 @@ test.describe('Doc Visibility: Restricted', () => {
 
     const [docTitle] = await createDoc(page, 'Restricted auth', browserName, 1);
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
 
@@ -176,7 +176,7 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await page.goto(urlDoc);
 
-    await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
+    await verifyDocName(page, docTitle);
     await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
   });
 });
@@ -198,7 +198,7 @@ test.describe('Doc Visibility: Public', () => {
       1,
     );
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await page
@@ -227,10 +227,14 @@ test.describe('Doc Visibility: Public', () => {
       position: { x: 0, y: 0 },
     });
 
+    const cardContainer = page.getByLabel(
+      'It is the card information about the document.',
+    );
+
+    await expect(cardContainer.getByTestId('public-icon')).toBeVisible();
+
     await expect(
-      page
-        .getByLabel('It is the card information about the document.')
-        .getByText('Public', { exact: true }),
+      cardContainer.getByText('Public document', { exact: true }),
     ).toBeVisible();
 
     const urlDoc = page.url();
@@ -261,7 +265,7 @@ test.describe('Doc Visibility: Public', () => {
 
     const [docTitle] = await createDoc(page, 'Public editable', browserName, 1);
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await page
@@ -290,10 +294,14 @@ test.describe('Doc Visibility: Public', () => {
       position: { x: 0, y: 0 },
     });
 
+    const cardContainer = page.getByLabel(
+      'It is the card information about the document.',
+    );
+
+    await expect(cardContainer.getByTestId('public-icon')).toBeVisible();
+
     await expect(
-      page
-        .getByLabel('It is the card information about the document.')
-        .getByText('Public', { exact: true }),
+      cardContainer.getByText('Public document', { exact: true }),
     ).toBeVisible();
 
     const urlDoc = page.url();
@@ -308,7 +316,7 @@ test.describe('Doc Visibility: Public', () => {
 
     await page.goto(urlDoc);
 
-    await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
+    await verifyDocName(page, docTitle);
     await expect(page.getByRole('button', { name: 'Share' })).toBeHidden();
     await expect(
       page.getByText('Read only, you cannot edit this document'),
@@ -333,7 +341,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       1,
     );
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await page
@@ -385,7 +393,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       1,
     );
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await page
@@ -451,7 +459,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       1,
     );
 
-    await expect(page.getByRole('heading', { name: docTitle })).toBeVisible();
+    await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
     await page
@@ -498,7 +506,7 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     await page.goto(urlDoc);
 
-    await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
+    await verifyDocName(page, docTitle);
     await page.getByRole('button', { name: 'Share' }).click();
     await expect(
       page.getByText('Read only, you cannot edit this document'),
