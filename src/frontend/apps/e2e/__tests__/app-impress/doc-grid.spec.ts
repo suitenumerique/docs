@@ -91,6 +91,98 @@ test.describe('Documents Grid mobile', () => {
   });
 });
 
+test.describe('Document grid item options', () => {
+  test('it deletes the document', async ({ page }) => {
+    let docs: SmallDoc[] = [];
+    const response = await page.waitForResponse(
+      (response) =>
+        response.url().includes('documents/?page=1') &&
+        response.status() === 200,
+    );
+    const result = await response.json();
+    docs = result.results as SmallDoc[];
+
+    const button = page.getByTestId(`docs-grid-actions-button-${docs[0].id}`);
+    await expect(button).toBeVisible();
+    await button.click();
+
+    const removeButton = page.getByTestId(
+      `docs-grid-actions-remove-${docs[0].id}`,
+    );
+    await expect(removeButton).toBeVisible();
+    await removeButton.click();
+
+    await expect(
+      page.locator('h2').getByText(`Deleting the document "${docs[0].title}"`),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'Confirm deletion',
+      })
+      .click();
+
+    const refetchResponse = await page.waitForResponse(
+      (response) =>
+        response.url().includes('documents/?page=1') &&
+        response.status() === 200,
+    );
+
+    const resultRefetch = await refetchResponse.json();
+    expect(resultRefetch.count).toBe(result.count - 1);
+    await expect(page.getByTestId('main-layout-loader')).toBeHidden();
+
+    await expect(
+      page.getByText('The document has been deleted.'),
+    ).toBeVisible();
+    await expect(button).toBeHidden();
+  });
+
+  test("it checks if the delete option is disabled if we don't have the destroy capability", async ({
+    page,
+  }) => {
+    await page.route('*/**/api/v1.0/documents/?page=1', async (route) => {
+      await route.fulfill({
+        json: {
+          results: [
+            {
+              id: 'mocked-document-id',
+              content: '',
+              title: 'Mocked document',
+              accesses: [],
+              abilities: {
+                destroy: false, // Means not owner
+                link_configuration: false,
+                versions_destroy: false,
+                versions_list: true,
+                versions_retrieve: true,
+                accesses_manage: false, // Means not admin
+                update: false,
+                partial_update: false, // Means not editor
+                retrieve: true,
+              },
+              link_reach: 'restricted',
+              created_at: '2021-09-01T09:00:00Z',
+            },
+          ],
+        },
+      });
+    });
+    await page.goto('/');
+
+    const button = page.getByTestId(
+      `docs-grid-actions-button-mocked-document-id`,
+    );
+    await expect(button).toBeVisible();
+    await button.click();
+    const removeButton = page.getByTestId(
+      `docs-grid-actions-remove-mocked-document-id`,
+    );
+    await expect(removeButton).toBeVisible();
+    await removeButton.isDisabled();
+  });
+});
+
 test.describe('Documents Grid', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -162,36 +254,5 @@ test.describe('Documents Grid', () => {
         ).toBeVisible();
       }),
     );
-  });
-
-  test('it deletes the document', async ({ page }) => {
-    let docs: SmallDoc[] = [];
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().includes('documents/?page=1') &&
-        response.status() === 200,
-    );
-    const result = await response.json();
-    docs = result.results as SmallDoc[];
-
-    const button = page.getByTestId(`docs-grid-delete-button-${docs[0].id}`);
-
-    await expect(button).toBeVisible();
-    await button.click();
-
-    await expect(
-      page.locator('h2').getByText(`Deleting the document "${docs[0].title}"`),
-    ).toBeVisible();
-
-    await page
-      .getByRole('button', {
-        name: 'Confirm deletion',
-      })
-      .click();
-
-    await expect(
-      page.getByText('The document has been deleted.'),
-    ).toBeVisible();
-    await expect(button).toBeHidden();
   });
 });

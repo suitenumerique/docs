@@ -1,9 +1,4 @@
-import React, {
-  PropsWithChildren,
-  ReactNode,
-  useEffect,
-  useState,
-} from 'react';
+import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
 import { Button, DialogTrigger, Popover } from 'react-aria-components';
 import styled from 'styled-components';
 
@@ -11,7 +6,7 @@ const StyledPopover = styled(Popover)`
   background-color: white;
   border-radius: 4px;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem;
+
   border: 1px solid #dddddd;
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
@@ -29,7 +24,7 @@ const StyledButton = styled(Button)`
   text-wrap: nowrap;
 `;
 
-interface DropButtonProps {
+export interface DropButtonProps {
   button: ReactNode;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;

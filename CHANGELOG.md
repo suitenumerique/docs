@@ -88,6 +88,8 @@ and this project adheres to
 - ✨(frontend) config endpoint #424
 - ✨(frontend) add sentry #424
 - ✨(frontend) add crisp chatbot #450
+- 💄(frontend) update DocsGridOptions component #432
+
 
 ## Changed
 

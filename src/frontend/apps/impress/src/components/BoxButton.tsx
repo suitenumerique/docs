@@ -1,9 +1,13 @@
-import { ComponentPropsWithRef, forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { css } from 'styled-components';
 
 import { Box, BoxType } from './Box';
 
-export type BoxButtonType = ComponentPropsWithRef<typeof BoxButton>;
+export type BoxButtonType = BoxType & {
+  disabled?: boolean;
+};
+
+/**
 
 /**
  * Styleless button that extends the Box component.
@@ -18,7 +22,7 @@ export type BoxButtonType = ComponentPropsWithRef<typeof BoxButton>;
  *  </BoxButton>
  * ```
  */
-const BoxButton = forwardRef<HTMLDivElement, BoxType>(
+const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
   ({ $css, ...props }, ref) => {
     return (
       <Box
@@ -28,14 +32,24 @@ const BoxButton = forwardRef<HTMLDivElement, BoxType>(
         $margin="none"
         $padding="none"
         $css={css`
-          cursor: pointer;
+          cursor: ${props.disabled ? 'not-allowed' : 'pointer'};
           border: none;
           outline: none;
           transition: all 0.2s ease-in-out;
           font-family: inherit;
+
+          color: ${props.disabled
+            ? 'var(--c--theme--colors--greyscale-400) !important'
+            : 'inherit'};
           ${$css || ''}
         `}
         {...props}
+        onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+          if (props.disabled) {
+            return;
+          }
+          props.onClick?.(event);
+        }}
       />
     );
   },

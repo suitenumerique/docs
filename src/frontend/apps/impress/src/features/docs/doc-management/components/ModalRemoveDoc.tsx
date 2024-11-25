@@ -6,14 +6,13 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
+import { t } from 'i18next';
+import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/router';
-import { useTranslation } from 'react-i18next';
 
 import { Box, Text, TextErrors } from '@/components';
-import { useCunninghamTheme } from '@/cunningham/';
 
 import { useRemoveDoc } from '../api/useRemoveDoc';
-import IconDoc from '../assets/icon-doc.svg';
 import { Doc } from '../types';
 
 interface ModalRemoveDocProps {
@@ -22,13 +21,13 @@ interface ModalRemoveDocProps {
 }
 
 export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
-  const { t } = useTranslation();
-  const { colorsTokens } = useCunninghamTheme();
   const { toast } = useToastProvider();
   const { push } = useRouter();
+  const pathname = usePathname();
 
   const {
     mutate: removeDoc,
+
     isError,
     error,
   } = useRemoveDoc({
@@ -36,7 +35,11 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       toast(t('The document has been deleted.'), VariantType.SUCCESS, {
         duration: 4000,
       });
-      void push('/');
+      if (pathname === '/') {
+        onClose();
+      } else {
+        void push('/');
+      }
     },
   });
 
@@ -59,7 +62,7 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       rightActions={
         <Button
           aria-label={t('Confirm deletion')}
-          color="primary"
+          color="danger"
           fullWidth
           onClick={() =>
             removeDoc({
@@ -97,32 +100,6 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
         )}
 
         {isError && <TextErrors causes={error.cause} />}
-
-        <Text
-          as="p"
-          $padding="small"
-          $direction="row"
-          $gap="0.5rem"
-          $background={colorsTokens()['primary-150']}
-          $theme="primary"
-          $align="center"
-          $radius="2px"
-        >
-          <IconDoc
-            className="p-t"
-            aria-label={t(`Document icon`)}
-            color={colorsTokens()['primary-500']}
-            width={58}
-            style={{
-              borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              border: `1px solid ${colorsTokens()['primary-300']}`,
-            }}
-          />
-          <Text $theme="primary" $weight="bold" $size="l">
-            {doc.title}
-          </Text>
-        </Text>
       </Box>
     </Modal>
   );
