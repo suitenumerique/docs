@@ -1,3 +1,5 @@
+import { css } from 'styled-components';
+
 import { Text, TextType } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
@@ -40,23 +42,21 @@ export const IconBG = ({ iconName, ...textProps }: IconBGProps) => {
   );
 };
 
-interface IconOptionsProps {
-  isOpen: boolean;
-  'aria-label': string;
-}
+type IconOptionsProps = TextType & {
+  isHorizontal?: boolean;
+};
 
-export const IconOptions = ({ isOpen, ...props }: IconOptionsProps) => {
+export const IconOptions = ({ isHorizontal, ...props }: IconOptionsProps) => {
   return (
     <Text
-      aria-label={props['aria-label']}
+      {...props}
       $isMaterialIcon
-      $css={`
-        transition: all 0.3s ease-in-out;
-        transform: rotate(${isOpen ? '90' : '0'}deg);
+      $css={css`
         user-select: none;
+        ${props.$css}
       `}
     >
-      more_vert
+      {isHorizontal ? 'more_horiz' : 'more_vert'}
     </Text>
   );
 };

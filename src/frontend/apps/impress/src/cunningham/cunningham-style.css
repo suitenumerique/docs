@@ -352,8 +352,8 @@ input:-webkit-autofill:focus {
 }
 
 .c__button--nano {
-  padding: 0 var(--c--theme--spacings--2xs) !important;
-  gap: var(--c--theme--spacings--2xs) !important;
+  padding: 0 var(--c--theme--spacings--2xs);
+  gap: var(--c--theme--spacings--2xs);
 }
 
 .c__button--medium {

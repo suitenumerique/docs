@@ -1,5 +1,5 @@
 import { Button } from '@openfun/cunningham-react';
-import React, { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, DropButton, IconOptions, StyledLink, Text } from '@/components';
@@ -70,10 +70,7 @@ export const VersionItem = ({
             {isActive && versionId && (
               <DropButton
                 button={
-                  <IconOptions
-                    isOpen={isDropOpen}
-                    aria-label={t('Open the version options')}
-                  />
+                  <IconOptions aria-label={t('Open the version options')} />
                 }
                 onOpenChange={(isOpen) => setIsDropOpen(isOpen)}
                 isOpen={isDropOpen}

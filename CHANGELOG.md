@@ -89,6 +89,7 @@ and this project adheres to
 - ✨(frontend) add sentry #424
 - ✨(frontend) add crisp chatbot #450
 - 💄(frontend) update DocsGridOptions component #432
+- 💄(frontend) update DocHeader ui #446
 
 
 ## Changed

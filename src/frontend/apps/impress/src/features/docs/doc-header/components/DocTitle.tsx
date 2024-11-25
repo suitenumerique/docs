@@ -5,12 +5,12 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useHeadingStore } from '@/features/docs/doc-editor';
 import {
   Doc,
   KEY_DOC,
@@ -19,7 +19,6 @@ import {
   useUpdateDoc,
 } from '@/features/docs/doc-management';
 import { useBroadcastStore, useResponsiveStore } from '@/stores';
-import { isFirefox } from '@/utils/userAgent';
 
 interface DocTitleProps {
   doc: Doc;
@@ -32,7 +31,7 @@ export const DocTitle = ({ doc }: DocTitleProps) => {
     return (
       <Text
         as="h2"
-        $margin={{ all: 'none', left: 'tiny' }}
+        $margin={{ all: 'none', left: 'none' }}
         $size={isMobile ? 'h4' : 'h2'}
       >
         {doc.title}
@@ -44,20 +43,18 @@ export const DocTitle = ({ doc }: DocTitleProps) => {
 };
 
 const DocTitleInput = ({ doc }: DocTitleProps) => {
+  const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
   const { toast } = useToastProvider();
   const { untitledDocument } = useTrans();
   const isUntitled = titleDisplay === untitledDocument;
-  const { headings } = useHeadingStore();
-  const headingText = headings?.[0]?.contentText;
-  const debounceRef = useRef<NodeJS.Timeout>();
-  const { isMobile } = useResponsiveStore();
+
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC],
+    listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
     onSuccess(data) {
       if (data.title !== untitledDocument) {
         toast(t('Document title updated successfully'), VariantType.SUCCESS);
@@ -81,10 +78,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
 
       // If mutation we update
       if (sanitizedTitle !== doc.title) {
-        if (debounceRef.current) {
-          clearTimeout(debounceRef.current);
-          debounceRef.current = undefined;
-        }
+        setTitleDisplay(sanitizedTitle);
         updateDoc({ id: doc.id, title: sanitizedTitle });
       }
     },
@@ -98,74 +92,38 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
     }
   };
 
-  const handleOnClick = () => {
-    if (isUntitled) {
-      setTitleDisplay('');
-    }
-  };
-
-  useEffect(() => {
-    setTitleDisplay(doc.title);
-  }, [doc.title]);
-
-  useEffect(() => {
-    if ((!debounceRef.current && !isUntitled) || !headingText) {
-      return;
-    }
-
-    setTitleDisplay(headingText);
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = setTimeout(() => {
-      handleTitleSubmit(headingText);
-      debounceRef.current = undefined;
-    }, 3000);
-  }, [isUntitled, handleTitleSubmit, headingText]);
-
   return (
     <>
       <Tooltip content={t('Rename')} placement="top">
         <Box
-          as="h2"
-          $radius="4px"
-          $padding={{ horizontal: 'tiny', vertical: '4px' }}
-          $margin="none"
-          $minWidth="200px"
-          contentEditable={isFirefox() ? 'true' : 'plaintext-only'}
-          onClick={handleOnClick}
-          onBlurCapture={(e) =>
-            handleTitleSubmit(e.currentTarget.textContent || '')
-          }
+          as="span"
+          role="textbox"
+          contentEditable
+          defaultValue={isUntitled ? undefined : titleDisplay}
           onKeyDownCapture={handleKeyDown}
           suppressContentEditableWarning={true}
-          $color={
-            isUntitled
-              ? colorsTokens()['greyscale-200']
-              : colorsTokens()['greyscale-text']
+          aria-label={t('doc title input')}
+          onBlurCapture={(event) =>
+            handleTitleSubmit(event.target.textContent || '')
           }
-          $css={`
-            ${isUntitled && 'font-style: italic;'}
-            cursor: text;
-            font-size: ${isMobile ? '1.2rem' : '1.5rem'};
-            transition: box-shadow 0.5s, border-color 0.5s;
-            border: 1px dashed transparent;
-            
-            &:hover {
-              border-color: rgba(0, 123, 255, 0.25);
-              border-style: dashed;
+          $color={colorsTokens()['greyscale-text']}
+          $margin={{ left: '-2px', right: '10px' }}
+          $css={css`
+            &[contenteditable='true']:empty:not(:focus):before {
+              content: '${untitledDocument}';
+              color: grey;
+              pointer-events: none;
+              font-style: italic;
             }
+            font-size: ${isDesktop
+              ? css`var(--c--theme--font--sizes--h2)`
+              : css`var(--c--theme--font--sizes--sm)`};
+            font-weight: 700;
 
-            &:focus {
-              outline: none;
-              border-color: transparent;
-              box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-            }
+            outline: none;
           `}
         >
-          {titleDisplay}
+          {isUntitled ? '' : titleDisplay}
         </Box>
       </Tooltip>
     </>
