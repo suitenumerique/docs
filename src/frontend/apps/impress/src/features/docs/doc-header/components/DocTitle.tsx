@@ -25,21 +25,28 @@ interface DocTitleProps {
 }
 
 export const DocTitle = ({ doc }: DocTitleProps) => {
-  const { isMobile } = useResponsiveStore();
-
   if (!doc.abilities.partial_update) {
-    return (
-      <Text
-        as="h2"
-        $margin={{ all: 'none', left: 'none' }}
-        $size={isMobile ? 'h4' : 'h2'}
-      >
-        {doc.title}
-      </Text>
-    );
+    return <DocTitleText title={doc.title} />;
   }
 
   return <DocTitleInput doc={doc} />;
+};
+
+interface DocTitleTextProps {
+  title: string;
+}
+
+export const DocTitleText = ({ title }: DocTitleTextProps) => {
+  const { isMobile } = useResponsiveStore();
+  return (
+    <Text
+      as="h2"
+      $margin={{ all: 'none', left: 'none' }}
+      $size={isMobile ? 'h4' : 'h2'}
+    >
+      {title}
+    </Text>
+  );
 };
 
 const DocTitleInput = ({ doc }: DocTitleProps) => {

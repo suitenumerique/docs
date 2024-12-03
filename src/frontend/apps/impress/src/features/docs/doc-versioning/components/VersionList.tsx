@@ -1,10 +1,10 @@
 import { Loader } from '@openfun/cunningham-react';
-import { useRouter } from 'next/router';
-import React, { useMemo, useRef } from 'react';
+import { DateTime } from 'luxon';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { APIError } from '@/api';
-import { Box, InfiniteScroll, Text, TextErrors } from '@/components';
+import { Box, BoxButton, InfiniteScroll, Text, TextErrors } from '@/components';
 import { Doc } from '@/features/docs/doc-management';
 import { useDate } from '@/hook';
 
@@ -18,19 +18,20 @@ interface VersionListStateProps {
   error: APIError<unknown> | null;
   versions?: Versions[];
   doc: Doc;
+  selectedVersionId?: Versions['version_id'];
+  onSelectVersion?: (versionId: Versions['version_id']) => void;
 }
 
 const VersionListState = ({
+  onSelectVersion,
+  selectedVersionId,
+
   isLoading,
   error,
   versions,
   doc,
 }: VersionListStateProps) => {
-  const { t } = useTranslation();
   const { formatDate } = useDate();
-  const {
-    query: { versionId },
-  } = useRouter();
 
   if (isLoading) {
     return (
@@ -41,26 +42,23 @@ const VersionListState = ({
   }
 
   return (
-    <>
-      <VersionItem
-        text={t('Current version')}
-        versionId={undefined}
-        link={`/docs/${doc.id}/`}
-        docId={doc.id}
-        isActive={!versionId}
-      />
+    <Box $gap="10px" $padding="xs">
       {versions?.map((version) => (
-        <VersionItem
+        <BoxButton
+          aria-label="version item"
+          className="version-item"
           key={version.version_id}
-          versionId={version.version_id}
-          text={formatDate(version.last_modified, {
-            dateStyle: 'long',
-            timeStyle: 'short',
-          })}
-          link={`/docs/${doc.id}/versions/${version.version_id}`}
-          docId={doc.id}
-          isActive={version.version_id === versionId}
-        />
+          onClick={() => {
+            onSelectVersion?.(version.version_id);
+          }}
+        >
+          <VersionItem
+            versionId={version.version_id}
+            text={formatDate(version.last_modified, DateTime.DATETIME_MED)}
+            docId={doc.id}
+            isActive={version.version_id === selectedVersionId}
+          />
+        </BoxButton>
       ))}
       {error && (
         <Box
@@ -79,15 +77,23 @@ const VersionListState = ({
           />
         </Box>
       )}
-    </>
+    </Box>
   );
 };
 
 interface VersionListProps {
   doc: Doc;
+  onSelectVersion?: (versionId: Versions['version_id']) => void;
+  selectedVersionId?: Versions['version_id'];
 }
 
-export const VersionList = ({ doc }: VersionListProps) => {
+export const VersionList = ({
+  doc,
+  onSelectVersion,
+  selectedVersionId,
+}: VersionListProps) => {
+  const { t } = useTranslation();
+
   const {
     data,
     error,
@@ -98,7 +104,7 @@ export const VersionList = ({ doc }: VersionListProps) => {
   } = useDocVersionsInfiniteQuery({
     docId: doc.id,
   });
-  const containerRef = useRef<HTMLDivElement>(null);
+
   const versions = useMemo(() => {
     return data?.pages.reduce((acc, page) => {
       return acc.concat(page.versions);
@@ -106,24 +112,32 @@ export const VersionList = ({ doc }: VersionListProps) => {
   }, [data?.pages]);
 
   return (
-    <Box $css="overflow-y: auto; overflow-x: hidden;" ref={containerRef}>
+    <Box $css="overflow-y: auto; overflow-x: hidden;">
       <InfiniteScroll
         hasMore={hasNextPage}
         isLoading={isFetchingNextPage}
         next={() => {
           void fetchNextPage();
         }}
-        scrollContainer={containerRef.current}
         as="ul"
         $padding="none"
         $margin={{ top: 'none' }}
         role="listbox"
       >
+        {versions?.length === 0 && (
+          <Box $align="center" $margin="large">
+            <Text $size="h6" $weight="bold">
+              {t('No versions')}
+            </Text>
+          </Box>
+        )}
         <VersionListState
+          onSelectVersion={onSelectVersion}
           isLoading={isLoading}
           error={error}
           versions={versions}
           doc={doc}
+          selectedVersionId={selectedVersionId}
         />
       </InfiniteScroll>
     </Box>

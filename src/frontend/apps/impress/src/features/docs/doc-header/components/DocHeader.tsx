@@ -68,6 +68,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
           >
             <Box $gap={spacings['3xs']}>
               <DocTitle doc={doc} />
+
               <Box $direction="row">
                 {isDesktop && (
                   <>

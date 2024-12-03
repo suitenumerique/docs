@@ -21,6 +21,9 @@ and this project adheres to
 - ♻️(frontend) better separation collaboration process #528
 - 💄(frontend) updating the header and leftpanel for responsive #421
 - 💄(frontend) update DocsGrid component #431
+- 💄(frontend) update DocsGridOptions component #432
+- 💄(frontend) update DocHeader ui #446
+- 💄(frontend) update doc versioning ui #463
 
 
 ## [1.10.0] - 2024-12-17
@@ -38,6 +41,7 @@ and this project adheres to
 ## Fixed
 
 - ⚡️(e2e) reduce flakiness on e2e tests #511
+
 
 
 ## [1.9.0] - 2024-12-11
@@ -62,7 +66,9 @@ and this project adheres to
 - 🐛(backend) fix sanitize problem IA #490
 
 
+
 ## [1.8.2] - 2024-11-28
+
 
 ## Changed
 
@@ -88,9 +94,6 @@ and this project adheres to
 - ✨(frontend) config endpoint #424
 - ✨(frontend) add sentry #424
 - ✨(frontend) add crisp chatbot #450
-- 💄(frontend) update DocsGridOptions component #432
-- 💄(frontend) update DocHeader ui #446
-
 
 ## Changed
 

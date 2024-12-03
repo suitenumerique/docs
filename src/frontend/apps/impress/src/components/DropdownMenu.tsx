@@ -11,6 +11,7 @@ export type DropdownMenuOption = {
   callback?: () => void | Promise<unknown>;
   danger?: boolean;
   disabled?: boolean;
+  show?: boolean;
 };
 
 export type DropdownMenuProps = {
@@ -59,6 +60,10 @@ export const DropdownMenu = ({
     >
       <Box>
         {options.map((option, index) => {
+          if (option.show !== undefined && !option.show) {
+            return;
+          }
+
           const isDisabled = option.disabled !== undefined && option.disabled;
           return (
             <BoxButton

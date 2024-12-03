@@ -33,8 +33,8 @@ export const SimpleDocItem = ({
   const spacings = spacingsTokens();
 
   const isPublic = doc?.link_reach === LinkReach.PUBLIC;
-  const isShared = !isPublic && doc.accesses.length > 1;
-  const accessCount = doc.accesses.length - 1;
+  const isShared = !isPublic && doc.nb_accesses > 1;
+  const accessCount = doc.nb_accesses - 1;
   const isSharedOrPublic = isShared || isPublic;
 
   return (

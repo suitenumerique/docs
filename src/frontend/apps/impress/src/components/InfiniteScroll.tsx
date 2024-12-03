@@ -1,12 +1,16 @@
-import { PropsWithChildren, useEffect, useRef } from 'react';
+import { Button } from '@openfun/cunningham-react';
+import { PropsWithChildren } from 'react';
+import { useTranslation } from 'react-i18next';
+import { InView } from 'react-intersection-observer';
 
-import { Box, BoxType } from '@/components';
+import { Box, BoxType, Icon } from '@/components';
 
 interface InfiniteScrollProps extends BoxType {
   hasMore: boolean;
   isLoading: boolean;
   next: () => void;
-  scrollContainer: HTMLElement | null;
+  scrollContainer?: HTMLElement | null;
+  buttonLabel?: string;
 }
 
 export const InfiniteScroll = ({
@@ -14,42 +18,31 @@ export const InfiniteScroll = ({
   hasMore,
   isLoading,
   next,
-  scrollContainer,
+  buttonLabel,
   ...boxProps
 }: PropsWithChildren<InfiniteScrollProps>) => {
-  const timeout = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    if (!scrollContainer) {
+  const { t } = useTranslation();
+  const loadMore = (inView: boolean) => {
+    if (!inView || isLoading) {
       return;
     }
+    void next();
+  };
 
-    const nextHandle = () => {
-      if (!hasMore || isLoading) {
-        return;
-      }
-
-      // To not wait until the end of the scroll to load more data
-      const heightFromBottom = 150;
-
-      const { scrollTop, clientHeight, scrollHeight } = scrollContainer;
-      if (scrollTop + clientHeight >= scrollHeight - heightFromBottom) {
-        next();
-      }
-    };
-
-    const handleScroll = () => {
-      if (timeout.current) {
-        clearTimeout(timeout.current);
-      }
-      timeout.current = setTimeout(nextHandle, 50);
-    };
-
-    scrollContainer.addEventListener('scroll', handleScroll);
-    return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll);
-    };
-  }, [hasMore, isLoading, next, scrollContainer]);
-
-  return <Box {...boxProps}>{children}</Box>;
+  return (
+    <Box {...boxProps}>
+      {children}
+      <InView onChange={loadMore}>
+        {!isLoading && hasMore && (
+          <Button
+            onClick={() => void next()}
+            color="primary-text"
+            icon={<Icon iconName="arrow_downward" />}
+          >
+            {buttonLabel ?? t('Load more')}
+          </Button>
+        )}
+      </InView>
+    </Box>
+  );
 };

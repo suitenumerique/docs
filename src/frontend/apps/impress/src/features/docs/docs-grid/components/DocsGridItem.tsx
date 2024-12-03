@@ -19,7 +19,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
   const isRestricted = doc.link_reach === LinkReach.RESTRICTED;
-  const sharedCount = doc.accesses.length - 1;
+  const sharedCount = doc.nb_accesses - 1;
   const isShared = sharedCount > 0;
 
   return (

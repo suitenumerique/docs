@@ -6,7 +6,7 @@ import * as Y from 'yjs';
 
 import { Box, Card, Text, TextErrors } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocHeader } from '@/features/docs/doc-header';
+import { DocHeader, DocVersionHeader } from '@/features/docs/doc-header/';
 import {
   Doc,
   base64ToBlocknoteXmlFragment,
@@ -20,12 +20,10 @@ import { IconOpenPanelEditor, PanelEditor } from './PanelEditor';
 
 interface DocEditorProps {
   doc: Doc;
+  versionId?: Versions['version_id'];
 }
 
-export const DocEditor = ({ doc }: DocEditorProps) => {
-  const {
-    query: { versionId },
-  } = useRouter();
+export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const { t } = useTranslation();
   const { isMobile } = useResponsiveStore();
 
@@ -41,7 +39,12 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
 
   return (
     <>
-      <DocHeader doc={doc} />
+      {isVersion ? (
+        <DocVersionHeader title={doc.title} />
+      ) : (
+        <DocHeader doc={doc} />
+      )}
+
       {!doc.abilities.partial_update && (
         <Box $width="100%" $margin={{ all: 'small', top: 'none' }}>
           <Alert type={VariantType.WARNING}>
@@ -49,18 +52,11 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
           </Alert>
         </Box>
       )}
-      {isVersion && (
-        <Box $margin={{ all: 'small', top: 'none' }}>
-          <Alert type={VariantType.WARNING}>
-            {t(`Read only, you cannot edit document versions.`)}
-          </Alert>
-        </Box>
-      )}
+
       <Box
         $background={colorsTokens()['primary-bg']}
         $direction="row"
         $width="100%"
-        $margin={{ all: isMobile ? 'tiny' : 'small', top: 'none' }}
         $css="overflow-x: clip; flex: 1;"
         $position="relative"
       >
@@ -75,9 +71,9 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
           ) : (
             <BlockNoteEditor doc={doc} provider={provider} />
           )}
-          {!isMobile && <IconOpenPanelEditor />}
+          {!isMobile && !isVersion && <IconOpenPanelEditor />}
         </Card>
-        <PanelEditor doc={doc} />
+        {!isVersion && <PanelEditor />}
       </Box>
     </>
   );

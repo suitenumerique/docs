@@ -54,8 +54,10 @@ test.describe('Document list members', () => {
     const list = page.getByLabel('List members card').locator('ul');
     await expect(list.locator('li')).toHaveCount(20);
     await list.getByText(`impress@impress.world-page-${1}-18`).hover();
-    await page.mouse.wheel(0, 10);
-
+    const loadMoreButton = page
+      .getByLabel('List members card')
+      .getByRole('button', { name: 'arrow_downward Load more' });
+    await loadMoreButton.scrollIntoViewIfNeeded();
     await waitForElementCount(list.locator('li'), 21, 10000);
 
     expect(await list.locator('li').count()).toBeGreaterThan(20);
@@ -109,9 +111,13 @@ test.describe('Document list members', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     const list = page.getByLabel('List invitation card').locator('ul');
+
     await expect(list.locator('li')).toHaveCount(20);
     await list.getByText(`impress@impress.world-page-${1}-18`).hover();
-    await page.mouse.wheel(0, 10);
+    const loadMoreButton = page
+      .getByLabel('List invitation card')
+      .getByRole('button', { name: 'arrow_downward Load more' });
+    await loadMoreButton.scrollIntoViewIfNeeded();
 
     await waitForElementCount(list.locator('li'), 21, 10000);
 

@@ -1,2 +1,3 @@
-export * from './ModalVersion';
+export * from './ModalConfirmationVersion';
+export * from './ModalSelectVersion';
 export * from './VersionList';

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Modal,
   ModalSize,
@@ -22,17 +21,18 @@ import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
 import { Versions } from '../types';
 import { revertUpdate } from '../utils';
 
-interface ModalVersionProps {
+interface ModalConfirmationVersionProps {
   onClose: () => void;
   docId: Doc['id'];
+
   versionId: Versions['version_id'];
 }
 
-export const ModalVersion = ({
+export const ModalConfirmationVersion = ({
   onClose,
   docId,
   versionId,
-}: ModalVersionProps) => {
+}: ModalConfirmationVersionProps) => {
   const { data: version } = useDocVersion({
     docId,
     versionId,
@@ -68,60 +68,50 @@ export const ModalVersion = ({
     <Modal
       isOpen
       closeOnClickOutside
-      hideCloseButton
-      leftActions={
-        <Button
-          aria-label={t('Close the modal')}
-          color="secondary"
-          fullWidth
-          onClick={() => onClose()}
-        >
-          {t('Cancel')}
-        </Button>
-      }
       onClose={() => onClose()}
       rightActions={
-        <Button
-          aria-label={t('Restore')}
-          color="primary"
-          fullWidth
-          onClick={() => {
-            if (!version?.content) {
-              return;
-            }
+        <>
+          <Button
+            aria-label={t('Close the modal')}
+            color="secondary"
+            fullWidth
+            onClick={() => onClose()}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            aria-label={t('Restore')}
+            color="danger"
+            fullWidth
+            onClick={() => {
+              if (!version?.content) {
+                return;
+              }
 
-            updateDoc({
-              id: docId,
-              content: version.content,
-            });
+              updateDoc({
+                id: docId,
+                content: version.content,
+              });
 
-            onClose();
-          }}
-        >
-          {t('Restore')}
-        </Button>
+              onClose();
+            }}
+          >
+            {t('Restore')}
+          </Button>
+        </>
       }
       size={ModalSize.MEDIUM}
       title={
-        <Box $gap="1rem">
-          <Text $isMaterialIcon $size="36px" $theme="primary">
-            restore
-          </Text>
-          <Text as="h2" $size="h3" $margin="none">
-            {t('Restore this version?')}
-          </Text>
-        </Box>
+        <Text $size="h6" $align="flex-start">
+          {t('Warning')}
+        </Text>
       }
     >
       <Box aria-label={t('Modal confirmation to restore the version')}>
-        <Alert canClose={false} type={VariantType.WARNING}>
-          <Box>
-            <Text>
-              {t('Your current document will revert to this version.')}
-            </Text>
-            <Text>{t('If a member is editing, his works can be lost.')}</Text>
-          </Box>
-        </Alert>
+        <Box>
+          <Text>{t('Your current document will revert to this version.')}</Text>
+          <Text>{t('If a member is editing, his works can be lost.')}</Text>
+        </Box>
       </Box>
     </Modal>
   );
