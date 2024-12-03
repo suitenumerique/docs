@@ -35,7 +35,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
     <>
       <Box
         $width="100%"
-        $padding={{ vertical: 'base' }}
+        $padding={{ top: 'base' }}
         $gap={spacings['base']}
         aria-label={t('It is the card information about the document.')}
       >
@@ -92,7 +92,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             <DocToolBox doc={doc} />
           </Box>
         </Box>
-        <HorizontalSeparator />
+        <HorizontalSeparator $withPadding={false} />
       </Box>
     </>
   );

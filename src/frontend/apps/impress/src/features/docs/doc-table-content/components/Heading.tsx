@@ -5,10 +5,10 @@ import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useResponsiveStore } from '@/stores';
 
-const sizeMap: { [key: number]: string } = {
-  1: '1.1rem',
+const leftPaddingMap: { [key: number]: string } = {
+  3: '1.5rem',
   2: '0.9rem',
-  3: '0.8rem',
+  1: '0.3',
 };
 
 export type HeadingsHighlight = {
@@ -34,9 +34,12 @@ export const Heading = ({
   const [isHover, setIsHover] = useState(isHighlight);
   const { colorsTokens } = useCunninghamTheme();
   const { isMobile } = useResponsiveStore();
+  const isActive = isHighlight || isHover;
 
   return (
     <BoxButton
+      id={`heading-${headingId}`}
+      $width="100%"
       key={headingId}
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
@@ -47,23 +50,24 @@ export const Heading = ({
         }
 
         editor.setTextCursorPosition(headingId, 'end');
+
         document.querySelector(`[data-id="${headingId}"]`)?.scrollIntoView({
           behavior: 'smooth',
+          inline: 'start',
           block: 'start',
         });
       }}
+      $radius="4px"
+      $background={isActive ? `${colorsTokens()['greyscale-100']}` : 'none'}
       $css="text-align: left;"
     >
       <Text
-        $theme="primary"
-        $padding={{ vertical: 'xtiny', left: 'tiny' }}
-        $size={sizeMap[level]}
+        $width="100%"
+        $padding={{ vertical: 'xtiny', left: leftPaddingMap[level] }}
+        $variation={isActive ? '1000' : '700'}
+        $weight={isActive ? 'bold' : 'normal'}
+        $css="overflow-wrap: break-word;"
         $hasTransition
-        $css={
-          isHover || isHighlight
-            ? `box-shadow: -2px 0px 0px ${colorsTokens()[isHighlight ? 'primary-500' : 'primary-400']};`
-            : ''
-        }
         aria-selected={isHighlight}
       >
         {text}

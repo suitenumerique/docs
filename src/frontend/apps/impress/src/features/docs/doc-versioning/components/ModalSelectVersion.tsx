@@ -64,7 +64,7 @@ export const ModalSelectVersion = ({
               flex: 1;
             `}
           >
-            <Box $width="100%" $padding="base">
+            <Box $width="100%" $padding="base" $align="center">
               {selectedVersionId && (
                 <DocEditor doc={doc} versionId={selectedVersionId} />
               )}

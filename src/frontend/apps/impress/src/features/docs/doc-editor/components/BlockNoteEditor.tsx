@@ -4,7 +4,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
@@ -24,10 +24,7 @@ const cssEditor = (readonly: boolean) => `
   &, & > .bn-container, & .ProseMirror {
     height:100%
   };
-  & .bn-editor {
-    padding-right: 30px;
-    ${readonly && `padding-left: 30px;`}
-  };
+  
   & .bn-inline-content code {
     background-color: gainsboro;
     padding: 2px;
