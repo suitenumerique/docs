@@ -14,6 +14,7 @@ and this project adheres to
 - 🔧(backend) add option to configure list of essential OIDC claims #525 & #531
 - 🔧(helm) add option to disable default tls setting by @dominikkaminski #519
 - 💄(frontend) Add left panel #420
+- 💄(frontend) add filtering to left panel #475
 
 ## Changed
 
@@ -41,6 +42,9 @@ and this project adheres to
 ## Fixed
 
 - ⚡️(e2e) reduce flakiness on e2e tests #511
+
+
+
 
 
 

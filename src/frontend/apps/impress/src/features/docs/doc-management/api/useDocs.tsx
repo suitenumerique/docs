@@ -28,16 +28,24 @@ export type DocsOrdering = (typeof docsOrdering)[number];
 export type DocsParams = {
   page: number;
   ordering?: DocsOrdering;
+  is_creator_me?: boolean;
 };
 
 export type DocsResponse = APIList<Doc>;
+export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
+  const searchParams = new URLSearchParams();
+  if (params.page) {
+    searchParams.set('page', params.page.toString());
+  }
 
-export const getDocs = async ({
-  ordering,
-  page,
-}: DocsParams): Promise<DocsResponse> => {
-  const orderingQuery = ordering ? `&ordering=${ordering}` : '';
-  const response = await fetchAPI(`documents/?page=${page}${orderingQuery}`);
+  if (params.ordering) {
+    searchParams.set('ordering', params.ordering);
+  }
+  if (params.is_creator_me !== undefined) {
+    searchParams.set('is_creator_me', params.is_creator_me.toString());
+  }
+
+  const response = await fetchAPI(`documents/?${searchParams.toString()}`);
 
   if (!response.ok) {
     throw new APIError('Failed to get the docs', await errorCauses(response));

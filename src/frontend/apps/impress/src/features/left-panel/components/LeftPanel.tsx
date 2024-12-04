@@ -1,4 +1,3 @@
-import { PropsWithChildren } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
@@ -10,6 +9,7 @@ import { useResponsiveStore } from '@/stores';
 
 import { useLeftPanelStore } from '../stores';
 
+import { LeftPanelContent } from './LeftPanelContent';
 import { LeftPanelHeader } from './LeftPanelHeader';
 
 const MobileLeftPanelStyle = createGlobalStyle`
@@ -18,7 +18,7 @@ const MobileLeftPanelStyle = createGlobalStyle`
   }
 `;
 
-export const LeftPanel = ({ children }: PropsWithChildren) => {
+export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
   const { isPanelOpen } = useLeftPanelStore();
   const theme = useCunninghamTheme();
@@ -37,7 +37,8 @@ export const LeftPanel = ({ children }: PropsWithChildren) => {
             border-right: 1px solid ${colors['greyscale-200']};
         `}
         >
-          <LeftPanelHeader>{children}</LeftPanelHeader>
+          <LeftPanelHeader />
+          <LeftPanelContent />
         </Box>
       )}
 
@@ -65,7 +66,8 @@ export const LeftPanel = ({ children }: PropsWithChildren) => {
                 gap: ${spacings['base']};
               `}
             >
-              <LeftPanelHeader>{children}</LeftPanelHeader>
+              <LeftPanelHeader />
+              <LeftPanelContent />
               <SeparatedSection showSeparator={false}>
                 <Box $justify="center" $align="center" $gap={spacings['sm']}>
                   <ButtonLogin />

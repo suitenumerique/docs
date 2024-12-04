@@ -183,6 +183,80 @@ test.describe('Document grid item options', () => {
   });
 });
 
+test.describe('Documents filters', () => {
+  test('it checks the prebuild left panel filters', async ({ page }) => {
+    // All Docs
+    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    const response = await page.waitForResponse(
+      (response) =>
+        response.url().includes('documents/?page=1') &&
+        response.status() === 200,
+    );
+    const result = await response.json();
+    const allCount = result.count as number;
+    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+
+    const allDocs = page.getByLabel('All docs');
+    const myDocs = page.getByLabel('My docs');
+    const sharedWithMe = page.getByLabel('Shared with me');
+
+    // Initial state
+    await expect(allDocs).toBeVisible();
+    await expect(allDocs).toHaveCSS('background-color', 'rgb(238, 238, 238)');
+    await expect(allDocs).toHaveAttribute('aria-selected', 'true');
+
+    await expect(myDocs).toBeVisible();
+    await expect(myDocs).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(myDocs).toHaveAttribute('aria-selected', 'false');
+
+    await expect(sharedWithMe).toBeVisible();
+    await expect(sharedWithMe).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
+    await expect(sharedWithMe).toHaveAttribute('aria-selected', 'false');
+
+    await allDocs.click();
+
+    let url = new URL(page.url());
+    let target = url.searchParams.get('target');
+    expect(target).toBe('all_docs');
+
+    // My docs
+    await myDocs.click();
+    url = new URL(page.url());
+    target = url.searchParams.get('target');
+    expect(target).toBe('my_docs');
+    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    const responseMyDocs = await page.waitForResponse(
+      (response) =>
+        response.url().includes('documents/?page=1&is_creator_me=true') &&
+        response.status() === 200,
+    );
+    const resultMyDocs = await responseMyDocs.json();
+    const countMyDocs = resultMyDocs.count as number;
+    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    expect(countMyDocs).toBeLessThanOrEqual(allCount);
+
+    // Shared with me
+    await sharedWithMe.click();
+    url = new URL(page.url());
+    target = url.searchParams.get('target');
+    expect(target).toBe('shared_with_me');
+    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    const responseSharedWithMe = await page.waitForResponse(
+      (response) =>
+        response.url().includes('documents/?page=1&is_creator_me=false') &&
+        response.status() === 200,
+    );
+    const resultSharedWithMe = await responseSharedWithMe.json();
+    const countSharedWithMe = resultSharedWithMe.count as number;
+    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    expect(countSharedWithMe).toBeLessThanOrEqual(allCount);
+    expect(countSharedWithMe + countMyDocs).toEqual(allCount);
+  });
+});
+
 test.describe('Documents Grid', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

@@ -5,12 +5,17 @@ import { InView } from 'react-intersection-observer';
 import { Box, Card, Text } from '@/components';
 import { useResponsiveStore } from '@/stores';
 
-import { useInfiniteDocs } from '../../doc-management';
+import { DocDefaultFilter, useInfiniteDocs } from '../../doc-management';
 
 import { DocsGridItem } from './DocsGridItem';
 import { DocsGridLoader } from './DocsGridLoader';
 
-export const DocsGrid = () => {
+type DocsGridProps = {
+  target?: DocDefaultFilter;
+};
+export const DocsGrid = ({
+  target = DocDefaultFilter.ALL_DOCS,
+}: DocsGridProps) => {
   const { t } = useTranslation();
 
   const { isDesktop } = useResponsiveStore();
@@ -24,6 +29,10 @@ export const DocsGrid = () => {
     hasNextPage,
   } = useInfiniteDocs({
     page: 1,
+    ...(target &&
+      target !== DocDefaultFilter.ALL_DOCS && {
+        is_creator_me: target === DocDefaultFilter.MY_DOCS,
+      }),
   });
   const loading = isFetching || isLoading;
 

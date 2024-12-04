@@ -356,6 +356,10 @@ input:-webkit-autofill:focus {
   gap: var(--c--theme--spacings--2xs);
 }
 
+.c__button--nano.c__button--icon-only {
+  width: auto;
+}
+
 .c__button--medium {
   padding: 0.9rem var(--c--theme--spacings--s);
 }
