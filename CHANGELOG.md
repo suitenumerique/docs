@@ -48,6 +48,9 @@ and this project adheres to
 
 
 
+## Fixed
+- 🐛(frontend) update doc editor height #481
+
 
 ## [1.9.0] - 2024-12-11
 
@@ -71,9 +74,7 @@ and this project adheres to
 - 🐛(backend) fix sanitize problem IA #490
 
 
-
 ## [1.8.2] - 2024-11-28
-
 
 ## Changed
 

@@ -27,6 +27,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
       $direction="row"
       $width="100%"
       $align="center"
+      $gap="20px"
       role="row"
       $padding={{ vertical: 'xs', horizontal: 'sm' }}
       $css={css`
@@ -46,7 +47,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
           <SimpleDocItem doc={doc} />
         </Box>
         {isDesktop && (
-          <Box $flex={1}>
+          <Box $flex={1.3}>
             <Text $variation="500" $size="xs">
               {DateTime.fromISO(doc.updated_at).toRelative()}
             </Text>

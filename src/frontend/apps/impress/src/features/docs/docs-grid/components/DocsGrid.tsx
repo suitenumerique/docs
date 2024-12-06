@@ -43,6 +43,13 @@ export const DocsGrid = ({
     void fetchNextPage();
   };
 
+  const title =
+    target === DocDefaultFilter.MY_DOCS
+      ? t('My docs')
+      : target === DocDefaultFilter.SHARED_WITH_ME
+        ? t('Shared with me')
+        : t('All docs');
+
   return (
     <Box $position="relative" $width="100%" $maxWidth="960px">
       <DocsGridLoader isLoading={isRefetching} />
@@ -53,18 +60,23 @@ export const DocsGrid = ({
           $weight="700"
           $margin={{ top: '0px', bottom: 'xs' }}
         >
-          {t('All docs')}
+          {title}
         </Text>
 
         <Box>
-          <Box $direction="row" $padding="xs" data-testid="docs-grid-header">
+          <Box
+            $direction="row"
+            $padding="xs"
+            $gap="20px"
+            data-testid="docs-grid-header"
+          >
             <Box $flex={6} $padding="3xs">
               <Text $size="xs" $variation="600">
                 {t('Name')}
               </Text>
             </Box>
             {isDesktop && (
-              <Box $flex={1} $padding="3xs">
+              <Box $flex={1.3} $padding="3xs">
                 <Text $size="xs" $variation="600">
                   {t('Updated at')}
                 </Text>

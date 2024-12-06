@@ -109,7 +109,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           defaultValue={isUntitled ? undefined : titleDisplay}
           onKeyDownCapture={handleKeyDown}
           suppressContentEditableWarning={true}
-          aria-label={t('doc title input')}
+          aria-label="doc title input"
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')
           }

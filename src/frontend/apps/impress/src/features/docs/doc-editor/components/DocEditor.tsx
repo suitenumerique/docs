@@ -51,7 +51,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           <TableContent />
         </Box>
       )}
-      <Box $maxWidth="868px" $width="100%">
+      <Box $maxWidth="868px" $width="100%" $height="100%">
         <Box $padding={{ horizontal: '54px' }}>
           {isVersion ? (
             <DocVersionHeader title={doc.title} />
