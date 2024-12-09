@@ -23,6 +23,7 @@
     "@openfun/cunningham-react": "2.9.4",
     "@sentry/nextjs": "8.47.0",
     "@tanstack/react-query": "5.62.11",
+    "cmdk": "1.0.4",
     "crisp-sdk-web": "1.0.25",
     "i18next": "24.2.0",
     "i18next-browser-languagedetector": "8.0.2",
@@ -37,6 +38,7 @@
     "react-intersection-observer": "9.13.1",
     "react-select": "5.9.0",
     "styled-components": "6.1.13",
+    "use-debounce": "10.0.4",
     "y-protocols": "1.0.6",
     "yjs": "13.6.21",
     "zustand": "5.0.2"
