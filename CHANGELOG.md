@@ -50,6 +50,7 @@ and this project adheres to
 
 ## Fixed
 - 🐛(frontend) update doc editor height #481
+- 💄(frontend) add doc search #485
 
 
 ## [1.9.0] - 2024-12-11

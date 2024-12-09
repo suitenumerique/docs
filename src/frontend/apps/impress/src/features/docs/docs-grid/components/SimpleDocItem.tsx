@@ -21,12 +21,14 @@ type SimpleDocItemProps = {
   doc: Doc;
   isPinned?: boolean;
   subText?: string;
+  showAccesses?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
   isPinned = false,
   subText,
+  showAccesses = false,
 }: SimpleDocItemProps) => {
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
@@ -61,7 +63,7 @@ export const SimpleDocItem = ({
           {doc.title}
         </Text>
         <Box $direction="row" $align="center" $gap={spacings['3xs']}>
-          {!isDesktop && (
+          {(!isDesktop || showAccesses) && (
             <>
               {isPublic && <Icon iconName="public" $size="16px" />}
               {isShared && <Icon iconName="group" $size="16px" />}

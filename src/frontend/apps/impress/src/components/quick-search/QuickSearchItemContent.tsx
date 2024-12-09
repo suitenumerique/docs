@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
+import { useResponsiveStore } from '@/stores';
 
 import { Box } from '../Box';
 
@@ -18,6 +19,8 @@ export const QuickSearchItemContent = ({
   const { spacingsTokens } = useCunninghamTheme();
   const spacings = spacingsTokens();
 
+  const { isDesktop } = useResponsiveStore();
+
   return (
     <Box
       $direction="row"
@@ -30,7 +33,7 @@ export const QuickSearchItemContent = ({
         {left}
       </Box>
 
-      {right && (
+      {isDesktop && right && (
         <Box
           className={!alwaysShowRight ? 'show-right-on-focus' : ''}
           $direction="row"

@@ -29,6 +29,7 @@ export type DocsParams = {
   page: number;
   ordering?: DocsOrdering;
   is_creator_me?: boolean;
+  title?: string;
 };
 
 export type DocsResponse = APIList<Doc>;
@@ -43,6 +44,10 @@ export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
   }
   if (params.is_creator_me !== undefined) {
     searchParams.set('is_creator_me', params.is_creator_me.toString());
+  }
+
+  if (params.title && params.title.length > 0) {
+    searchParams.set('title', params.title);
   }
 
   const response = await fetchAPI(`documents/?${searchParams.toString()}`);

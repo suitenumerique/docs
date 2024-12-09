@@ -16,6 +16,7 @@ export const QuickSearchGroup = <T,>({
   onSelect,
   renderElement,
 }: Props<T>) => {
+  console.log('group', group, group.emptyString && group.elements.length === 0);
   return (
     <Box $margin={{ top: 'base' }}>
       <Command.Group
@@ -36,6 +37,7 @@ export const QuickSearchGroup = <T,>({
         {group.elements.map((groupElement, index) => {
           return (
             <QuickSearchItem
+              id={`${group.groupName}-element-${index}`}
               key={`${group.groupName}-element-${index}`}
               onSelect={() => {
                 onSelect?.(groupElement);
