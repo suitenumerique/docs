@@ -76,9 +76,7 @@ test.describe('Header mobile', () => {
     const header = page.locator('header').first();
 
     await expect(header.getByLabel('Open the header menu')).toBeVisible();
-    await expect(
-      header.getByRole('link', { name: 'Docs Logo Docs' }),
-    ).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Docs Logo' })).toBeVisible();
     await expect(
       header.getByRole('button', {
         name: 'Les services de La Suite numérique',
