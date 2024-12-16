@@ -7,12 +7,12 @@ import {
   DropdownMenuOption,
   IconOptions,
 } from '@/components';
+import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
 import {
   useDeleteDocAccess,
   useUpdateDocAccess,
 } from '@/features/docs/members/members-list';
 import { useWhoAmI } from '@/features/docs/members/members-list/hooks/useWhoAmI';
-import { SearchUserRow } from '@/features/users/components/SearchUserRow';
 import { useResponsiveStore } from '@/stores';
 
 import { Access, Doc, Role } from '../../doc-management/types';

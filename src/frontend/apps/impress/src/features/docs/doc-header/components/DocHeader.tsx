@@ -92,7 +92,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             <DocToolBox doc={doc} />
           </Box>
         </Box>
-        <HorizontalSeparator $withPadding={false} />
+        <HorizontalSeparator />
       </Box>
     </>
   );

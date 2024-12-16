@@ -1,7 +1,6 @@
-import { Alert, Loader, VariantType } from '@openfun/cunningham-react';
+import { Loader } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 import * as Y from 'yjs';
 
@@ -25,7 +24,6 @@ interface DocEditorProps {
 }
 
 export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
-  const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
   const isVersion = !!versionId && typeof versionId === 'string';
@@ -59,14 +57,6 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
             <DocHeader doc={doc} />
           )}
         </Box>
-
-        {!doc.abilities.partial_update && (
-          <Box $width="100%" $margin={{ all: 'small', top: 'none' }}>
-            <Alert type={VariantType.WARNING}>
-              {t(`Read only, you cannot edit this document.`)}
-            </Alert>
-          </Box>
-        )}
 
         <Box
           $background={colorsTokens()['primary-bg']}

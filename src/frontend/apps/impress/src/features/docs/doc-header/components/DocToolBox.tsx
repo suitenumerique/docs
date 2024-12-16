@@ -21,13 +21,11 @@ import {
   useEditorStore,
   usePanelEditorStore,
 } from '@/features/docs/doc-editor/';
-import {
-  Doc,
-  ModalRemoveDoc,
-  ModalShare,
-} from '@/features/docs/doc-management';
+import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
 import { ModalSelectVersion } from '@/features/docs/doc-versioning';
 import { useResponsiveStore } from '@/stores';
+
+import { DocShareModal } from '../../doc-share/component/DocShareModal';
 
 import { ModalPDF } from './ModalExport';
 
@@ -42,10 +40,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const spacings = spacingsTokens();
   const colors = colorsTokens();
 
-  const [isModalShareOpen, setIsModalShareOpen] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalPDFOpen, setIsModalPDFOpen] = useState(false);
   const selectHistoryModal = useModal();
+  const modalShare = useModal();
   const { setIsPanelOpen, setIsPanelTableContentOpen } = usePanelEditorStore();
 
   const { isSmallMobile, isDesktop } = useResponsiveStore();
@@ -60,7 +58,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             label: t('Share'),
             icon: 'upload',
             callback: () => {
-              setIsModalShareOpen(true);
+              modalShare.open();
             },
           },
           {
@@ -72,6 +70,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           },
         ]
       : []),
+
     {
       label: t('Version history'),
       icon: 'history',
@@ -149,7 +148,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           <Button
             color="primary-text"
             onClick={() => {
-              setIsModalShareOpen(true);
+              modalShare.open();
             }}
             size={isSmallMobile ? 'small' : 'medium'}
           >
@@ -185,8 +184,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           />
         </DropdownMenu>
       </Box>
-      {isModalShareOpen && (
-        <ModalShare onClose={() => setIsModalShareOpen(false)} doc={doc} />
+
+      {modalShare.isOpen && (
+        <DocShareModal onClose={() => modalShare.close()} doc={doc} />
       )}
       {isModalPDFOpen && (
         <ModalPDF onClose={() => setIsModalPDFOpen(false)} doc={doc} />

@@ -22,7 +22,8 @@ import { BlockNoteToolbar } from './BlockNoteToolbar';
 
 const cssEditor = (readonly: boolean) => `
   &, & > .bn-container, & .ProseMirror {
-    height:100%
+    height:100%;
+    
   };
   
   & .bn-inline-content code {
@@ -32,8 +33,7 @@ const cssEditor = (readonly: boolean) => `
   }
   @media screen and (width <= 560px) {
     & .bn-editor {
-      padding-left: 40px;
-      padding-right: 10px;
+      
       ${readonly && `padding-left: 10px;`}
     };
     .bn-side-menu[data-block-type=heading][data-level="1"] {
