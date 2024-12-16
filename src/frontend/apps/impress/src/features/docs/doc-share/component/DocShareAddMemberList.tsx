@@ -12,9 +12,11 @@ import { Box } from '@/components';
 import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/features/docs';
-import { useCreateDocInvitation } from '@/features/docs/members/invitation-list';
-import { useCreateDocAccess } from '@/features/docs/members/members-add';
-import { OptionType } from '@/features/docs/members/members-add/types';
+import {
+  useCreateDocAccess,
+  useCreateDocInvitation,
+} from '@/features/docs/doc-share';
+import { OptionType } from '@/features/docs/doc-share/types';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 
 import { DocRoleDropdown } from './DocRoleDropdown';

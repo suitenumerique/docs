@@ -9,7 +9,7 @@ import {
   KEY_LIST_DOC,
   Role,
 } from '@/features/docs/doc-management';
-import { KEY_LIST_DOC_ACCESSES } from '@/features/docs/members/members-list';
+import { KEY_LIST_DOC_ACCESSES } from '@/features/docs/doc-share';
 import { ContentLanguage } from '@/i18n/types';
 import { useBroadcastStore } from '@/stores';
 

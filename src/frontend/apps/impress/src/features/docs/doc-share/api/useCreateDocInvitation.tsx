@@ -3,10 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/core/auth';
 import { Doc, Role } from '@/features/docs/doc-management';
-import { OptionType } from '@/features/docs/members/members-add/types';
+import { Invitation, OptionType } from '@/features/docs/doc-share/types';
 import { ContentLanguage } from '@/i18n/types';
-
-import { Invitation } from '../types';
 
 import { KEY_LIST_DOC_INVITATIONS } from './useDocInvitations';
 

@@ -13,10 +13,13 @@ import {
 import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { User } from '@/core';
 import { Access, Doc } from '@/features/docs';
-import { useDocInvitationsInfinite } from '@/features/docs/members/invitation-list';
-import { Invitation } from '@/features/docs/members/invitation-list/types';
-import { KEY_LIST_USER, useUsers } from '@/features/docs/members/members-add';
-import { useDocAccessesInfinite } from '@/features/docs/members/members-list';
+import {
+  KEY_LIST_USER,
+  useDocAccessesInfinite,
+  useDocInvitationsInfinite,
+  useUsers,
+} from '@/features/docs/doc-share';
+import { Invitation } from '@/features/docs/doc-share/types';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 

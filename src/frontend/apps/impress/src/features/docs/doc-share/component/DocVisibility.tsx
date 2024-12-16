@@ -11,15 +11,16 @@ import {
   Text,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useResponsiveStore } from '@/stores';
-
 import {
+  Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  LinkReach,
+  LinkRole,
   useUpdateDocLink,
-} from '../../doc-management/api';
-import { useTranslatedShareSettings } from '../hooks/useTranslatedShareSettings';
-import { Doc, LinkReach, LinkRole } from '../../doc-management/types';
+} from '@/features/docs';
+import { useTranslatedShareSettings } from '@/features/docs/doc-share';
+import { useResponsiveStore } from '@/stores';
 
 interface DocVisibilityProps {
   doc: Doc;

@@ -8,14 +8,11 @@ import {
   IconOptions,
 } from '@/components';
 import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
-import {
-  useDeleteDocAccess,
-  useUpdateDocAccess,
-} from '@/features/docs/members/members-list';
-import { useWhoAmI } from '@/features/docs/members/members-list/hooks/useWhoAmI';
+import { useWhoAmI } from '@/features/docs/doc-share/hooks/useWhoAmI';
 import { useResponsiveStore } from '@/stores';
 
 import { Access, Doc, Role } from '../../doc-management/types';
+import { useDeleteDocAccess, useUpdateDocAccess } from '../index';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 

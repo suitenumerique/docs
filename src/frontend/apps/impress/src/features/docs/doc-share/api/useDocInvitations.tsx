@@ -8,8 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
-
-import { Invitation } from '../types';
+import { Invitation } from '@/features/docs/doc-share/types';
 
 export type DocInvitationsParams = {
   docId: string;

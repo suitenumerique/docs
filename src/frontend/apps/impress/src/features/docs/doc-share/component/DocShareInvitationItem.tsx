@@ -9,12 +9,12 @@ import {
 } from '@/components';
 import { User } from '@/core';
 import { Doc, Role } from '@/features/docs/doc-management';
-import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
 import {
   useDeleteDocInvitation,
   useUpdateDocInvitation,
-} from '@/features/docs/members/invitation-list';
-import { Invitation } from '@/features/docs/members/invitation-list/types';
+} from '@/features/docs/doc-share';
+import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
+import { Invitation } from '@/features/docs/doc-share/types';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 
