@@ -76,6 +76,36 @@
   --c--theme--colors--primary-950: #1b1b35;
   --c--theme--colors--info-150: #e5eefa;
   --c--theme--colors--greyscale-1000: #161616;
+  --c--theme--colors--blue-400: #7ab1e8;
+  --c--theme--colors--blue-500: #417dc4;
+  --c--theme--colors--blue-600: #3558a2;
+  --c--theme--colors--brown-400: #e6be92;
+  --c--theme--colors--brown-500: #bd987a;
+  --c--theme--colors--brown-600: #745b47;
+  --c--theme--colors--cyan-400: #34bab5;
+  --c--theme--colors--cyan-500: #009099;
+  --c--theme--colors--cyan-600: #006a6f;
+  --c--theme--colors--gold-400: #ffca00;
+  --c--theme--colors--gold-500: #c3992a;
+  --c--theme--colors--gold-600: #695240;
+  --c--theme--colors--green-400: #34cb6a;
+  --c--theme--colors--green-500: #00a95f;
+  --c--theme--colors--green-600: #297254;
+  --c--theme--colors--olive-400: #99c221;
+  --c--theme--colors--olive-500: #68a532;
+  --c--theme--colors--olive-600: #447049;
+  --c--theme--colors--orange-400: #ff732c;
+  --c--theme--colors--orange-500: #e4794a;
+  --c--theme--colors--orange-600: #755348;
+  --c--theme--colors--pink-400: #ffb7ae;
+  --c--theme--colors--pink-500: #e18b76;
+  --c--theme--colors--pink-600: #8d533e;
+  --c--theme--colors--purple-400: #ce70cc;
+  --c--theme--colors--purple-500: #a558a0;
+  --c--theme--colors--purple-600: #6e445a;
+  --c--theme--colors--yellow-400: #d8c634;
+  --c--theme--colors--yellow-500: #b7a73f;
+  --c--theme--colors--yellow-600: #66673d;
   --c--theme--font--sizes--h1: 2rem;
   --c--theme--font--sizes--h2: 1.75rem;
   --c--theme--font--sizes--h3: 1.5rem;
@@ -864,6 +894,126 @@
   color: var(--c--theme--colors--greyscale-1000);
 }
 
+.clr-blue-400 {
+  color: var(--c--theme--colors--blue-400);
+}
+
+.clr-blue-500 {
+  color: var(--c--theme--colors--blue-500);
+}
+
+.clr-blue-600 {
+  color: var(--c--theme--colors--blue-600);
+}
+
+.clr-brown-400 {
+  color: var(--c--theme--colors--brown-400);
+}
+
+.clr-brown-500 {
+  color: var(--c--theme--colors--brown-500);
+}
+
+.clr-brown-600 {
+  color: var(--c--theme--colors--brown-600);
+}
+
+.clr-cyan-400 {
+  color: var(--c--theme--colors--cyan-400);
+}
+
+.clr-cyan-500 {
+  color: var(--c--theme--colors--cyan-500);
+}
+
+.clr-cyan-600 {
+  color: var(--c--theme--colors--cyan-600);
+}
+
+.clr-gold-400 {
+  color: var(--c--theme--colors--gold-400);
+}
+
+.clr-gold-500 {
+  color: var(--c--theme--colors--gold-500);
+}
+
+.clr-gold-600 {
+  color: var(--c--theme--colors--gold-600);
+}
+
+.clr-green-400 {
+  color: var(--c--theme--colors--green-400);
+}
+
+.clr-green-500 {
+  color: var(--c--theme--colors--green-500);
+}
+
+.clr-green-600 {
+  color: var(--c--theme--colors--green-600);
+}
+
+.clr-olive-400 {
+  color: var(--c--theme--colors--olive-400);
+}
+
+.clr-olive-500 {
+  color: var(--c--theme--colors--olive-500);
+}
+
+.clr-olive-600 {
+  color: var(--c--theme--colors--olive-600);
+}
+
+.clr-orange-400 {
+  color: var(--c--theme--colors--orange-400);
+}
+
+.clr-orange-500 {
+  color: var(--c--theme--colors--orange-500);
+}
+
+.clr-orange-600 {
+  color: var(--c--theme--colors--orange-600);
+}
+
+.clr-pink-400 {
+  color: var(--c--theme--colors--pink-400);
+}
+
+.clr-pink-500 {
+  color: var(--c--theme--colors--pink-500);
+}
+
+.clr-pink-600 {
+  color: var(--c--theme--colors--pink-600);
+}
+
+.clr-purple-400 {
+  color: var(--c--theme--colors--purple-400);
+}
+
+.clr-purple-500 {
+  color: var(--c--theme--colors--purple-500);
+}
+
+.clr-purple-600 {
+  color: var(--c--theme--colors--purple-600);
+}
+
+.clr-yellow-400 {
+  color: var(--c--theme--colors--yellow-400);
+}
+
+.clr-yellow-500 {
+  color: var(--c--theme--colors--yellow-500);
+}
+
+.clr-yellow-600 {
+  color: var(--c--theme--colors--yellow-600);
+}
+
 .bg-secondary-text {
   background-color: var(--c--theme--colors--secondary-text);
 }
@@ -1170,6 +1320,126 @@
 
 .bg-greyscale-1000 {
   background-color: var(--c--theme--colors--greyscale-1000);
+}
+
+.bg-blue-400 {
+  background-color: var(--c--theme--colors--blue-400);
+}
+
+.bg-blue-500 {
+  background-color: var(--c--theme--colors--blue-500);
+}
+
+.bg-blue-600 {
+  background-color: var(--c--theme--colors--blue-600);
+}
+
+.bg-brown-400 {
+  background-color: var(--c--theme--colors--brown-400);
+}
+
+.bg-brown-500 {
+  background-color: var(--c--theme--colors--brown-500);
+}
+
+.bg-brown-600 {
+  background-color: var(--c--theme--colors--brown-600);
+}
+
+.bg-cyan-400 {
+  background-color: var(--c--theme--colors--cyan-400);
+}
+
+.bg-cyan-500 {
+  background-color: var(--c--theme--colors--cyan-500);
+}
+
+.bg-cyan-600 {
+  background-color: var(--c--theme--colors--cyan-600);
+}
+
+.bg-gold-400 {
+  background-color: var(--c--theme--colors--gold-400);
+}
+
+.bg-gold-500 {
+  background-color: var(--c--theme--colors--gold-500);
+}
+
+.bg-gold-600 {
+  background-color: var(--c--theme--colors--gold-600);
+}
+
+.bg-green-400 {
+  background-color: var(--c--theme--colors--green-400);
+}
+
+.bg-green-500 {
+  background-color: var(--c--theme--colors--green-500);
+}
+
+.bg-green-600 {
+  background-color: var(--c--theme--colors--green-600);
+}
+
+.bg-olive-400 {
+  background-color: var(--c--theme--colors--olive-400);
+}
+
+.bg-olive-500 {
+  background-color: var(--c--theme--colors--olive-500);
+}
+
+.bg-olive-600 {
+  background-color: var(--c--theme--colors--olive-600);
+}
+
+.bg-orange-400 {
+  background-color: var(--c--theme--colors--orange-400);
+}
+
+.bg-orange-500 {
+  background-color: var(--c--theme--colors--orange-500);
+}
+
+.bg-orange-600 {
+  background-color: var(--c--theme--colors--orange-600);
+}
+
+.bg-pink-400 {
+  background-color: var(--c--theme--colors--pink-400);
+}
+
+.bg-pink-500 {
+  background-color: var(--c--theme--colors--pink-500);
+}
+
+.bg-pink-600 {
+  background-color: var(--c--theme--colors--pink-600);
+}
+
+.bg-purple-400 {
+  background-color: var(--c--theme--colors--purple-400);
+}
+
+.bg-purple-500 {
+  background-color: var(--c--theme--colors--purple-500);
+}
+
+.bg-purple-600 {
+  background-color: var(--c--theme--colors--purple-600);
+}
+
+.bg-yellow-400 {
+  background-color: var(--c--theme--colors--yellow-400);
+}
+
+.bg-yellow-500 {
+  background-color: var(--c--theme--colors--yellow-500);
+}
+
+.bg-yellow-600 {
+  background-color: var(--c--theme--colors--yellow-600);
 }
 
 .fw-thin {
