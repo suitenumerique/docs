@@ -1,5 +1,11 @@
-import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
-import { Button, DialogTrigger, Popover } from 'react-aria-components';
+import {
+  PropsWithChildren,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { Button, Popover } from 'react-aria-components';
 import styled from 'styled-components';
 
 const StyledPopover = styled(Popover)`
@@ -8,7 +14,7 @@ const StyledPopover = styled(Popover)`
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
 
   border: 1px solid #dddddd;
-  opacity: 0;
+
   transition: opacity 0.2s ease-in-out;
 `;
 
@@ -21,6 +27,7 @@ const StyledButton = styled(Button)`
   font-family: Marianne, Arial, serif;
   font-weight: 500;
   font-size: 0.938rem;
+  padding: 0;
   text-wrap: nowrap;
 `;
 
@@ -28,6 +35,7 @@ export interface DropButtonProps {
   button: ReactNode;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  label?: string;
 }
 
 export const DropButton = ({
@@ -35,9 +43,11 @@ export const DropButton = ({
   isOpen = false,
   onOpenChange,
   children,
+  label,
 }: PropsWithChildren<DropButtonProps>) => {
-  const [opacity, setOpacity] = useState(false);
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
+
+  const triggerRef = useRef(null);
 
   useEffect(() => {
     setIsLocalOpen(isOpen);
@@ -46,21 +56,25 @@ export const DropButton = ({
   const onOpenChangeHandler = (isOpen: boolean) => {
     setIsLocalOpen(isOpen);
     onOpenChange?.(isOpen);
-    setTimeout(() => {
-      setOpacity(isOpen);
-    }, 10);
   };
 
   return (
-    <DialogTrigger onOpenChange={onOpenChangeHandler} isOpen={isLocalOpen}>
-      <StyledButton>{button}</StyledButton>
+    <>
+      <StyledButton
+        ref={triggerRef}
+        onPress={() => onOpenChangeHandler(true)}
+        aria-label={label}
+      >
+        {button}
+      </StyledButton>
+
       <StyledPopover
-        style={{ opacity: opacity ? 1 : 0 }}
+        triggerRef={triggerRef}
         isOpen={isLocalOpen}
         onOpenChange={onOpenChangeHandler}
       >
         {children}
       </StyledPopover>
-    </DialogTrigger>
+    </>
   );
 };

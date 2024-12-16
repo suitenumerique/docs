@@ -13,6 +13,10 @@ interface DeleteDocInvitationProps {
   invitationId: string;
 }
 
+type RemoveDocInvitationError = {
+  role?: string[];
+};
+
 export const deleteDocInvitation = async ({
   docId,
   invitationId,
@@ -34,7 +38,7 @@ export const deleteDocInvitation = async ({
 
 type UseDeleteDocInvitationOptions = UseMutationOptions<
   void,
-  APIError,
+  APIError<RemoveDocInvitationError>,
   DeleteDocInvitationProps
 >;
 
@@ -42,7 +46,11 @@ export const useDeleteDocInvitation = (
   options?: UseDeleteDocInvitationOptions,
 ) => {
   const queryClient = useQueryClient();
-  return useMutation<void, APIError, DeleteDocInvitationProps>({
+  return useMutation<
+    void,
+    APIError<RemoveDocInvitationError>,
+    DeleteDocInvitationProps
+  >({
     mutationFn: deleteDocInvitation,
     ...options,
     onSuccess: (data, variables, context) => {

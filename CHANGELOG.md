@@ -15,6 +15,7 @@ and this project adheres to
 - 🔧(helm) add option to disable default tls setting by @dominikkaminski #519
 - 💄(frontend) Add left panel #420
 - 💄(frontend) add filtering to left panel #475
+- ✨(frontend) new share modal ui #489
 
 ## Changed
 
@@ -43,9 +44,6 @@ and this project adheres to
 ## Fixed
 
 - ⚡️(e2e) reduce flakiness on e2e tests #511
-
-
-
 
 
 ## Fixed

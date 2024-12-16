@@ -17,6 +17,10 @@ interface UpdateDocInvitationProps {
   role: Role;
 }
 
+type UpdateDocInvitationError = {
+  role?: string[];
+};
+
 export const updateDocInvitation = async ({
   docId,
   invitationId,
@@ -43,7 +47,7 @@ type UseUpdateDocInvitation = Partial<Invitation>;
 
 type UseUpdateDocInvitationOptions = UseMutationOptions<
   Invitation,
-  APIError,
+  APIError<UpdateDocInvitationError>,
   UseUpdateDocInvitation
 >;
 
@@ -51,7 +55,11 @@ export const useUpdateDocInvitation = (
   options?: UseUpdateDocInvitationOptions,
 ) => {
   const queryClient = useQueryClient();
-  return useMutation<Invitation, APIError, UpdateDocInvitationProps>({
+  return useMutation<
+    Invitation,
+    APIError<UpdateDocInvitationError>,
+    UpdateDocInvitationProps
+  >({
     mutationFn: updateDocInvitation,
     ...options,
     onSuccess: (data, variables, context) => {
