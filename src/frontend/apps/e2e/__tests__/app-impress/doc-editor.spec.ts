@@ -121,17 +121,15 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const selectVisibility = page.getByRole('combobox', {
-      name: 'Visibility',
-    });
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
 
     // When the visibility is changed, the ws should closed the connection (backend signal)
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
     await page
-      .getByRole('option', {
-        name: 'Authenticated',
+      .getByRole('button', {
+        name: 'Connected',
       })
       .click();
 
@@ -274,9 +272,10 @@ test.describe('Doc Editor', () => {
 
     await goToGridDoc(page);
 
-    await expect(
-      page.getByText('Read only, you cannot edit this document.'),
-    ).toBeVisible();
+    const card = page.getByLabel('It is the card information');
+    await expect(card).toBeVisible();
+
+    await expect(card.getByText('Reader')).toBeVisible();
   });
 
   test('it adds an image to the doc editor', async ({ page, browserName }) => {

@@ -36,35 +36,31 @@ test.describe('Doc Visibility', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const selectVisibility = page.getByRole('combobox', {
-      name: 'Visibility',
-    });
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
 
-    await expect(selectVisibility.getByText('Restricted')).toBeVisible();
+    await expect(selectVisibility.getByText('Private')).toBeVisible();
 
     await expect(page.getByLabel('Read only')).toBeHidden();
     await expect(page.getByLabel('Can read and edit')).toBeHidden();
 
     await selectVisibility.click();
     await page
-      .getByRole('option', {
-        name: 'Authenticated',
+      .getByRole('button', {
+        name: 'Connected',
       })
       .click();
 
-    await expect(page.getByLabel('Read only')).toBeVisible();
-    await expect(page.getByLabel('Can read and edit')).toBeVisible();
+    await expect(page.getByLabel('Visibility mode')).toBeVisible();
 
     await selectVisibility.click();
 
     await page
-      .getByRole('option', {
+      .getByRole('button', {
         name: 'Public',
       })
       .click();
 
-    await expect(page.getByLabel('Read only')).toBeVisible();
-    await expect(page.getByLabel('Can read and edit')).toBeVisible();
+    await expect(page.getByLabel('Visibility mode')).toBeVisible();
   });
 });
 
@@ -143,7 +139,9 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const inputSearch = page.getByLabel(/Find a member to add to the document/);
+    const inputSearch = page.getByRole('combobox', {
+      name: 'Quick search input',
+    });
 
     const otherBrowser = browsersName.find((b) => b !== browserName);
     const username = `user@${otherBrowser}.e2e`;
@@ -151,14 +149,11 @@ test.describe('Doc Visibility: Restricted', () => {
     await page.getByRole('option', { name: username }).click();
 
     // Choose a role
-    await page.getByRole('combobox', { name: /Choose a role/ }).click();
-    await page.getByRole('option', { name: 'Administrator' }).click();
+    const container = page.getByTestId('doc-share-add-member-list');
+    await container.getByLabel('doc-role-dropdown').click();
+    await page.getByRole('button', { name: 'Administrator' }).click();
 
-    await page.getByRole('button', { name: 'Validate' }).click();
-
-    await expect(
-      page.getByText(`User ${username} added to the document.`),
-    ).toBeVisible();
+    await page.getByRole('button', { name: 'Invite' }).click();
 
     await page.locator('.c__modal__backdrop').click({
       position: { x: 0, y: 0 },
@@ -201,14 +196,11 @@ test.describe('Doc Visibility: Public', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    await page
-      .getByRole('combobox', {
-        name: 'Visibility',
-      })
-      .click();
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    await selectVisibility.click();
 
     await page
-      .getByRole('option', {
+      .getByRole('button', {
         name: 'Public',
       })
       .click();
@@ -217,15 +209,18 @@ test.describe('Doc Visibility: Public', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.getByLabel('Read only').click();
+    await page.getByLabel('Visibility mode').click();
+    await page
+      .getByRole('button', {
+        name: 'Reading',
+      })
+      .click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),
     ).toBeVisible();
 
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
+    await page.getByRole('button', { name: 'close' }).click();
 
     const cardContainer = page.getByLabel(
       'It is the card information about the document.',
@@ -251,9 +246,10 @@ test.describe('Doc Visibility: Public', () => {
 
     await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Share' })).toBeHidden();
-    await expect(
-      page.getByText('Read only, you cannot edit this document'),
-    ).toBeVisible();
+    const card = page.getByLabel('It is the card information');
+    await expect(card).toBeVisible();
+
+    await expect(card.getByText('Reader')).toBeVisible();
   });
 
   test('It checks a public doc in editable mode', async ({
@@ -268,14 +264,11 @@ test.describe('Doc Visibility: Public', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    await page
-      .getByRole('combobox', {
-        name: 'Visibility',
-      })
-      .click();
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    await selectVisibility.click();
 
     await page
-      .getByRole('option', {
+      .getByRole('button', {
         name: 'Public',
       })
       .click();
@@ -284,15 +277,14 @@ test.describe('Doc Visibility: Public', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.getByLabel('Can read and edit').click();
+    await page.getByLabel('Visibility mode').click();
+    await page.getByLabel('Edition').click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),
     ).toBeVisible();
 
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
+    await page.getByRole('button', { name: 'close' }).click();
 
     const cardContainer = page.getByLabel(
       'It is the card information about the document.',
@@ -318,9 +310,6 @@ test.describe('Doc Visibility: Public', () => {
 
     await verifyDocName(page, docTitle);
     await expect(page.getByRole('button', { name: 'Share' })).toBeHidden();
-    await expect(
-      page.getByText('Read only, you cannot edit this document'),
-    ).toBeHidden();
   });
 });
 
@@ -344,14 +333,11 @@ test.describe('Doc Visibility: Authenticated', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    await selectVisibility.click();
     await page
-      .getByRole('combobox', {
-        name: 'Visibility',
-      })
-      .click();
-    await page
-      .getByRole('option', {
-        name: 'Authenticated',
+      .getByRole('button', {
+        name: 'Connected',
       })
       .click();
 
@@ -359,9 +345,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
+    await page.getByRole('button', { name: 'close' }).click();
 
     const urlDoc = page.url();
 
@@ -396,14 +380,11 @@ test.describe('Doc Visibility: Authenticated', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    await selectVisibility.click();
     await page
-      .getByRole('combobox', {
-        name: 'Visibility',
-      })
-      .click();
-    await page
-      .getByRole('option', {
-        name: 'Authenticated',
+      .getByRole('button', {
+        name: 'Connected',
       })
       .click();
 
@@ -411,9 +392,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
+    await page.getByRole('button', { name: 'close' }).click();
 
     const urlDoc = page.url();
 
@@ -430,19 +409,13 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
     await page.getByRole('button', { name: 'Share' }).click();
-    await expect(
-      page.getByText('Read only, you cannot edit this document'),
-    ).toBeVisible();
 
-    const shareModal = page.getByLabel('Share modal');
+    await expect(selectVisibility).toBeHidden();
 
-    await expect(
-      shareModal.getByRole('combobox', {
-        name: 'Visibility',
-      }),
-    ).toHaveAttribute('disabled');
-    await expect(shareModal.getByText('Search by email')).toBeHidden();
-    await expect(shareModal.getByLabel('List members card')).toBeHidden();
+    const inputSearch = page.getByRole('combobox', {
+      name: 'Quick search input',
+    });
+    await expect(inputSearch).toBeHidden();
   });
 
   test('It checks a authenticated doc in editable mode', async ({
@@ -462,14 +435,11 @@ test.describe('Doc Visibility: Authenticated', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    await selectVisibility.click();
     await page
-      .getByRole('combobox', {
-        name: 'Visibility',
-      })
-      .click();
-    await page
-      .getByRole('option', {
-        name: 'Authenticated',
+      .getByRole('button', {
+        name: 'Connected',
       })
       .click();
 
@@ -477,23 +447,15 @@ test.describe('Doc Visibility: Authenticated', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
-
     const urlDoc = page.url();
-
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    await page.getByLabel('Can read and edit').click();
+    await page.getByLabel('Visibility mode').click();
+    await page.getByLabel('Edition').click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),
     ).toBeVisible();
 
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
+    await page.getByRole('button', { name: 'close' }).click();
 
     await page
       .getByRole('button', {
@@ -508,18 +470,12 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     await verifyDocName(page, docTitle);
     await page.getByRole('button', { name: 'Share' }).click();
-    await expect(
-      page.getByText('Read only, you cannot edit this document'),
-    ).toBeHidden();
 
-    const shareModal = page.getByLabel('Share modal');
+    await expect(selectVisibility).toBeHidden();
 
-    await expect(
-      shareModal.getByRole('combobox', {
-        name: 'Visibility',
-      }),
-    ).toHaveAttribute('disabled');
-    await expect(shareModal.getByText('Search by email')).toBeHidden();
-    await expect(shareModal.getByLabel('List members card')).toBeHidden();
+    const inputSearch = page.getByRole('combobox', {
+      name: 'Quick search input',
+    });
+    await expect(inputSearch).toBeHidden();
   });
 });

@@ -67,7 +67,9 @@ export const addNewMember = async (
       response.status() === 200,
   );
 
-  const inputSearch = page.getByLabel(/Find a member to add to the document/);
+  const inputSearch = page.getByRole('combobox', {
+    name: 'Quick search input',
+  });
 
   // Select a new user
   await inputSearch.fill(fillText);
@@ -82,13 +84,9 @@ export const addNewMember = async (
   await page.getByRole('option', { name: users[index].email }).click();
 
   // Choose a role
-  await page.getByRole('combobox', { name: /Choose a role/ }).click();
-  await page.getByRole('option', { name: role }).click();
-  await page.getByRole('button', { name: 'Validate' }).click();
-
-  await expect(
-    page.getByText(`User ${users[index].email} added to the document.`),
-  ).toBeVisible();
+  await page.getByLabel('doc-role-dropdown').click();
+  await page.getByRole('button', { name: role }).click();
+  await page.getByRole('button', { name: 'Invite' }).click();
 
   return users[index].email;
 };

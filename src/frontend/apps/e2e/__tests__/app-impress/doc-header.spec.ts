@@ -155,34 +155,40 @@ test.describe('Doc Header', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     const shareModal = page.getByLabel('Share modal');
+    await expect(shareModal).toBeVisible();
+    await expect(page.getByText('Share the document')).toBeVisible();
 
-    await expect(
-      shareModal.getByRole('combobox', {
-        name: 'Visibility',
-      }),
-    ).not.toHaveAttribute('disabled');
-    await expect(shareModal.getByText('Search by email')).toBeVisible();
+    await expect(page.getByPlaceholder('Type a name or email')).toBeVisible();
 
     const invitationCard = shareModal.getByLabel('List invitation card');
+    await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test'),
+      invitationCard.getByText('test@invitation.test').first(),
     ).toBeVisible();
+    await expect(invitationCard.getByLabel('doc-role-dropdown')).toBeVisible();
+
+    await invitationCard.getByRole('button', { name: 'more_vert' }).click();
+
     await expect(
-      invitationCard.getByRole('combobox', { name: 'Role' }),
-    ).toBeEnabled();
-    await expect(
-      invitationCard.getByRole('button', {
+      page.getByRole('button', {
         name: 'delete',
       }),
     ).toBeEnabled();
+    await invitationCard.click();
 
     const memberCard = shareModal.getByLabel('List members card');
-    await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard).toBeVisible();
     await expect(
-      memberCard.getByRole('combobox', { name: 'Role' }),
-    ).toBeEnabled();
+      memberCard.getByText('test@accesses.test').first(),
+    ).toBeVisible();
+    await expect(memberCard.getByLabel('doc-role-dropdown')).toBeVisible();
     await expect(
-      memberCard.getByRole('button', {
+      memberCard.getByRole('button', { name: 'more_vert' }),
+    ).toBeVisible();
+    await memberCard.getByRole('button', { name: 'more_vert' }).click();
+
+    await expect(
+      page.getByRole('button', {
         name: 'delete',
       }),
     ).toBeEnabled();
@@ -229,36 +235,24 @@ test.describe('Doc Header', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     const shareModal = page.getByLabel('Share modal');
+    await expect(page.getByText('Share the document')).toBeVisible();
 
-    await expect(
-      shareModal.getByRole('combobox', {
-        name: 'Visibility',
-      }),
-    ).toHaveAttribute('disabled');
-    await expect(shareModal.getByText('Search by email')).toBeHidden();
+    await expect(page.getByPlaceholder('Type a name or email')).toBeHidden();
 
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(
-      invitationCard.getByText('test@invitation.test'),
+      invitationCard.getByText('test@invitation.test').first(),
     ).toBeVisible();
+    await expect(invitationCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      invitationCard.getByRole('combobox', { name: 'Role' }),
-    ).toHaveAttribute('disabled');
-    await expect(
-      invitationCard.getByRole('button', {
-        name: 'delete',
-      }),
+      invitationCard.getByRole('button', { name: 'more_vert' }),
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
     await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      memberCard.getByRole('combobox', { name: 'Role' }),
-    ).toHaveAttribute('disabled');
-    await expect(
-      memberCard.getByRole('button', {
-        name: 'delete',
-      }),
+      memberCard.getByRole('button', { name: 'more_vert' }),
     ).toBeHidden();
   });
 
@@ -303,36 +297,24 @@ test.describe('Doc Header', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     const shareModal = page.getByLabel('Share modal');
+    await expect(page.getByText('Share the document')).toBeVisible();
 
-    await expect(
-      shareModal.getByRole('combobox', {
-        name: 'Visibility',
-      }),
-    ).toHaveAttribute('disabled');
-    await expect(shareModal.getByText('Search by email')).toBeHidden();
+    await expect(page.getByPlaceholder('Type a name or email')).toBeHidden();
 
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(
-      invitationCard.getByText('test@invitation.test'),
+      invitationCard.getByText('test@invitation.test').first(),
     ).toBeVisible();
+    await expect(invitationCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      invitationCard.getByRole('combobox', { name: 'Role' }),
-    ).toHaveAttribute('disabled');
-    await expect(
-      invitationCard.getByRole('button', {
-        name: 'delete',
-      }),
+      invitationCard.getByRole('button', { name: 'more_vert' }),
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
     await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      memberCard.getByRole('combobox', { name: 'Role' }),
-    ).toHaveAttribute('disabled');
-    await expect(
-      memberCard.getByRole('button', {
-        name: 'delete',
-      }),
+      memberCard.getByRole('button', { name: 'more_vert' }),
     ).toBeHidden();
   });
 
