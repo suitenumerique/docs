@@ -135,9 +135,14 @@ def create_demo(stdout):
     users_ids = list(models.User.objects.values_list("id", flat=True))
 
     with Timeit(stdout, "Creating documents"):
-        for _ in range(defaults.NB_OBJECTS["docs"]):
+        for i in range(defaults.NB_OBJECTS["docs"]):
+            # pylint: disable=protected-access
+            key = models.Document._int2str(i)  # noqa: SLF001
+            padding = models.Document.alphabet[0] * (models.Document.steplen - len(key))
             queue.push(
                 models.Document(
+                    depth=1,
+                    path=f"{padding}{key}",
                     creator_id=random.choice(users_ids),
                     title=fake.sentence(nb_words=4),
                     link_reach=models.LinkReachChoices.AUTHENTICATED

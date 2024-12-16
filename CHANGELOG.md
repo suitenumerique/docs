@@ -11,7 +11,8 @@ and this project adheres to
 
 ## Added
 
-- github actions to manage Crowdin workflow
+- ✨(backend) allow organizing documents in a tree structure #516
+- ✨(backend) add github actions to manage Crowdin workflow #559 & #563
 - 📈Integrate Posthog #540
 - 🏷️(backend) add content-type to uploaded files #552
 - ✨(frontend) export pdf docx front side #537

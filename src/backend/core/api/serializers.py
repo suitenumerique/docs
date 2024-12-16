@@ -287,7 +287,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = models.Document.objects.create(
+        document = models.Document.add_root(
             title=validated_data["title"],
             content=document_content,
             creator=user,

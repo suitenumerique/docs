@@ -34,20 +34,18 @@ def test_models_documents_id_unique():
 
 def test_models_documents_creator_required():
     """No field should be required on the Document model."""
-    models.Document.objects.create()
+    models.Document.add_root()
 
 
 def test_models_documents_title_null():
     """The "title" field can be null."""
-    document = models.Document.objects.create(
-        title=None, creator=factories.UserFactory()
-    )
+    document = models.Document.add_root(title=None, creator=factories.UserFactory())
     assert document.title is None
 
 
 def test_models_documents_title_empty():
     """The "title" field can be empty."""
-    document = models.Document.objects.create(title="", creator=factories.UserFactory())
+    document = models.Document.add_root(title="", creator=factories.UserFactory())
     assert document.title == ""
 
 
@@ -65,6 +63,22 @@ def test_models_documents_file_key():
     """The file key should be built from the instance uuid."""
     document = factories.DocumentFactory(id="9531a5f1-42b1-496c-b3f4-1c09ed139b3c")
     assert document.file_key == "9531a5f1-42b1-496c-b3f4-1c09ed139b3c/file"
+
+
+def test_models_documents_tree_alphabet():
+    """Test the creation of documents with treebeard methods."""
+    models.Document.load_bulk(
+        [
+            {
+                "data": {
+                    "title": f"document-{i}",
+                }
+            }
+            for i in range(len(models.Document.alphabet) * 2)
+        ]
+    )
+
+    assert models.Document.objects.count() == 124
 
 
 # get_abilities

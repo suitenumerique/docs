@@ -431,7 +431,11 @@ class DocumentViewSet(
 
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
-        obj = serializer.save(creator=self.request.user)
+        obj = models.Document.add_root(
+            creator=self.request.user,
+            **serializer.validated_data,
+        )
+        serializer.instance = obj
         models.DocumentAccess.objects.create(
             document=obj,
             user=self.request.user,

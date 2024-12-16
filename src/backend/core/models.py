@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 
 from botocore.exceptions import ClientError
 from timezone_field import TimeZoneField
+from treebeard.mp_tree import MP_Node
 
 logger = getLogger(__name__)
 
@@ -366,7 +367,7 @@ class BaseAccess(BaseModel):
         }
 
 
-class Document(BaseModel):
+class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
@@ -388,9 +389,16 @@ class Document(BaseModel):
 
     _content = None
 
+    # Tree structure
+    alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    steplen = 7  # nb siblings max: 3,521,614,606,208
+    node_order_by = []  # Manual ordering
+
+    path = models.CharField(max_length=7 * 36, unique=True, db_collation="C")
+
     class Meta:
         db_table = "impress_document"
-        ordering = ("title",)
+        ordering = ("path",)
         verbose_name = _("Document")
         verbose_name_plural = _("Documents")
 
