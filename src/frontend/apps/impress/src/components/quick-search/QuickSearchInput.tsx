@@ -15,6 +15,7 @@ type Props = {
   onFilter?: (str: string) => void;
   placeholder?: string;
   children?: ReactNode;
+  withSeparator?: boolean;
 };
 export const QuickSearchInput = ({
   loading,
@@ -22,6 +23,7 @@ export const QuickSearchInput = ({
   onFilter,
   placeholder,
   children,
+  withSeparator: separator = true,
 }: Props) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
@@ -31,7 +33,7 @@ export const QuickSearchInput = ({
     return (
       <>
         {children}
-        <HorizontalSeparator />
+        {separator && <HorizontalSeparator />}
       </>
     );
   }
@@ -61,7 +63,7 @@ export const QuickSearchInput = ({
           onValueChange={onFilter}
         />
       </Box>
-      <HorizontalSeparator $withPadding={false} />
+      {separator && <HorizontalSeparator $withPadding={false} />}
     </>
   );
 };

@@ -1,9 +1,10 @@
 import { Command } from 'cmdk';
 import { ReactNode, useRef } from 'react';
 
+import { hasChildrens } from '@/utils/children';
+
 import { Box } from '../Box';
 
-import { QuickSearchGroup } from './QuickSearchGroup';
 import { QuickSearchInput } from './QuickSearchInput';
 import { QuickSearchStyle } from './QuickSearchStyle';
 
@@ -21,11 +22,8 @@ export type QuickSearchData<T> = {
   showWhenEmpty?: boolean;
 };
 
-export type QuickSearchProps<T> = {
-  data?: QuickSearchData<T>[];
+export type QuickSearchProps = {
   onFilter?: (str: string) => void;
-  renderElement?: (element: T) => ReactNode;
-  onSelect?: (element: T) => void;
   inputValue?: string;
   inputContent?: ReactNode;
   showInput?: boolean;
@@ -35,19 +33,16 @@ export type QuickSearchProps<T> = {
   children?: ReactNode;
 };
 
-export const QuickSearch = <T,>({
-  onSelect,
+export const QuickSearch = ({
   onFilter,
   inputContent,
   inputValue,
   loading,
   showInput = true,
-  data,
-  renderElement,
   label,
   placeholder,
   children,
-}: QuickSearchProps<T>) => {
+}: QuickSearchProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
 
   return (
@@ -58,6 +53,7 @@ export const QuickSearch = <T,>({
           {showInput && (
             <QuickSearchInput
               loading={loading}
+              withSeparator={hasChildrens(children)}
               inputValue={inputValue}
               onFilter={onFilter}
               placeholder={placeholder}
@@ -66,20 +62,7 @@ export const QuickSearch = <T,>({
             </QuickSearchInput>
           )}
           <Command.List>
-            <Box>
-              {!loading &&
-                data?.map((group) => {
-                  return (
-                    <QuickSearchGroup
-                      key={group.groupName}
-                      group={group}
-                      onSelect={onSelect}
-                      renderElement={renderElement}
-                    />
-                  );
-                })}
-              {children}
-            </Box>
+            <Box>{children}</Box>
           </Command.List>
         </Command>
       </div>

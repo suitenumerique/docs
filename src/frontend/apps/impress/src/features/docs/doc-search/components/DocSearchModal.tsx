@@ -72,7 +72,6 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
         <QuickSearch
           placeholder={t('Type the name of a document')}
           loading={loading}
-          data={[]}
           onFilter={handleInputSearch}
         >
           <Box $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}>
