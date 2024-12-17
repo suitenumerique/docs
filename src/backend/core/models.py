@@ -584,6 +584,7 @@ class Document(MP_Node, BaseModel):
             "ai_transform": can_update,
             "ai_translate": can_update,
             "attachment_upload": can_update,
+            "children": can_get,
             "collaboration_auth": can_get,
             "destroy": RoleChoices.OWNER in roles,
             "favorite": can_get and user.is_authenticated,

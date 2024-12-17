@@ -489,6 +489,26 @@ class DocumentViewSet(
             {"id": str(document.id)}, status=status.HTTP_201_CREATED
         )
 
+    @drf.decorators.action(
+        detail=True,
+        methods=["get", "post"],
+        serializer_class=serializers.ListDocumentSerializer,
+    )
+    # pylint: disable=unused-argument
+    def children(self, request, pk, *args, **kwargs):
+        """Custom action to retrieve children of a document"""
+        document = self.get_object()
+        queryset = document.get_children()
+        queryset = self.annotate_queryset(queryset)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return drf.response.Response(serializer.data)
+
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
         """
