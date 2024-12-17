@@ -158,8 +158,11 @@ def test_api_documents_update_anonymous_or_authenticated_unrelated(
             "accesses",
             "created_at",
             "creator",
+            "depth",
             "link_reach",
             "link_role",
+            "numchild",
+            "path",
         ]:
             assert value == old_document_values[key]
         elif key == "updated_at":
@@ -269,9 +272,12 @@ def test_api_documents_update_authenticated_editor_administrator_or_owner(
             "id",
             "created_at",
             "creator",
+            "depth",
             "link_reach",
             "link_role",
             "nb_accesses",
+            "numchild",
+            "path",
         ]:
             assert value == old_document_values[key]
         elif key == "updated_at":

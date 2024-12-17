@@ -63,10 +63,13 @@ def test_api_documents_list_format():
         "abilities": document.get_abilities(user),
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
+        "depth": 1,
         "is_favorite": True,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses": 3,
+        "numchild": 0,
+        "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
     }
