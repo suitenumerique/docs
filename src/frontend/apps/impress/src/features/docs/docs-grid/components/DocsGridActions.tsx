@@ -2,7 +2,14 @@ import { useModal } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
-import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
+import {
+  Doc,
+  KEY_LIST_DOC,
+  ModalRemoveDoc,
+  useCreateFavoriteDoc,
+} from '@/features/docs/doc-management';
+
+import { useDeleteFavoriteDoc } from '../../doc-management/api/useDeleteFavoriteDoc';
 
 interface DocsGridActionsProps {
   doc: Doc;
@@ -11,8 +18,26 @@ interface DocsGridActionsProps {
 export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const { t } = useTranslation();
   const deleteModal = useModal();
+  const removeFavoriteDoc = useDeleteFavoriteDoc({
+    listInvalideQueries: [KEY_LIST_DOC],
+  });
+  const makeFavoriteDoc = useCreateFavoriteDoc({
+    listInvalideQueries: [KEY_LIST_DOC],
+  });
 
   const options: DropdownMenuOption[] = [
+    {
+      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      icon: 'push_pin',
+      callback: () => {
+        if (doc.is_favorite) {
+          removeFavoriteDoc.mutate({ id: doc.id });
+        } else {
+          makeFavoriteDoc.mutate({ id: doc.id });
+        }
+      },
+      testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+    },
     {
       label: t('Remove'),
       icon: 'delete',

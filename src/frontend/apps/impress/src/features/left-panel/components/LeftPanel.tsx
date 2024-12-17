@@ -1,3 +1,5 @@
+import { usePathname } from 'next/navigation';
+import { useCallback, useEffect } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
@@ -20,10 +22,21 @@ const MobileLeftPanelStyle = createGlobalStyle`
 
 export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
-  const { isPanelOpen } = useLeftPanelStore();
+
   const theme = useCunninghamTheme();
+  const { togglePanel, isPanelOpen } = useLeftPanelStore();
+
+  const pathname = usePathname();
   const colors = theme.colorsTokens();
   const spacings = theme.spacingsTokens();
+
+  const toggle = useCallback(() => {
+    togglePanel(false);
+  }, [togglePanel]);
+
+  useEffect(() => {
+    toggle();
+  }, [pathname, toggle]);
 
   return (
     <>
@@ -34,10 +47,17 @@ export const LeftPanel = () => {
             height: calc(100vh - ${HEADER_HEIGHT}px);
             width: 300px;
             min-width: 300px;
+            overflow: hidden;
             border-right: 1px solid ${colors['greyscale-200']};
         `}
         >
-          <LeftPanelHeader />
+          <Box
+            $css={css`
+              flex: 0 0 auto;
+            `}
+          >
+            <LeftPanelHeader />
+          </Box>
           <LeftPanelContent />
         </Box>
       )}

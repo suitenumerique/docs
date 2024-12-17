@@ -54,7 +54,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             $flex={6}
             $padding={{ right: 'base' }}
           >
-            <SimpleDocItem doc={doc} />
+            <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
           </Box>
           {isDesktop && (
             <Box $flex={1.3}>

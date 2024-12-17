@@ -16,6 +16,7 @@ and this project adheres to
 - 💄(frontend) Add left panel #420
 - 💄(frontend) add filtering to left panel #475
 - ✨(frontend) new share modal ui #489
+- ✨(frontend) add favorite feature #515
 
 ## Changed
 

@@ -96,7 +96,7 @@ test.describe('Document grid item options', () => {
     let docs: SmallDoc[] = [];
     const response = await page.waitForResponse(
       (response) =>
-        response.url().includes('documents/?page=1') &&
+        response.url().endsWith('documents/?page=1') &&
         response.status() === 200,
     );
     const result = await response.json();
@@ -124,7 +124,7 @@ test.describe('Document grid item options', () => {
 
     const refetchResponse = await page.waitForResponse(
       (response) =>
-        response.url().includes('documents/?page=1') &&
+        response.url().endsWith('documents/?page=1') &&
         response.status() === 200,
     );
 
@@ -189,7 +189,7 @@ test.describe('Documents filters', () => {
     await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
     const response = await page.waitForResponse(
       (response) =>
-        response.url().includes('documents/?page=1') &&
+        response.url().endsWith('documents/?page=1') &&
         response.status() === 200,
     );
     const result = await response.json();
@@ -230,7 +230,7 @@ test.describe('Documents filters', () => {
     await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
     const responseMyDocs = await page.waitForResponse(
       (response) =>
-        response.url().includes('documents/?page=1&is_creator_me=true') &&
+        response.url().endsWith('documents/?page=1&is_creator_me=true') &&
         response.status() === 200,
     );
     const resultMyDocs = await responseMyDocs.json();
@@ -268,7 +268,7 @@ test.describe('Documents Grid', () => {
 
     const response = await page.waitForResponse(
       (response) =>
-        response.url().includes('documents/?page=1') &&
+        response.url().endsWith('documents/?page=1') &&
         response.status() === 200,
     );
     const result = await response.json();
@@ -294,13 +294,13 @@ test.describe('Documents Grid', () => {
     let docs: SmallDoc[] = [];
     const responsePromisePage1 = page.waitForResponse(
       (response) =>
-        response.url().includes(`/documents/?page=1`) &&
+        response.url().endsWith(`/documents/?page=1`) &&
         response.status() === 200,
     );
 
     const responsePromisePage2 = page.waitForResponse(
       (response) =>
-        response.url().includes(`/documents/?page=2`) &&
+        response.url().endsWith(`/documents/?page=2`) &&
         response.status() === 200,
     );
 

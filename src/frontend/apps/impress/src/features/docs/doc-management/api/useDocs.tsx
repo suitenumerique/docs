@@ -30,6 +30,7 @@ export type DocsParams = {
   ordering?: DocsOrdering;
   is_creator_me?: boolean;
   title?: string;
+  is_favorite?: boolean;
 };
 
 export type DocsResponse = APIList<Doc>;
@@ -48,6 +49,9 @@ export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
 
   if (params.title && params.title.length > 0) {
     searchParams.set('title', params.title);
+  }
+  if (params.is_favorite !== undefined) {
+    searchParams.set('is_favorite', params.is_favorite.toString());
   }
 
   const response = await fetchAPI(`documents/?${searchParams.toString()}`);

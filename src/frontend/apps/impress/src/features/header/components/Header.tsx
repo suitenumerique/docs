@@ -48,7 +48,7 @@ export const Header = () => {
       {!isDesktop && (
         <Button
           size="medium"
-          onClick={togglePanel}
+          onClick={() => togglePanel()}
           aria-label={t('Open the header menu')}
           color="primary-text"
           icon={<Icon iconName={isPanelOpen ? 'close' : 'menu'} />}
