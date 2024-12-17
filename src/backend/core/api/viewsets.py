@@ -13,9 +13,9 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models as db
 from django.db.models import (
-    Count,
     Exists,
     F,
+    Func,
     OuterRef,
     Q,
     Subquery,
@@ -353,13 +353,22 @@ class DocumentViewSet(
             return serializers.ListDocumentSerializer
         return self.serializer_class
 
-    def get_queryset(self):
-        """Optimize queryset to include favorite status for the current user."""
-        queryset = super().get_queryset()
+    def annotate_queryset(self, queryset):
+        """Annotate document queryset with favorite and number of accesses."""
         user = self.request.user
 
-        # Annotate the number of accesses associated with each document
-        queryset = queryset.annotate(nb_accesses=Count("accesses", distinct=True))
+        # Annotate the number of accesses taking into account ancestors
+        ancestor_accesses_query = (
+            models.DocumentAccess.objects.filter(
+                document__path=Left(OuterRef("path"), Length("document__path")),
+            )
+            .order_by()
+            .annotate(total_accesses=Func(Value("id"), function="COUNT"))
+            .values("total_accesses")
+        )
+
+        # Annotate with the number of accesses, default to 0 if no accesses exist
+        queryset = queryset.annotate(nb_accesses=Subquery(ancestor_accesses_query))
 
         if not user.is_authenticated:
             # If the user is not authenticated, annotate `is_favorite` as False
@@ -369,19 +378,13 @@ class DocumentViewSet(
         favorite_exists = models.DocumentFavorite.objects.filter(
             document_id=OuterRef("pk"), user=user
         )
-        queryset = queryset.annotate(is_favorite=Exists(favorite_exists))
+        return queryset.annotate(is_favorite=Exists(favorite_exists))
 
-        # Annotate the queryset with the logged-in user roles
-        user_roles_query = (
-            models.DocumentAccess.objects.filter(
-                Q(user=user) | Q(team__in=user.teams),
-                document_id=OuterRef("pk"),
-            )
-            .values("document")
-            .annotate(roles_array=ArrayAgg("role"))
-            .values("roles_array")
-        )
-        return queryset.annotate(user_roles=Subquery(user_roles_query)).distinct()
+    def get_queryset(self):
+        """Optimize queryset to include favorite status for the current user."""
+        queryset = super().get_queryset()
+        queryset = self.annotate_queryset(queryset)
+        return queryset.distinct()
 
     def list(self, request, *args, **kwargs):
         """Restrict resources returned by the list endpoint"""
@@ -504,8 +507,9 @@ class DocumentViewSet(
 
         # Users should not see version history dating from before they gained access to the
         # document. Filter to get the minimum access date for the logged-in user
-        access_queryset = document.accesses.filter(
-            db.Q(user=user) | db.Q(team__in=user.teams)
+        access_queryset = models.DocumentAccess.objects.filter(
+            db.Q(user=user) | db.Q(team__in=user.teams),
+            document__path=Left(Value(document.path), Length("document__path")),
         ).aggregate(min_date=db.Min("created_at"))
 
         # Handle the case where the user has no accesses
@@ -543,10 +547,12 @@ class DocumentViewSet(
         user = request.user
         min_datetime = min(
             access.created_at
-            for access in document.accesses.filter(
+            for access in models.DocumentAccess.objects.filter(
                 db.Q(user=user) | db.Q(team__in=user.teams),
+                document__path=Left(Value(document.path), Length("document__path")),
             )
         )
+
         if response["LastModified"] < min_datetime:
             raise Http404
 

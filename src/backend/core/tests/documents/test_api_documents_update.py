@@ -16,6 +16,7 @@ from core.tests.conftest import TEAM, USER, VIA
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.parametrize("via_parent", [True, False])
 @pytest.mark.parametrize(
     "reach, role",
     [
@@ -26,12 +27,18 @@ pytestmark = pytest.mark.django_db
         ("public", "reader"),
     ],
 )
-def test_api_documents_update_anonymous_forbidden(reach, role):
+def test_api_documents_update_anonymous_forbidden(reach, role, via_parent):
     """
     Anonymous users should not be allowed to update a document when link
     configuration does not allow it.
     """
-    document = factories.DocumentFactory(link_reach=reach, link_role=role)
+    if via_parent:
+        grand_parent = factories.DocumentFactory(link_reach=reach, link_role=role)
+        parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
+        document = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    else:
+        document = factories.DocumentFactory(link_reach=reach, link_role=role)
+
     old_document_values = serializers.DocumentSerializer(instance=document).data
 
     new_document_values = serializers.DocumentSerializer(
@@ -52,6 +59,7 @@ def test_api_documents_update_anonymous_forbidden(reach, role):
     assert document_values == old_document_values
 
 
+@pytest.mark.parametrize("via_parent", [True, False])
 @pytest.mark.parametrize(
     "reach,role",
     [
@@ -61,7 +69,9 @@ def test_api_documents_update_anonymous_forbidden(reach, role):
         ("restricted", "editor"),
     ],
 )
-def test_api_documents_update_authenticated_unrelated_forbidden(reach, role):
+def test_api_documents_update_authenticated_unrelated_forbidden(
+    reach, role, via_parent
+):
     """
     Authenticated users should not be allowed to update a document to which
     they are not related if the link configuration does not allow it.
@@ -71,7 +81,12 @@ def test_api_documents_update_authenticated_unrelated_forbidden(reach, role):
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach=reach, link_role=role)
+    if via_parent:
+        grand_parent = factories.DocumentFactory(link_reach=reach, link_role=role)
+        parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
+        document = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    else:
+        document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
     old_document_values = serializers.DocumentSerializer(instance=document).data
     new_document_values = serializers.DocumentSerializer(
@@ -93,6 +108,7 @@ def test_api_documents_update_authenticated_unrelated_forbidden(reach, role):
     assert document_values == old_document_values
 
 
+@pytest.mark.parametrize("via_parent", [True, False])
 @pytest.mark.parametrize(
     "is_authenticated,reach,role",
     [
@@ -102,10 +118,10 @@ def test_api_documents_update_authenticated_unrelated_forbidden(reach, role):
     ],
 )
 def test_api_documents_update_anonymous_or_authenticated_unrelated(
-    is_authenticated, reach, role
+    is_authenticated, reach, role, via_parent
 ):
     """
-    Authenticated users should be able to update a document to which
+    Anonymous and authenticated users should be able to update a document to which
     they are not related if the link configuration allows it.
     """
     client = APIClient()
@@ -116,7 +132,12 @@ def test_api_documents_update_anonymous_or_authenticated_unrelated(
     else:
         user = AnonymousUser()
 
-    document = factories.DocumentFactory(link_reach=reach, link_role=role)
+    if via_parent:
+        grand_parent = factories.DocumentFactory(link_reach=reach, link_role=role)
+        parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
+        document = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    else:
+        document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
     old_document_values = serializers.DocumentSerializer(instance=document).data
     new_document_values = serializers.DocumentSerializer(
@@ -147,24 +168,34 @@ def test_api_documents_update_anonymous_or_authenticated_unrelated(
             assert value == new_document_values[key]
 
 
+@pytest.mark.parametrize("via_parent", [True, False])
 @pytest.mark.parametrize("via", VIA)
-def test_api_documents_update_authenticated_reader(via, mock_user_teams):
+def test_api_documents_update_authenticated_reader(via, via_parent, mock_user_teams):
     """
-    Users who are reader of a document but not administrators should
-    not be allowed to update it.
+    Users who are reader of a document should not be allowed to update it.
     """
     user = factories.UserFactory(with_owned_document=True)
 
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_role="reader")
+    if via_parent:
+        grand_parent = factories.DocumentFactory(link_reach="restricted")
+        parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
+        document = factories.DocumentFactory(parent=parent, link_reach="restricted")
+        access_document = grand_parent
+    else:
+        document = factories.DocumentFactory(link_reach="restricted")
+        access_document = document
+
     if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user, role="reader")
+        factories.UserDocumentAccessFactory(
+            document=access_document, user=user, role="reader"
+        )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role="reader"
+            document=access_document, team="lasuite", role="reader"
         )
 
     old_document_values = serializers.DocumentSerializer(instance=document).data
@@ -188,10 +219,11 @@ def test_api_documents_update_authenticated_reader(via, mock_user_teams):
     assert document_values == old_document_values
 
 
+@pytest.mark.parametrize("via_parent", [True, False])
 @pytest.mark.parametrize("role", ["editor", "administrator", "owner"])
 @pytest.mark.parametrize("via", VIA)
 def test_api_documents_update_authenticated_editor_administrator_or_owner(
-    via, role, mock_user_teams
+    via, role, via_parent, mock_user_teams
 ):
     """A user who is editor, administrator or owner of a document should be allowed to update it."""
     user = factories.UserFactory(with_owned_document=True)
@@ -199,13 +231,23 @@ def test_api_documents_update_authenticated_editor_administrator_or_owner(
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    if via_parent:
+        grand_parent = factories.DocumentFactory(link_reach="restricted")
+        parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
+        document = factories.DocumentFactory(parent=parent, link_reach="restricted")
+        access_document = grand_parent
+    else:
+        document = factories.DocumentFactory(link_reach="restricted")
+        access_document = document
+
     if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user, role=role)
+        factories.UserDocumentAccessFactory(
+            document=access_document, user=user, role=role
+        )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role=role
+            document=access_document, team="lasuite", role=role
         )
 
     old_document_values = serializers.DocumentSerializer(instance=document).data
@@ -220,52 +262,6 @@ def test_api_documents_update_authenticated_editor_administrator_or_owner(
     )
     assert response.status_code == 200
 
-    document = models.Document.objects.get(pk=document.pk)
-    document_values = serializers.DocumentSerializer(instance=document).data
-    for key, value in document_values.items():
-        if key in [
-            "id",
-            "created_at",
-            "creator",
-            "link_reach",
-            "link_role",
-            "nb_accesses",
-        ]:
-            assert value == old_document_values[key]
-        elif key == "updated_at":
-            assert value > old_document_values[key]
-        else:
-            assert value == new_document_values[key]
-
-
-@pytest.mark.parametrize("via", VIA)
-def test_api_documents_update_authenticated_owners(via, mock_user_teams):
-    """Administrators of a document should be allowed to update it."""
-    user = factories.UserFactory(with_owned_document=True)
-
-    client = APIClient()
-    client.force_login(user)
-
-    document = factories.DocumentFactory()
-    if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
-    elif via == TEAM:
-        mock_user_teams.return_value = ["lasuite", "unknown"]
-        factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role="owner"
-        )
-
-    old_document_values = serializers.DocumentSerializer(instance=document).data
-
-    new_document_values = serializers.DocumentSerializer(
-        instance=factories.DocumentFactory()
-    ).data
-
-    response = client.put(
-        f"/api/v1.0/documents/{document.id!s}/", new_document_values, format="json"
-    )
-
-    assert response.status_code == 200
     document = models.Document.objects.get(pk=document.pk)
     document_values = serializers.DocumentSerializer(instance=document).data
     for key, value in document_values.items():

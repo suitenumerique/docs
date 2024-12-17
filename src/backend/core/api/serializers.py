@@ -152,8 +152,8 @@ class ListDocumentSerializer(BaseResourceSerializer):
         model = models.Document
         fields = [
             "id",
-            "abilities",
             "content",
+            "abilities",
             "created_at",
             "creator",
             "is_favorite",
