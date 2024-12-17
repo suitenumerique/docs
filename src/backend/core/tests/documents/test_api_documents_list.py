@@ -2,6 +2,7 @@
 Tests for Documents API endpoint in impress's core app: list
 """
 
+import random
 from unittest import mock
 
 import pytest
@@ -82,7 +83,7 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
     client = APIClient()
     client.force_login(user)
 
-    documents = [
+    document1, document2 = [
         access.document
         for access in factories.UserDocumentAccessFactory.create_batch(2, user=user)
     ]
@@ -92,14 +93,29 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
         for role in models.LinkRoleChoices:
             factories.DocumentFactory(link_reach=reach, link_role=role)
 
-    expected_ids = {str(document.id) for document in documents}
+    # Children of visible documents should not get listed even with a specific access
+    factories.DocumentFactory(parent=document1)
+
+    child1_with_access = factories.DocumentFactory(parent=document1)
+    factories.UserDocumentAccessFactory(user=user, document=child1_with_access)
+
+    middle_document = factories.DocumentFactory(parent=document2)
+    child2_with_access = factories.DocumentFactory(parent=middle_document)
+    factories.UserDocumentAccessFactory(user=user, document=child2_with_access)
+
+    # Children of hidden documents should get listed when visible by the logged-in user
+    hidden_root = factories.DocumentFactory()
+    child3_with_access = factories.DocumentFactory(parent=hidden_root)
+    factories.UserDocumentAccessFactory(user=user, document=child3_with_access)
+
+    expected_ids = {str(document1.id), str(document2.id), str(child3_with_access.id)}
 
     with django_assert_num_queries(3):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
     results = response.json()["results"]
-    assert len(results) == 2
+    assert len(results) == 3
     results_id = {result["id"] for result in results}
     assert expected_ids == results_id
 
@@ -183,12 +199,27 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
     client = APIClient()
     client.force_login(user)
 
-    documents = [
+    document1, document2 = [
         factories.DocumentFactory(link_traces=[user], link_reach=reach)
         for reach in models.LinkReachChoices
         if reach != "restricted"
     ]
-    expected_ids = {str(document.id) for document in documents}
+    factories.DocumentFactory(
+        link_reach=random.choice(["public", "authenticated"]),
+        link_traces=[user],
+        parent=document1,
+    )
+
+    hidden_document = factories.DocumentFactory(
+        link_reach=random.choice(["public", "authenticated"])
+    )
+    visible_child = factories.DocumentFactory(
+        link_traces=[user],
+        link_reach=random.choice(["public", "authenticated"]),
+        parent=hidden_document,
+    )
+
+    expected_ids = {str(document1.id), str(document2.id), str(visible_child.id)}
 
     with django_assert_num_queries(3):
         response = client.get(
@@ -197,7 +228,7 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
 
     assert response.status_code == 200
     results = response.json()["results"]
-    assert len(results) == 2
+    assert len(results) == 3
     results_id = {result["id"] for result in results}
     assert expected_ids == results_id
 

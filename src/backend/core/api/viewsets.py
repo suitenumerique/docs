@@ -15,12 +15,14 @@ from django.db import models as db
 from django.db.models import (
     Count,
     Exists,
+    F,
     OuterRef,
     Q,
     Subquery,
     Value,
 )
 from django.db.models.expressions import RawSQL
+from django.db.models.functions import Left, Length
 from django.http import Http404
 
 import rest_framework as drf
@@ -395,6 +397,24 @@ class DocumentViewSet(
                     & ~db.Q(link_reach=models.LinkReachChoices.RESTRICTED)
                 )
             )
+
+            # Among the results, we may have documents that are ancestors/children of each other
+            # In this case we want to keep only the highest ancestor. Let's annotate, each document
+            # with the path of its highest ancestor within results so we can use it to filter
+            shortest_path = Subquery(
+                queryset.filter(path=Left(OuterRef("path"), Length("path")))
+                .order_by("path")  # Get the shortest (root) path
+                .values("path")[:1]
+            )
+            queryset = queryset.annotate(root_path=shortest_path)
+
+            # Filter documents based on their shortest path (root path)
+            queryset = queryset.filter(
+                root_path=F(
+                    "path"
+                )  # Keep only documents who are the annotated highest ancestor
+            )
+
         else:
             queryset = queryset.none()
 
