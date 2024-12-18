@@ -12,6 +12,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models as db
+from django.db import transaction
 from django.db.models import (
     Exists,
     F,
@@ -493,11 +494,38 @@ class DocumentViewSet(
         detail=True,
         methods=["get", "post"],
         serializer_class=serializers.ListDocumentSerializer,
+        url_path="children",
     )
-    # pylint: disable=unused-argument
-    def children(self, request, pk, *args, **kwargs):
-        """Custom action to retrieve children of a document"""
+    def children(self, request, *args, **kwargs):
+        """Handle listing and creating children of a document"""
         document = self.get_object()
+
+        if request.method == "POST":
+            # Create a child document
+            serializer = serializers.DocumentSerializer(
+                data=request.data, context=self.get_serializer_context()
+            )
+            serializer.is_valid(raise_exception=True)
+
+            with transaction.atomic():
+                child_document = document.add_child(
+                    creator=request.user,
+                    **serializer.validated_data,
+                )
+                models.DocumentAccess.objects.create(
+                    document=child_document,
+                    user=request.user,
+                    role=models.RoleChoices.OWNER,
+                )
+            # Set the created instance to the serializer
+            serializer.instance = child_document
+
+            headers = self.get_success_headers(serializer.data)
+            return drf.response.Response(
+                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            )
+
+        # GET: List children
         queryset = document.get_children()
         queryset = self.annotate_queryset(queryset)
 

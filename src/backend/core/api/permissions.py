@@ -8,7 +8,8 @@ from rest_framework import permissions
 from core.models import DocumentAccess, RoleChoices
 
 ACTION_FOR_METHOD_TO_PERMISSION = {
-    "versions_detail": {"DELETE": "versions_destroy", "GET": "versions_retrieve"}
+    "versions_detail": {"DELETE": "versions_destroy", "GET": "versions_retrieve"},
+    "children": {"GET": "children_list", "POST": "children_create"},
 }
 
 
