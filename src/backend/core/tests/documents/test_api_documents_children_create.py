@@ -2,7 +2,6 @@
 Tests for Documents API endpoint in impress's core app: create
 """
 
-import random
 from uuid import uuid4
 
 import pytest

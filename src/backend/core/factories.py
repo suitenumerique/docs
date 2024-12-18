@@ -74,6 +74,7 @@ class DocumentFactory(factory.django.DjangoModelFactory):
     parent = ParentNodeFactory()
 
     title = factory.Sequence(lambda n: f"document{n}")
+    excerpt = factory.Sequence(lambda n: f"excerpt{n}")
     content = factory.Sequence(lambda n: f"content{n}")
     creator = factory.SubFactory(UserFactory)
     link_reach = factory.fuzzy.FuzzyChoice(

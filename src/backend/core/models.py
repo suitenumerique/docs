@@ -358,6 +358,7 @@ class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
+    excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
     link_reach = models.CharField(
         max_length=20,
         choices=LinkReachChoices.choices,

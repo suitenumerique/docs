@@ -152,11 +152,11 @@ class ListDocumentSerializer(BaseResourceSerializer):
         model = models.Document
         fields = [
             "id",
-            "content",
             "abilities",
             "created_at",
             "creator",
             "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
@@ -172,6 +172,7 @@ class ListDocumentSerializer(BaseResourceSerializer):
             "created_at",
             "creator",
             "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
@@ -196,6 +197,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "created_at",
             "creator",
             "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",

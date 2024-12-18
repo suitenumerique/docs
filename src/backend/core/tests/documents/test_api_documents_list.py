@@ -59,11 +59,11 @@ def test_api_documents_list_format():
     assert len(results) == 1
     assert results[0] == {
         "id": str(document.id),
-        "content": document.content,
         "abilities": document.get_abilities(user),
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
         "depth": 1,
+        "excerpt": document.excerpt,
         "is_favorite": True,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
