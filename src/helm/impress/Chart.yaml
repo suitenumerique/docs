@@ -1,4 +1,5 @@
 apiVersion: v2
 type: application
-name: impress
-version: 1.10.0
+name: docs
+version: 0.0.1
+appVersion: latest
