@@ -6,6 +6,7 @@ import expressWebsockets from 'express-ws';
 
 import { PORT } from '../env';
 import {
+  collaborationHTTPHandler,
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
   convertMarkdownHandler,
@@ -27,9 +28,10 @@ export const initServer = () => {
   app.use(corsMiddleware);
 
   /**
-   * Route to handle WebSocket connections
+   * Routes to handle collaboration connections
    */
   app.ws(routes.COLLABORATION_WS, wsSecurity, collaborationWSHandler);
+  app.post(routes.COLLABORATION_POLL, httpSecurity, collaborationHTTPHandler);
 
   /**
    * Route to reset connections in a room:
