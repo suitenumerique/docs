@@ -53,7 +53,7 @@ export const LeftPanelTargetFilters = () => {
   return (
     <Box
       $justify="center"
-      $padding={{ horizontal: 'xs' }}
+      $padding={{ horizontal: 'sm' }}
       $gap={spacing['2xs']}
     >
       {defaultQueries.map((query) => {
@@ -69,8 +69,8 @@ export const LeftPanelTargetFilters = () => {
             $align="center"
             $justify="flex-start"
             $gap={spacing['xs']}
-            $radius={spacing['2xs']}
-            $padding={{ all: 'xs' }}
+            $radius={spacing['3xs']}
+            $padding={{ all: '2xs' }}
             $css={css`
               cursor: pointer;
               background-color: ${isActive
@@ -83,8 +83,13 @@ export const LeftPanelTargetFilters = () => {
               }
             `}
           >
-            <Icon $variation="1000" iconName={query.icon} />
-            <Text $variation="1000">{query.label}</Text>
+            <Icon
+              $variation={isActive ? '1000' : '700'}
+              iconName={query.icon}
+            />
+            <Text $variation={isActive ? '1000' : '700'} $size="sm">
+              {query.label}
+            </Text>
           </BoxButton>
         );
       })}

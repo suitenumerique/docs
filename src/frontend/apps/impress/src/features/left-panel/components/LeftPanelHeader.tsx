@@ -47,7 +47,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               <Button
                 onClick={goToHome}
                 size="medium"
-                color="primary-text"
+                color="tertiary-text"
                 icon={
                   <Icon $variation="800" $theme="primary" iconName="house" />
                 }
@@ -55,7 +55,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               <Button
                 onClick={searchModal.open}
                 size="medium"
-                color="primary-text"
+                color="tertiary-text"
                 icon={
                   <Icon $variation="800" $theme="primary" iconName="search" />
                 }

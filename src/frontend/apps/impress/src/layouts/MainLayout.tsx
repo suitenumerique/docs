@@ -42,8 +42,7 @@ export function MainLayout({
           $width="100%"
           $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
           $padding={{
-            vertical: isDesktop ? 'base' : 'xs',
-            horizontal: isDesktop ? '6xl' : 'xs',
+            all: isDesktop ? 'base' : '2xs',
           }}
           $background={
             backgroundColor === 'white'
