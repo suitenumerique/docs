@@ -29,7 +29,12 @@ export const QuickSearchItemContent = ({
       $justify="space-between"
       $width="100%"
     >
-      <Box $direction="row" $align="center" $gap={spacings['2xs']}>
+      <Box
+        $direction="row"
+        $align="center"
+        $gap={spacings['2xs']}
+        $width="100%"
+      >
         {left}
       </Box>
 

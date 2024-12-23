@@ -65,8 +65,8 @@ export const QuickSearchStyle = createGlobalStyle`
 
   [cmdk-list] {
   
-    padding: 0 var(--c--theme--spacings--sm) var(--c--theme--spacings--sm)
-      var(--c--theme--spacings--sm);
+    padding: 0 var(--c--theme--spacings--base) var(--c--theme--spacings--base)
+      var(--c--theme--spacings--base);
   
     flex:1;
     overflow-y: auto;
@@ -114,7 +114,7 @@ export const QuickSearchStyle = createGlobalStyle`
 
     display: flex;
     align-items: center;
-    margin-bottom: var(--c--theme--spacings--base);
+    margin-bottom: var(--c--theme--spacings--xs);
   }
 
   [cmdk-empty] {
