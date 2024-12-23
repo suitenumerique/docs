@@ -227,7 +227,7 @@ test.describe('Document create member', () => {
     await page.getByRole('button', { name: 'Reader' }).click();
 
     const moreActions = userInvitation.getByRole('button', {
-      name: 'more_vert',
+      name: 'more_horiz',
     });
     await moreActions.click();
 

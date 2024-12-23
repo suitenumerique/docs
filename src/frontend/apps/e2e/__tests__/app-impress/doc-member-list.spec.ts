@@ -182,18 +182,20 @@ test.describe('Document list members', () => {
 
     const emailMyself = `user@${browserName}.e2e`;
     const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
-    const mySelfMoreActions = mySelf.getByRole('button', { name: 'more_vert' });
+    const mySelfMoreActions = mySelf.getByRole('button', {
+      name: 'more_horiz',
+    });
 
     const userOwnerEmail = await addNewMember(page, 0, 'Owner');
     const userOwner = list.getByTestId(
       `doc-share-member-row-${userOwnerEmail}`,
     );
     const userOwnerMoreActions = userOwner.getByRole('button', {
-      name: 'more_vert',
+      name: 'more_horiz',
     });
 
     await page.getByRole('button', { name: 'close' }).first().click();
-    await page.getByRole('button', { name: 'Share' }).click();
+    await page.getByRole('button', { name: 'Share' }).first().click();
 
     const userReaderEmail = await addNewMember(page, 0, 'Reader');
 
@@ -201,7 +203,7 @@ test.describe('Document list members', () => {
       `doc-share-member-row-${userReaderEmail}`,
     );
     const userReaderMoreActions = userReader.getByRole('button', {
-      name: 'more_vert',
+      name: 'more_horiz',
     });
 
     await expect(mySelf).toBeVisible();

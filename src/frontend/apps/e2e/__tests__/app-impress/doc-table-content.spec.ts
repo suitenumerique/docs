@@ -31,11 +31,7 @@ test.describe('Doc Table Content', () => {
     await page.locator('.bn-block-outer').first().click();
     await editor.click();
     await page.locator('.bn-block-outer').last().click();
-
-    // Create space to fill the viewport
-    for (let i = 0; i < 2; i++) {
-      await page.keyboard.press('Enter');
-    }
+    await page.keyboard.press('Enter');
 
     await editor.locator('.bn-block-outer').last().fill('/');
     await page.getByText('Heading 2').click();
@@ -44,9 +40,7 @@ test.describe('Doc Table Content', () => {
     await page.locator('.bn-block-outer').last().click();
 
     // Create space to fill the viewport
-    for (let i = 0; i < 2; i++) {
-      await page.keyboard.press('Enter');
-    }
+    await page.keyboard.press('Enter');
 
     await editor.locator('.bn-block-outer').last().fill('/');
     await page.getByText('Heading 3').click();
@@ -55,7 +49,7 @@ test.describe('Doc Table Content', () => {
     expect(true).toBe(true);
 
     const summaryContainer = page.locator('#summaryContainer');
-    await summaryContainer.hover();
+    await summaryContainer.click();
 
     const level1 = summaryContainer.getByText('Level 1');
     const level2 = summaryContainer.getByText('Level 2');

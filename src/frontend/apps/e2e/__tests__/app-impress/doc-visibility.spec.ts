@@ -172,7 +172,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await page.goto(urlDoc);
 
     await verifyDocName(page, docTitle);
-    await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
+    await expect(page.getByLabel('Share button')).toBeVisible();
   });
 });
 

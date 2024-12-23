@@ -94,7 +94,13 @@ test.describe('Doc Header', () => {
       .click();
 
     await expect(
-      page.locator('h2').getByText(`Deleting the document "${randomDoc}"`),
+      page.getByRole('heading', { name: 'Delete a doc' }),
+    ).toBeVisible();
+
+    await expect(
+      page.getByText(
+        `Are you sure you want to delete the document "${randomDoc}"?`,
+      ),
     ).toBeVisible();
 
     await page
@@ -167,7 +173,7 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
     await expect(invitationCard.getByLabel('doc-role-dropdown')).toBeVisible();
 
-    await invitationCard.getByRole('button', { name: 'more_vert' }).click();
+    await invitationCard.getByRole('button', { name: 'more_horiz' }).click();
 
     await expect(
       page.getByRole('button', {
@@ -183,9 +189,9 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
     await expect(memberCard.getByLabel('doc-role-dropdown')).toBeVisible();
     await expect(
-      memberCard.getByRole('button', { name: 'more_vert' }),
+      memberCard.getByRole('button', { name: 'more_horiz' }),
     ).toBeVisible();
-    await memberCard.getByRole('button', { name: 'more_vert' }).click();
+    await memberCard.getByRole('button', { name: 'more_horiz' }).click();
 
     await expect(
       page.getByRole('button', {
@@ -245,14 +251,14 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
     await expect(invitationCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      invitationCard.getByRole('button', { name: 'more_vert' }),
+      invitationCard.getByRole('button', { name: 'more_horiz' }),
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
     await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
     await expect(memberCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      memberCard.getByRole('button', { name: 'more_vert' }),
+      memberCard.getByRole('button', { name: 'more_horiz' }),
     ).toBeHidden();
   });
 
@@ -307,14 +313,14 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
     await expect(invitationCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      invitationCard.getByRole('button', { name: 'more_vert' }),
+      invitationCard.getByRole('button', { name: 'more_horiz' }),
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
     await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
     await expect(memberCard.getByLabel('doc-role-text')).toBeVisible();
     await expect(
-      memberCard.getByRole('button', { name: 'more_vert' }),
+      memberCard.getByRole('button', { name: 'more_horiz' }),
     ).toBeHidden();
   });
 

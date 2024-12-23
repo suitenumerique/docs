@@ -30,7 +30,11 @@ test.describe('Doc Version', () => {
     await expect(panel).toBeVisible();
     await expect(modal.getByText('No versions')).toBeVisible();
 
+    const editor = page.locator('.ProseMirror');
     await modal.getByRole('button', { name: 'close' }).click();
+    await editor.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Heading 1').click();
+
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').last().fill('Hello World');
     await goToGridDoc(page, {
@@ -64,7 +68,6 @@ test.describe('Doc Version', () => {
 
     await expect(panel).toBeVisible();
     await expect(page.getByText('History', { exact: true })).toBeVisible();
-    await expect(page.getByRole('status')).toBeVisible();
     await expect(page.getByRole('status')).toBeHidden();
     const items = await panel.locator('.version-item').all();
     expect(items.length).toBe(1);

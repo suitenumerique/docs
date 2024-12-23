@@ -113,7 +113,7 @@ test.describe('Document grid item options', () => {
     await removeButton.click();
 
     await expect(
-      page.locator('h2').getByText(`Deleting the document "${docs[0].title}"`),
+      page.getByRole('heading', { name: 'Delete a doc' }),
     ).toBeVisible();
 
     await page
