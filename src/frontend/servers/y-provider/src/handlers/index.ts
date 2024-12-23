@@ -1,3 +1,3 @@
 export * from './collaborationResetConnectionsHandler';
-export * from './collaborationWSHandler';
+export * from './collaborationConnectionsHandler';
 export * from './convertMarkdownHandler';
