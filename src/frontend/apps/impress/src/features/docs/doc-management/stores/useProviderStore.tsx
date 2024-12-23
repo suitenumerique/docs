@@ -11,11 +11,17 @@ export interface UseCollaborationStore {
     initialDoc?: Base64,
   ) => HocuspocusProvider;
   destroyProvider: () => void;
+  failureCount: number;
+  maxFailureCount: number;
   provider: HocuspocusProvider | undefined;
+  isProviderFailure: boolean;
 }
 
 const defaultValues = {
+  failureCount: 0,
+  maxFailureCount: 4,
   provider: undefined,
+  isProviderFailure: false,
 };
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
@@ -33,6 +39,26 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       url: wsUrl,
       name: storeId,
       document: doc,
+      onConnect: () => {
+        set({
+          failureCount: 0,
+          isProviderFailure: false,
+        });
+      },
+      onClose: () => {
+        set({
+          failureCount: get().failureCount + 1,
+        });
+
+        if (
+          !get().isProviderFailure &&
+          get().failureCount > get().maxFailureCount
+        ) {
+          set({
+            isProviderFailure: true,
+          });
+        }
+      },
     });
 
     set({
