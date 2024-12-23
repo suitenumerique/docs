@@ -12,15 +12,19 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
   const { provider, createProvider, destroyProvider } = useProviderStore();
 
   useEffect(() => {
-    if (!room || !collaborationUrl || provider) {
+    if (!room || !collaborationUrl?.wsUrl || provider) {
       return;
     }
 
-    const newProvider = createProvider(collaborationUrl, room, initialContent);
+    const newProvider = createProvider(
+      collaborationUrl.wsUrl,
+      room,
+      initialContent,
+    );
     setBroadcastProvider(newProvider);
   }, [
     provider,
-    collaborationUrl,
+    collaborationUrl?.wsUrl,
     room,
     initialContent,
     createProvider,
