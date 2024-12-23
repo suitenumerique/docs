@@ -1,30 +1,31 @@
 import { useTranslation } from 'react-i18next';
 
-import { Text } from '@/components/';
+import { Box, Text } from '@/components/';
+import { useCunninghamTheme } from '@/cunningham';
 
 const Title = () => {
   const { t } = useTranslation();
+  const theme = useCunninghamTheme();
+  const spacings = theme.spacingsTokens();
+  const colors = theme.colorsTokens();
 
   return (
-    <>
-      <Text
-        $padding="2px 3px"
-        $size="8px"
-        $background="#368bd6"
-        $color="white"
-        $position="absolute"
-        $radius="5px"
-        $css={`
-          bottom: 13px;
-          right: -17px;
-        `}
-      >
-        BETA
-      </Text>
+    <Box $direction="row" $align="center" $gap={spacings['2xs']}>
       <Text $margin="none" as="h2" $color="#000091" $zIndex={1} $size="1.30rem">
         {t('Docs')}
       </Text>
-    </>
+      <Text
+        $padding={{ horizontal: 'xs', vertical: '1px' }}
+        $size="11px"
+        $theme="primary"
+        $variation="500"
+        $weight="bold"
+        $radius="12px"
+        $background={colors['primary-200']}
+      >
+        BETA
+      </Text>
+    </Box>
   );
 };
 

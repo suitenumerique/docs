@@ -50,6 +50,7 @@ export const DropdownMenu = ({
           <Box $direction="row" $align="center">
             <div>{children}</div>
             <Icon
+              $variation="600"
               $css={
                 arrowCss ??
                 css`
@@ -67,7 +68,7 @@ export const DropdownMenu = ({
       <Box $maxWidth="320px">
         {topMessage && (
           <Text
-            $variation="1000"
+            $variation="700"
             $wrap="wrap"
             $size="xs"
             $weight="bold"
@@ -123,10 +124,7 @@ export const DropdownMenu = ({
                     iconName={option.icon}
                   />
                 )}
-                <Text
-                  $margin={{ top: '-3px' }}
-                  $variation={isDisabled ? '400' : '1000'}
-                >
+                <Text $variation={isDisabled ? '400' : '1000'}>
                   {option.label}
                 </Text>
               </Box>

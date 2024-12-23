@@ -50,8 +50,14 @@ export const Header = () => {
           size="medium"
           onClick={() => togglePanel()}
           aria-label={t('Open the header menu')}
-          color="primary-text"
-          icon={<Icon iconName={isPanelOpen ? 'close' : 'menu'} />}
+          color="tertiary-text"
+          icon={
+            <Icon
+              $variation="800"
+              $theme="primary"
+              iconName={isPanelOpen ? 'close' : 'menu'}
+            />
+          }
         />
       )}
       <StyledLink href="/">
