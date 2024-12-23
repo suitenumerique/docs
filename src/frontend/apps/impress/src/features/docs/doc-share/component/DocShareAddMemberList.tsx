@@ -149,11 +149,7 @@ export const DocShareAddMemberList = ({
           currentRole={invitationRole}
           onSelectRole={setInvitationRole}
         />
-        <Button
-          onClick={() => void onInvite()}
-          size="small"
-          disabled={isLoading}
-        >
+        <Button onClick={() => void onInvite()} disabled={isLoading}>
           {t('Invite')}
         </Button>
       </Box>

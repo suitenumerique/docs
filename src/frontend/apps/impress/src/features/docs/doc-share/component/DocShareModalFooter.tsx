@@ -27,14 +27,18 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
         flex-shrink: 0;
       `}
     >
-      <HorizontalSeparator />
+      <HorizontalSeparator $withPadding={true} />
       {canShare && (
         <>
           <DocVisibility doc={doc} />
           <HorizontalSeparator />
         </>
       )}
-      <Box $direction="row" $justify="space-between" $padding="base">
+      <Box
+        $direction="row"
+        $justify="space-between"
+        $padding={{ horizontal: 'base', bottom: 'base' }}
+      >
         <Button
           fullWidth={false}
           onClick={() => {

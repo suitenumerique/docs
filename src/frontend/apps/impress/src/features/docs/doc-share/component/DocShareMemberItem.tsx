@@ -7,6 +7,7 @@ import {
   DropdownMenuOption,
   IconOptions,
 } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
 import { useWhoAmI } from '@/features/docs/doc-share/hooks/useWhoAmI';
 import { useResponsiveStore } from '@/stores';
@@ -25,6 +26,8 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   const { isLastOwner, isOtherOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
+  const { spacingsTokens } = useCunninghamTheme();
+  const spacing = spacingsTokens();
   const isNotAllowed =
     isOtherOwner || !!isLastOwner || !doc.abilities.accesses_manage;
 
@@ -74,7 +77,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
         alwaysShowRight={true}
         user={access.user}
         right={
-          <Box $direction="row" $align="center">
+          <Box $direction="row" $align="center" $gap={spacing['2xs']}>
             <DocRoleDropdown
               currentRole={access.role}
               onSelectRole={onUpdate}
@@ -86,6 +89,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
             {isDesktop && doc.abilities.accesses_manage && (
               <DropdownMenu options={moreActions}>
                 <IconOptions
+                  isHorizontal
                   data-testid="doc-share-member-more-actions"
                   $variation="600"
                 />

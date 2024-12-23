@@ -86,11 +86,11 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
 
   return (
     <Box
-      $padding={{ horizontal: isDesktop ? 'base' : 'sm' }}
+      $padding={{ horizontal: 'base' }}
       aria-label={t('Doc visibility card')}
       $gap={spacing['base']}
     >
-      <Text $weight="700" $variation="1000">
+      <Text $weight="700" $size="sm" $variation="700">
         {t('Link parameters')}
       </Text>
       <Box
@@ -104,6 +104,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         <Box
           $direction="row"
           $align={isDesktop ? 'center' : undefined}
+          $padding={{ horizontal: '2xs' }}
           $gap={spacing['3xs']}
         >
           <DropdownMenu

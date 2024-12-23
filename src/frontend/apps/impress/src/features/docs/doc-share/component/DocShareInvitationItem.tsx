@@ -8,6 +8,7 @@ import {
   IconOptions,
 } from '@/components';
 import { User } from '@/core';
+import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/features/docs/doc-management';
 import {
   useDeleteDocInvitation,
@@ -24,6 +25,8 @@ type Props = {
 };
 export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
   const { t } = useTranslation();
+  const { spacingsTokens } = useCunninghamTheme();
+  const spacing = spacingsTokens();
   const fakeUser: User = {
     id: invitation.email,
     full_name: invitation.email,
@@ -84,10 +87,11 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
       data-testid={`doc-share-invitation-row-${invitation.email}`}
     >
       <SearchUserRow
+        isInvitation={true}
         alwaysShowRight={true}
         user={fakeUser}
         right={
-          <Box $direction="row" $align="center">
+          <Box $direction="row" $align="center" $gap={spacing['2xs']}>
             <DocRoleDropdown
               currentRole={invitation.role}
               onSelectRole={onUpdate}
@@ -99,7 +103,7 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
                 data-testid="doc-share-invitation-more-actions"
                 options={moreActions}
               >
-                <IconOptions $variation="600" />
+                <IconOptions isHorizontal $variation="600" />
               </DropdownMenu>
             )}
           </Box>

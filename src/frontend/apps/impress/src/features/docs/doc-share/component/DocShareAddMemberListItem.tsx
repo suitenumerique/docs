@@ -23,20 +23,26 @@ export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
       $height="fit-content"
       $justify="center"
       $align="center"
-      $gap={spacing.xs}
+      $gap={spacing['3xs']}
       $background={color['greyscale-250']}
-      $padding={{ horizontal: spacing['2xs'], vertical: spacing['3xs'] }}
+      $padding={{
+        left: spacing['xs'],
+        right: spacing['4xs'],
+        vertical: spacing['4xs'],
+      }}
       $css={css`
         color: ${color['greyscale-1000']};
         font-size: ${fontSize['xs']};
       `}
     >
-      <Text $margin={{ top: '-3px' }}>{user.full_name || user.email}</Text>
+      <Text $variation="1000" $size="xs">
+        {user.full_name || user.email}
+      </Text>
       <Button
-        color="primary-text"
+        color="tertiary-text"
         size="nano"
         onClick={() => onRemoveUser?.(user)}
-        icon={<Icon $variation="500" $size="sm" iconName="close" />}
+        icon={<Icon $variation="600" $size="sm" iconName="close" />}
       />
     </Box>
   );

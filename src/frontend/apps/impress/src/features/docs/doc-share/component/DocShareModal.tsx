@@ -171,15 +171,12 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
               overflow-y: auto;
               height: ${isDesktop
                 ? '400px'
-                : 'calc(100vh - 49px -  68px - 237px)'};
+                : 'calc(100vh - 49px -  68px - 229px)'};
             }
           `}
         >
           {canShare && selectedUsers.length > 0 && (
-            <Box
-              $padding={{ horizontal: 'base' }}
-              $margin={{ vertical: '11px' }}
-            >
+            <Box $padding={{ horizontal: 'base' }} $margin={{ top: '11px' }}>
               <DocShareAddMemberList
                 doc={doc}
                 selectedUsers={selectedUsers}

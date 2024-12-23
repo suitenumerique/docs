@@ -44,7 +44,7 @@ export function useUpdateDocLink({
     mutationFn: updateDocLink,
     onSuccess: (data, variable) => {
       listInvalideQueries?.forEach((queryKey) => {
-        void queryClient.resetQueries({
+        void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
       });
