@@ -286,11 +286,9 @@
   );
   --c--components--button--danger--color-hover: white;
   --c--components--button--danger--background--color: var(
-    --c--theme--colors--danger-400
+    --c--theme--colors--danger-600
   );
-  --c--components--button--danger--background--color-hover: var(
-    --c--theme--colors--danger-500
-  );
+  --c--components--button--danger--background--color-hover: #ff2725;
   --c--components--button--danger--background--color-disabled: var(
     --c--theme--colors--danger-100
   );
@@ -443,13 +441,13 @@
   --c--theme--colors--success-800: #1e2e22;
   --c--theme--colors--success-900: #19281d;
   --c--theme--colors--info-text: #0078f3;
-  --c--theme--colors--info-100: #f4f6ff;
-  --c--theme--colors--info-200: #e8edff;
-  --c--theme--colors--info-300: #dde5ff;
-  --c--theme--colors--info-400: #bdcdff;
+  --c--theme--colors--info-100: #e8edff;
+  --c--theme--colors--info-200: #dde5ff;
+  --c--theme--colors--info-300: #bccdff;
+  --c--theme--colors--info-400: #518fff;
   --c--theme--colors--info-500: #0078f3;
   --c--theme--colors--info-600: #0063cb;
-  --c--theme--colors--info-700: #f4f6ff;
+  --c--theme--colors--info-700: #273961;
   --c--theme--colors--info-800: #222a3f;
   --c--theme--colors--info-900: #1d2437;
   --c--theme--colors--warning-text: #d64d00;
@@ -462,16 +460,16 @@
   --c--theme--colors--warning-700: #5e2c21;
   --c--theme--colors--warning-800: #3e241e;
   --c--theme--colors--warning-900: #361e19;
-  --c--theme--colors--danger-text: #e1000f;
-  --c--theme--colors--danger-100: #fef4f4;
-  --c--theme--colors--danger-200: #fee9e9;
-  --c--theme--colors--danger-300: #fddede;
-  --c--theme--colors--danger-400: #fcbfbf;
-  --c--theme--colors--danger-500: #e1000f;
-  --c--theme--colors--danger-600: #c9191e;
-  --c--theme--colors--danger-700: #642727;
+  --c--theme--colors--danger-text: #fff;
+  --c--theme--colors--danger-100: #ffe9e9;
+  --c--theme--colors--danger-200: #fdd;
+  --c--theme--colors--danger-300: #ffbdbd;
+  --c--theme--colors--danger-400: #ff5655;
+  --c--theme--colors--danger-500: #f60700;
+  --c--theme--colors--danger-600: #ce0500;
+  --c--theme--colors--danger-700: #642626;
   --c--theme--colors--danger-800: #412121;
-  --c--theme--colors--danger-900: #3a1c1c;
+  --c--theme--colors--danger-900: #391c1c;
   --c--theme--font--families--accent: marianne;
   --c--theme--font--families--base: marianne;
   --c--theme--logo--src: /assets/logo-gouv.svg;
@@ -479,7 +477,9 @@
   --c--theme--logo--widthFooter: 220px;
   --c--theme--logo--alt: gouvernement logo;
   --c--components--alert--border-radius: 0;
-  --c--components--button--medium-height: 48px;
+  --c--components--modal--width-small: 342px;
+  --c--components--button--medium-height: 40px;
+  --c--components--button--medium-text-height: 40px;
   --c--components--button--border-radius: 4px;
   --c--components--button--primary--background--color: var(
     --c--theme--colors--primary-text
@@ -510,7 +510,7 @@
     --c--theme--colors--primary-text
   );
   --c--components--button--tertiary-text--background--color-hover: var(
-    --c--theme--colors--primary-100
+    --c--theme--colors--greyscale-100
   );
   --c--components--button--tertiary-text--color-hover: var(
     --c--theme--colors--primary-text
