@@ -1,6 +1,5 @@
 import { Loader } from '@openfun/cunningham-react';
 import { DateTime } from 'luxon';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { APIError } from '@/api';
@@ -105,11 +104,9 @@ export const VersionList = ({
     docId: doc.id,
   });
 
-  const versions = useMemo(() => {
-    return data?.pages.reduce((acc, page) => {
-      return acc.concat(page.versions);
-    }, [] as Versions[]);
-  }, [data?.pages]);
+  const versions = data?.pages.reduce((acc, page) => {
+    return acc.concat(page.versions);
+  }, [] as Versions[]);
 
   return (
     <Box $css="overflow-y: auto; overflow-x: hidden;">

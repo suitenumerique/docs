@@ -130,7 +130,6 @@ export const ModalPDF = ({ onClose, doc }: ModalPDFProps) => {
       data-testid="modal-export"
       isOpen
       closeOnClickOutside
-      hideCloseButton
       onClose={() => onClose()}
       rightActions={
         <>
@@ -155,7 +154,7 @@ export const ModalPDF = ({ onClose, doc }: ModalPDFProps) => {
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text $size="h6" $align="flex-start">
+        <Text $size="h6" $variation="1000" $align="flex-start">
           {t('Download')}
         </Text>
       }
@@ -163,9 +162,9 @@ export const ModalPDF = ({ onClose, doc }: ModalPDFProps) => {
       <Box
         $margin={{ bottom: 'xl' }}
         aria-label={t('Content modal to export the document')}
-        $gap="1.5rem"
+        $gap="1rem"
       >
-        <Text $variation="600">
+        <Text $variation="600" $size="sm">
           {t(
             'Upload your docs to a Microsoft Word, Open Office or PDF document.',
           )}

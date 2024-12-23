@@ -38,7 +38,7 @@ export function useUpdateDoc({
     mutationFn: updateDoc,
     onSuccess: (data) => {
       listInvalideQueries?.forEach((queryKey) => {
-        void queryClient.resetQueries({
+        void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
       });

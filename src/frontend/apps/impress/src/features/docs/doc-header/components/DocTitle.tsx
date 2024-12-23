@@ -43,6 +43,7 @@ export const DocTitleText = ({ title }: DocTitleTextProps) => {
       as="h2"
       $margin={{ all: 'none', left: 'none' }}
       $size={isMobile ? 'h4' : 'h2'}
+      $variation="1000"
     >
       {title}
     </Text>
@@ -113,7 +114,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')
           }
-          $color={colorsTokens()['greyscale-text']}
+          $color={colorsTokens()['greyscale-1000']}
           $margin={{ left: '-2px', right: '10px' }}
           $css={css`
             &[contenteditable='true']:empty:not(:focus):before {

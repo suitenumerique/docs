@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Modal,
   ModalSize,
@@ -48,41 +47,36 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       isOpen
       closeOnClickOutside
       hideCloseButton
-      leftActions={
-        <Button
-          aria-label={t('Close the modal')}
-          color="secondary"
-          fullWidth
-          onClick={() => onClose()}
-        >
-          {t('Cancel')}
-        </Button>
-      }
       onClose={() => onClose()}
       rightActions={
-        <Button
-          aria-label={t('Confirm deletion')}
-          color="danger"
-          fullWidth
-          onClick={() =>
-            removeDoc({
-              docId: doc.id,
-            })
-          }
-        >
-          {t('Confirm deletion')}
-        </Button>
+        <>
+          <Button
+            aria-label={t('Close the modal')}
+            color="secondary"
+            fullWidth
+            onClick={() => onClose()}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            aria-label={t('Confirm deletion')}
+            color="danger"
+            fullWidth
+            onClick={() =>
+              removeDoc({
+                docId: doc.id,
+              })
+            }
+          >
+            {t('Delete')}
+          </Button>
+        </>
       }
-      size={ModalSize.MEDIUM}
+      size={ModalSize.SMALL}
       title={
-        <Box $align="center" $gap="1rem">
-          <Text $isMaterialIcon $size="48px" $theme="primary" $variation="600">
-            delete_forever
-          </Text>
-          <Text as="h2" $size="h3" $margin="none">
-            {t('Deleting the document "{{title}}"', { title: doc.title })}
-          </Text>
-        </Box>
+        <Text $size="h6" as="h6" $margin={{ all: '0' }} $align="flex-start">
+          {t('Delete a doc')}
+        </Text>
       }
     >
       <Box
@@ -90,13 +84,11 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
         aria-label={t('Content modal to delete document')}
       >
         {!isError && (
-          <Alert canClose={false} type={VariantType.WARNING}>
-            <Text>
-              {t('Are you sure you want to delete the document "{{title}}"?', {
-                title: doc.title,
-              })}
-            </Text>
-          </Alert>
+          <Text $size="sm" $variation="600">
+            {t('Are you sure you want to delete the document "{{title}}"?', {
+              title: doc.title,
+            })}
+          </Text>
         )}
 
         {isError && <TextErrors causes={error.cause} />}

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, BoxButton, Icon, Text } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { useEditorStore, useHeadingStore } from '@/features/docs/doc-editor';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
@@ -11,6 +12,8 @@ import { Heading } from './Heading';
 export const TableContent = () => {
   const { headings } = useHeadingStore();
   const { editor } = useEditorStore();
+  const { spacingsTokens } = useCunninghamTheme();
+  const spacing = spacingsTokens();
 
   const [headingIdHighlight, setHeadingIdHighlight] = useState<string>();
 
@@ -58,33 +61,33 @@ export const TableContent = () => {
     };
   }, [headings, setHeadingIdHighlight]);
 
+  const onOpen = () => {
+    setIsHover(true);
+    setTimeout(() => {
+      const element = document.getElementById(`heading-${headingIdHighlight}`);
+
+      element?.scrollIntoView({
+        behavior: 'instant',
+        inline: 'center',
+        block: 'center',
+      });
+    }, 0); // 300ms is the transition time of the box
+  };
+
+  const onClose = () => {
+    setIsHover(false);
+  };
+
   if (!editor) {
     return null;
   }
 
   return (
     <Box
-      onMouseEnter={() => {
-        setIsHover(true);
-        setTimeout(() => {
-          const element = document.getElementById(
-            `heading-${headingIdHighlight}`,
-          );
-
-          element?.scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'center',
-          });
-        }, 250); // 300ms is the transition time of the box
-      }}
-      onMouseLeave={() => {
-        setIsHover(false);
-      }}
       id="summaryContainer"
-      $effect="show"
-      $width="40px"
-      $height="40px"
+      $width={!isHover ? '40px' : '200px'}
+      $height={!isHover ? '40px' : 'auto'}
+      $maxHeight="calc(50vh - 60px)"
       $zIndex={1000}
       $align="center"
       $padding="xs"
@@ -94,51 +97,69 @@ export const TableContent = () => {
         overflow: hidden;
         border-radius: var(--c--theme--spacings--3xs);
         background: var(--c--theme--colors--greyscale-000);
-
-        &:hover {
-          overflow-y: auto;
+        ${isHover &&
+        css`
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
           align-items: flex-start;
           gap: var(--c--theme--spacings--2xs);
-          width: 200px;
-          height: auto;
-          max-height: calc(100vh - 60px - 15vh);
-        }
+        `}
       `}
     >
       {!isHover && (
-        <Box $justify="center" $align="center">
+        <BoxButton onClick={onOpen} $justify="center" $align="center">
           <Icon iconName="list" $theme="primary" $variation="800" />
-        </Box>
+        </BoxButton>
       )}
       {isHover && (
-        <Box $width="100%">
+        <Box
+          $width="100%"
+          $overflow="hidden"
+          $css={css`
+            user-select: none;
+          `}
+        >
           <Box
-            $margin={{ bottom: '20px' }}
+            $margin={{ bottom: '10px' }}
             $direction="row"
             $justify="space-between"
             $align="center"
           >
-            <Text $weight="bold" $variation="800" $theme="primary">
+            <Text $weight="500" $size="sm" $variation="800" $theme="primary">
               {t('Summary')}
             </Text>
-            <Icon iconName="list" $theme="primary" $variation="800" />
+            <BoxButton
+              onClick={onClose}
+              $justify="center"
+              $align="center"
+              $css={css`
+                transform: rotate(180deg);
+              `}
+            >
+              <Icon iconName="menu_open" $theme="primary" $variation="800" />
+            </BoxButton>
           </Box>
-          {headings?.map(
-            (heading) =>
-              heading.contentText && (
-                <Heading
-                  editor={editor}
-                  headingId={heading.id}
-                  level={heading.props.level}
-                  text={heading.contentText}
-                  key={heading.id}
-                  isHighlight={headingIdHighlight === heading.id}
-                />
-              ),
-          )}
+          <Box
+            $gap={spacing['3xs']}
+            $css={css`
+              overflow-y: auto;
+            `}
+          >
+            {headings?.map(
+              (heading) =>
+                heading.contentText && (
+                  <Heading
+                    editor={editor}
+                    headingId={heading.id}
+                    level={heading.props.level}
+                    text={heading.contentText}
+                    key={heading.id}
+                    isHighlight={headingIdHighlight === heading.id}
+                  />
+                ),
+            )}
+          </Box>
         </Box>
       )}
     </Box>
