@@ -19,7 +19,8 @@ export const SeparatedSection = ({
   return (
     <Box
       $css={css`
-        padding: ${spacings['base']} 0;
+        width: 100%;
+        padding: ${spacings['sm']} 0;
         ${showSeparator &&
         css`
           border-bottom: 1px solid ${colors?.['greyscale-200']};

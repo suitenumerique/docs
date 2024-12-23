@@ -29,15 +29,16 @@ const getColorFromName = (name: string) => {
 
 type Props = {
   user: User;
+  background?: string;
 };
 
-export const UserAvatar = ({ user }: Props) => {
+export const UserAvatar = ({ user, background }: Props) => {
   const name = user.full_name || user.email || '?';
   const splitName = name?.split(' ');
 
   return (
     <Box
-      $background={getColorFromName(name)}
+      $background={background || getColorFromName(name)}
       $width="24px"
       $height="24px"
       $direction="row"

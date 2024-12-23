@@ -53,37 +53,44 @@ export const DocsGrid = ({
   return (
     <Box $position="relative" $width="100%" $maxWidth="960px">
       <DocsGridLoader isLoading={isRefetching} />
-      <Card data-testid="docs-grid" $padding="md">
+      <Card
+        data-testid="docs-grid"
+        $padding={{
+          top: 'base',
+          horizontal: isDesktop ? 'md' : 'xs',
+          bottom: 'md',
+        }}
+      >
         <Text
           as="h4"
           $size="h4"
-          $weight="700"
-          $margin={{ top: '0px', bottom: 'xs' }}
+          $variation="1000"
+          $margin={{ top: '0px', bottom: '10px' }}
         >
           {title}
         </Text>
 
-        <Box>
+        <Box $gap="6px">
           <Box
             $direction="row"
-            $padding="xs"
+            $padding={{ horizontal: 'xs' }}
             $gap="20px"
             data-testid="docs-grid-header"
           >
             <Box $flex={6} $padding="3xs">
-              <Text $size="xs" $variation="600">
+              <Text $size="xs" $variation="600" $weight="500">
                 {t('Name')}
               </Text>
             </Box>
             {isDesktop && (
-              <Box $flex={1.3} $padding="3xs">
-                <Text $size="xs" $variation="600">
+              <Box $flex={2} $padding="3xs">
+                <Text $size="xs" $weight="500" $variation="600">
                   {t('Updated at')}
                 </Text>
               </Box>
             )}
 
-            <Box $flex={1} $align="flex-end" $padding="3xs" />
+            <Box $flex={1.15} $align="flex-end" $padding="3xs" />
           </Box>
 
           {/* Body */}

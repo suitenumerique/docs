@@ -36,7 +36,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
         $align="center"
         $gap="20px"
         role="row"
-        $padding={{ vertical: 'xs', horizontal: 'sm' }}
+        $padding={{ vertical: '2xs', horizontal: isDesktop ? 'base' : 'xs' }}
         $css={css`
           cursor: pointer;
           border-radius: 4px;
@@ -46,7 +46,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
         `}
       >
         <StyledLink
-          $css="flex: 7; align-items: center;"
+          $css="flex: 8; align-items: center;"
           href={`/docs/${doc.id}`}
         >
           <Box
@@ -57,19 +57,19 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
           </Box>
           {isDesktop && (
-            <Box $flex={1.3}>
-              <Text $variation="500" $size="xs">
+            <Box $flex={2}>
+              <Text $variation="600" $size="xs">
                 {DateTime.fromISO(doc.updated_at).toRelative()}
               </Text>
             </Box>
           )}
         </StyledLink>
         <Box
-          $flex={1}
+          $flex={1.15}
           $direction="row"
           $align="center"
           $justify="flex-end"
-          $gap="10px"
+          $gap="32px"
         >
           {isDesktop && isPublic && (
             <Button
@@ -79,6 +79,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
                 handleShareClick();
               }}
               size="nano"
+              fullWidth
               icon={<Icon $variation="000" iconName="public" />}
             >
               {isShared ? sharedCount : undefined}
@@ -91,6 +92,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
                 event.stopPropagation();
                 handleShareClick();
               }}
+              fullWidth
               color="tertiary"
               size="nano"
               icon={<Icon $variation="800" $theme="primary" iconName="group" />}
@@ -105,13 +107,14 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
                 event.stopPropagation();
                 handleShareClick();
               }}
+              fullWidth
               size="nano"
               icon={<Icon $variation="000" iconName="corporate_fare" />}
             >
               {sharedCount}
             </Button>
           )}
-          <DocsGridActions doc={doc} />
+          <DocsGridActions doc={doc} openShareModal={handleShareClick} />
         </Box>
       </Box>
       {shareModal.isOpen && (

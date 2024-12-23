@@ -13,11 +13,16 @@ import { useDeleteFavoriteDoc } from '../../doc-management/api/useDeleteFavorite
 
 interface DocsGridActionsProps {
   doc: Doc;
+  openShareModal?: () => void;
 }
 
-export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
+export const DocsGridActions = ({
+  doc,
+  openShareModal,
+}: DocsGridActionsProps) => {
   const { t } = useTranslation();
   const deleteModal = useModal();
+
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalideQueries: [KEY_LIST_DOC],
   });
@@ -38,6 +43,13 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
       },
       testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
     },
+    {
+      label: t('Share'),
+      icon: 'group',
+      callback: () => openShareModal?.(),
+      testId: `docs-grid-actions-share-${doc.id}`,
+    },
+
     {
       label: t('Remove'),
       icon: 'delete',

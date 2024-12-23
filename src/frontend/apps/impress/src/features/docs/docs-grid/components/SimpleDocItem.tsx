@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
@@ -20,14 +21,12 @@ const ItemTextCss = css`
 type SimpleDocItemProps = {
   doc: Doc;
   isPinned?: boolean;
-  subText?: string;
   showAccesses?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
   isPinned = false,
-  subText,
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { spacingsTokens } = useCunninghamTheme();
@@ -51,7 +50,7 @@ export const SimpleDocItem = ({
       >
         {isPinned ? <PinnedDocumentIcon /> : <SimpleFileIcon />}
       </Box>
-      <Box>
+      <Box $justify="center">
         <Text
           aria-describedby="doc-title"
           aria-label={doc.title}
@@ -62,23 +61,34 @@ export const SimpleDocItem = ({
         >
           {doc.title}
         </Text>
-        <Box $direction="row" $align="center" $gap={spacings['3xs']}>
-          {(!isDesktop || showAccesses) && (
-            <>
-              {isPublic && <Icon iconName="public" $size="16px" />}
-              {isShared && <Icon iconName="group" $size="16px" />}
-              {isSharedOrPublic && accessCount > 0 && (
-                <Text $size="12px">{accessCount}</Text>
-              )}
-              {isSharedOrPublic && <Text $size="12px">·</Text>}
-            </>
-          )}
-
-          <Text $size="xs" $variation="500" $weight="500" $css={ItemTextCss}>
-            {subText ??
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi vel ante libero. Interdum et malesuada fames ac ante ipsum primis in faucibus. Sed imperdiet neque quam, sed euismod metus mollis ut. '}
-          </Text>
-        </Box>
+        {(!isDesktop || showAccesses) && (
+          <Box
+            $direction="row"
+            $align="center"
+            $gap={spacings['3xs']}
+            $margin={{ top: '-2px' }}
+          >
+            {isPublic && (
+              <Icon iconName="public" $size="16px" $variation="600" />
+            )}
+            {isShared && (
+              <Icon iconName="group" $size="16px" $variation="600" />
+            )}
+            {isSharedOrPublic && accessCount > 0 && (
+              <Text $size="12px" $weight="bold" $variation="600">
+                {accessCount}
+              </Text>
+            )}
+            {isSharedOrPublic && (
+              <Text $size="12px" $variation="600">
+                ·
+              </Text>
+            )}
+            <Text $variation="600" $size="xs">
+              {DateTime.fromISO(doc.updated_at).toRelative()}
+            </Text>
+          </Box>
+        )}
       </Box>
     </Box>
   );
