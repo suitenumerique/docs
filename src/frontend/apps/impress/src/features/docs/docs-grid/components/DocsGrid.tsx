@@ -1,6 +1,7 @@
 import { Button, Loader } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
+import { css } from 'styled-components';
 
 import { Box, Card, Text } from '@/components';
 import { useResponsiveStore } from '@/stores';
@@ -51,10 +52,26 @@ export const DocsGrid = ({
         : t('All docs');
 
   return (
-    <Box $position="relative" $width="100%" $maxWidth="960px">
+    <Box
+      $position="relative"
+      $width="100%"
+      $maxWidth="960px"
+      $maxHeight="calc(100vh - 52px - 1rem)"
+      $align="center"
+      $css={css`
+        overflow-x: hidden;
+        overflow-y: auto;
+      `}
+    >
       <DocsGridLoader isLoading={isRefetching} />
       <Card
         data-testid="docs-grid"
+        $height="100%"
+        $width="100%"
+        $css={css`
+          overflow-x: hidden;
+          overflow-y: auto;
+        `}
         $padding={{
           top: 'base',
           horizontal: isDesktop ? 'md' : 'xs',
