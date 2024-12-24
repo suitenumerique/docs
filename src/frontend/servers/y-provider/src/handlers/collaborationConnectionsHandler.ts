@@ -49,10 +49,16 @@ export const collaborationHTTPHandler = async (
     return;
   }
 
-  const syncYDoc64 = await syncDoc(room, yDoc64, canEdit, req);
+  const { syncYDoc64, connectionsCount } = await syncDoc(
+    room,
+    yDoc64,
+    canEdit,
+    req,
+  );
 
   res.status(200).json({
     yDoc64: syncYDoc64,
+    connectionsCount,
   });
 };
 
@@ -69,6 +75,8 @@ const syncDoc = async (
 ) => {
   let docExist = false;
   let syncYDoc = undefined;
+  let connectionsCount = 0;
+
   hocusPocusServer.documents.forEach((hpYDoc) => {
     if (hpYDoc.name !== room) {
       return;
@@ -77,6 +85,7 @@ const syncDoc = async (
     docExist = true;
 
     const hpYDoc64 = toBase64(Y.encodeStateAsUpdate(hpYDoc));
+    connectionsCount = hpYDoc.getConnectionsCount();
 
     // If the document has not changed, return
     if (yDoc64 === hpYDoc64) {
@@ -117,5 +126,8 @@ const syncDoc = async (
     syncYDoc = hpYDoc.merge(ydoc);
   }
 
-  return syncYDoc && toBase64(Y.encodeStateAsUpdate(syncYDoc));
+  return {
+    syncYDoc64: syncYDoc && toBase64(Y.encodeStateAsUpdate(syncYDoc)),
+    connectionsCount,
+  };
 };
