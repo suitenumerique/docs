@@ -9,6 +9,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨Collaboration long polling fallback #517
+
+
 ## [2.0.0] - 2025-01-13
 
 ## Added

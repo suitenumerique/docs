@@ -14,7 +14,7 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
   const { setBroadcastProvider } = useBroadcastStore();
   const { provider, createProvider, destroyProvider, isProviderFailure } =
     useProviderStore();
-  const [pollingInterval] = useState(1500);
+  const [pollingInterval, setPollingInterval] = useState(1500);
   const intervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -68,7 +68,9 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
         yDoc64: toBase64(Y.encodeStateAsUpdate(provider.document)),
       })
         .then((response) => {
-          const { yDoc64 } = response;
+          const { yDoc64, connectionsCount } = response;
+
+          setPollingInterval(connectionsCount ? 600 : 1500);
 
           if (!yDoc64) {
             return;

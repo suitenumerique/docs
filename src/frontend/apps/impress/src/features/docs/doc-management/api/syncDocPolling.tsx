@@ -9,6 +9,7 @@ interface SyncDocPollingParams {
 
 interface SyncDocPollingResponse {
   yDoc64?: Base64;
+  connectionsCount: number;
 }
 
 export const syncDocPolling = async ({
