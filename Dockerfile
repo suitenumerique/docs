@@ -15,6 +15,13 @@ FROM base AS back-builder
 
 WORKDIR /builder
 
+# Install Rust and Cargo using Alpine's package manager
+RUN apk add --no-cache \
+  build-base \
+  libffi-dev \
+  rust \
+  cargo
+
 # Copy required python dependencies
 COPY ./src/backend /builder
 

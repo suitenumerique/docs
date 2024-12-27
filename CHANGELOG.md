@@ -132,6 +132,7 @@ and this project adheres to
 
 ## Added
 
+- ⚗️(backend) add util to extract text from base64 yjs document
 - ✨(backend) add soft delete and restore API endpoints to documents #516
 - ✨(backend) allow organizing documents in a tree structure #516
 - ✨(backend) add "excerpt" field to document list serializer #516

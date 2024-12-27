@@ -25,6 +25,7 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "beautifulsoup4==4.12.3",
     "boto3==1.37.18",
     "Brotli==1.1.0",
     "celery[redis]==5.4.0",
@@ -47,6 +48,7 @@ dependencies = [
     "gunicorn==23.0.0",
     "jsonschema==4.23.0",
     "markdown==3.7",
+    "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
     "openai==1.68.2",
     "psycopg[binary]==3.2.6",
@@ -55,8 +57,13 @@ dependencies = [
     "requests==2.32.3",
     "sentry-sdk==2.24.0",
     "url-normalize==1.4.3",
+<<<<<<< HEAD
     "whitenoise==6.9.0",
     "mozilla-django-oidc==4.0.1",
+=======
+    "whitenoise==6.8.2",
+    "y-py==0.6.2",
+>>>>>>> f087cd70 (✨(backend) add util to extract text from Ydoc content)
 ]
 
 [project.urls]
