@@ -592,6 +592,7 @@ class Document(MP_Node, BaseModel):
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": RoleChoices.OWNER in roles,
+            "move": is_owner_or_admin,
             "partial_update": can_update,
             "retrieve": can_get,
             "media_auth": can_get,

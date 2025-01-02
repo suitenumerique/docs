@@ -36,6 +36,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "invite_owner": False,
             "link_configuration": False,
             "media_auth": True,
+            "move": False,
             "partial_update": document.link_role == "editor",
             "retrieve": True,
             "update": document.link_role == "editor",
@@ -90,6 +91,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "invite_owner": False,
             "link_configuration": False,
             "media_auth": True,
+            "move": False,
             "partial_update": grand_parent.link_role == "editor",
             "retrieve": True,
             "update": grand_parent.link_role == "editor",
@@ -175,8 +177,9 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "destroy": False,
             "favorite": True,
             "invite_owner": False,
-            "media_auth": True,
             "link_configuration": False,
+            "media_auth": True,
+            "move": False,
             "partial_update": document.link_role == "editor",
             "retrieve": True,
             "update": document.link_role == "editor",
@@ -237,6 +240,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
+            "move": False,
             "media_auth": True,
             "partial_update": grand_parent.link_role == "editor",
             "retrieve": True,
@@ -408,6 +412,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "invite_owner": access.role == "owner",
             "link_configuration": access.role in ["administrator", "owner"],
             "media_auth": True,
+            "move": access.role in ["administrator", "owner"],
             "partial_update": access.role != "reader",
             "retrieve": True,
             "update": access.role != "reader",
@@ -753,4 +758,3 @@ def test_api_documents_retrieve_numqueries_with_link_trace(django_assert_num_que
     assert response.status_code == 200
 
     assert response.json()["id"] == str(document.id)
-

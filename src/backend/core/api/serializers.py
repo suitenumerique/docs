@@ -568,3 +568,37 @@ class AITranslateSerializer(serializers.Serializer):
         if len(value.strip()) == 0:
             raise serializers.ValidationError("Text field cannot be empty.")
         return value
+
+
+class MoveDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for validating input data to move a document within the tree structure.
+
+    Fields:
+        - target_document_id (UUIDField): The ID of the target parent document where the
+            document should be moved. This field is required and must be a valid UUID.
+        - position (ChoiceField): Specifies the position of the document in relation to
+            the target parent's children.
+          Choices:
+            - "first-child": Place the document as the first child of the target parent.
+            - "last-child": Place the document as the last child of the target parent (default).
+            - "left": Place the document as the left sibling of the target parent.
+            - "right": Place the document as the right sibling of the target parent.
+
+    Example:
+        Input payload for moving a document:
+        {
+            "target_document_id": "123e4567-e89b-12d3-a456-426614174000",
+            "position": "first-child"
+        }
+
+    Notes:
+        - The `target_document_id` is mandatory.
+        - The `position` defaults to "last-child" if not provided.
+    """
+
+    target_document_id = serializers.UUIDField(required=True)
+    position = serializers.ChoiceField(
+        choices=enums.MoveNodePositionChoices.choices,
+        default=enums.MoveNodePositionChoices.LAST_CHILD,
+    )
