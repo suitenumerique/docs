@@ -27,11 +27,8 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
+      - name: Publish Helm charts
+        uses: numerique-gouv/helm-gh-pages@add-overwrite-option
         with:
           charts_dir: ./src/helm
-          skip_existing: True
-          mark_as_latest: False
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
