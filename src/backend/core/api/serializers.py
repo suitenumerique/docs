@@ -147,6 +147,7 @@ class ListDocumentSerializer(BaseResourceSerializer):
 
     is_favorite = serializers.BooleanField(read_only=True)
     nb_accesses = serializers.IntegerField(read_only=True)
+    user_roles = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
@@ -165,6 +166,7 @@ class ListDocumentSerializer(BaseResourceSerializer):
             "path",
             "title",
             "updated_at",
+            "user_roles",
         ]
         read_only_fields = [
             "id",
@@ -180,7 +182,18 @@ class ListDocumentSerializer(BaseResourceSerializer):
             "numchild",
             "path",
             "updated_at",
+            "user_roles",
         ]
+
+    def get_user_roles(self, document):
+        """
+        Return roles of the logged-in user for the current document,
+        taking into account ancestors.
+        """
+        request = self.context.get("request")
+        if request:
+            return document.get_roles(request.user)
+        return []
 
 
 class DocumentSerializer(ListDocumentSerializer):
@@ -206,6 +219,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "path",
             "title",
             "updated_at",
+            "user_roles",
         ]
         read_only_fields = [
             "id",
@@ -220,6 +234,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "numchild",
             "path",
             "updated_at",
+            "user_roles",
         ]
 
     def get_fields(self):

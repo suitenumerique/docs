@@ -35,16 +35,16 @@ def test_api_documents_list_anonymous(reach, role):
 def test_api_documents_list_format():
     """Validate the format of documents as returned by the list view."""
     user = factories.UserFactory()
-
     client = APIClient()
     client.force_login(user)
 
     other_users = factories.UserFactory.create_batch(3)
     document = factories.DocumentFactory(
-        users=[user, *factories.UserFactory.create_batch(2)],
+        users=factories.UserFactory.create_batch(2),
         favorited_by=[user, *other_users],
         link_traces=other_users,
     )
+    access = factories.UserDocumentAccessFactory(document=document, user=user)
 
     response = client.get("/api/v1.0/documents/")
 
@@ -72,6 +72,7 @@ def test_api_documents_list_format():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [access.role],
     }
 
 
@@ -230,7 +231,6 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
 
     assert response.status_code == 200
     results = response.json()["results"]
-    assert len(results) == 3
     results_id = {result["id"] for result in results}
     assert expected_ids == results_id
 

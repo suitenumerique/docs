@@ -56,6 +56,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [],
     }
 
 
@@ -109,6 +110,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [],
     }
 
 
@@ -195,6 +197,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [],
     }
     assert (
         models.LinkTrace.objects.filter(document=document, user=user).exists() is True
@@ -255,6 +258,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [],
     }
 
 
@@ -340,7 +344,7 @@ def test_api_documents_retrieve_authenticated_related_direct():
     client.force_login(user)
 
     document = factories.DocumentFactory()
-    factories.UserDocumentAccessFactory(document=document, user=user)
+    access = factories.UserDocumentAccessFactory(document=document, user=user)
     factories.UserDocumentAccessFactory(document=document)
 
     response = client.get(
@@ -363,6 +367,7 @@ def test_api_documents_retrieve_authenticated_related_direct():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [access.role],
     }
 
 
@@ -423,6 +428,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": [access.role],
     }
 
 
@@ -516,16 +522,16 @@ def test_api_documents_retrieve_authenticated_related_team_none(mock_user_teams)
 
 
 @pytest.mark.parametrize(
-    "teams",
+    "teams,roles",
     [
-        ["readers"],
-        ["unknown", "readers"],
-        ["editors"],
-        ["unknown", "editors"],
+        [["readers"], ["reader"]],
+        [["unknown", "readers"], ["reader"]],
+        [["editors"], ["editor"]],
+        [["unknown", "editors"], ["editor"]],
     ],
 )
 def test_api_documents_retrieve_authenticated_related_team_members(
-    teams, mock_user_teams
+    teams, roles, mock_user_teams
 ):
     """
     Authenticated users should be allowed to retrieve a document to which they
@@ -573,19 +579,20 @@ def test_api_documents_retrieve_authenticated_related_team_members(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": roles,
     }
 
 
 @pytest.mark.parametrize(
-    "teams",
+    "teams,roles",
     [
-        ["administrators"],
-        ["editors", "administrators"],
-        ["unknown", "administrators"],
+        [["administrators"], ["administrator"]],
+        [["editors", "administrators"], ["administrator", "editor"]],
+        [["unknown", "administrators"], ["administrator"]],
     ],
 )
 def test_api_documents_retrieve_authenticated_related_team_administrators(
-    teams, mock_user_teams
+    teams, roles, mock_user_teams
 ):
     """
     Authenticated users should be allowed to retrieve a document to which they
@@ -633,20 +640,21 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": roles,
     }
 
 
 @pytest.mark.parametrize(
-    "teams",
+    "teams,roles",
     [
-        ["owners"],
-        ["owners", "administrators"],
-        ["members", "administrators", "owners"],
-        ["unknown", "owners"],
+        [["owners"], ["owner"]],
+        [["owners", "administrators"], ["owner", "administrator"]],
+        [["members", "administrators", "owners"], ["owner", "administrator"]],
+        [["unknown", "owners"], ["owner"]],
     ],
 )
 def test_api_documents_retrieve_authenticated_related_team_owners(
-    teams, mock_user_teams
+    teams, roles, mock_user_teams
 ):
     """
     Authenticated users should be allowed to retrieve a restricted document to which
@@ -655,7 +663,6 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
     mock_user_teams.return_value = teams
 
     user = factories.UserFactory()
-
     client = APIClient()
     client.force_login(user)
 
@@ -694,4 +701,56 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "user_roles": roles,
     }
+
+
+def test_api_documents_retrieve_user_roles(django_assert_num_queries):
+    """
+    Roles should be annotated on querysets taking into account all documents ancestors.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    grand_parent = factories.DocumentFactory(
+        users=factories.UserFactory.create_batch(2)
+    )
+    parent = factories.DocumentFactory(
+        parent=grand_parent, users=factories.UserFactory.create_batch(2)
+    )
+    document = factories.DocumentFactory(
+        parent=parent, users=factories.UserFactory.create_batch(2)
+    )
+
+    accesses = (
+        factories.UserDocumentAccessFactory(document=grand_parent, user=user),
+        factories.UserDocumentAccessFactory(document=parent, user=user),
+        factories.UserDocumentAccessFactory(document=document, user=user),
+    )
+    expected_roles = {access.role for access in accesses}
+
+    with django_assert_num_queries(8):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    assert response.status_code == 200
+
+    user_roles = response.json()["user_roles"]
+    assert set(user_roles) == expected_roles
+
+
+def test_api_documents_retrieve_numqueries_with_link_trace(django_assert_num_queries):
+    """If the link traced already exists, the number of queries should be minimal."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[user], link_traces=[user])
+
+    with django_assert_num_queries(2):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    assert response.status_code == 200
+
+    assert response.json()["id"] == str(document.id)
+

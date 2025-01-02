@@ -43,6 +43,7 @@ def test_api_documents_children_list_anonymous_public_standalone():
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
@@ -59,6 +60,7 @@ def test_api_documents_children_list_anonymous_public_standalone():
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
         ],
     }
@@ -102,6 +104,7 @@ def test_api_documents_children_list_anonymous_public_parent():
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
@@ -118,6 +121,7 @@ def test_api_documents_children_list_anonymous_public_parent():
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
         ],
     }
@@ -179,6 +183,7 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -195,6 +200,7 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
         ],
     }
@@ -242,6 +248,7 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -258,6 +265,7 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [],
             },
         ],
     }
@@ -327,6 +335,7 @@ def test_api_documents_children_list_authenticated_related_direct():
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [access.role],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -343,6 +352,7 @@ def test_api_documents_children_list_authenticated_related_direct():
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [access.role],
             },
         ],
     }
@@ -365,8 +375,10 @@ def test_api_documents_children_list_authenticated_related_parent():
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
+    grand_parent_access = factories.UserDocumentAccessFactory(
+        document=grand_parent, user=user
+    )
     factories.UserDocumentAccessFactory(document=grand_parent, user=user)
-    factories.UserDocumentAccessFactory(document=grand_parent)
 
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/children/",
@@ -392,6 +404,7 @@ def test_api_documents_children_list_authenticated_related_parent():
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [grand_parent_access.role],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -408,6 +421,7 @@ def test_api_documents_children_list_authenticated_related_parent():
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [grand_parent_access.role],
             },
         ],
     }
@@ -479,7 +493,7 @@ def test_api_documents_children_list_authenticated_related_team_members(
     document = factories.DocumentFactory(link_reach="restricted")
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
 
-    factories.TeamDocumentAccessFactory(document=document, team="myteam")
+    access = factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
     response = client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
@@ -505,6 +519,7 @@ def test_api_documents_children_list_authenticated_related_team_members(
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [access.role],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -521,6 +536,7 @@ def test_api_documents_children_list_authenticated_related_team_members(
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_roles": [access.role],
             },
         ],
     }
