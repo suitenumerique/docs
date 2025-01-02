@@ -3,7 +3,10 @@ Tests for Documents API endpoint in impress's core app: list
 """
 
 import random
+from datetime import timedelta
 from unittest import mock
+
+from django.utils import timezone
 
 import pytest
 from faker import Faker
@@ -21,7 +24,7 @@ pytestmark = pytest.mark.django_db
 def test_api_documents_list_anonymous(reach, role):
     """
     Anonymous users should not be allowed to list documents whatever the
-    link reach and the role
+    link reach and link role
     """
     factories.DocumentFactory(link_reach=reach, link_role=role)
 
@@ -76,6 +79,7 @@ def test_api_documents_list_format():
     }
 
 
+# pylint: disable=too-many-locals
 def test_api_documents_list_authenticated_direct(django_assert_num_queries):
     """
     Authenticated users should be able to list documents they are a direct
@@ -110,17 +114,50 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
     hidden_root = factories.DocumentFactory()
     child3_with_access = factories.DocumentFactory(parent=hidden_root)
     factories.UserDocumentAccessFactory(user=user, document=child3_with_access)
+    child4_with_access = factories.DocumentFactory(parent=hidden_root)
+    factories.UserDocumentAccessFactory(user=user, document=child4_with_access)
 
-    expected_ids = {str(document1.id), str(document2.id), str(child3_with_access.id)}
+    # Documents that are soft deleted and children of a soft deleted document should not be listed
+    soft_deleted_document = factories.DocumentFactory(users=[user])
+    child_of_soft_deleted_document = factories.DocumentFactory(
+        users=[user],
+        parent=soft_deleted_document,
+    )
+    factories.DocumentFactory(users=[user], parent=child_of_soft_deleted_document)
+    soft_deleted_document.soft_delete()
 
-    with django_assert_num_queries(7):
+    # Documents that are permanently deleted and children of a permanently deleted
+    # document should not be listed
+    permanently_deleted_document = factories.DocumentFactory(users=[user])
+    child_of_permanently_deleted_document = factories.DocumentFactory(
+        users=[user], parent=permanently_deleted_document
+    )
+    factories.DocumentFactory(
+        users=[user], parent=child_of_permanently_deleted_document
+    )
+
+    fourty_days_ago = timezone.now() - timedelta(days=40)
+    with mock.patch("django.utils.timezone.now", return_value=fourty_days_ago):
+        permanently_deleted_document.soft_delete()
+
+    expected_ids = {
+        str(document1.id),
+        str(document2.id),
+        str(child3_with_access.id),
+        str(child4_with_access.id),
+    }
+
+    with django_assert_num_queries(8):
+        response = client.get("/api/v1.0/documents/")
+
+    # nb_accesses should now be cached
+    with django_assert_num_queries(4):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
     results = response.json()["results"]
-    assert len(results) == 3
-    results_id = {result["id"] for result in results}
-    assert expected_ids == results_id
+    results_ids = {result["id"] for result in results}
+    assert expected_ids == results_ids
 
 
 def test_api_documents_list_authenticated_via_team(
@@ -148,7 +185,11 @@ def test_api_documents_list_authenticated_via_team(
 
     expected_ids = {str(document.id) for document in documents_team1 + documents_team2}
 
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(9):
+        response = client.get("/api/v1.0/documents/")
+
+    # nb_accesses should now be cached
+    with django_assert_num_queries(4):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
@@ -177,10 +218,12 @@ def test_api_documents_list_authenticated_link_reach_restricted(
     other_document = factories.DocumentFactory(link_reach="public")
     models.LinkTrace.objects.create(document=other_document, user=user)
 
+    with django_assert_num_queries(5):
+        response = client.get("/api/v1.0/documents/")
+
+    # nb_accesses should now be cached
     with django_assert_num_queries(4):
-        response = client.get(
-            "/api/v1.0/documents/",
-        )
+        response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
     results = response.json()["results"]
@@ -225,9 +268,11 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
     expected_ids = {str(document1.id), str(document2.id), str(visible_child.id)}
 
     with django_assert_num_queries(7):
-        response = client.get(
-            "/api/v1.0/documents/",
-        )
+        response = client.get("/api/v1.0/documents/")
+
+    # nb_accesses should now be cached
+    with django_assert_num_queries(4):
+        response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
     results = response.json()["results"]
@@ -317,7 +362,11 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
     factories.DocumentFactory.create_batch(2, users=[user])
 
     url = "/api/v1.0/documents/"
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(9):
+        response = client.get(url)
+
+    # nb_accesses should now be cached
+    with django_assert_num_queries(4):
         response = client.get(url)
 
     assert response.status_code == 200
@@ -330,7 +379,7 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
     for document in special_documents:
         models.DocumentFavorite.objects.create(document=document, user=user)
 
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(4):
         response = client.get(url)
 
     assert response.status_code == 200

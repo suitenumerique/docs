@@ -296,6 +296,7 @@ class Base(Configuration):
         "drf_spectacular",
         # Third party apps
         "corsheaders",
+        "django_filters",
         "dockerflow.django",
         "rest_framework",
         "parler",
@@ -350,6 +351,10 @@ class Base(Configuration):
         "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
         "REDOC_DIST": "SIDECAR",
     }
+
+    TRASHBIN_CUTOFF_DAYS = values.Value(
+        30, environ_name="TRASHBIN_CUTOFF_DAYS", environ_prefix=None
+    )
 
     # Mail
     EMAIL_BACKEND = values.Value("django.core.mail.backends.smtp.EmailBackend")
@@ -769,6 +774,11 @@ class Production(Base):
             "LOCATION": values.Value(
                 "redis://redis:6379/1",
                 environ_name="REDIS_URL",
+                environ_prefix=None,
+            ),
+            "TIMEOUT": values.IntegerValue(
+                30,  # timeout in seconds
+                environ_name="CACHES_DEFAULT_TIMEOUT",
                 environ_prefix=None,
             ),
             "OPTIONS": {

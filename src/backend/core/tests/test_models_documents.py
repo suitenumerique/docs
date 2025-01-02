@@ -2,12 +2,14 @@
 Unit tests for the Document model
 """
 
+import random
 import smtplib
 from logging import Logger
 from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser
 from django.core import mail
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.utils import timezone
@@ -81,6 +83,44 @@ def test_models_documents_tree_alphabet():
     assert models.Document.objects.count() == 124
 
 
+@pytest.mark.parametrize("depth", range(5))
+def test_models_documents_soft_delete(depth):
+    """Trying to delete a document that is already deleted or is a descendant of
+    a deleted document should raise an error.
+    """
+    documents = []
+    for i in range(depth + 1):
+        documents.append(
+            factories.DocumentFactory()
+            if i == 0
+            else factories.DocumentFactory(parent=documents[-1])
+        )
+    assert models.Document.objects.count() == depth + 1
+
+    # Delete any one of the documents...
+    deleted_document = random.choice(documents)
+    deleted_document.soft_delete()
+
+    with pytest.raises(RuntimeError):
+        documents[-1].soft_delete()
+
+    assert deleted_document.deleted_at is not None
+    assert deleted_document.ancestors_deleted_at == deleted_document.deleted_at
+
+    descendants = deleted_document.get_descendants()
+    for child in descendants:
+        assert child.deleted_at is None
+        assert child.ancestors_deleted_at is not None
+        assert child.ancestors_deleted_at == deleted_document.deleted_at
+
+    ancestors = deleted_document.get_ancestors()
+    for parent in ancestors:
+        assert parent.deleted_at is None
+        assert parent.ancestors_deleted_at is None
+
+    assert len(ancestors) + len(descendants) == depth
+
+
 # get_abilities
 
 
@@ -95,15 +135,16 @@ def test_models_documents_tree_alphabet():
         (False, "authenticated", "editor"),
     ],
 )
-def test_models_documents_get_abilities_forbidden(is_authenticated, reach, role):
+def test_models_documents_get_abilities_forbidden(
+    is_authenticated, reach, role, django_assert_num_queries
+):
     """
     Check abilities returned for a document giving insufficient roles to link holders
     i.e anonymous users or authenticated users who have no specific role on the document.
     """
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
-    abilities = document.get_abilities(user)
-    assert abilities == {
+    expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
         "ai_transform": False,
@@ -125,6 +166,12 @@ def test_models_documents_get_abilities_forbidden(is_authenticated, reach, role)
         "versions_list": False,
         "versions_retrieve": False,
     }
+    nb_queries = 1 if is_authenticated else 0
+    with django_assert_num_queries(nb_queries):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    assert document.get_abilities(user) == expected_abilities
 
 
 @pytest.mark.parametrize(
@@ -135,15 +182,16 @@ def test_models_documents_get_abilities_forbidden(is_authenticated, reach, role)
         (True, "authenticated"),
     ],
 )
-def test_models_documents_get_abilities_reader(is_authenticated, reach):
+def test_models_documents_get_abilities_reader(
+    is_authenticated, reach, django_assert_num_queries
+):
     """
     Check abilities returned for a document giving reader role to link holders
     i.e anonymous users or authenticated users who have no specific role on the document.
     """
     document = factories.DocumentFactory(link_reach=reach, link_role="reader")
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
-    abilities = document.get_abilities(user)
-    assert abilities == {
+    expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
         "ai_transform": False,
@@ -165,6 +213,12 @@ def test_models_documents_get_abilities_reader(is_authenticated, reach):
         "versions_list": False,
         "versions_retrieve": False,
     }
+    nb_queries = 1 if is_authenticated else 0
+    with django_assert_num_queries(nb_queries):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    assert all(value is False for value in document.get_abilities(user).values())
 
 
 @pytest.mark.parametrize(
@@ -175,15 +229,16 @@ def test_models_documents_get_abilities_reader(is_authenticated, reach):
         (True, "authenticated"),
     ],
 )
-def test_models_documents_get_abilities_editor(is_authenticated, reach):
+def test_models_documents_get_abilities_editor(
+    is_authenticated, reach, django_assert_num_queries
+):
     """
     Check abilities returned for a document giving editor role to link holders
     i.e anonymous users or authenticated users who have no specific role on the document.
     """
     document = factories.DocumentFactory(link_reach=reach, link_role="editor")
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
-    abilities = document.get_abilities(user)
-    assert abilities == {
+    expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
         "ai_transform": True,
@@ -205,14 +260,19 @@ def test_models_documents_get_abilities_editor(is_authenticated, reach):
         "versions_list": False,
         "versions_retrieve": False,
     }
+    nb_queries = 1 if is_authenticated else 0
+    with django_assert_num_queries(nb_queries):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    assert all(value is False for value in document.get_abilities(user).values())
 
 
-def test_models_documents_get_abilities_owner():
+def test_models_documents_get_abilities_owner(django_assert_num_queries):
     """Check abilities returned for the owner of a document."""
     user = factories.UserFactory()
-    access = factories.UserDocumentAccessFactory(role="owner", user=user)
-    abilities = access.document.get_abilities(access.user)
-    assert abilities == {
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    expected_abilities = {
         "accesses_manage": True,
         "accesses_view": True,
         "ai_transform": True,
@@ -234,13 +294,19 @@ def test_models_documents_get_abilities_owner():
         "versions_list": True,
         "versions_retrieve": True,
     }
+    with django_assert_num_queries(1):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    expected_abilities["move"] = False
+    assert document.get_abilities(user) == expected_abilities
 
 
-def test_models_documents_get_abilities_administrator():
+def test_models_documents_get_abilities_administrator(django_assert_num_queries):
     """Check abilities returned for the administrator of a document."""
-    access = factories.UserDocumentAccessFactory(role="administrator")
-    abilities = access.document.get_abilities(access.user)
-    assert abilities == {
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "administrator")])
+    expected_abilities = {
         "accesses_manage": True,
         "accesses_view": True,
         "ai_transform": True,
@@ -262,16 +328,18 @@ def test_models_documents_get_abilities_administrator():
         "versions_list": True,
         "versions_retrieve": True,
     }
+    with django_assert_num_queries(1):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    assert all(value is False for value in document.get_abilities(user).values())
 
 
 def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     """Check abilities returned for the editor of a document."""
-    access = factories.UserDocumentAccessFactory(role="editor")
-
-    with django_assert_num_queries(1):
-        abilities = access.document.get_abilities(access.user)
-
-    assert abilities == {
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "editor")])
+    expected_abilities = {
         "accesses_manage": False,
         "accesses_view": True,
         "ai_transform": True,
@@ -293,24 +361,27 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "versions_list": True,
         "versions_retrieve": True,
     }
+    with django_assert_num_queries(1):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    assert all(value is False for value in document.get_abilities(user).values())
 
 
 def test_models_documents_get_abilities_reader_user(django_assert_num_queries):
     """Check abilities returned for the reader of a document."""
-    access = factories.UserDocumentAccessFactory(
-        role="reader", document__link_role="reader"
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "reader")])
+    access_from_link = (
+        document.link_reach != "restricted" and document.link_role == "editor"
     )
-
-    with django_assert_num_queries(1):
-        abilities = access.document.get_abilities(access.user)
-
-    assert abilities == {
+    expected_abilities = {
         "accesses_manage": False,
         "accesses_view": True,
-        "ai_transform": False,
-        "ai_translate": False,
-        "attachment_upload": False,
-        "children_create": False,
+        "ai_transform": access_from_link,
+        "ai_translate": access_from_link,
+        "attachment_upload": access_from_link,
+        "children_create": access_from_link,
         "children_list": True,
         "collaboration_auth": True,
         "destroy": False,
@@ -319,13 +390,18 @@ def test_models_documents_get_abilities_reader_user(django_assert_num_queries):
         "link_configuration": False,
         "media_auth": True,
         "move": False,
-        "partial_update": False,
+        "partial_update": access_from_link,
         "retrieve": True,
-        "update": False,
+        "update": access_from_link,
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
     }
+    with django_assert_num_queries(1):
+        assert document.get_abilities(user) == expected_abilities
+    document.soft_delete()
+    document.refresh_from_db()
+    assert all(value is False for value in document.get_abilities(user).values())
 
 
 def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
@@ -555,3 +631,62 @@ def test_models_documents__email_invitation__failed(mock_logger, _mock_send_mail
 
     assert emails == ["guest3@example.com"]
     assert isinstance(exception, smtplib.SMTPException)
+
+
+# Document number of accesses
+
+
+def test_models_documents_nb_accesses_cache_is_set_and_retrieved(
+    django_assert_num_queries,
+):
+    """Test that nb_accesses is cached after the first computation."""
+    document = factories.DocumentFactory()
+    key = f"document_{document.id!s}_nb_accesses"
+    nb_accesses = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(nb_accesses, document=document)
+    factories.UserDocumentAccessFactory()  # An unrelated access should not be counted
+
+    # Initially, the nb_accesses should not be cached
+    assert cache.get(key) is None
+
+    # Compute the nb_accesses for the first time (this should set the cache)
+    with django_assert_num_queries(1):
+        assert document.nb_accesses == nb_accesses
+
+    # Ensure that the nb_accesses is now cached
+    with django_assert_num_queries(0):
+        assert document.nb_accesses == nb_accesses
+    assert cache.get(key) == nb_accesses
+
+    # The cache value should be invalidated when a document access is created
+    models.DocumentAccess.objects.create(
+        document=document, user=factories.UserFactory(), role="reader"
+    )
+    assert cache.get(key) is None  # Cache should be invalidated
+    with django_assert_num_queries(1):
+        new_nb_accesses = document.nb_accesses
+    assert new_nb_accesses == nb_accesses + 1
+    assert cache.get(key) == new_nb_accesses  # Cache should now contain the new value
+
+
+def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
+    django_assert_num_queries,
+):
+    """Test that the cache is invalidated when a document access is deleted."""
+    document = factories.DocumentFactory()
+    key = f"document_{document.id!s}_nb_accesses"
+    access = factories.UserDocumentAccessFactory(document=document)
+
+    # Initially, the nb_accesses should be cached
+    assert document.nb_accesses == 1
+    assert cache.get(key) == 1
+
+    # Remove the access and check if cache is invalidated
+    access.delete()
+    assert cache.get(key) is None  # Cache should be invalidated
+
+    # Recompute the nb_accesses (this should trigger a cache set)
+    with django_assert_num_queries(1):
+        new_nb_accesses = document.nb_accesses
+    assert new_nb_accesses == 0
+    assert cache.get(key) == 0  # Cache should now contain the new value

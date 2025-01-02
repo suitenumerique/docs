@@ -624,7 +624,9 @@ def test_api_document_invitations_create_cannot_invite_existing_users():
     )
 
     assert response.status_code == 400
-    assert response.json() == ["This email is already associated to a registered user."]
+    assert response.json() == {
+        "email": ["This email is already associated to a registered user."]
+    }
 
 
 # Update

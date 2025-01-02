@@ -24,7 +24,7 @@ class DocumentFilter(django_filters.FilterSet):
 
     class Meta:
         model = models.Document
-        fields = ["is_creator_me", "is_favorite", "link_reach", "title"]
+        fields = ["is_creator_me", "is_favorite", "title"]
 
     # pylint: disable=unused-argument
     def filter_is_creator_me(self, queryset, name, value):
@@ -63,7 +63,4 @@ class DocumentFilter(django_filters.FilterSet):
         if not user.is_authenticated:
             return queryset
 
-        if value:
-            return queryset.filter(favorited_by_users__user=user)
-
-        return queryset.exclude(favorited_by_users__user=user)
+        return queryset.filter(is_favorite=bool(value))

@@ -604,15 +604,19 @@ def test_api_document_versions_update_authenticated_related(via, mock_user_teams
 # Delete
 
 
-def test_api_document_versions_delete_anonymous():
+@pytest.mark.parametrize("reach", models.LinkReachChoices.values)
+def test_api_document_versions_delete_anonymous(reach):
     """Anonymous users should not be allowed to destroy a document version."""
-    access = factories.UserDocumentAccessFactory()
+    access = factories.UserDocumentAccessFactory(document__link_reach=reach)
 
     response = APIClient().delete(
         f"/api/v1.0/documents/{access.document_id!s}/versions/{access.id!s}/",
     )
 
     assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Authentication credentials were not provided."
+    }
 
 
 @pytest.mark.parametrize("reach", models.LinkReachChoices.values)

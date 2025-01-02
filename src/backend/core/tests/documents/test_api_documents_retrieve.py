@@ -3,6 +3,10 @@ Tests for Documents API endpoint in impress's core app: retrieve
 """
 
 import random
+from datetime import timedelta
+from unittest import mock
+
+from django.utils import timezone
 
 import pytest
 from rest_framework.test import APIClient
@@ -735,7 +739,7 @@ def test_api_documents_retrieve_user_roles(django_assert_num_queries):
     )
     expected_roles = {access.role for access in accesses}
 
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(10):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
@@ -752,9 +756,175 @@ def test_api_documents_retrieve_numqueries_with_link_trace(django_assert_num_que
 
     document = factories.DocumentFactory(users=[user], link_traces=[user])
 
-    with django_assert_num_queries(2):
+    with django_assert_num_queries(4):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    with django_assert_num_queries(3):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
 
     assert response.json()["id"] == str(document.id)
+
+
+# Soft/permanent delete
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+@pytest.mark.parametrize("reach", models.LinkReachChoices.values)
+def test_api_documents_retrieve_soft_deleted_anonymous(reach, depth):
+    """
+    A soft/permanently deleted public document should not be accessible via its
+    detail endpoint for anonymous users, and should return a 404.
+    """
+    documents = []
+    for i in range(depth):
+        documents.append(
+            factories.DocumentFactory(link_reach=reach)
+            if i == 0
+            else factories.DocumentFactory(parent=documents[-1])
+        )
+    assert models.Document.objects.count() == depth
+
+    response = APIClient().get(f"/api/v1.0/documents/{documents[-1].id!s}/")
+
+    assert response.status_code == 200 if reach == "public" else 401
+
+    # Delete any one of the documents...
+    deleted_document = random.choice(documents)
+    deleted_document.soft_delete()
+
+    response = APIClient().get(f"/api/v1.0/documents/{documents[-1].id!s}/")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
+
+    fourty_days_ago = timezone.now() - timedelta(days=40)
+    deleted_document.deleted_at = fourty_days_ago
+    deleted_document.ancestors_deleted_at = fourty_days_ago
+    deleted_document.save()
+
+    response = APIClient().get(f"/api/v1.0/documents/{documents[-1].id!s}/")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+@pytest.mark.parametrize("reach", models.LinkReachChoices.values)
+def test_api_documents_retrieve_soft_deleted_authenticated(reach, depth):
+    """
+    A soft/permanently deleted document should not be accessible via its detail endpoint for
+    authenticated users not related to the document.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    documents = []
+    for i in range(depth):
+        documents.append(
+            factories.DocumentFactory(link_reach=reach)
+            if i == 0
+            else factories.DocumentFactory(parent=documents[-1])
+        )
+    assert models.Document.objects.count() == depth
+
+    response = client.get(f"/api/v1.0/documents/{documents[-1].id!s}/")
+
+    assert response.status_code == 200 if reach in ["public", "authenticated"] else 403
+
+    # Delete any one of the documents...
+    deleted_document = random.choice(documents)
+    deleted_document.soft_delete()
+
+    response = client.get(f"/api/v1.0/documents/{documents[-1].id!s}/")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
+
+    fourty_days_ago = timezone.now() - timedelta(days=40)
+    deleted_document.deleted_at = fourty_days_ago
+    deleted_document.ancestors_deleted_at = fourty_days_ago
+    deleted_document.save()
+
+    response = client.get(f"/api/v1.0/documents/{documents[-1].id!s}/")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+@pytest.mark.parametrize("role", models.RoleChoices.values)
+def test_api_documents_retrieve_soft_deleted_related(role, depth):
+    """
+    A soft deleted document should only be accessible via its detail endpoint by
+    users with specific "owner" access rights.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    documents = []
+    for i in range(depth):
+        documents.append(
+            factories.UserDocumentAccessFactory(role=role, user=user).document
+            if i == 0
+            else factories.DocumentFactory(parent=documents[-1])
+        )
+    assert models.Document.objects.count() == depth
+    document = documents[-1]
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    assert response.status_code == 200
+
+    # Delete any one of the documents
+    deleted_document = random.choice(documents)
+    deleted_document.soft_delete()
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    if role == "owner":
+        assert response.status_code == 200
+        assert response.json()["id"] == str(document.id)
+    else:
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Not found."}
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+@pytest.mark.parametrize("role", models.RoleChoices.values)
+def test_api_documents_retrieve_permanently_deleted_related(role, depth):
+    """
+    A permanently deleted document should not be accessible via its detail endpoint for
+    authenticated users with specific access rights whatever their role.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    documents = []
+    for i in range(depth):
+        documents.append(
+            factories.UserDocumentAccessFactory(role=role, user=user).document
+            if i == 0
+            else factories.DocumentFactory(parent=documents[-1])
+        )
+    assert models.Document.objects.count() == depth
+    document = documents[-1]
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    assert response.status_code == 200
+
+    # Delete any one of the documents
+    deleted_document = random.choice(documents)
+    fourty_days_ago = timezone.now() - timedelta(days=40)
+    with mock.patch("django.utils.timezone.now", return_value=fourty_days_ago):
+        deleted_document.soft_delete()
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}

@@ -31,8 +31,11 @@ def test_api_documents_children_create_anonymous(reach, role, depth):
         },
     )
 
-    assert response.status_code == 401
     assert Document.objects.count() == depth
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Authentication credentials were not provided."
+    }
 
 
 @pytest.mark.parametrize("depth", [1, 2, 3])

@@ -86,8 +86,6 @@ def test_api_documents_list_filter_and_access_rights():
                 "-created_at",
                 "is_favorite",
                 "-is_favorite",
-                "nb_accesses",
-                "-nb_accesses",
                 "title",
                 "-title",
                 "updated_at",
@@ -143,8 +141,6 @@ def test_api_documents_list_ordering_by_fields():
         "-created_at",
         "is_favorite",
         "-is_favorite",
-        "nb_accesses",
-        "-nb_accesses",
         "title",
         "-title",
         "updated_at",
@@ -163,6 +159,31 @@ def test_api_documents_list_ordering_by_fields():
         compare = operator.ge if is_descending else operator.le
         for i in range(4):
             assert compare(results[i][field], results[i + 1][field])
+
+
+# Filters: unknown field
+
+
+def test_api_documents_list_filter_unknown_field():
+    """
+    Trying to filter by an unknown field should raise a 400 error.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.DocumentFactory()
+    expected_ids = {
+        str(document.id)
+        for document in factories.DocumentFactory.create_batch(2, users=[user])
+    }
+
+    response = client.get("/api/v1.0/documents/?unknown=true")
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 2
+    assert {result["id"] for result in results} == expected_ids
 
 
 # Filters: is_creator_me
@@ -291,46 +312,6 @@ def test_api_documents_list_filter_is_favorite_invalid():
     assert len(results) == 5
 
 
-# Filters: link_reach
-
-
-@pytest.mark.parametrize("reach", models.LinkReachChoices.values)
-def test_api_documents_list_filter_link_reach(reach):
-    """Authenticated users should be able to filter documents by link reach."""
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    factories.DocumentFactory.create_batch(5, users=[user])
-
-    response = client.get(f"/api/v1.0/documents/?link_reach={reach:s}")
-
-    assert response.status_code == 200
-    results = response.json()["results"]
-
-    # Ensure all results have the chosen link reach
-    for result in results:
-        assert result["link_reach"] == reach
-
-
-def test_api_documents_list_filter_link_reach_invalid():
-    """Filtering with an invalid `link_reach` value should raise an error."""
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    factories.DocumentFactory.create_batch(3, users=[user])
-
-    response = client.get("/api/v1.0/documents/?link_reach=invalid")
-
-    assert response.status_code == 400
-    assert response.json() == {
-        "link_reach": [
-            "Select a valid choice. invalid is not one of the available choices."
-        ]
-    }
-
-
 # Filters: title
 
 
@@ -360,7 +341,8 @@ def test_api_documents_list_filter_title(query, nb_results):
         "Annual Review 2024",
     ]
     for title in titles:
-        factories.DocumentFactory(title=title, users=[user])
+        parent = factories.DocumentFactory() if random.choice([True, False]) else None
+        factories.DocumentFactory(title=title, users=[user], parent=parent)
 
     # Perform the search query
     response = client.get(f"/api/v1.0/documents/?title={query:s}")

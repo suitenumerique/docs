@@ -305,7 +305,7 @@ def test_api_documents_children_list_authenticated_related_direct():
     client.force_login(user)
 
     document = factories.DocumentFactory()
-    factories.UserDocumentAccessFactory(document=document, user=user)
+    access = factories.UserDocumentAccessFactory(document=document, user=user)
     factories.UserDocumentAccessFactory(document=document)
 
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
@@ -378,7 +378,6 @@ def test_api_documents_children_list_authenticated_related_parent():
     grand_parent_access = factories.UserDocumentAccessFactory(
         document=grand_parent, user=user
     )
-    factories.UserDocumentAccessFactory(document=grand_parent, user=user)
 
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/children/",
@@ -400,7 +399,7 @@ def test_api_documents_children_list_authenticated_related_parent():
                 "link_reach": child1.link_reach,
                 "link_role": child1.link_role,
                 "numchild": 0,
-                "nb_accesses": 3,
+                "nb_accesses": 2,
                 "path": child1.path,
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
@@ -417,7 +416,7 @@ def test_api_documents_children_list_authenticated_related_parent():
                 "link_reach": child2.link_reach,
                 "link_role": child2.link_role,
                 "numchild": 0,
-                "nb_accesses": 2,
+                "nb_accesses": 1,
                 "path": child2.path,
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
