@@ -134,4 +134,4 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
         )
         if has_changed:
             updated_claims = {key: value for key, value in claims.items() if value}
-            self.UserModel.objects.filter(sub=user.sub).update(**updated_claims)
+            self.UserModel.objects.filter(id=user.id).update(**updated_claims)

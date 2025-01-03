@@ -130,11 +130,12 @@ def test_authentication_getter_existing_user_with_email(
         ("Jack", "Duy", "jack.duy@example.com"),
     ],
 )
-def test_authentication_getter_existing_user_change_fields(
+def test_authentication_getter_existing_user_change_fields_sub(
     first_name, last_name, email, django_assert_num_queries, monkeypatch
 ):
     """
-    It should update the email or name fields on the user when they change.
+    It should update the email or name fields on the user when they change
+    and the user was identified by its "sub".
     """
     klass = OIDCAuthenticationBackend()
     user = UserFactory(
@@ -153,6 +154,48 @@ def test_authentication_getter_existing_user_change_fields(
 
     # One and only one additional update query when a field has changed
     with django_assert_num_queries(2):
+        authenticated_user = klass.get_or_create_user(
+            access_token="test-token", id_token=None, payload=None
+        )
+
+    assert user == authenticated_user
+    user.refresh_from_db()
+    assert user.email == email
+    assert user.full_name == f"{first_name:s} {last_name:s}"
+    assert user.short_name == first_name
+
+
+@pytest.mark.parametrize(
+    "first_name, last_name, email",
+    [
+        ("Jack", "Doe", "john.doe@example.com"),
+        ("John", "Duy", "john.doe@example.com"),
+    ],
+)
+def test_authentication_getter_existing_user_change_fields_email(
+    first_name, last_name, email, django_assert_num_queries, monkeypatch
+):
+    """
+    It should update the name fields on the user when they change
+    and the user was identified by its "email" as fallback.
+    """
+    klass = OIDCAuthenticationBackend()
+    user = UserFactory(
+        full_name="John Doe", short_name="John", email="john.doe@example.com"
+    )
+
+    def get_userinfo_mocked(*args):
+        return {
+            "sub": "123",
+            "email": user.email,
+            "first_name": first_name,
+            "last_name": last_name,
+        }
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    # One and only one additional update query when a field has changed
+    with django_assert_num_queries(3):
         authenticated_user = klass.get_or_create_user(
             access_token="test-token", id_token=None, payload=None
         )
