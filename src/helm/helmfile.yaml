@@ -4,6 +4,46 @@ repositories:
   oci: true
 
 releases:
+  - name: keycloak
+    installed: {{ eq .Environment.Name "dev" | toYaml }}
+    missingFileHandler: Warn
+    namespace: {{ .Namespace }}
+    chart: bitnami/keycloak
+    version: 17.3.6
+    values:
+      - postgresql:
+          auth:
+            username: keycloak
+            password: keycloak
+            database: keycloak
+      - extraEnvVars:
+          - name: KEYCLOAK_EXTRA_ARGS
+            value: "--import-realm"
+          - name: KC_HOSTNAME_URL
+            value: https://keycloak.127.0.0.1.nip.io
+      - extraVolumes:
+          - name: import
+            configMap:
+              name: docs-keycloak
+      - extraVolumeMounts:
+          - name: import
+            mountPath: /opt/bitnami/keycloak/data/import/
+      - auth:
+          adminUser: su
+          adminPassword: su
+      - proxy: edge
+      - ingress:
+          enabled: true
+          hostname: keycloak.127.0.0.1.nip.io
+      - extraDeploy:
+        - apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: docs-keycloak
+          data:
+            impress.json: |
+{{ readFile "../../docker/auth/realm.json" | replace "http://localhost:3200" "https://impress.127.0.0.1.nip.io" | indent 14 }}
+
   - name: postgres
     installed: {{ eq .Environment.Name "dev" | toYaml }}
     namespace: {{ .Namespace }}
@@ -43,25 +83,14 @@ releases:
           password: pass
         architecture: standalone
 
-  - name: extra
-    installed: {{ ne .Environment.Name "dev" | toYaml }}
-    namespace: {{ .Namespace }}
-    chart: ./extra
-    secrets:
-      - env.d/{{ .Environment.Name }}/secrets.enc.yaml
-
   - name: impress
     version: {{ .Values.version }}
     namespace: {{ .Namespace }}
     chart: ./impress
     values:
       - env.d/{{ .Environment.Name }}/values.impress.yaml.gotmpl
-    secrets:
-      - env.d/{{ .Environment.Name }}/secrets.enc.yaml
 
 environments:
   dev:
     values:
       - version: 1.10.0
-    secrets:
-      - env.d/{{ .Environment.Name }}/secrets.enc.yaml

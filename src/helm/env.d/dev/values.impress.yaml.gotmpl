@@ -1,3 +1,12 @@
+djangoSecretKey: &djangoSecretKey "lkjsdlfkjsldkfjslkdfjslkdjfslkdjf"
+djangoSuperUserEmail: admin@example.com
+djangoSuperUserPass: admin
+aiApiKey: changeme
+aiBaseUrl: changeme
+oidc:
+    clientId: impress
+    clientSecret: ThisIsAnExampleKeyForDevPurposeOnly
+
 image:
   repository: localhost:5001/impress-backend
   pullPolicy: Always
@@ -6,13 +15,12 @@ image:
 backend:
   replicas: 1
   envVars:
-    COLLABORATION_API_URL: https://impress.127.0.0.1.nip.io/collaboration/api/
     COLLABORATION_SERVER_SECRET: my-secret
     DJANGO_CSRF_TRUSTED_ORIGINS: https://impress.127.0.0.1.nip.io
     DJANGO_CONFIGURATION: Feature
     DJANGO_ALLOWED_HOSTS: impress.127.0.0.1.nip.io
     DJANGO_SERVER_TO_SERVER_API_TOKENS: secret-api-key
-    DJANGO_SECRET_KEY: {{ .Values.djangoSecretKey }}
+    DJANGO_SECRET_KEY: *djangoSecretKey
     DJANGO_SETTINGS_MODULE: impress.settings
     DJANGO_SUPERUSER_PASSWORD: admin
     DJANGO_EMAIL_BRAND_NAME: "La Suite Numérique"
@@ -23,19 +31,17 @@ backend:
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    OIDC_OP_JWKS_ENDPOINT: https://fca.integ01.dev-agentconnect.fr/api/v2/jwks
-    OIDC_OP_AUTHORIZATION_ENDPOINT: https://fca.integ01.dev-agentconnect.fr/api/v2/authorize
-    OIDC_OP_TOKEN_ENDPOINT: https://fca.integ01.dev-agentconnect.fr/api/v2/token
-    OIDC_OP_USER_ENDPOINT: https://fca.integ01.dev-agentconnect.fr/api/v2/userinfo
-    OIDC_OP_LOGOUT_ENDPOINT: https://fca.integ01.dev-agentconnect.fr/api/v2/session/end
-    OIDC_RP_CLIENT_ID: {{ .Values.oidc.clientId }}
-    OIDC_RP_CLIENT_SECRET: {{ .Values.oidc.clientSecret }}
-    OIDC_RP_SIGN_ALGO: RS256
-    OIDC_RP_SCOPES: "openid email given_name usual_name"
     USER_OIDC_FIELD_TO_SHORTNAME: "given_name"
     USER_OIDC_FIELDS_TO_FULLNAME: "given_name,usual_name"
-    OIDC_REDIRECT_ALLOWED_HOSTS: https://impress.127.0.0.1.nip.io
-    OIDC_AUTH_REQUEST_EXTRA_PARAMS: "{'acr_values': 'eidas1'}"
+    OIDC_OP_JWKS_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
+    OIDC_OP_TOKEN_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
+    OIDC_OP_USER_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
+    OIDC_RP_CLIENT_ID: impress
+    OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
+    OIDC_RP_SIGN_ALGO: RS256
+    OIDC_RP_SCOPES: "openid email"
     LOGIN_REDIRECT_URL: https://impress.127.0.0.1.nip.io
     LOGIN_REDIRECT_URL_FAILURE: https://impress.127.0.0.1.nip.io
     LOGOUT_REDIRECT_URL: https://impress.127.0.0.1.nip.io
@@ -55,7 +61,6 @@ backend:
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
-
   migrate:
     command:
       - "/bin/sh"
@@ -79,6 +84,21 @@ backend:
       - |
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
+
+  # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
+  extraVolumeMounts:
+    - name: certs
+      mountPath: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+      subPath: cacert.pem
+
+  # Exra volumes to manage our local custom CA and avoid to set ssl_verify: false
+  extraVolumes:
+    - name: certs
+      configMap:
+        name: certifi
+        items:
+        - key: cacert.pem
+          path: cacert.pem
 
 frontend:
   envVars:

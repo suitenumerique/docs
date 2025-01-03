@@ -1,5 +1,0 @@
-apiVersion: v2
-name: extra
-description: A Helm chart to add some manifests to impress
-type: application
-version: 1.10.0

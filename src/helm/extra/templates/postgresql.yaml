@@ -1,7 +1,0 @@
-apiVersion: core.libre.sh/v1alpha1
-kind: Postgres
-metadata:
-  name: postgresql
-  namespace: {{ .Release.Namespace | quote }}
-spec:
-  database: impress

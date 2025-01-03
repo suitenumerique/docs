@@ -20,25 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: "impress,secrets"
-      -
         name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          token: ${{ steps.app-token.outputs.token }}
-      -
-        name: Load sops secrets
-        uses: rouja/actions-sops@main
-        with:
-          secret-file: secrets/numerique-gouv/impress/secrets.enc.env
-          age-key: ${{ secrets.SOPS_PRIVATE }}
+        uses: actions/checkout@v4
       -
         name: Docker meta
         id: meta
@@ -48,7 +31,7 @@ jobs:
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        run: echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
@@ -71,25 +54,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: "impress,secrets"
-      -
         name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          token: ${{ steps.app-token.outputs.token }}
-      -
-        name: Load sops secrets
-        uses: rouja/actions-sops@main
-        with:
-          secret-file: secrets/numerique-gouv/impress/secrets.enc.env
-          age-key: ${{ secrets.SOPS_PRIVATE }}
+        uses: actions/checkout@v4
       -
         name: Docker meta
         id: meta
@@ -99,7 +65,7 @@ jobs:
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        run: echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
@@ -123,25 +89,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: "impress,secrets"
-      -
         name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          token: ${{ steps.app-token.outputs.token }}
-      -
-        name: Load sops secrets
-        uses: rouja/actions-sops@main
-        with:
-          secret-file: secrets/numerique-gouv/impress/secrets.enc.env
-          age-key: ${{ secrets.SOPS_PRIVATE }}
+        uses: actions/checkout@v4
       -
         name: Docker meta
         id: meta
@@ -151,7 +100,7 @@ jobs:
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        run: echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
@@ -180,28 +129,11 @@ jobs:
       github.event_name != 'pull_request'
     steps:
       -
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: "impress,secrets"
-      -
         name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          token: ${{ steps.app-token.outputs.token }}
-      -
-        name: Load sops secrets
-        uses: rouja/actions-sops@main
-        with:
-          secret-file: secrets/numerique-gouv/impress/secrets.enc.env
-          age-key: ${{ secrets.SOPS_PRIVATE }}
+        uses: actions/checkout@v4
       -
         name: Call argocd github webhook
         run: |
           data='{"ref": "'$GITHUB_REF'","repository": {"html_url":"'$GITHUB_SERVER_URL'/'$GITHUB_REPOSITORY'"}}'
-          sig=$(echo -n ${data} | openssl dgst -sha1 -hmac ''${ARGOCD_WEBHOOK_SECRET}'' | awk '{print "X-Hub-Signature: sha1="$2}')
-          curl -X POST -H 'X-GitHub-Event:push' -H "Content-Type: application/json" -H "${sig}" --data "${data}" $ARGOCD_WEBHOOK_URL
+          sig=$(echo -n ${data} | openssl dgst -sha1 -hmac ''${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET}}'' | awk '{print "X-Hub-Signature: sha1="$2}')
+          curl -X POST -H 'X-GitHub-Event:push' -H "Content-Type: application/json" -H "${sig}" --data "${data}" ${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}

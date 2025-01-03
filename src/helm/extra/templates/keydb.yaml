@@ -1,7 +1,0 @@
-apiVersion: core.libre.sh/v1alpha1
-kind: Redis
-metadata:
-  name: redis
-  namespace: {{ .Release.Namespace | quote }}
-spec:
-  disableAuth: false
