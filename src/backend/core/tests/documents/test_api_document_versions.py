@@ -229,6 +229,8 @@ def test_api_document_versions_list_authenticated_related_pagination_parent(
     )
 
     content = response.json()
+
+    assert response.status_code == 200
     assert content["is_truncated"] is False
     # The current version is not listed
     assert content["count"] == 3
