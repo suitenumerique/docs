@@ -11,7 +11,7 @@ and this project adheres to
 
 ## Added
 
-- ✨(backend) add soft delete API endpoint to documents #516
+- ✨(backend) add soft delete and restore API endpoints to documents #516
 - ✨(backend) allow organizing documents in a tree structure #516
 - ✨(backend) add "excerpt" field to document list serializer #516
 - ✨(backend) add github actions to manage Crowdin workflow #559 & #563

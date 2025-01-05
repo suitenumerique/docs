@@ -716,6 +716,22 @@ class DocumentViewSet(
 
     @drf.decorators.action(
         detail=True,
+        methods=["post"],
+    )
+    def restore(self, request, *args, **kwargs):
+        """
+        Restore a soft-deleted document if it was deleted less than x days ago.
+        """
+        document = self.get_object()
+        document.restore()
+
+        return drf_response.Response(
+            {"detail": "Document has been successfully restored."},
+            status=status.HTTP_200_OK,
+        )
+
+    @drf.decorators.action(
+        detail=True,
         methods=["get", "post"],
         ordering=["path"],
         serializer_class=serializers.ListDocumentSerializer,

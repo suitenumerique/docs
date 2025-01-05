@@ -662,6 +662,7 @@ class Document(MP_Node, BaseModel):
             "invite_owner": is_owner,
             "move": is_owner_or_admin and not self.ancestors_deleted_at,
             "partial_update": can_update,
+            "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
             "update": can_update,
@@ -750,6 +751,52 @@ class Document(MP_Node, BaseModel):
 
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
+            ancestors_deleted_at=self.ancestors_deleted_at
+        )
+
+    @transaction.atomic
+    def restore(self):
+        """Cancelling a soft delete with checks."""
+        # This should not happen
+        if self.deleted_at is None:
+            raise ValidationError({"deleted_at": [_("This document is not deleted.")]})
+
+        if self.deleted_at < get_trashbin_cutoff():
+            raise ValidationError(
+                {
+                    "deleted_at": [
+                        _(
+                            "This document was permanently deleted and cannot be restored."
+                        )
+                    ]
+                }
+            )
+
+        # Restore the current document
+        self.deleted_at = None
+
+        # Calculate the minimum `deleted_at` among all ancestors
+        ancestors_deleted_at = (
+            self.get_ancestors()
+            .filter(deleted_at__isnull=False)
+            .values_list("deleted_at", flat=True)
+        )
+        self.ancestors_deleted_at = min(ancestors_deleted_at, default=None)
+        self.save()
+
+        # Update descendants excluding those who were deleted prior to the deletion of the
+        # current document (the ancestor_deleted_at date for those should already by good)
+        # The number of deleted descendants should not be too big so we can handcraft a union
+        # clause for them:
+        deleted_descendants_paths = (
+            self.get_descendants()
+            .filter(deleted_at__isnull=False)
+            .values_list("path", flat=True)
+        )
+        exclude_condition = models.Q(
+            *(models.Q(path__startswith=path) for path in deleted_descendants_paths)
+        )
+        self.get_descendants().exclude(exclude_condition).update(
             ancestors_deleted_at=self.ancestors_deleted_at
         )
 
