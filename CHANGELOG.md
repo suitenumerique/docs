@@ -18,6 +18,8 @@ and this project adheres to
 - ✨(frontend) new share modal ui #489
 - ✨(frontend) add favorite feature #515
 - ✨(frontend) export pdf docx front side #537
+- 📝(documentation) Documentation about self-hosted installation #530
+- ✨(helm) helm versioning #530
 
 ## Changed
 
