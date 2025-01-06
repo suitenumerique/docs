@@ -38,6 +38,8 @@ and this project adheres to
 - 💄(frontend) add filtering to left panel #475
 - ✨(frontend) new share modal ui #489
 - ✨(frontend) add favorite feature #515
+- 📝(documentation) Documentation about self-hosted installation #530
+- ✨(helm) helm versioning #530
 
 ## Changed
 
