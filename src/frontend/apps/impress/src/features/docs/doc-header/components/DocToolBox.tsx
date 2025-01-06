@@ -26,7 +26,7 @@ import {
 } from '@/features/docs/doc-versioning';
 import { useResponsiveStore } from '@/stores';
 
-import { ModalPDF } from './ModalExport';
+import { ModalExport } from './ModalExport';
 
 interface DocToolBoxProps {
   doc: Doc;
@@ -43,7 +43,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const colors = colorsTokens();
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
-  const [isModalPDFOpen, setIsModalPDFOpen] = useState(false);
+  const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
@@ -63,7 +63,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             label: t('Export'),
             icon: 'download',
             callback: () => {
-              setIsModalPDFOpen(true);
+              setIsModalExportOpen(true);
             },
           },
         ]
@@ -198,7 +198,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               <Icon iconName="download" $theme="primary" $variation="800" />
             }
             onClick={() => {
-              setIsModalPDFOpen(true);
+              setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
           />
@@ -228,8 +228,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       {modalShare.isOpen && (
         <DocShareModal onClose={() => modalShare.close()} doc={doc} />
       )}
-      {isModalPDFOpen && (
-        <ModalPDF onClose={() => setIsModalPDFOpen(false)} doc={doc} />
+      {isModalExportOpen && (
+        <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
       )}
       {isModalRemoveOpen && (
         <ModalRemoveDoc onClose={() => setIsModalRemoveOpen(false)} doc={doc} />

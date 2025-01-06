@@ -14,6 +14,7 @@ and this project adheres to
 - github actions to managed Crowdin workflow
 - 📈Integrate Posthog #540
 - 🏷️(backend) add content-type to uploaded files #552
+- ✨(frontend) export pdf docx front side #537
 
 ## Changed
 
