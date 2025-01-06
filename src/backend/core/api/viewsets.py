@@ -936,40 +936,6 @@ class TemplateViewSet(
             role=models.RoleChoices.OWNER,
         )
 
-    @drf.decorators.action(
-        detail=True,
-        methods=["post"],
-        url_path="generate-document",
-        permission_classes=[permissions.AccessPermission],
-    )
-    # pylint: disable=unused-argument
-    def generate_document(self, request, pk=None):
-        """
-        Generate and return a document for this template around the
-        body passed as argument.
-
-        2 types of body are accepted:
-        - HTML: body_type = "html"
-        - Markdown: body_type = "markdown"
-
-        2 types of documents can be generated:
-        - PDF: format = "pdf"
-        - Docx: format = "docx"
-        """
-        serializer = serializers.DocumentGenerationSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return drf.response.Response(
-                serializer.errors, status=drf.status.HTTP_400_BAD_REQUEST
-            )
-
-        body = serializer.validated_data["body"]
-        body_type = serializer.validated_data["body_type"]
-        export_format = serializer.validated_data["format"]
-
-        template = self.get_object()
-        return template.generate_document(body, body_type, export_format)
-
 
 class TemplateAccessViewSet(
     ResourceAccessViewsetMixin,

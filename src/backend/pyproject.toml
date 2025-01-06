@@ -50,13 +50,11 @@ dependencies = [
     "openai==1.58.1",
     "psycopg[binary]==3.2.3",
     "PyJWT==2.10.1",
-    "pypandoc==1.14",
     "python-frontmatter==1.1.0",
     "python-magic==0.4.27",
     "requests==2.32.3",
     "sentry-sdk==2.19.2",
     "url-normalize==1.4.3",
-    "WeasyPrint>=60.2",
     "whitenoise==6.8.2",
     "mozilla-django-oidc==4.0.1",
 ]
