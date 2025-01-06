@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "convert-stream": "1.0.2",
-    "jsdom": "25.0.1",
     "pdf-parse": "1.1.1"
   }
 }
