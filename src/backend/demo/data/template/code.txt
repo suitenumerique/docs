@@ -1,10 +1,2 @@
-<page size="A4">
-  <div class="header">
-    <img width="200"
-      src="https://impress-staging.beta.numerique.gouv.fr/assets/logo-gouv.png"
-    />
-  </div>
-  <div class="content">
-    <div class="body">{{ body }}</div>
-  </div>
-</page>
+<img width="200" src="https://impress-staging.beta.numerique.gouv.fr/assets/logo-gouv.png" />
+<br/>
