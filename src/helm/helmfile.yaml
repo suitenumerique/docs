@@ -77,7 +77,7 @@ releases:
     installed: {{ eq .Environment.Name "dev" | toYaml }}
     namespace: {{ .Namespace }}
     chart: bitnami/redis
-    version: 18.19.2
+    version: 20.6.2
     values:
       - auth:
           password: pass

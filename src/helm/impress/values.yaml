@@ -59,7 +59,7 @@ ingressCollaborationWS:
   className: null
   host: impress.example.com
   path: /collaboration/ws/
-  ## @param ingress.hosts Additional host to configure for the Ingress
+  ## @param ingressCollaborationWS.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
   ## @param ingressCollaborationWS.tls.enabled Weather to enable TLS for the Ingress
@@ -75,6 +75,12 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.customBackends Add custom backends to ingress
   customBackends: []
 
+  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-response-headers
+  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-url
+  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/enable-websocket
+  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout
+  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout
+  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
   annotations:
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Can-Edit, X-User-Id"
     nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/collaboration-auth/
@@ -92,7 +98,7 @@ ingressCollaborationApi:
   className: null
   host: impress.example.com
   path: /collaboration/api/
-  ## @param ingress.hosts Additional host to configure for the Ingress
+  ## @param ingressCollaborationApi.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
   ## @param ingressCollaborationApi.tls.enabled Weather to enable TLS for the Ingress
@@ -108,6 +114,7 @@ ingressCollaborationApi:
   ## @param ingressCollaborationApi.customBackends Add custom backends to ingress
   customBackends: []
 
+  ## @param ingressCollaborationApi.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
   annotations:
     nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
 
@@ -156,11 +163,17 @@ ingressMedia:
     secretName: null
     additional: []
 
+  ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-url
+  ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-response-headers
+  ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/upstream-vhost
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/media-auth/
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
     nginx.ingress.kubernetes.io/upstream-vhost: minio.impress.svc.cluster.local:9000
 
+## @param serviceMedia.host
+## @param serviceMedia.port
+## @param serviceMedia.annotations
 serviceMedia:
   host: minio.impress.svc.cluster.local
   port: 9000
@@ -204,6 +217,9 @@ backend:
 
   ## @param backend.podAnnotations Annotations to add to the backend Pod
   podAnnotations: {}
+
+  ## @param backend.dpAnnotations Annotations to add to the backend Deployment
+  dpAnnotations: {}
 
   ## @param backend.service.type backend Service type
   ## @param backend.service.port backend Service listening port
@@ -322,6 +338,9 @@ frontend:
   ## @param frontend.podAnnotations Annotations to add to the frontend Pod
   podAnnotations: {}
 
+  ## @param frontend.dpAnnotations Annotations to add to the frontend Deployment
+  dpAnnotations: {}
+
   ## @param frontend.service.type frontend Service type
   ## @param frontend.service.port frontend Service listening port
   ## @param frontend.service.targetPort frontend container listening port
@@ -413,6 +432,9 @@ yProvider:
   ## @param yProvider.podAnnotations Annotations to add to the yProvider Pod
   podAnnotations: {}
 
+  ## @param yProvider.dpAnnotations Annotations to add to the yProvider Deployment
+  dpAnnotations: {}
+
   ## @param yProvider.service.type yProvider Service type
   ## @param yProvider.service.port yProvider Service listening port
   ## @param yProvider.service.targetPort yProvider container listening port
@@ -423,7 +445,6 @@ yProvider:
     targetPort: 4444
     annotations: {}
 
-  ## @param yProvider.probes Configure probe for yProvider
   ## @extra yProvider.probes.liveness.path Configure path for yProvider HTTP liveness probe
   ## @extra yProvider.probes.liveness.targetPort Configure port for yProvider HTTP liveness probe
   ## @extra yProvider.probes.liveness.initialDelaySeconds Configure initial delay for yProvider liveness probe
@@ -438,6 +459,8 @@ yProvider:
   ## @extra yProvider.probes.readiness.initialDelaySeconds Configure timeout for yProvider readiness probe
   probes:
     liveness:
+      ## @param yProvider.probes.liveness.path
+      ## @param yProvider.probes.liveness.initialDelaySeconds
       path: /ping
       initialDelaySeconds: 10
 
