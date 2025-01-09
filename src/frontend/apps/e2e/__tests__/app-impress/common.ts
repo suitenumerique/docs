@@ -104,10 +104,10 @@ export const goToGridDoc = async (
 
   const docsGrid = page.getByTestId('docs-grid');
   await expect(docsGrid).toBeVisible();
-  await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+  await expect(docsGrid.getByTestId('grid-loader')).toBeHidden();
 
   const rows = docsGrid.getByRole('row');
-  expect(await rows.count()).toEqual(20);
+
   const row = title
     ? rows.filter({
         hasText: title,

@@ -29,8 +29,9 @@ test.describe('Document favorite', () => {
     );
     const result = await response.json();
     docs = result.results as SmallDoc[];
-    await page.getByRole('heading', { name: 'All docs' }).click();
-    await expect(page.getByText(`Doc ${id}`)).toBeVisible();
+    const docsGrid = page.getByTestId('docs-grid');
+    await docsGrid.getByRole('heading', { name: 'All docs' }).click();
+    await expect(docsGrid.getByText(`Doc ${id}`)).toBeVisible();
     const doc = docs.find((doc) => doc.title === createdDoc[0]) as SmallDoc;
 
     // Check document
@@ -38,7 +39,7 @@ test.describe('Document favorite', () => {
     expect(doc?.title).toBe(createdDoc[0]);
 
     // Open document actions
-    const button = page.getByTestId(`docs-grid-actions-button-${doc.id}`);
+    const button = docsGrid.getByTestId(`docs-grid-actions-button-${doc.id}`);
     await expect(button).toBeVisible();
     await button.click();
 

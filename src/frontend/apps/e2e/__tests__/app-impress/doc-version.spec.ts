@@ -32,11 +32,9 @@ test.describe('Doc Version', () => {
 
     const editor = page.locator('.ProseMirror');
     await modal.getByRole('button', { name: 'close' }).click();
-    await editor.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Heading 1').click();
+    await editor.click();
+    await page.keyboard.type('# Hello World');
 
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').last().fill('Hello World');
     await goToGridDoc(page, {
       title: randomDoc,
     });

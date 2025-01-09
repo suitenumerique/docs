@@ -19,34 +19,9 @@ test.describe('Doc Table Content', () => {
 
     await verifyDocName(page, randomDoc);
 
-    const editor = page.locator('.ProseMirror');
+    await page.locator('.ProseMirror').click();
 
-    await editor.locator('.bn-block-outer').last().fill('/');
-
-    await page.getByText('Heading 1').click();
-    await page.keyboard.type('Level 1');
-    await editor.getByText('Level 1').dblclick();
-    await page.getByRole('button', { name: 'Strike' }).click();
-
-    await page.locator('.bn-block-outer').first().click();
-    await editor.click();
-    await page.locator('.bn-block-outer').last().click();
-    await page.keyboard.press('Enter');
-
-    await editor.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Heading 2').click();
-    await page.keyboard.type('Level 2');
-
-    await page.locator('.bn-block-outer').last().click();
-
-    // Create space to fill the viewport
-    await page.keyboard.press('Enter');
-
-    await editor.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Heading 3').click();
-    await page.keyboard.type('Level 3');
-
-    expect(true).toBe(true);
+    await page.keyboard.type('# Level 1\n## Level 2\n### Level 3');
 
     const summaryContainer = page.locator('#summaryContainer');
     await summaryContainer.click();
