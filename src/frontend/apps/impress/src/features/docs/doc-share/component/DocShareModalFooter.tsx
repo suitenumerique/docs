@@ -61,7 +61,7 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
           {t('Copy link')}
         </Button>
         <Button onClick={onClose} color="primary">
-          {t('Ok')}
+          {t('OK')}
         </Button>
       </Box>
     </Box>
