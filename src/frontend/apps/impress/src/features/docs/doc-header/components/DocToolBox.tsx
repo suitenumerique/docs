@@ -212,6 +212,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             $theme="primary"
             $padding={{ all: 'xs' }}
             $css={css`
+              border-radius: 4px;
               &:hover {
                 background-color: ${colors['greyscale-100']};
               }

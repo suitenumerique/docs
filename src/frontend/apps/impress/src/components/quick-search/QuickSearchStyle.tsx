@@ -71,8 +71,6 @@ export const QuickSearchStyle = createGlobalStyle`
     flex:1;
     overflow-y: auto;
     overscroll-behavior: contain;
-    transition: 100ms ease;
-    transition-property: height;
   }
 
   [cmdk-vercel-shortcuts] {

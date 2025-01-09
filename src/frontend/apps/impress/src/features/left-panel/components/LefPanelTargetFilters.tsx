@@ -79,7 +79,6 @@ export const LeftPanelTargetFilters = () => {
               font-weight: ${isActive ? 700 : undefined};
               &:hover {
                 background-color: ${colors['greyscale-100']};
-                font-weight: 700;
               }
             `}
           >

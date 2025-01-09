@@ -545,8 +545,8 @@ input:-webkit-autofill:focus {
   color: var(--c--theme--colors--greyscale-600);
 }
 
-.c__modal__footer {
-  margin-top: -1rem;
+.c__modal__close .c__button {
+  padding: 0 !important;
 }
 
 .c__modal--full .c__modal__content {
