@@ -18,11 +18,11 @@ test.describe('Doc Create', () => {
     const header = page.locator('header').first();
     await header.locator('h2').getByText('Docs').click();
 
-    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeVisible();
 
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid).toBeVisible();
-    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
     await expect(docsGrid.getByText(docTitle)).toBeVisible();
   });
 });

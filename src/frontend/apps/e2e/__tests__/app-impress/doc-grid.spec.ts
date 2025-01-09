@@ -78,7 +78,7 @@ test.describe('Documents Grid mobile', () => {
 
     const docsGrid = page.getByTestId('docs-grid');
     await expect(docsGrid).toBeVisible();
-    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
 
     const rows = docsGrid.getByRole('row');
     const row = rows.filter({
@@ -186,7 +186,7 @@ test.describe('Document grid item options', () => {
 test.describe('Documents filters', () => {
   test('it checks the prebuild left panel filters', async ({ page }) => {
     // All Docs
-    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeVisible();
     const response = await page.waitForResponse(
       (response) =>
         response.url().endsWith('documents/?page=1') &&
@@ -194,7 +194,7 @@ test.describe('Documents filters', () => {
     );
     const result = await response.json();
     const allCount = result.count as number;
-    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
 
     const allDocs = page.getByLabel('All docs');
     const myDocs = page.getByLabel('My docs');
@@ -227,7 +227,7 @@ test.describe('Documents filters', () => {
     url = new URL(page.url());
     target = url.searchParams.get('target');
     expect(target).toBe('my_docs');
-    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeVisible();
     const responseMyDocs = await page.waitForResponse(
       (response) =>
         response.url().endsWith('documents/?page=1&is_creator_me=true') &&
@@ -235,7 +235,7 @@ test.describe('Documents filters', () => {
     );
     const resultMyDocs = await responseMyDocs.json();
     const countMyDocs = resultMyDocs.count as number;
-    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
     expect(countMyDocs).toBeLessThanOrEqual(allCount);
 
     // Shared with me
@@ -243,7 +243,7 @@ test.describe('Documents filters', () => {
     url = new URL(page.url());
     target = url.searchParams.get('target');
     expect(target).toBe('shared_with_me');
-    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeVisible();
     const responseSharedWithMe = await page.waitForResponse(
       (response) =>
         response.url().includes('documents/?page=1&is_creator_me=false') &&
@@ -251,7 +251,7 @@ test.describe('Documents filters', () => {
     );
     const resultSharedWithMe = await responseSharedWithMe.json();
     const countSharedWithMe = resultSharedWithMe.count as number;
-    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
     expect(countSharedWithMe).toBeLessThanOrEqual(allCount);
     expect(countSharedWithMe + countMyDocs).toEqual(allCount);
   });
@@ -264,7 +264,7 @@ test.describe('Documents Grid', () => {
 
   test('checks all the elements are visible', async ({ page }) => {
     let docs: SmallDoc[] = [];
-    await expect(page.getByTestId('docs-grid-loader')).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeVisible();
 
     const response = await page.waitForResponse(
       (response) =>
@@ -274,7 +274,7 @@ test.describe('Documents Grid', () => {
     const result = await response.json();
     docs = result.results as SmallDoc[];
 
-    await expect(page.getByTestId('docs-grid-loader')).toBeHidden();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
     await expect(page.locator('h4').getByText('All docs')).toBeVisible();
 
     const thead = page.getByTestId('docs-grid-header');
@@ -317,7 +317,6 @@ test.describe('Documents Grid', () => {
     );
 
     await page.getByTestId('infinite-scroll-trigger').scrollIntoViewIfNeeded();
-
     const responsePage2 = await responsePromisePage2;
     result = await responsePage2.json();
     docs = result.results as SmallDoc[];
