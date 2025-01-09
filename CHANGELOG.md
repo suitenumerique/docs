@@ -13,6 +13,7 @@ and this project adheres to
 
 🔧(backend) add option to configure list of required OIDC claims #525
 🔧(helm) add option to disable default tls setting by @dominikkaminski #519
+✨(frontend) add multi columns support for editor #533
 
 ## Changed
 

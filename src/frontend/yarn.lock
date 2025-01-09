@@ -1075,6 +1075,21 @@
     y-protocols "^1.0.6"
     yjs "^13.6.15"
 
+"@blocknote/xl-multi-column@0.22.0":
+  version "0.22.0"
+  resolved "https://registry.yarnpkg.com/@blocknote/xl-multi-column/-/xl-multi-column-0.22.0.tgz#495a4dc4080c3fb7b2a4d436653502d1abd1d3f6"
+  integrity sha512-RcrCbH3VPGojB+R5gFLKQ48c2nnr0AqoiAsdpR3w13FvynRY4qVjq3ZVzpHPfKFs0/2D0YNxhQu4fny9roaazQ==
+  dependencies:
+    "@blocknote/core" "^0.22.0"
+    "@blocknote/react" "^0.22.0"
+    "@tiptap/core" "^2.7.1"
+    prosemirror-model "^1.23.0"
+    prosemirror-state "^1.4.3"
+    prosemirror-tables "^1.3.7"
+    prosemirror-transform "^1.9.0"
+    prosemirror-view "^1.33.7"
+    react-icons "^5.2.1"
+
 "@cspotcode/source-map-support@^0.8.0":
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/@cspotcode/source-map-support/-/source-map-support-0.8.1.tgz#00629c35a688e05a88b1cda684fb9d5e73f000a1"
@@ -10923,7 +10938,7 @@ prosemirror-state@^1.0.0, prosemirror-state@^1.2.2, prosemirror-state@^1.4.3:
     prosemirror-transform "^1.0.0"
     prosemirror-view "^1.27.0"
 
-prosemirror-tables@^1.6.1:
+prosemirror-tables@^1.3.7, prosemirror-tables@^1.6.1:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/prosemirror-tables/-/prosemirror-tables-1.6.2.tgz#cec9e9ac6ecf81d67147c19ab39125d56c8351ae"
   integrity sha512-97dKocVLrEVTQjZ4GBLdrrMw7Gv3no8H8yMwf5IRM9OoHrzbWpcH5jJxYgNQIRCtdIqwDctT1HdMHrGTiwp1dQ==
@@ -10942,7 +10957,7 @@ prosemirror-trailing-node@^3.0.0:
     "@remirror/core-constants" "3.0.0"
     escape-string-regexp "^4.0.0"
 
-prosemirror-transform@^1.0.0, prosemirror-transform@^1.1.0, prosemirror-transform@^1.10.2, prosemirror-transform@^1.7.3:
+prosemirror-transform@^1.0.0, prosemirror-transform@^1.1.0, prosemirror-transform@^1.10.2, prosemirror-transform@^1.7.3, prosemirror-transform@^1.9.0:
   version "1.10.2"
   resolved "https://registry.yarnpkg.com/prosemirror-transform/-/prosemirror-transform-1.10.2.tgz#8ebac4e305b586cd96595aa028118c9191bbf052"
   integrity sha512-2iUq0wv2iRoJO/zj5mv8uDUriOHWzXRnOTVgCzSXnktS/2iQRa3UUQwVlkBlYZFtygw6Nh1+X4mGqoYBINn5KQ==

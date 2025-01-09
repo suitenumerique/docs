@@ -18,6 +18,7 @@
     "@blocknote/core": "0.22.0",
     "@blocknote/mantine": "0.22.0",
     "@blocknote/react": "0.22.0",
+    "@blocknote/xl-multi-column": "0.22.0",
     "@gouvfr-lasuite/integration": "1.0.2",
     "@hocuspocus/provider": "2.15.0",
     "@openfun/cunningham-react": "2.9.4",

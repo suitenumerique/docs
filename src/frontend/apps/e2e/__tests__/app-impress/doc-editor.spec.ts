@@ -351,4 +351,27 @@ test.describe('Doc Editor', () => {
 
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
   });
+
+  test('it checks the multi columns', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-multi-columns', browserName, 1);
+
+    await page.locator('.bn-block-outer').last().fill('/');
+
+    await page.getByText('Three Columns', { exact: true }).click();
+
+    await page.locator('.bn-block-column').first().fill('Column 1');
+    await page.locator('.bn-block-column').nth(1).fill('Column 2');
+    await page.locator('.bn-block-column').last().fill('Column 3');
+
+    expect(await page.locator('.bn-block-column').count()).toBe(3);
+    await expect(
+      page.locator('.bn-block-column[data-node-type="column"]').first(),
+    ).toHaveText('Column 1');
+    await expect(
+      page.locator('.bn-block-column[data-node-type="column"]').nth(1),
+    ).toHaveText('Column 2');
+    await expect(
+      page.locator('.bn-block-column[data-node-type="column"]').last(),
+    ).toHaveText('Column 3');
+  });
 });
