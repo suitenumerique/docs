@@ -1,0 +1,220 @@
+image:
+  repository: lasuite/impress-backend
+  pullPolicy: Always
+  tag: "v1.10.0"
+
+backend:
+  migrateJobAnnotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+  envVars:
+    AI_API_KEY:
+      secretKeyRef:
+        name: backend
+        key: AI_API_KEY
+    AI_BASE_URL: https://albert.api.etalab.gouv.fr/v1/
+    AI_MODEL: meta-llama/Meta-Llama-3.1-70B-Instruct
+    COLLABORATION_API_URL: https://docs.numerique.gouv.fr/collaboration/api/
+    COLLABORATION_SERVER_SECRET:
+      secretKeyRef:
+        name: backend
+        key: COLLABORATION_SERVER_SECRET
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://docs.numerique.gouv.fr
+    DJANGO_CONFIGURATION: Production
+    DJANGO_ALLOWED_HOSTS: docs.numerique.gouv.fr
+    DJANGO_SECRET_KEY:
+      secretKeyRef:
+        name: backend
+        key: DJANGO_SECRET_KEY
+    DJANGO_SERVER_TO_SERVER_API_TOKENS:
+      secretKeyRef:
+        name: backend
+        key: DJANGO_SERVER_TO_SERVER_API_TOKENS
+    DJANGO_SETTINGS_MODULE: impress.settings
+    DJANGO_SUPERUSER_EMAIL: 
+      secretKeyRef:
+        name: backend
+        key: DJANGO_SUPERUSER_EMAIL
+    DJANGO_SUPERUSER_PASSWORD:
+      secretKeyRef:
+        name: backend
+        key: DJANGO_SUPERUSER_PASSWORD
+    DJANGO_EMAIL_BRAND_NAME: "La Suite Numérique"
+    DJANGO_EMAIL_HOST: "smtp.tem.scw.cloud"
+    DJANGO_EMAIL_LOGO_IMG: https://docs.numerique.gouv.fr/assets/logo-suite-numerique.png
+    DJANGO_EMAIL_PORT: 587
+    DJANGO_EMAIL_USE_TLS: True
+    DJANGO_EMAIL_FROM: "noreply@docs.beta.numerique.gouv.fr"
+    DJANGO_EMAIL_HOST_USER: 
+      secretKeyRef:
+        name: backend
+        key: DJANGO_EMAIL_HOST_USER
+    DJANGO_EMAIL_HOST_PASSWORD:
+      secretKeyRef:
+        name: backend
+        key: DJANGO_EMAIL_HOST_PASSWORD
+    DJANGO_SILENCED_SYSTEM_CHECKS: security.W008,security.W004
+    OIDC_OP_JWKS_ENDPOINT: https://auth.agentconnect.gouv.fr/api/v2/jwks
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://auth.agentconnect.gouv.fr/api/v2/authorize
+    OIDC_OP_TOKEN_ENDPOINT: https://auth.agentconnect.gouv.fr/api/v2/token
+    OIDC_OP_USER_ENDPOINT: https://auth.agentconnect.gouv.fr/api/v2/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://auth.agentconnect.gouv.fr/api/v2/session/end
+    OIDC_RP_CLIENT_ID:
+      secretKeyRef:
+        name: backend
+        key: OIDC_RP_CLIENT_ID
+    OIDC_RP_CLIENT_SECRET:
+      secretKeyRef:
+        name: backend
+        key: OIDC_RP_CLIENT_SECRET
+    OIDC_RP_SIGN_ALGO: RS256
+    OIDC_RP_SCOPES: "openid email given_name usual_name"
+    USER_OIDC_FIELD_TO_SHORTNAME: "given_name"
+    USER_OIDC_FIELDS_TO_FULLNAME: "given_name,usual_name"
+    OIDC_REDIRECT_ALLOWED_HOSTS: https://docs.numerique.gouv.fr
+    OIDC_AUTH_REQUEST_EXTRA_PARAMS: "{'acr_values': 'eidas1'}"
+    LOGIN_REDIRECT_URL: https://docs.numerique.gouv.fr
+    LOGIN_REDIRECT_URL_FAILURE: https://docs.numerique.gouv.fr
+    LOGOUT_REDIRECT_URL: https://docs.numerique.gouv.fr
+    DB_HOST:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: host
+    DB_NAME:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: database
+    DB_USER:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: username
+    DB_PASSWORD:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: password
+    DB_PORT:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: port
+    POSTGRES_USER:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: username
+    POSTGRES_DB:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: database
+    POSTGRES_PASSWORD:
+      secretKeyRef:
+        name: postgresql.postgres.libre.sh
+        key: password
+    REDIS_URL:
+      secretKeyRef:
+        name: redis.redis.libre.sh
+        key: url
+    AWS_S3_ENDPOINT_URL:
+      secretKeyRef:
+        name: impress-media-storage.bucket.libre.sh
+        key: url
+    AWS_S3_ACCESS_KEY_ID:
+      secretKeyRef:
+        name: impress-media-storage.bucket.libre.sh
+        key: accessKey
+    AWS_S3_SECRET_ACCESS_KEY:
+      secretKeyRef:
+        name: impress-media-storage.bucket.libre.sh
+        key: secretKey
+    AWS_STORAGE_BUCKET_NAME:
+      secretKeyRef:
+        name: impress-media-storage.bucket.libre.sh
+        key: bucket
+    AWS_S3_REGION_NAME: local
+    STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
+    Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
+    Y_PROVIDER_API_KEY:
+      secretKeyRef:
+        name: backend
+        key: Y_PROVIDER_API_KEY
+
+  createsuperuser:
+    command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        python manage.py createsuperuser --email $DJANGO_SUPERUSER_EMAIL --password $DJANGO_SUPERUSER_PASSWORD
+    restartPolicy: Never
+
+frontend:
+  image:
+    repository: lasuite/impress-frontend
+    pullPolicy: Always
+    tag: "v1.10.0"
+
+yProvider:
+  image:
+    repository: lasuite/impress-y-provider
+    pullPolicy: Always
+    tag: "v1.10.0"
+
+  envVars:
+    COLLABORATION_LOGGING: true
+    COLLABORATION_SERVER_ORIGIN: https://docs.numerique.gouv.fr
+    COLLABORATION_SERVER_SECRET:
+      secretKeyRef:
+        name: backend
+        key: COLLABORATION_SERVER_SECRET
+    Y_PROVIDER_API_KEY:
+      secretKeyRef:
+        name: backend
+        key: Y_PROVIDER_API_KEY
+
+ingress:
+  enabled: true
+  host: docs.numerique.gouv.fr
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+
+ingressCollaborationWS:
+  enabled: true
+  host: docs.numerique.gouv.fr
+  className: nginx
+  
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/auth-url: https://docs.numerique.gouv.fr/api/v1.0/documents/collaboration-auth/
+
+ingressCollaborationApi:
+  enabled: true
+  host: docs.numerique.gouv.fr
+  className: nginx
+  
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+
+ingressAdmin:
+  enabled: true
+  host: docs.numerique.gouv.fr
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/auth-signin: https://oauth2-proxy.beta.numerique.gouv.fr/oauth2/start
+    nginx.ingress.kubernetes.io/auth-url: https://oauth2-proxy.beta.numerique.gouv.fr/oauth2/auth
+
+ingressMedia:
+  enabled: true
+  host: docs.numerique.gouv.fr
+
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
+    nginx.ingress.kubernetes.io/auth-url: https://docs.numerique.gouv.fr/api/v1.0/documents/media-auth/
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /impress-impress-media-storage/$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/upstream-vhost: s3.hedy-lamarr.indiehosters.net
+
+serviceMedia:
+  host: s3.hedy-lamarr.indiehosters.net
+  port: 443
