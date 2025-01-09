@@ -1,16 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import {
-  Box,
-  InfiniteScroll,
-  SeparatedSection,
-  StyledLink,
-  Text,
-} from '@/components';
+import { Box, InfiniteScroll, Text } from '@/components';
+import { HorizontalSeparator } from '@/components/separators/HorizontalSeparator';
 import { useCunninghamTheme } from '@/cunningham';
 import { useInfiniteDocs } from '@/features/docs';
-import { SimpleDocItem } from '@/features/docs/docs-grid/components/SimpleDocItem';
+
+import { LeftPanelFavoriteItem } from './LeftPanelFavoriteItem';
 
 export const LeftPanelFavorites = () => {
   const { t } = useTranslation();
@@ -23,17 +18,18 @@ export const LeftPanelFavorites = () => {
     is_favorite: true,
   });
 
-  const invitations = docs.data?.pages.flatMap((page) => page.results) || [];
+  const favoriteDocs = docs.data?.pages.flatMap((page) => page.results) || [];
 
-  if (invitations.length === 0) {
+  if (favoriteDocs.length === 0) {
     return null;
   }
 
   return (
-    <SeparatedSection showSeparator={true}>
+    <Box>
+      <HorizontalSeparator $withPadding={false} />
       <Box
         $justify="center"
-        $padding={{ horizontal: 'sm' }}
+        $padding={{ horizontal: 'sm', top: 'sm' }}
         $gap={spacing['2xs']}
         $height="100%"
         data-testid="left-panel-favorites"
@@ -51,25 +47,11 @@ export const LeftPanelFavorites = () => {
           isLoading={docs.isFetchingNextPage}
           next={() => void docs.fetchNextPage()}
         >
-          {invitations.map((doc) => (
-            <Box
-              $css={css`
-                padding: ${spacing['2xs']};
-                border-radius: 4px;
-                &:hover {
-                  cursor: pointer;
-                  background-color: var(--c--theme--colors--greyscale-100);
-                }
-              `}
-              key={doc.id}
-            >
-              <StyledLink href={`/docs/${doc.id}`}>
-                <SimpleDocItem showAccesses doc={doc} />
-              </StyledLink>
-            </Box>
+          {favoriteDocs.map((doc) => (
+            <LeftPanelFavoriteItem key={doc.id} doc={doc} />
           ))}
         </InfiniteScroll>
       </Box>
-    </SeparatedSection>
+    </Box>
   );
 };

@@ -1,4 +1,4 @@
-import { Button, Loader } from '@openfun/cunningham-react';
+import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
@@ -36,7 +36,7 @@ export const DocsGrid = ({
       }),
   });
   const loading = isFetching || isLoading;
-
+  const hasDocs = data?.pages.some((page) => page.results.length > 0);
   const loadMore = (inView: boolean) => {
     if (!inView || loading) {
       return;
@@ -63,7 +63,7 @@ export const DocsGrid = ({
         overflow-y: auto;
       `}
     >
-      <DocsGridLoader isLoading={isRefetching} />
+      <DocsGridLoader isLoading={isRefetching || loading} />
       <Card
         data-testid="docs-grid"
         $height="100%"
@@ -87,48 +87,46 @@ export const DocsGrid = ({
           {title}
         </Text>
 
-        <Box $gap="6px">
-          <Box
-            $direction="row"
-            $padding={{ horizontal: 'xs' }}
-            $gap="20px"
-            data-testid="docs-grid-header"
-          >
-            <Box $flex={6} $padding="3xs">
-              <Text $size="xs" $variation="600" $weight="500">
-                {t('Name')}
-              </Text>
-            </Box>
-            {isDesktop && (
-              <Box $flex={2} $padding="3xs">
-                <Text $size="xs" $weight="500" $variation="600">
-                  {t('Updated at')}
-                </Text>
-              </Box>
-            )}
-
-            <Box $flex={1.15} $align="flex-end" $padding="3xs" />
-          </Box>
-
-          {/* Body */}
-          {data?.pages.map((currentPage) => {
-            return currentPage.results.map((doc) => (
-              <DocsGridItem doc={doc} key={doc.id} />
-            ));
-          })}
-        </Box>
-
-        {loading && (
-          <Box
-            data-testid="docs-grid-loader"
-            $padding="md"
-            $align="center"
-            $justify="center"
-            $width="100%"
-          >
-            <Loader />
+        {!hasDocs && (
+          <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
+            <Text $size="sm" $variation="600" $weight="700">
+              {t('No documents found')}
+            </Text>
           </Box>
         )}
+        {hasDocs && (
+          <Box $gap="6px">
+            <Box
+              $direction="row"
+              $padding={{ horizontal: 'xs' }}
+              $gap="20px"
+              data-testid="docs-grid-header"
+            >
+              <Box $flex={6} $padding="3xs">
+                <Text $size="xs" $variation="600" $weight="500">
+                  {t('Name')}
+                </Text>
+              </Box>
+              {isDesktop && (
+                <Box $flex={2} $padding="3xs">
+                  <Text $size="xs" $weight="500" $variation="600">
+                    {t('Updated at')}
+                  </Text>
+                </Box>
+              )}
+
+              <Box $flex={1.15} $align="flex-end" $padding="3xs" />
+            </Box>
+
+            {/* Body */}
+            {data?.pages.map((currentPage) => {
+              return currentPage.results.map((doc) => (
+                <DocsGridItem doc={doc} key={doc.id} />
+              ));
+            })}
+          </Box>
+        )}
+
         {hasNextPage && !loading && (
           <InView
             data-testid="infinite-scroll-trigger"

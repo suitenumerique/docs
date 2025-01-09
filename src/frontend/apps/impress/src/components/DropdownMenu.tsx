@@ -77,7 +77,7 @@ export const DropdownMenu = ({
             {topMessage}
           </Text>
         )}
-        {options.map((option) => {
+        {options.map((option, index) => {
           if (option.show !== undefined && !option.show) {
             return;
           }
@@ -104,6 +104,16 @@ export const DropdownMenu = ({
               $gap={spacings['base']}
               $css={css`
                 border: none;
+                ${index === 0 &&
+                css`
+                  border-top-left-radius: 4px;
+                  border-top-right-radius: 4px;
+                `}
+                ${index === options.length - 1 &&
+                css`
+                  border-bottom-left-radius: 4px;
+                  border-bottom-right-radius: 4px;
+                `}
                 font-size: var(--c--theme--font--sizes--sm);
                 color: var(--c--theme--colors--greyscale-1000);
                 font-weight: 500;

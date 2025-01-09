@@ -1,10 +1,14 @@
+import { css } from 'styled-components';
+
 import { Box, SeparatedSection } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { useDocStore } from '@/features/docs';
 import { SimpleDocItem } from '@/features/docs/docs-grid/components/SimpleDocItem';
 
 export const LeftPanelDocContent = () => {
   const { currentDoc } = useDocStore();
-
+  const { spacingsTokens } = useCunninghamTheme();
+  const spacing = spacingsTokens();
   if (!currentDoc) {
     return null;
   }
@@ -17,7 +21,15 @@ export const LeftPanelDocContent = () => {
     >
       <SeparatedSection showSeparator={false}>
         <Box $padding={{ horizontal: 'sm' }}>
-          <SimpleDocItem doc={currentDoc} showAccesses={true} />
+          <Box
+            $css={css`
+              padding: ${spacing['2xs']};
+              border-radius: 4px;
+              background-color: var(--c--theme--colors--greyscale-100);
+            `}
+          >
+            <SimpleDocItem doc={currentDoc} showAccesses={true} />
+          </Box>
         </Box>
       </SeparatedSection>
     </Box>

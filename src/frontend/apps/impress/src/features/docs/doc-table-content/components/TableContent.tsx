@@ -78,7 +78,12 @@ export const TableContent = () => {
     setIsHover(false);
   };
 
-  if (!editor) {
+  if (
+    !editor ||
+    !headings ||
+    headings.length === 0 ||
+    (headings.length === 1 && !headings[0].contentText)
+  ) {
     return null;
   }
 

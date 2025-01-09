@@ -42,7 +42,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
         {docIsPublic && (
           <Box
             aria-label={t('Public document')}
-            $color={colors['primary-600']}
+            $color={colors['primary-800']}
             $background={colors['primary-100']}
             $radius={spacings['3xs']}
             $direction="row"
@@ -54,8 +54,15 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
               border: 1px solid var(--c--theme--colors--primary-300, #e3e3fd);
             `}
           >
-            <Icon data-testid="public-icon" iconName="public" />
-            <Text>{t('Public document')}</Text>
+            <Icon
+              $theme="primary"
+              $variation="800"
+              data-testid="public-icon"
+              iconName="public"
+            />
+            <Text $theme="primary" $variation="800">
+              {t('Public document')}
+            </Text>
           </Box>
         )}
         <Box $direction="row" $align="center" $width="100%">

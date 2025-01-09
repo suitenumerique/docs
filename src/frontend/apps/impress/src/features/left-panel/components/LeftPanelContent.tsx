@@ -22,7 +22,7 @@ export const LeftPanelContent = () => {
               flex: 0 0 auto;
             `}
           >
-            <SeparatedSection>
+            <SeparatedSection showSeparator={false}>
               <LeftPanelTargetFilters />
             </SeparatedSection>
           </Box>
