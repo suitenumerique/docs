@@ -13,6 +13,10 @@ Impress is built on top of [Django Rest Framework](https://www.django-rest-frame
 
 ## Getting started
 
+### Architecture
+
+Have a look at the [architecture](./docs/architecture.md) to get an overview of the project.
+
 ### Prerequisite
 
 Make sure you have a recent version of Docker and [Docker
