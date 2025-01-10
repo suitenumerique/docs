@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, keyCloakSignIn, randomName } from './common';
+import {
+  createDoc,
+  goToGridDoc,
+  keyCloakSignIn,
+  randomName,
+  verifyDocName,
+} from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -61,7 +67,7 @@ test.describe('Doc Create: Not loggued', () => {
 
     await goToGridDoc(page, { title });
 
-    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await verifyDocName(page, title);
 
     const editor = page.locator('.ProseMirror');
     await expect(editor.getByText('This is a normal text')).toBeVisible();

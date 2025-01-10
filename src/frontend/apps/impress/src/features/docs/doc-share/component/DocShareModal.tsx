@@ -42,12 +42,16 @@ type Props = {
   doc: Doc;
   onClose: () => void;
 };
+
 export const DocShareModal = ({ doc, onClose }: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
 
   const { isDesktop } = useResponsiveStore();
 
+  const modalContentHeight = isDesktop
+    ? 'min(690px, calc(100dvh - 2em - 12px - 34px))' // 100dvh - 2em - 12px  is the max cunningham modal height.  690px is the height of the content in desktop ad 34px is the height of the modal title in mobile
+    : `calc(100dvh - 34px)`;
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [userQuery, setUserQuery] = useState('');
   const [inputValue, setInputValue] = useState('');
@@ -164,13 +168,11 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
   };
 
   const handleRef = (node: HTMLDivElement) => {
-    const contentHeight = isDesktop ? '690px' : '100dvh - 34px'; // 690px is the height of the content in desktop ad 34px is the height of the modal title in mobile
     const inputHeight = canShare ? 70 : 0;
     const marginTop = 11;
     const footerHeight = node?.clientHeight ?? 0;
     const selectedUsersHeight = selectedUsersRef.current?.clientHeight ?? 0;
-
-    const height = `calc(${contentHeight} - ${footerHeight}px - ${selectedUsersHeight}px - ${inputHeight}px - ${marginTop}px)`;
+    const height = `calc(${modalContentHeight} - ${footerHeight}px - ${selectedUsersHeight}px - ${inputHeight}px - ${marginTop}px)`;
 
     setListHeight(height);
   };
@@ -189,7 +191,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
         <ShareModalStyle />
         <Box
           aria-label={t('Share modal')}
-          $height={isDesktop ? '690px' : `calc(100dvh - 34px)`}
+          $height={modalContentHeight}
           $overflow="hidden"
           $justify="space-between"
         >
