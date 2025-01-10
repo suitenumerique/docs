@@ -13,6 +13,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories
+from core.api.serializers import ServerCreateDocumentSerializer
 from core.models import Document, Invitation, User
 from core.services.converter_services import ConversionError, YdocConverter
 
@@ -20,7 +21,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def mock_convert_markdown():
+def mock_convert_md():
     """Mock YdocConverter.convert_markdown to return a converted content."""
     with patch.object(
         YdocConverter,
@@ -169,8 +170,11 @@ def test_api_documents_create_for_owner_invalid_sub():
 
 
 @override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
-def test_api_documents_create_for_owner_existing(mock_convert_markdown):
-    """It should be possible to create a document on behalf of a pre-existing user."""
+def test_api_documents_create_for_owner_existing(mock_convert_md):
+    """
+    It should be possible to create a document on behalf of a pre-existing user
+    by passing their sub and email.
+    """
     user = factories.UserFactory(language="en-us")
 
     data = {
@@ -189,7 +193,7 @@ def test_api_documents_create_for_owner_existing(mock_convert_markdown):
 
     assert response.status_code == 201
 
-    mock_convert_markdown.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with("Document content")
 
     document = Document.objects.get()
     assert response.json() == {"id": str(document.id)}
@@ -213,10 +217,10 @@ def test_api_documents_create_for_owner_existing(mock_convert_markdown):
 
 
 @override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
-def test_api_documents_create_for_owner_new_user(mock_convert_markdown):
+def test_api_documents_create_for_owner_new_user(mock_convert_md):
     """
     It should be possible to create a document on behalf of new users by
-    passing only their email address.
+    passing their unknown sub and email address.
     """
     data = {
         "title": "My Document",
@@ -234,7 +238,7 @@ def test_api_documents_create_for_owner_new_user(mock_convert_markdown):
 
     assert response.status_code == 201
 
-    mock_convert_markdown.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with("Document content")
 
     document = Document.objects.get()
     assert response.json() == {"id": str(document.id)}
@@ -264,8 +268,190 @@ def test_api_documents_create_for_owner_new_user(mock_convert_markdown):
     assert document.creator == user
 
 
+@override_settings(
+    SERVER_TO_SERVER_API_TOKENS=["DummyToken"],
+    OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION=True,
+)
+def test_api_documents_create_for_owner_existing_user_email_no_sub_with_fallback(
+    mock_convert_md,
+):
+    """
+    It should be possible to create a document on behalf of a pre-existing user for
+    who the sub was not found if the settings allow it. This edge case should not
+    happen in a healthy OIDC federation but can be usefull if an OIDC provider modifies
+    users sub on each login for example...
+    """
+    user = factories.UserFactory(language="en-us")
+
+    data = {
+        "title": "My Document",
+        "content": "Document content",
+        "sub": "123",
+        "email": user.email,
+    }
+
+    response = APIClient().post(
+        "/api/v1.0/documents/create-for-owner/",
+        data,
+        format="json",
+        HTTP_AUTHORIZATION="Bearer DummyToken",
+    )
+
+    assert response.status_code == 201
+
+    mock_convert_md.assert_called_once_with("Document content")
+
+    document = Document.objects.get()
+    assert response.json() == {"id": str(document.id)}
+
+    assert document.title == "My Document"
+    assert document.content == "Converted document content"
+    assert document.creator == user
+    assert document.accesses.filter(user=user, role="owner").exists()
+
+    assert Invitation.objects.exists() is False
+
+    assert len(mail.outbox) == 1
+    email = mail.outbox[0]
+    assert email.to == [user.email]
+    assert email.subject == "A new document was created on your behalf!"
+    email_content = " ".join(email.body.split())
+    assert "A new document was created on your behalf!" in email_content
+    assert (
+        "You have been granted ownership of a new document: My Document"
+    ) in email_content
+
+
+@override_settings(
+    SERVER_TO_SERVER_API_TOKENS=["DummyToken"],
+    OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION=False,
+    OIDC_ALLOW_DUPLICATE_EMAILS=False,
+)
+def test_api_documents_create_for_owner_existing_user_email_no_sub_no_fallback(
+    mock_convert_md,
+):
+    """
+    When a user does not match an existing sub and fallback to matching on email is
+    not allowed in settings, it should raise an error if the email is already used by
+    a registered user and duplicate emails are not allowed.
+    """
+    user = factories.UserFactory()
+
+    data = {
+        "title": "My Document",
+        "content": "Document content",
+        "sub": "123",
+        "email": user.email,
+    }
+
+    response = APIClient().post(
+        "/api/v1.0/documents/create-for-owner/",
+        data,
+        format="json",
+        HTTP_AUTHORIZATION="Bearer DummyToken",
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "email": [
+            (
+                "We couldn't find a user with this sub but the email is already "
+                "associated with a registered user."
+            )
+        ]
+    }
+    assert mock_convert_md.called is False
+    assert Document.objects.exists() is False
+    assert Invitation.objects.exists() is False
+    assert len(mail.outbox) == 0
+
+
+@override_settings(
+    SERVER_TO_SERVER_API_TOKENS=["DummyToken"],
+    OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION=False,
+    OIDC_ALLOW_DUPLICATE_EMAILS=True,
+)
+def test_api_documents_create_for_owner_new_user_no_sub_no_fallback_allow_duplicate(
+    mock_convert_md,
+):
+    """
+    When a user does not match an existing sub and fallback to matching on email is
+    not allowed in settings, it should be possible to create a new user with the same
+    email as an existing user if the settings allow it (identification is still done
+    via the sub in this case).
+    """
+    user = factories.UserFactory()
+
+    data = {
+        "title": "My Document",
+        "content": "Document content",
+        "sub": "123",
+        "email": user.email,
+    }
+
+    response = APIClient().post(
+        "/api/v1.0/documents/create-for-owner/",
+        data,
+        format="json",
+        HTTP_AUTHORIZATION="Bearer DummyToken",
+    )
+    assert response.status_code == 201
+    mock_convert_md.assert_called_once_with("Document content")
+
+    document = Document.objects.get()
+    assert response.json() == {"id": str(document.id)}
+
+    assert document.title == "My Document"
+    assert document.content == "Converted document content"
+    assert document.creator is None
+    assert document.accesses.exists() is False
+
+    invitation = Invitation.objects.get()
+    assert invitation.email == user.email
+    assert invitation.role == "owner"
+
+    assert len(mail.outbox) == 1
+    email = mail.outbox[0]
+    assert email.to == [user.email]
+    assert email.subject == "A new document was created on your behalf!"
+    email_content = " ".join(email.body.split())
+    assert "A new document was created on your behalf!" in email_content
+    assert (
+        "You have been granted ownership of a new document: My Document"
+    ) in email_content
+
+    # The creator field on the document should be set when the user is created
+    user = User.objects.create(email=user.email, password="!")
+    document.refresh_from_db()
+    assert document.creator == user
+
+
+@patch.object(ServerCreateDocumentSerializer, "_send_email_notification")
+@override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"], LANGUAGE_CODE="de-de")
+def test_api_documents_create_for_owner_with_default_language(
+    mock_send, mock_convert_md
+):
+    """The default language from settings should apply by default."""
+    data = {
+        "title": "My Document",
+        "content": "Document content",
+        "sub": "123",
+        "email": "john.doe@example.com",
+    }
+
+    response = APIClient().post(
+        "/api/v1.0/documents/create-for-owner/",
+        data,
+        format="json",
+        HTTP_AUTHORIZATION="Bearer DummyToken",
+    )
+    assert response.status_code == 201
+
+    mock_convert_md.assert_called_once_with("Document content")
+    assert mock_send.call_args[0][3] == "de-de"
+
+
 @override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
-def test_api_documents_create_for_owner_with_custom_language(mock_convert_markdown):
+def test_api_documents_create_for_owner_with_custom_language(mock_convert_md):
     """
     Test creating a document with a specific language.
     Useful if the remote server knows the user's language.
@@ -287,7 +473,7 @@ def test_api_documents_create_for_owner_with_custom_language(mock_convert_markdo
 
     assert response.status_code == 201
 
-    mock_convert_markdown.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with("Document content")
 
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -302,7 +488,7 @@ def test_api_documents_create_for_owner_with_custom_language(mock_convert_markdo
 
 @override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
 def test_api_documents_create_for_owner_with_custom_subject_and_message(
-    mock_convert_markdown,
+    mock_convert_md,
 ):
     """It should be possible to customize the subject and message of the invitation email."""
     data = {
@@ -323,7 +509,7 @@ def test_api_documents_create_for_owner_with_custom_subject_and_message(
 
     assert response.status_code == 201
 
-    mock_convert_markdown.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with("Document content")
 
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -336,11 +522,11 @@ def test_api_documents_create_for_owner_with_custom_subject_and_message(
 
 @override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
 def test_api_documents_create_for_owner_with_converter_exception(
-    mock_convert_markdown,
+    mock_convert_md,
 ):
-    """It should be possible to customize the subject and message of the invitation email."""
+    """In case of converter error, a 400 error should be raised."""
 
-    mock_convert_markdown.side_effect = ConversionError("Conversion failed")
+    mock_convert_md.side_effect = ConversionError("Conversion failed")
 
     data = {
         "title": "My Document",
@@ -357,8 +543,33 @@ def test_api_documents_create_for_owner_with_converter_exception(
         format="json",
         HTTP_AUTHORIZATION="Bearer DummyToken",
     )
+    mock_convert_md.assert_called_once_with("Document content")
 
-    mock_convert_markdown.assert_called_once_with("Document content")
+    assert response.status_code == 400
+    assert response.json() == {"content": ["Could not convert content"]}
 
-    assert response.status_code == 500
-    assert response.json() == {"detail": "could not convert content"}
+
+@override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
+def test_api_documents_create_for_owner_with_empty_content():
+    """The content should not be empty or a 400 error should be raised."""
+
+    data = {
+        "title": "My Document",
+        "content": "  ",
+        "sub": "123",
+        "email": "john.doe@example.com",
+    }
+
+    response = APIClient().post(
+        "/api/v1.0/documents/create-for-owner/",
+        data,
+        format="json",
+        HTTP_AUTHORIZATION="Bearer DummyToken",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "content": [
+            "This field may not be blank.",
+        ],
+    }

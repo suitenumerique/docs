@@ -474,6 +474,15 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # WARNING: Enabling this setting allows multiple user accounts to share the same email
+    # address. This may cause security issues and is not recommended for production use when
+    # email is activated as fallback for identification (see previous setting).
+    OIDC_ALLOW_DUPLICATE_EMAILS = values.BooleanValue(
+        default=False,
+        environ_name="OIDC_ALLOW_DUPLICATE_EMAILS",
+        environ_prefix=None,
+    )
+
     USER_OIDC_ESSENTIAL_CLAIMS = values.ListValue(
         default=[], environ_name="USER_OIDC_ESSENTIAL_CLAIMS", environ_prefix=None
     )
@@ -624,6 +633,15 @@ class Base(Configuration):
             )
             with sentry_sdk.configure_scope() as scope:
                 scope.set_extra("application", "backend")
+
+        if (
+            cls.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION
+            and cls.OIDC_ALLOW_DUPLICATE_EMAILS
+        ):
+            raise ValueError(
+                "Both OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION and "
+                "OIDC_ALLOW_DUPLICATE_EMAILS cannot be set to True simultaneously. "
+            )
 
 
 class Build(Base):

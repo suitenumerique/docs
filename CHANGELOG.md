@@ -29,6 +29,9 @@ and this project adheres to
 - 💄(frontend) update doc versioning ui #463
 - 💄(frontend) update doc summary ui #473
 
+## Fixed
+
+- 🐛(backend) fix create document via s2s if sub unknown but email found #543
 
 ## [1.10.0] - 2024-12-17
 

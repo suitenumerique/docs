@@ -1,6 +1,7 @@
 """
 Declare and configure the models for the impress core application
 """
+# pylint: disable=too-many-lines
 
 import hashlib
 import smtplib
@@ -89,6 +90,16 @@ class LinkReachChoices(models.TextChoices):
     PUBLIC = "public", _("Public")  # Even anonymous users can access the document
 
 
+class DuplicateEmailError(Exception):
+    """Raised when an email is already associated with a pre-existing user."""
+
+    def __init__(self, message=None, email=None):
+        """Set message and email to describe the exception."""
+        self.message = message
+        self.email = email
+        super().__init__(self.message)
+
+
 class BaseModel(models.Model):
     """
     Serves as an abstract base model for other models, ensuring that records are validated
@@ -124,6 +135,35 @@ class BaseModel(models.Model):
         """Call `full_clean` before saving."""
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class UserManager(auth_models.UserManager):
+    """Custom manager for User model with additional methods."""
+
+    def get_user_by_sub_or_email(self, sub, email):
+        """Fetch existing user by sub or email."""
+        try:
+            return self.get(sub=sub)
+        except self.model.DoesNotExist as err:
+            if not email:
+                return None
+
+            if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
+                try:
+                    return self.get(email=email)
+                except self.model.DoesNotExist:
+                    pass
+            elif (
+                self.filter(email=email).exists()
+                and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
+            ):
+                raise DuplicateEmailError(
+                    _(
+                        "We couldn't find a user with this sub but the email is already "
+                        "associated with a registered user."
+                    )
+                ) from err
+        return None
 
 
 class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
@@ -192,7 +232,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         ),
     )
 
-    objects = auth_models.UserManager()
+    objects = UserManager()
 
     USERNAME_FIELD = "admin_email"
     REQUIRED_FIELDS = []
@@ -939,7 +979,10 @@ class Invitation(BaseModel):
         super().clean()
 
         # Check if an identity already exists for the provided email
-        if User.objects.filter(email=self.email).exists():
+        if (
+            User.objects.filter(email=self.email).exists()
+            and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
+        ):
             raise exceptions.ValidationError(
                 {"email": _("This email is already associated to a registered user.")}
             )

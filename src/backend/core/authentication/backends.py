@@ -11,7 +11,7 @@ from mozilla_django_oidc.auth import (
     OIDCAuthenticationBackend as MozillaOIDCAuthenticationBackend,
 )
 
-from core.models import User
+from core.models import DuplicateEmailError, User
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,10 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
             "short_name": short_name,
         }
 
-        user = self.get_existing_user(sub, email)
+        try:
+            user = User.objects.get_user_by_sub_or_email(sub, email)
+        except DuplicateEmailError as err:
+            raise SuspiciousOperation(err.message) from err
 
         if user:
             if not user.is_active:
@@ -116,16 +119,6 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
             user_info[field] for field in name_fields if user_info.get(field)
         )
         return full_name or None
-
-    def get_existing_user(self, sub, email):
-        """Fetch an existing user by sub (or email as a fallback respecting fallback setting."""
-        try:
-            return User.objects.get(sub=sub)
-        except User.DoesNotExist:
-            if email and settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
-                return User.objects.filter(email=email).first()
-
-        return None
 
     def update_user_if_needed(self, user, claims):
         """Update user claims if they have changed."""

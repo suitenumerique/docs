@@ -1,5 +1,6 @@
 """Unit tests for the Authentication Backends."""
 
+import random
 import re
 from logging import Logger
 from unittest import mock
@@ -64,7 +65,33 @@ def test_authentication_getter_existing_user_via_email(
     assert user == db_user
 
 
-def test_authentication_getter_existing_user_no_fallback_to_email(
+def test_authentication_getter_email_none(monkeypatch):
+    """
+    If no user is found with the sub and no email is provided, a new user should be created.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    db_user = UserFactory(email=None)
+
+    def get_userinfo_mocked(*args):
+        user_info = {"sub": "123"}
+        if random.choice([True, False]):
+            user_info["email"] = None
+        return user_info
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    user = klass.get_or_create_user(
+        access_token="test-token", id_token=None, payload=None
+    )
+
+    # Since the sub and email didn't match, it should create a new user
+    assert models.User.objects.count() == 2
+    assert user != db_user
+    assert user.sub == "123"
+
+
+def test_authentication_getter_existing_user_no_fallback_to_email_allow_duplicate(
     settings, monkeypatch
 ):
     """
@@ -77,6 +104,7 @@ def test_authentication_getter_existing_user_no_fallback_to_email(
 
     # Set the setting to False
     settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION = False
+    settings.OIDC_ALLOW_DUPLICATE_EMAILS = True
 
     def get_userinfo_mocked(*args):
         return {"sub": "123", "email": db_user.email}
@@ -91,6 +119,39 @@ def test_authentication_getter_existing_user_no_fallback_to_email(
     assert models.User.objects.count() == 2
     assert user != db_user
     assert user.sub == "123"
+
+
+def test_authentication_getter_existing_user_no_fallback_to_email_no_duplicate(
+    settings, monkeypatch
+):
+    """
+    When the "OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION" setting is set to False,
+    the system should not match users by email, even if the email matches.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    db_user = UserFactory()
+
+    # Set the setting to False
+    settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION = False
+    settings.OIDC_ALLOW_DUPLICATE_EMAILS = False
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": db_user.email}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    with pytest.raises(
+        SuspiciousOperation,
+        match=(
+            "We couldn't find a user with this sub but the email is already associated "
+            "with a registered user."
+        ),
+    ):
+        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+
+    # Since the sub doesn't match, it should not create a new user
+    assert models.User.objects.count() == 1
 
 
 def test_authentication_getter_existing_user_with_email(
