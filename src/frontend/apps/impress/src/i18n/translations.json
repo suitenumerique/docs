@@ -147,7 +147,7 @@
       "Your {{format}} was downloaded succesfully": "Ihr {{format}} wurde erfolgreich heruntergeladen"
     }
   },
-    "nl": {
+  "nl": {
     "translation": {
       "\"{{email}}\" is already invited to the document.": "\"{{email}}\" is al uitgenodigd voor het document.",
       "Accessibility": "Toegankelijkheid",
