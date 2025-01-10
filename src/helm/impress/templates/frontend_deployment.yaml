@@ -6,6 +6,10 @@ kind: Deployment
 metadata:
   name: {{ $fullName }}
   namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    {{- with .Values.backend.dpAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
   labels:
     {{- include "impress.common.labels" (list . $component) | nindent 4 }}
 spec:

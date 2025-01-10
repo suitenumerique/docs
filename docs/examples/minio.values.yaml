@@ -1,0 +1,8 @@
+auth:
+  rootUser: root
+  rootPassword: password
+provisioning:
+  enabled: true
+  buckets:
+    - name: impress-media-storage
+      versioning: true
