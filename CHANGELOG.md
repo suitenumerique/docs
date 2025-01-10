@@ -26,6 +26,7 @@ and this project adheres to
 - ✨(frontend) add favorite feature #515
 - ✨(frontend) many ui fixes #524
 - 💄(frontend) fix the ux of the new ui #539
+- 💄(frontend) fix minor bugs #546
 
 ## Changed
 - 💄(frontend) add filtering from left panel #475

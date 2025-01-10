@@ -5,7 +5,7 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -99,6 +99,10 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       handleTitleSubmit(e.currentTarget.textContent || '');
     }
   };
+
+  useEffect(() => {
+    setTitleDisplay(doc.title);
+  }, [doc]);
 
   return (
     <>
