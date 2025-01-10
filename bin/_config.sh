@@ -7,7 +7,7 @@ UNSET_USER=0
 
 TERRAFORM_DIRECTORY="./env.d/terraform"
 COMPOSE_FILE="${REPO_DIR}/docker-compose.yml"
-COMPOSE_PROJECT="impress"
+COMPOSE_PROJECT="docs"
 
 
 # _set_user: set (or unset) default user id used to run docker commands
