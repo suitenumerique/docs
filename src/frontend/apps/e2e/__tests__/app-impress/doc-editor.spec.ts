@@ -204,6 +204,15 @@ test.describe('Doc Editor', () => {
     await verifyDocName(page, firstDoc);
     await expect(editor.getByText('Hello World Doc 2')).toBeHidden();
     await expect(editor.getByText('Hello World Doc 1')).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'New doc',
+      })
+      .click();
+
+    await expect(editor.getByText('Hello World Doc 1')).toBeHidden();
+    await expect(editor.getByText('Hello World Doc 2')).toBeHidden();
   });
 
   test('it saves the doc when we change pages', async ({

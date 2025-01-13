@@ -27,9 +27,14 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
     setBroadcastProvider,
   ]);
 
+  /**
+   * Destroy the provider when the component is unmounted
+   */
   useEffect(() => {
     return () => {
-      destroyProvider();
+      if (room) {
+        destroyProvider();
+      }
     };
-  }, [destroyProvider]);
+  }, [destroyProvider, room]);
 };
