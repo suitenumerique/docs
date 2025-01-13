@@ -85,23 +85,28 @@ export const AddMembers = ({ currentRole, doc }: ModalAddMembersProps) => {
           })
         : t(`Failed to add the member in the document.`);
 
-    if (
-      dataError.cause?.[0] ===
-      'Document invitation with this Email address and Document already exists.'
-    ) {
-      messageError = t('"{{email}}" is already invited to the document.', {
-        email: dataError['data']?.value,
-      });
+ const onError = (dataError: APIErrorUser) => {
+    const email = dataError['data']?.value;
+    const statusCode = dataError.status; // Assuming `status` is available
+    let messageError = t('An error occurred.');
+
+    if (statusCode === 400) { // Bad Request
+        messageError = email
+            ? t(`Failed to create the invitation for {{email}}.`, { email })
+            : t('Failed to add the member in the document.');
+    } else if (statusCode === 409) { // Conflict
+        if (dataError.cause?.some(cause => cause.includes('invitation') && cause.includes(email))) {
+            messageError = t('"{{email}}" is already invited to the document.', { email });
+        } else if (dataError.cause?.some(cause => cause.includes('associated to a registered user') && cause.includes(email))) {
+            messageError = t('"{{email}}" is already a member of the document.', { email });
+        }
+    } else {
+        messageError = t('An unexpected error occurred. Please try again.');
     }
 
-    if (
-      dataError.cause?.[0] ===
-      'This email is already associated to a registered user.'
-    ) {
-      messageError = t('"{{email}}" is already member of the document.', {
-        email: dataError['data']?.value,
-      });
-    }
+    toast(messageError, VariantType.ERROR, toastOptions);
+};
+
 
     toast(messageError, VariantType.ERROR, toastOptions);
   };
