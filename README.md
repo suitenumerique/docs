@@ -40,7 +40,7 @@ $ make bootstrap FLUSH_ARGS='--no-input'
 This command builds the `app` container, installs dependencies, performs
 database migrations and compile translations. It's a good idea to use this
 command each time you are pulling code from the project repository to avoid
-dependency-releated or migration-releated issues.
+dependency-related or migration-related issues.
 
 Your Docker services should now be up and running 🎉
 

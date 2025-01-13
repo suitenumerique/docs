@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box } from '@/components';
+import { Box, StyledLink } from '@/components';
 import { useCreateDoc, useTrans } from '@/features/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
@@ -28,10 +28,17 @@ export const DocsGridContainer = () => {
   return (
     <Box $overflow="auto">
       <Box
+        $direction="row"
         $align="flex-end"
-        $justify="center"
+        $justify="flex-end"
+        $gap="10px"
         $margin={isMobile ? 'small' : 'big'}
       >
+        <StyledLink href="/import">
+          <Button color="secondary">
+            {t('Import documents')}
+          </Button>
+        </StyledLink>
         <Button onClick={handleCreateDoc}>{t('Create a new document')}</Button>
       </Box>
       <DocsGrid />
