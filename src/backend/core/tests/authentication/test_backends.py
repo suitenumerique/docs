@@ -1,6 +1,8 @@
 """Unit tests for the Authentication Backends."""
 
 import re
+from logging import Logger
+from unittest import mock
 
 from django.core.exceptions import SuspiciousOperation
 from django.test.utils import override_settings
@@ -128,11 +130,12 @@ def test_authentication_getter_existing_user_with_email(
         ("Jack", "Duy", "jack.duy@example.com"),
     ],
 )
-def test_authentication_getter_existing_user_change_fields(
+def test_authentication_getter_existing_user_change_fields_sub(
     first_name, last_name, email, django_assert_num_queries, monkeypatch
 ):
     """
-    It should update the email or name fields on the user when they change.
+    It should update the email or name fields on the user when they change
+    and the user was identified by its "sub".
     """
     klass = OIDCAuthenticationBackend()
     user = UserFactory(
@@ -151,6 +154,48 @@ def test_authentication_getter_existing_user_change_fields(
 
     # One and only one additional update query when a field has changed
     with django_assert_num_queries(2):
+        authenticated_user = klass.get_or_create_user(
+            access_token="test-token", id_token=None, payload=None
+        )
+
+    assert user == authenticated_user
+    user.refresh_from_db()
+    assert user.email == email
+    assert user.full_name == f"{first_name:s} {last_name:s}"
+    assert user.short_name == first_name
+
+
+@pytest.mark.parametrize(
+    "first_name, last_name, email",
+    [
+        ("Jack", "Doe", "john.doe@example.com"),
+        ("John", "Duy", "john.doe@example.com"),
+    ],
+)
+def test_authentication_getter_existing_user_change_fields_email(
+    first_name, last_name, email, django_assert_num_queries, monkeypatch
+):
+    """
+    It should update the name fields on the user when they change
+    and the user was identified by its "email" as fallback.
+    """
+    klass = OIDCAuthenticationBackend()
+    user = UserFactory(
+        full_name="John Doe", short_name="John", email="john.doe@example.com"
+    )
+
+    def get_userinfo_mocked(*args):
+        return {
+            "sub": "123",
+            "email": user.email,
+            "first_name": first_name,
+            "last_name": last_name,
+        }
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    # One and only one additional update query when a field has changed
+    with django_assert_num_queries(3):
         authenticated_user = klass.get_or_create_user(
             access_token="test-token", id_token=None, payload=None
         )
@@ -211,29 +256,6 @@ def test_authentication_getter_new_user_with_email(monkeypatch):
     assert user.short_name == "John"
     assert user.password == "!"
     assert models.User.objects.count() == 1
-
-
-def test_authentication_getter_invalid_token(django_assert_num_queries, monkeypatch):
-    """The user's info doesn't contain a sub."""
-    klass = OIDCAuthenticationBackend()
-
-    def get_userinfo_mocked(*args):
-        return {
-            "test": "123",
-        }
-
-    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
-
-    with (
-        django_assert_num_queries(0),
-        pytest.raises(
-            SuspiciousOperation,
-            match="User info contained no recognizable user identification",
-        ),
-    ):
-        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
-
-    assert models.User.objects.exists() is False
 
 
 @override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
@@ -341,7 +363,7 @@ def test_authentication_getter_existing_disabled_user_via_email(
     django_assert_num_queries, monkeypatch
 ):
     """
-    If an existing user does not matches the sub but matches the email and is disabled,
+    If an existing user does not match the sub but matches the email and is disabled,
     an error should be raised and a user should not be created.
     """
 
@@ -367,85 +389,100 @@ def test_authentication_getter_existing_disabled_user_via_email(
     assert models.User.objects.count() == 1
 
 
-# Required claims
+# Essential claims
 
 
-@override_settings(
-    OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo",
-    USER_OIDC_REQUIRED_CLAIMS=["email", "sub", "address"],
-)
-@responses.activate
-def test_authentication_get_userinfo_required_claims_missing():
-    """Ensure SuspiciousOperation is raised if required claims are missing."""
+def test_authentication_verify_claims_default(django_assert_num_queries, monkeypatch):
+    """The sub claim should be mandatory by default."""
+    klass = OIDCAuthenticationBackend()
 
-    responses.add(
-        responses.GET,
-        re.compile(r".*/userinfo"),
-        json={
-            "last_name": "Doe",
-            "email": "john.doe@example.com",
-        },
-        status=200,
-    )
+    def get_userinfo_mocked(*args):
+        return {
+            "test": "123",
+        }
 
-    oidc_backend = OIDCAuthenticationBackend()
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
-    with pytest.raises(
-        SuspiciousOperation, match="Missing required claims in user info: sub, address"
+    with (
+        django_assert_num_queries(0),
+        pytest.raises(
+            KeyError,
+            match="sub",
+        ),
     ):
-        oidc_backend.get_userinfo("fake_access_token", None, None)
+        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+
+    assert models.User.objects.exists() is False
 
 
-@override_settings(
-    OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo",
-    USER_OIDC_REQUIRED_CLAIMS=["email", "Sub"],
+@pytest.mark.parametrize(
+    "essential_claims, missing_claims",
+    [
+        (["email", "sub"], ["email"]),
+        (["Email", "sub"], ["Email"]),  # Case sensitivity
+    ],
 )
-@responses.activate
-def test_authentication_get_userinfo_required_claims_case_sensitivity():
-    """Ensure the system respects case sensitivity for required claims."""
+@override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
+@mock.patch.object(Logger, "error")
+def test_authentication_verify_claims_essential_missing(
+    mock_logger,
+    essential_claims,
+    missing_claims,
+    django_assert_num_queries,
+    monkeypatch,
+):
+    """Ensure SuspiciousOperation is raised if essential claims are missing."""
 
-    responses.add(
-        responses.GET,
-        re.compile(r".*/userinfo"),
-        json={
+    klass = OIDCAuthenticationBackend()
+
+    def get_userinfo_mocked(*args):
+        return {
             "sub": "123",
             "last_name": "Doe",
-            "email": "john.doe@example.com",
-        },
-        status=200,
-    )
+        }
 
-    oidc_backend = OIDCAuthenticationBackend()
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
-    with pytest.raises(
-        SuspiciousOperation, match="Missing required claims in user info: Sub"
+    with (
+        django_assert_num_queries(0),
+        pytest.raises(
+            SuspiciousOperation,
+            match="Claims verification failed",
+        ),
+        override_settings(USER_OIDC_ESSENTIAL_CLAIMS=essential_claims),
     ):
-        oidc_backend.get_userinfo("fake_access_token", None, None)
+        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+
+    assert models.User.objects.exists() is False
+    mock_logger.assert_called_once_with("Missing essential claims: %s", missing_claims)
 
 
 @override_settings(
     OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo",
-    USER_OIDC_REQUIRED_CLAIMS=["email", "sub"],
+    USER_OIDC_ESSENTIAL_CLAIMS=["email", "last_name"],
 )
-@responses.activate
-def test_authentication_get_userinfo_required_claims_success():
-    """Ensure user is authenticated when required claims are present."""
+def test_authentication_verify_claims_success(django_assert_num_queries, monkeypatch):
+    """Ensure user is authenticated when all essential claims are present."""
 
-    responses.add(
-        responses.GET,
-        re.compile(r".*/userinfo"),
-        json={
-            "sub": "123",
-            "last_name": "Doe",
+    klass = OIDCAuthenticationBackend()
+
+    def get_userinfo_mocked(*args):
+        return {
             "email": "john.doe@example.com",
-        },
-        status=200,
-    )
+            "last_name": "Doe",
+            "sub": "123",
+        }
 
-    oidc_backend = OIDCAuthenticationBackend()
-    result = oidc_backend.get_userinfo("fake_access_token", None, None)
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
-    assert result["sub"] == "123"
-    assert result.get("first_name") is None
-    assert result["last_name"] == "Doe"
-    assert result["email"] == "john.doe@example.com"
+    with django_assert_num_queries(6):
+        user = klass.get_or_create_user(
+            access_token="test-token", id_token=None, payload=None
+        )
+
+    assert models.User.objects.filter(id=user.id).exists()
+
+    assert user.sub == "123"
+    assert user.full_name == "Doe"
+    assert user.short_name is None
+    assert user.email == "john.doe@example.com"

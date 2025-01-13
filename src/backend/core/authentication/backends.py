@@ -1,5 +1,7 @@
 """Authentication Backends for the Impress core app."""
 
+import logging
+
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.utils.translation import gettext_lazy as _
@@ -10,6 +12,8 @@ from mozilla_django_oidc.auth import (
 )
 
 from core.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
@@ -57,24 +61,31 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
                     _("Invalid response format or token verification failed")
                 ) from e
 
-        # Validate required claims
-        missing_claims = [
-            claim
-            for claim in settings.USER_OIDC_REQUIRED_CLAIMS
-            if claim not in userinfo
-        ]
-        if missing_claims:
-            raise SuspiciousOperation(
-                _("Missing required claims in user info: %(claims)s")
-                % {"claims": ", ".join(missing_claims)}
-            )
-
         return userinfo
+
+    def verify_claims(self, claims):
+        """
+        Verify the presence of essential claims and the "sub" (which is mandatory as defined
+        by the OIDC specification) to decide if authentication should be allowed.
+        """
+        essential_claims = settings.USER_OIDC_ESSENTIAL_CLAIMS
+        missing_claims = [claim for claim in essential_claims if claim not in claims]
+
+        if missing_claims:
+            logger.error("Missing essential claims: %s", missing_claims)
+            return False
+
+        return True
 
     def get_or_create_user(self, access_token, id_token, payload):
         """Return a User based on userinfo. Create a new user if no match is found."""
 
         user_info = self.get_userinfo(access_token, id_token, payload)
+
+        if not self.verify_claims(user_info):
+            raise SuspiciousOperation("Claims verification failed.")
+
+        sub = user_info["sub"]
         email = user_info.get("email")
 
         # Get user's full name from OIDC fields defined in settings
@@ -86,12 +97,6 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
             "full_name": full_name,
             "short_name": short_name,
         }
-
-        sub = user_info.get("sub")
-        if not sub:
-            raise SuspiciousOperation(
-                _("User info contained no recognizable user identification")
-            )
 
         user = self.get_existing_user(sub, email)
 
@@ -113,15 +118,13 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
         return full_name or None
 
     def get_existing_user(self, sub, email):
-        """Fetch existing user by sub or email."""
+        """Fetch an existing user by sub (or email as a fallback respecting fallback setting."""
         try:
             return User.objects.get(sub=sub)
         except User.DoesNotExist:
             if email and settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
-                try:
-                    return User.objects.get(email=email)
-                except User.DoesNotExist:
-                    pass
+                return User.objects.filter(email=email).first()
+
         return None
 
     def update_user_if_needed(self, user, claims):
@@ -131,4 +134,4 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
         )
         if has_changed:
             updated_claims = {key: value for key, value in claims.items() if value}
-            self.UserModel.objects.filter(sub=user.sub).update(**updated_claims)
+            self.UserModel.objects.filter(id=user.id).update(**updated_claims)

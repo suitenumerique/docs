@@ -474,8 +474,8 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
-    USER_OIDC_REQUIRED_CLAIMS = values.ListValue(
-        default=[], environ_name="USER_OIDC_REQUIRED_CLAIMS", environ_prefix=None
+    USER_OIDC_ESSENTIAL_CLAIMS = values.ListValue(
+        default=[], environ_name="USER_OIDC_ESSENTIAL_CLAIMS", environ_prefix=None
     )
     USER_OIDC_FIELDS_TO_FULLNAME = values.ListValue(
         default=["first_name", "last_name"],
