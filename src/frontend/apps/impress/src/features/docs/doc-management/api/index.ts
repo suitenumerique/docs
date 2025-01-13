@@ -1,4 +1,5 @@
 export * from './useCreateDoc';
+export * from './useDeleteFavoriteDoc';
 export * from './useDoc';
 export * from './useDocOptions';
 export * from './useDocs';

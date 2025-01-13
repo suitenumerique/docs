@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { PropsWithChildren } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
-import { useCreateDoc } from '@/features/docs';
-import { DocSearchModal } from '@/features/docs/doc-search/components/DocSearchModal';
+import { useCreateDoc } from '@/features/docs/doc-management';
+import { DocSearchModal } from '@/features/docs/doc-search';
 import { useCmdK } from '@/hook/useCmdK';
 
 import { useLeftPanelStore } from '../stores';

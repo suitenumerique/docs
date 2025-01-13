@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { Box } from '@/components';
-import { HorizontalSeparator } from '@/components/separators/HorizontalSeparator';
+import { Box, HorizontalSeparator } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { DocTitleText } from './DocTitle';

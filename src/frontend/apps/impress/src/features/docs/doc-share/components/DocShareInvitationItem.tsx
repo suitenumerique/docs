@@ -10,14 +10,12 @@ import {
 import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/features/docs/doc-management';
-import {
-  useDeleteDocInvitation,
-  useUpdateDocInvitation,
-} from '@/features/docs/doc-share';
-import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
-import { Invitation } from '@/features/docs/doc-share/types';
+
+import { useDeleteDocInvitation, useUpdateDocInvitation } from '../api';
+import { Invitation } from '../types';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
+import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
   doc: Doc;

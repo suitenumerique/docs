@@ -7,9 +7,8 @@ import {
   KEY_LIST_DOC,
   ModalRemoveDoc,
   useCreateFavoriteDoc,
+  useDeleteFavoriteDoc,
 } from '@/features/docs/doc-management';
-
-import { useDeleteFavoriteDoc } from '../../doc-management/api/useDeleteFavoriteDoc';
 
 interface DocsGridActionsProps {
   doc: Doc;

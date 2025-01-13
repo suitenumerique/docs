@@ -3,7 +3,7 @@ import { Command } from 'cmdk';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { HorizontalSeparator } from '@/components/separators/HorizontalSeparator';
+import { HorizontalSeparator } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { Box } from '../Box';

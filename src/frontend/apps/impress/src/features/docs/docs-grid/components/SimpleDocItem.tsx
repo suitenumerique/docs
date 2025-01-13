@@ -3,10 +3,11 @@ import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/features/docs';
-import PinnedDocumentIcon from '@/features/docs/doc-management/assets/pinned-document.svg';
-import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
+import { Doc, LinkReach } from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
+
+import PinnedDocumentIcon from '../assets/pinned-document.svg';
+import SimpleFileIcon from '../assets/simple-document.svg';
 
 const ItemTextCss = css`
   overflow: hidden;

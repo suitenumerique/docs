@@ -3,10 +3,9 @@ import { DateTime } from 'luxon';
 import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
-import { DocShareModal } from '@/features/docs/doc-share/component/DocShareModal';
+import { Doc, LinkReach } from '@/features/docs/doc-management';
+import { DocShareModal } from '@/features/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
-
-import { Doc, LinkReach } from '../../doc-management';
 
 import { DocsGridActions } from './DocsGridActions';
 import { SimpleDocItem } from './SimpleDocItem';

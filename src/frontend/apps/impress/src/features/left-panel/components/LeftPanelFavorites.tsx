@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
-import { Box, InfiniteScroll, Text } from '@/components';
-import { HorizontalSeparator } from '@/components/separators/HorizontalSeparator';
+import { Box, HorizontalSeparator, InfiniteScroll, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useInfiniteDocs } from '@/features/docs';
+import { useInfiniteDocs } from '@/features/docs/doc-management';
 
 import { LeftPanelFavoriteItem } from './LeftPanelFavoriteItem';
 

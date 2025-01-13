@@ -4,24 +4,24 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box } from '@/components';
-import { LoadMoreText } from '@/components/LoadMoreText';
+import { Box, LoadMoreText } from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
-} from '@/components/quick-search/QuickSearch';
-import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
+  QuickSearchGroup,
+} from '@/components/quick-search/';
 import { User } from '@/core';
 import { Access, Doc } from '@/features/docs';
+import { useResponsiveStore } from '@/stores';
+import { isValidEmail } from '@/utils';
+
 import {
   KEY_LIST_USER,
   useDocAccessesInfinite,
   useDocInvitationsInfinite,
   useUsers,
-} from '@/features/docs/doc-share';
-import { Invitation } from '@/features/docs/doc-share/types';
-import { useResponsiveStore } from '@/stores';
-import { isValidEmail } from '@/utils';
+} from '../api';
+import { Invitation } from '../types';
 
 import { DocShareAddMemberList } from './DocShareAddMemberList';
 import { DocShareInvitationItem } from './DocShareInvitationItem';

@@ -8,14 +8,14 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
-import { useWhoAmI } from '@/features/docs/doc-share/hooks/useWhoAmI';
+import { Access, Doc, Role } from '@/features/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
-import { Access, Doc, Role } from '../../doc-management/types';
-import { useDeleteDocAccess, useUpdateDocAccess } from '../index';
+import { useDeleteDocAccess, useUpdateDocAccess } from '../api';
+import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
+import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
   doc: Doc;

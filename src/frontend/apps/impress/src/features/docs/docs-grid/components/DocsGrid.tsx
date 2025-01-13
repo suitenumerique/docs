@@ -4,9 +4,11 @@ import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
 import { Box, Card, Text } from '@/components';
+import {
+  DocDefaultFilter,
+  useInfiniteDocs,
+} from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
-
-import { DocDefaultFilter, useInfiniteDocs } from '../../doc-management';
 
 import { DocsGridItem } from './DocsGridItem';
 import { DocsGridLoader } from './DocsGridLoader';

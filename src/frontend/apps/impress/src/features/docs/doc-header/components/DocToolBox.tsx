@@ -20,13 +20,12 @@ import { useAuthStore } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { useEditorStore } from '@/features/docs/doc-editor/';
 import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
+import { DocShareModal } from '@/features/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
 } from '@/features/docs/doc-versioning';
 import { useResponsiveStore } from '@/stores';
-
-import { DocShareModal } from '../../doc-share/component/DocShareModal';
 
 import { ModalPDF } from './ModalExport';
 

@@ -6,8 +6,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box } from '@/components';
-import { HorizontalSeparator } from '@/components/separators/HorizontalSeparator';
+import { Box, HorizontalSeparator } from '@/components';
 import { Doc } from '@/features/docs';
 
 import { DocVisibility } from './DocVisibility';

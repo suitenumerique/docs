@@ -2,7 +2,7 @@ import { Box, Text } from '@/components';
 import {
   QuickSearchItemContent,
   QuickSearchItemContentProps,
-} from '@/components/quick-search/QuickSearchItemContent';
+} from '@/components/quick-search';
 import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 

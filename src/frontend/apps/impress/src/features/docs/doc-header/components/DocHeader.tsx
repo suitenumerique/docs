@@ -2,8 +2,7 @@ import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
-import { HorizontalSeparator } from '@/components/separators/HorizontalSeparator';
+import { Box, HorizontalSeparator, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,

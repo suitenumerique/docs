@@ -12,10 +12,10 @@ import {
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search';
-import EmptySearchIcon from '@/features/docs/doc-search/assets/illustration-docs-empty.png';
+import { Doc, useInfiniteDocs } from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
-import { Doc, useInfiniteDocs } from '../../doc-management';
+import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
 import { DocSearchItem } from './DocSearchItem';
 

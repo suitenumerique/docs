@@ -19,8 +19,9 @@ import {
   LinkRole,
   useUpdateDocLink,
 } from '@/features/docs';
-import { useTranslatedShareSettings } from '@/features/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
+
+import { useTranslatedShareSettings } from '../hooks/';
 
 interface DocVisibilityProps {
   doc: Doc;

@@ -3,7 +3,8 @@ import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
 import { User } from '@/core';
-import { SearchUserRow } from '@/features/docs/doc-share/component/SearchUserRow';
+
+import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
   user: User;

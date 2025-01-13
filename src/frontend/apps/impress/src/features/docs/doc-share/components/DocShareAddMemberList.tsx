@@ -12,12 +12,10 @@ import { Box } from '@/components';
 import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/features/docs';
-import {
-  useCreateDocAccess,
-  useCreateDocInvitation,
-} from '@/features/docs/doc-share';
-import { OptionType } from '@/features/docs/doc-share/types';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
+
+import { useCreateDocAccess, useCreateDocInvitation } from '../api';
+import { OptionType } from '../types';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 import { DocShareAddMemberListItem } from './DocShareAddMemberListItem';

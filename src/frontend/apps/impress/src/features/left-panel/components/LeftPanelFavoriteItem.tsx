@@ -3,8 +3,9 @@ import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, DocsGridActions, SimpleDocItem } from '@/features/docs';
-import { DocShareModal } from '@/features/docs/doc-share/component/DocShareModal';
+import { Doc } from '@/features/docs/doc-management';
+import { DocShareModal } from '@/features/docs/doc-share';
+import { DocsGridActions, SimpleDocItem } from '@/features/docs/docs-grid';
 import { useResponsiveStore } from '@/stores';
 
 type LeftPanelFavoriteItemProps = {
