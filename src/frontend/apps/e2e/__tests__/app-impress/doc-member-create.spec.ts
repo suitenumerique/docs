@@ -160,7 +160,7 @@ test.describe('Document create member', () => {
     await page.getByRole('button', { name: 'Partager' }).click();
 
     const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
+      name: 'Saisie de recherche rapide',
     });
 
     const email = randomName('test@test.fr', browserName, 1)[0];

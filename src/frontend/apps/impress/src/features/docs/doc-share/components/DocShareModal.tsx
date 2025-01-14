@@ -94,7 +94,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
         count === 1
           ? t('Document owner')
           : t('Share with {{count}} users', {
-              count: count,
+              count,
             }),
       elements: members,
       endActions: membersQuery.hasNextPage
@@ -137,7 +137,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     };
 
     return {
-      groupName: t('Search user result', { count: users.length }),
+      groupName: t('Search user result'),
       elements: users,
       endActions:
         isEmail && users.length === 0

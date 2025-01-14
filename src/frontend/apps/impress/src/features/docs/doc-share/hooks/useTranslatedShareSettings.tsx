@@ -29,10 +29,10 @@ export const useTranslatedShareSettings = () => {
       icon: 'corporate_fare',
       value: LinkReach.AUTHENTICATED,
       descriptionReadOnly: t(
-        'Anyone with the link can see the document provided they are logged in',
+        'Anyone with the link can view the document if they are logged in',
       ),
       descriptionEdit: t(
-        'Anyone with the link can edit provided they are logged in',
+        'Anyone with the link can edit the document if they are logged in',
       ),
     },
     [LinkReach.PUBLIC]: {

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: lasuite-people\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-12-17 15:50+0000\n"
-"PO-Revision-Date: 2024-12-17 15:53\n"
+"PO-Revision-Date: 2025-01-14 15:14\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "Language: de_DE\n"
@@ -31,23 +31,23 @@ msgstr "Wichtige Daten"
 
 #: core/api/filters.py:16
 msgid "Creator is me"
-msgstr ""
+msgstr "Ersteller bin ich"
 
 #: core/api/filters.py:19
 msgid "Favorite"
-msgstr ""
+msgstr "Favorit"
 
 #: core/api/filters.py:22
 msgid "Title"
-msgstr ""
+msgstr "Titel"
 
 #: core/api/serializers.py:307
 msgid "A new document was created on your behalf!"
-msgstr ""
+msgstr "Ein neues Dokument wurde in Ihrem Namen erstellt!"
 
 #: core/api/serializers.py:311
 msgid "You have been granted ownership of a new document:"
-msgstr ""
+msgstr "Sie sind Besitzer eines neuen Dokuments:"
 
 #: core/api/serializers.py:414
 msgid "Body"
@@ -63,15 +63,15 @@ msgstr "Format"
 
 #: core/authentication/backends.py:57
 msgid "Invalid response format or token verification failed"
-msgstr ""
+msgstr "Ungültiges Antwortformat oder Token-Verifizierung fehlgeschlagen"
 
 #: core/authentication/backends.py:81
 msgid "User info contained no recognizable user identification"
-msgstr ""
+msgstr "Benutzerinfo enthielt keine erkennbare Benutzeridentifikation"
 
 #: core/authentication/backends.py:88
 msgid "User account is disabled"
-msgstr ""
+msgstr "Benutzerkonto ist deaktiviert"
 
 #: core/models.py:62 core/models.py:69
 msgid "Reader"
@@ -127,31 +127,31 @@ msgstr "Datum und Uhrzeit, an dem zuletzt aktualisiert wurde"
 
 #: core/models.py:135
 msgid "Enter a valid sub. This value may contain only letters, numbers, and @/./+/-/_/: characters."
-msgstr ""
+msgstr "Geben Sie eine gültige Unterseite ein. Dieser Wert darf nur Buchstaben, Zahlen und die @/./+/-/_/: Zeichen enthalten."
 
 #: core/models.py:141
 msgid "sub"
-msgstr ""
+msgstr "unter"
 
 #: core/models.py:143
 msgid "Required. 255 characters or fewer. Letters, numbers, and @/./+/-/_/: characters only."
-msgstr ""
+msgstr "Erforderlich. 255 Zeichen oder weniger. Buchstaben, Zahlen und die Zeichen @/./+/-/_/:"
 
 #: core/models.py:152
 msgid "full name"
-msgstr ""
+msgstr "Name"
 
 #: core/models.py:153
 msgid "short name"
-msgstr ""
+msgstr "Kurzbezeichnung"
 
 #: core/models.py:155
 msgid "identity email address"
-msgstr ""
+msgstr "Identitäts-E-Mail-Adresse"
 
 #: core/models.py:160
 msgid "admin email address"
-msgstr ""
+msgstr "Admin E-Mail-Adresse"
 
 #: core/models.py:167
 msgid "language"
@@ -159,35 +159,35 @@ msgstr "Sprache"
 
 #: core/models.py:168
 msgid "The language in which the user wants to see the interface."
-msgstr ""
+msgstr "Die Sprache, in der der Benutzer die Benutzeroberfläche sehen möchte."
 
 #: core/models.py:174
 msgid "The timezone in which the user wants to see times."
-msgstr ""
+msgstr "Die Zeitzone, in der der Nutzer Zeiten sehen möchte."
 
 #: core/models.py:177
 msgid "device"
-msgstr ""
+msgstr "Gerät"
 
 #: core/models.py:179
 msgid "Whether the user is a device or a real user."
-msgstr ""
+msgstr "Ob der Benutzer ein Gerät oder ein echter Benutzer ist."
 
 #: core/models.py:182
 msgid "staff status"
-msgstr ""
+msgstr "Status des Teammitgliedes"
 
 #: core/models.py:184
 msgid "Whether the user can log into this admin site."
-msgstr ""
+msgstr "Gibt an, ob der Benutzer sich in diese Admin-Seite einloggen kann."
 
 #: core/models.py:187
 msgid "active"
-msgstr ""
+msgstr "aktiviert"
 
 #: core/models.py:190
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
-msgstr ""
+msgstr "Ob dieser Benutzer als aktiviert behandelt werden soll. Deaktivieren Sie diese Option, anstatt Konten zu löschen."
 
 #: core/models.py:202
 msgid "user"
@@ -216,25 +216,25 @@ msgstr "Unbenanntes Dokument"
 #: core/models.py:593
 #, python-brace-format
 msgid "{name} shared a document with you!"
-msgstr ""
+msgstr "{name} hat ein Dokument mit Ihnen geteilt!"
 
 #: core/models.py:597
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
-msgstr ""
+msgstr "{name} hat Sie mit der Rolle \"{role}\" zu folgendem Dokument eingeladen:"
 
 #: core/models.py:600
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
-msgstr ""
+msgstr "{name} hat ein Dokument mit Ihnen geteilt: {title}"
 
 #: core/models.py:623
 msgid "Document/user link trace"
-msgstr ""
+msgstr "Dokument/Benutzer Linkverfolgung"
 
 #: core/models.py:624
 msgid "Document/user link traces"
-msgstr ""
+msgstr "Dokument/Benutzer Linkverfolgung"
 
 #: core/models.py:630
 msgid "A link trace already exists for this document/user."
@@ -242,23 +242,23 @@ msgstr ""
 
 #: core/models.py:653
 msgid "Document favorite"
-msgstr ""
+msgstr "Dokumentenfavorit"
 
 #: core/models.py:654
 msgid "Document favorites"
-msgstr ""
+msgstr "Dokumentfavoriten"
 
 #: core/models.py:660
 msgid "This document is already targeted by a favorite relation instance for the same user."
-msgstr ""
+msgstr "Dieses Dokument ist bereits durch den gleichen Benutzer favorisiert worden."
 
 #: core/models.py:682
 msgid "Document/user relation"
-msgstr ""
+msgstr "Dokument/Benutzerbeziehung"
 
 #: core/models.py:683
 msgid "Document/user relations"
-msgstr ""
+msgstr "Dokument/Benutzerbeziehungen"
 
 #: core/models.py:689
 msgid "This user is already in this document."
@@ -294,101 +294,101 @@ msgstr "Ob diese Vorlage für jedermann öffentlich ist."
 
 #: core/models.py:731
 msgid "Template"
-msgstr ""
+msgstr "Vorlage"
 
 #: core/models.py:732
 msgid "Templates"
-msgstr ""
+msgstr "Vorlagen"
 
 #: core/models.py:871
 msgid "Template/user relation"
-msgstr ""
+msgstr "Vorlage/Benutzer-Beziehung"
 
 #: core/models.py:872
 msgid "Template/user relations"
-msgstr ""
+msgstr "Vorlage/Benutzerbeziehungen"
 
 #: core/models.py:878
 msgid "This user is already in this template."
-msgstr ""
+msgstr "Dieser Benutzer ist bereits in dieser Vorlage."
 
 #: core/models.py:884
 msgid "This team is already in this template."
-msgstr ""
+msgstr "Dieses Team ist bereits in diesem Template."
 
 #: core/models.py:907
 msgid "email address"
-msgstr ""
+msgstr "E-Mail-Adresse"
 
 #: core/models.py:926
 msgid "Document invitation"
-msgstr ""
+msgstr "Einladung zum Dokument"
 
 #: core/models.py:927
 msgid "Document invitations"
-msgstr ""
+msgstr "Dokumenteinladungen"
 
 #: core/models.py:944
 msgid "This email is already associated to a registered user."
-msgstr ""
+msgstr "Diese E-Mail ist bereits einem registrierten Benutzer zugeordnet."
 
 #: core/templates/mail/html/hello.html:159 core/templates/mail/text/hello.txt:3
 msgid "Company logo"
-msgstr ""
+msgstr "Unternehmens-Logo"
 
 #: core/templates/mail/html/hello.html:188 core/templates/mail/text/hello.txt:5
 #, python-format
 msgid "Hello %(name)s"
-msgstr ""
+msgstr "Guten Tag %(name)s!"
 
 #: core/templates/mail/html/hello.html:188 core/templates/mail/text/hello.txt:5
 msgid "Hello"
-msgstr ""
+msgstr "Hallo"
 
 #: core/templates/mail/html/hello.html:189 core/templates/mail/text/hello.txt:6
 msgid "Thank you very much for your visit!"
-msgstr ""
+msgstr "Vielen Dank für Ihren Besuch!"
 
 #: core/templates/mail/html/hello.html:221
 #, python-format
 msgid "This mail has been sent to %(email)s by <a href=\"%(href)s\">%(name)s</a>"
-msgstr ""
+msgstr "Diese E-Mail wurde an %(email)s von <a href=\"%(href)s\">%(name)s</a> gesendet"
 
 #: core/templates/mail/html/invitation.html:162
 #: core/templates/mail/text/invitation.txt:3
 msgid "Logo email"
-msgstr ""
+msgstr "Logo-E-Mail"
 
 #: core/templates/mail/html/invitation.html:209
 #: core/templates/mail/text/invitation.txt:10
 msgid "Open"
-msgstr ""
+msgstr "Öffnen"
 
 #: core/templates/mail/html/invitation.html:226
 #: core/templates/mail/text/invitation.txt:14
 msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
-msgstr ""
+msgstr " Docs, Ihr neues unentbehrliches Werkzeug für die Organisation, den Austausch und die Zusammenarbeit in Ihren Dokumenten als Team. "
 
 #: core/templates/mail/html/invitation.html:233
 #: core/templates/mail/text/invitation.txt:16
 #, python-format
 msgid " Brought to you by %(brandname)s "
-msgstr ""
+msgstr " Erstellt von %(brandname)s "
 
 #: core/templates/mail/text/hello.txt:8
 #, python-format
 msgid "This mail has been sent to %(email)s by %(name)s [%(href)s]"
-msgstr ""
+msgstr "Diese E-Mail wurde an %(email)s von %(name)s [%(href)s ] gesendet"
 
 #: impress/settings.py:236
 msgid "English"
-msgstr ""
+msgstr "Englisch"
 
 #: impress/settings.py:237
 msgid "French"
-msgstr ""
+msgstr "Französisch"
 
 #: impress/settings.py:238
 msgid "German"
-msgstr ""
+msgstr "Deutsch"
 
