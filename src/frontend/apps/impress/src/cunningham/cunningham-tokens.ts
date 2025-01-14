@@ -75,6 +75,7 @@ export const tokens = {
           'danger-text': '#fff',
           'card-border': '#ededed',
           'primary-bg': '#FAFAFA',
+          'primary-action': '#1212FF',
           'primary-050': '#F5F5FE',
           'primary-150': '#E5EEFA',
           'primary-950': '#1B1B35',
@@ -129,6 +130,11 @@ export const tokens = {
             ml: '0.938rem',
             xl: '1.25rem',
             t: '0.6875rem',
+            'xl-alt': '5rem',
+            'lg-alt': '4.5rem',
+            'md-alt': '4rem',
+            'sm-alt': '3.5rem',
+            'xs-alt': '3rem',
           },
           weights: {
             thin: 100,
@@ -315,7 +321,7 @@ export const tokens = {
               color: 'white',
               'color-hover': 'var(--c--theme--colors--primary-700)',
             },
-            border: { color: 'var(--c--theme--colors--primary-200)' },
+            border: { color: 'var(--c--theme--colors--greyscale-300)' },
           },
           tertiary: {
             color: 'var(--c--theme--colors--primary-text)',
@@ -502,8 +508,8 @@ export const tokens = {
           secondary: {
             background: { 'color-hover': '#F6F6F6', 'color-active': '#EDEDED' },
             border: {
-              color: 'var(--c--theme--colors--primary-600)',
-              'color-hover': 'var(--c--theme--colors--primary-600)',
+              color: 'var(--c--theme--colors--greyscale-300)',
+              'color-hover': 'var(--c--theme--colors--greyscale-300)',
             },
             color: 'var(--c--theme--colors--primary-text)',
           },

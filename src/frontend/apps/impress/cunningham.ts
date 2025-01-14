@@ -5,6 +5,7 @@ const config = {
         colors: {
           'card-border': '#ededed',
           'primary-bg': '#FAFAFA',
+          'primary-action': '#1212FF',
           'primary-050': '#F5F5FE',
           'primary-100': '#EDF5FA',
           'primary-150': '#E5EEFA',
@@ -59,6 +60,11 @@ const config = {
             h4: '1.375rem',
             h5: '1.25rem',
             h6: '1.125rem',
+            'xl-alt': '5rem',
+            'lg-alt': '4.5rem',
+            'md-alt': '4rem',
+            'sm-alt': '3.5rem',
+            'xs-alt': '3rem',
           },
           weights: {
             thin: 100,
@@ -224,7 +230,7 @@ const config = {
               'color-hover': 'var(--c--theme--colors--primary-700)',
             },
             border: {
-              color: 'var(--c--theme--colors--primary-200)',
+              color: 'var(--c--theme--colors--greyscale-300)',
             },
           },
           tertiary: {
@@ -379,8 +385,8 @@ const config = {
               'color-active': '#EDEDED',
             },
             border: {
-              color: 'var(--c--theme--colors--primary-600)',
-              'color-hover': 'var(--c--theme--colors--primary-600)',
+              color: 'var(--c--theme--colors--greyscale-300)',
+              'color-hover': 'var(--c--theme--colors--greyscale-300)',
             },
             color: 'var(--c--theme--colors--primary-text)',
           },
