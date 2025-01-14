@@ -50,7 +50,6 @@ dependencies = [
     "openai==1.58.1",
     "psycopg[binary]==3.2.3",
     "PyJWT==2.10.1",
-    "python-frontmatter==1.1.0",
     "python-magic==0.4.27",
     "requests==2.32.3",
     "sentry-sdk==2.19.2",
