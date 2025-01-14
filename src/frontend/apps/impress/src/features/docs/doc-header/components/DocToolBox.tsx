@@ -66,7 +66,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             label: t('Export'),
             icon: 'download',
             callback: () => {
-              setIsModalPDFOpen(true);
+              setIsModalExportOpen(true);
             },
           },
         ]
