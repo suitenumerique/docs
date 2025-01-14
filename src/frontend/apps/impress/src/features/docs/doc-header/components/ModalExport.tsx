@@ -8,6 +8,7 @@ import {
 } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
+  Loader,
   Modal,
   ModalSize,
   Select,
@@ -17,15 +18,16 @@ import {
 import { pdf } from '@react-pdf/renderer';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useEditorStore } from '@/features/docs/doc-editor';
 import { Doc } from '@/features/docs/doc-management';
 
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
-import { downloadFile } from '../utils';
+import { downloadFile, exportResolveFileUrl } from '../utils';
 
-export enum DocDownloadFormat {
+enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
 }
@@ -43,6 +45,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { toast } = useToastProvider();
   const { editor } = useEditorStore();
   const [templateSelected, setTemplateSelected] = useState<string>('');
+  const [isExporting, setIsExporting] = useState(false);
   const [format, setFormat] = useState<DocDownloadFormat>(
     DocDownloadFormat.PDF,
   );
@@ -66,14 +69,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   }, [t, templates?.pages]);
 
   async function onSubmit() {
-    if (!format) {
+    if (!editor) {
+      toast(t('The export failed'), VariantType.ERROR);
       return;
     }
 
-    if (!editor) {
-      toast(t('No editor found'), VariantType.ERROR);
-      return;
-    }
+    setIsExporting(true);
 
     const title = doc.title
       .toLowerCase()
@@ -88,15 +89,36 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       exportDocument = [...blockTemplate, ...editor.document];
     }
 
-    let blobExport;
-    if (format === 'pdf') {
-      const exporter = new PDFExporter(editor.schema, pdfDefaultSchemaMappings);
+    let blobExport: Blob;
+    if (format === DocDownloadFormat.PDF) {
+      const defaultExporter = new PDFExporter(
+        editor.schema,
+        pdfDefaultSchemaMappings,
+      );
+
+      const exporter = new PDFExporter(
+        editor.schema,
+        pdfDefaultSchemaMappings,
+        {
+          resolveFileUrl: async (url) =>
+            exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+        },
+      );
       const pdfDocument = await exporter.toReactPDFDocument(exportDocument);
       blobExport = await pdf(pdfDocument).toBlob();
     } else {
+      const defaultExporter = new DOCXExporter(
+        editor.schema,
+        docxDefaultSchemaMappings,
+      );
+
       const exporter = new DOCXExporter(
         editor.schema,
         docxDefaultSchemaMappings,
+        {
+          resolveFileUrl: async (url) =>
+            exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+        },
       );
 
       blobExport = await exporter.toBlob(exportDocument);
@@ -110,6 +132,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       }),
       VariantType.SUCCESS,
     );
+
+    setIsExporting(false);
 
     onClose();
   }
@@ -127,6 +151,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             color="secondary"
             fullWidth
             onClick={() => onClose()}
+            disabled={isExporting}
           >
             {t('Cancel')}
           </Button>
@@ -135,6 +160,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             color="primary"
             fullWidth
             onClick={() => void onSubmit()}
+            disabled={isExporting}
           >
             {t('Download')}
           </Button>
@@ -179,6 +205,21 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             setFormat(options.target.value as DocDownloadFormat)
           }
         />
+
+        {isExporting && (
+          <Box
+            $align="center"
+            $margin={{ top: 'big' }}
+            $css={css`
+              position: absolute;
+              left: 50%;
+              top: 50%;
+              transform: translate(-50%, -100%);
+            `}
+          >
+            <Loader />
+          </Box>
+        )}
       </Box>
     </Modal>
   );

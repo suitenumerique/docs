@@ -13,12 +13,12 @@
   },
   "devDependencies": {
     "@playwright/test": "1.49.1",
+    "@types/luxon": "3.4.2",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.4",
     "eslint-config-impress": "*",
-    "typescript": "*",
     "luxon": "3.5.0",
-    "@types/luxon": "3.4.2"
+    "typescript": "*"
   },
   "dependencies": {
     "convert-stream": "1.0.2",
