@@ -2,6 +2,7 @@
 # pylint: disable=too-many-lines
 
 import logging
+import mimetypes
 import re
 import uuid
 from urllib.parse import urlparse
@@ -604,8 +605,19 @@ class DocumentViewSet(
         extension = serializer.validated_data["expected_extension"]
         key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}.{extension:s}"
 
+        # Determine the content type of the file
+        file = serializer.validated_data["file"]
+        content_type, _ = mimetypes.guess_type(file.name)
+
+        # Fallback if MIME type cannot be determined
+        if not content_type:
+            content_type = "application/octet-stream"
+
         # Prepare metadata for storage
-        extra_args = {"Metadata": {"owner": str(request.user.id)}}
+        extra_args = {
+            "Metadata": {"owner": str(request.user.id)},
+            "ContentType": content_type,
+        }
         if serializer.validated_data["is_unsafe"]:
             extra_args["Metadata"]["is_unsafe"] = "true"
 

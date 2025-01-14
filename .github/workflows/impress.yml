@@ -206,10 +206,11 @@ jobs:
       - name: Install development dependencies
         run: pip install --user .[dev]
 
-      - name: Install gettext (required to compile messages)
+      - name: Install gettext (required to compile messages) and MIME support
         run: |
           sudo apt-get update
-          sudo apt-get install -y gettext pandoc
+          sudo apt-get install -y gettext pandoc shared-mime-info
+          sudo wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types -O /etc/mime.types
 
       - name: Generate a MO file from strings extracted from the project
         run: python manage.py compilemessages
