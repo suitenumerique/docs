@@ -16,7 +16,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12.6"
+      - name: Upgrade pip and setuptools
+        run: pip install --upgrade pip setuptools
+      - name: Install development dependencies
+        run: pip install --user .[dev]
+        working-directory: src/backend
+      - name: generate pot files
+        working-directory: src/backend
+        run: |
+          DJANGO_CONFIGURATION=Build python manage.py makemessages -a --keep-pot
       - name: crowdin action
         uses: crowdin/github-action@v2
         with:
