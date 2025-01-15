@@ -19,6 +19,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.User
+        skip_postgeneration_save = True
 
     sub = factory.Sequence(lambda n: f"user{n!s}")
     email = factory.Faker("email")
@@ -36,6 +37,8 @@ class UserFactory(factory.django.DjangoModelFactory):
         if create and (extracted is True):
             UserDocumentAccessFactory(user=self, role="owner")
 
+        self.save()
+
     @factory.post_generation
     def with_owned_template(self, create, extracted, **kwargs):
         """
@@ -44,6 +47,8 @@ class UserFactory(factory.django.DjangoModelFactory):
         """
         if create and (extracted is True):
             UserTemplateAccessFactory(user=self, role="owner")
+
+        self.save()
 
 
 class DocumentFactory(factory.django.DjangoModelFactory):

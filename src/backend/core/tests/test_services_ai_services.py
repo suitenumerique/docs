@@ -1,5 +1,5 @@
 """
-Test ai API endpoints in the impress core app.
+Test AI API endpoints in the impress core app.
 """
 
 import json

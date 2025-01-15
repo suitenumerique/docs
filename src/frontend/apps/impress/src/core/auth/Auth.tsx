@@ -33,7 +33,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
     setPathAllowed(!regexpUrlsAuth.some((regexp) => !!asPath.match(regexp)));
   }, [asPath]);
 
-  // We force to login except on allowed paths
+  // We force to log in except on allowed paths
   useEffect(() => {
     if (!initiated || authenticated || pathAllowed) {
       return;

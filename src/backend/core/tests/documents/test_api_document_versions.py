@@ -285,7 +285,7 @@ def test_api_document_versions_retrieve_authenticated_related(via, mock_user_tea
     assert response.status_code == 404
 
     # Create a new version should not make it available to the user because
-    # only the current version is available to the user but it is excluded
+    # only the current version is available to the user, but it is excluded
     # from the list
     document.content = "new content 1"
     document.save()

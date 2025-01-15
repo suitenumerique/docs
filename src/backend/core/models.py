@@ -195,7 +195,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
     email = models.EmailField(_("identity email address"), blank=True, null=True)
 
     # Unlike the "email" field which stores the email coming from the OIDC token, this field
-    # stores the email used by staff users to login to the admin site
+    # stores the email used by staff users to log in to the admin site
     admin_email = models.EmailField(
         _("admin email address"), unique=True, blank=True, null=True
     )
@@ -239,6 +239,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
     class Meta:
         db_table = "impress_user"
+        ordering = ("-created_at",)
         verbose_name = _("user")
         verbose_name_plural = _("users")
 
@@ -735,7 +736,7 @@ class DocumentAccess(BaseAccess):
                 violation_error_message=_("This team is already in this document."),
             ),
             models.CheckConstraint(
-                check=models.Q(user__isnull=False, team="")
+                condition=models.Q(user__isnull=False, team="")
                 | models.Q(user__isnull=True, team__gt=""),
                 name="check_document_access_either_user_or_team",
                 violation_error_message=_("Either user or team must be set, not both."),
@@ -800,7 +801,7 @@ class Template(BaseModel):
         """
         document_html = weasyprint.HTML(
             string=DjangoTemplate(self.code).render(
-                Context({"body": html.format_html(body_html), **metadata})
+                Context({"body": html.format_html("{}", body_html), **metadata})
             )
         )
         css = weasyprint.CSS(
@@ -819,7 +820,7 @@ class Template(BaseModel):
         Generate and return a docx document wrapped around the current template
         """
         template_string = DjangoTemplate(self.code).render(
-            Context({"body": html.format_html(body_html), **metadata})
+            Context({"body": html.format_html("{}", body_html), **metadata})
         )
 
         html_string = f"""
@@ -837,7 +838,6 @@ class Template(BaseModel):
         """
 
         reference_docx = "core/static/reference.docx"
-        output = BytesIO()
 
         # Convert the HTML to a temporary docx file
         with tempfile.NamedTemporaryFile(suffix=".docx", prefix="docx_") as tmp_file:
@@ -924,7 +924,7 @@ class TemplateAccess(BaseAccess):
                 violation_error_message=_("This team is already in this template."),
             ),
             models.CheckConstraint(
-                check=models.Q(user__isnull=False, team="")
+                condition=models.Q(user__isnull=False, team="")
                 | models.Q(user__isnull=True, team__gt=""),
                 name="check_template_access_either_user_or_team",
                 violation_error_message=_("Either user or team must be set, not both."),

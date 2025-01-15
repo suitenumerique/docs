@@ -49,7 +49,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         },
       );
     },
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
 
   const updateReach = (link_reach: LinkReach) => {

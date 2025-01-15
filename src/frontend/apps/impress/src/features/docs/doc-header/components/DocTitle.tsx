@@ -62,7 +62,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
+    listInvalidQueries: [KEY_DOC, KEY_LIST_DOC],
     onSuccess(data) {
       if (data.title !== untitledDocument) {
         toast(t('Document title updated successfully'), VariantType.SUCCESS);

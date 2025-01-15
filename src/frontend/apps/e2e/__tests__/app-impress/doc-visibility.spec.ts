@@ -67,7 +67,7 @@ test.describe('Doc Visibility', () => {
 test.describe('Doc Visibility: Restricted', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('A doc is not accessible when not authentified.', async ({
+  test('A doc is not accessible when not authenticated.', async ({
     page,
     browserName,
   }) => {
@@ -98,7 +98,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await expect(page.getByRole('textbox', { name: 'password' })).toBeVisible();
   });
 
-  test('A doc is not accessible when authentified but not member.', async ({
+  test('A doc is not accessible when authenticated but not member.', async ({
     page,
     browserName,
   }) => {
@@ -321,7 +321,7 @@ test.describe('Doc Visibility: Public', () => {
 test.describe('Doc Visibility: Authenticated', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('A doc is not accessible when unauthentified.', async ({
+  test('A doc is not accessible when unauthenticated.', async ({
     page,
     browserName,
   }) => {
@@ -330,7 +330,7 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     const [docTitle] = await createDoc(
       page,
-      'Authenticated unauthentified',
+      'Authenticated unauthenticated',
       browserName,
       1,
     );

@@ -15,7 +15,7 @@ class Command(BaseCommand):
         """Define required arguments "email" and "password"."""
         parser.add_argument(
             "--email",
-            help=("Email for the user."),
+            help="Email for the user.",
         )
         parser.add_argument(
             "--password",

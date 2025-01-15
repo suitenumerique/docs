@@ -23,10 +23,10 @@ export const DocsGridActions = ({
   const deleteModal = useModal();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC],
+    listInvalidQueries: [KEY_LIST_DOC],
   });
   const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC],
+    listInvalidQueries: [KEY_LIST_DOC],
   });
 
   const options: DropdownMenuOption[] = [

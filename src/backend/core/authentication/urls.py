@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from mozilla_django_oidc.urls import urlpatterns as mozzila_oidc_urls
+from mozilla_django_oidc.urls import urlpatterns as mozilla_oidc_urls
 
 from .views import OIDCLogoutCallbackView, OIDCLogoutView
 
@@ -14,5 +14,5 @@ urlpatterns = [
         OIDCLogoutCallbackView.as_view(),
         name="oidc_logout_callback",
     ),
-    *mozzila_oidc_urls,
+    *mozilla_oidc_urls,
 ]

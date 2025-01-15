@@ -94,7 +94,7 @@ const convertToImg = (html: string) => {
   const doc = parser.parseFromString(html, 'text/html');
   const divs = doc.querySelectorAll('div[data-content-type="image"]');
 
-  // Loop through each div and replace it with a img
+  // Loop through each div and replace it with an img
   divs.forEach((div) => {
     const img = document.createElement('img');
 

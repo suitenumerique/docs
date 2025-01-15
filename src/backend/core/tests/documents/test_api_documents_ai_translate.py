@@ -154,7 +154,7 @@ def test_api_documents_ai_translate_authenticated_forbidden(reach, role):
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_translate_authenticated_success(mock_create, reach, role):
     """
-    Autenticated who are not related to a document should be able to request AI translate
+    Authenticated who are not related to a document should be able to request AI translate
     if the link reach and role permit it.
     """
     user = factories.UserFactory()
