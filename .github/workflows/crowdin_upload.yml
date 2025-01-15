@@ -1,0 +1,75 @@
+name: Update crowdin sources
+
+on:
+  workflow_dispatch:
+  push:
+    branches: 
+      - main
+
+jobs:
+  synchronize-with-crowdin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Backend i18n
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12.6"
+      - name: Upgrade pip and setuptools
+        run: pip install --upgrade pip setuptools
+      - name: Install development dependencies
+        run: pip install --user .
+        working-directory: src/backend
+      - name: Install gettext
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext pandoc
+      - name: generate pot files
+        working-directory: src/backend
+        run: |
+          DJANGO_CONFIGURATION=Build python manage.py compilemessages
+          DJANGO_CONFIGURATION=Build python manage.py makemessages -a --keep-pot
+      # frontend i18n
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      - name: Restore the frontend cache
+        uses: actions/cache@v4
+        id: front-node_modules
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+      - name: Install dependencies
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        run: cd src/frontend/ && yarn install --frozen-lockfile
+      - name: Cache install frontend
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+      - name: generate source translation file
+        working-directory: src/frontend
+        run: yarn i18n:extract
+      # crowdin workflow
+      - name: crowdin action
+        uses: crowdin/github-action@v2
+        with:
+          config: crowdin/config.yml
+          upload_sources: true
+          upload_translations: false
+          download_translations: false
+          create_pull_request: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A numeric ID, found at https://crowdin.com/project/<projectName>/tools/api
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+
+          # Visit https://crowdin.com/settings#api-key to create this token
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+          CROWDIN_BASE_PATH: "../src/"

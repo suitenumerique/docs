@@ -9,13 +9,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- github actions to managed Crowdin workflow
+
 ## [2.0.1] - 2025-01-17
 
 ## Fixed
 
 -🐛(frontend) share modal is shown when you don't have the abilities #557
 -🐛(frontend) title copy break app #564
-
 
 ## [2.0.0] - 2025-01-13
 
