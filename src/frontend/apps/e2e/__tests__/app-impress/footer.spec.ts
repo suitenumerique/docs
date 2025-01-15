@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import { goToGridDoc } from './common';
+import { keyCloakSignIn } from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
 test.describe('Footer', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
   test('checks all the elements are visible', async ({ page }) => {
     const footer = page.locator('footer').first();
 
@@ -47,9 +48,14 @@ test.describe('Footer', () => {
     ).toBeVisible();
   });
 
-  test('checks footer is not visible on doc editor', async ({ page }) => {
-    await expect(page.locator('footer')).toBeVisible();
-    await goToGridDoc(page);
+  test('checks footer is not visible on doc editor', async ({
+    page,
+    browserName,
+  }) => {
+    await page.getByTestId('proconnect-button').first().click();
+    await keyCloakSignIn(page, browserName);
+    await page.goto('/');
+
     await expect(page.locator('footer')).toBeHidden();
   });
 

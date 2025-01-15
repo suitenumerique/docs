@@ -90,6 +90,7 @@ test.describe('Header: Log out', () => {
 
   test('checks logout button', async ({ page, browserName }) => {
     await page.goto('/');
+    await page.getByTestId('proconnect-button').first().click();
     await keyCloakSignIn(page, browserName);
 
     await page
@@ -98,6 +99,6 @@ test.describe('Header: Log out', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByTestId('proconnect-button')).toHaveCount(2);
   });
 });
