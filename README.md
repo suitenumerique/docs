@@ -18,7 +18,7 @@ Welcome to Docs! The open source document editor where your notes can become kno
   </a>
 </p>
 
-<img src="/docs/assets/doc_live_collaboration_light.gif" width="600" align="center"/>
+<img src="https://github.com/suitenumerique/docs/blob/main/docs/assets/docs_live_collaboration_light.gif?raw=true" width="600" align="center"/>
 
 ## Why use Docs ❓
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
