@@ -89,7 +89,7 @@ export const DocsGrid = ({
           {title}
         </Text>
 
-        {!hasDocs && (
+        {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
             <Text $size="sm" $variation="600" $weight="700">
               {t('No documents found')}
