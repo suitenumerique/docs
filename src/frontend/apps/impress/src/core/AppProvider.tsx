@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
 import '@/i18n/initI18n';
+import { PostHogProvider } from '@/services/Posthog';
 import { useResponsiveStore } from '@/stores/';
 
 import { Auth } from './auth/';
@@ -38,12 +39,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [initializeResizeListener]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <CunninghamProvider theme={theme}>
-        <ConfigProvider>
-          <Auth>{children}</Auth>
-        </ConfigProvider>
-      </CunninghamProvider>
-    </QueryClientProvider>
+    <PostHogProvider>
+      <QueryClientProvider client={queryClient}>
+        <CunninghamProvider theme={theme}>
+          <ConfigProvider>
+            <Auth>{children}</Auth>
+          </ConfigProvider>
+        </CunninghamProvider>
+      </QueryClientProvider>
+    </PostHogProvider>
   );
 }
