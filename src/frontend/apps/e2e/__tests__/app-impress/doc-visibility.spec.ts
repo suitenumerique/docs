@@ -413,14 +413,8 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.goto(urlDoc);
 
     await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    await expect(selectVisibility).toBeHidden();
-
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
-    await expect(inputSearch).toBeHidden();
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
   });
 
   test('It checks a authenticated doc in editable mode', async ({
@@ -474,13 +468,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.goto(urlDoc);
 
     await verifyDocName(page, docTitle);
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    await expect(selectVisibility).toBeHidden();
-
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
-    await expect(inputSearch).toBeHidden();
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
   });
 });

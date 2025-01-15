@@ -1,13 +1,14 @@
-import { Button, useModal } from '@openfun/cunningham-react';
+import { useModal } from '@openfun/cunningham-react';
 import { DateTime } from 'luxon';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
-import { Doc, LinkReach } from '@/features/docs/doc-management';
+import { Box, StyledLink, Text } from '@/components';
+import { Doc } from '@/features/docs/doc-management';
 import { DocShareModal } from '@/features/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
 import { DocsGridActions } from './DocsGridActions';
+import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
 import { SimpleDocItem } from './SimpleDocItem';
 
 type DocsGridItemProps = {
@@ -17,11 +18,6 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
   const { isDesktop } = useResponsiveStore();
 
   const shareModal = useModal();
-  const isPublic = doc.link_reach === LinkReach.PUBLIC;
-  const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
-  const isRestricted = doc.link_reach === LinkReach.RESTRICTED;
-  const sharedCount = doc.nb_accesses - 1;
-  const isShared = sharedCount > 0;
 
   const handleShareClick = () => {
     shareModal.open();
@@ -70,49 +66,13 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
           $justify="flex-end"
           $gap="32px"
         >
-          {isDesktop && isPublic && (
-            <Button
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                handleShareClick();
-              }}
-              size="nano"
-              fullWidth
-              icon={<Icon $variation="000" iconName="public" />}
-            >
-              {isShared ? sharedCount : undefined}
-            </Button>
+          {isDesktop && (
+            <DocsGridItemSharedButton
+              doc={doc}
+              handleClick={handleShareClick}
+            />
           )}
-          {isDesktop && !isPublic && isRestricted && isShared && (
-            <Button
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                handleShareClick();
-              }}
-              fullWidth
-              color="tertiary"
-              size="nano"
-              icon={<Icon $variation="800" $theme="primary" iconName="group" />}
-            >
-              {sharedCount}
-            </Button>
-          )}
-          {isDesktop && !isPublic && isAuthenticated && (
-            <Button
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                handleShareClick();
-              }}
-              fullWidth
-              size="nano"
-              icon={<Icon $variation="000" iconName="corporate_fare" />}
-            >
-              {sharedCount}
-            </Button>
-          )}
+
           <DocsGridActions doc={doc} openShareModal={handleShareClick} />
         </Box>
       </Box>

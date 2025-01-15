@@ -47,6 +47,7 @@ test.describe('Doc Header', () => {
         versions_list: true,
         versions_retrieve: true,
         accesses_manage: true,
+        accesses_view: true,
         update: true,
         partial_update: true,
         retrieve: true,
@@ -396,6 +397,28 @@ test.describe('Doc Header', () => {
     const clipboardContent = await handle.jsonValue();
     expect(clipboardContent.trim()).toBe(`<h1>Hello World</h1><p></p>`);
   });
+
+  test('it checks the copy link button', async ({ page }) => {
+    await mockedDocument(page, {
+      abilities: {
+        destroy: false, // Means owner
+        link_configuration: true,
+        versions_destroy: true,
+        versions_list: true,
+        versions_retrieve: true,
+        accesses_manage: false,
+        accesses_view: false,
+        update: true,
+        partial_update: true,
+        retrieve: true,
+      },
+    });
+
+    await goToGridDoc(page);
+
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+  });
 });
 
 test.describe('Documents Header mobile', () => {
@@ -403,6 +426,45 @@ test.describe('Documents Header mobile', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+  });
+
+  test('it checks the copy link button', async ({ page, browserName }) => {
+    // eslint-disable-next-line playwright/no-skipped-test
+    test.skip(
+      browserName === 'webkit',
+      'navigator.clipboard is not working with webkit and playwright',
+    );
+    await mockedDocument(page, {
+      abilities: {
+        destroy: false,
+        link_configuration: true,
+        versions_destroy: true,
+        versions_list: true,
+        versions_retrieve: true,
+        accesses_manage: false,
+        accesses_view: false,
+        update: true,
+        partial_update: true,
+        retrieve: true,
+      },
+    });
+
+    await goToGridDoc(page);
+
+    await expect(page.getByRole('button', { name: 'Copy link' })).toBeHidden();
+    await page.getByLabel('Open the document options').click();
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    await expect(page.getByText('Link Copied !')).toBeVisible();
+    // Test that clipboard is in HTML format
+    const handle = await page.evaluateHandle(() =>
+      navigator.clipboard.readText(),
+    );
+    const clipboardContent = await handle.jsonValue();
+
+    const origin = await page.evaluate(() => window.location.origin);
+    expect(clipboardContent.trim()).toMatch(
+      `${origin}/docs/mocked-document-id/`,
+    );
   });
 
   test('it checks the close button on Share modal', async ({ page }) => {
@@ -414,6 +476,7 @@ test.describe('Documents Header mobile', () => {
         versions_list: true,
         versions_retrieve: true,
         accesses_manage: true,
+        accesses_view: true,
         update: true,
         partial_update: true,
         retrieve: true,

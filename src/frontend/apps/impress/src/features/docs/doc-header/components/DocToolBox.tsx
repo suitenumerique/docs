@@ -16,10 +16,13 @@ import {
   Icon,
   IconOptions,
 } from '@/components';
-import { useAuthStore } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { useEditorStore } from '@/features/docs/doc-editor/';
-import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
+import {
+  Doc,
+  ModalRemoveDoc,
+  useCopyDocLink,
+} from '@/features/docs/doc-management';
 import { DocShareModal } from '@/features/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
@@ -37,6 +40,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const hasAccesses = doc.nb_accesses > 1;
   const queryClient = useQueryClient();
+
+  const copyDocLink = useCopyDocLink(doc.id);
+
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
   const spacings = spacingsTokens();
@@ -48,18 +54,24 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const modalShare = useModal();
 
   const { isSmallMobile, isDesktop } = useResponsiveStore();
-  const { authenticated } = useAuthStore();
   const { editor } = useEditorStore();
+
   const { toast } = useToastProvider();
+  const canViewAccesses = doc.abilities.accesses_view;
 
   const options: DropdownMenuOption[] = [
     ...(isSmallMobile
       ? [
           {
-            label: t('Share'),
-            icon: 'upload',
+            label: canViewAccesses ? t('Share') : t('Copy link'),
+            icon: canViewAccesses ? 'group' : 'link',
+
             callback: () => {
-              modalShare.open();
+              if (canViewAccesses) {
+                modalShare.open();
+                return;
+              }
+              copyDocLink();
             },
           },
           {
@@ -153,7 +165,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         $margin={{ left: 'auto' }}
         $gap={spacings['2xs']}
       >
-        {authenticated && !isSmallMobile && (
+        {canViewAccesses && !isSmallMobile && (
           <>
             {!hasAccesses && (
               <Button
@@ -187,11 +199,22 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                   }}
                   size={isSmallMobile ? 'small' : 'medium'}
                 >
-                  {doc.nb_accesses}
+                  {doc.nb_accesses - 1}
                 </Button>
               </Box>
             )}
           </>
+        )}
+        {!canViewAccesses && !isSmallMobile && (
+          <Button
+            color="tertiary-text"
+            onClick={() => {
+              copyDocLink();
+            }}
+            size={isSmallMobile ? 'small' : 'medium'}
+          >
+            {t('Copy link')}
+          </Button>
         )}
         {!isSmallMobile && (
           <Button

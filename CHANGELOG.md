@@ -9,6 +9,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- 🐛(frontend) share modal is shown when you don't have the abilities #557
+
 ## [2.0.0] - 2025-01-13
 
 ## Added

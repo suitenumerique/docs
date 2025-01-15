@@ -6,6 +6,7 @@ import {
   Doc,
   KEY_LIST_DOC,
   ModalRemoveDoc,
+  useCopyDocLink,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
 } from '@/features/docs/doc-management';
@@ -20,6 +21,11 @@ export const DocsGridActions = ({
   openShareModal,
 }: DocsGridActionsProps) => {
   const { t } = useTranslation();
+
+  const copyDocLink = useCopyDocLink(doc.id);
+
+  const canViewAccesses = doc.abilities.accesses_view;
+
   const deleteModal = useModal();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -43,9 +49,16 @@ export const DocsGridActions = ({
       testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
     },
     {
-      label: t('Share'),
-      icon: 'group',
-      callback: () => openShareModal?.(),
+      label: canViewAccesses ? t('Share') : t('Copy link'),
+      icon: canViewAccesses ? 'group' : 'link',
+      callback: () => {
+        if (canViewAccesses) {
+          openShareModal?.();
+          return;
+        }
+        copyDocLink();
+      },
+
       testId: `docs-grid-actions-share-${doc.id}`,
     },
 

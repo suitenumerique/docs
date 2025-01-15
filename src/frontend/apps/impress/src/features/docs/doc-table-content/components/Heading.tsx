@@ -8,7 +8,7 @@ import { useResponsiveStore } from '@/stores';
 const leftPaddingMap: { [key: number]: string } = {
   3: '1.5rem',
   2: '0.9rem',
-  1: '0.3',
+  1: '0.3rem',
 };
 
 export type HeadingsHighlight = {

@@ -79,7 +79,7 @@ test.describe('Document create member', () => {
     await expect(quickSearchContent.getByText(email).first()).toBeVisible();
 
     // Check user added
-    await expect(page.getByText('Share with 3 users')).toBeVisible();
+    await expect(page.getByText('Share with 2 users')).toBeVisible();
     await expect(
       quickSearchContent.getByText(users[0].full_name).first(),
     ).toBeVisible();

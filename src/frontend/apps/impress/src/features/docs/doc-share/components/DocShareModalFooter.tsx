@@ -1,13 +1,9 @@
-import {
-  Button,
-  VariantType,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, HorizontalSeparator } from '@/components';
-import { Doc } from '@/features/docs';
+import { Doc, useCopyDocLink } from '@/features/docs';
 
 import { DocVisibility } from './DocVisibility';
 
@@ -18,7 +14,8 @@ type Props = {
 
 export const DocShareModalFooter = ({ doc, onClose }: Props) => {
   const canShare = doc.abilities.accesses_manage;
-  const { toast } = useToastProvider();
+
+  const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
   return (
     <Box
@@ -41,18 +38,7 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
         <Button
           fullWidth={false}
           onClick={() => {
-            navigator.clipboard
-              .writeText(window.location.href)
-              .then(() => {
-                toast(t('Link Copied !'), VariantType.SUCCESS, {
-                  duration: 3000,
-                });
-              })
-              .catch(() => {
-                toast(t('Failed to copy link'), VariantType.ERROR, {
-                  duration: 3000,
-                });
-              });
+            copyDocLink();
           }}
           color="tertiary"
           icon={<span className="material-icons">add_link</span>}
