@@ -299,6 +299,7 @@ class Base(Configuration):
         "dockerflow.django",
         "rest_framework",
         "parler",
+        "treebeard",
         "easy_thumbnails",
         # Django
         "django.contrib.admin",
@@ -349,6 +350,10 @@ class Base(Configuration):
         "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
         "REDOC_DIST": "SIDECAR",
     }
+
+    SOFT_DELETE_KEEP_DAYS = values.Value(
+        30, environ_name="SOFT_DELETE_KEEP_DAYS", environ_prefix=None
+    )
 
     # Mail
     EMAIL_BACKEND = values.Value("django.core.mail.backends.smtp.EmailBackend")

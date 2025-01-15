@@ -147,33 +147,53 @@ class ListDocumentSerializer(BaseResourceSerializer):
 
     is_favorite = serializers.BooleanField(read_only=True)
     nb_accesses = serializers.IntegerField(read_only=True)
+    user_roles = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
         fields = [
             "id",
             "abilities",
-            "content",
             "created_at",
             "creator",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
             "nb_accesses",
+            "numchild",
+            "path",
             "title",
             "updated_at",
+            "user_roles",
         ]
         read_only_fields = [
             "id",
             "abilities",
             "created_at",
             "creator",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
             "nb_accesses",
+            "numchild",
+            "path",
             "updated_at",
+            "user_roles",
         ]
+
+    def get_user_roles(self, document):
+        """
+        Return roles of the logged-in user for the current document,
+        taking into account ancestors.
+        """
+        request = self.context.get("request")
+        if request:
+            return document.get_roles(request.user)
+        return []
 
 
 class DocumentSerializer(ListDocumentSerializer):
@@ -189,23 +209,32 @@ class DocumentSerializer(ListDocumentSerializer):
             "content",
             "created_at",
             "creator",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
             "nb_accesses",
+            "numchild",
+            "path",
             "title",
             "updated_at",
+            "user_roles",
         ]
         read_only_fields = [
             "id",
             "abilities",
             "created_at",
             "creator",
-            "is_avorite",
+            "depth",
+            "is_favorite",
             "link_role",
             "link_reach",
             "nb_accesses",
+            "numchild",
+            "path",
             "updated_at",
+            "user_roles",
         ]
 
     def get_fields(self):
@@ -287,7 +316,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = models.Document.objects.create(
+        document = models.Document.add_root(
             title=validated_data["title"],
             content=document_content,
             creator=user,
@@ -537,3 +566,44 @@ class AITranslateSerializer(serializers.Serializer):
         if len(value.strip()) == 0:
             raise serializers.ValidationError("Text field cannot be empty.")
         return value
+
+
+class MoveDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for validating input data to move a document within the tree structure.
+
+    Fields:
+        - target_document_id (UUIDField): The ID of the target parent document where the
+            document should be moved. This field is required and must be a valid UUID.
+        - position (ChoiceField): Specifies the position of the document in relation to
+            the target parent's children.
+          Choices:
+            - "first-child": Place the document as the first child of the target parent.
+            - "last-child": Place the document as the last child of the target parent (default).
+            - "left": Place the document as the left sibling of the target parent.
+            - "right": Place the document as the right sibling of the target parent.
+
+    Example:
+        Input payload for moving a document:
+        {
+            "target_document_id": "123e4567-e89b-12d3-a456-426614174000",
+            "position": "first-child"
+        }
+
+    Notes:
+        - The `target_document_id` is mandatory.
+        - The `position` defaults to "last-child" if not provided.
+    """
+
+    target_document_id = serializers.UUIDField(required=True)
+    position = serializers.ChoiceField(
+        choices=[
+            "first-child",
+            "last-child",
+            "first-sibling",
+            "last-sibling",
+            "left",
+            "right",
+        ],
+        default="last-child",
+    )

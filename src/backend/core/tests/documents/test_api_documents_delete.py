@@ -77,6 +77,38 @@ def test_api_documents_delete_authenticated_not_owner(via, role, mock_user_teams
     assert models.Document.objects.count() == 2
 
 
+@pytest.mark.parametrize("depth", [1, 2, 3])
+def test_api_documents_delete_authenticated_owner_of_ancestor(depth):
+    """
+    Authenticated users should not be able to delete a document for which
+    they are only owner of an ancestor.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    documents = []
+    for i in range(depth):
+        documents.append(
+            factories.UserDocumentAccessFactory(role="owner", user=user).document
+            if i == 0
+            else factories.DocumentFactory(parent=documents[-1])
+        )
+    assert models.Document.objects.count() == depth
+
+    response = client.delete(
+        f"/api/v1.0/documents/{documents[-1].id}/",
+    )
+
+    assert response.status_code == 204
+    assert models.Document.objects.active().count() == depth - 1
+
+    # Make sure it is only a soft delete
+    assert models.Document.objects.soft_deleted().exists() is True
+    assert models.Document.objects.not_hard_deleted().exists() is True
+    assert models.Document.objects.hard_deleted().exists() is False
+
+
 @pytest.mark.parametrize("via", VIA)
 def test_api_documents_delete_authenticated_owner(via, mock_user_teams):
     """
@@ -101,4 +133,9 @@ def test_api_documents_delete_authenticated_owner(via, mock_user_teams):
     )
 
     assert response.status_code == 204
-    assert models.Document.objects.exists() is False
+    assert models.Document.objects.active().exists() is False
+
+    # Make sure it is only a soft delete
+    assert models.Document.objects.soft_deleted().exists() is True
+    assert models.Document.objects.not_hard_deleted().exists() is True
+    assert models.Document.objects.hard_deleted().exists() is False

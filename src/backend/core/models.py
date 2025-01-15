@@ -21,6 +21,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models
+from django.db.models.functions import Left, Length
 from django.http import FileResponse
 from django.template.base import Template as DjangoTemplate
 from django.template.context import Context
@@ -36,25 +37,9 @@ import pypandoc
 import weasyprint
 from botocore.exceptions import ClientError
 from timezone_field import TimeZoneField
+from treebeard.mp_tree import MP_Node
 
 logger = getLogger(__name__)
-
-
-def get_resource_roles(resource, user):
-    """Compute the roles a user has on a resource."""
-    if not user.is_authenticated:
-        return []
-
-    try:
-        roles = resource.user_roles or []
-    except AttributeError:
-        try:
-            roles = resource.accesses.filter(
-                models.Q(user=user) | models.Q(team__in=user.teams),
-            ).values_list("role", flat=True)
-        except (models.ObjectDoesNotExist, IndexError):
-            roles = []
-    return roles
 
 
 class LinkRoleChoices(models.TextChoices):
@@ -376,10 +361,36 @@ class BaseAccess(BaseModel):
         }
 
 
-class Document(BaseModel):
+class DocumentQuerySet(models.QuerySet):
+    """Custom queryset for Document model."""
+
+    def active(self):
+        """Return only active (non-deleted) documents."""
+        return self.filter(deleted_at__isnull=True)
+
+    def soft_deleted(self):
+        """Return only soft-deleted documents."""
+        limit_datetime = timezone.now() - timedelta(days=settings.SOFT_DELETE_KEEP_DAYS)
+        return self.filter(deleted_at__isnull=False, deleted_at__gte=limit_datetime)
+
+    def hard_deleted(self):
+        """Return only hard-deleted documents."""
+        limit_datetime = timezone.now() - timedelta(days=settings.SOFT_DELETE_KEEP_DAYS)
+        return self.filter(deleted_at__isnull=False, deleted_at__lt=limit_datetime)
+
+    def not_hard_deleted(self):
+        """Return active or soft-deleted documents. Used for detailed views."""
+        limit_datetime = timezone.now() - timedelta(days=settings.SOFT_DELETE_KEEP_DAYS)
+        return self.filter(
+            models.Q(deleted_at__isnull=True) | models.Q(deleted_at__gte=limit_datetime)
+        )
+
+
+class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
+    excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
     link_reach = models.CharField(
         max_length=20,
         choices=LinkReachChoices.choices,
@@ -395,8 +406,17 @@ class Document(BaseModel):
         blank=True,
         null=True,
     )
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     _content = None
+
+    # Tree structure
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    steplen = 7  # nb siblings max: 3,521,614,606,208 / max depth: 255/7=36
+    node_order_by = None  # Manual ordering
+
+    # Custom manager
+    objects = DocumentQuerySet.as_manager()
 
     class Meta:
         db_table = "impress_document"
@@ -541,11 +561,46 @@ class Document(BaseModel):
             Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
         )
 
+    def get_roles(self, user):
+        """Return the roles a user has on a document."""
+        if not user.is_authenticated:
+            return []
+
+        try:
+            roles = self.user_roles or []
+        except AttributeError:
+            try:
+                roles = DocumentAccess.objects.filter(
+                    models.Q(user=user) | models.Q(team__in=user.teams),
+                    document__path=Left(
+                        models.Value(self.path), Length("document__path")
+                    ),
+                ).values_list("role", flat=True)
+            except (models.ObjectDoesNotExist, IndexError):
+                roles = []
+        return roles
+
+    @cached_property
+    def links_definitions(self):
+        """Get links reach/role definitions for the current document and its ancestors."""
+        links_definitions = [
+            {"link_reach": self.link_reach, "link_role": self.link_role}
+        ]
+
+        # Ancestors links definitions are only interesting if the document is not the highest
+        # ancestor to which the current user has access. Look for the annotation:
+        if getattr(self, "root_path", None) != self.path:
+            links_definitions.extend(
+                self.get_ancestors().values("link_reach", "link_role")
+            )
+
+        return links_definitions
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document.
         """
-        roles = set(get_resource_roles(self, user))
+        roles = set(self.get_roles(user))
 
         # Compute version roles before adding link roles because we don't
         # want anonymous users to access versions (we wouldn't know from
@@ -553,15 +608,20 @@ class Document(BaseModel):
         # Anonymous users should also not see document accesses
         has_role = bool(roles)
 
-        # Add role provided by the document link
-        if self.link_reach == LinkReachChoices.PUBLIC or (
-            self.link_reach == LinkReachChoices.AUTHENTICATED and user.is_authenticated
-        ):
-            roles.add(self.link_role)
+        # Add roles provided by the document link, taking into account its ancestors
+        links_definitions = self.links_definitions
+        for lr in links_definitions:
+            if lr["link_reach"] == LinkReachChoices.PUBLIC:
+                roles.add(lr["link_role"])
 
-        is_owner_or_admin = bool(
-            roles.intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
-        )
+        if user.is_authenticated:
+            for lr in links_definitions:
+                if lr["link_reach"] == LinkReachChoices.AUTHENTICATED:
+                    roles.add(lr["link_role"])
+
+        is_owner = RoleChoices.OWNER in roles
+        is_owner_or_admin = is_owner or RoleChoices.ADMIN in roles
+
         can_get = bool(roles)
         can_update = is_owner_or_admin or RoleChoices.EDITOR in roles
 
@@ -571,12 +631,16 @@ class Document(BaseModel):
             "ai_transform": can_update,
             "ai_translate": can_update,
             "attachment_upload": can_update,
+            "children_list": can_get,
+            "children_create": can_update and user.is_authenticated,
             "collaboration_auth": can_get,
             "destroy": RoleChoices.OWNER in roles,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": RoleChoices.OWNER in roles,
+            "move": is_owner_or_admin,
             "partial_update": can_update,
+            "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
             "update": can_update,
@@ -642,6 +706,31 @@ class Document(BaseModel):
             )
 
         self.send_email(subject, [email], context, language)
+
+    def soft_delete(self):
+        """We still keep the .delete() method untouched for programmatic purposes."""
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def restore(self):
+        """Cancelling a soft delete with checks."""
+        if self.deleted_at is None:
+            raise exceptions.ValidationError(
+                {"deleted_at": _("This document is not deleted.")}
+            )
+
+        limit_datetime = timezone.now() - timedelta(days=settings.SOFT_DELETE_KEEP_DAYS)
+        if self.deleted_at < limit_datetime:
+            raise exceptions.ValidationError(
+                {
+                    "deleted_at": _(
+                        "This document was hard deleted and cannot be restored."
+                    )
+                }
+            )
+
+        self.deleted_at = None
+        self.save()
 
 
 class LinkTrace(BaseModel):
@@ -774,11 +863,27 @@ class Template(BaseModel):
     def __str__(self):
         return self.title
 
+    def get_roles(self, user):
+        """Return the roles a user has on a resource."""
+        if not user.is_authenticated:
+            return []
+
+        try:
+            roles = self.user_roles or []
+        except AttributeError:
+            try:
+                roles = self.accesses.filter(
+                    models.Q(user=user) | models.Q(team__in=user.teams),
+                ).values_list("role", flat=True)
+            except (models.ObjectDoesNotExist, IndexError):
+                roles = []
+        return roles
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the template.
         """
-        roles = get_resource_roles(self, user)
+        roles = self.get_roles(user)
         is_owner_or_admin = bool(
             set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
         )
