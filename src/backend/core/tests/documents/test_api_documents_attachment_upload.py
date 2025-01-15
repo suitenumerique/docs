@@ -64,11 +64,21 @@ def test_api_documents_attachment_upload_anonymous_success():
     assert response.status_code == 201
 
     pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.png")
-    match = pattern.search(response.json()["file"])
+    file_path = response.json()["file"]
+    match = pattern.search(file_path)
     file_id = match.group(1)
 
     # Validate that file_id is a valid UUID
     uuid.UUID(file_id)
+
+    # Now, check the metadata of the uploaded file
+    key = file_path.replace("/media", "")
+    file_head = default_storage.connection.meta.client.head_object(
+        Bucket=default_storage.bucket_name, Key=key
+    )
+
+    assert file_head["Metadata"] == {"owner": "None"}
+    assert file_head["ContentType"] == "image/png"
 
 
 @pytest.mark.parametrize(
@@ -206,6 +216,7 @@ def test_api_documents_attachment_upload_success(via, role, mock_user_teams):
         Bucket=default_storage.bucket_name, Key=key
     )
     assert file_head["Metadata"] == {"owner": str(user.id)}
+    assert file_head["ContentType"] == "image/png"
 
 
 def test_api_documents_attachment_upload_invalid(client):
@@ -247,16 +258,18 @@ def test_api_documents_attachment_upload_size_limit_exceeded(settings):
 
 
 @pytest.mark.parametrize(
-    "name,content,extension",
+    "name,content,extension,content_type",
     [
-        ("test.exe", b"text", "exe"),
-        ("test", b"text", "txt"),
-        ("test.aaaaaa", b"test", "txt"),
-        ("test.txt", PIXEL, "txt"),
-        ("test.py", b"#!/usr/bin/python", "py"),
+        ("test.exe", b"text", "exe", "text/plain"),
+        ("test", b"text", "txt", "text/plain"),
+        ("test.aaaaaa", b"test", "txt", "text/plain"),
+        ("test.txt", PIXEL, "txt", "image/png"),
+        ("test.py", b"#!/usr/bin/python", "py", "text/plain"),
     ],
 )
-def test_api_documents_attachment_upload_fix_extension(name, content, extension):
+def test_api_documents_attachment_upload_fix_extension(
+    name, content, extension, content_type
+):
     """
     A file with no extension or a wrong extension is accepted and the extension
     is corrected in storage.
@@ -287,6 +300,7 @@ def test_api_documents_attachment_upload_fix_extension(name, content, extension)
         Bucket=default_storage.bucket_name, Key=key
     )
     assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
+    assert file_head["ContentType"] == content_type
 
 
 def test_api_documents_attachment_upload_empty_file():
@@ -335,3 +349,4 @@ def test_api_documents_attachment_upload_unsafe():
         Bucket=default_storage.bucket_name, Key=key
     )
     assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
+    assert file_head["ContentType"] == "application/octet-stream"

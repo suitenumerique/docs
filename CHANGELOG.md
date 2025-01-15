@@ -13,7 +13,7 @@ and this project adheres to
 
 - github actions to managed Crowdin workflow
 - 📈Integrate Posthog #540
-
+- 🏷️(backend) add content-type to uploaded files #552
 
 ## Changed
 

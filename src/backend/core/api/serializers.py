@@ -388,6 +388,7 @@ class FileUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError("Could not determine file extension.")
 
         self.context["expected_extension"] = extension
+        self.context["content_type"] = magic_mime_type
 
         return file
 
@@ -395,6 +396,7 @@ class FileUploadSerializer(serializers.Serializer):
         """Override validate to add the computed extension to validated_data."""
         attrs["expected_extension"] = self.context["expected_extension"]
         attrs["is_unsafe"] = self.context["is_unsafe"]
+        attrs["content_type"] = self.context["content_type"]
         return attrs
 
 
