@@ -201,7 +201,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "abilities",
             "created_at",
             "creator",
-            "is_avorite",
+            "is_favorite",
             "link_role",
             "link_reach",
             "nb_accesses",
