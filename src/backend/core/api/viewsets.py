@@ -676,7 +676,7 @@ class DocumentViewSet(
 
         # Fetch the document and check if the user has access
         try:
-            document, _created = models.Document.objects.get_or_create(pk=pk)
+            document = models.Document.objects.get(pk=pk)
         except models.Document.DoesNotExist as exc:
             logger.debug("Document with ID '%s' does not exist", pk)
             raise drf.exceptions.PermissionDenied() from exc

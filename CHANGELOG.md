@@ -33,6 +33,7 @@ and this project adheres to
 
 - 🐛(backend) fix create document via s2s if sub unknown but email found #543
 - 🐛(frontend) hide search and create doc button if not authenticated #555
+- 🐛(backend) race condition creation issue #556
 
 ## [1.10.0] - 2024-12-17
 
