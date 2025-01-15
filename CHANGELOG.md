@@ -19,6 +19,7 @@ and this project adheres to
 - 💄(frontend) add filtering to left panel #475
 - ✨(frontend) new share modal ui #489
 - ✨(frontend) add favorite feature #515
+- 🏷️(backend) add content-type to uploaded files #552
 
 ## Changed
 

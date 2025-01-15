@@ -378,6 +378,10 @@ class FileUploadSerializer(serializers.Serializer):
         if extension_mime_type != magic_mime_type:
             self.context["is_unsafe"] = True
 
+        # mime_type fallback
+        if extension_mime_type is None:
+            extension_mime_type = "application/x-unknown-content-type"
+
         guessed_ext = mimetypes.guess_extension(magic_mime_type)
         # Missing extensions or extensions longer than 5 characters (it's as long as an extension
         # can be) are replaced by the extension we eventually guessed from mimetype.
@@ -388,6 +392,7 @@ class FileUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError("Could not determine file extension.")
 
         self.context["expected_extension"] = extension
+        self.context["content_type"] = extension_mime_type
 
         return file
 
@@ -395,6 +400,7 @@ class FileUploadSerializer(serializers.Serializer):
         """Override validate to add the computed extension to validated_data."""
         attrs["expected_extension"] = self.context["expected_extension"]
         attrs["is_unsafe"] = self.context["is_unsafe"]
+        attrs["content_type"] = self.context["content_type"]
         return attrs
 
 

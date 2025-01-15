@@ -605,7 +605,11 @@ class DocumentViewSet(
         key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}.{extension:s}"
 
         # Prepare metadata for storage
-        extra_args = {"Metadata": {"owner": str(request.user.id)}}
+        content_type = serializer.validated_data["content_type"]
+        extra_args = {
+            "Metadata": {"owner": str(request.user.id)},
+            "ContentType": content_type,
+        }
         if serializer.validated_data["is_unsafe"]:
             extra_args["Metadata"]["is_unsafe"] = "true"
 
