@@ -1,113 +1,164 @@
-# Impress
+<p align="center">
+  <a href="https://github.com/suitenumerique/docs">
+    <img alt="Docs" src="/docs/assets/logo-docs.png" width="300" />
+  </a>
+</p>
 
-Impress is a web application for real-time collaborative text editing with user and role based access rights.
-Features include : 
-- User authentication through OIDC
-- BlocNote.js text editing experience (markdown support, dynamic conversion, block structure, slash commands for block creation) 
-- Document export to pdf and docx from predefined templates
-- Granular document permissions
-- Public link sharing
-- Offline mode
+<p align="center">
+Welcome to Docs! The open source document editor where your notes can become knowledge through live collaboration
+</p>
 
-Impress is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/) and [BlocNote.js](https://www.blocknotejs.org/)
+<p align="center">
+  <a href="https://matrix.to/#/#docs-official:matrix.org">
+    Chat on Matrix
+  </a> - <a href="/docs/">
+    Documentation
+  </a> - <a href="#getting-started">
+    Getting started
+  </a>
+</p>
 
-## Getting started
+<img src="/docs/assets/doc_live_collaboration_light.gif" width="600" align="center"/>
 
-### Prerequisite
+## Why use Docs ❓
+Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
-Make sure you have a recent version of Docker and [Docker
-Compose](https://docs.docker.com/compose/install) installed on your laptop:
+### Write
+*   😌 Simple collaborative editing without the formatting complexity of markdown
+*   🔌 Offline? No problem, keep writing, your edits will get synced when back online
+*   💅 Clean formatting options to focus on content creation and create beautiful documents
+*   🧱 Built for productivity (markdown support, many block types, slash commands, markdown support, keyboard shortcuts)
+*   🤖 Save time thanks to our AI actions (generate, sum up, correct, translate)
 
-```bash
+### Collaborate
+*   🤝 Collaborate in realtime with your team mates
+*   🔒 Granular access control to keep your information secure and shared with the right people
+*   📑 Professional document exports in multiple formats (.odt, .doc, .pdf) with customizable templates
+*   📚 Built-in wiki functionality to transform your team's collaborative work into organized knowledge `ETA 02/2025`
+
+### Self-host
+*   🚀 Easy to install, scalable (Kube first) and secure alternative to Notion, Outline and Confluence
+
+## Getting started 🔧
+### Run it locally
+**Prerequisite**
+Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop:
+
+```shellscript
 $ docker -v
-  Docker version 20.10.2, build 2291f61
+
+Docker version 20.10.2, build 2291f61
 
 $ docker compose -v
-  docker compose version 1.27.4, build 40524192
+
+docker compose version 1.27.4, build 40524192
 ```
 
-> ⚠️ You may need to run the following commands with `sudo` but this can be
-> avoided by assigning your user to the `docker` group.
+> ⚠️ You may need to run the following commands with sudo but this can be avoided by assigning your user to the `docker` group.
 
-### Project bootstrap
-
+**Project bootstrap**
 The easiest way to start working on the project is to use GNU Make:
 
-```bash
+```shellscript
 $ make bootstrap FLUSH_ARGS='--no-input'
 ```
 
-This command builds the `app` container, installs dependencies, performs
-database migrations and compile translations. It's a good idea to use this
-command each time you are pulling code from the project repository to avoid
-dependency-releated or migration-releated issues.
+This command builds the `app` container, installs dependencies, performs database migrations and compile translations. It's a good idea to use this
+
+command each time you are pulling code from the project repository to avoid dependency-releated or migration-releated issues.
 
 Your Docker services should now be up and running 🎉
 
-You can access to the project by going to http://localhost:3000.
+You can access to the project by going to <http://localhost:3000>.
+
 You will be prompted to log in, the default credentials are:
-```bash
+
+```shellscript
 username: impress
+
 password: impress
 ```
 
 📝 Note that if you need to run them afterwards, you can use the eponym Make rule:
 
-```bash
+```shellscript
 $ make run-with-frontend
 ```
 
----
+⚠️ For the frontend developper, it is often better to run the frontend in development mode locally.
 
-⚠️ For the frontend developper, it is often better to run the frontend in development mode locally. 
 To do so, install the frontend dependencies with the following command:
 
-```bash
+```shellscript
 $ make frontend-install
 ```
+
 And run the frontend locally in development mode with the following command:
 
-```bash
+```shellscript
 $ make run-frontend-development
 ```
 
 To start all the services, except the frontend container, you can use the following command:
 
-```bash
+```shellscript
 $ make run
 ```
 
----
-
-### Adding content
-
+**Adding content**
 You can create a basic demo site by running:
 
-    $ make demo
+```shellscript
+$ make demo
+```
 
 Finally, you can check all available Make rules using:
 
-```bash
+```shellscript
 $ make help
 ```
 
-### Django admin
-
+**Django admin**
 You can access the Django admin site at
-[http://localhost:8071/admin](http://localhost:8071/admin).
+
+<http://localhost:8071/admin>.
 
 You first need to create a superuser account:
 
-```bash
+```shellscript
 $ make superuser
 ```
 
-## Contributing
+## Feedback 🙋‍♂️🙋‍♀️
+We'd love to hear your thoughts and hear about your experiments, so come and say hi on Matrix.
 
-This project is intended to be community-driven, so please, do not hesitate to
-get in touch if you have any question related to our implementation or design
-decisions.
+## Licence 📝
+This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-## License
+While Docs is public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
 
-This work is released under the MIT License (see [LICENSE](./LICENSE)).
+## Contributing 🙌
+This project is intended to be community-driven, so please, do not hesitate to get in touch if you have any question related to our implementation or design decisions.
+
+If you intend to make pull requests see CONTRIBUTING for guidelines.
+
+Directory structure:
+
+```markdown
+docs
+├── bin - executable scripts or binaries that are used for various tasks, such as setup scripts, utility scripts, or custom commands.
+├── crowdin - for crowdin translations, a tool or service that helps manage translations for the project.
+├── docker - Dockerfiles and related configuration files used to build Docker images for the project. These images can be used for development, testing, or production environments.
+├── docs - documentation for the project, including user guides, API documentation, and other helpful resources.
+├── env.d/development - environment-specific configuration files for the development environment. These files might include environment variables, configuration settings, or other setup files needed for development.
+├── gitlint - configuration files for `gitlint`, a tool that enforces commit message guidelines to ensure consistency and quality in commit messages.
+├── playground - experimental or temporary code, where developers can test new features or ideas without affecting the main codebase.
+└── src - main source code directory, containing the core application code, libraries, and modules of the project.
+```
+
+## Credits ❤️
+### Stack
+Impress is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [MinIO](https://min.io/) and [BlocNote.js](https://www.blocknotejs.org/)
+
+### States ❤️ open source
+Docs is the result of a joint effort lead by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 government ([ZenDiS](https://zendis.de/)). We are always looking for new public partners feel free please reach out if you are interested in using or contributing to docs.
