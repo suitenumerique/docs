@@ -9,7 +9,7 @@ import { LeftPanelFavorites } from './LeftPanelFavorites';
 
 export const LeftPanelContent = () => {
   const router = useRouter();
-  const isHome = router.pathname === '/';
+  const isHome = router.pathname === '/docs';
   const isDoc = router.pathname === '/docs/[id]';
 
   return (

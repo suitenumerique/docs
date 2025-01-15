@@ -14,12 +14,11 @@ import { useAuthStore } from './useAuthStore';
  * When we will have a homepage design for non-authenticated users, we will remove this restriction to have
  * the full website accessible without authentication.
  */
-const regexpUrlsAuth = [/\/docs\/$/g, /^\/$/g];
+const regexpUrlsAuth = [/\/docs\/$/g];
 
 export const Auth = ({ children }: PropsWithChildren) => {
-  const { initAuth, initiated, authenticated, login, getAuthUrl } =
-    useAuthStore();
-  const { asPath, replace } = useRouter();
+  const { initAuth, initiated, authenticated, login } = useAuthStore();
+  const { asPath } = useRouter();
 
   const [pathAllowed, setPathAllowed] = useState<boolean>(
     !regexpUrlsAuth.some((regexp) => !!asPath.match(regexp)),
@@ -41,18 +40,6 @@ export const Auth = ({ children }: PropsWithChildren) => {
 
     login();
   }, [authenticated, pathAllowed, login, initiated]);
-
-  // Redirect to the path before login
-  useEffect(() => {
-    if (!authenticated) {
-      return;
-    }
-
-    const authUrl = getAuthUrl();
-    if (authUrl) {
-      void replace(authUrl);
-    }
-  }, [authenticated, getAuthUrl, replace]);
 
   if ((!initiated && pathAllowed) || (!authenticated && !pathAllowed)) {
     return (

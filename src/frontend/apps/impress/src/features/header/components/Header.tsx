@@ -60,14 +60,13 @@ export const Header = () => {
           }
         />
       )}
-      <StyledLink href="/">
+      <StyledLink href="/docs">
         <Box
           $align="center"
           $gap={spacings['3xs']}
           $direction="row"
           $position="relative"
           $height="fit-content"
-          $margin={{ top: 'auto' }}
         >
           <Image priority src={IconDocs} alt={t('Docs Logo')} width={25} />
           <Title />

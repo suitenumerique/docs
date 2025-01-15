@@ -17,6 +17,7 @@ and this project adheres to
 - 💄(frontend) add filtering to left panel #475
 - ✨(frontend) new share modal ui #489
 - ✨(frontend) add favorite feature #515
+- ✨(frontend) add home page #553
 
 ## Changed
 
