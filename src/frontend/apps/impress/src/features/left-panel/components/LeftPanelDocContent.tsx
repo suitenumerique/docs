@@ -1,6 +1,7 @@
 import { css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
+import { TreeView } from '@/components/TreeView';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDocStore } from '@/features/docs/doc-management';
 import { SimpleDocItem } from '@/features/docs/docs-grid';
@@ -32,6 +33,7 @@ export const LeftPanelDocContent = () => {
           </Box>
         </Box>
       </SeparatedSection>
+      <TreeView />
     </Box>
   );
 };
