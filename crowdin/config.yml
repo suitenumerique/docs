@@ -1,7 +1,7 @@
 #
 # Your crowdin's credentials
 #
-api_token_env: CROWDIN_API_TOKEN
+api_token_env: CROWDIN_PERSONAL_TOKEN
 project_id_env: CROWDIN_PROJECT_ID
 base_path_env: CROWDIN_BASE_PATH
 
@@ -15,11 +15,11 @@ preserve_hierarchy: true
 # Files configuration
 #
 files: [
- {
-  source : "/backend/locale/django.pot",
-  dest: "/backend-impress.pot",
-  translation : "/backend/locale/%locale_with_underscore%/LC_MESSAGES/django.po"
- },
+  {
+    source : "/backend/locale/django.pot",
+    dest: "/backend-impress.pot",
+    translation : "/backend/locale/%locale_with_underscore%/LC_MESSAGES/django.po"
+  },
   {
     source: "/frontend/packages/i18n/locales/impress/translations-crowdin.json",
     dest: "/frontend-impress.json",
