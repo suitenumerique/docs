@@ -25,6 +25,10 @@ jobs:
       - name: Install development dependencies
         run: pip install --user .[dev]
         working-directory: src/backend
+      - name: Install gettext
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext pandoc
       - name: generate pot files
         working-directory: src/backend
         run: |
