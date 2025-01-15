@@ -57,4 +57,4 @@ jobs:
           # Visit https://crowdin.com/settings#api-key to create this token
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
-          CROWDIN_BASE_PATH: "src/"
+          CROWDIN_BASE_PATH: "../src/"
