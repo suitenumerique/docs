@@ -2,6 +2,7 @@
 # pylint: disable=too-many-lines
 
 import logging
+import mimetypes
 import re
 import uuid
 from urllib.parse import urlparse
@@ -604,8 +605,19 @@ class DocumentViewSet(
         extension = serializer.validated_data["expected_extension"]
         key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}.{extension:s}"
 
+        # Determine the content type of the file
+        file = serializer.validated_data["file"]
+        content_type, _ = mimetypes.guess_type(file.name)
+
+        # Fallback if MIME type cannot be determined
+        if not content_type:
+            content_type = "application/octet-stream"
+
         # Prepare metadata for storage
-        extra_args = {"Metadata": {"owner": str(request.user.id)}}
+        extra_args = {
+            "Metadata": {"owner": str(request.user.id)},
+            "ContentType": content_type,
+        }
         if serializer.validated_data["is_unsafe"]:
             extra_args["Metadata"]["is_unsafe"] = "true"
 
@@ -935,40 +947,6 @@ class TemplateViewSet(
             user=self.request.user,
             role=models.RoleChoices.OWNER,
         )
-
-    @drf.decorators.action(
-        detail=True,
-        methods=["post"],
-        url_path="generate-document",
-        permission_classes=[permissions.AccessPermission],
-    )
-    # pylint: disable=unused-argument
-    def generate_document(self, request, pk=None):
-        """
-        Generate and return a document for this template around the
-        body passed as argument.
-
-        2 types of body are accepted:
-        - HTML: body_type = "html"
-        - Markdown: body_type = "markdown"
-
-        2 types of documents can be generated:
-        - PDF: format = "pdf"
-        - Docx: format = "docx"
-        """
-        serializer = serializers.DocumentGenerationSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return drf.response.Response(
-                serializer.errors, status=drf.status.HTTP_400_BAD_REQUEST
-            )
-
-        body = serializer.validated_data["body"]
-        body_type = serializer.validated_data["body_type"]
-        export_format = serializer.validated_data["format"]
-
-        template = self.get_object()
-        return template.generate_document(body, body_type, export_format)
 
 
 class TemplateAccessViewSet(
