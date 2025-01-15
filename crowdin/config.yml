@@ -3,7 +3,7 @@
 #
 api_token_env: CROWDIN_PERSONAL_TOKEN
 project_id_env: CROWDIN_PROJECT_ID
-base_path_env: "."
+base_path_env: CROWDIN_BASE_PATH
 
 #
 # Choose file structure in crowdin
