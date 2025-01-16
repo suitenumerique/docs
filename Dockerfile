@@ -51,7 +51,7 @@ COPY ./src/backend /app/
 WORKDIR /app
 
 # collectstatic
-RUN DJANGO_CONFIGURATION=Build DJANGO_JWT_PRIVATE_SIGNING_KEY=Dummy \
+RUN DJANGO_CONFIGURATION=Build \
     python manage.py collectstatic --noinput
 
 # Replace duplicated file by a symlink to decrease the overall size of the
@@ -91,6 +91,11 @@ COPY --from=back-builder /install /usr/local
 COPY ./src/backend /app/
 
 WORKDIR /app
+
+# Generate compiled translation messages
+RUN DJANGO_CONFIGURATION=Build \
+    python manage.py compilemessages
+
 
 # We wrap commands run in this container by the following entrypoint that
 # creates a user on-the-fly with the container user ID (see USER) and root group
