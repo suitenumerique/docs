@@ -1,21 +1,54 @@
 """URL configuration for the impress project"""
 
+import os
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path, re_path
 
+from django_prometheus import exports
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
 
+from core.api.custom_probe_views import liveness_check, readiness_check
+from core.api.decorators import monitoring_cidr_protected_view
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("core.urls")),
 ]
+
+# Conditionally add Prometheus Exporter endpoint
+if os.environ.get("MONITORING_PROMETHEUS_EXPORTER", "False").lower() == "true":
+    urlpatterns.append(
+        path(
+            "prometheus/",
+            monitoring_cidr_protected_view(exports.ExportToDjangoView),
+            name="prometheus-django-metrics",
+        ),
+    )
+
+# Conditionally add liveness and readiness probe endpoints
+if os.environ.get("MONITORING_PROBING", "False").lower() == "true":
+    urlpatterns.append(
+        path(
+            "probes/liveness/",
+            monitoring_cidr_protected_view(liveness_check),
+            name="liveness-probe",
+        ),
+    )
+    urlpatterns.append(
+        path(
+            "probes/readiness/",
+            monitoring_cidr_protected_view(readiness_check),
+            name="readiness-probe",
+        ),
+    )
 
 if settings.DEBUG:
     urlpatterns = (
