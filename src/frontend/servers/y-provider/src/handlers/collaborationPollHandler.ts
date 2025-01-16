@@ -3,6 +3,8 @@ import { Response } from 'express';
 import { PollSync, PollSyncRequest } from '@/libs/PollSync';
 import { hocusPocusServer } from '@/servers/hocusPocusServer';
 
+const TIMEOUT = 30000;
+
 /**
  * Polling way of handling collaboration
  * @param req
@@ -14,6 +16,12 @@ export const collaborationPollGetAwarenessHandler = async (
 ) => {
   const room = req.query.room;
   const canEdit = req.headers['x-can-edit'] === 'True';
+
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(408).json({ error: 'Request Timeout' });
+    }
+  }, TIMEOUT);
 
   if (!room) {
     res.status(400).json({ error: 'Room name not provided' });
@@ -28,17 +36,12 @@ export const collaborationPollGetAwarenessHandler = async (
     return;
   }
 
-  setTimeout(() => {
-    if (!res.headersSent) {
-      res.status(408).json({ error: 'Request Timeout' });
-    }
-  }, 60000);
-
   const awareness = await pollSynch.getAwarenessStates();
 
   console.log('awaaaa', awareness);
 
   if (!res.headersSent) {
+    clearTimeout(timeout);
     res.status(200).json({
       awareness,
     });
@@ -62,6 +65,12 @@ export const collaborationPollGetDocHandler = async (
   const room = req.query.room;
   const canEdit = req.headers['x-can-edit'] === 'True';
 
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      res.status(408).json({ error: 'Request Timeout' });
+    }
+  }, TIMEOUT);
+
   if (!room) {
     res.status(400).json({ error: 'Room name not provided' });
     return;
@@ -75,15 +84,10 @@ export const collaborationPollGetDocHandler = async (
     return;
   }
 
-  setTimeout(() => {
-    if (!res.headersSent) {
-      res.status(408).json({ error: 'Request Timeout' });
-    }
-  }, 60000);
-
   const updatedDoc = await pollSynch.getUpdatedDoc();
 
   if (!res.headersSent) {
+    clearTimeout(timeout);
     res.status(200).json(updatedDoc);
   }
 };

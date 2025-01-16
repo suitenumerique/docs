@@ -11,6 +11,7 @@ import {
 import * as time from 'lib0/time';
 import * as Y from 'yjs';
 
+import { APIError, errorCauses } from '@/api';
 import { isFirefox } from '@/utils';
 
 import { toBase64 } from '../utils';
@@ -33,6 +34,7 @@ export class DocsProvider extends HocuspocusProvider {
   private isWebsocketFailed = false;
   private isLongPollingStarted = false;
   private url = '';
+  public static TIMEOUT = 30000;
 
   public constructor(configuration: HocuspocusProviderConfiguration) {
     const withWS = isFirefox();
@@ -132,7 +134,7 @@ export class DocsProvider extends HocuspocusProvider {
 
     try {
       const { updatedDoc64, stateFingerprint } =
-        await pollRequest<GetPollDocResponse>({
+        await longPollRequest<GetPollDocResponse>({
           pollUrl: this.toPollUrl('doc'),
         });
 
@@ -172,7 +174,7 @@ export class DocsProvider extends HocuspocusProvider {
     console.log('startPollAwareness');
     let waitMs = 0;
     try {
-      const { awareness } = await pollRequest<GetPollAwarenessResponse>({
+      const { awareness } = await longPollRequest<GetPollAwarenessResponse>({
         pollUrl: this.toPollUrl('awareness'),
       });
 
@@ -265,6 +267,13 @@ export const postPollMessageRequest = async ({
     }),
   });
 
+  if (!response.ok) {
+    throw new APIError(
+      `Post poll message request failed`,
+      await errorCauses(response),
+    );
+  }
+
   return response.json() as Promise<PostPollMessageResponse>;
 };
 
@@ -280,18 +289,41 @@ interface GetPollDocResponse {
 interface PollParams {
   pollUrl: string;
 }
-export const pollRequest = async <Response>({
+export const longPollRequest = async <Response>({
   pollUrl,
 }: PollParams): Promise<Response> => {
-  const response = await fetch(pollUrl, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort('Request Timeout'),
+      DocsProvider.TIMEOUT,
+    );
 
-  return response.json() as Promise<Response>;
+    const response = await fetch(pollUrl, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new APIError(
+        `Long polling request failed: ${response.status} ${response.statusText}`,
+        await errorCauses(response),
+      );
+    }
+
+    return response.json() as Promise<Response>;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('Polling request timed out');
+    }
+    throw error;
+  }
 };
 
 interface PollSyncParams {
@@ -316,6 +348,13 @@ export const pollSyncRequest = async ({
       localDoc64,
     }),
   });
+
+  if (!response.ok) {
+    throw new APIError(
+      `Sync request failed: ${response.status} ${response.statusText}`,
+      await errorCauses(response),
+    );
+  }
 
   return response.json() as Promise<PollSyncResponse>;
 };
