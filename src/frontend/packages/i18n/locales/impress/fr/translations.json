@@ -75,10 +75,6 @@
     "message": "Dernière mise à jour : {{update}}",
     "description": ""
   },
-  "Public": {
-    "message": "Public",
-    "description": ""
-  },
   "Document title updated successfully": {
     "message": "Titre du document mis à jour avec succès",
     "description": ""
@@ -153,22 +149,6 @@
   },
   "Upload your docs to a Microsoft Word, Open Office or PDF document.": {
     "message": "Téléchargez vos documents dans un document Microsoft Word, Open Office ou PDF.",
-    "description": ""
-  },
-  "Template": {
-    "message": "Template",
-    "description": ""
-  },
-  "Format": {
-    "message": "Format",
-    "description": ""
-  },
-  "Word / Open Office": {
-    "message": "Word / Open Office",
-    "description": ""
-  },
-  "PDF": {
-    "message": "PDF",
     "description": ""
   },
   "The document has been deleted.": {
@@ -335,10 +315,6 @@
     "message": "Copier le lien",
     "description": ""
   },
-  "OK": {
-    "message": "OK",
-    "description": ""
-  },
   "Add": {
     "message": "Ajouter",
     "description": ""
@@ -503,10 +479,6 @@
     "message": "Logo Docs",
     "description": ""
   },
-  "Docs": {
-    "message": "Docs",
-    "description": ""
-  },
   "Pinned documents": {
     "message": "Documents épinglés",
     "description": ""
@@ -561,10 +533,6 @@
   },
   "If you are unable to access a content or a service, you can contact the person responsible for https://lasuite.numerique.gouv.fr to be directed to an accessible alternative or to obtain the content in another form.": {
     "message": "Si vous ne pouvez pas accéder à un contenu ou à un service, vous pouvez contacter la personne responsable de https://lasuite. umerique.gouv.fr pour être dirigé vers une alternative accessible ou pour obtenir le contenu sous une autre forme.",
-    "description": ""
-  },
-  "E-mail:": {
-    "message": "E-mail:",
     "description": ""
   },
   "Address:": {
@@ -625,10 +593,6 @@
   },
   "Stéphanie Schaer: Interministerial Digital Director (DINUM).": {
     "message": "Stéphanie Schaer: Directrice numérique interministériel (DINUM).",
-    "description": ""
-  },
-  "Copyright": {
-    "message": "Copyright",
     "description": ""
   },
   "Illustration:": {

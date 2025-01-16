@@ -159,18 +159,6 @@
     "message": "Vorlage",
     "description": ""
   },
-  "Format": {
-    "message": "Format",
-    "description": ""
-  },
-  "Word / Open Office": {
-    "message": "Word / Open Office",
-    "description": ""
-  },
-  "PDF": {
-    "message": "PDF",
-    "description": ""
-  },
   "The document has been deleted.": {
     "message": "Das Dokument wurde gelöscht.",
     "description": ""
@@ -197,14 +185,6 @@
   },
   "Reader": {
     "message": "Leser",
-    "description": ""
-  },
-  "Editor": {
-    "message": "Editor",
-    "description": ""
-  },
-  "Administrator": {
-    "message": "Administrator",
     "description": ""
   },
   "Owner": {
@@ -335,10 +315,6 @@
     "message": "Link kopieren",
     "description": ""
   },
-  "OK": {
-    "message": "OK",
-    "description": ""
-  },
   "Add": {
     "message": "Hinzufügen",
     "description": ""
@@ -455,10 +431,6 @@
     "message": "Keine Dokumente gefunden",
     "description": ""
   },
-  "Name": {
-    "message": "Name",
-    "description": ""
-  },
   "Updated at": {
     "message": "Aktualisiert am",
     "description": ""
@@ -497,14 +469,6 @@
   },
   "Open the header menu": {
     "message": "Öffne das Kopfzeilen-Menü",
-    "description": ""
-  },
-  "Docs Logo": {
-    "message": "Docs Logo",
-    "description": ""
-  },
-  "Docs": {
-    "message": "Docs",
     "description": ""
   },
   "Pinned documents": {
@@ -587,10 +551,6 @@
     "message": "Senden Sie einen Brief per Post (kostenlos, kein Porto erforderlich):",
     "description": ""
   },
-  "Defender of Rights - Free response - 71120 75342 Paris CEDEX 07": {
-    "message": "",
-    "description": ""
-  },
   "Legal notice": {
     "message": "Impressum",
     "description": ""
@@ -599,20 +559,12 @@
     "message": "Herausgeber",
     "description": ""
   },
-  "French Interministerial Directorate for Digital Affairs (DINUM), 20 avenue de Ségur 75007 Paris.": {
-    "message": "",
-    "description": ""
-  },
   "Publication Director": {
     "message": "Verantwortlicher Herausgeber",
     "description": ""
   },
   "Stéphanie Schaer: Interministerial Digital Director (DINUM).": {
     "message": "Stéphanie Schaer: Interministerielle Digitaldirektorin (DINUM).",
-    "description": ""
-  },
-  "Copyright": {
-    "message": "Copyright",
     "description": ""
   },
   "Illustration:": {
@@ -653,10 +605,6 @@
   },
   "This will protect your privacy, but will also prevent the owner from learning from your actions and creating a better experience for you and other users.": {
     "message": "Dies schützt Ihre Privatsphäre, verhindert jedoch auch, dass der Eigentümer aus Ihren Aktionen lernt und eine bessere Erfahrung für Sie und andere Benutzer schafft.",
-    "description": ""
-  },
-  "This site does not display a cookie consent banner, why?": {
-    "message": "",
     "description": ""
   },
   "It's true, you didn't have to click on a block that covers half the page to say you agree to the placement of cookies — even if you don't know what it means!": {
