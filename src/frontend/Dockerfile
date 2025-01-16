@@ -14,6 +14,12 @@ COPY ./src/frontend/.prettierrc.js ./.prettierrc.js
 COPY ./src/frontend/packages/eslint-config-impress ./packages/eslint-config-impress
 COPY ./src/frontend/apps/impress ./apps/impress
 
+# In order to generate the translations.json file we need to copy
+# packages and the run the i18n:deploy script
+COPY ./src/frontend/packages ./packages
+RUN yarn run i18n:deploy && \
+    rm -rf ./packages
+
 ### ---- Front-end builder image ----
 FROM frontend-deps AS impress
 
