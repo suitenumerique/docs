@@ -54,13 +54,22 @@ export class DocsProvider extends HocuspocusProvider {
     );
   }
 
-  public onWebsocketConnect = () => {
+  public setPollDefaultValues(): void {
     this.websocketFailureCount = 0;
     this.isWebsocketFailed = false;
     this.isLongPollingStarted = false;
+  }
+
+  public destroy(): void {
+    super.destroy();
+    this.setPollDefaultValues();
+  }
+
+  public onWebsocketConnect = () => {
+    this.setPollDefaultValues();
   };
 
-  public onClose() {
+  public onClose(): void {
     this.isAuthenticated = false;
     this.synced = false;
 
