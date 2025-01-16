@@ -100,7 +100,7 @@ export class DocsProvider extends HocuspocusProvider {
       return;
     }
 
-    console.log('outgoingMessage', message.description);
+    //console.log('outgoingMessage', message.description);
 
     void postPollMessageRequest({
       pollUrl: this.toPollUrl('message'),
