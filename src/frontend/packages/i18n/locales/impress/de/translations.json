@@ -1,0 +1,674 @@
+{
+  "Load more": {
+    "message": "Mehr anzeigen",
+    "description": ""
+  },
+  "Quick search input": {
+    "message": "Schnellsuche-Eingabe",
+    "description": ""
+  },
+  "Search": {
+    "message": "Suchen",
+    "description": ""
+  },
+  "Something bad happens, please retry.": {
+    "message": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut.",
+    "description": ""
+  },
+  "Login": {
+    "message": "Anmelden",
+    "description": ""
+  },
+  "Logout": {
+    "message": "Abmelden",
+    "description": ""
+  },
+  "AI Actions": {
+    "message": "KI-Aktionen",
+    "description": ""
+  },
+  "Use as prompt": {
+    "message": "Als Prompt verwenden",
+    "description": ""
+  },
+  "Rephrase": {
+    "message": "Umformulieren",
+    "description": ""
+  },
+  "Summarize": {
+    "message": "Zusammenfassen",
+    "description": ""
+  },
+  "Correct": {
+    "message": "Korrigieren",
+    "description": ""
+  },
+  "Language": {
+    "message": "Sprache",
+    "description": ""
+  },
+  "Too many requests. Please wait 60 seconds.": {
+    "message": "Zu viele Anfragen. Bitte warten Sie 60 Sekunden.",
+    "description": ""
+  },
+  "AI seems busy! Please try again.": {
+    "message": "KI scheint beschäftigt! Bitte versuchen Sie es erneut.",
+    "description": ""
+  },
+  "Anonymous": {
+    "message": "Gast",
+    "description": ""
+  },
+  "Convert Markdown": {
+    "message": "Markdown konvertieren",
+    "description": ""
+  },
+  "It is the card information about the document.": {
+    "message": "Es handelt sich um die Karteninformationen zum Dokument.",
+    "description": ""
+  },
+  "Public document": {
+    "message": "Öffentliches Dokument",
+    "description": ""
+  },
+  "Last update: {{update}}": {
+    "message": "Zuletzt aktualisiert: {{update}}",
+    "description": ""
+  },
+  "Public": {
+    "message": "Öffentlich",
+    "description": ""
+  },
+  "Document title updated successfully": {
+    "message": "Titel des Dokuments erfolgreich aktualisiert",
+    "description": ""
+  },
+  "Rename": {
+    "message": "Umbenennen",
+    "description": ""
+  },
+  "Share": {
+    "message": "Teilen",
+    "description": ""
+  },
+  "Export": {
+    "message": "Exportieren",
+    "description": ""
+  },
+  "Version history": {
+    "message": "Versionsverlauf",
+    "description": ""
+  },
+  "Copy as {{format}}": {
+    "message": "Als {{format}} kopieren",
+    "description": ""
+  },
+  "Delete document": {
+    "message": "Dokument löschen",
+    "description": ""
+  },
+  "Editor unavailable": {
+    "message": "Editor nicht verfügbar",
+    "description": ""
+  },
+  "Copied to clipboard": {
+    "message": "In die Zwischenablage kopiert",
+    "description": ""
+  },
+  "Failed to copy to clipboard": {
+    "message": "Fehler beim Kopieren in die Zwischenablage",
+    "description": ""
+  },
+  "Open the document options": {
+    "message": "Öffnen Sie die Dokumentoptionen",
+    "description": ""
+  },
+  "It is the document title": {
+    "message": "Es ist der Titel des Dokuments",
+    "description": ""
+  },
+  "Your {{format}} was downloaded succesfully": {
+    "message": "Ihr {{format}} wurde erfolgreich heruntergeladen",
+    "description": ""
+  },
+  "No editor found": {
+    "message": "Kein Editor gefunden",
+    "description": ""
+  },
+  "Close the modal": {
+    "message": "Pop up schliessen",
+    "description": ""
+  },
+  "Cancel": {
+    "message": "Abbrechen",
+    "description": ""
+  },
+  "Download": {
+    "message": "Herunterladen",
+    "description": ""
+  },
+  "Content modal to export the document": {
+    "message": "Inhalte zum Exportieren des Dokuments",
+    "description": ""
+  },
+  "Upload your docs to a Microsoft Word, Open Office or PDF document.": {
+    "message": "Laden Sie Ihre Dokumente zu einem Microsoft Word, Open Office oder PDF Dokument hoch.",
+    "description": ""
+  },
+  "Template": {
+    "message": "Vorlage",
+    "description": ""
+  },
+  "Format": {
+    "message": "Format",
+    "description": ""
+  },
+  "Word / Open Office": {
+    "message": "Word / Open Office",
+    "description": ""
+  },
+  "PDF": {
+    "message": "PDF",
+    "description": ""
+  },
+  "The document has been deleted.": {
+    "message": "Das Dokument wurde gelöscht.",
+    "description": ""
+  },
+  "Confirm deletion": {
+    "message": "Löschung bestätigen",
+    "description": ""
+  },
+  "Delete": {
+    "message": "Löschen",
+    "description": ""
+  },
+  "Delete a doc": {
+    "message": "Dokument löschen",
+    "description": ""
+  },
+  "Content modal to delete document": {
+    "message": "Inhalts-Modal zum Löschen des Dokuments",
+    "description": ""
+  },
+  "Are you sure you want to delete the document \"{{title}}\"?": {
+    "message": "Sind Sie sicher, dass Sie das Dokument \"{{title}}\" löschen möchten?",
+    "description": ""
+  },
+  "Reader": {
+    "message": "Leser",
+    "description": ""
+  },
+  "Editor": {
+    "message": "Editor",
+    "description": ""
+  },
+  "Administrator": {
+    "message": "Administrator",
+    "description": ""
+  },
+  "Owner": {
+    "message": "Besitzer",
+    "description": ""
+  },
+  "You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.": {
+    "message": "Sie sind der einzige Besitzer dieser Gruppe. Machen Sie ein anderes Mitglied zum Gruppenbesitzer, bevor Sie Ihre eigene Rolle ändern oder aus Ihrem Dokument entfernen können.",
+    "description": ""
+  },
+  "You cannot update the role or remove other owner.": {
+    "message": "Sie können die Rolle nicht aktualisieren oder einen anderen Besitzer entfernen.",
+    "description": ""
+  },
+  "Untitled document": {
+    "message": "Unbenanntes Dokument",
+    "description": ""
+  },
+  "Select a document": {
+    "message": "Dokument auswählen",
+    "description": ""
+  },
+  "No document found": {
+    "message": "Kein Dokument gefunden",
+    "description": ""
+  },
+  "Search modal": {
+    "message": "Suche Modal",
+    "description": ""
+  },
+  "Type the name of a document": {
+    "message": "Geben Sie den Namen eines Dokuments ein",
+    "description": ""
+  },
+  "No active search": {
+    "message": "Keine aktive Suche",
+    "description": ""
+  },
+  "Failed to create the invitation for {{email}}.": {
+    "message": "Fehler beim Erstellen der Einladung für {{email}}.",
+    "description": ""
+  },
+  "Failed to add the member in the document.": {
+    "message": "Fehler beim Hinzufügen des Mitglieds zum Dokument.",
+    "description": ""
+  },
+  "\"{{email}}\" is already invited to the document.": {
+    "message": "\"{{email}}\" ist bereits zum Dokument eingeladen.",
+    "description": ""
+  },
+  "\"{{email}}\" is already member of the document.": {
+    "message": "\"{{email}}\" ist bereits Mitglied des Dokuments.",
+    "description": ""
+  },
+  "Invite": {
+    "message": "Einladen",
+    "description": ""
+  },
+  "Error during update invitation": {
+    "message": "Fehler beim Aktualisieren der Einladung",
+    "description": ""
+  },
+  "Error during delete invitation": {
+    "message": "Fehler beim Löschen der Einladung",
+    "description": ""
+  },
+  "Error during invitation update": {
+    "message": "Fehler beim Aktualisieren der Einladung",
+    "description": ""
+  },
+  "Error while deleting invitation": {
+    "message": "Fehler beim Löschen der Einladung",
+    "description": ""
+  },
+  "Document owner": {
+    "message": "Besitzer des Dokuments",
+    "description": ""
+  },
+  "Share with {{count}} users_one": {
+    "message": "Teilen mit {{count}} Benutzern",
+    "description": ""
+  },
+  "Share with {{count}} users_many": {
+    "message": "Teilen mit {{count}} Benutzern",
+    "description": ""
+  },
+  "Share with {{count}} users_other": {
+    "message": "Teilen mit {{count}} Benutzern",
+    "description": ""
+  },
+  "Pending invitations": {
+    "message": "Ausstehende Einladungen",
+    "description": ""
+  },
+  "Search user result": {
+    "message": "Suchergebnis",
+    "description": ""
+  },
+  "Share modal": {
+    "message": "Teilen-Modal",
+    "description": ""
+  },
+  "Share the document": {
+    "message": "Dokument teilen",
+    "description": ""
+  },
+  "Type a name or email": {
+    "message": "Geben Sie einen Namen oder eine E-Mail-Adresse ein",
+    "description": ""
+  },
+  "List invitation card": {
+    "message": "Einladungsliste anzeigen",
+    "description": ""
+  },
+  "List members card": {
+    "message": "Mitgliederliste anzeigen",
+    "description": ""
+  },
+  "Link Copied !": {
+    "message": "Link kopiert!",
+    "description": ""
+  },
+  "Failed to copy link": {
+    "message": "Link konnte nicht kopiert werden",
+    "description": ""
+  },
+  "Copy link": {
+    "message": "Link kopieren",
+    "description": ""
+  },
+  "OK": {
+    "message": "OK",
+    "description": ""
+  },
+  "Add": {
+    "message": "Hinzufügen",
+    "description": ""
+  },
+  "The document visibility has been updated.": {
+    "message": "Die Sichtbarkeit des Dokuments wurde aktualisiert.",
+    "description": ""
+  },
+  "Doc visibility card": {
+    "message": "Dokumenten-Sichtbarkeitskarte",
+    "description": ""
+  },
+  "Link parameters": {
+    "message": "Link-Parameter",
+    "description": ""
+  },
+  "Visibility": {
+    "message": "Sichtbarkeit",
+    "description": ""
+  },
+  "Visibility mode": {
+    "message": "Sichtbarkeitseinstellungen",
+    "description": ""
+  },
+  "Private": {
+    "message": "Privat",
+    "description": ""
+  },
+  "Connected": {
+    "message": "Verbunden",
+    "description": ""
+  },
+  "Reading": {
+    "message": "Lesen",
+    "description": ""
+  },
+  "Edition": {
+    "message": "Bearbeiten",
+    "description": ""
+  },
+  "Only invited people can access": {
+    "message": "Nur eingeladene Personen haben Zugriff",
+    "description": ""
+  },
+  "Anyone with the link can view the document if they are logged in": {
+    "message": "Jeder mit dem Link kann das Dokument ansehen, wenn er angemeldet ist",
+    "description": ""
+  },
+  "Anyone with the link can edit the document if they are logged in": {
+    "message": "Jeder mit dem Link kann das Dokument bearbeiten, wenn er angemeldet ist",
+    "description": ""
+  },
+  "Anyone with the link can see the document": {
+    "message": "Jeder mit dem Link kann das Dokument ansehen",
+    "description": ""
+  },
+  "Anyone with the link can edit the document": {
+    "message": "Jeder mit dem Link kann das Dokument bearbeiten",
+    "description": ""
+  },
+  "Summary": {
+    "message": "Zusammenfassung",
+    "description": ""
+  },
+  "Version restored successfully": {
+    "message": "Version erfolgreich wiederhergestellt",
+    "description": ""
+  },
+  "Restore": {
+    "message": "Wiederherstellen",
+    "description": ""
+  },
+  "Warning": {
+    "message": "Warnung",
+    "description": ""
+  },
+  "Modal confirmation to restore the version": {
+    "message": "Modale Bestätigung um die Version wiederherzustellen",
+    "description": ""
+  },
+  "Your current document will revert to this version.": {
+    "message": "Ihr aktuelles Dokument wird auf diese Version zurückgesetzt.",
+    "description": ""
+  },
+  "If a member is editing, his works can be lost.": {
+    "message": "Wenn ein Mitglied editiert, können seine Änderungen verloren gehen.",
+    "description": ""
+  },
+  "Select a version on the right to restore": {
+    "message": "Wählen Sie rechts eine Version zum Wiederherstellen aus",
+    "description": ""
+  },
+  "History": {
+    "message": "Versionsverlauf",
+    "description": ""
+  },
+  "No versions": {
+    "message": "Keine Versionen",
+    "description": ""
+  },
+  "My docs": {
+    "message": "Meine Dokumente",
+    "description": ""
+  },
+  "Shared with me": {
+    "message": "Mit mir geteilt",
+    "description": ""
+  },
+  "All docs": {
+    "message": "Alle Dokumente",
+    "description": ""
+  },
+  "No documents found": {
+    "message": "Keine Dokumente gefunden",
+    "description": ""
+  },
+  "Name": {
+    "message": "Name",
+    "description": ""
+  },
+  "Updated at": {
+    "message": "Aktualisiert am",
+    "description": ""
+  },
+  "More docs": {
+    "message": "Weitere Dokumente",
+    "description": ""
+  },
+  "Unpin": {
+    "message": "Lösen",
+    "description": ""
+  },
+  "Pin": {
+    "message": "Anheften",
+    "description": ""
+  },
+  "Remove": {
+    "message": "Löschen",
+    "description": ""
+  },
+  "Legal Notice": {
+    "message": "Impressum",
+    "description": ""
+  },
+  "Personal data and cookies": {
+    "message": "Personenbezogene Daten und Cookies",
+    "description": ""
+  },
+  "Accessibility": {
+    "message": "Barrierefreiheit",
+    "description": ""
+  },
+  "Unless otherwise stated, all content on this site is under": {
+    "message": "Sofern nicht anders angegeben, steht der gesamte Inhalt dieser Website unter",
+    "description": ""
+  },
+  "Open the header menu": {
+    "message": "Öffne das Kopfzeilen-Menü",
+    "description": ""
+  },
+  "Docs Logo": {
+    "message": "Docs Logo",
+    "description": ""
+  },
+  "Docs": {
+    "message": "Docs",
+    "description": ""
+  },
+  "Pinned documents": {
+    "message": "Angepinnte Dokumente",
+    "description": ""
+  },
+  "New doc": {
+    "message": "Neues Dokument",
+    "description": ""
+  },
+  "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": {
+    "message": "Pages: Ihr neuer Begleiter für eine effiziente, intuitive und sichere Zusammenarbeit bei Dokumenten.",
+    "description": ""
+  },
+  "Ouch !": {
+    "message": "Autsch!",
+    "description": ""
+  },
+  "It seems that the page you are looking for does not exist or cannot be displayed correctly.": {
+    "message": "Es scheint, dass die von Ihnen gesuchte Seite nicht existiert oder nicht korrekt angezeigt werden kann.",
+    "description": ""
+  },
+  "Back to home page": {
+    "message": "Zurück zur Startseite",
+    "description": ""
+  },
+  "Accessibility statement": {
+    "message": "Erklärung zur Barrierefreiheit",
+    "description": ""
+  },
+  "Established on December 20, 2023.": {
+    "message": "Gegründet am 20. Dezember 2023.",
+    "description": ""
+  },
+  "This accessibility statement applies to the site hosted on": {
+    "message": "Diese Erklärung zur Barrierefreiheit gilt für die gehostete Seite",
+    "description": ""
+  },
+  "Compliance status": {
+    "message": "Konformitätsstatus",
+    "description": ""
+  },
+  "Improvement and contact": {
+    "message": "Verbesserungen und Kontakt",
+    "description": ""
+  },
+  "If you are unable to access a content or a service, you can contact the person responsible for https://lasuite.numerique.gouv.fr to be directed to an accessible alternative or to obtain the content in another form.": {
+    "message": "Wenn Sie keinen Zugriff auf Inhalte oder einen Service haben, können Sie sich an die für https://lasuite.numerique.gouv.fr verantwortliche Person wenden, um eine zugängliche Alternative zu erhalten oder den Inhalt in einer anderen Form zu erhalten.",
+    "description": ""
+  },
+  "E-mail:": {
+    "message": "E-Mail:",
+    "description": ""
+  },
+  "Address:": {
+    "message": "Anschrift:",
+    "description": ""
+  },
+  "We try to respond within 2 working days.": {
+    "message": "Wir versuchen, innerhalb von 2 Arbeitstagen zu antworten.",
+    "description": ""
+  },
+  "Remedies": {
+    "message": "Rechtsbehelfe",
+    "description": ""
+  },
+  "This procedure should be used in the following case:": {
+    "message": "Dieses Verfahren sollte in folgendem Fall verwendet werden:",
+    "description": ""
+  },
+  "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": {
+    "message": "sie haben dem Website-Manager einen Mangel an Barrierefreiheit gemeldet, der Ihnen den Zugriff auf Inhalte oder einen der Dienste des Portals verwehrt, und Sie haben keine zufriedenstellende Antwort erhalten.",
+    "description": ""
+  },
+  "You can:": {
+    "message": "Sie können:",
+    "description": ""
+  },
+  "Send a letter by post (free of charge, no stamp needed):": {
+    "message": "Senden Sie einen Brief per Post (kostenlos, kein Porto erforderlich):",
+    "description": ""
+  },
+  "Defender of Rights - Free response - 71120 75342 Paris CEDEX 07": {
+    "message": "",
+    "description": ""
+  },
+  "Legal notice": {
+    "message": "Impressum",
+    "description": ""
+  },
+  "Publisher": {
+    "message": "Herausgeber",
+    "description": ""
+  },
+  "French Interministerial Directorate for Digital Affairs (DINUM), 20 avenue de Ségur 75007 Paris.": {
+    "message": "",
+    "description": ""
+  },
+  "Publication Director": {
+    "message": "Verantwortlicher Herausgeber",
+    "description": ""
+  },
+  "Stéphanie Schaer: Interministerial Digital Director (DINUM).": {
+    "message": "Stéphanie Schaer: Interministerielle Digitaldirektorin (DINUM).",
+    "description": ""
+  },
+  "Copyright": {
+    "message": "Copyright",
+    "description": ""
+  },
+  "Illustration:": {
+    "message": "Abbildung:",
+    "description": ""
+  },
+  "More info?": {
+    "message": "Mehr Informationen",
+    "description": ""
+  },
+  "The team in charge of the digital workspace \"La Suite numérique\" can be contacted directly at": {
+    "message": "Das Team, das für den digitalen Arbeitsbereich \"La Suite numérique\" zuständig ist, kann direkt kontaktiert werden unter",
+    "description": ""
+  },
+  "Offline ?!": {
+    "message": "Offline?!",
+    "description": ""
+  },
+  "Can't load this page, please check your internet connection.": {
+    "message": "Diese Seite kann nicht geladen werden. Bitte überprüfen Sie Ihre Internetverbindung.",
+    "description": ""
+  },
+  "Cookies placed": {
+    "message": "Cookies gesetzt",
+    "description": ""
+  },
+  "This site places a small text file (a \"cookie\") on your computer when you visit it.": {
+    "message": "Diese Website platziert beim Besuch auf Ihrem Computer eine kleine Textdatei (ein \"Cookie\").",
+    "description": ""
+  },
+  "This allows us to measure the number of visits and understand which pages are the most viewed.": {
+    "message": "Dies ermöglicht es uns, die Anzahl der Besuche zu messen und zu verstehen, welche Seiten am häufigsten angesehen werden.",
+    "description": ""
+  },
+  "You can oppose the tracking of your browsing on this website.": {
+    "message": "Sie können der Verfolgung Ihres Surfverhaltens auf dieser Website widersprechen.",
+    "description": ""
+  },
+  "This will protect your privacy, but will also prevent the owner from learning from your actions and creating a better experience for you and other users.": {
+    "message": "Dies schützt Ihre Privatsphäre, verhindert jedoch auch, dass der Eigentümer aus Ihren Aktionen lernt und eine bessere Erfahrung für Sie und andere Benutzer schafft.",
+    "description": ""
+  },
+  "This site does not display a cookie consent banner, why?": {
+    "message": "",
+    "description": ""
+  },
+  "It's true, you didn't have to click on a block that covers half the page to say you agree to the placement of cookies — even if you don't know what it means!": {
+    "message": "Es stimmt, Sie mussten nicht auf einen Block klicken, der die halbe Seite bedeckt, um zu sagen, dass Sie der Platzierung von Cookies zustimmen - auch wenn Sie nicht wissen, was es bedeutet!",
+    "description": ""
+  },
+  "Nothing exceptional, no special privileges related to a .gouv.fr.": {
+    "message": "Nichts Außergewöhnliches, keine besonderen Privilegien im Zusammenhang mit .gouv.fr.",
+    "description": ""
+  },
+  "We simply comply with the law, which states that certain audience measurement tools, properly configured to respect privacy, are exempt from prior authorization.": {
+    "message": "Wir halten uns einfach an das Gesetz, das besagt, dass bestimmte Publikumsmessungstools, die ordnungsgemäß konfiguriert sind, um die Privatsphäre zu respektieren, von einer vorherigen Genehmigung befreit sind.",
+    "description": ""
+  }
+}

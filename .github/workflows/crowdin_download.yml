@@ -1,0 +1,67 @@
+name: Download translations from Crowdin
+
+on:
+  workflow_dispatch:
+  push:
+    branches: 
+      - main
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  synchronize-with-crowdin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create empty source files
+        run: |
+          touch src/backend/locale/django.pot
+          touch src/frontend/packages/i18n/locales/impress/translations-crowdin.json
+      # crowdin workflow
+      - name: crowdin action
+        uses: crowdin/github-action@v2
+        with:
+          config: crowdin/config.yml
+          upload_sources: false
+          upload_translations: false
+          download_translations: true
+          create_pull_request: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          # A numeric ID, found at https://crowdin.com/project/<projectName>/tools/api
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+
+          # Visit https://crowdin.com/settings#api-key to create this token
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+          CROWDIN_BASE_PATH: "../src/"
+      # frontend i18n
+      - name: generate translations files
+        working-directory: src/frontend
+        run: yarn i18n:deploy
+      # Create a new PR
+      - name: Create a new Pull Request with new translated strings
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          commit-message: |
+            🌐(i18n) update translated strings
+
+            Update translated files with new translations
+          title: 🌐(i18n) update translated strings
+          body: |
+            ## Purpose
+
+            update translated strings
+
+            ## Proposal
+
+            - [x]  update translated strings
+          branch: i18n/update-translations
+          base: main
+          labels: i18n
