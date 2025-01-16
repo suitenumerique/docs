@@ -31,7 +31,7 @@ export class DocsProvider extends HocuspocusProvider {
   private websocketFailureCount = 0;
   private websocketMaxFailureCount = 2;
   private isWebsocketFailed = false;
-  private isPollingStarted = false;
+  private isLongPollingStarted = false;
   private url = '';
 
   public constructor(configuration: HocuspocusProviderConfiguration) {
@@ -57,7 +57,7 @@ export class DocsProvider extends HocuspocusProvider {
   public onWebsocketConnect = () => {
     this.websocketFailureCount = 0;
     this.isWebsocketFailed = false;
-    this.isPollingStarted = false;
+    this.isLongPollingStarted = false;
   };
 
   public onClose() {
@@ -74,8 +74,8 @@ export class DocsProvider extends HocuspocusProvider {
     ) {
       this.isWebsocketFailed = true;
 
-      if (!this.isPollingStarted) {
-        this.isPollingStarted = true;
+      if (!this.isLongPollingStarted) {
+        this.isLongPollingStarted = true;
         void this.pollSync();
         void this.longPollAwareness();
         void this.longPollDocUpdate();
@@ -121,9 +121,9 @@ export class DocsProvider extends HocuspocusProvider {
           pollUrl: this.toPollUrl('doc'),
         });
 
-      if (updatedDoc64) {
-        console.log('updatedDoc64', updatedDoc64);
+      console.log('updatedDoc64', updatedDoc64);
 
+      if (updatedDoc64) {
         const uint8Array = Buffer.from(updatedDoc64, 'base64');
         Y.applyUpdate(this.document, uint8Array);
 
@@ -135,9 +135,9 @@ export class DocsProvider extends HocuspocusProvider {
         if (localStateFingerprint !== stateFingerprint) {
           await this.pollSync();
         }
-
-        void this.longPollDocUpdate();
       }
+
+      void this.longPollDocUpdate();
     } catch (error) {
       console.error('Polling doc failed:', error);
 
@@ -160,15 +160,16 @@ export class DocsProvider extends HocuspocusProvider {
         pollUrl: this.toPollUrl('awareness'),
       });
 
+      console.log('awareness', awareness);
+
       if (awareness) {
-        console.log('awareness', awareness);
         Object.entries(awareness).forEach(
           ([clientAwarenessKeyStr, clientAwareness]) =>
             this.setAwareness(Number(clientAwarenessKeyStr), clientAwareness),
         );
-
-        void this.longPollAwareness();
       }
+
+      void this.longPollAwareness();
     } catch (error) {
       console.error('Polling awareness failed:', error);
 
