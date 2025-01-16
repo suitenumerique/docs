@@ -114,6 +114,7 @@ export class DocsProvider extends HocuspocusProvider {
     }
 
     console.log('startPollDoc');
+    let waitMs = 0;
 
     try {
       const { updatedDoc64, stateFingerprint } =
@@ -136,15 +137,16 @@ export class DocsProvider extends HocuspocusProvider {
           await this.pollSync();
         }
       }
-
-      void this.longPollDocUpdate();
     } catch (error) {
       console.error('Polling doc failed:', error);
-
       // Could be no internet connection
+      waitMs = 5000;
+    } finally {
+      console.log('endPollDoc');
+
       setTimeout(() => {
         void this.longPollDocUpdate();
-      }, 5000);
+      }, waitMs);
     }
   }
 
@@ -154,7 +156,7 @@ export class DocsProvider extends HocuspocusProvider {
     }
 
     console.log('startPollAwareness');
-
+    let waitMs = 0;
     try {
       const { awareness } = await pollRequest<GetPollAwarenessResponse>({
         pollUrl: this.toPollUrl('awareness'),
@@ -168,15 +170,14 @@ export class DocsProvider extends HocuspocusProvider {
             this.setAwareness(Number(clientAwarenessKeyStr), clientAwareness),
         );
       }
-
-      void this.longPollAwareness();
     } catch (error) {
       console.error('Polling awareness failed:', error);
-
       // Could be no internet connection
+      waitMs = 5000;
+    } finally {
       setTimeout(() => {
         void this.longPollAwareness();
-      }, 5000);
+      }, waitMs);
     }
   }
 
