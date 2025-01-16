@@ -91,14 +91,14 @@ export class PollSync<T> {
     const updateFn = (
       update: Uint8Array,
       _origin: string,
-      _updatedDoc: Y.Doc,
+      updatedDoc: Y.Doc,
       _transaction: Y.Transaction,
     ) => {
       console.log('Doc Update V2');
 
       done({
         updatedDoc64: toBase64(update),
-        stateFingerprint: this.getStateFingerprint(_updatedDoc),
+        stateFingerprint: this.getStateFingerprint(updatedDoc),
       });
 
       hpDoc.off('update', updateFn);
@@ -145,19 +145,9 @@ export class PollSync<T> {
   /**
    * - Dispatch new messages to clients
    */
-  public messageHandler(
-    message64: string,
-    connections?: Map<
-      WebSocket,
-      {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        clients: Set<any>;
-        connection: Connection;
-      }
-    >,
-  ) {
-    console.log('Polling Updated message64', message64);
-
+  public messageHandler(message64: string) {
+    console.log('Polling Updated 789');
+    let updated = true;
     const hpDoc = this.getHpDocument();
     const messageBuffer = Buffer.from(message64, 'base64');
     const message = new IncomingMessage(messageBuffer);
@@ -171,17 +161,16 @@ export class PollSync<T> {
 
     const mr = new MessageReceiver(message, new Debugger());
 
-    if (connections) {
-      try {
-        connections.forEach((connection) => {
-          mr.apply(hpDoc, connection.connection);
-        });
-      } catch (e) {
-        console.log('Error in messageHandler', e);
-      }
+    try {
+      mr.apply(hpDoc, undefined, undefined);
+    } catch (e) {
+      console.log('Error in messageHandler', e);
+      updated = false;
     }
 
     logger('Polling Updated YDoc', hpDoc.name);
+
+    return updated;
   }
 
   private getHpDocument() {

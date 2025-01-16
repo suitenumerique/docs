@@ -95,17 +95,22 @@ export class DocsProvider extends HocuspocusProvider {
     return `${pollUrl}&${Date.now()}`;
   }
 
-  public onPollOutgoingMessage({ message }: onOutgoingMessageParameters) {
+  public async onPollOutgoingMessage({ message }: onOutgoingMessageParameters) {
     if (!this.isWebsocketFailed) {
       return;
     }
 
     //console.log('outgoingMessage', message.description);
 
-    void postPollMessageRequest({
+    const { updated } = await postPollMessageRequest({
       pollUrl: this.toPollUrl('message'),
       message64: Buffer.from(message.toUint8Array()).toString('base64'),
     });
+
+    if (!updated) {
+      console.error('Message not updated');
+      await this.pollSync();
+    }
   }
 
   protected async longPollDocUpdate() {
@@ -185,6 +190,8 @@ export class DocsProvider extends HocuspocusProvider {
     if (!this.isWebsocketFailed) {
       return;
     }
+
+    console.log('Syncing');
 
     try {
       const { syncDoc64 } = await pollSyncRequest({

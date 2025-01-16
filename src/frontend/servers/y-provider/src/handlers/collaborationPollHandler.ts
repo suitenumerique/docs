@@ -126,12 +126,10 @@ export const collaborationPollPostMessageHandler = async (
     return;
   }
 
-  const documents = await hocusPocusServer.openDirectConnection(room);
-
-  pollSynch.messageHandler(req.body.message64, documents.document?.connections);
+  const updated = pollSynch.messageHandler(req.body.message64);
 
   if (!res.headersSent) {
-    res.status(200).json({ updated: true });
+    res.status(200).json({ updated });
   }
 };
 
