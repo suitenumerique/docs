@@ -130,7 +130,10 @@ $ make superuser
 ```
 
 ## Feedback 🙋‍♂️🙋‍♀️
-We'd love to hear your thoughts and hear about your experiments, so come and say hi on Matrix.
+We'd love to hear your thoughts and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
+
+## Roadmap
+Want to know where the project is headed? [🗺️ Checkout our roadmap](https://github.com/orgs/numerique-gouv/projects/13/views/11)
 
 ## Licence 📝
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
