@@ -4,6 +4,8 @@ import { create } from 'zustand';
 
 import { Base64 } from '@/features/docs/doc-management';
 
+import { DocsProvider } from '../libs/DocsProvider';
+
 export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
@@ -29,7 +31,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
     }
 
-    const provider = new HocuspocusProvider({
+    const provider = new DocsProvider({
       url: wsUrl,
       name: storeId,
       document: doc,

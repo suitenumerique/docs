@@ -1,6 +1,6 @@
 import { useConfig } from '../api';
 
-export const useCollaborationUrl = (room?: string) => {
+export const useCollaborationUrl = (room?: string): string | undefined => {
   const { data: conf } = useConfig();
 
   if (!room) {
@@ -13,5 +13,7 @@ export const useCollaborationUrl = (room?: string) => {
       ? `wss://${window.location.host}/collaboration/ws/`
       : '');
 
-  return `${base}?room=${room}`;
+  const wsUrl = `${base}?room=${encodeURIComponent(room)}`;
+
+  return wsUrl;
 };

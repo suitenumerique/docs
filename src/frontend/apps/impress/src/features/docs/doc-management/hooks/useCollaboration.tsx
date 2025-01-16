@@ -11,6 +11,9 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
   const { setBroadcastProvider } = useBroadcastStore();
   const { provider, createProvider, destroyProvider } = useProviderStore();
 
+  /**
+   * Initialize the provider
+   */
   useEffect(() => {
     if (!room || !collaborationUrl || provider) {
       return;
@@ -27,9 +30,6 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
     setBroadcastProvider,
   ]);
 
-  /**
-   * Destroy the provider when the component is unmounted
-   */
   useEffect(() => {
     return () => {
       if (room) {
