@@ -172,9 +172,13 @@ export class PollSync<T> {
     const mr = new MessageReceiver(message, new Debugger());
 
     if (connections) {
-      connections.forEach((connection) => {
-        mr.apply(hpDoc, connection.connection);
-      });
+      try {
+        connections.forEach((connection) => {
+          mr.apply(hpDoc, connection.connection);
+        });
+      } catch (e) {
+        console.log('Error in messageHandler', e);
+      }
     }
 
     logger('Polling Updated YDoc', hpDoc.name);
