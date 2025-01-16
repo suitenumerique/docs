@@ -9,6 +9,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- github action to managed Crowdin workflow
+
 ## [2.0.0] - 2025-01-13
 
 ## Added
