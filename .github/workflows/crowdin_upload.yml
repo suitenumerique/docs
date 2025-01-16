@@ -30,7 +30,6 @@ jobs:
       - name: generate pot files
         working-directory: src/backend
         run: |
-          DJANGO_CONFIGURATION=Build python manage.py compilemessages
           DJANGO_CONFIGURATION=Build python manage.py makemessages -a --keep-pot
       # frontend i18n
       - name: Setup Node.js
