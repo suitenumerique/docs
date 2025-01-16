@@ -1,4 +1,3 @@
-export * from './syncDocPolling';
 export * from './useCreateDoc';
 export * from './useDeleteFavoriteDoc';
 export * from './useDoc';

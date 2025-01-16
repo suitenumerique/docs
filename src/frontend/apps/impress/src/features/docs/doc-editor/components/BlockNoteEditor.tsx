@@ -114,7 +114,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
 
-  const readOnly = !doc.abilities.partial_update;
+  //const readOnly = !doc.abilities.partial_update;
+  const readOnly = false;
   useSaveDoc(doc.id, provider.document, !readOnly);
   const { i18n } = useTranslation();
   const lang = i18n.language;
