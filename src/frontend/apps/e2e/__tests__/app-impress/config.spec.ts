@@ -77,6 +77,7 @@ test.describe('Config', () => {
 
     const jsonResponse = await response.json();
     expect(jsonResponse.FRONTEND_THEME).toStrictEqual('dsfr');
+    await page.getByLabel('Logout').click();
 
     const footer = page.locator('footer').first();
     // alt 'Gouvernement Logo' comes from the theme

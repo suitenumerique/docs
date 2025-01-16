@@ -9,7 +9,11 @@ export const ButtonLogin = () => {
 
   if (!authenticated) {
     return (
-      <Button onClick={login} color="primary-text" aria-label={t('Login')}>
+      <Button
+        onClick={() => login(true)}
+        color="primary-text"
+        aria-label={t('Login')}
+      >
         {t('Login')}
       </Button>
     );

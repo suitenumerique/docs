@@ -11,7 +11,7 @@ interface AuthStore {
   authenticated: boolean;
   initAuth: () => void;
   logout: () => void;
-  login: () => void;
+  login: (directLogin?: boolean) => void;
   setAuthUrl: (url: string) => void;
   getAuthUrl: () => string | undefined;
   userData?: User;
@@ -37,10 +37,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ initiated: true });
       });
   },
-  login: () => {
-    get().setAuthUrl(window.location.pathname);
+  login: (directLogin?: boolean) => {
+    if (directLogin) {
+      get().setAuthUrl(window.location.pathname);
+      window.location.replace(`${baseApiUrl()}authenticate/`);
+      return;
+    }
 
-    window.location.replace(`${baseApiUrl()}authenticate/`);
+    if (window.location.pathname !== '/') {
+      get().setAuthUrl(window.location.pathname);
+      window.location.replace(`/`);
+      return;
+    }
   },
   logout: () => {
     terminateCrispSession();
