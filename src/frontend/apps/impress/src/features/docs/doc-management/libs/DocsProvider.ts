@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import crypto from 'crypto';
 
 import {
@@ -11,9 +10,13 @@ import {
 import * as time from 'lib0/time';
 import * as Y from 'yjs';
 
-import { APIError, errorCauses } from '@/api';
 import { isFirefox } from '@/utils';
 
+import {
+  longPollRequest,
+  pollSyncRequest,
+  postPollMessageRequest,
+} from '../api';
 import { toBase64 } from '../utils';
 
 type HocuspocusProviderConfigurationUrl = Required<
@@ -21,6 +24,15 @@ type HocuspocusProviderConfigurationUrl = Required<
 > &
   Partial<CompleteHocuspocusProviderConfiguration> &
   Required<Pick<CompleteHocuspocusProviderWebsocketConfiguration, 'url'>>;
+
+interface GetPollAwarenessResponse {
+  awareness?: Record<string, Record<string, unknown>>;
+}
+
+interface GetPollDocResponse {
+  updatedDoc64?: string;
+  stateFingerprint?: string;
+}
 
 export const isHocuspocusProviderConfigurationUrl = (
   data: HocuspocusProviderConfiguration,
@@ -136,6 +148,7 @@ export class DocsProvider extends HocuspocusProvider {
       const { updatedDoc64, stateFingerprint } =
         await longPollRequest<GetPollDocResponse>({
           pollUrl: this.toPollUrl('doc'),
+          timeout: DocsProvider.TIMEOUT,
         });
 
       console.log('updatedDoc64', updatedDoc64);
@@ -176,6 +189,7 @@ export class DocsProvider extends HocuspocusProvider {
     try {
       const { awareness } = await longPollRequest<GetPollAwarenessResponse>({
         pollUrl: this.toPollUrl('awareness'),
+        timeout: DocsProvider.TIMEOUT,
       });
 
       console.log('awareness', awareness);
@@ -243,118 +257,3 @@ export class DocsProvider extends HocuspocusProvider {
     });
   }
 }
-
-interface PostPollMessageParams {
-  pollUrl: string;
-  message64: string;
-}
-interface PostPollMessageResponse {
-  updated?: boolean;
-}
-
-export const postPollMessageRequest = async ({
-  pollUrl,
-  message64,
-}: PostPollMessageParams): Promise<PostPollMessageResponse> => {
-  const response = await fetch(pollUrl, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message64,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new APIError(
-      `Post poll message request failed`,
-      await errorCauses(response),
-    );
-  }
-
-  return response.json() as Promise<PostPollMessageResponse>;
-};
-
-interface GetPollAwarenessResponse {
-  awareness?: Record<string, Record<string, unknown>>;
-}
-
-interface GetPollDocResponse {
-  updatedDoc64?: string;
-  stateFingerprint?: string;
-}
-
-interface PollParams {
-  pollUrl: string;
-}
-export const longPollRequest = async <Response>({
-  pollUrl,
-}: PollParams): Promise<Response> => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort('Request Timeout'),
-      DocsProvider.TIMEOUT,
-    );
-
-    const response = await fetch(pollUrl, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new APIError(
-        `Long polling request failed: ${response.status} ${response.statusText}`,
-        await errorCauses(response),
-      );
-    }
-
-    return response.json() as Promise<Response>;
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.error('Polling request timed out');
-    }
-    throw error;
-  }
-};
-
-interface PollSyncParams {
-  pollUrl: string;
-  localDoc64: string;
-}
-interface PollSyncResponse {
-  syncDoc64?: string;
-}
-
-export const pollSyncRequest = async ({
-  pollUrl,
-  localDoc64,
-}: PollSyncParams): Promise<PollSyncResponse> => {
-  const response = await fetch(pollUrl, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      localDoc64,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new APIError(
-      `Sync request failed: ${response.status} ${response.statusText}`,
-      await errorCauses(response),
-    );
-  }
-
-  return response.json() as Promise<PollSyncResponse>;
-};
