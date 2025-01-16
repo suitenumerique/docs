@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'feature/collab-long-polling'
     tags:
       - 'v*'
   pull_request:

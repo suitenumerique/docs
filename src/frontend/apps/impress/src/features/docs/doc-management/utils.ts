@@ -1,3 +1,5 @@
+import * as time from 'lib0/time';
+import { Awareness } from 'y-protocols/awareness.js';
 import * as Y from 'yjs';
 
 import { Doc, Role } from './types';
@@ -24,4 +26,18 @@ export const base64ToYDoc = (base64: string) => {
 
 export const base64ToBlocknoteXmlFragment = (base64: string) => {
   return base64ToYDoc(base64).getXmlFragment('document-store');
+};
+
+export const setAwareness = (
+  awareness: Awareness,
+  awarenessKey: number,
+  awarenessValue: Record<string, unknown>,
+) => {
+  awareness?.states.set(awarenessKey, awarenessValue);
+  const currLocalMeta = awareness?.meta.get(awarenessKey);
+  const clock = currLocalMeta === undefined ? 0 : currLocalMeta.clock + 1;
+  awareness?.meta.set(awarenessKey, {
+    clock,
+    lastUpdated: time.getUnixTime(),
+  });
 };
