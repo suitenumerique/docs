@@ -76,14 +76,14 @@ def test_api_document_accesses_list_authenticated_related(via, mock_user_teams):
         user_access = models.DocumentAccess.objects.create(
             document=document,
             user=user,
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         user_access = models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
 
     access1 = factories.TeamDocumentAccessFactory(document=document)
@@ -227,7 +227,7 @@ def test_api_document_accesses_update_anonymous():
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     api_client = APIClient()
@@ -260,7 +260,7 @@ def test_api_document_accesses_update_authenticated_unrelated():
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -302,7 +302,7 @@ def test_api_document_accesses_update_authenticated_reader_or_editor(
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -413,7 +413,7 @@ def test_api_document_accesses_update_administrator_from_owner(via, mock_user_te
     new_values = {
         "id": uuid4(),
         "user_id": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -527,7 +527,7 @@ def test_api_document_accesses_update_owner(
     new_values = {
         "id": uuid4(),
         "user_id": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():

@@ -23,7 +23,7 @@ def test_api_template_accesses_create_anonymous():
         {
             "user": str(other_user.id),
             "template": str(template.id),
-            "role": random.choice(models.RoleChoices.choices)[0],
+            "role": random.choice(models.RoleChoices.values),
         },
         format="json",
     )

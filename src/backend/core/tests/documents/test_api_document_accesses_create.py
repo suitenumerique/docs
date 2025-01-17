@@ -26,7 +26,7 @@ def test_api_document_accesses_create_anonymous():
         {
             "user_id": str(other_user.id),
             "document": str(document.id),
-            "role": random.choice(models.RoleChoices.choices)[0],
+            "role": random.choice(models.RoleChoices.values),
         },
         format="json",
     )

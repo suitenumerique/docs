@@ -304,7 +304,7 @@ def test_api_document_invitations_create_anonymous():
     document = factories.DocumentFactory()
     invitation_values = {
         "email": "guest@example.com",
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     response = APIClient().post(
@@ -325,7 +325,7 @@ def test_api_document_invitations_create_authenticated_outsider():
     document = factories.DocumentFactory()
     invitation_values = {
         "email": "guest@example.com",
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     client = APIClient()
@@ -550,7 +550,7 @@ def test_api_document_invitations_create_issuer_and_document_override():
         "document": str(other_document.id),
         "issuer": str(factories.UserFactory().id),
         "email": "guest@example.com",
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     client = APIClient()
@@ -611,7 +611,7 @@ def test_api_document_invitations_create_cannot_invite_existing_users():
     # Build an invitation to the email of an exising identity in the db
     invitation_values = {
         "email": existing_user.email,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     client = APIClient()

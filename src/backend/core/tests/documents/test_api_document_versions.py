@@ -75,14 +75,14 @@ def test_api_document_versions_list_authenticated_related_success(via, mock_user
         models.DocumentAccess.objects.create(
             document=document,
             user=user,
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
 
     # Other versions of documents to which the user has access should not be listed
@@ -134,14 +134,14 @@ def test_api_document_versions_list_authenticated_related_pagination(
         models.DocumentAccess.objects.create(
             document=document,
             user=user,
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
 
     for i in range(4):
@@ -210,14 +210,14 @@ def test_api_document_versions_list_authenticated_related_pagination_parent(
         models.DocumentAccess.objects.create(
             document=grand_parent,
             user=user,
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         models.DocumentAccess.objects.create(
             document=grand_parent,
             team="lasuite",
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
 
     for i in range(4):

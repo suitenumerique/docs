@@ -117,16 +117,23 @@ class SerializerPerActionMixin:
 
     This mixin is useful to avoid to define a serializer class for each action in the
     `get_serializer_class` method.
-    """
 
-    serializer_classes: dict[str, type] = {}
-    default_serializer_class: type = None
+    Example:
+    ```
+    class MyViewSet(SerializerPerActionMixin, viewsets.GenericViewSet):
+        serializer_class = MySerializer
+        list_serializer_class = MyListSerializer
+        retrieve_serializer_class = MyRetrieveSerializer
+    ```
+    """
 
     def get_serializer_class(self):
         """
         Return the serializer class to use depending on the action.
         """
-        return self.serializer_classes.get(self.action, self.default_serializer_class)
+        if serializer_class := getattr(self, f"{self.action}_serializer_class", None):
+            return serializer_class
+        return super().get_serializer_class()
 
 
 class Pagination(drf.pagination.PageNumberPagination):
@@ -314,6 +321,7 @@ class DocumentMetadata(drf.metadata.SimpleMetadata):
 
 # pylint: disable=too-many-public-methods
 class DocumentViewSet(
+    SerializerPerActionMixin,
     drf.mixins.CreateModelMixin,
     drf.mixins.DestroyModelMixin,
     drf.mixins.ListModelMixin,
@@ -424,16 +432,10 @@ class DocumentViewSet(
     ]
     queryset = models.Document.objects.all()
     serializer_class = serializers.DocumentSerializer
-
-    def get_serializer_class(self):
-        """
-        Use ListDocumentSerializer for list actions; otherwise, use DocumentSerializer.
-        """
-        return (
-            serializers.ListDocumentSerializer
-            if self.action == "list"
-            else self.serializer_class
-        )
+    list_serializer_class = serializers.ListDocumentSerializer
+    trashbin_serializer_class = serializers.ListDocumentSerializer
+    children_serializer_class = serializers.ListDocumentSerializer
+    ai_translate_serializer_class = serializers.AITranslateSerializer
 
     def annotate_is_favorite(self, queryset):
         """
@@ -613,7 +615,6 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=False,
         methods=["get"],
-        serializer_class=serializers.ListDocumentSerializer,
     )
     def trashbin(self, request, *args, **kwargs):
         """
@@ -734,7 +735,6 @@ class DocumentViewSet(
         detail=True,
         methods=["get", "post"],
         ordering=["path"],
-        serializer_class=serializers.ListDocumentSerializer,
         url_path="children",
     )
     def children(self, request, *args, **kwargs):
@@ -1091,7 +1091,6 @@ class DocumentViewSet(
         detail=True,
         methods=["post"],
         name="Translate a piece of text with AI",
-        serializer_class=serializers.AITranslateSerializer,
         url_path="ai-translate",
         throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
     )
