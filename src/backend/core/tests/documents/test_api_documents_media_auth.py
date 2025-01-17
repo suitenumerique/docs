@@ -2,9 +2,9 @@
 Test file uploads API endpoint for users in impress's core app.
 """
 
-import uuid
 from io import BytesIO
 from urllib.parse import urlparse
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -14,17 +14,32 @@ import pytest
 import requests
 from rest_framework.test import APIClient
 
-from core import factories
+from core import factories, models
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
+
+
+def test_api_documents_media_auth_unkown_document():
+    """
+    Trying to download a media related to a document ID that does not exist
+    should not have the side effect to create it (no regression test).
+    """
+    original_url = f"http://localhost/media/{uuid4()!s}/attachments/{uuid4()!s}.jpg"
+
+    response = APIClient().get(
+        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
+    )
+
+    assert response.status_code == 403
+    assert models.Document.objects.exists() is False
 
 
 def test_api_documents_media_auth_anonymous_public():
     """Anonymous users should be able to retrieve attachments linked to a public document"""
     document = factories.DocumentFactory(link_reach="public")
 
-    filename = f"{uuid.uuid4()!s}.jpg"
+    filename = f"{uuid4()!s}.jpg"
     key = f"{document.pk!s}/attachments/{filename:s}"
 
     default_storage.connection.meta.client.put_object(
@@ -96,7 +111,7 @@ def test_api_documents_media_auth_anonymous_authenticated_or_restricted(reach):
     """
     document = factories.DocumentFactory(link_reach=reach)
 
-    filename = f"{uuid.uuid4()!s}.jpg"
+    filename = f"{uuid4()!s}.jpg"
     media_url = f"http://localhost/media/{document.pk!s}/attachments/{filename:s}"
 
     response = APIClient().get(
@@ -119,7 +134,7 @@ def test_api_documents_media_auth_authenticated_public_or_authenticated(reach):
     client = APIClient()
     client.force_login(user)
 
-    filename = f"{uuid.uuid4()!s}.jpg"
+    filename = f"{uuid4()!s}.jpg"
     key = f"{document.pk!s}/attachments/{filename:s}"
 
     default_storage.connection.meta.client.put_object(
@@ -170,7 +185,7 @@ def test_api_documents_media_auth_authenticated_restricted():
     client = APIClient()
     client.force_login(user)
 
-    filename = f"{uuid.uuid4()!s}.jpg"
+    filename = f"{uuid4()!s}.jpg"
     media_url = f"http://localhost/media/{document.pk!s}/attachments/{filename:s}"
 
     response = client.get(
@@ -198,7 +213,7 @@ def test_api_documents_media_auth_related(via, mock_user_teams):
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(document=document, team="lasuite")
 
-    filename = f"{uuid.uuid4()!s}.jpg"
+    filename = f"{uuid4()!s}.jpg"
     key = f"{document.pk!s}/attachments/{filename:s}"
 
     default_storage.connection.meta.client.put_object(

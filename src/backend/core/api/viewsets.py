@@ -2,7 +2,6 @@
 # pylint: disable=too-many-lines
 
 import logging
-import re
 import uuid
 from urllib.parse import unquote, urlparse
 
@@ -35,6 +34,7 @@ from .filters import DocumentFilter, ListDocumentFilter
 
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 ATTACHMENTS_FOLDER = "attachments"
 UUID_REGEX = (
     r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
@@ -45,6 +45,8 @@ MEDIA_STORAGE_URL_PATTERN = re.compile(
     f"(?P<key>{ATTACHMENTS_FOLDER:s}/{UUID_REGEX:s}(?:-unsafe)?{FILE_EXT_REGEX:s})$"
 )
 COLLABORATION_WS_URL_PATTERN = re.compile(rf"(?:^|&)room=(?P<pk>{UUID_REGEX})(?:&|$)")
+=======
+>>>>>>> 8076486a (✅(backend) add missing test on media-auth and collaboration-auth)
 
 # pylint: disable=too-many-ancestors
 

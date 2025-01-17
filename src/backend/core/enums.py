@@ -2,9 +2,23 @@
 Core application enums declaration
 """
 
-from django.conf import global_settings
+import re
+
+from django.conf import global_settings, settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+ATTACHMENTS_FOLDER = "attachments"
+UUID_REGEX = (
+    r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+)
+FILE_EXT_REGEX = r"\.[a-zA-Z]{3,4}"
+MEDIA_STORAGE_URL_PATTERN = re.compile(
+    f"{settings.MEDIA_URL:s}(?P<pk>{UUID_REGEX:s})/"
+    f"(?P<key>{ATTACHMENTS_FOLDER:s}/{UUID_REGEX:s}{FILE_EXT_REGEX:s})$"
+)
+COLLABORATION_WS_URL_PATTERN = re.compile(rf"(?:^|&)room=(?P<pk>{UUID_REGEX})(?:&|$)")
+
 
 # In Django's code base, `LANGUAGES` is set by default with all supported languages.
 # We can use it for the choice of languages which should not be limited to the few languages
