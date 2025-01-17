@@ -6,6 +6,7 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
@@ -20,17 +21,19 @@ import { randomColor } from '../utils';
 
 import { BlockNoteToolbar } from './BlockNoteToolbar';
 
-const cssEditor = (readonly: boolean) => `
-  &, & > .bn-container, & .ProseMirror {
-    height:100%;
-    
-      .bn-side-menu[data-block-type=heading][data-level="1"] { 
-         height: 50px; 
-     } 
-     .bn-side-menu[data-block-type=heading][data-level="2"] { 
-       height: 43px; 
-     } 
-    .bn-side-menu[data-block-type=heading][data-level="3"] {
+const cssEditor = (readonly: boolean) => css`
+  &,
+  & > .bn-container,
+  & .ProseMirror {
+    height: 100%;
+
+    .bn-side-menu[data-block-type='heading'][data-level='1'] {
+      height: 50px;
+    }
+    .bn-side-menu[data-block-type='heading'][data-level='2'] {
+      height: 43px;
+    }
+    .bn-side-menu[data-block-type='heading'][data-level='3'] {
       height: 35px;
     }
     h1 {
@@ -52,11 +55,11 @@ const cssEditor = (readonly: boolean) => `
       border-left: none;
     }
   }
-  
+
   .bn-editor {
-    
     color: var(--c--theme--colors--greyscale-700);
   }
+
   .bn-block-outer:not(:first-child) {
     &:has(h1) {
       padding-top: 32px;
@@ -67,25 +70,25 @@ const cssEditor = (readonly: boolean) => `
     &:has(h3) {
       padding-top: 16px;
     }
-  };
-  
+  }
+
   & .bn-inline-content code {
     background-color: gainsboro;
     padding: 2px;
     border-radius: 4px;
   }
+
   @media screen and (width <= 560px) {
     & .bn-editor {
-      
       ${readonly && `padding-left: 10px;`}
-    };
-    .bn-side-menu[data-block-type=heading][data-level="1"] {
-        height: 46px;
     }
-    .bn-side-menu[data-block-type=heading][data-level="2"] {
+    .bn-side-menu[data-block-type='heading'][data-level='1'] {
+      height: 46px;
+    }
+    .bn-side-menu[data-block-type='heading'][data-level='2'] {
       height: 40px;
     }
-    .bn-side-menu[data-block-type=heading][data-level="3"] {
+    .bn-side-menu[data-block-type='heading'][data-level='3'] {
       height: 40px;
     }
     & .bn-editor h1 {
@@ -97,7 +100,7 @@ const cssEditor = (readonly: boolean) => `
     & .bn-editor h3 {
       font-size: 1.2rem;
     }
-    .bn-block-content[data-is-empty-and-focused][data-content-type="paragraph"] 
+    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
       .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
       font-size: 14px;
     }
