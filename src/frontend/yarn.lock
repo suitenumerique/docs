@@ -988,7 +988,56 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@blocknote/core@0.22.0", "@blocknote/core@^0.22.0":
+"@blocknote/core@0.21.0", "@blocknote/core@^0.21.0":
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/@blocknote/core/-/core-0.21.0.tgz#b54baaa3eca3b700c80c59113a837c3d4153dca2"
+  integrity sha512-TQAN0qRCkXpz5AwfdxjuFvIKWsU4bBI5d/e5iX7PEkhwf4PFgPHsMUl2uuGw5o/hhjzoU54YKaAjlJlWyw4goA==
+  dependencies:
+    "@emoji-mart/data" "^1.2.1"
+    "@tiptap/core" "^2.7.1"
+    "@tiptap/extension-bold" "^2.7.1"
+    "@tiptap/extension-code" "^2.7.1"
+    "@tiptap/extension-collaboration" "^2.7.1"
+    "@tiptap/extension-collaboration-cursor" "^2.7.1"
+    "@tiptap/extension-gapcursor" "^2.7.1"
+    "@tiptap/extension-hard-break" "^2.7.1"
+    "@tiptap/extension-history" "^2.7.1"
+    "@tiptap/extension-horizontal-rule" "^2.7.1"
+    "@tiptap/extension-italic" "^2.7.1"
+    "@tiptap/extension-link" "^2.7.1"
+    "@tiptap/extension-paragraph" "^2.7.1"
+    "@tiptap/extension-strike" "^2.7.1"
+    "@tiptap/extension-table-cell" "^2.7.1"
+    "@tiptap/extension-table-header" "^2.7.1"
+    "@tiptap/extension-table-row" "^2.7.1"
+    "@tiptap/extension-text" "^2.7.1"
+    "@tiptap/extension-underline" "^2.7.1"
+    "@tiptap/pm" "^2.7.1"
+    emoji-mart "^5.6.0"
+    hast-util-from-dom "^4.2.0"
+    prosemirror-dropcursor "^1.8.1"
+    prosemirror-highlight "^0.9.0"
+    prosemirror-model "^1.23.0"
+    prosemirror-state "^1.4.3"
+    prosemirror-tables "^1.6.1"
+    prosemirror-transform "^1.9.0"
+    prosemirror-view "^1.33.7"
+    rehype-format "^5.0.0"
+    rehype-parse "^8.0.4"
+    rehype-remark "^9.1.2"
+    rehype-stringify "^9.0.3"
+    remark-gfm "^3.0.1"
+    remark-parse "^10.0.1"
+    remark-rehype "^10.1.0"
+    remark-stringify "^10.0.2"
+    shiki "^1.22.0"
+    unified "^10.1.2"
+    uuid "^8.3.2"
+    y-prosemirror "1.2.13"
+    y-protocols "^1.0.6"
+    yjs "^13.6.15"
+
+"@blocknote/core@^0.22.0":
   version "0.22.0"
   resolved "https://registry.yarnpkg.com/@blocknote/core/-/core-0.22.0.tgz#2f363f9677d4fa5f20299b22850f5f34a6340a55"
   integrity sha512-AAEx01zK6u+b1SsZniMm/aogEMjasF4vA9ZHgFGj04G7AwK5Hjwa0Sxre58qcW+KzuvR09CQHTkwjmgVmJX/HA==
@@ -1037,19 +1086,31 @@
     y-protocols "^1.0.6"
     yjs "^13.6.15"
 
-"@blocknote/mantine@0.22.0":
-  version "0.22.0"
-  resolved "https://registry.yarnpkg.com/@blocknote/mantine/-/mantine-0.22.0.tgz#15509aaefe88c3efd73a884b9fb1e0584a6223ec"
-  integrity sha512-6irIKCGUpE47X8qWLx9oa5ndztSrvLEHgVRp+fdVUHMJCx0/OzijJyYTTFKw8yEI9qc01pjmwdYMZrMMZybyGw==
+"@blocknote/mantine@0.21.0":
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/@blocknote/mantine/-/mantine-0.21.0.tgz#b8a640f498a4884129fe33f854be8d2bb842ea41"
+  integrity sha512-GAxgvn/87wDyE8qdkystTkEbqE8AFO81gaMJ6df0P6ZAdfIH3sFYUf9MffVOjtq7T6NSCM9vHNnhHsC9K8m/fg==
   dependencies:
-    "@blocknote/core" "^0.22.0"
-    "@blocknote/react" "^0.22.0"
+    "@blocknote/core" "^0.21.0"
+    "@blocknote/react" "^0.21.0"
     "@mantine/core" "^7.10.1"
     "@mantine/hooks" "^7.10.1"
     "@mantine/utils" "^6.0.21"
     react-icons "^5.2.1"
 
-"@blocknote/react@0.22.0", "@blocknote/react@^0.22.0":
+"@blocknote/react@0.21.0", "@blocknote/react@^0.21.0":
+  version "0.21.0"
+  resolved "https://registry.yarnpkg.com/@blocknote/react/-/react-0.21.0.tgz#ad8907f89575e8c139d07d75bdb66ef4e33f84f9"
+  integrity sha512-eBKe3hihGNeO4G/qKKJ/B5uuEmWm8XMbT8SxJ2zpNTjHx5lLP45vhtjAM+HCzQqz4xYacc2NphUIdjPPH5eXrQ==
+  dependencies:
+    "@blocknote/core" "^0.21.0"
+    "@floating-ui/react" "^0.26.4"
+    "@tiptap/core" "^2.7.1"
+    "@tiptap/react" "^2.7.1"
+    lodash.merge "^4.6.2"
+    react-icons "^5.2.1"
+
+"@blocknote/react@^0.22.0":
   version "0.22.0"
   resolved "https://registry.yarnpkg.com/@blocknote/react/-/react-0.22.0.tgz#a17167a26b70ef421218ae3e49d15cca751291f0"
   integrity sha512-Y6Oj99iOKnlh2FE/lgy8kO5PziPnA8MyEJyjCH9Jbvlc9t493L9EFmLK8iKBZek7sh0TOzhXGBOA6lIpk02X6A==
@@ -11080,7 +11141,7 @@ prosemirror-trailing-node@^3.0.0:
     "@remirror/core-constants" "3.0.0"
     escape-string-regexp "^4.0.0"
 
-prosemirror-transform@^1.0.0, prosemirror-transform@^1.1.0, prosemirror-transform@^1.10.2, prosemirror-transform@^1.7.3:
+prosemirror-transform@^1.0.0, prosemirror-transform@^1.1.0, prosemirror-transform@^1.10.2, prosemirror-transform@^1.7.3, prosemirror-transform@^1.9.0:
   version "1.10.2"
   resolved "https://registry.yarnpkg.com/prosemirror-transform/-/prosemirror-transform-1.10.2.tgz#8ebac4e305b586cd96595aa028118c9191bbf052"
   integrity sha512-2iUq0wv2iRoJO/zj5mv8uDUriOHWzXRnOTVgCzSXnktS/2iQRa3UUQwVlkBlYZFtygw6Nh1+X4mGqoYBINn5KQ==

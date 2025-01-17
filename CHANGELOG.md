@@ -11,7 +11,9 @@ and this project adheres to
 
 ## Fixed
 
-- 🐛(frontend) share modal is shown when you don't have the abilities #557
+-🐛(frontend) share modal is shown when you don't have the abilities #557
+-🐛(frontend) title copy break app #564
+
 
 ## [2.0.0] - 2025-01-13
 

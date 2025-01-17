@@ -15,9 +15,9 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@blocknote/core": "0.22.0",
-    "@blocknote/mantine": "0.22.0",
-    "@blocknote/react": "0.22.0",
+    "@blocknote/core": "0.21.0",
+    "@blocknote/mantine": "0.21.0",
+    "@blocknote/react": "0.21.0",
     "@gouvfr-lasuite/integration": "1.0.2",
     "@hocuspocus/provider": "2.15.0",
     "@openfun/cunningham-react": "2.9.4",
