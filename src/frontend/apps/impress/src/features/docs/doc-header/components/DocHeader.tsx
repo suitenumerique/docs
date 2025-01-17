@@ -64,7 +64,12 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             </Text>
           </Box>
         )}
-        <Box $direction="row" $align="center" $width="100%">
+        <Box
+          $direction="row"
+          $align="center"
+          $width="100%"
+          $padding={{ bottom: 'xs' }}
+        >
           <Box
             $direction="row"
             $justify="space-between"
@@ -98,7 +103,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             <DocToolBox doc={doc} />
           </Box>
         </Box>
-        <HorizontalSeparator $withPadding={true} />
+        <HorizontalSeparator $withPadding={false} />
       </Box>
     </>
   );

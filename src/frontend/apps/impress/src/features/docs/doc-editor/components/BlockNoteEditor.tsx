@@ -176,7 +176,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box $css={cssEditor(readOnly)}>
+    <Box
+      $padding={{ top: 'md' }}
+      $background="white"
+      $css={cssEditor(readOnly)}
+    >
       {errorAttachment && (
         <Box $margin={{ bottom: 'big' }}>
           <TextErrors
