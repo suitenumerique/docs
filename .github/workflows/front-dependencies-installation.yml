@@ -1,0 +1,36 @@
+name: Install frontend installation reusable workflow
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        required: false
+        default: '20.x'
+        type: string
+
+jobs:
+  front-dependencies-installation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Restore the frontend cache
+        uses: actions/cache@v4
+        id: front-node_modules
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+      - name: Setup Node.js
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+      - name: Install dependencies
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        run: cd src/frontend/ && yarn install --frozen-lockfile
+      - name: Cache install frontend
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}

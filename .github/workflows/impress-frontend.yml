@@ -9,39 +9,15 @@ on:
       - "*"
 
 jobs:
+
   install-front:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
-
-      - name: Restore the frontend cache
-        uses: actions/cache@v4
-        id: front-node_modules
-        with:
-          path: "src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
-
-      - name: Install dependencies
-        if: steps.front-node_modules.outputs.cache-hit != 'true'
-        run: cd src/frontend/ && yarn install --frozen-lockfile
-
-      - name: Cache install frontend
-        if: steps.front-node_modules.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: "src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+    uses: ./.github/workflows/front-dependencies-installation.yml
+    with:
+      node_version: '20.x'
 
   test-front:
-    runs-on: ubuntu-latest
     needs: install-front
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -53,10 +29,10 @@ jobs:
 
       - name: Restore the frontend cache
         uses: actions/cache@v4
-        id: front-node_modules
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
 
       - name: Test App
         run: cd src/frontend/ && yarn test
@@ -68,29 +44,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
       - name: Restore the frontend cache
         uses: actions/cache@v4
-        id: front-node_modules
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
 
       - name: Check linting
         run: cd src/frontend/ && yarn lint
 
   test-e2e-chromium:
     runs-on: ubuntu-latest
+    needs: install-front
     timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
       - name: Restore the frontend cache
         uses: actions/cache@v4
-        id: front-node_modules
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
 
       - name: Set e2e env variables
         run: cat env.d/development/common.e2e.dist >> env.d/development/common.dist
@@ -141,12 +127,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore the frontend cache
-        uses: actions/cache@v4
-        id: front-node_modules
-        with:
-          path: "src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+      - name: Install frontend dependencies
+        uses: ./.github/workflows/front-dependencies-installation.yml
 
       - name: Set e2e env variables
         run: cat env.d/development/common.e2e.dist >> env.d/development/common.dist

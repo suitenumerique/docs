@@ -7,7 +7,13 @@ on:
       - main
 
 jobs:
+  install-front:
+    uses: ./.github/workflows/front-dependencies-installation.yml
+    with:
+      node_version: '20.x'
+
   synchronize-with-crowdin:
+    needs: install-front
     runs-on: ubuntu-latest
 
     steps:
@@ -32,25 +38,12 @@ jobs:
         run: |
           DJANGO_CONFIGURATION=Build python manage.py makemessages -a --keep-pot
       # frontend i18n
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
       - name: Restore the frontend cache
         uses: actions/cache@v4
-        id: front-node_modules
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
-      - name: Install dependencies
-        if: steps.front-node_modules.outputs.cache-hit != 'true'
-        run: cd src/frontend/ && yarn install --frozen-lockfile
-      - name: Cache install frontend
-        if: steps.front-node_modules.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: "src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
       - name: generate source translation file
         working-directory: src/frontend
         run: yarn i18n:extract
