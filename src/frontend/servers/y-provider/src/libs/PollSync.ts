@@ -11,7 +11,7 @@ import {
   MessageReceiver,
 } from '@hocuspocus/server';
 import { Request } from 'express';
-import WebSocket from 'ws';
+import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
 import { promiseDone } from '@/helpers';
@@ -48,41 +48,44 @@ export class PollSync<T> {
 
   public async initHocuspocusDocument(hocusPocusServer: Hocuspocus) {
     const { req, room, canEdit } = this;
+    this._hpDocument = await hocusPocusServer.loadingDocuments.get(room);
+
+    if (this._hpDocument) {
+      return this._hpDocument;
+    }
+
     this._hpDocument = hocusPocusServer.documents.get(room);
 
-    if (!this._hpDocument && !canEdit) {
-      return;
+    if (this._hpDocument || (!this._hpDocument && !canEdit)) {
+      return this._hpDocument;
     }
 
-    if (!this._hpDocument) {
-      /**
-       * createDocument is used to create a new document if it does not exist.
-       * If the document exists, it will return the existing document.
-       */
-      const socketId = Math.random().toString(36).substring(7);
-      console.log('Create New');
-      this._hpDocument = await hocusPocusServer.createDocument(
-        room,
-        req,
-        socketId,
-        {
-          readOnly: false,
-          requiresAuthentication: false,
-          isAuthenticated: false,
-        },
-      );
-    }
+    /**
+     * createDocument is used to create a new document if it does not exist.
+     * If the document exists, it will return the existing document.
+     */
+    console.log('Create New');
+    this._hpDocument = await hocusPocusServer.createDocument(
+      room,
+      req,
+      uuid(),
+      {
+        readOnly: false,
+        requiresAuthentication: false,
+        isAuthenticated: false,
+      },
+    );
 
     return this._hpDocument;
   }
 
   public async getUpdatedDoc(): Promise<{
-    updatedDoc64: string;
+    updatedDoc64?: string;
     stateFingerprint: string;
   }> {
     const hpDoc = this.getHpDocument();
     const { promise, done } = promiseDone<{
-      updatedDoc64: string;
+      updatedDoc64?: string;
       stateFingerprint: string;
     }>();
 
@@ -96,16 +99,29 @@ export class PollSync<T> {
     ) => {
       console.log('Doc Update V2');
 
+      hpDoc.off('update', updateFn);
+      hpDoc.off('destroy', destroyFn);
       done({
         updatedDoc64: toBase64(update),
         stateFingerprint: this.getStateFingerprint(updatedDoc),
       });
+    };
 
+    const destroyFn = (updatedDoc: Y.Doc) => {
+      console.log('Doc Destroy V2');
+      hpDoc.off('destroy', destroyFn);
       hpDoc.off('update', updateFn);
+      done({
+        updatedDoc64: undefined,
+        stateFingerprint: this.getStateFingerprint(updatedDoc),
+      });
     };
 
     hpDoc.off('update', updateFn);
+    hpDoc.off('destroy', destroyFn);
+
     hpDoc.on('update', updateFn);
+    hpDoc.on('destroy', destroyFn);
 
     return promise;
   }

@@ -171,7 +171,7 @@ export class DocsProvider extends HocuspocusProvider {
       // Could be no internet connection
       waitMs = 5000;
     } finally {
-      console.log('endPollDoc');
+      console.log('endPollDoc', waitMs);
 
       setTimeout(() => {
         void this.longPollDocUpdate();
