@@ -24,6 +24,10 @@ and this project adheres to
 - 💄(frontend) add abilities on doc row #581
 - 💄(frontend) improve DocsGridItem responsive padding  #582
 
+## Changed
+
+- 🔧(backend) Bump page size to 200 #516
+
 ## Removed
 
 - 🔥(backend) remove "content" field from list serializer # 516
