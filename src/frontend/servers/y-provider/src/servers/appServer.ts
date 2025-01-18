@@ -9,6 +9,7 @@ import {
   collaborationPollGetAwarenessHandler,
   collaborationPollGetDocHandler,
   collaborationPollPostMessageHandler,
+  collaborationPollSSEMessageHandler,
   collaborationPollSyncDocHandler,
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
@@ -43,6 +44,11 @@ export const initServer = () => {
     routes.COLLABORATION_POLL_DOC,
     httpSecurity,
     collaborationPollGetDocHandler,
+  );
+  app.get(
+    routes.COLLABORATION_POLL_MESSAGE,
+    httpSecurity,
+    collaborationPollSSEMessageHandler,
   );
   app.post(
     routes.COLLABORATION_POLL_MESSAGE,

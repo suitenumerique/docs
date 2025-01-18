@@ -8,14 +8,17 @@ import {
   onOutgoingMessageParameters,
 } from '@hocuspocus/provider';
 import * as time from 'lib0/time';
+import type { MessageEvent } from 'ws';
 import * as Y from 'yjs';
 
 import { isFirefox } from '@/utils';
 
 import {
+  collaborationSSE,
   longPollRequest,
   pollSyncRequest,
   postPollMessageRequest,
+  postPollSyncRequest,
 } from '../api';
 import { toBase64 } from '../utils';
 
@@ -47,6 +50,8 @@ export class CollaborationProvider extends HocuspocusProvider {
   private isLongPollingStarted = false;
   private url = '';
   public static TIMEOUT = 30000;
+  // Server-Sent Events
+  private sse: EventSource | null = null;
 
   public constructor(configuration: HocuspocusProviderConfiguration) {
     const withWS = isFirefox();
@@ -72,6 +77,8 @@ export class CollaborationProvider extends HocuspocusProvider {
     this.websocketFailureCount = 0;
     this.isWebsocketFailed = false;
     this.isLongPollingStarted = false;
+    this.sse?.close();
+    this.sse = null;
   }
 
   public destroy(): void {
@@ -100,8 +107,9 @@ export class CollaborationProvider extends HocuspocusProvider {
       if (!this.isLongPollingStarted) {
         this.isLongPollingStarted = true;
         void this.pollSync();
-        void this.longPollAwareness();
-        void this.longPollDocUpdate();
+        this.initCollaborationSSE();
+        //void this.longPollAwareness();
+        //void this.longPollDocUpdate();
       }
     }
   }
@@ -136,86 +144,102 @@ export class CollaborationProvider extends HocuspocusProvider {
     }
   }
 
-  protected async longPollDocUpdate() {
-    if (!this.isWebsocketFailed) {
-      return;
-    }
+  // protected async longPollDocUpdate() {
+  //   if (!this.isWebsocketFailed) {
+  //     return;
+  //   }
 
-    console.log('startPollDoc');
-    let waitMs = 0;
+  //   console.log('startPollDoc');
+  //   let waitMs = 0;
 
-    try {
-      const { updatedDoc64, stateFingerprint } =
-        await longPollRequest<GetPollDocResponse>({
-          pollUrl: this.toPollUrl('doc'),
-          timeout: CollaborationProvider.TIMEOUT,
-        });
+  //   try {
+  //     const { updatedDoc64, stateFingerprint } =
+  //       await longPollRequest<GetPollDocResponse>({
+  //         pollUrl: this.toPollUrl('doc'),
+  //         timeout: CollaborationProvider.TIMEOUT,
+  //       });
 
-      console.log('updatedDoc64', updatedDoc64);
+  //     console.log('updatedDoc64', updatedDoc64);
 
-      if (updatedDoc64) {
-        const uint8Array = Buffer.from(updatedDoc64, 'base64');
-        Y.applyUpdate(this.document, uint8Array);
+  //     if (updatedDoc64) {
+  //       const uint8Array = Buffer.from(updatedDoc64, 'base64');
+  //       Y.applyUpdate(this.document, uint8Array);
 
-        const localStateFingerprint = this.getStateFingerprint(this.document);
-        console.log('stateFingerprint', stateFingerprint);
-        console.log('localStateFingerprint', localStateFingerprint);
-        console.log('EQUAL', localStateFingerprint === stateFingerprint);
+  //       const localStateFingerprint = this.getStateFingerprint(this.document);
+  //       console.log('stateFingerprint', stateFingerprint);
+  //       console.log('localStateFingerprint', localStateFingerprint);
+  //       console.log('EQUAL', localStateFingerprint === stateFingerprint);
 
-        if (localStateFingerprint !== stateFingerprint) {
-          await this.pollSync();
-        }
-      }
-    } catch (error) {
-      console.error('Polling doc failed:', error);
-      // Could be no internet connection
-      waitMs = 5000;
-    } finally {
-      console.log('endPollDoc', waitMs);
+  //       if (localStateFingerprint !== stateFingerprint) {
+  //         await this.pollSync();
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Polling doc failed:', error);
+  //     // Could be no internet connection
+  //     waitMs = 5000;
+  //   } finally {
+  //     console.log('endPollDoc', waitMs);
 
-      setTimeout(() => {
-        void this.longPollDocUpdate();
-      }, waitMs);
-    }
-  }
-
-  protected async longPollAwareness() {
-    if (!this.isWebsocketFailed) {
-      return;
-    }
-
-    console.log('startPollAwareness');
-    let waitMs = 0;
-    try {
-      const { awareness } = await longPollRequest<GetPollAwarenessResponse>({
-        pollUrl: this.toPollUrl('awareness'),
-        timeout: CollaborationProvider.TIMEOUT,
-      });
-
-      console.log('awareness', awareness);
-
-      if (awareness) {
-        Object.entries(awareness).forEach(
-          ([clientAwarenessKeyStr, clientAwareness]) =>
-            this.setAwareness(Number(clientAwarenessKeyStr), clientAwareness),
-        );
-      }
-    } catch (error) {
-      console.error('Polling awareness failed:', error);
-      // Could be no internet connection
-      waitMs = 5000;
-    } finally {
-      setTimeout(() => {
-        void this.longPollAwareness();
-      }, waitMs);
-    }
-  }
-
-  // public onMessage(event: MessageEvent<any>) {
-  //   super.onMessage(event);
-
-  //   this.websocketFailureCount;
+  //     setTimeout(() => {
+  //       void this.longPollDocUpdate();
+  //     }, waitMs);
+  //   }
   // }
+
+  protected initCollaborationSSE() {
+    if (!this.isWebsocketFailed) {
+      return;
+    }
+
+    console.log('initCollaborationSSE');
+
+    this.sse = collaborationSSE({
+      pollUrl: this.toPollUrl('message'),
+    });
+
+    //console.log('initCollaborationSSE:data', data);
+  }
+
+  // protected async longPollAwareness() {
+  //   if (!this.isWebsocketFailed) {
+  //     return;
+  //   }
+
+  //   console.log('startPollAwareness');
+  //   let waitMs = 0;
+  //   try {
+  //     const { awareness } = await longPollRequest<GetPollAwarenessResponse>({
+  //       pollUrl: this.toPollUrl('awareness'),
+  //       timeout: CollaborationProvider.TIMEOUT,
+  //     });
+
+  //     console.log('awareness', awareness);
+
+  //     if (awareness) {
+  //       Object.entries(awareness).forEach(
+  //         ([clientAwarenessKeyStr, clientAwareness]) =>
+  //           this.setAwareness(Number(clientAwarenessKeyStr), clientAwareness),
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Polling awareness failed:', error);
+  //     // Could be no internet connection
+  //     waitMs = 5000;
+  //   } finally {
+  //     setTimeout(() => {
+  //       void this.longPollAwareness();
+  //     }, waitMs);
+  //   }
+  // }
+
+  public onMessage(event: MessageEvent) {
+    super.onMessage(event);
+
+    console.log('onMessage', event);
+    console.log('isSynced', this.isSynced);
+    console.log('unsyncedChanges', this.unsyncedChanges);
+  }
 
   public async pollSync() {
     if (!this.isWebsocketFailed) {
@@ -225,7 +249,7 @@ export class CollaborationProvider extends HocuspocusProvider {
     console.log('Syncing');
 
     try {
-      const { syncDoc64 } = await pollSyncRequest({
+      const { syncDoc64 } = await postPollSyncRequest({
         pollUrl: this.toPollUrl('sync'),
         localDoc64: toBase64(Y.encodeStateAsUpdate(this.document)),
       });

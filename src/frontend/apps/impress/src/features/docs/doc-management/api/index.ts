@@ -1,4 +1,4 @@
-export * from './pollRequests';
+export * from './collaborationRequests';
 export * from './useCreateDoc';
 export * from './useDeleteFavoriteDoc';
 export * from './useDoc';
