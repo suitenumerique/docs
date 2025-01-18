@@ -107,6 +107,8 @@ export const collaborationPollPostMessageHandler = async (
   const room = req.query.room;
   const canEdit = req.headers['x-can-edit'] === 'True';
 
+  console.log('canEdit', canEdit);
+
   // Only editors can send messages
   if (!canEdit) {
     res.status(403).json({ error: 'Forbidden' });

@@ -40,7 +40,7 @@ export const isHocuspocusProviderConfigurationUrl = (
   return 'url' in data;
 };
 
-export class DocsProvider extends HocuspocusProvider {
+export class CollaborationProvider extends HocuspocusProvider {
   private websocketFailureCount = 0;
   private websocketMaxFailureCount = 2;
   private isWebsocketFailed = false;
@@ -148,7 +148,7 @@ export class DocsProvider extends HocuspocusProvider {
       const { updatedDoc64, stateFingerprint } =
         await longPollRequest<GetPollDocResponse>({
           pollUrl: this.toPollUrl('doc'),
-          timeout: DocsProvider.TIMEOUT,
+          timeout: CollaborationProvider.TIMEOUT,
         });
 
       console.log('updatedDoc64', updatedDoc64);
@@ -189,7 +189,7 @@ export class DocsProvider extends HocuspocusProvider {
     try {
       const { awareness } = await longPollRequest<GetPollAwarenessResponse>({
         pollUrl: this.toPollUrl('awareness'),
-        timeout: DocsProvider.TIMEOUT,
+        timeout: CollaborationProvider.TIMEOUT,
       });
 
       console.log('awareness', awareness);
@@ -210,6 +210,12 @@ export class DocsProvider extends HocuspocusProvider {
       }, waitMs);
     }
   }
+
+  // public onMessage(event: MessageEvent<any>) {
+  //   super.onMessage(event);
+
+  //   this.websocketFailureCount;
+  // }
 
   public async pollSync() {
     if (!this.isWebsocketFailed) {
