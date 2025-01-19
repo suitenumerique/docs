@@ -13,13 +13,7 @@ import * as Y from 'yjs';
 
 import { isFirefox } from '@/utils';
 
-import {
-  collaborationSSE,
-  longPollRequest,
-  pollSyncRequest,
-  postPollMessageRequest,
-  postPollSyncRequest,
-} from '../api';
+import { pollOutgoingMessageRequest, postPollSyncRequest } from '../api';
 import { toBase64 } from '../utils';
 
 type HocuspocusProviderConfigurationUrl = Required<
@@ -109,7 +103,6 @@ export class CollaborationProvider extends HocuspocusProvider {
         void this.pollSync();
         this.initCollaborationSSE();
         //void this.longPollAwareness();
-        //void this.longPollDocUpdate();
       }
     }
   }
@@ -133,7 +126,7 @@ export class CollaborationProvider extends HocuspocusProvider {
 
     //console.log('outgoingMessage', message.description);
 
-    const { updated } = await postPollMessageRequest({
+    const { updated } = await pollOutgoingMessageRequest({
       pollUrl: this.toPollUrl('message'),
       message64: Buffer.from(message.toUint8Array()).toString('base64'),
     });
@@ -144,49 +137,6 @@ export class CollaborationProvider extends HocuspocusProvider {
     }
   }
 
-  // protected async longPollDocUpdate() {
-  //   if (!this.isWebsocketFailed) {
-  //     return;
-  //   }
-
-  //   console.log('startPollDoc');
-  //   let waitMs = 0;
-
-  //   try {
-  //     const { updatedDoc64, stateFingerprint } =
-  //       await longPollRequest<GetPollDocResponse>({
-  //         pollUrl: this.toPollUrl('doc'),
-  //         timeout: CollaborationProvider.TIMEOUT,
-  //       });
-
-  //     console.log('updatedDoc64', updatedDoc64);
-
-  //     if (updatedDoc64) {
-  //       const uint8Array = Buffer.from(updatedDoc64, 'base64');
-  //       Y.applyUpdate(this.document, uint8Array);
-
-  //       const localStateFingerprint = this.getStateFingerprint(this.document);
-  //       console.log('stateFingerprint', stateFingerprint);
-  //       console.log('localStateFingerprint', localStateFingerprint);
-  //       console.log('EQUAL', localStateFingerprint === stateFingerprint);
-
-  //       if (localStateFingerprint !== stateFingerprint) {
-  //         await this.pollSync();
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Polling doc failed:', error);
-  //     // Could be no internet connection
-  //     waitMs = 5000;
-  //   } finally {
-  //     console.log('endPollDoc', waitMs);
-
-  //     setTimeout(() => {
-  //       void this.longPollDocUpdate();
-  //     }, waitMs);
-  //   }
-  // }
-
   protected initCollaborationSSE() {
     if (!this.isWebsocketFailed) {
       return;
@@ -194,16 +144,12 @@ export class CollaborationProvider extends HocuspocusProvider {
 
     console.log('initCollaborationSSE');
 
-    // this.sse = collaborationSSE({
-    //   pollUrl: this.toPollUrl('message'),
-    // });
-
     const eventSource = new EventSource(this.toPollUrl('message'), {
       withCredentials: true,
     });
 
     // 1. onmessage handles messages sent with `data:` lines
-    eventSource.onmessage = async (event: MessageEvent) => {
+    eventSource.onmessage = async (event) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
       const { updatedDoc64, stateFingerprint } = JSON.parse(event.data) as {
         updatedDoc64: string;

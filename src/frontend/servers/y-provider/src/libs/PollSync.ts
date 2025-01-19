@@ -79,53 +79,6 @@ export class PollSync<T> {
     return this._hpDocument;
   }
 
-  // public async getUpdatedDoc(): Promise<{
-  //   updatedDoc64?: string;
-  //   stateFingerprint: string;
-  // }> {
-  //   const hpDoc = this.getHpDocument();
-  //   const { promise, done } = promiseDone<{
-  //     updatedDoc64?: string;
-  //     stateFingerprint: string;
-  //   }>();
-
-  //   console.log('Get Updated V3 Doc');
-
-  //   const updateFn = (
-  //     update: Uint8Array,
-  //     _origin: string,
-  //     updatedDoc: Y.Doc,
-  //     _transaction: Y.Transaction,
-  //   ) => {
-  //     console.log('Doc Update V2');
-
-  //     hpDoc.off('update', updateFn);
-  //     hpDoc.off('destroy', destroyFn);
-  //     done({
-  //       updatedDoc64: toBase64(update),
-  //       stateFingerprint: this.getStateFingerprint(updatedDoc),
-  //     });
-  //   };
-
-  //   const destroyFn = (updatedDoc: Y.Doc) => {
-  //     console.log('Doc Destroy V2');
-  //     hpDoc.off('destroy', destroyFn);
-  //     hpDoc.off('update', updateFn);
-  //     done({
-  //       updatedDoc64: undefined,
-  //       stateFingerprint: this.getStateFingerprint(updatedDoc),
-  //     });
-  //   };
-
-  //   hpDoc.off('update', updateFn);
-  //   hpDoc.off('destroy', destroyFn);
-
-  //   hpDoc.on('update', updateFn);
-  //   hpDoc.on('destroy', destroyFn);
-
-  //   return promise;
-  // }
-
   /**
    * Create a hash SHA-256 of the state vector of the document.
    * Usefull to compare the state of the document.
@@ -172,32 +125,6 @@ export class PollSync<T> {
     logger('Polling Updated YDoc', hpDoc.name);
   }
 
-  /**
-   * Receive messages from other clients
-   */
-  // private receiveMessages(
-  //   update: Uint8Array,
-  //   connection: Connection,
-  // ): Document {
-  //   this.callbacks.onUpdate(this, connection, update);
-
-  //   const message = new OutgoingMessage(this.name)
-  //     .createSyncMessage()
-  //     .writeUpdate(update);
-
-  //   this.getConnections().forEach((connection) => {
-  //     this.logger?.log({
-  //       direction: 'out',
-  //       type: message.type,
-  //       category: message.category,
-  //     });
-
-  //     connection.send(message.toUint8Array());
-  //   });
-
-  //   return this;
-  // }
-
   public receiveMessages(res: Response) {
     const hpDoc = this.getHpDocument();
 
@@ -209,9 +136,6 @@ export class PollSync<T> {
     ) => {
       console.log('Doc Update V2');
 
-      // hpDoc.off('update', updateFn);
-      // hpDoc.off('destroy', destroyFn);
-
       res.write(
         `data: ${JSON.stringify({
           time: new Date(),
@@ -219,11 +143,6 @@ export class PollSync<T> {
           stateFingerprint: this.getStateFingerprint(updatedDoc),
         })}\n\n`,
       );
-
-      // done({
-      //   updatedDoc64: toBase64(update),
-      //   stateFingerprint: this.getStateFingerprint(updatedDoc),
-      // });
     };
 
     const destroyFn = (updatedDoc: Y.Doc) => {
@@ -247,59 +166,11 @@ export class PollSync<T> {
     hpDoc.on('update', updateFn);
     hpDoc.on('destroy', destroyFn);
 
-    // const intervalId = setInterval(() => {
-    //   // `data:` lines contain the actual message
-    //   // `\n\n` is the SSE delimiter
-
-    //   res.write(`data: ${JSON.stringify({ time: new Date() })}\n\n`);
-    // }, 5000);
-
     this.req.on('close', () => {
       console.log('Connection SSE closed');
       hpDoc.off('update', updateFn);
       hpDoc.off('destroy', destroyFn);
     });
-
-    // const { promise, done } = promiseDone<{
-    //   updatedDoc64?: string;
-    //   stateFingerprint: string;
-    // }>();
-
-    // console.log('Get Updated V3 Doc');
-
-    // const updateFn = (
-    //   update: Uint8Array,
-    //   _origin: string,
-    //   updatedDoc: Y.Doc,
-    //   _transaction: Y.Transaction,
-    // ) => {
-    //   console.log('Doc Update V2');
-
-    //   hpDoc.off('update', updateFn);
-    //   hpDoc.off('destroy', destroyFn);
-    //   done({
-    //     updatedDoc64: toBase64(update),
-    //     stateFingerprint: this.getStateFingerprint(updatedDoc),
-    //   });
-    // };
-
-    // const destroyFn = (updatedDoc: Y.Doc) => {
-    //   console.log('Doc Destroy V2');
-    //   hpDoc.off('destroy', destroyFn);
-    //   hpDoc.off('update', updateFn);
-    //   done({
-    //     updatedDoc64: undefined,
-    //     stateFingerprint: this.getStateFingerprint(updatedDoc),
-    //   });
-    // };
-
-    // hpDoc.off('update', updateFn);
-    // hpDoc.off('destroy', destroyFn);
-
-    // hpDoc.on('update', updateFn);
-    // hpDoc.on('destroy', destroyFn);
-
-    // return promise;
   }
 
   private getHpDocument() {
