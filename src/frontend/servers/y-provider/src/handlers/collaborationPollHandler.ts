@@ -5,49 +5,6 @@ import { hocusPocusServer } from '@/servers/hocusPocusServer';
 
 const TIMEOUT = 30000;
 
-/**
- * Polling way of handling collaboration
- * @param req
- * @param res
- */
-export const collaborationPollGetAwarenessHandler = async (
-  req: PollSyncRequest<void>,
-  res: Response,
-) => {
-  const room = req.query.room;
-  const canEdit = req.headers['x-can-edit'] === 'True';
-
-  const timeout = setTimeout(() => {
-    if (!res.headersSent) {
-      res.status(408).json({ error: 'Request Timeout' });
-    }
-  }, TIMEOUT);
-
-  if (!room) {
-    res.status(400).json({ error: 'Room name not provided' });
-    return;
-  }
-
-  const pollSynch = new PollSync<void>(req, room, canEdit);
-  const hpDoc = await pollSynch.initHocuspocusDocument(hocusPocusServer);
-
-  if (!hpDoc) {
-    res.status(404).json({ error: 'Document not found' });
-    return;
-  }
-
-  const awareness = await pollSynch.getAwarenessStates();
-
-  console.log('awaaaa', awareness);
-
-  if (!res.headersSent) {
-    clearTimeout(timeout);
-    res.status(200).json({
-      awareness,
-    });
-  }
-};
-
 interface CollaborationPollPostMessagePayload {
   message64: string;
 }
@@ -147,6 +104,7 @@ export const collaborationPollSyncDocHandler = async (
 interface CollaborationPollSSEMessageResponse {
   updatedDoc64?: string;
   stateFingerprint?: string;
+  awareness64?: string;
   error?: string;
 }
 export const collaborationPollSSEMessageHandler = async (
@@ -174,5 +132,5 @@ export const collaborationPollSSEMessageHandler = async (
   res.setHeader('Connection', 'keep-alive');
   res.write(': connected\n\n');
 
-  pollSynch.receiveMessages(res);
+  pollSynch.listenMessages(res);
 };

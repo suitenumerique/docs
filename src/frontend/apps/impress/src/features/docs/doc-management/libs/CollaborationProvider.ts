@@ -7,7 +7,6 @@ import {
   HocuspocusProviderConfiguration,
   onOutgoingMessageParameters,
 } from '@hocuspocus/provider';
-import * as time from 'lib0/time';
 import type { MessageEvent } from 'ws';
 import * as Y from 'yjs';
 
@@ -21,15 +20,6 @@ type HocuspocusProviderConfigurationUrl = Required<
 > &
   Partial<CompleteHocuspocusProviderConfiguration> &
   Required<Pick<CompleteHocuspocusProviderWebsocketConfiguration, 'url'>>;
-
-interface GetPollAwarenessResponse {
-  awareness?: Record<string, Record<string, unknown>>;
-}
-
-interface GetPollDocResponse {
-  updatedDoc64?: string;
-  stateFingerprint?: string;
-}
 
 export const isHocuspocusProviderConfigurationUrl = (
   data: HocuspocusProviderConfiguration,
@@ -151,11 +141,22 @@ export class CollaborationProvider extends HocuspocusProvider {
     // 1. onmessage handles messages sent with `data:` lines
     eventSource.onmessage = async (event) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-      const { updatedDoc64, stateFingerprint } = JSON.parse(event.data) as {
+      const { updatedDoc64, stateFingerprint, awareness64 } = JSON.parse(
+        event.data,
+      ) as {
         updatedDoc64: string;
         stateFingerprint: string;
+        awareness64: string;
       };
       console.log('Received SSE event:', event.data);
+
+      if (awareness64) {
+        const awareness = Buffer.from(awareness64, 'base64');
+
+        this.onMessage({
+          data: awareness,
+        } as MessageEvent);
+      }
 
       if (updatedDoc64) {
         const uint8Array = Buffer.from(updatedDoc64, 'base64');
@@ -186,44 +187,17 @@ export class CollaborationProvider extends HocuspocusProvider {
     //console.log('initCollaborationSSE:data', data);
   }
 
-  // protected async longPollAwareness() {
-  //   if (!this.isWebsocketFailed) {
-  //     return;
-  //   }
-
-  //   console.log('startPollAwareness');
-  //   let waitMs = 0;
-  //   try {
-  //     const { awareness } = await longPollRequest<GetPollAwarenessResponse>({
-  //       pollUrl: this.toPollUrl('awareness'),
-  //       timeout: CollaborationProvider.TIMEOUT,
-  //     });
-
-  //     console.log('awareness', awareness);
-
-  //     if (awareness) {
-  //       Object.entries(awareness).forEach(
-  //         ([clientAwarenessKeyStr, clientAwareness]) =>
-  //           this.setAwareness(Number(clientAwarenessKeyStr), clientAwareness),
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error('Polling awareness failed:', error);
-  //     // Could be no internet connection
-  //     waitMs = 5000;
-  //   } finally {
-  //     setTimeout(() => {
-  //       void this.longPollAwareness();
-  //     }, waitMs);
-  //   }
-  // }
-
   public onMessage(event: MessageEvent) {
     super.onMessage(event);
 
     console.log('onMessage', event);
     console.log('isSynced', this.isSynced);
     console.log('unsyncedChanges', this.unsyncedChanges);
+
+    // if (this.hasUnsyncedChanges) {
+    //   this.unsyncedChanges = 0;
+    //   void this.pollSync();
+    // }
   }
 
   public async pollSync() {
@@ -242,6 +216,7 @@ export class CollaborationProvider extends HocuspocusProvider {
       if (syncDoc64) {
         const uint8Array = Buffer.from(syncDoc64, 'base64');
         Y.applyUpdate(this.document, uint8Array);
+        this.synced = true;
       }
     } catch (error) {
       console.error('Polling sync failed:', error);
@@ -257,18 +232,5 @@ export class CollaborationProvider extends HocuspocusProvider {
   public getStateFingerprint(doc: Y.Doc): string {
     const stateVector = Y.encodeStateVector(doc);
     return crypto.createHash('sha256').update(stateVector).digest('base64');
-  }
-
-  public setAwareness(
-    awarenessKey: number,
-    awarenessValue: Record<string, unknown>,
-  ): void {
-    this.awareness?.states.set(awarenessKey, awarenessValue);
-    const currLocalMeta = this.awareness?.meta.get(awarenessKey);
-    const clock = currLocalMeta === undefined ? 0 : currLocalMeta.clock + 1;
-    this.awareness?.meta.set(awarenessKey, {
-      clock,
-      lastUpdated: time.getUnixTime(),
-    });
   }
 }

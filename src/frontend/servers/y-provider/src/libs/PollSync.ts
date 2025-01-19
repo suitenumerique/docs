@@ -3,21 +3,15 @@ import crypto from 'crypto';
 
 import {
   AwarenessUpdate,
-  Connection,
-  Debugger,
   Document,
   Hocuspocus,
-  IncomingMessage,
-  MessageReceiver,
+  OutgoingMessage,
 } from '@hocuspocus/server';
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
-import { promiseDone } from '@/helpers';
 import { base64ToYDoc, logger, toBase64 } from '@/utils';
-
-type AwarenessState = Record<string, Record<string, unknown>>;
 
 export type PollSyncRequestQuery = {
   room?: string;
@@ -125,10 +119,10 @@ export class PollSync<T> {
     logger('Polling Updated YDoc', hpDoc.name);
   }
 
-  public receiveMessages(res: Response) {
+  public listenMessages(res: Response) {
     const hpDoc = this.getHpDocument();
 
-    const updateFn = (
+    const updateMessagesFn = (
       update: Uint8Array,
       _origin: string,
       updatedDoc: Y.Doc,
@@ -156,20 +150,44 @@ export class PollSync<T> {
       );
 
       hpDoc.off('destroy', destroyFn);
-      hpDoc.off('update', updateFn);
+      hpDoc.off('update', updateMessagesFn);
 
+      // Close the connection
       res.end();
     };
 
-    hpDoc.off('update', updateFn);
+    const updateAwarenessFn = ({
+      added,
+      updated,
+      removed,
+    }: AwarenessUpdate) => {
+      const changedClients = added.concat(updated, removed);
+      const awarenessMessage = new OutgoingMessage(
+        this.room,
+      ).createAwarenessUpdateMessage(hpDoc.awareness, changedClients);
+
+      console.log('Awareness Update', awarenessMessage);
+
+      res.write(
+        `data: ${JSON.stringify({
+          time: new Date(),
+          awareness64: toBase64(awarenessMessage.toUint8Array()),
+        })}\n\n`,
+      );
+    };
+
+    hpDoc.awareness.off('update', updateAwarenessFn);
+    hpDoc.awareness.on('update', updateAwarenessFn);
+    hpDoc.off('update', updateMessagesFn);
     hpDoc.off('destroy', destroyFn);
-    hpDoc.on('update', updateFn);
+    hpDoc.on('update', updateMessagesFn);
     hpDoc.on('destroy', destroyFn);
 
     this.req.on('close', () => {
       console.log('Connection SSE closed');
-      hpDoc.off('update', updateFn);
+      hpDoc.off('update', updateMessagesFn);
       hpDoc.off('destroy', destroyFn);
+      hpDoc.awareness.off('update', updateAwarenessFn);
     });
   }
 
@@ -179,27 +197,5 @@ export class PollSync<T> {
     }
 
     return this.hpDocument;
-  }
-
-  public async getAwarenessStates(): Promise<AwarenessState | undefined> {
-    const hpDoc = this.getHpDocument();
-    const { promise, done } = promiseDone<AwarenessState | undefined>();
-
-    const updateFn = (update: AwarenessUpdate) => {
-      console.log('Awareness Update', update);
-
-      done(
-        hpDoc.hasAwarenessStates()
-          ? Object.fromEntries(hpDoc.awareness.getStates())
-          : undefined,
-      );
-
-      hpDoc.awareness.off('update', updateFn);
-    };
-
-    hpDoc.awareness.off('update', updateFn);
-    hpDoc.awareness.on('update', updateFn);
-
-    return promise;
   }
 }
