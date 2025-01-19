@@ -1,7 +1,7 @@
 export const routes = {
   COLLABORATION_WS: '/collaboration/ws/',
   COLLABORATION_POLL_AWARENESS: '/collaboration/ws/poll/awareness/',
-  COLLABORATION_POLL_DOC: '/collaboration/ws/poll/doc/',
+  // COLLABORATION_POLL_DOC: '/collaboration/ws/poll/doc/',
   COLLABORATION_POLL_MESSAGE: '/collaboration/ws/poll/message/',
   COLLABORATION_POLL_SYNC: '/collaboration/ws/poll/sync/',
   COLLABORATION_RESET_CONNECTIONS: '/collaboration/api/reset-connections/',

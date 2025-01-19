@@ -7,7 +7,6 @@ import expressWebsockets from 'express-ws';
 import { PORT } from '../env';
 import {
   collaborationPollGetAwarenessHandler,
-  collaborationPollGetDocHandler,
   collaborationPollPostMessageHandler,
   collaborationPollSSEMessageHandler,
   collaborationPollSyncDocHandler,
@@ -40,11 +39,11 @@ export const initServer = () => {
     httpSecurity,
     collaborationPollGetAwarenessHandler,
   );
-  app.get(
-    routes.COLLABORATION_POLL_DOC,
-    httpSecurity,
-    collaborationPollGetDocHandler,
-  );
+  // app.get(
+  //   routes.COLLABORATION_POLL_DOC,
+  //   httpSecurity,
+  //   collaborationPollGetDocHandler,
+  // );
   app.get(
     routes.COLLABORATION_POLL_MESSAGE,
     httpSecurity,

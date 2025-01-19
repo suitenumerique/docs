@@ -1,6 +1,5 @@
 import { Response } from 'express';
 
-import { COLLABORATION_SERVER_ORIGIN } from '@/env';
 import { PollSync, PollSyncRequest } from '@/libs/PollSync';
 import { hocusPocusServer } from '@/servers/hocusPocusServer';
 
@@ -49,49 +48,49 @@ export const collaborationPollGetAwarenessHandler = async (
   }
 };
 
-/**
- * Polling way of handling collaboration
- * @param req
- * @param res
- */
-interface CollaborationPollGetDocResponse {
-  updatedDoc64?: string;
-  stateFingerprint?: string;
-  error?: string;
-}
-export const collaborationPollGetDocHandler = async (
-  req: PollSyncRequest<void>,
-  res: Response<CollaborationPollGetDocResponse>,
-) => {
-  const room = req.query.room;
-  const canEdit = req.headers['x-can-edit'] === 'True';
+// /**
+//  * Polling way of handling collaboration
+//  * @param req
+//  * @param res
+//  */
+// interface CollaborationPollGetDocResponse {
+//   updatedDoc64?: string;
+//   stateFingerprint?: string;
+//   error?: string;
+// }
+// export const collaborationPollGetDocHandler = async (
+//   req: PollSyncRequest<void>,
+//   res: Response<CollaborationPollGetDocResponse>,
+// ) => {
+//   const room = req.query.room;
+//   const canEdit = req.headers['x-can-edit'] === 'True';
 
-  const timeout = setTimeout(() => {
-    if (!res.headersSent) {
-      res.status(408).json({ error: 'Request Timeout' });
-    }
-  }, TIMEOUT);
+//   const timeout = setTimeout(() => {
+//     if (!res.headersSent) {
+//       res.status(408).json({ error: 'Request Timeout' });
+//     }
+//   }, TIMEOUT);
 
-  if (!room) {
-    res.status(400).json({ error: 'Room name not provided' });
-    return;
-  }
+//   if (!room) {
+//     res.status(400).json({ error: 'Room name not provided' });
+//     return;
+//   }
 
-  const pollSynch = new PollSync<void>(req, room, canEdit);
-  const hpDoc = await pollSynch.initHocuspocusDocument(hocusPocusServer);
+//   const pollSynch = new PollSync<void>(req, room, canEdit);
+//   const hpDoc = await pollSynch.initHocuspocusDocument(hocusPocusServer);
 
-  if (!res.headersSent && !hpDoc) {
-    res.status(404).json({ error: 'Document not found' });
-    return;
-  }
+//   if (!res.headersSent && !hpDoc) {
+//     res.status(404).json({ error: 'Document not found' });
+//     return;
+//   }
 
-  const updatedDoc = await pollSynch.getUpdatedDoc();
+//   const updatedDoc = await pollSynch.getUpdatedDoc();
 
-  if (!res.headersSent) {
-    clearTimeout(timeout);
-    res.status(200).json(updatedDoc);
-  }
-};
+//   if (!res.headersSent) {
+//     clearTimeout(timeout);
+//     res.status(200).json(updatedDoc);
+//   }
+// };
 
 interface CollaborationPollPostMessagePayload {
   message64: string;
@@ -133,10 +132,10 @@ export const collaborationPollPostMessageHandler = async (
     return;
   }
 
-  const updated = pollSynch.messageHandler(req.body.message64);
+  pollSynch.sendMessages(req.body.message64);
 
   if (!res.headersSent) {
-    res.status(200).json({ updated });
+    res.status(200).json({ updated: true });
   }
 };
 
@@ -190,25 +189,31 @@ export const collaborationPollSyncDocHandler = async (
  * @param res
  */
 interface CollaborationPollSSEMessageResponse {
-  syncDoc64?: string;
+  updatedDoc64?: string;
+  stateFingerprint?: string;
   error?: string;
 }
-interface CollaborationPollSSEMessageBody {
-  localDoc64: string;
-}
-export const collaborationPollSSEMessageHandler = (
-  req: PollSyncRequest<CollaborationPollSSEMessageBody>,
+export const collaborationPollSSEMessageHandler = async (
+  req: PollSyncRequest<void>,
   res: Response<CollaborationPollSSEMessageResponse>,
 ) => {
   const room = req.query.room;
-  //const canEdit = req.headers['x-can-edit'] === 'True';
+  const canEdit = req.headers['x-can-edit'] === 'True';
 
   if (!room) {
     res.status(400).json({ error: 'Room name not provided' });
     return;
   }
 
-  console.log('SSE', room);
+  const pollSynch = new PollSync<void>(req, room, canEdit);
+  const hpDoc = await pollSynch.initHocuspocusDocument(hocusPocusServer);
+
+  if (!hpDoc) {
+    res.status(404).json({ error: 'Document not found' });
+    return;
+  }
+
+  //hpDoc.console.log('SSE', room);
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -217,16 +222,7 @@ export const collaborationPollSSEMessageHandler = (
 
   res.write(': connected\n\n');
 
-  const intervalId = setInterval(() => {
-    // `data:` lines contain the actual message
-    // `\n\n` is the SSE delimiter
-    res.write(`data: ${JSON.stringify({ time: new Date() })}\n\n`);
-  }, 5000);
-
-  // 5. If the client closes the connection, stop sending events
-  req.on('close', () => {
-    clearInterval(intervalId);
-  });
+  pollSynch.receiveMessages(res);
 
   // const pollSynch = new PollSync<CollaborationPollSSEMessageBody>(
   //   req,

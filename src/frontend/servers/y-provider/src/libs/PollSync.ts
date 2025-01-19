@@ -10,7 +10,7 @@ import {
   IncomingMessage,
   MessageReceiver,
 } from '@hocuspocus/server';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
@@ -79,52 +79,52 @@ export class PollSync<T> {
     return this._hpDocument;
   }
 
-  public async getUpdatedDoc(): Promise<{
-    updatedDoc64?: string;
-    stateFingerprint: string;
-  }> {
-    const hpDoc = this.getHpDocument();
-    const { promise, done } = promiseDone<{
-      updatedDoc64?: string;
-      stateFingerprint: string;
-    }>();
+  // public async getUpdatedDoc(): Promise<{
+  //   updatedDoc64?: string;
+  //   stateFingerprint: string;
+  // }> {
+  //   const hpDoc = this.getHpDocument();
+  //   const { promise, done } = promiseDone<{
+  //     updatedDoc64?: string;
+  //     stateFingerprint: string;
+  //   }>();
 
-    console.log('Get Updated V3 Doc');
+  //   console.log('Get Updated V3 Doc');
 
-    const updateFn = (
-      update: Uint8Array,
-      _origin: string,
-      updatedDoc: Y.Doc,
-      _transaction: Y.Transaction,
-    ) => {
-      console.log('Doc Update V2');
+  //   const updateFn = (
+  //     update: Uint8Array,
+  //     _origin: string,
+  //     updatedDoc: Y.Doc,
+  //     _transaction: Y.Transaction,
+  //   ) => {
+  //     console.log('Doc Update V2');
 
-      hpDoc.off('update', updateFn);
-      hpDoc.off('destroy', destroyFn);
-      done({
-        updatedDoc64: toBase64(update),
-        stateFingerprint: this.getStateFingerprint(updatedDoc),
-      });
-    };
+  //     hpDoc.off('update', updateFn);
+  //     hpDoc.off('destroy', destroyFn);
+  //     done({
+  //       updatedDoc64: toBase64(update),
+  //       stateFingerprint: this.getStateFingerprint(updatedDoc),
+  //     });
+  //   };
 
-    const destroyFn = (updatedDoc: Y.Doc) => {
-      console.log('Doc Destroy V2');
-      hpDoc.off('destroy', destroyFn);
-      hpDoc.off('update', updateFn);
-      done({
-        updatedDoc64: undefined,
-        stateFingerprint: this.getStateFingerprint(updatedDoc),
-      });
-    };
+  //   const destroyFn = (updatedDoc: Y.Doc) => {
+  //     console.log('Doc Destroy V2');
+  //     hpDoc.off('destroy', destroyFn);
+  //     hpDoc.off('update', updateFn);
+  //     done({
+  //       updatedDoc64: undefined,
+  //       stateFingerprint: this.getStateFingerprint(updatedDoc),
+  //     });
+  //   };
 
-    hpDoc.off('update', updateFn);
-    hpDoc.off('destroy', destroyFn);
+  //   hpDoc.off('update', updateFn);
+  //   hpDoc.off('destroy', destroyFn);
 
-    hpDoc.on('update', updateFn);
-    hpDoc.on('destroy', destroyFn);
+  //   hpDoc.on('update', updateFn);
+  //   hpDoc.on('destroy', destroyFn);
 
-    return promise;
-  }
+  //   return promise;
+  // }
 
   /**
    * Create a hash SHA-256 of the state vector of the document.
@@ -159,34 +159,147 @@ export class PollSync<T> {
   }
 
   /**
-   * - Dispatch new messages to clients
+   * Send messages to other clients
    */
-  public messageHandler(message64: string) {
-    console.log('Polling Updated 789');
-    let updated = true;
+  public sendMessages(message64: string) {
+    console.log('Polling Updated 1234');
     const hpDoc = this.getHpDocument();
-    const messageBuffer = Buffer.from(message64, 'base64');
-    const message = new IncomingMessage(messageBuffer);
-    const room = message.readVarString();
 
-    console.log('Which room', room);
-    if (hpDoc.name !== room) {
-      logger('Polling update message64 problem', hpDoc.name);
-      return;
-    }
-
-    const mr = new MessageReceiver(message, new Debugger());
-
-    try {
-      mr.apply(hpDoc, undefined, undefined);
-    } catch (e) {
-      console.log('Error in messageHandler', e);
-      updated = false;
-    }
+    hpDoc.getConnections().forEach((connection) => {
+      connection.handleMessage(Buffer.from(message64, 'base64'));
+    });
 
     logger('Polling Updated YDoc', hpDoc.name);
+  }
 
-    return updated;
+  /**
+   * Receive messages from other clients
+   */
+  // private receiveMessages(
+  //   update: Uint8Array,
+  //   connection: Connection,
+  // ): Document {
+  //   this.callbacks.onUpdate(this, connection, update);
+
+  //   const message = new OutgoingMessage(this.name)
+  //     .createSyncMessage()
+  //     .writeUpdate(update);
+
+  //   this.getConnections().forEach((connection) => {
+  //     this.logger?.log({
+  //       direction: 'out',
+  //       type: message.type,
+  //       category: message.category,
+  //     });
+
+  //     connection.send(message.toUint8Array());
+  //   });
+
+  //   return this;
+  // }
+
+  public receiveMessages(res: Response) {
+    const hpDoc = this.getHpDocument();
+
+    const updateFn = (
+      update: Uint8Array,
+      _origin: string,
+      updatedDoc: Y.Doc,
+      _transaction: Y.Transaction,
+    ) => {
+      console.log('Doc Update V2');
+
+      // hpDoc.off('update', updateFn);
+      // hpDoc.off('destroy', destroyFn);
+
+      res.write(
+        `data: ${JSON.stringify({
+          time: new Date(),
+          updatedDoc64: toBase64(update),
+          stateFingerprint: this.getStateFingerprint(updatedDoc),
+        })}\n\n`,
+      );
+
+      // done({
+      //   updatedDoc64: toBase64(update),
+      //   stateFingerprint: this.getStateFingerprint(updatedDoc),
+      // });
+    };
+
+    const destroyFn = (updatedDoc: Y.Doc) => {
+      console.log('Doc Destroy V2');
+      res.write(
+        `data: ${JSON.stringify({
+          time: new Date(),
+          updatedDoc64: undefined,
+          stateFingerprint: this.getStateFingerprint(updatedDoc),
+        })}\n\n`,
+      );
+
+      hpDoc.off('destroy', destroyFn);
+      hpDoc.off('update', updateFn);
+
+      res.end();
+    };
+
+    hpDoc.off('update', updateFn);
+    hpDoc.off('destroy', destroyFn);
+    hpDoc.on('update', updateFn);
+    hpDoc.on('destroy', destroyFn);
+
+    // const intervalId = setInterval(() => {
+    //   // `data:` lines contain the actual message
+    //   // `\n\n` is the SSE delimiter
+
+    //   res.write(`data: ${JSON.stringify({ time: new Date() })}\n\n`);
+    // }, 5000);
+
+    this.req.on('close', () => {
+      console.log('Connection SSE closed');
+      hpDoc.off('update', updateFn);
+      hpDoc.off('destroy', destroyFn);
+    });
+
+    // const { promise, done } = promiseDone<{
+    //   updatedDoc64?: string;
+    //   stateFingerprint: string;
+    // }>();
+
+    // console.log('Get Updated V3 Doc');
+
+    // const updateFn = (
+    //   update: Uint8Array,
+    //   _origin: string,
+    //   updatedDoc: Y.Doc,
+    //   _transaction: Y.Transaction,
+    // ) => {
+    //   console.log('Doc Update V2');
+
+    //   hpDoc.off('update', updateFn);
+    //   hpDoc.off('destroy', destroyFn);
+    //   done({
+    //     updatedDoc64: toBase64(update),
+    //     stateFingerprint: this.getStateFingerprint(updatedDoc),
+    //   });
+    // };
+
+    // const destroyFn = (updatedDoc: Y.Doc) => {
+    //   console.log('Doc Destroy V2');
+    //   hpDoc.off('destroy', destroyFn);
+    //   hpDoc.off('update', updateFn);
+    //   done({
+    //     updatedDoc64: undefined,
+    //     stateFingerprint: this.getStateFingerprint(updatedDoc),
+    //   });
+    // };
+
+    // hpDoc.off('update', updateFn);
+    // hpDoc.off('destroy', destroyFn);
+
+    // hpDoc.on('update', updateFn);
+    // hpDoc.on('destroy', destroyFn);
+
+    // return promise;
   }
 
   private getHpDocument() {

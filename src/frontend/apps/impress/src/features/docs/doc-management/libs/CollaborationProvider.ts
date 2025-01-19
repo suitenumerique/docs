@@ -194,9 +194,48 @@ export class CollaborationProvider extends HocuspocusProvider {
 
     console.log('initCollaborationSSE');
 
-    this.sse = collaborationSSE({
-      pollUrl: this.toPollUrl('message'),
+    // this.sse = collaborationSSE({
+    //   pollUrl: this.toPollUrl('message'),
+    // });
+
+    const eventSource = new EventSource(this.toPollUrl('message'), {
+      withCredentials: true,
     });
+
+    // 1. onmessage handles messages sent with `data:` lines
+    eventSource.onmessage = async (event: MessageEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
+      const { updatedDoc64, stateFingerprint } = JSON.parse(event.data) as {
+        updatedDoc64: string;
+        stateFingerprint: string;
+      };
+      console.log('Received SSE event:', event.data);
+
+      if (updatedDoc64) {
+        const uint8Array = Buffer.from(updatedDoc64, 'base64');
+        Y.applyUpdate(this.document, uint8Array);
+
+        const localStateFingerprint = this.getStateFingerprint(this.document);
+        console.log('stateFingerprint', stateFingerprint);
+        console.log('localStateFingerprint', localStateFingerprint);
+        console.log('EQUAL', localStateFingerprint === stateFingerprint);
+
+        if (localStateFingerprint !== stateFingerprint) {
+          await this.pollSync();
+        }
+      }
+    };
+
+    // 2. onopen is triggered when the connection is first established
+    eventSource.onopen = () => {
+      console.log('SSE connection opened.');
+    };
+
+    // 3. onerror is triggered if there's a connection issue
+    eventSource.onerror = (err) => {
+      console.error('SSE error:', err);
+      // Depending on the error, the browser may or may not automatically reconnect
+    };
 
     //console.log('initCollaborationSSE:data', data);
   }
