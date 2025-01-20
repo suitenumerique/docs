@@ -3,12 +3,17 @@ import crypto from 'crypto';
 
 import {
   AwarenessUpdate,
+  Debugger,
   Document,
   Hocuspocus,
+  IncomingMessage,
+  MessageReceiver,
+  MessageType,
   OutgoingMessage,
 } from '@hocuspocus/server';
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
+import { readSyncMessage, readUpdate } from 'y-protocols/sync.js';
 import * as Y from 'yjs';
 
 import { base64ToYDoc, logger, toBase64 } from '@/utils';
@@ -109,18 +114,39 @@ export class PollSync<T> {
    * Send messages to other clients
    */
   public sendMessages(message64: string) {
-    console.log('Polling Updated 1234');
     const hpDoc = this.getHpDocument();
+    const messageBuffer = Buffer.from(message64, 'base64');
+    const message = new IncomingMessage(messageBuffer);
+    const room = message.readVarString();
 
-    hpDoc.getConnections().forEach((connection) => {
-      connection.handleMessage(Buffer.from(message64, 'base64'));
-    });
+    logger('Polling sendMessages 1010', hpDoc.name);
+
+    if (hpDoc.name !== room) {
+      logger('Send messages problem, room different', room, hpDoc.name);
+      return;
+    }
+
+    // We write the sync to the current doc - it will propagate to others by itself
+    const type = message.readVarUint() as MessageType;
+    if (type === MessageType.Sync) {
+      message.writeVarUint(MessageType.Sync);
+      readSyncMessage(message.decoder, message.encoder, hpDoc, null);
+    } else {
+      hpDoc.getConnections().forEach((connection) => {
+        connection.handleMessage(messageBuffer);
+      });
+    }
+
+    // hpDoc.getConnections().forEach((connection) => {
+    //   connection.handleMessage(messageBuffer);
+    // });
 
     logger('Polling Updated YDoc', hpDoc.name);
   }
 
   public listenMessages(res: Response) {
     const hpDoc = this.getHpDocument();
+    hpDoc.addDirectConnection();
 
     const updateMessagesFn = (
       update: Uint8Array,
@@ -128,7 +154,7 @@ export class PollSync<T> {
       updatedDoc: Y.Doc,
       _transaction: Y.Transaction,
     ) => {
-      console.log('Doc Update V2');
+      console.log('Doc Update V2', _transaction.doc.clientID);
 
       res.write(
         `data: ${JSON.stringify({
@@ -166,12 +192,14 @@ export class PollSync<T> {
         this.room,
       ).createAwarenessUpdateMessage(hpDoc.awareness, changedClients);
 
-      console.log('Awareness Update', awarenessMessage);
+      //console.log('Awareness Update', awarenessMessage);
 
+      console.log('Awareness Update V2');
       res.write(
         `data: ${JSON.stringify({
           time: new Date(),
           awareness64: toBase64(awarenessMessage.toUint8Array()),
+          stateFingerprint: this.getStateFingerprint(hpDoc),
         })}\n\n`,
       );
     };
@@ -188,6 +216,7 @@ export class PollSync<T> {
       hpDoc.off('update', updateMessagesFn);
       hpDoc.off('destroy', destroyFn);
       hpDoc.awareness.off('update', updateAwarenessFn);
+      hpDoc.removeDirectConnection();
     });
   }
 

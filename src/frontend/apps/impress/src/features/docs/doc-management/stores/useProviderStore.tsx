@@ -10,6 +10,7 @@ export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
+    canEdit: boolean,
     initialDoc?: Base64,
   ) => HocuspocusProvider;
   destroyProvider: () => void;
@@ -22,7 +23,7 @@ const defaultValues = {
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, initialDoc) => {
+  createProvider: (wsUrl, storeId, canEdit, initialDoc) => {
     const doc = new Y.Doc({
       guid: storeId,
     });
@@ -35,6 +36,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       url: wsUrl,
       name: storeId,
       document: doc,
+      canEdit,
     });
 
     set({
