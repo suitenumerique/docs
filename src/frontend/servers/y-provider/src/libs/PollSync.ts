@@ -3,11 +3,9 @@ import crypto from 'crypto';
 
 import {
   AwarenessUpdate,
-  Debugger,
   Document,
   Hocuspocus,
   IncomingMessage,
-  MessageReceiver,
   MessageType,
   OutgoingMessage,
 } from '@hocuspocus/server';
@@ -136,10 +134,6 @@ export class PollSync<T> {
         connection.handleMessage(messageBuffer);
       });
     }
-
-    // hpDoc.getConnections().forEach((connection) => {
-    //   connection.handleMessage(messageBuffer);
-    // });
 
     logger('Polling Updated YDoc', hpDoc.name);
   }

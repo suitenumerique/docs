@@ -3,8 +3,6 @@ import { Response } from 'express';
 import { PollSync, PollSyncRequest } from '@/libs/PollSync';
 import { hocusPocusServer } from '@/servers/hocusPocusServer';
 
-const TIMEOUT = 30000;
-
 interface CollaborationPollPostMessagePayload {
   message64: string;
 }

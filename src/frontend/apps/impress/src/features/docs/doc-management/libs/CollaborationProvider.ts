@@ -10,6 +10,7 @@ import {
 import type { MessageEvent } from 'ws';
 import * as Y from 'yjs';
 
+import { isAPIError } from '@/api';
 import { isFirefox } from '@/utils';
 
 import { pollOutgoingMessageRequest, postPollSyncRequest } from '../api';
@@ -32,14 +33,16 @@ type CollaborationProviderConfiguration = HocuspocusProviderConfiguration & {
 };
 
 export class CollaborationProvider extends HocuspocusProvider {
-  private websocketFailureCount = 0;
-  private websocketMaxFailureCount = 2;
-  private isWebsocketFailed = false;
-  private isLongPollingStarted = false;
-  private url = '';
-  public static TIMEOUT = 30000;
+  public canEdit = false;
+  public isLongPollingStarted = false;
+  public isWebsocketFailed = false;
+  public seemsUnsyncCount = 0;
+  public seemsUnsyncMaxCount = 5;
   // Server-Sent Events
-  private sse: EventSource | null = null;
+  protected sse: EventSource | null = null;
+  protected url = '';
+  public websocketFailureCount = 0;
+  public websocketMaxFailureCount = 2;
 
   public constructor(configuration: CollaborationProviderConfiguration) {
     const withWS = isFirefox();
@@ -53,6 +56,7 @@ export class CollaborationProvider extends HocuspocusProvider {
     super(configuration);
 
     this.url = url;
+    this.canEdit = configuration.canEdit;
 
     if (configuration.canEdit) {
       this.on('outgoingMessage', this.onPollOutgoingMessage.bind(this));
@@ -65,11 +69,12 @@ export class CollaborationProvider extends HocuspocusProvider {
   }
 
   public setPollDefaultValues(): void {
-    this.websocketFailureCount = 0;
-    this.isWebsocketFailed = false;
     this.isLongPollingStarted = false;
+    this.isWebsocketFailed = false;
+    this.seemsUnsyncCount = 0;
     this.sse?.close();
     this.sse = null;
+    this.websocketFailureCount = 0;
   }
 
   public destroy(): void {
@@ -97,7 +102,7 @@ export class CollaborationProvider extends HocuspocusProvider {
 
       if (!this.isLongPollingStarted) {
         this.isLongPollingStarted = true;
-        void this.pollSync();
+        void this.pollSync(true);
         this.initCollaborationSSE();
       }
     }
@@ -116,7 +121,7 @@ export class CollaborationProvider extends HocuspocusProvider {
   }
 
   public async onPollOutgoingMessage({ message }: onOutgoingMessageParameters) {
-    if (!this.isWebsocketFailed) {
+    if (!this.isWebsocketFailed || !this.canEdit) {
       return;
     }
 
@@ -133,6 +138,14 @@ export class CollaborationProvider extends HocuspocusProvider {
         await this.pollSync();
       }
     } catch (error: unknown) {
+      if (isAPIError(error)) {
+        // The user is not allowed to send messages
+        if (error.status === 403) {
+          this.off('outgoingMessage', this.onPollOutgoingMessage.bind(this));
+          this.canEdit = false;
+        }
+      }
+
       console.error('Polling message failed:', error);
     }
   }
@@ -148,23 +161,16 @@ export class CollaborationProvider extends HocuspocusProvider {
       withCredentials: true,
     });
 
-    //eventSource.close();
-
-    // 1. onmessage handles messages sent with `data:` lines
     this.sse.onmessage = (event) => {
       const { updatedDoc64, stateFingerprint, awareness64 } = JSON.parse(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         event.data,
       ) as {
-        updatedDoc64: string;
-        stateFingerprint: string;
-        awareness64: string;
+        updatedDoc64?: string;
+        stateFingerprint?: string;
+        awareness64?: string;
       };
       console.log('Received SSE event:', event.data);
-      console.log('CLineId:', this.document.clientID);
-
-      const localStateFingerprint = this.getStateFingerprint(this.document);
-      console.log('EQUAL BEF', localStateFingerprint === stateFingerprint);
 
       if (awareness64) {
         const awareness = Buffer.from(awareness64, 'base64');
@@ -172,26 +178,22 @@ export class CollaborationProvider extends HocuspocusProvider {
         this.onMessage({
           data: awareness,
         } as MessageEvent);
-
-        console.log('EQUAL AWA', localStateFingerprint === stateFingerprint);
-        // if (localStateFingerprint !== stateFingerprint) {
-        //   await this.pollSync();
-        // }
       }
 
       if (updatedDoc64) {
         const uint8Array = Buffer.from(updatedDoc64, 'base64');
         Y.applyUpdate(this.document, uint8Array);
+      }
 
-        console.log('EQUAL', localStateFingerprint === stateFingerprint);
-
-        // if (localStateFingerprint !== stateFingerprint) {
-        //   await this.pollSync();
-        // }
+      const localStateFingerprint = this.getStateFingerprint(this.document);
+      console.log('EQUAL AWA', localStateFingerprint === stateFingerprint);
+      if (localStateFingerprint !== stateFingerprint) {
+        void this.pollSync();
+      } else {
+        this.seemsUnsyncCount = 0;
       }
     };
 
-    // 2. onopen is triggered when the connection is first established
     this.sse.onopen = () => {
       console.log('SSE connection opened.');
     };
@@ -199,27 +201,27 @@ export class CollaborationProvider extends HocuspocusProvider {
     // 3. onerror is triggered if there's a connection issue
     this.sse.onerror = (err) => {
       console.error('SSE error:', err);
-      // Depending on the error, the browser may or may not automatically reconnect
     };
-
-    //console.log('initCollaborationSSE:data', data);
   }
 
-  public onMessage(event: MessageEvent) {
-    super.onMessage(event);
-
-    // console.log('onMessage', event);
-    // console.log('isSynced', this.isSynced);
-    // console.log('unsyncedChanges', this.unsyncedChanges);
-
-    // if (this.hasUnsyncedChanges) {
-    //   this.unsyncedChanges = 0;
-    //   void this.pollSync();
-    // }
-  }
-
-  public async pollSync() {
+  /**
+   * Sync the document with the server.
+   *
+   * In some rare cases, the document may be out of sync.
+   * We use a fingerprint to compare documents,
+   * it happens that the local fingerprint is different from the server one
+   * when awareness plus the document are updated quickly.
+   * The system is resilient to this kind of problems, so `seemsUnsyncCount` should
+   * go back to 0 after a few seconds. If not, we will force a sync.
+   */
+  public async pollSync(forseSync = false) {
     if (!this.isWebsocketFailed) {
+      return;
+    }
+
+    this.seemsUnsyncCount++;
+
+    if (this.seemsUnsyncCount < this.seemsUnsyncMaxCount && !forseSync) {
       return;
     }
 
