@@ -81,6 +81,7 @@ def test_api_documents_trashbin_format():
             "descendants": True,
             "cors_proxy": True,
             "destroy": True,
+            "duplicate": True,
             "favorite": True,
             "invite_owner": True,
             "link_configuration": True,

@@ -57,13 +57,8 @@ dependencies = [
     "requests==2.32.3",
     "sentry-sdk==2.24.0",
     "url-normalize==1.4.3",
-<<<<<<< HEAD
     "whitenoise==6.9.0",
-    "mozilla-django-oidc==4.0.1",
-=======
-    "whitenoise==6.8.2",
     "y-py==0.6.2",
->>>>>>> f087cd70 (✨(backend) add util to extract text from Ydoc content)
 ]
 
 [project.urls]

@@ -151,6 +151,8 @@ class DocumentAdmin(TreeAdmin):
                     "path",
                     "depth",
                     "numchild",
+                    "duplicated_from",
+                    "attachments",
                 )
             },
         ),
@@ -166,8 +168,10 @@ class DocumentAdmin(TreeAdmin):
         "updated_at",
     )
     readonly_fields = (
+        "attachments",
         "creator",
         "depth",
+        "duplicated_from",
         "id",
         "numchild",
         "path",

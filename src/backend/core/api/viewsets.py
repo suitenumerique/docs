@@ -16,6 +16,8 @@ from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
+from django.utils.text import capfirst
+from django.utils.translation import gettext_lazy as _
 
 import requests
 import rest_framework as drf
@@ -28,25 +30,12 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter
 
 logger = logging.getLogger(__name__)
-
-<<<<<<< HEAD
-ATTACHMENTS_FOLDER = "attachments"
-UUID_REGEX = (
-    r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
-)
-FILE_EXT_REGEX = r"\.[a-zA-Z0-9]{1,10}"
-MEDIA_STORAGE_URL_PATTERN = re.compile(
-    f"{settings.MEDIA_URL:s}(?P<pk>{UUID_REGEX:s})/"
-    f"(?P<key>{ATTACHMENTS_FOLDER:s}/{UUID_REGEX:s}(?:-unsafe)?{FILE_EXT_REGEX:s})$"
-)
-COLLABORATION_WS_URL_PATTERN = re.compile(rf"(?:^|&)room=(?P<pk>{UUID_REGEX})(?:&|$)")
-=======
->>>>>>> 8076486a (✅(backend) add missing test on media-auth and collaboration-auth)
 
 # pylint: disable=too-many-ancestors
 
@@ -904,6 +893,82 @@ class DocumentViewSet(
             utils.nest_tree(serializer.data, self.queryset.model.steplen)
         )
 
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated, permissions.AccessPermission],
+        url_path="duplicate",
+    )
+    @transaction.atomic
+    def duplicate(self, request, *args, **kwargs):
+        """
+        Duplicate a document and store the links to attached files in the duplicated
+        document to allow cross-access.
+
+        Optionally duplicates accesses if `with_accesses` is set to true
+        in the payload.
+        """
+        # Get document while checking permissions
+        document = self.get_object()
+
+        serializer = serializers.DocumentDuplicationSerializer(
+            data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        with_accesses = serializer.validated_data.get("with_accesses", False)
+
+        base64_yjs_content = document.content
+
+        # Duplicate the document instance
+        link_kwargs = (
+            {"link_reach": document.link_reach, "link_role": document.link_role}
+            if with_accesses
+            else {}
+        )
+        extracted_attachments = set(extract_attachments(document.content))
+        attachments = list(extracted_attachments & set(document.attachments))
+        duplicated_document = document.add_sibling(
+            "right",
+            title=capfirst(_("copy of {title}").format(title=document.title)),
+            content=base64_yjs_content,
+            attachments=attachments,
+            duplicated_from=document,
+            creator=request.user,
+            **link_kwargs,
+        )
+
+        # Always add the logged-in user as OWNER
+        accesses_to_create = [
+            models.DocumentAccess(
+                document=duplicated_document,
+                user=request.user,
+                role=models.RoleChoices.OWNER,
+            )
+        ]
+
+        # If accesses should be duplicated, add other users' accesses as per original document
+        if with_accesses:
+            original_accesses = models.DocumentAccess.objects.filter(
+                document=document
+            ).exclude(user=request.user)
+
+            accesses_to_create.extend(
+                models.DocumentAccess(
+                    document=duplicated_document,
+                    user_id=access.user_id,
+                    team=access.team,
+                    role=access.role,
+                )
+                for access in original_accesses
+            )
+
+        # Bulk create all the duplicated accesses
+        models.DocumentAccess.objects.bulk_create(accesses_to_create)
+
+        return drf_response.Response(
+            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        )
+
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
         """
@@ -1053,7 +1118,7 @@ class DocumentViewSet(
 
         # Generate a generic yet unique filename to store the image in object storage
         file_id = uuid.uuid4()
-        extension = serializer.validated_data["expected_extension"]
+        ext = serializer.validated_data["expected_extension"]
 
         # Prepare metadata for storage
         extra_args = {
@@ -1065,7 +1130,7 @@ class DocumentViewSet(
             extra_args["Metadata"]["is_unsafe"] = "true"
             file_unsafe = "-unsafe"
 
-        key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}{file_unsafe}.{extension:s}"
+        key = f"{document.key_base}/{enums.ATTACHMENTS_FOLDER:s}/{file_id!s}{file_unsafe}.{ext:s}"
 
         file_name = serializer.validated_data["file_name"]
         if (
@@ -1084,6 +1149,10 @@ class DocumentViewSet(
         default_storage.connection.meta.client.upload_fileobj(
             file, default_storage.bucket_name, key, ExtraArgs=extra_args
         )
+
+        # Make the attachment readable by document readers
+        document.attachments.append(key)
+        document.save()
 
         return drf.response.Response(
             {"file": f"{settings.MEDIA_URL:s}{key:s}"},
@@ -1152,20 +1221,35 @@ class DocumentViewSet(
         url_params = self._auth_get_url_params(
             enums.MEDIA_STORAGE_URL_PATTERN, parsed_url.path
         )
-        document = self._auth_get_document(url_params["pk"])
 
-        if not document.get_abilities(request.user).get(self.action, False):
-            logger.debug(
-                "User '%s' lacks permission for document '%s'",
-                request.user,
-                document.pk,
-            )
+        user = request.user
+        key = f"{url_params['pk']:s}/{url_params['attachment']:s}"
+
+        # Look for a document to which the user has access and that includes this attachment
+        # We must look into all descendants of any document to which the user has access per se
+        readable_per_se_paths = (
+            self.queryset.readable_per_se(user)
+            .order_by("path")
+            .values_list("path", flat=True)
+        )
+
+        attachments_documents = (
+            self.queryset.filter(attachments__contains=[key])
+            .only("path")
+            .order_by("path")
+        )
+        readable_attachments_paths = filter_descendants(
+            [doc.path for doc in attachments_documents],
+            readable_per_se_paths,
+            skip_sorting=True,
+        )
+
+        if not readable_attachments_paths:
+            logger.debug("User '%s' lacks permission for attachment", user)
             raise drf.exceptions.PermissionDenied()
 
         # Generate S3 authorization headers using the extracted URL parameters
-        request = utils.generate_s3_authorization_headers(
-            f"{url_params['pk']:s}/{url_params['key']:s}"
-        )
+        request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
 

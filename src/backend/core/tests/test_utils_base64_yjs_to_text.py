@@ -1,9 +1,15 @@
 """Test util base64_yjs_to_text."""
 
+import base64
+import uuid
+
+import y_py
+
+from core import utils
 from core.utils import base64_yjs_to_text
 
 
-def test_base64_yjs_to_text():
+def test_utils_base64_yjs_to_text():
     """
     Test extract_text_from_saved_yjs_document
     This base64 string is an example of what is saved in the database.
@@ -27,3 +33,38 @@ def test_base64_yjs_to_text():
     )
 
     assert base64_yjs_to_text(base64_string) == "Hello world"
+
+
+def test_utils_extract_attachments():
+    """
+    All attachment keys in the document content should be extracted.
+    """
+    document_id = uuid.uuid4()
+    image_key1 = f"{document_id!s}/attachments/{uuid.uuid4()!s}.png"
+    image_url1 = f"http://localhost/media/{image_key1:s}"
+
+    image_key2 = f"{uuid.uuid4()!s}/attachments/{uuid.uuid4()!s}.png"
+    image_url2 = f"http://localhost/{image_key2:s}"
+
+    image_key3 = f"{uuid.uuid4()!s}/attachments/{uuid.uuid4()!s}.png"
+    image_url3 = f"http://localhost/media/{image_key3:s}"
+
+    ydoc = y_py.YDoc()  # pylint: disable=no-member
+    with ydoc.begin_transaction() as txn:
+        xml_fragment = ydoc.get_xml_element("document-store")
+
+        xml_image = xml_fragment.push_xml_element(txn, "image")
+        xml_image.set_attribute(txn, "src", image_url1)
+
+        xml_image = xml_fragment.push_xml_element(txn, "image")
+        xml_image.set_attribute(txn, "src", image_url2)
+
+        xml_paragraph = xml_fragment.push_xml_element(txn, "paragraph")
+        xml_text = xml_paragraph.push_xml_text(txn)
+        xml_text.push(txn, image_url3)
+
+    update = y_py.encode_state_as_update(ydoc)  # pylint: disable=no-member
+    base64_string = base64.b64encode(update).decode("utf-8")
+
+    # image_url3 is missing the "/media/" part and shouldn't get extracted
+    assert utils.extract_attachments(base64_string) == [image_key1, image_key3]

@@ -381,6 +381,27 @@ class LinkDocumentSerializer(serializers.ModelSerializer):
         ]
 
 
+class DocumentDuplicationSerializer(serializers.Serializer):
+    """
+    Serializer for duplicating a document.
+    Allows specifying whether to keep access permissions.
+    """
+
+    with_accesses = serializers.BooleanField(default=False)
+
+    def create(self, validated_data):
+        """
+        This serializer is not intended to create objects.
+        """
+        raise NotImplementedError("This serializer does not support creation.")
+
+    def update(self, instance, validated_data):
+        """
+        This serializer is not intended to update objects.
+        """
+        raise NotImplementedError("This serializer does not support updating.")
+
+
 # Suppress the warning about not implementing `create` and `update` methods
 # since we don't use a model and only rely on the serializer for validation
 # pylint: disable=abstract-method
