@@ -1,5 +1,5 @@
 """
-Test file uploads API endpoint for users in impress's core app.
+Test media-auth authorization API endpoint in docs core app.
 """
 
 from io import BytesIO
