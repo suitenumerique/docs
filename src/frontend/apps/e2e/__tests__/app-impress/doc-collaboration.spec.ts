@@ -1,9 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { Browser, expect, firefox, test } from '@playwright/test';
 
 import { createDoc } from './common';
 
+let firefoxBrowser: Browser;
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
+  firefoxBrowser = await firefox.launch({ headless: false });
+});
+test.afterEach(async () => {
+  await firefoxBrowser?.close();
 });
 
 test.describe('Doc Collaboration', () => {
@@ -100,5 +106,56 @@ test.describe('Doc Collaboration', () => {
 
     expect(responseJson.yDoc64).toBeDefined();
     expect(responseJson.connectionsCount).toBe(0);
+  });
+
+  test('checks the collaboration between 2 browsers', async ({
+    page,
+    browserName,
+  }) => {
+    // eslint-disable-next-line playwright/no-skipped-test
+    test.skip(browserName === 'webkit' || browserName === 'firefox');
+
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-collaboration',
+      browserName,
+      1,
+    );
+    await expect(
+      page.getByLabel('doc title input').getByText(randomDoc),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Share' }).click();
+    await page.getByLabel('Visibility', { exact: true }).click();
+    await page.getByRole('button', { name: 'Public' }).click();
+    await page.getByLabel('Visibility mode').click();
+    await page.getByRole('button', { name: 'Edition' }).click();
+    await page.getByRole('button', { name: 'close' }).click();
+
+    const chromeEditor = page.locator('.ProseMirror');
+    await chromeEditor.click();
+    await chromeEditor.fill('Hello Firefox');
+
+    const urlDoc = page.url();
+
+    const firefoxContext = await firefoxBrowser.newContext({
+      locale: 'en-US',
+      timezoneId: 'Europe/Paris',
+      permissions: [],
+    });
+    const firefoxPage = await firefoxContext.newPage();
+    await firefoxPage.goto(urlDoc);
+    const firefoxEditor = firefoxPage.locator('.ProseMirror');
+
+    // The cursor tag of the collaborator should be visible
+    await expect(firefoxEditor.getByText('E2E Chromium')).toBeVisible();
+    await expect(firefoxEditor.getByText('Hello Firefox')).toBeVisible();
+
+    await firefoxEditor.locator('.bn-block-outer').last().fill('Hello Chrome');
+
+    await expect(chromeEditor.getByText('Hello Chrome')).toBeVisible();
+
+    // await firefoxPage.close();
+    // await firefoxContext.close();
+    // await firefoxBrowser.close();
   });
 });
