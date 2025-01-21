@@ -3,7 +3,7 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { configureCrispSession } from '@/services';
+import { PostHogProvider, configureCrispSession } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -45,5 +45,5 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     );
   }
 
-  return children;
+  return <PostHogProvider conf={conf.POSTHOG_KEY}>{children}</PostHogProvider>;
 };

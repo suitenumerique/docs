@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
+import { PostHogConf } from '@/services';
 
 interface ConfigResponse {
   LANGUAGES: [string, string][];
@@ -11,6 +12,7 @@ interface ConfigResponse {
   CRISP_WEBSITE_ID?: string;
   FRONTEND_THEME?: Theme;
   MEDIA_BASE_URL?: string;
+  POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
 }
 

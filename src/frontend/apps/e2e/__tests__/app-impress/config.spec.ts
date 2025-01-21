@@ -16,6 +16,7 @@ const config = {
     ['de-de', 'German'],
   ],
   LANGUAGE_CODE: 'en-us',
+  POSTHOG_KEY: {},
   SENTRY_DSN: null,
 };
 
