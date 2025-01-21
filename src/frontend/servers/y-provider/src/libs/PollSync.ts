@@ -11,7 +11,7 @@ import {
 } from '@hocuspocus/server';
 import { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
-import { readSyncMessage, readUpdate } from 'y-protocols/sync.js';
+import { readSyncMessage } from 'y-protocols/sync';
 import * as Y from 'yjs';
 
 import { base64ToYDoc, logger, toBase64 } from '@/utils';

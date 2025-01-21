@@ -46,6 +46,7 @@ export class CollaborationProvider extends HocuspocusProvider {
 
   public constructor(configuration: CollaborationProviderConfiguration) {
     const withWS = isFirefox();
+    //const withWS = true;
 
     let url = '';
     if (isHocuspocusProviderConfigurationUrl(configuration)) {
