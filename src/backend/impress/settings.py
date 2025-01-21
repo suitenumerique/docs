@@ -390,6 +390,11 @@ class Base(Configuration):
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
 
+    # Posthog
+    POSTHOG_KEY = values.DictValue(
+        None, environ_name="POSTHOG_KEY", environ_prefix=None
+    )
+
     # Crisp
     CRISP_WEBSITE_ID = values.Value(
         None, environ_name="CRISP_WEBSITE_ID", environ_prefix=None

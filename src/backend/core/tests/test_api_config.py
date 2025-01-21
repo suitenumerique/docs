@@ -20,6 +20,7 @@ pytestmark = pytest.mark.django_db
     CRISP_WEBSITE_ID="123",
     FRONTEND_THEME="test-theme",
     MEDIA_BASE_URL="http://testserver/",
+    POSTHOG_KEY={"id": "132456", "host": "https://eu.i.posthog-test.com"},
     SENTRY_DSN="https://sentry.test/123",
 )
 @pytest.mark.parametrize("is_authenticated", [False, True])
@@ -41,5 +42,6 @@ def test_api_config(is_authenticated):
         "LANGUAGES": [["en-us", "English"], ["fr-fr", "French"], ["de-de", "German"]],
         "LANGUAGE_CODE": "en-us",
         "MEDIA_BASE_URL": "http://testserver/",
+        "POSTHOG_KEY": {"id": "132456", "host": "https://eu.i.posthog-test.com"},
         "SENTRY_DSN": "https://sentry.test/123",
     }
