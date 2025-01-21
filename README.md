@@ -18,7 +18,7 @@ Welcome to Docs! The open source document editor where your notes can become kno
   </a>
 </p>
 
-<img src="https://github.com/suitenumerique/docs/blob/main/docs/assets/docs_live_collaboration_light.gif?raw=true" width="600" align="center"/>
+<img src="/docs/assets/docs_live_collaboration_light.gif?raw=true" width="600" align="center"/>
 
 ## Why use Docs ❓
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
@@ -26,9 +26,9 @@ Docs is a collaborative text editor designed to address common challenges in kno
 ### Write
 *   😌 Simple collaborative editing without the formatting complexity of markdown
 *   🔌 Offline? No problem, keep writing, your edits will get synced when back online
-*   💅 Clean formatting options to focus on content creation and create beautiful documents
-*   🧱 Built for productivity (markdown support, many block types, slash commands, markdown support, keyboard shortcuts)
-*   🤖 Save time thanks to our AI actions (generate, sum up, correct, translate)
+*   💅 Create clean documents with limited but beautiful formatting options and focus on content
+*   🧱 Built for productivity (markdown support, many block types, slash commands, markdown support, keyboard shortcuts) (page in french sorry 😅).
+*   ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
 
 ### Collaborate
 *   🤝 Collaborate in realtime with your team mates
@@ -37,9 +37,15 @@ Docs is a collaborative text editor designed to address common challenges in kno
 *   📚 Built-in wiki functionality to transform your team's collaborative work into organized knowledge `ETA 02/2025`
 
 ### Self-host
-*   🚀 Easy to install, scalable (Kube first) and secure alternative to Notion, Outline and Confluence
+*   🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
 
 ## Getting started 🔧
+### Test it
+Test Docs on your browser by logging in on this [environment](https://impress-preprod.beta.numerique.gouv.fr/docs/0aa856e9-da41-4d59-b73d-a61cb2c1245f/)
+```
+email: test.docs@yopmail.com
+password: I'd<3ToTestDocs
+```
 ### Run it locally
 **Prerequisite**
 Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop:
