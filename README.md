@@ -164,4 +164,4 @@ docs
 Impress is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [MinIO](https://min.io/) and [BlocNote.js](https://www.blocknotejs.org/)
 
 ### States ❤️ open source
-Docs is the result of a joint effort lead by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 government ([ZenDiS](https://zendis.de/)). We are always looking for new public partners feel free please reach out if you are interested in using or contributing to docs.
+Docs is the result of a joint effort lead by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 government ([ZenDiS](https://zendis.de/)). We are always looking for new public partners feel free to reach out if you are interested in using or contributing to docs.
