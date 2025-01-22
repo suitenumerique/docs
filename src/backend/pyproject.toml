@@ -33,6 +33,7 @@ dependencies = [
     "django-countries==7.6.1",
     "django-filter==24.3",
     "django-parler==2.3",
+    "django-prometheus==2.3.1",
     "redis==5.2.1",
     "django-redis==5.4.0",
     "django-storages[s3]==1.14.4",

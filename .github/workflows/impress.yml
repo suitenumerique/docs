@@ -153,6 +153,9 @@ jobs:
       AWS_S3_ENDPOINT_URL: http://localhost:9000
       AWS_S3_ACCESS_KEY_ID: impress
       AWS_S3_SECRET_ACCESS_KEY: password
+      MONITORING_PROMETHEUS_EXPORTER: true
+      MONITORING_PROBING: true
+      MONITORING_ALLOWED_CIDR_RANGES: "*"
 
     steps:
       - name: Checkout repository

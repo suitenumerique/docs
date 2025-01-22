@@ -23,6 +23,9 @@ from sentry_sdk.integrations.django import DjangoIntegration
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join("/", "data")
+MONITORING_PROMETHEUS_EXPORTER = (
+    os.getenv("MONITORING_PROMETHEUS_EXPORTER", "False").lower() == "true"
+)
 
 
 def get_release():
@@ -283,6 +286,26 @@ class Base(Configuration):
         "dockerflow.django.middleware.DockerflowMiddleware",
     ]
 
+    if MONITORING_PROMETHEUS_EXPORTER:
+        MIDDLEWARE.insert(0, "django_prometheus.middleware.PrometheusBeforeMiddleware")
+        MIDDLEWARE.append("django_prometheus.middleware.PrometheusAfterMiddleware")
+        PROMETHEUS_METRIC_NAMESPACE = "impress"
+        PROMETHEUS_LATENCY_BUCKETS = (
+            0.05,
+            0.1,
+            0.25,
+            0.5,
+            0.75,
+            1.0,
+            1.5,
+            2.5,
+            5.0,
+            10.0,
+            15.0,
+            30.0,
+            float("inf"),
+        )
+
     AUTHENTICATION_BACKENDS = [
         "django.contrib.auth.backends.ModelBackend",
         "core.authentication.backends.OIDCAuthenticationBackend",
@@ -296,6 +319,7 @@ class Base(Configuration):
         "drf_spectacular",
         # Third party apps
         "corsheaders",
+        "django_prometheus",
         "dockerflow.django",
         "rest_framework",
         "parler",
