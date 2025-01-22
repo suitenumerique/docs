@@ -27,7 +27,7 @@ Docs is a collaborative text editor designed to address common challenges in kno
 *   😌 Simple collaborative editing without the formatting complexity of markdown
 *   🔌 Offline? No problem, keep writing, your edits will get synced when back online
 *   💅 Create clean documents with limited but beautiful formatting options and focus on content
-*   🧱 Built for productivity (markdown support, many block types, slash commands, markdown support, keyboard shortcuts) (page in french sorry 😅).
+*   🧱 Built for productivity (markdown support, many block types, slash commands, keyboard shortcuts).
 *   ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
 
 ### Collaborate
@@ -91,7 +91,7 @@ password: impress
 $ make run-with-frontend
 ```
 
-⚠️ For the frontend developper, it is often better to run the frontend in development mode locally.
+⚠️ For the frontend developer, it is often better to run the frontend in development mode locally.
 
 To do so, install the frontend dependencies with the following command:
 
@@ -144,7 +144,7 @@ Want to know where the project is headed? [🗺️ Checkout our roadmap](https:/
 ## Licence 📝
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
 
 ## Contributing 🙌
 This project is intended to be community-driven, so please, do not hesitate to get in touch if you have any question related to our implementation or design decisions.
@@ -167,7 +167,7 @@ docs
 
 ## Credits ❤️
 ### Stack
-Impress is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [MinIO](https://min.io/) and [BlocNote.js](https://www.blocknotejs.org/)
+Impress is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [MinIO](https://min.io/) and [BlockNote.js](https://www.blocknotejs.org/)
 
 ### States ❤️ open source
 Docs is the result of a joint effort lead by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 government ([ZenDiS](https://zendis.de/)). We are always looking for new public partners feel free to reach out if you are interested in using or contributing to docs.
