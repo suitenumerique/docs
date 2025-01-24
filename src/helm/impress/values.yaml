@@ -251,6 +251,19 @@ backend:
         python manage.py createsuperuser --email $DJANGO_SUPERUSER_EMAIL --password $DJANGO_SUPERUSER_PASSWORD
     restartPolicy: Never
 
+  ## @extra backend.job job dedicated to run a random management command, for example after a deployment
+  ## @param backend.job.name The name to use to describe this job
+  ## @param backend.job.command The management command to execute
+  ## @param backend.job.restartPolicy The restart policy for the job.
+  ## @extra backend.job.annotations Annotations to add to the job [default: argocd.argoproj.io/hook: PostSync]
+  ## @skip backend.job.annotations.argocd.argoproj.io/hook
+  job:
+    name: ""
+    command: []
+    restartPolicy: Never
+    annotations: 
+      argocd.argoproj.io/hook: PostSync
+
   ## @param backend.probes.liveness.path [nullable] Configure path for backend HTTP liveness probe
   ## @param backend.probes.liveness.targetPort [nullable] Configure port for backend HTTP liveness probe
   ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for backend liveness probe
