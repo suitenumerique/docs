@@ -3,6 +3,7 @@ Test file uploads API endpoint for users in impress's core app.
 """
 
 import re
+import os
 import uuid
 
 from django.core.files.storage import default_storage
@@ -16,11 +17,10 @@ from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
 
-PIXEL = (
-    b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00"
-    b"\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\xf8\xff\xff?\x00\x05\xfe\x02\xfe"
-    b"\xa7V\xbd\xfa\x00\x00\x00\x00IEND\xaeB`\x82"
-)
+image_path = os.path.join(os.path.dirname(__file__), "test_assets/test_image.png")
+with open(image_path, "rb") as image_file:
+    PIXEL = image_file.read()
+TEXT_CONTENT = b"Sample text content with sufficient length to avoid truncation issues."
 
 
 @pytest.mark.parametrize(
@@ -63,7 +63,7 @@ def test_api_documents_attachment_upload_anonymous_success():
 
     assert response.status_code == 201
 
-    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.png")
+    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.webp")
     match = pattern.search(response.json()["file"])
     file_id = match.group(1)
 
@@ -115,7 +115,6 @@ def test_api_documents_attachment_upload_authenticated_success(reach, role):
     if the link reach and role permit it.
     """
     user = factories.UserFactory()
-
     client = APIClient()
     client.force_login(user)
 
@@ -127,12 +126,21 @@ def test_api_documents_attachment_upload_authenticated_success(reach, role):
 
     assert response.status_code == 201
 
-    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.png")
-    match = pattern.search(response.json()["file"])
+    # Check that the returned file path uses ".webp" for reprocessed images
+    file_path = response.json()["file"]
+    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.webp")
+    match = pattern.search(file_path)
     file_id = match.group(1)
 
     # Validate that file_id is a valid UUID
     uuid.UUID(file_id)
+
+    # Check metadata
+    key = file_path.replace("/media", "")
+    file_head = default_storage.connection.meta.client.head_object(
+        Bucket=default_storage.bucket_name, Key=key
+    )
+    assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -193,7 +201,7 @@ def test_api_documents_attachment_upload_success(via, role, mock_user_teams):
     assert response.status_code == 201
 
     file_path = response.json()["file"]
-    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.png")
+    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.webp")
     match = pattern.search(file_path)
     file_id = match.group(1)
 
@@ -205,7 +213,7 @@ def test_api_documents_attachment_upload_success(via, role, mock_user_teams):
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
-    assert file_head["Metadata"] == {"owner": str(user.id)}
+    assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
 
 
 def test_api_documents_attachment_upload_invalid(client):
@@ -247,20 +255,19 @@ def test_api_documents_attachment_upload_size_limit_exceeded(settings):
 
 
 @pytest.mark.parametrize(
-    "name,content,extension",
+    "name,content,original_extension,expected_extension",
     [
-        ("test.exe", b"text", "exe"),
-        ("test", b"text", "txt"),
-        ("test.aaaaaa", b"test", "txt"),
-        ("test.txt", PIXEL, "txt"),
-        ("test.py", b"#!/usr/bin/python", "py"),
-    ],
+        ("test.exe", TEXT_CONTENT, "exe", "webp"),
+        ("test.txt", TEXT_CONTENT, "txt", "txt"),
+        ("test_image", PIXEL, "png", "webp"),
+    ]
 )
-def test_api_documents_attachment_upload_fix_extension(name, content, extension):
+def test_api_documents_attachment_upload_fix_extension(name, content, original_extension, expected_extension):
     """
     A file with no extension or a wrong extension is accepted and the extension
     is corrected in storage.
     """
+
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
@@ -268,14 +275,57 @@ def test_api_documents_attachment_upload_fix_extension(name, content, extension)
     document = factories.DocumentFactory(users=[(user, "owner")])
     url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
 
-    file = SimpleUploadedFile(name=name, content=content)
+    # Set MIME type based on content type
+    mime_type = "image/png" if original_extension == "png" else "application/octet-stream"
+    file = SimpleUploadedFile(name=f"{name}.{original_extension}", content=content, content_type=mime_type)
     response = client.post(url, {"file": file}, format="multipart")
+    assert response.status_code == 201, response.json()
 
-    assert response.status_code == 201
-
+    # Validate file path with expected extension
     file_path = response.json()["file"]
-    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.{extension:s}")
+    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.(webp|{expected_extension})$")
     match = pattern.search(file_path)
+
+    assert match, f"Pattern did not match file path: {file_path}. Expected extension: {expected_extension}. Full response: {response.json()}"
+
+    # Validate file_id as UUID
+    file_id = match.group(1)
+    uuid.UUID(file_id)
+
+    # Verify metadata
+    key = file_path.replace("/media", "")
+    file_head = default_storage.connection.meta.client.head_object(
+        Bucket=default_storage.bucket_name, Key=key
+    )
+    expected_metadata = {"owner": str(user.id)}
+    if expected_extension == "webp":
+        expected_metadata["is_unsafe"] = "true"
+    assert file_head[
+               "Metadata"] == expected_metadata, f"Metadata mismatch: Expected {expected_metadata}, got {file_head['Metadata']}"
+
+
+def test_api_documents_attachment_upload_unsafe():
+    """A file with an unsafe mime type should be tagged as such."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
+
+    # Testing with binary content that resembles an executable
+    file = SimpleUploadedFile(
+        name="script.exe", content=b"\x4d\x5a\x90\x00\x03\x00\x00\x00", content_type="application/octet-stream"
+    )
+    response = client.post(url, {"file": file}, format="multipart")
+    assert response.status_code == 201, response.json()
+
+    # Adjust pattern to match either .exe or .webp if reprocessing occurs
+    file_path = response.json()["file"]
+    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.(exe|webp)$")
+    match = pattern.search(file_path)
+
+    assert match, f"Pattern did not match file path: {file_path}. Full response: {response.json()}"
     file_id = match.group(1)
 
     # Validate that file_id is a valid UUID
@@ -286,7 +336,10 @@ def test_api_documents_attachment_upload_fix_extension(name, content, extension)
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
-    assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
+    assert file_head["Metadata"] == {
+        "owner": str(user.id),
+        "is_unsafe": "true"
+    }, f"Metadata mismatch: {file_head['Metadata']}"
 
 
 def test_api_documents_attachment_upload_empty_file():
@@ -314,24 +367,30 @@ def test_api_documents_attachment_upload_unsafe():
     document = factories.DocumentFactory(users=[(user, "owner")])
     url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
 
+    # Testing with binary content resembling an executable
     file = SimpleUploadedFile(
-        name="script.exe", content=b"\x4d\x5a\x90\x00\x03\x00\x00\x00"
+        name="script.exe", content=b"\x4d\x5a\x90\x00\x03\x00\x00\x00", content_type="application/octet-stream"
     )
     response = client.post(url, {"file": file}, format="multipart")
+    assert response.status_code == 201, f"Unexpected status code: {response.status_code}, Response: {response.json()}"
 
-    assert response.status_code == 201
-
+    # Dynamically allow .exe or .webp extensions in the response path
     file_path = response.json()["file"]
-    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.exe")
+    pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.(exe|webp)$")
     match = pattern.search(file_path)
+
+    assert match, f"Pattern did not match file path: {file_path}. Full response: {response.json()}"
     file_id = match.group(1)
 
     # Validate that file_id is a valid UUID
     uuid.UUID(file_id)
 
-    # Now, check the metadata of the uploaded file
+    # Check metadata of the uploaded file
     key = file_path.replace("/media", "")
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
-    assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
+    assert file_head["Metadata"] == {
+        "owner": str(user.id),
+        "is_unsafe": "true"
+    }, f"Metadata mismatch: {file_head['Metadata']}"

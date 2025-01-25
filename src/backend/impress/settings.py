@@ -143,6 +143,8 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    DOCUMENT_IMAGE_MAX_DIMENSIONS = (1920, 1080)
+
     DOCUMENT_UNSAFE_MIME_TYPES = [
         # Executable Files
         "application/x-msdownload",

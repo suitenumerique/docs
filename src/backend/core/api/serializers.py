@@ -1,11 +1,14 @@
 """Client serializers for the impress core app."""
-
 import mimetypes
+import os
+from PIL import UnidentifiedImageError, Image
 
+from io import BytesIO
 from django.conf import settings
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 import magic
 from rest_framework import exceptions, serializers
@@ -348,18 +351,12 @@ class LinkDocumentSerializer(BaseResourceSerializer):
 # since we don't use a model and only rely on the serializer for validation
 # pylint: disable=abstract-method
 class FileUploadSerializer(serializers.Serializer):
-    """Receive file upload requests."""
+    """Receive file upload requests with validation, resizing, and compression."""
 
     file = serializers.FileField()
 
     def validate_file(self, file):
-        """Add file size and type constraints as defined in settings."""
-        # Validate file size
-        if file.size > settings.DOCUMENT_IMAGE_MAX_SIZE:
-            max_size = settings.DOCUMENT_IMAGE_MAX_SIZE // (1024 * 1024)
-            raise serializers.ValidationError(
-                f"File size exceeds the maximum limit of {max_size:d} MB."
-            )
+        """Validate, resize, and compress the file if it’s an image."""
 
         extension = file.name.rpartition(".")[-1] if "." in file.name else None
 
@@ -367,6 +364,44 @@ class FileUploadSerializer(serializers.Serializer):
         mime = magic.Magic(mime=True)
         magic_mime_type = mime.from_buffer(file.read(1024))
         file.seek(0)  # Reset file pointer to the beginning after reading
+
+        # Pass through SVG files without modification
+        if "image/" in magic_mime_type and extension != "svg":
+
+            # Attempt to open the file with PIL to determine if it's a valid image
+            try:
+                image = Image.open(file)
+            except UnidentifiedImageError:
+                raise serializers.ValidationError("The uploaded file is not a valid image or the format is not supported.")
+
+            # Resize and compress the image
+            max_width, max_height = settings.DOCUMENT_IMAGE_MAX_DIMENSIONS
+            image.thumbnail((max_width, max_height))
+
+            # Save image as WebP in memory with compression
+            image_io = BytesIO()
+            image.save(image_io, format="WEBP", quality=85, optimize=True)
+            image_io.seek(0)
+            image_io.name = "compressed.webp"
+
+            # Replace the file with the WebP version
+            file = InMemoryUploadedFile(
+                image_io, None, image_io.name, "image/webp", image_io.getbuffer().nbytes, None
+            )
+
+        # Validate compressed file size
+        # if image_io.getbuffer().nbytes > settings.DOCUMENT_IMAGE_MAX_SIZE:
+        #     max_size = settings.DOCUMENT_IMAGE_MAX_SIZE // (1024 * 1024)
+        #     raise serializers.ValidationError(
+        #         f"Compressed file size exceeds the maximum limit of {max_size:d} MB."
+        #     )
+
+        # Validate initial file size
+        if file.size > settings.DOCUMENT_IMAGE_MAX_SIZE:
+            max_size = settings.DOCUMENT_IMAGE_MAX_SIZE // (1024 * 1024)
+            raise serializers.ValidationError(
+                f"File size exceeds the maximum limit of {max_size:d} MB."
+            )
 
         self.context["is_unsafe"] = (
             magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
@@ -387,7 +422,7 @@ class FileUploadSerializer(serializers.Serializer):
         if extension is None:
             raise serializers.ValidationError("Could not determine file extension.")
 
-        self.context["expected_extension"] = extension
+        self.context["expected_extension"] = "webp"  # Set expected extension to WebP
 
         return file
 

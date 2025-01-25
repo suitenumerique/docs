@@ -101,6 +101,9 @@ and this project adheres to
 
 
 ## [1.8.1] - 2024-11-27
+- 🚸(backend) improve users similarity search and sort results #391
+- 🌐(backend) add german translation #259
+- ♻️(backend) compress img before saving #320
 
 ## Fixed
 
@@ -123,6 +126,8 @@ and this project adheres to
 ## Changed
 
 - 🚸(backend) improve users similarity search and sort results #391
+- 🌐(backend) add german translation #259
+- ♻️(backend) compress img before saving #320
 - ♻️(frontend) simplify stores #402
 - ✨(frontend) update $css Box props type to add styled components RuleSet #423
 - ✅(CI) trivy continue on error #453
