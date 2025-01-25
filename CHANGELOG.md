@@ -11,7 +11,7 @@ and this project adheres to
 
 ## Added
 
-- github actions to managed Crowdin workflow
+- github actions to manage Crowdin workflow
 - 📈Integrate Posthog #540
 - 🏷️(backend) add content-type to uploaded files #552
 - ✨(frontend) export pdf docx front side #537
@@ -20,7 +20,6 @@ and this project adheres to
 
 - 💄(frontend) add abilities on doc row #581
 - 💄(frontend) improve DocsGridItem responsive padding  #582
-
 
 ## [2.0.1] - 2025-01-17
 

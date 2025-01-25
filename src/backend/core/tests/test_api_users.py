@@ -42,8 +42,9 @@ def test_api_users_list_authenticated():
 
 def test_api_users_list_query_email():
     """
-    Authenticated users should be able to list users
-    and filter by email.
+    Authenticated users should be able to list users and filter by email.
+    Only results with a Levenstein distance less than 3 with the query should be returned.
+    We want to match by Levenstein distance because we want to prevent typing errors.
     """
     user = factories.UserFactory()
 
@@ -51,9 +52,7 @@ def test_api_users_list_query_email():
     client.force_login(user)
 
     dave = factories.UserFactory(email="david.bowman@work.com")
-    nicole = factories.UserFactory(email="nicole_foole@work.com")
-    frank = factories.UserFactory(email="frank_poole@work.com")
-    factories.UserFactory(email="heywood_floyd@work.com")
+    factories.UserFactory(email="nicole.bowman@work.com")
 
     response = client.get(
         "/api/v1.0/users/?q=david.bowman@work.com",
@@ -62,59 +61,53 @@ def test_api_users_list_query_email():
     user_ids = [user["id"] for user in response.json()["results"]]
     assert user_ids == [str(dave.id)]
 
-    response = client.get("/api/v1.0/users/?q=oole")
-
+    response = client.get(
+        "/api/v1.0/users/?q=davig.bovman@worm.com",
+    )
     assert response.status_code == 200
     user_ids = [user["id"] for user in response.json()["results"]]
-    assert user_ids == [str(nicole.id), str(frank.id)]
+    assert user_ids == [str(dave.id)]
+
+    response = client.get(
+        "/api/v1.0/users/?q=davig.bovman@worm.cop",
+    )
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()["results"]]
+    assert user_ids == []
 
 
 def test_api_users_list_query_email_matching():
-    """While filtering by email, results should be filtered and sorted by similarity"""
+    """While filtering by email, results should be filtered and sorted by Levenstein distance."""
     user = factories.UserFactory()
 
     client = APIClient()
     client.force_login(user)
 
-    alice = factories.UserFactory(email="alice.johnson@example.gouv.fr")
-    factories.UserFactory(email="jane.smith@example.gouv.fr")
-    michael_wilson = factories.UserFactory(email="michael.wilson@example.gouv.fr")
-    factories.UserFactory(email="david.jones@example.gouv.fr")
-    michael_brown = factories.UserFactory(email="michael.brown@example.gouv.fr")
-    factories.UserFactory(email="sophia.taylor@example.gouv.fr")
+    user1 = factories.UserFactory(email="alice.johnson@example.gouv.fr")
+    user2 = factories.UserFactory(email="alice.johnnson@example.gouv.fr")
+    user3 = factories.UserFactory(email="alice.kohlson@example.gouv.fr")
+    user4 = factories.UserFactory(email="alicia.johnnson@example.gouv.fr")
+    user5 = factories.UserFactory(email="alicia.johnnson@example.gov.uk")
+    factories.UserFactory(email="alice.thomson@example.gouv.fr")
 
     response = client.get(
-        "/api/v1.0/users/?q=michael.johnson@example.gouv.f",
+        "/api/v1.0/users/?q=alice.johnson@example.gouv.fr",
     )
     assert response.status_code == 200
     user_ids = [user["id"] for user in response.json()["results"]]
-    assert user_ids == [str(michael_wilson.id)]
+    assert user_ids == [str(user1.id), str(user2.id), str(user3.id), str(user4.id)]
 
-    response = client.get("/api/v1.0/users/?q=michael.johnson@example.gouv.fr")
+    response = client.get("/api/v1.0/users/?q=alicia.johnnson@example.gouv.fr")
 
     assert response.status_code == 200
     user_ids = [user["id"] for user in response.json()["results"]]
-    assert user_ids == [str(michael_wilson.id), str(alice.id), str(michael_brown.id)]
-
-    response = client.get(
-        "/api/v1.0/users/?q=ajohnson@example.gouv.f",
-    )
-    assert response.status_code == 200
-    user_ids = [user["id"] for user in response.json()["results"]]
-    assert user_ids == [str(alice.id)]
-
-    response = client.get(
-        "/api/v1.0/users/?q=michael.wilson@example.gouv.f",
-    )
-    assert response.status_code == 200
-    user_ids = [user["id"] for user in response.json()["results"]]
-    assert user_ids == [str(michael_wilson.id)]
+    assert user_ids == [str(user4.id), str(user2.id), str(user1.id), str(user5.id)]
 
 
 def test_api_users_list_query_email_exclude_doc_user():
     """
-    Authenticated users should be able to list users
-    and filter by email and exclude users who have access to a document.
+    Authenticated users should be able to list users while filtering by email
+    and excluding users who have access to a document.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory()
@@ -122,17 +115,19 @@ def test_api_users_list_query_email_exclude_doc_user():
     client = APIClient()
     client.force_login(user)
 
-    nicole = factories.UserFactory(email="nicole_foole@work.com")
-    frank = factories.UserFactory(email="frank_poole@work.com")
+    nicole_fool = factories.UserFactory(email="nicole_fool@work.com")
+    nicole_pool = factories.UserFactory(email="nicole_pool@work.com")
     factories.UserFactory(email="heywood_floyd@work.com")
 
-    factories.UserDocumentAccessFactory(document=document, user=frank)
+    factories.UserDocumentAccessFactory(document=document, user=nicole_pool)
 
-    response = client.get("/api/v1.0/users/?q=oole&document_id=" + str(document.id))
+    response = client.get(
+        "/api/v1.0/users/?q=nicole_fool@work.com&document_id=" + str(document.id)
+    )
 
     assert response.status_code == 200
     user_ids = [user["id"] for user in response.json()["results"]]
-    assert user_ids == [str(nicole.id)]
+    assert user_ids == [str(nicole_fool.id)]
 
 
 def test_api_users_retrieve_me_anonymous():
