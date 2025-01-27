@@ -12,6 +12,8 @@ and this project adheres to
 ## Added
 
 - github actions to managed Crowdin workflow
+- 📈Integrate Posthog #540
+
 
 ## Changed
 

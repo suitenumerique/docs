@@ -149,6 +149,15 @@ Requires top level scope
 {{- end }}
 
 {{/*
+Full name for the Posthog
+
+Requires top level scope
+*/}}
+{{- define "impress.posthog.fullname" -}}
+{{ include "impress.fullname" . }}-posthog
+{{- end }}
+
+{{/*
 Full name for the yProvider
 
 Requires top level scope

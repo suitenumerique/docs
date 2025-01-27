@@ -1,0 +1,24 @@
+{{- if .Values.posthog.ingressAssets.enabled -}}
+{{- $envVars := include "impress.common.env" (list . .Values.posthog) -}}
+{{- $fullName := include "impress.posthog.fullname" . -}}
+{{- $component := "posthog" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}-assets-proxy
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+  annotations:
+    {{- toYaml $.Values.posthog.assetsService.annotations | nindent 4 }}
+spec:
+  type: {{ .Values.posthog.assetsService.type }}
+  externalName: {{ .Values.posthog.assetsService.externalName }}
+  ports:
+    - port: {{ .Values.posthog.assetsService.port }}
+      targetPort: {{ .Values.posthog.assetsService.targetPort }}
+      protocol: TCP
+      name: https
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}
+{{- end }}

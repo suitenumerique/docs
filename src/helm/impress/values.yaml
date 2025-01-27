@@ -390,6 +390,77 @@ frontend:
   ## @param frontend.extraVolumes Additional volumes to mount on the frontend.
   extraVolumes: []
 
+## @section posthog
+
+posthog:
+
+  ## @param posthog.ingress.enabled Enable or disable the ingress resource creation
+  ## @param posthog.ingress.className Kubernetes ingress class name to use (e.g., nginx, traefik)
+  ## @param posthog.ingress.host Primary hostname for the ingress resource
+  ## @param posthog.ingress.path URL path prefix for the ingress routes (e.g., /)
+  ## @param posthog.ingress.hosts Additional hostnames array to be included in the ingress
+  ## @param posthog.ingress.tls.enabled Enable or disable TLS/HTTPS for the ingress
+  ## @param posthog.ingress.tls.additional Additional TLS configurations for extra hosts/certificates
+  ## @param posthog.ingress.customBackends Custom backend service configurations for the ingress
+  ## @param posthog.ingress.annotations Additional Kubernetes annotations to apply to the ingress
+  ingress:
+    enabled: false
+    className: null
+    host: impress.example.com
+    path: /
+    hosts: [ ]
+    tls:
+      enabled: true
+      additional: [ ]
+
+    customBackends: [ ]
+    annotations: {}
+
+  ## @param posthog.ingressAssets.enabled Enable or disable the ingress resource creation
+  ## @param posthog.ingressAssets.className Kubernetes ingress class name to use (e.g., nginx, traefik)
+  ## @param posthog.ingressAssets.host Primary hostname for the ingress resource
+  ## @param posthog.ingressAssets.paths URL paths prefix for the ingress routes (e.g., /static)
+  ## @param posthog.ingressAssets.hosts Additional hostnames array to be included in the ingress
+  ## @param posthog.ingressAssets.tls.enabled Enable or disable TLS/HTTPS for the ingress
+  ## @param posthog.ingressAssets.tls.additional Additional TLS configurations for extra hosts/certificates
+  ## @param posthog.ingressAssets.customBackends Custom backend service configurations for the ingress
+  ## @param posthog.ingressAssets.annotations Additional Kubernetes annotations to apply to the ingress
+  ingressAssets:
+    enabled: false
+    className: null
+    host: impress.example.com
+    paths:
+    - /static
+    - /array
+    hosts: [ ]
+    tls:
+      enabled: true
+      additional: [ ]
+
+    customBackends: [ ]
+    annotations: {}
+
+  ## @param posthog.service.type Service type (e.g. ExternalName, ClusterIP, LoadBalancer)
+  ## @param posthog.service.externalName External service hostname when type is ExternalName
+  ## @param posthog.service.port Port number for the service
+  ## @param posthog.service.annotations Additional annotations to apply to the service
+  service:
+    type: ExternalName
+    externalName: eu.i.posthog.com
+    port: 443
+    annotations: {}
+
+  ## @param posthog.assetsService.type Service type (e.g. ExternalName, ClusterIP, LoadBalancer)
+  ## @param posthog.assetsService.externalName External service hostname when type is ExternalName
+  ## @param posthog.assetsService.port Port number for the service
+  ## @param posthog.assetsService.annotations Additional annotations to apply to the service
+  assetsService:
+    type: ExternalName
+    externalName: eu-assets.i.posthog.com
+    port: 443
+    annotations: {}
+
+
 ## @section yProvider
 
 yProvider:

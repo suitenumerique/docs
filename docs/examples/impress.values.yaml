@@ -40,6 +40,7 @@ backend:
     LOGIN_REDIRECT_URL: https://impress.127.0.0.1.nip.io
     LOGIN_REDIRECT_URL_FAILURE: https://impress.127.0.0.1.nip.io
     LOGOUT_REDIRECT_URL: https://impress.127.0.0.1.nip.io
+    POSTHOG_KEY: "{'id': 'posthog_key', 'host': 'https://product.impress.127.0.0.1.nip.io'}"
     DB_HOST: postgresql
     DB_NAME: impress
     DB_USER: dinum
@@ -120,6 +121,12 @@ yProvider:
     COLLABORATION_SERVER_ORIGIN: https://impress.127.0.0.1.nip.io
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
+
+posthog:
+  ingress:
+    enabled: false
+  ingressAssets:
+    enabled: false
 
 ingress:
   enabled: true
