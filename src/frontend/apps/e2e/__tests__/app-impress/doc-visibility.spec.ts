@@ -250,7 +250,7 @@ test.describe('Doc Visibility: Public', () => {
     await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
     await expect(page.getByRole('button', { name: 'search' })).toBeHidden();
     await expect(page.getByRole('button', { name: 'New doc' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Share' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
     const card = page.getByLabel('It is the card information');
     await expect(card).toBeVisible();
 
@@ -314,7 +314,7 @@ test.describe('Doc Visibility: Public', () => {
     await page.goto(urlDoc);
 
     await verifyDocName(page, docTitle);
-    await expect(page.getByRole('button', { name: 'Share' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
   });
 });
 
@@ -413,6 +413,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.goto(urlDoc);
 
     await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
+    await page.getByRole('button', { name: 'Share' }).click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
   });
@@ -468,6 +469,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.goto(urlDoc);
 
     await verifyDocName(page, docTitle);
+    await page.getByRole('button', { name: 'Share' }).click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
   });

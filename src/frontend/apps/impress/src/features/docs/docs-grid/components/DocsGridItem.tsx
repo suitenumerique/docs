@@ -63,11 +63,16 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             $align="center"
             $gap={spacings.xs}
             $flex={flexLeft}
-            $padding={{ right: 'md' }}
+            $padding={{ right: isDesktop ? 'md' : '3xs' }}
           >
             <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
-            {showAccesses && isDesktop && (
-              <>
+            {showAccesses && (
+              <Box
+                $padding={{ top: '3xs' }}
+                $css={css`
+                  align-self: flex-start;
+                `}
+              >
                 <Tooltip
                   content={
                     <Text $textAlign="center" $variation="000">
@@ -87,7 +92,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
                     />
                   </div>
                 </Tooltip>
-              </>
+              </Box>
             )}
           </Box>
         </StyledLink>

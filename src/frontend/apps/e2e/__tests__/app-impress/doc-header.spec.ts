@@ -418,6 +418,13 @@ test.describe('Doc Header', () => {
 
     await goToGridDoc(page);
 
+    const shareButton = page.getByRole('button', {
+      name: 'Share',
+      exact: true,
+    });
+    await expect(shareButton).toBeVisible();
+
+    await shareButton.click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
   });
@@ -455,6 +462,7 @@ test.describe('Documents Header mobile', () => {
 
     await expect(page.getByRole('button', { name: 'Copy link' })).toBeHidden();
     await page.getByLabel('Open the document options').click();
+    await page.getByRole('button', { name: 'Share' }).click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
     // Test that clipboard is in HTML format

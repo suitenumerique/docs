@@ -114,7 +114,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             arrowCss={css`
               color: ${colors['primary-800']} !important;
             `}
-            disabled={!doc.abilities.accesses_manage}
+            disabled={!canManage}
             showArrow={true}
             options={linkReachOptions}
           >

@@ -151,7 +151,7 @@ services:
     image: node:18
     user: "${DOCKER_USER:-1000}"
     environment:
-      HOME: /tmp
+      HOME: /tmp 
     volumes:
       - ".:/app"
 

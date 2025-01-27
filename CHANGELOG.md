@@ -13,6 +13,11 @@ and this project adheres to
 
 - github actions to managed Crowdin workflow
 
+## Changed
+
+- 💄(frontend) add abilities on doc row #581
+
+
 ## [2.0.1] - 2025-01-17
 
 ## Fixed

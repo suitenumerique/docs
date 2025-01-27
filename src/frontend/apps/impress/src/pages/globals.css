@@ -41,19 +41,3 @@ main ::-webkit-scrollbar-thumb:hover,
   cursor: pointer;
   outline: inherit;
 }
-
-.c__modal__scroller:has(.noPadding) {
-  padding: 0 !important;
-
-  .c__modal__close .c__button {
-    right: 5px;
-    top: 5px;
-    padding: 1.5rem 1rem;
-  }
-
-  .c__modal__title {
-    font-size: var(--c--theme--font--sizes--xs);
-    padding: var(--c--theme--spacings--base);
-    margin-bottom: 0;
-  }
-}
