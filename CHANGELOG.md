@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ➕(backend) add  `django-lasuite` dependency #839
+
 ## [3.1.0] - 2025-04-07
 
 ## Added

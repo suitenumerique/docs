@@ -73,8 +73,8 @@ These are the environmental variables you can set for the impress-backend contai
 | OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION       | faillback to email for identification                                                         | true                                                    |
 | OIDC_ALLOW_DUPLICATE_EMAILS                     | Allow dupplicate emails                                                                       | false                                                   |
 | USER_OIDC_ESSENTIAL_CLAIMS                      | essential claims in OIDC token                                                                | []                                                      |
-| USER_OIDC_FIELDS_TO_FULLNAME                    | OIDC token claims to create full name                                                         | ["first_name", "last_name"]                             |
-| USER_OIDC_FIELD_TO_SHORTNAME                    | OIDC token claims to create shortname                                                         | first_name                                              |
+| OIDC_USERINFO_FULLNAME_FIELDS                   | OIDC token claims to create full name                                                         | ["first_name", "last_name"]                             |
+| OIDC_USERINFO_SHORTNAME_FIELD                   | OIDC token claims to create shortname                                                         | first_name                                              |
 | ALLOW_LOGOUT_GET_METHOD                         | Allow get logout method                                                                       | true                                                    |
 | AI_API_KEY                                      | AI key to be used for AI Base url                                                             |                                                         |
 | AI_BASE_URL                                     | OpenAI compatible AI base url                                                                 |                                                         |

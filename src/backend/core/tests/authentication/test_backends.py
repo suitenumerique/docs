@@ -2,14 +2,14 @@
 
 import random
 import re
-from logging import Logger
-from unittest import mock
 
 from django.core.exceptions import SuspiciousOperation
 from django.test.utils import override_settings
 
 import pytest
 import responses
+from cryptography.fernet import Fernet
+from lasuite.oidc_login.backends import get_oidc_refresh_token
 
 from core import models
 from core.authentication.backends import OIDCAuthenticationBackend
@@ -57,7 +57,7 @@ def test_authentication_getter_existing_user_via_email(
 
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
-    with django_assert_num_queries(2):
+    with django_assert_num_queries(3):  # user by sub, user by mail, update sub
         user = klass.get_or_create_user(
             access_token="test-token", id_token=None, payload=None
         )
@@ -288,7 +288,7 @@ def test_authentication_getter_new_user_no_email(monkeypatch):
     assert user.email is None
     assert user.full_name is None
     assert user.short_name is None
-    assert user.password == "!"
+    assert user.has_usable_password() is False
     assert models.User.objects.count() == 1
 
 
@@ -315,7 +315,7 @@ def test_authentication_getter_new_user_with_email(monkeypatch):
     assert user.email == email
     assert user.full_name == "John Doe"
     assert user.short_name == "John"
-    assert user.password == "!"
+    assert user.has_usable_password() is False
     assert models.User.objects.count() == 1
 
 
@@ -345,11 +345,15 @@ def test_authentication_get_userinfo_json_response():
 
 @override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
 @responses.activate
-def test_authentication_get_userinfo_token_response(monkeypatch):
+def test_authentication_get_userinfo_token_response(monkeypatch, settings):
     """Test get_userinfo method with a token response."""
-
+    settings.OIDC_RP_SIGN_ALGO = "HS256"  # disable JWKS URL call
     responses.add(
-        responses.GET, re.compile(r".*/userinfo"), body="fake.jwt.token", status=200
+        responses.GET,
+        re.compile(r".*/userinfo"),
+        body="fake.jwt.token",
+        status=200,
+        content_type="application/jwt",
     )
 
     def mock_verify_token(self, token):  # pylint: disable=unused-argument
@@ -371,21 +375,25 @@ def test_authentication_get_userinfo_token_response(monkeypatch):
 
 @override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
 @responses.activate
-def test_authentication_get_userinfo_invalid_response():
+def test_authentication_get_userinfo_invalid_response(settings):
     """
     Test get_userinfo method with an invalid JWT response that
     causes verify_token to raise an error.
     """
-
+    settings.OIDC_RP_SIGN_ALGO = "HS256"  # disable JWKS URL call
     responses.add(
-        responses.GET, re.compile(r".*/userinfo"), body="fake.jwt.token", status=200
+        responses.GET,
+        re.compile(r".*/userinfo"),
+        body="fake.jwt.token",
+        status=200,
+        content_type="application/jwt",
     )
 
     oidc_backend = OIDCAuthenticationBackend()
 
     with pytest.raises(
         SuspiciousOperation,
-        match="Invalid response format or token verification failed",
+        match="User info response was not valid JWT",
     ):
         oidc_backend.get_userinfo("fake_access_token", None, None)
 
@@ -450,100 +458,54 @@ def test_authentication_getter_existing_disabled_user_via_email(
     assert models.User.objects.count() == 1
 
 
-# Essential claims
-
-
-def test_authentication_verify_claims_default(django_assert_num_queries, monkeypatch):
-    """The sub claim should be mandatory by default."""
-    klass = OIDCAuthenticationBackend()
-
-    def get_userinfo_mocked(*args):
-        return {
-            "test": "123",
-        }
-
-    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
-
-    with (
-        django_assert_num_queries(0),
-        pytest.raises(
-            KeyError,
-            match="sub",
-        ),
-    ):
-        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
-
-    assert models.User.objects.exists() is False
-
-
-@pytest.mark.parametrize(
-    "essential_claims, missing_claims",
-    [
-        (["email", "sub"], ["email"]),
-        (["Email", "sub"], ["Email"]),  # Case sensitivity
-    ],
-)
-@override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
-@mock.patch.object(Logger, "error")
-def test_authentication_verify_claims_essential_missing(
-    mock_logger,
-    essential_claims,
-    missing_claims,
-    django_assert_num_queries,
-    monkeypatch,
+@responses.activate
+def test_authentication_session_tokens(
+    django_assert_num_queries, monkeypatch, rf, settings
 ):
-    """Ensure SuspiciousOperation is raised if essential claims are missing."""
+    """
+    Test that the session contains oidc_refresh_token and oidc_access_token after authentication.
+    """
+    settings.OIDC_OP_TOKEN_ENDPOINT = "http://oidc.endpoint.test/token"
+    settings.OIDC_OP_USER_ENDPOINT = "http://oidc.endpoint.test/userinfo"
+    settings.OIDC_OP_JWKS_ENDPOINT = "http://oidc.endpoint.test/jwks"
+    settings.OIDC_STORE_ACCESS_TOKEN = True
+    settings.OIDC_STORE_REFRESH_TOKEN = True
+    settings.OIDC_STORE_REFRESH_TOKEN_KEY = Fernet.generate_key()
 
     klass = OIDCAuthenticationBackend()
+    request = rf.get("/some-url", {"state": "test-state", "code": "test-code"})
+    request.session = {}
 
-    def get_userinfo_mocked(*args):
-        return {
-            "sub": "123",
-            "last_name": "Doe",
-        }
+    def verify_token_mocked(*args, **kwargs):
+        return {"sub": "123", "email": "test@example.com"}
 
-    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+    monkeypatch.setattr(OIDCAuthenticationBackend, "verify_token", verify_token_mocked)
 
-    with (
-        django_assert_num_queries(0),
-        pytest.raises(
-            SuspiciousOperation,
-            match="Claims verification failed",
-        ),
-        override_settings(USER_OIDC_ESSENTIAL_CLAIMS=essential_claims),
-    ):
-        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+    responses.add(
+        responses.POST,
+        re.compile(settings.OIDC_OP_TOKEN_ENDPOINT),
+        json={
+            "access_token": "test-access-token",
+            "refresh_token": "test-refresh-token",
+        },
+        status=200,
+    )
 
-    assert models.User.objects.exists() is False
-    mock_logger.assert_called_once_with("Missing essential claims: %s", missing_claims)
-
-
-@override_settings(
-    OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo",
-    USER_OIDC_ESSENTIAL_CLAIMS=["email", "last_name"],
-)
-def test_authentication_verify_claims_success(django_assert_num_queries, monkeypatch):
-    """Ensure user is authenticated when all essential claims are present."""
-
-    klass = OIDCAuthenticationBackend()
-
-    def get_userinfo_mocked(*args):
-        return {
-            "email": "john.doe@example.com",
-            "last_name": "Doe",
-            "sub": "123",
-        }
-
-    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+    responses.add(
+        responses.GET,
+        re.compile(settings.OIDC_OP_USER_ENDPOINT),
+        json={"sub": "123", "email": "test@example.com"},
+        status=200,
+    )
 
     with django_assert_num_queries(6):
-        user = klass.get_or_create_user(
-            access_token="test-token", id_token=None, payload=None
+        user = klass.authenticate(
+            request,
+            code="test-code",
+            nonce="test-nonce",
+            code_verifier="test-code-verifier",
         )
 
-    assert models.User.objects.filter(id=user.id).exists()
-
-    assert user.sub == "123"
-    assert user.full_name == "Doe"
-    assert user.short_name is None
-    assert user.email == "john.doe@example.com"
+    assert user is not None
+    assert request.session["oidc_access_token"] == "test-access-token"
+    assert get_oidc_refresh_token(request.session) == "test-refresh-token"
