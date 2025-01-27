@@ -33,6 +33,7 @@ dependencies = [
     "django-cors-headers==4.7.0",
     "django-countries==7.6.1",
     "django-filter==25.1",
+    "django-lasuite @ git+https://github.com/suitenumerique/django-lasuite@qbey/oidc-add-resource-server-clients",
     "django-parler==2.3",
     "redis==5.2.1",
     "django-redis==5.4.0",

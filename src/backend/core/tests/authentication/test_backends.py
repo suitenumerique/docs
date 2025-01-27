@@ -10,6 +10,8 @@ from django.test.utils import override_settings
 
 import pytest
 import responses
+from cryptography.fernet import Fernet
+from lasuite.oidc.backends import get_oidc_refresh_token
 
 from core import models
 from core.authentication.backends import OIDCAuthenticationBackend
@@ -547,3 +549,56 @@ def test_authentication_verify_claims_success(django_assert_num_queries, monkeyp
     assert user.full_name == "Doe"
     assert user.short_name is None
     assert user.email == "john.doe@example.com"
+
+
+@responses.activate
+def test_authentication_session_tokens(
+    django_assert_num_queries, monkeypatch, rf, settings
+):
+    """
+    Test that the session contains oidc_refresh_token and oidc_access_token after authentication.
+    """
+    settings.OIDC_OP_TOKEN_ENDPOINT = "http://oidc.endpoint.test/token"
+    settings.OIDC_OP_USER_ENDPOINT = "http://oidc.endpoint.test/userinfo"
+    settings.OIDC_OP_JWKS_ENDPOINT = "http://oidc.endpoint.test/jwks"
+    settings.OIDC_STORE_ACCESS_TOKEN = True
+    settings.OIDC_STORE_REFRESH_TOKEN = True
+    settings.OIDC_STORE_REFRESH_TOKEN_KEY = Fernet.generate_key()
+
+    klass = OIDCAuthenticationBackend()
+    request = rf.get("/some-url", {"state": "test-state", "code": "test-code"})
+    request.session = {}
+
+    def verify_token_mocked(*args, **kwargs):
+        return {"sub": "123", "email": "test@example.com"}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "verify_token", verify_token_mocked)
+
+    responses.add(
+        responses.POST,
+        re.compile(settings.OIDC_OP_TOKEN_ENDPOINT),
+        json={
+            "access_token": "test-access-token",
+            "refresh_token": "test-refresh-token",
+        },
+        status=200,
+    )
+
+    responses.add(
+        responses.GET,
+        re.compile(settings.OIDC_OP_USER_ENDPOINT),
+        json={"sub": "123", "email": "test@example.com"},
+        status=200,
+    )
+
+    with django_assert_num_queries(6):
+        user = klass.authenticate(
+            request,
+            code="test-code",
+            nonce="test-nonce",
+            code_verifier="test-code-verifier",
+        )
+
+    assert user is not None
+    assert request.session["oidc_access_token"] == "test-access-token"
+    assert get_oidc_refresh_token(request.session) == "test-refresh-token"
