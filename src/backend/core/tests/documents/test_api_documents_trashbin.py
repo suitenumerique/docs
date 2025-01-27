@@ -85,6 +85,7 @@ def test_api_documents_trashbin_format():
             "media_auth": True,
             "move": False,  # Can't move a deleted document
             "partial_update": True,
+            "restore": True,
             "retrieve": True,
             "update": True,
             "versions_destroy": True,

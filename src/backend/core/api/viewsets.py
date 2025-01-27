@@ -14,15 +14,6 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import models as db
 from django.db import transaction
-from django.db.models import (
-    Exists,
-    F,
-    Func,
-    OuterRef,
-    Q,
-    Subquery,
-    Value,
-)
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404
@@ -579,6 +570,7 @@ class DocumentViewSet(
 
         return drf.response.Response(serializer.data)
 
+    @transaction.atomic
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
         obj = models.Document.add_root(
@@ -1250,6 +1242,7 @@ class TemplateViewSet(
         serializer = self.get_serializer(queryset, many=True)
         return drf.response.Response(serializer.data)
 
+    @transaction.atomic
     def perform_create(self, serializer):
         """Set the current user as owner of the newly created object."""
         obj = serializer.save()
