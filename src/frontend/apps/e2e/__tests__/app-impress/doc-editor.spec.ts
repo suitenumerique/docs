@@ -14,6 +14,29 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Editor', () => {
+  test('it saves the doc when we quit pages', async ({ page, browserName }) => {
+    // eslint-disable-next-line playwright/no-skipped-test
+    test.skip(browserName === 'webkit', 'This test is very flaky with webkit');
+
+    // Check the first doc
+    const doc = await goToGridDoc(page);
+
+    await verifyDocName(page, doc);
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await editor.fill('Hello World Doc persisted 2');
+    await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
+
+    await page.goto('/');
+
+    await goToGridDoc(page, {
+      title: doc,
+    });
+
+    await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
+  });
+
   test('it check translations of the slash menu when changing language', async ({
     page,
     browserName,
@@ -239,29 +262,6 @@ test.describe('Doc Editor', () => {
     });
 
     await expect(editor.getByText('Hello World Doc persisted 1')).toBeVisible();
-  });
-
-  test('it saves the doc when we quit pages', async ({ page, browserName }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
-    test.skip(browserName === 'webkit', 'This test is very flaky with webkit');
-
-    // Check the first doc
-    const doc = await goToGridDoc(page);
-
-    await verifyDocName(page, doc);
-
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('Hello World Doc persisted 2');
-    await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
-
-    await page.goto('/');
-
-    await goToGridDoc(page, {
-      title: doc,
-    });
-
-    await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
   });
 
   test('it cannot edit if viewer', async ({ page }) => {

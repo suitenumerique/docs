@@ -140,15 +140,14 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     return {
       groupName: t('Search user result'),
       elements: users,
-      endActions:
-        isEmail && users.length === 0
-          ? [
-              {
-                content: <DocShareModalInviteUserRow user={newUser} />,
-                onSelect: () => void onSelect(newUser),
-              },
-            ]
-          : undefined,
+      endActions: isEmail
+        ? [
+            {
+              content: <DocShareModalInviteUserRow user={newUser} />,
+              onSelect: () => void onSelect(newUser),
+            },
+          ]
+        : undefined,
     };
   }, [searchUsersQuery.data, t, userQuery]);
 

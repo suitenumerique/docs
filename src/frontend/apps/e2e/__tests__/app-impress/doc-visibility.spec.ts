@@ -67,6 +67,53 @@ test.describe('Doc Visibility', () => {
 test.describe('Doc Visibility: Restricted', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
+  test('A doc is accessible when member.', async ({ page, browserName }) => {
+    test.slow();
+    await page.goto('/');
+    await keyCloakSignIn(page, browserName);
+
+    const [docTitle] = await createDoc(page, 'Restricted auth', browserName, 1);
+
+    await verifyDocName(page, docTitle);
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    const inputSearch = page.getByRole('combobox', {
+      name: 'Quick search input',
+    });
+
+    const otherBrowser = browsersName.find((b) => b !== browserName);
+    const username = `user@${otherBrowser}.e2e`;
+    await inputSearch.fill(username);
+    await page.getByRole('option', { name: username }).first().click();
+
+    // Choose a role
+    const container = page.getByTestId('doc-share-add-member-list');
+    await container.getByLabel('doc-role-dropdown').click();
+    await page.getByRole('button', { name: 'Administrator' }).click();
+
+    await page.getByRole('button', { name: 'Invite' }).click();
+
+    await page.locator('.c__modal__backdrop').click({
+      position: { x: 0, y: 0 },
+    });
+
+    const urlDoc = page.url();
+
+    await page
+      .getByRole('button', {
+        name: 'Logout',
+      })
+      .click();
+
+    await keyCloakSignIn(page, otherBrowser!);
+
+    await page.goto(urlDoc);
+
+    await verifyDocName(page, docTitle);
+    await expect(page.getByLabel('Share button')).toBeVisible();
+  });
+
   test('A doc is not accessible when not authentified.', async ({
     page,
     browserName,
@@ -126,53 +173,6 @@ test.describe('Doc Visibility: Restricted', () => {
     await expect(
       page.getByText('You do not have permission to perform this action.'),
     ).toBeVisible();
-  });
-
-  test('A doc is accessible when member.', async ({ page, browserName }) => {
-    test.slow();
-    await page.goto('/');
-    await keyCloakSignIn(page, browserName);
-
-    const [docTitle] = await createDoc(page, 'Restricted auth', browserName, 1);
-
-    await verifyDocName(page, docTitle);
-
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
-
-    const otherBrowser = browsersName.find((b) => b !== browserName);
-    const username = `user@${otherBrowser}.e2e`;
-    await inputSearch.fill(username);
-    await page.getByRole('option', { name: username }).click();
-
-    // Choose a role
-    const container = page.getByTestId('doc-share-add-member-list');
-    await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Administrator' }).click();
-
-    await page.getByRole('button', { name: 'Invite' }).click();
-
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
-
-    const urlDoc = page.url();
-
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
-
-    await keyCloakSignIn(page, otherBrowser!);
-
-    await page.goto(urlDoc);
-
-    await verifyDocName(page, docTitle);
-    await expect(page.getByLabel('Share button')).toBeVisible();
   });
 });
 
