@@ -26,10 +26,10 @@ export const DocShareModalInviteUserRow = ({ user }: Props) => {
               color: var(--c--theme--colors--greyscale-400);
             `}
           >
-            <Text $theme="primary" $variation="600">
+            <Text $theme="primary" $variation="800">
               {t('Add')}
             </Text>
-            <Icon $theme="primary" $variation="600" iconName="add" />
+            <Icon $theme="primary" $variation="800" iconName="add" />
           </Box>
         }
       />

@@ -1,23 +1,33 @@
-import { useModal } from '@openfun/cunningham-react';
+import { Tooltip, useModal } from '@openfun/cunningham-react';
 import { DateTime } from 'luxon';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, StyledLink, Text } from '@/components';
-import { Doc } from '@/features/docs/doc-management';
+import { Box, Icon, StyledLink, Text } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
+import { Doc, LinkReach } from '@/features/docs/doc-management';
 import { DocShareModal } from '@/features/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
+
+import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocsGridActions } from './DocsGridActions';
 import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
 import { SimpleDocItem } from './SimpleDocItem';
-
 type DocsGridItemProps = {
   doc: Doc;
 };
 export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
+  const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
-
+  const { flexLeft, flexRight } = useResponsiveDocGrid();
+  const { spacingsTokens } = useCunninghamTheme();
+  const spacings = spacingsTokens();
   const shareModal = useModal();
+  const isPublic = doc.link_reach === LinkReach.PUBLIC;
+  const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
+
+  const showAccesses = isPublic || isAuthenticated;
 
   const handleShareClick = () => {
     shareModal.open();
@@ -29,8 +39,8 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
         $direction="row"
         $width="100%"
         $align="center"
-        $gap="20px"
         role="row"
+        $gap="20px"
         $padding={{ vertical: '2xs', horizontal: isDesktop ? 'base' : 'xs' }}
         $css={css`
           cursor: pointer;
@@ -41,39 +51,71 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
         `}
       >
         <StyledLink
-          $css="flex: 8; align-items: center;"
+          $css={css`
+            flex: ${flexLeft};
+            align-items: center;
+          `}
           href={`/docs/${doc.id}`}
         >
           <Box
             data-testid={`docs-grid-name-${doc.id}`}
-            $flex={6}
-            $padding={{ right: 'base' }}
+            $direction="row"
+            $align="center"
+            $gap={spacings.xs}
+            $flex={flexLeft}
+            $padding={{ right: 'md' }}
           >
             <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
+            {showAccesses && isDesktop && (
+              <>
+                <Tooltip
+                  content={
+                    <Text $textAlign="center" $variation="000">
+                      {isPublic
+                        ? t('Accessible to anyone')
+                        : t('Accessible to authenticated users')}
+                    </Text>
+                  }
+                  placement="top"
+                >
+                  <div>
+                    <Icon
+                      $theme="greyscale"
+                      $variation="600"
+                      $size="14px"
+                      iconName={isPublic ? 'public' : 'vpn_lock'}
+                    />
+                  </div>
+                </Tooltip>
+              </>
+            )}
           </Box>
-          {isDesktop && (
-            <Box $flex={2}>
-              <Text $variation="600" $size="xs">
-                {DateTime.fromISO(doc.updated_at).toRelative()}
-              </Text>
-            </Box>
-          )}
         </StyledLink>
+
         <Box
-          $flex={1.15}
+          $flex={flexRight}
           $direction="row"
           $align="center"
-          $justify="flex-end"
+          $justify={isDesktop ? 'space-between' : 'flex-end'}
           $gap="32px"
         >
           {isDesktop && (
-            <DocsGridItemSharedButton
-              doc={doc}
-              handleClick={handleShareClick}
-            />
+            <StyledLink href={`/docs/${doc.id}`}>
+              <Text $variation="600" $size="xs">
+                {DateTime.fromISO(doc.updated_at).toRelative()}
+              </Text>
+            </StyledLink>
           )}
 
-          <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+          <Box $direction="row" $align="center" $gap={spacings.lg}>
+            {isDesktop && (
+              <DocsGridItemSharedButton
+                doc={doc}
+                handleClick={handleShareClick}
+              />
+            )}
+            <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+          </Box>
         </Box>
       </Box>
       {shareModal.isOpen && (

@@ -26,7 +26,7 @@ export const useTranslatedShareSettings = () => {
     },
     [LinkReach.AUTHENTICATED]: {
       label: linkReachTranslations[LinkReach.AUTHENTICATED],
-      icon: 'corporate_fare',
+      icon: 'vpn_lock',
       value: LinkReach.AUTHENTICATED,
       descriptionReadOnly: t(
         'Anyone with the link can view the document if they are logged in',

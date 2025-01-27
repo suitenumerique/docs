@@ -34,6 +34,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
   const colors = colorsTokens();
+  const canManage = doc.abilities.accesses_manage;
   const [linkReach, setLinkReach] = useState<LinkReach>(doc.link_reach);
   const [docLinkRole, setDocLinkRole] = useState<LinkRole>(doc.link_role);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
@@ -106,29 +107,35 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           $direction="row"
           $align={isDesktop ? 'center' : undefined}
           $padding={{ horizontal: '2xs' }}
-          $gap={spacing['3xs']}
+          $gap={canManage ? spacing['3xs'] : spacing['base']}
         >
           <DropdownMenu
             label={t('Visibility')}
             arrowCss={css`
               color: ${colors['primary-800']} !important;
             `}
+            disabled={!doc.abilities.accesses_manage}
             showArrow={true}
             options={linkReachOptions}
           >
             <Box $direction="row" $align="center" $gap={spacing['3xs']}>
               <Icon
-                $theme="primary"
-                $variation="800"
+                $theme={canManage ? 'primary' : 'greyscale'}
+                $variation={canManage ? '800' : '600'}
                 iconName={linkReachChoices[linkReach].icon}
               />
-              <Text $theme="primary" $variation="800">
+              <Text
+                $theme={canManage ? 'primary' : 'greyscale'}
+                $variation={canManage ? '800' : '600'}
+                $weight="500"
+                $size="md"
+              >
                 {linkReachChoices[linkReach].label}
               </Text>
             </Box>
           </DropdownMenu>
           {isDesktop && (
-            <Text $size="xs" $variation="600">
+            <Text $size="xs" $variation="600" $weight="400">
               {description}
             </Text>
           )}
@@ -137,6 +144,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           <Box $direction="row" $align="center" $gap={spacing['3xs']}>
             {linkReach !== LinkReach.RESTRICTED && (
               <DropdownMenu
+                disabled={!canManage}
                 showArrow={true}
                 options={linkMode}
                 label={t('Visibility mode')}

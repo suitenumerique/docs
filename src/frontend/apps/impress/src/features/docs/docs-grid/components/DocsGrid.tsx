@@ -10,6 +10,8 @@ import {
 } from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
+
 import { DocsGridItem } from './DocsGridItem';
 import { DocsGridLoader } from './DocsGridLoader';
 
@@ -22,6 +24,7 @@ export const DocsGrid = ({
   const { t } = useTranslation();
 
   const { isDesktop } = useResponsiveStore();
+  const { flexLeft, flexRight } = useResponsiveDocGrid();
 
   const {
     data,
@@ -101,23 +104,21 @@ export const DocsGrid = ({
             <Box
               $direction="row"
               $padding={{ horizontal: 'xs' }}
-              $gap="20px"
+              $gap="10px"
               data-testid="docs-grid-header"
             >
-              <Box $flex={6} $padding="3xs">
+              <Box $flex={flexLeft} $padding="3xs">
                 <Text $size="xs" $variation="600" $weight="500">
                   {t('Name')}
                 </Text>
               </Box>
               {isDesktop && (
-                <Box $flex={2} $padding="3xs">
+                <Box $flex={flexRight} $padding={{ vertical: '3xs' }}>
                   <Text $size="xs" $weight="500" $variation="600">
                     {t('Updated at')}
                   </Text>
                 </Box>
               )}
-
-              <Box $flex={1.15} $align="flex-end" $padding="3xs" />
             </Box>
 
             {/* Body */}

@@ -13,8 +13,6 @@ type Props = {
 };
 
 export const DocShareModalFooter = ({ doc, onClose }: Props) => {
-  const canShare = doc.abilities.accesses_manage;
-
   const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
   return (
@@ -24,12 +22,10 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
       `}
     >
       <HorizontalSeparator $withPadding={true} />
-      {canShare && (
-        <>
-          <DocVisibility doc={doc} />
-          <HorizontalSeparator />
-        </>
-      )}
+
+      <DocVisibility doc={doc} />
+      <HorizontalSeparator />
+
       <Box
         $direction="row"
         $justify="space-between"

@@ -20,12 +20,14 @@ export type DropdownMenuProps = {
   showArrow?: boolean;
   label?: string;
   arrowCss?: BoxProps['$css'];
+  disabled?: boolean;
   topMessage?: string;
 };
 
 export const DropdownMenu = ({
   options,
   children,
+  disabled = false,
   showArrow = false,
   arrowCss,
   label,
@@ -39,6 +41,10 @@ export const DropdownMenu = ({
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
   };
+
+  if (disabled) {
+    return children;
+  }
 
   return (
     <DropButton

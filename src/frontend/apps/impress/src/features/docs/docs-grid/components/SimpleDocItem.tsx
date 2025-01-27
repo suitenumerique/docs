@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon';
 import { css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/features/docs/doc-management';
+import { Doc } from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
@@ -33,11 +33,6 @@ export const SimpleDocItem = ({
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
-
-  const isPublic = doc?.link_reach === LinkReach.PUBLIC;
-  const isShared = !isPublic && doc.nb_accesses > 1;
-  const accessCount = doc.nb_accesses - 1;
-  const isSharedOrPublic = isShared || isPublic;
 
   return (
     <Box $direction="row" $gap={spacings.sm}>
@@ -69,22 +64,6 @@ export const SimpleDocItem = ({
             $gap={spacings['3xs']}
             $margin={{ top: '-2px' }}
           >
-            {isPublic && (
-              <Icon iconName="public" $size="16px" $variation="600" />
-            )}
-            {isShared && (
-              <Icon iconName="group" $size="16px" $variation="600" />
-            )}
-            {isSharedOrPublic && accessCount > 0 && (
-              <Text $size="12px" $weight="bold" $variation="600">
-                {accessCount}
-              </Text>
-            )}
-            {isSharedOrPublic && (
-              <Text $size="12px" $variation="600">
-                ·
-              </Text>
-            )}
             <Text $variation="600" $size="xs">
               {DateTime.fromISO(doc.updated_at).toRelative()}
             </Text>

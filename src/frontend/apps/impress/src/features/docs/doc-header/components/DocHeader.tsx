@@ -42,7 +42,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
           <Box
             aria-label={t('Public document')}
             $color={colors['primary-800']}
-            $background={colors['primary-100']}
+            $background={colors['primary-050']}
             $radius={spacings['3xs']}
             $direction="row"
             $padding="xs"
