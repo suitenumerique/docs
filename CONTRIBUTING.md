@@ -2,7 +2,14 @@
 
 Thank you for taking the time to contribute! Please follow these guidelines to ensure a smooth and productive workflow. 🚀🚀🚀
 
-To get started with the project, please refer to the [README.md](https://github.com/numerique-gouv/impress/blob/main/README.md) for detailed instructions.
+To get started with the project, please refer to the [README.md](https://github.com/suitenumerique/docs/blob/main/README.md) for detailed instructions.
+
+Please also check out our [dev handbook](https://suitenumerique.gitbook.io/handbook) to learn our best practices.
+
+## Help us with translations
+
+You can help us with translations on [Crowdin](https://crowdin.com/project/lasuite-docs).
+Your language is not there? Request it on our Crowdin page 😊.
 
 ## Creating an Issue
 

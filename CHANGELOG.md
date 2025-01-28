@@ -51,7 +51,7 @@ and this project adheres to
 - 💄(frontend) update DocHeader ui #448
 - 💄(frontend) update doc versioning ui #463
 - 💄(frontend) update doc summary ui #473
-- 📝(doc) update readme.md to match V2 changes #558
+- 📝(doc) update readme.md to match V2 changes #558 & #572
 
 ## Fixed
 
