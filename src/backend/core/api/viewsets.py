@@ -140,6 +140,7 @@ class UserViewSet(
     permission_classes = [permissions.IsSelf]
     queryset = models.User.objects.all()
     serializer_class = serializers.UserSerializer
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         """
@@ -629,7 +630,7 @@ class DocumentViewSet(
         nginx.ingress.kubernetes.io/auth-url annotation to understand how the Nginx ingress
         is configured to do this.
 
-        Based on the original url and the logged in user, we must decide if we authorize Nginx
+        Based on the original url and the logged-in user, we must decide if we authorize Nginx
         to let this request go through (by returning a 200 code) or if we block it (by returning
         a 403 error). Note that we return 403 errors without any further details for security
         reasons.
@@ -834,7 +835,7 @@ class DocumentAccessViewSet(
     serializer_class = serializers.DocumentAccessSerializer
 
     def perform_create(self, serializer):
-        """Add a new access to the document and send an email to the new added user."""
+        """Add new access to the document and email the new added user."""
         access = serializer.save()
         language = self.request.headers.get("Content-Language", "en-us")
 
@@ -846,7 +847,7 @@ class DocumentAccessViewSet(
         )
 
     def perform_update(self, serializer):
-        """Update an access to the document and notify the collaboration server."""
+        """Update access to the document and notify the collaboration server."""
         access = serializer.save()
 
         access_user_id = None
@@ -859,7 +860,7 @@ class DocumentAccessViewSet(
         )
 
     def perform_destroy(self, instance):
-        """Delete an access to the document and notify the collaboration server."""
+        """Delete access to the document and notify the collaboration server."""
         instance.delete()
 
         # Notify collaboration server about the access removed
@@ -1098,7 +1099,7 @@ class InvitationViewset(
         return queryset
 
     def perform_create(self, serializer):
-        """Save invitation to a document then send an email to the invited user."""
+        """Save invitation to a document then email the invited user."""
         invitation = serializer.save()
 
         language = self.request.headers.get("Content-Language", "en-us")

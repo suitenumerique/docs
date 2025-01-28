@@ -26,18 +26,18 @@ export const updateDoc = async ({
 
 interface UpdateDocProps {
   onSuccess?: (data: Doc) => void;
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 }
 
 export function useUpdateDoc({
   onSuccess,
-  listInvalideQueries,
+  listInvalidQueries,
 }: UpdateDocProps = {}) {
   const queryClient = useQueryClient();
   return useMutation<Doc, APIError, UpdateDocParams>({
     mutationFn: updateDoc,
     onSuccess: (data) => {
-      listInvalideQueries?.forEach((queryKey) => {
+      listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });

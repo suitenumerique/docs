@@ -46,8 +46,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     terminateCrispSession();
     window.location.replace(`${baseApiUrl()}logout/`);
   },
-  // If we try to access a specific page and we are not authenticated
-  // we store the path in the local storage to redirect to it after login
+  // If we try to access a specific page, and we are not authenticated
+  // we store the path in the local storage to redirect to it after log in
   setAuthUrl() {
     if (window.location.pathname !== '/') {
       localStorage.setItem(PATH_AUTH_LOCAL_STORAGE, window.location.pathname);

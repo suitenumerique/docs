@@ -160,7 +160,7 @@ def test_api_documents_media_auth_authenticated_restricted():
 @pytest.mark.parametrize("via", VIA)
 def test_api_documents_media_auth_related(via, mock_user_teams):
     """
-    Users who have a specific access to a document, whatever the role, should be able to
+    Users who have specific access to a document, whatever the role, should be able to
     retrieve related attachments.
     """
     user = factories.UserFactory()

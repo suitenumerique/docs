@@ -221,7 +221,7 @@ and this project adheres to
 
 - 🛂(frontend) match email if no existing user matches the sub
 - 🐛(backend) gitlab oicd userinfo endpoint #232
-- 🛂(frontend) redirect to the OIDC when private doc and unauthentified #292
+- 🛂(frontend) redirect to the OIDC when private doc and unauthenticated #292
 - ♻️(backend) getting list of document versions available for a user #258
 - 🔧(backend) fix configuration to avoid different ssl warning #297
 - 🐛(frontend) fix editor break line not working #302
@@ -350,7 +350,7 @@ and this project adheres to
 - ⚡️(e2e) unique login between tests (#80)
 - ⚡️(CI) improve e2e job (#86)
 - ♻️(frontend) improve the error and message info ui (#93)
-- ✏️(frontend) change all occurences of pad to doc (#99)
+- ✏️(frontend) change all occurrences of pad to doc (#99)
 
 ## Fixed
 

@@ -647,7 +647,7 @@ def test_api_template_accesses_delete_administrators_except_owners(
     via, mock_user_teams
 ):
     """
-    Users who are administrators in a template should be allowed to delete an access
+    Users who are administrators in a template should be allowed to delete access
     from the template provided it is not ownership.
     """
     user = factories.UserFactory()

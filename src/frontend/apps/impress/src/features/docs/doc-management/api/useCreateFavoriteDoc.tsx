@@ -20,18 +20,18 @@ export const createFavoriteDoc = async ({ id }: CreateFavoriteDocParams) => {
 
 interface CreateFavoriteDocProps {
   onSuccess?: () => void;
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 }
 
 export function useCreateFavoriteDoc({
   onSuccess,
-  listInvalideQueries,
+  listInvalidQueries,
 }: CreateFavoriteDocProps) {
   const queryClient = useQueryClient();
   return useMutation<void, APIError, CreateFavoriteDocParams>({
     mutationFn: createFavoriteDoc,
     onSuccess: () => {
-      listInvalideQueries?.forEach((queryKey) => {
+      listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });

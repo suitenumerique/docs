@@ -34,7 +34,7 @@ interface IDocsDB extends DBSchema {
 type TableName = 'doc-list' | 'doc-item' | 'doc-mutation';
 
 /**
- * IndexDB version must be a integer
+ * IndexDB version must be an integer
  * @returns
  */
 const getCurrentVersion = () => {

@@ -84,7 +84,7 @@ def test_models_documents_file_key():
 def test_models_documents_get_abilities_forbidden(is_authenticated, reach, role):
     """
     Check abilities returned for a document giving insufficient roles to link holders
-    i.e anonymous users or authenticated users who have no specific role on the document.
+    i.e. anonymous users or authenticated users who have no specific role on the document.
     """
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
@@ -121,7 +121,7 @@ def test_models_documents_get_abilities_forbidden(is_authenticated, reach, role)
 def test_models_documents_get_abilities_reader(is_authenticated, reach):
     """
     Check abilities returned for a document giving reader role to link holders
-    i.e anonymous users or authenticated users who have no specific role on the document.
+    i.e. anonymous users or authenticated users who have no specific role on the document.
     """
     document = factories.DocumentFactory(link_reach=reach, link_role="reader")
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
@@ -158,7 +158,7 @@ def test_models_documents_get_abilities_reader(is_authenticated, reach):
 def test_models_documents_get_abilities_editor(is_authenticated, reach):
     """
     Check abilities returned for a document giving editor role to link holders
-    i.e anonymous users or authenticated users who have no specific role on the document.
+    i.e. anonymous users or authenticated users who have no specific role on the document.
     """
     document = factories.DocumentFactory(link_reach=reach, link_role="editor")
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
@@ -449,7 +449,7 @@ def test_models_documents__email_invitation__success():
 
 def test_models_documents__email_invitation__success_fr():
     """
-    The email invitation is sent successfully in french.
+    The email invitation is sent successfully in French.
     """
     document = factories.DocumentFactory()
 

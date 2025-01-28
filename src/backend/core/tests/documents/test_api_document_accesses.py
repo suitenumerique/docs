@@ -698,7 +698,7 @@ def test_api_document_accesses_delete_administrators_except_owners(
     mock_reset_connections,  # pylint: disable=redefined-outer-name
 ):
     """
-    Users who are administrators in a document should be allowed to delete an access
+    Users who are administrators in a document should be allowed to delete access
     from the document provided it is not ownership.
     """
     user = factories.UserFactory()
