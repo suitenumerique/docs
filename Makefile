@@ -38,13 +38,13 @@ DB_PORT            = 5432
 DOCKER_UID          = $(shell id -u)
 DOCKER_GID          = $(shell id -g)
 DOCKER_USER         = $(DOCKER_UID):$(DOCKER_GID)
-COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose
+COMPOSE             = DOCKER_USER=$(DOCKER_USER) ./bin/compose
+COMPOSE_PRODUCTION  = DOCKER_USER=$(DOCKER_USER) COMPOSE_FILE=compose.production.yaml ./bin/compose
 COMPOSE_EXEC        = $(COMPOSE) exec
 COMPOSE_EXEC_APP    = $(COMPOSE_EXEC) app-dev
 COMPOSE_RUN         = $(COMPOSE) run --rm
 COMPOSE_RUN_APP     = $(COMPOSE_RUN) app-dev
 COMPOSE_RUN_CROWDIN = $(COMPOSE_RUN) crowdin crowdin
-WAIT_DB             = @$(COMPOSE_RUN) dockerize -wait tcp://$(DB_HOST):$(DB_PORT) -timeout 60s
 
 # -- Backend
 MANAGE              = $(COMPOSE_RUN_APP) python manage.py
@@ -64,6 +64,19 @@ data/media:
 
 data/static:
 	@mkdir -p data/static
+
+# -- production volumes
+data/production/media:
+	@mkdir -p data/production/media
+
+data/production/certs:
+	@mkdir -p data/production/certs
+
+data/production/databases/backend:
+	@mkdir -p data/production/databases/backend
+
+data/production/databases/keycloak:
+	@mkdir -p data/production/databases/keycloak
 
 # -- Project
 
@@ -88,6 +101,27 @@ bootstrap: \
 	mails-install \
 	mails-build
 .PHONY: bootstrap
+
+bootstrap-production: ## Prepare project to run in production mode using docker compose
+bootstrap-production: \
+	env.d/production \
+	data/production/media \
+	data/production/certs \
+	data/production/databases/backend \
+	data/production/databases/keycloak
+bootstrap-production:
+	@echo 'Environment files created in env.d/production'
+	@echo 'Edit them to set good value for your production environment'
+.PHONY: bootstrap-production
+
+run-production: ## Run compose project in production mode
+	@$(COMPOSE_PRODUCTION) up -d ingress
+.PHONY: run-production
+
+stop-production: ## Stop compose project in production mode
+	@$(COMPOSE_PRODUCTION) stop
+.PHONY: stop-production
+
 
 # -- Docker/compose
 build: cache ?= --no-cache
@@ -124,8 +158,6 @@ run: ## start the wsgi (production) and development server
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider
 	@$(COMPOSE) up --force-recreate -d nginx
-	@echo "Wait for postgresql to be up..."
-	@$(WAIT_DB)
 .PHONY: run
 
 run-with-frontend: ## Start all the containers needed (backend to frontend)
@@ -188,14 +220,12 @@ test-back-parallel: ## run all back-end tests in parallel
 makemigrations:  ## run django makemigrations for the impress project.
 	@echo "$(BOLD)Running makemigrations$(RESET)"
 	@$(COMPOSE) up -d postgresql
-	@$(WAIT_DB)
 	@$(MANAGE) makemigrations
 .PHONY: makemigrations
 
 migrate:  ## run django migrations for the impress project.
 	@echo "$(BOLD)Running migrations$(RESET)"
 	@$(COMPOSE) up -d postgresql
-	@$(WAIT_DB)
 	@$(MANAGE) migrate
 .PHONY: migrate
 
@@ -229,6 +259,8 @@ resetdb: ## flush database and create a superuser "admin"
 	@${MAKE} superuser
 .PHONY: resetdb
 
+# -- Environment variable files
+
 env.d/development/common:
 	cp -n env.d/development/common.dist env.d/development/common
 
@@ -237,6 +269,9 @@ env.d/development/postgresql:
 
 env.d/development/kc_postgresql:
 	cp -n env.d/development/kc_postgresql.dist env.d/development/kc_postgresql
+
+env.d/production:
+	cp -rnf env.d/production.dist env.d/production
 
 # -- Internationalization
 

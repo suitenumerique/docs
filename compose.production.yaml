@@ -1,0 +1,167 @@
+name: docs-production
+
+services:
+  postgresql:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-U", "docs", "-d", "docs"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
+    env_file:
+      - env.d/production/postgresql
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/production/databases/backend:/var/lib/postgresql/data/pgdata
+
+  redis:
+    image: redis:5
+
+  backend-migration:
+    image: lasuite/impress-backend:latest
+    user: ${DOCKER_USER:-1000}
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    environment:
+      - DJANGO_CONFIGURATION=Production
+    env_file:
+      - env.d/production/backend
+      - env.d/production/postgresql
+      - env.d/production/yprovider
+    depends_on:
+      postgresql:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+
+  backend:
+    image: lasuite/impress-backend:latest
+    user: ${DOCKER_USER:-1000}
+    restart: always
+    environment:
+      - DJANGO_CONFIGURATION=Production
+    env_file:
+      - env.d/production/backend
+      - env.d/production/postgresql
+      - env.d/production/yprovider
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check"]
+      interval: 15s
+      timeout: 30s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      postgresql:
+        condition: service_healthy
+        restart: true
+      backend-migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+      minio-bootstrap:
+        condition: service_completed_successfully
+
+  celery:
+    user: ${DOCKER_USER:-1000}
+    image: lasuite/impress-backend:latest
+    command: ["celery", "-A", "impress.celery_app", "worker", "-l", "INFO"]
+    environment:
+      - DJANGO_CONFIGURATION=Production
+    env_file:
+      - env.d/production/backend
+      - env.d/production/postgresql
+      - env.d/production/yprovider
+    depends_on:
+      - backend
+
+  frontend:
+    image: lasuite/impress-frontend:latest
+    user: ${DOCKER_USER:-1000}
+
+  y-provider:
+    image: lasuite/impress-y-provider:latest
+    user: ${DOCKER_USER:-1000}
+    env_file:
+      - env.d/production/yprovider
+
+  kc_postgresql:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-U", "keycloak", "-d", "keycloak"]
+      interval: 1s
+      timeout: 2s
+      retries: 300    
+    env_file:
+      - env.d/production/kc_postgresql
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/production/databases/keycloak:/var/lib/postgresql/data/pgdata
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.0
+    command: ["start"]
+    env_file:
+      - env.d/production/keycloak
+      - env.d/production/kc_postgresql
+    ports:
+      - "8443:8443"
+    volumes:
+      - ${DOCS_PROD_KEYCLOAK_CERT_FOLDER:-./data/production/certs}:/etc/ssl/certs:ro
+    depends_on:
+      kc_postgresql:
+        condition: service_healthy
+        restart: true
+
+  minio-bootstrap:
+    image: minio/mc
+    env_file:
+      - env.d/production/minio
+    depends_on:
+      minio:
+        condition: service_healthy
+        restart: true
+    entrypoint: >
+      sh -c "
+      /usr/bin/mc alias set docs http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} && \
+      /usr/bin/mc mb --ignore-existing docs/docs-media-storage && \
+      /usr/bin/mc version enable docs/docs-media-storage && \
+      exit 0;"
+
+  minio:
+    user: ${DOCKER_USER:-1000}
+    image: minio/minio
+    env_file:
+      - env.d/production/minio
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 20s
+      retries: 300
+    entrypoint: ""
+    command: minio server /data
+    volumes:
+      - ./data/production/media:/data
+
+  ingress:
+    image: nginx:1.27
+    ports:
+      - "${DOCS_PROD_NGING_PORT:-443}:8083"
+    volumes:
+      - ./docker/files/production/etc/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${DOCS_PROD_NGINX_CERT_FOLDER:-./data/production/certs}:/etc/nginx/ssl:ro
+    depends_on:
+      frontend:
+        condition: service_started
+      y-provider:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      backend:
+        condition: service_healthy
+        restart: true

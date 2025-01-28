@@ -1,0 +1,2 @@
+MINIO_ROOT_USER=<Set minio root username>
+MINIO_ROOT_PASSWORD=<Set minio root password>
