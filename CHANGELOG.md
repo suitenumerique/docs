@@ -19,6 +19,7 @@ and this project adheres to
 ## Changed
 
 - 💄(frontend) add abilities on doc row #581
+- 💄(frontend) improve DocsGridItem responsive padding  #582
 
 
 ## [2.0.1] - 2025-01-17

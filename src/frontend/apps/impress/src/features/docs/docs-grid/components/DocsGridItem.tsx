@@ -68,10 +68,14 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
             {showAccesses && (
               <Box
-                $padding={{ top: '3xs' }}
-                $css={css`
-                  align-self: flex-start;
-                `}
+                $padding={{ top: !isDesktop ? '4xs' : undefined }}
+                $css={
+                  !isDesktop
+                    ? css`
+                        align-self: flex-start;
+                      `
+                    : undefined
+                }
               >
                 <Tooltip
                   content={
