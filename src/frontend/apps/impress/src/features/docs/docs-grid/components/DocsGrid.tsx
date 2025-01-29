@@ -70,6 +70,7 @@ export const DocsGrid = ({
     >
       <DocsGridLoader isLoading={isRefetching || loading} />
       <Card
+        role="grid"
         data-testid="docs-grid"
         $height="100%"
         $width="100%"

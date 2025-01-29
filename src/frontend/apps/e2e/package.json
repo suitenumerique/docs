@@ -13,11 +13,9 @@
   },
   "devDependencies": {
     "@playwright/test": "1.49.1",
-    "@types/luxon": "3.4.2",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.4",
     "eslint-config-impress": "*",
-    "luxon": "3.5.0",
     "typescript": "*"
   },
   "dependencies": {

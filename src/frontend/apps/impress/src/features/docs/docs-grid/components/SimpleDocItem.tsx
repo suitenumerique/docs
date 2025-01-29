@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
@@ -30,6 +31,7 @@ export const SimpleDocItem = ({
   isPinned = false,
   showAccesses = false,
 }: SimpleDocItemProps) => {
+  const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
@@ -44,7 +46,11 @@ export const SimpleDocItem = ({
           filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
         `}
       >
-        {isPinned ? <PinnedDocumentIcon /> : <SimpleFileIcon />}
+        {isPinned ? (
+          <PinnedDocumentIcon aria-label={t('Pin document icon')} />
+        ) : (
+          <SimpleFileIcon aria-label={t('Simple document icon')} />
+        )}
       </Box>
       <Box $justify="center">
         <Text

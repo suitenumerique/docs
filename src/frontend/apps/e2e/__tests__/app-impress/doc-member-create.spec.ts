@@ -26,7 +26,7 @@ test.describe('Document create member', () => {
     const response = await responsePromise;
     const users = (await response.json()).results as {
       email: string;
-      full_name: string;
+      full_name?: string | null;
     }[];
 
     const list = page.getByTestId('doc-share-add-member-list');
@@ -40,7 +40,9 @@ test.describe('Document create member', () => {
     await expect(
       list.getByTestId(`doc-share-add-member-${users[0].email}`),
     ).toBeVisible();
-    await expect(list.getByText(`${users[0].full_name}`)).toBeVisible();
+    await expect(
+      list.getByText(`${users[0].full_name || users[0].email}`),
+    ).toBeVisible();
 
     // Select user 2 and verify tag
     await inputSearch.fill('user');
@@ -51,7 +53,9 @@ test.describe('Document create member', () => {
     await expect(
       list.getByTestId(`doc-share-add-member-${users[1].email}`),
     ).toBeVisible();
-    await expect(list.getByText(`${users[1].full_name}`)).toBeVisible();
+    await expect(
+      list.getByText(`${users[1].full_name || users[1].email}`),
+    ).toBeVisible();
 
     // Select email and verify tag
     const email = randomName('test@test.fr', browserName, 1)[0];
@@ -81,7 +85,9 @@ test.describe('Document create member', () => {
     // Check user added
     await expect(page.getByText('Share with 3 users')).toBeVisible();
     await expect(
-      quickSearchContent.getByText(users[0].full_name).first(),
+      quickSearchContent
+        .getByText(users[0].full_name || users[0].email)
+        .first(),
     ).toBeVisible();
     await expect(
       quickSearchContent.getByText(users[0].email).first(),
@@ -90,7 +96,9 @@ test.describe('Document create member', () => {
       quickSearchContent.getByText(users[1].email).first(),
     ).toBeVisible();
     await expect(
-      quickSearchContent.getByText(users[1].full_name).first(),
+      quickSearchContent
+        .getByText(users[1].full_name || users[1].email)
+        .first(),
     ).toBeVisible();
   });
 

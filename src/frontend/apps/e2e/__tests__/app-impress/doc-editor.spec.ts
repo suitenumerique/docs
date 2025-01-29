@@ -220,7 +220,7 @@ test.describe('Doc Editor', () => {
     browserName,
   }) => {
     // Check the first doc
-    const [doc] = await createDoc(page, 'doc-saves-change', browserName, 1);
+    const [doc] = await createDoc(page, 'doc-saves-change', browserName);
     await verifyDocName(page, doc);
 
     const editor = page.locator('.ProseMirror');
@@ -228,9 +228,11 @@ test.describe('Doc Editor', () => {
     await editor.fill('Hello World Doc persisted 1');
     await expect(editor.getByText('Hello World Doc persisted 1')).toBeVisible();
 
-    const secondDoc = await goToGridDoc(page, {
-      nthRow: 2,
-    });
+    const [secondDoc] = await createDoc(
+      page,
+      'doc-saves-change-other',
+      browserName,
+    );
 
     await verifyDocName(page, secondDoc);
 
@@ -238,6 +240,7 @@ test.describe('Doc Editor', () => {
       title: doc,
     });
 
+    await verifyDocName(page, doc);
     await expect(editor.getByText('Hello World Doc persisted 1')).toBeVisible();
   });
 
@@ -246,8 +249,7 @@ test.describe('Doc Editor', () => {
     test.skip(browserName === 'webkit', 'This test is very flaky with webkit');
 
     // Check the first doc
-    const doc = await goToGridDoc(page);
-
+    const [doc] = await createDoc(page, 'doc-quit-1', browserName, 1);
     await verifyDocName(page, doc);
 
     const editor = page.locator('.ProseMirror');

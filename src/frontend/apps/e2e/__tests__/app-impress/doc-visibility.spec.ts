@@ -171,6 +171,9 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await page.goto(urlDoc);
 
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(1000);
+
     await verifyDocName(page, docTitle);
     await expect(page.getByLabel('Share button')).toBeVisible();
   });
@@ -209,6 +212,7 @@ test.describe('Doc Visibility: Public', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
+    await expect(page.getByLabel('Visibility mode')).toBeVisible();
     await page.getByLabel('Visibility mode').click();
     await page
       .getByRole('button', {

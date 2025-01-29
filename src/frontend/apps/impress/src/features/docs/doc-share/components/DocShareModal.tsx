@@ -30,12 +30,9 @@ import { DocShareModalFooter } from './DocShareModalFooter';
 import { DocShareModalInviteUserRow } from './DocShareModalInviteUserByEmail';
 
 const ShareModalStyle = createGlobalStyle`
-
   .c__modal__title {
     padding-bottom: 0 !important;
-
-}
-
+  }
 `;
 
 type Props = {

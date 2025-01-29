@@ -26,7 +26,7 @@ export const createDoc = async (
   page: Page,
   docName: string,
   browserName: string,
-  length: number,
+  length: number = 1,
 ) => {
   const randomDocs = randomName(docName, browserName, length);
 
@@ -40,7 +40,8 @@ export const createDoc = async (
       })
       .click();
 
-    const input = page.getByRole('textbox', { name: 'doc title input' });
+    const input = page.getByLabel('doc title input');
+    await expect(input).toHaveText('');
     await input.click();
     await input.fill(randomDocs[i]);
     await input.blur();
@@ -91,6 +92,22 @@ export const addNewMember = async (
   return users[index].email;
 };
 
+export const getGridRow = async (page: Page, title: string) => {
+  const docsGrid = page.getByRole('grid');
+  await expect(docsGrid).toBeVisible();
+  await expect(page.getByTestId('grid-loader')).toBeHidden();
+
+  const rows = docsGrid.getByRole('row');
+
+  const row = rows.filter({
+    hasText: title,
+  });
+
+  await expect(row).toBeVisible();
+
+  return row;
+};
+
 interface GoToGridDocOptions {
   nthRow?: number;
   title?: string;
@@ -104,7 +121,7 @@ export const goToGridDoc = async (
 
   const docsGrid = page.getByTestId('docs-grid');
   await expect(docsGrid).toBeVisible();
-  await expect(docsGrid.getByTestId('grid-loader')).toBeHidden();
+  await expect(page.getByTestId('grid-loader')).toBeHidden();
 
   const rows = docsGrid.getByRole('row');
 

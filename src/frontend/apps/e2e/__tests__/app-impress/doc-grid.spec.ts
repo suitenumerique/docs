@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { createDoc, getGridRow } from './common';
+
 type SmallDoc = {
   id: string;
   title: string;
@@ -92,6 +94,31 @@ test.describe('Documents Grid mobile', () => {
 });
 
 test.describe('Document grid item options', () => {
+  test('it pins a document', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
+
+    await page.goto('/');
+
+    const row = await getGridRow(page, docTitle);
+
+    // Pin
+    await row.getByText(`more_horiz`).click();
+    await page.getByText('push_pin').click();
+
+    // Check is pinned
+    await expect(row.getByLabel('Pin document icon')).toBeVisible();
+    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
+    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
+
+    // Unpin
+    await row.getByText(`more_horiz`).click();
+    await page.getByText('Unpin').click();
+
+    // Check is unpinned
+    await expect(row.getByLabel('Pin document icon')).toBeHidden();
+    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+  });
+
   test('it deletes the document', async ({ page }) => {
     let docs: SmallDoc[] = [];
     const response = await page.waitForResponse(
