@@ -13,7 +13,7 @@ Welcome to Docs! The open source document editor where your notes can become kno
     Chat on Matrix
   </a> - <a href="/docs/">
     Documentation
-  </a> - <a href="#getting-started">
+  </a> - <a href="#getting-started-">
     Getting started
   </a>
 </p>
@@ -60,7 +60,7 @@ $ docker compose -v
 docker compose version 1.27.4, build 40524192
 ```
 
-> ⚠️ You may need to run the following commands with sudo but this can be avoided by assigning your user to the `docker` group.
+> ⚠️ You may need to run the following commands with sudo but this can be avoided by adding your user to the `docker` group.
 
 **Project bootstrap**
 The easiest way to start working on the project is to use GNU Make:
@@ -71,7 +71,7 @@ $ make bootstrap FLUSH_ARGS='--no-input'
 
 This command builds the `app` container, installs dependencies, performs database migrations and compile translations. It's a good idea to use this
 
-command each time you are pulling code from the project repository to avoid dependency-releated or migration-releated issues.
+command each time you are pulling code from the project repository to avoid dependency-related or migration-related issues.
 
 Your Docker services should now be up and running 🎉
 
@@ -79,9 +79,8 @@ You can access to the project by going to <http://localhost:3000>.
 
 You will be prompted to log in, the default credentials are:
 
-```shellscript
+```
 username: impress
-
 password: impress
 ```
 
@@ -172,7 +171,7 @@ docs
 Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [MinIO](https://min.io/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/)
 
 ### Gov ❤️ open source
-Docs is the result of a joint effort lead by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
+Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
 
 We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
