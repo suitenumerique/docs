@@ -24,7 +24,7 @@
     "@hocuspocus/provider": "2.15.0",
     "@openfun/cunningham-react": "2.9.4",
     "@react-pdf/renderer": "4.1.6",
-    "@sentry/nextjs": "8.47.0",
+    "@sentry/nextjs": "8.49.0",
     "@tanstack/react-query": "5.62.11",
     "cmdk": "1.0.4",
     "crisp-sdk-web": "1.0.25",
