@@ -14,10 +14,14 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@types/react",
+        "@types/react-dom",
+        "eslint",
         "fetch-mock",
         "node",
         "node-fetch",
-        "eslint",
+        "react",
+        "react-dom",
         "workbox-webpack-plugin"
       ]
     }
