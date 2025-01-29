@@ -179,5 +179,5 @@ We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](h
 We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](https://matrix.to/#/#docs-official:matrix.org) if you are interested in using or contributing to Docs.
 
 <p align="center">
-  <img src="/docs/assets/europe<3opensource.png" width="50%"/>
+  <img src="/docs/assets/europe_opensource.png" width="50%"/>
 </p>
