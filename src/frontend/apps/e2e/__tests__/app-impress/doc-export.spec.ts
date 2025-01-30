@@ -29,9 +29,7 @@ test.describe('Doc Export', () => {
         .first(),
     ).toBeVisible();
     await expect(
-      page.getByText(
-        'Upload your docs to a Microsoft Word, Open Office or PDF document',
-      ),
+      page.getByText('Download your document in a .docx or .pdf format.'),
     ).toBeVisible();
     await expect(
       page.getByRole('combobox', { name: 'Template' }),
@@ -95,7 +93,7 @@ test.describe('Doc Export', () => {
       .click();
 
     await page.getByRole('combobox', { name: 'Format' }).click();
-    await page.getByRole('option', { name: 'Word / Open Office' }).click();
+    await page.getByRole('option', { name: 'Docx' }).click();
 
     await page
       .getByRole('button', {

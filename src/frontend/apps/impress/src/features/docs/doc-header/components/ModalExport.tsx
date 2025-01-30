@@ -179,9 +179,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $gap="1rem"
       >
         <Text $variation="600" $size="sm">
-          {t(
-            'Upload your docs to a Microsoft Word, Open Office or PDF document.',
-          )}
+          {t('Download your document in a .docx or .pdf format.')}
         </Text>
         <Select
           clearable={false}
@@ -197,7 +195,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           fullWidth
           label={t('Format')}
           options={[
-            { label: t('Word / Open Office'), value: DocDownloadFormat.DOCX },
+            { label: t('Docx'), value: DocDownloadFormat.DOCX },
             { label: t('PDF'), value: DocDownloadFormat.PDF },
           ]}
           value={format}
