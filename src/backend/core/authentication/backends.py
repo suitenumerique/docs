@@ -1,19 +1,57 @@
 """Authentication Backends for the Impress core app."""
 
 import logging
+from functools import lru_cache
 
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.utils.translation import gettext_lazy as _
 
 import requests
+from cryptography.fernet import Fernet
 from mozilla_django_oidc.auth import (
     OIDCAuthenticationBackend as MozillaOIDCAuthenticationBackend,
 )
+from mozilla_django_oidc.utils import import_from_settings
 
 from core.models import DuplicateEmailError, User
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=0)
+def get_cipher_suite():
+    """Return a Fernet cipher suite."""
+    key = import_from_settings("OIDC_STORE_REFRESH_TOKEN_KEY", None)
+    if not key:
+        raise ValueError("OIDC_STORE_REFRESH_TOKEN_KEY setting is required.")
+    return Fernet(key)
+
+
+def store_oidc_refresh_token(session, refresh_token):
+    """Store the encrypted OIDC refresh token in the session if enabled in settings."""
+    if import_from_settings("OIDC_STORE_REFRESH_TOKEN", False):
+        encrypted_token = get_cipher_suite().encrypt(refresh_token.encode())
+        session["oidc_refresh_token"] = encrypted_token.decode()
+
+
+def get_oidc_refresh_token(session):
+    """Retrieve and decrypt the OIDC refresh token from the session."""
+    encrypted_token = session.get("oidc_refresh_token")
+    if encrypted_token:
+        return get_cipher_suite().decrypt(encrypted_token.encode()).decode()
+    return None
+
+
+def store_tokens(session, access_token, id_token, refresh_token):
+    """Store tokens in the session if enabled in settings."""
+    if import_from_settings("OIDC_STORE_ACCESS_TOKEN", False):
+        session["oidc_access_token"] = access_token
+
+    if import_from_settings("OIDC_STORE_ID_TOKEN", False):
+        session["oidc_id_token"] = id_token
+
+    store_oidc_refresh_token(session, refresh_token)
 
 
 class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
@@ -22,6 +60,40 @@ class OIDCAuthenticationBackend(MozillaOIDCAuthenticationBackend):
     This class overrides the default OIDC Authentication Backend to accommodate differences
     in the User and Identity models, and handles signed and/or encrypted UserInfo response.
     """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the OIDC Authentication Backend.
+
+        Adds an internal attribute to store the token_info dictionary.
+        The purpose of `self._token_info` is to not duplicate code from
+        the original `authenticate` method.
+        This won't be needed after https://github.com/mozilla/mozilla-django-oidc/pull/377
+        is merged.
+        """
+        super().__init__(*args, **kwargs)
+        self._token_info = None
+
+    def get_token(self, payload):
+        """
+        Return token object as a dictionary.
+
+        Store the value to extract the refresh token in the `authenticate` method.
+        """
+        self._token_info = super().get_token(payload)
+        return self._token_info
+
+    def authenticate(self, request, **kwargs):
+        """Authenticates a user based on the OIDC code flow."""
+        user = super().authenticate(request, **kwargs)
+
+        if user is not None:
+            # Then the user successfully authenticated
+            store_oidc_refresh_token(
+                request.session, self._token_info.get("refresh_token")
+            )
+
+        return user
 
     def get_userinfo(self, access_token, id_token, payload):
         """Return user details dictionary.

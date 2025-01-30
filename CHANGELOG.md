@@ -11,6 +11,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(oidc) add refresh token tools #584
 - ✨(backend) add soft delete and restore API endpoints to documents #516
 - ✨(backend) allow organizing documents in a tree structure #516
 - ✨(backend) add "excerpt" field to document list serializer #516
