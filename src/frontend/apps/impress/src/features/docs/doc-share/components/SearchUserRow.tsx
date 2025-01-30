@@ -3,8 +3,8 @@ import {
   QuickSearchItemContent,
   QuickSearchItemContentProps,
 } from '@/components/quick-search';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { User } from '@/features/auth';
 
 import { UserAvatar } from './UserAvatar';
 

@@ -1,4 +1,4 @@
-import { User } from '@/core/auth';
+import { User } from '@/features/auth';
 import { Role } from '@/features/docs';
 
 export interface Invitation {

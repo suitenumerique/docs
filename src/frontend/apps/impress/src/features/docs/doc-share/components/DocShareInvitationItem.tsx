@@ -7,8 +7,8 @@ import {
   DropdownMenuOption,
   IconOptions,
 } from '@/components';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { User } from '@/features/auth';
 import { Doc, Role } from '@/features/docs/doc-management';
 
 import { useDeleteDocInvitation, useUpdateDocInvitation } from '../api';

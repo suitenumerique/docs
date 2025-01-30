@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { PropsWithChildren } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
-import { useAuthStore } from '@/core';
+import { useAuthStore } from '@/features/auth';
 import { useCreateDoc } from '@/features/docs/doc-management';
 import { DocSearchModal } from '@/features/docs/doc-search';
 import { useCmdK } from '@/hook/useCmdK';

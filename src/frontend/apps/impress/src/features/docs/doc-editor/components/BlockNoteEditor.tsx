@@ -10,7 +10,7 @@ import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { useAuthStore } from '@/core/auth';
+import { useAuthStore } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
 import { useUploadFile } from '../hook';

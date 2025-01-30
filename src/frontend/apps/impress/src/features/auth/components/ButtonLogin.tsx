@@ -1,7 +1,7 @@
 import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
-import { useAuthStore } from '@/core/auth';
+import { useAuthStore } from '@/features/auth';
 
 export const ButtonLogin = () => {
   const { t } = useTranslation();

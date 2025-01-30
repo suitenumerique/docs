@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/core/auth';
+import { useAuthStore } from '@/features/auth';
 import { Access, Role } from '@/features/docs/doc-management';
 
 export const useWhoAmI = (access: Access) => {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import { Box, Text, TextErrors } from '@/components';
-import { useAuthStore } from '@/core/auth';
+import { useAuthStore } from '@/features/auth';
 import { DocEditor } from '@/features/docs/doc-editor';
 import {
   Doc,
