@@ -15,6 +15,8 @@ Welcome to Docs! The open source document editor where your notes can become kno
     Documentation
   </a> - <a href="#getting-started-">
     Getting started
+  </a> - <a href="mailto:docs@numerique.gouv.fr">
+    Reach out
   </a>
 </p>
 
@@ -175,7 +177,7 @@ Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](htt
 
 We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
-We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](https://matrix.to/#/#docs-official:matrix.org) if you are interested in using or contributing to Docs.
+We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 
 <p align="center">
   <img src="/docs/assets/europe_opensource.png" width="50%"/>

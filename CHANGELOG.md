@@ -9,6 +9,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+- 📝(doc) Add security.md and codeofconduct.md #604
 
 ## [2.1.0] - 2025-01-29
 
