@@ -9,8 +9,8 @@ import { css } from 'styled-components';
 
 import { APIError } from '@/api';
 import { Box } from '@/components';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { User } from '@/features/auth';
 import { Doc, Role } from '@/features/docs';
 import { useLanguage } from '@/i18n/hooks/useLanguage';
 

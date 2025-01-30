@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
-import { User } from '@/core';
+import { User } from '@/features/auth';
 
 import { SearchUserRow } from './SearchUserRow';
 

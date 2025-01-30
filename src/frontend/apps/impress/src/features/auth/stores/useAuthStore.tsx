@@ -3,8 +3,8 @@ import { create } from 'zustand';
 import { baseApiUrl } from '@/api';
 import { terminateCrispSession } from '@/services';
 
-import { User, getMe } from './api';
-import { PATH_AUTH_LOCAL_STORAGE } from './conf';
+import { User, getMe } from '../api';
+import { PATH_AUTH_LOCAL_STORAGE } from '../conf';
 
 interface AuthStore {
   initiated: boolean;

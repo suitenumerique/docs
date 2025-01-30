@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink } from '@/components/';
-import { ButtonLogin } from '@/core/auth';
 import { useCunninghamTheme } from '@/cunningham';
+import { ButtonLogin } from '@/features/auth';
 import { LanguagePicker } from '@/features/language';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';

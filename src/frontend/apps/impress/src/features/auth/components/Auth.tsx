@@ -4,7 +4,7 @@ import { PropsWithChildren, useEffect, useState } from 'react';
 
 import { Box } from '@/components';
 
-import { useAuthStore } from './useAuthStore';
+import { useAuthStore } from '../stores/useAuthStore';
 
 /**
  * TODO: Remove this restriction when we will have a homepage design for non-authenticated users.

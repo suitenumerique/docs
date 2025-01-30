@@ -1,4 +1,4 @@
-import { User } from '@/core';
+import { User } from '@/features/auth';
 
 export interface Access {
   id: string;
