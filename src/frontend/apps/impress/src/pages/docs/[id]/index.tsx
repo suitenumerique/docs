@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import { Box, Text, TextErrors } from '@/components';
-import { useAuthStore } from '@/features/auth';
+import { gotoLogin } from '@/features/auth';
 import { DocEditor } from '@/features/docs/doc-editor';
 import {
   Doc,
@@ -45,7 +45,6 @@ interface DocProps {
 }
 
 const DocPage = ({ id }: DocProps) => {
-  const { login } = useAuthStore();
   const {
     data: docQuery,
     isError,
@@ -106,7 +105,7 @@ const DocPage = ({ id }: DocProps) => {
     }
 
     if (error.status === 401) {
-      login();
+      gotoLogin();
       return null;
     }
 

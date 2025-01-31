@@ -1,2 +1,2 @@
-export * from './getMe';
+export * from './useAuthQuery';
 export * from './types';
