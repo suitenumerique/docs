@@ -1,7 +1,7 @@
 import { Crisp } from 'crisp-sdk-web';
 import fetchMock from 'fetch-mock';
 
-import { useAuthStore } from '../useAuthStore';
+import { gotoLogout } from '../utils';
 
 jest.mock('crisp-sdk-web', () => ({
   ...jest.requireActual('crisp-sdk-web'),
@@ -17,7 +17,7 @@ jest.mock('crisp-sdk-web', () => ({
   },
 }));
 
-describe('useAuthStore', () => {
+describe('utils', () => {
   afterEach(() => {
     jest.clearAllMocks();
     fetchMock.restore();
@@ -33,7 +33,7 @@ describe('useAuthStore', () => {
       writable: true,
     });
 
-    useAuthStore.getState().logout();
+    gotoLogout();
 
     expect(Crisp.session.reset).toHaveBeenCalled();
   });

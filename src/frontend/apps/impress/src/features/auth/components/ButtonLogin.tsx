@@ -1,22 +1,23 @@
 import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
-import { useAuthStore } from '@/features/auth';
+import { useAuth } from '../hooks';
+import { gotoLogin, gotoLogout } from '../utils';
 
 export const ButtonLogin = () => {
   const { t } = useTranslation();
-  const { logout, authenticated, login } = useAuthStore();
+  const { authenticated } = useAuth();
 
   if (!authenticated) {
     return (
-      <Button onClick={login} color="primary-text" aria-label={t('Login')}>
+      <Button onClick={gotoLogin} color="primary-text" aria-label={t('Login')}>
         {t('Login')}
       </Button>
     );
   }
 
   return (
-    <Button onClick={logout} color="primary-text" aria-label={t('Logout')}>
+    <Button onClick={gotoLogout} color="primary-text" aria-label={t('Logout')}>
       {t('Logout')}
     </Button>
   );

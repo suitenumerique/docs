@@ -1,10 +1,10 @@
 import { Loader } from '@openfun/cunningham-react';
-import { useRouter } from 'next/router';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { PropsWithChildren } from 'react';
 
 import { Box } from '@/components';
+import HomeContent from '@/features/home/components/HomeContent';
 
-import { useAuthStore } from '../stores/useAuthStore';
+import { useAuth } from '../hooks';
 
 /**
  * TODO: Remove this restriction when we will have a homepage design for non-authenticated users.
@@ -14,47 +14,10 @@ import { useAuthStore } from '../stores/useAuthStore';
  * When we will have a homepage design for non-authenticated users, we will remove this restriction to have
  * the full website accessible without authentication.
  */
-const regexpUrlsAuth = [/\/docs\/$/g, /^\/$/g];
-
 export const Auth = ({ children }: PropsWithChildren) => {
-  const { initAuth, initiated, authenticated, login, getAuthUrl } =
-    useAuthStore();
-  const { asPath, replace } = useRouter();
+  const { user, isLoading, pathAllowed } = useAuth();
 
-  const [pathAllowed, setPathAllowed] = useState<boolean>(
-    !regexpUrlsAuth.some((regexp) => !!asPath.match(regexp)),
-  );
-
-  useEffect(() => {
-    initAuth();
-  }, [initAuth]);
-
-  useEffect(() => {
-    setPathAllowed(!regexpUrlsAuth.some((regexp) => !!asPath.match(regexp)));
-  }, [asPath]);
-
-  // We force to login except on allowed paths
-  useEffect(() => {
-    if (!initiated || authenticated || pathAllowed) {
-      return;
-    }
-
-    login();
-  }, [authenticated, pathAllowed, login, initiated]);
-
-  // Redirect to the path before login
-  useEffect(() => {
-    if (!authenticated) {
-      return;
-    }
-
-    const authUrl = getAuthUrl();
-    if (authUrl) {
-      void replace(authUrl);
-    }
-  }, [authenticated, getAuthUrl, replace]);
-
-  if ((!initiated && pathAllowed) || (!authenticated && !pathAllowed)) {
+  if (isLoading) {
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
         <Loader />

@@ -1,4 +1,6 @@
-import { fetchAPI } from '@/api';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
+
+import { APIError, fetchAPI } from '@/api';
 
 import { User } from './types';
 
@@ -19,3 +21,16 @@ export const getMe = async (): Promise<User> => {
   }
   return response.json() as Promise<User>;
 };
+
+export const KEY_AUTH = 'auth';
+
+export function useAuthQuery(
+  queryConfig?: UseQueryOptions<User, APIError, User>,
+) {
+  return useQuery<User, APIError, User>({
+    queryKey: [KEY_AUTH],
+    queryFn: getMe,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    ...queryConfig,
+  });
+}

@@ -10,7 +10,7 @@ import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { useAuthStore } from '@/features/auth';
+import { useAuth } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
 import { useUploadFile } from '../hook';
@@ -113,7 +113,7 @@ interface BlockNoteEditorProps {
 }
 
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
-  const { userData } = useAuthStore();
+  const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
 
@@ -126,7 +126,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const collabName = readOnly
     ? 'Reader'
-    : userData?.full_name || userData?.email || t('Anonymous');
+    : user?.full_name || user?.email || t('Anonymous');
 
   const editor = useCreateBlockNote(
     {
