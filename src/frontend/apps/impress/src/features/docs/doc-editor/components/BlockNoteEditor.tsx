@@ -1,10 +1,24 @@
-import { Dictionary, locales } from '@blocknote/core';
+import {
+  Dictionary,
+  combineByGroup,
+  filterSuggestionItems,
+  locales,
+} from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
+import {
+  SuggestionMenuController,
+  getDefaultReactSlashMenuItems,
+  useCreateBlockNote,
+} from '@blocknote/react';
+import {
+  getMultiColumnSlashMenuItems,
+  multiColumnDropCursor,
+  locales as multiColumnLocales,
+} from '@blocknote/xl-multi-column';
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 import * as Y from 'yjs';
@@ -17,7 +31,7 @@ import { useUploadFile } from '../hook';
 import { useHeadings } from '../hook/useHeadings';
 import useSaveDoc from '../hook/useSaveDoc';
 import { useEditorStore } from '../stores';
-import { randomColor } from '../utils';
+import { blockNoteWithMultiColumn, randomColor } from '../utils';
 
 import { BlockNoteToolbar } from './BlockNoteToolbar';
 
@@ -163,8 +177,14 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           return cursor;
         },
       },
-      dictionary: locales[lang as keyof typeof locales] as Dictionary,
+      dictionary: {
+        ...(locales[lang as keyof typeof locales] as Dictionary),
+        multi_column:
+          multiColumnLocales[lang as keyof typeof multiColumnLocales],
+      },
       uploadFile,
+      schema: blockNoteWithMultiColumn,
+      dropCursor: multiColumnDropCursor,
     },
     [collabName, lang, provider, uploadFile],
   );
@@ -177,6 +197,18 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       setEditor(undefined);
     };
   }, [setEditor, editor]);
+
+  const getSlashMenuItems = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    return async (query: string) =>
+      filterSuggestionItems(
+        combineByGroup(
+          getDefaultReactSlashMenuItems(editor),
+          getMultiColumnSlashMenuItems(editor),
+        ),
+        query,
+      );
+  }, [editor]);
 
   return (
     <Box
@@ -199,7 +231,12 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         formattingToolbar={false}
         editable={!readOnly}
         theme="light"
+        slashMenu={false}
       >
+        <SuggestionMenuController
+          triggerCharacter="/"
+          getItems={getSlashMenuItems}
+        />
         <BlockNoteToolbar />
       </BlockNoteView>
     </Box>
@@ -225,6 +262,7 @@ export const BlockNoteEditorVersion = ({
         },
         provider: undefined,
       },
+      schema: blockNoteWithMultiColumn,
     },
     [initialContent],
   );

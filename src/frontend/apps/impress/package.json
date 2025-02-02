@@ -18,6 +18,7 @@
     "@blocknote/core": "0.21.0",
     "@blocknote/mantine": "0.21.0",
     "@blocknote/react": "0.21.0",
+    "@blocknote/xl-multi-column": "0.21.0",
     "@blocknote/xl-docx-exporter": "0.21.0",
     "@blocknote/xl-pdf-exporter": "0.21.0",
     "@gouvfr-lasuite/integration": "1.0.2",

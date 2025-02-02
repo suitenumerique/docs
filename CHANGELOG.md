@@ -42,6 +42,10 @@ and this project adheres to
 
 ## [2.0.1] - 2025-01-17
 
+## Added
+
+✨(frontend) add multi columns support for editor #533
+
 ## Fixed
 
 -🐛(frontend) share modal is shown when you don't have the abilities #557
