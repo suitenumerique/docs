@@ -26,6 +26,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "boto3==1.36.7",
+    "beautifulsoup4==4.12.3",
     "Brotli==1.1.0",
     "celery[redis]==5.4.0",
     "django-configurations==2.5.1",
@@ -47,6 +48,7 @@ dependencies = [
     "gunicorn==23.0.0",
     "jsonschema==4.23.0",
     "markdown==3.7",
+    "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
     "openai==1.60.2",
     "psycopg[binary]==3.2.4",
@@ -56,7 +58,7 @@ dependencies = [
     "sentry-sdk==2.20.0",
     "url-normalize==1.4.3",
     "whitenoise==6.8.2",
-    "mozilla-django-oidc==4.0.1",
+    "y-py==0.6.2",
 ]
 
 [project.urls]
