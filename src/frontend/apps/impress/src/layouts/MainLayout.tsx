@@ -3,7 +3,6 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Footer } from '@/features/footer';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LeftPanel } from '@/features/left-panel';
@@ -12,13 +11,11 @@ import { useResponsiveStore } from '@/stores';
 
 type MainLayoutProps = {
   backgroundColor?: 'white' | 'grey';
-  withoutFooter?: boolean;
 };
 
 export function MainLayout({
   children,
   backgroundColor = 'white',
-  withoutFooter = false,
 }: PropsWithChildren<MainLayoutProps>) {
   const { isDesktop } = useResponsiveStore();
   const { colorsTokens } = useCunninghamTheme();
@@ -57,7 +54,6 @@ export function MainLayout({
           {children}
         </Box>
       </Box>
-      {!withoutFooter && <Footer />}
     </div>
   );
 }

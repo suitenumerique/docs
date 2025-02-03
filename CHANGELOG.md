@@ -10,7 +10,10 @@ and this project adheres to
 ## [Unreleased]
 
 ## Added
+
 - 📝(doc) Add security.md and codeofconduct.md #604
+- ✨(frontend) add home page #553
+
 
 ## Fixed
 
