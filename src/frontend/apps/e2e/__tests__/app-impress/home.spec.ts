@@ -20,30 +20,33 @@ test.describe('Home page', () => {
     await expect(
       header.getByRole('img', { name: 'Gouvernement Logo' }),
     ).toBeVisible();
-    await expect(
-      header.getByRole('img', { name: 'Docs app logo' }),
-    ).toBeVisible();
+    await expect(header.getByRole('img', { name: 'Docs logo' })).toBeVisible();
     await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
     await expect(header.getByText('BETA')).toBeVisible();
 
-    // Check the ttile and subtitle are visible
-    await expect(page.getByText('Collaborative writing made')).toBeVisible();
-    await expect(page.getByText('Collaborate and write in real')).toBeVisible();
-    await expect(page.getByText('An uncompromising writing')).toBeVisible();
-    await expect(page.getByText('Docs offers an intuitive')).toBeVisible();
-    await expect(page.getByText('Simple and secure')).toBeVisible();
-    await expect(page.getByText('Docs makes real-time')).toBeVisible();
-    await expect(page.getByText('Flexible export.')).toBeVisible();
-    await expect(page.getByText('To facilitate the circulation')).toBeVisible();
-    await expect(page.getByText('A new way to organize')).toBeVisible();
-    await expect(page.getByText('Docs transforms your')).toBeVisible();
-
-    await expect(page.getByTestId('proconnect-button')).toHaveCount(2);
-
-    // Footer - The footer is already tested in its entirety in the footer.spec.ts file
-    await expect(footer).toBeVisible();
+    // Check the titles
+    const h2 = page.locator('h2');
     await expect(
-      page.getByRole('link', { name: 'expand_more See more' }),
+      h2.getByText('Collaborative writing, Simplified.'),
     ).toBeVisible();
+    await expect(
+      h2.getByText('An uncompromising writing experience.'),
+    ).toBeVisible();
+    await expect(
+      h2.getByText('Simple and secure collaboration.'),
+    ).toBeVisible();
+    await expect(h2.getByText('Flexible export.')).toBeVisible();
+    await expect(
+      h2.getByText('A new way to organize knowledge.'),
+    ).toBeVisible();
+
+    await expect(
+      page.getByText('Docs is already available, log in to use it now.'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Proconnect Login' }),
+    ).toHaveCount(2);
+
+    await expect(footer).toBeVisible();
   });
 });

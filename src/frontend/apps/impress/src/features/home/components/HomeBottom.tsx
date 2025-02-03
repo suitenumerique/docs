@@ -1,20 +1,38 @@
+import Image from 'next/image';
 import { Trans, useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
+import DocLogo from '@/assets/icons/icon-docs.svg?url';
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { ProConnectButton } from '@/features/auth';
+import { Title } from '@/features/header';
+import { useResponsiveStore } from '@/stores';
 
 import SC5 from '../assets/SC5.png';
 
 import { HomeSection } from './HomeSection';
 
-export function HomeOpenSource() {
+export function HomeBottom() {
+  const { componentTokens } = useCunninghamTheme();
+  const withProConnect = componentTokens()['home-proconnect'].activated;
+
+  if (withProConnect) {
+    return <HomeProConnect />;
+  } else {
+    return <HomeOpenSource />;
+  }
+}
+
+function HomeOpenSource() {
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
+  const { isTablet } = useResponsiveStore();
 
   return (
     <HomeSection
       isColumn={false}
+      isSmallDevice={isTablet}
       illustration={SC5}
       title={t('Govs ❤️ Open Source.')}
       tag={t('Open Source')}
@@ -99,5 +117,43 @@ export function HomeOpenSource() {
         </Box>
       }
     />
+  );
+}
+
+function HomeProConnect() {
+  const { t } = useTranslation();
+  const { spacingsTokens } = useCunninghamTheme();
+  const spacings = spacingsTokens();
+  const { isMobile } = useResponsiveStore();
+  const parentGap = '230px';
+
+  return (
+    <Box
+      $justify="center"
+      $height={!isMobile ? `calc(100vh - ${parentGap})` : 'auto'}
+    >
+      <Box
+        $gap={spacings['md']}
+        $direction="column"
+        $align="center"
+        $margin={{ top: isMobile ? 'none' : `-${parentGap}` }}
+      >
+        <Box
+          $align="center"
+          $gap={spacings['3xs']}
+          $direction="row"
+          $position="relative"
+          $height="fit-content"
+          $css="zoom: 1.9;"
+        >
+          <Image src={DocLogo} alt="DocLogo" />
+          <Title />
+        </Box>
+        <Text $size="md" $variation="1000" $textAlign="center">
+          {t('Docs is already available, log in to use it now.')}
+        </Text>
+        <ProConnectButton />
+      </Box>
+    </Box>
   );
 }

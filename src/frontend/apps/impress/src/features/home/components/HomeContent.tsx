@@ -19,7 +19,7 @@ import SC4ResponsiveEn from '../assets/SC4-responsive-en.png';
 import SC4ResponsiveFr from '../assets/SC4-responsive-fr.png';
 
 import HomeBanner from './HomeBanner';
-import { HomeOpenSource } from './HomeOpenSource';
+import { HomeBottom } from './HomeBottom';
 import { HomeHeader, getHeaderHeight } from './HomeHeader';
 import { HomeSection } from './HomeSection';
 
@@ -110,7 +110,7 @@ export function HomeContent() {
                 'Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.',
               )}
             />
-            <HomeOpenSource />
+            <HomeBottom />
           </Box>
         </Box>
         <Footer />

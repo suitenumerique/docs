@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { keyCloakSignIn, mockedDocument } from './common';
+import { expectLoginPage, keyCloakSignIn, mockedDocument } from './common';
 
 test.describe('Doc Routing', () => {
   test.beforeEach(async ({ page }) => {
@@ -63,16 +63,13 @@ test.describe('Doc Routing: Not loggued', () => {
     await page.goto('/docs/mocked-document-id/');
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
     await page.getByRole('button', { name: 'Login' }).click();
-    await keyCloakSignIn(page, browserName);
+    await keyCloakSignIn(page, browserName, false);
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
   });
 
+  // eslint-disable-next-line playwright/expect-expect
   test('The homepage redirects to login.', async ({ page }) => {
     await page.goto('/');
-    await expect(
-      page.getByRole('button', {
-        name: 'Sign In',
-      }),
-    ).toBeVisible();
+    await expectLoginPage(page);
   });
 });

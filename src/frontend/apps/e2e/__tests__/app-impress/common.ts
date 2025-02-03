@@ -1,6 +1,17 @@
 import { Page, expect } from '@playwright/test';
 
-export const keyCloakSignIn = async (page: Page, browserName: string) => {
+export const keyCloakSignIn = async (
+  page: Page,
+  browserName: string,
+  fromHome: boolean = true,
+) => {
+  if (fromHome) {
+    await page
+      .getByRole('button', { name: 'Proconnect Login' })
+      .first()
+      .click();
+  }
+
   const login = `user-e2e-${browserName}`;
   const password = `password-e2e-${browserName}`;
 
@@ -258,3 +269,8 @@ export const mockedAccesses = async (page: Page, json?: object) => {
     }
   });
 };
+
+export const expectLoginPage = async (page: Page) =>
+  await expect(
+    page.getByRole('heading', { name: 'Collaborative writing' }),
+  ).toBeVisible();

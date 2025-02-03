@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { keyCloakSignIn } from './common';
+import { expectLoginPage, keyCloakSignIn } from './common';
 
 test.describe('Header', () => {
   test.beforeEach(async ({ page }) => {
@@ -98,6 +98,6 @@ test.describe('Header: Log out', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expectLoginPage(page);
   });
 });

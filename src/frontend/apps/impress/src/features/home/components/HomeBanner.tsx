@@ -6,7 +6,7 @@ import { css } from 'styled-components';
 import DocLogo from '@/assets/icons/icon-docs.svg?url';
 import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { gotoLogin } from '@/features/auth';
+import { ProConnectButton, gotoLogin } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
 
 import banner from '../assets/banner.jpg';
@@ -15,9 +15,10 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { componentTokens, spacingsTokens } = useCunninghamTheme();
   const spacings = spacingsTokens();
   const { isMobile, isSmallMobile } = useResponsiveStore();
+  const withProConnect = componentTokens()['home-proconnect'].activated;
 
   return (
     <Box
@@ -69,16 +70,20 @@ export default function HomeBanner() {
               'Collaborate and write in real time, without layout constraints.',
             )}
           </Text>
-          <Button
-            onClick={gotoLogin}
-            icon={
-              <Text $isMaterialIcon $color="white">
-                bolt
-              </Text>
-            }
-          >
-            {t('Start Writing')}
-          </Button>
+          {withProConnect ? (
+            <ProConnectButton />
+          ) : (
+            <Button
+              onClick={gotoLogin}
+              icon={
+                <Text $isMaterialIcon $color="white">
+                  bolt
+                </Text>
+              }
+            >
+              {t('Start Writing')}
+            </Button>
+          )}
         </Box>
         {!isMobile && (
           <Image
