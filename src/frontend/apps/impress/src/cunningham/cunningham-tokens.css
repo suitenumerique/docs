@@ -345,6 +345,7 @@
   --c--components--button--disabled--color: white;
   --c--components--button--disabled--background--color: #b3cef0;
   --c--components--la-gauffre--activated: false;
+  --c--components--home-proconnect--activated: false;
 }
 
 .cunningham-theme--dark {
@@ -590,6 +591,7 @@
   );
   --c--components--forms-textarea--border-radius: 0;
   --c--components--la-gauffre--activated: true;
+  --c--components--home-proconnect--activated: true;
 }
 
 .clr-secondary-text {

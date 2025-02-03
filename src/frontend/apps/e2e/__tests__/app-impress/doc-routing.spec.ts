@@ -63,16 +63,14 @@ test.describe('Doc Routing: Not loggued', () => {
     await page.goto('/docs/mocked-document-id/');
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
     await page.getByRole('button', { name: 'Login' }).click();
-    await keyCloakSignIn(page, browserName);
+    await keyCloakSignIn(page, browserName, false);
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
   });
 
   test('The homepage redirects to login.', async ({ page }) => {
     await page.goto('/');
     await expect(
-      page.getByRole('button', {
-        name: 'Sign In',
-      }),
+      page.getByRole('heading', { name: 'Collaborative writing' }),
     ).toBeVisible();
   });
 });

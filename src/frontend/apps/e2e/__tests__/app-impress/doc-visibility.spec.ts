@@ -91,7 +91,9 @@ test.describe('Doc Visibility: Restricted', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Collaborative writing' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -120,6 +122,10 @@ test.describe('Doc Visibility: Restricted', () => {
     const otherBrowser = browsersName.find((b) => b !== browserName);
 
     await keyCloakSignIn(page, otherBrowser!);
+
+    await expect(
+      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -169,10 +175,11 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await keyCloakSignIn(page, otherBrowser!);
 
-    await page.goto(urlDoc);
+    await expect(
+      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+    ).toBeVisible();
 
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(1000);
+    await page.goto(urlDoc);
 
     await verifyDocName(page, docTitle);
     await expect(page.getByLabel('Share button')).toBeVisible();
@@ -247,7 +254,9 @@ test.describe('Doc Visibility: Public', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Collaborative writing' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -313,7 +322,9 @@ test.describe('Doc Visibility: Public', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Collaborative writing' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -364,7 +375,9 @@ test.describe('Doc Visibility: Authenticated', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Collaborative writing' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -413,6 +426,10 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     const otherBrowser = browsersName.find((b) => b !== browserName);
     await keyCloakSignIn(page, otherBrowser!);
+
+    await expect(
+      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -469,6 +486,10 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     const otherBrowser = browsersName.find((b) => b !== browserName);
     await keyCloakSignIn(page, otherBrowser!);
+
+    await expect(
+      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+    ).toBeVisible();
 
     await page.goto(urlDoc);
 

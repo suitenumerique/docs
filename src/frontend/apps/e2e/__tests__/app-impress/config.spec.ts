@@ -63,27 +63,6 @@ test.describe('Config', () => {
     expect((await consoleMessage).text()).toContain(invalidMsg);
   });
 
-  test('it checks that theme is configured from config endpoint', async ({
-    page,
-  }) => {
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/config/') && response.status() === 200,
-    );
-
-    await page.goto('/');
-
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-
-    const jsonResponse = await response.json();
-    expect(jsonResponse.FRONTEND_THEME).toStrictEqual('dsfr');
-
-    const footer = page.locator('footer').first();
-    // alt 'Gouvernement Logo' comes from the theme
-    await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
-  });
-
   test('it checks that media server is configured from config endpoint', async ({
     page,
     browserName,
@@ -159,5 +138,30 @@ test.describe('Config', () => {
     await expect(
       page.locator('#crisp-chatbox').getByText('Invalid website'),
     ).toBeVisible();
+  });
+});
+
+test.describe('Config: Not loggued', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('it checks that theme is configured from config endpoint', async ({
+    page,
+  }) => {
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/config/') && response.status() === 200,
+    );
+
+    await page.goto('/');
+
+    const response = await responsePromise;
+    expect(response.ok()).toBeTruthy();
+
+    const jsonResponse = await response.json();
+    expect(jsonResponse.FRONTEND_THEME).toStrictEqual('dsfr');
+
+    const footer = page.locator('footer').first();
+    // alt 'Gouvernement Logo' comes from the theme
+    await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
   });
 });

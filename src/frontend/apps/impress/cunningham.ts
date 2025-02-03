@@ -253,6 +253,9 @@ const config = {
         'la-gauffre': {
           activated: false,
         },
+        'home-proconnect': {
+          activated: false,
+        },
       },
     },
     dsfr: {
@@ -466,6 +469,9 @@ const config = {
           'border-radius': '0',
         },
         'la-gauffre': {
+          activated: true,
+        },
+        'home-proconnect': {
           activated: true,
         },
       },

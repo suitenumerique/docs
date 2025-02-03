@@ -336,6 +336,7 @@ export const tokens = {
           disabled: { color: 'white', background: { color: '#b3cef0' } },
         },
         'la-gauffre': { activated: false },
+        'home-proconnect': { activated: false },
       },
     },
     dark: {
@@ -581,6 +582,7 @@ export const tokens = {
         },
         'forms-textarea': { 'border-radius': '0' },
         'la-gauffre': { activated: true },
+        'home-proconnect': { activated: true },
       },
     },
   },
