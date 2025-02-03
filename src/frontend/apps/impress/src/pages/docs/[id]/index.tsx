@@ -33,7 +33,7 @@ export function DocLayout() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <MainLayout withoutFooter>
+      <MainLayout>
         <DocPage id={id} />
       </MainLayout>
     </>

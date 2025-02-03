@@ -1,25 +1,23 @@
-import { Button } from '@openfun/cunningham-react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink } from '@/components/';
+import { default as IconDocs } from '@/assets/icons/icon-docs.svg?url';
+import { Box, StyledLink } from '@/components/';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
 import { LanguagePicker } from '@/features/language';
-import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
-import { default as IconDocs } from '../assets/icon-docs.svg?url';
 import { HEADER_HEIGHT } from '../conf';
 
+import { ButtonTogglePanel } from './ButtonTogglePanel';
 import { LaGaufre } from './LaGaufre';
-import Title from './Title/Title';
+import { Title } from './Title';
 
 export const Header = () => {
   const { t } = useTranslation();
   const theme = useCunninghamTheme();
-  const { isPanelOpen, togglePanel } = useLeftPanelStore();
   const { isDesktop } = useResponsiveStore();
 
   const spacings = theme.spacingsTokens();
@@ -29,7 +27,6 @@ export const Header = () => {
     <Box
       as="header"
       $css={css`
-        display: flex;
         position: fixed;
         top: 0;
         left: 0;
@@ -39,27 +36,12 @@ export const Header = () => {
         align-items: center;
         justify-content: space-between;
         height: ${HEADER_HEIGHT}px;
-        min-height: ${HEADER_HEIGHT}px;
         padding: 0 ${spacings['base']};
         background-color: ${colors['greyscale-000']};
         border-bottom: 1px solid ${colors['greyscale-200']};
       `}
     >
-      {!isDesktop && (
-        <Button
-          size="medium"
-          onClick={() => togglePanel()}
-          aria-label={t('Open the header menu')}
-          color="tertiary-text"
-          icon={
-            <Icon
-              $variation="800"
-              $theme="primary"
-              iconName={isPanelOpen ? 'close' : 'menu'}
-            />
-          }
-        />
-      )}
+      {!isDesktop && <ButtonTogglePanel />}
       <StyledLink href="/">
         <Box
           $align="center"

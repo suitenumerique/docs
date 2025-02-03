@@ -1,23 +1,41 @@
 import { Loader } from '@openfun/cunningham-react';
+import { useRouter } from 'next/router';
 import { PropsWithChildren } from 'react';
 
 import { Box } from '@/components';
-import HomeContent from '@/features/home/components/HomeContent';
 
 import { useAuth } from '../hooks';
 
-/**
- * TODO: Remove this restriction when we will have a homepage design for non-authenticated users.
- *
- * We define the paths that are not allowed without authentication.
- * Actually, only the home page and the docs page are not allowed without authentication.
- * When we will have a homepage design for non-authenticated users, we will remove this restriction to have
- * the full website accessible without authentication.
- */
 export const Auth = ({ children }: PropsWithChildren) => {
-  const { user, isLoading, pathAllowed } = useAuth();
+  const { isLoading, pathAllowed, isFetchedAfterMount, authenticated } =
+    useAuth();
+  const { replace, pathname } = useRouter();
 
-  if (isLoading) {
+  if (isLoading && !isFetchedAfterMount) {
+    return (
+      <Box $height="100vh" $width="100vw" $align="center" $justify="center">
+        <Loader />
+      </Box>
+    );
+  }
+
+  /**
+   * If the user is not authenticated and the path is not allowed, we redirect to the login page.
+   */
+  if (!authenticated && !pathAllowed) {
+    void replace('/login');
+    return (
+      <Box $height="100vh" $width="100vw" $align="center" $justify="center">
+        <Loader />
+      </Box>
+    );
+  }
+
+  /**
+   * If the user is authenticated and the path is the login page, we redirect to the home page.
+   */
+  if (pathname === '/login' && authenticated) {
+    void replace('/');
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
         <Loader />

@@ -36,7 +36,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
 
   return (
     <>
-      <Box $width="100%">
+      <Box $width="100%" className="panel-header">
         <SeparatedSection>
           <Box
             $padding={{ horizontal: 'sm' }}
