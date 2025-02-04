@@ -69,7 +69,7 @@ export const Header = () => {
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <Image priority src={IconDocs} alt={t('Docs Logo')} width={25} />
+          <Image priority src={IconDocs} alt="" width={25} />
           <Title />
         </Box>
       </StyledLink>

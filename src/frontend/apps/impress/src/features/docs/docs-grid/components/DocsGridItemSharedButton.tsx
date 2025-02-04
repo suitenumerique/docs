@@ -9,6 +9,7 @@ type Props = {
   doc: Doc;
   handleClick: () => void;
 };
+
 export const DocsGridItemSharedButton = ({ doc, handleClick }: Props) => {
   const { t } = useTranslation();
   const sharedCount = doc.nb_accesses;
@@ -18,11 +19,15 @@ export const DocsGridItemSharedButton = ({ doc, handleClick }: Props) => {
     return <Box $minWidth="50px">&nbsp;</Box>;
   }
 
+  const tooltipContent = t('Shared with {{count}} users', {
+    count: sharedCount,
+  });
+
   return (
     <Tooltip
       content={
-        <Text $textAlign="center" $variation="000">
-          {t('Shared with {{count}} users', { count: sharedCount })}
+        <Text $variation="000" $textAlign="center">
+          {tooltipContent}
         </Text>
       }
       placement="top"
@@ -36,8 +41,14 @@ export const DocsGridItemSharedButton = ({ doc, handleClick }: Props) => {
         }}
         color="tertiary"
         size="nano"
-        icon={<Icon $variation="800" $theme="primary" iconName="group" />}
+        aria-label={tooltipContent} // Lecture directe pour les lecteurs d'écran
       >
+        <Icon
+          $variation="800"
+          $theme="primary"
+          iconName="group"
+          aria-hidden="true" // Empêche la lecture de l'icône
+        />
         {sharedCount}
       </Button>
     </Tooltip>

@@ -12,9 +12,7 @@ const StyledPopover = styled(Popover)`
   background-color: white;
   border-radius: 4px;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
-
   border: 1px solid #dddddd;
-
   transition: opacity 0.2s ease-in-out;
 `;
 
@@ -43,10 +41,8 @@ export const DropButton = ({
   isOpen = false,
   onOpenChange,
   children,
-  label,
 }: PropsWithChildren<DropButtonProps>) => {
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
-
   const triggerRef = useRef(null);
 
   useEffect(() => {
@@ -60,12 +56,8 @@ export const DropButton = ({
 
   return (
     <>
-      <StyledButton
-        ref={triggerRef}
-        onPress={() => onOpenChangeHandler(true)}
-        aria-label={label}
-      >
-        {button}
+      <StyledButton ref={triggerRef} onPress={() => onOpenChangeHandler(true)}>
+        <span aria-hidden="true">{button}</span>
       </StyledButton>
 
       <StyledPopover

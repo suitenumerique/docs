@@ -54,6 +54,9 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
           $css={css`
             flex: ${flexLeft};
             align-items: center;
+            &:focus {
+              outline: 2px solidrgb(33, 34, 82);
+            }
           `}
           href={`/docs/${doc.id}`}
         >
@@ -79,7 +82,11 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
               >
                 <Tooltip
                   content={
-                    <Text $textAlign="center" $variation="000">
+                    <Text
+                      id={`tooltip-access-${doc.id}`}
+                      $textAlign="center"
+                      $variation="000"
+                    >
                       {isPublic
                         ? t('Accessible to anyone')
                         : t('Accessible to authenticated users')}
@@ -87,12 +94,17 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
                   }
                   placement="top"
                 >
-                  <div>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    aria-labelledby={`tooltip-access-${doc.id}`}
+                  >
                     <Icon
                       $theme="greyscale"
                       $variation="600"
                       $size="14px"
                       iconName={isPublic ? 'public' : 'vpn_lock'}
+                      aria-hidden="true"
                     />
                   </div>
                 </Tooltip>

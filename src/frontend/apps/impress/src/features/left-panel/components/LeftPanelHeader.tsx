@@ -50,8 +50,11 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                 onClick={goToHome}
                 size="medium"
                 color="tertiary-text"
+                aria-label={t('Back to home page')}
                 icon={
-                  <Icon $variation="800" $theme="primary" iconName="house" />
+                  <span aria-hidden="true">
+                    <Icon $variation="800" $theme="primary" iconName="house" />
+                  </span>
                 }
               />
               {auth.authenticated && (
@@ -59,8 +62,15 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                   onClick={searchModal.open}
                   size="medium"
                   color="tertiary-text"
+                  aria-label={t('Search')}
                   icon={
-                    <Icon $variation="800" $theme="primary" iconName="search" />
+                    <span aria-hidden="true">
+                      <Icon
+                        $variation="800"
+                        $theme="primary"
+                        iconName="search"
+                      />
+                    </span>
                   }
                 />
               )}

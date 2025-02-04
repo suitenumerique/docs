@@ -49,7 +49,6 @@ export const DocsGridActions = ({
       callback: () => {
         openShareModal?.();
       },
-
       testId: `docs-grid-actions-share-${doc.id}`,
     },
 
@@ -70,6 +69,7 @@ export const DocsGridActions = ({
           iconName="more_horiz"
           $theme="primary"
           $variation="600"
+          aria-hidden="true"
         />
       </DropdownMenu>
 
