@@ -71,6 +71,7 @@
   --c--theme--colors--danger-text: var(--c--theme--colors--greyscale-000);
   --c--theme--colors--card-border: #ededed;
   --c--theme--colors--primary-bg: #fafafa;
+  --c--theme--colors--primary-action: #1212ff;
   --c--theme--colors--primary-050: #f5f5fe;
   --c--theme--colors--primary-150: #e5eefa;
   --c--theme--colors--primary-950: #1b1b35;
@@ -122,6 +123,11 @@
   --c--theme--font--sizes--ml: 0.938rem;
   --c--theme--font--sizes--xl: 1.25rem;
   --c--theme--font--sizes--t: 0.6875rem;
+  --c--theme--font--sizes--xl-alt: 5rem;
+  --c--theme--font--sizes--lg-alt: 4.5rem;
+  --c--theme--font--sizes--md-alt: 4rem;
+  --c--theme--font--sizes--sm-alt: 3.5rem;
+  --c--theme--font--sizes--xs-alt: 3rem;
   --c--theme--font--weights--thin: 100;
   --c--theme--font--weights--light: 300;
   --c--theme--font--weights--regular: 400;
@@ -316,7 +322,7 @@
     --c--theme--colors--primary-700
   );
   --c--components--button--secondary--border--color: var(
-    --c--theme--colors--primary-200
+    --c--theme--colors--greyscale-300
   );
   --c--components--button--tertiary--color: var(
     --c--theme--colors--primary-text
@@ -339,6 +345,7 @@
   --c--components--button--disabled--color: white;
   --c--components--button--disabled--background--color: #b3cef0;
   --c--components--la-gauffre--activated: false;
+  --c--components--home-proconnect--activated: false;
 }
 
 .cunningham-theme--dark {
@@ -501,10 +508,10 @@
   --c--components--button--secondary--background--color-hover: #f6f6f6;
   --c--components--button--secondary--background--color-active: #ededed;
   --c--components--button--secondary--border--color: var(
-    --c--theme--colors--primary-600
+    --c--theme--colors--greyscale-300
   );
   --c--components--button--secondary--border--color-hover: var(
-    --c--theme--colors--primary-600
+    --c--theme--colors--greyscale-300
   );
   --c--components--button--secondary--color: var(
     --c--theme--colors--primary-text
@@ -584,6 +591,7 @@
   );
   --c--components--forms-textarea--border-radius: 0;
   --c--components--la-gauffre--activated: true;
+  --c--components--home-proconnect--activated: true;
 }
 
 .clr-secondary-text {
@@ -872,6 +880,10 @@
 
 .clr-primary-bg {
   color: var(--c--theme--colors--primary-bg);
+}
+
+.clr-primary-action {
+  color: var(--c--theme--colors--primary-action);
 }
 
 .clr-primary-050 {
@@ -1302,6 +1314,10 @@
   background-color: var(--c--theme--colors--primary-bg);
 }
 
+.bg-primary-action {
+  background-color: var(--c--theme--colors--primary-action);
+}
+
 .bg-primary-050 {
   background-color: var(--c--theme--colors--primary-050);
 }
@@ -1548,6 +1564,31 @@
 .fs-t {
   font-size: var(--c--theme--font--sizes--t);
   letter-spacing: var(--c--theme--font--letterspacings--t);
+}
+
+.fs-xl-alt {
+  font-size: var(--c--theme--font--sizes--xl-alt);
+  letter-spacing: var(--c--theme--font--letterspacings--xl-alt);
+}
+
+.fs-lg-alt {
+  font-size: var(--c--theme--font--sizes--lg-alt);
+  letter-spacing: var(--c--theme--font--letterspacings--lg-alt);
+}
+
+.fs-md-alt {
+  font-size: var(--c--theme--font--sizes--md-alt);
+  letter-spacing: var(--c--theme--font--letterspacings--md-alt);
+}
+
+.fs-sm-alt {
+  font-size: var(--c--theme--font--sizes--sm-alt);
+  letter-spacing: var(--c--theme--font--letterspacings--sm-alt);
+}
+
+.fs-xs-alt {
+  font-size: var(--c--theme--font--sizes--xs-alt);
+  letter-spacing: var(--c--theme--font--letterspacings--xs-alt);
 }
 
 .f-base {

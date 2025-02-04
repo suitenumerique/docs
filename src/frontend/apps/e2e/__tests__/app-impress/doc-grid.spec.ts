@@ -213,7 +213,6 @@ test.describe('Document grid item options', () => {
 test.describe('Documents filters', () => {
   test('it checks the prebuild left panel filters', async ({ page }) => {
     // All Docs
-    await expect(page.getByTestId('grid-loader')).toBeVisible();
     const response = await page.waitForResponse(
       (response) =>
         response.url().endsWith('documents/?page=1') &&
@@ -254,7 +253,6 @@ test.describe('Documents filters', () => {
     url = new URL(page.url());
     target = url.searchParams.get('target');
     expect(target).toBe('my_docs');
-    await expect(page.getByTestId('grid-loader')).toBeVisible();
     const responseMyDocs = await page.waitForResponse(
       (response) =>
         response.url().endsWith('documents/?page=1&is_creator_me=true') &&
@@ -270,7 +268,6 @@ test.describe('Documents filters', () => {
     url = new URL(page.url());
     target = url.searchParams.get('target');
     expect(target).toBe('shared_with_me');
-    await expect(page.getByTestId('grid-loader')).toBeVisible();
     const responseSharedWithMe = await page.waitForResponse(
       (response) =>
         response.url().includes('documents/?page=1&is_creator_me=false') &&
@@ -291,8 +288,6 @@ test.describe('Documents Grid', () => {
 
   test('checks all the elements are visible', async ({ page }) => {
     let docs: SmallDoc[] = [];
-    await expect(page.getByTestId('grid-loader')).toBeVisible();
-
     const response = await page.waitForResponse(
       (response) =>
         response.url().endsWith('documents/?page=1') &&

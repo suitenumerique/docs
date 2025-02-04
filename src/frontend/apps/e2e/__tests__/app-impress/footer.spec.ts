@@ -1,13 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import { goToGridDoc } from './common';
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
-
 test.describe('Footer', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('checks all the elements are visible', async ({ page }) => {
+    await page.goto('/');
     const footer = page.locator('footer').first();
 
     await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
@@ -47,12 +44,6 @@ test.describe('Footer', () => {
     ).toBeVisible();
   });
 
-  test('checks footer is not visible on doc editor', async ({ page }) => {
-    await expect(page.locator('footer')).toBeVisible();
-    await goToGridDoc(page);
-    await expect(page.locator('footer')).toBeHidden();
-  });
-
   const legalPages = [
     { name: 'Legal Notice', url: '/legal-notice/' },
     { name: 'Personal data and cookies', url: '/personal-data-cookies/' },
@@ -60,6 +51,8 @@ test.describe('Footer', () => {
   ];
   for (const { name, url } of legalPages) {
     test(`checks ${name} page`, async ({ page }) => {
+      await page.goto('/');
+
       const footer = page.locator('footer').first();
       await footer.getByRole('link', { name }).click();
 

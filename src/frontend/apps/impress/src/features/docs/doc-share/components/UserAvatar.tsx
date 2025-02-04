@@ -1,8 +1,8 @@
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
-import { User } from '@/core';
 import { tokens } from '@/cunningham';
+import { User } from '@/features/auth';
 
 const colors = tokens.themes.default.theme.colors;
 

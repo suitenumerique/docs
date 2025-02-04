@@ -4,7 +4,7 @@
 
 import { Crisp } from 'crisp-sdk-web';
 
-import { User } from '@/core';
+import { User } from '@/features/auth';
 
 export const initializeCrispSession = (user: User) => {
   if (!Crisp.isCrispInjected()) {
