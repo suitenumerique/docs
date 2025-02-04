@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@next/eslint-plugin-next": "15.1.6",
-    "@tanstack/eslint-plugin-query": "5.65.0",
+    "@tanstack/eslint-plugin-query": "5.66.0",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "eslint": "*",
