@@ -1,6 +1,6 @@
-import { BlockNoteEditor } from '@blocknote/core';
 import { create } from 'zustand';
 
+import { DocsBlockNoteEditor } from '../components/BlockNoteEditor';
 import { HeadingBlock } from '../types';
 
 const recursiveTextContent = (content: HeadingBlock['content']): string => {
@@ -21,7 +21,7 @@ const recursiveTextContent = (content: HeadingBlock['content']): string => {
 
 export interface UseHeadingStore {
   headings: HeadingBlock[];
-  setHeadings: (editor: BlockNoteEditor) => void;
+  setHeadings: (editor: DocsBlockNoteEditor) => void;
   resetHeadings: () => void;
 }
 

@@ -368,4 +368,84 @@ test.describe('Doc Editor', () => {
 
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
   });
+
+  test('it checks the divider block', async ({ page, browserName }) => {
+    await createDoc(page, 'divider-block', browserName, 1);
+
+    const editor = page.locator('.ProseMirror');
+    // Trigger slash menu to show menu
+    await editor.click();
+    await editor.fill('/');
+    await page.getByText('Divider', { exact: true }).click();
+
+    await expect(
+      editor.locator('.bn-block-content[data-content-type="divider"]'),
+    ).toBeVisible();
+  });
+
+  test('it checks the quote block', async ({ page, browserName }) => {
+    await createDoc(page, 'divider-block', browserName, 1);
+
+    const editor = page.locator('.ProseMirror');
+    // Trigger slash menu to show menu
+    await editor.click();
+    await editor.fill('/');
+    await page.getByText('Quote', { exact: true }).click();
+
+    await expect(
+      editor.locator('.bn-block-content[data-content-type="quote"]'),
+    ).toBeVisible();
+
+    await editor.fill('Hello World');
+
+    await expect(editor.getByText('Hello World')).toHaveCSS(
+      'font-style',
+      'italic',
+    );
+  });
+
+  test('it checks the alert block', async ({ page, browserName }) => {
+    await createDoc(page, 'divider-block', browserName, 1);
+
+    const editor = page.locator('.ProseMirror');
+    // Trigger slash menu to show menu
+    await editor.click();
+    await editor.fill('/');
+    await page.getByText('Alert', { exact: true }).click();
+
+    const alertBlock = editor.locator(
+      '.bn-block-content[data-content-type="alert"]',
+    );
+    await expect(
+      alertBlock.locator('div[data-alert-type="warning"]'),
+    ).toBeVisible();
+    await editor.fill('My alert');
+    await expect(alertBlock.getByText('My alert')).toBeVisible();
+
+    await alertBlock.getByText('warning').click();
+
+    await expect(
+      alertBlock.getByRole('menuitem', { name: 'warning Warning' }),
+    ).toBeVisible();
+
+    await expect(
+      alertBlock.getByRole('menuitem', { name: 'error Error' }),
+    ).toBeVisible();
+
+    await expect(
+      alertBlock.getByRole('menuitem', { name: 'info Info' }),
+    ).toBeVisible();
+
+    await expect(
+      alertBlock.getByRole('menuitem', { name: 'check_circle Success' }),
+    ).toBeVisible();
+
+    await alertBlock
+      .getByRole('menuitem', { name: 'check_circle Success' })
+      .click();
+
+    await expect(
+      alertBlock.locator('div[data-alert-type="success"]'),
+    ).toBeVisible();
+  });
 });

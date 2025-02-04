@@ -11,6 +11,8 @@ and this project adheres to
 
 ## Added
 - 📝(doc) Add security.md and codeofconduct.md #604
+- ✨(frontend) add Alert, Quote, and Divider blocks to the editor #566
+
 
 ## [2.1.0] - 2025-01-29
 

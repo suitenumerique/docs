@@ -1,9 +1,9 @@
-import { BlockNoteEditor } from '@blocknote/core';
 import { useEffect } from 'react';
 
+import { DocsBlockNoteEditor } from '../components/BlockNoteEditor';
 import { useHeadingStore } from '../stores';
 
-export const useHeadings = (editor: BlockNoteEditor) => {
+export const useHeadings = (editor: DocsBlockNoteEditor) => {
   const { setHeadings, resetHeadings } = useHeadingStore();
 
   useEffect(() => {
