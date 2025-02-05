@@ -15,9 +15,14 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@blocknote/core": "0.21.0",
-    "@blocknote/mantine": "0.21.0",
-    "@blocknote/react": "0.21.0",
+    "ai": "^4.1.18",
+    "zod": "^3.24.1",
+    "@ai-sdk/openai": "^1.1.9",
+    "@blocknote/core": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/core?ai-block-built",
+    "@blocknote/mantine": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/mantine?ai-block-built",
+    "@blocknote/react": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/react?ai-block-built",
+    "@blocknote/xl-ai": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/xl-ai?ai-block-built",
+    "vitest": "^2.0.3",
     "@blocknote/xl-docx-exporter": "0.21.0",
     "@blocknote/xl-pdf-exporter": "0.21.0",
     "@gouvfr-lasuite/integration": "1.0.2",

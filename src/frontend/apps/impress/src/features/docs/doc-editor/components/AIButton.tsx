@@ -95,7 +95,7 @@ export function AIGroupButton() {
   return (
     <Components.Generic.Menu.Root>
       <Components.Generic.Menu.Trigger>
-        <Components.FormattingToolbar.Button
+        <Components.Toolbar.Button
           className="bn-button bn-menu-item"
           data-test="ai-actions"
           label="AI"

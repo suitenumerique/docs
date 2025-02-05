@@ -5,7 +5,7 @@ import {
   useSelectedBlocks,
 } from '@blocknote/react';
 import { forEach, isArray } from 'lodash';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type Block = {
@@ -80,11 +80,11 @@ export function MarkdownButton() {
   }
 
   return (
-    <Components.FormattingToolbar.Button
+    <Components.Toolbar.Button
       mainTooltip={t('Convert Markdown')}
       onClick={handleConvertMarkdown}
     >
       M
-    </Components.FormattingToolbar.Button>
+    </Components.Toolbar.Button>
   );
 }

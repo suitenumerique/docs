@@ -1,18 +1,35 @@
-import { Dictionary, locales } from '@blocknote/core';
-import '@blocknote/core/fonts/inter.css';
-import { BlockNoteView } from '@blocknote/mantine';
-import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
-import { HocuspocusProvider } from '@hocuspocus/provider';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
-import * as Y from 'yjs';
-
 import { Box, TextErrors } from '@/components';
 import { useAuthStore } from '@/core/auth';
 import { Doc } from '@/features/docs/doc-management';
-
+import { createOpenAI } from '@ai-sdk/openai';
+import {
+  BlockNoteEditor as BNEditor,
+  Dictionary,
+  filterSuggestionItems,
+  locales,
+} from '@blocknote/core';
+import '@blocknote/core/fonts/inter.css';
+import { BlockNoteView } from '@blocknote/mantine';
+import '@blocknote/mantine/style.css';
+import {
+  getDefaultReactSlashMenuItems,
+  SuggestionMenuController,
+  useCreateBlockNote,
+} from '@blocknote/react';
+import {
+  locales as aiLocales,
+  AIShowSelectionPlugin,
+  BlockNoteAIContextProvider,
+  BlockNoteAIUI,
+  createBlockNoteAIClient,
+  getAISlashMenuItems,
+  useBlockNoteAIContext,
+} from '@blocknote/xl-ai';
+import { HocuspocusProvider } from '@hocuspocus/provider';
+import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
+import * as Y from 'yjs';
 import { useUploadFile } from '../hook';
 import { useHeadings } from '../hook/useHeadings';
 import useSaveDoc from '../hook/useSaveDoc';
@@ -128,8 +145,36 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     ? 'Reader'
     : userData?.full_name || userData?.email || t('Anonymous');
 
+  const model = useMemo(() => {
+    const blocknoteAIClient = createBlockNoteAIClient({
+      apiKey: 'BLOCKNOTE-API-KEY-CURRENTLY-NOT-NEEDED',
+      baseURL: 'https://blocknote-esy4.onrender.com/ai',
+    });
+
+    return createOpenAI({
+      baseURL: 'https://albert.api.staging.etalab.gouv.fr/v1',
+      ...blocknoteAIClient.getProviderSettings('albert-etalab'),
+      compatibility: 'compatible',
+    })('albert-etalab/neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8');
+
+    // We call the model via a proxy server (see above) that has the API key,
+    // but we could also call the model directly from the frontend.
+    // i.e., this should work as well (but it would leak your albert key to the frontend):
+    /*
+      return createOpenAI({
+      baseURL: 'https://albert.api.staging.etalab.gouv.fr/v1',
+      apiKey: 'ALBERT-API-KEY',
+      compatibility: 'compatible',
+    })('albert-etalab/neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8');
+     */
+  }, []);
+
   const editor = useCreateBlockNote(
     {
+      _extensions: {
+        aiSelection: new AIShowSelectionPlugin(),
+      },
+
       collaboration: {
         provider,
         fragment: provider.document.getXmlFragment('document-store'),
@@ -163,7 +208,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           return cursor;
         },
       },
-      dictionary: locales[lang as keyof typeof locales] as Dictionary,
+      dictionary: {
+        ...(locales[lang as keyof typeof locales] as Dictionary),
+        ai: (aiLocales as any)[lang] as Dictionary,
+      },
       uploadFile,
     },
     [collabName, lang, provider, uploadFile],
@@ -199,12 +247,39 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         formattingToolbar={false}
         editable={!readOnly}
         theme="light"
+        slashMenu={false}
       >
-        <BlockNoteToolbar />
+        <BlockNoteAIContextProvider
+          model={model}
+          dataFormat={'markdown'}
+          stream={false}
+        >
+          <BlockNoteAIUI />
+          <BlockNoteToolbar />
+          <SuggestionMenu editor={editor} />
+        </BlockNoteAIContextProvider>
       </BlockNoteView>
     </Box>
   );
 };
+
+function SuggestionMenu(props: { editor: BNEditor<any, any, any> }) {
+  const ctx = useBlockNoteAIContext();
+  return (
+    <SuggestionMenuController
+      triggerCharacter="/"
+      getItems={async (query) =>
+        filterSuggestionItems(
+          [
+            ...getDefaultReactSlashMenuItems(props.editor),
+            ...getAISlashMenuItems(props.editor, ctx),
+          ],
+          query,
+        )
+      }
+    />
+  );
+}
 
 interface BlockNoteEditorVersionProps {
   initialContent: Y.XmlFragment;

@@ -35,6 +35,10 @@
     "eslint": "8.57.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "@blocknote/core": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/core?ai-block-built",
+    "@blocknote/mantine": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/mantine?ai-block-built",
+    "@blocknote/react": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/react?ai-block-built",
+    "@blocknote/xl-ai": "https://gitpkg.vercel.app/typecellOS/blocknote/packages/xl-ai?ai-block-built"
   }
 }
