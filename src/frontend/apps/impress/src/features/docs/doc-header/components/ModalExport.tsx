@@ -3,10 +3,6 @@ import {
   docxDefaultSchemaMappings,
 } from '@blocknote/xl-docx-exporter';
 import {
-  PDFExporter,
-  pdfDefaultSchemaMappings,
-} from '@blocknote/xl-pdf-exporter';
-import {
   Button,
   Loader,
   Modal,
@@ -25,6 +21,7 @@ import { useEditorStore } from '@/features/docs/doc-editor';
 import { Doc } from '@/features/docs/doc-management';
 
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
+import { DocsPDFExporter } from '../libs/DocsPDFExporter';
 import { downloadFile, exportResolveFileUrl } from '../utils';
 
 enum DocDownloadFormat {
@@ -91,19 +88,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     let blobExport: Blob;
     if (format === DocDownloadFormat.PDF) {
-      const defaultExporter = new PDFExporter(
-        editor.schema,
-        pdfDefaultSchemaMappings,
-      );
+      const defaultExporter = new DocsPDFExporter(editor.schema);
+      const exporter = new DocsPDFExporter(editor.schema, {
+        resolveFileUrl: async (url) =>
+          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+      });
 
-      const exporter = new PDFExporter(
-        editor.schema,
-        pdfDefaultSchemaMappings,
-        {
-          resolveFileUrl: async (url) =>
-            exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
-        },
-      );
       const pdfDocument = await exporter.toReactPDFDocument(exportDocument);
       blobExport = await pdf(pdfDocument).toBlob();
     } else {
