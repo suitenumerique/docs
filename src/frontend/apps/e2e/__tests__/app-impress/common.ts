@@ -1,6 +1,9 @@
 import { Page, expect } from '@playwright/test';
 
 export const keyCloakSignIn = async (page: Page, browserName: string) => {
+  await page.waitForURL(
+    'http://localhost:8083/realms/impress/protocol/openid-connect/auth**',
+  );
   const login = `user-e2e-${browserName}`;
   const password = `password-e2e-${browserName}`;
 
