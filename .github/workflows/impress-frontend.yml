@@ -10,13 +10,14 @@ on:
 
 jobs:
 
-  install-front:
-    uses: ./.github/workflows/front-dependencies-installation.yml
+  install-dependencies:
+    uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '20.x'
+      with-front-dependencies-installation: true
 
   test-front:
-    needs: install-front
+    needs: install-dependencies
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -39,7 +40,7 @@ jobs:
 
   lint-front:
     runs-on: ubuntu-latest
-    needs: install-front
+    needs: install-dependencies
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,7 +61,7 @@ jobs:
 
   test-e2e-chromium:
     runs-on: ubuntu-latest
-    needs: install-front
+    needs: install-dependencies
     timeout-minutes: 20
     steps:
       - name: Checkout repository

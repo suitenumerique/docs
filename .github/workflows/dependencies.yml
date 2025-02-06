@@ -1,0 +1,85 @@
+name: Dependency reusable workflow
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        required: false
+        default: '20.x'
+        type: string
+      with-front-dependencies-installation:
+        type: boolean
+        default: false
+      with-build_mails:
+        type: boolean
+        default: false
+
+jobs:
+  front-dependencies-installation:
+    if: ${{ inputs.with-front-dependencies-installation == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Restore the frontend cache
+        uses: actions/cache@v4
+        id: front-node_modules
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+      - name: Setup Node.js
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+      - name: Install dependencies
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        run: cd src/frontend/ && yarn install --frozen-lockfile
+      - name: Cache install frontend
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+
+  build-mails:
+    if: ${{ inputs.with-build_mails == true }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/mail
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore the mail templates
+        uses: actions/cache@v4
+        id: mail-templates
+        with:
+          path: "src/backend/core/templates/mail"
+          key: mail-templates-${{ hashFiles('src/mail/mjml') }}
+
+      - name: Setup Node.js
+        if: steps.mail-templates.outputs.cache-hit != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install yarn
+        if: steps.mail-templates.outputs.cache-hit != 'true'
+        run: npm install -g yarn
+
+      - name: Install node dependencies
+        if: steps.mail-templates.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Build mails
+        if: steps.mail-templates.outputs.cache-hit != 'true'
+        run: yarn build
+
+      - name: Cache mail templates
+        if: steps.mail-templates.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: "src/backend/core/templates/mail"
+          key: mail-templates-${{ hashFiles('src/mail/mjml') }}

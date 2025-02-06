@@ -7,10 +7,11 @@ on:
       - 'release/**'
 
 jobs:
-  install-front:
-    uses: ./.github/workflows/front-dependencies-installation.yml
+  install-dependencies:
+    uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '20.x'
+      with-front-dependencies-installation: true
 
   synchronize-with-crowdin:
     runs-on: ubuntu-latest
