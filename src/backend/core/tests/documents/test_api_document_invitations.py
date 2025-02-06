@@ -458,6 +458,10 @@ def test_api_document_invitations_create_email_from_content_language():
 
     email_content = " ".join(email.body.split())
     assert f"{user.full_name} a partagé un document avec vous!" in email_content
+    assert (
+        "Docs, votre nouvel outil incontournable pour organiser, partager et collaborer "
+        "sur vos documents en équipe." in email_content
+    )
 
 
 def test_api_document_invitations_create_email_from_content_language_not_supported():

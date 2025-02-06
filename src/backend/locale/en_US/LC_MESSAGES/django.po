@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-29 13:43+0000\n"
-"PO-Revision-Date: 2025-01-30 10:24\n"
+"POT-Creation-Date: 2025-02-06 15:30+0000\n"
+"PO-Revision-Date: 2025-02-06 15:57\n"
 "Last-Translator: \n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -389,5 +389,26 @@ msgstr ""
 
 #: build/lib/impress/settings.py:238 impress/settings.py:238
 msgid "German"
+msgstr ""
+
+#: core/templates/mail/html/invitation.html:162
+#: core/templates/mail/text/invitation.txt:3
+msgid "Logo email"
+msgstr ""
+
+#: core/templates/mail/html/invitation.html:209
+#: core/templates/mail/text/invitation.txt:10
+msgid "Open"
+msgstr ""
+
+#: core/templates/mail/html/invitation.html:226
+#: core/templates/mail/text/invitation.txt:14
+msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
+msgstr ""
+
+#: core/templates/mail/html/invitation.html:233
+#: core/templates/mail/text/invitation.txt:16
+#, python-format
+msgid " Brought to you by %(brandname)s "
 msgstr ""
 
