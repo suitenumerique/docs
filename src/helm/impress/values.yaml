@@ -308,6 +308,9 @@ backend:
   ## @param backend.extraVolumes Additional volumes to mount on the backend.
   extraVolumes: []
 
+  ## @param backend.pdb.enabled Enable pdb on backend
+  pdb:
+    enabled: true
 
 ## @section frontend
 
@@ -402,6 +405,10 @@ frontend:
 
   ## @param frontend.extraVolumes Additional volumes to mount on the frontend.
   extraVolumes: []
+
+  ## @param frontend.pdb.enabled Enable pdb on frontend
+  pdb:
+    enabled: true
 
 ## @section posthog
 
@@ -571,3 +578,7 @@ yProvider:
 
   ## @param yProvider.extraVolumes Additional volumes to mount on the yProvider.
   extraVolumes: []
+
+  ## @param yProvider.pdb.enabled Enable pdb on yProvider
+  pdb:
+    enabled: true

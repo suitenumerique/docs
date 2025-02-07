@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 docker image ls | grep readme-generator-for-helm
 if [ "$?" -ne "0" ]; then
