@@ -27,6 +27,41 @@ const cssEditor = (readonly: boolean) => css`
   & .ProseMirror {
     height: 100%;
 
+    .collaboration-cursor-custom__base {
+      position: relative;
+    }
+    .collaboration-cursor-custom__caret {
+      position: absolute;
+      height: 85%;
+      width: 2px;
+      bottom: 4%;
+      left: -1px;
+    }
+
+    .collaboration-cursor-custom__label {
+      color: #0d0d0d;
+      font-size: 12px;
+      font-weight: 600;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+      position: absolute;
+      top: -17px;
+      padding: 0px 6px;
+      border-radius: 0px;
+      white-space: nowrap;
+      transition: clip-path 0.3s ease-in-out;
+      border-radius: 4px 4px 4px 0;
+      box-shadow: inset -2px 2px 6px #ffffff88;
+      clip-path: polygon(0 100%, 0 100%, 0 100%, 0% 100%);
+    }
+
+    .collaboration-cursor-custom__base[data-active]
+      .collaboration-cursor-custom__label {
+      pointer-events: none;
+      clip-path: polygon(0 0, 100% 0%, 100% 100%, 0% 100%);
+    }
+
     .bn-side-menu[data-block-type='heading'][data-level='1'] {
       height: 50px;
     }
@@ -127,6 +162,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const collabName = readOnly
     ? 'Reader'
     : user?.full_name || user?.email || t('Anonymous');
+  const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
   const editor = useCreateBlockNote(
     {
@@ -138,30 +174,46 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           color: randomColor(),
         },
         /**
-         * We re-use the blocknote code to render the cursor but we:
-         * - fix rendering issue with Firefox
-         * - We don't want to show the cursor when anonymous users
+         * We render the cursor with a custom element to:
+         * - fix rendering issue with the default cursor
+         * - hide the cursor when anonymous users
          */
         renderCursor: (user: { color: string; name: string }) => {
-          const cursor = document.createElement('span');
+          const cursorElement = document.createElement('span');
 
           if (user.name === 'Reader') {
-            return cursor;
+            return cursorElement;
           }
 
-          cursor.classList.add('collaboration-cursor__caret');
-          cursor.setAttribute('style', `border-color: ${user.color}`);
+          cursorElement.classList.add('collaboration-cursor-custom__base');
+          const caretElement = document.createElement('span');
+          caretElement.classList.add('collaboration-cursor-custom__caret');
+          caretElement.setAttribute('spellcheck', `false`);
+          caretElement.setAttribute('style', `background-color: ${user.color}`);
 
-          const label = document.createElement('span');
+          if (showCursorLabels === 'always') {
+            cursorElement.setAttribute('data-active', '');
+          }
 
-          label.classList.add('collaboration-cursor__label');
-          label.setAttribute('style', `background-color: ${user.color}`);
-          label.insertBefore(document.createTextNode(user.name), null);
+          const labelElement = document.createElement('span');
 
-          cursor.insertBefore(label, null);
+          labelElement.classList.add('collaboration-cursor-custom__label');
+          labelElement.setAttribute('spellcheck', `false`);
+          labelElement.setAttribute(
+            'style',
+            `background-color: ${user.color};border: 1px solid ${user.color};`,
+          );
+          labelElement.insertBefore(document.createTextNode(user.name), null);
 
-          return cursor;
+          caretElement.insertBefore(labelElement, null);
+
+          cursorElement.insertBefore(document.createTextNode('\u2060'), null); // Non-breaking space
+          cursorElement.insertBefore(caretElement, null);
+          cursorElement.insertBefore(document.createTextNode('\u2060'), null); // Non-breaking space
+
+          return cursorElement;
         },
+        showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
       dictionary: locales[lang as keyof typeof locales] as Dictionary,
       uploadFile,
