@@ -23,7 +23,7 @@
     "@gouvfr-lasuite/integration": "1.0.2",
     "@hocuspocus/provider": "2.15.2",
     "@openfun/cunningham-react": "2.9.4",
-    "@react-pdf/renderer": "4.2.1",
+    "@react-pdf/renderer": "4.1.6",
     "@sentry/nextjs": "8.54.0",
     "@tanstack/react-query": "5.66.0",
     "cmdk": "1.0.4",
