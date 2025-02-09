@@ -13,11 +13,14 @@ and this project adheres to
 
 - 📝(doc) Add security.md and codeofconduct.md #604
 - ✨(frontend) add home page #553
-
+- ✨(frontend) cursor display on activity #609
 
 ## Fixed
 
 🌐(CI) Fix email partially translated #616
+- 🐛(frontend) fix cursor breakline #609
+- 🐛(frontend) fix style pdf export #609
+
 
 ## [2.1.0] - 2025-01-29
 
