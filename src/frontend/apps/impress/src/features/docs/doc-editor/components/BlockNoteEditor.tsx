@@ -1,4 +1,9 @@
-import { Dictionary, locales } from '@blocknote/core';
+import {
+  BlockNoteSchema,
+  Dictionary,
+  locales,
+  withPageBreak,
+} from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
@@ -19,6 +24,7 @@ import useSaveDoc from '../hook/useSaveDoc';
 import { useEditorStore } from '../stores';
 import { randomColor } from '../utils';
 
+import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolbar';
 
 const cssEditor = (readonly: boolean) => css`
@@ -142,6 +148,8 @@ const cssEditor = (readonly: boolean) => css`
   }
 `;
 
+export const blockNoteSchema = withPageBreak(BlockNoteSchema.create());
+
 interface BlockNoteEditorProps {
   doc: Doc;
   provider: HocuspocusProvider;
@@ -217,6 +225,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: locales[lang as keyof typeof locales] as Dictionary,
       uploadFile,
+      schema: blockNoteSchema,
     },
     [collabName, lang, provider, uploadFile],
   );
@@ -249,10 +258,12 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       <BlockNoteView
         editor={editor}
         formattingToolbar={false}
+        slashMenu={false}
         editable={!readOnly}
         theme="light"
       >
         <BlockNoteToolbar />
+        <BlockNoteSuggestionMenu />
       </BlockNoteView>
     </Box>
   );
@@ -277,6 +288,7 @@ export const BlockNoteEditorVersion = ({
         },
         provider: undefined,
       },
+      schema: blockNoteSchema,
     },
     [initialContent],
   );

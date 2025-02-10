@@ -14,6 +14,7 @@ and this project adheres to
 - 📝(doc) Add security.md and codeofconduct.md #604
 - ✨(frontend) add home page #553
 - ✨(frontend) cursor display on activity #609
+- ✨(frontend) Add export page break #623
 
 ## Fixed
 
