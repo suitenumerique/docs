@@ -1,3 +1,4 @@
+import { Button } from '@openfun/cunningham-react';
 import Image from 'next/image';
 import { Trans, useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -10,6 +11,7 @@ import { Title } from '@/features/header';
 import { useResponsiveStore } from '@/stores';
 
 import SC5 from '../assets/SC5.png';
+import GithubIcon from '../assets/github.svg';
 
 import { HomeSection } from './HomeSection';
 
@@ -72,7 +74,7 @@ function HomeOpenSource() {
           </Text>
           <Text as="p" $display="inline">
             <Trans t={t} i18nKey="home-content-open-source-part2">
-              You can easily self-host Docs (check our installation{' '}
+              You can easily self-hosted Docs (check our installation{' '}
               <a
                 href="https://github.com/suitenumerique/docs/tree/main/docs"
                 target="_blank"
@@ -114,6 +116,27 @@ function HomeOpenSource() {
               are interested in using or contributing to docs.
             </Trans>
           </Text>
+          <Box $direction="row" $gap="1rem" $margin={{ top: 'small' }}>
+            <Button
+              icon={
+                <Text $isMaterialIcon $color="white">
+                  chat
+                </Text>
+              }
+              href="https://matrix.to/#/#docs-official:matrix.org"
+              target="_blank"
+            >
+              <Text $color="white">Matrix</Text>
+            </Button>
+            <Button
+              color="secondary"
+              icon={<GithubIcon />}
+              href="https://github.com/suitenumerique/docs"
+              target="_blank"
+            >
+              Github
+            </Button>
+          </Box>
         </Box>
       }
     />
