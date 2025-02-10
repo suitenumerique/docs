@@ -30,12 +30,13 @@ export const cssEditor = (readonly: boolean) => css`
       white-space: nowrap;
       transition: clip-path 0.3s ease-in-out;
       border-radius: 4px 4px 4px 0;
-      box-shadow: inset -2px 2px 6px #ffffff88;
-      clip-path: polygon(0 100%, 0 100%, 0 100%, 0% 100%);
+      box-shadow: inset -2px 2px 6px #ffffff00;
+      clip-path: polygon(0 85%, 4% 85%, 4% 100%, 0% 100%);
     }
     .collaboration-cursor-custom__base[data-active]
       .collaboration-cursor-custom__label {
       pointer-events: none;
+      box-shadow: inset -2px 2px 6px #ffffff88;
       clip-path: polygon(0 0, 100% 0%, 100% 100%, 0% 100%);
     }
 
