@@ -1,8 +1,8 @@
-import { BlockNoteEditor } from '@blocknote/core';
 import { useState } from 'react';
 
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { DocsBlockNoteEditor } from '@/features/docs/doc-editor';
 import { useResponsiveStore } from '@/stores';
 
 const leftPaddingMap: { [key: number]: string } = {
@@ -17,7 +17,7 @@ export type HeadingsHighlight = {
 }[];
 
 interface HeadingProps {
-  editor: BlockNoteEditor;
+  editor: DocsBlockNoteEditor;
   level: number;
   text: string;
   headingId: string;

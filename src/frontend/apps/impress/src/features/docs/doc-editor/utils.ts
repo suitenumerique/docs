@@ -1,3 +1,6 @@
+import { BlockNoteSchema } from '@blocknote/core';
+import { withMultiColumn } from '@blocknote/xl-multi-column';
+
 export const randomColor = () => {
   const randomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -25,3 +28,7 @@ function hslToHex(h: number, s: number, l: number) {
 
 export const toBase64 = (str: Uint8Array) =>
   Buffer.from(str).toString('base64');
+
+export const blockNoteWithMultiColumn = withMultiColumn(
+  BlockNoteSchema.create(),
+);
