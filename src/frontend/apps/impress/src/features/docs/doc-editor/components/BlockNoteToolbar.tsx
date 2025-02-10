@@ -5,9 +5,9 @@ import {
   FormattingToolbarProps,
   getFormattingToolbarItems,
 } from '@blocknote/react';
-import React, { useCallback } from 'react';
+import { AIToolbarButton } from '@blocknote/xl-ai';
+import { useCallback } from 'react';
 
-import { AIGroupButton } from './AIButton';
 import { MarkdownButton } from './MarkdownButton';
 
 export const BlockNoteToolbar = () => {
@@ -17,7 +17,8 @@ export const BlockNoteToolbar = () => {
         {getFormattingToolbarItems(blockTypeSelectItems)}
 
         {/* Extra button to do some AI powered actions */}
-        <AIGroupButton key="AIButton" />
+        {/* <AIGroupButton key="AIButton" /> */}
+        <AIToolbarButton key="AIButton" />
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
