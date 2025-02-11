@@ -8,21 +8,27 @@ import {
 import React, { useCallback } from 'react';
 
 import { AIGroupButton } from './AIButton';
+import { AIPdfButton } from './AIPdfButton';
 import { MarkdownButton } from './MarkdownButton';
 
 export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(
-    ({ blockTypeSelectItems }: FormattingToolbarProps) => (
-      <FormattingToolbar>
-        {getFormattingToolbarItems(blockTypeSelectItems)}
+    ({ blockTypeSelectItems }: FormattingToolbarProps) => {
+      console.log('formattingToolbar', blockTypeSelectItems);
+      return (
+        <FormattingToolbar>
+          {getFormattingToolbarItems(blockTypeSelectItems)}
 
-        {/* Extra button to do some AI powered actions */}
-        <AIGroupButton key="AIButton" />
+          {/* Extra button to do some AI powered actions */}
+          <AIGroupButton key="AIButton" />
 
-        {/* Extra button to convert from markdown to json */}
-        <MarkdownButton key="customButton" />
-      </FormattingToolbar>
-    ),
+          {/* Extra button to convert from markdown to json */}
+          <MarkdownButton key="customButton" />
+
+          <AIPdfButton />
+        </FormattingToolbar>
+      );
+    },
     [],
   );
 

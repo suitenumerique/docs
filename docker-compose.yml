@@ -21,8 +21,8 @@ services:
       - MINIO_ROOT_USER=impress
       - MINIO_ROOT_PASSWORD=password
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
     entrypoint: ""
     command: minio server --console-address :9001 /data
     volumes:
@@ -59,11 +59,11 @@ services:
       - ./src/backend:/app
       - ./data/static:/data/static
     depends_on:
-        - postgresql
-        - mailcatcher
-        - redis
-        - createbuckets
-  
+      - postgresql
+      - mailcatcher
+      - redis
+      - createbuckets
+
   celery-dev:
     user: ${DOCKER_USER:-1000}
     image: impress:backend-development
@@ -122,7 +122,7 @@ services:
 
   frontend-dev:
     user: "${DOCKER_USER:-1000}"
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/Dockerfile
       target: frontend-production
@@ -151,13 +151,13 @@ services:
     image: node:18
     user: "${DOCKER_USER:-1000}"
     environment:
-      HOME: /tmp 
+      HOME: /tmp
     volumes:
       - ".:/app"
 
   y-provider:
     user: ${DOCKER_USER:-1000}
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
       target: y-provider
@@ -169,6 +169,7 @@ services:
 
   kc_postgresql:
     image: postgres:14.3
+    platform: linux/amd64
     ports:
       - "5433:5432"
     env_file:
@@ -196,7 +197,7 @@ services:
       KC_DB_PASSWORD: pass
       KC_DB_USERNAME: impress
       KC_DB_SCHEMA: public
-      PROXY_ADDRESS_FORWARDING: 'true'
+      PROXY_ADDRESS_FORWARDING: "true"
     ports:
       - "8080:8080"
     depends_on:

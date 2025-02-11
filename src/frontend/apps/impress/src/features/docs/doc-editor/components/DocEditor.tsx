@@ -16,6 +16,7 @@ import { TableContent } from '@/features/docs/doc-table-content/';
 import { Versions, useDocVersion } from '@/features/docs/doc-versioning/';
 import { useResponsiveStore } from '@/stores';
 
+import { AiButton } from './Ai/AiButton';
 import { BlockNoteEditor, BlockNoteEditorVersion } from './BlockNoteEditor';
 
 interface DocEditorProps {
@@ -38,6 +39,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
 
   return (
     <>
+      <AiButton doc={doc} />
       {isDesktop && !isVersion && (
         <Box
           $position="absolute"

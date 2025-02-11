@@ -1082,6 +1082,41 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=True,
         methods=["post"],
+        name="Just proxy ai call",
+        url_path="ai-proxy"
+    )
+    def ai_proxy(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/ai-transform
+        with expected data:
+        - text: str
+        - action: str [prompt, correct, rephrase, summarize]
+        Return JSON response with the processed text.
+        """
+        print('PROXY 1')
+        # Check permissions first
+        # self.get_object()
+
+        print('PROXY 2')
+        print(request.data)
+        # serializer = serializers.AITransformSerializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+
+        print('PROXY 3')
+        system_content = request.data["system"]
+        text = request.data["text"]
+
+        print('PROXY 4')
+        response = AIService().call_proxy(system_content, text)
+
+        print('PROXY 5')
+        print(response)
+
+        return drf.response.Response(response, status=drf.status.HTTP_200_OK)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
         name="Translate a piece of text with AI",
         url_path="ai-translate",
         throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],

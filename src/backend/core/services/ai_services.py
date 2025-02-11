@@ -55,6 +55,22 @@ class AIService:
             raise ImproperlyConfigured("AI configuration not set")
         self.client = OpenAI(base_url=settings.AI_BASE_URL, api_key=settings.AI_API_KEY)
 
+    def call_proxy(self, system_content, text):
+       messages = [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": text},
+            ]
+       print('REQUEST', messages)
+       response = self.client.chat.completions.create(
+            model='meta-llama/Llama-3.1-8B-Instruct',
+            messages=messages,
+        )
+       
+       print('RESPONSE', response)
+       content = response.choices[0].message.content
+       print('CONTENT', content)
+       return content
+
     def call_ai_api(self, system_content, text):
         """Helper method to call the OpenAI API and process the response."""
         response = self.client.chat.completions.create(
