@@ -11,6 +11,7 @@ and this project adheres to
 
 ## Changed
 
+- 🛂(frontend) Restore version visibility #629
 - 📝(doc) minor README.md formatting and wording enhancements
 - ♻️Stop setting a default title on doc creation #634
 

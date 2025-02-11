@@ -36,8 +36,9 @@ export const ModalSelectVersion = ({
   const { t } = useTranslation();
   const [selectedVersionId, setSelectedVersionId] =
     useState<Versions['version_id']>();
-
+  const canRestore = doc.abilities.partial_update;
   const restoreModal = useModal();
+
   return (
     <>
       <Modal
@@ -127,21 +128,23 @@ export const ModalSelectVersion = ({
                 selectedVersionId={selectedVersionId}
               />
             </Box>
-            <Box
-              $padding="xs"
-              $css={css`
-                border-top: 1px solid var(--c--theme--colors--greyscale-200);
-              `}
-            >
-              <Button
-                fullWidth
-                disabled={!selectedVersionId}
-                onClick={restoreModal.open}
-                color="primary"
+            {canRestore && (
+              <Box
+                $padding="xs"
+                $css={css`
+                  border-top: 1px solid var(--c--theme--colors--greyscale-200);
+                `}
               >
-                {t('Restore')}
-              </Button>
-            </Box>
+                <Button
+                  fullWidth
+                  disabled={!selectedVersionId}
+                  onClick={restoreModal.open}
+                  color="primary"
+                >
+                  {t('Restore')}
+                </Button>
+              </Box>
+            )}
           </Box>
         </Box>
       </Modal>
