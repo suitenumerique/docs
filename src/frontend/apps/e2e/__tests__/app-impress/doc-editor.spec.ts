@@ -1,3 +1,5 @@
+/* eslint-disable playwright/no-conditional-expect */
+/* eslint-disable playwright/no-conditional-in-test */
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
@@ -367,5 +369,78 @@ test.describe('Doc Editor', () => {
     await page.getByRole('menuitem', { name: 'English', exact: true }).click();
 
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+  });
+
+  [
+    { ai_transform: false, ai_translate: false },
+    { ai_transform: true, ai_translate: false },
+    { ai_transform: false, ai_translate: true },
+  ].forEach(({ ai_transform, ai_translate }) => {
+    test(`it checks AI buttons when can transform is at "${ai_transform}" and can translate is at "${ai_translate}"`, async ({
+      page,
+    }) => {
+      await mockedDocument(page, {
+        accesses: [
+          {
+            id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
+            role: 'owner',
+            user: {
+              email: 'super@owner.com',
+              full_name: 'Super Owner',
+            },
+          },
+        ],
+        abilities: {
+          destroy: true, // Means owner
+          link_configuration: true,
+          ai_transform,
+          ai_translate,
+          accesses_manage: true,
+          accesses_view: true,
+          update: true,
+          partial_update: true,
+          retrieve: true,
+        },
+        link_reach: 'public',
+        link_role: 'editor',
+        created_at: '2021-09-01T09:00:00Z',
+      });
+
+      await goToGridDoc(page);
+
+      await verifyDocName(page, 'Mocked document');
+
+      await page.locator('.bn-block-outer').last().fill('Hello World');
+
+      const editor = page.locator('.ProseMirror');
+      await editor.getByText('Hello').dblclick();
+
+      if (!ai_transform && !ai_translate) {
+        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
+        return;
+      }
+
+      await page.getByRole('button', { name: 'AI' }).click();
+
+      if (ai_transform) {
+        await expect(
+          page.getByRole('menuitem', { name: 'Use as prompt' }),
+        ).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole('menuitem', { name: 'Use as prompt' }),
+        ).toBeHidden();
+      }
+
+      if (ai_translate) {
+        await expect(
+          page.getByRole('menuitem', { name: 'Language' }),
+        ).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole('menuitem', { name: 'Language' }),
+        ).toBeHidden();
+      }
+    });
   });
 });
