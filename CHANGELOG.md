@@ -9,6 +9,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- 🛂(frontend) Restore version visibility #629
+
+
 ## [2.2.0] - 2025-02-10
 
 ## Added
