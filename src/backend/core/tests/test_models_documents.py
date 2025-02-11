@@ -12,6 +12,7 @@ from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.test.utils import override_settings
 from django.utils import timezone
 
 import pytest
@@ -124,6 +125,9 @@ def test_models_documents_soft_delete(depth):
 # get_abilities
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 @pytest.mark.parametrize(
     "is_authenticated,reach,role",
     [
@@ -175,6 +179,9 @@ def test_models_documents_get_abilities_forbidden(
     assert document.get_abilities(user) == expected_abilities
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 @pytest.mark.parametrize(
     "is_authenticated,reach",
     [
@@ -243,8 +250,8 @@ def test_models_documents_get_abilities_editor(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
-        "ai_transform": True,
-        "ai_translate": True,
+        "ai_transform": is_authenticated,
+        "ai_translate": is_authenticated,
         "attachment_upload": True,
         "children_create": is_authenticated,
         "children_list": True,
@@ -271,6 +278,9 @@ def test_models_documents_get_abilities_editor(
     assert all(value is False for value in document.get_abilities(user).values())
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 def test_models_documents_get_abilities_owner(django_assert_num_queries):
     """Check abilities returned for the owner of a document."""
     user = factories.UserFactory()
@@ -300,12 +310,16 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
+
     document.soft_delete()
     document.refresh_from_db()
     expected_abilities["move"] = False
     assert document.get_abilities(user) == expected_abilities
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 def test_models_documents_get_abilities_administrator(django_assert_num_queries):
     """Check abilities returned for the administrator of a document."""
     user = factories.UserFactory()
@@ -335,11 +349,15 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
+
     document.soft_delete()
     document.refresh_from_db()
     assert all(value is False for value in document.get_abilities(user).values())
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     """Check abilities returned for the editor of a document."""
     user = factories.UserFactory()
@@ -369,23 +387,31 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
+
     document.soft_delete()
     document.refresh_from_db()
     assert all(value is False for value in document.get_abilities(user).values())
 
 
-def test_models_documents_get_abilities_reader_user(django_assert_num_queries):
+@pytest.mark.parametrize("ai_access_setting", ["public", "authenticated", "restricted"])
+def test_models_documents_get_abilities_reader_user(
+    ai_access_setting, django_assert_num_queries
+):
     """Check abilities returned for the reader of a document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(users=[(user, "reader")])
+
     access_from_link = (
         document.link_reach != "restricted" and document.link_role == "editor"
     )
+
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": True,
-        "ai_transform": access_from_link,
-        "ai_translate": access_from_link,
+        # If you get your editor rights from the link role and not your access role
+        # You should not access AI if it's restricted to users with specific access
+        "ai_transform": access_from_link and ai_access_setting != "restricted",
+        "ai_translate": access_from_link and ai_access_setting != "restricted",
         "attachment_upload": access_from_link,
         "children_create": access_from_link,
         "children_list": True,
@@ -404,11 +430,14 @@ def test_models_documents_get_abilities_reader_user(django_assert_num_queries):
         "versions_list": True,
         "versions_retrieve": True,
     }
-    with django_assert_num_queries(1):
-        assert document.get_abilities(user) == expected_abilities
-    document.soft_delete()
-    document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+
+    with override_settings(AI_ALLOW_REACH_FROM=ai_access_setting):
+        with django_assert_num_queries(1):
+            assert document.get_abilities(user) == expected_abilities
+
+        document.soft_delete()
+        document.refresh_from_db()
+        assert all(value is False for value in document.get_abilities(user).values())
 
 
 def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
@@ -444,6 +473,44 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "versions_list": True,
         "versions_retrieve": True,
     }
+
+
+@override_settings(AI_ALLOW_REACH_FROM="public")
+@pytest.mark.parametrize(
+    "is_authenticated,reach",
+    [
+        (True, "public"),
+        (False, "public"),
+        (True, "authenticated"),
+    ],
+)
+def test_models_document_get_abilities_ai_access_authenticated(is_authenticated, reach):
+    """Validate AI abilities when AI is available to any anonymous user with editor rights."""
+    user = factories.UserFactory() if is_authenticated else AnonymousUser()
+    document = factories.DocumentFactory(link_reach=reach, link_role="editor")
+
+    abilities = document.get_abilities(user)
+    assert abilities["ai_transform"] is True
+    assert abilities["ai_translate"] is True
+
+
+@override_settings(AI_ALLOW_REACH_FROM="authenticated")
+@pytest.mark.parametrize(
+    "is_authenticated,reach",
+    [
+        (True, "public"),
+        (False, "public"),
+        (True, "authenticated"),
+    ],
+)
+def test_models_document_get_abilities_ai_access_public(is_authenticated, reach):
+    """Validate AI abilities when AI is available only to authenticated users with editor rights."""
+    user = factories.UserFactory() if is_authenticated else AnonymousUser()
+    document = factories.DocumentFactory(link_reach=reach, link_role="editor")
+
+    abilities = document.get_abilities(user)
+    assert abilities["ai_transform"] == is_authenticated
+    assert abilities["ai_translate"] == is_authenticated
 
 
 def test_models_documents_get_versions_slice_pagination(settings):

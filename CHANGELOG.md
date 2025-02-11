@@ -16,6 +16,10 @@ and this project adheres to
 - ✨(frontend) cursor display on activity #609
 - ✨(frontend) Add export page break #623
 
+## Changed
+
+- 🔧(backend) make AI feature reach configurable
+
 ## Fixed
 
 🌐(CI) Fix email partially translated #616
