@@ -2,6 +2,7 @@
 Test AI translate API endpoint for users in impress's core app.
 """
 
+import random
 from unittest.mock import MagicMock, patch
 
 from django.core.cache import cache
@@ -51,6 +52,9 @@ def test_api_documents_ai_translate_viewset_options_metadata():
     }
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 @pytest.mark.parametrize(
     "reach, role",
     [
@@ -77,6 +81,7 @@ def test_api_documents_ai_translate_anonymous_forbidden(reach, role):
     }
 
 
+@override_settings(AI_ALLOW_REACH_FROM="public")
 @pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_translate_anonymous_success(mock_create):
@@ -111,6 +116,27 @@ def test_api_documents_ai_translate_anonymous_success(mock_create):
             {"role": "user", "content": '{"markdown_input": "Hello"}'},
         ],
     )
+
+
+@override_settings(AI_ALLOW_REACH_FROM=random.choice(["authenticated", "restricted"]))
+@pytest.mark.usefixtures("ai_settings")
+@patch("openai.resources.chat.completions.Completions.create")
+def test_api_documents_ai_translate_anonymous_limited_by_setting(mock_create):
+    """
+    Anonymous users should be able to request AI translate to a document
+    if the link reach and role permit it.
+    """
+    document = factories.DocumentFactory(link_reach="public", link_role="editor")
+
+    answer = '{"answer": "Salut"}'
+    mock_create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content=answer))]
+    )
+
+    url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
+    response = APIClient().post(url, {"text": "Hello", "language": "es"})
+
+    assert response.status_code == 401
 
 
 @pytest.mark.parametrize(

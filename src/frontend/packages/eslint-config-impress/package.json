@@ -1,13 +1,13 @@
 {
   "name": "eslint-config-impress",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "license": "MIT",
   "scripts": {
     "lint": "eslint --ext .js ."
   },
   "dependencies": {
     "@next/eslint-plugin-next": "15.1.6",
-    "@tanstack/eslint-plugin-query": "5.65.0",
+    "@tanstack/eslint-plugin-query": "5.66.0",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
     "eslint": "*",

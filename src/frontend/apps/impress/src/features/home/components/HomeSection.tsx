@@ -175,7 +175,7 @@ export const HomeSection = ({
               height: 'fit-content',
               margin: 'auto',
               overflow: 'auto',
-              flexBasis: direction === 'column' ? '100%' : '50%',
+              flexBasis: direction === 'column' ? 'fit-content' : '50%',
             }}
           />
         )}

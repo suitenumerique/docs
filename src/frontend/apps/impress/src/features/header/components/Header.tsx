@@ -1,8 +1,7 @@
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { default as IconDocs } from '@/assets/icons/icon-docs.svg?url';
+import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, StyledLink } from '@/components/';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
@@ -51,7 +50,7 @@ export const Header = () => {
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <Image priority src={IconDocs} alt={t('Docs Logo')} width={25} />
+          <IconDocs aria-label={t('Docs Logo')} width={25} />
           <Title />
         </Box>
       </StyledLink>

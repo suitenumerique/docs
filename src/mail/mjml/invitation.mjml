@@ -2,7 +2,7 @@
   <mj-include path="./partial/header.mjml" />
 
   <mj-body mj-class="bg--blue-100">
-    <mj-wrapper css-class="wrapper" padding="0 25px 0px 25px">
+    <mj-wrapper css-class="wrapper" padding="5px 25px 0px 25px">
       <mj-section css-class="wrapper-logo">
         <mj-column>
           <mj-image
@@ -14,7 +14,7 @@
           />
         </mj-column>
       </mj-section>
-      <mj-section mj-class="bg--white-100" padding="30px 20px 60px 20px">
+      <mj-section mj-class="bg--white-100" padding="0px 20px 60px 20px">
         <mj-column>
           <mj-text align="center">
             <h1>{{title|capfirst}}</h1>

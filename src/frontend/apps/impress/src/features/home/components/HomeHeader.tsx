@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 
-import { default as IconDocs } from '@/assets/icons/icon-docs.svg?url';
+import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonTogglePanel, Title } from '@/features/header/';
@@ -61,7 +61,7 @@ export const HomeHeader = () => {
           $position="relative"
           $height="fit-content"
         >
-          <Image priority src={IconDocs} alt={t('Docs Logo')} width={32} />
+          <IconDocs aria-label={t('Docs Logo')} width={32} />
           <Title />
         </Box>
       </Box>

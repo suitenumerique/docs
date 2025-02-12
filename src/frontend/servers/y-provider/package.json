@@ -1,6 +1,6 @@
 {
   "name": "server-y-provider",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Y.js provider for docs",
   "repository": "https://github.com/numerique-gouv/impress",
   "license": "MIT",
@@ -16,10 +16,10 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.21.0",
-    "@hocuspocus/server": "2.15.1",
-    "@sentry/node": "8.52.0",
-    "@sentry/profiling-node": "8.52.0",
+    "@blocknote/server-util": "0.23.2",
+    "@hocuspocus/server": "2.15.2",
+    "@sentry/node": "8.54.0",
+    "@sentry/profiling-node": "8.54.0",
     "cors": "2.8.5",
     "express": "4.21.2",
     "express-ws": "5.0.2",
@@ -27,7 +27,7 @@
     "yjs": "13.6.23"
   },
   "devDependencies": {
-    "@hocuspocus/provider": "2.15.1",
+    "@hocuspocus/provider": "2.15.2",
     "@types/cors": "2.8.17",
     "@types/express": "5.0.0",
     "@types/express-ws": "3.0.5",

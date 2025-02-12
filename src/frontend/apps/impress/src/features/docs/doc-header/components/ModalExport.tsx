@@ -98,7 +98,61 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       const exporter = new PDFExporter(
         editor.schema,
-        pdfDefaultSchemaMappings,
+        {
+          ...pdfDefaultSchemaMappings,
+          blockMapping: {
+            ...pdfDefaultSchemaMappings.blockMapping,
+            heading: (block, exporter) => {
+              const PIXELS_PER_POINT = 0.75;
+              const MERGE_RATIO = 7.5;
+              const FONT_SIZE = 16;
+              const fontSizeEM =
+                block.props.level === 1
+                  ? 2
+                  : block.props.level === 2
+                    ? 1.5
+                    : 1.17;
+              return (
+                <Text
+                  style={{
+                    fontSize: fontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
+                    fontWeight: 700,
+                    marginTop: `${fontSizeEM * MERGE_RATIO}px`,
+                    marginBottom: `${fontSizeEM * MERGE_RATIO}px`,
+                  }}
+                >
+                  {exporter.transformInlineContent(block.content)}
+                </Text>
+              );
+            },
+            paragraph: (block, exporter) => {
+              /**
+               * Breakline in the editor are not rendered in the PDF
+               * By adding a space if the block is empty we ensure that the block is rendered
+               */
+              if (Array.isArray(block.content)) {
+                block.content.forEach((content) => {
+                  if (content.type === 'text' && !content.text) {
+                    content.text = ' ';
+                  }
+                });
+
+                if (!block.content.length) {
+                  block.content.push({
+                    styles: {},
+                    text: ' ',
+                    type: 'text',
+                  });
+                }
+              }
+              return (
+                <Text key={block.id}>
+                  {exporter.transformInlineContent(block.content)}
+                </Text>
+              );
+            },
+          },
+        },
         {
           resolveFileUrl: async (url) =>
             exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),

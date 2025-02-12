@@ -10,7 +10,7 @@ test.describe('Header', () => {
   test('checks all the elements are visible', async ({ page }) => {
     const header = page.locator('header').first();
 
-    await expect(header.getByAltText('Docs Logo')).toBeVisible();
+    await expect(header.getByLabel('Docs Logo')).toBeVisible();
     await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
       'color',
       'rgb(0, 0, 145)',

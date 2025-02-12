@@ -516,7 +516,12 @@ class Base(Configuration):
     AI_API_KEY = values.Value(None, environ_name="AI_API_KEY", environ_prefix=None)
     AI_BASE_URL = values.Value(None, environ_name="AI_BASE_URL", environ_prefix=None)
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
-
+    AI_ALLOW_REACH_FROM = values.Value(
+        choices=("public", "authenticated", "restricted"),
+        default="authenticated",
+        environ_name="AI_ALLOW_REACH_FROM",
+        environ_prefix=None,
+    )
     AI_DOCUMENT_RATE_THROTTLE_RATES = {
         "minute": 5,
         "hour": 100,

@@ -41,8 +41,16 @@ test.describe('Doc Export', () => {
     await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
   });
 
-  test('it exports the doc to pdf', async ({ page, browserName }) => {
-    const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
+  test('it exports the doc with pdf line break', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-line-break',
+      browserName,
+      1,
+    );
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
@@ -50,8 +58,20 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, randomDoc);
 
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+    const editor = page.locator('.ProseMirror.bn-editor');
+
+    await editor.click();
+    await editor.locator('.bn-block-outer').last().fill('Hello');
+
+    await page.keyboard.press('Enter');
+    await editor.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Page Break').click();
+
+    await expect(editor.locator('.bn-page-break')).toBeVisible();
+
+    await page.keyboard.press('Enter');
+
+    await editor.locator('.bn-block-outer').last().fill('World');
 
     await page
       .getByRole('button', {
@@ -69,9 +89,10 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfText = (await pdf(pdfBuffer)).text;
+    const pdfData = await pdf(pdfBuffer);
 
-    expect(pdfText).toContain('Hello World'); // This is the doc text
+    expect(pdfData.numpages).toBe(2);
+    expect(pdfData.text).toContain('\n\nHello\n\nWorld'); // This is the doc text
   });
 
   test('it exports the doc to docx', async ({ page, browserName }) => {

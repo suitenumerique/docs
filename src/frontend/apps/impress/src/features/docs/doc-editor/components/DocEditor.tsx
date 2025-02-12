@@ -65,7 +65,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           $css="overflow-x: clip; flex: 1;"
           $position="relative"
         >
-          <Box $css="flex:1;" $overflow="auto" $position="relative">
+          <Box $css="flex:1;" $position="relative" $width="100%">
             {isVersion ? (
               <DocVersionEditor docId={doc.id} versionId={versionId} />
             ) : (

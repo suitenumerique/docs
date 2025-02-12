@@ -28,8 +28,8 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": document.link_role == "editor",
-            "ai_translate": document.link_role == "editor",
+            "ai_transform": False,
+            "ai_translate": False,
             "attachment_upload": document.link_role == "editor",
             "children_create": False,
             "children_list": True,
@@ -84,8 +84,8 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": grand_parent.link_role == "editor",
-            "ai_translate": grand_parent.link_role == "editor",
+            "ai_transform": False,
+            "ai_translate": False,
             "attachment_upload": grand_parent.link_role == "editor",
             "children_create": False,
             "children_list": True,

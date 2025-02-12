@@ -48,10 +48,20 @@ export interface Doc {
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
-    attachment_upload: true;
+    ai_transform: boolean;
+    ai_translate: boolean;
+    attachment_upload: boolean;
+    children_create: boolean;
+    children_list: boolean;
+    collaboration_auth: boolean;
     destroy: boolean;
+    favorite: boolean;
+    invite_owner: boolean;
     link_configuration: boolean;
+    media_auth: boolean;
+    move: boolean;
     partial_update: boolean;
+    restore: boolean;
     retrieve: boolean;
     update: boolean;
     versions_destroy: boolean;

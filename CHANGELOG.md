@@ -9,15 +9,25 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-02-10
+
 ## Added
 
 - 📝(doc) Add security.md and codeofconduct.md #604
-- ✨(frontend) add home page #553
+- ✨(frontend) add home page #608
+- ✨(frontend) cursor display on activity #609
+- ✨(frontend) Add export page break #623
 
+## Changed
+
+- 🔧(backend) make AI feature reach configurable #628
 
 ## Fixed
 
-🌐(CI) Fix email partially translated #616
+- 🌐(CI) Fix email partially translated #616
+- 🐛(frontend) fix cursor breakline #609
+- 🐛(frontend) fix style pdf export #609
+
 
 ## [2.1.0] - 2025-01-29
 
@@ -401,7 +411,8 @@ and this project adheres to
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v2.1.0...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v2.2.0...main
+[v2.2.0]: https://github.com/numerique-gouv/impress/releases/v2.2.0
 [v2.1.0]: https://github.com/numerique-gouv/impress/releases/v2.1.0
 [v2.0.1]: https://github.com/numerique-gouv/impress/releases/v2.0.1
 [v2.0.0]: https://github.com/numerique-gouv/impress/releases/v2.0.0

@@ -92,6 +92,13 @@ export function AIGroupButton() {
     return null;
   }
 
+  const canAITransform = currentDoc.abilities.ai_transform;
+  const canAITranslate = currentDoc.abilities.ai_translate;
+
+  if (!canAITransform && !canAITranslate) {
+    return null;
+  }
+
   return (
     <Components.Generic.Menu.Root>
       <Components.Generic.Menu.Trigger>
@@ -111,79 +118,85 @@ export function AIGroupButton() {
         className="bn-menu-dropdown bn-drag-handle-menu"
         sub={true}
       >
-        <AIMenuItemTransform
-          action="prompt"
-          docId={currentDoc.id}
-          icon={
-            <Text $isMaterialIcon $size="s">
-              text_fields
-            </Text>
-          }
-        >
-          {t('Use as prompt')}
-        </AIMenuItemTransform>
-        <AIMenuItemTransform
-          action="rephrase"
-          docId={currentDoc.id}
-          icon={
-            <Text $isMaterialIcon $size="s">
-              refresh
-            </Text>
-          }
-        >
-          {t('Rephrase')}
-        </AIMenuItemTransform>
-        <AIMenuItemTransform
-          action="summarize"
-          docId={currentDoc.id}
-          icon={
-            <Text $isMaterialIcon $size="s">
-              summarize
-            </Text>
-          }
-        >
-          {t('Summarize')}
-        </AIMenuItemTransform>
-        <AIMenuItemTransform
-          action="correct"
-          docId={currentDoc.id}
-          icon={
-            <Text $isMaterialIcon $size="s">
-              check
-            </Text>
-          }
-        >
-          {t('Correct')}
-        </AIMenuItemTransform>
-        <Components.Generic.Menu.Root position="right" sub={true}>
-          <Components.Generic.Menu.Trigger sub={false}>
-            <Components.Generic.Menu.Item
-              className="bn-menu-item"
-              subTrigger={true}
-            >
-              <Box $direction="row" $gap="0.6rem">
+        {canAITransform && (
+          <>
+            <AIMenuItemTransform
+              action="prompt"
+              docId={currentDoc.id}
+              icon={
                 <Text $isMaterialIcon $size="s">
-                  translate
+                  text_fields
                 </Text>
-                {t('Language')}
-              </Box>
-            </Components.Generic.Menu.Item>
-          </Components.Generic.Menu.Trigger>
-          <Components.Generic.Menu.Dropdown
-            sub={true}
-            className="bn-menu-dropdown"
-          >
-            {languages.map((language) => (
-              <AIMenuItemTranslate
-                key={language.value}
-                language={language.value}
-                docId={currentDoc.id}
+              }
+            >
+              {t('Use as prompt')}
+            </AIMenuItemTransform>
+            <AIMenuItemTransform
+              action="rephrase"
+              docId={currentDoc.id}
+              icon={
+                <Text $isMaterialIcon $size="s">
+                  refresh
+                </Text>
+              }
+            >
+              {t('Rephrase')}
+            </AIMenuItemTransform>
+            <AIMenuItemTransform
+              action="summarize"
+              docId={currentDoc.id}
+              icon={
+                <Text $isMaterialIcon $size="s">
+                  summarize
+                </Text>
+              }
+            >
+              {t('Summarize')}
+            </AIMenuItemTransform>
+            <AIMenuItemTransform
+              action="correct"
+              docId={currentDoc.id}
+              icon={
+                <Text $isMaterialIcon $size="s">
+                  check
+                </Text>
+              }
+            >
+              {t('Correct')}
+            </AIMenuItemTransform>
+          </>
+        )}
+        {canAITranslate && (
+          <Components.Generic.Menu.Root position="right" sub={true}>
+            <Components.Generic.Menu.Trigger sub={false}>
+              <Components.Generic.Menu.Item
+                className="bn-menu-item"
+                subTrigger={true}
               >
-                {language.display_name}
-              </AIMenuItemTranslate>
-            ))}
-          </Components.Generic.Menu.Dropdown>
-        </Components.Generic.Menu.Root>
+                <Box $direction="row" $gap="0.6rem">
+                  <Text $isMaterialIcon $size="s">
+                    translate
+                  </Text>
+                  {t('Language')}
+                </Box>
+              </Components.Generic.Menu.Item>
+            </Components.Generic.Menu.Trigger>
+            <Components.Generic.Menu.Dropdown
+              sub={true}
+              className="bn-menu-dropdown"
+            >
+              {languages.map((language) => (
+                <AIMenuItemTranslate
+                  key={language.value}
+                  language={language.value}
+                  docId={currentDoc.id}
+                >
+                  {language.display_name}
+                </AIMenuItemTranslate>
+              ))}
+            </Components.Generic.Menu.Dropdown>
+          </Components.Generic.Menu.Root>
+        )}
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
   );

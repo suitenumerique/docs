@@ -1,11 +1,10 @@
 import { Button } from '@openfun/cunningham-react';
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { BoxButton } from '@/components';
 
-import ProConnectImg from '../assets/button-proconnect.svg?url';
+import ProConnectImg from '../assets/button-proconnect.svg';
 import { useAuth } from '../hooks';
 import { gotoLogin, gotoLogout } from '../utils';
 
@@ -41,8 +40,9 @@ export const ProConnectButton = () => {
           background-color: var(--c--theme--colors--primary-action);
         }
       `}
+      $radius="4px"
     >
-      <Image src={ProConnectImg} alt={t('ProConnect Image')} />
+      <ProConnectImg />
     </BoxButton>
   );
 };

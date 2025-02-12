@@ -629,6 +629,9 @@ class Document(MP_Node, BaseModel):
         # which date to allow them anyway)
         # Anonymous users should also not see document accesses
         has_access_role = bool(roles) and not is_deleted
+        can_update_from_access = (
+            is_owner_or_admin or RoleChoices.EDITOR in roles
+        ) and not is_deleted
 
         # Add roles provided by the document link, taking into account its ancestors
 
@@ -647,11 +650,23 @@ class Document(MP_Node, BaseModel):
             is_owner_or_admin or RoleChoices.EDITOR in roles
         ) and not is_deleted
 
+        ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
+        ai_access = any(
+            [
+                ai_allow_reach_from == LinkReachChoices.PUBLIC and can_update,
+                ai_allow_reach_from == LinkReachChoices.AUTHENTICATED
+                and user.is_authenticated
+                and can_update,
+                ai_allow_reach_from == LinkReachChoices.RESTRICTED
+                and can_update_from_access,
+            ]
+        )
+
         return {
             "accesses_manage": is_owner_or_admin,
             "accesses_view": has_access_role,
-            "ai_transform": can_update,
-            "ai_translate": can_update,
+            "ai_transform": ai_access,
+            "ai_translate": ai_access,
             "attachment_upload": can_update,
             "children_list": can_get,
             "children_create": can_update and user.is_authenticated,
