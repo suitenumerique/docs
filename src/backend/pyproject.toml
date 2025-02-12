@@ -68,6 +68,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "django-extensions==3.2.3",
+    "django-test-migrations==1.4.0",
     "drf-spectacular-sidecar==2024.12.1",
     "freezegun==1.5.1",
     "ipdb==0.13.13",
