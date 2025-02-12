@@ -88,6 +88,7 @@ test.describe('Header mobile', () => {
 test.describe('Header: Log out', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
+  // eslint-disable-next-line playwright/expect-expect
   test('checks logout button', async ({ page, browserName }) => {
     await page.goto('/');
     await keyCloakSignIn(page, browserName);

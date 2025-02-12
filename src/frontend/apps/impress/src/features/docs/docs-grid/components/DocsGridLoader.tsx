@@ -1,8 +1,7 @@
 import { Loader } from '@openfun/cunningham-react';
-import { createGlobalStyle, css } from 'styled-components';
+import { createGlobalStyle } from 'styled-components';
 
 import { Box } from '@/components';
-import { HEADER_HEIGHT } from '@/features/header/conf';
 
 const DocsGridLoaderStyle = createGlobalStyle`
   body, main {
@@ -27,15 +26,11 @@ export const DocsGridLoader = ({ isLoading }: DocsGridLoaderProps) => {
         data-testid="grid-loader"
         $align="center"
         $justify="center"
-        $height="calc(100vh - 50px)"
+        $height="100%"
         $width="100%"
-        $maxWidth="960px"
-        $background="rgba(255, 255, 255, 0.3)"
+        $background="rgba(255, 255, 255, 0.5)"
         $zIndex={998}
-        $position="fixed"
-        $css={css`
-          top: ${HEADER_HEIGHT}px;
-        `}
+        $position="absolute"
       >
         <Loader />
       </Box>

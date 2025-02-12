@@ -25,6 +25,7 @@ export const cssEditor = (readonly: boolean) => css`
       user-select: none;
       position: absolute;
       top: -17px;
+      left: 0px;
       padding: 0px 6px;
       border-radius: 0px;
       white-space: nowrap;
