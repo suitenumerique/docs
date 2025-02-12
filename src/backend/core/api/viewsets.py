@@ -141,7 +141,7 @@ class UserViewSet(
     """User ViewSet"""
 
     permission_classes = [permissions.IsSelf]
-    queryset = models.User.objects.all()
+    queryset = models.User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
 
     def get_queryset(self):

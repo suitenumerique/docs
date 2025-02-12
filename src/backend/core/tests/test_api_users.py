@@ -154,6 +154,22 @@ def test_api_users_list_query_short_queries():
     assert len(response.json()["results"]) == 2
 
 
+def test_api_users_list_query_inactive():
+    """Inactive users should not be listed."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.UserFactory(email="john.doe@example.com", is_active=False)
+    lennon = factories.UserFactory(email="john.lennon@example.com")
+
+    response = client.get("/api/v1.0/users/?q=john.")
+
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()["results"]]
+    assert user_ids == [str(lennon.id)]
+
+
 def test_api_users_retrieve_me_anonymous():
     """Anonymous users should not be allowed to list users."""
     factories.UserFactory.create_batch(2)
