@@ -55,6 +55,8 @@ password: I'd<3ToTestDocs
 
 ### Run it locally
 
+> ⚠️ Running Docs locally using the methods described below is for testing purposes only.  It is based on building Docs using Minio as the S3 storage solution: if you want to use Minio for production deployment of Docs, you will need to comply with Minio's AGPL-3.0 licence.
+
 **Prerequisite**
 
 Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop:
@@ -183,7 +185,7 @@ docs
 
 ### Stack
 
-Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [MinIO](https://min.io/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/)
+Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/).
 
 ### Gov ❤️ open source
 
