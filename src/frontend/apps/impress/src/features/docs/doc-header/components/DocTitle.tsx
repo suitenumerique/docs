@@ -57,16 +57,13 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
   const { toast } = useToastProvider();
   const { untitledDocument } = useTrans();
-  const isUntitled = titleDisplay === untitledDocument;
 
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
     onSuccess(data) {
-      if (data.title !== untitledDocument) {
-        toast(t('Document title updated successfully'), VariantType.SUCCESS);
-      }
+      toast(t('Document title updated successfully'), VariantType.SUCCESS);
 
       // Broadcast to every user connected to the document
       broadcast(`${KEY_DOC}-${data.id}`);
@@ -80,8 +77,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
 
       // When blank we set to untitled
       if (!sanitizedTitle) {
-        sanitizedTitle = untitledDocument;
-        setTitleDisplay(sanitizedTitle);
+        setTitleDisplay('');
       }
 
       // If mutation we update
@@ -90,7 +86,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         updateDoc({ id: doc.id, title: sanitizedTitle });
       }
     },
-    [doc.id, doc.title, untitledDocument, updateDoc],
+    [doc.id, doc.title, updateDoc],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -111,7 +107,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           as="span"
           role="textbox"
           contentEditable
-          defaultValue={isUntitled ? undefined : titleDisplay}
+          defaultValue={titleDisplay || undefined}
           onKeyDownCapture={handleKeyDown}
           suppressContentEditableWarning={true}
           aria-label="doc title input"
@@ -135,7 +131,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
             outline: none;
           `}
         >
-          {isUntitled ? '' : titleDisplay}
+          {titleDisplay}
         </Box>
       </Tooltip>
     </>

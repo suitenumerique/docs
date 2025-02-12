@@ -31,7 +31,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   };
 
   const createNewDoc = () => {
-    createDoc({ title: t('Untitled document') });
+    createDoc();
   };
 
   return (

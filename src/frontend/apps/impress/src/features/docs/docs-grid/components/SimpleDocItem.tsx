@@ -4,7 +4,7 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc } from '@/features/docs/doc-management';
+import { Doc, useTrans } from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
@@ -35,6 +35,7 @@ export const SimpleDocItem = ({
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
+  const { untitledDocument } = useTrans();
 
   return (
     <Box $direction="row" $gap={spacings.sm}>
@@ -61,7 +62,7 @@ export const SimpleDocItem = ({
           $weight="500"
           $css={ItemTextCss}
         >
-          {doc.title}
+          {doc.title || untitledDocument}
         </Text>
         {(!isDesktop || showAccesses) && (
           <Box
