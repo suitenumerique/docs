@@ -19,6 +19,8 @@ and this project adheres to
 ## Fixed
 
 - 🐛(back) allow only images to be used with the cors-proxy #781
+- 🐛(backend) stop returning inactive users on the list endpoint #636
+- 🔒️(backend) require at least 5 characters to search for users #636
 
 
 ## [2.5.0] - 2025-03-18

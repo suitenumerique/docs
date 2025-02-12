@@ -24,7 +24,7 @@ def test_api_users_list_anonymous():
 
 def test_api_users_list_authenticated():
     """
-    Authenticated users should be able to list users.
+    Authenticated users should not be able to list users without a query.
     """
     user = factories.UserFactory()
 
@@ -37,7 +37,7 @@ def test_api_users_list_authenticated():
     )
     assert response.status_code == 200
     content = response.json()
-    assert len(content["results"]) == 3
+    assert content["results"] == []
 
 
 def test_api_users_list_query_email():
@@ -128,6 +128,30 @@ def test_api_users_list_query_email_exclude_doc_user():
     assert response.status_code == 200
     user_ids = [user["id"] for user in response.json()["results"]]
     assert user_ids == [str(nicole_fool.id)]
+
+
+def test_api_users_list_query_short_queries():
+    """
+    Queries shorter than 5 characters should return an empty result set.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.UserFactory(email="john.doe@example.com")
+    factories.UserFactory(email="john.lennon@example.com")
+
+    response = client.get("/api/v1.0/users/?q=jo")
+    assert response.status_code == 200
+    assert response.json()["results"] == []
+
+    response = client.get("/api/v1.0/users/?q=john")
+    assert response.status_code == 200
+    assert response.json()["results"] == []
+
+    response = client.get("/api/v1.0/users/?q=john.")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 2
 
 
 def test_api_users_retrieve_me_anonymous():

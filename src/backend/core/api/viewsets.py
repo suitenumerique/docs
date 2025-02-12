@@ -160,8 +160,8 @@ class UserViewSet(
         if document_id := self.request.GET.get("document_id", ""):
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
-        if not (query := self.request.GET.get("q", "")):
-            return queryset
+        if not (query := self.request.GET.get("q", "")) or len(query) < 5:
+            return queryset.none()
 
         # For emails, match emails by Levenstein distance to prevent typing errors
         if "@" in query:
