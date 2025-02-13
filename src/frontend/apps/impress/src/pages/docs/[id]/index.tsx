@@ -63,7 +63,7 @@ const DocPage = ({ id }: DocProps) => {
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
   const { replace } = useRouter();
-  useCollaboration(doc?.id, doc?.content);
+  useCollaboration(doc?.id, doc?.content, doc?.abilities.partial_update);
 
   useEffect(() => {
     if (doc?.title) {
