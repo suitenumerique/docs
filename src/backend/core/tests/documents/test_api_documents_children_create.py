@@ -2,13 +2,17 @@
 Tests for Documents API endpoint in impress's core app: create
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
+
+from django.core.exceptions import ValidationError
+from django.db import transaction
 
 import pytest
 from rest_framework.test import APIClient
 
 from core import factories
-from core.models import Document, LinkReachChoices, LinkRoleChoices
+from core.models import Document, LinkReachChoices, LinkRoleChoices, User
 
 pytestmark = pytest.mark.django_db
 
@@ -249,3 +253,44 @@ def test_api_documents_children_create_force_id_existing():
     assert response.json() == {
         "id": ["A document with this ID already exists. You cannot override it."]
     }
+
+
+def test_api_documents_children_create_document_race_condition():
+    """
+    It should be possible to create several documents at the same time
+    without causing any race conditions or data integrity issues.
+    """
+
+    def create_document(title):
+        user = User.objects.get(pk="ee7b279f-f30d-4980-a537-11f0ff15f7ca")
+        client = APIClient()
+        client.force_login(user)
+
+        return client.post(
+            "/api/v1.0/documents/c3d9a707-9b09-48a4-a9a0-3f31cf4b120f/children/",
+            {
+                "title": title,
+            },
+            format="json",
+        )
+
+    @transaction.atomic
+    def thread_initializer():
+        try:
+            factories.UserDocumentAccessFactory(
+                document__id="c3d9a707-9b09-48a4-a9a0-3f31cf4b120f",
+                user__id="ee7b279f-f30d-4980-a537-11f0ff15f7ca",
+                role="editor",
+            )
+        except ValidationError:
+            pass
+
+    with ThreadPoolExecutor(max_workers=2, initializer=thread_initializer) as executor:
+        future1 = executor.submit(create_document, "my document 1")
+        future2 = executor.submit(create_document, "my document 2")
+
+        response1 = future1.result()
+        response2 = future2.result()
+
+        assert response1.status_code == 201
+        assert response2.status_code == 201

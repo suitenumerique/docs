@@ -18,6 +18,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404
 
+import pglock
 import rest_framework as drf
 from botocore.exceptions import ClientError
 from django_filters import rest_framework as drf_filters
@@ -573,12 +574,6 @@ class DocumentViewSet(
     @transaction.atomic
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
-                "IN SHARE ROW EXCLUSIVE MODE;"
-            )
-
         obj = models.Document.add_root(
             creator=self.request.user,
             **serializer.validated_data,
@@ -735,6 +730,7 @@ class DocumentViewSet(
         ordering=["path"],
         url_path="children",
     )
+    #@pglock.advisory()
     def children(self, request, *args, **kwargs):
         """Handle listing and creating children of a document"""
         document = self.get_object()

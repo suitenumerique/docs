@@ -4,6 +4,7 @@ Unit tests for the Document model
 
 import random
 import smtplib
+from concurrent.futures import ThreadPoolExecutor
 from logging import Logger
 from unittest import mock
 
@@ -12,6 +13,7 @@ from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.test.utils import override_settings
 from django.utils import timezone
 
@@ -765,3 +767,51 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
         new_nb_accesses = document.nb_accesses
     assert new_nb_accesses == 0
     assert cache.get(key) == 0  # Cache should now contain the new value
+
+
+def test_models_documents_concurrent_add_root():
+    @transaction.atomic
+    def create_document(title):
+        return models.Document.add_root(title=title)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future1 = executor.submit(create_document, "my document 1")
+        future2 = executor.submit(create_document, "my document 2")
+
+        document1 = future1.result()
+        document2 = future2.result()
+
+        assert document1.title == "my document 1"
+        assert document2.title == "my document 2"
+
+        assert models.Document.objects.count() == 3
+
+
+def test_models_documents_concurrent_add_child():
+    @transaction.atomic
+    def create_child(title):
+        document = models.Document.objects.get(
+            pk="c3d9a707-9b09-48a4-a9a0-3f31cf4b120f"
+        )
+        return document.add_child(title=title)
+
+    @transaction.atomic
+    def thread_initializer():
+        try:
+            models.Document.add_root(
+                id="c3d9a707-9b09-48a4-a9a0-3f31cf4b120f",
+            )
+        except ValidationError:
+            pass
+
+    with ThreadPoolExecutor(max_workers=2, initializer=thread_initializer) as executor:
+        future1 = executor.submit(create_child, "my document 1")
+        future2 = executor.submit(create_child, "my document 2")
+
+        document1 = future1.result()
+        document2 = future2.result()
+
+        assert document1.title == "my document 1"
+        assert document2.title == "my document 2"
+
+        assert models.Document.objects.count() == 3

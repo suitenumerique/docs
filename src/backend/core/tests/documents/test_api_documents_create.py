@@ -44,7 +44,6 @@ def test_api_documents_create_authenticated_success():
         },
         format="json",
     )
-
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "my document"
