@@ -145,7 +145,7 @@ services:
         condition: service_healthy
         restart: true
 
-  frontend-dev:
+  frontend:
     user: "${DOCKER_USER:-1000}"
     build: 
       context: .

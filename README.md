@@ -66,9 +66,9 @@ $ docker -v
 
 Docker version 20.10.2, build 2291f61
 
-$ docker compose -v
+$ docker compose version
 
-docker compose version 1.27.4, build 40524192
+Docker Compose version v2.32.4
 ```
 
 > ⚠️ You may need to run the following commands with sudo but this can be avoided by adding your user to the `docker` group.
@@ -97,7 +97,7 @@ password: impress
 📝 Note that if you need to run them afterwards, you can use the eponym Make rule:
 
 ```shellscript
-$ make run-with-frontend
+$ make run
 ```
 
 ⚠️ For the frontend developer, it is often better to run the frontend in development mode locally.
@@ -105,7 +105,7 @@ $ make run-with-frontend
 To do so, install the frontend dependencies with the following command:
 
 ```shellscript
-$ make frontend-install
+$ make frontend-development-install
 ```
 
 And run the frontend locally in development mode with the following command:
@@ -117,7 +117,7 @@ $ make run-frontend-development
 To start all the services, except the frontend container, you can use the following command:
 
 ```shellscript
-$ make run
+$ make run-backend
 ```
 
 **Adding content**
