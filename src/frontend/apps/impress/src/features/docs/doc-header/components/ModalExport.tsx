@@ -27,6 +27,8 @@ import { Doc } from '@/features/docs/doc-management';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { downloadFile, exportResolveFileUrl } from '../utils';
 
+import { Table } from './blocks/Table';
+
 enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
@@ -150,6 +152,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
                   {exporter.transformInlineContent(block.content)}
                 </Text>
               );
+            },
+            table: (block, t) => {
+              return <Table data={block.content} transformer={t} />;
             },
           },
         },
