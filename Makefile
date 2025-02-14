@@ -80,12 +80,12 @@ bootstrap: \
 	data/static \
 	create-env-files \
 	build \
-	run-with-frontend \
 	migrate \
 	demo \
 	back-i18n-compile \
 	mails-install \
-	mails-build
+	mails-build \
+	run
 .PHONY: bootstrap
 
 # -- Docker/compose
@@ -119,16 +119,17 @@ logs: ## display app-dev logs (follow mode)
 	@$(COMPOSE) logs -f app-dev
 .PHONY: logs
 
-run: ## start the wsgi (production) and development server
+run-backend: ## Start only the backend application and all needed services
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider
 	@$(COMPOSE) up --force-recreate -d nginx
-.PHONY: run
+.PHONY: run-backend
 
-run-with-frontend: ## Start all the containers needed (backend to frontend)
-	@$(MAKE) run
+run: ## start the wsgi (production) and development server
+run: 
+	@$(MAKE) run-backend
 	@$(COMPOSE) up --force-recreate -d frontend-dev
-.PHONY: run-with-frontend
+.PHONY: run
 
 status: ## an alias for "docker compose ps"
 	@$(COMPOSE) ps
