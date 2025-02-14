@@ -27,6 +27,8 @@ import { Doc } from '@/features/docs/doc-management';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { downloadFile, exportResolveFileUrl } from '../utils';
 
+import { Table } from './blocks/Table';
+
 enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
@@ -114,6 +116,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
                     : 1.17;
               return (
                 <PDFText
+                  key={block.id}
                   style={{
                     fontSize: fontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
                     fontWeight: 700,
@@ -150,6 +153,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
                   {exporter.transformInlineContent(block.content)}
                 </PDFText>
               );
+            },
+            table: (block, transformer) => {
+              return <Table data={block.content} transformer={transformer} />;
             },
           },
         },

@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@adobe/css-tools/-/css-tools-4.4.1.tgz#2447a230bfe072c1659e6815129c03cf170710e3"
   integrity sha512-12WGKBQzjUAI4ayyF4IAtfw2QR/IDoqk6jTddXDhtYTJF9ASmoE1zst7cVtP0aL/F1jUJL5r+JxKXKEgHNbEUQ==
 
+"@ag-media/react-pdf-table@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@ag-media/react-pdf-table/-/react-pdf-table-2.0.1.tgz#609e51992faed54bcf379a376442997c6bac53cc"
+  integrity sha512-UMNdGYAfuI6L1wLRziYmwcp/8I2JgbwX+PY7bHXGb2+P6MwgFJH8W71qZO1bxfxrmVUTP8YblQwl1PkXG2m6Rg==
+
 "@ampproject/remapping@^2.2.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@ampproject/remapping/-/remapping-2.3.0.tgz#ed441b6fa600072520ce18b43d2c8cc8caecc7f4"

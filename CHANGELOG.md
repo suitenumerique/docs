@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 
 ## Changed
@@ -15,6 +14,9 @@ and this project adheres to
 - 📝(doc) minor README.md formatting and wording enhancements
 - ♻️Stop setting a default title on doc creation #634
 
+## Fixed
+
+- ♻️(frontend) improve table pdf rendering
 
 ## [2.2.0] - 2025-02-10
 
@@ -35,7 +37,6 @@ and this project adheres to
 - 🐛(frontend) fix cursor breakline #609
 - 🐛(frontend) fix style pdf export #609
 
-
 ## [2.1.0] - 2025-01-29
 
 ## Added
@@ -51,7 +52,7 @@ and this project adheres to
 ## Changed
 
 - 💄(frontend) add abilities on doc row #581
-- 💄(frontend) improve DocsGridItem responsive padding  #582
+- 💄(frontend) improve DocsGridItem responsive padding #582
 - 🔧(backend) Bump maximum page size to 200 #516
 - 📝(doc) Improve Read me #558
 
@@ -62,7 +63,6 @@ and this project adheres to
 ## Removed
 
 - 🔥(backend) remove "content" field from list serializer # 516
-
 
 ## [2.0.1] - 2025-01-17
 
@@ -118,11 +118,10 @@ and this project adheres to
 
 - ⚡️(e2e) reduce flakiness on e2e tests #511
 
-
 ## Fixed
+
 - 🐛(frontend) update doc editor height #481
 - 💄(frontend) add doc search #485
-
 
 ## [1.9.0] - 2024-12-11
 
@@ -145,20 +144,17 @@ and this project adheres to
 - 🐛(frontend) Fix hidden menu on Firefox #468
 - 🐛(backend) fix sanitize problem IA #490
 
-
 ## [1.8.2] - 2024-11-28
 
 ## Changed
 
 - ♻️(SW) change strategy html caching #460
 
-
 ## [1.8.1] - 2024-11-27
 
 ## Fixed
 
 - 🐛(frontend) link not clickable and flickering firefox #457
-
 
 ## [1.8.0] - 2024-11-25
 
@@ -188,7 +184,6 @@ and this project adheres to
 - 🐛(frontend) users have view access when revoked #387
 - 🐛(frontend) fix placeholder editable when double clicks #454
 
-
 ## [1.7.0] - 2024-10-24
 
 ## Added
@@ -216,7 +211,6 @@ and this project adheres to
 
 - 🔥(helm) remove infra related codes #366
 
-
 ## [1.6.0] - 2024-10-17
 
 ## Added
@@ -238,7 +232,6 @@ and this project adheres to
 - 🐛(backend) Fix dysfunctional permissions on document create #329
 - 🐛(backend) fix nginx docker container #340
 - 🐛(frontend) fix copy paste firefox #353
-
 
 ## [1.5.1] - 2024-10-10
 
@@ -274,7 +267,6 @@ and this project adheres to
 - 🔧(backend) fix configuration to avoid different ssl warning #297
 - 🐛(frontend) fix editor break line not working #302
 
-
 ## [1.4.0] - 2024-09-17
 
 ## Added
@@ -294,7 +286,6 @@ and this project adheres to
 
 - 🐛(backend) Fix forcing ID when creating a document via API endpoint #234
 - 🐛 Rebuild frontend dev container from makefile #248
-
 
 ## [1.3.0] - 2024-09-05
 
@@ -320,14 +311,12 @@ and this project adheres to
 
 - 🔥(frontend) remove saving modal #213
 
-
 ## [1.2.1] - 2024-08-23
 
 ## Changed
 
 - ♻️ Change ordering docs datagrid #195
 - 🔥(helm) use scaleway email #194
-
 
 ## [1.2.0] - 2024-08-22
 
@@ -352,14 +341,14 @@ and this project adheres to
 - ⚡️(CI) only e2e chrome mandatory #177
 
 ## Removed
-- 🔥(helm) remove htaccess #181
 
+- 🔥(helm) remove htaccess #181
 
 ## [1.1.0] - 2024-07-15
 
 ## Added
 
-- 🤡(demo) generate dummy documents on dev users #120 
+- 🤡(demo) generate dummy documents on dev users #120
 - ✨(frontend) create side modal component #134
 - ✨(frontend) Doc grid actions (update / delete) #136
 - ✨(frontend) Doc editor header information #137
@@ -370,12 +359,11 @@ and this project adheres to
 - ♻️(frontend) create a doc from a modal #132
 - ♻️(frontend) manage members from the share modal #140
 
-
 ## [1.0.0] - 2024-07-02
 
 ## Added
 
-- 🛂(frontend) Manage the document's right (#75) 
+- 🛂(frontend) Manage the document's right (#75)
 - ✨(frontend) Update document (#68)
 - ✨(frontend) Remove document (#68)
 - 🐳(docker) dockerize dev frontend (#63)
@@ -409,14 +397,12 @@ and this project adheres to
 - 💚(CI) Remove trigger workflow on push tags on CI (#68)
 - 🔥(frontend) Remove coming soon page (#121)
 
-
 ## [0.1.0] - 2024-05-24
 
 ## Added
 
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
-
 
 [unreleased]: https://github.com/numerique-gouv/impress/compare/v2.2.0...main
 [v2.2.0]: https://github.com/numerique-gouv/impress/releases/v2.2.0
