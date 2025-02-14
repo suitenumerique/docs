@@ -44,7 +44,6 @@ COMPOSE_EXEC_APP    = $(COMPOSE_EXEC) app-dev
 COMPOSE_RUN         = $(COMPOSE) run --rm
 COMPOSE_RUN_APP     = $(COMPOSE_RUN) app-dev
 COMPOSE_RUN_CROWDIN = $(COMPOSE_RUN) crowdin crowdin
-WAIT_DB             = @$(COMPOSE_RUN) dockerize -wait tcp://$(DB_HOST):$(DB_PORT) -timeout 60s
 
 # -- Backend
 MANAGE              = $(COMPOSE_RUN_APP) python manage.py
@@ -124,8 +123,6 @@ run: ## start the wsgi (production) and development server
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider
 	@$(COMPOSE) up --force-recreate -d nginx
-	@echo "Wait for postgresql to be up..."
-	@$(WAIT_DB)
 .PHONY: run
 
 run-with-frontend: ## Start all the containers needed (backend to frontend)
@@ -188,14 +185,12 @@ test-back-parallel: ## run all back-end tests in parallel
 makemigrations:  ## run django makemigrations for the impress project.
 	@echo "$(BOLD)Running makemigrations$(RESET)"
 	@$(COMPOSE) up -d postgresql
-	@$(WAIT_DB)
 	@$(MANAGE) makemigrations
 .PHONY: makemigrations
 
 migrate:  ## run django migrations for the impress project.
 	@echo "$(BOLD)Running migrations$(RESET)"
 	@$(COMPOSE) up -d postgresql
-	@$(WAIT_DB)
 	@$(MANAGE) migrate
 .PHONY: migrate
 

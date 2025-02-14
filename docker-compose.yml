@@ -1,6 +1,11 @@
 services:
   postgresql:
     image: postgres:16
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
     env_file:
       - env.d/development/postgresql
     ports:
@@ -15,7 +20,7 @@ services:
       - "1081:1080"
 
   minio:
-    # user: ${DOCKER_USER:-1000}
+    user: ${DOCKER_USER:-1000}
     image: minio/minio
     environment:
       - MINIO_ROOT_USER=impress
@@ -23,6 +28,11 @@ services:
     ports:
       - '9000:9000'
       - '9001:9001'
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 20s
+      retries: 300
     entrypoint: ""
     command: minio server --console-address :9001 /data
     volumes:
@@ -31,7 +41,9 @@ services:
   createbuckets:
     image: minio/mc
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
+        restart: true
     entrypoint: >
       sh -c "
       /usr/bin/mc alias set impress http://minio:9000 impress password && \
@@ -59,10 +71,15 @@ services:
       - ./src/backend:/app
       - ./data/static:/data/static
     depends_on:
-        - postgresql
-        - mailcatcher
-        - redis
-        - createbuckets
+        postgresql:
+            condition: service_healthy
+            restart: true
+        mailcatcher:
+          condition: service_started
+        redis:
+          condition: service_started
+        createbuckets:
+          condition: service_started
   
   celery-dev:
     user: ${DOCKER_USER:-1000}
@@ -93,9 +110,13 @@ services:
       - env.d/development/common
       - env.d/development/postgresql
     depends_on:
-      - postgresql
-      - redis
-      - minio
+      postgresql:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
 
   celery:
     user: ${DOCKER_USER:-1000}
@@ -116,9 +137,13 @@ services:
     volumes:
       - ./docker/files/etc/nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
-      - keycloak
-      - app-dev
-      - y-provider
+      app-dev:
+        condition: service_started
+      y-provider:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+        restart: true
 
   frontend-dev:
     user: "${DOCKER_USER:-1000}"
@@ -134,9 +159,6 @@ services:
     image: impress:frontend-development
     ports:
       - "3000:3000"
-
-  dockerize:
-    image: jwilder/dockerize
 
   crowdin:
     image: crowdin/cli:3.16.0
@@ -169,6 +191,11 @@ services:
 
   kc_postgresql:
     image: postgres:14.3
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
     ports:
       - "5433:5432"
     env_file:
@@ -187,6 +214,13 @@ services:
       - --hostname-admin-url=http://localhost:8083/
       - --hostname-strict=false
       - --hostname-strict-https=false
+      - --health-enabled=true
+      - --metrics-enabled=true
+    healthcheck:
+      test: ["CMD", "curl", "--head", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
@@ -200,4 +234,6 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - kc_postgresql
+      kc_postgresql:
+        condition: service_healthy
+        restart: true

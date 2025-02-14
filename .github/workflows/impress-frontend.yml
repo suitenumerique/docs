@@ -88,28 +88,6 @@ jobs:
       - name: Start Docker services
         run: make bootstrap FLUSH_ARGS='--no-input' cache=
 
-      # Tool to wait for a service to be ready
-      - name: Install Dockerize
-        run: |
-          curl -sSL https://github.com/jwilder/dockerize/releases/download/v0.8.0/dockerize-linux-amd64-v0.8.0.tar.gz | sudo tar -C /usr/local/bin -xzv
-
-      - name: Wait for services to be ready
-        run: |
-          printf "Minio check...\n"
-          dockerize -wait tcp://localhost:9000 -timeout 20s
-          printf "Keyclock check...\n"
-          dockerize -wait tcp://localhost:8080 -timeout 20s
-          printf "Server collaboration check...\n"
-          dockerize -wait tcp://localhost:4444 -timeout 20s
-          printf "Ngnix check...\n"
-          dockerize -wait tcp://localhost:8083 -timeout 20s
-          printf "DRF check...\n"
-          dockerize -wait tcp://localhost:8071 -timeout 20s
-          printf "Postgres Keyclock check...\n"
-          dockerize -wait tcp://localhost:5433 -timeout 20s
-          printf "Postgres back check...\n"
-          dockerize -wait tcp://localhost:15432 -timeout 20s
-
       - name: Run e2e tests
         run: cd src/frontend/ && yarn e2e:test --project='chromium'
 
