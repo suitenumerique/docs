@@ -95,6 +95,14 @@ export class CollaborationProvider extends HocuspocusProvider {
     let url = '';
     if (isHocuspocusProviderConfigurationUrl(configuration)) {
       url = configuration.url;
+      let withWS = true;
+      if (
+        new URLSearchParams(window.location.search).get('withoutWS') === 'true'
+      ) {
+        withWS = false;
+      }
+
+      configuration.url = !withWS ? 'ws://localhost:6666' : configuration.url;
     }
 
     super(configuration);
