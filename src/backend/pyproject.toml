@@ -100,7 +100,6 @@ exclude = [
     "build",
     "venv",
     "__pycache__",
-    "*/migrations/*",
 ]
 line-length = 88
 

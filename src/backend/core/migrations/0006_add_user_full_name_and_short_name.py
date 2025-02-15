@@ -4,25 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0005_remove_document_is_public_alter_document_link_reach_and_more'),
+        ("core", "0005_remove_document_is_public_alter_document_link_reach_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='full_name',
-            field=models.CharField(blank=True, max_length=100, null=True, verbose_name='full name'),
+            model_name="user",
+            name="full_name",
+            field=models.CharField(
+                blank=True, max_length=100, null=True, verbose_name="full name"
+            ),
         ),
         migrations.AddField(
-            model_name='user',
-            name='short_name',
-            field=models.CharField(blank=True, max_length=20, null=True, verbose_name='short name'),
+            model_name="user",
+            name="short_name",
+            field=models.CharField(
+                blank=True, max_length=20, null=True, verbose_name="short name"
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='language',
-            field=models.CharField(choices="(('en-us', 'English'), ('fr-fr', 'French'))", default='en-us', help_text='The language in which the user wants to see the interface.', max_length=10, verbose_name='language'),
+            model_name="user",
+            name="language",
+            field=models.CharField(
+                choices="(('en-us', 'English'), ('fr-fr', 'French'))",
+                default="en-us",
+                help_text="The language in which the user wants to see the interface.",
+                max_length=10,
+                verbose_name="language",
+            ),
         ),
     ]

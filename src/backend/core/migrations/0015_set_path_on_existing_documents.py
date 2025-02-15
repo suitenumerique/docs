@@ -7,9 +7,10 @@ from treebeard.numconv import NumConv
 ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 STEPLEN = 7
 
+
 def set_path_on_existing_documents(apps, schema_editor):
     """
-    Updates the `path` and `depth` fields for all existing Document records 
+    Updates the `path` and `depth` fields for all existing Document records
     to ensure valid materialized paths.
 
     This function assigns a unique `path` to each Document as a root node
@@ -26,27 +27,25 @@ def set_path_on_existing_documents(apps, schema_editor):
     updates = []
     for i, pk in enumerate(documents):
         key = numconv.int2str(i)
-        path = "{0}{1}".format(
-            ALPHABET[0] * (STEPLEN - len(key)),
-            key
-        )
+        path = "{0}{1}".format(ALPHABET[0] * (STEPLEN - len(key)), key)
         updates.append(Document(pk=pk, path=path, depth=1))
 
     # Bulk update using the prepared updates list
-    Document.objects.bulk_update(updates, ['depth', 'path'])
+    Document.objects.bulk_update(updates, ["depth", "path"])
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0014_add_tree_structure_to_documents'),
+        ("core", "0014_add_tree_structure_to_documents"),
     ]
 
     operations = [
-        migrations.RunPython(set_path_on_existing_documents, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(
+            set_path_on_existing_documents, reverse_code=migrations.RunPython.noop
+        ),
         migrations.AlterField(
-            model_name='document',
-            name='path',
-            field=models.CharField(db_collation='C', max_length=252, unique=True),
+            model_name="document",
+            name="path",
+            field=models.CharField(db_collation="C", max_length=252, unique=True),
         ),
     ]

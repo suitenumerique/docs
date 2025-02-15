@@ -3,7 +3,7 @@
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations
-from django.db.models import F, ForeignKey, Subquery, OuterRef, Q
+from django.db.models import F, ForeignKey, OuterRef, Q, Subquery
 
 
 def set_creator_from_document_access(apps, schema_editor):
@@ -25,28 +25,37 @@ def set_creator_from_document_access(apps, schema_editor):
     DocumentAccess = apps.get_model("core", "DocumentAccess")
 
     # Update `creator` using the "owner" role
-    owner_subquery = DocumentAccess.objects.filter(
-        document=OuterRef('pk'),
-        user__isnull=False,
-        role='owner',
-    ).order_by('created_at').values('user_id')[:1]
+    owner_subquery = (
+        DocumentAccess.objects.filter(
+            document=OuterRef("pk"),
+            user__isnull=False,
+            role="owner",
+        )
+        .order_by("created_at")
+        .values("user_id")[:1]
+    )
 
-    Document.objects.filter(
-        creator__isnull=True
-    ).update(creator=Subquery(owner_subquery))
+    Document.objects.filter(creator__isnull=True).update(
+        creator=Subquery(owner_subquery)
+    )
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0010_add_field_creator_to_document'),
+        ("core", "0010_add_field_creator_to_document"),
     ]
 
     operations = [
-        migrations.RunPython(set_creator_from_document_access, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(
+            set_creator_from_document_access, reverse_code=migrations.RunPython.noop
+        ),
         migrations.AlterField(
-            model_name='document',
-            name='creator',
-            field=ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='documents_created', to=settings.AUTH_USER_MODEL),
+            model_name="document",
+            name="creator",
+            field=ForeignKey(
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name="documents_created",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

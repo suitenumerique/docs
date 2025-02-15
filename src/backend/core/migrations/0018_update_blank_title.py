@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            update_titles_to_null,
-            reverse_code=migrations.RunPython.noop
+            update_titles_to_null, reverse_code=migrations.RunPython.noop
         ),
     ]

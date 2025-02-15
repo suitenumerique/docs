@@ -2,10 +2,10 @@
 
 from django.db import migrations
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0012_make_document_creator_and_invitation_issuer_optional'),
+        ("core", "0012_make_document_creator_and_invitation_issuer_optional"),
     ]
 
     operations = [
