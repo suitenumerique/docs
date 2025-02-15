@@ -328,6 +328,35 @@ def test_api_documents_list_pagination(
     assert document_ids == []
 
 
+def test_api_documents_list_pagination_force_page_size():
+    """Page size can be set via querystring."""
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document_ids = [
+        str(access.document_id)
+        for access in factories.UserDocumentAccessFactory.create_batch(3, user=user)
+    ]
+
+    # Force page size
+    response = client.get(
+        "/api/v1.0/documents/?page_size=2",
+    )
+
+    assert response.status_code == 200
+    content = response.json()
+
+    assert content["count"] == 3
+    assert content["next"] == "http://testserver/api/v1.0/documents/?page=2&page_size=2"
+    assert content["previous"] is None
+
+    assert len(content["results"]) == 2
+    for item in content["results"]:
+        document_ids.remove(item["id"])
+
+
 def test_api_documents_list_authenticated_distinct():
     """A document with several related users should only be listed once."""
     user = factories.UserFactory()

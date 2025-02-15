@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(backend) allow forcing page size within limits
+
 ## Changed
 
 - 🛂(frontend) Restore version visibility #629
