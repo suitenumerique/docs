@@ -770,6 +770,8 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
 
 
 def test_models_documents_concurrent_add_root():
+    """Test concurrent creation of root documents."""
+
     @transaction.atomic
     def create_document(title):
         return models.Document.add_root(title=title)
@@ -788,6 +790,8 @@ def test_models_documents_concurrent_add_root():
 
 
 def test_models_documents_concurrent_add_child():
+    """Test concurrent creation of child documents."""
+
     @transaction.atomic
     def create_child(title):
         document = models.Document.objects.get(

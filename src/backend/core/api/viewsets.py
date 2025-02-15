@@ -12,13 +12,12 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.db import connection, transaction
 from django.db import models as db
+from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404
 
-import pglock
 import rest_framework as drf
 from botocore.exceptions import ClientError
 from django_filters import rest_framework as drf_filters
@@ -491,6 +490,9 @@ class DocumentViewSet(
             "document_id", flat=True
         )
 
+        if self.action == "children" and self.request.method == "POST":
+            queryset = queryset.select_for_update()
+
         return queryset.filter(
             db.Q(id__in=access_documents_ids)
             | (
@@ -730,7 +732,7 @@ class DocumentViewSet(
         ordering=["path"],
         url_path="children",
     )
-    #@pglock.advisory()
+    @transaction.atomic
     def children(self, request, *args, **kwargs):
         """Handle listing and creating children of a document"""
         document = self.get_object()
