@@ -418,6 +418,7 @@ class DocumentViewSet(
     metadata_class = DocumentMetadata
     ordering = ["-updated_at"]
     ordering_fields = ["created_at", "updated_at", "title"]
+    pagination_class = Pagination
     permission_classes = [
         permissions.DocumentAccessPermission,
     ]

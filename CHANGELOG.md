@@ -32,6 +32,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) allow forcing page size within limits
 - 💄(frontend) add error pages #643
 - 🔒️ Manage unsafe attachments #663
 - ✨(frontend) Custom block quote with export #646
