@@ -4,6 +4,7 @@
 import logging
 import re
 import uuid
+from collections import defaultdict
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -424,10 +425,11 @@ class DocumentViewSet(
     ]
     queryset = models.Document.objects.all()
     serializer_class = serializers.DocumentSerializer
+    ai_translate_serializer_class = serializers.AITranslateSerializer
+    children_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
-    children_serializer_class = serializers.ListDocumentSerializer
-    ai_translate_serializer_class = serializers.AITranslateSerializer
+    tree_serializer_class = serializers.ListDocumentSerializer
 
     def annotate_is_favorite(self, queryset):
         """
@@ -523,7 +525,7 @@ class DocumentViewSet(
             queryset = queryset.filter(path__in=root_paths)
 
             # Annotate the queryset with an attribute marking instances as highest ancestor
-            # in order to save some time while computing abilities in the instance
+            # in order to save some time while computing abilities on the instance
             queryset = queryset.annotate(
                 is_highest_ancestor_for_user=db.Value(
                     True, output_field=db.BooleanField()
@@ -765,6 +767,71 @@ class DocumentViewSet(
         queryset = self.annotate_is_favorite(queryset)
         queryset = self.annotate_user_roles(queryset)
         return self.get_response_for_queryset(queryset)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        ordering=["path"],
+    )
+    def tree(self, request, *args, **kwargs):
+        """
+        List ancestors tree above the document.
+        What we need to display is the tree structure opened for the current document.
+        """
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        current_document = (
+            self.queryset.filter(**filter_kwargs).only("depth", "path").first()
+        )
+
+        if current_document is None:
+            raise Http404
+
+        ancestors = (
+            (current_document.get_ancestors() | self.queryset.filter(**filter_kwargs))
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
+
+        # Get the highest readable ancestor
+        highest_readable = ancestors.readable_per_se(request.user).only("depth").first()
+        if highest_readable is None:
+            raise (
+                drf.exceptions.PermissionDenied()
+                if request.user.is_authenticated
+                else drf.exceptions.NotAuthenticated()
+            )
+
+        ancestors_links_definitions = defaultdict(set)
+        children_clause = db.Q()
+        for ancestor in ancestors:
+            if ancestor.depth < highest_readable.depth:
+                continue
+
+            ancestors_links_definitions[ancestor.link_reach].add(ancestor.link_role)
+            children_clause |= db.Q(
+                path__startswith=ancestor.path, depth=ancestor.depth + 1
+            )
+
+        children = self.queryset.filter(children_clause, deleted_at__isnull=True)
+
+        queryset = ancestors.filter(depth__gte=highest_readable.depth) | children
+        queryset = queryset.order_by("path")
+        queryset = self.annotate_user_roles(queryset)
+        queryset = self.annotate_is_favorite(queryset)
+
+        # Pass ancestors' links definitions to the serializer as a context variable
+        # in order to allow saving time while computing abilities on the instance
+        serializer = self.get_serializer(
+            queryset,
+            many=True,
+            context={
+                "request": request,
+                "ancestors_links_definitions": ancestors_links_definitions,
+            },
+        )
+
+        return drf.response.Response(serializer.data)
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):

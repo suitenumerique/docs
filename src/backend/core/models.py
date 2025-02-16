@@ -367,6 +367,51 @@ class BaseAccess(BaseModel):
         }
 
 
+class DocumentQuerySet(models.QuerySet):
+    """
+    Custom queryset for the Document model, providing additional methods
+    to filter documents based on user permissions.
+    """
+
+    def readable_per_se(self, user):
+        """
+        Filters the queryset to return documents that the given user has
+        permission to read.
+        :param user: The user for whom readable documents are to be fetched.
+        :return: A queryset of documents readable by the user.
+        """
+        if user.is_authenticated:
+            return self.filter(
+                models.Q(accesses__user=user)
+                | models.Q(accesses__team__in=user.teams)
+                | ~models.Q(link_reach=LinkReachChoices.RESTRICTED)
+            )
+
+        return self.filter(models.Q(link_reach=LinkReachChoices.PUBLIC))
+
+
+class DocumentManager(models.Manager):
+    """
+    Custom manager for the Document model, enabling the use of the custom
+    queryset methods directly from the model manager.
+    """
+
+    def get_queryset(self):
+        """
+        Overrides the default get_queryset method to return a custom queryset.
+        :return: An instance of DocumentQuerySet.
+        """
+        return DocumentQuerySet(self.model, using=self._db)
+
+    def readable_per_se(self, user):
+        """
+        Filters documents based on user permissions using the custom queryset.
+        :param user: The user for whom readable documents are to be fetched.
+        :return: A queryset of documents readable by the user.
+        """
+        return self.get_queryset().readable_per_se(user)
+
+
 class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
@@ -398,6 +443,8 @@ class Document(MP_Node, BaseModel):
     node_order_by = []  # Manual ordering
 
     path = models.CharField(max_length=7 * 36, unique=True, db_collation="C")
+
+    objects = DocumentManager()
 
     class Meta:
         db_table = "impress_document"
@@ -680,6 +727,7 @@ class Document(MP_Node, BaseModel):
             "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
+            "tree": can_get,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
