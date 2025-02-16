@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 import magic
 from rest_framework import exceptions, serializers
 
-from core import enums, models
+from core import enums, models, utils
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
@@ -260,6 +260,36 @@ class DocumentSerializer(ListDocumentSerializer):
 
         return value
 
+    def save(self, **kwargs):
+        """
+        Process the content field to extract attachment keys and update the document's
+        "attachments" field for access control.
+        """
+        content = self.validated_data.get("content", "")
+        extracted_attachments = set(utils.extract_attachments(content))
+
+        existing_attachments = (
+            set(self.instance.attachments or []) if self.instance else set()
+        )
+        new_attachments = extracted_attachments - existing_attachments
+
+        if new_attachments:
+            user = self.context["request"].user
+            readable_documents = models.Document.objects.readable(user).filter(
+                Q(attachments__overlap=list(new_attachments))
+            )
+
+            readable_attachments = set()
+            for document in readable_documents:
+                readable_attachments.update(set(document.attachments) & new_attachments)
+
+            # Update attachments with readable keys
+            self.validated_data["attachments"] = list(
+                existing_attachments | readable_attachments
+            )
+
+        return super().save(**kwargs)
+
 
 class ServerCreateDocumentSerializer(serializers.Serializer):
     """
@@ -371,6 +401,27 @@ class LinkDocumentSerializer(BaseResourceSerializer):
             "link_role",
             "link_reach",
         ]
+
+
+class DocumentDuplicationSerializer(serializers.Serializer):
+    """
+    Serializer for duplicating a document.
+    Allows specifying whether to keep access permissions.
+    """
+
+    with_accesses = serializers.BooleanField(default=False)
+
+    def create(self, validated_data):
+        """
+        This serializer is not intended to create objects.
+        """
+        raise NotImplementedError("This serializer does not support creation.")
+
+    def update(self, instance, validated_data):
+        """
+        This serializer is not intended to update objects.
+        """
+        raise NotImplementedError("This serializer does not support updating.")
 
 
 # Suppress the warning about not implementing `create` and `update` methods
