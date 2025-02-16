@@ -6,6 +6,9 @@ import expressWebsockets from 'express-ws';
 
 import { PORT } from '../env';
 import {
+  collaborationPollPostMessageHandler,
+  collaborationPollSSEMessageHandler,
+  collaborationPollSyncDocHandler,
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
   convertMarkdownHandler,
@@ -27,9 +30,24 @@ export const initServer = () => {
   app.use(corsMiddleware);
 
   /**
-   * Route to handle WebSocket connections
+   * Routes to handle collaboration connections
    */
   app.ws(routes.COLLABORATION_WS, wsSecurity, collaborationWSHandler);
+  app.get(
+    routes.COLLABORATION_POLL_MESSAGE,
+    httpSecurity,
+    collaborationPollSSEMessageHandler,
+  );
+  app.post(
+    routes.COLLABORATION_POLL_MESSAGE,
+    httpSecurity,
+    collaborationPollPostMessageHandler,
+  );
+  app.post(
+    routes.COLLABORATION_POLL_SYNC,
+    httpSecurity,
+    collaborationPollSyncDocHandler,
+  );
 
   /**
    * Route to reset connections in a room:
