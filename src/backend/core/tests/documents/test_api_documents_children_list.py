@@ -15,7 +15,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_api_documents_children_list_anonymous_public_standalone():
-    """Anonymous users should be allowed to retrieve the children of a public documents."""
+    """Anonymous users should be allowed to retrieve the children of a public document."""
     document = factories.DocumentFactory(link_reach="public")
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)

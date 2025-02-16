@@ -128,26 +128,13 @@ class TemplateAccessSerializer(BaseAccessSerializer):
         read_only_fields = ["id", "abilities"]
 
 
-class BaseResourceSerializer(serializers.ModelSerializer):
-    """Serialize documents."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-    accesses = TemplateAccessSerializer(many=True, read_only=True)
-
-    def get_abilities(self, document) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return document.get_abilities(request.user)
-        return {}
-
-
-class ListDocumentSerializer(BaseResourceSerializer):
+class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
     nb_accesses = serializers.IntegerField(read_only=True)
     user_roles = serializers.SerializerMethodField(read_only=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
@@ -184,6 +171,18 @@ class ListDocumentSerializer(BaseResourceSerializer):
             "updated_at",
             "user_roles",
         ]
+
+    def get_abilities(self, document) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+
+        if request:
+            paths_links_mapping = self.context.get("paths_links_mapping", None)
+            return document.get_abilities(
+                request.user, paths_links_mapping=paths_links_mapping
+            )
+
+        return {}
 
     def get_user_roles(self, document):
         """
@@ -359,7 +358,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
         raise NotImplementedError("Update is not supported for this serializer.")
 
 
-class LinkDocumentSerializer(BaseResourceSerializer):
+class LinkDocumentSerializer(serializers.ModelSerializer):
     """
     Serialize link configuration for documents.
     We expose it separately from document in order to simplify and secure access control.
@@ -431,8 +430,11 @@ class FileUploadSerializer(serializers.Serializer):
         return attrs
 
 
-class TemplateSerializer(BaseResourceSerializer):
+class TemplateSerializer(serializers.ModelSerializer):
     """Serialize templates."""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+    accesses = TemplateAccessSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Template
@@ -446,6 +448,13 @@ class TemplateSerializer(BaseResourceSerializer):
             "is_public",
         ]
         read_only_fields = ["id", "accesses", "abilities"]
+
+    def get_abilities(self, document) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return document.get_abilities(request.user)
+        return {}
 
 
 # pylint: disable=abstract-method
