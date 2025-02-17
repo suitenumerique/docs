@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import { Box, Text, TextErrors } from '@/components';
-import { gotoLogin } from '@/features/auth';
+import { setAuthUrl } from '@/features/auth';
 import { DocEditor } from '@/features/docs/doc-editor';
 import {
   Doc,
@@ -99,13 +99,19 @@ const DocPage = ({ id }: DocProps) => {
   }, [addTask, doc?.id, queryClient]);
 
   if (isError && error) {
+    if (error.status === 403) {
+      void replace(`/403`);
+      return null;
+    }
+
     if (error.status === 404) {
       void replace(`/404`);
       return null;
     }
 
     if (error.status === 401) {
-      gotoLogin();
+      setAuthUrl();
+      void replace(`/401`);
       return null;
     }
 
