@@ -6,6 +6,7 @@ Declare and configure the models for the impress core application
 import hashlib
 import smtplib
 import uuid
+from collections import defaultdict
 from datetime import timedelta
 from logging import getLogger
 
@@ -649,22 +650,27 @@ class Document(MP_Node, BaseModel):
                 roles = []
         return roles
 
-    @cached_property
-    def links_definitions(self):
+    def get_links_definitions(self, ancestors_links=None):
         """Get links reach/role definitions for the current document and its ancestors."""
-        links_definitions = {self.link_reach: {self.link_role}}
 
-        # Ancestors links definitions are only interesting if the document is not the highest
-        # ancestor to which the current user has access. Look for the annotation:
-        if self.depth > 1 and not getattr(self, "is_highest_ancestor_for_user", False):
-            for ancestor in self.get_ancestors().values("link_reach", "link_role"):
-                links_definitions.setdefault(ancestor["link_reach"], set()).add(
-                    ancestor["link_role"]
-                )
+        links_definitions = defaultdict(set)
+        links_definitions[self.link_reach].add(self.link_role)
 
-        return links_definitions
+        # Skip ancestor processing if the document is the highest accessible ancestor
+        if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
+            return links_definitions
 
-    def get_abilities(self, user):
+        # Fallback to querying the DB if ancestors links are not provided
+        if ancestors_links is None:
+            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
+
+        # Merge ancestor link definitions
+        for ancestor in ancestors_links:
+            links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
+
+        return dict(links_definitions)  # Convert defaultdict back to a normal dict
+
+    def get_abilities(self, user, ancestors_links=None):
         """
         Compute and return abilities for a given user on the document.
         """
@@ -689,7 +695,7 @@ class Document(MP_Node, BaseModel):
         # Add roles provided by the document link, taking into account its ancestors
 
         # Add roles provided by the document link
-        links_definitions = self.links_definitions
+        links_definitions = self.get_links_definitions(ancestors_links=ancestors_links)
         public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
         authenticated_roles = (
             links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
@@ -724,6 +730,7 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_update and user.is_authenticated,
             "collaboration_auth": can_get,
+            "descendants": can_get,
             "destroy": is_owner,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,

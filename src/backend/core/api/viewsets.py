@@ -4,7 +4,6 @@
 import logging
 import re
 import uuid
-from collections import defaultdict
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -21,7 +20,6 @@ from django.http import Http404
 
 import rest_framework as drf
 from botocore.exceptions import ClientError
-from django_filters import rest_framework as drf_filters
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -424,6 +422,7 @@ class DocumentViewSet(
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
     children_serializer_class = serializers.ListDocumentSerializer
+    descendants_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
@@ -841,16 +840,23 @@ class DocumentViewSet(
                 else drf.exceptions.NotAuthenticated()
             )
 
-        ancestors_links_definitions = defaultdict(set)
+        paths_links_mapping = {}
+        ancestors_links = []
         children_clause = db.Q()
         for ancestor in ancestors:
             if ancestor.depth < highest_readable.depth:
                 continue
 
-            ancestors_links_definitions[ancestor.link_reach].add(ancestor.link_role)
             children_clause |= db.Q(
                 path__startswith=ancestor.path, depth=ancestor.depth + 1
             )
+
+            # Compute cache for ancestors links to avoid many queries while computing
+            # abilties for his documents in the tree!
+            ancestors_links.append(
+                {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
+            )
+            paths_links_mapping[ancestor.path] = ancestors_links.copy()
 
         children = self.queryset.filter(children_clause, deleted_at__isnull=True)
 
@@ -866,7 +872,7 @@ class DocumentViewSet(
             many=True,
             context={
                 "request": request,
-                "ancestors_links_definitions": ancestors_links_definitions,
+                "paths_links_mapping": paths_links_mapping,
             },
         )
         return drf.response.Response(

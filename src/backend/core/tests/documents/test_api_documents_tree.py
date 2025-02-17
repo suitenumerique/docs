@@ -18,10 +18,12 @@ pytestmark = pytest.mark.django_db
 def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_queries):
     """Anonymous users should be allowed to retrieve the tree of a public document."""
     parent = factories.DocumentFactory(link_reach="public")
-    document, sibling = factories.DocumentFactory.create_batch(2, parent=parent)
+    document, sibling1, sibling2 = factories.DocumentFactory.create_batch(
+        3, parent=parent
+    )
     child = factories.DocumentFactory(link_reach="public", parent=document)
 
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(9):
         APIClient().get(f"/api/v1.0/documents/{document.id!s}/tree/")
 
     with django_assert_num_queries(4):

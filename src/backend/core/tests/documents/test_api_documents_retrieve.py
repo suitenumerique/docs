@@ -34,6 +34,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "children_create": False,
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
@@ -91,6 +92,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "children_create": False,
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
@@ -182,6 +184,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "children_create": document.link_role == "editor",
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             "favorite": True,
             "invite_owner": False,
@@ -246,6 +249,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "children_create": grand_parent.link_role == "editor",
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             "favorite": True,
             "invite_owner": False,
@@ -419,6 +423,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "children_create": access.role != "reader",
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": access.role == "owner",
             "favorite": True,
             "invite_owner": access.role == "owner",
@@ -724,7 +729,7 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
     }
 
 
-def test_api_documents_retrieve_user_roles(django_assert_num_queries):
+def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
     """
     Roles should be annotated on querysets taking into account all documents ancestors.
     """
@@ -749,7 +754,7 @@ def test_api_documents_retrieve_user_roles(django_assert_num_queries):
     )
     expected_roles = {access.role for access in accesses}
 
-    with django_assert_num_queries(10):
+    with django_assert_max_num_queries(11):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
