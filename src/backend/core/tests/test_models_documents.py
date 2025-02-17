@@ -786,7 +786,7 @@ def test_models_documents_concurrent_add_root():
         assert document1.title == "my document 1"
         assert document2.title == "my document 2"
 
-        assert models.Document.objects.count() == 3
+    assert models.Document.get_root_nodes().count() == 2
 
 
 def test_models_documents_concurrent_add_child():
@@ -818,4 +818,8 @@ def test_models_documents_concurrent_add_child():
         assert document1.title == "my document 1"
         assert document2.title == "my document 2"
 
-        assert models.Document.objects.count() == 3
+    document = models.Document.objects.get(
+        pk="c3d9a707-9b09-48a4-a9a0-3f31cf4b120f"
+    )
+
+    assert document.get_children().count() == 2
