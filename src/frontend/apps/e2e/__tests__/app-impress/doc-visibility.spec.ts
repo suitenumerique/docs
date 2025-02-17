@@ -133,7 +133,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await page.goto(urlDoc);
 
     await expect(
-      page.getByText('You do not have permission to perform this action.'),
+      page.getByText('You do not have permission to view this document.'),
     ).toBeVisible();
   });
 
