@@ -788,7 +788,6 @@ def test_models_documents_concurrent_add_root():
 
     assert models.Document.get_root_nodes().count() == 2
 
-
 def test_models_documents_concurrent_add_child():
     """Test concurrent creation of child documents."""
 

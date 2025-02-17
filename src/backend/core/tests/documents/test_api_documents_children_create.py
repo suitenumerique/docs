@@ -254,7 +254,7 @@ def test_api_documents_children_create_force_id_existing():
         "id": ["A document with this ID already exists. You cannot override it."]
     }
 
-
+@pytest.mark.xdist_group(name="concurrent_docs_insert")
 def test_api_documents_children_create_document_race_condition():
     """
     It should be possible to create several documents at the same time

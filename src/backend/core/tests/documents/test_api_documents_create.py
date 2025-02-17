@@ -8,6 +8,8 @@ from uuid import uuid4
 import pytest
 from rest_framework.test import APIClient
 
+from django.db import connections
+
 from core import factories
 from core.models import Document
 
