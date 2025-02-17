@@ -9,6 +9,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- 💄(frontend) add error pages #643
+
 ## Changed
 
 - 📝(doc) minor README.md formatting and wording enhancements

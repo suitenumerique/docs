@@ -16,8 +16,11 @@ export const setAuthUrl = () => {
   }
 };
 
-export const gotoLogin = () => {
-  setAuthUrl();
+export const gotoLogin = (withRedirect = true) => {
+  if (withRedirect) {
+    setAuthUrl();
+  }
+
   window.location.replace(LOGIN_URL);
 };
 
