@@ -14,7 +14,11 @@ export const ButtonLogin = () => {
 
   if (!authenticated) {
     return (
-      <Button onClick={gotoLogin} color="primary-text" aria-label={t('Login')}>
+      <Button
+        onClick={() => gotoLogin()}
+        color="primary-text"
+        aria-label={t('Login')}
+      >
         {t('Login')}
       </Button>
     );
@@ -32,7 +36,7 @@ export const ProConnectButton = () => {
 
   return (
     <BoxButton
-      onClick={gotoLogin}
+      onClick={() => gotoLogin()}
       aria-label={t('Proconnect Login')}
       $css={css`
         background-color: var(--c--theme--colors--primary-text);

@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- 💄(frontend) add error pages #643
+
 ## Changed
 
 - 🛂(frontend) Restore version visibility #629
