@@ -77,6 +77,7 @@ export const DocsGrid = ({
         $css={css`
           overflow-x: hidden;
           overflow-y: auto;
+          ${!isDesktop ? 'border: none;' : ''}
         `}
         $padding={{
           top: 'base',
