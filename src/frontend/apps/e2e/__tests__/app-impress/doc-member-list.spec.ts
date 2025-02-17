@@ -221,7 +221,7 @@ test.describe('Document list members', () => {
     await mySelfMoreActions.click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(
-      page.getByText('You do not have permission to perform this action.'),
+      page.getByText('You do not have permission to view this document.'),
     ).toBeVisible();
   });
 });

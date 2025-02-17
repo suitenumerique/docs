@@ -99,6 +99,11 @@ const DocPage = ({ id }: DocProps) => {
   }, [addTask, doc?.id, queryClient]);
 
   if (isError && error) {
+    if (error.status === 403) {
+      void replace(`/403`);
+      return null;
+    }
+
     if (error.status === 404) {
       void replace(`/404`);
       return null;
