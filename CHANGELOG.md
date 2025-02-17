@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) add new "descendants" action to document API endpoint #645
 - ✨(backend) new "tree" action on document detail endpoint #645
 - ✨(backend) allow forcing page size within limits #645
 

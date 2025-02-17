@@ -78,6 +78,7 @@ def test_api_documents_trashbin_format():
             "children_create": True,
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": True,
             "favorite": True,
             "invite_owner": True,

@@ -177,7 +177,14 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
 
         if request:
-            return document.get_abilities(request.user)
+            paths_links_mapping = self.context.get("paths_links_mapping", None)
+            # Retrieve ancestor links from paths_links_mapping (if provided)
+            ancestors_links = (
+                paths_links_mapping.get(document.path[: -document.steplen])
+                if paths_links_mapping
+                else None
+            )
+            return document.get_abilities(request.user, ancestors_links=ancestors_links)
 
         return {}
 
