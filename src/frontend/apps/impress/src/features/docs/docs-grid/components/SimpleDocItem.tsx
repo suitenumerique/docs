@@ -48,9 +48,9 @@ export const SimpleDocItem = ({
         `}
       >
         {isPinned ? (
-          <PinnedDocumentIcon aria-label={t('Pin document icon')} />
+          <PinnedDocumentIcon aria-label={t('Pinned document.')} />
         ) : (
-          <SimpleFileIcon aria-label={t('Simple document icon')} />
+          <SimpleFileIcon aria-label="" />
         )}
       </Box>
       <Box $justify="center">

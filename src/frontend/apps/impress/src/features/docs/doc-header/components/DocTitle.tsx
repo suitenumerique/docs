@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import {
   Tooltip,
   VariantType,
@@ -110,7 +108,6 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           defaultValue={titleDisplay || undefined}
           onKeyDownCapture={handleKeyDown}
           suppressContentEditableWarning={true}
-          aria-label="doc title input"
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')
           }
