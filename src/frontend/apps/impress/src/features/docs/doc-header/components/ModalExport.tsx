@@ -15,7 +15,7 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import { pdf } from '@react-pdf/renderer';
+import { Text as PDFText, pdf } from '@react-pdf/renderer';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -113,7 +113,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
                     ? 1.5
                     : 1.17;
               return (
-                <Text
+                <PDFText
                   style={{
                     fontSize: fontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
                     fontWeight: 700,
@@ -122,7 +122,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
                   }}
                 >
                   {exporter.transformInlineContent(block.content)}
-                </Text>
+                </PDFText>
               );
             },
             paragraph: (block, exporter) => {
@@ -146,9 +146,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
                 }
               }
               return (
-                <Text key={block.id}>
+                <PDFText key={block.id}>
                   {exporter.transformInlineContent(block.content)}
-                </Text>
+                </PDFText>
               );
             },
           },
