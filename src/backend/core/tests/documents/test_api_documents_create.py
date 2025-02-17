@@ -2,10 +2,13 @@
 Tests for Documents API endpoint in impress's core app: create
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
 import pytest
 from rest_framework.test import APIClient
+
+from django.db import connections
 
 from core import factories
 from core.models import Document
@@ -43,12 +46,44 @@ def test_api_documents_create_authenticated_success():
         },
         format="json",
     )
-
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "my document"
     assert document.link_reach == "restricted"
     assert document.accesses.filter(role="owner", user=user).exists()
+
+
+# def test_api_documents_create_document_race_condition():
+#     """
+#     It should be possible to create several documents at the same time
+#     without causing any race conditions or data integrity issues.
+#     """
+
+#     def create_document(title):
+#         user = factories.UserFactory()
+#         client = APIClient()
+#         client.force_login(user)
+#         response =  client.post(
+#             "/api/v1.0/documents/",
+#             {
+#                 "title": title,
+#             },
+#             format="json",
+#         )
+
+#         connections.close_all()
+
+#         return response
+
+#     with ThreadPoolExecutor(max_workers=2) as executor:
+#         future1 = executor.submit(create_document, "my document 1")
+#         future2 = executor.submit(create_document, "my document 2")
+
+#         response1 = future1.result()
+#         response2 = future2.result()
+
+#         assert response1.status_code == 201
+#         assert response2.status_code == 201
 
 
 def test_api_documents_create_authenticated_title_null():

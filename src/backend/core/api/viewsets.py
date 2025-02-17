@@ -490,6 +490,9 @@ class DocumentViewSet(
             "document_id", flat=True
         )
 
+        if self.action == "children" and self.request.method == "POST":
+            queryset = queryset.select_for_update()
+
         return queryset.filter(
             db.Q(id__in=access_documents_ids)
             | (
@@ -729,6 +732,7 @@ class DocumentViewSet(
         ordering=["path"],
         url_path="children",
     )
+    @transaction.atomic
     def children(self, request, *args, **kwargs):
         """Handle listing and creating children of a document"""
         document = self.get_object()
