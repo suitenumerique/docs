@@ -177,10 +177,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
 
         if request:
-            paths_links_mapping = self.context.get("paths_links_mapping", None)
-            return document.get_abilities(
-                request.user, paths_links_mapping=paths_links_mapping
-            )
+            return document.get_abilities(request.user)
 
         return {}
 
