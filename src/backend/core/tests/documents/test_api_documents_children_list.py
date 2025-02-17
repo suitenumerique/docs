@@ -1,5 +1,5 @@
 """
-Tests for Documents API endpoint in impress's core app: retrieve
+Tests for Documents API endpoint in impress's core app: children list
 """
 
 import random

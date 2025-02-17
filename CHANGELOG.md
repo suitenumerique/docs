@@ -11,6 +11,8 @@ and this project adheres to
 ## Fixed
 - 🐛(frontend) remove scroll listener table content  #688
 - 🔒️(back) restrict access to favorite_list endpoint #690
+- 🐛(backend) refactor to fix filtering on children 
+    and descendants views #695
 
 
 ## [2.4.0] - 2025-03-06

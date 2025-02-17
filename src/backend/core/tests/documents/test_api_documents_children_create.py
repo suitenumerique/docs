@@ -1,5 +1,5 @@
 """
-Tests for Documents API endpoint in impress's core app: create
+Tests for Documents API endpoint in impress's core app: children create
 """
 
 from uuid import uuid4

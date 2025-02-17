@@ -31,7 +31,7 @@ from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 
 from . import permissions, serializers, utils
-from .filters import DocumentFilter
+from .filters import DocumentFilter, ListDocumentFilter
 
 logger = logging.getLogger(__name__)
 
@@ -316,7 +316,6 @@ class DocumentViewSet(
     SerializerPerActionMixin,
     drf.mixins.CreateModelMixin,
     drf.mixins.DestroyModelMixin,
-    drf.mixins.ListModelMixin,
     drf.mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
@@ -414,8 +413,6 @@ class DocumentViewSet(
     - Implements soft delete logic to retain document tree structures.
     """
 
-    filter_backends = [drf_filters.DjangoFilterBackend]
-    filterset_class = DocumentFilter
     metadata_class = DocumentMetadata
     ordering = ["-updated_at"]
     ordering_fields = ["created_at", "updated_at", "title"]
@@ -502,11 +499,42 @@ class DocumentViewSet(
         )
 
     def filter_queryset(self, queryset):
-        """Apply annotations and filters sequentially."""
-        filterset = DocumentFilter(
+        """Override to apply annotations to generic views."""
+        queryset = super().filter_queryset(queryset)
+        queryset = self.annotate_is_favorite(queryset)
+        queryset = self.annotate_user_roles(queryset)
+        return queryset
+
+    def get_response_for_queryset(self, queryset):
+        """Return paginated response for the queryset if requested."""
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return drf.response.Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list.
+
+        This method applies filtering based on request parameters using `ListDocumentFilter`.
+        It performs early filtering on model fields, annotates user roles, and removes
+        descendant documents to keep only the highest ancestors readable by the current user.
+
+        Additional annotations (e.g., `is_highest_ancestor_for_user`, favorite status) are
+        applied before ordering and returning the response.
+        """
+        queryset = (
+            self.get_queryset()
+        )  # Not calling filter_queryset. We do our own cooking.
+
+        filterset = ListDocumentFilter(
             self.request.GET, queryset=queryset, request=self.request
         )
-        filterset.is_valid()
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
@@ -515,22 +543,19 @@ class DocumentViewSet(
 
         queryset = self.annotate_user_roles(queryset)
 
-        if self.action == "list":
-            # Among the results, we may have documents that are ancestors/descendants
-            # of each other. In this case we want to keep only the highest ancestors.
-            root_paths = utils.filter_root_paths(
-                queryset.order_by("path").values_list("path", flat=True),
-                skip_sorting=True,
-            )
-            queryset = queryset.filter(path__in=root_paths)
+        # Among the results, we may have documents that are ancestors/descendants
+        # of each other. In this case we want to keep only the highest ancestors.
+        root_paths = utils.filter_root_paths(
+            queryset.order_by("path").values_list("path", flat=True),
+            skip_sorting=True,
+        )
+        queryset = queryset.filter(path__in=root_paths)
 
-            # Annotate the queryset with an attribute marking instances as highest ancestor
-            # in order to save some time while computing abilities on the instance
-            queryset = queryset.annotate(
-                is_highest_ancestor_for_user=db.Value(
-                    True, output_field=db.BooleanField()
-                )
-            )
+        # Annotate the queryset with an attribute marking instances as highest ancestor
+        # in order to save some time while computing abilities on the instance
+        queryset = queryset.annotate(
+            is_highest_ancestor_for_user=db.Value(True, output_field=db.BooleanField())
+        )
 
         # Annotate favorite status and filter if applicable as late as possible
         queryset = self.annotate_is_favorite(queryset)
@@ -539,18 +564,11 @@ class DocumentViewSet(
         )
 
         # Apply ordering only now that everyting is filtered and annotated
-        return filters.OrderingFilter().filter_queryset(self.request, queryset, self)
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
+        )
 
-    def get_response_for_queryset(self, queryset):
-        """Return paginated response for the queryset if requested."""
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            result = self.get_paginated_response(serializer.data)
-            return result
-
-        serializer = self.get_serializer(queryset, many=True)
-        return drf.response.Response(serializer.data)
+        return self.get_response_for_queryset(queryset)
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -604,7 +622,7 @@ class DocumentViewSet(
             user=user
         ).values_list("document_id", flat=True)
 
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
         queryset = queryset.filter(id__in=favorite_documents_ids)
         return self.get_response_for_queryset(queryset)
 
@@ -731,7 +749,6 @@ class DocumentViewSet(
         detail=True,
         methods=["get", "post"],
         ordering=["path"],
-        url_path="children",
     )
     def children(self, request, *args, **kwargs):
         """Handle listing and creating children of a document"""
@@ -763,10 +780,35 @@ class DocumentViewSet(
             )
 
         # GET: List children
-        queryset = document.get_children().filter(deleted_at__isnull=True)
+        queryset = document.get_children().filter(ancestors_deleted_at__isnull=True)
         queryset = self.filter_queryset(queryset)
-        queryset = self.annotate_is_favorite(queryset)
-        queryset = self.annotate_user_roles(queryset)
+
+        filterset = DocumentFilter(request.GET, queryset=queryset)
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.qs
+
+        return self.get_response_for_queryset(queryset)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        ordering=["path"],
+    )
+    def descendants(self, request, *args, **kwargs):
+        """Handle listing descendants of a document"""
+        document = self.get_object()
+
+        queryset = document.get_descendants().filter(ancestors_deleted_at__isnull=True)
+        queryset = self.filter_queryset(queryset)
+
+        filterset = DocumentFilter(request.GET, queryset=queryset)
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.qs
+
         return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(

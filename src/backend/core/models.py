@@ -809,15 +809,16 @@ class Document(MP_Node, BaseModel):
         Soft delete the document, marking the deletion on descendants.
         We still keep the .delete() method untouched for programmatic purposes.
         """
-        if self.deleted_at or self.ancestors_deleted_at:
+        if (
+            self._meta.model.objects.filter(
+                models.Q(deleted_at__isnull=False)
+                | models.Q(ancestors_deleted_at__isnull=False),
+                pk=self.pk,
+            ).exists()
+            or self.get_ancestors().filter(deleted_at__isnull=False).exists()
+        ):
             raise RuntimeError(
                 "This document is already deleted or has deleted ancestors."
-            )
-
-        # Check if any ancestors are deleted
-        if self.get_ancestors().filter(deleted_at__isnull=False).exists():
-            raise RuntimeError(
-                "Cannot delete this document because one or more ancestors are already deleted."
             )
 
         self.ancestors_deleted_at = self.deleted_at = timezone.now()
@@ -836,14 +837,8 @@ class Document(MP_Node, BaseModel):
             raise ValidationError({"deleted_at": [_("This document is not deleted.")]})
 
         if self.deleted_at < get_trashbin_cutoff():
-            raise ValidationError(
-                {
-                    "deleted_at": [
-                        _(
-                            "This document was permanently deleted and cannot be restored."
-                        )
-                    ]
-                }
+            raise RuntimeError(
+                "This document was permanently deleted and cannot be restored."
             )
 
         # save the current deleted_at value to exclude it from the descendants update
