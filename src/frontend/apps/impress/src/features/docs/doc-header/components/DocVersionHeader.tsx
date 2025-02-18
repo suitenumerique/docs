@@ -6,7 +6,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { DocTitleText } from './DocTitle';
 
 interface DocVersionHeaderProps {
-  title: string;
+  title?: string;
 }
 
 export const DocVersionHeader = ({ title }: DocVersionHeaderProps) => {

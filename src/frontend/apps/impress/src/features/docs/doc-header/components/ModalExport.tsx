@@ -22,7 +22,7 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useEditorStore } from '@/features/docs/doc-editor';
-import { Doc } from '@/features/docs/doc-management';
+import { Doc, useTrans } from '@/features/docs/doc-management';
 
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { downloadFile, exportResolveFileUrl } from '../utils';
@@ -51,6 +51,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const [format, setFormat] = useState<DocDownloadFormat>(
     DocDownloadFormat.PDF,
   );
+  const { untitledDocument } = useTrans();
 
   const templateOptions = useMemo(() => {
     const templateOptions = (templates?.pages || [])
@@ -78,7 +79,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     setIsExporting(true);
 
-    const title = doc.title
+    const title = (doc.title || untitledDocument)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
