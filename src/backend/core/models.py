@@ -81,6 +81,55 @@ class LinkReachChoices(models.TextChoices):
     )  # Any authenticated user can access the document
     PUBLIC = "public", _("Public")  # Even anonymous users can access the document
 
+    @classmethod
+    def get_select_options(cls, ancestors_links):
+        """
+        Determines the valid select options for link reach and link role depending on the
+        list of ancestors' link reach/role.
+
+        Args:
+            ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
+                             representing the reach and role of ancestors links.
+
+        Returns:
+            Dictionary mapping possible reach levels to their corresponding possible roles.
+        """
+        # If no ancestors, return all options
+        if not ancestors_links:
+            return {reach: LinkRoleChoices.values for reach in cls.values}
+
+        # Initialize result with all possible reaches and role options as sets
+        result = {reach: set(LinkRoleChoices.values) for reach in cls.values}
+
+        # Group roles by reach level
+        reach_roles = defaultdict(set)
+        for link in ancestors_links:
+            reach_roles[link["link_reach"]].add(link["link_role"])
+
+        # Apply constraints based on ancestor links
+        if LinkRoleChoices.EDITOR in reach_roles[cls.RESTRICTED]:
+            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+
+        if LinkRoleChoices.EDITOR in reach_roles[cls.AUTHENTICATED]:
+            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.pop(cls.RESTRICTED, None)
+        elif LinkRoleChoices.READER in reach_roles[cls.AUTHENTICATED]:
+            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+
+        if LinkRoleChoices.EDITOR in reach_roles[cls.PUBLIC]:
+            result[cls.PUBLIC].discard(LinkRoleChoices.READER)
+            result.pop(cls.AUTHENTICATED, None)
+            result.pop(cls.RESTRICTED, None)
+        elif LinkRoleChoices.READER in reach_roles[cls.PUBLIC]:
+            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.get(cls.RESTRICTED, set()).discard(LinkRoleChoices.READER)
+
+        # Convert roles sets to lists while maintaining the order from LinkRoleChoices
+        for reach, roles in result.items():
+            result[reach] = [role for role in LinkRoleChoices.values if role in roles]
+
+        return result
+
 
 class DuplicateEmailError(Exception):
     """Raised when an email is already associated with a pre-existing user."""
@@ -650,19 +699,11 @@ class Document(MP_Node, BaseModel):
                 roles = []
         return roles
 
-    def get_links_definitions(self, ancestors_links=None):
+    def get_links_definitions(self, ancestors_links):
         """Get links reach/role definitions for the current document and its ancestors."""
 
         links_definitions = defaultdict(set)
         links_definitions[self.link_reach].add(self.link_role)
-
-        # Skip ancestor processing if the document is the highest accessible ancestor
-        if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
-            return links_definitions
-
-        # Fallback to querying the DB if ancestors links are not provided
-        if ancestors_links is None:
-            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
 
         # Merge ancestor link definitions
         for ancestor in ancestors_links:
@@ -674,6 +715,11 @@ class Document(MP_Node, BaseModel):
         """
         Compute and return abilities for a given user on the document.
         """
+        if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
+            ancestors_links = []
+        elif ancestors_links is None:
+            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
+
         roles = set(
             self.get_roles(user)
         )  # at this point only roles based on specific access
@@ -693,9 +739,7 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         # Add roles provided by the document link, taking into account its ancestors
-
-        # Add roles provided by the document link
-        links_definitions = self.get_links_definitions(ancestors_links=ancestors_links)
+        links_definitions = self.get_links_definitions(ancestors_links)
         public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
         authenticated_roles = (
             links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
@@ -740,6 +784,7 @@ class Document(MP_Node, BaseModel):
             "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
+            "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
             "tree": can_get,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,

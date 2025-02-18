@@ -83,6 +83,11 @@ def test_api_documents_trashbin_format():
             "favorite": True,
             "invite_owner": True,
             "link_configuration": True,
+            "link_select_options": {
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
             "media_auth": True,
             "move": False,  # Can't move a deleted document
             "partial_update": True,
