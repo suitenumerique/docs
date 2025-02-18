@@ -19,7 +19,7 @@ test.describe('Doc Version', () => {
 
     await page.getByLabel('Open the document options').click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Version history',
       })
       .click();
@@ -59,7 +59,7 @@ test.describe('Doc Version', () => {
 
     await page.getByLabel('Open the document options').click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Version history',
       })
       .click();
@@ -91,7 +91,7 @@ test.describe('Doc Version', () => {
 
     await page.getByLabel('Open the document options').click();
     await expect(
-      page.getByRole('button', { name: 'Version history' }),
+      page.getByRole('menuitem', { name: 'Version history' }),
     ).toBeDisabled();
   });
 
@@ -120,7 +120,7 @@ test.describe('Doc Version', () => {
 
     await page.getByLabel('Open the document options').click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Version history',
       })
       .click();

@@ -89,7 +89,7 @@ test.describe('Doc Header', () => {
 
     await page.getByLabel('Open the document options').click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Delete document',
       })
       .click();
@@ -153,7 +153,7 @@ test.describe('Doc Header', () => {
     await page.getByLabel('Open the document options').click();
 
     await expect(
-      page.getByRole('button', { name: 'Delete document' }),
+      page.getByRole('menuitem', { name: 'Delete document' }),
     ).toBeDisabled();
 
     // Click somewhere else to close the options
@@ -177,7 +177,7 @@ test.describe('Doc Header', () => {
     await invitationCard.getByRole('button', { name: 'more_horiz' }).click();
 
     await expect(
-      page.getByRole('button', {
+      page.getByRole('menuitem', {
         name: 'delete',
       }),
     ).toBeEnabled();
@@ -195,7 +195,7 @@ test.describe('Doc Header', () => {
     await memberCard.getByRole('button', { name: 'more_horiz' }).click();
 
     await expect(
-      page.getByRole('button', {
+      page.getByRole('menuitem', {
         name: 'delete',
       }),
     ).toBeEnabled();
@@ -233,7 +233,7 @@ test.describe('Doc Header', () => {
     await page.getByLabel('Open the document options').click();
 
     await expect(
-      page.getByRole('button', { name: 'Delete document' }),
+      page.getByRole('menuitem', { name: 'Delete document' }),
     ).toBeDisabled();
 
     // Click somewhere else to close the options
@@ -295,7 +295,7 @@ test.describe('Doc Header', () => {
     await page.getByLabel('Open the document options').click();
 
     await expect(
-      page.getByRole('button', { name: 'Delete document' }),
+      page.getByRole('menuitem', { name: 'Delete document' }),
     ).toBeDisabled();
 
     // Click somewhere else to close the options
@@ -352,7 +352,7 @@ test.describe('Doc Header', () => {
 
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('button', { name: 'Copy as Markdown' }).click();
+    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
     await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
     // Test that clipboard is in Markdown format
@@ -387,7 +387,7 @@ test.describe('Doc Header', () => {
 
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('button', { name: 'Copy as HTML' }).click();
+    await page.getByRole('menuitem', { name: 'Copy as HTML' }).click();
     await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
     // Test that clipboard is in HTML format
@@ -460,7 +460,7 @@ test.describe('Documents Header mobile', () => {
 
     await expect(page.getByRole('button', { name: 'Copy link' })).toBeHidden();
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('button', { name: 'Share' }).click();
+    await page.getByRole('menuitem', { name: 'Share' }).click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
     // Test that clipboard is in HTML format
@@ -494,7 +494,7 @@ test.describe('Documents Header mobile', () => {
     await goToGridDoc(page);
 
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('button', { name: 'Share' }).click();
+    await page.getByRole('menuitem', { name: 'Share' }).click();
 
     await expect(page.getByLabel('Share modal')).toBeVisible();
     await page.getByRole('button', { name: 'close' }).click();

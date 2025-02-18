@@ -12,7 +12,7 @@ test.describe('Home page', () => {
     const footer = page.locator('footer').first();
     await expect(header).toBeVisible();
     await expect(
-      header.getByRole('combobox', { name: 'Language' }),
+      header.getByRole('button', { name: /Language/ }),
     ).toBeVisible();
     await expect(
       header.getByRole('button', { name: 'Les services de La Suite numé' }),

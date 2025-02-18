@@ -9,19 +9,20 @@ test.describe('Language', () => {
     await expect(page.getByLabel('Logout')).toBeVisible();
 
     const header = page.locator('header').first();
-    await header.getByRole('combobox').getByText('English').click();
-    await header.getByRole('option', { name: 'Français' }).click();
+    await header
+      .getByRole('button', { name: /Language/ })
+      .getByText('English')
+      .click();
+    await page.getByRole('menuitem', { name: 'Français' }).click();
     await expect(
-      header.getByRole('combobox').getByText('Français'),
+      header.getByRole('button').getByText('Français'),
     ).toBeVisible();
 
     await expect(page.getByLabel('Se déconnecter')).toBeVisible();
 
-    await header.getByRole('combobox').getByText('Français').click();
-    await header.getByRole('option', { name: 'Deutsch' }).click();
-    await expect(
-      header.getByRole('combobox').getByText('Deutsch'),
-    ).toBeVisible();
+    await header.getByRole('button').getByText('Français').click();
+    await page.getByRole('menuitem', { name: 'Deutsch' }).click();
+    await expect(header.getByRole('button').getByText('Deutsch')).toBeVisible();
 
     await expect(page.getByLabel('Abmelden')).toBeVisible();
   });
@@ -53,8 +54,11 @@ test.describe('Language', () => {
 
     // Switch language to French
     const header = page.locator('header').first();
-    await header.getByRole('combobox').getByText('English').click();
-    await header.getByRole('option', { name: 'Français' }).click();
+    await header
+      .getByRole('button', { name: /Language/ })
+      .getByText('English')
+      .click();
+    await page.getByRole('menuitem', { name: 'Français' }).click();
 
     // Check for French 404 response
     await check404Response('Pas trouvé.');
