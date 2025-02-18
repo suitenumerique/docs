@@ -50,7 +50,7 @@ test.describe('Doc Visibility', () => {
 
     await selectVisibility.click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Connected',
       })
       .click();
@@ -60,7 +60,7 @@ test.describe('Doc Visibility', () => {
     await selectVisibility.click();
 
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Public',
       })
       .click();
@@ -162,7 +162,7 @@ test.describe('Doc Visibility: Restricted', () => {
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Administrator' }).click();
+    await page.getByRole('menuitem', { name: 'Administrator' }).click();
 
     await page.getByRole('button', { name: 'Invite' }).click();
 
@@ -215,7 +215,7 @@ test.describe('Doc Visibility: Public', () => {
     await selectVisibility.click();
 
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Public',
       })
       .click();
@@ -227,7 +227,7 @@ test.describe('Doc Visibility: Public', () => {
     await expect(page.getByLabel('Visibility mode')).toBeVisible();
     await page.getByLabel('Visibility mode').click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Reading',
       })
       .click();
@@ -289,7 +289,7 @@ test.describe('Doc Visibility: Public', () => {
     await selectVisibility.click();
 
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Public',
       })
       .click();
@@ -357,7 +357,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     const selectVisibility = page.getByLabel('Visibility', { exact: true });
     await selectVisibility.click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Connected',
       })
       .click();
@@ -407,7 +407,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     const selectVisibility = page.getByLabel('Visibility', { exact: true });
     await selectVisibility.click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Connected',
       })
       .click();
@@ -461,7 +461,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     const selectVisibility = page.getByLabel('Visibility', { exact: true });
     await selectVisibility.click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Connected',
       })
       .click();

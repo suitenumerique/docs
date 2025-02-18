@@ -381,6 +381,7 @@ const config = {
               'color-active': 'var(--c--theme--colors--primary-100)',
             },
             'color-hover': 'var(--c--theme--colors--primary-text)',
+            color: 'var(--c--theme--colors--primary-800)',
           },
           secondary: {
             background: {

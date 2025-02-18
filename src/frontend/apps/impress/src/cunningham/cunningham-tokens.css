@@ -505,6 +505,9 @@
   --c--components--button--primary-text--color-hover: var(
     --c--theme--colors--primary-text
   );
+  --c--components--button--primary-text--color: var(
+    --c--theme--colors--primary-800
+  );
   --c--components--button--secondary--background--color-hover: #f6f6f6;
   --c--components--button--secondary--background--color-active: #ededed;
   --c--components--button--secondary--border--color: var(

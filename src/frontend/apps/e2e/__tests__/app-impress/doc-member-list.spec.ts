@@ -161,12 +161,12 @@ test.describe('Document list members', () => {
     await list.click();
 
     await currentUserRole.click();
-    await page.getByRole('button', { name: 'Administrator' }).click();
+    await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
     await currentUserRole.click();
-    await page.getByRole('button', { name: 'Reader' }).click();
+    await page.getByRole('menuitem', { name: 'Reader' }).click();
     await list.click();
     await expect(currentUserRole).toBeHidden();
   });
@@ -215,11 +215,11 @@ test.describe('Document list members', () => {
     await expect(mySelfMoreActions).toBeVisible();
 
     await userReaderMoreActions.click();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
     await expect(userReader).toBeHidden();
 
     await mySelfMoreActions.click();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
     await expect(
       page.getByText('You do not have permission to view this document.'),
     ).toBeVisible();

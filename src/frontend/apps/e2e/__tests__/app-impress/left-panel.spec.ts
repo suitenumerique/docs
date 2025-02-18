@@ -29,7 +29,7 @@ test.describe('Left panel mobile', () => {
     const header = page.locator('header').first();
     const homeButton = page.getByRole('button', { name: 'house' });
     const newDocButton = page.getByRole('button', { name: 'New doc' });
-    const languageButton = page.getByRole('combobox', { name: 'Language' });
+    const languageButton = page.getByRole('button', { name: /Language/ });
     const logoutButton = page.getByRole('button', { name: 'Logout' });
 
     await expect(homeButton).not.toBeInViewport();

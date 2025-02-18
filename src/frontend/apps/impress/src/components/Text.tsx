@@ -25,7 +25,9 @@ export interface TextProps extends BoxProps {
   $size?: TextSizes | (string & {});
   $theme?:
     | 'primary'
+    | 'primary-text'
     | 'secondary'
+    | 'secondary-text'
     | 'info'
     | 'success'
     | 'warning'

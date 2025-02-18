@@ -406,6 +406,10 @@ input:-webkit-autofill:focus {
   );
 }
 
+.c__button--primary-text {
+  color: var(--c--components--button--primary-text--color);
+}
+
 .c__button--primary-text:hover,
 .c__button--primary-text:focus-visible {
   background-color: var(
