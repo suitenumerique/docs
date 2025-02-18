@@ -6,6 +6,10 @@ export const cssEditor = (readonly: boolean) => css`
   & .ProseMirror {
     height: 100%;
 
+    .bn-side-menu[data-block-type='quote'] {
+      height: 46px;
+    }
+
     .collaboration-cursor-custom__base {
       position: relative;
     }
