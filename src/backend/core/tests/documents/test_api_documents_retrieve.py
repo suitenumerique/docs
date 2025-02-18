@@ -40,6 +40,11 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": {
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
             "media_auth": True,
             "move": False,
             "partial_update": document.link_role == "editor",
@@ -81,6 +86,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
     response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
+    links = document.get_ancestors().values("link_reach", "link_role")
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -98,6 +104,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": models.LinkReachChoices.get_select_options(links),
             "media_auth": True,
             "move": False,
             "partial_update": grand_parent.link_role == "editor",
@@ -189,6 +196,11 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": {
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
             "media_auth": True,
             "move": False,
             "partial_update": document.link_role == "editor",
@@ -238,6 +250,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
     response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
+    links = document.get_ancestors().values("link_reach", "link_role")
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -254,6 +267,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": models.LinkReachChoices.get_select_options(links),
             "move": False,
             "media_auth": True,
             "partial_update": grand_parent.link_role == "editor",
@@ -412,6 +426,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         f"/api/v1.0/documents/{document.id!s}/",
     )
     assert response.status_code == 200
+    links = document.get_ancestors().values("link_reach", "link_role")
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -428,6 +443,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "favorite": True,
             "invite_owner": access.role == "owner",
             "link_configuration": access.role in ["administrator", "owner"],
+            "link_select_options": models.LinkReachChoices.get_select_options(links),
             "media_auth": True,
             "move": access.role in ["administrator", "owner"],
             "partial_update": access.role != "reader",
