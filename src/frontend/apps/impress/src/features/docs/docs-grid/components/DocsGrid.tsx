@@ -61,12 +61,8 @@ export const DocsGrid = ({
       $position="relative"
       $width="100%"
       $maxWidth="960px"
-      $maxHeight="calc(100vh - 52px - 1rem)"
+      $maxHeight="calc(100vh - 52px - 2rem)"
       $align="center"
-      $css={css`
-        overflow-x: hidden;
-        overflow-y: auto;
-      `}
     >
       <DocsGridLoader isLoading={isRefetching || loading} />
       <Card
@@ -75,8 +71,7 @@ export const DocsGrid = ({
         $height="100%"
         $width="100%"
         $css={css`
-          overflow-x: hidden;
-          overflow-y: auto;
+          ${!isDesktop ? 'border: none;' : ''}
         `}
         $padding={{
           top: 'base',
@@ -101,7 +96,7 @@ export const DocsGrid = ({
           </Box>
         )}
         {hasDocs && (
-          <Box $gap="6px">
+          <Box $gap="6px" $overflow="auto">
             <Box
               $direction="row"
               $padding={{ horizontal: 'xs' }}
@@ -122,27 +117,29 @@ export const DocsGrid = ({
               )}
             </Box>
 
-            {/* Body */}
             {data?.pages.map((currentPage) => {
               return currentPage.results.map((doc) => (
                 <DocsGridItem doc={doc} key={doc.id} />
               ));
             })}
-          </Box>
-        )}
 
-        {hasNextPage && !loading && (
-          <InView
-            data-testid="infinite-scroll-trigger"
-            as="div"
-            onChange={loadMore}
-          >
-            {!isFetching && hasNextPage && (
-              <Button onClick={() => void fetchNextPage()} color="primary-text">
-                {t('More docs')}
-              </Button>
+            {hasNextPage && !loading && (
+              <InView
+                data-testid="infinite-scroll-trigger"
+                as="div"
+                onChange={loadMore}
+              >
+                {!isFetching && hasNextPage && (
+                  <Button
+                    onClick={() => void fetchNextPage()}
+                    color="primary-text"
+                  >
+                    {t('More docs')}
+                  </Button>
+                )}
+              </InView>
             )}
-          </InView>
+          </Box>
         )}
       </Card>
     </Box>

@@ -101,39 +101,35 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   }, [doc]);
 
   return (
-    <>
-      <Tooltip content={t('Rename')} placement="top">
-        <Box
-          as="span"
-          role="textbox"
-          contentEditable
-          defaultValue={titleDisplay || undefined}
-          onKeyDownCapture={handleKeyDown}
-          suppressContentEditableWarning={true}
-          aria-label="doc title input"
-          onBlurCapture={(event) =>
-            handleTitleSubmit(event.target.textContent || '')
+    <Tooltip content={t('Rename')} placement="top">
+      <Box
+        as="span"
+        role="textbox"
+        contentEditable
+        defaultValue={titleDisplay || undefined}
+        onKeyDownCapture={handleKeyDown}
+        suppressContentEditableWarning={true}
+        aria-label="doc title input"
+        onBlurCapture={(event) =>
+          handleTitleSubmit(event.target.textContent || '')
+        }
+        $color={colorsTokens()['greyscale-1000']}
+        $css={css`
+          &[contenteditable='true']:empty:not(:focus):before {
+            content: '${untitledDocument}';
+            color: grey;
+            pointer-events: none;
+            font-style: italic;
           }
-          $color={colorsTokens()['greyscale-1000']}
-          $margin={{ left: '-2px', right: '10px' }}
-          $css={css`
-            &[contenteditable='true']:empty:not(:focus):before {
-              content: '${untitledDocument}';
-              color: grey;
-              pointer-events: none;
-              font-style: italic;
-            }
-            font-size: ${isDesktop
-              ? css`var(--c--theme--font--sizes--h2)`
-              : css`var(--c--theme--font--sizes--sm)`};
-            font-weight: 700;
-
-            outline: none;
-          `}
-        >
-          {titleDisplay}
-        </Box>
-      </Tooltip>
-    </>
+          font-size: ${isDesktop
+            ? css`var(--c--theme--font--sizes--h2)`
+            : css`var(--c--theme--font--sizes--sm)`};
+          font-weight: 700;
+          outline: none;
+        `}
+      >
+        {titleDisplay}
+      </Box>
+    </Tooltip>
   );
 };
