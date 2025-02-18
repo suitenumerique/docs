@@ -5,13 +5,19 @@ import {
   getDefaultReactSlashMenuItems,
   getPageBreakReactSlashMenuItems,
   useBlockNoteEditor,
+  useDictionary,
 } from '@blocknote/react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { DocsBlockNoteEditor } from '../types';
+import { DocsBlockSchema } from '../types';
+
+import { getQuoteReactSlashMenuItems } from './custom-blocks';
 
 export const BlockNoteSuggestionMenu = () => {
-  const editor = useBlockNoteEditor() as DocsBlockNoteEditor;
+  const editor = useBlockNoteEditor<DocsBlockSchema>();
+  const { t } = useTranslation();
+  const basicBlocksName = useDictionary().slash_menu.page_break.group;
 
   const getSlashMenuItems = useMemo(() => {
     return async (query: string) =>
@@ -20,11 +26,12 @@ export const BlockNoteSuggestionMenu = () => {
           combineByGroup(
             getDefaultReactSlashMenuItems(editor),
             getPageBreakReactSlashMenuItems(editor),
+            getQuoteReactSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
         ),
       );
-  }, [editor]);
+  }, [basicBlocksName, editor, t]);
 
   return (
     <SuggestionMenuController
