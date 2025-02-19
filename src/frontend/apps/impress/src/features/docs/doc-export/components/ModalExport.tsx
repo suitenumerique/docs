@@ -1,11 +1,5 @@
-import {
-  DOCXExporter,
-  docxDefaultSchemaMappings,
-} from '@blocknote/xl-docx-exporter';
-import {
-  PDFExporter,
-  pdfDefaultSchemaMappings,
-} from '@blocknote/xl-pdf-exporter';
+import { DOCXExporter } from '@blocknote/xl-docx-exporter';
+import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
   Loader,
@@ -15,7 +9,7 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import { Text as PDFText, pdf } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -25,9 +19,9 @@ import { useEditorStore } from '@/features/docs/doc-editor';
 import { Doc, useTrans } from '@/features/docs/doc-management';
 
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
+import { docxDocsSchemaMappings } from '../mappingDocx';
+import { pdfDocsSchemaMappings } from '../mappingPDF';
 import { downloadFile, exportResolveFileUrl } from '../utils';
-
-import { Table } from './blocks/Table';
 
 enum DocDownloadFormat {
   PDF = 'pdf',
@@ -96,91 +90,25 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     if (format === DocDownloadFormat.PDF) {
       const defaultExporter = new PDFExporter(
         editor.schema,
-        pdfDefaultSchemaMappings,
+        pdfDocsSchemaMappings,
       );
 
-      const exporter = new PDFExporter(
-        editor.schema,
-        {
-          ...pdfDefaultSchemaMappings,
-          blockMapping: {
-            ...pdfDefaultSchemaMappings.blockMapping,
-            heading: (block, exporter) => {
-              const PIXELS_PER_POINT = 0.75;
-              const MERGE_RATIO = 7.5;
-              const FONT_SIZE = 16;
-              const fontSizeEM =
-                block.props.level === 1
-                  ? 2
-                  : block.props.level === 2
-                    ? 1.5
-                    : 1.17;
-              return (
-                <PDFText
-                  key={block.id}
-                  style={{
-                    fontSize: fontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
-                    fontWeight: 700,
-                    marginTop: `${fontSizeEM * MERGE_RATIO}px`,
-                    marginBottom: `${fontSizeEM * MERGE_RATIO}px`,
-                  }}
-                >
-                  {exporter.transformInlineContent(block.content)}
-                </PDFText>
-              );
-            },
-            paragraph: (block, exporter) => {
-              /**
-               * Breakline in the editor are not rendered in the PDF
-               * By adding a space if the block is empty we ensure that the block is rendered
-               */
-              if (Array.isArray(block.content)) {
-                block.content.forEach((content) => {
-                  if (content.type === 'text' && !content.text) {
-                    content.text = ' ';
-                  }
-                });
-
-                if (!block.content.length) {
-                  block.content.push({
-                    styles: {},
-                    text: ' ',
-                    type: 'text',
-                  });
-                }
-              }
-              return (
-                <PDFText key={block.id}>
-                  {exporter.transformInlineContent(block.content)}
-                </PDFText>
-              );
-            },
-            table: (block, transformer) => {
-              return <Table data={block.content} transformer={transformer} />;
-            },
-          },
-        },
-        {
-          resolveFileUrl: async (url) =>
-            exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
-        },
-      );
+      const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
+        resolveFileUrl: async (url) =>
+          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+      });
       const pdfDocument = await exporter.toReactPDFDocument(exportDocument);
       blobExport = await pdf(pdfDocument).toBlob();
     } else {
       const defaultExporter = new DOCXExporter(
         editor.schema,
-        docxDefaultSchemaMappings,
+        docxDocsSchemaMappings,
       );
 
-      const exporter = new DOCXExporter(
-        editor.schema,
-        docxDefaultSchemaMappings,
-        {
-          resolveFileUrl: async (url) =>
-            exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
-        },
-      );
+      const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
+        resolveFileUrl: async (url) =>
+          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+      });
 
       blobExport = await exporter.toBlob(exportDocument);
     }

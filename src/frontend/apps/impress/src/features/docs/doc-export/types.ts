@@ -1,3 +1,18 @@
+import { Exporter } from '@blocknote/core';
+import { Link, Text, TextProps } from '@react-pdf/renderer';
+import {
+  IRunPropertiesOptions,
+  Paragraph,
+  ParagraphChild,
+  Table,
+  TextRun,
+} from 'docx';
+
+import {
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+} from '../doc-editor';
 import { Access } from '../doc-management';
 
 export interface Template {
@@ -16,3 +31,23 @@ export interface Template {
   css: string;
   code: string;
 }
+
+export type DocsExporterPDF = Exporter<
+  NoInfer<DocsBlockSchema>,
+  NoInfer<DocsInlineContentSchema>,
+  NoInfer<DocsStyleSchema>,
+  React.ReactElement<Text>,
+  React.ReactElement<Link> | React.ReactElement<Text>,
+  TextProps['style'],
+  React.ReactElement<Text>
+>;
+
+export type DocsExporterDocx = Exporter<
+  NoInfer<DocsBlockSchema>,
+  NoInfer<DocsInlineContentSchema>,
+  NoInfer<DocsStyleSchema>,
+  Promise<Paragraph[] | Paragraph | Table> | Paragraph[] | Paragraph | Table,
+  ParagraphChild,
+  IRunPropertiesOptions,
+  TextRun
+>;
