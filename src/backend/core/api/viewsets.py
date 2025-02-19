@@ -830,8 +830,7 @@ class DocumentViewSet(
                 "ancestors_links_definitions": ancestors_links_definitions,
             },
         )
-
-        return drf.response.Response(serializer.data)
+        return drf.response.Response(utils.flat_to_nested(serializer.data))
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
