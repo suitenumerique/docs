@@ -1,3 +1,5 @@
+name: docs
+
 services:
   postgresql:
     image: postgres:16
