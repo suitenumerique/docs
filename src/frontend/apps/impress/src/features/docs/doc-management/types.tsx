@@ -45,6 +45,7 @@ export interface Doc {
   nb_accesses: number;
   created_at: string;
   updated_at: string;
+  numchild: number;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;

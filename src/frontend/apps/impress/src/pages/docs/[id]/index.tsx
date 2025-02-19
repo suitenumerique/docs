@@ -14,6 +14,7 @@ import {
   useDoc,
   useDocStore,
 } from '@/features/docs/doc-management/';
+import { useDocRootTreeStore } from '@/features/docs/doc-tree/stores/useDocRootTree';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
@@ -60,6 +61,7 @@ const DocPage = ({ id }: DocProps) => {
 
   const [doc, setDoc] = useState<Doc>();
   const { setCurrentDoc } = useDocStore();
+  const { setRootId, rootId } = useDocRootTreeStore();
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
   const { replace } = useRouter();
@@ -74,13 +76,23 @@ const DocPage = ({ id }: DocProps) => {
   }, [doc?.title]);
 
   useEffect(() => {
+    return () => {
+      console.log('exit');
+      setRootId(undefined);
+    };
+  }, [setRootId]);
+
+  useEffect(() => {
     if (!docQuery || isFetching) {
       return;
     }
 
     setDoc(docQuery);
     setCurrentDoc(docQuery);
-  }, [docQuery, setCurrentDoc, isFetching]);
+    if (!rootId) {
+      setRootId(docQuery.id);
+    }
+  }, [docQuery, setCurrentDoc, setRootId, rootId, isFetching]);
 
   /**
    * We add a broadcast task to reset the query cache

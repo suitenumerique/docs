@@ -22,6 +22,7 @@ export type DropdownMenuProps = {
   arrowCss?: BoxProps['$css'];
   disabled?: boolean;
   topMessage?: string;
+  afterOpenChange?: (isOpen: boolean) => void;
 };
 
 export const DropdownMenu = ({
@@ -32,6 +33,7 @@ export const DropdownMenu = ({
   arrowCss,
   label,
   topMessage,
+  afterOpenChange,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const theme = useCunninghamTheme();
   const spacings = theme.spacingsTokens();
@@ -40,6 +42,7 @@ export const DropdownMenu = ({
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
+    afterOpenChange?.(isOpen);
   };
 
   if (disabled) {

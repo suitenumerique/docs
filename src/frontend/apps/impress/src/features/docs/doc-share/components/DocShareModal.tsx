@@ -57,6 +57,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
   const canShare = doc.abilities.accesses_manage;
   const canViewAccesses = doc.abilities.accesses_view;
   const showMemberSection = inputValue === '' && selectedUsers.length === 0;
+
   const showFooter = selectedUsers.length === 0 && !inputValue;
 
   const onSelect = (user: User) => {

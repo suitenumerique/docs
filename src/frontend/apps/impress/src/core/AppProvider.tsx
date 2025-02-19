@@ -41,7 +41,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <CunninghamProvider theme={theme}>
         <ConfigProvider>
-          <Auth>{children}</Auth>
+          <Auth>
+            {children}
+            <div id="modals" />
+          </Auth>
         </ConfigProvider>
       </CunninghamProvider>
     </QueryClientProvider>

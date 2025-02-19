@@ -1,0 +1,40 @@
+.loader {
+  border-radius: 50%;
+  background:
+    radial-gradient(farthest-side, #cecece 94%, #0000) top/3.8px 3.8px no-repeat,
+    conic-gradient(#0000 30%, #cecece);
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    #0000 calc(100% - 3.8px),
+    #000 0
+  );
+  animation: spinner-c7wet2 1s infinite linear;
+  &.sm {
+    width: 16px;
+    height: 16px;
+  }
+
+  &.md {
+    width: 24px;
+    height: 24px;
+  }
+
+  &.lg {
+    width: 32px;
+    height: 32px;
+  }
+
+  &.xl {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.spinner {
+}
+
+@keyframes spinner-c7wet2 {
+  100% {
+    transform: rotate(1turn);
+  }
+}

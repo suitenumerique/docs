@@ -58,13 +58,17 @@ export const DropButton = ({
     onOpenChange?.(isOpen);
   };
 
+  const props = {
+    onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      e.preventDefault();
+      onOpenChangeHandler(!isLocalOpen);
+    },
+  };
+
   return (
     <>
-      <StyledButton
-        ref={triggerRef}
-        onPress={() => onOpenChangeHandler(true)}
-        aria-label={label}
-      >
+      <StyledButton {...props} ref={triggerRef} aria-label={label}>
         {button}
       </StyledButton>
 

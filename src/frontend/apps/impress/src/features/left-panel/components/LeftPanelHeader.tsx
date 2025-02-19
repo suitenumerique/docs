@@ -4,22 +4,37 @@ import { useRouter } from 'next/navigation';
 import { PropsWithChildren } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
+import { useTreeStore } from '@/components/common/tree/treeStore';
 import { useAuth } from '@/features/auth';
-import { useCreateDoc } from '@/features/docs/doc-management';
+import { useCreateDoc, useDocStore } from '@/features/docs/doc-management';
 import { DocSearchModal } from '@/features/docs/doc-search';
-import { useCmdK } from '@/hook/useCmdK';
+import { useCreateChildrenDoc } from '@/features/docs/doc-tree/api/useCreateChildren';
 
 import { useLeftPanelStore } from '../stores';
 
-export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
+type Props = PropsWithChildren<{}>;
+
+export const LeftPanelHeader = ({ children }: Props) => {
   const router = useRouter();
+  const { currentDoc } = useDocStore();
+  const treeStore = useTreeStore();
+
   const searchModal = useModal();
   const { authenticated } = useAuth();
-  useCmdK(searchModal.open);
   const { togglePanel } = useLeftPanelStore();
 
   const { mutate: createDoc } = useCreateDoc({
     onSuccess: (doc) => {
+      router.push(`/docs/${doc.id}`);
+      treeStore.setSelectedNode(doc);
+      togglePanel();
+    },
+  });
+
+  const { mutate: createChildrenDoc } = useCreateChildrenDoc({
+    onSuccess: (doc) => {
+      treeStore.addRootNode(doc);
+      treeStore.setSelectedNode(doc);
       router.push(`/docs/${doc.id}`);
       togglePanel();
     },
@@ -31,7 +46,14 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   };
 
   const createNewDoc = () => {
-    createDoc();
+    if (currentDoc) {
+      createChildrenDoc({
+        title: t('Untitled page'),
+        parentId: currentDoc.id,
+      });
+    } else {
+      createDoc();
+    }
   };
 
   return (
