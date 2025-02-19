@@ -17,8 +17,12 @@ export type HeadingBlock = {
   };
 };
 
+export type DocsBlockSchema = typeof blockNoteSchema.blockSchema;
+export type DocsInlineContentSchema =
+  typeof blockNoteSchema.inlineContentSchema;
+export type DocsStyleSchema = typeof blockNoteSchema.styleSchema;
 export type DocsBlockNoteEditor = BlockNoteEditor<
-  typeof blockNoteSchema.blockSchema,
-  typeof blockNoteSchema.inlineContentSchema,
-  typeof blockNoteSchema.styleSchema
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema
 >;
