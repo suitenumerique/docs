@@ -1,2 +1,2 @@
 export * from './Crisp';
-export * from './Posthog';
+export * from './PosthogAnalytic';
