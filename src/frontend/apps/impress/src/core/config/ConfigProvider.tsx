@@ -3,8 +3,9 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useLanguageSynchronizer } from '@/features/language/hooks/useLanguageSynchronizer';
-import { CrispProvider, PostHogProvider } from '@/services';
+import { useLanguageSynchronizer } from '@/features/language/';
+import { useAnalytics } from '@/libs';
+import { CrispProvider, PostHogAnalytic } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -13,6 +14,7 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { data: conf } = useConfig();
   const { setSentry } = useSentryStore();
   const { setTheme } = useCunninghamTheme();
+  const { AnalyticsProvider } = useAnalytics();
   const { synchronizeLanguage } = useLanguageSynchronizer();
 
   useEffect(() => {
@@ -35,6 +37,14 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     void synchronizeLanguage();
   }, [synchronizeLanguage]);
 
+  useEffect(() => {
+    if (!conf?.POSTHOG_KEY) {
+      return;
+    }
+
+    new PostHogAnalytic(conf.POSTHOG_KEY);
+  }, [conf?.POSTHOG_KEY]);
+
   if (!conf) {
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
@@ -44,10 +54,10 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }
 
   return (
-    <PostHogProvider conf={conf.POSTHOG_KEY}>
+    <AnalyticsProvider>
       <CrispProvider websiteId={conf?.CRISP_WEBSITE_ID}>
         {children}
       </CrispProvider>
-    </PostHogProvider>
+    </AnalyticsProvider>
   );
 };

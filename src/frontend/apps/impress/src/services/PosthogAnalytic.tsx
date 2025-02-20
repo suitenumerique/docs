@@ -1,7 +1,36 @@
 import { Router } from 'next/router';
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
-import { PropsWithChildren, useEffect } from 'react';
+import { JSX, PropsWithChildren, ReactNode, useEffect } from 'react';
+
+import { AbstractAnalytic } from '@/libs/';
+
+export class PostHogAnalytic extends AbstractAnalytic {
+  private conf?: PostHogConf = undefined;
+
+  public constructor(conf?: PostHogConf) {
+    super();
+
+    this.conf = conf;
+  }
+
+  public Provider(children?: ReactNode): JSX.Element {
+    return <PostHogProvider conf={this.conf}>{children}</PostHogProvider>;
+  }
+
+  public trackEvent(): void {}
+
+  public isFeatureFlagActivated(flagName: string): boolean {
+    if (
+      posthog.featureFlags.getFlags().includes(flagName) &&
+      posthog.isFeatureEnabled(flagName) === false
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+}
 
 export interface PostHogConf {
   id: string;
