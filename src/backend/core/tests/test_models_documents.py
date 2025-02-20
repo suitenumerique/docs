@@ -157,15 +157,22 @@ def test_models_documents_get_abilities_forbidden(
         "children_create": False,
         "children_list": False,
         "collaboration_auth": False,
+        "descendants": False,
         "destroy": False,
         "favorite": False,
         "invite_owner": False,
         "media_auth": False,
         "move": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "partial_update": False,
         "restore": False,
         "retrieve": False,
+        "tree": False,
         "update": False,
         "versions_destroy": False,
         "versions_list": False,
@@ -208,15 +215,22 @@ def test_models_documents_get_abilities_reader(
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": is_authenticated,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": False,
         "versions_destroy": False,
         "versions_list": False,
@@ -225,9 +239,14 @@ def test_models_documents_get_abilities_reader(
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
+
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @pytest.mark.parametrize(
@@ -256,15 +275,22 @@ def test_models_documents_get_abilities_editor(
         "children_create": is_authenticated,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": is_authenticated,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": False,
         "versions_list": False,
@@ -275,7 +301,11 @@ def test_models_documents_get_abilities_editor(
         assert document.get_abilities(user) == expected_abilities
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @override_settings(
@@ -294,15 +324,22 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": True,
         "favorite": True,
         "invite_owner": True,
         "link_configuration": True,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": True,
         "partial_update": True,
         "restore": True,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": True,
         "versions_list": True,
@@ -333,15 +370,22 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": True,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": True,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": True,
         "versions_list": True,
@@ -352,7 +396,11 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
 
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @override_settings(
@@ -371,15 +419,22 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": False,
         "versions_list": True,
@@ -390,7 +445,11 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
 
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @pytest.mark.parametrize("ai_access_setting", ["public", "authenticated", "restricted"])
@@ -416,15 +475,22 @@ def test_models_documents_get_abilities_reader_user(
         "children_create": access_from_link,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": access_from_link,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": access_from_link,
         "versions_destroy": False,
         "versions_list": True,
@@ -437,7 +503,11 @@ def test_models_documents_get_abilities_reader_user(
 
         document.soft_delete()
         document.refresh_from_db()
-        assert all(value is False for value in document.get_abilities(user).values())
+        assert all(
+            value is False
+            for key, value in document.get_abilities(user).items()
+            if key != "link_select_options"
+        )
 
 
 def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
@@ -459,15 +529,22 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": False,
         "versions_destroy": False,
         "versions_list": True,
@@ -765,3 +842,143 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
         new_nb_accesses = document.nb_accesses
     assert new_nb_accesses == 0
     assert cache.get(key) == 0  # Cache should now contain the new value
+
+
+@pytest.mark.parametrize(
+    "ancestors_links, select_options",
+    [
+        # One ancestor
+        (
+            [{"link_reach": "public", "link_role": "reader"}],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        ([{"link_reach": "public", "link_role": "editor"}], {"public": ["editor"]}),
+        (
+            [{"link_reach": "authenticated", "link_role": "reader"}],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [{"link_reach": "authenticated", "link_role": "editor"}],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        (
+            [{"link_reach": "restricted", "link_role": "reader"}],
+            {
+                "restricted": ["reader", "editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [{"link_reach": "restricted", "link_role": "editor"}],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        # Multiple ancestors with different roles
+        (
+            [
+                {"link_reach": "public", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "editor"},
+            ],
+            {"public": ["editor"]},
+        ),
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "authenticated", "link_role": "editor"},
+            ],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "reader"},
+                {"link_reach": "restricted", "link_role": "editor"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        # Multiple ancestors with different reaches
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "reader"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "reader"},
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "reader"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        # Multiple ancestors with mixed reaches and roles
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "editor"},
+                {"link_reach": "public", "link_role": "reader"},
+            ],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "editor"},
+            ],
+            {"public": ["editor"]},
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "editor"},
+                {"link_reach": "authenticated", "link_role": "reader"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "reader"},
+                {"link_reach": "authenticated", "link_role": "editor"},
+            ],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        # No ancestors (edge case)
+        (
+            [],
+            {
+                "public": ["reader", "editor"],
+                "authenticated": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
+        ),
+    ],
+)
+def test_models_documents_get_select_options(ancestors_links, select_options):
+    """Validate that the "get_select_options" method operates as expected."""
+    assert models.LinkReachChoices.get_select_options(ancestors_links) == select_options

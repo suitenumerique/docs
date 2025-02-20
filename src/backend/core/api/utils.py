@@ -11,6 +11,33 @@ import botocore
 from rest_framework.throttling import BaseThrottle
 
 
+def flat_to_nested(documents):
+    """
+    Convert a flat list of serialized documents into a nested tree making advantage
+    of the`depth` field and the fact that documents are ordered by path.
+    """
+    tree = []
+    parents = []  # Stack to track parent documents
+
+    for doc in documents:
+        doc["children"] = []
+
+        # Maintain the correct parent stack based on depth
+        while parents and parents[-1]["depth"] >= doc["depth"]:
+            parents.pop()
+
+        # Attach to the correct parent or add to root
+        if parents:
+            parents[-1]["children"].append(doc)
+        else:
+            tree.append(doc)
+
+        # Push current document to stack as potential parent
+        parents.append(doc)
+
+    return tree
+
+
 def filter_root_paths(paths, skip_sorting=False):
     """
     Filters root paths from a list of paths representing a tree structure.

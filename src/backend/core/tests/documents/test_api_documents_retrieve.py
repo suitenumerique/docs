@@ -34,16 +34,23 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "children_create": False,
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": {
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
             "media_auth": True,
             "move": False,
             "partial_update": document.link_role == "editor",
             "restore": False,
             "retrieve": True,
+            "tree": True,
             "update": document.link_role == "editor",
             "versions_destroy": False,
             "versions_list": False,
@@ -79,6 +86,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
     response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
+    links = document.get_ancestors().values("link_reach", "link_role")
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -90,16 +98,19 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "children_create": False,
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": models.LinkReachChoices.get_select_options(links),
             "media_auth": True,
             "move": False,
             "partial_update": grand_parent.link_role == "editor",
             "restore": False,
             "retrieve": True,
+            "tree": True,
             "update": grand_parent.link_role == "editor",
             "versions_destroy": False,
             "versions_list": False,
@@ -180,15 +191,22 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "children_create": document.link_role == "editor",
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": {
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
             "media_auth": True,
             "move": False,
             "partial_update": document.link_role == "editor",
             "restore": False,
             "retrieve": True,
+            "tree": True,
             "update": document.link_role == "editor",
             "versions_destroy": False,
             "versions_list": False,
@@ -232,6 +250,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
     response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
+    links = document.get_ancestors().values("link_reach", "link_role")
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -243,15 +262,18 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "children_create": grand_parent.link_role == "editor",
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": False,
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
+            "link_select_options": models.LinkReachChoices.get_select_options(links),
             "move": False,
             "media_auth": True,
             "partial_update": grand_parent.link_role == "editor",
             "restore": False,
             "retrieve": True,
+            "tree": True,
             "update": grand_parent.link_role == "editor",
             "versions_destroy": False,
             "versions_list": False,
@@ -404,6 +426,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         f"/api/v1.0/documents/{document.id!s}/",
     )
     assert response.status_code == 200
+    links = document.get_ancestors().values("link_reach", "link_role")
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -415,15 +438,18 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "children_create": access.role != "reader",
             "children_list": True,
             "collaboration_auth": True,
+            "descendants": True,
             "destroy": access.role == "owner",
             "favorite": True,
             "invite_owner": access.role == "owner",
             "link_configuration": access.role in ["administrator", "owner"],
+            "link_select_options": models.LinkReachChoices.get_select_options(links),
             "media_auth": True,
             "move": access.role in ["administrator", "owner"],
             "partial_update": access.role != "reader",
             "restore": access.role == "owner",
             "retrieve": True,
+            "tree": True,
             "update": access.role != "reader",
             "versions_destroy": access.role in ["administrator", "owner"],
             "versions_list": True,
@@ -719,7 +745,7 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
     }
 
 
-def test_api_documents_retrieve_user_roles(django_assert_num_queries):
+def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
     """
     Roles should be annotated on querysets taking into account all documents ancestors.
     """
@@ -744,7 +770,7 @@ def test_api_documents_retrieve_user_roles(django_assert_num_queries):
     )
     expected_roles = {access.role for access in accesses}
 
-    with django_assert_num_queries(10):
+    with django_assert_max_num_queries(11):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
