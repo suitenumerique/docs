@@ -34,6 +34,7 @@ dependencies = [
     "django-filter==24.3",
     "django-parler==2.3",
     "redis==5.2.1",
+    "django-pglock==1.7.1",
     "django-redis==5.4.0",
     "django-storages[s3]==1.14.4",
     "django-timezone-field>=5.1",
