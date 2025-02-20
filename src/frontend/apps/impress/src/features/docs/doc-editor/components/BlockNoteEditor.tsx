@@ -1,6 +1,7 @@
 import {
   BlockNoteSchema,
   Dictionary,
+  defaultBlockSpecs,
   locales,
   withPageBreak,
 } from '@blocknote/core';
@@ -26,8 +27,16 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolbar';
+import { QuoteBlock } from './custom-blocks';
 
-export const blockNoteSchema = withPageBreak(BlockNoteSchema.create());
+export const blockNoteSchema = withPageBreak(
+  BlockNoteSchema.create({
+    blockSpecs: {
+      ...defaultBlockSpecs,
+      quote: QuoteBlock,
+    },
+  }),
+);
 
 interface BlockNoteEditorProps {
   doc: Doc;
@@ -141,8 +150,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editable={!readOnly}
         theme="light"
       >
-        <BlockNoteToolbar />
         <BlockNoteSuggestionMenu />
+        <BlockNoteToolbar />
       </BlockNoteView>
     </Box>
   );

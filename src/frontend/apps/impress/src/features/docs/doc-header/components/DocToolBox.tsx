@@ -18,6 +18,7 @@ import {
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useEditorStore } from '@/features/docs/doc-editor/';
+import { ModalExport } from '@/features/docs/doc-export/';
 import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
 import { DocShareModal } from '@/features/docs/doc-share';
 import {
@@ -25,8 +26,6 @@ import {
   ModalSelectVersion,
 } from '@/features/docs/doc-versioning';
 import { useResponsiveStore } from '@/stores';
-
-import { ModalExport } from './ModalExport';
 
 interface DocToolBoxProps {
   doc: Doc;

@@ -36,7 +36,7 @@ export type Base64 = string;
 
 export interface Doc {
   id: string;
-  title: string;
+  title?: string;
   content: Base64;
   creator: string;
   is_favorite: boolean;

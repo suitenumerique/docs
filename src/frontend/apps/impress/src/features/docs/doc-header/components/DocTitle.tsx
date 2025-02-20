@@ -33,11 +33,13 @@ export const DocTitle = ({ doc }: DocTitleProps) => {
 };
 
 interface DocTitleTextProps {
-  title: string;
+  title?: string;
 }
 
 export const DocTitleText = ({ title }: DocTitleTextProps) => {
   const { isMobile } = useResponsiveStore();
+  const { untitledDocument } = useTrans();
+
   return (
     <Text
       as="h2"
@@ -45,7 +47,7 @@ export const DocTitleText = ({ title }: DocTitleTextProps) => {
       $size={isMobile ? 'h4' : 'h2'}
       $variation="1000"
     >
-      {title}
+      {title || untitledDocument}
     </Text>
   );
 };

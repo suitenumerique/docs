@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(frontend) Custom block quote with export #646
+
 ## Changed
 
 - 🛂(frontend) Restore version visibility #629
@@ -17,6 +21,7 @@ and this project adheres to
 ## Fixed
 
 - ♻️(frontend) improve table pdf rendering
+
 
 ## [2.2.0] - 2025-02-10
 
