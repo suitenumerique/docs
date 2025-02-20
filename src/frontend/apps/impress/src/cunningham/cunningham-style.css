@@ -605,3 +605,20 @@ input:-webkit-autofill:focus {
 .c__tooltip {
   padding: 4px 6px;
 }
+
+button:focus {
+  background-color: var(
+    --c--components--button--primary-text--background--color-hover
+  );
+  border-radius: var(--c--components--button--border-radius--focus);
+  box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400)
+}
+
+.new-doc-button {
+  color: white !important;
+}
+
+.new-doc-button:focus,
+.new-doc-button:focus-visible {
+  color: white !important;
+}

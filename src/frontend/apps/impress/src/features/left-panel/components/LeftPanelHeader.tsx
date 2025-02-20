@@ -66,7 +66,9 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               )}
             </Box>
             {authenticated && (
-              <Button onClick={createNewDoc}>{t('New doc')}</Button>
+              <Button onClick={createNewDoc} className="new-doc-button">
+                {t('New doc')}
+              </Button>
             )}
           </Box>
         </SeparatedSection>

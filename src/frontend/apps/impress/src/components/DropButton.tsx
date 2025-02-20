@@ -29,6 +29,9 @@ const StyledButton = styled(Button)`
   font-size: 0.938rem;
   padding: 0;
   text-wrap: nowrap;
+  &:focus-within {
+    outline: 2px solid #007bff;
+  }
 `;
 
 export interface DropButtonProps {
@@ -47,11 +50,14 @@ export const DropButton = ({
 }: PropsWithChildren<DropButtonProps>) => {
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
 
-  const triggerRef = useRef(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setIsLocalOpen(isOpen);
-  }, [isOpen]);
+    if (isLocalOpen && firstFocusableRef.current) {
+      firstFocusableRef.current.focus();
+    }
+  }, [isLocalOpen]);
 
   const onOpenChangeHandler = (isOpen: boolean) => {
     setIsLocalOpen(isOpen);

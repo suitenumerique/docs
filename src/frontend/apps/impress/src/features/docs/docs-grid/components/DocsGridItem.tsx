@@ -54,6 +54,9 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
           $css={css`
             flex: ${flexLeft};
             align-items: center;
+            &:focus {
+              outline: 2px solidrgb(33, 34, 82);
+            }
           `}
           href={`/docs/${doc.id}`}
         >
