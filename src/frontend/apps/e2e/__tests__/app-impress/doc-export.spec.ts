@@ -197,4 +197,49 @@ test.describe('Doc Export', () => {
 
     expect(pdfText).toContain('Hello World');
   });
+
+  test('it exports the doc with quotes', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'export-quotes', browserName, 1);
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
+    const editor = page.locator('.ProseMirror');
+    // Trigger slash menu to show menu
+    await editor.click();
+    await editor.fill('/');
+    await page.getByText('Add a quote block').click();
+
+    await expect(
+      editor.locator('.bn-block-content[data-content-type="quote"]'),
+    ).toBeVisible();
+
+    await editor.fill('Hello World');
+
+    await expect(editor.getByText('Hello World')).toHaveCSS(
+      'font-style',
+      'italic',
+    );
+
+    await page
+      .getByRole('button', {
+        name: 'download',
+      })
+      .click();
+
+    await page
+      .getByRole('button', {
+        name: 'Download',
+      })
+      .click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfData = await pdf(pdfBuffer);
+
+    expect(pdfData.text).toContain('Hello World'); // This is the pdf text
+  });
 });

@@ -11,6 +11,7 @@ and this project adheres to
 ## Added
 
 - 💄(frontend) add error pages #643
+- ✨(frontend) Custom block quote with export #646
 
 ## Changed
 
@@ -23,6 +24,7 @@ and this project adheres to
 
 - 🐛(backend) allow any type of extensions for media download #671
 - ♻️(frontend) improve table pdf rendering
+
 
 ## [2.2.0] - 2025-02-10
 
