@@ -100,7 +100,9 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await page.goto(urlDoc);
 
-    await expect(page.getByRole('textbox', { name: 'password' })).toBeVisible();
+    await expect(
+      page.getByText('Log in to access the document.'),
+    ).toBeVisible();
   });
 
   test('A doc is not accessible when authentified but not member.', async ({
@@ -133,7 +135,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await page.goto(urlDoc);
 
     await expect(
-      page.getByText('You do not have permission to perform this action.'),
+      page.getByText('You do not have permission to view this document.'),
     ).toBeVisible();
   });
 
@@ -379,7 +381,10 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.goto(urlDoc);
 
     await expect(page.locator('h2').getByText(docTitle)).toBeHidden();
-    await expect(page.getByRole('textbox', { name: 'password' })).toBeVisible();
+
+    await expect(
+      page.getByText('Log in to access the document.'),
+    ).toBeVisible();
   });
 
   test('It checks a authenticated doc in read only mode', async ({

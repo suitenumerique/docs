@@ -74,7 +74,7 @@ export default function HomeBanner() {
             <ProConnectButton />
           ) : (
             <Button
-              onClick={gotoLogin}
+              onClick={() => gotoLogin()}
               icon={
                 <Text $isMaterialIcon $color="white">
                   bolt
