@@ -12,6 +12,9 @@ export const currentDocRole = (abilities: Doc['abilities']): Role => {
         : Role.READER;
 };
 
+export const toBase64 = (str: Uint8Array) =>
+  Buffer.from(str).toString('base64');
+
 export const base64ToYDoc = (base64: string) => {
   const uint8Array = Buffer.from(base64, 'base64');
   const ydoc = new Y.Doc();

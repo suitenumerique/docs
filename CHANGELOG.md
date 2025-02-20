@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨Collaboration long polling fallback #517
+
 ## Changed
 
 - 🛂(frontend) Restore version visibility #629
@@ -17,6 +21,7 @@ and this project adheres to
 ## Fixed
 
 - ♻️(frontend) improve table pdf rendering
+
 
 ## [2.2.0] - 2025-02-10
 

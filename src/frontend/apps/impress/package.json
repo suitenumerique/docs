@@ -62,6 +62,7 @@
     "@types/node": "*",
     "@types/react": "18.3.12",
     "@types/react-dom": "*",
+    "@types/ws": "8.5.13",
     "cross-env": "7.0.3",
     "dotenv": "16.4.7",
     "eslint-config-impress": "*",
