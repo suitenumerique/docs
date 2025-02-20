@@ -52,6 +52,7 @@ export const LeftPanelTargetFilters = () => {
 
   return (
     <Box
+      role="tablist"
       $justify="center"
       $padding={{ horizontal: 'sm' }}
       $gap={spacing['2xs']}
@@ -61,7 +62,7 @@ export const LeftPanelTargetFilters = () => {
 
         return (
           <BoxButton
-            aria-label={query.label}
+            role="tab"
             key={query.label}
             onClick={() => onSelectQuery(query.targetQuery)}
             $direction="row"
@@ -85,6 +86,7 @@ export const LeftPanelTargetFilters = () => {
             <Icon
               $variation={isActive ? '1000' : '700'}
               iconName={query.icon}
+              aria-hidden="true"
             />
             <Text $variation={isActive ? '1000' : '700'} $size="sm">
               {query.label}

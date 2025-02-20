@@ -51,7 +51,7 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
     return {
       groupName: docs.length > 0 ? t('Select a document') : '',
       elements: search ? docs : [],
-      emptyString: t('No document found'),
+      //emptyString: t('No document found'),
       endActions: hasNextPage
         ? [{ content: <InView onChange={() => void fetchNextPage()} /> }]
         : [],
@@ -95,6 +95,20 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
                 group={docsData}
                 renderElement={(doc) => <DocSearchItem doc={doc} />}
               />
+            )}
+            {/* Message accessible pour les résultats vides */}
+            {search && docsData.elements.length === 0 && (
+              <p
+                role="alert"
+                aria-live="polite"
+                style={{
+                  textAlign: 'center',
+                  marginTop: '1rem',
+                  color: '#666',
+                }}
+              >
+                {t('No document found')}
+              </p>
             )}
           </Box>
         </QuickSearch>

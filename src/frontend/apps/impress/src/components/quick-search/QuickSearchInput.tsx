@@ -47,7 +47,11 @@ export const QuickSearchInput = ({
         $gap={spacing['2xs']}
         $padding={{ all: 'base' }}
       >
-        {!loading && <Icon iconName="search" $variation="600" />}
+        {!loading && (
+          <span aria-hidden="true">
+            <Icon iconName="search" $variation="600" />
+          </span>
+        )}
         {loading && (
           <div>
             <Loader size="small" />

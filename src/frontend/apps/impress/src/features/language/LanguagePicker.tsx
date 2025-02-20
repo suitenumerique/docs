@@ -54,6 +54,7 @@ export const LanguagePicker = () => {
             $theme="primary"
             $weight="bold"
             $variation="800"
+            aria-hidden="true"
           >
             translate
           </Text>

@@ -203,6 +203,7 @@ input:-webkit-autofill:focus {
 
 .c__select__wrapper .c__select__inner__actions__open:focus {
   outline: none;
+  
 }
 
 .c__select__wrapper .labelled-box__label.c__offscreen {
@@ -604,4 +605,32 @@ input:-webkit-autofill:focus {
 */
 .c__tooltip {
   padding: 4px 6px;
+}
+
+/**
+ * lecture ou non des icons
+ */
+ .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+[data-icon]:before {
+  font-family: 'Material Icons';
+  content: attr(data-icon);
+}
+
+button:focus {
+  background-color: var(
+    --c--components--button--primary-text--background--color-hover
+  );
+  border-radius: var(--c--components--button--border-radius--focus);
+  box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400)
 }
