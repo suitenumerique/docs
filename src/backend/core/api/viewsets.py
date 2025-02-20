@@ -2,7 +2,6 @@
 # pylint: disable=too-many-lines
 
 import logging
-import re
 import uuid
 from urllib.parse import urlparse
 
@@ -17,6 +16,8 @@ from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404
+from django.utils.text import capfirst
+from django.utils.translation import gettext_lazy as _
 
 import rest_framework as drf
 from botocore.exceptions import ClientError
@@ -28,22 +29,13 @@ from rest_framework.permissions import AllowAny
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.utils import extract_attachments
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter
 
 logger = logging.getLogger(__name__)
 
-ATTACHMENTS_FOLDER = "attachments"
-UUID_REGEX = (
-    r"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
-)
-FILE_EXT_REGEX = r"\.[a-zA-Z]{3,4}"
-MEDIA_STORAGE_URL_PATTERN = re.compile(
-    f"{settings.MEDIA_URL:s}(?P<pk>{UUID_REGEX:s})/"
-    f"(?P<key>{ATTACHMENTS_FOLDER:s}/{UUID_REGEX:s}{FILE_EXT_REGEX:s})$"
-)
-COLLABORATION_WS_URL_PATTERN = re.compile(rf"(?:^|&)room=(?P<pk>{UUID_REGEX})(?:&|$)")
 
 # pylint: disable=too-many-ancestors
 
@@ -765,6 +757,81 @@ class DocumentViewSet(
         queryset = self.annotate_user_roles(queryset)
         return self.get_response_for_queryset(queryset)
 
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated, permissions.AccessPermission],
+        url_path="duplicate",
+    )
+    @transaction.atomic
+    def duplicate(self, request, *args, **kwargs):
+        """
+        Duplicate a document and store the links to attached files in the duplicated
+        document to allow cross-access.
+
+        Optionally duplicates accesses if `with_accesses` is set to true
+        in the payload.
+        """
+        serializer = serializers.DocumentDuplicationSerializer(
+            data=request.query_params
+        )
+        serializer.is_valid(raise_exception=True)
+        with_accesses = serializer.validated_data["with_accesses"]
+
+        # Get document while checking permissions
+        document = self.get_object()
+        base64_yjs_content = document.content
+
+        # Duplicate the document instance
+        link_kwargs = (
+            {"link_reach": document.link_reach, "link_role": document.link_role}
+            if with_accesses
+            else {}
+        )
+        extracted_attachments = set(extract_attachments(document.content))
+        attachments = list(extracted_attachments & set(document.attachments))
+        duplicated_document = document.add_sibling(
+            "right",
+            title=capfirst(_("copy of {title}").format(title=document.title)),
+            content=base64_yjs_content,
+            attachments=attachments,
+            duplicated_from=document,
+            creator=request.user,
+            **link_kwargs,
+        )
+
+        # Always add the logged-in user as OWNER
+        accesses_to_create = [
+            models.DocumentAccess(
+                document=duplicated_document,
+                user=request.user,
+                role=models.RoleChoices.OWNER,
+            )
+        ]
+
+        # If accesses should be duplicated, add other users' accesses as per original document
+        if with_accesses:
+            original_accesses = models.DocumentAccess.objects.filter(
+                document=document
+            ).exclude(user=request.user)
+
+            accesses_to_create.extend(
+                models.DocumentAccess(
+                    document=duplicated_document,
+                    user_id=access.user_id,
+                    team=access.team,
+                    role=access.role,
+                )
+                for access in original_accesses
+            )
+
+        # Bulk create all the duplicated accesses
+        models.DocumentAccess.objects.bulk_create(accesses_to_create)
+
+        return drf_response.Response(
+            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        )
+
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
         """
@@ -915,7 +982,7 @@ class DocumentViewSet(
         # Generate a generic yet unique filename to store the image in object storage
         file_id = uuid.uuid4()
         extension = serializer.validated_data["expected_extension"]
-        key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}.{extension:s}"
+        key = f"{document.key_base}/{enums.ATTACHMENTS_FOLDER:s}/{file_id!s}.{extension:s}"
 
         # Prepare metadata for storage
         extra_args = {
@@ -930,15 +997,19 @@ class DocumentViewSet(
             file, default_storage.bucket_name, key, ExtraArgs=extra_args
         )
 
+        # Make the attachment readable by document readers
+        document.attachments.append(key)
+        document.save()
+
         return drf.response.Response(
             {"file": f"{settings.MEDIA_URL:s}{key:s}"},
             status=drf.status.HTTP_201_CREATED,
         )
 
-    def _authorize_subrequest(self, request, pattern):
+    def _auth_get_original_url(self, request):
         """
-        Shared method to authorize access based on the original URL of an Nginx subrequest
-        and user permissions. Returns a dictionary of URL parameters if authorized.
+        Extracts and parses the original URL from the "HTTP_X_ORIGINAL_URL" header.
+        Raises PermissionDenied if the header is missing.
 
         The original url is passed by nginx in the "HTTP_X_ORIGINAL_URL" header.
         See corresponding ingress configuration in Helm chart and read about the
@@ -949,14 +1020,6 @@ class DocumentViewSet(
         to let this request go through (by returning a 200 code) or if we block it (by returning
         a 403 error). Note that we return 403 errors without any further details for security
         reasons.
-
-        Parameters:
-        - pattern: The regex pattern to extract identifiers from the URL.
-
-        Returns:
-        - A dictionary of URL parameters if the request is authorized.
-        Raises:
-        - PermissionDenied if authorization fails.
         """
         # Extract the original URL from the request header
         original_url = request.META.get("HTTP_X_ORIGINAL_URL")
@@ -964,51 +1027,31 @@ class DocumentViewSet(
             logger.debug("Missing HTTP_X_ORIGINAL_URL header in subrequest")
             raise drf.exceptions.PermissionDenied()
 
-        parsed_url = urlparse(original_url)
-        match = pattern.search(parsed_url.path)
+        logger.debug("Original url: '%s'", original_url)
+        return urlparse(original_url)
 
-        # If the path does not match the pattern, try to extract the parameters from the query
-        if not match:
-            match = pattern.search(parsed_url.query)
-
-        if not match:
-            logger.debug(
-                "Subrequest URL '%s' did not match pattern '%s'",
-                parsed_url.path,
-                pattern,
-            )
-            raise drf.exceptions.PermissionDenied()
-
+    def _auth_get_url_params(self, pattern, fragment):
+        """
+        Extracts URL parameters from the given fragment using the specified regex pattern.
+        Raises PermissionDenied if parameters cannot be extracted.
+        """
+        match = pattern.search(fragment)
         try:
-            url_params = match.groupdict()
+            return match.groupdict()
         except (ValueError, AttributeError) as exc:
             logger.debug("Failed to extract parameters from subrequest URL: %s", exc)
             raise drf.exceptions.PermissionDenied() from exc
 
-        pk = url_params.get("pk")
-        if not pk:
-            logger.debug("Document ID (pk) not found in URL parameters: %s", url_params)
-            raise drf.exceptions.PermissionDenied()
-
-        # Fetch the document and check if the user has access
+    def _auth_get_document(self, pk):
+        """
+        Retrieves the document corresponding to the given primary key (pk).
+        Raises PermissionDenied if the document is not found.
+        """
         try:
-            document = models.Document.objects.get(pk=pk)
+            return models.Document.objects.get(pk=pk)
         except models.Document.DoesNotExist as exc:
             logger.debug("Document with ID '%s' does not exist", pk)
             raise drf.exceptions.PermissionDenied() from exc
-
-        user_abilities = document.get_abilities(request.user)
-
-        if not user_abilities.get(self.action, False):
-            logger.debug(
-                "User '%s' lacks permission for document '%s'", request.user, pk
-            )
-            raise drf.exceptions.PermissionDenied()
-
-        logger.debug(
-            "Subrequest authorization successful. Extracted parameters: %s", url_params
-        )
-        return url_params, user_abilities, request.user.id
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="media-auth")
     def media_auth(self, request, *args, **kwargs):
@@ -1021,13 +1064,24 @@ class DocumentViewSet(
         annotation. The request will then be proxied to the object storage backend who will
         respond with the file after checking the signature included in headers.
         """
-        url_params, _, _ = self._authorize_subrequest(
-            request, MEDIA_STORAGE_URL_PATTERN
+        parsed_url = self._auth_get_original_url(request)
+        url_params = self._auth_get_url_params(
+            enums.MEDIA_STORAGE_URL_PATTERN, parsed_url.path
         )
-        pk, key = url_params.values()
+
+        user = request.user
+        key = f"{url_params['pk']:s}/{url_params['attachment']:s}"
+
+        if (
+            not self.queryset.readable(user)
+            .filter(attachments__contains=[key])
+            .exists()
+        ):
+            logger.debug("User '%s' lacks permission for image", user)
+            raise drf.exceptions.PermissionDenied()
 
         # Generate S3 authorization headers using the extracted URL parameters
-        request = utils.generate_s3_authorization_headers(f"{pk:s}/{key:s}")
+        request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
 
@@ -1037,17 +1091,33 @@ class DocumentViewSet(
         This view is used by an Nginx subrequest to control access to a document's
         collaboration server.
         """
-        _, user_abilities, user_id = self._authorize_subrequest(
-            request, COLLABORATION_WS_URL_PATTERN
+        parsed_url = self._auth_get_original_url(request)
+        url_params = self._auth_get_url_params(
+            enums.COLLABORATION_WS_URL_PATTERN, parsed_url.query
         )
-        can_edit = user_abilities["partial_update"]
+        document = self._auth_get_document(url_params["pk"])
+
+        abilities = document.get_abilities(request.user)
+        if not abilities.get(self.action, False):
+            logger.debug(
+                "User '%s' lacks permission for document '%s'",
+                request.user,
+                document.pk,
+            )
+            raise drf.exceptions.PermissionDenied()
+
+        if not settings.COLLABORATION_SERVER_SECRET:
+            logger.debug("Collaboration server secret is not defined")
+            raise drf.exceptions.PermissionDenied()
 
         # Add the collaboration server secret token to the headers
         headers = {
             "Authorization": settings.COLLABORATION_SERVER_SECRET,
-            "X-Can-Edit": str(can_edit),
-            "X-User-Id": str(user_id),
+            "X-Can-Edit": str(abilities["partial_update"]),
         }
+
+        if request.user.is_authenticated:
+            headers["X-User-Id"] = str(request.user.id)
 
         return drf.response.Response("authorized", headers=headers, status=200)
 
