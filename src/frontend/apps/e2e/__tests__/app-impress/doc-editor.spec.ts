@@ -37,10 +37,10 @@ test.describe('Doc Editor', () => {
 
     // Change language to French
     await header.click();
-    await header.getByRole('combobox').getByText('English').click();
-    await header.getByRole('option', { name: 'Français' }).click();
+    await header.getByRole('button', { name: /Language/ }).click();
+    await page.getByRole('menuitem', { name: 'Français' }).click();
     await expect(
-      header.getByRole('combobox').getByText('Français'),
+      header.getByRole('button').getByText('Français'),
     ).toBeVisible();
 
     // Trigger slash menu to show french menu
@@ -130,7 +130,7 @@ test.describe('Doc Editor', () => {
 
     await selectVisibility.click();
     await page
-      .getByRole('button', {
+      .getByRole('menuitem', {
         name: 'Connected',
       })
       .click();

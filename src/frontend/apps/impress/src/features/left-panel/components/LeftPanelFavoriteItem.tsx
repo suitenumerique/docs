@@ -39,7 +39,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
       `}
       key={doc.id}
     >
-      <StyledLink href={`/docs/${doc.id}`}>
+      <StyledLink href={`/docs/${doc.id}`} $css="overflow: auto;">
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
       <div className="pinned-actions">

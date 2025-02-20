@@ -19,8 +19,8 @@ export function MainLayout({
 }: PropsWithChildren<MainLayoutProps>) {
   const { isDesktop } = useResponsiveStore();
   const { colorsTokens } = useCunninghamTheme();
-
   const colors = colorsTokens();
+  const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
   return (
     <div>
@@ -39,10 +39,10 @@ export function MainLayout({
           $width="100%"
           $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
           $padding={{
-            all: isDesktop ? 'base' : '2xs',
+            all: isDesktop ? 'base' : '0',
           }}
           $background={
-            backgroundColor === 'white'
+            currentBackgroundColor === 'white'
               ? colors['greyscale-000']
               : colors['greyscale-050']
           }

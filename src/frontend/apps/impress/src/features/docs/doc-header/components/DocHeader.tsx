@@ -27,6 +27,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
 
   const { t } = useTranslation();
   const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
+  const docIsAuth = doc.link_reach === LinkReach.AUTHENTICATED;
 
   const { transRole } = useTrans();
 
@@ -38,7 +39,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
         $gap={spacings['base']}
         aria-label={t('It is the card information about the document.')}
       >
-        {docIsPublic && (
+        {(docIsPublic || docIsAuth) && (
           <Box
             aria-label={t('Public document')}
             $color={colors['primary-800']}
@@ -57,10 +58,12 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
               $theme="primary"
               $variation="800"
               data-testid="public-icon"
-              iconName="public"
+              iconName={docIsPublic ? 'public' : 'vpn_lock'}
             />
             <Text $theme="primary" $variation="800">
-              {t('Public document')}
+              {docIsPublic
+                ? t('Public document')
+                : t('Document accessible to any connected person')}
             </Text>
           </Box>
         )}
@@ -76,8 +79,9 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             $css="flex:1;"
             $gap="0.5rem 1rem"
             $align="center"
+            $maxWidth="100%"
           >
-            <Box $gap={spacings['3xs']}>
+            <Box $gap={spacings['3xs']} $overflow="auto">
               <DocTitle doc={doc} />
 
               <Box $direction="row">

@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren, useRef, useState } from 'react';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
@@ -20,6 +20,7 @@ export type DropdownMenuProps = {
   showArrow?: boolean;
   label?: string;
   arrowCss?: BoxProps['$css'];
+  buttonCss?: BoxProps['$css'];
   disabled?: boolean;
   topMessage?: string;
 };
@@ -30,6 +31,7 @@ export const DropdownMenu = ({
   disabled = false,
   showArrow = false,
   arrowCss,
+  buttonCss,
   label,
   topMessage,
 }: PropsWithChildren<DropdownMenuProps>) => {
@@ -37,6 +39,7 @@ export const DropdownMenu = ({
   const spacings = theme.spacingsTokens();
   const colors = theme.colorsTokens();
   const [isOpen, setIsOpen] = useState(false);
+  const blockButtonRef = useRef<HTMLDivElement>(null);
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
@@ -51,10 +54,17 @@ export const DropdownMenu = ({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       label={label}
+      buttonCss={buttonCss}
       button={
         showArrow ? (
-          <Box $direction="row" $align="center">
-            <div>{children}</div>
+          <Box
+            ref={blockButtonRef}
+            $direction="row"
+            $align="center"
+            $position="relative"
+            aria-controls="menu"
+          >
+            <Box>{children}</Box>
             <Icon
               $variation="600"
               $css={
@@ -67,11 +77,17 @@ export const DropdownMenu = ({
             />
           </Box>
         ) : (
-          children
+          <Box ref={blockButtonRef} aria-controls="menu">
+            {children}
+          </Box>
         )
       }
     >
-      <Box $maxWidth="320px">
+      <Box
+        $maxWidth="320px"
+        $minWidth={`${blockButtonRef.current?.clientWidth}px`}
+        role="menu"
+      >
         {topMessage && (
           <Text
             $variation="700"
@@ -90,6 +106,7 @@ export const DropdownMenu = ({
           const isDisabled = option.disabled !== undefined && option.disabled;
           return (
             <BoxButton
+              role="menuitem"
               aria-label={option.label}
               data-testid={option.testId}
               $direction="row"

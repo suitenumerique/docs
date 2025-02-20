@@ -18,7 +18,11 @@ import {
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useEditorStore } from '@/features/docs/doc-editor/';
-import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
+import {
+  Doc,
+  ModalRemoveDoc,
+  useCopyDocLink,
+} from '@/features/docs/doc-management';
 import { DocShareModal } from '@/features/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
@@ -34,7 +38,7 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const hasAccesses = doc.nb_accesses > 1;
+  const hasAccesses = doc.nb_accesses > 1 && doc.abilities.accesses_view;
   const queryClient = useQueryClient();
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
@@ -50,6 +54,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { isSmallMobile, isDesktop } = useResponsiveStore();
   const { editor } = useEditorStore();
   const { toast } = useToastProvider();
+  const copyDocLink = useCopyDocLink(doc.id);
 
   const options: DropdownMenuOption[] = [
     ...(isSmallMobile
@@ -65,6 +70,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             callback: () => {
               setIsModalExportOpen(true);
             },
+          },
+          {
+            label: t('Copy link'),
+            icon: 'add_link',
+            callback: copyDocLink,
           },
         ]
       : []),
