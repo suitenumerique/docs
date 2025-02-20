@@ -9,7 +9,7 @@ import { useCunninghamTheme } from '@/cunningham';
 
 import { Doc, useDoc } from '../../doc-management';
 import { SimpleDocItem } from '../../docs-grid';
-import { useInfiniteDocChildren } from '../api/useDocChildren';
+import { useDocTree } from '../api/useDocTree';
 import { TreeViewDataType, TreeViewMoveResult } from '../types/tree';
 
 import { DocTreeItem } from './DocTreeItem';
@@ -31,7 +31,7 @@ export const DocTree = ({ docId }: Props) => {
     treeData: treeDataStore,
   } = useTreeStore();
 
-  const { data, isLoading, isFetching, isRefetching } = useInfiniteDocChildren({
+  const { data, isLoading, isFetching, isRefetching } = useDocTree({
     docId,
     page_size: 25,
     page: 1,
@@ -62,7 +62,10 @@ export const DocTree = ({ docId }: Props) => {
       return;
     }
 
-    const newChildren = data.pages.flatMap((page) => page.results);
+    console.log(data);
+    const newChildren = data ?? [];
+    const root = newChildren.shift();
+    console.log('root', root);
     const newData: DocTreeDataType[] = newChildren.map((child) => ({
       ...child,
       childrenCount: child.numchild,

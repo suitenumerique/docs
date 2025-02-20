@@ -1,6 +1,6 @@
 import { useModal } from '@openfun/cunningham-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { NodeRendererProps } from 'react-arborist';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -102,7 +102,7 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
     },
   ];
   return (
-    <>
+    <Fragment>
       <TreeViewNode
         onClick={() => router.push(`/docs/${node.data.id}`)}
         node={node}
@@ -150,6 +150,6 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
           <ModalRenameDoc onClose={renameModal.onClose} doc={node.data} />,
           document.getElementById('modals') as HTMLElement,
         )}
-    </>
+    </Fragment>
   );
 };
