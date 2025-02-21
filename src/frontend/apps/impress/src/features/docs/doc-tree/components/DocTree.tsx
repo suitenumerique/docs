@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { OpenMap } from 'react-arborist/dist/module/state/open-slice';
 import { css } from 'styled-components';
 
 import { fetchAPI } from '@/api';
@@ -7,7 +8,7 @@ import { TreeView } from '@/components/common/tree/TreeView';
 import { useTreeStore } from '@/components/common/tree/treeStore';
 import { useCunninghamTheme } from '@/cunningham';
 
-import { Doc, useDoc } from '../../doc-management';
+import { Doc } from '../../doc-management';
 import { SimpleDocItem } from '../../docs-grid';
 import { useDocTree } from '../api/useDocTree';
 import { TreeViewDataType, TreeViewMoveResult } from '../types/tree';
@@ -20,9 +21,14 @@ type Props = {
 
 export type DocTreeDataType = TreeViewDataType<Doc>;
 export const DocTree = ({ docId }: Props) => {
+  const [rootNode, setRootNode] = useState<Doc | null>(null);
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
-  const { data: rootNode } = useDoc({ id: docId });
+
+  const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
+    undefined,
+  );
+
   const {
     selectedNode,
     setSelectedNode,
@@ -62,18 +68,46 @@ export const DocTree = ({ docId }: Props) => {
       return;
     }
 
-    console.log(data);
-    const newChildren = data ?? [];
-    const root = newChildren.shift();
-    console.log('root', root);
-    const newData: DocTreeDataType[] = newChildren.map((child) => ({
-      ...child,
-      childrenCount: child.numchild,
-      children: [],
-      parentId: docId,
-    }));
-    setTreeDataStore(newData);
-  }, [data, setTreeDataStore, docId]);
+    const initialOpenState: OpenMap = {};
+    const root = data[0];
+
+    initialOpenState[root.id] = true;
+
+    const serialize = (
+      children: Doc[],
+      parentId: Doc['id'],
+    ): DocTreeDataType[] => {
+      if (children.length === 0) {
+        return [];
+      }
+      return children.map((child) => {
+        if (child?.children?.length && child?.children?.length > 0) {
+          initialOpenState[child.id] = true;
+        }
+
+        if (docId === child.id) {
+          setSelectedNode(child);
+        }
+
+        const node = {
+          ...child,
+          childrenCount: child.numchild,
+          children: serialize(child.children ?? [], child.id),
+          parentId: parentId,
+        };
+        if (child?.children?.length && child?.children?.length > 0) {
+          initialOpenState[child.id] = true;
+        }
+        return node;
+      });
+    };
+
+    root.children = serialize(root.children ?? [], docId);
+    console.log('initialOpenState', initialOpenState);
+    setInitialOpenState(initialOpenState);
+    setRootNode(root);
+    setTreeDataStore(root.children ?? []);
+  }, [data, setTreeDataStore, docId, setSelectedNode, rootNode]);
 
   const isRootNodeSelected = !selectedNode
     ? true
@@ -114,16 +148,19 @@ export const DocTree = ({ docId }: Props) => {
         </Box>
       </SeparatedSection>
       <Box $padding={{ all: 'sm' }} $margin={{ top: '-35px' }} $width="100%">
-        <TreeView
-          treeData={treeDataStore}
-          width="100%"
-          selectedNodeId={selectedNode?.id}
-          rootNodeId={docId}
-          renderNode={(props) => <DocTreeItem {...props} />}
-          afterMove={(result, newTreeData) => {
-            void afterMove(result, newTreeData);
-          }}
-        />
+        {initialOpenState && treeDataStore.length > 0 && (
+          <TreeView
+            initialOpenState={initialOpenState}
+            treeData={treeDataStore}
+            width="100%"
+            selectedNodeId={selectedNode?.id}
+            rootNodeId={docId}
+            renderNode={(props) => <DocTreeItem {...props} />}
+            afterMove={(result, newTreeData) => {
+              void afterMove(result, newTreeData);
+            }}
+          />
+        )}
       </Box>
     </>
   );

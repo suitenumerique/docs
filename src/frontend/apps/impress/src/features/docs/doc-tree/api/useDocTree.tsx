@@ -47,6 +47,8 @@ export function useDocTree(
   return useQuery<Doc[], APIError, Doc[]>({
     queryKey: [KEY_LIST_DOC_CHILDREN, params],
     queryFn: () => getDocTree(params),
+    staleTime: 0,
+    gcTime: 0,
     ...queryConfig,
   });
 }

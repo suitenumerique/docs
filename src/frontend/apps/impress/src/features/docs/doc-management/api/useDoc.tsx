@@ -28,6 +28,7 @@ export function useDoc(
   return useQuery<Doc, APIError, Doc>({
     queryKey: [KEY_DOC, param],
     queryFn: () => getDoc(param),
+
     ...queryConfig,
   });
 }

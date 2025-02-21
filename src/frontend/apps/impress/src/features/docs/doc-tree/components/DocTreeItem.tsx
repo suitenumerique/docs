@@ -25,11 +25,15 @@ type DocTreeItemProps = NodeRendererProps<TreeViewDataType<DocTreeDataType>>;
 
 export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
   const data = node.data;
+  const { push } = useRouter();
+
   const deleteModal = useModal();
+
   const shareModal = useModal();
   const renameModal = useModal();
   const [isOpen, setIsOpen] = useState(false);
-  const { updateNode, setSelectedNode } = useTreeStore();
+  const { updateNode, setSelectedNode, removeNode, refreshNode } =
+    useTreeStore();
   const { spacingsTokens } = useCunninghamTheme();
   const { refetch } = useDocChildren(
     {
@@ -54,9 +58,16 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
           })
           .catch(console.error);
       } else {
+        const newDoc = {
+          ...doc,
+          children: [],
+          childrenCount: 0,
+          parentId: node.id,
+        };
         updateNode(node.id, {
           ...node.data,
-          children: [...actualChildren, doc],
+          children: [...actualChildren, newDoc],
+          childrenCount: actualChildren.length + 1,
         });
         node.open();
         router.push(`/docs/${doc.id}`);
@@ -82,6 +93,16 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
     node.data.children = newChilds;
     updateNode(node.id, { ...node.data, children: newChilds });
     return newChilds;
+  };
+
+  const afterDelete = () => {
+    console.log('afterDelete', node.data);
+    if (node.data.parentId) {
+      router.push(`/docs/${node.data.parentId}`);
+      refreshNode(node.data.parentId);
+      setSelectedNode(node.data);
+    }
+    removeNode(node.data.id);
   };
 
   const options = [
@@ -140,7 +161,11 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
         />
       </TreeViewNode>
       {deleteModal.isOpen && (
-        <ModalRemoveDoc onClose={deleteModal.onClose} doc={node.data} />
+        <ModalRemoveDoc
+          onClose={deleteModal.onClose}
+          doc={node.data}
+          afterDelete={afterDelete}
+        />
       )}
       {shareModal.isOpen && (
         <DocShareModal doc={node.data} onClose={shareModal.close} />

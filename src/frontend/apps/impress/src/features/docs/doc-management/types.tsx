@@ -46,6 +46,7 @@ export interface Doc {
   created_at: string;
   updated_at: string;
   numchild: number;
+  children?: Doc[];
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;

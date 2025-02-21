@@ -84,9 +84,11 @@ export const createTreeStore = <T>(
 
           return filteredNodes.map((node) => {
             if (node.children) {
+              const children = removeNodeFromTree(node.children);
               return {
                 ...node,
-                children: removeNodeFromTree(node.children),
+                children: children,
+                childrenCount: children.length,
               };
             }
             return node;

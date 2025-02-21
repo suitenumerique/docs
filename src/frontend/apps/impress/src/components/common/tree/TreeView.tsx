@@ -8,6 +8,7 @@ import {
   NodeRendererProps,
   Tree,
 } from 'react-arborist';
+import { OpenMap } from 'react-arborist/dist/module/state/open-slice';
 
 import {
   BaseType,
@@ -27,6 +28,7 @@ export type TreeViewProps<T> = {
   width?: number | string;
   selectedNodeId?: string;
   rootNodeId: string;
+  initialOpenState?: OpenMap;
   renderNode: (
     props: NodeRendererProps<TreeViewDataType<T>>,
   ) => React.ReactNode;
@@ -43,6 +45,7 @@ export const TreeView = <T,>({
   renderNode,
   afterMove,
   selectedNodeId,
+  initialOpenState,
 }: TreeViewProps<T>) => {
   const onMove3 = (args: {
     dragIds: string[];
@@ -223,6 +226,7 @@ export const TreeView = <T,>({
       height={1000}
       indent={20}
       width={width}
+      initialOpenState={initialOpenState}
       selection={selectedNodeId}
       disableEdit={true}
       rowHeight={32}
@@ -326,7 +330,11 @@ export const TreeViewNode = <T,>({
             </Box>
           ) : (
             <Icon
-              onClick={() => void handleClick()}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                void handleClick();
+              }}
               $variation="500"
               $size="16px"
               iconName={
