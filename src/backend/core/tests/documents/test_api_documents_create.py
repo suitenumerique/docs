@@ -52,6 +52,7 @@ def test_api_documents_create_authenticated_success():
     assert document.accesses.filter(role="owner", user=user).exists()
 
 
+@pytest.mark.django_db(transaction=True)
 def test_api_documents_create_document_race_condition():
     """
     It should be possible to create several documents at the same time

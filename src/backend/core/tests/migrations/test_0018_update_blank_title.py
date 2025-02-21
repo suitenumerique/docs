@@ -1,3 +1,5 @@
+from django.db import transaction
+
 import pytest
 
 from core import factories
@@ -11,10 +13,11 @@ def test_update_blank_title_migration(migrator):
     """
     migrator.apply_initial_migration(("core", "0017_add_fields_for_soft_delete"))
 
-    english_doc = factories.DocumentFactory(title="Untitled document")
-    german_doc = factories.DocumentFactory(title="Unbenanntes Dokument")
-    french_doc = factories.DocumentFactory(title="Document sans titre")
-    other_doc = factories.DocumentFactory(title="My document")
+    with transaction.atomic():
+        english_doc = factories.DocumentFactory(title="Untitled document")
+        german_doc = factories.DocumentFactory(title="Unbenanntes Dokument")
+        french_doc = factories.DocumentFactory(title="Document sans titre")
+        other_doc = factories.DocumentFactory(title="My document")
 
     assert english_doc.title == "Untitled document"
     assert german_doc.title == "Unbenanntes Dokument"

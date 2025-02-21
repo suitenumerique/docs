@@ -12,8 +12,8 @@ from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.db import connection, transaction
 from django.db import models as db
+from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404
@@ -573,12 +573,6 @@ class DocumentViewSet(
     @transaction.atomic
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
-                "IN SHARE ROW EXCLUSIVE MODE;"
-            )
-
         obj = models.Document.add_root(
             creator=self.request.user,
             **serializer.validated_data,
