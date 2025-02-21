@@ -262,23 +262,25 @@ def test_api_documents_create_document_children_race_condition():
     without causing any race conditions or data integrity issues.
     """
 
-    def create_document():
-        user = factories.UserFactory()
+    user = factories.UserFactory()
 
-        client = APIClient()
-        client.force_login(user)
+    client = APIClient()
+    client.force_login(user)
 
-        with transaction.atomic():
-            document = factories.DocumentFactory()
+    with transaction.atomic():
+        document = factories.DocumentFactory()
 
-        factories.UserDocumentAccessFactory(user=user, document=document, role="owner")
+    factories.UserDocumentAccessFactory(user=user, document=document, role="owner")
+
+    def create_document(document_id):
         response = client.post(
-            f"/api/v1.0/documents/{document.id!s}/children/",
+            f"/api/v1.0/documents/{document_id}/children/",
             {
                 "title": "my child",
             },
         )
 
+        print("response", response.json())
         assert response.status_code == 201
 
         child = Document.objects.get(id=response.json()["id"])
@@ -289,8 +291,8 @@ def test_api_documents_create_document_children_race_condition():
         return response
 
     with ThreadPoolExecutor(max_workers=2) as executor:
-        future1 = executor.submit(create_document)
-        future2 = executor.submit(create_document)
+        future1 = executor.submit(create_document, document.id)
+        future2 = executor.submit(create_document, document.id)
 
         response1 = future1.result()
         response2 = future2.result()
