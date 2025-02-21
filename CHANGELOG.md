@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- 🚩(frontend) feature flag analytic on copy as html #649
+
 ## Changed
 
 - 🛂(frontend) Restore version visibility #629

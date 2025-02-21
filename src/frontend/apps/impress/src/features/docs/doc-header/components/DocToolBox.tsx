@@ -24,6 +24,7 @@ import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
 } from '@/features/docs/doc-versioning';
+import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
 import { ModalExport } from './ModalExport';
@@ -50,6 +51,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { isSmallMobile, isDesktop } = useResponsiveStore();
   const { editor } = useEditorStore();
   const { toast } = useToastProvider();
+  const { isFeatureFlagActivated } = useAnalytics();
 
   const options: DropdownMenuOption[] = [
     ...(isSmallMobile
@@ -92,6 +94,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         void copyCurrentEditorToClipboard('html');
       },
+      show: isFeatureFlagActivated('CopyAsHTML'),
     },
     {
       label: t('Delete document'),
