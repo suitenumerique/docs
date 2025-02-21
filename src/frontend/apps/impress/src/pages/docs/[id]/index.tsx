@@ -34,7 +34,7 @@ export function DocLayout() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <MainLayout>
+      <MainLayout enableResize={true}>
         <DocPage id={id} />
       </MainLayout>
     </>
@@ -77,10 +77,10 @@ const DocPage = ({ id }: DocProps) => {
 
   useEffect(() => {
     return () => {
-      console.log('exit');
       setRootId(undefined);
+      setCurrentDoc(undefined);
     };
-  }, [setRootId]);
+  }, [setRootId, setCurrentDoc]);
 
   useEffect(() => {
     if (!docQuery || isFetching) {

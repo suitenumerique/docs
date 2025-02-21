@@ -6,7 +6,7 @@ import { DocsResponse } from '../../doc-management';
 
 export type DocsChildrenParams = {
   docId: string;
-  page: number;
+  page?: number;
   page_size?: number;
 };
 

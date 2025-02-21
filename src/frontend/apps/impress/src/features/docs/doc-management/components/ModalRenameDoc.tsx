@@ -36,11 +36,11 @@ export const ModalRenameDoc = ({ onClose, doc }: ModalRenameDocProps) => {
             {t('Cancel')}
           </Button>
           <Button
-            aria-label={t('Confirm deletion')}
+            aria-label={t('Confirm rename')}
             fullWidth
             onClick={() => console.log('rename', title)}
           >
-            {t('Delete')}
+            {t('Rename')}
           </Button>
         </>
       }

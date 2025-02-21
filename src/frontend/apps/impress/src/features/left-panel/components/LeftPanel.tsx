@@ -45,7 +45,7 @@ export const LeftPanel = () => {
           data-testid="left-panel-desktop"
           $css={`
             height: calc(100vh - ${HEADER_HEIGHT}px);
-            width: 300px;
+            width: 100%;
             min-width: 300px;
             overflow: hidden;
             border-right: 1px solid ${colors['greyscale-200']};

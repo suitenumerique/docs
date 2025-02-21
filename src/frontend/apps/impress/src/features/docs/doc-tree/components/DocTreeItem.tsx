@@ -2,7 +2,6 @@ import { useModal } from '@openfun/cunningham-react';
 import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { NodeRendererProps } from 'react-arborist';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { Box, BoxButton, DropdownMenu, Icon } from '@/components';
@@ -25,7 +24,6 @@ type DocTreeItemProps = NodeRendererProps<TreeViewDataType<DocTreeDataType>>;
 
 export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
   const data = node.data;
-  const { push } = useRouter();
 
   const deleteModal = useModal();
 
@@ -38,7 +36,7 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
   const { refetch } = useDocChildren(
     {
       docId: data.id,
-      page: 1,
+      page_size: 999,
     },
     { enabled: false },
   );
@@ -80,7 +78,7 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
 
   const loadChildren = async () => {
     const data = await refetch();
-    console.log(data, node);
+
     const childs = data.data?.results ?? [];
     const newChilds: TreeViewDataType<DocTreeDataType>[] = childs.map(
       (child) => ({
@@ -96,13 +94,12 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
   };
 
   const afterDelete = () => {
-    console.log('afterDelete', node.data);
+    removeNode(node.data.id);
     if (node.data.parentId) {
       router.push(`/docs/${node.data.parentId}`);
       refreshNode(node.data.parentId);
       setSelectedNode(node.data);
     }
-    removeNode(node.data.id);
   };
 
   const options = [
@@ -170,11 +167,9 @@ export const DocTreeItem = ({ node, ...props }: DocTreeItemProps) => {
       {shareModal.isOpen && (
         <DocShareModal doc={node.data} onClose={shareModal.close} />
       )}
-      {renameModal.isOpen &&
-        createPortal(
-          <ModalRenameDoc onClose={renameModal.onClose} doc={node.data} />,
-          document.getElementById('modals') as HTMLElement,
-        )}
+      {renameModal.isOpen && (
+        <ModalRenameDoc onClose={renameModal.onClose} doc={node.data} />
+      )}
     </Fragment>
   );
 };

@@ -325,7 +325,7 @@ export const TreeViewNode = <T,>({
       ) : (
         <>
           {isLoading ? (
-            <Box $padding={{ horizontal: '4px' }}>
+            <Box>
               <Loader />
             </Box>
           ) : (

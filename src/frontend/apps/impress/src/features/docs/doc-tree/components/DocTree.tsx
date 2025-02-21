@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { OpenMap } from 'react-arborist/dist/module/state/open-slice';
 import { css } from 'styled-components';
 
-import { fetchAPI } from '@/api';
 import { Box, SeparatedSection, StyledLink } from '@/components';
 import { TreeView } from '@/components/common/tree/TreeView';
 import { useTreeStore } from '@/components/common/tree/treeStore';
@@ -11,6 +10,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Doc } from '../../doc-management';
 import { SimpleDocItem } from '../../docs-grid';
 import { useDocTree } from '../api/useDocTree';
+import { useMoveDoc } from '../api/useMove';
 import { TreeViewDataType, TreeViewMoveResult } from '../types/tree';
 
 import { DocTreeItem } from './DocTreeItem';
@@ -24,6 +24,7 @@ export const DocTree = ({ docId }: Props) => {
   const [rootNode, setRootNode] = useState<Doc | null>(null);
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
+  const moveDoc = useMoveDoc();
 
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
@@ -35,6 +36,7 @@ export const DocTree = ({ docId }: Props) => {
     refreshNode,
     setTreeData: setTreeDataStore,
     treeData: treeDataStore,
+    setRootId,
   } = useTreeStore();
 
   const { data, isLoading, isFetching, isRefetching } = useDocTree({
@@ -43,24 +45,27 @@ export const DocTree = ({ docId }: Props) => {
     page: 1,
   });
 
-  const afterMove = async (
+  const afterMove = (
     result: TreeViewMoveResult,
     newTreeData: TreeViewDataType<Doc>[],
   ) => {
     const { targetNodeId, mode: position, sourceNodeId, oldParentId } = result;
-    await fetchAPI(`documents/${sourceNodeId}/move/`, {
-      method: 'POST',
-      body: JSON.stringify({
-        target_document_id: targetNodeId,
+    moveDoc.mutate(
+      {
+        sourceDocumentId: sourceNodeId,
+        targetDocumentId: targetNodeId,
         position,
-      }),
-    });
-
-    setTreeDataStore(newTreeData);
-    if (oldParentId) {
-      refreshNode(oldParentId);
-    }
-    refreshNode(targetNodeId);
+      },
+      {
+        onSuccess: () => {
+          setTreeDataStore(newTreeData);
+          if (oldParentId) {
+            refreshNode(oldParentId);
+          }
+          refreshNode(targetNodeId);
+        },
+      },
+    );
   };
 
   useEffect(() => {
@@ -103,11 +108,12 @@ export const DocTree = ({ docId }: Props) => {
     };
 
     root.children = serialize(root.children ?? [], docId);
-    console.log('initialOpenState', initialOpenState);
+
     setInitialOpenState(initialOpenState);
     setRootNode(root);
+    setRootId(root.id);
     setTreeDataStore(root.children ?? []);
-  }, [data, setTreeDataStore, docId, setSelectedNode, rootNode]);
+  }, [data, setTreeDataStore, docId, setSelectedNode, rootNode, setRootId]);
 
   const isRootNodeSelected = !selectedNode
     ? true

@@ -33,9 +33,14 @@ export const LeftPanelHeader = ({ children }: Props) => {
 
   const { mutate: createChildrenDoc } = useCreateChildrenDoc({
     onSuccess: (doc) => {
-      treeStore.addRootNode(doc);
-      treeStore.setSelectedNode(doc);
-      router.push(`/docs/${doc.id}`);
+      if (treeStore.rootId === currentDoc?.id) {
+        treeStore.addRootNode(doc);
+      } else if (currentDoc) {
+        treeStore.addChildNode(currentDoc.id, doc);
+      } else {
+        treeStore.addRootNode(doc);
+      }
+
       togglePanel();
     },
   });

@@ -6,6 +6,7 @@ import { TreeViewDataType } from '@/features/docs/doc-tree/types/tree';
 interface TreeStore<T> {
   treeData: TreeViewDataType<T>[];
   selectedNode: TreeViewDataType<T> | null;
+  rootId: string | undefined;
   setSelectedNode: (node: TreeViewDataType<T> | null) => void;
   setTreeData: (data: TreeViewDataType<T>[]) => void;
   updateNode: (nodeId: string, newData: Partial<TreeViewDataType<T>>) => void;
@@ -14,6 +15,8 @@ interface TreeStore<T> {
   addChildNode: (parentId: string, newNode: TreeViewDataType<T>) => void;
   refreshNode: (nodeId: string) => void;
   findNode: (nodeId: string) => TreeViewDataType<T> | null;
+  setRootId: (id?: string) => void;
+  reset: () => void;
 }
 
 export const createTreeStore = <T>(
@@ -22,11 +25,15 @@ export const createTreeStore = <T>(
   create<TreeStore<T>>((set, get) => ({
     treeData: [],
     selectedNode: null,
+    rootId: undefined,
     setSelectedNode: (node) => {
       set({ selectedNode: node });
     },
     setTreeData: (data) => {
       set({ treeData: data });
+    },
+    setRootId: (id) => {
+      set({ rootId: id });
     },
     refreshNode: (nodeId) => {
       set((state) => {
@@ -148,6 +155,9 @@ export const createTreeStore = <T>(
       };
 
       return findNodeInTree(get().treeData);
+    },
+    reset: () => {
+      set({ treeData: [], selectedNode: null, rootId: undefined });
     },
   }));
 

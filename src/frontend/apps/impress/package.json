@@ -45,6 +45,7 @@
     "react-dom": "*",
     "react-i18next": "15.4.0",
     "react-intersection-observer": "9.15.1",
+    "react-resizable-panels": "^2.1.7",
     "react-select": "5.10.0",
     "sass": "1.83.4",
     "styled-components": "6.1.15",
