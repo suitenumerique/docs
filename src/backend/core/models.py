@@ -26,6 +26,7 @@ from django.utils.functional import cached_property, lazy
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
+import pglock
 from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
@@ -814,6 +815,21 @@ class Document(MP_Node, BaseModel):
         self.get_descendants().exclude(exclude_condition).update(
             ancestors_deleted_at=self.ancestors_deleted_at
         )
+
+    @classmethod
+    def add_root(cls, **kwargs):
+        """
+        Lock the Document models to avoid race condition when the path field value is computed.
+        """
+        pglock.model(Document, mode="SHARE ROW EXCLUSIVE")
+        return super().add_root(**kwargs)
+
+    def add_child(self, **kwargs):
+        """
+        Lock the document models to avoid race condition when the path field value is computed.
+        """
+        pglock.model(Document)
+        return super().add_child(**kwargs)
 
 
 class LinkTrace(BaseModel):

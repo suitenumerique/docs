@@ -631,6 +631,7 @@ class DocumentViewSet(
         permission_classes=[],
         url_path="create-for-owner",
     )
+    @transaction.atomic
     def create_for_owner(self, request):
         """
         Create a document on behalf of a specified owner (pre-existing user or invited).
@@ -729,6 +730,7 @@ class DocumentViewSet(
         ordering=["path"],
         url_path="children",
     )
+    @transaction.atomic
     def children(self, request, *args, **kwargs):
         """Handle listing and creating children of a document"""
         document = self.get_object()
