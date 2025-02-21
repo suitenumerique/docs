@@ -3,7 +3,8 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { PostHogProvider, configureCrispSession } from '@/services';
+import { useAnalytics } from '@/libs';
+import { PostHogAnalytic, configureCrispSession } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -12,6 +13,7 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { data: conf } = useConfig();
   const { setSentry } = useSentryStore();
   const { setTheme } = useCunninghamTheme();
+  const { AnalyticsProvider } = useAnalytics();
 
   useEffect(() => {
     if (!conf?.SENTRY_DSN) {
@@ -37,6 +39,14 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     configureCrispSession(conf.CRISP_WEBSITE_ID);
   }, [conf?.CRISP_WEBSITE_ID]);
 
+  useEffect(() => {
+    if (!conf?.POSTHOG_KEY) {
+      return;
+    }
+
+    new PostHogAnalytic(conf.POSTHOG_KEY);
+  }, [conf?.POSTHOG_KEY]);
+
   if (!conf) {
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
@@ -45,5 +55,5 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     );
   }
 
-  return <PostHogProvider conf={conf.POSTHOG_KEY}>{children}</PostHogProvider>;
+  return <AnalyticsProvider>{children}</AnalyticsProvider>;
 };
