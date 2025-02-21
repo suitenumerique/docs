@@ -21,6 +21,7 @@ pytestmark = pytest.mark.django_db
     },
 )
 @override_settings(DEBUG=True)
+@pytest.mark.django_db(transaction=True)
 def test_commands_create_demo():
     """The create_demo management command should create objects as expected."""
     call_command("create_demo")
