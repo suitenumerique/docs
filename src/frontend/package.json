@@ -28,10 +28,10 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@types/node": "22.13.1",
+    "@types/node": "22.13.5",
     "@types/react-dom": "18.3.1",
-    "@typescript-eslint/eslint-plugin": "8.23.0",
-    "@typescript-eslint/parser": "8.23.0",
+    "@typescript-eslint/eslint-plugin": "8.24.1",
+    "@typescript-eslint/parser": "8.24.1",
     "eslint": "8.57.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
