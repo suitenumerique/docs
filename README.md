@@ -40,7 +40,7 @@ Docs is a collaborative text editor designed to address common challenges in kno
 *   📚 Built-in wiki functionality to turn your team's collaborative work into organized knowledge `ETA 02/2025`
 
 ### Self-host
-*   🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
+*   🚀 Easy to install, scalable and secure alternative to Notion and Outline.
 
 ## Getting started 🔧
 
@@ -98,26 +98,6 @@ password: impress
 
 ```shellscript
 $ make run
-```
-
-⚠️ For the frontend developer, it is often better to run the frontend in development mode locally.
-
-To do so, install the frontend dependencies with the following command:
-
-```shellscript
-$ make frontend-development-install
-```
-
-And run the frontend locally in development mode with the following command:
-
-```shellscript
-$ make run-frontend-development
-```
-
-To start all the services, except the frontend container, you can use the following command:
-
-```shellscript
-$ make run-backend
 ```
 
 **Adding content**

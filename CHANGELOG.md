@@ -13,6 +13,7 @@ and this project adheres to
 - 🛂(frontend) Restore version visibility #629
 - 📝(doc) minor README.md formatting and wording enhancements
 - ♻️Stop setting a default title on doc creation #634
+- 📝(readme) remove front-end local run instructions local.md #651 
 
 ## Fixed
 
