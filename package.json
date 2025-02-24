@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@blocknote/core": "^0.23.4",
+    "next": "^15.1.7"
+  }
+}
