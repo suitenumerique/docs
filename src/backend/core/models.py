@@ -794,9 +794,11 @@ class Document(MP_Node, BaseModel):
         ancestors_deleted_at = (
             self.get_ancestors()
             .filter(deleted_at__isnull=False)
+            .order_by("deleted_at")
             .values_list("deleted_at", flat=True)
+            .first()
         )
-        self.ancestors_deleted_at = min(ancestors_deleted_at, default=None)
+        self.ancestors_deleted_at = ancestors_deleted_at
         self.save()
 
         # Update descendants excluding those who were deleted prior to the deletion of the
