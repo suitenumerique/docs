@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import Icon404 from '@/assets/icons/icon-404.svg';
 import { Box, StyledLink, Text } from '@/components';
-import { MainLayout } from '@/layouts';
+import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
 const StyledButton = styled(Button)`
@@ -33,7 +33,15 @@ const Page: NextPageWithLayout = () => {
 
       <Box $margin={{ top: 'large' }}>
         <StyledLink href="/">
-          <StyledButton>{t('Back to home page')}</StyledButton>
+          <StyledButton
+            icon={
+              <Text $isMaterialIcon $color="white">
+                house
+              </Text>
+            }
+          >
+            {t('Home')}
+          </StyledButton>
         </StyledLink>
       </Box>
     </Box>
@@ -41,7 +49,7 @@ const Page: NextPageWithLayout = () => {
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
-  return <MainLayout>{page}</MainLayout>;
+  return <PageLayout withFooter={false}>{page}</PageLayout>;
 };
 
 export default Page;

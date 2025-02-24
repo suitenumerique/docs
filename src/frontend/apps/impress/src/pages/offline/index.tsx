@@ -31,7 +31,15 @@ const Page: NextPageWithLayout = () => {
 
       <Box $margin={{ top: 'large' }}>
         <StyledLink href="/">
-          <StyledButton>{t('Back to home page')}</StyledButton>
+          <StyledButton
+            icon={
+              <Text $isMaterialIcon $color="white">
+                house
+              </Text>
+            }
+          >
+            {t('Home')}
+          </StyledButton>
         </StyledLink>
       </Box>
     </Box>
