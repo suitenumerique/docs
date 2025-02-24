@@ -416,6 +416,14 @@ test.describe('Doc Visibility: Authenticated', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
+    await expect(
+      page
+        .getByLabel('It is the card information about the document.')
+        .getByText('Document accessible to any connected person', {
+          exact: true,
+        }),
+    ).toBeVisible();
+
     await page.getByRole('button', { name: 'close' }).click();
 
     const urlDoc = page.url();

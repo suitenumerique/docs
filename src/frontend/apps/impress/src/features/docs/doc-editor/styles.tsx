@@ -76,13 +76,13 @@ export const cssEditor = (readonly: boolean) => css`
 
   .bn-block-outer:not(:first-child) {
     &:has(h1) {
-      padding-top: 32px;
+      margin-top: 32px;
     }
     &:has(h2) {
-      padding-top: 24px;
+      margin-top: 24px;
     }
     &:has(h3) {
-      padding-top: 16px;
+      margin-top: 16px;
     }
   }
 
@@ -92,9 +92,16 @@ export const cssEditor = (readonly: boolean) => css`
     border-radius: 4px;
   }
 
+  @media screen and (width <= 768px) {
+    & .bn-editor {
+      padding-right: 36px;
+    }
+  }
+
   @media screen and (width <= 560px) {
     & .bn-editor {
       ${readonly && `padding-left: 10px;`}
+      padding-right: 10px;
     }
     .bn-side-menu[data-block-type='heading'][data-level='1'] {
       height: 46px;

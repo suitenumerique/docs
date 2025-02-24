@@ -38,7 +38,7 @@ export const SimpleDocItem = ({
   const { untitledDocument } = useTrans();
 
   return (
-    <Box $direction="row" $gap={spacings.sm}>
+    <Box $direction="row" $gap={spacings.sm} $overflow="auto">
       <Box
         $direction="row"
         $align="center"
@@ -53,7 +53,7 @@ export const SimpleDocItem = ({
           <SimpleFileIcon aria-label={t('Simple document icon')} />
         )}
       </Box>
-      <Box $justify="center">
+      <Box $justify="center" $overflow="auto">
         <Text
           aria-describedby="doc-title"
           aria-label={doc.title}

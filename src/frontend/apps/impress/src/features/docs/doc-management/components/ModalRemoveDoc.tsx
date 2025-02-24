@@ -71,9 +71,15 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
           </Button>
         </>
       }
-      size={ModalSize.MEDIUM}
+      size={ModalSize.SMALL}
       title={
-        <Text $size="h6" as="h6" $margin={{ all: '0' }} $align="flex-start">
+        <Text
+          $size="h6"
+          as="h6"
+          $margin={{ all: '0' }}
+          $align="flex-start"
+          $variation="1000"
+        >
           {t('Delete a doc')}
         </Text>
       }

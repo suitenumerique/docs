@@ -7,16 +7,8 @@ type SmallDoc = {
   title: string;
 };
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
-
 test.describe('Documents Grid mobile', () => {
   test.use({ viewport: { width: 500, height: 1200 } });
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
 
   test('it checks the grid when mobile', async ({ page }) => {
     await page.route('**/documents/**', async (route) => {
@@ -94,6 +86,10 @@ test.describe('Documents Grid mobile', () => {
 });
 
 test.describe('Document grid item options', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
   test('it pins a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
 
@@ -212,6 +208,8 @@ test.describe('Document grid item options', () => {
 
 test.describe('Documents filters', () => {
   test('it checks the prebuild left panel filters', async ({ page }) => {
+    await page.goto('/');
+
     // All Docs
     const response = await page.waitForResponse(
       (response) =>
@@ -282,11 +280,9 @@ test.describe('Documents filters', () => {
 });
 
 test.describe('Documents Grid', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
-
   test('checks all the elements are visible', async ({ page }) => {
+    await page.goto('/');
+
     let docs: SmallDoc[] = [];
     const response = await page.waitForResponse(
       (response) =>
@@ -314,17 +310,20 @@ test.describe('Documents Grid', () => {
 
   test('checks the infinite scroll', async ({ page }) => {
     let docs: SmallDoc[] = [];
-    const responsePromisePage1 = page.waitForResponse(
-      (response) =>
+    const responsePromisePage1 = page.waitForResponse((response) => {
+      return (
         response.url().endsWith(`/documents/?page=1`) &&
-        response.status() === 200,
-    );
+        response.status() === 200
+      );
+    });
 
     const responsePromisePage2 = page.waitForResponse(
       (response) =>
         response.url().endsWith(`/documents/?page=2`) &&
         response.status() === 200,
     );
+
+    await page.goto('/');
 
     const responsePage1 = await responsePromisePage1;
     expect(responsePage1.ok()).toBeTruthy();

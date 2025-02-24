@@ -100,17 +100,21 @@ export const ModalConfirmationVersion = ({
           </Button>
         </>
       }
-      size={ModalSize.MEDIUM}
+      size={ModalSize.SMALL}
       title={
-        <Text $size="h6" $align="flex-start">
+        <Text $size="h6" $align="flex-start" $variation="1000">
           {t('Warning')}
         </Text>
       }
     >
       <Box aria-label={t('Modal confirmation to restore the version')}>
         <Box>
-          <Text>{t('Your current document will revert to this version.')}</Text>
-          <Text>{t('If a member is editing, his works can be lost.')}</Text>
+          <Text $variation="600">
+            {t('Your current document will revert to this version.')}
+          </Text>
+          <Text $variation="600">
+            {t('If a member is editing, his works can be lost.')}
+          </Text>
         </Box>
       </Box>
     </Modal>

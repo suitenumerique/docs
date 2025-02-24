@@ -116,8 +116,8 @@ export const HomeSection = ({
             `}
             $variation="1000"
             $weight="bold"
-            $size={!isSmallDevice ? 'xs-alt' : 'h4'}
-            $textAlign={isSmallMobile ? 'center' : 'left'}
+            $size={!isSmallDevice ? 'xs-alt' : isSmallMobile ? 'h6' : 'h4'}
+            $textAlign="left"
             $margin="none"
           >
             {title}
