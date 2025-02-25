@@ -179,7 +179,8 @@ def create_demo(stdout):
                     is_superuser=False,
                     is_active=True,
                     is_staff=False,
-                    language=random.choice(settings.LANGUAGES)[0],
+                    language=dev_user["language"]
+                    or random.choice(settings.LANGUAGES)[0],
                 )
             )
 
