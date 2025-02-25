@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { Auth } from '@/features/auth';
-import '@/i18n/initI18n';
+import LanguageInitializer from '@/features/language/LanguageInitializer';
 import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';
@@ -41,7 +41,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <CunninghamProvider theme={theme}>
         <ConfigProvider>
-          <Auth>{children}</Auth>
+          <Auth>
+            <LanguageInitializer />
+            {children}
+          </Auth>
         </ConfigProvider>
       </CunninghamProvider>
     </QueryClientProvider>
