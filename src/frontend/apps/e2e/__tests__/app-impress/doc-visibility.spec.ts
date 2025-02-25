@@ -49,21 +49,13 @@ test.describe('Doc Visibility', () => {
     await expect(page.getByLabel('Can read and edit')).toBeHidden();
 
     await selectVisibility.click();
-    await page
-      .getByRole('menuitem', {
-        name: 'Connected',
-      })
-      .click();
+    await page.getByLabel('Connected').click();
 
     await expect(page.getByLabel('Visibility mode')).toBeVisible();
 
     await selectVisibility.click();
 
-    await page
-      .getByRole('menuitem', {
-        name: 'Public',
-      })
-      .click();
+    await page.getByLabel('Public', { exact: true }).click();
 
     await expect(page.getByLabel('Visibility mode')).toBeVisible();
   });
@@ -162,7 +154,7 @@ test.describe('Doc Visibility: Restricted', () => {
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('menuitem', { name: 'Administrator' }).click();
+    await page.getByLabel('Administrator').click();
 
     await page.getByRole('button', { name: 'Invite' }).click();
 

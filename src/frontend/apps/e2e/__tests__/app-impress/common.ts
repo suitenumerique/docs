@@ -97,7 +97,7 @@ export const addNewMember = async (
 
   // Choose a role
   await page.getByLabel('doc-role-dropdown').click();
-  await page.getByRole('menuitem', { name: role }).click();
+  await page.getByLabel(role).click();
   await page.getByRole('button', { name: 'Invite' }).click();
 
   return users[index].email;
