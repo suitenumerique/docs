@@ -53,11 +53,14 @@ export const DropButton = ({
 }: PropsWithChildren<DropButtonProps>) => {
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
 
-  const triggerRef = useRef(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setIsLocalOpen(isOpen);
-  }, [isOpen]);
+    if (isLocalOpen && firstFocusableRef.current) {
+      firstFocusableRef.current.focus();
+    }
+  }, [isLocalOpen]);
 
   const onOpenChangeHandler = (isOpen: boolean) => {
     setIsLocalOpen(isOpen);

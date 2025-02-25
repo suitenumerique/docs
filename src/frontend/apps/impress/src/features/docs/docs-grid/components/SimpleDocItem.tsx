@@ -50,7 +50,7 @@ export const SimpleDocItem = ({
         {isPinned ? (
           <PinnedDocumentIcon aria-label={t('Pin document icon')} />
         ) : (
-          <SimpleFileIcon aria-label={t('Simple document icon')} />
+          <SimpleFileIcon aria-hidden="true" />
         )}
       </Box>
       <Box $justify="center" $overflow="auto">

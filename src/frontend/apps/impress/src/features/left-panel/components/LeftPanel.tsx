@@ -50,6 +50,7 @@ export const LeftPanel = () => {
             overflow: hidden;
             border-right: 1px solid ${colors['greyscale-200']};
         `}
+          $background={colors['greyscale-000']}
         >
           <Box
             $css={css`

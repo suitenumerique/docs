@@ -14,6 +14,29 @@ export const LanguagePicker = () => {
 
   const optionsPicker = useMemo(() => {
     return (languages || []).map((lang) => ({
+      value: lang,
+      label: lang,
+      render: () => (
+        <Box
+          className="c_select__render"
+          $direction="row"
+          $gap="0.7rem"
+          $align="center"
+        >
+          <Text
+            $isMaterialIcon
+            $size="1rem"
+            $theme="primary"
+            $weight="bold"
+            $variation="800"
+          >
+            translate
+          </Text>
+          <Text $theme="primary" $weight="500" $variation="800" lang={lang}>
+            {LANGUAGES_ALLOWED[lang]}
+          </Text>
+        </Box>
+      ),
       label: LANGUAGES_ALLOWED[lang],
       isSelected: language === lang,
       callback: () => {

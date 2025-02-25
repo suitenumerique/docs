@@ -1,9 +1,4 @@
-import {
-  BlockNoteSchema,
-  Dictionary,
-  locales,
-  withPageBreak,
-} from '@blocknote/core';
+import { BlockNoteSchema, Dictionary, locales } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
@@ -27,7 +22,7 @@ import { randomColor } from '../utils';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolbar';
 
-export const blockNoteSchema = withPageBreak(BlockNoteSchema.create());
+export const blockNoteSchema = BlockNoteSchema.create();
 
 interface BlockNoteEditorProps {
   doc: Doc;
