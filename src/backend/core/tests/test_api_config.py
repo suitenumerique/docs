@@ -39,7 +39,11 @@ def test_api_config(is_authenticated):
         "CRISP_WEBSITE_ID": "123",
         "ENVIRONMENT": "test",
         "FRONTEND_THEME": "test-theme",
-        "LANGUAGES": [["en-us", "English"], ["fr-fr", "French"], ["de-de", "German"]],
+        "LANGUAGES": [
+            ["en-us", "English"],
+            ["fr-fr", "Français"],
+            ["de-de", "Deutsch"],
+        ],
         "LANGUAGE_CODE": "en-us",
         "MEDIA_BASE_URL": "http://testserver/",
         "POSTHOG_KEY": {"id": "132456", "host": "https://eu.i.posthog-test.com"},
