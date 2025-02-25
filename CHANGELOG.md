@@ -16,6 +16,7 @@ and this project adheres to
 - 🔒️ Manage unsafe attachments #663
 - ✨(frontend) Custom block quote with export #646
 - ✨(frontend) add open source section homepage #666
+- ✨(frontend) synchronize language-choice #401
 
 ## Changed
 

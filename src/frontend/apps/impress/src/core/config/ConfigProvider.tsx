@@ -3,6 +3,7 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { useLanguageSynchronizer } from '@/features/language/hooks/useLanguageSynchronizer';
 import { CrispProvider, PostHogProvider } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
@@ -12,6 +13,7 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { data: conf } = useConfig();
   const { setSentry } = useSentryStore();
   const { setTheme } = useCunninghamTheme();
+  const { synchronizeLanguage } = useLanguageSynchronizer();
 
   useEffect(() => {
     if (!conf?.SENTRY_DSN) {
@@ -28,6 +30,10 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
 
     setTheme(conf.FRONTEND_THEME);
   }, [conf?.FRONTEND_THEME, setTheme]);
+
+  useEffect(() => {
+    void synchronizeLanguage();
+  }, [synchronizeLanguage]);
 
   if (!conf) {
     return (
