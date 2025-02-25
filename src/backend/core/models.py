@@ -194,9 +194,11 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
     language = models.CharField(
         max_length=10,
         choices=lazy(lambda: settings.LANGUAGES, tuple)(),
-        default=settings.LANGUAGE_CODE,
+        default=None,
         verbose_name=_("language"),
         help_text=_("The language in which the user wants to see the interface."),
+        null=True,
+        blank=True,
     )
     timezone = TimeZoneField(
         choices_display="WITH_GMT_OFFSET",

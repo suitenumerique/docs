@@ -132,6 +132,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
       full_name: '',
       email: userQuery,
       short_name: '',
+      language: '',
     };
 
     const hasEmailInUsers = users.some((user) => user.email === userQuery);

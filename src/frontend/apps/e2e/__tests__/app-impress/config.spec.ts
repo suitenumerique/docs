@@ -12,8 +12,8 @@ const config = {
   MEDIA_BASE_URL: 'http://localhost:8083',
   LANGUAGES: [
     ['en-us', 'English'],
-    ['fr-fr', 'French'],
-    ['de-de', 'German'],
+    ['fr-fr', 'Français'],
+    ['de-de', 'Deutsch'],
   ],
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
