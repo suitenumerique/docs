@@ -22,6 +22,7 @@ and this project adheres to
 ## Fixed
 
 - ♻️(frontend) improve table pdf rendering
+- 🐛(email) invitation emails in receivers language
 
 ## [2.2.0] - 2025-02-10
 
