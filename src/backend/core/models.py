@@ -874,11 +874,6 @@ class Document(MP_Node, BaseModel):
 
         self.send_email(subject, [email], context, language)
 
-    def delete(self, *args, **kwargs):
-        """Invalidate cache for number of accesses when deleting a document."""
-        super().delete(*args, **kwargs)
-        self.invalidate_nb_accesses_cache()
-
     @transaction.atomic
     def soft_delete(self):
         """
@@ -901,6 +896,11 @@ class Document(MP_Node, BaseModel):
         self.save()
         self.invalidate_nb_accesses_cache()
 
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") - 1
+            )
+
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
             ancestors_deleted_at=self.ancestors_deleted_at
@@ -910,8 +910,10 @@ class Document(MP_Node, BaseModel):
     def restore(self):
         """Cancelling a soft delete with checks."""
         # This should not happen
-        if self.deleted_at is None:
-            raise ValidationError({"deleted_at": [_("This document is not deleted.")]})
+        if self._meta.model.objects.filter(
+            pk=self.pk, deleted_at__isnull=True
+        ).exists():
+            raise RuntimeError("This document is not deleted.")
 
         if self.deleted_at < get_trashbin_cutoff():
             raise RuntimeError(
@@ -940,6 +942,11 @@ class Document(MP_Node, BaseModel):
             models.Q(deleted_at__isnull=False)
             | models.Q(ancestors_deleted_at__lt=current_deleted_at)
         ).update(ancestors_deleted_at=self.ancestors_deleted_at)
+
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") + 1
+            )
 
 
 class LinkTrace(BaseModel):
