@@ -132,7 +132,8 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
-    nb_accesses = serializers.IntegerField(read_only=True)
+    nb_accesses_ancestors = serializers.IntegerField(read_only=True)
+    nb_accesses_direct = serializers.IntegerField(read_only=True)
     user_roles = serializers.SerializerMethodField(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
 
@@ -148,7 +149,8 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
             "numchild",
             "path",
             "title",
@@ -165,7 +167,8 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
             "numchild",
             "path",
             "updated_at",
@@ -217,7 +220,8 @@ class DocumentSerializer(ListDocumentSerializer):
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
             "numchild",
             "path",
             "title",
@@ -233,7 +237,8 @@ class DocumentSerializer(ListDocumentSerializer):
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
             "numchild",
             "path",
             "updated_at",

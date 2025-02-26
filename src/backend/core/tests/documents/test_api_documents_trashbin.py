@@ -105,7 +105,8 @@ def test_api_documents_trashbin_format():
         "excerpt": document.excerpt,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
-        "nb_accesses": 3,
+        "nb_accesses_ancestors": 0,
+        "nb_accesses_direct": 3,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -154,7 +155,7 @@ def test_api_documents_trashbin_authenticated_direct(django_assert_num_queries):
 
     expected_ids = {str(document1.id), str(document2.id), str(document3.id)}
 
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(10):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     with django_assert_num_queries(4):
@@ -196,7 +197,7 @@ def test_api_documents_trashbin_authenticated_via_team(
 
     expected_ids = {str(deleted_document_team1.id), str(deleted_document_team2.id)}
 
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(7):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     with django_assert_num_queries(3):

@@ -64,7 +64,8 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "is_favorite": False,
         "link_reach": "public",
         "link_role": document.link_role,
-        "nb_accesses": 0,
+        "nb_accesses_ancestors": 0,
+        "nb_accesses_direct": 0,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -124,7 +125,8 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "is_favorite": False,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
-        "nb_accesses": 0,
+        "nb_accesses_ancestors": 0,
+        "nb_accesses_direct": 0,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -220,7 +222,8 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "is_favorite": False,
         "link_reach": reach,
         "link_role": document.link_role,
-        "nb_accesses": 0,
+        "nb_accesses_ancestors": 0,
+        "nb_accesses_direct": 0,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -287,7 +290,8 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "is_favorite": False,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
-        "nb_accesses": 0,
+        "nb_accesses_ancestors": 0,
+        "nb_accesses_direct": 0,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -396,7 +400,8 @@ def test_api_documents_retrieve_authenticated_related_direct():
         "is_favorite": False,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
-        "nb_accesses": 2,
+        "nb_accesses_ancestors": 2,
+        "nb_accesses_direct": 2,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -463,7 +468,8 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "is_favorite": False,
         "link_reach": "restricted",
         "link_role": document.link_role,
-        "nb_accesses": 2,
+        "nb_accesses_ancestors": 2,
+        "nb_accesses_direct": 0,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -491,7 +497,8 @@ def test_api_documents_retrieve_authenticated_related_nb_accesses():
         f"/api/v1.0/documents/{document.id!s}/",
     )
     assert response.status_code == 200
-    assert response.json()["nb_accesses"] == 3
+    assert response.json()["nb_accesses_ancestors"] == 3
+    assert response.json()["nb_accesses_direct"] == 1
 
     factories.UserDocumentAccessFactory(document=grand_parent)
 
@@ -499,7 +506,8 @@ def test_api_documents_retrieve_authenticated_related_nb_accesses():
         f"/api/v1.0/documents/{document.id!s}/",
     )
     assert response.status_code == 200
-    assert response.json()["nb_accesses"] == 4
+    assert response.json()["nb_accesses_ancestors"] == 4
+    assert response.json()["nb_accesses_direct"] == 1
 
 
 def test_api_documents_retrieve_authenticated_related_child():
@@ -580,12 +588,10 @@ def test_api_documents_retrieve_authenticated_related_team_members(
     mock_user_teams.return_value = teams
 
     user = factories.UserFactory()
-
     client = APIClient()
     client.force_login(user)
 
     document = factories.DocumentFactory(link_reach="restricted")
-
     factories.TeamDocumentAccessFactory(
         document=document, team="readers", role="reader"
     )
@@ -614,7 +620,8 @@ def test_api_documents_retrieve_authenticated_related_team_members(
         "is_favorite": False,
         "link_reach": "restricted",
         "link_role": document.link_role,
-        "nb_accesses": 5,
+        "nb_accesses_ancestors": 5,
+        "nb_accesses_direct": 5,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -675,7 +682,8 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
         "is_favorite": False,
         "link_reach": "restricted",
         "link_role": document.link_role,
-        "nb_accesses": 5,
+        "nb_accesses_ancestors": 5,
+        "nb_accesses_direct": 5,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -736,7 +744,8 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
         "is_favorite": False,
         "link_reach": "restricted",
         "link_role": document.link_role,
-        "nb_accesses": 5,
+        "nb_accesses_ancestors": 5,
+        "nb_accesses_direct": 5,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -770,7 +779,7 @@ def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
     )
     expected_roles = {access.role for access in accesses}
 
-    with django_assert_max_num_queries(11):
+    with django_assert_max_num_queries(12):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
@@ -787,7 +796,7 @@ def test_api_documents_retrieve_numqueries_with_link_trace(django_assert_num_que
 
     document = factories.DocumentFactory(users=[user], link_traces=[user])
 
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     with django_assert_num_queries(3):
