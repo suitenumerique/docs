@@ -291,7 +291,9 @@ def test_api_documents_attachment_upload_fix_extension(
     match = pattern.search(file_path)
     file_id = match.group(1)
 
+    assert "-unsafe" in file_id
     # Validate that file_id is a valid UUID
+    file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
@@ -340,7 +342,9 @@ def test_api_documents_attachment_upload_unsafe():
     match = pattern.search(file_path)
     file_id = match.group(1)
 
+    assert "-unsafe" in file_id
     # Validate that file_id is a valid UUID
+    file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
@@ -350,3 +354,27 @@ def test_api_documents_attachment_upload_unsafe():
     )
     assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
     assert file_head["ContentType"] == "application/octet-stream"
+
+
+def test_api_documents_attachment_upload_sanitize():
+    """Uploaded files should be sanitized to remove forbidden tags to prevent XSS attacks."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
+
+    file = SimpleUploadedFile(
+        name="script.svg", content=b"<svg><script>alert('XSS')</script>my svg</svg>"
+    )
+    response = client.post(url, {"file": file}, format="multipart")
+
+    assert response.status_code == 201
+
+    file_path = response.json()["file"]
+
+    key = file_path.replace("/media", "")
+    content = default_storage.open(key).read()
+
+    assert content == b'<?xml version="1.0" encoding="utf-8"?>\n<svg>my svg</svg>'

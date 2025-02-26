@@ -3,6 +3,7 @@
 import mimetypes
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +17,7 @@ from core.services.converter_services import (
     ConversionError,
     YdocConverter,
 )
+from core.utils import sanitize_markup
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -426,7 +428,28 @@ class FileUploadSerializer(serializers.Serializer):
         attrs["expected_extension"] = self.context["expected_extension"]
         attrs["is_unsafe"] = self.context["is_unsafe"]
         attrs["content_type"] = self.context["content_type"]
+
+        if attrs["is_unsafe"]:
+            attrs["file"] = self.sanitize_file(attrs["file"], attrs["content_type"])
+
         return attrs
+
+    def sanitize_file(self, file_obj, mime_type):
+        """Sanitize the file content of markup mimetypes."""
+        if mime_type in [
+            "text/html",
+            "image/svg+xml",
+            "application/xhtml+xml",
+            "application/xml",
+        ]:
+            raw_content = file_obj.read()
+            decoded_str = raw_content.decode("utf-8", errors="replace")
+            sanitized_str = sanitize_markup(decoded_str)
+            sanitized_bytes = sanitized_str.encode("utf-8")
+            file_obj = ContentFile(sanitized_bytes, name=file_obj.name)
+
+        file_obj.seek(0)
+        return file_obj
 
 
 class TemplateSerializer(BaseResourceSerializer):

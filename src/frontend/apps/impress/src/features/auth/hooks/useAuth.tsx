@@ -30,5 +30,10 @@ export const useAuth = () => {
     }
   }, [user, replace]);
 
-  return { user, authenticated: !!user, pathAllowed, ...authStates };
+  return {
+    user,
+    authenticated: !!user && authStates.isSuccess,
+    pathAllowed,
+    ...authStates,
+  };
 };

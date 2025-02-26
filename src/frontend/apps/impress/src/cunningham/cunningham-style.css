@@ -310,7 +310,7 @@ input:-webkit-autofill:focus {
 }
 
 /**
- * Others
+ * Checkbox
 */
 .c__checkbox:focus-within {
   border-color: transparent;
@@ -608,4 +608,23 @@ input:-webkit-autofill:focus {
 */
 .c__tooltip {
   padding: 4px 6px;
+}
+
+/**
+ * Alert
+*/
+.c__alert--error {
+  background-color: var(--c--components--alert--error--background-color);
+  border-left-color: var(--c--components--alert--error--border-left-color);
+}
+
+.c__alert--error .c__button--tertiary {
+  background-color: var(--c--components--alert--error--close--background-color);
+  color: var(--c--components--alert--error--close--color);
+}
+
+.c__alert.c__alert--error .c__button--tertiary:hover {
+  background-color: var(
+    --c--components--alert--error--close--background-color-hover
+  );
 }

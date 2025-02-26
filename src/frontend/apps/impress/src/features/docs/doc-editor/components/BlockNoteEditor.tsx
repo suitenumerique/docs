@@ -105,6 +105,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       dictionary: locales[lang as keyof typeof locales] as Dictionary,
       uploadFile,
       schema: blockNoteSchema,
+      // resolveFileUrl: (fileId) => {
+      //   console.log('fileId', fileId);
+      //   return Promise.resolve(false);
+      //   //return `/api/docs/${doc.id}/attachments/${fileId}`;
+      // },
     },
     [collabName, lang, provider, uploadFile],
   );
