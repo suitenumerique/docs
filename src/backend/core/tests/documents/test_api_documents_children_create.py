@@ -2,6 +2,7 @@
 Tests for Documents API endpoint in impress's core app: children create
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
 import pytest
@@ -249,3 +250,41 @@ def test_api_documents_children_create_force_id_existing():
     assert response.json() == {
         "id": ["A document with this ID already exists. You cannot override it."]
     }
+
+
+@pytest.mark.django_db(transaction=True)
+def test_api_documents_create_document_children_race_condition():
+    """
+    It should be possible to create several documents at the same time
+    without causing any race conditions or data integrity issues.
+    """
+
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(user=user, document=document, role="owner")
+
+    def create_document():
+        return client.post(
+            f"/api/v1.0/documents/{document.id}/children/",
+            {
+                "title": "my child",
+            },
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future1 = executor.submit(create_document)
+        future2 = executor.submit(create_document)
+
+        response1 = future1.result()
+        response2 = future2.result()
+
+        assert response1.status_code == 201
+        assert response2.status_code == 201
+
+        document.refresh_from_db()
+        assert document.numchild == 2
