@@ -1,6 +1,7 @@
 """
 Unit tests for the Document model
 """
+# pylint: disable=too-many-lines
 
 import random
 import smtplib
@@ -819,40 +820,89 @@ def test_models_documents__email_invitation__failed(mock_logger, _mock_send_mail
 # Document number of accesses
 
 
-def test_models_documents_nb_accesses_cache_is_set_and_retrieved(
+def test_models_documents_nb_accesses_cache_is_set_and_retrieved_ancestors(
     django_assert_num_queries,
 ):
-    """Test that nb_accesses is cached after the first computation."""
-    document = factories.DocumentFactory()
+    """Test that nb_accesses is cached when calling nb_accesses_ancestors."""
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
     key = f"document_{document.id!s}_nb_accesses"
-    nb_accesses = random.randint(1, 4)
-    factories.UserDocumentAccessFactory.create_batch(nb_accesses, document=document)
+    nb_accesses_parent = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_parent, document=parent
+    )
+    nb_accesses_direct = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_direct, document=document
+    )
     factories.UserDocumentAccessFactory()  # An unrelated access should not be counted
 
     # Initially, the nb_accesses should not be cached
     assert cache.get(key) is None
 
     # Compute the nb_accesses for the first time (this should set the cache)
-    with django_assert_num_queries(1):
-        assert document.nb_accesses == nb_accesses
+    nb_accesses_ancestors = nb_accesses_parent + nb_accesses_direct
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_ancestors == nb_accesses_ancestors
 
     # Ensure that the nb_accesses is now cached
     with django_assert_num_queries(0):
-        assert document.nb_accesses == nb_accesses
-    assert cache.get(key) == nb_accesses
+        assert document.nb_accesses_ancestors == nb_accesses_ancestors
+    assert cache.get(key) == (nb_accesses_direct, nb_accesses_ancestors)
 
     # The cache value should be invalidated when a document access is created
     models.DocumentAccess.objects.create(
         document=document, user=factories.UserFactory(), role="reader"
     )
     assert cache.get(key) is None  # Cache should be invalidated
-    with django_assert_num_queries(1):
-        new_nb_accesses = document.nb_accesses
-    assert new_nb_accesses == nb_accesses + 1
-    assert cache.get(key) == new_nb_accesses  # Cache should now contain the new value
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_ancestors == nb_accesses_ancestors + 1
+    assert cache.get(key) == (nb_accesses_direct + 1, nb_accesses_ancestors + 1)
 
 
+def test_models_documents_nb_accesses_cache_is_set_and_retrieved_direct(
+    django_assert_num_queries,
+):
+    """Test that nb_accesses is cached when calling nb_accesses_direct."""
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
+    key = f"document_{document.id!s}_nb_accesses"
+    nb_accesses_parent = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_parent, document=parent
+    )
+    nb_accesses_direct = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_direct, document=document
+    )
+    factories.UserDocumentAccessFactory()  # An unrelated access should not be counted
+
+    # Initially, the nb_accesses should not be cached
+    assert cache.get(key) is None
+
+    # Compute the nb_accesses for the first time (this should set the cache)
+    nb_accesses_ancestors = nb_accesses_parent + nb_accesses_direct
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_direct == nb_accesses_direct
+
+    # Ensure that the nb_accesses is now cached
+    with django_assert_num_queries(0):
+        assert document.nb_accesses_direct == nb_accesses_direct
+    assert cache.get(key) == (nb_accesses_direct, nb_accesses_ancestors)
+
+    # The cache value should be invalidated when a document access is created
+    models.DocumentAccess.objects.create(
+        document=document, user=factories.UserFactory(), role="reader"
+    )
+    assert cache.get(key) is None  # Cache should be invalidated
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_direct == nb_accesses_direct + 1
+    assert cache.get(key) == (nb_accesses_direct + 1, nb_accesses_ancestors + 1)
+
+
+@pytest.mark.parametrize("field", ["nb_accesses_ancestors", "nb_accesses_direct"])
 def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
+    field,
     django_assert_num_queries,
 ):
     """Test that the cache is invalidated when a document access is deleted."""
@@ -861,18 +911,76 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
     access = factories.UserDocumentAccessFactory(document=document)
 
     # Initially, the nb_accesses should be cached
-    assert document.nb_accesses == 1
-    assert cache.get(key) == 1
+    assert getattr(document, field) == 1
+    assert cache.get(key) == (1, 1)
 
     # Remove the access and check if cache is invalidated
     access.delete()
     assert cache.get(key) is None  # Cache should be invalidated
 
     # Recompute the nb_accesses (this should trigger a cache set)
-    with django_assert_num_queries(1):
-        new_nb_accesses = document.nb_accesses
+    with django_assert_num_queries(2):
+        new_nb_accesses = getattr(document, field)
     assert new_nb_accesses == 0
-    assert cache.get(key) == 0  # Cache should now contain the new value
+    assert cache.get(key) == (0, 0)  # Cache should now contain the new value
+
+
+@pytest.mark.parametrize("field", ["nb_accesses_ancestors", "nb_accesses_direct"])
+def test_models_documents_nb_accesses_cache_is_invalidated_on_document_soft_delete_restore(
+    field,
+    django_assert_num_queries,
+):
+    """Test that the cache is invalidated when a document access is deleted."""
+    document = factories.DocumentFactory()
+    key = f"document_{document.id!s}_nb_accesses"
+    factories.UserDocumentAccessFactory(document=document)
+
+    # Initially, the nb_accesses should be cached
+    assert getattr(document, field) == 1
+    assert cache.get(key) == (1, 1)
+
+    # Soft delete the document and check if cache is invalidated
+    document.soft_delete()
+    assert cache.get(key) is None  # Cache should be invalidated
+
+    # Recompute the nb_accesses (this should trigger a cache set)
+    with django_assert_num_queries(2):
+        new_nb_accesses = getattr(document, field)
+    assert new_nb_accesses == (1 if field == "nb_accesses_direct" else 0)
+    assert cache.get(key) == (1, 0)  # Cache should now contain the new value
+
+    document.restore()
+
+    # Recompute the nb_accesses (this should trigger a cache set)
+    with django_assert_num_queries(2):
+        new_nb_accesses = getattr(document, field)
+    assert new_nb_accesses == 1
+    assert cache.get(key) == (1, 1)  # Cache should now contain the new value
+
+
+def test_models_documents_nb_accesses_cache_is_invalidated_on_document_delete(
+    django_assert_num_queries,
+):
+    """Test that the cache is invalidated when a document is deleted."""
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
+    key = f"document_{document.id!s}_nb_accesses"
+    factories.UserDocumentAccessFactory(document=parent)
+
+    # Initially, the nb_accesses should be cached
+    assert document.nb_accesses_ancestors == 1
+    assert document.nb_accesses_direct == 0
+    assert cache.get(key) == (0, 1)
+
+    # Delete the parent and check if cache is invalidated
+    parent.delete()
+    assert cache.get(key) is None  # Cache should be invalidated
+
+    # Recompute the nb_accesses (this should trigger a cache set)
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_ancestors == 0
+        assert document.nb_accesses_direct == 0
+    assert cache.get(key) == (0, 0)  # Cache should now contain the new value
 
 
 def test_models_documents_restore(django_assert_num_queries):

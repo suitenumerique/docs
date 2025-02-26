@@ -12,7 +12,7 @@ def test_api_document_favorite_list_anonymous():
     """Anonymous users should receive a 401 error."""
     client = APIClient()
 
-    response = client.get(f"/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorite_list/")
 
     assert response.status_code == 401
 
@@ -23,7 +23,7 @@ def test_api_document_favorite_list_authenticated_no_favorite():
     client = APIClient()
     client.force_login(user)
 
-    response = client.get(f"/api/v1.0/documents/favorite_list/")
+    response = client.get("/api/v1.0/documents/favorite_list/")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -65,9 +65,11 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "depth": document.depth,
                 "excerpt": document.excerpt,
                 "id": str(document.id),
+                "is_favorite": True,
                 "link_reach": document.link_reach,
                 "link_role": document.link_role,
-                "nb_accesses": document.nb_accesses,
+                "nb_accesses_ancestors": 1,
+                "nb_accesses_direct": 1,
                 "numchild": document.numchild,
                 "path": document.path,
                 "title": document.title,
