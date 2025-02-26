@@ -26,6 +26,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "boto3==1.36.7",
+    "beautifulsoup4==4.13.3",
     "Brotli==1.1.0",
     "celery[redis]==5.4.0",
     "django-configurations==2.5.1",
@@ -46,6 +47,7 @@ dependencies = [
     "factory_boy==3.3.1",
     "gunicorn==23.0.0",
     "jsonschema==4.23.0",
+    "lxml==5.3.1",
     "markdown==3.7",
     "nested-multipart-parser==1.5.0",
     "openai==1.60.2",
