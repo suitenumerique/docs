@@ -41,7 +41,7 @@ UUID_REGEX = (
 FILE_EXT_REGEX = r"\.[a-zA-Z0-9]{1,10}"
 MEDIA_STORAGE_URL_PATTERN = re.compile(
     f"{settings.MEDIA_URL:s}(?P<pk>{UUID_REGEX:s})/"
-    f"(?P<key>{ATTACHMENTS_FOLDER:s}/{UUID_REGEX:s}{FILE_EXT_REGEX:s})$"
+    f"(?P<key>{ATTACHMENTS_FOLDER:s}/{UUID_REGEX:s}(?:-unsafe)?{FILE_EXT_REGEX:s})$"
 )
 COLLABORATION_WS_URL_PATTERN = re.compile(rf"(?:^|&)room=(?P<pk>{UUID_REGEX})(?:&|$)")
 
@@ -915,15 +915,18 @@ class DocumentViewSet(
         # Generate a generic yet unique filename to store the image in object storage
         file_id = uuid.uuid4()
         extension = serializer.validated_data["expected_extension"]
-        key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}.{extension:s}"
 
         # Prepare metadata for storage
         extra_args = {
             "Metadata": {"owner": str(request.user.id)},
             "ContentType": serializer.validated_data["content_type"],
         }
+        file_unsafe = ""
         if serializer.validated_data["is_unsafe"]:
             extra_args["Metadata"]["is_unsafe"] = "true"
+            file_unsafe = "-unsafe"
+
+        key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}{file_unsafe}.{extension:s}"
 
         file = serializer.validated_data["file"]
         default_storage.connection.meta.client.upload_fileobj(
