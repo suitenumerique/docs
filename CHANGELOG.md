@@ -11,6 +11,7 @@ and this project adheres to
 ## Added
 
 - 💄(frontend) add error pages #643
+✨(frontend) add open source section homepage #666
 
 ## Changed
 

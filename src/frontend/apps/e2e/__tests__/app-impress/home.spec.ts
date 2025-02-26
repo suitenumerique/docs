@@ -26,6 +26,7 @@ test.describe('Home page', () => {
 
     // Check the titles
     const h2 = page.locator('h2');
+    await expect(h2.getByText('Govs ❤️ Open Source.')).toBeVisible();
     await expect(
       h2.getByText('Collaborative writing, Simplified.'),
     ).toBeVisible();
