@@ -927,29 +927,78 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_document_soft_dele
     assert cache.get(key) == (1, 1)  # Cache should now contain the new value
 
 
-def test_models_documents_nb_accesses_cache_is_invalidated_on_document_delete(
-    django_assert_num_queries,
-):
-    """Test that the cache is invalidated when a document is deleted."""
-    parent = factories.DocumentFactory()
-    document = factories.DocumentFactory(parent=parent)
-    key = f"document_{document.id!s}_nb_accesses"
-    factories.UserDocumentAccessFactory(document=parent)
+def test_models_documents_numchild_deleted_from_instance():
+    """the "numchild" field should not include documents deleted from the instance."""
+    document = factories.DocumentFactory()
+    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
+    assert document.numchild == 2
 
-    # Initially, the nb_accesses should be cached
-    assert document.nb_accesses_ancestors == 1
-    assert document.nb_accesses_direct == 0
-    assert cache.get(key) == (0, 1)
+    child1.delete()
 
-    # Delete the parent and check if cache is invalidated
-    parent.delete()
-    assert cache.get(key) is None  # Cache should be invalidated
+    document.refresh_from_db()
+    assert document.numchild == 1
 
-    # Recompute the nb_accesses (this should trigger a cache set)
-    with django_assert_num_queries(2):
-        assert document.nb_accesses_ancestors == 0
-        assert document.nb_accesses_direct == 0
-    assert cache.get(key) == (0, 0)  # Cache should now contain the new value
+
+def test_models_documents_numchild_deleted_from_queryset():
+    """the "numchild" field should not include documents deleted from a queryset."""
+    document = factories.DocumentFactory()
+    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
+    assert document.numchild == 2
+
+    models.Document.objects.filter(pk=child1.pk).delete()
+
+    document.refresh_from_db()
+    assert document.numchild == 1
+
+
+def test_models_documents_numchild_soft_deleted_and_restore():
+    """the "numchild" field should not include soft deleted documents."""
+    document = factories.DocumentFactory()
+    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
+
+    assert document.numchild == 2
+
+    child1.soft_delete()
+
+    document.refresh_from_db()
+    assert document.numchild == 1
+
+    child1.restore()
+
+    document.refresh_from_db()
+    assert document.numchild == 2
+
+
+def test_models_documents_soft_delete_tempering_with_instance():
+    """
+    Soft deleting should fail if the document is already deleted in database even though the
+    instance "deleted_at" attributes where tempered with.
+    """
+    document = factories.DocumentFactory()
+    document.soft_delete()
+
+    document.deleted_at = None
+    document.ancestors_deleted_at = None
+    with pytest.raises(
+        RuntimeError, match="This document is already deleted or has deleted ancestors."
+    ):
+        document.soft_delete()
+
+
+def test_models_documents_restore_tempering_with_instance():
+    """
+    Soft deleting should fail if the document is already deleted in database even though the
+    instance "deleted_at" attributes where tempered with.
+    """
+    document = factories.DocumentFactory()
+
+    if random.choice([False, True]):
+        document.deleted_at = timezone.now()
+    else:
+        document.ancestors_deleted_at = timezone.now()
+
+    with pytest.raises(RuntimeError, match="This document is not deleted."):
+        document.restore()
 
 
 @pytest.mark.parametrize(

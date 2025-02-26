@@ -867,31 +867,30 @@ class Document(MP_Node, BaseModel):
 
         self.send_email(subject, [email], context, language)
 
-    def delete(self, *args, **kwargs):
-        """Invalidate cache for number of accesses when deleting a document."""
-        super().delete(*args, **kwargs)
-        self.invalidate_nb_accesses_cache()
-
     @transaction.atomic
     def soft_delete(self):
         """
         Soft delete the document, marking the deletion on descendants.
         We still keep the .delete() method untouched for programmatic purposes.
         """
-        if self.deleted_at or self.ancestors_deleted_at:
-            raise RuntimeError(
-                "This document is already deleted or has deleted ancestors."
-            )
-
-        # Check if any ancestors are deleted
-        if self.get_ancestors().filter(deleted_at__isnull=False).exists():
-            raise RuntimeError(
-                "Cannot delete this document because one or more ancestors are already deleted."
-            )
+        if (
+            self._meta.model.objects.filter(
+                models.Q(deleted_at__isnull=False)
+                | models.Q(ancestors_deleted_at__isnull=False),
+                pk=self.pk,
+            ).exists()
+            or self.get_ancestors().filter(deleted_at__isnull=False).exists()
+        ):
+            raise RuntimeError("This document is already deleted or has deleted ancestors.")
 
         self.ancestors_deleted_at = self.deleted_at = timezone.now()
         self.save()
         self.invalidate_nb_accesses_cache()
+
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") - 1
+            )
 
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
@@ -902,19 +901,13 @@ class Document(MP_Node, BaseModel):
     def restore(self):
         """Cancelling a soft delete with checks."""
         # This should not happen
-        if self.deleted_at is None:
-            raise ValidationError({"deleted_at": [_("This document is not deleted.")]})
+        if self._meta.model.objects.filter(
+            pk=self.pk, deleted_at__isnull=True
+        ).exists():
+            raise RuntimeError("This document is not deleted.")
 
         if self.deleted_at < get_trashbin_cutoff():
-            raise ValidationError(
-                {
-                    "deleted_at": [
-                        _(
-                            "This document was permanently deleted and cannot be restored."
-                        )
-                    ]
-                }
-            )
+            raise RuntimeError("This document was permanently deleted and cannot be restored.")
 
         # Restore the current document
         self.deleted_at = None
@@ -929,8 +922,13 @@ class Document(MP_Node, BaseModel):
         self.save()
         self.invalidate_nb_accesses_cache()
 
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") + 1
+            )
+
         # Update descendants excluding those who were deleted prior to the deletion of the
-        # current document (the ancestor_deleted_at date for those should already by good)
+        # current document (the ancestor_deleted_at date for those should already be good)
         # The number of deleted descendants should not be too big so we can handcraft a union
         # clause for them:
         deleted_descendants_paths = (
