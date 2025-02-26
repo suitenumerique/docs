@@ -1,6 +1,6 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, fetchAPI } from '@/api';
+import { APIError, errorCauses, fetchAPI } from '@/api';
 
 import { User } from './types';
 
@@ -17,7 +17,10 @@ import { User } from './types';
 export const getMe = async (): Promise<User> => {
   const response = await fetchAPI(`users/me/`);
   if (!response.ok) {
-    throw new Error(`Couldn't fetch user data: ${response.statusText}`);
+    throw new APIError(
+      `Couldn't fetch user data: ${response.statusText}`,
+      await errorCauses(response),
+    );
   }
   return response.json() as Promise<User>;
 };

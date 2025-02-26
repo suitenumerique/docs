@@ -22,7 +22,7 @@ services:
       - "1081:1080"
 
   minio:
-    user: ${DOCKER_USER:-1000}
+    # user: ${DOCKER_USER:-1000}
     image: minio/minio
     environment:
       - MINIO_ROOT_USER=impress
