@@ -59,6 +59,14 @@ jobs:
       -
         name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Checkout custom code repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'AntoLC/docs-customized'
+          ref: 'main'
+          path: docs-custom
+
       -
         name: Docker meta
         id: meta
@@ -76,7 +84,7 @@ jobs:
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
-          docker-build-args: '-f src/frontend/Dockerfile --target frontend-production'
+          docker-build-args: '-f src/frontend/Dockerfile --target frontend-production --build-arg CUSTOM_CODE=docs-custom'
           docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
       -
         name: Build and push
@@ -87,6 +95,7 @@ jobs:
           target: frontend-production
           build-args: |
             DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+            CUSTOM_CODE=docs-custom
             PUBLISH_AS_MIT=false
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
