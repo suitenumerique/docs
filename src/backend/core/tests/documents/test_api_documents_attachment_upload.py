@@ -291,7 +291,9 @@ def test_api_documents_attachment_upload_fix_extension(
     match = pattern.search(file_path)
     file_id = match.group(1)
 
+    assert "-unsafe" in file_id
     # Validate that file_id is a valid UUID
+    file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
@@ -340,7 +342,9 @@ def test_api_documents_attachment_upload_unsafe():
     match = pattern.search(file_path)
     file_id = match.group(1)
 
+    assert "-unsafe" in file_id
     # Validate that file_id is a valid UUID
+    file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
