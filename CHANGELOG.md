@@ -23,6 +23,10 @@ and this project adheres to
 
 - ♻️(frontend) improve table pdf rendering
 
+## Fixed
+
+- 🐛(backend) race condition create doc #633
+
 ## [2.2.0] - 2025-02-10
 
 ## Added
