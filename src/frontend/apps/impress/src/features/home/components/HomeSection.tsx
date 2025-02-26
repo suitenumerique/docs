@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
+import { Box, BoxType, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useResponsiveStore } from '@/stores';
 
@@ -18,10 +18,12 @@ export type HomeSectionProps = {
   reverse?: boolean;
   textWidth?: string;
   video?: string;
+  $css?: BoxType['$css'];
 };
 
 export const HomeSection = ({
   availableSoon = false,
+  $css,
   description,
   illustration,
   isSmallDevice,
@@ -89,6 +91,7 @@ export const HomeSection = ({
       $hasTransition="slow"
       $css={css`
         opacity: ${isVisible ? 1 : 0};
+        ${$css}
       `}
     >
       <Box
@@ -122,7 +125,11 @@ export const HomeSection = ({
           >
             {title}
           </Text>
-          <Text $variation="700" $weight="400" $size="md">
+          <Text
+            $variation="700"
+            $weight="400"
+            $size={isSmallMobile ? 'ml' : 'md'}
+          >
             {description}
           </Text>
         </Box>

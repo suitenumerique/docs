@@ -12,6 +12,7 @@ and this project adheres to
 
 - 💄(frontend) add error pages #643
 - ✨(frontend) Custom block quote with export #646
+- ✨(frontend) add open source section homepage #666
 
 ## Changed
 
