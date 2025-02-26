@@ -10,6 +10,10 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) limit link reach/role select options depending on ancestors #645
+- ✨(backend) add new "descendants" action to document API endpoint #645
+- ✨(backend) new "tree" action on document detail endpoint #645
+- ✨(backend) allow forcing page size within limits #645
 - 💄(frontend) add error pages #643
 
 ## Changed
@@ -22,6 +26,7 @@ and this project adheres to
 ## Fixed
 
 - ♻️(frontend) improve table pdf rendering
+- 🐛(backend) refactor to fix filtering on children and descendants views #645
 
 ## [2.2.0] - 2025-02-10
 

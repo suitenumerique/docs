@@ -6,6 +6,7 @@ Declare and configure the models for the impress core application
 import hashlib
 import smtplib
 import uuid
+from collections import defaultdict
 from datetime import timedelta
 from logging import getLogger
 
@@ -29,7 +30,7 @@ from django.utils.translation import gettext_lazy as _
 from botocore.exceptions import ClientError
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
-from treebeard.mp_tree import MP_Node
+from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
 logger = getLogger(__name__)
 
@@ -79,6 +80,55 @@ class LinkReachChoices(models.TextChoices):
         _("Authenticated"),
     )  # Any authenticated user can access the document
     PUBLIC = "public", _("Public")  # Even anonymous users can access the document
+
+    @classmethod
+    def get_select_options(cls, ancestors_links):
+        """
+        Determines the valid select options for link reach and link role depending on the
+        list of ancestors' link reach/role.
+
+        Args:
+            ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
+                             representing the reach and role of ancestors links.
+
+        Returns:
+            Dictionary mapping possible reach levels to their corresponding possible roles.
+        """
+        # If no ancestors, return all options
+        if not ancestors_links:
+            return {reach: LinkRoleChoices.values for reach in cls.values}
+
+        # Initialize result with all possible reaches and role options as sets
+        result = {reach: set(LinkRoleChoices.values) for reach in cls.values}
+
+        # Group roles by reach level
+        reach_roles = defaultdict(set)
+        for link in ancestors_links:
+            reach_roles[link["link_reach"]].add(link["link_role"])
+
+        # Apply constraints based on ancestor links
+        if LinkRoleChoices.EDITOR in reach_roles[cls.RESTRICTED]:
+            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+
+        if LinkRoleChoices.EDITOR in reach_roles[cls.AUTHENTICATED]:
+            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.pop(cls.RESTRICTED, None)
+        elif LinkRoleChoices.READER in reach_roles[cls.AUTHENTICATED]:
+            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+
+        if LinkRoleChoices.EDITOR in reach_roles[cls.PUBLIC]:
+            result[cls.PUBLIC].discard(LinkRoleChoices.READER)
+            result.pop(cls.AUTHENTICATED, None)
+            result.pop(cls.RESTRICTED, None)
+        elif LinkRoleChoices.READER in reach_roles[cls.PUBLIC]:
+            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.get(cls.RESTRICTED, set()).discard(LinkRoleChoices.READER)
+
+        # Convert roles sets to lists while maintaining the order from LinkRoleChoices
+        for reach, roles in result.items():
+            result[reach] = [role for role in LinkRoleChoices.values if role in roles]
+
+        return result
 
 
 class DuplicateEmailError(Exception):
@@ -367,6 +417,51 @@ class BaseAccess(BaseModel):
         }
 
 
+class DocumentQuerySet(MP_NodeQuerySet):
+    """
+    Custom queryset for the Document model, providing additional methods
+    to filter documents based on user permissions.
+    """
+
+    def readable_per_se(self, user):
+        """
+        Filters the queryset to return documents that the given user has
+        permission to read.
+        :param user: The user for whom readable documents are to be fetched.
+        :return: A queryset of documents readable by the user.
+        """
+        if user.is_authenticated:
+            return self.filter(
+                models.Q(accesses__user=user)
+                | models.Q(accesses__team__in=user.teams)
+                | ~models.Q(link_reach=LinkReachChoices.RESTRICTED)
+            )
+
+        return self.filter(link_reach=LinkReachChoices.PUBLIC)
+
+
+class DocumentManager(MP_NodeManager):
+    """
+    Custom manager for the Document model, enabling the use of the custom
+    queryset methods directly from the model manager.
+    """
+
+    def get_queryset(self):
+        """
+        Overrides the default get_queryset method to return a custom queryset.
+        :return: An instance of DocumentQuerySet.
+        """
+        return DocumentQuerySet(self.model, using=self._db)
+
+    def readable_per_se(self, user):
+        """
+        Filters documents based on user permissions using the custom queryset.
+        :param user: The user for whom readable documents are to be fetched.
+        :return: A queryset of documents readable by the user.
+        """
+        return self.get_queryset().readable_per_se(user)
+
+
 class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
@@ -398,6 +493,8 @@ class Document(MP_Node, BaseModel):
     node_order_by = []  # Manual ordering
 
     path = models.CharField(max_length=7 * 36, unique=True, db_collation="C")
+
+    objects = DocumentManager()
 
     class Meta:
         db_table = "impress_document"
@@ -555,24 +652,47 @@ class Document(MP_Node, BaseModel):
         """Generate a unique cache key for each document."""
         return f"document_{self.id!s}_nb_accesses"
 
-    @property
-    def nb_accesses(self):
-        """Calculate the number of accesses."""
+    def get_nb_accesses(self):
+        """
+        Calculate the number of accesses:
+        - directly attached to the document
+        - attached to any of the document's ancestors
+        """
         cache_key = self.get_nb_accesses_cache_key()
         nb_accesses = cache.get(cache_key)
 
         if nb_accesses is None:
-            nb_accesses = DocumentAccess.objects.filter(
-                document__path=Left(models.Value(self.path), Length("document__path")),
-            ).count()
+            nb_accesses = (
+                DocumentAccess.objects.filter(document=self).count(),
+                DocumentAccess.objects.filter(
+                    document__path=Left(
+                        models.Value(self.path), Length("document__path")
+                    ),
+                    document__ancestors_deleted_at__isnull=True,
+                ).count(),
+            )
             cache.set(cache_key, nb_accesses)
 
         return nb_accesses
 
+    @property
+    def nb_accesses_direct(self):
+        """Returns the number of accesses related to the document or one of its ancestors."""
+        return self.get_nb_accesses()[0]
+
+    @property
+    def nb_accesses_ancestors(self):
+        """Returns the number of accesses related to the document or one of its ancestors."""
+        return self.get_nb_accesses()[1]
+
     def invalidate_nb_accesses_cache(self):
         """
         Invalidate the cache for number of accesses, including on affected descendants.
+        Args:
+            path: can optionally be passed as argument (useful when invalidating cache for a
+                document we just deleted)
         """
+
         for document in Document.objects.filter(path__startswith=self.path).only("id"):
             cache_key = document.get_nb_accesses_cache_key()
             cache.delete(cache_key)
@@ -596,25 +716,27 @@ class Document(MP_Node, BaseModel):
                 roles = []
         return roles
 
-    @cached_property
-    def links_definitions(self):
+    def get_links_definitions(self, ancestors_links):
         """Get links reach/role definitions for the current document and its ancestors."""
-        links_definitions = {self.link_reach: {self.link_role}}
 
-        # Ancestors links definitions are only interesting if the document is not the highest
-        # ancestor to which the current user has access. Look for the annotation:
-        if self.depth > 1 and not getattr(self, "is_highest_ancestor_for_user", False):
-            for ancestor in self.get_ancestors().values("link_reach", "link_role"):
-                links_definitions.setdefault(ancestor["link_reach"], set()).add(
-                    ancestor["link_role"]
-                )
+        links_definitions = defaultdict(set)
+        links_definitions[self.link_reach].add(self.link_role)
 
-        return links_definitions
+        # Merge ancestor link definitions
+        for ancestor in ancestors_links:
+            links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
 
-    def get_abilities(self, user):
+        return dict(links_definitions)  # Convert defaultdict back to a normal dict
+
+    def get_abilities(self, user, ancestors_links=None):
         """
         Compute and return abilities for a given user on the document.
         """
+        if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
+            ancestors_links = []
+        elif ancestors_links is None:
+            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
+
         roles = set(
             self.get_roles(user)
         )  # at this point only roles based on specific access
@@ -634,9 +756,7 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         # Add roles provided by the document link, taking into account its ancestors
-
-        # Add roles provided by the document link
-        links_definitions = self.links_definitions
+        links_definitions = self.get_links_definitions(ancestors_links)
         public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
         authenticated_roles = (
             links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
@@ -671,6 +791,7 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_update and user.is_authenticated,
             "collaboration_auth": can_get,
+            "descendants": can_get,
             "destroy": is_owner,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
@@ -680,6 +801,8 @@ class Document(MP_Node, BaseModel):
             "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
+            "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
+            "tree": can_get,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
@@ -750,19 +873,26 @@ class Document(MP_Node, BaseModel):
         Soft delete the document, marking the deletion on descendants.
         We still keep the .delete() method untouched for programmatic purposes.
         """
-        if self.deleted_at or self.ancestors_deleted_at:
+        if (
+            self._meta.model.objects.filter(
+                models.Q(deleted_at__isnull=False)
+                | models.Q(ancestors_deleted_at__isnull=False),
+                pk=self.pk,
+            ).exists()
+            or self.get_ancestors().filter(deleted_at__isnull=False).exists()
+        ):
             raise RuntimeError(
-                "This document is already deleted or has deleted ancestors."
-            )
-
-        # Check if any ancestors are deleted
-        if self.get_ancestors().filter(deleted_at__isnull=False).exists():
-            raise RuntimeError(
-                "Cannot delete this document because one or more ancestors are already deleted."
+                _("This document is already deleted or has deleted ancestors.")
             )
 
         self.ancestors_deleted_at = self.deleted_at = timezone.now()
         self.save()
+        self.invalidate_nb_accesses_cache()
+
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") - 1
+            )
 
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
@@ -773,18 +903,14 @@ class Document(MP_Node, BaseModel):
     def restore(self):
         """Cancelling a soft delete with checks."""
         # This should not happen
-        if self.deleted_at is None:
-            raise ValidationError({"deleted_at": [_("This document is not deleted.")]})
+        if self._meta.model.objects.filter(
+            pk=self.pk, deleted_at__isnull=True
+        ).exists():
+            raise RuntimeError(_("This document is not deleted."))
 
         if self.deleted_at < get_trashbin_cutoff():
-            raise ValidationError(
-                {
-                    "deleted_at": [
-                        _(
-                            "This document was permanently deleted and cannot be restored."
-                        )
-                    ]
-                }
+            raise RuntimeError(
+                _("This document was permanently deleted and cannot be restored.")
             )
 
         # Restore the current document
@@ -798,9 +924,15 @@ class Document(MP_Node, BaseModel):
         )
         self.ancestors_deleted_at = min(ancestors_deleted_at, default=None)
         self.save()
+        self.invalidate_nb_accesses_cache()
+
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") + 1
+            )
 
         # Update descendants excluding those who were deleted prior to the deletion of the
-        # current document (the ancestor_deleted_at date for those should already by good)
+        # current document (the ancestor_deleted_at date for those should already be good)
         # The number of deleted descendants should not be too big so we can handcraft a union
         # clause for them:
         deleted_descendants_paths = (

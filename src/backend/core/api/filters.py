@@ -12,14 +12,25 @@ class DocumentFilter(django_filters.FilterSet):
     Custom filter for filtering documents.
     """
 
+    title = django_filters.CharFilter(
+        field_name="title", lookup_expr="icontains", label=_("Title")
+    )
+
+    class Meta:
+        model = models.Document
+        fields = ["title"]
+
+
+class ListDocumentFilter(DocumentFilter):
+    """
+    Custom filter for filtering documents.
+    """
+
     is_creator_me = django_filters.BooleanFilter(
         method="filter_is_creator_me", label=_("Creator is me")
     )
     is_favorite = django_filters.BooleanFilter(
         method="filter_is_favorite", label=_("Favorite")
-    )
-    title = django_filters.CharFilter(
-        field_name="title", lookup_expr="icontains", label=_("Title")
     )
 
     class Meta:
