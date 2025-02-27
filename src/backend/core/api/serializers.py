@@ -418,6 +418,7 @@ class FileUploadSerializer(serializers.Serializer):
 
         self.context["expected_extension"] = extension
         self.context["content_type"] = magic_mime_type
+        self.context["file_name"] = file.name
 
         return file
 
@@ -426,6 +427,7 @@ class FileUploadSerializer(serializers.Serializer):
         attrs["expected_extension"] = self.context["expected_extension"]
         attrs["is_unsafe"] = self.context["is_unsafe"]
         attrs["content_type"] = self.context["content_type"]
+        attrs["file_name"] = self.context["file_name"]
         return attrs
 
 

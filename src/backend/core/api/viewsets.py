@@ -928,6 +928,19 @@ class DocumentViewSet(
 
         key = f"{document.key_base}/{ATTACHMENTS_FOLDER:s}/{file_id!s}{file_unsafe}.{extension:s}"
 
+        file_name = serializer.validated_data["file_name"]
+        if (
+            not serializer.validated_data["content_type"].startswith("image/")
+            or serializer.validated_data["is_unsafe"]
+        ):
+            extra_args.update(
+                {"ContentDisposition": f'attachment; filename="{file_name:s}"'}
+            )
+        else:
+            extra_args.update(
+                {"ContentDisposition": f'inline; filename="{file_name:s}"'}
+            )
+
         file = serializer.validated_data["file"]
         default_storage.connection.meta.client.upload_fileobj(
             file, default_storage.bucket_name, key, ExtraArgs=extra_args
