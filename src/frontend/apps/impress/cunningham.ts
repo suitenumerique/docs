@@ -357,6 +357,15 @@ const config = {
       components: {
         alert: {
           'border-radius': '0',
+          error: {
+            'background-color': 'var(--c--theme--colors--danger-100)',
+            'border-left-color': 'var(--c--theme--colors--danger-400)',
+            close: {
+              color: 'white',
+              'background-color': 'var(--c--theme--colors--danger-400)',
+              'background-color-hover': 'var(--c--theme--colors--danger-600)',
+            },
+          },
         },
         modal: {
           'width-small': '342px',

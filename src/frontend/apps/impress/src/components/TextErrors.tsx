@@ -35,6 +35,7 @@ export const TextErrors = ({
             <Text
               key={`causes-${i}`}
               $theme="danger"
+              $variation="600"
               $textAlign="center"
               {...textProps}
             >
@@ -43,7 +44,12 @@ export const TextErrors = ({
           ))}
 
         {!causes && (
-          <Text $theme="danger" $textAlign="center" {...textProps}>
+          <Text
+            $theme="danger"
+            $variation="600"
+            $textAlign="center"
+            {...textProps}
+          >
             {defaultMessage || t('Something bad happens, please retry.')}
           </Text>
         )}

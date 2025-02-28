@@ -134,7 +134,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       $css={cssEditor(readOnly)}
     >
       {errorAttachment && (
-        <Box $margin={{ bottom: 'big' }}>
+        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
             causes={errorAttachment.cause}
             canClose
