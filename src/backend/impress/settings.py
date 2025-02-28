@@ -210,7 +210,6 @@ class Base(Configuration):
         "application/x-ms-regedit",
         "application/x-msdownload",
         "application/xml",
-        "image/svg+xml",
     ]
 
     # Document versions

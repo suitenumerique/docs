@@ -452,7 +452,7 @@ test.describe('Doc Editor', () => {
 
     const fileChooserPromise = page.waitForEvent('filechooser');
     const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`svg`);
+      return download.suggestedFilename().includes(`html`);
     });
 
     await verifyDocName(page, randomDoc);
@@ -462,14 +462,14 @@ test.describe('Doc Editor', () => {
 
     await page.keyboard.press('Enter');
     await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
-    await page.getByText('Upload image').click();
+    await page.getByText('Embedded file').click();
+    await page.getByText('Upload file').click();
 
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
-    await page.locator('.bn-block-content[data-name="test.svg"]').click();
-    await page.getByRole('button', { name: 'Download image' }).click();
+    await page.locator('.bn-block-content[data-name="test.html"]').click();
+    await page.getByRole('button', { name: 'Download file' }).click();
 
     await expect(
       page.getByText('This file is flagged as unsafe.'),
@@ -478,7 +478,7 @@ test.describe('Doc Editor', () => {
     await page.getByRole('button', { name: 'Download' }).click();
 
     const download = await downloadPromise;
-    expect(download.suggestedFilename()).toContain(`-unsafe.svg`);
+    expect(download.suggestedFilename()).toContain(`-unsafe.html`);
 
     const svgBuffer = await cs.toBuffer(await download.createReadStream());
     expect(svgBuffer.toString()).toContain('Hello svg');
