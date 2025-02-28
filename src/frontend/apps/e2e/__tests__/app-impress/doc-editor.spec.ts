@@ -1,8 +1,7 @@
-/* eslint-disable playwright/no-conditional-expect */
-/* eslint-disable playwright/no-conditional-in-test */
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
+import cs from 'convert-stream';
 
 import {
   createDoc,
@@ -415,6 +414,8 @@ test.describe('Doc Editor', () => {
       const editor = page.locator('.ProseMirror');
       await editor.getByText('Hello').dblclick();
 
+      /* eslint-disable playwright/no-conditional-expect */
+      /* eslint-disable playwright/no-conditional-in-test */
       if (!ai_transform && !ai_translate) {
         await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
         return;
@@ -441,6 +442,45 @@ test.describe('Doc Editor', () => {
           page.getByRole('menuitem', { name: 'Language' }),
         ).toBeHidden();
       }
+      /* eslint-enable playwright/no-conditional-expect */
+      /* eslint-enable playwright/no-conditional-in-test */
     });
+  });
+
+  test('it downloads unsafe files', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`svg`);
+    });
+
+    await verifyDocName(page, randomDoc);
+
+    await page.locator('.ProseMirror.bn-editor').click();
+    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    await page.locator('.bn-block-content[data-name="test.svg"]').click();
+    await page.getByRole('button', { name: 'Download image' }).click();
+
+    await expect(
+      page.getByText('This file is flagged as unsafe.'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Download' }).click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain(`-unsafe.svg`);
+
+    const svgBuffer = await cs.toBuffer(await download.createReadStream());
+    expect(svgBuffer.toString()).toContain('Hello svg');
   });
 });

@@ -6,24 +6,50 @@ import {
   getFormattingToolbarItems,
   useDictionary,
 } from '@blocknote/react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIGroupButton } from './AIButton';
+import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
+import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
 import { getQuoteFormattingToolbarItems } from './custom-blocks';
 
 export const BlockNoteToolbar = () => {
   const dict = useDictionary();
+  const [confirmOpen, setIsConfirmOpen] = useState(false);
+  const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
   const { t } = useTranslation();
 
-  const formattingToolbar = useCallback(
-    () => (
+  const toolbarItems = useMemo(() => {
+    const toolbarItems = getFormattingToolbarItems([
+      ...blockTypeSelectItems(dict),
+      getQuoteFormattingToolbarItems(t),
+    ]);
+    const fileDownloadButtonIndex = toolbarItems.findIndex(
+      (item) => item.key === 'fileDownloadButton',
+    );
+    if (fileDownloadButtonIndex !== -1) {
+      toolbarItems.splice(
+        fileDownloadButtonIndex,
+        1,
+        <FileDownloadButton
+          key="fileDownloadButton"
+          open={(onConfirm) => {
+            setIsConfirmOpen(true);
+            setOnConfirm(() => onConfirm);
+          }}
+        />,
+      );
+    }
+
+    return toolbarItems;
+  }, [dict, t]);
+
+  const formattingToolbar = useCallback(() => {
+    return (
       <FormattingToolbar>
-        {getFormattingToolbarItems([
-          ...blockTypeSelectItems(dict),
-          getQuoteFormattingToolbarItems(t),
-        ])}
+        {toolbarItems}
 
         {/* Extra button to do some AI powered actions */}
         <AIGroupButton key="AIButton" />
@@ -31,9 +57,18 @@ export const BlockNoteToolbar = () => {
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
-    ),
-    [dict, t],
-  );
+    );
+  }, [toolbarItems]);
 
-  return <FormattingToolbarController formattingToolbar={formattingToolbar} />;
+  return (
+    <>
+      <FormattingToolbarController formattingToolbar={formattingToolbar} />
+      {confirmOpen && (
+        <ModalConfirmDownloadUnsafe
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={onConfirm}
+        />
+      )}
+    </>
+  );
 };

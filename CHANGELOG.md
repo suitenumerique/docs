@@ -11,6 +11,7 @@ and this project adheres to
 ## Added
 
 - 💄(frontend) add error pages #643
+- 🔒️ Manage unsafe attachments #663
 - ✨(frontend) Custom block quote with export #646
 - ✨(frontend) add open source section homepage #666
 
