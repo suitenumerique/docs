@@ -6,6 +6,10 @@ export const cssEditor = (readonly: boolean) => css`
   & .ProseMirror {
     height: 100%;
 
+    img.bn-visual-media[src*='-unsafe'] {
+      pointer-events: none;
+    }
+
     .bn-side-menu[data-block-type='quote'] {
       height: 46px;
     }
