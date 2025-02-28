@@ -26,7 +26,7 @@ import { cssEditor } from '../styles';
 import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
-import { BlockNoteToolbar } from './BlockNoteToolbar';
+import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { QuoteBlock } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(

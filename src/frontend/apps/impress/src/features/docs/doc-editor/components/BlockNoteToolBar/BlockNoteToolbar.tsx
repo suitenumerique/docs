@@ -9,11 +9,12 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getQuoteFormattingToolbarItems } from '../custom-blocks';
+
 import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
-import { getQuoteFormattingToolbarItems } from './custom-blocks';
 
 export const BlockNoteToolbar = () => {
   const dict = useDictionary();

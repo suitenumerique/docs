@@ -20,7 +20,7 @@ import {
   AITransformActions,
   useDocAITransform,
   useDocAITranslate,
-} from '../api/';
+} from '../../api';
 
 type LanguageTranslate = {
   value: string;
