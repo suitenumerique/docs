@@ -21,6 +21,7 @@ and this project adheres to
 
 ## Fixed
 
+- 🐛(backend) allow any type of extensions for media download #671
 - ♻️(frontend) improve table pdf rendering
 
 ## [2.2.0] - 2025-02-10
