@@ -792,6 +792,9 @@ class Document(MP_Node, BaseModel):
                 }
             )
 
+        # save the current deleted_at value to exclude it from the descendants update
+        current_deleted_at = self.deleted_at
+
         # Restore the current document
         self.deleted_at = None
 
@@ -804,23 +807,12 @@ class Document(MP_Node, BaseModel):
             .first()
         )
         self.ancestors_deleted_at = ancestors_deleted_at
-        self.save()
+        self.save(update_fields=["deleted_at", "ancestors_deleted_at"])
 
-        # Update descendants excluding those who were deleted prior to the deletion of the
-        # current document (the ancestor_deleted_at date for those should already by good)
-        # The number of deleted descendants should not be too big so we can handcraft a union
-        # clause for them:
-        deleted_descendants_paths = (
-            self.get_descendants()
-            .filter(deleted_at__isnull=False)
-            .values_list("path", flat=True)
-        )
-        exclude_condition = models.Q(
-            *(models.Q(path__startswith=path) for path in deleted_descendants_paths)
-        )
-        self.get_descendants().exclude(exclude_condition).update(
-            ancestors_deleted_at=self.ancestors_deleted_at
-        )
+        self.get_descendants().exclude(
+            models.Q(deleted_at__isnull=False)
+            | models.Q(ancestors_deleted_at__lt=current_deleted_at)
+        ).update(ancestors_deleted_at=self.ancestors_deleted_at)
 
 
 class LinkTrace(BaseModel):

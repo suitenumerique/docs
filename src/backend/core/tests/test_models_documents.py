@@ -796,3 +796,122 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
         new_nb_accesses = document.nb_accesses
     assert new_nb_accesses == 0
     assert cache.get(key) == 0  # Cache should now contain the new value
+
+
+def test_models_documents_restore(django_assert_num_queries):
+    """The restore method should restore a soft-deleted document."""
+    document = factories.DocumentFactory()
+    document.soft_delete()
+    document.refresh_from_db()
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+
+    with django_assert_num_queries(6):
+        document.restore()
+    document.refresh_from_db()
+    assert document.deleted_at is None
+    assert document.ancestors_deleted_at == document.deleted_at
+
+
+def test_models_documents_restore_complex(django_assert_num_queries):
+    """The restore method should restore a soft-deleted document and its ancestors."""
+    grand_parent = factories.DocumentFactory()
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+
+    child1 = factories.DocumentFactory(parent=document)
+    child2 = factories.DocumentFactory(parent=document)
+
+    # Soft delete first the document
+    document.soft_delete()
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+    assert child1.ancestors_deleted_at == document.deleted_at
+    assert child2.ancestors_deleted_at == document.deleted_at
+
+    # Soft delete the grand parent
+    grand_parent.soft_delete()
+    grand_parent.refresh_from_db()
+    parent.refresh_from_db()
+    assert grand_parent.deleted_at is not None
+    assert grand_parent.ancestors_deleted_at == grand_parent.deleted_at
+    assert parent.ancestors_deleted_at == grand_parent.deleted_at
+    # item, child1 and child2 should not be affected
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+    assert child1.ancestors_deleted_at == document.deleted_at
+    assert child2.ancestors_deleted_at == document.deleted_at
+
+    # Restore the item
+    with django_assert_num_queries(8):
+        document.restore()
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    grand_parent.refresh_from_db()
+    assert document.deleted_at is None
+    assert document.ancestors_deleted_at == grand_parent.deleted_at
+    # child 1 and child 2 should now have the same ancestors_deleted_at as the grand parent
+    assert child1.ancestors_deleted_at == grand_parent.deleted_at
+    assert child2.ancestors_deleted_at == grand_parent.deleted_at
+
+
+def test_models_documents_restore_complex_bis(django_assert_num_queries):
+    """The restore method should restore a soft-deleted item and its ancestors."""
+    grand_parent = factories.DocumentFactory()
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+
+    child1 = factories.DocumentFactory(parent=document)
+    child2 = factories.DocumentFactory(parent=document)
+
+    # Soft delete first the document
+    document.soft_delete()
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+    assert child1.ancestors_deleted_at == document.deleted_at
+    assert child2.ancestors_deleted_at == document.deleted_at
+
+    # Soft delete the grand parent
+    grand_parent.soft_delete()
+    grand_parent.refresh_from_db()
+    parent.refresh_from_db()
+    assert grand_parent.deleted_at is not None
+    assert grand_parent.ancestors_deleted_at == grand_parent.deleted_at
+    assert parent.ancestors_deleted_at == grand_parent.deleted_at
+    # item, child1 and child2 should not be affected
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+    assert child1.ancestors_deleted_at == document.deleted_at
+    assert child2.ancestors_deleted_at == document.deleted_at
+
+    # Restoring the grand parent should not restore the document
+    # as it was deleted before the grand parent
+    with django_assert_num_queries(7):
+        grand_parent.restore()
+
+    grand_parent.refresh_from_db()
+    parent.refresh_from_db()
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    assert grand_parent.deleted_at is None
+    assert grand_parent.ancestors_deleted_at is None
+    assert parent.deleted_at is None
+    assert parent.ancestors_deleted_at is None
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+    assert child1.ancestors_deleted_at == document.deleted_at
+    assert child2.ancestors_deleted_at == document.deleted_at
