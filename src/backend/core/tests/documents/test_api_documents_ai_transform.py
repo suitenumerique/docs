@@ -91,9 +91,10 @@ def test_api_documents_ai_transform_anonymous_success(mock_create):
                     "Summarize the markdown text, preserving language and markdown formatting. "
                     'Return JSON: {"answer": "your markdown summary"}. Do not provide any other '
                     "information."
+                    "Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": '{"answer": "Hello"}'},
         ],
     )
 
@@ -189,9 +190,10 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
                 "content": (
                     'Answer the prompt in markdown format. Return JSON: {"answer": '
                     '"Your markdown answer"}. Do not provide any other information.'
+                    "Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": '{"answer": "Hello"}'},
         ],
     )
 
@@ -265,9 +267,10 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
                 "content": (
                     'Answer the prompt in markdown format. Return JSON: {"answer": '
                     '"Your markdown answer"}. Do not provide any other information.'
+                    "Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": '{"answer": "Hello"}'},
         ],
     )
 
