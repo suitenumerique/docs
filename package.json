@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@ag-media/react-pdf-table": "^2.0.1"
+  }
+}
