@@ -56,7 +56,8 @@ export const UserAvatar = ({ user, background }: Props) => {
           text-align: center;
           font-style: normal;
           font-weight: 600;
-          font-family: Arial, Helvetica, sans-serif; // Can't use marianne font because it's impossible to center with this font
+          font-family:
+            Arial, Helvetica, sans-serif; // Can't use marianne font because it's impossible to center with this font
           font-size: 10px;
           text-transform: uppercase;
         `}
