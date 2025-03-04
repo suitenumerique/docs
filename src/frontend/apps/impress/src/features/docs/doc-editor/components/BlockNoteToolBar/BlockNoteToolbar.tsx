@@ -5,7 +5,7 @@ import {
   getFormattingToolbarItems,
   useDictionary,
 } from '@blocknote/react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { JSX, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getQuoteFormattingToolbarItems } from '../custom-blocks';
@@ -27,7 +27,11 @@ export const BlockNoteToolbar = () => {
       getQuoteFormattingToolbarItems(t),
     ]);
     const fileDownloadButtonIndex = toolbarItems.findIndex(
-      (item) => item.key === 'fileDownloadButton',
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'key' in item &&
+        (item as { key: string }).key === 'fileDownloadButton',
     );
     if (fileDownloadButtonIndex !== -1) {
       toolbarItems.splice(
@@ -43,7 +47,7 @@ export const BlockNoteToolbar = () => {
       );
     }
 
-    return toolbarItems;
+    return toolbarItems as JSX.Element[];
   }, [dict, t]);
 
   const formattingToolbar = useCallback(() => {

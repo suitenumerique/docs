@@ -29,12 +29,13 @@
   },
   "resolutions": {
     "@types/node": "22.13.9",
-    "@types/react-dom": "18.3.1",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
     "@typescript-eslint/eslint-plugin": "8.26.0",
     "@typescript-eslint/parser": "8.26.0",
     "eslint": "8.57.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "typescript": "5.8.2",
     "yjs": "13.6.23"
   }
