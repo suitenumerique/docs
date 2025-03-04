@@ -1,27 +1,34 @@
-import i18n from 'i18next';
+import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
-import { BASE_LANGUAGE, LANGUAGES_ALLOWED, LANGUAGE_COOKIE_NAME } from './conf';
 import resources from './translations.json';
 
-i18n
+export const availableFrontendLanguages: readonly string[] =
+  Object.keys(resources);
+
+i18next
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: BASE_LANGUAGE,
-    supportedLngs: Object.keys(LANGUAGES_ALLOWED),
+    fallbackLng: 'en',
+    debug: false,
     detection: {
       order: ['cookie', 'navigator'], // detection order
       caches: ['cookie'], // Use cookies to store the language preference
-      lookupCookie: LANGUAGE_COOKIE_NAME,
+      lookupCookie: 'docs_language',
       cookieMinutes: 525600, // Expires after one year
+      cookieOptions: {
+        path: '/',
+        sameSite: 'lax',
+      },
     },
     interpolation: {
       escapeValue: false,
     },
-    preload: Object.keys(LANGUAGES_ALLOWED),
+    preload: availableFrontendLanguages,
+    lowerCaseLng: true,
     nsSeparator: false,
     keySeparator: false,
   })
@@ -29,4 +36,4 @@ i18n
     throw new Error('i18n initialization failed');
   });
 
-export default i18n;
+export default i18next;

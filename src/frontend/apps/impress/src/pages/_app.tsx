@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppProvider } from '@/core/';
 import { useSWRegister } from '@/features/service-worker/';
+import '@/i18n/initI18n';
 import { NextPageWithLayout } from '@/types/next';
 
 import './globals.css';
