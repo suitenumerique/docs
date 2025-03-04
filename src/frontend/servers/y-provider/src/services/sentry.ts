@@ -9,3 +9,4 @@ Sentry.init({
   tracesSampleRate: 0.1,
   profilesSampleRate: 1.0,
 });
+Sentry.setTag('application', 'y-provider');

@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- Use sentry tags instead of extra scope
+
 ## [2.3.0] - 2025-03-03
 
 ## Added
