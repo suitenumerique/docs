@@ -24,7 +24,7 @@
     "express": "4.21.2",
     "express-ws": "5.0.2",
     "y-protocols": "1.0.6",
-    "yjs": "13.6.23"
+    "yjs": "*"
   },
   "devDependencies": {
     "@hocuspocus/provider": "2.15.2",
