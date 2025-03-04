@@ -1,9 +1,4 @@
-import {
-  CSSProperties,
-  ComponentPropsWithRef,
-  ReactHTML,
-  forwardRef,
-} from 'react';
+import { CSSProperties, ComponentPropsWithRef, forwardRef } from 'react';
 import styled from 'styled-components';
 
 import { tokens } from '@/cunningham';
@@ -14,10 +9,7 @@ const { sizes } = tokens.themes.default.theme.font;
 type TextSizes = keyof typeof sizes;
 
 export interface TextProps extends BoxProps {
-  as?: keyof Pick<
-    ReactHTML,
-    'p' | 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
-  >;
+  as?: 'p' | 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   $elipsis?: boolean;
   $isMaterialIcon?: boolean;
   $weight?: CSSProperties['fontWeight'];

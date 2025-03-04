@@ -1,5 +1,4 @@
 import { combineByGroup, filterSuggestionItems } from '@blocknote/core';
-import '@blocknote/mantine/style.css';
 import {
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
