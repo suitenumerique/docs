@@ -370,7 +370,7 @@ def test_api_document_invitations_create_privileged_members(
     Only owners and administrators should be able to invite new users.
     Only owners can invite owners.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(language="en-us")
     document = factories.DocumentFactory()
     if via == USER:
         factories.UserDocumentAccessFactory(document=document, user=user, role=inviting)
@@ -422,11 +422,11 @@ def test_api_document_invitations_create_privileged_members(
         }
 
 
-def test_api_document_invitations_create_email_from_content_language():
+def test_api_document_invitations_create_email_from_senders_language():
     """
-    The email generated is from the language set in the Content-Language header
+    When inviting on a document a user who does not exist yet in our database, the invitation email should be sent in the language of the sending user.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(language="fr-fr")
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
@@ -444,7 +444,6 @@ def test_api_document_invitations_create_email_from_content_language():
         f"/api/v1.0/documents/{document.id!s}/invitations/",
         invitation_values,
         format="json",
-        headers={"Content-Language": "fr-fr"},
     )
 
     assert response.status_code == 201
@@ -464,50 +463,11 @@ def test_api_document_invitations_create_email_from_content_language():
     )
 
 
-def test_api_document_invitations_create_email_from_content_language_not_supported():
-    """
-    If the language from the Content-Language is not supported
-    it will display the default language, English.
-    """
-    user = factories.UserFactory()
-    document = factories.DocumentFactory()
-    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
-
-    invitation_values = {
-        "email": "guest@example.com",
-        "role": "reader",
-    }
-
-    assert len(mail.outbox) == 0
-
-    client = APIClient()
-    client.force_login(user)
-
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/invitations/",
-        invitation_values,
-        format="json",
-        headers={"Content-Language": "not-supported"},
-    )
-
-    assert response.status_code == 201
-    assert response.json()["email"] == "guest@example.com"
-    assert models.Invitation.objects.count() == 1
-    assert len(mail.outbox) == 1
-
-    email = mail.outbox[0]
-
-    assert email.to == ["guest@example.com"]
-
-    email_content = " ".join(email.body.split())
-    assert f"{user.full_name} shared a document with you!" in email_content
-
-
 def test_api_document_invitations_create_email_full_name_empty():
     """
     If the full name of the user is empty, it will display the email address.
     """
-    user = factories.UserFactory(full_name="")
+    user = factories.UserFactory(full_name="", language="en-us")
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
