@@ -365,7 +365,8 @@ input:-webkit-autofill:focus {
 }
 
 .c__button--medium {
-  padding: 0.9rem var(--c--theme--spacings--s);
+  height: auto;
+  min-height: var(--c--components--button--medium-height);
 }
 
 .c__button--small {
@@ -551,6 +552,8 @@ input:-webkit-autofill:focus {
 
 .c__modal__close .c__button {
   padding: 0 !important;
+  top: -0.65rem;
+  right: -0.65rem;
 }
 
 .c__modal--full .c__modal__content {

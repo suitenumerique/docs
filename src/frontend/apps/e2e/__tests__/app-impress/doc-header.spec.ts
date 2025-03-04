@@ -99,9 +99,7 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
 
     await expect(
-      page.getByText(
-        `Are you sure you want to delete the document "${randomDoc}"?`,
-      ),
+      page.getByText(`Are you sure you want to delete this document ?`),
     ).toBeVisible();
 
     await page

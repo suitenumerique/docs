@@ -1,4 +1,4 @@
-export * from './api/types';
+export * from './api';
 export * from './components';
 export * from './hooks';
 export * from './utils';

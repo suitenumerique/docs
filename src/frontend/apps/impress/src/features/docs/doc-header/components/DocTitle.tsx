@@ -116,6 +116,8 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           handleTitleSubmit(event.target.textContent || '')
         }
         $color={colorsTokens()['greyscale-1000']}
+        $minHeight="40px"
+        $padding={{ right: 'big' }}
         $css={css`
           &[contenteditable='true']:empty:not(:focus):before {
             content: '${untitledDocument}';

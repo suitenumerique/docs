@@ -5,6 +5,7 @@ import { PropsWithChildren } from 'react';
 import { Box } from '@/components';
 
 import { useAuth } from '../hooks';
+import { getAuthUrl } from '../utils';
 
 export const Auth = ({ children }: PropsWithChildren) => {
   const { isLoading, pathAllowed, isFetchedAfterMount, authenticated } =
@@ -17,6 +18,22 @@ export const Auth = ({ children }: PropsWithChildren) => {
         <Loader />
       </Box>
     );
+  }
+
+  /**
+   * If the user is authenticated and wanted initially to access a document,
+   * we redirect to the document page.
+   */
+  if (authenticated) {
+    const authUrl = getAuthUrl();
+    if (authUrl) {
+      void replace(authUrl);
+      return (
+        <Box $height="100vh" $width="100vw" $align="center" $justify="center">
+          <Loader />
+        </Box>
+      );
+    }
   }
 
   /**

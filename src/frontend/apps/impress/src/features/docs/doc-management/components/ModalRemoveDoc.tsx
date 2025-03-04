@@ -87,9 +87,7 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       <Box aria-label={t('Content modal to delete document')}>
         {!isError && (
           <Text $size="sm" $variation="600">
-            {t('Are you sure you want to delete the document "{{title}}"?', {
-              title: doc.title,
-            })}
+            {t('Are you sure you want to delete this document ?')}
           </Text>
         )}
 

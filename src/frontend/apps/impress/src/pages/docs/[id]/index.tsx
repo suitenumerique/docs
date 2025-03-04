@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import { Box, Text, TextErrors } from '@/components';
-import { setAuthUrl } from '@/features/auth';
+import { KEY_AUTH, setAuthUrl } from '@/features/auth';
 import { DocEditor } from '@/features/docs/doc-editor';
 import {
   Doc,
@@ -110,6 +110,9 @@ const DocPage = ({ id }: DocProps) => {
     }
 
     if (error.status === 401) {
+      void queryClient.resetQueries({
+        queryKey: [KEY_AUTH],
+      });
       setAuthUrl();
       void replace(`/401`);
       return null;
