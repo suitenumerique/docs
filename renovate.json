@@ -14,7 +14,6 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
-        "@openfun/cunningham-react",
         "eslint",
         "fetch-mock",
         "node",
