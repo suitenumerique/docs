@@ -33,13 +33,13 @@
     "@blocknote/react": "0.23.2-hotfix.0",
     "@blocknote/xl-docx-exporter": "0.23.2-hotfix.0",
     "@blocknote/xl-pdf-exporter": "0.23.2-hotfix.0",
-    "@types/node": "22.13.1",
+    "@types/node": "22.13.9",
     "@types/react-dom": "18.3.1",
-    "@typescript-eslint/eslint-plugin": "8.23.0",
-    "@typescript-eslint/parser": "8.23.0",
+    "@typescript-eslint/eslint-plugin": "8.26.0",
+    "@typescript-eslint/parser": "8.26.0",
     "eslint": "8.57.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "typescript": "5.7.3"
+    "typescript": "5.8.2"
   }
 }
