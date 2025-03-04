@@ -19,6 +19,7 @@ from django.utils.translation import gettext_lazy as _
 import sentry_sdk
 from configurations import Configuration, values
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import ignore_logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -646,8 +647,10 @@ class Base(Configuration):
                 release=get_release(),
                 integrations=[DjangoIntegration()],
             )
-            with sentry_sdk.configure_scope() as scope:
-                scope.set_extra("application", "backend")
+            sentry_sdk.set_tag("application", "backend")
+
+            # Ignore the logs added by the DockerflowMiddleware
+            ignore_logger("request.summary")
 
         if (
             cls.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION
