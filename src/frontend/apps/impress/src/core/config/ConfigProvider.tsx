@@ -3,7 +3,7 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { PostHogProvider, configureCrispSession } from '@/services';
+import { CrispProvider, PostHogProvider } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -29,14 +29,6 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     setTheme(conf.FRONTEND_THEME);
   }, [conf?.FRONTEND_THEME, setTheme]);
 
-  useEffect(() => {
-    if (!conf?.CRISP_WEBSITE_ID) {
-      return;
-    }
-
-    configureCrispSession(conf.CRISP_WEBSITE_ID);
-  }, [conf?.CRISP_WEBSITE_ID]);
-
   if (!conf) {
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
@@ -45,5 +37,11 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     );
   }
 
-  return <PostHogProvider conf={conf.POSTHOG_KEY}>{children}</PostHogProvider>;
+  return (
+    <PostHogProvider conf={conf.POSTHOG_KEY}>
+      <CrispProvider websiteId={conf?.CRISP_WEBSITE_ID}>
+        {children}
+      </CrispProvider>
+    </PostHogProvider>
+  );
 };
