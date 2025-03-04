@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'feature/overwrite-docs'
     tags:
       - 'v*'
   pull_request:
@@ -16,39 +17,39 @@ env:
   DOCKER_USER: 1001:127
 
 jobs:
-  build-and-push-backend:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: lasuite/impress-backend
-      -
-        name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
-        with:
-          docker-build-args: '--target backend-production -f Dockerfile'
-          docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
-        continue-on-error: true
-      -
-        name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: backend-production
-          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+  # build-and-push-backend:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     -
+  #       name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     -
+  #       name: Docker meta
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         images: lasuite/impress-backend
+  #     -
+  #       name: Login to DockerHub
+  #       if: github.event_name != 'pull_request'
+  #       run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+  #     -
+  #       name: Run trivy scan
+  #       uses: numerique-gouv/action-trivy-cache@main
+  #       with:
+  #         docker-build-args: '--target backend-production -f Dockerfile'
+  #         docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
+  #       continue-on-error: true
+  #     -
+  #       name: Build and push
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: .
+  #         target: backend-production
+  #         build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+  #         push: ${{ github.event_name != 'pull_request' }}
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-frontend:
     runs-on: ubuntu-latest
@@ -56,6 +57,14 @@ jobs:
       -
         name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Checkout custom code repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'AntoLC/docs-customized'
+          ref: 'main'
+          path: docs-custom
+
       -
         name: Docker meta
         id: meta
@@ -66,13 +75,13 @@ jobs:
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
-        with:
-          docker-build-args: '-f src/frontend/Dockerfile --target frontend-production'
-          docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-        continue-on-error: true
+      # -
+      #   name: Run trivy scan
+      #   uses: numerique-gouv/action-trivy-cache@main
+      #   with:
+      #     docker-build-args: '-f src/frontend/Dockerfile --target frontend-production --build-arg CUSTOM_CODE=docs-custom'
+      #     docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
+      #   continue-on-error: true
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -80,50 +89,53 @@ jobs:
           context: .
           file: ./src/frontend/Dockerfile
           target: frontend-production
-          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+            CUSTOM_CODE=docs-custom
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  build-and-push-y-provider:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: lasuite/impress-y-provider
-      -
-        name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
-        with:
-          docker-build-args: '-f src/frontend/servers/y-provider/Dockerfile --target y-provider'
-          docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-        continue-on-error: true
-      -
-        name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./src/frontend/servers/y-provider/Dockerfile
-          target: y-provider
-          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+  # build-and-push-y-provider:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     -
+  #       name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     -
+  #       name: Docker meta
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         images: lasuite/impress-y-provider
+  #     -
+  #       name: Login to DockerHub
+  #       if: github.event_name != 'pull_request'
+  #       run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+  #     -
+  #       name: Run trivy scan
+  #       uses: numerique-gouv/action-trivy-cache@main
+  #       with:
+  #         docker-build-args: '-f src/frontend/servers/y-provider/Dockerfile --target y-provider'
+  #         docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
+  #       continue-on-error: true
+  #     -
+  #       name: Build and push
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: .
+  #         file: ./src/frontend/servers/y-provider/Dockerfile
+  #         target: y-provider
+  #         build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+  #         push: ${{ github.event_name != 'pull_request' }}
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
 
   notify-argocd:
     needs:
       - build-and-push-frontend
-      - build-and-push-backend
+      # - build-and-push-backend
+      # - build-and-push-y-provider
     runs-on: ubuntu-latest
     if: |
       github.event_name != 'pull_request'
