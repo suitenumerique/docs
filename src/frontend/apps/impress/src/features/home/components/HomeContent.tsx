@@ -6,7 +6,6 @@ import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Footer } from '@/features/footer';
 import { LeftPanel } from '@/features/left-panel';
-import { useLanguage } from '@/i18n/hooks/useLanguage';
 import { useResponsiveStore } from '@/stores';
 
 import SC1ResponsiveEn from '../assets/SC1-responsive-en.png';
@@ -28,11 +27,10 @@ import { HomeHeader, getHeaderHeight } from './HomeHeader';
 import { HomeSection } from './HomeSection';
 
 export function HomeContent() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
   const { isMobile, isSmallMobile, isTablet } = useResponsiveStore();
-  const lang = useLanguage();
-  const isFrLanguage = lang.language === 'fr';
+  const isFrLanguage = i18n.resolvedLanguage === 'fr';
 
   return (
     <Box as="main">

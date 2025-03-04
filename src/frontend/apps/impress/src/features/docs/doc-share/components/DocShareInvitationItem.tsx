@@ -30,6 +30,7 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
     full_name: invitation.email,
     email: invitation.email,
     short_name: invitation.email,
+    language: 'en-us',
   };
 
   const { toast } = useToastProvider();

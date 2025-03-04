@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { Auth } from '@/features/auth';
-import '@/i18n/initI18n';
 import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';

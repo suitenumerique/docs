@@ -16,6 +16,7 @@ and this project adheres to
 - 🔒️ Manage unsafe attachments #663
 - ✨(frontend) Custom block quote with export #646
 - ✨(frontend) add open source section homepage #666
+- ✨(frontend) synchronize language-choice #401
 
 ## Changed
 
@@ -28,6 +29,7 @@ and this project adheres to
 
 - 🐛(backend) allow any type of extensions for media download #671
 - ♻️(frontend) improve table pdf rendering
+- 🐛(email) invitation emails in receivers language
 
 
 ## [2.2.0] - 2025-02-10

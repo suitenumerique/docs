@@ -51,7 +51,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const readOnly = !doc.abilities.partial_update;
   useSaveDoc(doc.id, provider.document, !readOnly);
   const { i18n } = useTranslation();
-  const lang = i18n.language;
+  const lang = i18n.resolvedLanguage;
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
 

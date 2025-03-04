@@ -220,7 +220,9 @@ class Base(Configuration):
 
     # Languages
     LANGUAGE_CODE = values.Value("en-us")
-    LANGUAGE_COOKIE_NAME = "docs_language"  # cookie & language is set from frontend
+    # cookie & language is set from frontend
+    LANGUAGE_COOKIE_NAME = "docs_language"
+    LANGUAGE_COOKIE_PATH = "/"
 
     DRF_NESTED_MULTIPART_PARSER = {
         # output of parser is converted to querydict
@@ -232,9 +234,9 @@ class Base(Configuration):
     # fallback/default languages throughout the app.
     LANGUAGES = values.SingleNestedTupleValue(
         (
-            ("en-us", _("English")),
-            ("fr-fr", _("French")),
-            ("de-de", _("German")),
+            ("en-us", "English"),
+            ("fr-fr", "Français"),
+            ("de-de", "Deutsch"),
         )
     )
 
