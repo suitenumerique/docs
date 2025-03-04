@@ -46,7 +46,7 @@
     "styled-components": "6.1.15",
     "use-debounce": "10.0.4",
     "y-protocols": "1.0.6",
-    "yjs": "13.6.23",
+    "yjs": "*",
     "zustand": "5.0.3"
   },
   "devDependencies": {
