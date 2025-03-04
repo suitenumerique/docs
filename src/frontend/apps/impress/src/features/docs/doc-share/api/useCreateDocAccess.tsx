@@ -10,7 +10,6 @@ import {
   Role,
 } from '@/features/docs/doc-management';
 import { KEY_LIST_DOC_ACCESSES } from '@/features/docs/doc-share';
-import { ContentLanguage } from '@/i18n/types';
 import { useBroadcastStore } from '@/stores';
 
 import { OptionType } from '../types';
@@ -21,20 +20,15 @@ interface CreateDocAccessParams {
   role: Role;
   docId: Doc['id'];
   memberId: User['id'];
-  contentLanguage: ContentLanguage;
 }
 
 export const createDocAccess = async ({
   memberId,
   role,
   docId,
-  contentLanguage,
 }: CreateDocAccessParams): Promise<Access> => {
   const response = await fetchAPI(`documents/${docId}/accesses/`, {
     method: 'POST',
-    headers: {
-      'Content-Language': contentLanguage,
-    },
     body: JSON.stringify({
       user_id: memberId,
       role,
