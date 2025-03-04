@@ -15,14 +15,10 @@
       "matchManagers": ["npm"],
       "matchPackageNames": [
         "@openfun/cunningham-react",
-        "@types/react",
-        "@types/react-dom",
         "eslint",
         "fetch-mock",
         "node",
         "node-fetch",
-        "react",
-        "react-dom",
         "workbox-webpack-plugin"
       ]
     }

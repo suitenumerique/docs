@@ -60,7 +60,7 @@
     "@types/lodash": "4.17.16",
     "@types/luxon": "3.4.2",
     "@types/node": "*",
-    "@types/react": "18.3.12",
+    "@types/react": "*",
     "@types/react-dom": "*",
     "cross-env": "7.0.3",
     "dotenv": "16.4.7",
