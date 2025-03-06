@@ -591,6 +591,7 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=False,
         methods=["get"],
+        permission_classes=[permissions.IsAuthenticated],
     )
     def favorite_list(self, request, *args, **kwargs):
         """Get list of favorite documents for the current user."""
