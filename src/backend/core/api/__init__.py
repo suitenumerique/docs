@@ -17,9 +17,10 @@ def exception_handler(exc, context):
     https://gist.github.com/twidi/9d55486c36b6a51bdcb05ce3a763e79f
     """
     if isinstance(exc, ValidationError):
-        detail = exc.message_dict
-
-        if hasattr(exc, "message"):
+        detail = None
+        if hasattr(exc, "message_dict"):
+            detail = exc.message_dict
+        elif hasattr(exc, "message"):
             detail = exc.message
         elif hasattr(exc, "messages"):
             detail = exc.messages

@@ -424,7 +424,8 @@ def test_api_document_invitations_create_privileged_members(
 
 def test_api_document_invitations_create_email_from_senders_language():
     """
-    When inviting on a document a user who does not exist yet in our database, the invitation email should be sent in the language of the sending user.
+    When inviting on a document a user who does not exist yet in our database,
+    the invitation email should be sent in the language of the sending user.
     """
     user = factories.UserFactory(language="fr-fr")
     document = factories.DocumentFactory()
@@ -559,9 +560,11 @@ def test_api_document_invitations_create_cannot_duplicate_invitation():
     )
 
     assert response.status_code == 400
-    assert response.json() == [
-        "Document invitation with this Email address and Document already exists."
-    ]
+    assert response.json() == {
+        "__all__": [
+            "Document invitation with this Email address and Document already exists."
+        ],
+    }
 
 
 def test_api_document_invitations_create_cannot_invite_existing_users():
