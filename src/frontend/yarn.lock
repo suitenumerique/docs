@@ -1004,7 +1004,7 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@blocknote/core@0.23.2-hotfix.0":
+"@blocknote/core@*", "@blocknote/core@0.23.2-hotfix.0", "@blocknote/core@^0.23.2", "@blocknote/core@^0.23.2-hotfix.0":
   version "0.23.2-hotfix.0"
   resolved "https://registry.yarnpkg.com/@blocknote/core/-/core-0.23.2-hotfix.0.tgz#f95e64dfa6a481baac27414242b08b593bf6383d"
   integrity sha512-y+fAV7YBwRQYonITjcSYiydTqZMA2VePBkcurLGDGU/OV3V/ihSsS8TjhABVf3l+w5bX3bp1i1ZuyhiGopyFBg==
@@ -1053,105 +1053,7 @@
     y-protocols "^1.0.6"
     yjs "^13.6.15"
 
-"@blocknote/core@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@blocknote/core/-/core-0.23.2.tgz#8383ec6c71b054412f968e77d65e0641a944a164"
-  integrity sha512-rPKiWJq/Tg479PFk5DPY4xMqX5puPqSidD5cYrBHYdt9dXvuqAnMNbdDhYpRM9bA7XmLXkYG46kSzUjI58ZIBA==
-  dependencies:
-    "@emoji-mart/data" "^1.2.1"
-    "@tiptap/core" "^2.7.1"
-    "@tiptap/extension-bold" "^2.7.1"
-    "@tiptap/extension-code" "^2.7.1"
-    "@tiptap/extension-collaboration" "^2.7.1"
-    "@tiptap/extension-collaboration-cursor" "^2.7.1"
-    "@tiptap/extension-gapcursor" "^2.7.1"
-    "@tiptap/extension-hard-break" "^2.7.1"
-    "@tiptap/extension-history" "^2.7.1"
-    "@tiptap/extension-horizontal-rule" "^2.7.1"
-    "@tiptap/extension-italic" "^2.7.1"
-    "@tiptap/extension-link" "^2.7.1"
-    "@tiptap/extension-paragraph" "^2.7.1"
-    "@tiptap/extension-strike" "^2.7.1"
-    "@tiptap/extension-table-cell" "^2.7.1"
-    "@tiptap/extension-table-header" "^2.7.1"
-    "@tiptap/extension-table-row" "^2.7.1"
-    "@tiptap/extension-text" "^2.7.1"
-    "@tiptap/extension-underline" "^2.7.1"
-    "@tiptap/pm" "^2.7.1"
-    emoji-mart "^5.6.0"
-    hast-util-from-dom "^4.2.0"
-    prosemirror-dropcursor "^1.8.1"
-    prosemirror-highlight "^0.9.0"
-    prosemirror-model "^1.23.0"
-    prosemirror-state "^1.4.3"
-    prosemirror-tables "^1.6.1"
-    prosemirror-transform "^1.10.2"
-    prosemirror-view "^1.33.7"
-    rehype-format "^5.0.0"
-    rehype-parse "^8.0.4"
-    rehype-remark "^9.1.2"
-    rehype-stringify "^9.0.3"
-    remark-gfm "^3.0.1"
-    remark-parse "^10.0.1"
-    remark-rehype "^10.1.0"
-    remark-stringify "^10.0.2"
-    shiki "^1.22.0"
-    unified "^10.1.2"
-    uuid "^8.3.2"
-    y-prosemirror "1.2.13"
-    y-protocols "^1.0.6"
-    yjs "^13.6.15"
-
-"@blocknote/core@^0.23.2-hotfix.0", "@blocknote/core@^0.23.6":
-  version "0.23.6"
-  resolved "https://registry.yarnpkg.com/@blocknote/core/-/core-0.23.6.tgz#3cffea4549b77a6d6a9406ad9bb3e56e8c76d3ab"
-  integrity sha512-X5bxzFCgAG42lT2NhKJQdEQp0DEWaY4DJdGo76d2o3xef+bNGCLRe4i2XkGty2B9B3uYElgHqz6GYGeF0Hfn5g==
-  dependencies:
-    "@emoji-mart/data" "^1.2.1"
-    "@tiptap/core" "^2.7.1"
-    "@tiptap/extension-bold" "^2.7.1"
-    "@tiptap/extension-code" "^2.7.1"
-    "@tiptap/extension-collaboration" "^2.7.1"
-    "@tiptap/extension-collaboration-cursor" "^2.7.1"
-    "@tiptap/extension-gapcursor" "^2.7.1"
-    "@tiptap/extension-hard-break" "^2.7.1"
-    "@tiptap/extension-history" "^2.7.1"
-    "@tiptap/extension-horizontal-rule" "^2.7.1"
-    "@tiptap/extension-italic" "^2.7.1"
-    "@tiptap/extension-link" "^2.7.1"
-    "@tiptap/extension-paragraph" "^2.7.1"
-    "@tiptap/extension-strike" "^2.7.1"
-    "@tiptap/extension-table-cell" "^2.7.1"
-    "@tiptap/extension-table-header" "^2.7.1"
-    "@tiptap/extension-table-row" "^2.7.1"
-    "@tiptap/extension-text" "^2.7.1"
-    "@tiptap/extension-underline" "^2.7.1"
-    "@tiptap/pm" "^2.7.1"
-    emoji-mart "^5.6.0"
-    hast-util-from-dom "^4.2.0"
-    prosemirror-dropcursor "^1.8.1"
-    prosemirror-highlight "^0.9.0"
-    prosemirror-model "^1.23.0"
-    prosemirror-state "^1.4.3"
-    prosemirror-tables "^1.6.1"
-    prosemirror-transform "^1.10.2"
-    prosemirror-view "^1.38.0"
-    rehype-format "^5.0.0"
-    rehype-parse "^8.0.4"
-    rehype-remark "^9.1.2"
-    rehype-stringify "^9.0.3"
-    remark-gfm "^3.0.1"
-    remark-parse "^10.0.1"
-    remark-rehype "^10.1.0"
-    remark-stringify "^10.0.2"
-    shiki "^1.22.0"
-    unified "^10.1.2"
-    uuid "^8.3.2"
-    y-prosemirror "1.2.13"
-    y-protocols "^1.0.6"
-    yjs "^13.6.15"
-
-"@blocknote/mantine@0.23.2-hotfix.0":
+"@blocknote/mantine@*", "@blocknote/mantine@0.23.2-hotfix.0":
   version "0.23.2-hotfix.0"
   resolved "https://registry.yarnpkg.com/@blocknote/mantine/-/mantine-0.23.2-hotfix.0.tgz#695a6b44b92fab91ee0dcaa93c4224bc573374f4"
   integrity sha512-8SNBzgdOiYz+of/BfZY15nG71fmB0jk2eKjVliU4fWbhyKCM5ZJ86I2/5Ap8yBNP6ZtrV7QEEKyUqelg7/U/PA==
@@ -1163,36 +1065,12 @@
     "@mantine/utils" "^6.0.21"
     react-icons "^5.2.1"
 
-"@blocknote/react@0.23.2-hotfix.0":
+"@blocknote/react@*", "@blocknote/react@0.23.2-hotfix.0", "@blocknote/react@^0.23.2", "@blocknote/react@^0.23.2-hotfix.0":
   version "0.23.2-hotfix.0"
   resolved "https://registry.yarnpkg.com/@blocknote/react/-/react-0.23.2-hotfix.0.tgz#4fc52986b6b22598ee89a5ab1cafbe3d2d04ae0b"
   integrity sha512-POcDQHc4VsNrGxDH6DPcm2SeAaSnqQgWgGKCGljR1+4HaaqdK56WbHYeFw4W70jJcj5W6zY0keoev+r3lNH86Q==
   dependencies:
     "@blocknote/core" "^0.23.2-hotfix.0"
-    "@floating-ui/react" "^0.26.4"
-    "@tiptap/core" "^2.7.1"
-    "@tiptap/react" "^2.7.1"
-    lodash.merge "^4.6.2"
-    react-icons "^5.2.1"
-
-"@blocknote/react@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@blocknote/react/-/react-0.23.2.tgz#1a6e5463b768c481f5d662d37353c5765454b16b"
-  integrity sha512-/6eqWmA4gRDskCX/2HUAf/i4OzxeObg/59wpHu3rjQLGHCiGrgQx9pLyO2tf/sy0b+WstXpKlSj2V13YJ45E+Q==
-  dependencies:
-    "@blocknote/core" "^0.23.2"
-    "@floating-ui/react" "^0.26.4"
-    "@tiptap/core" "^2.7.1"
-    "@tiptap/react" "^2.7.1"
-    lodash.merge "^4.6.2"
-    react-icons "^5.2.1"
-
-"@blocknote/react@^0.23.2-hotfix.0":
-  version "0.23.6"
-  resolved "https://registry.yarnpkg.com/@blocknote/react/-/react-0.23.6.tgz#359272d4a7116822254c32710ec889f6ae503a72"
-  integrity sha512-HHlutNtgDNuSLYPyDjbyAGSimSY+CTG3Uvga5J8E4aky2XvxDQhrp1w2iPdOX5IAcLbpuqTOpDbdRj5pfTvveA==
-  dependencies:
-    "@blocknote/core" "^0.23.6"
     "@floating-ui/react" "^0.26.4"
     "@tiptap/core" "^2.7.1"
     "@tiptap/react" "^2.7.1"
@@ -1213,7 +1091,7 @@
     y-protocols "^1.0.6"
     yjs "^13.6.15"
 
-"@blocknote/xl-docx-exporter@0.23.2-hotfix.0":
+"@blocknote/xl-docx-exporter@*", "@blocknote/xl-docx-exporter@0.23.2-hotfix.0":
   version "0.23.2-hotfix.0"
   resolved "https://registry.yarnpkg.com/@blocknote/xl-docx-exporter/-/xl-docx-exporter-0.23.2-hotfix.0.tgz#4be683d38da35d7b056f759e033a59335746c88b"
   integrity sha512-LXodW2toxtjx2WE7ZOUFdrqnuahjpt5+12EkA1n3BeMIoApv7BKsPKmwkvMLmjg3S+8VX29tiOxFqRUOUL75lQ==
@@ -1223,7 +1101,7 @@
     docx "^9.0.2"
     sharp "^0.33.5"
 
-"@blocknote/xl-pdf-exporter@0.23.2-hotfix.0":
+"@blocknote/xl-pdf-exporter@*", "@blocknote/xl-pdf-exporter@0.23.2-hotfix.0":
   version "0.23.2-hotfix.0"
   resolved "https://registry.yarnpkg.com/@blocknote/xl-pdf-exporter/-/xl-pdf-exporter-0.23.2-hotfix.0.tgz#a9a64e66e0d3f87a28efc9de689c3a14ce573025"
   integrity sha512-1QPOSv+2OeUAEGY2yDxRsZopv/rdpZZ2U6amvipwGXwH9KmXqenFOuM8ZrrHf/UAens9vXGRx4ezKaAkdm/Nmw==
@@ -11714,15 +11592,6 @@ prosemirror-view@^1.0.0, prosemirror-view@^1.1.0, prosemirror-view@^1.27.0, pros
   version "1.37.2"
   resolved "https://registry.yarnpkg.com/prosemirror-view/-/prosemirror-view-1.37.2.tgz#e16b92611c6d0f30695606724dc4a9575ce7ca6b"
   integrity sha512-ApcyrfV/cRcaL65on7TQcfWElwLyOgIjnIynfAuV+fIdlpbSvSWRwfuPaH7T5mo4AbO/FID29qOtjiDIKGWyog==
-  dependencies:
-    prosemirror-model "^1.20.0"
-    prosemirror-state "^1.0.0"
-    prosemirror-transform "^1.1.0"
-
-prosemirror-view@^1.38.0:
-  version "1.38.1"
-  resolved "https://registry.yarnpkg.com/prosemirror-view/-/prosemirror-view-1.38.1.tgz#566d30cc8b00a68d6b4c60f5d8a6ab97c82990b3"
-  integrity sha512-4FH/uM1A4PNyrxXbD+RAbAsf0d/mM0D/wAKSVVWK7o0A9Q/oOXJBrw786mBf2Vnrs/Edly6dH6Z2gsb7zWwaUw==
   dependencies:
     prosemirror-model "^1.20.0"
     prosemirror-state "^1.0.0"

@@ -28,6 +28,11 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
+    "@blocknote/core": "0.23.2-hotfix.0",
+    "@blocknote/mantine": "0.23.2-hotfix.0",
+    "@blocknote/react": "0.23.2-hotfix.0",
+    "@blocknote/xl-docx-exporter": "0.23.2-hotfix.0",
+    "@blocknote/xl-pdf-exporter": "0.23.2-hotfix.0",
     "@types/node": "22.13.1",
     "@types/react-dom": "18.3.1",
     "@typescript-eslint/eslint-plugin": "8.23.0",
