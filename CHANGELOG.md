@@ -12,6 +12,10 @@ and this project adheres to
 
 - Use sentry tags instead of extra scope
 
+## Fixed
+
+- 🐛(frontend) fix collaboration error #684
+
 ## [2.3.0] - 2025-03-03
 
 ## Added
