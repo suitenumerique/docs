@@ -66,7 +66,7 @@ const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
     });
   }, [doc, docId, updateDoc]);
 
-  const timeout = useRef<NodeJS.Timeout>();
+  const timeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -101,7 +101,10 @@ const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
     router.events.on('routeChangeStart', onSave);
 
     return () => {
-      clearTimeout(timeout.current);
+      if (timeout.current) {
+        clearTimeout(timeout.current);
+      }
+
       removeEventListener('beforeunload', onSave);
       router.events.off('routeChangeStart', onSave);
     };
