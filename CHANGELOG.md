@@ -22,6 +22,8 @@ and this project adheres to
 
 - 🐛(frontend) fix collaboration error #684
 - 🔒️(back) restrict access to favorite_list endpoint #690
+- 🐛(frontend) remove scroll listener table content  #688
+
 
 ## [2.3.0] - 2025-03-03
 
