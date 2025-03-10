@@ -11,7 +11,7 @@ type Props = {
 };
 export const DocsGridItemSharedButton = ({ doc, handleClick }: Props) => {
   const { t } = useTranslation();
-  const sharedCount = doc.nb_accesses;
+  const sharedCount = doc.nb_accesses_direct;
   const isShared = sharedCount - 1 > 0;
 
   if (!isShared) {
