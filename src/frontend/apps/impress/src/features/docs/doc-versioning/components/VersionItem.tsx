@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc } from '@/features/docs/doc-management';
+import { Doc } from '@/docs/doc-management';
 
 import { Versions } from '../types';
 

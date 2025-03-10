@@ -4,7 +4,7 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore, useHeadingStore } from '@/features/docs/doc-editor';
+import { useEditorStore, useHeadingStore } from '@/docs/doc-editor';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
 import { Heading } from './Heading';

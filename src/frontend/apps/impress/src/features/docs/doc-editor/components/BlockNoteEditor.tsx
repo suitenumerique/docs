@@ -15,8 +15,8 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { Doc } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
-import { Doc } from '@/features/docs/doc-management';
 
 import { useUploadFile } from '../hook';
 import { useHeadings } from '../hook/useHeadings';

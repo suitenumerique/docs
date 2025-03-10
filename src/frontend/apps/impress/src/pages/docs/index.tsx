@@ -1,8 +1,8 @@
 import { useSearchParams } from 'next/navigation';
 import type { ReactElement } from 'react';
 
+import { DocsGrid } from '@/docs/docs-grid';
 import { DocDefaultFilter } from '@/features/docs';
-import { DocsGrid } from '@/features/docs/docs-grid';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 

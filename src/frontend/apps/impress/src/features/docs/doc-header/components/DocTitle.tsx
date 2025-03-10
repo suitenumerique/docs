@@ -17,7 +17,7 @@ import {
   KEY_LIST_DOC,
   useTrans,
   useUpdateDoc,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
 import { useBroadcastStore, useResponsiveStore } from '@/stores';
 
 interface DocTitleProps {

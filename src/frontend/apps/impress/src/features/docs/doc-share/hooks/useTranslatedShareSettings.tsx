@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { LinkReach, LinkRole } from '@/features/docs/doc-management/types';
+import { LinkReach, LinkRole } from '@/docs/doc-management/types';
 
 export const useTranslatedShareSettings = () => {
   const { t } = useTranslation();
