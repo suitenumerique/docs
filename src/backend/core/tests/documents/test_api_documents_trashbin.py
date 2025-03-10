@@ -79,6 +79,7 @@ def test_api_documents_trashbin_format():
             "children_list": True,
             "collaboration_auth": True,
             "descendants": True,
+            "cors_proxy": True,
             "destroy": True,
             "favorite": True,
             "invite_owner": True,

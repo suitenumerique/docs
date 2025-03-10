@@ -4,7 +4,7 @@
 import logging
 import re
 import uuid
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -16,8 +16,9 @@ from django.db import models as db
 from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
-from django.http import Http404
+from django.http import Http404, StreamingHttpResponse
 
+import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
 from rest_framework import filters, status, viewsets
@@ -1236,6 +1237,58 @@ class DocumentViewSet(
         response = AIService().translate(text, language)
 
         return drf.response.Response(response, status=drf.status.HTTP_200_OK)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        name="",
+        url_path="cors-proxy",
+    )
+    def cors_proxy(self, request, *args, **kwargs):
+        """
+        GET /api/v1.0/documents/<resource_id>/cors-proxy
+        Act like a proxy to fetch external resources and bypass CORS restrictions.
+        """
+        url = request.query_params.get("url")
+        if not url:
+            return drf.response.Response(
+                {"detail": "Missing 'url' query parameter"},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check for permissions.
+        self.get_object()
+
+        url = unquote(url)
+
+        try:
+            response = requests.get(
+                url,
+                stream=True,
+                headers={
+                    "User-Agent": request.headers.get("User-Agent", ""),
+                    "Accept": request.headers.get("Accept", ""),
+                },
+                timeout=10,
+            )
+
+            # Use StreamingHttpResponse with the response's iter_content to properly stream the data
+            proxy_response = StreamingHttpResponse(
+                streaming_content=response.iter_content(chunk_size=8192),
+                content_type=response.headers.get(
+                    "Content-Type", "application/octet-stream"
+                ),
+                status=response.status_code,
+            )
+
+            return proxy_response
+
+        except requests.RequestException as e:
+            logger.error("Proxy request failed: %s", str(e))
+            return drf_response.Response(
+                {"error": f"Failed to fetch resource: {e!s}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class DocumentAccessViewSet(
