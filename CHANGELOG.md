@@ -11,6 +11,8 @@ and this project adheres to
 ## Fixed
 - 🐛(frontend) remove scroll listener table content  #688
 - 🔒️(back) restrict access to favorite_list endpoint #690
+- 🐛(backend) refactor to fix filtering on children 
+    and descendants views #695
 
 
 ## [2.4.0] - 2025-03-06
@@ -32,6 +34,10 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) limit link reach/role select options depending on ancestors #645
+- ✨(backend) add new "descendants" action to document API endpoint #645
+- ✨(backend) new "tree" action on document detail endpoint #645
+- ✨(backend) allow forcing page size within limits #645
 - 💄(frontend) add error pages #643
 - 🔒️ Manage unsafe attachments #663
 - ✨(frontend) Custom block quote with export #646

@@ -37,7 +37,7 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const hasAccesses = doc.nb_accesses > 1 && doc.abilities.accesses_view;
+  const hasAccesses = doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
   const queryClient = useQueryClient();
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
@@ -193,7 +193,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                   }}
                   size={isSmallMobile ? 'small' : 'medium'}
                 >
-                  {doc.nb_accesses}
+                  {doc.nb_accesses_direct}
                 </Button>
               </Box>
             )}

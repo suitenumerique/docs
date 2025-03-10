@@ -1,6 +1,7 @@
 """
 Unit tests for the Document model
 """
+# pylint: disable=too-many-lines
 
 import random
 import smtplib
@@ -157,15 +158,22 @@ def test_models_documents_get_abilities_forbidden(
         "children_create": False,
         "children_list": False,
         "collaboration_auth": False,
+        "descendants": False,
         "destroy": False,
         "favorite": False,
         "invite_owner": False,
         "media_auth": False,
         "move": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "partial_update": False,
         "restore": False,
         "retrieve": False,
+        "tree": False,
         "update": False,
         "versions_destroy": False,
         "versions_list": False,
@@ -208,15 +216,22 @@ def test_models_documents_get_abilities_reader(
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": is_authenticated,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": False,
         "versions_destroy": False,
         "versions_list": False,
@@ -225,9 +240,14 @@ def test_models_documents_get_abilities_reader(
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
+
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @pytest.mark.parametrize(
@@ -256,15 +276,22 @@ def test_models_documents_get_abilities_editor(
         "children_create": is_authenticated,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": is_authenticated,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": False,
         "versions_list": False,
@@ -275,7 +302,11 @@ def test_models_documents_get_abilities_editor(
         assert document.get_abilities(user) == expected_abilities
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @override_settings(
@@ -294,15 +325,22 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": True,
         "favorite": True,
         "invite_owner": True,
         "link_configuration": True,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": True,
         "partial_update": True,
         "restore": True,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": True,
         "versions_list": True,
@@ -333,15 +371,22 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": True,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": True,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": True,
         "versions_list": True,
@@ -352,7 +397,11 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
 
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @override_settings(
@@ -371,15 +420,22 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "children_create": True,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": True,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": True,
         "versions_destroy": False,
         "versions_list": True,
@@ -390,7 +446,11 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
 
     document.soft_delete()
     document.refresh_from_db()
-    assert all(value is False for value in document.get_abilities(user).values())
+    assert all(
+        value is False
+        for key, value in document.get_abilities(user).items()
+        if key != "link_select_options"
+    )
 
 
 @pytest.mark.parametrize("ai_access_setting", ["public", "authenticated", "restricted"])
@@ -416,15 +476,22 @@ def test_models_documents_get_abilities_reader_user(
         "children_create": access_from_link,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": access_from_link,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": access_from_link,
         "versions_destroy": False,
         "versions_list": True,
@@ -437,7 +504,11 @@ def test_models_documents_get_abilities_reader_user(
 
         document.soft_delete()
         document.refresh_from_db()
-        assert all(value is False for value in document.get_abilities(user).values())
+        assert all(
+            value is False
+            for key, value in document.get_abilities(user).items()
+            if key != "link_select_options"
+        )
 
 
 def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
@@ -459,15 +530,22 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "children_create": False,
         "children_list": True,
         "collaboration_auth": True,
+        "descendants": True,
         "destroy": False,
         "favorite": True,
         "invite_owner": False,
         "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": ["reader", "editor"],
+        },
         "media_auth": True,
         "move": False,
         "partial_update": False,
         "restore": False,
         "retrieve": True,
+        "tree": True,
         "update": False,
         "versions_destroy": False,
         "versions_list": True,
@@ -742,40 +820,89 @@ def test_models_documents__email_invitation__failed(mock_logger, _mock_send_mail
 # Document number of accesses
 
 
-def test_models_documents_nb_accesses_cache_is_set_and_retrieved(
+def test_models_documents_nb_accesses_cache_is_set_and_retrieved_ancestors(
     django_assert_num_queries,
 ):
-    """Test that nb_accesses is cached after the first computation."""
-    document = factories.DocumentFactory()
+    """Test that nb_accesses is cached when calling nb_accesses_ancestors."""
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
     key = f"document_{document.id!s}_nb_accesses"
-    nb_accesses = random.randint(1, 4)
-    factories.UserDocumentAccessFactory.create_batch(nb_accesses, document=document)
+    nb_accesses_parent = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_parent, document=parent
+    )
+    nb_accesses_direct = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_direct, document=document
+    )
     factories.UserDocumentAccessFactory()  # An unrelated access should not be counted
 
     # Initially, the nb_accesses should not be cached
     assert cache.get(key) is None
 
     # Compute the nb_accesses for the first time (this should set the cache)
-    with django_assert_num_queries(1):
-        assert document.nb_accesses == nb_accesses
+    nb_accesses_ancestors = nb_accesses_parent + nb_accesses_direct
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_ancestors == nb_accesses_ancestors
 
     # Ensure that the nb_accesses is now cached
     with django_assert_num_queries(0):
-        assert document.nb_accesses == nb_accesses
-    assert cache.get(key) == nb_accesses
+        assert document.nb_accesses_ancestors == nb_accesses_ancestors
+    assert cache.get(key) == (nb_accesses_direct, nb_accesses_ancestors)
 
     # The cache value should be invalidated when a document access is created
     models.DocumentAccess.objects.create(
         document=document, user=factories.UserFactory(), role="reader"
     )
     assert cache.get(key) is None  # Cache should be invalidated
-    with django_assert_num_queries(1):
-        new_nb_accesses = document.nb_accesses
-    assert new_nb_accesses == nb_accesses + 1
-    assert cache.get(key) == new_nb_accesses  # Cache should now contain the new value
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_ancestors == nb_accesses_ancestors + 1
+    assert cache.get(key) == (nb_accesses_direct + 1, nb_accesses_ancestors + 1)
 
 
+def test_models_documents_nb_accesses_cache_is_set_and_retrieved_direct(
+    django_assert_num_queries,
+):
+    """Test that nb_accesses is cached when calling nb_accesses_direct."""
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
+    key = f"document_{document.id!s}_nb_accesses"
+    nb_accesses_parent = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_parent, document=parent
+    )
+    nb_accesses_direct = random.randint(1, 4)
+    factories.UserDocumentAccessFactory.create_batch(
+        nb_accesses_direct, document=document
+    )
+    factories.UserDocumentAccessFactory()  # An unrelated access should not be counted
+
+    # Initially, the nb_accesses should not be cached
+    assert cache.get(key) is None
+
+    # Compute the nb_accesses for the first time (this should set the cache)
+    nb_accesses_ancestors = nb_accesses_parent + nb_accesses_direct
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_direct == nb_accesses_direct
+
+    # Ensure that the nb_accesses is now cached
+    with django_assert_num_queries(0):
+        assert document.nb_accesses_direct == nb_accesses_direct
+    assert cache.get(key) == (nb_accesses_direct, nb_accesses_ancestors)
+
+    # The cache value should be invalidated when a document access is created
+    models.DocumentAccess.objects.create(
+        document=document, user=factories.UserFactory(), role="reader"
+    )
+    assert cache.get(key) is None  # Cache should be invalidated
+    with django_assert_num_queries(2):
+        assert document.nb_accesses_direct == nb_accesses_direct + 1
+    assert cache.get(key) == (nb_accesses_direct + 1, nb_accesses_ancestors + 1)
+
+
+@pytest.mark.parametrize("field", ["nb_accesses_ancestors", "nb_accesses_direct"])
 def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
+    field,
     django_assert_num_queries,
 ):
     """Test that the cache is invalidated when a document access is deleted."""
@@ -784,18 +911,125 @@ def test_models_documents_nb_accesses_cache_is_invalidated_on_access_removal(
     access = factories.UserDocumentAccessFactory(document=document)
 
     # Initially, the nb_accesses should be cached
-    assert document.nb_accesses == 1
-    assert cache.get(key) == 1
+    assert getattr(document, field) == 1
+    assert cache.get(key) == (1, 1)
 
     # Remove the access and check if cache is invalidated
     access.delete()
     assert cache.get(key) is None  # Cache should be invalidated
 
     # Recompute the nb_accesses (this should trigger a cache set)
-    with django_assert_num_queries(1):
-        new_nb_accesses = document.nb_accesses
+    with django_assert_num_queries(2):
+        new_nb_accesses = getattr(document, field)
     assert new_nb_accesses == 0
-    assert cache.get(key) == 0  # Cache should now contain the new value
+    assert cache.get(key) == (0, 0)  # Cache should now contain the new value
+
+
+@pytest.mark.parametrize("field", ["nb_accesses_ancestors", "nb_accesses_direct"])
+def test_models_documents_nb_accesses_cache_is_invalidated_on_document_soft_delete_restore(
+    field,
+    django_assert_num_queries,
+):
+    """Test that the cache is invalidated when a document access is deleted."""
+    document = factories.DocumentFactory()
+    key = f"document_{document.id!s}_nb_accesses"
+    factories.UserDocumentAccessFactory(document=document)
+
+    # Initially, the nb_accesses should be cached
+    assert getattr(document, field) == 1
+    assert cache.get(key) == (1, 1)
+
+    # Soft delete the document and check if cache is invalidated
+    document.soft_delete()
+    assert cache.get(key) is None  # Cache should be invalidated
+
+    # Recompute the nb_accesses (this should trigger a cache set)
+    with django_assert_num_queries(2):
+        new_nb_accesses = getattr(document, field)
+    assert new_nb_accesses == (1 if field == "nb_accesses_direct" else 0)
+    assert cache.get(key) == (1, 0)  # Cache should now contain the new value
+
+    document.restore()
+
+    # Recompute the nb_accesses (this should trigger a cache set)
+    with django_assert_num_queries(2):
+        new_nb_accesses = getattr(document, field)
+    assert new_nb_accesses == 1
+    assert cache.get(key) == (1, 1)  # Cache should now contain the new value
+
+
+def test_models_documents_numchild_deleted_from_instance():
+    """the "numchild" field should not include documents deleted from the instance."""
+    document = factories.DocumentFactory()
+    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
+    assert document.numchild == 2
+
+    child1.delete()
+
+    document.refresh_from_db()
+    assert document.numchild == 1
+
+
+def test_models_documents_numchild_deleted_from_queryset():
+    """the "numchild" field should not include documents deleted from a queryset."""
+    document = factories.DocumentFactory()
+    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
+    assert document.numchild == 2
+
+    models.Document.objects.filter(pk=child1.pk).delete()
+
+    document.refresh_from_db()
+    assert document.numchild == 1
+
+
+def test_models_documents_numchild_soft_deleted_and_restore():
+    """the "numchild" field should not include soft deleted documents."""
+    document = factories.DocumentFactory()
+    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
+
+    assert document.numchild == 2
+
+    child1.soft_delete()
+
+    document.refresh_from_db()
+    assert document.numchild == 1
+
+    child1.restore()
+
+    document.refresh_from_db()
+    assert document.numchild == 2
+
+
+def test_models_documents_soft_delete_tempering_with_instance():
+    """
+    Soft deleting should fail if the document is already deleted in database even though the
+    instance "deleted_at" attributes where tempered with.
+    """
+    document = factories.DocumentFactory()
+    document.soft_delete()
+
+    document.deleted_at = None
+    document.ancestors_deleted_at = None
+    with pytest.raises(
+        RuntimeError, match="This document is already deleted or has deleted ancestors."
+    ):
+        document.soft_delete()
+
+
+def test_models_documents_restore_tempering_with_instance():
+    """
+    Soft deleting should fail if the document is already deleted in database even though the
+    instance "deleted_at" attributes where tempered with.
+    """
+    document = factories.DocumentFactory()
+
+    if random.choice([False, True]):
+        document.deleted_at = timezone.now()
+    else:
+        document.ancestors_deleted_at = timezone.now()
+
+    with pytest.raises(RuntimeError, match="This document is not deleted."):
+        document.restore()
 
 
 def test_models_documents_restore(django_assert_num_queries):
@@ -806,7 +1040,7 @@ def test_models_documents_restore(django_assert_num_queries):
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
 
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(8):
         document.restore()
     document.refresh_from_db()
     assert document.deleted_at is None
@@ -849,7 +1083,7 @@ def test_models_documents_restore_complex(django_assert_num_queries):
     assert child2.ancestors_deleted_at == document.deleted_at
 
     # Restore the item
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(11):
         document.restore()
     document.refresh_from_db()
     child1.refresh_from_db()
@@ -899,7 +1133,7 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
 
     # Restoring the grand parent should not restore the document
     # as it was deleted before the grand parent
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(9):
         grand_parent.restore()
 
     grand_parent.refresh_from_db()
@@ -915,3 +1149,143 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
     assert document.ancestors_deleted_at == document.deleted_at
     assert child1.ancestors_deleted_at == document.deleted_at
     assert child2.ancestors_deleted_at == document.deleted_at
+
+
+@pytest.mark.parametrize(
+    "ancestors_links, select_options",
+    [
+        # One ancestor
+        (
+            [{"link_reach": "public", "link_role": "reader"}],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        ([{"link_reach": "public", "link_role": "editor"}], {"public": ["editor"]}),
+        (
+            [{"link_reach": "authenticated", "link_role": "reader"}],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [{"link_reach": "authenticated", "link_role": "editor"}],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        (
+            [{"link_reach": "restricted", "link_role": "reader"}],
+            {
+                "restricted": ["reader", "editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [{"link_reach": "restricted", "link_role": "editor"}],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        # Multiple ancestors with different roles
+        (
+            [
+                {"link_reach": "public", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "editor"},
+            ],
+            {"public": ["editor"]},
+        ),
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "authenticated", "link_role": "editor"},
+            ],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "reader"},
+                {"link_reach": "restricted", "link_role": "editor"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        # Multiple ancestors with different reaches
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "reader"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "reader"},
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "reader"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        # Multiple ancestors with mixed reaches and roles
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "editor"},
+                {"link_reach": "public", "link_role": "reader"},
+            ],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        (
+            [
+                {"link_reach": "authenticated", "link_role": "reader"},
+                {"link_reach": "public", "link_role": "editor"},
+            ],
+            {"public": ["editor"]},
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "editor"},
+                {"link_reach": "authenticated", "link_role": "reader"},
+            ],
+            {
+                "restricted": ["editor"],
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            [
+                {"link_reach": "restricted", "link_role": "reader"},
+                {"link_reach": "authenticated", "link_role": "editor"},
+            ],
+            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+        ),
+        # No ancestors (edge case)
+        (
+            [],
+            {
+                "public": ["reader", "editor"],
+                "authenticated": ["reader", "editor"],
+                "restricted": ["reader", "editor"],
+            },
+        ),
+    ],
+)
+def test_models_documents_get_select_options(ancestors_links, select_options):
+    """Validate that the "get_select_options" method operates as expected."""
+    assert models.LinkReachChoices.get_select_options(ancestors_links) == select_options

@@ -70,7 +70,8 @@ def test_api_documents_list_format():
         "is_favorite": True,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
-        "nb_accesses": 3,
+        "nb_accesses_ancestors": 3,
+        "nb_accesses_direct": 3,
         "numchild": 0,
         "path": document.path,
         "title": document.title,
@@ -147,7 +148,7 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
         str(child4_with_access.id),
     }
 
-    with django_assert_num_queries(8):
+    with django_assert_num_queries(12):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
@@ -185,7 +186,7 @@ def test_api_documents_list_authenticated_via_team(
 
     expected_ids = {str(document.id) for document in documents_team1 + documents_team2}
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(14):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
@@ -218,7 +219,7 @@ def test_api_documents_list_authenticated_link_reach_restricted(
     other_document = factories.DocumentFactory(link_reach="public")
     models.LinkTrace.objects.create(document=other_document, user=user)
 
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(6):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
@@ -267,7 +268,7 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
 
     expected_ids = {str(document1.id), str(document2.id), str(visible_child.id)}
 
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(10):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
@@ -328,6 +329,35 @@ def test_api_documents_list_pagination(
     assert document_ids == []
 
 
+def test_api_documents_list_pagination_force_page_size():
+    """Page size can be set via querystring."""
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document_ids = [
+        str(access.document_id)
+        for access in factories.UserDocumentAccessFactory.create_batch(3, user=user)
+    ]
+
+    # Force page size
+    response = client.get(
+        "/api/v1.0/documents/?page_size=2",
+    )
+
+    assert response.status_code == 200
+    content = response.json()
+
+    assert content["count"] == 3
+    assert content["next"] == "http://testserver/api/v1.0/documents/?page=2&page_size=2"
+    assert content["previous"] is None
+
+    assert len(content["results"]) == 2
+    for item in content["results"]:
+        document_ids.remove(item["id"])
+
+
 def test_api_documents_list_authenticated_distinct():
     """A document with several related users should only be listed once."""
     user = factories.UserFactory()
@@ -362,7 +392,7 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
     factories.DocumentFactory.create_batch(2, users=[user])
 
     url = "/api/v1.0/documents/"
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(14):
         response = client.get(url)
 
     # nb_accesses should now be cached

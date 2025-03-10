@@ -275,7 +275,8 @@ def test_api_documents_update_authenticated_editor_administrator_or_owner(
             "depth",
             "link_reach",
             "link_role",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
             "numchild",
             "path",
         ]:
