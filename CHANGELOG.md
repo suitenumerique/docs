@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+- 🐛(frontend) remove scroll listener table content  #688
+- 🔒️(back) restrict access to favorite_list endpoint #690
+
+
 ## [2.4.0] - 2025-03-06
 
 ## Added
@@ -21,7 +26,7 @@ and this project adheres to
 ## Fixed
 
 - 🐛(frontend) fix collaboration error #684
-- 🔒️(back) restrict access to favorite_list endpoint #690
+
 
 ## [2.3.0] - 2025-03-03
 
