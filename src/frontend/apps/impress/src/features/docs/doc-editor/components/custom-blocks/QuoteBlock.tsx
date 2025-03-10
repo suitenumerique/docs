@@ -13,7 +13,6 @@ export const QuoteBlock = createReactBlockSpec(
     type: 'quote',
     propSchema: {
       textAlignment: defaultProps.textAlignment,
-      textColor: defaultProps.textColor,
     },
     content: 'inline',
   },
