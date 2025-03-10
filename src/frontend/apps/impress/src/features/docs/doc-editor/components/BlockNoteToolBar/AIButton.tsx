@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { isAPIError } from '@/api';
 import { Box, Text } from '@/components';
-import { useDocOptions, useDocStore } from '@/features/docs/doc-management/';
+import { useDocOptions, useDocStore } from '@/docs/doc-management/';
 
 import {
   AITransformActions,

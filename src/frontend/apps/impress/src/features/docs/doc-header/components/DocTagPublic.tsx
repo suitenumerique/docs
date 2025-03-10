@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/features/docs/doc-management';
+import { Doc, LinkReach } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 interface DocTagPublicProps {

@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { User } from '@/features/auth';
 import {
   Access,
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
   Role,
-} from '@/features/docs/doc-management';
-import { KEY_LIST_DOC_ACCESSES } from '@/features/docs/doc-share';
+} from '@/docs/doc-management';
+import { KEY_LIST_DOC_ACCESSES } from '@/docs/doc-share';
+import { User } from '@/features/auth';
 import { useBroadcastStore } from '@/stores';
 
 import { OptionType } from '../types';

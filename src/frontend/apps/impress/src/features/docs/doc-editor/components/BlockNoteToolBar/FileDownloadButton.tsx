@@ -14,7 +14,7 @@ import {
 import { useCallback, useMemo } from 'react';
 import { RiDownload2Fill } from 'react-icons/ri';
 
-import { downloadFile, exportResolveFileUrl } from '@/features/docs/doc-export';
+import { downloadFile, exportResolveFileUrl } from '@/docs/doc-export';
 
 export const FileDownloadButton = ({
   open,

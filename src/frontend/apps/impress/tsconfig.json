@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/docs/*": ["./src/features/docs/*"]
     }
   },
   "include": [

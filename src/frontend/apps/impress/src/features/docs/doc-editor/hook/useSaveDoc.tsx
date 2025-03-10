@@ -2,8 +2,8 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
-import { useUpdateDoc } from '@/features/docs/doc-management/';
-import { KEY_LIST_DOC_VERSIONS } from '@/features/docs/doc-versioning';
+import { useUpdateDoc } from '@/docs/doc-management/';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { isFirefox } from '@/utils/userAgent';
 
 import { toBase64 } from '../utils';

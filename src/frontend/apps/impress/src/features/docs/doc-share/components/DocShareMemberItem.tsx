@@ -8,7 +8,7 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Access, Doc, Role } from '@/features/docs/doc-management/';
+import { Access, Doc, Role } from '@/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
 import { useDeleteDocAccess, useUpdateDocAccess } from '../api';

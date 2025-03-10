@@ -5,8 +5,8 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Role } from '@/features/docs/doc-management';
-import { Invitation } from '@/features/docs/doc-share/types';
+import { Role } from '@/docs/doc-management';
+import { Invitation } from '@/docs/doc-share/types';
 
 import { KEY_LIST_DOC_INVITATIONS } from './useDocInvitations';
 

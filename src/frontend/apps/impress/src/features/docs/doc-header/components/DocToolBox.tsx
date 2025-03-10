@@ -17,18 +17,14 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore } from '@/features/docs/doc-editor/';
-import { ModalExport } from '@/features/docs/doc-export/';
-import {
-  Doc,
-  ModalRemoveDoc,
-  useCopyDocLink,
-} from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
+import { useEditorStore } from '@/docs/doc-editor/';
+import { ModalExport } from '@/docs/doc-export/';
+import { Doc, ModalRemoveDoc, useCopyDocLink } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
-} from '@/features/docs/doc-versioning';
+} from '@/docs/doc-versioning';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 

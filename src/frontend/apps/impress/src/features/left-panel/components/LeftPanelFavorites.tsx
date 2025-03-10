@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator, InfiniteScroll, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useInfiniteDocs } from '@/features/docs/doc-management';
+import { useInfiniteDocs } from '@/docs/doc-management';
 
 import { LeftPanelFavoriteItem } from './LeftPanelFavoriteItem';
 

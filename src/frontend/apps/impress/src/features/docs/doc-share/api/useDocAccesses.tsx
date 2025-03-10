@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
-import { Access } from '@/features/docs/doc-management';
+import { Access } from '@/docs/doc-management';
 
 export type DocAccessesParam = {
   docId: string;
