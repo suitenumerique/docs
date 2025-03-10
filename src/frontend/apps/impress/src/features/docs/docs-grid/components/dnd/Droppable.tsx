@@ -6,15 +6,6 @@ import { css } from 'styled-components';
 import { Box } from '@/components';
 import { Doc } from '@/features/docs/doc-management';
 
-const HoverCss = css`
-  opacity: 0.5;
-  border: 1.5px dashed red;
-`;
-
-const DroppableCss = css`
-  border: 1.5px dashed transparent;
-`;
-
 type DroppableProps = {
   id: string;
   onOver?: (isOver: boolean, data?: Data<Doc>) => void;
@@ -42,7 +33,7 @@ export const Droppable = (props: DroppableProps) => {
       $css={css`
         border-radius: 4px;
         background-color: ${enableHover
-          ? 'var(--c--theme--colors--primary-300)'
+          ? 'var(--c--theme--colors--primary-100)'
           : 'transparent'};
         border: 1.5px solid
           ${enableHover

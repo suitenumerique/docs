@@ -48,10 +48,7 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
   const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
   const handleDragStart = (e: DragStartEvent) => {
-    console.log('drag start');
-    console.log(e);
     document.body.style.cursor = 'grabbing';
-
     if (e.active.data.current) {
       setSelectedDoc(e.active.data.current as Doc);
     }
@@ -61,11 +58,23 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
     setSelectedDoc(undefined);
     setCanDrop(undefined);
     document.body.style.cursor = 'default';
-    console.log('drag end');
-    console.log(e);
+    if (!canDrag || !canDrop) {
+      return;
+    }
+
+    const { active, over } = e;
+
+    if (active.id === over?.id) {
+      return;
+    }
+
+    console.log(
+      'MAKE SOME STUFF HERE',
+      `active: ${active.id}, over: ${over?.id}`,
+    );
   };
 
-  const getOverlayText = () => {
+  const overlayText = useMemo(() => {
     if (!canDrag) {
       return t('You must be the owner to move the document');
     }
@@ -73,11 +82,8 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
       return t('You must be at least the editor of the target document');
     }
 
-    console.log('selectedDoc', selectedDoc);
-    console.log('canDrop', canDrop);
-    console.log('canDrag', canDrag);
     return selectedDoc?.title;
-  };
+  }, [canDrag, canDrop, selectedDoc, t]);
 
   const overlayBgColor = useMemo(() => {
     if (!canDrag) {
@@ -133,7 +139,7 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
           $height="auto"
         >
           <Text $size="xs" $variation="000" $weight="500">
-            {getOverlayText()}
+            {overlayText}
           </Text>
         </Box>
       </DragOverlay>
