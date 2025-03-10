@@ -1,31 +1,56 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Data, useDroppable } from '@dnd-kit/core';
 import { useEffect } from 'react';
+import { css } from 'styled-components';
 
-type DroppableProps<T> = {
+import { Box } from '@/components';
+import { Doc } from '@/features/docs/doc-management';
+
+const HoverCss = css`
+  opacity: 0.5;
+  border: 1.5px dashed red;
+`;
+
+const DroppableCss = css`
+  border: 1.5px dashed transparent;
+`;
+
+type DroppableProps = {
   id: string;
-  onOver?: (isOver: boolean, data?: Data<T>) => void;
-  data?: Data<T>;
+  onOver?: (isOver: boolean, data?: Data<Doc>) => void;
+  data?: Data<Doc>;
   children: React.ReactNode;
+  enabledDrop?: boolean;
+  canDrop?: boolean;
 };
 
-export const Droppable = <T,>(props: DroppableProps<T>) => {
+export const Droppable = (props: DroppableProps) => {
   const { isOver, setNodeRef } = useDroppable({
     id: props.id,
     data: props.data,
   });
 
-  const style = {
-    opacity: isOver ? 0.5 : 1,
-  };
+  const enableHover = props.canDrop && isOver;
 
   useEffect(() => {
     props.onOver?.(isOver, props.data);
   }, [isOver, props.data, props.onOver]);
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <Box
+      ref={setNodeRef}
+      $css={css`
+        border-radius: 4px;
+        background-color: ${enableHover
+          ? 'var(--c--theme--colors--primary-300)'
+          : 'transparent'};
+        border: 1.5px solid
+          ${enableHover
+            ? 'var(--c--theme--colors--primary-500)'
+            : 'transparent'};
+      `}
+    >
       {props.children}
-    </div>
+    </Box>
   );
 };

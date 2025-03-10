@@ -1,20 +1,22 @@
 import {
   DndContext,
+  DragEndEvent,
   DragOverlay,
   DragStartEvent,
   KeyboardSensor,
+  Modifier,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { snapCenterToCursor } from '@dnd-kit/modifiers';
-import { useState } from 'react';
-import { css } from 'styled-components';
+import { getEventCoordinates } from '@dnd-kit/utilities';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box, Text } from '@/components';
 
-import { Doc } from '../../doc-management';
+import { Doc, Role } from '../../doc-management';
 
 import { DocsGridItem } from './DocsGridItem';
 import { Draggable } from './dnd/Draggable';
@@ -29,8 +31,11 @@ type DocGridContentListProps = {
 };
 
 export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
+  const { t } = useTranslation();
   const [selectedDoc, setSelectedDoc] = useState<Doc>();
-  console.log(selectedDoc);
+  const canDrag = selectedDoc?.user_roles.some((role) => role === Role.OWNER);
+  const [canDrop, setCanDrop] = useState<boolean>();
+
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint,
   });
@@ -45,10 +50,44 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
   const handleDragStart = (e: DragStartEvent) => {
     console.log('drag start');
     console.log(e);
+    document.body.style.cursor = 'grabbing';
+
     if (e.active.data.current) {
       setSelectedDoc(e.active.data.current as Doc);
     }
   };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    setSelectedDoc(undefined);
+    setCanDrop(undefined);
+    document.body.style.cursor = 'default';
+    console.log('drag end');
+    console.log(e);
+  };
+
+  const getOverlayText = () => {
+    if (!canDrag) {
+      return t('You must be the owner to move the document');
+    }
+    if (!canDrop) {
+      return t('You must be at least the editor of the target document');
+    }
+
+    console.log('selectedDoc', selectedDoc);
+    console.log('canDrop', canDrop);
+    console.log('canDrag', canDrag);
+    return selectedDoc?.title;
+  };
+
+  const overlayBgColor = useMemo(() => {
+    if (!canDrag) {
+      return 'var(--c--theme--colors--danger-600)';
+    }
+    if (canDrop !== undefined && !canDrop) {
+      return 'var(--c--theme--colors--danger-600)';
+    }
+    return '#5858D3';
+  }, [canDrag, canDrop]);
 
   if (docs.length === 0) {
     return null;
@@ -57,38 +96,72 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
   return (
     <DndContext
       sensors={sensors}
-      modifiers={[snapCenterToCursor]}
+      modifiers={[snapToTopLeft]}
       onDragStart={handleDragStart}
-      onDragEnd={(e) => {
-        console.log('drag end');
-        console.log(e);
-      }}
+      onDragEnd={handleDragEnd}
     >
-      {docs.map((doc) => (
-        <Droppable key={doc.id} id={doc.id} data={doc}>
-          <Draggable key={doc.id} id={doc.id} data={doc}>
-            <DocsGridItem doc={doc} key={doc.id} />
-          </Draggable>
-        </Droppable>
-      ))}
+      {docs.map((doc) => {
+        const canDropItem = doc.user_roles.some(
+          (role) =>
+            role === Role.ADMIN || role === Role.OWNER || role === Role.EDITOR,
+        );
+        return (
+          <Droppable
+            enabledDrop={canDrag}
+            canDrop={canDrag && canDropItem}
+            onOver={(isOver) => {
+              if (isOver) {
+                setCanDrop(canDropItem);
+              }
+            }}
+            key={doc.id}
+            id={doc.id}
+            data={doc}
+          >
+            <Draggable key={doc.id} id={doc.id} data={doc}>
+              <DocsGridItem dragMode={!!selectedDoc} doc={doc} key={doc.id} />
+            </Draggable>
+          </Droppable>
+        );
+      })}
       <DragOverlay>
         <Box
           $width="fit-content"
-          $padding="2xs"
-          $radius="8px"
+          $padding={{ horizontal: 'xs', vertical: '3xs' }}
+          $radius="12px"
+          $background={overlayBgColor}
           $height="auto"
-          $css={css`
-            cursor: grab;
-            background: ${selectedDoc?.abilities.update
-              ? 'var(--c--theme--colors--primary-300)'
-              : 'var(--c--theme--colors--danger-600)'};
-          `}
         >
-          <Text $size="xs" $variation="600" $weight="500">
-            {selectedDoc?.title}
+          <Text $size="xs" $variation="000" $weight="500">
+            {getOverlayText()}
           </Text>
         </Box>
       </DragOverlay>
     </DndContext>
   );
+};
+
+export const snapToTopLeft: Modifier = ({
+  activatorEvent,
+  draggingNodeRect,
+  transform,
+}) => {
+  if (draggingNodeRect && activatorEvent) {
+    const activatorCoordinates = getEventCoordinates(activatorEvent);
+
+    if (!activatorCoordinates) {
+      return transform;
+    }
+
+    const offsetX = activatorCoordinates.x - draggingNodeRect.left;
+    const offsetY = activatorCoordinates.y - draggingNodeRect.top;
+
+    return {
+      ...transform,
+      x: transform.x + offsetX - 3,
+      y: transform.y + offsetY - 3,
+    };
+  }
+
+  return transform;
 };
