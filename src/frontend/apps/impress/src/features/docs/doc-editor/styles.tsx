@@ -10,10 +10,6 @@ export const cssEditor = (readonly: boolean) => css`
       pointer-events: none;
     }
 
-    .bn-side-menu[data-block-type='quote'] {
-      height: 46px;
-    }
-
     .collaboration-cursor-custom__base {
       position: relative;
     }
@@ -49,6 +45,9 @@ export const cssEditor = (readonly: boolean) => css`
       clip-path: polygon(0 0, 100% 0%, 100% 100%, 0% 100%);
     }
 
+    /**
+     * Side menu
+     */
     .bn-side-menu[data-block-type='heading'][data-level='1'] {
       height: 50px;
     }
@@ -58,6 +57,13 @@ export const cssEditor = (readonly: boolean) => css`
     .bn-side-menu[data-block-type='heading'][data-level='3'] {
       height: 35px;
     }
+    .bn-side-menu[data-block-type='quote'] {
+      height: 46px;
+    }
+    .bn-side-menu[data-block-type='divider'] {
+      height: 38px;
+    }
+
     h1 {
       font-size: 1.875rem;
     }
