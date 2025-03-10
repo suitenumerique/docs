@@ -9,7 +9,7 @@ import {
   LinkReach,
   currentDocRole,
   useTrans,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { DocTitle } from './DocTitle';

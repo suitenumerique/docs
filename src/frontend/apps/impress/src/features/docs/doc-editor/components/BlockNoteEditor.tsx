@@ -15,8 +15,8 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { Doc } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
-import { Doc } from '@/features/docs/doc-management';
 
 import { useUploadFile } from '../hook';
 import { useHeadings } from '../hook/useHeadings';
@@ -27,12 +27,13 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { QuoteBlock } from './custom-blocks';
+import { DividerBlock, QuoteBlock } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      divider: DividerBlock,
       quote: QuoteBlock,
     },
   }),

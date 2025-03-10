@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { Doc, Role } from '@/docs/doc-management';
+import { Invitation, OptionType } from '@/docs/doc-share/types';
 import { User } from '@/features/auth';
-import { Doc, Role } from '@/features/docs/doc-management';
-import { Invitation, OptionType } from '@/features/docs/doc-share/types';
 
 import { KEY_LIST_DOC_INVITATIONS } from './useDocInvitations';
 

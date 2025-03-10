@@ -5,12 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import {
-  Access,
-  KEY_DOC,
-  KEY_LIST_DOC,
-  Role,
-} from '@/features/docs/doc-management';
+import { Access, KEY_DOC, KEY_LIST_DOC, Role } from '@/docs/doc-management';
 import { useBroadcastStore } from '@/stores';
 
 import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';

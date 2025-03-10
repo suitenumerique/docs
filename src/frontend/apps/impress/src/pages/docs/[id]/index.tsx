@@ -5,15 +5,15 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import { Box, Text, TextErrors } from '@/components';
-import { KEY_AUTH, setAuthUrl } from '@/features/auth';
-import { DocEditor } from '@/features/docs/doc-editor';
+import { DocEditor } from '@/docs/doc-editor';
 import {
   Doc,
   KEY_DOC,
   useCollaboration,
   useDoc,
   useDocStore,
-} from '@/features/docs/doc-management/';
+} from '@/docs/doc-management/';
+import { KEY_AUTH, setAuthUrl } from '@/features/auth';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
