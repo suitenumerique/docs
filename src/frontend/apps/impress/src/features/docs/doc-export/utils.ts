@@ -5,6 +5,8 @@ import {
 } from '@blocknote/core';
 import { IParagraphOptions, ShadingType } from 'docx';
 
+import { baseApiUrl } from '@/api';
+
 export function downloadFile(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -17,12 +19,11 @@ export function downloadFile(blob: Blob, filename: string) {
   window.URL.revokeObjectURL(url);
 }
 
-export const exportResolveFileUrl = async (
-  url: string,
-  resolveFileUrl: ((url: string) => Promise<string | Blob>) | undefined,
-) => {
-  if (!url.includes(window.location.hostname) && resolveFileUrl) {
-    return resolveFileUrl(url);
+export const exportResolveFileUrl = async (url: string) => {
+  // If the url is not from the same origin, better to proxy the request
+  // to avoid CORS issues
+  if (!url.includes(window.location.hostname) && !url.includes('base64')) {
+    return `${baseApiUrl()}cors-proxy/?url=${encodeURIComponent(url)}`;
   }
 
   try {

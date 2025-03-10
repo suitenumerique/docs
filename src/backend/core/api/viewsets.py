@@ -3,8 +3,9 @@
 
 import logging
 import re
+import requests
 import uuid
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -16,7 +17,7 @@ from django.db import models as db
 from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
-from django.http import Http404
+from django.http import Http404, HttpResponse
 
 import rest_framework as drf
 from botocore.exceptions import ClientError
@@ -1436,3 +1437,55 @@ class ConfigView(drf.views.APIView):
                 dict_settings[setting] = getattr(settings, setting)
 
         return drf.response.Response(dict_settings)
+
+
+class CorsProxyView(drf.views.APIView):
+    """
+    A proxy view that handles CORS requests to external resources.
+
+    This view acts as a middleware to fetch external resources while handling CORS.
+
+    GET /api/v1.0/cors-proxy/?url=<encoded_url>
+        Fetches the resource at the given URL and returns it with appropriate CORS headers.
+    """
+
+    def get(self, request):
+        """Handle GET requests to proxy external resources."""
+        url = request.query_params.get('url')
+
+        if not url:
+            return drf_response.Response(
+                {'error': 'URL parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        url = unquote(url)
+
+        try:
+            response = requests.get(
+                url,
+                stream=True,
+                headers={
+                    'User-Agent': request.headers.get('User-Agent', ''),
+                    'Accept': request.headers.get('Accept', ''),
+                },
+                timeout=10
+            )
+
+            proxy_response = HttpResponse(
+                content=response.content,
+                content_type=response.headers.get('Content-Type', 'application/octet-stream'),
+                status=response.status_code
+            )
+
+            proxy_response["Access-Control-Allow-Origin"] = "*"
+            proxy_response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+
+            return proxy_response
+
+        except requests.RequestException as e:
+            logger.error("Proxy request failed: %s", str(e))
+            return drf_response.Response(
+                {'error': f'Failed to fetch resource: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
