@@ -88,26 +88,14 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     let blobExport: Blob;
     if (format === DocDownloadFormat.PDF) {
-      const defaultExporter = new PDFExporter(
-        editor.schema,
-        pdfDocsSchemaMappings,
-      );
-
       const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
-        resolveFileUrl: async (url) =>
-          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+        resolveFileUrl: async (url) => exportResolveFileUrl(url),
       });
       const pdfDocument = await exporter.toReactPDFDocument(exportDocument);
       blobExport = await pdf(pdfDocument).toBlob();
     } else {
-      const defaultExporter = new DOCXExporter(
-        editor.schema,
-        docxDocsSchemaMappings,
-      );
-
       const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
-        resolveFileUrl: async (url) =>
-          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+        resolveFileUrl: async (url) => exportResolveFileUrl(url),
       });
 
       blobExport = await exporter.toBlob(exportDocument);

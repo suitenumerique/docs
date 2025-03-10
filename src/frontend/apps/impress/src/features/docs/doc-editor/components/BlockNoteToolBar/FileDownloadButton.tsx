@@ -70,11 +70,11 @@ export const FileDownloadButton = ({
       }
 
       if (!url.includes('-unsafe')) {
-        const blob = (await exportResolveFileUrl(url, undefined)) as Blob;
+        const blob = (await exportResolveFileUrl(url)) as Blob;
         downloadFile(blob, url.split('/').pop() || 'file');
       } else {
         const onConfirm = async () => {
-          const blob = (await exportResolveFileUrl(url, undefined)) as Blob;
+          const blob = (await exportResolveFileUrl(url)) as Blob;
           downloadFile(blob, url.split('/').pop() || 'file (unsafe)');
         };
 

@@ -8,7 +8,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+♻️(frontend) replace cors proxy for export #695
+
 ## Fixed
+
 - 🐛(frontend) remove scroll listener table content  #688
 - 🔒️(back) restrict access to favorite_list endpoint #690
 
