@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- 🧑‍💻(frontend) change literal section open source #702
+
 ## Fixed
 - 🐛(frontend) remove scroll listener table content  #688
 - 🔒️(back) restrict access to favorite_list endpoint #690

@@ -86,14 +86,10 @@ export function HomeContent() {
                           target="_blank"
                         >
                           Django Rest Framework
-                        </a>
-                        ,{' '}
+                        </a>{' '}
+                        and{' '}
                         <a href="https://nextjs.org/" target="_blank">
                           Next.js
-                        </a>
-                        , and{' '}
-                        <a href="https://min.io/" target="_blank">
-                          MinIO
                         </a>
                         . We also use{' '}
                         <a href="https://github.com/yjs" target="_blank">
@@ -102,8 +98,8 @@ export function HomeContent() {
                         and{' '}
                         <a href="https://www.blocknotejs.org/" target="_blank">
                           BlockNote.js
-                        </a>{' '}
-                        of which we are proud sponsors.
+                        </a>
+                        , both of which we are proud to sponsor.
                       </Trans>
                     </Text>
                     <Text as="p" $display="inline">
@@ -114,8 +110,8 @@ export function HomeContent() {
                           target="_blank"
                         >
                           documentation
-                        </a>{' '}
-                        with production-ready examples).
+                        </a>
+                        ).
                         <br />
                         Docs uses an innovation and business friendly{' '}
                         <a
@@ -123,8 +119,9 @@ export function HomeContent() {
                           target="_blank"
                         >
                           licence
-                        </a>
-                        .<br />
+                        </a>{' '}
+                        (MIT).
+                        <br />
                         Contributions are welcome (see our roadmap{' '}
                         <a
                           href="https://github.com/orgs/numerique-gouv/projects/13/views/11"
@@ -149,10 +146,7 @@ export function HomeContent() {
                         <a href="https://zendis.de/" target="_blank">
                           (ZenDiS)
                         </a>
-                        . We are always looking for new public partners (we are
-                        currently onboarding the Netherlands 🇳🇱🧀). Feel free to
-                        reach out if you are interested in using or contributing
-                        to docs.
+                        .
                       </Trans>
                     </Text>
                     <Box
