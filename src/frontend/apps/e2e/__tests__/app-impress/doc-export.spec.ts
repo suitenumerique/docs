@@ -257,4 +257,47 @@ test.describe('Doc Export', () => {
 
     expect(pdfData.text).toContain('Hello World'); // This is the pdf text
   });
+
+  /**
+   * We cannot assert the line break is visible in the pdf but we can assert the
+   * line break is visible in the editor and that the pdf is generated.
+   */
+  test('it exports the doc with divider', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'export-divider', browserName, 1);
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await editor.fill('Hello World');
+
+    // Trigger slash menu to show menu
+    await editor.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Add a horizontal line').click();
+
+    await expect(
+      editor.locator('.bn-block-content[data-content-type="divider"]'),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'download',
+      })
+      .click();
+
+    await page
+      .getByRole('button', {
+        name: 'Download',
+      })
+      .click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfData = await pdf(pdfBuffer);
+    expect(pdfData.text).toContain('Hello World');
+  });
 });

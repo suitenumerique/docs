@@ -1,6 +1,7 @@
 import { pdfDefaultSchemaMappings } from '@blocknote/xl-pdf-exporter';
 
 import {
+  blockMappingDividerPDF,
   blockMappingHeadingPDF,
   blockMappingParagraphPDF,
   blockMappingQuotePDF,
@@ -14,6 +15,7 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     ...pdfDefaultSchemaMappings.blockMapping,
     heading: blockMappingHeadingPDF,
     paragraph: blockMappingParagraphPDF,
+    divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
   },

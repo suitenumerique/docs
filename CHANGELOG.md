@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(frontend) Custom block divider with export #698
+
 ## Changed
 
 - 🧑‍💻(frontend) change literal section open source #702
