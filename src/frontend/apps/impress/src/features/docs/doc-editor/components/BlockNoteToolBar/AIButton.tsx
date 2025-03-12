@@ -1,3 +1,4 @@
+import { Block } from '@blocknote/core';
 import {
   ComponentProps,
   useBlockNoteEditor,
@@ -225,14 +226,23 @@ const AIMenuItemTransform = ({
   icon,
 }: PropsWithChildren<AIMenuItemTransform>) => {
   const { mutateAsync: requestAI, isPending } = useDocAITransform();
+  const editor = useBlockNoteEditor();
 
-  const requestAIAction = async (markdown: string) => {
+  const requestAIAction = async (selectedBlocks: Block[]) => {
+    const text = await editor.blocksToMarkdownLossy(selectedBlocks);
+
     const responseAI = await requestAI({
-      text: markdown,
+      text,
       action,
       docId,
     });
-    return responseAI.answer;
+
+    if (!responseAI?.answer) {
+      throw new Error('No response from AI');
+    }
+
+    const markdown = await editor.tryParseMarkdownToBlocks(responseAI.answer);
+    editor.replaceBlocks(selectedBlocks, markdown);
   };
 
   return (
@@ -255,14 +265,35 @@ const AIMenuItemTranslate = ({
   language,
 }: PropsWithChildren<AIMenuItemTranslate>) => {
   const { mutateAsync: requestAI, isPending } = useDocAITranslate();
+  const editor = useBlockNoteEditor();
 
-  const requestAITranslate = async (markdown: string) => {
+  const requestAITranslate = async (selectedBlocks: Block[]) => {
+    let fullHtml = '';
+    for (const block of selectedBlocks) {
+      if (Array.isArray(block.content) && block.content.length === 0) {
+        fullHtml += '<p><br/></p>';
+        continue;
+      }
+
+      fullHtml += await editor.blocksToHTMLLossy([block]);
+    }
+
     const responseAI = await requestAI({
-      text: markdown,
+      text: fullHtml,
       language,
       docId,
     });
-    return responseAI.answer;
+
+    if (!responseAI || !responseAI.answer) {
+      throw new Error('No response from AI');
+    }
+
+    try {
+      const blocks = await editor.tryParseHTMLToBlocks(responseAI.answer);
+      editor.replaceBlocks(selectedBlocks, blocks);
+    } catch {
+      editor.replaceBlocks(selectedBlocks, selectedBlocks);
+    }
   };
 
   return (
@@ -277,7 +308,7 @@ const AIMenuItemTranslate = ({
 };
 
 interface AIMenuItemProps {
-  requestAI: (markdown: string) => Promise<string>;
+  requestAI: (blocks: Block[]) => Promise<void>;
   isPending: boolean;
   icon?: ReactNode;
 }
@@ -289,32 +320,24 @@ const AIMenuItem = ({
   icon,
 }: PropsWithChildren<AIMenuItemProps>) => {
   const Components = useComponentsContext();
+  const { toast } = useToastProvider();
+  const { t } = useTranslation();
 
   const editor = useBlockNoteEditor();
   const handleAIError = useHandleAIError();
 
   const handleAIAction = async () => {
-    let selectedBlocks = editor.getSelection()?.blocks;
+    const selectedBlocks = editor.getSelection()?.blocks ?? [
+      editor.getTextCursorPosition().block,
+    ];
 
-    if (!selectedBlocks || selectedBlocks.length === 0) {
-      selectedBlocks = [editor.getTextCursorPosition().block];
-
-      if (!selectedBlocks || selectedBlocks.length === 0) {
-        return;
-      }
+    if (!selectedBlocks?.length) {
+      toast(t('No text selected'), VariantType.WARNING);
+      return;
     }
 
-    const markdown = await editor.blocksToMarkdownLossy(selectedBlocks);
-
     try {
-      const responseAI = await requestAI(markdown);
-
-      if (!responseAI) {
-        return;
-      }
-
-      const blockMarkdown = await editor.tryParseMarkdownToBlocks(responseAI);
-      editor.replaceBlocks(selectedBlocks, blockMarkdown);
+      await requestAI(selectedBlocks);
     } catch (error) {
       handleAIError(error);
     }

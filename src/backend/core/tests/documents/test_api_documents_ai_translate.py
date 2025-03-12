@@ -91,29 +91,28 @@ def test_api_documents_ai_translate_anonymous_success(mock_create):
     """
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Ola"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
     response = APIClient().post(url, {"text": "Hello", "language": "es"})
 
     assert response.status_code == 200
-    assert response.json() == {"answer": "Salut"}
+    assert response.json() == {"answer": "Ola"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Translate the markdown text to Spanish, preserving markdown formatting. "
-                    'Return JSON: {"answer": "your translated markdown text in Spanish"}. '
+                    "Keep the same html stucture and formatting. "
+                    "Translate the content in the html to the specified language Spanish. "
+                    "Check the translation for accuracy and make any necessary corrections. "
                     "Do not provide any other information."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -190,9 +189,8 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
 
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
@@ -202,18 +200,18 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Translate the markdown text to Colombian Spanish, "
-                    "preserving markdown formatting. Return JSON: "
-                    '{"answer": "your translated markdown text in Colombian Spanish"}. '
+                    "Keep the same html stucture and formatting. "
+                    "Translate the content in the html to the "
+                    "specified language Colombian Spanish. "
+                    "Check the translation for accuracy and make any necessary corrections. "
                     "Do not provide any other information."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -268,9 +266,8 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
             document=document, team="lasuite", role=role
         )
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
@@ -280,18 +277,18 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Translate the markdown text to Colombian Spanish, "
-                    "preserving markdown formatting. Return JSON: "
-                    '{"answer": "your translated markdown text in Colombian Spanish"}. '
+                    "Keep the same html stucture and formatting. "
+                    "Translate the content in the html to the "
+                    "specified language Colombian Spanish. "
+                    "Check the translation for accuracy and make any necessary corrections. "
                     "Do not provide any other information."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -339,9 +336,8 @@ def test_api_documents_ai_translate_throttling_document(mock_create):
     client = APIClient()
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
@@ -374,9 +370,8 @@ def test_api_documents_ai_translate_throttling_user(mock_create):
     client = APIClient()
     client.force_login(user)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     for _ in range(3):

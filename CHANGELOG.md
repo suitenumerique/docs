@@ -56,6 +56,7 @@ and this project adheres to
 - 📝(doc) minor README.md formatting and wording enhancements
 - ♻️Stop setting a default title on doc creation #634
 - ♻️(frontend) misc ui improvements #644
+- ♻️(frontend) Improve AI translations #478
 
 ## Fixed
 

@@ -71,9 +71,8 @@ def test_api_documents_ai_transform_anonymous_success(mock_create):
     """
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -83,17 +82,15 @@ def test_api_documents_ai_transform_anonymous_success(mock_create):
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
                     "Summarize the markdown text, preserving language and markdown formatting. "
-                    'Return JSON: {"answer": "your markdown summary"}. Do not provide any other '
-                    "information."
+                    "Do not provide any other information. Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -170,9 +167,8 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
 
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -182,16 +178,15 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    'Answer the prompt in markdown format. Return JSON: {"answer": '
-                    '"Your markdown answer"}. Do not provide any other information.'
+                    "Answer the prompt in markdown format. Preserve the language and markdown "
+                    "formatting. Do not provide any other information. Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -246,9 +241,8 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
             document=document, team="lasuite", role=role
         )
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -258,16 +252,15 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    'Answer the prompt in markdown format. Return JSON: {"answer": '
-                    '"Your markdown answer"}. Do not provide any other information.'
+                    "Answer the prompt in markdown format. Preserve the language and markdown "
+                    "formatting. Do not provide any other information. Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -315,9 +308,8 @@ def test_api_documents_ai_transform_throttling_document(mock_create):
     client = APIClient()
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -350,9 +342,8 @@ def test_api_documents_ai_transform_throttling_user(mock_create):
     client = APIClient()
     client.force_login(user)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     for _ in range(3):

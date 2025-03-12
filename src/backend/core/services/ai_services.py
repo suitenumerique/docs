@@ -1,8 +1,5 @@
 """AI services."""
 
-import json
-import re
-
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -12,32 +9,34 @@ from core import enums
 
 AI_ACTIONS = {
     "prompt": (
-        "Answer the prompt in markdown format. Return JSON: "
-        '{"answer": "Your markdown answer"}. '
-        "Do not provide any other information."
+        "Answer the prompt in markdown format. "
+        "Preserve the language and markdown formatting. "
+        "Do not provide any other information. "
+        "Preserve the language."
     ),
     "correct": (
         "Correct grammar and spelling of the markdown text, "
         "preserving language and markdown formatting. "
-        'Return JSON: {"answer": "your corrected markdown text"}. '
-        "Do not provide any other information."
+        "Do not provide any other information. "
+        "Preserve the language."
     ),
     "rephrase": (
         "Rephrase the given markdown text, "
         "preserving language and markdown formatting. "
-        'Return JSON: {"answer": "your rephrased markdown text"}. '
-        "Do not provide any other information."
+        "Do not provide any other information. "
+        "Preserve the language."
     ),
     "summarize": (
         "Summarize the markdown text, preserving language and markdown formatting. "
-        'Return JSON: {"answer": "your markdown summary"}. '
-        "Do not provide any other information."
+        "Do not provide any other information. "
+        "Preserve the language."
     ),
 }
 
 AI_TRANSLATE = (
-    "Translate the markdown text to {language:s}, preserving markdown formatting. "
-    'Return JSON: {{"answer": "your translated markdown text in {language:s}"}}. '
+    "Keep the same html stucture and formatting. "
+    "Translate the content in the html to the specified language {language:s}. "
+    "Check the translation for accuracy and make any necessary corrections. "
     "Do not provide any other information."
 )
 
@@ -59,32 +58,18 @@ class AIService:
         """Helper method to call the OpenAI API and process the response."""
         response = self.client.chat.completions.create(
             model=settings.AI_MODEL,
-            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system_content},
-                {"role": "user", "content": json.dumps({"markdown_input": text})},
+                {"role": "user", "content": text},
             ],
         )
 
         content = response.choices[0].message.content
 
-        try:
-            sanitized_content = re.sub(r'\s*"answer"\s*:\s*', '"answer": ', content)
-            sanitized_content = re.sub(r"\s*\}", "}", sanitized_content)
-            sanitized_content = re.sub(r"(?<!\\)\n", "\\\\n", sanitized_content)
-            sanitized_content = re.sub(r"(?<!\\)\t", "\\\\t", sanitized_content)
-
-            json_response = json.loads(sanitized_content)
-        except (json.JSONDecodeError, IndexError):
-            try:
-                json_response = json.loads(content)
-            except json.JSONDecodeError as err:
-                raise RuntimeError("AI response is not valid JSON", content) from err
-
-        if "answer" not in json_response:
+        if not content:
             raise RuntimeError("AI response does not contain an answer")
 
-        return json_response
+        return {"answer": content}
 
     def transform(self, text, action):
         """Transform text based on specified action."""
