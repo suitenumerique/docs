@@ -165,6 +165,17 @@ export function AIGroupButton() {
             >
               {t('Correct')}
             </AIMenuItemTransform>
+            <AIMenuItemTransform
+              action="beautify"
+              docId={currentDoc.id}
+              icon={
+                <Text $isMaterialIcon $size="s">
+                  draw
+                </Text>
+              }
+            >
+              {t('Beautify')}
+            </AIMenuItemTransform>
           </>
         )}
         {canAITranslate && (

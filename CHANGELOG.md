@@ -26,10 +26,12 @@ and this project adheres to
 ## Added
 
 - ✨(frontend) synchronize language-choice #401
+- ✨(frontend) add Beautify action to AI transform #478
 
 ## Changed
 
 - Use sentry tags instead of extra scope
+- ♻️(frontend) Improve AI translations #478
 
 ## Fixed
 
@@ -56,7 +58,6 @@ and this project adheres to
 - 📝(doc) minor README.md formatting and wording enhancements
 - ♻️Stop setting a default title on doc creation #634
 - ♻️(frontend) misc ui improvements #644
-- ♻️(frontend) Improve AI translations #478
 
 ## Fixed
 
