@@ -3,6 +3,7 @@ import {
   DefaultProps,
   UnreachableCaseError,
 } from '@blocknote/core';
+import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
 
 export function downloadFile(blob: Blob, filename: string) {
@@ -15,6 +16,26 @@ export function downloadFile(blob: Blob, filename: string) {
   a.click();
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Convert SVG to PNG
+ * @param svgText - The SVG text to convert
+ * @returns The PNG data URL
+ */
+export async function convertSvgToPng(svgText: string) {
+  // Create a canvas and render the SVG onto it
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Canvas context is null');
+  }
+
+  const svg = Canvg.fromString(ctx, svgText);
+  await svg.render();
+
+  return canvas.toDataURL('image/png');
 }
 
 export function docxBlockPropsToStyles(

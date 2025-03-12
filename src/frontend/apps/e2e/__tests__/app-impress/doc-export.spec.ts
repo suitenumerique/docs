@@ -157,11 +157,9 @@ test.describe('Doc Export', () => {
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(
-      path.join(__dirname, 'assets/logo-suite-numerique.png'),
-    );
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'logo-suite-numerique.png' });
+    const image = page.getByRole('img', { name: 'test.svg' });
 
     await expect(image).toBeVisible();
 

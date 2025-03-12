@@ -1,0 +1,8 @@
+<svg width="100" height="100" viewBox="0 0 100 100">
+  <circle cx="50" cy="30" r="20" fill="#3498db" />
+  <polygon
+    points="50,10 55,20 65,20 58,30 60,40 50,35 40,40 42,30 35,20 45,20"
+    fill="#f1c40f"
+  />
+  <text x="50" y="70" text-anchor="middle" fill="white">Hello svg</text>
+</svg>
