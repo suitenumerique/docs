@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import {
   createDoc,
+  getGridRow,
   goToGridDoc,
   mockedAccesses,
   mockedDocument,
@@ -378,7 +379,12 @@ test.describe('Doc Header', () => {
     expect(clipboardContent.trim()).toBe(`<h1>Hello World</h1><p></p>`);
   });
 
-  test('it checks the copy link button', async ({ page }) => {
+  test('it checks the copy link button', async ({ page, browserName }) => {
+    // eslint-disable-next-line playwright/no-skipped-test
+    test.skip(
+      browserName === 'webkit',
+      'navigator.clipboard is not working with webkit and playwright',
+    );
     await mockedDocument(page, {
       abilities: {
         destroy: false, // Means owner
@@ -405,6 +411,50 @@ test.describe('Doc Header', () => {
     await shareButton.click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    const handle = await page.evaluateHandle(() =>
+      navigator.clipboard.readText(),
+    );
+    const clipboardContent = await handle.jsonValue();
+
+    const origin = await page.evaluate(() => window.location.origin);
+    expect(clipboardContent.trim()).toMatch(
+      `${origin}/docs/mocked-document-id/`,
+    );
+  });
+
+  test('it pins a document', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
+
+    await page.getByLabel('Open the document options').click();
+
+    // Pin
+    await page.getByText('push_pin').click();
+    await page.getByLabel('Open the document options').click();
+    await expect(page.getByText('Unpin')).toBeVisible();
+
+    await page.goto('/');
+
+    const row = await getGridRow(page, docTitle);
+
+    // Check is pinned
+    await expect(row.getByLabel('Pin document icon')).toBeVisible();
+    const leftPanelFavorites = page.getByTestId('left-panel-favorites');
+    await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
+
+    await row.getByText(docTitle).click();
+    await page.getByLabel('Open the document options').click();
+
+    // Unpin
+    await page.getByText('Unpin').click();
+    await page.getByLabel('Open the document options').click();
+    await expect(page.getByText('push_pin')).toBeVisible();
+
+    await page.goto('/');
+
+    // Check is unpinned
+    await expect(row.getByLabel('Pin document icon')).toBeHidden();
+    await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 });
 
@@ -415,12 +465,7 @@ test.describe('Documents Header mobile', () => {
     await page.goto('/');
   });
 
-  test('it checks the copy link button', async ({ page, browserName }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
-    test.skip(
-      browserName === 'webkit',
-      'navigator.clipboard is not working with webkit and playwright',
-    );
+  test('it checks the copy link button is displayed', async ({ page }) => {
     await mockedDocument(page, {
       abilities: {
         destroy: false,
@@ -440,19 +485,11 @@ test.describe('Documents Header mobile', () => {
 
     await expect(page.getByRole('button', { name: 'Copy link' })).toBeHidden();
     await page.getByLabel('Open the document options').click();
+    await expect(
+      page.getByRole('menuitem', { name: 'Copy link' }),
+    ).toBeVisible();
     await page.getByLabel('Share').click();
-    await page.getByRole('button', { name: 'Copy link' }).click();
-    await expect(page.getByText('Link Copied !')).toBeVisible();
-    // Test that clipboard is in HTML format
-    const handle = await page.evaluateHandle(() =>
-      navigator.clipboard.readText(),
-    );
-    const clipboardContent = await handle.jsonValue();
-
-    const origin = await page.evaluate(() => window.location.origin);
-    expect(clipboardContent.trim()).toMatch(
-      `${origin}/docs/mocked-document-id/`,
-    );
+    await expect(page.getByRole('button', { name: 'Copy link' })).toBeVisible();
   });
 
   test('it checks the close button on Share modal', async ({ page }) => {
