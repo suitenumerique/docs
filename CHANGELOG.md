@@ -27,6 +27,7 @@ and this project adheres to
 
 - ✨(frontend) synchronize language-choice #401
 - ✨(frontend) add Beautify action to AI transform #478
+- ✨(frontend) add Emojify action to AI transform #478
 
 ## Changed
 

@@ -176,6 +176,17 @@ export function AIGroupButton() {
             >
               {t('Beautify')}
             </AIMenuItemTransform>
+            <AIMenuItemTransform
+              action="emojify"
+              docId={currentDoc.id}
+              icon={
+                <Text $isMaterialIcon $size="s">
+                  emoji_emotions
+                </Text>
+              }
+            >
+              {t('Emojify')}
+            </AIMenuItemTransform>
           </>
         )}
         {canAITranslate && (

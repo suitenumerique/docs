@@ -33,7 +33,12 @@ AI_ACTIONS = {
     ),
     "beautify": (
         "Add formatting to the text to make it more readable. "
-        "Do not provide any other information."
+        "Do not provide any other information. "
+        "Preserve the language."
+    ),
+    "emojify": (
+        "Add emojis to the important parts of the text. "
+        "Do not provide any other information. "
         "Preserve the language."
     ),
 }
