@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box, Text, TextErrors } from '@/components';
 import { DocEditor } from '@/docs/doc-editor';
@@ -64,14 +65,15 @@ const DocPage = ({ id }: DocProps) => {
   const queryClient = useQueryClient();
   const { replace } = useRouter();
   useCollaboration(doc?.id, doc?.content);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (doc?.title) {
       setTimeout(() => {
-        document.title = `${doc.title} - Docs`;
+        document.title = `${doc.title} - ${t('Docs')}`;
       }, 100);
     }
-  }, [doc?.title]);
+  }, [doc?.title, t]);
 
   useEffect(() => {
     if (!docQuery || isFetching) {
