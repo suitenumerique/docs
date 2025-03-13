@@ -18,10 +18,11 @@ import { Box, Text } from '@/components';
 import { useEditorStore } from '@/features/docs/doc-editor';
 import { Doc, useTrans } from '@/features/docs/doc-management';
 
+import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
-import { downloadFile, exportResolveFileUrl } from '../utils';
+import { downloadFile } from '../utils';
 
 enum DocDownloadFormat {
   PDF = 'pdf',
@@ -88,26 +89,14 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     let blobExport: Blob;
     if (format === DocDownloadFormat.PDF) {
-      const defaultExporter = new PDFExporter(
-        editor.schema,
-        pdfDocsSchemaMappings,
-      );
-
       const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
-        resolveFileUrl: async (url) =>
-          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
       const pdfDocument = await exporter.toReactPDFDocument(exportDocument);
       blobExport = await pdf(pdfDocument).toBlob();
     } else {
-      const defaultExporter = new DOCXExporter(
-        editor.schema,
-        docxDocsSchemaMappings,
-      );
-
       const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
-        resolveFileUrl: async (url) =>
-          exportResolveFileUrl(url, defaultExporter.options.resolveFileUrl),
+        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
 
       blobExport = await exporter.toBlob(exportDocument);

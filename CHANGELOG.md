@@ -11,8 +11,10 @@ and this project adheres to
 ## Changed
 
 - 🧑‍💻(frontend) change literal section open source #702
+- ♻️(frontend) replace cors proxy for export #695
 
 ## Fixed
+
 - 🐛(frontend) remove scroll listener table content  #688
 - 🔒️(back) restrict access to favorite_list endpoint #690
 - 🐛(backend) refactor to fix filtering on children 

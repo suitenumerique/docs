@@ -57,7 +57,7 @@ export const FileDownloadButton = ({
        * If not hosted on our domain, means not a file uploaded by the user,
        * we do what Blocknote was doing initially.
        */
-      if (!url.includes(window.location.hostname)) {
+      if (!url.includes(window.location.hostname) && !url.includes('base64')) {
         if (!editor.resolveFileUrl) {
           window.open(url);
         } else {
@@ -70,11 +70,11 @@ export const FileDownloadButton = ({
       }
 
       if (!url.includes('-unsafe')) {
-        const blob = (await exportResolveFileUrl(url, undefined)) as Blob;
+        const blob = (await exportResolveFileUrl(url)) as Blob;
         downloadFile(blob, url.split('/').pop() || 'file');
       } else {
         const onConfirm = async () => {
-          const blob = (await exportResolveFileUrl(url, undefined)) as Blob;
+          const blob = (await exportResolveFileUrl(url)) as Blob;
           downloadFile(blob, url.split('/').pop() || 'file (unsafe)');
         };
 

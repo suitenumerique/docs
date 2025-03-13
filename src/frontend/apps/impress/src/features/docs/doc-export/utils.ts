@@ -17,27 +17,6 @@ export function downloadFile(blob: Blob, filename: string) {
   window.URL.revokeObjectURL(url);
 }
 
-export const exportResolveFileUrl = async (
-  url: string,
-  resolveFileUrl: ((url: string) => Promise<string | Blob>) | undefined,
-) => {
-  if (!url.includes(window.location.hostname) && resolveFileUrl) {
-    return resolveFileUrl(url);
-  }
-
-  try {
-    const response = await fetch(url, {
-      credentials: 'include',
-    });
-
-    return response.blob();
-  } catch {
-    console.error(`Failed to fetch image: ${url}`);
-  }
-
-  return url;
-};
-
 export function docxBlockPropsToStyles(
   props: Partial<DefaultProps>,
   colors: typeof COLORS_DEFAULT,

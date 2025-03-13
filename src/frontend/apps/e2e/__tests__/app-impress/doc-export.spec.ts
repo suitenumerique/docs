@@ -136,6 +136,11 @@ test.describe('Doc Export', () => {
   test('it exports the docs with images', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
 
+    const responseCorsPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/cors-proxy/') && response.status() === 200,
+    );
+
     const fileChooserPromise = page.waitForEvent('filechooser');
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
@@ -159,6 +164,14 @@ test.describe('Doc Export', () => {
     const image = page.getByRole('img', { name: 'logo-suite-numerique.png' });
 
     await expect(image).toBeVisible();
+
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByRole('tab', { name: 'Embed' }).click();
+    await page
+      .getByRole('textbox', { name: 'Enter URL' })
+      .fill('https://docs.numerique.gouv.fr/assets/logo-gouv.png');
+    await page.getByText('Embed image').click();
 
     await page
       .getByRole('button', {
@@ -188,6 +201,8 @@ test.describe('Doc Export', () => {
       })
       .click();
 
+    const responseCors = await responseCorsPromise;
+    expect(responseCors.ok()).toBe(true);
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
