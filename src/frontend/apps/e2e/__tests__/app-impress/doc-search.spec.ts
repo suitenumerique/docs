@@ -63,4 +63,35 @@ test.describe('Document search', () => {
       listSearch.getByRole('option').getByText(doc2Title),
     ).toBeHidden();
   });
+
+  test('it checks cmd+k modal search interaction', async ({
+    page,
+    browserName,
+  }) => {
+    const [doc1Title] = await createDoc(
+      page,
+      'Doc seack ctrl k',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, doc1Title);
+
+    await page.keyboard.press('Control+k');
+    await expect(
+      page.getByLabel('Search modal').getByText('search'),
+    ).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await editor.fill('Hello world');
+    await editor.getByText('Hello world').dblclick();
+
+    await page.keyboard.press('Control+k');
+    await expect(page.getByRole('textbox', { name: 'Edit URL' })).toBeVisible();
+    await expect(
+      page.getByLabel('Search modal').getByText('search'),
+    ).toBeHidden();
+  });
 });

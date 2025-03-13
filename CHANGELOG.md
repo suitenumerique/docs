@@ -12,9 +12,14 @@ and this project adheres to
 
 - 📝(doc) add publiccode.yml
 
+## Changed
+
+- 🚸(frontend) ctrl+k modal not when editor is focused #712
+
 ## Fixed
 
 - 🐛(back) allow only images to be used with the cors-proxy #781
+
 
 ## [2.5.0] - 2025-03-18
 
