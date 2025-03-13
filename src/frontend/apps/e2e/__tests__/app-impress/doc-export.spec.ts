@@ -98,6 +98,7 @@ test.describe('Doc Export', () => {
   test('it exports the doc to docx', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
 
+    const fileChooserPromise = page.waitForEvent('filechooser');
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.docx`);
     });
@@ -106,6 +107,18 @@ test.describe('Doc Export', () => {
 
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    const image = page.getByRole('img', { name: 'test.svg' });
+
+    await expect(image).toBeVisible();
 
     await page
       .getByRole('button', {

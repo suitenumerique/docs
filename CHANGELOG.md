@@ -19,6 +19,7 @@ and this project adheres to
 
 ## Fixed
 
+- 🐛(frontend) SVG export #706
 - 🐛(frontend) remove scroll listener table content  #688
 - 🔒️(back) restrict access to favorite_list endpoint #690
 - 🐛(backend) refactor to fix filtering on children 
