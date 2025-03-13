@@ -3,7 +3,7 @@ import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import React from 'react';
 
-import { Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { DocsBlockNoteEditor } from '../../types';
@@ -23,16 +23,17 @@ export const QuoteBlock = createReactBlockSpec(
       const { colorsTokens } = useCunninghamTheme();
 
       return (
-        <Text
+        <Box
+          as="blockquote"
           className="inline-content"
           $margin="0 0 1rem 0"
           $padding="0.5rem 1rem"
-          $variation="600"
           style={{
             borderLeft: `4px solid ${colorsTokens()['greyscale-300']}`,
             fontStyle: 'italic',
             flexGrow: 1,
           }}
+          $color="var(--c--theme--colors--greyscale-500)"
           ref={props.contentRef}
         />
       );
