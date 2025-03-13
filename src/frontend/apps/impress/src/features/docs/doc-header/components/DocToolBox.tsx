@@ -21,8 +21,12 @@ import { useEditorStore } from '@/features/docs/doc-editor/';
 import { ModalExport } from '@/features/docs/doc-export/';
 import {
   Doc,
+  KEY_DOC,
+  KEY_LIST_DOC,
   ModalRemoveDoc,
   useCopyDocLink,
+  useCreateFavoriteDoc,
+  useDeleteFavoriteDoc,
 } from '@/features/docs/doc-management';
 import { DocShareModal } from '@/features/docs/doc-share';
 import {
@@ -54,6 +58,12 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { editor } = useEditorStore();
   const { toast } = useToastProvider();
   const copyDocLink = useCopyDocLink(doc.id);
+  const removeFavoriteDoc = useDeleteFavoriteDoc({
+    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
+  const makeFavoriteDoc = useCreateFavoriteDoc({
+    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
 
   const options: DropdownMenuOption[] = [
     ...(isSmallMobile
@@ -77,7 +87,18 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           },
         ]
       : []),
-
+    {
+      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      icon: 'push_pin',
+      callback: () => {
+        if (doc.is_favorite) {
+          removeFavoriteDoc.mutate({ id: doc.id });
+        } else {
+          makeFavoriteDoc.mutate({ id: doc.id });
+        }
+      },
+      testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+    },
     {
       label: t('Version history'),
       icon: 'history',

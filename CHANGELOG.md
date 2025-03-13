@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(frontend) add pinning on doc detail #711
+
 ## Changed
 
 - 🧑‍💻(frontend) change literal section open source #702
