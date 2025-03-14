@@ -25,6 +25,7 @@ and this project adheres to
 - 🔒️(back) restrict access to favorite_list endpoint #690
 - 🐛(backend) refactor to fix filtering on children 
     and descendants views #695
+- 🐛(action) fix notify-argocd workflow #713
 
 
 ## [2.4.0] - 2025-03-06

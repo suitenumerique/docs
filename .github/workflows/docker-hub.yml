@@ -125,8 +125,7 @@ jobs:
       - build-and-push-frontend
       - build-and-push-backend
     runs-on: ubuntu-latest
-    if: |
-      github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     steps:
       -
         name: Checkout repository
@@ -134,6 +133,6 @@ jobs:
       -
         name: Call argocd github webhook
         run: |
-          data='{"ref": "'$GITHUB_REF'","repository": {"html_url":"'$GITHUB_SERVER_URL'/'$GITHUB_REPOSITORY'"}}'
-          sig=$(echo -n ${data} | openssl dgst -sha1 -hmac ''${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET}}'' | awk '{print "X-Hub-Signature: sha1="$2}')
+          data='{"ref": "'$GITHUB_REF'","repository": {"html_url":"'$GITHUB_SERVER_URL'/${{ secrets.DEPLOYMENT_REPO_URL }}"}}'
+          sig=$(echo -n ${data} | openssl dgst -sha1 -hmac "${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET }}" | awk '{print "X-Hub-Signature: sha1="$2}')
           curl -X POST -H 'X-GitHub-Event:push' -H "Content-Type: application/json" -H "${sig}" --data "${data}" ${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}
