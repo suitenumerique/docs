@@ -42,10 +42,14 @@ export interface Doc {
   is_favorite: boolean;
   link_reach: LinkReach;
   link_role: LinkRole;
-  nb_accesses_ancestors: number;
-  nb_accesses_direct: number;
+  user_roles: Role[];
   created_at: string;
   updated_at: string;
+  nb_accesses_direct: number;
+  nb_accesses_ancestors: number;
+  children?: Doc[];
+  childrenCount?: number;
+  numchild: number;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;

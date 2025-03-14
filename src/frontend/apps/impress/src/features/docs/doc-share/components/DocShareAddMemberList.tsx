@@ -13,6 +13,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { User } from '@/features/auth';
 import { Doc, Role } from '@/features/docs';
 
+import { useDocTreeData } from '../../doc-tree/context/DocTreeContext';
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
 
@@ -39,6 +40,7 @@ export const DocShareAddMemberList = ({
 }: Props) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
+  const treeData = useDocTreeData();
   const [isLoading, setIsLoading] = useState(false);
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
@@ -91,14 +93,28 @@ export const DocShareAddMemberList = ({
       };
 
       return isInvitationMode
-        ? createInvitation({
-            ...payload,
-            email: user.email,
-          })
-        : createDocAccess({
-            ...payload,
-            memberId: user.id,
-          });
+        ? createInvitation(
+            {
+              ...payload,
+              email: user.email,
+            },
+            {
+              onSuccess: () => {
+                void treeData?.tree.refreshNode(doc.id);
+              },
+            },
+          )
+        : createDocAccess(
+            {
+              ...payload,
+              memberId: user.id,
+            },
+            {
+              onSuccess: () => {
+                void treeData?.tree.refreshNode(doc.id);
+              },
+            },
+          );
     });
 
     const settledPromises = await Promise.allSettled(promises);

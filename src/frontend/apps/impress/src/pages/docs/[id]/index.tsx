@@ -14,6 +14,7 @@ import {
   useDoc,
   useDocStore,
 } from '@/features/docs/doc-management/';
+import { DocTreeProvider } from '@/features/docs/doc-tree/context/DocTreeContext';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
@@ -33,9 +34,11 @@ export function DocLayout() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <MainLayout>
-        <DocPage id={id} />
-      </MainLayout>
+      <DocTreeProvider initialTargetId={id}>
+        <MainLayout>
+          <DocPage id={id} />
+        </MainLayout>
+      </DocTreeProvider>
     </>
   );
 }
