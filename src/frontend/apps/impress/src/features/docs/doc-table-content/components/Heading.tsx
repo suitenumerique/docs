@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocsBlockNoteEditor } from '@/features/docs/doc-editor';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor';
 import { useResponsiveStore } from '@/stores';
 
 const leftPaddingMap: { [key: number]: string } = {

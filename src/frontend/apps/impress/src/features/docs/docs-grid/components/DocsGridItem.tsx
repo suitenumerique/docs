@@ -5,8 +5,8 @@ import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
+import { Doc, LinkReach } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';

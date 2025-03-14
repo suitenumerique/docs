@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { Doc } from '@/features/docs/doc-management';
+import { Doc } from '@/docs/doc-management';
 
 export interface UseDocStore {
   currentDoc?: Doc;

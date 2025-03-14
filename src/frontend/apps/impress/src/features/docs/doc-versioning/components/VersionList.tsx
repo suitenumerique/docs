@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { APIError } from '@/api';
 import { Box, BoxButton, InfiniteScroll, Text, TextErrors } from '@/components';
-import { Doc } from '@/features/docs/doc-management';
+import { Doc } from '@/docs/doc-management';
 import { useDate } from '@/hook';
 
 import { useDocVersionsInfiniteQuery } from '../api/useDocVersions';

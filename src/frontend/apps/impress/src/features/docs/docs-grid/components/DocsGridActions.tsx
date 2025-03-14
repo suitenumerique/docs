@@ -8,7 +8,7 @@ import {
   ModalRemoveDoc,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
 
 interface DocsGridActionsProps {
   doc: Doc;

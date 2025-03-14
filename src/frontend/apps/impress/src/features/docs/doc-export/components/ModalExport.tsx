@@ -15,8 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
-import { useEditorStore } from '@/features/docs/doc-editor';
-import { Doc, useTrans } from '@/features/docs/doc-management';
+import { useEditorStore } from '@/docs/doc-editor';
+import { Doc, useTrans } from '@/docs/doc-management';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';

@@ -14,7 +14,7 @@ import {
   base64ToYDoc,
   useProviderStore,
   useUpdateDoc,
-} from '@/features/docs/doc-management/';
+} from '@/docs/doc-management/';
 
 import { useDocVersion } from '../api';
 import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';

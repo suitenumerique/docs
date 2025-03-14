@@ -12,23 +12,36 @@ const saveStorageState = async (
   const context = await browser.newContext(useConfig);
   const page = await context.newPage();
 
-  await page.goto('/', { waitUntil: 'networkidle' });
-  await page.content();
-  await expect(page.getByText('Docs').first()).toBeVisible();
+  try {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.content();
+    await expect(page.getByText('Docs').first()).toBeVisible();
 
-  await keyCloakSignIn(page, browserName);
+    await keyCloakSignIn(page, browserName);
 
-  await expect(
-    page.locator('header').first().getByRole('button', {
-      name: 'Logout',
-    }),
-  ).toBeVisible();
+    await expect(
+      page.locator('header').first().getByRole('button', {
+        name: 'Logout',
+      }),
+    ).toBeVisible();
 
-  await page.context().storageState({
-    path: storageState as string,
-  });
+    await page.context().storageState({
+      path: storageState as string,
+    });
+  } catch (error) {
+    console.log(error);
 
-  await browser.close();
+    await page.screenshot({
+      path: `./screenshots/${browserName}-${Date.now()}.png`,
+    });
+    // Get console logs
+    const consoleLogs = await page.evaluate(() =>
+      console.log(window.console.log),
+    );
+    console.log(consoleLogs);
+  } finally {
+    await browser.close();
+  }
 };
 
 async function globalSetup(config: FullConfig) {
