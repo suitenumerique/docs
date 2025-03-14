@@ -23,6 +23,7 @@ const jestConfig = async () => {
       '\\.svg$': '<rootDir>/jest/mocks/svg.js',
       '^.+\\.svg\\?url$': `<rootDir>/jest/mocks/fileMock.js`,
       BlockNoteEditor: `<rootDir>/jest/mocks/ComponentMock.js`,
+      'custom-blocks': `<rootDir>/jest/mocks/ComponentMock.js`,
       ...nextJestConfig.moduleNameMapper,
     },
   };

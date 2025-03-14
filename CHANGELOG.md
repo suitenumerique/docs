@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- 🚩(frontend) feature flag analytic on copy as html #649
 - ✨(frontend) Custom block divider with export #698
 
 ## Changed
