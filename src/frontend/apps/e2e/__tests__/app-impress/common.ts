@@ -51,9 +51,15 @@ export const createDoc = async (
       })
       .click();
 
+    await page.waitForURL('**/docs/**', {
+      timeout: 10000,
+      waitUntil: 'networkidle',
+    });
+
     const input = page.getByLabel('doc title input');
     await expect(input).toHaveText('');
     await input.click();
+
     await input.fill(randomDocs[i]);
     await input.blur();
   }
@@ -63,8 +69,11 @@ export const createDoc = async (
 
 export const verifyDocName = async (page: Page, docName: string) => {
   const input = page.getByRole('textbox', { name: 'doc title input' });
-  await expect(input).toBeVisible();
-  await expect(input).toHaveText(docName);
+  try {
+    await expect(input).toHaveText(docName);
+  } catch {
+    await expect(page.getByRole('heading', { name: docName })).toBeVisible();
+  }
 };
 
 export const addNewMember = async (

@@ -131,7 +131,7 @@ test.describe('Document list members', () => {
     const list = page.getByTestId('doc-share-quick-search');
     await expect(list).toBeVisible();
     const currentUser = list.getByTestId(
-      `doc-share-member-row-user@chromium.e2e`,
+      `doc-share-member-row-user@${browserName}.e2e`,
     );
     const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
     await expect(currentUser).toBeVisible();

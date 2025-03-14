@@ -154,7 +154,7 @@ test.describe('Doc Visibility: Restricted', () => {
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByLabel('doc-role-dropdown').click();
-    await page.getByLabel('Administrator').click();
+    await page.getByLabel('Reader').click();
 
     await page.getByRole('button', { name: 'Invite' }).click();
 

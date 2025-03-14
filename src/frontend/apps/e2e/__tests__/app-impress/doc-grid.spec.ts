@@ -115,25 +115,16 @@ test.describe('Document grid item options', () => {
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
-  test('it deletes the document', async ({ page }) => {
-    let docs: SmallDoc[] = [];
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
-    );
-    const result = await response.json();
-    docs = result.results as SmallDoc[];
+  test('it deletes the document', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, `delete doc`, browserName);
 
-    const button = page.getByTestId(`docs-grid-actions-button-${docs[0].id}`);
-    await expect(button).toBeVisible();
-    await button.click();
+    await page.goto('/');
 
-    const removeButton = page.getByTestId(
-      `docs-grid-actions-remove-${docs[0].id}`,
-    );
-    await expect(removeButton).toBeVisible();
-    await removeButton.click();
+    await expect(page.getByText(docTitle)).toBeVisible();
+    const row = await getGridRow(page, docTitle);
+    await row.getByText(`more_horiz`).click();
+
+    await page.getByRole('menuitem', { name: 'Remove' }).click();
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
@@ -145,20 +136,11 @@ test.describe('Document grid item options', () => {
       })
       .click();
 
-    const refetchResponse = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
-    );
-
-    const resultRefetch = await refetchResponse.json();
-    expect(resultRefetch.count).toBe(result.count - 1);
-    await expect(page.getByTestId('main-layout-loader')).toBeHidden();
-
     await expect(
       page.getByText('The document has been deleted.'),
     ).toBeVisible();
-    await expect(button).toBeHidden();
+
+    await expect(page.getByText(docTitle)).toBeHidden();
   });
 
   test("it checks if the delete option is disabled if we don't have the destroy capability", async ({
