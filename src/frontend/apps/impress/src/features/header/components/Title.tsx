@@ -8,7 +8,6 @@ export const Title = () => {
   const { t } = useTranslation();
   const theme = useCunninghamTheme();
   const spacings = theme.spacingsTokens();
-  const colors = theme.colorsTokens();
 
   return (
     <Box $direction="row" $align="center" $gap={spacings['2xs']}>
@@ -36,7 +35,8 @@ export const Title = () => {
         `}
         $width="40px"
         $height="16px"
-        $background={colors['primary-200']}
+        $background="#ECECFF"
+        $color="#5958D3"
       >
         BETA
       </Text>
