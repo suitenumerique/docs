@@ -39,6 +39,15 @@ ENV NEXT_PUBLIC_API_ORIGIN=${API_ORIGIN}
 ARG SW_DEACTIVATED
 ENV NEXT_PUBLIC_SW_DEACTIVATED=${SW_DEACTIVATED}
 
+ARG CUSTOM_CODE
+COPY ./${CUSTOM_CODE} /tmp/custom_code
+RUN if [ -n "$CUSTOM_CODE" ] && [ -d "/tmp/custom_code" ] && [ "$(ls -A /tmp/custom_code)" ]; then \
+        echo "Custom code provided. Replacing files from $CUSTOM_CODE..."; \
+        cp -Rv /tmp/custom_code/${CUSTOM_CODE}/* .; \
+    else \
+        echo "No custom code provided. Skipping replacement..."; \
+    fi
+
 RUN yarn build
 
 # ---- Front-end image ----
