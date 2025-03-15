@@ -139,10 +139,13 @@ def test_api_documents_tree_list_anonymous_public_parent():
     has a public ancestor but only up to the highest public ancestor.
     """
     great_grand_parent = factories.DocumentFactory(
-        link_reach=random.choice(["authenticated", "restricted"])
+        link_reach="authenticated",
+        link_role="editor",
     )
     grand_parent = factories.DocumentFactory(
-        link_reach="public", parent=great_grand_parent
+        link_reach="public",
+        parent=great_grand_parent,
+        link_role="reader",
     )
     factories.DocumentFactory(link_reach="public", parent=great_grand_parent)
     factories.DocumentFactory(
@@ -151,14 +154,28 @@ def test_api_documents_tree_list_anonymous_public_parent():
     )
 
     parent = factories.DocumentFactory(
-        parent=grand_parent, link_reach=random.choice(["authenticated", "restricted"])
+        link_role="reader",
+        link_reach="authenticated",
+        parent=grand_parent,
     )
-    parent_sibling = factories.DocumentFactory(parent=grand_parent)
+    parent_sibling = factories.DocumentFactory(
+        parent=grand_parent,
+        link_role="reader",
+        link_reach="restricted",
+    )
     document = factories.DocumentFactory(
-        link_reach=random.choice(["authenticated", "restricted"]), parent=parent
+        parent=parent,
+        link_role="editor",
+        link_reach="restricted",
     )
-    document_sibling = factories.DocumentFactory(parent=parent)
-    child = factories.DocumentFactory(link_reach="public", parent=document)
+    document_sibling = factories.DocumentFactory(
+        parent=parent,
+        link_role="reader",
+        link_reach="restricted",
+    )
+    child = factories.DocumentFactory(
+        link_reach="public", link_role="editor", parent=document
+    )
 
     response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/tree/")
 

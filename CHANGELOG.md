@@ -25,6 +25,7 @@ and this project adheres to
 - 🔒️(back) restrict access to favorite_list endpoint #690
 - 🐛(backend) refactor to fix filtering on children 
     and descendants views #695
+- 🐛(backend) compute ancestor_links in get_abilities if needed #725
 
 
 ## [2.4.0] - 2025-03-06
