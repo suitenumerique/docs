@@ -28,7 +28,7 @@ if settings.DEBUG:
 if settings.USE_SWAGGER or settings.DEBUG:
     urlpatterns += [
         path(
-            f"{settings.API_VERSION}/swagger.json",
+            f"api/{settings.API_VERSION}/swagger.json",
             SpectacularJSONAPIView.as_view(
                 api_version=settings.API_VERSION,
                 urlconf="core.urls",
@@ -36,12 +36,12 @@ if settings.USE_SWAGGER or settings.DEBUG:
             name="client-api-schema",
         ),
         path(
-            f"{settings.API_VERSION}//swagger/",
+            f"api/{settings.API_VERSION}/swagger/",
             SpectacularSwaggerView.as_view(url_name="client-api-schema"),
             name="swagger-ui-schema",
         ),
         re_path(
-            f"{settings.API_VERSION}//redoc/",
+            f"api/{settings.API_VERSION}/redoc/",
             SpectacularRedocView.as_view(url_name="client-api-schema"),
             name="redoc-schema",
         ),
