@@ -19,6 +19,7 @@ and this project adheres to
 ## Fixed
 
 - 🐛(back) allow only images to be used with the cors-proxy #781
+- 🐛(backend) compute ancestor_links in get_abilities if needed #725
 
 
 ## [2.5.0] - 2025-03-18
