@@ -55,7 +55,7 @@ password: I'd<3ToTestDocs
 
 ### Run it locally
 
-> ⚠️ Running Docs locally using the methods described below is for testing purposes only.  It is based on building Docs using Minio as the S3 storage solution: if you want to use Minio for production deployment of Docs, you will need to comply with Minio's AGPL-3.0 licence.
+> ⚠️ Running Docs locally using the methods described below is for testing purposes only.  It is based on building Docs using Minio as the S3 storage solution but you can choose any S3 compatible object storage of your choice.
 
 **Prerequisite**
 
