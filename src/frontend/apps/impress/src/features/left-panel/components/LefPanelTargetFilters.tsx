@@ -44,7 +44,7 @@ export const LeftPanelTargetFilters = () => {
   const onSelectQuery = (query: DocDefaultFilter) => {
     const params = new URLSearchParams(searchParams);
     params.set('target', query);
-    router.replace(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
     togglePanel();
   };
 
