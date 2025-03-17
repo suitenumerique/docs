@@ -11,7 +11,7 @@ jobs:
   helmfile-lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/helmfile/helmfile:latest
+      image: ghcr.io/helmfile/helmfile:v0.171.0
     steps:
     -
       name: Checkout repository
@@ -22,7 +22,7 @@ jobs:
       run: |
         set -e
         HELMFILE=src/helm/helmfile.yaml
-        environments=$(awk '/environments:/ {flag=1; next} flag && NF {print} !NF {flag=0}' "$HELMFILE" | grep -E '^[[:space:]]{2}[a-zA-Z]+' | sed 's/^[[:space:]]*//;s/:.*//')
+        environments=$(awk 'BEGIN {in_env=0} /^environments:/ {in_env=1; next} /^---/ {in_env=0} in_env && /^  [^ ]/ {gsub(/^  /,""); gsub(/:.*$/,""); print}' "$HELMFILE")
         for env in $environments; do
           echo "################### $env lint ###################"
           helmfile -e $env -f $HELMFILE lint || exit 1

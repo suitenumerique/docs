@@ -27,6 +27,7 @@ and this project adheres to
 - 🐛(backend) refactor to fix filtering on children 
     and descendants views #695
 - 🐛(action) fix notify-argocd workflow #713
+- 🚨(helm) fix helmfile lint #736
 
 
 ## [2.4.0] - 2025-03-06

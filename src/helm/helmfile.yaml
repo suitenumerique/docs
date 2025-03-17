@@ -1,7 +1,13 @@
+environments:
+  dev:
+    values:
+      - version: 2.4.0
+---
 repositories:
 - name: bitnami
   url: registry-1.docker.io/bitnamicharts
   oci: true
+---
 
 releases:
   - name: keycloak
@@ -89,8 +95,3 @@ releases:
     chart: ./impress
     values:
       - env.d/{{ .Environment.Name }}/values.impress.yaml.gotmpl
-
-environments:
-  dev:
-    values:
-      - version: 2.4.0
