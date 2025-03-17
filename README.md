@@ -75,7 +75,7 @@ Docker Compose version v2.32.4
 
 **Project bootstrap**
 
-The easiest way to start working on the project is to use GNU Make:
+The easiest way to start working on the project is to use [GNU Make](https://www.gnu.org/software/make/):
 
 ```shellscript
 $ make bootstrap FLUSH_ARGS='--no-input'
