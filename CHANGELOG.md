@@ -13,6 +13,7 @@ and this project adheres to
 - ✨(frontend) add pinning on doc detail #711
 - 🚩(frontend) feature flag analytic on copy as html #649
 - ✨(frontend) Custom block divider with export #698
+- 🌐(i18n) activate dutch language #742
 
 ## Changed
 

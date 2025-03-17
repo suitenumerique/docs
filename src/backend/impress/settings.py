@@ -238,6 +238,7 @@ class Base(Configuration):
             ("en-us", "English"),
             ("fr-fr", "Français"),
             ("de-de", "Deutsch"),
+            ("nl-nl", "Nederlands"),
         )
     )
 

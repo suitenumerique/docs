@@ -43,6 +43,7 @@ def test_api_config(is_authenticated):
             ["en-us", "English"],
             ["fr-fr", "Français"],
             ["de-de", "Deutsch"],
+            ["nl-nl", "Nederlands"],
         ],
         "LANGUAGE_CODE": "en-us",
         "MEDIA_BASE_URL": "http://testserver/",

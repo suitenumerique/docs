@@ -14,6 +14,7 @@ const config = {
     ['en-us', 'English'],
     ['fr-fr', 'Français'],
     ['de-de', 'Deutsch'],
+    ['nl-nl', 'Nederlands'],
   ],
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
