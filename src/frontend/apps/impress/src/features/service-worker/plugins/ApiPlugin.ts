@@ -175,6 +175,7 @@ export class ApiPlugin implements WorkboxPlugin {
       is_favorite: false,
       nb_accesses_direct: 1,
       nb_accesses_ancestors: 1,
+      numchild: 0,
       updated_at: new Date().toISOString(),
       abilities: {
         accesses_manage: true,
@@ -202,6 +203,7 @@ export class ApiPlugin implements WorkboxPlugin {
       },
       link_reach: LinkReach.RESTRICTED,
       link_role: LinkRole.READER,
+      user_roles: [],
     };
 
     await DocsDB.cacheResponse(
