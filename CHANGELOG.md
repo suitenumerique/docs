@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- 📝(doc) Added GNU Make link to README #750
 - ✨(frontend) add pinning on doc detail #711
 - 🚩(frontend) feature flag analytic on copy as html #649
 - ✨(frontend) Custom block divider with export #698
