@@ -29,6 +29,7 @@ import {
   useDeleteFavoriteDoc,
 } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
+import { useTreeUtils } from '@/docs/doc-tree/';
 import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
@@ -44,6 +45,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const hasAccesses = doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
   const queryClient = useQueryClient();
+  const { isCurrentParent } = useTreeUtils(doc);
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
@@ -65,27 +67,26 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   });
 
   const options: DropdownMenuOption[] = [
-    ...(isSmallMobile
-      ? [
-          {
-            label: t('Share'),
-            icon: 'group',
-            callback: modalShare.open,
-          },
-          {
-            label: t('Export'),
-            icon: 'download',
-            callback: () => {
-              setIsModalExportOpen(true);
-            },
-          },
-          {
-            label: t('Copy link'),
-            icon: 'add_link',
-            callback: copyDocLink,
-          },
-        ]
-      : []),
+    {
+      label: t('Share'),
+      icon: 'group',
+      callback: modalShare.open,
+      show: isSmallMobile,
+    },
+    {
+      label: t('Export'),
+      icon: 'download',
+      callback: () => {
+        setIsModalExportOpen(true);
+      },
+      show: isSmallMobile,
+    },
+    {
+      label: t('Copy link'),
+      icon: 'add_link',
+      callback: copyDocLink,
+      show: isSmallMobile,
+    },
     {
       label: doc.is_favorite ? t('Unpin') : t('Pin'),
       icon: 'push_pin',
@@ -97,6 +98,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         }
       },
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      show: isCurrentParent,
     },
     {
       label: t('Version history'),
@@ -190,6 +192,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                   modalShare.open();
                 }}
                 size={isSmallMobile ? 'small' : 'medium'}
+                style={{
+                  color: colors['primary-800'],
+                }}
               >
                 {t('Share')}
               </Button>
