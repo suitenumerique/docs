@@ -41,6 +41,7 @@ export const SimpleDocItem = ({
       $direction="row"
       $gap={spacingsTokens.sm}
       $overflow="auto"
+      $width="100%"
       className="--docs--simple-doc-item"
     >
       <Box
