@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- 🚨(frontend) block button when creating doc #749
+
 ## Fixed
 
 - 🐛(back) validate document content in serializer #822

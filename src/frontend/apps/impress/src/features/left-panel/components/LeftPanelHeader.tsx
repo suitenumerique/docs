@@ -33,7 +33,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   useCmdK(openSearchModal);
   const { togglePanel } = useLeftPanelStore();
 
-  const { mutate: createDoc } = useCreateDoc({
+  const { mutate: createDoc, isPending: isCreatingDoc } = useCreateDoc({
     onSuccess: (doc) => {
       router.push(`/docs/${doc.id}`);
       togglePanel();
@@ -81,7 +81,9 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               )}
             </Box>
             {authenticated && (
-              <Button onClick={createNewDoc}>{t('New doc')}</Button>
+              <Button onClick={createNewDoc} disabled={isCreatingDoc}>
+                {t('New doc')}
+              </Button>
             )}
           </Box>
         </SeparatedSection>
