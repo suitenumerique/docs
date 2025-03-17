@@ -4,7 +4,7 @@ services:
   postgresql:
     image: postgres:16
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 1s
       timeout: 2s
       retries: 300
@@ -194,7 +194,7 @@ services:
   kc_postgresql:
     image: postgres:14.3
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 1s
       timeout: 2s
       retries: 300
