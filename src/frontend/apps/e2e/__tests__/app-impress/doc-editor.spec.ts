@@ -364,8 +364,6 @@ test.describe('Doc Editor', () => {
           retrieve: true,
         },
         link_reach: 'public',
-        link_role: 'editor',
-        created_at: '2021-09-01T09:00:00Z',
         title: '',
       });
 
