@@ -46,7 +46,7 @@ Docs is a collaborative text editor designed to address common challenges in kno
 
 ### Test it
 
-Test Docs on your browser by logging in on this [environment](https://impress-preprod.beta.numerique.gouv.fr/docs/0aa856e9-da41-4d59-b73d-a61cb2c1245f/)
+Test Docs on your browser by logging in on this [environment](https://impress-preprod.beta.numerique.gouv.fr/)
 
 ```
 email: test.docs@yopmail.com
