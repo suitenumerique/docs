@@ -214,11 +214,28 @@ export const mockedDocument = async (page: Page, json: object) => {
           },
           link_reach: 'restricted',
           created_at: '2021-09-01T09:00:00Z',
+          user_roles: ['owner'],
           ...json,
         },
       });
     } else {
       await route.continue();
+    }
+  });
+};
+
+export const mockedListDocs = async (page: Page, data: object[] = []) => {
+  await page.route('**/documents/**/', async (route) => {
+    const request = route.request();
+    if (request.method().includes('GET') && request.url().includes('page=')) {
+      await route.fulfill({
+        json: {
+          count: data.length,
+          next: null,
+          previous: null,
+          results: data,
+        },
+      });
     }
   });
 };
