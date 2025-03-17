@@ -53,7 +53,6 @@ export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
   if (params.is_favorite !== undefined) {
     searchParams.set('is_favorite', params.is_favorite.toString());
   }
-
   const response = await fetchAPI(`documents/?${searchParams.toString()}`);
 
   if (!response.ok) {

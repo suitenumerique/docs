@@ -1,10 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import {
-  Tooltip,
-  VariantType,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { Tooltip } from '@openfun/cunningham-react';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -15,6 +12,7 @@ import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  KEY_SUB_PAGE,
   useTrans,
   useUpdateDoc,
 } from '@/docs/doc-management';
@@ -54,21 +52,24 @@ export const DocTitleText = ({ title }: DocTitleTextProps) => {
 
 const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { isDesktop } = useResponsiveStore();
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
-  const { toast } = useToastProvider();
+
   const { untitledDocument } = useTrans();
 
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
-    onSuccess(data) {
-      toast(t('Document title updated successfully'), VariantType.SUCCESS);
-
+    onSuccess(updatedDoc) {
       // Broadcast to every user connected to the document
-      broadcast(`${KEY_DOC}-${data.id}`);
+      broadcast(`${KEY_DOC}-${updatedDoc.id}`);
+      queryClient.setQueryData(
+        [KEY_SUB_PAGE, { id: updatedDoc.id }],
+        updatedDoc,
+      );
     },
   });
 

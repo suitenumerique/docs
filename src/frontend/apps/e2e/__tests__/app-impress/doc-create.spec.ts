@@ -14,10 +14,10 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('Doc Create', () => {
   test('it creates a doc', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, 'My new doc', browserName, 1);
+    const [docTitle] = await createDoc(page, 'my-new-doc', browserName, 1);
 
     await page.waitForFunction(
-      () => document.title.match(/My new doc - Docs/),
+      () => document.title.match(/my-new-doc - Docs/),
       { timeout: 5000 },
     );
 

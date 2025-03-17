@@ -60,7 +60,7 @@ test.describe('Doc Routing', () => {
   });
 
   test('checks 401 on docs/[id] page', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, 'My new doc', browserName, 1);
+    const [docTitle] = await createDoc(page, '401-doc', browserName, 1);
     await verifyDocName(page, docTitle);
 
     const responsePromise = page.route(
