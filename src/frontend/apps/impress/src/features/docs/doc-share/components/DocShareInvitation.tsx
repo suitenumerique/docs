@@ -1,4 +1,5 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -14,7 +15,7 @@ import {
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, Role } from '@/docs/doc-management';
+import { Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 
 import {
@@ -37,6 +38,7 @@ const DocShareInvitationItem = ({
   invitation,
 }: DocShareInvitationItemProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { spacingsTokens } = useCunninghamTheme();
   const invitedUser: User = {
     id: invitation.email,
@@ -50,6 +52,11 @@ const DocShareInvitationItem = ({
   const canUpdate = doc.abilities.accesses_manage;
 
   const { mutate: updateDocInvitation } = useUpdateDocInvitation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: (error) => {
       toast(
         error?.data?.role?.[0] ?? t('Error during update invitation'),
@@ -62,6 +69,11 @@ const DocShareInvitationItem = ({
   });
 
   const { mutate: removeDocInvitation } = useDeleteDocInvitation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: (error) => {
       toast(
         error?.data?.role?.[0] ?? t('Error during delete invitation'),

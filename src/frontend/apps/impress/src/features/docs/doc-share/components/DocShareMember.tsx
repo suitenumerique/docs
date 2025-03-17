@@ -1,4 +1,5 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +12,7 @@ import {
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
-import { Access, Doc, Role } from '@/docs/doc-management/';
+import { Access, Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
 import {
@@ -31,8 +32,10 @@ type Props = {
 
 const DocShareMemberItem = ({ doc, access }: Props) => {
   const { t } = useTranslation();
-  const { isLastOwner } = useWhoAmI(access);
+  const queryClient = useQueryClient();
+  const { isLastOwner, isOtherOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
+
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
 
@@ -43,6 +46,11 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
     : undefined;
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: () => {
       toast(t('Error while updating the member role.'), VariantType.ERROR, {
         duration: 4000,
@@ -51,6 +59,11 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
   });
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: () => {
       toast(t('Error while deleting the member.'), VariantType.ERROR, {
         duration: 4000,

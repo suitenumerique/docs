@@ -78,16 +78,19 @@ export const createDoc = async (
   docName: string,
   browserName: string,
   length: number = 1,
+  isChild: boolean = false,
 ) => {
   const randomDocs = randomName(docName, browserName, length);
 
   for (let i = 0; i < randomDocs.length; i++) {
-    const header = page.locator('header').first();
-    await header.locator('h2').getByText('Docs').click();
+    if (!isChild) {
+      const header = page.locator('header').first();
+      await header.locator('h2').getByText('Docs').click();
+    }
 
     await page
       .getByRole('button', {
-        name: 'New doc',
+        name: isChild ? 'New page' : 'New doc',
       })
       .click();
 
