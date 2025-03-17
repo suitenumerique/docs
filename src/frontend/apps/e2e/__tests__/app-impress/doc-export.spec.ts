@@ -298,7 +298,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page
+    void page
       .getByRole('button', {
         name: 'Download',
       })
