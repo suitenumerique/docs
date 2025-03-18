@@ -31,6 +31,7 @@ and this project adheres to
     and descendants views #695
 - 🐛(action) fix notify-argocd workflow #713
 - 🚨(helm) fix helmfile lint #736
+- 🚚(frontend) redirect to 401 page when 401 error #759
 
 
 ## [2.4.0] - 2025-03-06

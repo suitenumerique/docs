@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { expectLoginPage, keyCloakSignIn, mockedDocument } from './common';
+import {
+  createDoc,
+  expectLoginPage,
+  keyCloakSignIn,
+  mockedDocument,
+  verifyDocName,
+} from './common';
 
 test.describe('Doc Routing', () => {
   test.beforeEach(async ({ page }) => {
@@ -49,6 +55,42 @@ test.describe('Doc Routing', () => {
     ).toBeVisible({
       timeout: 15000,
     });
+  });
+
+  test('checks 401 on docs/[id] page', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, 'My new doc', browserName, 1);
+    await verifyDocName(page, docTitle);
+
+    const responsePromise = page.route(
+      /.*\/link-configuration\/$|users\/me\/$/,
+      async (route) => {
+        const request = route.request();
+
+        if (
+          request.method().includes('PUT') ||
+          request.method().includes('GET')
+        ) {
+          await route.fulfill({
+            status: 401,
+            json: {
+              detail: 'Log in to access the document',
+            },
+          });
+        } else {
+          await route.continue();
+        }
+      },
+    );
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    await selectVisibility.click();
+    await page.getByLabel('Connected').click();
+
+    await responsePromise;
+
+    await expect(page.getByText('Log in to access the document')).toBeVisible();
   });
 });
 
