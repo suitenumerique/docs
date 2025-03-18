@@ -1,4 +1,4 @@
-import { Modal, ModalProps, ModalSize } from '@openfun/cunningham-react';
+import { Modal, ModalSize } from '@openfun/cunningham-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -19,7 +19,10 @@ import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
 import { DocSearchItem } from './DocSearchItem';
 
-type DocSearchModalProps = ModalProps & {};
+type DocSearchModalProps = {
+  onClose: () => void;
+  isOpen: boolean;
+};
 
 export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
   const { t } = useTranslation();

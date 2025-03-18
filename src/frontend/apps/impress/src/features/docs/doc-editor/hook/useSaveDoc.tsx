@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as Y from 'yjs';
 
 import { useUpdateDoc } from '@/docs/doc-management/';
@@ -8,17 +8,16 @@ import { isFirefox } from '@/utils/userAgent';
 
 import { toBase64 } from '../utils';
 
-const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
+const SAVE_INTERVAL = 60000;
+
+const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    onSuccess: () => {
+      setIsLocalChange(false);
+    },
   });
-  const [initialDoc, setInitialDoc] = useState<string>(
-    toBase64(Y.encodeStateAsUpdate(doc)),
-  );
-
-  useEffect(() => {
-    setInitialDoc(toBase64(Y.encodeStateAsUpdate(doc)));
-  }, [doc]);
+  const [isLocalChange, setIsLocalChange] = useState<boolean>(false);
 
   /**
    * Update initial doc when doc is updated by other users,
@@ -29,56 +28,34 @@ const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
     const onUpdate = (
       _uintArray: Uint8Array,
       _pluginKey: string,
-      updatedDoc: Y.Doc,
+      _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      if (!transaction.local) {
-        setInitialDoc(toBase64(Y.encodeStateAsUpdate(updatedDoc)));
-      }
+      setIsLocalChange(transaction.local ? true : false);
     };
 
-    doc.on('update', onUpdate);
+    yDoc.on('update', onUpdate);
 
     return () => {
-      doc.off('update', onUpdate);
+      yDoc.off('update', onUpdate);
     };
-  }, [doc]);
-
-  /**
-   * Check if the doc has been updated and can be saved.
-   */
-  const hasChanged = useCallback(() => {
-    const newDoc = toBase64(Y.encodeStateAsUpdate(doc));
-    return initialDoc !== newDoc;
-  }, [doc, initialDoc]);
-
-  const shouldSave = useCallback(() => {
-    return hasChanged() && canSave;
-  }, [canSave, hasChanged]);
+  }, [yDoc]);
 
   const saveDoc = useCallback(() => {
-    const newDoc = toBase64(Y.encodeStateAsUpdate(doc));
-    setInitialDoc(newDoc);
+    if (!canSave || !isLocalChange) {
+      return;
+    }
 
     updateDoc({
       id: docId,
-      content: newDoc,
+      content: toBase64(Y.encodeStateAsUpdate(yDoc)),
     });
-  }, [doc, docId, updateDoc]);
+  }, [canSave, yDoc, docId, isLocalChange, updateDoc]);
 
-  const timeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (timeout.current) {
-      clearTimeout(timeout.current);
-    }
-
     const onSave = (e?: Event) => {
-      if (!shouldSave()) {
-        return;
-      }
-
       saveDoc();
 
       /**
@@ -94,21 +71,19 @@ const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
     };
 
     // Save every minute
-    timeout.current = setInterval(onSave, 60000);
+    const timeout = setInterval(onSave, SAVE_INTERVAL);
     // Save when the user leaves the page
     addEventListener('beforeunload', onSave);
     // Save when the user navigates to another page
     router.events.on('routeChangeStart', onSave);
 
     return () => {
-      if (timeout.current) {
-        clearTimeout(timeout.current);
-      }
+      clearInterval(timeout);
 
       removeEventListener('beforeunload', onSave);
       router.events.off('routeChangeStart', onSave);
     };
-  }, [router.events, saveDoc, shouldSave]);
+  }, [router.events, saveDoc]);
 };
 
 export default useSaveDoc;

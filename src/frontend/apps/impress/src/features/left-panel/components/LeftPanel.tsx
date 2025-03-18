@@ -1,5 +1,5 @@
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
@@ -30,13 +30,9 @@ export const LeftPanel = () => {
   const colors = theme.colorsTokens();
   const spacings = theme.spacingsTokens();
 
-  const toggle = useCallback(() => {
-    togglePanel(false);
-  }, [togglePanel]);
-
   useEffect(() => {
-    toggle();
-  }, [pathname, toggle]);
+    togglePanel(false);
+  }, [pathname, togglePanel]);
 
   return (
     <>

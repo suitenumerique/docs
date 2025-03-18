@@ -19,6 +19,7 @@ and this project adheres to
 
 - 🧑‍💻(frontend) change literal section open source #702
 - ♻️(frontend) replace cors proxy for export #695
+- 🚨(frontend) block button when creating doc #749
 
 ## Fixed
 
