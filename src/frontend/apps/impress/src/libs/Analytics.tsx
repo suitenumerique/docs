@@ -16,7 +16,7 @@ export abstract class AbstractAnalytic {
     Analytics.registerAnalytic(this);
   }
 
-  public abstract Provider(children?: ReactNode): JSX.Element;
+  public abstract Provider(children: ReactNode): JSX.Element;
 
   public abstract trackEvent(evt: AnalyticEvent): void;
 
@@ -24,18 +24,7 @@ export abstract class AbstractAnalytic {
 }
 
 export class Analytics {
-  private static instance: Analytics;
   private static analytics: AbstractAnalytic[] = [];
-
-  private constructor() {}
-
-  public static getInstance(): Analytics {
-    if (!Analytics.instance) {
-      Analytics.instance = new Analytics();
-    }
-
-    return Analytics.instance;
-  }
 
   public static clearAnalytics(): void {
     Analytics.analytics = [];
@@ -74,12 +63,19 @@ export class Analytics {
   }
 }
 
+const AnalyticsProvider = ({ children }: PropsWithChildren) => {
+  return Analytics.providers(children);
+};
+
+const isFeatureFlagActivated = (flagName: string) =>
+  Analytics.isFeatureFlagActivated(flagName);
+
+const trackEvent = (evt: AnalyticEvent) => Analytics.trackEvent(evt);
+
 export const useAnalytics = () => {
   return {
-    AnalyticsProvider: ({ children }: PropsWithChildren) =>
-      Analytics.providers(children),
-    isFeatureFlagActivated: (flagName: string) =>
-      Analytics.isFeatureFlagActivated(flagName),
-    trackEvent: (evt: AnalyticEvent) => Analytics.trackEvent(evt),
+    AnalyticsProvider,
+    isFeatureFlagActivated,
+    trackEvent,
   };
 };
