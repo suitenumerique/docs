@@ -1,6 +1,6 @@
 # Installation on a k8s cluster
 
-This document is a step-by-step guide that describes how to install Docs on a k8s cluster without AI features. It's a teaching document to learn how it's work. It needs to be adapt for production environment.
+This document is a step-by-step guide that describes how to install Docs on a k8s cluster without AI features. It's a teaching document to learn how it works. It needs to be adapted for production environment.
 
 
 ## Prerequisites
