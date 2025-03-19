@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(oidc) add refresh token tools #584
+
 ## [2.5.0] - 2025-03-18
 
 ## Added

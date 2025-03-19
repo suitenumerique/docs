@@ -4,3 +4,6 @@ BURST_THROTTLE_RATES="200/minute"
 DJANGO_SERVER_TO_SERVER_API_TOKENS=test-e2e
 Y_PROVIDER_API_KEY=yprovider-api-key
 Y_PROVIDER_API_BASE_URL=http://y-provider:4444/api/
+
+# - add a key to store the refresh token in tests
+OIDC_STORE_REFRESH_TOKEN_KEY=qnw7gZrOFLkLuZIixzuxksNORFJyjWyi5ACugNchKJY=

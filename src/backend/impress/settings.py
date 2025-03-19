@@ -487,6 +487,17 @@ class Base(Configuration):
         environ_name="OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION",
         environ_prefix=None,
     )
+    OIDC_STORE_ACCESS_TOKEN = values.BooleanValue(
+        default=True, environ_name="OIDC_STORE_ACCESS_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN = values.BooleanValue(
+        default=True, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+        default=None,
+        environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
 
     # WARNING: Enabling this setting allows multiple user accounts to share the same email
     # address. This may cause security issues and is not recommended for production use when
