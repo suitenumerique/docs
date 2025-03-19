@@ -582,9 +582,13 @@ class Document(MP_Node, BaseModel):
 
     def get_content_response(self, version_id=""):
         """Get the content in a specific version of the document"""
-        return default_storage.connection.meta.client.get_object(
-            Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
-        )
+        params = {
+            "Bucket": default_storage.bucket_name,
+            "Key": self.file_key,
+        }
+        if version_id:
+            params["VersionId"] = version_id
+        return default_storage.connection.meta.client.get_object(**params)
 
     def get_versions_slice(self, from_version_id="", min_datetime=None, page_size=None):
         """Get document versions from object storage with pagination and starting conditions"""
