@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+- 📝(doc) add publiccode.yml
+
+## [2.5.0] - 2025-03-18
+
 ## Added
 
 - 📝(doc) Added GNU Make link to README #750
@@ -15,13 +19,15 @@ and this project adheres to
 - 🚩(frontend) feature flag analytic on copy as html #649
 - ✨(frontend) Custom block divider with export #698
 - 🌐(i18n) activate dutch language #742
-- 📝(doc) add publiccode.yml
+- ✨(frontend) add Beautify action to AI transform #478
+- ✨(frontend) add Emojify action to AI transform #478
 
 ## Changed
 
 - 🧑‍💻(frontend) change literal section open source #702
 - ♻️(frontend) replace cors proxy for export #695
 - 🚨(gitlint) Allow uppercase in commit messages #756
+- ♻️(frontend) Improve AI translations #478
 
 ## Fixed
 
@@ -40,13 +46,10 @@ and this project adheres to
 ## Added
 
 - ✨(frontend) synchronize language-choice #401
-- ✨(frontend) add Beautify action to AI transform #478
-- ✨(frontend) add Emojify action to AI transform #478
 
 ## Changed
 
 - Use sentry tags instead of extra scope
-- ♻️(frontend) Improve AI translations #478
 
 ## Fixed
 
@@ -467,7 +470,9 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v2.3.0...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v2.5.0...main
+[v2.5.0]: https://github.com/numerique-gouv/impress/releases/v2.5.0
+[v2.4.0]: https://github.com/numerique-gouv/impress/releases/v2.4.0
 [v2.3.0]: https://github.com/numerique-gouv/impress/releases/v2.3.0
 [v2.2.0]: https://github.com/numerique-gouv/impress/releases/v2.2.0
 [v2.1.0]: https://github.com/numerique-gouv/impress/releases/v2.1.0

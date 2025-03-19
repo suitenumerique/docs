@@ -13,9 +13,13 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
     const blob = await exporter.resolveFile(block.props.url);
     let pngConverted: string | undefined;
 
+    if (!blob.type.includes('image')) {
+      return <View wrap={false} />;
+    }
+
     if (blob.type.includes('svg')) {
       const svgText = await blob.text();
-      pngConverted = await convertSvgToPng(svgText);
+      pngConverted = await convertSvgToPng(svgText, block.props.previewWidth);
     }
 
     return (

@@ -22,9 +22,13 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
     let pngConverted: string | undefined;
     let dimensions: { width: number; height: number } | undefined;
 
+    if (!blob.type.includes('image')) {
+      return [];
+    }
+
     if (blob.type.includes('svg')) {
       const svgText = await blob.text();
-      pngConverted = await convertSvgToPng(svgText);
+      pngConverted = await convertSvgToPng(svgText, block.props.previewWidth);
       const img = new Image();
       img.src = pngConverted;
       await new Promise((resolve) => {
