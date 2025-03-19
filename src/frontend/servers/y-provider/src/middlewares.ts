@@ -40,17 +40,16 @@ export const wsSecurity = (
 ): void => {
   // Origin check
   const origin = req.headers['origin'];
-  if (origin && !allowedOrigins.includes(origin)) {
+  if (!origin || !allowedOrigins.includes(origin)) {
     ws.close(4001, 'Origin not allowed');
     console.error('CORS policy violation: Invalid Origin', origin);
     return;
   }
 
-  // Secret API Key check
-  const apiKey = req.headers['authorization'];
-  if (apiKey !== COLLABORATION_SERVER_SECRET) {
-    console.error('Forbidden: Invalid API Key');
-    ws.close();
+  const cookies = req.headers['cookie'];
+  if (!cookies) {
+    ws.close(4001, 'No cookies');
+    console.error('CORS policy violation: No cookies');
     return;
   }
 
