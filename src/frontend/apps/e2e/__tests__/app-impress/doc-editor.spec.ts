@@ -65,7 +65,7 @@ test.describe('Doc Editor', () => {
     let webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
       return webSocket
         .url()
-        .includes('ws://localhost:8083/collaboration/ws/?room=');
+        .includes('ws://localhost:4444/collaboration/ws/?room=');
     });
 
     const randomDoc = await createDoc(page, 'doc-editor', browserName, 1);
@@ -73,7 +73,7 @@ test.describe('Doc Editor', () => {
 
     let webSocket = await webSocketPromise;
     expect(webSocket.url()).toContain(
-      'ws://localhost:8083/collaboration/ws/?room=',
+      'ws://localhost:4444/collaboration/ws/?room=',
     );
 
     // Is connected
@@ -103,7 +103,7 @@ test.describe('Doc Editor', () => {
     webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
       return webSocket
         .url()
-        .includes('ws://localhost:8083/collaboration/ws/?room=');
+        .includes('ws://localhost:4444/collaboration/ws/?room=');
     });
 
     webSocket = await webSocketPromise;

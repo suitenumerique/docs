@@ -20,6 +20,7 @@
     "@hocuspocus/server": "2.15.2",
     "@sentry/node": "9.3.0",
     "@sentry/profiling-node": "9.3.0",
+    "axios": "1.8.2",
     "cors": "2.8.5",
     "express": "4.21.2",
     "express-ws": "5.0.2",
