@@ -3,6 +3,7 @@
     <img alt="Docs" src="/docs/assets/docs-logo.png" width="300" />
   </a>
 </p>
+<div></div>
 
 <p align="center">
 Welcome to Docs! The open source document editor where your notes can become knowledge through live collaboration
@@ -27,20 +28,23 @@ Welcome to Docs! The open source document editor where your notes can become kno
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
 ### Write
-*   😌 Simple collaborative editing without the formatting complexity of markdown
-*   🔌 Offline? No problem, keep writing, your edits will get synced when back online
-*   💅 Create clean documents with limited but beautiful formatting options and focus on content
-*   🧱 Built for productivity (markdown support, many block types, slash commands, keyboard shortcuts).
-*   ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
+
+- 😌 Simple collaborative editing without the formatting complexity of markdown
+- 🔌 Offline? No problem, keep writing, your edits will get synced when back online
+- 💅 Create clean documents with limited but beautiful formatting options and focus on content
+- 🧱 Built for productivity (markdown support, many block types, slash commands, keyboard shortcuts).
+- ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
 
 ### Collaborate
-*   🤝 Collaborate with your team in real time
-*   🔒 Granular access control to ensure your information is secure and only shared with the right people
-*   📑 Professional document exports in multiple formats (.odt, .doc, .pdf) with customizable templates
-*   📚 Built-in wiki functionality to turn your team's collaborative work into organized knowledge `ETA 02/2025`
+
+- 🤝 Collaborate with your team in real time
+- 🔒 Granular access control to ensure your information is secure and only shared with the right people
+- 📑 Professional document exports in multiple formats (.odt, .doc, .pdf) with customizable templates
+- 📚 Built-in wiki functionality to turn your team's collaborative work into organized knowledge `ETA 02/2025`
 
 ### Self-host
-*   🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
+
+- 🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
 
 ## Getting started 🔧
 
@@ -55,7 +59,7 @@ password: I'd<3ToTestDocs
 
 ### Run it locally
 
-> ⚠️ Running Docs locally using the methods described below is for testing purposes only.  It is based on building Docs using Minio as the S3 storage solution but you can choose any S3 compatible object storage of your choice.
+> ⚠️ Running Docs locally using the methods described below is for testing purposes only. It is based on building Docs using Minio as the S3 storage solution but you can choose any S3 compatible object storage of your choice.
 
 **Prerequisite**
 
@@ -157,7 +161,7 @@ Want to know where the project is headed? [🗺️ Checkout our roadmap](https:/
 
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is a public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project.
 
 ## Contributing 🙌
 
@@ -189,7 +193,7 @@ Docs is built on top of [Django Rest Framework](https://www.django-rest-framewor
 
 ### Gov ❤️ open source
 
-Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
+Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)).
 
 We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
