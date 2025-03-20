@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { keyCloakSignIn } from './common';
+import { expectLoginPage, keyCloakSignIn } from './common';
 
 test.describe('Header', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,7 +10,7 @@ test.describe('Header', () => {
   test('checks all the elements are visible', async ({ page }) => {
     const header = page.locator('header').first();
 
-    await expect(header.getByAltText('Docs Logo')).toBeVisible();
+    await expect(header.getByLabel('Docs Logo')).toBeVisible();
     await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
       'color',
       'rgb(0, 0, 145)',
@@ -88,6 +88,7 @@ test.describe('Header mobile', () => {
 test.describe('Header: Log out', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
+  // eslint-disable-next-line playwright/expect-expect
   test('checks logout button', async ({ page, browserName }) => {
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
@@ -98,6 +99,6 @@ test.describe('Header: Log out', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expectLoginPage(page);
   });
 });

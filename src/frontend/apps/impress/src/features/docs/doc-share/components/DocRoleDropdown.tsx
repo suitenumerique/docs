@@ -1,7 +1,7 @@
 import { css } from 'styled-components';
 
 import { DropdownMenu, DropdownMenuOption, Text } from '@/components';
-import { Role, useTrans } from '@/features/docs/doc-management/';
+import { Role, useTrans } from '@/docs/doc-management/';
 
 type Props = {
   currentRole: Role;

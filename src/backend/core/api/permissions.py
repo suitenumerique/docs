@@ -2,13 +2,15 @@
 
 from django.core import exceptions
 from django.db.models import Q
+from django.http import Http404
 
 from rest_framework import permissions
 
-from core.models import DocumentAccess, RoleChoices
+from core.models import DocumentAccess, RoleChoices, get_trashbin_cutoff
 
 ACTION_FOR_METHOD_TO_PERMISSION = {
-    "versions_detail": {"DELETE": "versions_destroy", "GET": "versions_retrieve"}
+    "versions_detail": {"DELETE": "versions_destroy", "GET": "versions_retrieve"},
+    "children": {"GET": "children_list", "POST": "children_create"},
 }
 
 
@@ -109,3 +111,26 @@ class AccessPermission(permissions.BasePermission):
         except KeyError:
             pass
         return abilities.get(action, False)
+
+
+class DocumentAccessPermission(AccessPermission):
+    """Subclass to handle soft deletion specificities."""
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Return a 404 on deleted documents
+        - for which the trashbin cutoff is past
+        - for which the current user is not owner of the document or one of its ancestors
+        """
+        if (
+            deleted_at := obj.ancestors_deleted_at
+        ) and deleted_at < get_trashbin_cutoff():
+            raise Http404
+
+        # Compute permission first to ensure the "user_roles" attribute is set
+        has_permission = super().has_object_permission(request, view, obj)
+
+        if obj.ancestors_deleted_at and not RoleChoices.OWNER in obj.user_roles:
+            raise Http404
+
+        return has_permission

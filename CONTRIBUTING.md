@@ -2,7 +2,14 @@
 
 Thank you for taking the time to contribute! Please follow these guidelines to ensure a smooth and productive workflow. 🚀🚀🚀
 
-To get started with the project, please refer to the [README.md](https://github.com/numerique-gouv/impress/blob/main/README.md) for detailed instructions.
+To get started with the project, please refer to the [README.md](https://github.com/suitenumerique/docs/blob/main/README.md) for detailed instructions.
+
+Please also check out our [dev handbook](https://suitenumerique.gitbook.io/handbook) to learn our best practices.
+
+## Help us with translations
+
+You can help us with translations on [Crowdin](https://crowdin.com/project/lasuite-docs).
+Your language is not there? Request it on our Crowdin page 😊.
 
 ## Creating an Issue
 
@@ -28,7 +35,7 @@ All commit messages must adhere to the following format:
 
 *   <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list here: <https://gitmoji.dev/>.
 *   **(type)**: Describe the type of change. Common types include `backend`, `frontend`, `CI`, `docker` etc...
-*   **title**: A short, descriptive title for the change, starting with a lowercase character.
+*   **title**: A short, descriptive title for the change.
 *   **description**: Include additional details about what was changed and why.
 
 ### Example Commit Message

@@ -7,13 +7,15 @@ on:
       - main
 
 jobs:
-  install-front:
-    uses: ./.github/workflows/front-dependencies-installation.yml
+  install-dependencies:
+    uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '20.x'
+      with-front-dependencies-installation: true
+      with-build_mails: true
 
   synchronize-with-crowdin:
-    needs: install-front
+    needs: install-dependencies
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +31,13 @@ jobs:
       - name: Install development dependencies
         run: pip install --user .
         working-directory: src/backend
+      - name: Restore the mail templates
+        uses: actions/cache@v4
+        id: mail-templates
+        with:
+          path: "src/backend/core/templates/mail"
+          key: mail-templates-${{ hashFiles('src/mail/mjml') }}
+          fail-on-cache-miss: true
       - name: Install gettext
         run: |
           sudo apt-get update

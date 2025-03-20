@@ -5,56 +5,48 @@ Declare and configure the models for the impress core application
 
 import hashlib
 import smtplib
-import tempfile
-import textwrap
 import uuid
+from collections import defaultdict
 from datetime import timedelta
-from io import BytesIO
 from logging import getLogger
 
 from django.conf import settings
 from django.contrib.auth import models as auth_models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.sites.models import Site
-from django.core import exceptions, mail, validators
+from django.core import mail, validators
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
-from django.db import models
-from django.http import FileResponse
-from django.template.base import Template as DjangoTemplate
-from django.template.context import Context
+from django.db import models, transaction
+from django.db.models.functions import Left, Length
 from django.template.loader import render_to_string
-from django.utils import html, timezone
+from django.utils import timezone
 from django.utils.functional import cached_property, lazy
 from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
-import frontmatter
-import markdown
-import pypandoc
-import weasyprint
 from botocore.exceptions import ClientError
+from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
+from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
 logger = getLogger(__name__)
 
 
-def get_resource_roles(resource, user):
-    """Compute the roles a user has on a resource."""
-    if not user.is_authenticated:
-        return []
+def get_trashbin_cutoff():
+    """
+    Calculate the cutoff datetime for soft-deleted items based on the retention policy.
 
-    try:
-        roles = resource.user_roles or []
-    except AttributeError:
-        try:
-            roles = resource.accesses.filter(
-                models.Q(user=user) | models.Q(team__in=user.teams),
-            ).values_list("role", flat=True)
-        except (models.ObjectDoesNotExist, IndexError):
-            roles = []
-    return roles
+    The function returns the current datetime minus the number of days specified in
+    the TRASHBIN_CUTOFF_DAYS setting, indicating the oldest date for items that can
+    remain in the trash bin.
+
+    Returns:
+        datetime: The cutoff datetime for soft-deleted items.
+    """
+    return timezone.now() - timedelta(days=settings.TRASHBIN_CUTOFF_DAYS)
 
 
 class LinkRoleChoices(models.TextChoices):
@@ -88,6 +80,55 @@ class LinkReachChoices(models.TextChoices):
         _("Authenticated"),
     )  # Any authenticated user can access the document
     PUBLIC = "public", _("Public")  # Even anonymous users can access the document
+
+    @classmethod
+    def get_select_options(cls, ancestors_links):
+        """
+        Determines the valid select options for link reach and link role depending on the
+        list of ancestors' link reach/role.
+
+        Args:
+            ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
+                             representing the reach and role of ancestors links.
+
+        Returns:
+            Dictionary mapping possible reach levels to their corresponding possible roles.
+        """
+        # If no ancestors, return all options
+        if not ancestors_links:
+            return {reach: LinkRoleChoices.values for reach in cls.values}
+
+        # Initialize result with all possible reaches and role options as sets
+        result = {reach: set(LinkRoleChoices.values) for reach in cls.values}
+
+        # Group roles by reach level
+        reach_roles = defaultdict(set)
+        for link in ancestors_links:
+            reach_roles[link["link_reach"]].add(link["link_role"])
+
+        # Apply constraints based on ancestor links
+        if LinkRoleChoices.EDITOR in reach_roles[cls.RESTRICTED]:
+            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+
+        if LinkRoleChoices.EDITOR in reach_roles[cls.AUTHENTICATED]:
+            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.pop(cls.RESTRICTED, None)
+        elif LinkRoleChoices.READER in reach_roles[cls.AUTHENTICATED]:
+            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+
+        if LinkRoleChoices.EDITOR in reach_roles[cls.PUBLIC]:
+            result[cls.PUBLIC].discard(LinkRoleChoices.READER)
+            result.pop(cls.AUTHENTICATED, None)
+            result.pop(cls.RESTRICTED, None)
+        elif LinkRoleChoices.READER in reach_roles[cls.PUBLIC]:
+            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.get(cls.RESTRICTED, set()).discard(LinkRoleChoices.READER)
+
+        # Convert roles sets to lists while maintaining the order from LinkRoleChoices
+        for reach, roles in result.items():
+            result[reach] = [role for role in LinkRoleChoices.values if role in roles]
+
+        return result
 
 
 class DuplicateEmailError(Exception):
@@ -203,9 +244,11 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
     language = models.CharField(
         max_length=10,
         choices=lazy(lambda: settings.LANGUAGES, tuple)(),
-        default=settings.LANGUAGE_CODE,
+        default=None,
         verbose_name=_("language"),
         help_text=_("The language in which the user wants to see the interface."),
+        null=True,
+        blank=True,
     )
     timezone = TimeZoneField(
         choices_display="WITH_GMT_OFFSET",
@@ -376,10 +419,56 @@ class BaseAccess(BaseModel):
         }
 
 
-class Document(BaseModel):
+class DocumentQuerySet(MP_NodeQuerySet):
+    """
+    Custom queryset for the Document model, providing additional methods
+    to filter documents based on user permissions.
+    """
+
+    def readable_per_se(self, user):
+        """
+        Filters the queryset to return documents that the given user has
+        permission to read.
+        :param user: The user for whom readable documents are to be fetched.
+        :return: A queryset of documents readable by the user.
+        """
+        if user.is_authenticated:
+            return self.filter(
+                models.Q(accesses__user=user)
+                | models.Q(accesses__team__in=user.teams)
+                | ~models.Q(link_reach=LinkReachChoices.RESTRICTED)
+            )
+
+        return self.filter(link_reach=LinkReachChoices.PUBLIC)
+
+
+class DocumentManager(MP_NodeManager):
+    """
+    Custom manager for the Document model, enabling the use of the custom
+    queryset methods directly from the model manager.
+    """
+
+    def get_queryset(self):
+        """
+        Overrides the default get_queryset method to return a custom queryset.
+        :return: An instance of DocumentQuerySet.
+        """
+        return DocumentQuerySet(self.model, using=self._db)
+
+    def readable_per_se(self, user):
+        """
+        Filters documents based on user permissions using the custom queryset.
+        :param user: The user for whom readable documents are to be fetched.
+        :return: A queryset of documents readable by the user.
+        """
+        return self.get_queryset().readable_per_se(user)
+
+
+class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
+    excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
     link_reach = models.CharField(
         max_length=20,
         choices=LinkReachChoices.choices,
@@ -395,14 +484,34 @@ class Document(BaseModel):
         blank=True,
         null=True,
     )
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    ancestors_deleted_at = models.DateTimeField(null=True, blank=True)
 
     _content = None
 
+    # Tree structure
+    alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    steplen = 7  # nb siblings max: 3,521,614,606,208
+    node_order_by = []  # Manual ordering
+
+    path = models.CharField(max_length=7 * 36, unique=True, db_collation="C")
+
+    objects = DocumentManager()
+
     class Meta:
         db_table = "impress_document"
-        ordering = ("title",)
+        ordering = ("path",)
         verbose_name = _("Document")
         verbose_name_plural = _("Documents")
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(deleted_at__isnull=True)
+                    | models.Q(deleted_at=models.F("ancestors_deleted_at"))
+                ),
+                name="check_deleted_at_matches_ancestors_deleted_at_when_set",
+            ),
+        ]
 
     def __str__(self):
         return str(self.title) if self.title else str(_("Untitled Document"))
@@ -541,48 +650,166 @@ class Document(BaseModel):
             Bucket=default_storage.bucket_name, Key=self.file_key, VersionId=version_id
         )
 
-    def get_abilities(self, user):
+    def get_nb_accesses_cache_key(self):
+        """Generate a unique cache key for each document."""
+        return f"document_{self.id!s}_nb_accesses"
+
+    def get_nb_accesses(self):
+        """
+        Calculate the number of accesses:
+        - directly attached to the document
+        - attached to any of the document's ancestors
+        """
+        cache_key = self.get_nb_accesses_cache_key()
+        nb_accesses = cache.get(cache_key)
+
+        if nb_accesses is None:
+            nb_accesses = (
+                DocumentAccess.objects.filter(document=self).count(),
+                DocumentAccess.objects.filter(
+                    document__path=Left(
+                        models.Value(self.path), Length("document__path")
+                    ),
+                    document__ancestors_deleted_at__isnull=True,
+                ).count(),
+            )
+            cache.set(cache_key, nb_accesses)
+
+        return nb_accesses
+
+    @property
+    def nb_accesses_direct(self):
+        """Returns the number of accesses related to the document or one of its ancestors."""
+        return self.get_nb_accesses()[0]
+
+    @property
+    def nb_accesses_ancestors(self):
+        """Returns the number of accesses related to the document or one of its ancestors."""
+        return self.get_nb_accesses()[1]
+
+    def invalidate_nb_accesses_cache(self):
+        """
+        Invalidate the cache for number of accesses, including on affected descendants.
+        Args:
+            path: can optionally be passed as argument (useful when invalidating cache for a
+                document we just deleted)
+        """
+
+        for document in Document.objects.filter(path__startswith=self.path).only("id"):
+            cache_key = document.get_nb_accesses_cache_key()
+            cache.delete(cache_key)
+
+    def get_roles(self, user):
+        """Return the roles a user has on a document."""
+        if not user.is_authenticated:
+            return []
+
+        try:
+            roles = self.user_roles or []
+        except AttributeError:
+            try:
+                roles = DocumentAccess.objects.filter(
+                    models.Q(user=user) | models.Q(team__in=user.teams),
+                    document__path=Left(
+                        models.Value(self.path), Length("document__path")
+                    ),
+                ).values_list("role", flat=True)
+            except (models.ObjectDoesNotExist, IndexError):
+                roles = []
+        return roles
+
+    def get_links_definitions(self, ancestors_links):
+        """Get links reach/role definitions for the current document and its ancestors."""
+
+        links_definitions = defaultdict(set)
+        links_definitions[self.link_reach].add(self.link_role)
+
+        # Merge ancestor link definitions
+        for ancestor in ancestors_links:
+            links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
+
+        return dict(links_definitions)  # Convert defaultdict back to a normal dict
+
+    def get_abilities(self, user, ancestors_links=None):
         """
         Compute and return abilities for a given user on the document.
         """
-        roles = set(get_resource_roles(self, user))
+        if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
+            ancestors_links = []
+        elif ancestors_links is None:
+            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
 
-        # Compute version roles before adding link roles because we don't
+        roles = set(
+            self.get_roles(user)
+        )  # at this point only roles based on specific access
+
+        # Characteristics that are based only on specific access
+        is_owner = RoleChoices.OWNER in roles
+        is_deleted = self.ancestors_deleted_at and not is_owner
+        is_owner_or_admin = (is_owner or RoleChoices.ADMIN in roles) and not is_deleted
+
+        # Compute access roles before adding link roles because we don't
         # want anonymous users to access versions (we wouldn't know from
         # which date to allow them anyway)
         # Anonymous users should also not see document accesses
-        has_role = bool(roles)
+        has_access_role = bool(roles) and not is_deleted
+        can_update_from_access = (
+            is_owner_or_admin or RoleChoices.EDITOR in roles
+        ) and not is_deleted
 
-        # Add role provided by the document link
-        if self.link_reach == LinkReachChoices.PUBLIC or (
-            self.link_reach == LinkReachChoices.AUTHENTICATED and user.is_authenticated
-        ):
-            roles.add(self.link_role)
-
-        is_owner_or_admin = bool(
-            roles.intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
+        # Add roles provided by the document link, taking into account its ancestors
+        links_definitions = self.get_links_definitions(ancestors_links)
+        public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
+        authenticated_roles = (
+            links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
+            if user.is_authenticated
+            else set()
         )
-        can_get = bool(roles)
-        can_update = is_owner_or_admin or RoleChoices.EDITOR in roles
+        roles = roles | public_roles | authenticated_roles
+
+        can_get = bool(roles) and not is_deleted
+        can_update = (
+            is_owner_or_admin or RoleChoices.EDITOR in roles
+        ) and not is_deleted
+
+        ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
+        ai_access = any(
+            [
+                ai_allow_reach_from == LinkReachChoices.PUBLIC and can_update,
+                ai_allow_reach_from == LinkReachChoices.AUTHENTICATED
+                and user.is_authenticated
+                and can_update,
+                ai_allow_reach_from == LinkReachChoices.RESTRICTED
+                and can_update_from_access,
+            ]
+        )
 
         return {
             "accesses_manage": is_owner_or_admin,
-            "accesses_view": has_role,
-            "ai_transform": can_update,
-            "ai_translate": can_update,
+            "accesses_view": has_access_role,
+            "ai_transform": ai_access,
+            "ai_translate": ai_access,
             "attachment_upload": can_update,
+            "children_list": can_get,
+            "children_create": can_update and user.is_authenticated,
             "collaboration_auth": can_get,
-            "destroy": RoleChoices.OWNER in roles,
+            "cors_proxy": can_get,
+            "descendants": can_get,
+            "destroy": is_owner,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
-            "invite_owner": RoleChoices.OWNER in roles,
+            "invite_owner": is_owner,
+            "move": is_owner_or_admin and not self.ancestors_deleted_at,
             "partial_update": can_update,
+            "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
+            "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
+            "tree": can_get,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,
-            "versions_list": has_role,
-            "versions_retrieve": has_role,
+            "versions_list": has_access_role,
+            "versions_retrieve": has_access_role,
         }
 
     def send_email(self, subject, emails, context=None, language=None):
@@ -596,6 +823,7 @@ class Document(BaseModel):
                 "document": self,
                 "domain": domain,
                 "link": f"{domain}/docs/{self.id}/",
+                "document_title": self.title or str(_("Untitled Document")),
                 "logo_img": settings.EMAIL_LOGO_IMG,
             }
         )
@@ -637,11 +865,89 @@ class Document(BaseModel):
                     '{name} invited you with the role "{role}" on the following document:'
                 ).format(name=sender_name_email, role=role.lower()),
             }
-            subject = _("{name} shared a document with you: {title}").format(
-                name=sender_name, title=self.title
+            subject = (
+                context["title"]
+                if not self.title
+                else _("{name} shared a document with you: {title}").format(
+                    name=sender_name, title=self.title
+                )
             )
 
         self.send_email(subject, [email], context, language)
+
+    @transaction.atomic
+    def soft_delete(self):
+        """
+        Soft delete the document, marking the deletion on descendants.
+        We still keep the .delete() method untouched for programmatic purposes.
+        """
+        if (
+            self._meta.model.objects.filter(
+                models.Q(deleted_at__isnull=False)
+                | models.Q(ancestors_deleted_at__isnull=False),
+                pk=self.pk,
+            ).exists()
+            or self.get_ancestors().filter(deleted_at__isnull=False).exists()
+        ):
+            raise RuntimeError(
+                "This document is already deleted or has deleted ancestors."
+            )
+
+        self.ancestors_deleted_at = self.deleted_at = timezone.now()
+        self.save()
+        self.invalidate_nb_accesses_cache()
+
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") - 1
+            )
+
+        # Mark all descendants as soft deleted
+        self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
+            ancestors_deleted_at=self.ancestors_deleted_at
+        )
+
+    @transaction.atomic
+    def restore(self):
+        """Cancelling a soft delete with checks."""
+        # This should not happen
+        if self._meta.model.objects.filter(
+            pk=self.pk, deleted_at__isnull=True
+        ).exists():
+            raise RuntimeError("This document is not deleted.")
+
+        if self.deleted_at < get_trashbin_cutoff():
+            raise RuntimeError(
+                "This document was permanently deleted and cannot be restored."
+            )
+
+        # save the current deleted_at value to exclude it from the descendants update
+        current_deleted_at = self.deleted_at
+
+        # Restore the current document
+        self.deleted_at = None
+
+        # Calculate the minimum `deleted_at` among all ancestors
+        ancestors_deleted_at = (
+            self.get_ancestors()
+            .filter(deleted_at__isnull=False)
+            .order_by("deleted_at")
+            .values_list("deleted_at", flat=True)
+            .first()
+        )
+        self.ancestors_deleted_at = ancestors_deleted_at
+        self.save(update_fields=["deleted_at", "ancestors_deleted_at"])
+        self.invalidate_nb_accesses_cache()
+
+        self.get_descendants().exclude(
+            models.Q(deleted_at__isnull=False)
+            | models.Q(ancestors_deleted_at__lt=current_deleted_at)
+        ).update(ancestors_deleted_at=self.ancestors_deleted_at)
+
+        if self.depth > 1:
+            self._meta.model.objects.filter(pk=self.get_parent().pk).update(
+                numchild=models.F("numchild") + 1
+            )
 
 
 class LinkTrace(BaseModel):
@@ -745,6 +1051,16 @@ class DocumentAccess(BaseAccess):
     def __str__(self):
         return f"{self.user!s} is {self.role:s} in document {self.document!s}"
 
+    def save(self, *args, **kwargs):
+        """Override save to clear the document's cache for number of accesses."""
+        super().save(*args, **kwargs)
+        self.document.invalidate_nb_accesses_cache()
+
+    def delete(self, *args, **kwargs):
+        """Override delete to clear the document's cache for number of accesses."""
+        super().delete(*args, **kwargs)
+        self.document.invalidate_nb_accesses_cache()
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document access.
@@ -774,11 +1090,27 @@ class Template(BaseModel):
     def __str__(self):
         return self.title
 
+    def get_roles(self, user):
+        """Return the roles a user has on a resource as an iterable."""
+        if not user.is_authenticated:
+            return []
+
+        try:
+            roles = self.user_roles or []
+        except AttributeError:
+            try:
+                roles = self.accesses.filter(
+                    models.Q(user=user) | models.Q(team__in=user.teams),
+                ).values_list("role", flat=True)
+            except (models.ObjectDoesNotExist, IndexError):
+                roles = []
+        return roles
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the template.
         """
-        roles = get_resource_roles(self, user)
+        roles = self.get_roles(user)
         is_owner_or_admin = bool(
             set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
         )
@@ -793,107 +1125,6 @@ class Template(BaseModel):
             "partial_update": can_update,
             "retrieve": can_get,
         }
-
-    def generate_pdf(self, body_html, metadata):
-        """
-        Generate and return a pdf document wrapped around the current template
-        """
-        document_html = weasyprint.HTML(
-            string=DjangoTemplate(self.code).render(
-                Context({"body": html.format_html(body_html), **metadata})
-            )
-        )
-        css = weasyprint.CSS(
-            string=self.css,
-            font_config=weasyprint.text.fonts.FontConfiguration(),
-        )
-
-        pdf_content = document_html.write_pdf(stylesheets=[css], zoom=1)
-        response = FileResponse(BytesIO(pdf_content), content_type="application/pdf")
-        response["Content-Disposition"] = f"attachment; filename={self.title}.pdf"
-
-        return response
-
-    def generate_word(self, body_html, metadata):
-        """
-        Generate and return a docx document wrapped around the current template
-        """
-        template_string = DjangoTemplate(self.code).render(
-            Context({"body": html.format_html(body_html), **metadata})
-        )
-
-        html_string = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                {self.css}
-            </style>
-        </head>
-        <body>
-            {template_string}
-        </body>
-        </html>
-        """
-
-        reference_docx = "core/static/reference.docx"
-        output = BytesIO()
-
-        # Convert the HTML to a temporary docx file
-        with tempfile.NamedTemporaryFile(suffix=".docx", prefix="docx_") as tmp_file:
-            output_path = tmp_file.name
-
-            pypandoc.convert_text(
-                html_string,
-                "docx",
-                format="html",
-                outputfile=output_path,
-                extra_args=["--reference-doc", reference_docx],
-            )
-
-            # Create a BytesIO object to store the output of the temporary docx file
-            with open(output_path, "rb") as f:
-                output = BytesIO(f.read())
-
-        # Ensure the pointer is at the beginning
-        output.seek(0)
-
-        response = FileResponse(
-            output,
-            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        )
-        response["Content-Disposition"] = f"attachment; filename={self.title}.docx"
-
-        return response
-
-    def generate_document(self, body, body_type, export_format):
-        """
-        Generate and return a document for this template around the
-        body passed as argument.
-
-        2 types of body are accepted:
-        - HTML: body_type = "html"
-        - Markdown: body_type = "markdown"
-
-        2 types of documents can be generated:
-        - PDF: export_format = "pdf"
-        - Docx: export_format = "docx"
-        """
-        document = frontmatter.loads(body)
-        metadata = document.metadata
-        strip_body = document.content.strip()
-
-        if body_type == "html":
-            body_html = strip_body
-        else:
-            body_html = (
-                markdown.markdown(textwrap.dedent(strip_body)) if strip_body else ""
-            )
-
-        if export_format == "pdf":
-            return self.generate_pdf(body_html, metadata)
-
-        return self.generate_word(body_html, metadata)
 
 
 class TemplateAccess(BaseAccess):
@@ -983,8 +1214,8 @@ class Invitation(BaseModel):
             User.objects.filter(email=self.email).exists()
             and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
         ):
-            raise exceptions.ValidationError(
-                {"email": _("This email is already associated to a registered user.")}
+            raise ValidationError(
+                {"email": [_("This email is already associated to a registered user.")]}
             )
 
     @property

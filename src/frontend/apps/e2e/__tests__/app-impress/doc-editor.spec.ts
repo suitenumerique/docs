@@ -1,6 +1,7 @@
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
+import cs from 'convert-stream';
 
 import {
   createDoc,
@@ -14,41 +15,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Editor', () => {
-  test('it check translations of the slash menu when changing language', async ({
-    page,
-    browserName,
-  }) => {
-    await createDoc(page, 'doc-toolbar', browserName, 1);
-
-    const header = page.locator('header').first();
-    const editor = page.locator('.ProseMirror');
-    // Trigger slash menu to show english menu
-    await editor.click();
-    await editor.fill('/');
-    await expect(page.getByText('Headings', { exact: true })).toBeVisible();
-    await header.click();
-    await expect(page.getByText('Headings', { exact: true })).toBeHidden();
-
-    // Reset menu
-    await editor.click();
-    await editor.fill('');
-
-    // Change language to French
-    await header.click();
-    await header.getByRole('combobox').getByText('English').click();
-    await header.getByRole('option', { name: 'Français' }).click();
-    await expect(
-      header.getByRole('combobox').getByText('Français'),
-    ).toBeVisible();
-
-    // Trigger slash menu to show french menu
-    await editor.click();
-    await editor.fill('/');
-    await expect(page.getByText('Titres', { exact: true })).toBeVisible();
-    await header.click();
-    await expect(page.getByText('Titres', { exact: true })).toBeHidden();
-  });
-
   test('it checks default toolbar buttons are displayed', async ({
     page,
     browserName,
@@ -127,11 +93,7 @@ test.describe('Doc Editor', () => {
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
-    await page
-      .getByRole('button', {
-        name: 'Connected',
-      })
-      .click();
+    await page.getByLabel('Connected').click();
 
     // Assert that the doc reconnects to the ws
     const wsClose = await wsClosePromise;
@@ -220,7 +182,7 @@ test.describe('Doc Editor', () => {
     browserName,
   }) => {
     // Check the first doc
-    const [doc] = await createDoc(page, 'doc-saves-change', browserName, 1);
+    const [doc] = await createDoc(page, 'doc-saves-change', browserName);
     await verifyDocName(page, doc);
 
     const editor = page.locator('.ProseMirror');
@@ -228,9 +190,11 @@ test.describe('Doc Editor', () => {
     await editor.fill('Hello World Doc persisted 1');
     await expect(editor.getByText('Hello World Doc persisted 1')).toBeVisible();
 
-    const secondDoc = await goToGridDoc(page, {
-      nthRow: 2,
-    });
+    const [secondDoc] = await createDoc(
+      page,
+      'doc-saves-change-other',
+      browserName,
+    );
 
     await verifyDocName(page, secondDoc);
 
@@ -238,6 +202,7 @@ test.describe('Doc Editor', () => {
       title: doc,
     });
 
+    await verifyDocName(page, doc);
     await expect(editor.getByText('Hello World Doc persisted 1')).toBeVisible();
   });
 
@@ -246,8 +211,7 @@ test.describe('Doc Editor', () => {
     test.skip(browserName === 'webkit', 'This test is very flaky with webkit');
 
     // Check the first doc
-    const doc = await goToGridDoc(page);
-
+    const [doc] = await createDoc(page, 'doc-quit-1', browserName, 1);
     await verifyDocName(page, doc);
 
     const editor = page.locator('.ProseMirror');
@@ -365,5 +329,119 @@ test.describe('Doc Editor', () => {
     await page.getByRole('menuitem', { name: 'English', exact: true }).click();
 
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+  });
+
+  [
+    { ai_transform: false, ai_translate: false },
+    { ai_transform: true, ai_translate: false },
+    { ai_transform: false, ai_translate: true },
+  ].forEach(({ ai_transform, ai_translate }) => {
+    test(`it checks AI buttons when can transform is at "${ai_transform}" and can translate is at "${ai_translate}"`, async ({
+      page,
+    }) => {
+      await mockedDocument(page, {
+        accesses: [
+          {
+            id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
+            role: 'owner',
+            user: {
+              email: 'super@owner.com',
+              full_name: 'Super Owner',
+            },
+          },
+        ],
+        abilities: {
+          destroy: true, // Means owner
+          link_configuration: true,
+          ai_transform,
+          ai_translate,
+          accesses_manage: true,
+          accesses_view: true,
+          update: true,
+          partial_update: true,
+          retrieve: true,
+        },
+        link_reach: 'public',
+        link_role: 'editor',
+        created_at: '2021-09-01T09:00:00Z',
+      });
+
+      await goToGridDoc(page);
+
+      await verifyDocName(page, 'Mocked document');
+
+      await page.locator('.bn-block-outer').last().fill('Hello World');
+
+      const editor = page.locator('.ProseMirror');
+      await editor.getByText('Hello').dblclick();
+
+      /* eslint-disable playwright/no-conditional-expect */
+      /* eslint-disable playwright/no-conditional-in-test */
+      if (!ai_transform && !ai_translate) {
+        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
+        return;
+      }
+
+      await page.getByRole('button', { name: 'AI' }).click();
+
+      if (ai_transform) {
+        await expect(
+          page.getByRole('menuitem', { name: 'Use as prompt' }),
+        ).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole('menuitem', { name: 'Use as prompt' }),
+        ).toBeHidden();
+      }
+
+      if (ai_translate) {
+        await expect(
+          page.getByRole('menuitem', { name: 'Language' }),
+        ).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole('menuitem', { name: 'Language' }),
+        ).toBeHidden();
+      }
+      /* eslint-enable playwright/no-conditional-expect */
+      /* eslint-enable playwright/no-conditional-in-test */
+    });
+  });
+
+  test('it downloads unsafe files', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`html`);
+    });
+
+    await verifyDocName(page, randomDoc);
+
+    await page.locator('.ProseMirror.bn-editor').click();
+    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Embedded file').click();
+    await page.getByText('Upload file').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
+
+    await page.locator('.bn-block-content[data-name="test.html"]').click();
+    await page.getByRole('button', { name: 'Download file' }).click();
+
+    await expect(
+      page.getByText('This file is flagged as unsafe.'),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Download' }).click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain(`-unsafe.html`);
+
+    const svgBuffer = await cs.toBuffer(await download.createReadStream());
+    expect(svgBuffer.toString()).toContain('Hello svg');
   });
 });

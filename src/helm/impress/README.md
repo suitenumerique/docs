@@ -131,6 +131,7 @@
 | `backend.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                         |                                                                                                                               |
 | `backend.extraVolumeMounts`                           | Additional volumes to mount on the backend.                                        | `[]`                                                                                                                          |
 | `backend.extraVolumes`                                | Additional volumes to mount on the backend.                                        | `[]`                                                                                                                          |
+| `backend.pdb.enabled`                                 | Enable pdb on backend                                                              | `true`                                                                                                                        |
 
 ### frontend
 
@@ -180,6 +181,7 @@
 | `frontend.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                          |                            |
 | `frontend.extraVolumeMounts`                           | Additional volumes to mount on the frontend.                                        | `[]`                       |
 | `frontend.extraVolumes`                                | Additional volumes to mount on the frontend.                                        | `[]`                       |
+| `frontend.pdb.enabled`                                 | Enable pdb on frontend                                                              | `true`                     |
 
 ### posthog
 
@@ -261,3 +263,4 @@
 | `yProvider.persistence.volume-name.mountPath`           | Path where the volume should be mounted to                                           |                              |
 | `yProvider.extraVolumeMounts`                           | Additional volumes to mount on the yProvider.                                        | `[]`                         |
 | `yProvider.extraVolumes`                                | Additional volumes to mount on the yProvider.                                        | `[]`                         |
+| `yProvider.pdb.enabled`                                 | Enable pdb on yProvider                                                              | `true`                       |

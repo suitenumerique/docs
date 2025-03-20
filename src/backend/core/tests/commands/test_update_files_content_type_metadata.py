@@ -42,9 +42,9 @@ def test_update_files_content_type_metadata():
 
     for key in keys:
         head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
-        assert (
-            head_resp["ContentType"] == "image/png"
-        ), f"ContentType not fixed, got {head_resp['ContentType']!r}"
+        assert head_resp["ContentType"] == "image/png", (
+            f"ContentType not fixed, got {head_resp['ContentType']!r}"
+        )
 
         # Check that original metadata was preserved
         assert head_resp["Metadata"].get("owner") == "None"

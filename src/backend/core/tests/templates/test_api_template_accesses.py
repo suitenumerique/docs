@@ -73,14 +73,14 @@ def test_api_template_accesses_list_authenticated_related(via, mock_user_teams):
         user_access = models.TemplateAccess.objects.create(
             template=template,
             user=user,
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         user_access = models.TemplateAccess.objects.create(
             template=template,
             team="lasuite",
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
 
     access1 = factories.TeamTemplateAccessFactory(template=template)
@@ -219,7 +219,7 @@ def test_api_template_accesses_update_anonymous():
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     api_client = APIClient()
@@ -252,7 +252,7 @@ def test_api_template_accesses_update_authenticated_unrelated():
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -294,7 +294,7 @@ def test_api_template_accesses_update_authenticated_editor_or_reader(
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -398,7 +398,7 @@ def test_api_template_accesses_update_administrator_from_owner(via, mock_user_te
     new_values = {
         "id": uuid4(),
         "user_id": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -497,7 +497,7 @@ def test_api_template_accesses_update_owner(via, mock_user_teams):
     new_values = {
         "id": uuid4(),
         "user_id": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():

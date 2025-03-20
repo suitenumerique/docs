@@ -1,6 +1,17 @@
 import { Page, expect } from '@playwright/test';
 
-export const keyCloakSignIn = async (page: Page, browserName: string) => {
+export const keyCloakSignIn = async (
+  page: Page,
+  browserName: string,
+  fromHome: boolean = true,
+) => {
+  if (fromHome) {
+    await page
+      .getByRole('button', { name: 'Proconnect Login' })
+      .first()
+      .click();
+  }
+
   const login = `user-e2e-${browserName}`;
   const password = `password-e2e-${browserName}`;
 
@@ -26,7 +37,7 @@ export const createDoc = async (
   page: Page,
   docName: string,
   browserName: string,
-  length: number,
+  length: number = 1,
 ) => {
   const randomDocs = randomName(docName, browserName, length);
 
@@ -40,8 +51,15 @@ export const createDoc = async (
       })
       .click();
 
-    const input = page.getByRole('textbox', { name: 'doc title input' });
+    await page.waitForURL('**/docs/**', {
+      timeout: 10000,
+      waitUntil: 'networkidle',
+    });
+
+    const input = page.getByLabel('doc title input');
+    await expect(input).toHaveText('');
     await input.click();
+
     await input.fill(randomDocs[i]);
     await input.blur();
   }
@@ -51,8 +69,11 @@ export const createDoc = async (
 
 export const verifyDocName = async (page: Page, docName: string) => {
   const input = page.getByRole('textbox', { name: 'doc title input' });
-  await expect(input).toBeVisible();
-  await expect(input).toHaveText(docName);
+  try {
+    await expect(input).toHaveText(docName);
+  } catch {
+    await expect(page.getByRole('heading', { name: docName })).toBeVisible();
+  }
 };
 
 export const addNewMember = async (
@@ -85,10 +106,26 @@ export const addNewMember = async (
 
   // Choose a role
   await page.getByLabel('doc-role-dropdown').click();
-  await page.getByRole('button', { name: role }).click();
+  await page.getByLabel(role).click();
   await page.getByRole('button', { name: 'Invite' }).click();
 
   return users[index].email;
+};
+
+export const getGridRow = async (page: Page, title: string) => {
+  const docsGrid = page.getByRole('grid');
+  await expect(docsGrid).toBeVisible();
+  await expect(page.getByTestId('grid-loader')).toBeHidden();
+
+  const rows = docsGrid.getByRole('row');
+
+  const row = rows.filter({
+    hasText: title,
+  });
+
+  await expect(row).toBeVisible();
+
+  return row;
 };
 
 interface GoToGridDocOptions {
@@ -104,7 +141,7 @@ export const goToGridDoc = async (
 
   const docsGrid = page.getByTestId('docs-grid');
   await expect(docsGrid).toBeVisible();
-  await expect(docsGrid.getByTestId('grid-loader')).toBeHidden();
+  await expect(page.getByTestId('grid-loader')).toBeHidden();
 
   const rows = docsGrid.getByRole('row');
 
@@ -241,3 +278,8 @@ export const mockedAccesses = async (page: Page, json?: object) => {
     }
   });
 };
+
+export const expectLoginPage = async (page: Page) =>
+  await expect(
+    page.getByRole('heading', { name: 'Collaborative writing' }),
+  ).toBeVisible();

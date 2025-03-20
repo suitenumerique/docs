@@ -2,7 +2,7 @@ import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
-import { Base64 } from '@/features/docs/doc-management';
+import { Base64 } from '@/docs/doc-management';
 
 export interface UseCollaborationStore {
   createProvider: (

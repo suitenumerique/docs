@@ -6,14 +6,14 @@ import * as Y from 'yjs';
 
 import { Box, Text, TextErrors } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocHeader, DocVersionHeader } from '@/features/docs/doc-header/';
+import { DocHeader, DocVersionHeader } from '@/docs/doc-header/';
 import {
   Doc,
   base64ToBlocknoteXmlFragment,
   useProviderStore,
-} from '@/features/docs/doc-management';
-import { TableContent } from '@/features/docs/doc-table-content/';
-import { Versions, useDocVersion } from '@/features/docs/doc-versioning/';
+} from '@/docs/doc-management';
+import { TableContent } from '@/docs/doc-table-content/';
+import { Versions, useDocVersion } from '@/docs/doc-versioning/';
 import { useResponsiveStore } from '@/stores';
 
 import { BlockNoteEditor, BlockNoteEditorVersion } from './BlockNoteEditor';
@@ -65,7 +65,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           $css="overflow-x: clip; flex: 1;"
           $position="relative"
         >
-          <Box $css="flex:1;" $overflow="auto" $position="relative">
+          <Box $css="flex:1;" $position="relative" $width="100%">
             {isVersion ? (
               <DocVersionEditor docId={doc.id} versionId={versionId} />
             ) : (

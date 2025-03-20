@@ -2,8 +2,8 @@ import { Button } from '@openfun/cunningham-react';
 import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { User } from '@/features/auth';
 
 type Props = {
   user: User;

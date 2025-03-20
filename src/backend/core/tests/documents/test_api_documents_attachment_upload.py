@@ -79,6 +79,7 @@ def test_api_documents_attachment_upload_anonymous_success():
 
     assert file_head["Metadata"] == {"owner": "None"}
     assert file_head["ContentType"] == "image/png"
+    assert file_head["ContentDisposition"] == 'inline; filename="test.png"'
 
 
 @pytest.mark.parametrize(
@@ -217,6 +218,7 @@ def test_api_documents_attachment_upload_success(via, role, mock_user_teams):
     )
     assert file_head["Metadata"] == {"owner": str(user.id)}
     assert file_head["ContentType"] == "image/png"
+    assert file_head["ContentDisposition"] == 'inline; filename="test.png"'
 
 
 def test_api_documents_attachment_upload_invalid(client):
@@ -291,7 +293,9 @@ def test_api_documents_attachment_upload_fix_extension(
     match = pattern.search(file_path)
     file_id = match.group(1)
 
+    assert "-unsafe" in file_id
     # Validate that file_id is a valid UUID
+    file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
@@ -301,6 +305,7 @@ def test_api_documents_attachment_upload_fix_extension(
     )
     assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
     assert file_head["ContentType"] == content_type
+    assert file_head["ContentDisposition"] == f'attachment; filename="{name:s}"'
 
 
 def test_api_documents_attachment_upload_empty_file():
@@ -340,7 +345,9 @@ def test_api_documents_attachment_upload_unsafe():
     match = pattern.search(file_path)
     file_id = match.group(1)
 
+    assert "-unsafe" in file_id
     # Validate that file_id is a valid UUID
+    file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
@@ -350,3 +357,4 @@ def test_api_documents_attachment_upload_unsafe():
     )
     assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
     assert file_head["ContentType"] == "application/octet-stream"
+    assert file_head["ContentDisposition"] == 'attachment; filename="script.exe"'

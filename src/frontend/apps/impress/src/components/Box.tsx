@@ -1,4 +1,4 @@
-import { ComponentPropsWithRef, ReactHTML } from 'react';
+import { ComponentPropsWithRef, HTMLElementType } from 'react';
 import styled from 'styled-components';
 import { CSSProperties, RuleSet } from 'styled-components/dist/types';
 
@@ -11,7 +11,7 @@ import {
 import { hideEffect, showEffect } from './Effect';
 
 export interface BoxProps {
-  as?: keyof ReactHTML;
+  as?: HTMLElementType;
   $align?: CSSProperties['alignItems'];
   $background?: CSSProperties['background'];
   $color?: CSSProperties['color'];

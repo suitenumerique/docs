@@ -12,19 +12,30 @@ class DocumentFilter(django_filters.FilterSet):
     Custom filter for filtering documents.
     """
 
-    is_creator_me = django_filters.BooleanFilter(
-        method="filter_is_creator_me", label=_("Creator is me")
-    )
-    is_favorite = django_filters.BooleanFilter(
-        method="filter_is_favorite", label=_("Favorite")
-    )
     title = django_filters.CharFilter(
         field_name="title", lookup_expr="icontains", label=_("Title")
     )
 
     class Meta:
         model = models.Document
-        fields = ["is_creator_me", "is_favorite", "link_reach", "title"]
+        fields = ["title"]
+
+
+class ListDocumentFilter(DocumentFilter):
+    """
+    Custom filter for filtering documents.
+    """
+
+    is_creator_me = django_filters.BooleanFilter(
+        method="filter_is_creator_me", label=_("Creator is me")
+    )
+    is_favorite = django_filters.BooleanFilter(
+        method="filter_is_favorite", label=_("Favorite")
+    )
+
+    class Meta:
+        model = models.Document
+        fields = ["is_creator_me", "is_favorite", "title"]
 
     # pylint: disable=unused-argument
     def filter_is_creator_me(self, queryset, name, value):
@@ -63,7 +74,4 @@ class DocumentFilter(django_filters.FilterSet):
         if not user.is_authenticated:
             return queryset
 
-        if value:
-            return queryset.filter(favorited_by_users__user=user)
-
-        return queryset.exclude(favorited_by_users__user=user)
+        return queryset.filter(is_favorite=bool(value))

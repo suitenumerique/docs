@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
-import { DocEditor } from '@/features/docs/doc-editor';
-import { Doc } from '@/features/docs/doc-management';
+import { DocEditor } from '@/docs/doc-editor';
+import { Doc } from '@/docs/doc-management';
 
 import { Versions } from '../types';
 
@@ -36,8 +36,9 @@ export const ModalSelectVersion = ({
   const { t } = useTranslation();
   const [selectedVersionId, setSelectedVersionId] =
     useState<Versions['version_id']>();
-
+  const canRestore = doc.abilities.partial_update;
   const restoreModal = useModal();
+
   return (
     <>
       <Modal
@@ -127,21 +128,23 @@ export const ModalSelectVersion = ({
                 selectedVersionId={selectedVersionId}
               />
             </Box>
-            <Box
-              $padding="xs"
-              $css={css`
-                border-top: 1px solid var(--c--theme--colors--greyscale-200);
-              `}
-            >
-              <Button
-                fullWidth
-                disabled={!selectedVersionId}
-                onClick={restoreModal.open}
-                color="primary"
+            {canRestore && (
+              <Box
+                $padding="xs"
+                $css={css`
+                  border-top: 1px solid var(--c--theme--colors--greyscale-200);
+                `}
               >
-                {t('Restore')}
-              </Button>
-            </Box>
+                <Button
+                  fullWidth
+                  disabled={!selectedVersionId}
+                  onClick={restoreModal.open}
+                  color="primary"
+                >
+                  {t('Restore')}
+                </Button>
+              </Box>
+            )}
           </Box>
         </Box>
       </Modal>

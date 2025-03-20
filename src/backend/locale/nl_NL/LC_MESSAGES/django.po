@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-01-15 21:00+0000\n"
-"PO-Revision-Date: 2025-01-16 19:53\n"
+"POT-Creation-Date: 2025-03-13 11:41+0000\n"
+"PO-Revision-Date: 2025-03-17 13:58\n"
 "Last-Translator: \n"
 "Language-Team: Dutch\n"
 "Language: nl_NL\n"
@@ -17,336 +17,379 @@ msgstr ""
 "X-Crowdin-File: backend-impress.pot\n"
 "X-Crowdin-File-ID: 18\n"
 
-#: build/lib/core/admin.py:33 core/admin.py:33
+#: build/lib/core/admin.py:37 core/admin.py:37
 msgid "Personal info"
-msgstr ""
+msgstr "Persoonlijke informatie"
 
-#: build/lib/core/admin.py:46 core/admin.py:46
+#: build/lib/core/admin.py:50 build/lib/core/admin.py:138 core/admin.py:50
+#: core/admin.py:138
 msgid "Permissions"
-msgstr ""
+msgstr "Toestemmingen"
 
-#: build/lib/core/admin.py:58 core/admin.py:58
+#: build/lib/core/admin.py:62 core/admin.py:62
 msgid "Important dates"
-msgstr ""
+msgstr "Belangrijke datums"
+
+#: build/lib/core/admin.py:148 core/admin.py:148
+msgid "Tree structure"
+msgstr "Document structuur"
 
 #: build/lib/core/api/filters.py:16 core/api/filters.py:16
-msgid "Creator is me"
-msgstr ""
-
-#: build/lib/core/api/filters.py:19 core/api/filters.py:19
-msgid "Favorite"
-msgstr ""
-
-#: build/lib/core/api/filters.py:22 core/api/filters.py:22
 msgid "Title"
-msgstr ""
+msgstr "Titel"
 
-#: build/lib/core/api/serializers.py:317 core/api/serializers.py:317
+#: build/lib/core/api/filters.py:30 core/api/filters.py:30
+msgid "Creator is me"
+msgstr "Ik ben Eigenaar"
+
+#: build/lib/core/api/filters.py:33 core/api/filters.py:33
+msgid "Favorite"
+msgstr "Favoriete"
+
+#: build/lib/core/api/serializers.py:354 core/api/serializers.py:354
 msgid "A new document was created on your behalf!"
-msgstr ""
+msgstr "Een nieuw document was gecreëerd voor u!"
 
-#: build/lib/core/api/serializers.py:321 core/api/serializers.py:321
+#: build/lib/core/api/serializers.py:358 core/api/serializers.py:358
 msgid "You have been granted ownership of a new document:"
-msgstr ""
+msgstr "U heeft eigenaarschap van een nieuw document:"
 
-#: build/lib/core/api/serializers.py:422 core/api/serializers.py:422
+#: build/lib/core/api/serializers.py:473 core/api/serializers.py:473
 msgid "Body"
-msgstr ""
+msgstr "Text"
 
-#: build/lib/core/api/serializers.py:425 core/api/serializers.py:425
+#: build/lib/core/api/serializers.py:476 core/api/serializers.py:476
 msgid "Body type"
-msgstr ""
+msgstr "Text type"
 
-#: build/lib/core/api/serializers.py:431 core/api/serializers.py:431
+#: build/lib/core/api/serializers.py:482 core/api/serializers.py:482
 msgid "Format"
-msgstr ""
+msgstr "Formaat"
 
 #: build/lib/core/authentication/backends.py:61
 #: core/authentication/backends.py:61
 msgid "Invalid response format or token verification failed"
-msgstr ""
+msgstr "Invalide response formaat of token verificatie gefaald"
 
 #: build/lib/core/authentication/backends.py:108
 #: core/authentication/backends.py:108
 msgid "User account is disabled"
-msgstr ""
+msgstr "Gebruikersaccount is buiten gebruik gesteld"
 
-#: build/lib/core/models.py:63 build/lib/core/models.py:70 core/models.py:63
-#: core/models.py:70
+#: build/lib/core/enums.py:19 core/enums.py:19
+msgid "First child"
+msgstr "Eerste node"
+
+#: build/lib/core/enums.py:20 core/enums.py:20
+msgid "Last child"
+msgstr "Laatste node"
+
+#: build/lib/core/enums.py:21 core/enums.py:21
+msgid "First sibling"
+msgstr "Eerste naaste"
+
+#: build/lib/core/enums.py:22 core/enums.py:22
+msgid "Last sibling"
+msgstr "Laatste naaste"
+
+#: build/lib/core/enums.py:23 core/enums.py:23
+msgid "Left"
+msgstr "Links"
+
+#: build/lib/core/enums.py:24 core/enums.py:24
+msgid "Right"
+msgstr "Rechts"
+
+#: build/lib/core/models.py:55 build/lib/core/models.py:62 core/models.py:55
+#: core/models.py:62
 msgid "Reader"
-msgstr ""
+msgstr "Lezer"
 
-#: build/lib/core/models.py:64 build/lib/core/models.py:71 core/models.py:64
-#: core/models.py:71
+#: build/lib/core/models.py:56 build/lib/core/models.py:63 core/models.py:56
+#: core/models.py:63
 msgid "Editor"
-msgstr ""
+msgstr "Bewerker"
 
-#: build/lib/core/models.py:72 core/models.py:72
+#: build/lib/core/models.py:64 core/models.py:64
 msgid "Administrator"
-msgstr ""
+msgstr "Administrator"
 
-#: build/lib/core/models.py:73 core/models.py:73
+#: build/lib/core/models.py:65 core/models.py:65
 msgid "Owner"
-msgstr ""
+msgstr "Eigenaar"
 
-#: build/lib/core/models.py:84 core/models.py:84
+#: build/lib/core/models.py:76 core/models.py:76
 msgid "Restricted"
-msgstr ""
+msgstr "Niet toegestaan"
 
-#: build/lib/core/models.py:88 core/models.py:88
+#: build/lib/core/models.py:80 core/models.py:80
 msgid "Authenticated"
-msgstr ""
+msgstr "Geauthenticeerd"
 
-#: build/lib/core/models.py:90 core/models.py:90
+#: build/lib/core/models.py:82 core/models.py:82
 msgid "Public"
-msgstr ""
+msgstr "Publiek"
 
-#: build/lib/core/models.py:112 core/models.py:112
+#: build/lib/core/models.py:153 core/models.py:153
 msgid "id"
-msgstr ""
+msgstr "id"
 
-#: build/lib/core/models.py:113 core/models.py:113
+#: build/lib/core/models.py:154 core/models.py:154
 msgid "primary key for the record as UUID"
-msgstr ""
+msgstr "primaire sleutel voor dossier als UUID"
 
-#: build/lib/core/models.py:119 core/models.py:119
+#: build/lib/core/models.py:160 core/models.py:160
 msgid "created on"
-msgstr ""
+msgstr "gemaakt op"
 
-#: build/lib/core/models.py:120 core/models.py:120
+#: build/lib/core/models.py:161 core/models.py:161
 msgid "date and time at which a record was created"
-msgstr ""
+msgstr "datum en tijd wanneer dossier was gecreëerd"
 
-#: build/lib/core/models.py:125 core/models.py:125
+#: build/lib/core/models.py:166 core/models.py:166
 msgid "updated on"
-msgstr ""
+msgstr "Laatst gewijzigd op"
 
-#: build/lib/core/models.py:126 core/models.py:126
+#: build/lib/core/models.py:167 core/models.py:167
 msgid "date and time at which a record was last updated"
-msgstr ""
+msgstr "datum en tijd waarop dossier laatst was gewijzigd"
 
-#: build/lib/core/models.py:162 core/models.py:162
+#: build/lib/core/models.py:203 core/models.py:203
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
-msgstr ""
+msgstr "Wij konden geen gebruiker vinden met deze id, maar de email is al geassocieerd met een geregistreerde gebruiker."
 
-#: build/lib/core/models.py:175 core/models.py:175
+#: build/lib/core/models.py:216 core/models.py:216
 msgid "Enter a valid sub. This value may contain only letters, numbers, and @/./+/-/_/: characters."
-msgstr ""
-
-#: build/lib/core/models.py:181 core/models.py:181
-msgid "sub"
-msgstr ""
-
-#: build/lib/core/models.py:183 core/models.py:183
-msgid "Required. 255 characters or fewer. Letters, numbers, and @/./+/-/_/: characters only."
-msgstr ""
-
-#: build/lib/core/models.py:192 core/models.py:192
-msgid "full name"
-msgstr ""
-
-#: build/lib/core/models.py:193 core/models.py:193
-msgid "short name"
-msgstr ""
-
-#: build/lib/core/models.py:195 core/models.py:195
-msgid "identity email address"
-msgstr ""
-
-#: build/lib/core/models.py:200 core/models.py:200
-msgid "admin email address"
-msgstr ""
-
-#: build/lib/core/models.py:207 core/models.py:207
-msgid "language"
-msgstr ""
-
-#: build/lib/core/models.py:208 core/models.py:208
-msgid "The language in which the user wants to see the interface."
-msgstr ""
-
-#: build/lib/core/models.py:214 core/models.py:214
-msgid "The timezone in which the user wants to see times."
-msgstr ""
-
-#: build/lib/core/models.py:217 core/models.py:217
-msgid "device"
-msgstr ""
-
-#: build/lib/core/models.py:219 core/models.py:219
-msgid "Whether the user is a device or a real user."
-msgstr ""
+msgstr ".Geef een valide id. De waarde mag alleen letters, nummers en @/./.+/-/_: karakters bevatten."
 
 #: build/lib/core/models.py:222 core/models.py:222
-msgid "staff status"
-msgstr ""
+msgid "sub"
+msgstr "id"
 
 #: build/lib/core/models.py:224 core/models.py:224
+msgid "Required. 255 characters or fewer. Letters, numbers, and @/./+/-/_/: characters only."
+msgstr "Verplicht. 255 karakters of minder. Alleen letters, nummers en @/./+/-/_/: karakters zijn toegestaan."
+
+#: build/lib/core/models.py:233 core/models.py:233
+msgid "full name"
+msgstr "volledige naam"
+
+#: build/lib/core/models.py:234 core/models.py:234
+msgid "short name"
+msgstr "gebruikersnaam"
+
+#: build/lib/core/models.py:236 core/models.py:236
+msgid "identity email address"
+msgstr "identiteit email adres"
+
+#: build/lib/core/models.py:241 core/models.py:241
+msgid "admin email address"
+msgstr "admin email adres"
+
+#: build/lib/core/models.py:248 core/models.py:248
+msgid "language"
+msgstr "taal"
+
+#: build/lib/core/models.py:249 core/models.py:249
+msgid "The language in which the user wants to see the interface."
+msgstr "De taal waarin de gebruiker de interface wilt zien."
+
+#: build/lib/core/models.py:257 core/models.py:257
+msgid "The timezone in which the user wants to see times."
+msgstr "De tijdzone waarin de gebruiker de tijden wilt zien."
+
+#: build/lib/core/models.py:260 core/models.py:260
+msgid "device"
+msgstr "apparaat"
+
+#: build/lib/core/models.py:262 core/models.py:262
+msgid "Whether the user is a device or a real user."
+msgstr "Of de gebruiker een apparaat is of een echte gebruiker."
+
+#: build/lib/core/models.py:265 core/models.py:265
+msgid "staff status"
+msgstr "beheerder status"
+
+#: build/lib/core/models.py:267 core/models.py:267
 msgid "Whether the user can log into this admin site."
-msgstr ""
+msgstr "Of de gebruiker kan inloggen in het admin gedeelte."
 
-#: build/lib/core/models.py:227 core/models.py:227
+#: build/lib/core/models.py:270 core/models.py:270
 msgid "active"
-msgstr ""
+msgstr "actief"
 
-#: build/lib/core/models.py:230 core/models.py:230
+#: build/lib/core/models.py:273 core/models.py:273
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
-msgstr ""
+msgstr "Of een gebruiker als actief moet worden beschouwd. Deselecteer dit in plaats van het account te deleten."
 
-#: build/lib/core/models.py:242 core/models.py:242
+#: build/lib/core/models.py:285 core/models.py:285
 msgid "user"
-msgstr ""
+msgstr "gebruiker"
 
-#: build/lib/core/models.py:243 core/models.py:243
+#: build/lib/core/models.py:286 core/models.py:286
 msgid "users"
-msgstr ""
+msgstr "gebruikers"
 
-#: build/lib/core/models.py:382 build/lib/core/models.py:758 core/models.py:382
-#: core/models.py:758
+#: build/lib/core/models.py:470 build/lib/core/models.py:1074
+#: core/models.py:470 core/models.py:1074
 msgid "title"
-msgstr ""
+msgstr "titel"
 
-#: build/lib/core/models.py:404 core/models.py:404
+#: build/lib/core/models.py:471 core/models.py:471
+msgid "excerpt"
+msgstr "uittreksel"
+
+#: build/lib/core/models.py:504 core/models.py:504
 msgid "Document"
-msgstr ""
+msgstr "Document"
 
-#: build/lib/core/models.py:405 core/models.py:405
+#: build/lib/core/models.py:505 core/models.py:505
 msgid "Documents"
-msgstr ""
+msgstr "Documenten"
 
-#: build/lib/core/models.py:408 core/models.py:408
+#: build/lib/core/models.py:517 build/lib/core/models.py:826 core/models.py:517
+#: core/models.py:826
 msgid "Untitled Document"
-msgstr ""
+msgstr "Naamloos Document"
 
-#: build/lib/core/models.py:633 core/models.py:633
+#: build/lib/core/models.py:861 core/models.py:861
 #, python-brace-format
 msgid "{name} shared a document with you!"
-msgstr ""
+msgstr "{name} heeft een document met gedeeld!"
 
-#: build/lib/core/models.py:637 core/models.py:637
+#: build/lib/core/models.py:865 core/models.py:865
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
-msgstr ""
+msgstr "{name} heeft u uitgenodigd met de rol \"{role}\" op het volgende document:"
 
-#: build/lib/core/models.py:640 core/models.py:640
+#: build/lib/core/models.py:871 core/models.py:871
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
-msgstr ""
+msgstr "{name} heeft een document met u gedeeld: {title}"
 
-#: build/lib/core/models.py:663 core/models.py:663
+#: build/lib/core/models.py:969 core/models.py:969
 msgid "Document/user link trace"
-msgstr ""
+msgstr "Document/gebruiker url"
 
-#: build/lib/core/models.py:664 core/models.py:664
+#: build/lib/core/models.py:970 core/models.py:970
 msgid "Document/user link traces"
-msgstr ""
+msgstr "Document/gebruiker url"
 
-#: build/lib/core/models.py:670 core/models.py:670
+#: build/lib/core/models.py:976 core/models.py:976
 msgid "A link trace already exists for this document/user."
-msgstr ""
+msgstr "Een url bestaat al voor dit document/deze gebruiker."
 
-#: build/lib/core/models.py:693 core/models.py:693
+#: build/lib/core/models.py:999 core/models.py:999
 msgid "Document favorite"
-msgstr ""
+msgstr "Document favoriet"
 
-#: build/lib/core/models.py:694 core/models.py:694
+#: build/lib/core/models.py:1000 core/models.py:1000
 msgid "Document favorites"
-msgstr ""
+msgstr "Document favorieten"
 
-#: build/lib/core/models.py:700 core/models.py:700
+#: build/lib/core/models.py:1006 core/models.py:1006
 msgid "This document is already targeted by a favorite relation instance for the same user."
-msgstr ""
+msgstr "Dit document is al in gebruik als favoriete door dezelfde gebruiker."
 
-#: build/lib/core/models.py:722 core/models.py:722
+#: build/lib/core/models.py:1028 core/models.py:1028
 msgid "Document/user relation"
-msgstr ""
+msgstr "Document/gebruiker relatie"
 
-#: build/lib/core/models.py:723 core/models.py:723
+#: build/lib/core/models.py:1029 core/models.py:1029
 msgid "Document/user relations"
-msgstr ""
+msgstr "Document/gebruiker relaties"
 
-#: build/lib/core/models.py:729 core/models.py:729
+#: build/lib/core/models.py:1035 core/models.py:1035
 msgid "This user is already in this document."
-msgstr ""
+msgstr "De gebruiker is al in dit document."
 
-#: build/lib/core/models.py:735 core/models.py:735
+#: build/lib/core/models.py:1041 core/models.py:1041
 msgid "This team is already in this document."
-msgstr ""
+msgstr "Het team is al in dit document."
 
-#: build/lib/core/models.py:741 build/lib/core/models.py:930 core/models.py:741
-#: core/models.py:930
+#: build/lib/core/models.py:1047 build/lib/core/models.py:1161
+#: core/models.py:1047 core/models.py:1161
 msgid "Either user or team must be set, not both."
-msgstr ""
+msgstr "Een gebruiker of team moet gekozen worden, maar niet beide."
 
-#: build/lib/core/models.py:759 core/models.py:759
+#: build/lib/core/models.py:1075 core/models.py:1075
 msgid "description"
-msgstr ""
+msgstr "omschrijving"
 
-#: build/lib/core/models.py:760 core/models.py:760
+#: build/lib/core/models.py:1076 core/models.py:1076
 msgid "code"
-msgstr ""
+msgstr "code"
 
-#: build/lib/core/models.py:761 core/models.py:761
+#: build/lib/core/models.py:1077 core/models.py:1077
 msgid "css"
-msgstr ""
+msgstr "css"
 
-#: build/lib/core/models.py:763 core/models.py:763
+#: build/lib/core/models.py:1079 core/models.py:1079
 msgid "public"
-msgstr ""
+msgstr "publiek"
 
-#: build/lib/core/models.py:765 core/models.py:765
+#: build/lib/core/models.py:1081 core/models.py:1081
 msgid "Whether this template is public for anyone to use."
-msgstr ""
+msgstr "Of dit template als publiek is en door iedereen te gebruiken is."
 
-#: build/lib/core/models.py:771 core/models.py:771
+#: build/lib/core/models.py:1087 core/models.py:1087
 msgid "Template"
-msgstr ""
+msgstr "Template"
 
-#: build/lib/core/models.py:772 core/models.py:772
+#: build/lib/core/models.py:1088 core/models.py:1088
 msgid "Templates"
-msgstr ""
+msgstr "Templates"
 
-#: build/lib/core/models.py:911 core/models.py:911
+#: build/lib/core/models.py:1142 core/models.py:1142
 msgid "Template/user relation"
-msgstr ""
+msgstr "Template/gebruiker relatie"
 
-#: build/lib/core/models.py:912 core/models.py:912
+#: build/lib/core/models.py:1143 core/models.py:1143
 msgid "Template/user relations"
-msgstr ""
+msgstr "Template/gebruiker relaties"
 
-#: build/lib/core/models.py:918 core/models.py:918
+#: build/lib/core/models.py:1149 core/models.py:1149
 msgid "This user is already in this template."
-msgstr ""
+msgstr "De gebruiker bestaat al in dit template."
 
-#: build/lib/core/models.py:924 core/models.py:924
+#: build/lib/core/models.py:1155 core/models.py:1155
 msgid "This team is already in this template."
-msgstr ""
+msgstr "Het team bestaat al in dit template."
 
-#: build/lib/core/models.py:947 core/models.py:947
+#: build/lib/core/models.py:1178 core/models.py:1178
 msgid "email address"
-msgstr ""
+msgstr "email adres"
 
-#: build/lib/core/models.py:966 core/models.py:966
+#: build/lib/core/models.py:1197 core/models.py:1197
 msgid "Document invitation"
-msgstr ""
+msgstr "Document uitnodiging"
 
-#: build/lib/core/models.py:967 core/models.py:967
+#: build/lib/core/models.py:1198 core/models.py:1198
 msgid "Document invitations"
-msgstr ""
+msgstr "Document uitnodigingen"
 
-#: build/lib/core/models.py:987 core/models.py:987
+#: build/lib/core/models.py:1218 core/models.py:1218
 msgid "This email is already associated to a registered user."
-msgstr ""
+msgstr "Deze email is al geassocieerd met een geregistreerde gebruiker."
 
-#: build/lib/impress/settings.py:236 impress/settings.py:236
-msgid "English"
-msgstr ""
+#: core/templates/mail/html/invitation.html:162
+#: core/templates/mail/text/invitation.txt:3
+msgid "Logo email"
+msgstr "Logo email"
 
-#: build/lib/impress/settings.py:237 impress/settings.py:237
-msgid "French"
-msgstr ""
+#: core/templates/mail/html/invitation.html:209
+#: core/templates/mail/text/invitation.txt:10
+msgid "Open"
+msgstr "Open"
 
-#: build/lib/impress/settings.py:238 impress/settings.py:238
-msgid "German"
-msgstr ""
+#: core/templates/mail/html/invitation.html:226
+#: core/templates/mail/text/invitation.txt:14
+msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
+msgstr " Docs, jouw nieuwe essentiële tool voor het organiseren, delen en collaboreren van documenten als team. "
+
+#: core/templates/mail/html/invitation.html:233
+#: core/templates/mail/text/invitation.txt:16
+#, python-format
+msgid " Brought to you by %(brandname)s "
+msgstr " Geleverd door %(brandname)s "
 

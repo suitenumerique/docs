@@ -26,7 +26,7 @@ test.describe('Document create member', () => {
     const response = await responsePromise;
     const users = (await response.json()).results as {
       email: string;
-      full_name: string;
+      full_name?: string | null;
     }[];
 
     const list = page.getByTestId('doc-share-add-member-list');
@@ -40,7 +40,9 @@ test.describe('Document create member', () => {
     await expect(
       list.getByTestId(`doc-share-add-member-${users[0].email}`),
     ).toBeVisible();
-    await expect(list.getByText(`${users[0].full_name}`)).toBeVisible();
+    await expect(
+      list.getByText(`${users[0].full_name || users[0].email}`),
+    ).toBeVisible();
 
     // Select user 2 and verify tag
     await inputSearch.fill('user');
@@ -51,7 +53,9 @@ test.describe('Document create member', () => {
     await expect(
       list.getByTestId(`doc-share-add-member-${users[1].email}`),
     ).toBeVisible();
-    await expect(list.getByText(`${users[1].full_name}`)).toBeVisible();
+    await expect(
+      list.getByText(`${users[1].full_name || users[1].email}`),
+    ).toBeVisible();
 
     // Select email and verify tag
     const email = randomName('test@test.fr', browserName, 1)[0];
@@ -61,15 +65,13 @@ test.describe('Document create member', () => {
 
     // Check roles are displayed
     await list.getByLabel('doc-role-dropdown').click();
-    await expect(page.getByRole('button', { name: 'Reader' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Editor' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Owner' })).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Administrator' }),
-    ).toBeVisible();
+    await expect(page.getByLabel('Reader')).toBeVisible();
+    await expect(page.getByLabel('Editor')).toBeVisible();
+    await expect(page.getByLabel('Owner')).toBeVisible();
+    await expect(page.getByLabel('Administrator')).toBeVisible();
 
     // Validate
-    await page.getByRole('button', { name: 'Administrator' }).click();
+    await page.getByLabel('Administrator').click();
     await page.getByRole('button', { name: 'Invite' }).click();
 
     // Check invitation added
@@ -81,7 +83,9 @@ test.describe('Document create member', () => {
     // Check user added
     await expect(page.getByText('Share with 3 users')).toBeVisible();
     await expect(
-      quickSearchContent.getByText(users[0].full_name).first(),
+      quickSearchContent
+        .getByText(users[0].full_name || users[0].email)
+        .first(),
     ).toBeVisible();
     await expect(
       quickSearchContent.getByText(users[0].email).first(),
@@ -90,7 +94,9 @@ test.describe('Document create member', () => {
       quickSearchContent.getByText(users[1].email).first(),
     ).toBeVisible();
     await expect(
-      quickSearchContent.getByText(users[1].full_name).first(),
+      quickSearchContent
+        .getByText(users[1].full_name || users[1].email)
+        .first(),
     ).toBeVisible();
   });
 
@@ -113,7 +119,7 @@ test.describe('Document create member', () => {
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Owner' }).click();
+    await page.getByLabel('Owner').click();
 
     const responsePromiseCreateInvitation = page.waitForResponse(
       (response) =>
@@ -131,7 +137,7 @@ test.describe('Document create member', () => {
 
     // Choose a role
     await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Owner' }).click();
+    await page.getByLabel('Owner').click();
 
     const responsePromiseCreateInvitationFail = page.waitForResponse(
       (response) =>
@@ -145,47 +151,6 @@ test.describe('Document create member', () => {
     const responseCreateInvitationFail =
       await responsePromiseCreateInvitationFail;
     expect(responseCreateInvitationFail.ok()).toBeFalsy();
-  });
-
-  test('The invitation endpoint get the language of the website', async ({
-    page,
-    browserName,
-  }) => {
-    await createDoc(page, 'user-invitation', browserName, 1);
-
-    const header = page.locator('header').first();
-    await header.getByRole('combobox').getByText('EN').click();
-    await header.getByRole('option', { name: 'translate Français' }).click();
-
-    await page.getByRole('button', { name: 'Partager' }).click();
-
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Saisie de recherche rapide',
-    });
-
-    const email = randomName('test@test.fr', browserName, 1)[0];
-    await inputSearch.fill(email);
-    await page.getByTestId(`search-user-row-${email}`).click();
-
-    // Choose a role
-    const container = page.getByTestId('doc-share-add-member-list');
-    await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Administrateur' }).click();
-
-    const responsePromiseCreateInvitation = page.waitForResponse(
-      (response) =>
-        response.url().includes('/invitations/') && response.status() === 201,
-    );
-
-    await page.getByRole('button', { name: 'Invite' }).click();
-
-    // Check invitation sent
-
-    const responseCreateInvitation = await responsePromiseCreateInvitation;
-    expect(responseCreateInvitation.ok()).toBeTruthy();
-    expect(
-      responseCreateInvitation.request().headers()['content-language'],
-    ).toBe('fr-fr');
   });
 
   test('it manages invitation', async ({ page, browserName }) => {
@@ -204,7 +169,7 @@ test.describe('Document create member', () => {
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
     await container.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Administrator' }).click();
+    await page.getByLabel('Administrator').click();
 
     const responsePromiseCreateInvitation = page.waitForResponse(
       (response) =>
@@ -224,14 +189,14 @@ test.describe('Document create member', () => {
     await expect(userInvitation).toBeVisible();
 
     await userInvitation.getByLabel('doc-role-dropdown').click();
-    await page.getByRole('button', { name: 'Reader' }).click();
+    await page.getByLabel('Reader').click();
 
     const moreActions = userInvitation.getByRole('button', {
       name: 'more_horiz',
     });
     await moreActions.click();
 
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByLabel('Delete').click();
 
     await expect(userInvitation).toBeHidden();
   });

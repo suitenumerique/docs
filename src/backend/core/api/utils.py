@@ -11,6 +11,58 @@ import botocore
 from rest_framework.throttling import BaseThrottle
 
 
+def nest_tree(flat_list, steplen):
+    """
+    Convert a flat list of serialized documents into a nested tree making advantage
+    of the`path` field and its step length.
+    """
+    node_dict = {}
+    roots = []
+
+    # Sort the flat list by path to ensure parent nodes are processed first
+    flat_list.sort(key=lambda x: x["path"])
+
+    for node in flat_list:
+        node["children"] = []  # Initialize children list
+        node_dict[node["path"]] = node
+
+        # Determine parent path
+        parent_path = node["path"][:-steplen]
+
+        if parent_path in node_dict:
+            node_dict[parent_path]["children"].append(node)
+        else:
+            roots.append(node)  # Collect root nodes
+
+    if len(roots) > 1:
+        raise ValueError("More than one root element detected.")
+
+    return roots[0] if roots else None
+
+
+def filter_root_paths(paths, skip_sorting=False):
+    """
+    Filters root paths from a list of paths representing a tree structure.
+    A root path is defined as a path that is not a prefix of any other path.
+
+    Args:
+        paths (list of str): The list of paths.
+
+    Returns:
+        list of str: The filtered list of root paths.
+    """
+    if not skip_sorting:
+        paths.sort()
+
+    root_paths = []
+    for path in paths:
+        # If the current path is not a prefix of the last added root path, add it
+        if not root_paths or not path.startswith(root_paths[-1]):
+            root_paths.append(path)
+
+    return root_paths
+
+
 def generate_s3_authorization_headers(key):
     """
     Generate authorization headers for an s3 object.

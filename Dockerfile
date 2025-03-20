@@ -72,7 +72,6 @@ RUN apk add \
   gettext \
   gdk-pixbuf \
   libffi-dev \
-  pandoc \
   pango \
   shared-mime-info
 

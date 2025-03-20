@@ -2,6 +2,7 @@
 Test AI translate API endpoint for users in impress's core app.
 """
 
+import random
 from unittest.mock import MagicMock, patch
 
 from django.core.cache import cache
@@ -51,6 +52,9 @@ def test_api_documents_ai_translate_viewset_options_metadata():
     }
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 @pytest.mark.parametrize(
     "reach, role",
     [
@@ -77,9 +81,46 @@ def test_api_documents_ai_translate_anonymous_forbidden(reach, role):
     }
 
 
+@override_settings(AI_ALLOW_REACH_FROM="public")
 @pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_translate_anonymous_success(mock_create):
+    """
+    Anonymous users should be able to request AI translate to a document
+    if the link reach and role permit it.
+    """
+    document = factories.DocumentFactory(link_reach="public", link_role="editor")
+
+    mock_create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="Ola"))]
+    )
+
+    url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
+    response = APIClient().post(url, {"text": "Hello", "language": "es"})
+
+    assert response.status_code == 200
+    assert response.json() == {"answer": "Ola"}
+    mock_create.assert_called_once_with(
+        model="llama",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Keep the same html stucture and formatting. "
+                    "Translate the content in the html to the specified language Spanish. "
+                    "Check the translation for accuracy and make any necessary corrections. "
+                    "Do not provide any other information."
+                ),
+            },
+            {"role": "user", "content": "Hello"},
+        ],
+    )
+
+
+@override_settings(AI_ALLOW_REACH_FROM=random.choice(["authenticated", "restricted"]))
+@pytest.mark.usefixtures("ai_settings")
+@patch("openai.resources.chat.completions.Completions.create")
+def test_api_documents_ai_translate_anonymous_limited_by_setting(mock_create):
     """
     Anonymous users should be able to request AI translate to a document
     if the link reach and role permit it.
@@ -94,23 +135,7 @@ def test_api_documents_ai_translate_anonymous_success(mock_create):
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
     response = APIClient().post(url, {"text": "Hello", "language": "es"})
 
-    assert response.status_code == 200
-    assert response.json() == {"answer": "Salut"}
-    mock_create.assert_called_once_with(
-        model="llama",
-        response_format={"type": "json_object"},
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Translate the markdown text to Spanish, preserving markdown formatting. "
-                    'Return JSON: {"answer": "your translated markdown text in Spanish"}. '
-                    "Do not provide any other information."
-                ),
-            },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
-        ],
-    )
+    assert response.status_code == 401
 
 
 @pytest.mark.parametrize(
@@ -164,9 +189,8 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
 
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
@@ -176,18 +200,18 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Translate the markdown text to Colombian Spanish, "
-                    "preserving markdown formatting. Return JSON: "
-                    '{"answer": "your translated markdown text in Colombian Spanish"}. '
+                    "Keep the same html stucture and formatting. "
+                    "Translate the content in the html to the "
+                    "specified language Colombian Spanish. "
+                    "Check the translation for accuracy and make any necessary corrections. "
                     "Do not provide any other information."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -242,9 +266,8 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
             document=document, team="lasuite", role=role
         )
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
@@ -254,18 +277,18 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Translate the markdown text to Colombian Spanish, "
-                    "preserving markdown formatting. Return JSON: "
-                    '{"answer": "your translated markdown text in Colombian Spanish"}. '
+                    "Keep the same html stucture and formatting. "
+                    "Translate the content in the html to the "
+                    "specified language Colombian Spanish. "
+                    "Check the translation for accuracy and make any necessary corrections. "
                     "Do not provide any other information."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -313,9 +336,8 @@ def test_api_documents_ai_translate_throttling_document(mock_create):
     client = APIClient()
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-translate/"
@@ -348,9 +370,8 @@ def test_api_documents_ai_translate_throttling_user(mock_create):
     client = APIClient()
     client.force_login(user)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     for _ in range(3):

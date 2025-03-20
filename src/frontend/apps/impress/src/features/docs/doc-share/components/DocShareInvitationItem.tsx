@@ -7,9 +7,9 @@ import {
   DropdownMenuOption,
   IconOptions,
 } from '@/components';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, Role } from '@/features/docs/doc-management';
+import { Doc, Role } from '@/docs/doc-management';
+import { User } from '@/features/auth';
 
 import { useDeleteDocInvitation, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
@@ -30,6 +30,7 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
     full_name: invitation.email,
     email: invitation.email,
     short_name: invitation.email,
+    language: 'en-us',
   };
 
   const { toast } = useToastProvider();

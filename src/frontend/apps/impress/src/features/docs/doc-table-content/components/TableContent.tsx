@@ -4,7 +4,7 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore, useHeadingStore } from '@/features/docs/doc-editor';
+import { useEditorStore, useHeadingStore } from '@/docs/doc-editor';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
 import { Heading } from './Heading';
@@ -48,16 +48,27 @@ export const TableContent = () => {
       }
     };
 
-    document.getElementById(MAIN_LAYOUT_ID)?.addEventListener('scroll', () => {
-      setTimeout(() => {
+    let timeout: NodeJS.Timeout;
+    const scrollFn = () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+
+      timeout = setTimeout(() => {
         handleScroll();
       }, 300);
-    });
+    };
+
+    document
+      .getElementById(MAIN_LAYOUT_ID)
+      ?.addEventListener('scroll', scrollFn);
 
     handleScroll();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      document
+        .getElementById(MAIN_LAYOUT_ID)
+        ?.removeEventListener('scroll', scrollFn);
     };
   }, [headings, setHeadingIdHighlight]);
 

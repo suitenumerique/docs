@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impress"
-version = "2.0.1"
+version = "2.5.0"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -25,39 +25,37 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "boto3==1.35.90",
+    "boto3==1.37.5",
     "Brotli==1.1.0",
     "celery[redis]==5.4.0",
     "django-configurations==2.5.1",
-    "django-cors-headers==4.6.0",
+    "django-cors-headers==4.7.0",
     "django-countries==7.6.1",
-    "django-filter==24.3",
+    "django-filter==25.1",
     "django-parler==2.3",
     "redis==5.2.1",
     "django-redis==5.4.0",
-    "django-storages[s3]==1.14.4",
+    "django-storages[s3]==1.14.5",
     "django-timezone-field>=5.1",
-    "django==5.1.5",
+    "django==5.1.7",
+    "django-treebeard==4.7.1",
     "djangorestframework==3.15.2",
     "drf_spectacular==0.28.0",
     "dockerflow==2024.4.2",
     "easy_thumbnails==2.10",
-    "factory_boy==3.3.1",
+    "factory_boy==3.3.3",
     "gunicorn==23.0.0",
     "jsonschema==4.23.0",
     "markdown==3.7",
     "nested-multipart-parser==1.5.0",
-    "openai==1.58.1",
-    "psycopg[binary]==3.2.3",
+    "openai==1.65.2",
+    "psycopg[binary]==3.2.5",
     "PyJWT==2.10.1",
-    "pypandoc==1.14",
-    "python-frontmatter==1.1.0",
     "python-magic==0.4.27",
     "requests==2.32.3",
-    "sentry-sdk==2.19.2",
+    "sentry-sdk==2.22.0",
     "url-normalize==1.4.3",
-    "WeasyPrint>=60.2",
-    "whitenoise==6.8.2",
+    "whitenoise==6.9.0",
     "mozilla-django-oidc==4.0.1",
 ]
 
@@ -70,21 +68,22 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "django-extensions==3.2.3",
-    "drf-spectacular-sidecar==2024.12.1",
+    "django-test-migrations==1.4.0",
+    "drf-spectacular-sidecar==2025.3.1",
     "freezegun==1.5.1",
     "ipdb==0.13.13",
-    "ipython==8.31.0",
-    "pyfakefs==5.7.3",
+    "ipython==9.0.1",
+    "pyfakefs==5.7.4",
     "pylint-django==2.6.1",
-    "pylint==3.3.3",
+    "pylint==3.3.4",
     "pytest-cov==6.0.0",
-    "pytest-django==4.9.0",
-    "pytest==8.3.4",
+    "pytest-django==4.10.0",
+    "pytest==8.3.5",
     "pytest-icdiff==0.9",
     "pytest-xdist==3.6.1",
-    "responses==0.25.3",
-    "ruff==0.8.4",
-    "types-requests==2.32.0.20241016",
+    "responses==0.25.6",
+    "ruff==0.9.9",
+    "types-requests==2.32.0.20250301",
 ]
 
 [tool.setuptools]
@@ -101,7 +100,6 @@ exclude = [
     "build",
     "venv",
     "__pycache__",
-    "*/migrations/*",
 ]
 line-length = 88
 

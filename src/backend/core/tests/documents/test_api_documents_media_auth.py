@@ -64,6 +64,30 @@ def test_api_documents_media_auth_anonymous_public():
     assert response.content.decode("utf-8") == "my prose"
 
 
+def test_api_documents_media_auth_extensions():
+    """Files with extensions of any format should work."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    extensions = [
+        "c",
+        "go",
+        "gif",
+        "mp4",
+        "woff2",
+        "appimage",
+    ]
+    for ext in extensions:
+        filename = f"{uuid.uuid4()!s}.{ext:s}"
+        key = f"{document.pk!s}/attachments/{filename:s}"
+
+        original_url = f"http://localhost/media/{key:s}"
+        response = APIClient().get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
+        )
+
+        assert response.status_code == 200
+
+
 @pytest.mark.parametrize("reach", ["authenticated", "restricted"])
 def test_api_documents_media_auth_anonymous_authenticated_or_restricted(reach):
     """

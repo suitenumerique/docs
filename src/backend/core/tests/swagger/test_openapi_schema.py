@@ -33,7 +33,7 @@ def test_openapi_client_schema():
     )
     assert output.getvalue() == ""
 
-    response = Client().get("/v1.0/swagger.json")
+    response = Client().get("/api/v1.0/swagger.json")
 
     assert response.status_code == 200
     with open(

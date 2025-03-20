@@ -3,7 +3,6 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Footer } from '@/features/footer';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LeftPanel } from '@/features/left-panel';
@@ -12,18 +11,16 @@ import { useResponsiveStore } from '@/stores';
 
 type MainLayoutProps = {
   backgroundColor?: 'white' | 'grey';
-  withoutFooter?: boolean;
 };
 
 export function MainLayout({
   children,
   backgroundColor = 'white',
-  withoutFooter = false,
 }: PropsWithChildren<MainLayoutProps>) {
   const { isDesktop } = useResponsiveStore();
   const { colorsTokens } = useCunninghamTheme();
-
   const colors = colorsTokens();
+  const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
   return (
     <div>
@@ -42,10 +39,10 @@ export function MainLayout({
           $width="100%"
           $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
           $padding={{
-            all: isDesktop ? 'base' : '2xs',
+            all: isDesktop ? 'base' : '0',
           }}
           $background={
-            backgroundColor === 'white'
+            currentBackgroundColor === 'white'
               ? colors['greyscale-000']
               : colors['greyscale-050']
           }
@@ -57,7 +54,6 @@ export function MainLayout({
           {children}
         </Box>
       </Box>
-      {!withoutFooter && <Footer />}
     </div>
   );
 }

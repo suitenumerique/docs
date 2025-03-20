@@ -131,7 +131,7 @@ test.describe('Document list members', () => {
     const list = page.getByTestId('doc-share-quick-search');
     await expect(list).toBeVisible();
     const currentUser = list.getByTestId(
-      `doc-share-member-row-user@chromium.e2e`,
+      `doc-share-member-row-user@${browserName}.e2e`,
     );
     const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
     await expect(currentUser).toBeVisible();
@@ -161,12 +161,12 @@ test.describe('Document list members', () => {
     await list.click();
 
     await currentUserRole.click();
-    await page.getByRole('button', { name: 'Administrator' }).click();
+    await page.getByLabel('Administrator').click();
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
     await currentUserRole.click();
-    await page.getByRole('button', { name: 'Reader' }).click();
+    await page.getByLabel('Reader').click();
     await list.click();
     await expect(currentUserRole).toBeHidden();
   });
@@ -215,13 +215,13 @@ test.describe('Document list members', () => {
     await expect(mySelfMoreActions).toBeVisible();
 
     await userReaderMoreActions.click();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByLabel('Delete').click();
     await expect(userReader).toBeHidden();
 
     await mySelfMoreActions.click();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByLabel('Delete').click();
     await expect(
-      page.getByText('You do not have permission to perform this action.'),
+      page.getByText('You do not have permission to view this document.'),
     ).toBeVisible();
   });
 });

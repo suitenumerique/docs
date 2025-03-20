@@ -187,9 +187,9 @@ def test_api_templates_list_order_default():
     response_template_ids = [template["id"] for template in response_data["results"]]
 
     template_ids.reverse()
-    assert (
-        response_template_ids == template_ids
-    ), "created_at values are not sorted from newest to oldest"
+    assert response_template_ids == template_ids, (
+        "created_at values are not sorted from newest to oldest"
+    )
 
 
 def test_api_templates_list_order_param():
@@ -215,6 +215,6 @@ def test_api_templates_list_order_param():
 
     response_template_ids = [template["id"] for template in response_data["results"]]
 
-    assert (
-        response_template_ids == templates_ids
-    ), "created_at values are not sorted from oldest to newest"
+    assert response_template_ids == templates_ids, (
+        "created_at values are not sorted from oldest to newest"
+    )

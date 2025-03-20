@@ -1,9 +1,10 @@
-import { BlockNoteEditor } from '@blocknote/core';
 import { create } from 'zustand';
 
+import { DocsBlockNoteEditor } from '../types';
+
 export interface UseEditorstore {
-  editor?: BlockNoteEditor;
-  setEditor: (editor: BlockNoteEditor | undefined) => void;
+  editor?: DocsBlockNoteEditor;
+  setEditor: (editor: DocsBlockNoteEditor | undefined) => void;
 }
 
 export const useEditorStore = create<UseEditorstore>((set) => ({

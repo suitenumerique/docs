@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc } from '@/features/docs/doc-management';
+import { Doc, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
@@ -30,12 +31,14 @@ export const SimpleDocItem = ({
   isPinned = false,
   showAccesses = false,
 }: SimpleDocItemProps) => {
+  const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
+  const { untitledDocument } = useTrans();
 
   return (
-    <Box $direction="row" $gap={spacings.sm}>
+    <Box $direction="row" $gap={spacings.sm} $overflow="auto">
       <Box
         $direction="row"
         $align="center"
@@ -44,9 +47,13 @@ export const SimpleDocItem = ({
           filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
         `}
       >
-        {isPinned ? <PinnedDocumentIcon /> : <SimpleFileIcon />}
+        {isPinned ? (
+          <PinnedDocumentIcon aria-label={t('Pin document icon')} />
+        ) : (
+          <SimpleFileIcon aria-label={t('Simple document icon')} />
+        )}
       </Box>
-      <Box $justify="center">
+      <Box $justify="center" $overflow="auto">
         <Text
           aria-describedby="doc-title"
           aria-label={doc.title}
@@ -55,7 +62,7 @@ export const SimpleDocItem = ({
           $weight="500"
           $css={ItemTextCss}
         >
-          {doc.title}
+          {doc.title || untitledDocument}
         </Text>
         {(!isDesktop || showAccesses) && (
           <Box

@@ -23,13 +23,13 @@ const initialState = {
 };
 
 export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
+  isDesktop: initialState.isDesktop,
   isMobile: initialState.isMobile,
-  isTablet: initialState.isTablet,
   isSmallMobile: initialState.isSmallMobile,
+  isTablet: initialState.isTablet,
   screenSize: initialState.screenSize,
   screenWidth: initialState.screenWidth,
   setScreenSize: (size: ScreenSize) => set(() => ({ screenSize: size })),
-  isDesktop: initialState.isDesktop,
   initializeResizeListener: () => {
     const resizeHandler = () => {
       const width = window.innerWidth;
@@ -38,14 +38,14 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
           isDesktop: false,
           screenSize: 'small-mobile',
           isMobile: true,
-          isTablet: false,
+          isTablet: true,
           isSmallMobile: true,
         });
       } else if (width < 768) {
         set({
           isDesktop: false,
           screenSize: 'mobile',
-          isTablet: false,
+          isTablet: true,
           isMobile: true,
           isSmallMobile: false,
         });

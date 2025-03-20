@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import { PropsWithChildren } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
-import { useAuthStore } from '@/core';
-import { useCreateDoc } from '@/features/docs/doc-management';
-import { DocSearchModal } from '@/features/docs/doc-search';
+import { useCreateDoc } from '@/docs/doc-management';
+import { DocSearchModal } from '@/docs/doc-search';
+import { useAuth } from '@/features/auth';
 import { useCmdK } from '@/hook/useCmdK';
 
 import { useLeftPanelStore } from '../stores';
@@ -14,7 +14,7 @@ import { useLeftPanelStore } from '../stores';
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const searchModal = useModal();
-  const auth = useAuthStore();
+  const { authenticated } = useAuth();
   useCmdK(searchModal.open);
   const { togglePanel } = useLeftPanelStore();
 
@@ -31,12 +31,12 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   };
 
   const createNewDoc = () => {
-    createDoc({ title: t('Untitled document') });
+    createDoc();
   };
 
   return (
     <>
-      <Box $width="100%">
+      <Box $width="100%" className="panel-header">
         <SeparatedSection>
           <Box
             $padding={{ horizontal: 'sm' }}
@@ -54,7 +54,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                   <Icon $variation="800" $theme="primary" iconName="house" />
                 }
               />
-              {auth.authenticated && (
+              {authenticated && (
                 <Button
                   onClick={searchModal.open}
                   size="medium"
@@ -65,7 +65,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                 />
               )}
             </Box>
-            {auth.authenticated && (
+            {authenticated && (
               <Button onClick={createNewDoc}>{t('New doc')}</Button>
             )}
           </Box>

@@ -38,10 +38,9 @@ export default defineConfig({
     timeout: 120 * 1000,
     reuseExistingServer: true,
   },
-
+  globalSetup: require.resolve('./__tests__/app-impress/auth.setup'),
   /* Configure projects for major browsers */
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
     {
       name: 'chromium',
       use: {
@@ -53,7 +52,6 @@ export default defineConfig({
           permissions: ['clipboard-read', 'clipboard-write'],
         },
       },
-      dependencies: ['setup'],
     },
     {
       name: 'webkit',
@@ -63,7 +61,6 @@ export default defineConfig({
         timezoneId: 'Europe/Paris',
         storageState: 'playwright/.auth/user-webkit.json',
       },
-      dependencies: ['setup'],
     },
     {
       name: 'firefox',
@@ -79,7 +76,6 @@ export default defineConfig({
           },
         },
       },
-      dependencies: ['setup'],
     },
   ],
 });

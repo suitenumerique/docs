@@ -12,21 +12,21 @@ interface SentryState {
 export const useSentryStore = create<SentryState>((set, get) => ({
   sentry: undefined,
   setSentry: (dsn, environment) => {
-    const sentry = get().sentry;
-    if (sentry) {
+    if (get().sentry) {
       return;
     }
 
-    set({
-      sentry: Sentry.init({
-        dsn,
-        environment,
-        integrations: [Sentry.replayIntegration()],
-        release: packageJson.version,
-        replaysSessionSampleRate: 0.1,
-        replaysOnErrorSampleRate: 1.0,
-        tracesSampleRate: 0.1,
-      }),
+    const sentry = Sentry.init({
+      dsn,
+      environment,
+      integrations: [Sentry.replayIntegration()],
+      release: packageJson.version,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+      tracesSampleRate: 0.1,
     });
+    Sentry.setTag('application', 'frontend');
+
+    set({ sentry });
   },
 }));

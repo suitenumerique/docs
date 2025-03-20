@@ -1,6 +1,6 @@
 {
   "name": "app-e2e",
-  "version": "2.0.1",
+  "version": "2.5.0",
   "private": true,
   "scripts": {
     "lint": "eslint . --ext .ts",
@@ -12,17 +12,14 @@
     "test:ui::chromium": "yarn test:ui --project=chromium"
   },
   "devDependencies": {
-    "@playwright/test": "1.49.1",
-    "@types/luxon": "3.4.2",
+    "@playwright/test": "1.50.1",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.4",
     "eslint-config-impress": "*",
-    "luxon": "3.5.0",
     "typescript": "*"
   },
   "dependencies": {
     "convert-stream": "1.0.2",
-    "jsdom": "25.0.1",
     "pdf-parse": "1.1.1"
   }
 }

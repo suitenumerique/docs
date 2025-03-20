@@ -71,9 +71,15 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
           </Button>
         </>
       }
-      size={ModalSize.MEDIUM}
+      size={ModalSize.SMALL}
       title={
-        <Text $size="h6" as="h6" $margin={{ all: '0' }} $align="flex-start">
+        <Text
+          $size="h6"
+          as="h6"
+          $margin={{ all: '0' }}
+          $align="flex-start"
+          $variation="1000"
+        >
           {t('Delete a doc')}
         </Text>
       }
@@ -81,9 +87,7 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       <Box aria-label={t('Content modal to delete document')}>
         {!isError && (
           <Text $size="sm" $variation="600">
-            {t('Are you sure you want to delete the document "{{title}}"?', {
-              title: doc.title,
-            })}
+            {t('Are you sure you want to delete this document ?')}
           </Text>
         )}
 

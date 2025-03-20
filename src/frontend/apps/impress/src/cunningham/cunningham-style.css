@@ -310,7 +310,7 @@ input:-webkit-autofill:focus {
 }
 
 /**
- * Others
+ * Checkbox
 */
 .c__checkbox:focus-within {
   border-color: transparent;
@@ -365,7 +365,8 @@ input:-webkit-autofill:focus {
 }
 
 .c__button--medium {
-  padding: 0.9rem var(--c--theme--spacings--s);
+  height: auto;
+  min-height: var(--c--components--button--medium-height);
 }
 
 .c__button--small {
@@ -404,6 +405,10 @@ input:-webkit-autofill:focus {
   background-color: var(
     --c--components--button--primary-text--background--color-active
   );
+}
+
+.c__button--primary-text {
+  color: var(--c--components--button--primary-text--color);
 }
 
 .c__button--primary-text:hover,
@@ -547,6 +552,8 @@ input:-webkit-autofill:focus {
 
 .c__modal__close .c__button {
   padding: 0 !important;
+  top: -0.65rem;
+  right: -0.65rem;
 }
 
 .c__modal--full .c__modal__content {
@@ -604,4 +611,23 @@ input:-webkit-autofill:focus {
 */
 .c__tooltip {
   padding: 4px 6px;
+}
+
+/**
+ * Alert
+*/
+.c__alert--error {
+  background-color: var(--c--components--alert--error--background-color);
+  border-left-color: var(--c--components--alert--error--border-left-color);
+}
+
+.c__alert--error .c__button--tertiary {
+  background-color: var(--c--components--alert--error--close--background-color);
+  color: var(--c--components--alert--error--close--color);
+}
+
+.c__alert.c__alert--error .c__button--tertiary:hover {
+  background-color: var(
+    --c--components--alert--error--close--background-color-hover
+  );
 }

@@ -46,6 +46,23 @@ class UserFactory(factory.django.DjangoModelFactory):
             UserTemplateAccessFactory(user=self, role="owner")
 
 
+class ParentNodeFactory(factory.declarations.ParameteredAttribute):
+    """Custom factory attribute for setting the parent node."""
+
+    def generate(self, step, params):
+        """
+        Generate a parent node for the factory.
+
+        This method is invoked during the factory's build process to determine the parent
+        node of the current object being created. If `params` is provided, it uses the factory's
+        metadata to recursively create or fetch the parent node. Otherwise, it returns `None`.
+        """
+        if not params:
+            return None
+        subfactory = step.builder.factory_meta.factory
+        return step.recurse(subfactory, params)
+
+
 class DocumentFactory(factory.django.DjangoModelFactory):
     """A factory to create documents"""
 
@@ -54,15 +71,42 @@ class DocumentFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("title",)
         skip_postgeneration_save = True
 
+    parent = ParentNodeFactory()
+
     title = factory.Sequence(lambda n: f"document{n}")
+    excerpt = factory.Sequence(lambda n: f"excerpt{n}")
     content = factory.Sequence(lambda n: f"content{n}")
     creator = factory.SubFactory(UserFactory)
+    deleted_at = None
     link_reach = factory.fuzzy.FuzzyChoice(
         [a[0] for a in models.LinkReachChoices.choices]
     )
     link_role = factory.fuzzy.FuzzyChoice(
         [r[0] for r in models.LinkRoleChoices.choices]
     )
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        """
+        Custom creation logic for the factory: creates a document as a child node if
+        a parent is provided; otherwise, creates it as a root node.
+        """
+        parent = kwargs.pop("parent", None)
+
+        if parent:
+            # Add as a child node
+            kwargs["ancestors_deleted_at"] = (
+                kwargs.get("ancestors_deleted_at") or parent.ancestors_deleted_at
+            )
+            return parent.add_child(instance=model_class(**kwargs))
+
+        # Add as a root node
+        return model_class.add_root(instance=model_class(**kwargs))
+
+    @factory.lazy_attribute
+    def ancestors_deleted_at(self):
+        """Should always be set when "deleted_at" is set."""
+        return self.deleted_at
 
     @factory.post_generation
     def users(self, create, extracted, **kwargs):
@@ -73,6 +117,16 @@ class DocumentFactory(factory.django.DjangoModelFactory):
                     UserDocumentAccessFactory(document=self, user=item)
                 else:
                     UserDocumentAccessFactory(document=self, user=item[0], role=item[1])
+
+    @factory.post_generation
+    def teams(self, create, extracted, **kwargs):
+        """Add teams to document from a given list of teams with or without roles."""
+        if create and extracted:
+            for item in extracted:
+                if isinstance(item, str):
+                    TeamDocumentAccessFactory(document=self, team=item)
+                else:
+                    TeamDocumentAccessFactory(document=self, team=item[0], role=item[1])
 
     @factory.post_generation
     def link_traces(self, create, extracted, **kwargs):

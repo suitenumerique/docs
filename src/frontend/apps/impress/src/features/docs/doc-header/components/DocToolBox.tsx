@@ -17,16 +17,24 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore } from '@/features/docs/doc-editor/';
-import { Doc, ModalRemoveDoc } from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
+import { useEditorStore } from '@/docs/doc-editor/';
+import { ModalExport } from '@/docs/doc-export/';
+import {
+  Doc,
+  KEY_DOC,
+  KEY_LIST_DOC,
+  ModalRemoveDoc,
+  useCopyDocLink,
+  useCreateFavoriteDoc,
+  useDeleteFavoriteDoc,
+} from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
-} from '@/features/docs/doc-versioning';
+} from '@/docs/doc-versioning';
+import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
-
-import { ModalPDF } from './ModalExport';
 
 interface DocToolBoxProps {
   doc: Doc;
@@ -34,7 +42,7 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const hasAccesses = doc.nb_accesses > 1;
+  const hasAccesses = doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
   const queryClient = useQueryClient();
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
@@ -43,13 +51,21 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const colors = colorsTokens();
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
-  const [isModalPDFOpen, setIsModalPDFOpen] = useState(false);
+  const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
   const { isSmallMobile, isDesktop } = useResponsiveStore();
   const { editor } = useEditorStore();
   const { toast } = useToastProvider();
+  const copyDocLink = useCopyDocLink(doc.id);
+  const { isFeatureFlagActivated } = useAnalytics();
+  const removeFavoriteDoc = useDeleteFavoriteDoc({
+    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
+  const makeFavoriteDoc = useCreateFavoriteDoc({
+    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
 
   const options: DropdownMenuOption[] = [
     ...(isSmallMobile
@@ -63,12 +79,28 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             label: t('Export'),
             icon: 'download',
             callback: () => {
-              setIsModalPDFOpen(true);
+              setIsModalExportOpen(true);
             },
+          },
+          {
+            label: t('Copy link'),
+            icon: 'add_link',
+            callback: copyDocLink,
           },
         ]
       : []),
-
+    {
+      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      icon: 'push_pin',
+      callback: () => {
+        if (doc.is_favorite) {
+          removeFavoriteDoc.mutate({ id: doc.id });
+        } else {
+          makeFavoriteDoc.mutate({ id: doc.id });
+        }
+      },
+      testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+    },
     {
       label: t('Version history'),
       icon: 'history',
@@ -92,6 +124,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         void copyCurrentEditorToClipboard('html');
       },
+      show: isFeatureFlagActivated('CopyAsHTML'),
     },
     {
       label: t('Delete document'),
@@ -184,7 +217,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                   }}
                   size={isSmallMobile ? 'small' : 'medium'}
                 >
-                  {doc.nb_accesses}
+                  {doc.nb_accesses_direct}
                 </Button>
               </Box>
             )}
@@ -198,7 +231,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               <Icon iconName="download" $theme="primary" $variation="800" />
             }
             onClick={() => {
-              setIsModalPDFOpen(true);
+              setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
           />
@@ -228,8 +261,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       {modalShare.isOpen && (
         <DocShareModal onClose={() => modalShare.close()} doc={doc} />
       )}
-      {isModalPDFOpen && (
-        <ModalPDF onClose={() => setIsModalPDFOpen(false)} doc={doc} />
+      {isModalExportOpen && (
+        <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
       )}
       {isModalRemoveOpen && (
         <ModalRemoveDoc onClose={() => setIsModalRemoveOpen(false)} doc={doc} />

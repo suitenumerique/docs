@@ -23,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "email", "full_name", "short_name"]
+        fields = ["id", "email", "full_name", "short_name", "language"]
         read_only_fields = ["id", "email", "full_name", "short_name"]
 
 
@@ -128,52 +128,78 @@ class TemplateAccessSerializer(BaseAccessSerializer):
         read_only_fields = ["id", "abilities"]
 
 
-class BaseResourceSerializer(serializers.ModelSerializer):
-    """Serialize documents."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-    accesses = TemplateAccessSerializer(many=True, read_only=True)
-
-    def get_abilities(self, document) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return document.get_abilities(request.user)
-        return {}
-
-
-class ListDocumentSerializer(BaseResourceSerializer):
+class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
-    nb_accesses = serializers.IntegerField(read_only=True)
+    nb_accesses_ancestors = serializers.IntegerField(read_only=True)
+    nb_accesses_direct = serializers.IntegerField(read_only=True)
+    user_roles = serializers.SerializerMethodField(read_only=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
         fields = [
             "id",
             "abilities",
-            "content",
             "created_at",
             "creator",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "title",
             "updated_at",
+            "user_roles",
         ]
         read_only_fields = [
             "id",
             "abilities",
             "created_at",
             "creator",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "updated_at",
+            "user_roles",
         ]
+
+    def get_abilities(self, document) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+
+        if request:
+            paths_links_mapping = self.context.get("paths_links_mapping", None)
+            # Retrieve ancestor links from paths_links_mapping (if provided)
+            ancestors_links = (
+                paths_links_mapping.get(document.path[: -document.steplen])
+                if paths_links_mapping
+                else None
+            )
+            return document.get_abilities(request.user, ancestors_links=ancestors_links)
+
+        return {}
+
+    def get_user_roles(self, document):
+        """
+        Return roles of the logged-in user for the current document,
+        taking into account ancestors.
+        """
+        request = self.context.get("request")
+        if request:
+            return document.get_roles(request.user)
+        return []
 
 
 class DocumentSerializer(ListDocumentSerializer):
@@ -189,23 +215,34 @@ class DocumentSerializer(ListDocumentSerializer):
             "content",
             "created_at",
             "creator",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "title",
             "updated_at",
+            "user_roles",
         ]
         read_only_fields = [
             "id",
             "abilities",
             "created_at",
             "creator",
+            "depth",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "updated_at",
+            "user_roles",
         ]
 
     def get_fields(self):
@@ -287,7 +324,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = models.Document.objects.create(
+        document = models.Document.add_root(
             title=validated_data["title"],
             content=document_content,
             creator=user,
@@ -330,7 +367,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
         raise NotImplementedError("Update is not supported for this serializer.")
 
 
-class LinkDocumentSerializer(BaseResourceSerializer):
+class LinkDocumentSerializer(serializers.ModelSerializer):
     """
     Serialize link configuration for documents.
     We expose it separately from document in order to simplify and secure access control.
@@ -389,6 +426,7 @@ class FileUploadSerializer(serializers.Serializer):
 
         self.context["expected_extension"] = extension
         self.context["content_type"] = magic_mime_type
+        self.context["file_name"] = file.name
 
         return file
 
@@ -397,11 +435,15 @@ class FileUploadSerializer(serializers.Serializer):
         attrs["expected_extension"] = self.context["expected_extension"]
         attrs["is_unsafe"] = self.context["is_unsafe"]
         attrs["content_type"] = self.context["content_type"]
+        attrs["file_name"] = self.context["file_name"]
         return attrs
 
 
-class TemplateSerializer(BaseResourceSerializer):
+class TemplateSerializer(serializers.ModelSerializer):
     """Serialize templates."""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+    accesses = TemplateAccessSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Template
@@ -415,6 +457,13 @@ class TemplateSerializer(BaseResourceSerializer):
             "is_public",
         ]
         read_only_fields = ["id", "accesses", "abilities"]
+
+    def get_abilities(self, document) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return document.get_abilities(request.user)
+        return {}
 
 
 # pylint: disable=abstract-method
@@ -539,3 +588,37 @@ class AITranslateSerializer(serializers.Serializer):
         if len(value.strip()) == 0:
             raise serializers.ValidationError("Text field cannot be empty.")
         return value
+
+
+class MoveDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for validating input data to move a document within the tree structure.
+
+    Fields:
+        - target_document_id (UUIDField): The ID of the target parent document where the
+            document should be moved. This field is required and must be a valid UUID.
+        - position (ChoiceField): Specifies the position of the document in relation to
+            the target parent's children.
+          Choices:
+            - "first-child": Place the document as the first child of the target parent.
+            - "last-child": Place the document as the last child of the target parent (default).
+            - "left": Place the document as the left sibling of the target parent.
+            - "right": Place the document as the right sibling of the target parent.
+
+    Example:
+        Input payload for moving a document:
+        {
+            "target_document_id": "123e4567-e89b-12d3-a456-426614174000",
+            "position": "first-child"
+        }
+
+    Notes:
+        - The `target_document_id` is mandatory.
+        - The `position` defaults to "last-child" if not provided.
+    """
+
+    target_document_id = serializers.UUIDField(required=True)
+    position = serializers.ChoiceField(
+        choices=enums.MoveNodePositionChoices.choices,
+        default=enums.MoveNodePositionChoices.LAST_CHILD,
+    )

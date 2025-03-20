@@ -10,7 +10,7 @@ import {
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
-import { User } from '@/core';
+import { User } from '@/features/auth';
 import { Access, Doc } from '@/features/docs';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
@@ -30,12 +30,9 @@ import { DocShareModalFooter } from './DocShareModalFooter';
 import { DocShareModalInviteUserRow } from './DocShareModalInviteUserByEmail';
 
 const ShareModalStyle = createGlobalStyle`
-
   .c__modal__title {
     padding-bottom: 0 !important;
-
-}
-
+  }
 `;
 
 type Props = {
@@ -135,13 +132,16 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
       full_name: '',
       email: userQuery,
       short_name: '',
+      language: '',
     };
+
+    const hasEmailInUsers = users.some((user) => user.email === userQuery);
 
     return {
       groupName: t('Search user result'),
       elements: users,
       endActions:
-        isEmail && users.length === 0
+        isEmail && !hasEmailInUsers
           ? [
               {
                 content: <DocShareModalInviteUserRow user={newUser} />,

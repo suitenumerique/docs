@@ -17,7 +17,7 @@ import {
   KEY_LIST_DOC,
   useTrans,
   useUpdateDoc,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
 import { useBroadcastStore, useResponsiveStore } from '@/stores';
 
 interface DocTitleProps {
@@ -33,11 +33,13 @@ export const DocTitle = ({ doc }: DocTitleProps) => {
 };
 
 interface DocTitleTextProps {
-  title: string;
+  title?: string;
 }
 
 export const DocTitleText = ({ title }: DocTitleTextProps) => {
   const { isMobile } = useResponsiveStore();
+  const { untitledDocument } = useTrans();
+
   return (
     <Text
       as="h2"
@@ -45,7 +47,7 @@ export const DocTitleText = ({ title }: DocTitleTextProps) => {
       $size={isMobile ? 'h4' : 'h2'}
       $variation="1000"
     >
-      {title}
+      {title || untitledDocument}
     </Text>
   );
 };
@@ -57,16 +59,13 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
   const { toast } = useToastProvider();
   const { untitledDocument } = useTrans();
-  const isUntitled = titleDisplay === untitledDocument;
 
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
     onSuccess(data) {
-      if (data.title !== untitledDocument) {
-        toast(t('Document title updated successfully'), VariantType.SUCCESS);
-      }
+      toast(t('Document title updated successfully'), VariantType.SUCCESS);
 
       // Broadcast to every user connected to the document
       broadcast(`${KEY_DOC}-${data.id}`);
@@ -80,8 +79,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
 
       // When blank we set to untitled
       if (!sanitizedTitle) {
-        sanitizedTitle = untitledDocument;
-        setTitleDisplay(sanitizedTitle);
+        setTitleDisplay('');
       }
 
       // If mutation we update
@@ -90,7 +88,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         updateDoc({ id: doc.id, title: sanitizedTitle });
       }
     },
-    [doc.id, doc.title, untitledDocument, updateDoc],
+    [doc.id, doc.title, updateDoc],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -105,39 +103,37 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   }, [doc]);
 
   return (
-    <>
-      <Tooltip content={t('Rename')} placement="top">
-        <Box
-          as="span"
-          role="textbox"
-          contentEditable
-          defaultValue={isUntitled ? undefined : titleDisplay}
-          onKeyDownCapture={handleKeyDown}
-          suppressContentEditableWarning={true}
-          aria-label="doc title input"
-          onBlurCapture={(event) =>
-            handleTitleSubmit(event.target.textContent || '')
+    <Tooltip content={t('Rename')} placement="top">
+      <Box
+        as="span"
+        role="textbox"
+        contentEditable
+        defaultValue={titleDisplay || undefined}
+        onKeyDownCapture={handleKeyDown}
+        suppressContentEditableWarning={true}
+        aria-label="doc title input"
+        onBlurCapture={(event) =>
+          handleTitleSubmit(event.target.textContent || '')
+        }
+        $color={colorsTokens()['greyscale-1000']}
+        $minHeight="40px"
+        $padding={{ right: 'big' }}
+        $css={css`
+          &[contenteditable='true']:empty:not(:focus):before {
+            content: '${untitledDocument}';
+            color: grey;
+            pointer-events: none;
+            font-style: italic;
           }
-          $color={colorsTokens()['greyscale-1000']}
-          $margin={{ left: '-2px', right: '10px' }}
-          $css={css`
-            &[contenteditable='true']:empty:not(:focus):before {
-              content: '${untitledDocument}';
-              color: grey;
-              pointer-events: none;
-              font-style: italic;
-            }
-            font-size: ${isDesktop
-              ? css`var(--c--theme--font--sizes--h2)`
-              : css`var(--c--theme--font--sizes--sm)`};
-            font-weight: 700;
-
-            outline: none;
-          `}
-        >
-          {isUntitled ? '' : titleDisplay}
-        </Box>
-      </Tooltip>
-    </>
+          font-size: ${isDesktop
+            ? css`var(--c--theme--font--sizes--h2)`
+            : css`var(--c--theme--font--sizes--sm)`};
+          font-weight: 700;
+          outline: none;
+        `}
+      >
+        {titleDisplay}
+      </Box>
+    </Tooltip>
   );
 };

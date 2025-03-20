@@ -1,5 +1,4 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -10,6 +9,7 @@ import { useLeftPanelStore } from '@/features/left-panel';
 
 export const LeftPanelTargetFilters = () => {
   const { t } = useTranslation();
+
   const pathname = usePathname();
   const { togglePanel } = useLeftPanelStore();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
@@ -23,25 +23,23 @@ export const LeftPanelTargetFilters = () => {
 
   const router = useRouter();
 
-  const defaultQueries = useMemo(() => {
-    return [
-      {
-        icon: 'apps',
-        label: t('All docs'),
-        targetQuery: DocDefaultFilter.ALL_DOCS,
-      },
-      {
-        icon: 'lock',
-        label: t('My docs'),
-        targetQuery: DocDefaultFilter.MY_DOCS,
-      },
-      {
-        icon: 'group',
-        label: t('Shared with me'),
-        targetQuery: DocDefaultFilter.SHARED_WITH_ME,
-      },
-    ];
-  }, [t]);
+  const defaultQueries = [
+    {
+      icon: 'apps',
+      label: t('All docs'),
+      targetQuery: DocDefaultFilter.ALL_DOCS,
+    },
+    {
+      icon: 'lock',
+      label: t('My docs'),
+      targetQuery: DocDefaultFilter.MY_DOCS,
+    },
+    {
+      icon: 'group',
+      label: t('Shared with me'),
+      targetQuery: DocDefaultFilter.SHARED_WITH_ME,
+    },
+  ];
 
   const onSelectQuery = (query: DocDefaultFilter) => {
     const params = new URLSearchParams(searchParams);

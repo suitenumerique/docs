@@ -10,13 +10,14 @@ on:
 
 jobs:
 
-  install-front:
-    uses: ./.github/workflows/front-dependencies-installation.yml
+  install-dependencies:
+    uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '20.x'
+      with-front-dependencies-installation: true
 
   test-front:
-    needs: install-front
+    needs: install-dependencies
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -39,7 +40,7 @@ jobs:
 
   lint-front:
     runs-on: ubuntu-latest
-    needs: install-front
+    needs: install-dependencies
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,7 +61,7 @@ jobs:
 
   test-e2e-chromium:
     runs-on: ubuntu-latest
-    needs: install-front
+    needs: install-dependencies
     timeout-minutes: 20
     steps:
       - name: Checkout repository
@@ -87,28 +88,6 @@ jobs:
       - name: Start Docker services
         run: make bootstrap FLUSH_ARGS='--no-input' cache=
 
-      # Tool to wait for a service to be ready
-      - name: Install Dockerize
-        run: |
-          curl -sSL https://github.com/jwilder/dockerize/releases/download/v0.8.0/dockerize-linux-amd64-v0.8.0.tar.gz | sudo tar -C /usr/local/bin -xzv
-
-      - name: Wait for services to be ready
-        run: |
-          printf "Minio check...\n"
-          dockerize -wait tcp://localhost:9000 -timeout 20s
-          printf "Keyclock check...\n"
-          dockerize -wait tcp://localhost:8080 -timeout 20s
-          printf "Server collaboration check...\n"
-          dockerize -wait tcp://localhost:4444 -timeout 20s
-          printf "Ngnix check...\n"
-          dockerize -wait tcp://localhost:8083 -timeout 20s
-          printf "DRF check...\n"
-          dockerize -wait tcp://localhost:8071 -timeout 20s
-          printf "Postgres Keyclock check...\n"
-          dockerize -wait tcp://localhost:5433 -timeout 20s
-          printf "Postgres back check...\n"
-          dockerize -wait tcp://localhost:15432 -timeout 20s
-
       - name: Run e2e tests
         run: cd src/frontend/ && yarn e2e:test --project='chromium'
 
@@ -127,8 +106,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install frontend dependencies
-        uses: ./.github/workflows/front-dependencies-installation.yml
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Restore the frontend cache
+        uses: actions/cache@v4
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
 
       - name: Set e2e env variables
         run: cat env.d/development/common.e2e.dist >> env.d/development/common.dist

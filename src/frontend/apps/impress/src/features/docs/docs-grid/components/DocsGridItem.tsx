@@ -5,8 +5,8 @@ import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
+import { Doc, LinkReach } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
@@ -54,6 +54,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
           $css={css`
             flex: ${flexLeft};
             align-items: center;
+            min-width: 0;
           `}
           href={`/docs/${doc.id}`}
         >
@@ -64,14 +65,19 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             $gap={spacings.xs}
             $flex={flexLeft}
             $padding={{ right: isDesktop ? 'md' : '3xs' }}
+            $maxWidth="100%"
           >
             <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
             {showAccesses && (
               <Box
-                $padding={{ top: '3xs' }}
-                $css={css`
-                  align-self: flex-start;
-                `}
+                $padding={{ top: !isDesktop ? '4xs' : undefined }}
+                $css={
+                  !isDesktop
+                    ? css`
+                        align-self: flex-start;
+                      `
+                    : undefined
+                }
               >
                 <Tooltip
                   content={

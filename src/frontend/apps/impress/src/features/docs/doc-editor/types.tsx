@@ -1,3 +1,7 @@
+import { BlockNoteEditor } from '@blocknote/core';
+
+import { blockNoteSchema } from './components/BlockNoteEditor';
+
 export interface DocAttachment {
   file: string;
 }
@@ -12,3 +16,13 @@ export type HeadingBlock = {
     level: number;
   };
 };
+
+export type DocsBlockSchema = typeof blockNoteSchema.blockSchema;
+export type DocsInlineContentSchema =
+  typeof blockNoteSchema.inlineContentSchema;
+export type DocsStyleSchema = typeof blockNoteSchema.styleSchema;
+export type DocsBlockNoteEditor = BlockNoteEditor<
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema
+>;

@@ -3,8 +3,8 @@ import { useCallback, useEffect } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
-import { ButtonLogin } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { ButtonLogin } from '@/features/auth';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LanguagePicker } from '@/features/language';
 import { useResponsiveStore } from '@/stores';

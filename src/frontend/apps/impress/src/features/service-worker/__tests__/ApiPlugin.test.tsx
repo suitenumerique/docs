@@ -346,13 +346,8 @@ describe('ApiPlugin', () => {
         headers: new Headers({
           'Content-Type': 'application/json',
         }),
-        arrayBuffer: () =>
-          RequestSerializer.objectToArrayBuffer({
-            title: 'my new doc',
-          }),
-        json: () => ({
-          title: 'my new doc',
-        }),
+        arrayBuffer: () => RequestSerializer.objectToArrayBuffer({}),
+        json: () => ({}),
       } as unknown as Request,
     } as any;
 
@@ -389,9 +384,7 @@ describe('ApiPlugin', () => {
     );
     expect(mockedPut).toHaveBeenCalledWith(
       'doc-item',
-      expect.objectContaining({
-        title: 'my new doc',
-      }),
+      expect.objectContaining({}),
       'http://test.jest/documents/444555/',
     );
     expect(mockedPut).toHaveBeenCalledWith(
@@ -400,7 +393,6 @@ describe('ApiPlugin', () => {
         results: expect.arrayContaining([
           expect.objectContaining({
             id: '444555',
-            title: 'my new doc',
           }),
         ]),
       }),

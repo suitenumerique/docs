@@ -3,9 +3,9 @@ import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc } from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
-import { DocsGridActions, SimpleDocItem } from '@/features/docs/docs-grid';
+import { Doc } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
+import { DocsGridActions, SimpleDocItem } from '@/docs/docs-grid';
 import { useResponsiveStore } from '@/stores';
 
 type LeftPanelFavoriteItemProps = {
@@ -39,7 +39,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
       `}
       key={doc.id}
     >
-      <StyledLink href={`/docs/${doc.id}`}>
+      <StyledLink href={`/docs/${doc.id}`} $css="overflow: auto;">
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
       <div className="pinned-actions">

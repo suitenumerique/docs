@@ -9,10 +9,9 @@ import { css } from 'styled-components';
 
 import { APIError } from '@/api';
 import { Box } from '@/components';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { User } from '@/features/auth';
 import { Doc, Role } from '@/features/docs';
-import { useLanguage } from '@/i18n/hooks/useLanguage';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
@@ -42,7 +41,6 @@ export const DocShareAddMemberList = ({
   const { toast } = useToastProvider();
   const [isLoading, setIsLoading] = useState(false);
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const { contentLanguage } = useLanguage();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
   const canShare = doc.abilities.accesses_manage;
   const spacing = spacingsTokens();
@@ -90,7 +88,6 @@ export const DocShareAddMemberList = ({
       const payload = {
         role: invitationRole,
         docId: doc.id,
-        contentLanguage,
       };
 
       return isInvitationMode

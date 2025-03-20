@@ -2,8 +2,8 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
-import { useUpdateDoc } from '@/features/docs/doc-management/';
-import { KEY_LIST_DOC_VERSIONS } from '@/features/docs/doc-versioning';
+import { useUpdateDoc } from '@/docs/doc-management/';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { isFirefox } from '@/utils/userAgent';
 
 import { toBase64 } from '../utils';
@@ -66,7 +66,7 @@ const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
     });
   }, [doc, docId, updateDoc]);
 
-  const timeout = useRef<NodeJS.Timeout>();
+  const timeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -101,7 +101,10 @@ const useSaveDoc = (docId: string, doc: Y.Doc, canSave: boolean) => {
     router.events.on('routeChangeStart', onSave);
 
     return () => {
-      clearTimeout(timeout.current);
+      if (timeout.current) {
+        clearTimeout(timeout.current);
+      }
+
       removeEventListener('beforeunload', onSave);
       router.events.off('routeChangeStart', onSave);
     };

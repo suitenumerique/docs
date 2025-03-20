@@ -4,15 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0007_fix_users_duplicate'),
+        ("core", "0007_fix_users_duplicate"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='document',
-            name='link_reach',
-            field=models.CharField(choices=[('restricted', 'Restricted'), ('authenticated', 'Authenticated'), ('public', 'Public')], default='restricted', max_length=20),
+            model_name="document",
+            name="link_reach",
+            field=models.CharField(
+                choices=[
+                    ("restricted", "Restricted"),
+                    ("authenticated", "Authenticated"),
+                    ("public", "Public"),
+                ],
+                default="restricted",
+                max_length=20,
+            ),
         ),
     ]
