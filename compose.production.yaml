@@ -24,41 +24,6 @@ services:
     env_file:
       - env.d/production/backend
       - env.d/production/kc_postgresql
-    environment:
-      - DJANGO_SETTINGS_MODULE=impress.settings
-      - DJANGO_CONFIGURATION=Production
-      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,areum-hub.duckdns.org
-      - DJANGO_SKIP_CHECKS=True
-      - DB_HOST=postgresql
-      - DB_PORT=5432
-      - DB_NAME=docs
-      - DB_USER=docs
-      - DB_PASSWORD=docs_password_please_change
-      - POSTGRES_HOST=postgresql
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=docs
-      - POSTGRES_USER=docs
-      - POSTGRES_PASSWORD=docs_password_please_change
-      - OIDC_RP_IDP_SIGN_KEY=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/certs
-      - OIDC_OP_JWKS_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/certs
-      - OIDC_OP_AUTHORIZATION_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/auth
-      - OIDC_OP_TOKEN_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/token
-      - OIDC_OP_USER_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/userinfo
-      - OIDC_OP_LOGOUT_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/logout
-      - OIDC_RP_CLIENT_ID=docs
-      - OIDC_RP_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
-      - LOGIN_REDIRECT_URL=https://areum-hub.duckdns.org:8444
-      - LOGIN_REDIRECT_URL_FAILURE=https://areum-hub.duckdns.org:8444/login
-      - LOGOUT_REDIRECT_URL=https://areum-hub.duckdns.org:8444
-      # Minio/S3 settings
-      - AWS_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_S3_ACCESS_KEY_ID=minio_admin
-      - AWS_S3_SECRET_ACCESS_KEY=minio_password_please_change
-      - AWS_STORAGE_BUCKET_NAME=docs-media-storage
-      - AWS_S3_REGION_NAME=us-east-1
-      - AWS_DEFAULT_ACL=public-read
-      - AWS_S3_CUSTOM_DOMAIN=areum-hub.duckdns.org
-      - AWS_LOCATION=media
     ports:
       - "8000:8000"
     volumes:
@@ -112,11 +77,8 @@ services:
         MEDIA_URL: "https://areum-hub.duckdns.org:8444"
         SW_DEACTIVATED: "true"
     user: ${DOCKER_USER:-1000}
-    environment:
-      - NEXT_PUBLIC_API_ORIGIN=https://areum-hub.duckdns.org:8444
-      - NEXT_PUBLIC_Y_PROVIDER_URL=wss://areum-hub.duckdns.org:8444
-      - NEXT_PUBLIC_MEDIA_URL=https://areum-hub.duckdns.org:8444
-      - NEXT_PUBLIC_SW_DEACTIVATED=true
+    env_file:
+      - env.d/production/frontend
 
   y-provider:
     image: lasuite/impress-y-provider:latest
