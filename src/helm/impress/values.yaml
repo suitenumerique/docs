@@ -236,8 +236,8 @@ backend:
     targetPort: 8000
     annotations: {}
 
- ## @param backend.migrate.command backend migrate command
- ## @param backend.migrate.restartPolicy backend migrate job restart policy
+  ## @param backend.migrate.command backend migrate command
+  ## @param backend.migrate.restartPolicy backend migrate job restart policy
   migrate:
     command:
       - /bin/sh
@@ -254,8 +254,8 @@ backend:
         python manage.py migrate --no-input
     restartPolicy: Never
 
- ## @param backend.createsuperuser.command backend migrate command
- ## @param backend.createsuperuser.restartPolicy backend migrate job restart policy
+  ## @param backend.createsuperuser.command backend migrate command
+  ## @param backend.createsuperuser.restartPolicy backend migrate job restart policy
   createsuperuser:
     command:
       - "/bin/sh"
@@ -282,7 +282,7 @@ backend:
     name: ""
     command: []
     restartPolicy: Never
-    annotations: 
+    annotations:
       argocd.argoproj.io/hook: PostSync
 
   # List of cronjob to add
@@ -343,6 +343,9 @@ backend:
   ## @param backend.pdb.enabled Enable pdb on backend
   pdb:
     enabled: true
+
+  ## @param backend.serviceAccountName Optional service account name to use for backend pods
+  serviceAccountName: null
 
   ## @param backend.themeCustomization.enabled Enable theme customization
   ## @param backend.themeCustomization.file_content Content of the theme customization file. Must be a json object.
@@ -479,6 +482,9 @@ frontend:
   ## @param frontend.pdb.enabled Enable pdb on frontend
   pdb:
     enabled: true
+
+  ## @param frontend.serviceAccountName Optional service account name to use for frontend pods
+  serviceAccountName: null
 
 ## @section posthog
 
@@ -652,3 +658,6 @@ yProvider:
   ## @param yProvider.pdb.enabled Enable pdb on yProvider
   pdb:
     enabled: true
+
+  ## @param yProvider.serviceAccountName Optional service account name to use for yProvider pods
+  serviceAccountName: null

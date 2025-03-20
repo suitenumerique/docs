@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(helm) Service Account support for K8s Resources in Helm Charts #778
+
 ### Changed
 
 - ⚡️(docker) Optimize Dockerfile to use apk with --no-cache #743
