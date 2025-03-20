@@ -81,23 +81,14 @@ class OIDCLogoutView(MozillaOIDCOIDCLogoutView):
     def post(self, request):
         """Handle user logout.
 
-        If the user is not authenticated, redirects to the default logout URL.
-        Otherwise, constructs the OIDC logout URL and redirects the user to start
-        the logout process.
-
-        If the user is redirected to the default logout URL, ensure her Django session
-        is terminated.
+        Always logs the user out from Django, and then redirects either to the OIDC provider
+        for single sign-out or to the default redirect URL.
         """
-
-        logout_url = self.redirect_url
-
-        if request.user.is_authenticated:
-            logout_url = self.construct_oidc_logout_url(request)
-
-        # If the user is not redirected to the OIDC provider, ensure logout
-        if logout_url == self.redirect_url:
-            auth.logout(request)
-
+        logout_url = self.construct_oidc_logout_url(request)
+        
+        # Always logout from Django session
+        auth.logout(request)
+        
         return HttpResponseRedirect(logout_url)
 
 

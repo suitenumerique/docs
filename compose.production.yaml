@@ -44,7 +44,7 @@ services:
       - OIDC_OP_AUTHORIZATION_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/auth
       - OIDC_OP_TOKEN_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/token
       - OIDC_OP_USER_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/userinfo
-      - OIDC_OP_END_SESSION_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/logout
+      - OIDC_OP_LOGOUT_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/logout
       - OIDC_RP_CLIENT_ID=docs
       - OIDC_RP_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
       - LOGIN_REDIRECT_URL=https://areum-hub.duckdns.org:8444
