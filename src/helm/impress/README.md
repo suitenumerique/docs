@@ -73,6 +73,8 @@
 | `ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-url`                        |                                                      | `https://impress.example.com/api/v1.0/documents/media-auth/`         |
 | `ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-response-headers`           |                                                      | `Authorization, X-Amz-Date, X-Amz-Content-SHA256`                    |
 | `ingressMedia.annotations.nginx.ingress.kubernetes.io/upstream-vhost`                  |                                                      | `minio.impress.svc.cluster.local:9000`                               |
+| `ingressMedia.annotations.nginx.ingress.kubernetes.io/configuration-snippet`           |                                                      | `add_header Content-Security-Policy "default-src 'none'" always;
+`   |
 | `serviceMedia.host`                                                                    |                                                      | `minio.impress.svc.cluster.local`                                    |
 | `serviceMedia.port`                                                                    |                                                      | `9000`                                                               |
 | `serviceMedia.annotations`                                                             |                                                      | `{}`                                                                 |
@@ -132,6 +134,7 @@
 | `backend.extraVolumeMounts`                           | Additional volumes to mount on the backend.                                        | `[]`                                                                                                                          |
 | `backend.extraVolumes`                                | Additional volumes to mount on the backend.                                        | `[]`                                                                                                                          |
 | `backend.pdb.enabled`                                 | Enable pdb on backend                                                              | `true`                                                                                                                        |
+| `backend.serviceAccountName`                          | Optional service account name to use for backend pods                              | `nil`                                                                                                                         |
 
 ### frontend
 
@@ -182,6 +185,7 @@
 | `frontend.extraVolumeMounts`                           | Additional volumes to mount on the frontend.                                        | `[]`                       |
 | `frontend.extraVolumes`                                | Additional volumes to mount on the frontend.                                        | `[]`                       |
 | `frontend.pdb.enabled`                                 | Enable pdb on frontend                                                              | `true`                     |
+| `frontend.serviceAccountName`                          | Optional service account name to use for frontend pods                              | `nil`                      |
 
 ### posthog
 
@@ -264,3 +268,4 @@
 | `yProvider.extraVolumeMounts`                           | Additional volumes to mount on the yProvider.                                        | `[]`                         |
 | `yProvider.extraVolumes`                                | Additional volumes to mount on the yProvider.                                        | `[]`                         |
 | `yProvider.pdb.enabled`                                 | Enable pdb on yProvider                                                              | `true`                       |
+| `yProvider.serviceAccountName`                          | Optional service account name to use for yProvider pods                              | `nil`                        |
