@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- 📄(legal) Require contributors to sign a DCO #779
+
 ## Changed
 
 - ♻️(frontend) Integrate UI kit #783
