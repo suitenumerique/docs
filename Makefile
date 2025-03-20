@@ -114,14 +114,54 @@ bootstrap-production:
 	@echo 'Edit them to set good value for your production environment'
 .PHONY: bootstrap-production
 
+# -- Production
+
+deploy: ## Deploy the application in production mode (includes migrations)
+	@echo "Starting deployment..."
+	@echo "1. Starting required services..."
+	@$(COMPOSE_PRODUCTION) up -d postgresql redis minio
+	@echo "2. Waiting for PostgreSQL to be ready..."
+	sleep 5
+	@echo "3. Running database migrations..."
+	@$(COMPOSE_PRODUCTION) run --rm backend sh -c "\
+		DJANGO_SETTINGS_MODULE=impress.settings \
+		DJANGO_CONFIGURATION=Production \
+		DB_HOST=postgresql \
+		DB_PORT=5432 \
+		DB_NAME=docs \
+		DB_USER=docs \
+		DB_PASSWORD=docs_password_please_change \
+		DJANGO_SKIP_CHECKS=True \
+		python manage.py migrate --noinput --skip-checks"
+	@echo "4. Starting all services..."
+	@$(COMPOSE_PRODUCTION) up -d
+	@echo "Deployment complete!"
+.PHONY: deploy
+
 run-production: ## Run compose project in production mode
-	@$(COMPOSE_PRODUCTION) up -d ingress
+	@$(COMPOSE_PRODUCTION) up -d
 .PHONY: run-production
 
 stop-production: ## Stop compose project in production mode
-	@$(COMPOSE_PRODUCTION) stop
+	@$(COMPOSE_PRODUCTION) down
 .PHONY: stop-production
 
+logs-production: ## View logs in production mode
+	@$(COMPOSE_PRODUCTION) logs -f
+.PHONY: logs-production
+
+clean-production: ## Clean up production volumes and containers (preserves Keycloak data)
+	@$(COMPOSE_PRODUCTION) down
+	rm -rf ./data/production/databases/backend/*
+	rm -rf ./data/production/media/*
+.PHONY: clean-production
+
+clean-production-all: ## Clean up all production volumes and containers (including Keycloak data)
+	@$(COMPOSE_PRODUCTION) down -v
+	rm -rf ./data/production/databases/backend/*
+	rm -rf ./data/production/databases/keycloak/*
+	rm -rf ./data/production/media/*
+.PHONY: clean-production-all
 
 # -- Docker/compose
 build: cache ?= --no-cache
@@ -226,7 +266,16 @@ makemigrations:  ## run django makemigrations for the impress project.
 migrate:  ## run django migrations for the impress project.
 	@echo "$(BOLD)Running migrations$(RESET)"
 	@$(COMPOSE) up -d postgresql
-	@$(MANAGE) migrate
+	@$(COMPOSE_PRODUCTION) run --rm backend sh -c "\
+		DJANGO_SETTINGS_MODULE=impress.settings \
+		DJANGO_CONFIGURATION=Production \
+		DB_HOST=postgresql \
+		DB_PORT=5432 \
+		DB_NAME=docs \
+		DB_USER=docs \
+		DB_PASSWORD=docs_password_please_change \
+		DJANGO_SKIP_CHECKS=True \
+		python manage.py migrate --noinput --skip-checks"
 .PHONY: migrate
 
 superuser: ## Create an admin superuser with password "admin"
