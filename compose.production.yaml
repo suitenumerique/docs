@@ -102,8 +102,21 @@ services:
       - backend
 
   frontend:
-    image: lasuite/impress-frontend:latest
+    build:
+      context: .
+      dockerfile: src/frontend/Dockerfile
+      target: frontend-production
+      args:
+        API_ORIGIN: "https://areum-hub.duckdns.org:8444"
+        Y_PROVIDER_URL: "wss://areum-hub.duckdns.org:8444"
+        MEDIA_URL: "https://areum-hub.duckdns.org:8444"
+        SW_DEACTIVATED: "true"
     user: ${DOCKER_USER:-1000}
+    environment:
+      - NEXT_PUBLIC_API_ORIGIN=https://areum-hub.duckdns.org:8444
+      - NEXT_PUBLIC_Y_PROVIDER_URL=wss://areum-hub.duckdns.org:8444
+      - NEXT_PUBLIC_MEDIA_URL=https://areum-hub.duckdns.org:8444
+      - NEXT_PUBLIC_SW_DEACTIVATED=true
 
   y-provider:
     image: lasuite/impress-y-provider:latest

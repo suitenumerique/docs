@@ -1,8 +1,8 @@
-import { HomeContent } from '@/features/home';
+import { LoginScreen } from '@/components/LoginScreen';
 import { NextPageWithLayout } from '@/types/next';
 
 const Page: NextPageWithLayout = () => {
-  return <HomeContent />;
+  return <LoginScreen />;
 };
 
 export default Page;
