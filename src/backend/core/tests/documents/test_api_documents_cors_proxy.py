@@ -1,6 +1,7 @@
 """Test on the CORS proxy API for documents."""
 
 import pytest
+import responses
 from rest_framework.test import APIClient
 
 from core import factories
@@ -8,17 +9,24 @@ from core import factories
 pytestmark = pytest.mark.django_db
 
 
+@responses.activate
 def test_api_docs_cors_proxy_valid_url():
     """Test the CORS proxy API for documents with a valid URL."""
     document = factories.DocumentFactory(link_reach="public")
 
     client = APIClient()
-    url_to_fetch = "https://docs.numerique.gouv.fr/assets/logo-gouv.png"
+    url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
+    responses.get(url_to_fetch, body=b"", status=200, content_type="image/png")
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "image/png"
+    assert response.headers["Content-Disposition"] == "attachment;"
+    assert (
+        response.headers["Content-Security-Policy"]
+        == "default-src 'none'; img-src 'none' data:;"
+    )
     assert response.streaming_content
 
 
@@ -32,12 +40,14 @@ def test_api_docs_cors_proxy_without_url_query_string():
     assert response.json() == {"detail": "Missing 'url' query parameter"}
 
 
+@responses.activate
 def test_api_docs_cors_proxy_anonymous_document_not_public():
     """Test the CORS proxy API for documents with an anonymous user and a non-public document."""
     document = factories.DocumentFactory(link_reach="authenticated")
 
     client = APIClient()
-    url_to_fetch = "https://docs.numerique.gouv.fr/assets/logo-gouv.png"
+    url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
+    responses.get(url_to_fetch, body=b"", status=200, content_type="image/png")
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
@@ -47,6 +57,7 @@ def test_api_docs_cors_proxy_anonymous_document_not_public():
     }
 
 
+@responses.activate
 def test_api_docs_cors_proxy_authenticated_user_accessing_protected_doc():
     """
     Test the CORS proxy API for documents with an authenticated user accessing a protected
@@ -58,15 +69,22 @@ def test_api_docs_cors_proxy_authenticated_user_accessing_protected_doc():
 
     client = APIClient()
     client.force_login(user)
-    url_to_fetch = "https://docs.numerique.gouv.fr/assets/logo-gouv.png"
+    url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
+    responses.get(url_to_fetch, body=b"", status=200, content_type="image/png")
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "image/png"
+    assert response.headers["Content-Disposition"] == "attachment;"
+    assert (
+        response.headers["Content-Security-Policy"]
+        == "default-src 'none'; img-src 'none' data:;"
+    )
     assert response.streaming_content
 
 
+@responses.activate
 def test_api_docs_cors_proxy_authenticated_not_accessing_restricted_doc():
     """
     Test the CORS proxy API for documents with an authenticated user not accessing a restricted
@@ -78,7 +96,8 @@ def test_api_docs_cors_proxy_authenticated_not_accessing_restricted_doc():
 
     client = APIClient()
     client.force_login(user)
-    url_to_fetch = "https://docs.numerique.gouv.fr/assets/logo-gouv.png"
+    url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
+    responses.get(url_to_fetch, body=b"", status=200, content_type="image/png")
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
@@ -86,3 +105,17 @@ def test_api_docs_cors_proxy_authenticated_not_accessing_restricted_doc():
     assert response.json() == {
         "detail": "You do not have permission to perform this action."
     }
+
+
+@responses.activate
+def test_api_docs_cors_proxy_unsupported_media_type():
+    """Test the CORS proxy API for documents with an unsupported media type."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/index.html"
+    responses.get(url_to_fetch, body=b"", status=200, content_type="text/html")
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 415

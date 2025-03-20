@@ -1271,13 +1271,21 @@ class DocumentViewSet(
                 },
                 timeout=10,
             )
+            content_type = response.headers.get("Content-Type", "")
+
+            if not content_type.startswith("image/"):
+                return drf.response.Response(
+                    status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                )
 
             # Use StreamingHttpResponse with the response's iter_content to properly stream the data
             proxy_response = StreamingHttpResponse(
                 streaming_content=response.iter_content(chunk_size=8192),
-                content_type=response.headers.get(
-                    "Content-Type", "application/octet-stream"
-                ),
+                content_type=content_type,
+                headers={
+                    "Content-Disposition": "attachment;",
+                    "Content-Security-Policy": "default-src 'none'; img-src 'none' data:;",
+                },
                 status=response.status_code,
             )
 
