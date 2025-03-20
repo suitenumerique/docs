@@ -25,4 +25,11 @@
   --c--components--forms-select--value-color--disabled: var(
     --c--theme--colors--greyscale-400
   );
+
+  /**
+  * Button
+  **/
+  --c--components--button--border-radius--active: var(
+    --c--components--button--border-radius
+  );
 }

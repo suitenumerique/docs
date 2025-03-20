@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- ♻️(frontend) Integrate UI kit #783
+
 ## [2.6.0] - 2025-03-21
 
 ## Added

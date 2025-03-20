@@ -8,7 +8,7 @@ const config = {
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:8083/collaboration/ws/',
   ENVIRONMENT: 'development',
-  FRONTEND_THEME: 'dsfr',
+  FRONTEND_THEME: 'default',
   MEDIA_BASE_URL: 'http://localhost:8083',
   LANGUAGES: [
     ['en-us', 'English'],
@@ -159,7 +159,7 @@ test.describe('Config: Not loggued', () => {
     expect(response.ok()).toBeTruthy();
 
     const jsonResponse = await response.json();
-    expect(jsonResponse.FRONTEND_THEME).toStrictEqual('dsfr');
+    expect(jsonResponse.FRONTEND_THEME).toStrictEqual('default');
 
     const footer = page.locator('footer').first();
     // alt 'Gouvernement Logo' comes from the theme

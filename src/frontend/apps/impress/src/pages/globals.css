@@ -1,4 +1,7 @@
-@import url('../cunningham/cunningham-style.css');
+@import url('@gouvfr-lasuite/ui-kit/style');
+@import url('../cunningham/cunningham-tokens.css');
+@import url('../cunningham/cunningham-custom-tokens.css');
+@import url('@fontsource/material-icons');
 
 body {
   margin: 0;
@@ -40,4 +43,38 @@ main ::-webkit-scrollbar-thumb:hover,
   font: inherit;
   cursor: pointer;
   outline: inherit;
+}
+
+.material-icons-filled {
+  font-family: 'Material Icons', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px; /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizelegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+[data-nextjs-dialog-overlay] {
+  display: none !important;
+}
+
+nextjs-portal {
+  display: none;
 }

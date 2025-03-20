@@ -61,4 +61,4 @@ COLLABORATION_SERVER_SECRET=my-secret
 COLLABORATION_WS_URL=ws://localhost:8083/collaboration/ws/
 
 # Frontend
-FRONTEND_THEME=dsfr
+FRONTEND_THEME=default

@@ -15,7 +15,7 @@ export const AppWrapper = ({ children }: PropsWithChildren) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CunninghamProvider theme="dsfr">{children}</CunninghamProvider>
+      <CunninghamProvider theme="default">{children}</CunninghamProvider>
     </QueryClientProvider>
   );
 };
