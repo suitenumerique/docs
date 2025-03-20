@@ -9,6 +9,7 @@ and this project adheres to
 ## [Unreleased]
 
 - 📝(doc) add publiccode.yml
+- ✨(helm) Service Account support for K8s Resources in Helm Charts #778
 
 ## [2.5.0] - 2025-03-18
 
