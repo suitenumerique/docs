@@ -38,7 +38,8 @@ DB_PORT            = 5432
 DOCKER_UID          = $(shell id -u)
 DOCKER_GID          = $(shell id -g)
 DOCKER_USER         = $(DOCKER_UID):$(DOCKER_GID)
-COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose
+COMPOSE             = DOCKER_USER=$(DOCKER_USER) ./bin/compose
+COMPOSE_PRODUCTION  = DOCKER_USER=$(DOCKER_USER) COMPOSE_FILE=compose.production.yaml ./bin/compose
 COMPOSE_EXEC        = $(COMPOSE) exec
 COMPOSE_EXEC_APP    = $(COMPOSE_EXEC) app-dev
 COMPOSE_RUN         = $(COMPOSE) run --rm
@@ -64,6 +65,19 @@ data/media:
 data/static:
 	@mkdir -p data/static
 
+# -- production volumes
+data/production/media:
+	@mkdir -p data/production/media
+
+data/production/certs:
+	@mkdir -p data/production/certs
+
+data/production/databases/backend:
+	@mkdir -p data/production/databases/backend
+
+data/production/databases/keycloak:
+	@mkdir -p data/production/databases/keycloak
+
 # -- Project
 
 create-env-files: ## Copy the dist env files to env files
@@ -87,6 +101,67 @@ bootstrap: \
 	mails-build \
 	run
 .PHONY: bootstrap
+
+bootstrap-production: ## Prepare project to run in production mode using docker compose
+bootstrap-production: \
+	env.d/production \
+	data/production/media \
+	data/production/certs \
+	data/production/databases/backend \
+	data/production/databases/keycloak
+bootstrap-production:
+	@echo 'Environment files created in env.d/production'
+	@echo 'Edit them to set good value for your production environment'
+.PHONY: bootstrap-production
+
+# -- Production
+
+deploy: ## Deploy the application in production mode (includes migrations)
+	@echo "Starting deployment..."
+	@echo "1. Starting required services..."
+	@$(COMPOSE_PRODUCTION) up -d postgresql redis minio
+	@echo "2. Waiting for PostgreSQL to be ready..."
+	sleep 5
+	@echo "3. Running database migrations..."
+	@$(COMPOSE_PRODUCTION) run --rm backend sh -c "\
+		DJANGO_SETTINGS_MODULE=impress.settings \
+		DJANGO_CONFIGURATION=Production \
+		DB_HOST=postgresql \
+		DB_PORT=5432 \
+		DB_NAME=docs \
+		DB_USER=docs \
+		DB_PASSWORD=docs_password_please_change \
+		DJANGO_SKIP_CHECKS=True \
+		python manage.py migrate --noinput --skip-checks"
+	@echo "4. Starting all services..."
+	@$(COMPOSE_PRODUCTION) up -d
+	@echo "Deployment complete!"
+.PHONY: deploy
+
+run-production: ## Run compose project in production mode
+	@$(COMPOSE_PRODUCTION) up -d
+.PHONY: run-production
+
+stop-production: ## Stop compose project in production mode
+	@$(COMPOSE_PRODUCTION) down
+.PHONY: stop-production
+
+logs-production: ## View logs in production mode
+	@$(COMPOSE_PRODUCTION) logs -f
+.PHONY: logs-production
+
+clean-production: ## Clean up production volumes and containers (preserves Keycloak data)
+	@$(COMPOSE_PRODUCTION) down
+	rm -rf ./data/production/databases/backend/*
+	rm -rf ./data/production/media/*
+.PHONY: clean-production
+
+clean-production-all: ## Clean up all production volumes and containers (including Keycloak data)
+	@$(COMPOSE_PRODUCTION) down -v
+	rm -rf ./data/production/databases/backend/*
+	rm -rf ./data/production/databases/keycloak/*
+	rm -rf ./data/production/media/*
+.PHONY: clean-production-all
 
 # -- Docker/compose
 build: cache ?= --no-cache
@@ -192,6 +267,16 @@ makemigrations:  ## run django makemigrations for the impress project.
 migrate:  ## run django migrations for the impress project.
 	@echo "$(BOLD)Running migrations$(RESET)"
 	@$(COMPOSE) up -d postgresql
+	@$(COMPOSE_PRODUCTION) run --rm backend sh -c "\
+		DJANGO_SETTINGS_MODULE=impress.settings \
+		DJANGO_CONFIGURATION=Production \
+		DB_HOST=postgresql \
+		DB_PORT=5432 \
+		DB_NAME=docs \
+		DB_USER=docs \
+		DB_PASSWORD=docs_password_please_change \
+		DJANGO_SKIP_CHECKS=True \
+		python manage.py migrate --noinput --skip-checks"
 	@$(MANAGE) migrate
 .PHONY: migrate
 
@@ -225,6 +310,8 @@ resetdb: ## flush database and create a superuser "admin"
 	@${MAKE} superuser
 .PHONY: resetdb
 
+# -- Environment variable files
+
 env.d/development/common:
 	cp -n env.d/development/common.dist env.d/development/common
 
@@ -233,6 +320,9 @@ env.d/development/postgresql:
 
 env.d/development/kc_postgresql:
 	cp -n env.d/development/kc_postgresql.dist env.d/development/kc_postgresql
+
+env.d/production:
+	cp -rnf env.d/production.dist env.d/production
 
 # -- Internationalization
 

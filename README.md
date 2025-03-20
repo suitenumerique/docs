@@ -63,12 +63,13 @@ Make sure you have a recent version of Docker and [Docker Compose](https://docs.
 
 ```shellscript
 $ docker -v
-
-Docker version 20.10.2, build 2291f61
+  Docker version 27.4.1, build b9d17ea
 
 $ docker compose version
 
 Docker Compose version v2.32.4
+$ docker compose version
+  Docker Compose version v2.32.1
 ```
 
 > ⚠️ You may need to run the following commands with sudo but this can be avoided by adding your user to the `docker` group.
@@ -198,3 +199,6 @@ We are always looking for new public partners (we are currently onboarding the N
 <p align="center">
   <img src="/docs/assets/europe_opensource.png" width="50%"/>
 </p>
+
+### States ❤️ open source
+Docs is the result of a joint effort lead by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 government ([ZenDiS](https://zendis.de/)). We are always looking for new public partners feel free to reach out if you are interested in using or contributing to docs.

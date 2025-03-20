@@ -1,0 +1,5 @@
+COLLABORATION_LOGGING=true
+Y_PROVIDER_API_KEY=<Set y provider api key>
+COLLABORATION_API_URL=https://impress.127.0.0.1.nip.io/collaboration/api/
+COLLABORATION_SERVER_ORIGIN=https://impress.127.0.0.1.nip.io
+COLLABORATION_SERVER_SECRET=<Set collaboration secret>

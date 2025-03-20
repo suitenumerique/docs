@@ -41,6 +41,7 @@ ENV/
 env.bak/
 venv.bak/
 env.d/development/*
+env.d/production/*
 !env.d/development/*.dist
 env.d/terraform
 
@@ -76,3 +77,5 @@ db.sqlite3
 .vscode/
 *.iml
 .devcontainer
+
+.env

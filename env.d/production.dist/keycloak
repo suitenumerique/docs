@@ -1,0 +1,9 @@
+KC_BOOTSTRAP_ADMIN_USERNAME=<Change this admin user>
+KC_BOOTSTRAP_ADMIN_PASSWORD=<Change this admin password>
+KC_DB=postgres
+KC_DB_URL_HOST=kc_postgresql
+KC_DB_SCHEMA=public
+PROXY_ADDRESS_FORWARDING='true'
+KC_HOSTNAME=http://localhost:8083
+KC_HTTPS_CERTIFICATE_FILE=/etc/ssl/certs/docs.crt
+KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/ssl/private/docs.key

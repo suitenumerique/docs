@@ -1,0 +1,216 @@
+name: docs-production
+
+services:
+  postgresql:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-U", "docs", "-d", "docs"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
+    env_file:
+      - env.d/production/postgresql
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/production/databases/backend:/var/lib/postgresql/data/pgdata
+
+  redis:
+    image: redis:5
+
+  backend:
+    image: lasuite/impress-backend:latest
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "impress.wsgi:application"]
+    env_file:
+      - env.d/production/backend
+      - env.d/production/kc_postgresql
+    environment:
+      - DJANGO_SETTINGS_MODULE=impress.settings
+      - DJANGO_CONFIGURATION=Production
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,areum-hub.duckdns.org
+      - DJANGO_SKIP_CHECKS=True
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_NAME=docs
+      - DB_USER=docs
+      - DB_PASSWORD=docs_password_please_change
+      - POSTGRES_HOST=postgresql
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=docs
+      - POSTGRES_USER=docs
+      - POSTGRES_PASSWORD=docs_password_please_change
+      - OIDC_RP_IDP_SIGN_KEY=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/certs
+      - OIDC_OP_JWKS_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/certs
+      - OIDC_OP_AUTHORIZATION_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/auth
+      - OIDC_OP_TOKEN_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/token
+      - OIDC_OP_USER_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/userinfo
+      - OIDC_OP_END_SESSION_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/logout
+      - OIDC_RP_CLIENT_ID=docs
+      - OIDC_RP_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+      - LOGIN_REDIRECT_URL=https://areum-hub.duckdns.org:8444
+      - LOGIN_REDIRECT_URL_FAILURE=https://areum-hub.duckdns.org:8444/login
+      - LOGOUT_REDIRECT_URL=https://areum-hub.duckdns.org:8444
+      # Minio/S3 settings
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_ACCESS_KEY_ID=minio_admin
+      - AWS_S3_SECRET_ACCESS_KEY=minio_password_please_change
+      - AWS_STORAGE_BUCKET_NAME=docs-media-storage
+      - AWS_S3_REGION_NAME=us-east-1
+      - AWS_DEFAULT_ACL=public-read
+      - AWS_S3_CUSTOM_DOMAIN=areum-hub.duckdns.org
+      - AWS_LOCATION=media
+    ports:
+      - "8000:8000"
+    volumes:
+      - /etc/letsencrypt:/etc/ssl/certs:ro
+    extra_hosts:
+      - "areum-hub.duckdns.org:192.168.1.100"
+    healthcheck:
+      test: ["CMD", "pgrep", "gunicorn"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      postgresql:
+        condition: service_healthy
+        restart: true
+      kc_postgresql:
+        condition: service_healthy
+        restart: true
+      minio:
+        condition: service_healthy
+        restart: true
+
+  celery:
+    user: ${DOCKER_USER:-1000}
+    image: lasuite/impress-backend:latest
+    command: ["celery", "-A", "impress.celery_app", "worker", "-l", "INFO"]
+    environment:
+      - DJANGO_SETTINGS_MODULE=impress.settings
+      - DJANGO_CONFIGURATION=Production
+      - POSTGRES_HOST=postgresql
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=docs
+      - POSTGRES_USER=docs
+      - POSTGRES_PASSWORD=docs_password_please_change
+    env_file:
+      - env.d/production/backend
+      - env.d/production/postgresql
+      - env.d/production/yprovider
+    depends_on:
+      - backend
+
+  frontend:
+    image: lasuite/impress-frontend:latest
+    user: ${DOCKER_USER:-1000}
+
+  y-provider:
+    image: lasuite/impress-y-provider:latest
+    user: ${DOCKER_USER:-1000}
+    env_file:
+      - env.d/production/yprovider
+
+  kc_postgresql:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-U", "keycloak", "-d", "keycloak"]
+      interval: 1s
+      timeout: 2s
+      retries: 300    
+    env_file:
+      - env.d/production/kc_postgresql
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/production/databases/keycloak:/var/lib/postgresql/data/pgdata
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.0
+    user: root
+    entrypoint: 
+      - /bin/sh
+      - -c
+      - |
+        # Create SSL directory
+        mkdir -p /tmp/ssl
+        
+        # Copy certificates to a location with known permissions
+        cp /etc/letsencrypt/live/areum-hub.duckdns.org/fullchain.pem /tmp/ssl/fullchain.pem
+        cp /etc/letsencrypt/live/areum-hub.duckdns.org/privkey.pem /tmp/ssl/privkey.pem
+        
+        # Set secure permissions
+        chmod 644 /tmp/ssl/fullchain.pem
+        chmod 600 /tmp/ssl/privkey.pem
+
+        # Start Keycloak with copied certificates
+        exec /opt/keycloak/bin/kc.sh start \
+          --https-certificate-file=/tmp/ssl/fullchain.pem \
+          --https-certificate-key-file=/tmp/ssl/privkey.pem \
+          --hostname=areum-hub.duckdns.org \
+          --hostname-strict=false \
+          --http-enabled=false \
+          --https-port=8443
+    env_file:
+      - env.d/production/keycloak
+      - env.d/production/kc_postgresql
+    ports:
+      - "8443:8443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # Changed the mount path
+    depends_on:
+      kc_postgresql:
+        condition: service_healthy
+        restart: true
+
+  minio-bootstrap:
+    image: minio/mc
+    env_file:
+      - env.d/production/minio
+    depends_on:
+      minio:
+        condition: service_healthy
+        restart: true
+    entrypoint: >
+      sh -c "
+      /usr/bin/mc alias set docs http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} && \
+      /usr/bin/mc mb --ignore-existing docs/docs-media-storage && \
+      /usr/bin/mc version enable docs/docs-media-storage && \
+      /usr/bin/mc policy set public docs/docs-media-storage && \
+      exit 0;"
+
+  minio:
+    user: ${DOCKER_USER:-1000}
+    image: minio/minio
+    env_file:
+      - env.d/production/minio
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 20s
+      retries: 300
+    entrypoint: ""
+    command: minio server /data
+    volumes:
+      - ./data/production/media:/data
+
+  ingress:
+    image: nginx:1.27
+    ports:
+      - "8444:8083"
+    volumes:
+      - ./docker/files/production/etc/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/nginx/ssl:ro
+    environment:
+      - SSL_CERT_PATH=/etc/nginx/ssl/live/areum-hub.duckdns.org/fullchain.pem
+      - SSL_KEY_PATH=/etc/nginx/ssl/live/areum-hub.duckdns.org/privkey.pem
+    depends_on:
+      frontend:
+        condition: service_started
+      y-provider:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      backend:
+        condition: service_healthy
+        restart: true

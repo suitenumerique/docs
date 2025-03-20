@@ -1,0 +1,58 @@
+## Django
+DJANGO_ALLOWED_HOSTS=impress.127.0.0.1.nip.io,keycloack.127.0.0.1.nip.io
+DJANGO_SECRET_KEY=ThisIsAnExampleKeyForDevPurposeOnly
+DJANGO_SETTINGS_MODULE=impress.settings
+DJANGO_SUPERUSER_PASSWORD=ThisIsAnExamplePassword
+
+# Logging
+# Set to DEBUG level for dev only
+LOGGING_LEVEL_HANDLERS_CONSOLE=ERROR
+LOGGING_LEVEL_LOGGERS_ROOT=INFO
+LOGGING_LEVEL_LOGGERS_APP=INFO
+
+# Python
+PYTHONPATH=/app
+
+# impress settings
+
+# Mail
+DJANGO_EMAIL_BRAND_NAME="La Suite Numérique"
+DJANGO_EMAIL_HOST="mailcatcher"
+DJANGO_EMAIL_LOGO_IMG="https://impress.127.0.0.1.nip.io/assets/logo-suite-numerique.png"
+DJANGO_EMAIL_PORT=1025
+
+# Media
+STORAGES_STATICFILES_BACKEND=django.contrib.staticfiles.storage.StaticFilesStorage
+AWS_S3_ENDPOINT_URL=http://minio:9000
+AWS_S3_ACCESS_KEY_ID=<minio root user>
+AWS_S3_SECRET_ACCESS_KEY=<minio root password>
+AWS_STORAGE_BUCKET_NAME=docs-media-storage
+MEDIA_BASE_URL=impress.127.0.0.1.nip.io
+
+# OIDC
+USER_OIDC_FIELD_TO_SHORTNAME="given_name"
+USER_OIDC_FIELDS_TO_FULLNAME="given_name,usual_name"
+OIDC_OP_JWKS_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
+OIDC_OP_AUTHORIZATION_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
+OIDC_OP_TOKEN_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
+OIDC_OP_USER_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
+OIDC_OP_LOGOUT_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
+OIDC_RP_CLIENT_ID=impress
+OIDC_RP_CLIENT_SECRETThisIsAnExampleKeyForDevPurposeOnly
+OIDC_RP_SIGN_ALGO=RS256
+OIDC_RP_SCOPES="openid email"
+
+LOGIN_REDIRECT_URL=https://impress.127.0.0.1.nip.io
+LOGIN_REDIRECT_URL_FAILURE=https://impress.127.0.0.1.nip.io
+LOGOUT_REDIRECT_URL=https://impress.127.0.0.1.nip.io
+
+OIDC_REDIRECT_ALLOWED_HOSTS=["https://impress.127.0.0.1.nip.io"]
+OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
+
+# AI
+AI_BASE_URL=https://openaiendpoint.com
+AI_API_KEY=password
+AI_MODEL=llama
+
+# Frontend
+FRONTEND_THEME=dsfr
