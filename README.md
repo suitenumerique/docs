@@ -5,7 +5,9 @@
 </p>
 
 <p align="center">
-Welcome to Docs! The open source document editor where your notes can become knowledge through live collaboration
+Welcome to Docs!<br> 
+Docs is an open-source document editor, where your notes can become knowledge through live collaboration.
+It offers a scalable and secure alternative to tools such as Notion, Outline, or Confluence
 </p>
 
 <p align="center">
@@ -22,29 +24,30 @@ Welcome to Docs! The open source document editor where your notes can become kno
 
 <img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
 
-## Why use Docs ❓
+## Why use Docs?
 
-Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
+Docs is a collaborative text editor designed to address common challenges in knowledge-building and sharing.
 
 ### Write
-*   😌 Simple collaborative editing without the formatting complexity of markdown
-*   🔌 Offline? No problem, keep writing, your edits will get synced when back online
-*   💅 Create clean documents with limited but beautiful formatting options and focus on content
-*   🧱 Built for productivity (markdown support, many block types, slash commands, keyboard shortcuts).
-*   ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
+*   😌 Docs offers simple, accessible online editing to all
+*   💅 Create clean documents with beautiful formatting options
+*   🖌️ Focus on your content using either the in-line editor, or [the Markdown syntax](https://www.markdownguide.org/basic-syntax/)
+*   🧱 Docs is built for productivity, with many block types accessible from the `/` slash commands, as well as keyboard shortcuts.
+*   🔌 Need to write while offline? No problem! Keep writing, your edits will get synced once you're back online
+*   ✨ Save time thanks to our AI actions, such as rephrasing, summarizing, fixing typos, translating, or even turn your text into a prompt!
 
 ### Collaborate
-*   🤝 Collaborate with your team in real time
+*   🤝 Enjoy live editing! Collaborate with your team in real time
 *   🔒 Granular access control to ensure your information is secure and only shared with the right people
-*   📑 Professional document exports in multiple formats (.odt, .doc, .pdf) with customizable templates
-*   📚 Built-in wiki functionality to turn your team's collaborative work into organized knowledge `ETA 02/2025`
+*   📑 Export your content in multiple formats (`.odt`, `.doc`, `.pdf`) with customizable templates
+*   📚 _Coming soon! Built-in wiki functionality to turn your team's collaborative work into organized knowledge_
 
 ### Self-host
-*   🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
+*   🚀 Anyone can install Docs on their server, provided you have the necessary configuration
 
 ## Getting started 🔧
 
-### Test it
+### Test Docs!
 
 Test Docs on your browser by logging in on this [environment](https://impress-preprod.beta.numerique.gouv.fr/)
 
@@ -53,13 +56,13 @@ email: test.docs@yopmail.com
 password: I'd<3ToTestDocs
 ```
 
-### Run it locally
+### Run Docs locally
 
-> ⚠️ Running Docs locally using the methods described below is for testing purposes only.  It is based on building Docs using Minio as the S3 storage solution but you can choose any S3 compatible object storage of your choice.
+> ⚠️ The methods described below for reunning Docs locally using is **for testing purposes only**. It is based on building Docs using Minio as the S3 storage solution. You can choose the S3-compatible object storage solution of your choice.
 
 **Prerequisite**
 
-Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop:
+Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your server. Use these commands to check for versions:
 
 ```shellscript
 $ docker -v
@@ -71,7 +74,7 @@ $ docker compose version
 Docker Compose version v2.32.4
 ```
 
-> ⚠️ You may need to run the following commands with sudo but this can be avoided by adding your user to the `docker` group.
+> ⚠️ You may need to run the following commands with `sudo`, but this can be avoided by adding your user to the local `docker` group.
 
 **Project bootstrap**
 
@@ -81,11 +84,11 @@ The easiest way to start working on the project is to use [GNU Make](https://www
 $ make bootstrap FLUSH_ARGS='--no-input'
 ```
 
-This command builds the `app` container, installs dependencies, performs database migrations and compile translations. It's a good idea to use this command each time you are pulling code from the project repository to avoid dependency-related or migration-related issues.
+This command builds the `app` container, installs dependencies, performs database migrations and compiles translations. It's a good idea to use this command each time you are pulling code from the project repository, to avoid dependency-related or migration-related issues.
 
 Your Docker services should now be up and running 🎉
 
-You can access to the project by going to <http://localhost:3000>.
+You can access the project by going to <http://localhost:3000>.
 
 You will be prompted to log in, the default credentials are:
 
@@ -121,13 +124,14 @@ $ make run-backend
 ```
 
 **Adding content**
-You can create a basic demo site by running:
+
+You can create a basic demo site by running this command:
 
 ```shellscript
 $ make demo
 ```
 
-Finally, you can check all available Make rules using:
+Finally, you can check all available Make rules using this command:
 
 ```shellscript
 $ make help
@@ -135,7 +139,7 @@ $ make help
 
 **Django admin**
 
-You can access the Django admin site at
+You can access the Django admin site at:
 
 <http://localhost:8071/admin>.
 
@@ -147,7 +151,7 @@ $ make superuser
 
 ## Feedback 🙋‍♂️🙋‍♀️
 
-We'd love to hear your thoughts and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
+We'd love to hear your thoughts, and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
 
 ## Roadmap
 
@@ -157,17 +161,17 @@ Want to know where the project is headed? [🗺️ Checkout our roadmap](https:/
 
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is a public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public-driven initiative, our licence choice is an invitation for private sector actors to use, sell, and contribute to the project. 
 
 ## Contributing 🙌
 
-This project is intended to be community-driven, so please, do not hesitate to [get in touch](https://matrix.to/#/#docs-official:matrix.org) if you have any question related to our implementation or design decisions.
+This project is intended to be community-driven, so please do not hesitate to [get in touch](https://matrix.to/#/#docs-official:matrix.org) if you have any question related to our implementation or design decisions.
 
 You can help us with translations on [Crowdin](https://crowdin.com/project/lasuite-docs).
 
-If you intend to make pull requests see [CONTRIBUTING](https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md) for guidelines.
+If you intend to make pull requests, see [CONTRIBUTING](https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md) for guidelines.
 
-Directory structure:
+## Directory structure
 
 ```markdown
 docs
@@ -185,15 +189,15 @@ docs
 
 ### Stack
 
-Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/).
+Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
+
+We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
 ### Gov ❤️ open source
 
 Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
 
-We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
-
-We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
+We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), so feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 
 <p align="center">
   <img src="/docs/assets/europe_opensource.png" width="50%"/>
