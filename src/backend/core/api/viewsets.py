@@ -24,6 +24,7 @@ from botocore.exceptions import ClientError
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import UserRateThrottle
 
 from core import authentication, enums, models
 from core.services.ai_services import AIService
@@ -135,6 +136,18 @@ class Pagination(drf.pagination.PageNumberPagination):
     page_size_query_param = "page_size"
 
 
+class UserListThrottleBurst(UserRateThrottle):
+    """Throttle for the user list endpoint."""
+
+    scope = "user_list_burst"
+
+
+class UserListThrottleSustained(UserRateThrottle):
+    """Throttle for the user list endpoint."""
+
+    scope = "user_list_sustained"
+
+
 class UserViewSet(
     drf.mixins.UpdateModelMixin, viewsets.GenericViewSet, drf.mixins.ListModelMixin
 ):
@@ -144,6 +157,14 @@ class UserViewSet(
     queryset = models.User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
     pagination_class = None
+    throttle_classes = []
+
+    def get_throttles(self):
+        self.throttle_classes = []
+        if self.action == "list":
+            self.throttle_classes = [UserListThrottleBurst, UserListThrottleSustained]
+
+        return super().get_throttles()
 
     def get_queryset(self):
         """

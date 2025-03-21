@@ -337,6 +337,18 @@ class Base(Configuration):
         "PAGE_SIZE": 20,
         "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
         "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+        "DEFAULT_THROTTLE_RATES": {
+            "user_list_sustained": values.Value(
+                default="180/hour",
+                environ_name="API_USERS_LIST_THROTTLE_RATE_SUSTAINED",
+                environ_prefix=None,
+            ),
+            "user_list_burst": values.Value(
+                default="30/minute",
+                environ_name="API_USERS_LIST_THROTTLE_RATE_BURST",
+                environ_prefix=None,
+            ),
+        },
     }
 
     SPECTACULAR_SETTINGS = {

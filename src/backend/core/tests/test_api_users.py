@@ -106,6 +106,28 @@ def test_api_users_list_limit(settings):
     assert len(response.json()) == 15
 
 
+def test_api_users_list_throttling_authenticated(settings):
+    """
+    Authenticated users should be throttled.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["user_list_burst"] = "3/minute"
+
+    for _i in range(3):
+        response = client.get(
+            "/api/v1.0/users/?q=alice",
+        )
+        assert response.status_code == 200
+
+    response = client.get(
+        "/api/v1.0/users/?q=alice",
+    )
+    assert response.status_code == 429
+
+
 def test_api_users_list_query_email_matching():
     """While filtering by email, results should be filtered and sorted by Levenstein distance."""
     user = factories.UserFactory()
