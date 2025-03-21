@@ -14,7 +14,7 @@ export const Title = () => {
       <Text
         $margin="none"
         as="h2"
-        $color="#000091"
+        $color={colors['primary-text']}
         $zIndex={1}
         $size="1.375rem"
       >
