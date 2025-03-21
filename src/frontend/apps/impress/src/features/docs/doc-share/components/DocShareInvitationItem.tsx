@@ -11,6 +11,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 
+import { useDocTreeData } from '../../doc-tree/context/DocTreeContext';
 import { useDeleteDocInvitation, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
 
@@ -25,6 +26,7 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
+  const treeData = useDocTreeData();
   const fakeUser: User = {
     id: invitation.email,
     full_name: invitation.email,
@@ -37,6 +39,9 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
   const canUpdate = doc.abilities.accesses_manage;
 
   const { mutate: updateDocInvitation } = useUpdateDocInvitation({
+    onSuccess: () => {
+      void treeData?.tree.refreshNode(doc.id);
+    },
     onError: (error) => {
       toast(
         error?.data?.role?.[0] ?? t('Error during update invitation'),
@@ -49,6 +54,9 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
   });
 
   const { mutate: removeDocInvitation } = useDeleteDocInvitation({
+    onSuccess: () => {
+      void treeData?.tree.refreshNode(doc.id);
+    },
     onError: (error) => {
       toast(
         error?.data?.role?.[0] ?? t('Error during delete invitation'),

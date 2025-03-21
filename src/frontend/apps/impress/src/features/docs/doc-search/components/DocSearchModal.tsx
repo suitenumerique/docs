@@ -15,17 +15,36 @@ import {
 import { Doc, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { useDocTreeData } from '../../doc-tree/context/DocTreeContext';
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
+import {
+  DocSearchFilters,
+  DocSearchFiltersValues,
+  DocSearchTarget,
+} from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
 
-type DocSearchModalProps = ModalProps & {};
+type DocSearchModalProps = ModalProps & {
+  showFilters?: boolean;
+  defaultFilters?: DocSearchFiltersValues;
+};
 
-export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
+export const DocSearchModal = ({
+  showFilters = false,
+  defaultFilters,
+  ...modalProps
+}: DocSearchModalProps) => {
   const { t } = useTranslation();
+  const tree = useDocTreeData();
   const router = useRouter();
+
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<DocSearchFiltersValues>(
+    defaultFilters ?? {},
+  );
   const { isDesktop } = useResponsiveStore();
+
   const {
     data,
     isFetching,
@@ -36,27 +55,42 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
   } = useInfiniteDocs({
     page: 1,
     title: search,
+    ...filters,
+    parent_id: tree?.root?.id,
   });
   const loading = isFetching || isRefetching || isLoading;
   const handleInputSearch = useDebouncedCallback(setSearch, 300);
 
   const handleSelect = (doc: Doc) => {
+    if (tree?.initialRootId !== doc.id) {
+      tree?.tree.resetTree([]);
+      tree?.tree.setSelectedNode(doc);
+      tree?.setRoot(doc);
+      tree?.setInitialTargetId(doc.id);
+    }
     router.push(`/docs/${doc.id}`);
     modalProps.onClose?.();
   };
 
+  const handleResetFilters = () => {
+    setFilters({});
+  };
+
   const docsData: QuickSearchData<Doc> = useMemo(() => {
     const docs = data?.pages.flatMap((page) => page.results) || [];
-
+    const groupName =
+      filters.target === DocSearchTarget.CURRENT
+        ? t('Select a page')
+        : t('Select a document');
     return {
-      groupName: docs.length > 0 ? t('Select a document') : '',
+      groupName: docs.length > 0 ? groupName : '',
       elements: search ? docs : [],
       emptyString: t('No document found'),
       endActions: hasNextPage
         ? [{ content: <InView onChange={() => void fetchNextPage()} /> }]
         : [],
     };
-  }, [data, hasNextPage, fetchNextPage, t, search]);
+  }, [data, hasNextPage, fetchNextPage, t, search, filters.target]);
 
   return (
     <Modal
@@ -75,6 +109,13 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
           onFilter={handleInputSearch}
         >
           <Box $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}>
+            {showFilters && (
+              <DocSearchFilters
+                values={filters}
+                onValuesChange={setFilters}
+                onReset={handleResetFilters}
+              />
+            )}
             {search.length === 0 && (
               <Box
                 $direction="column"

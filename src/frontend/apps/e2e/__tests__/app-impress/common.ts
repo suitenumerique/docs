@@ -200,6 +200,22 @@ export const mockedDocument = async (page: Page, json: object) => {
   });
 };
 
+export const mockedListDocs = async (page: Page, data: object[] = []) => {
+  await page.route('**/documents/**/', async (route) => {
+    const request = route.request();
+    if (request.method().includes('GET') && request.url().includes('page=')) {
+      await route.fulfill({
+        json: {
+          count: data.length,
+          next: null,
+          previous: null,
+          results: data,
+        },
+      });
+    }
+  });
+};
+
 export const mockedInvitations = async (page: Page, json?: object) => {
   await page.route('**/invitations/**/', async (route) => {
     const request = route.request();

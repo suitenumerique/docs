@@ -17,16 +17,20 @@ import { Doc } from '../types';
 interface ModalRemoveDocProps {
   onClose: () => void;
   doc: Doc;
+  afterDelete?: (doc: Doc) => void;
 }
 
-export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
+export const ModalRemoveDoc = ({
+  onClose,
+  doc,
+  afterDelete,
+}: ModalRemoveDocProps) => {
   const { toast } = useToastProvider();
   const { push } = useRouter();
   const pathname = usePathname();
 
   const {
     mutate: removeDoc,
-
     isError,
     error,
   } = useRemoveDoc({
@@ -34,6 +38,11 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       toast(t('The document has been deleted.'), VariantType.SUCCESS, {
         duration: 4000,
       });
+      if (afterDelete) {
+        afterDelete(doc);
+        return;
+      }
+
       if (pathname === '/') {
         onClose();
       } else {
@@ -87,7 +96,9 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       <Box aria-label={t('Content modal to delete document')}>
         {!isError && (
           <Text $size="sm" $variation="600">
-            {t('Are you sure you want to delete this document ?')}
+            {t('Are you sure you want to delete the document "{{title}}"?', {
+              title: doc.title,
+            })}
           </Text>
         )}
 

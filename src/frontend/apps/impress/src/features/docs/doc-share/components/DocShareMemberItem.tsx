@@ -11,6 +11,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Access, Doc, Role } from '@/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
+import { useDocTreeData } from '../../doc-tree/context/DocTreeContext';
 import { useDeleteDocAccess, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks/';
 
@@ -25,6 +26,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner, isOtherOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
+  const treeData = useDocTreeData();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
@@ -32,6 +34,9 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
     isOtherOwner || !!isLastOwner || !doc.abilities.accesses_manage;
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
+    onSuccess: () => {
+      void treeData?.tree.refreshNode(doc.id);
+    },
     onError: () => {
       toast(t('Error during invitation update'), VariantType.ERROR, {
         duration: 4000,
@@ -40,6 +45,9 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   });
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
+    onSuccess: () => {
+      void treeData?.tree.refreshNode(doc.id);
+    },
     onError: () => {
       toast(t('Error while deleting invitation'), VariantType.ERROR, {
         duration: 4000,

@@ -5,10 +5,19 @@ import { useCunninghamTheme } from '@/cunningham';
 
 type IconProps = TextType & {
   iconName: string;
+  isFilled?: boolean;
 };
-export const Icon = ({ iconName, ...textProps }: IconProps) => {
+export const Icon = ({ iconName, isFilled, ...textProps }: IconProps) => {
   return (
-    <Text $isMaterialIcon {...textProps}>
+    <Text
+      $isMaterialIcon={!isFilled}
+      {...textProps}
+      className={
+        isFilled
+          ? `material-icons-filled ${textProps.className}`
+          : textProps.className
+      }
+    >
       {iconName}
     </Text>
   );
@@ -27,7 +36,7 @@ export const IconBG = ({ iconName, ...textProps }: IconBGProps) => {
       $size="36px"
       $theme="primary"
       $variation="600"
-      $background={colorsTokens()['primary-bg']}
+      $background={colorsTokens()['greyscale-000']}
       $css={`
         border: 1px solid ${colorsTokens()['primary-200']}; 
         user-select: none;

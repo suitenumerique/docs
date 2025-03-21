@@ -1297,3 +1297,47 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
 def test_models_documents_get_select_options(ancestors_links, select_options):
     """Validate that the "get_select_options" method operates as expected."""
     assert models.LinkReachChoices.get_select_options(ancestors_links) == select_options
+
+
+def test_models_documents_children_create_after_sibling_deletion():
+    """
+    It should be possible to create a new child after all children have been deleted.
+    """
+
+    root = factories.DocumentFactory()
+    assert root.numchild == 0
+    assert root.has_deleted_children is False
+    assert root.is_leaf() is True
+    child1 = factories.DocumentFactory(parent=root)
+    child2 = factories.DocumentFactory(parent=root)
+
+    root.refresh_from_db()
+    assert root.numchild == 2
+    assert root.has_deleted_children is False
+    assert root.is_leaf() is False
+
+    child1.soft_delete()
+    child2.soft_delete()
+    root.refresh_from_db()
+    assert root.numchild == 0
+    assert root.has_deleted_children is True
+    assert root.is_leaf() is False
+
+    factories.DocumentFactory(parent=root)
+    root.refresh_from_db()
+    assert root.numchild == 1
+    assert root.has_deleted_children is True
+    assert root.is_leaf() is False
+
+
+def test_models_documents_has_deleted_children():
+    """
+    A document should have its has_deleted_children attribute set to True if one of its children
+    has been solf deleted no matter if numchild is 0 or not.
+    """
+    root = factories.DocumentFactory()
+    child = factories.DocumentFactory(parent=root)
+    assert root.has_deleted_children is False
+    child.soft_delete()
+    root.refresh_from_db()
+    assert root.has_deleted_children is True

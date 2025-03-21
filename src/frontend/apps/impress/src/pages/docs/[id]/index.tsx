@@ -7,14 +7,15 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, Text, TextErrors } from '@/components';
 import { DocEditor } from '@/docs/doc-editor';
+import { KEY_AUTH, setAuthUrl } from '@/features/auth';
 import {
   Doc,
   KEY_DOC,
   useCollaboration,
   useDoc,
   useDocStore,
-} from '@/docs/doc-management/';
-import { KEY_AUTH, setAuthUrl } from '@/features/auth';
+} from '@/features/docs/doc-management/';
+import { DocTreeProvider } from '@/features/docs/doc-tree/context/DocTreeContext';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
@@ -34,9 +35,11 @@ export function DocLayout() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <MainLayout>
-        <DocPage id={id} />
-      </MainLayout>
+      <DocTreeProvider initialTargetId={id}>
+        <MainLayout>
+          <DocPage id={id} />
+        </MainLayout>
+      </DocTreeProvider>
     </>
   );
 }
@@ -83,6 +86,14 @@ const DocPage = ({ id }: DocProps) => {
     setDoc(docQuery);
     setCurrentDoc(docQuery);
   }, [docQuery, setCurrentDoc, isFetching]);
+
+  useEffect(() => {
+    return () => {
+      console.log('unmount');
+      setCurrentDoc(undefined);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * We add a broadcast task to reset the query cache

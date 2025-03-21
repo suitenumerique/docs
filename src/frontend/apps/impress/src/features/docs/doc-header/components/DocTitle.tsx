@@ -1,10 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import {
-  Tooltip,
-  VariantType,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { Tooltip } from '@openfun/cunningham-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -19,6 +15,8 @@ import {
   useUpdateDoc,
 } from '@/docs/doc-management';
 import { useBroadcastStore, useResponsiveStore } from '@/stores';
+
+import { useDocTreeData } from '../../doc-tree/context/DocTreeContext';
 
 interface DocTitleProps {
   doc: Doc;
@@ -57,18 +55,20 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
-  const { toast } = useToastProvider();
+  const data = useDocTreeData();
   const { untitledDocument } = useTrans();
 
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
-    onSuccess(data) {
-      toast(t('Document title updated successfully'), VariantType.SUCCESS);
-
+    onSuccess(updatedDoc) {
       // Broadcast to every user connected to the document
-      broadcast(`${KEY_DOC}-${data.id}`);
+      broadcast(`${KEY_DOC}-${updatedDoc.id}`);
+      data?.tree?.updateNode(updatedDoc.id, { title: updatedDoc.title });
+      if (updatedDoc.id === data?.root?.id) {
+        void data?.refreshRoot();
+      }
     },
   });
 

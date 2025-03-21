@@ -3,7 +3,7 @@ import { create } from 'zustand';
 
 import { tokens } from './cunningham-tokens';
 
-type Tokens = typeof tokens.themes.default & Partial<typeof tokens.themes.dsfr>;
+type Tokens = typeof tokens.themes.default;
 type ColorsTokens = Tokens['theme']['colors'];
 type FontSizesTokens = Tokens['theme']['font']['sizes'];
 type SpacingsTokens = Tokens['theme']['spacings'];

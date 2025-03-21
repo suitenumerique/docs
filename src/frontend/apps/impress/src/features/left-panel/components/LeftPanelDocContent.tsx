@@ -1,15 +1,13 @@
-import { css } from 'styled-components';
-
-import { Box, SeparatedSection } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+import { Box } from '@/components';
 import { useDocStore } from '@/docs/doc-management';
-import { SimpleDocItem } from '@/docs/docs-grid';
+import { DocTree } from '@/features/docs/doc-tree/components/DocTree';
+import { useDocTreeData } from '@/features/docs/doc-tree/context/DocTreeContext';
 
 export const LeftPanelDocContent = () => {
   const { currentDoc } = useDocStore();
-  const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
-  if (!currentDoc) {
+  const tree = useDocTreeData();
+
+  if (!currentDoc || !tree) {
     return null;
   }
 
@@ -19,19 +17,9 @@ export const LeftPanelDocContent = () => {
       $width="100%"
       $css="width: 100%; overflow-y: auto; overflow-x: hidden;"
     >
-      <SeparatedSection showSeparator={false}>
-        <Box $padding={{ horizontal: 'sm' }}>
-          <Box
-            $css={css`
-              padding: ${spacing['2xs']};
-              border-radius: 4px;
-              background-color: var(--c--theme--colors--greyscale-100);
-            `}
-          >
-            <SimpleDocItem doc={currentDoc} showAccesses={true} />
-          </Box>
-        </Box>
-      </SeparatedSection>
+      {tree.initialTargetId && (
+        <DocTree initialTargetId={tree.initialTargetId} />
+      )}
     </Box>
   );
 };

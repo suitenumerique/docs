@@ -1,13 +1,15 @@
 import { Button, ModalSize, useModal } from '@openfun/cunningham-react';
 import { t } from 'i18next';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { PropsWithChildren } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
-import { useCreateDoc } from '@/docs/doc-management';
 import { DocSearchModal } from '@/docs/doc-search';
 import { useAuth } from '@/features/auth';
-import { useCmdK } from '@/hook/useCmdK';
+import { useCreateDoc, useDocStore } from '@/features/docs/doc-management';
+import { DocSearchTarget } from '@/features/docs/doc-search/components/DocSearchFilters';
+import { useCreateChildrenDoc } from '@/features/docs/doc-tree/api/useCreateChildren';
+import { useDocTreeData } from '@/features/docs/doc-tree/context/DocTreeContext';
 
 import { useLeftPanelStore } from '../stores';
 
@@ -15,23 +17,42 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const searchModal = useModal();
   const { authenticated } = useAuth();
-  useCmdK(searchModal.open);
+  const docTreeData = useDocTreeData();
+  const tree = docTreeData?.tree;
+  const { currentDoc } = useDocStore();
+  const isDoc = router.pathname === '/docs/[id]';
   const { togglePanel } = useLeftPanelStore();
 
   const { mutate: createDoc } = useCreateDoc({
     onSuccess: (doc) => {
-      router.push(`/docs/${doc.id}`);
+      void router.push(`/docs/${doc.id}`);
+      togglePanel();
+    },
+  });
+
+  const { mutate: createChildrenDoc } = useCreateChildrenDoc({
+    onSuccess: (doc) => {
+      tree?.addRootNode(doc);
+      tree?.selectNodeById(doc.id);
+      void router.push(`/docs/${doc.id}`);
       togglePanel();
     },
   });
 
   const goToHome = () => {
-    router.push('/');
+    void router.push('/');
     togglePanel();
   };
 
   const createNewDoc = () => {
-    createDoc();
+    if (docTreeData && docTreeData.root && isDoc) {
+      createChildrenDoc({
+        title: t('Untitled page'),
+        parentId: docTreeData.root.id,
+      });
+    } else {
+      createDoc();
+    }
   };
 
   return (
@@ -65,15 +86,29 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                 />
               )}
             </Box>
+
             {authenticated && (
-              <Button onClick={createNewDoc}>{t('New doc')}</Button>
+              <Button
+                color={!isDoc ? 'primary' : 'tertiary'}
+                onClick={createNewDoc}
+                disabled={currentDoc && !currentDoc.abilities.update}
+              >
+                {t(isDoc ? 'New page' : 'New doc')}
+              </Button>
             )}
           </Box>
         </SeparatedSection>
         {children}
       </Box>
       {searchModal.isOpen && (
-        <DocSearchModal {...searchModal} size={ModalSize.LARGE} />
+        <DocSearchModal
+          {...searchModal}
+          size={ModalSize.LARGE}
+          showFilters={isDoc}
+          defaultFilters={{
+            target: isDoc ? DocSearchTarget.CURRENT : undefined,
+          }}
+        />
       )}
     </>
   );
