@@ -8,9 +8,11 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('Document create member', () => {
   test('it selects 2 users and 1 invitation', async ({ page, browserName }) => {
+    const inputFill = 'user ';
     const responsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/users/?q=user') && response.status() === 200,
+        response.url().includes(`/users/?q=${encodeURIComponent(inputFill)}`) &&
+        response.status() === 200,
     );
     await createDoc(page, 'select-multi-users', browserName, 1);
 
@@ -22,9 +24,9 @@ test.describe('Document create member', () => {
     await expect(inputSearch).toBeVisible();
 
     // Select user 1 and verify tag
-    await inputSearch.fill('user');
+    await inputSearch.fill(inputFill);
     const response = await responsePromise;
-    const users = (await response.json()).results as {
+    const users = (await response.json()) as {
       email: string;
       full_name?: string | null;
     }[];
@@ -45,7 +47,7 @@ test.describe('Document create member', () => {
     ).toBeVisible();
 
     // Select user 2 and verify tag
-    await inputSearch.fill('user');
+    await inputSearch.fill(inputFill);
     await quickSearchContent
       .getByTestId(`search-user-row-${users[1].email}`)
       .click();

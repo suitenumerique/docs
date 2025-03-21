@@ -58,6 +58,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
   const canViewAccesses = doc.abilities.accesses_view;
   const showMemberSection = inputValue === '' && selectedUsers.length === 0;
   const showFooter = selectedUsers.length === 0 && !inputValue;
+  const MIN_CHARACTERS_FOR_SEARCH = 4;
 
   const onSelect = (user: User) => {
     setSelectedUsers((prev) => [...prev, user]);
@@ -76,7 +77,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
   const searchUsersQuery = useUsers(
     { query: userQuery, docId: doc.id },
     {
-      enabled: !!userQuery,
+      enabled: userQuery?.length > MIN_CHARACTERS_FOR_SEARCH,
       queryKey: [KEY_LIST_USER, { query: userQuery }],
     },
   );

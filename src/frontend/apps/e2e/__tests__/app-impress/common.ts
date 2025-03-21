@@ -80,11 +80,11 @@ export const addNewMember = async (
   page: Page,
   index: number,
   role: 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader',
-  fillText: string = 'user',
+  fillText: string = 'user ',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(
     (response) =>
-      response.url().includes(`/users/?q=${fillText}`) &&
+      response.url().includes(`/users/?q=${encodeURIComponent(fillText)}`) &&
       response.status() === 200,
   );
 
@@ -97,7 +97,7 @@ export const addNewMember = async (
 
   // Intercept response
   const responseSearchUser = await responsePromiseSearchUser;
-  const users = (await responseSearchUser.json()).results as {
+  const users = (await responseSearchUser.json()) as {
     email: string;
   }[];
 
