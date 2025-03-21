@@ -11,6 +11,7 @@ and this project adheres to
 ## Added
 
 - 📝(doc) add publiccode.yml
+- 📄(legal) Require contributors to sign a DCO
 
 ## Changed
 

@@ -4,6 +4,8 @@ Thank you for taking the time to contribute! Please follow these guidelines to e
 
 To get started with the project, please refer to the [README.md](https://github.com/suitenumerique/docs/blob/main/README.md) for detailed instructions.
 
+Contributors are required to sign off their commits with `git commit --sign-off`: this confirms that they have read and accepted the [Developer's Certificate of Origin 1.1](https://developercertificate.org/).
+
 Please also check out our [dev handbook](https://suitenumerique.gitbook.io/handbook) to learn our best practices.
 
 ## Help us with translations
