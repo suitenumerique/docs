@@ -1,58 +1,64 @@
-## Django
-DJANGO_ALLOWED_HOSTS=impress.127.0.0.1.nip.io,keycloack.127.0.0.1.nip.io
-DJANGO_SECRET_KEY=ThisIsAnExampleKeyForDevPurposeOnly
+DJANGO_SECRET_KEY=<YOUR_DJANGO_SECRET_KEY>
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,areum-hub.duckdns.org
+DJANGO_DEBUG=False
+DJANGO_DATABASE_URL=postgres://docs:<YOUR_DB_PASSWORD>@postgresql:5432/docs
+DJANGO_REDIS_URL=redis://redis:6379/0
+DJANGO_MEDIA_URL=https://areum-hub.duckdns.org/docs-media-storage/
+DJANGO_MEDIA_BUCKET=docs-media-storage
+DJANGO_MEDIA_ACCESS_KEY=<YOUR_MINIO_ACCESS_KEY>
+DJANGO_MEDIA_SECRET_KEY=<YOUR_MINIO_SECRET_KEY>
+DJANGO_MEDIA_ENDPOINT=https://areum-hub.duckdns.org
+DJANGO_MEDIA_SECURE=True
+DJANGO_MEDIA_CUSTOM_DOMAIN=areum-hub.duckdns.org
+DJANGO_MEDIA_LOCATION=media
+DJANGO_MEDIA_QUERYSTRING_AUTH=False
+DJANGO_MEDIA_DEFAULT_ACL=public-read
+DJANGO_MEDIA_FILE_OVERWRITE=False
+
+# Django settings
 DJANGO_SETTINGS_MODULE=impress.settings
-DJANGO_SUPERUSER_PASSWORD=ThisIsAnExamplePassword
+DJANGO_CONFIGURATION=Production
+DJANGO_SECURE_SSL_REDIRECT=False
+DJANGO_SKIP_CHECKS=True
 
-# Logging
-# Set to DEBUG level for dev only
-LOGGING_LEVEL_HANDLERS_CONSOLE=ERROR
-LOGGING_LEVEL_LOGGERS_ROOT=INFO
-LOGGING_LEVEL_LOGGERS_APP=INFO
+# Database settings
+DB_HOST=postgresql
+DB_PORT=5432
+DB_NAME=docs
+DB_USER=docs
+DB_PASSWORD=<YOUR_DB_PASSWORD>
+POSTGRES_HOST=postgresql
+POSTGRES_PORT=5432
+POSTGRES_DB=docs
+POSTGRES_USER=docs
+POSTGRES_PASSWORD=<YOUR_DB_PASSWORD>
 
-# Python
-PYTHONPATH=/app
-
-# impress settings
-
-# Mail
-DJANGO_EMAIL_BRAND_NAME="La Suite Numérique"
-DJANGO_EMAIL_HOST="mailcatcher"
-DJANGO_EMAIL_LOGO_IMG="https://impress.127.0.0.1.nip.io/assets/logo-suite-numerique.png"
-DJANGO_EMAIL_PORT=1025
-
-# Media
-STORAGES_STATICFILES_BACKEND=django.contrib.staticfiles.storage.StaticFilesStorage
-AWS_S3_ENDPOINT_URL=http://minio:9000
-AWS_S3_ACCESS_KEY_ID=<minio root user>
-AWS_S3_SECRET_ACCESS_KEY=<minio root password>
-AWS_STORAGE_BUCKET_NAME=docs-media-storage
-MEDIA_BASE_URL=impress.127.0.0.1.nip.io
-
-# OIDC
+# OIDC/Keycloak settings
 USER_OIDC_FIELD_TO_SHORTNAME="given_name"
 USER_OIDC_FIELDS_TO_FULLNAME="given_name,usual_name"
-OIDC_OP_JWKS_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
-OIDC_OP_AUTHORIZATION_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
-OIDC_OP_TOKEN_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
-OIDC_OP_USER_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
-OIDC_OP_LOGOUT_ENDPOINT=https://impress.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
-OIDC_RP_CLIENT_ID=impress
-OIDC_RP_CLIENT_SECRETThisIsAnExampleKeyForDevPurposeOnly
-OIDC_RP_SIGN_ALGO=RS256
-OIDC_RP_SCOPES="openid email"
+OIDC_RP_IDP_SIGN_KEY=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/certs
+OIDC_OP_JWKS_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/certs
+OIDC_OP_AUTHORIZATION_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/auth
+OIDC_OP_TOKEN_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/token
+OIDC_OP_USER_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/userinfo
+OIDC_OP_LOGOUT_ENDPOINT=https://areum-hub.duckdns.org:8443/realms/master/protocol/openid-connect/logout
+OIDC_RP_CLIENT_ID=docs
+OIDC_RP_CLIENT_SECRET=<YOUR_KEYCLOAK_CLIENT_SECRET>
 
-LOGIN_REDIRECT_URL=https://impress.127.0.0.1.nip.io
-LOGIN_REDIRECT_URL_FAILURE=https://impress.127.0.0.1.nip.io
-LOGOUT_REDIRECT_URL=https://impress.127.0.0.1.nip.io
+# Redirect URLs
+LOGIN_REDIRECT_URL=https://areum-hub.duckdns.org:8444
+LOGIN_REDIRECT_URL_FAILURE=https://areum-hub.duckdns.org:8444/login
+LOGOUT_REDIRECT_URL=https://areum-hub.duckdns.org:8444
 
-OIDC_REDIRECT_ALLOWED_HOSTS=["https://impress.127.0.0.1.nip.io"]
-OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
+# Minio/S3 settings
+AWS_S3_ENDPOINT_URL=http://minio:9000
+AWS_S3_ACCESS_KEY_ID=<YOUR_MINIO_ACCESS_KEY>
+AWS_S3_SECRET_ACCESS_KEY=<YOUR_MINIO_SECRET_KEY>
+AWS_STORAGE_BUCKET_NAME=docs-media-storage
+AWS_S3_REGION_NAME=us-east-1
+AWS_DEFAULT_ACL=public-read
+AWS_S3_CUSTOM_DOMAIN=areum-hub.duckdns.org
+AWS_LOCATION=media
 
-# AI
-AI_BASE_URL=https://openaiendpoint.com
-AI_API_KEY=password
-AI_MODEL=llama
-
-# Frontend
-FRONTEND_THEME=dsfr
+Y_PROVIDER_API_KEY=<YOUR_Y_PROVIDER_API_KEY>
+COLLABORATION_SERVER_SECRET=<YOUR_COLLABORATION_SERVER_SECRET>

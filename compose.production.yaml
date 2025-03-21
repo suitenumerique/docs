@@ -51,14 +51,6 @@ services:
     user: ${DOCKER_USER:-1000}
     image: lasuite/impress-backend:latest
     command: ["celery", "-A", "impress.celery_app", "worker", "-l", "INFO"]
-    environment:
-      - DJANGO_SETTINGS_MODULE=impress.settings
-      - DJANGO_CONFIGURATION=Production
-      - POSTGRES_HOST=postgresql
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=docs
-      - POSTGRES_USER=docs
-      - POSTGRES_PASSWORD=docs_password_please_change
     env_file:
       - env.d/production/backend
       - env.d/production/postgresql

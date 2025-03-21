@@ -1,9 +1,3 @@
-# Postgresql db container configuration
 POSTGRES_DB=keycloak
 POSTGRES_USER=keycloak
-POSTGRES_PASSWORD=<Set postgresql password>
-
-# Keycloak database configuration
-KC_DB_URL_DATABASE=keycloak
-KC_DB_USERNAME=keycloak
-KC_DB_PASSWORD=<Same password as above>
+POSTGRES_PASSWORD=<YOUR_KEYCLOAK_DB_PASSWORD>

@@ -123,16 +123,7 @@ deploy: ## Deploy the application in production mode (includes migrations)
 	@echo "2. Waiting for PostgreSQL to be ready..."
 	sleep 5
 	@echo "3. Running database migrations..."
-	@$(COMPOSE_PRODUCTION) run --rm backend sh -c "\
-		DJANGO_SETTINGS_MODULE=impress.settings \
-		DJANGO_CONFIGURATION=Production \
-		DB_HOST=postgresql \
-		DB_PORT=5432 \
-		DB_NAME=docs \
-		DB_USER=docs \
-		DB_PASSWORD=docs_password_please_change \
-		DJANGO_SKIP_CHECKS=True \
-		python manage.py migrate --noinput --skip-checks"
+	@$(COMPOSE_PRODUCTION) run --rm backend python manage.py migrate --noinput --skip-checks
 	@echo "4. Starting all services..."
 	@$(COMPOSE_PRODUCTION) up -d
 	@echo "Deployment complete!"

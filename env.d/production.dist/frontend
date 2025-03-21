@@ -1,0 +1,7 @@
+# API and service URLs
+NEXT_PUBLIC_API_ORIGIN=https://areum-hub.duckdns.org:8444
+NEXT_PUBLIC_Y_PROVIDER_URL=wss://areum-hub.duckdns.org:8444
+NEXT_PUBLIC_MEDIA_URL=https://areum-hub.duckdns.org:8444
+
+# Service worker settings
+NEXT_PUBLIC_SW_DEACTIVATED=true 
