@@ -11,6 +11,7 @@ and this project adheres to
 ## Added
 
 - 📝(doc) add publiccode.yml
+- ✨(helm) Service Account support for K8s Resources in Helm Charts #778
 
 ## Changed
 
