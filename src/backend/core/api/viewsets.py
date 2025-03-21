@@ -143,6 +143,7 @@ class UserViewSet(
     permission_classes = [permissions.IsSelf]
     queryset = models.User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
+    pagination_class = None
 
     def get_queryset(self):
         """
@@ -157,10 +158,10 @@ class UserViewSet(
             return queryset
 
         # Exclude all users already in the given document
-        if document_id := self.request.GET.get("document_id", ""):
+        if document_id := self.request.query_params.get("document_id", ""):
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
-        if not (query := self.request.GET.get("q", "")) or len(query) < 5:
+        if not (query := self.request.query_params.get("q", "")) or len(query) < 5:
             return queryset.none()
 
         # For emails, match emails by Levenstein distance to prevent typing errors
@@ -170,7 +171,7 @@ class UserViewSet(
                     distance=RawSQL("levenshtein(email::text, %s::text)", (query,))
                 )
                 .filter(distance__lte=3)
-                .order_by("distance", "email")
+                .order_by("distance", "email")[: settings.API_USERS_LIST_LIMIT]
             )
 
         # Use trigram similarity for non-email-like queries
@@ -180,7 +181,7 @@ class UserViewSet(
             queryset.filter(email__trigram_word_similar=query)
             .annotate(similarity=TrigramSimilarity("email", query))
             .filter(similarity__gt=0.2)
-            .order_by("-similarity", "email")
+            .order_by("-similarity", "email")[: settings.API_USERS_LIST_LIMIT]
         )
 
     @drf.decorators.action(

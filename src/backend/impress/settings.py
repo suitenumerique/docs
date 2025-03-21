@@ -604,6 +604,12 @@ class Base(Configuration):
         },
     }
 
+    API_USERS_LIST_LIMIT = values.PositiveIntegerValue(
+        default=5,
+        environ_name="API_USERS_LIST_LIMIT",
+        environ_prefix=None,
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):

@@ -21,6 +21,8 @@ and this project adheres to
 - 🐛(back) allow only images to be used with the cors-proxy #781
 - 🐛(backend) stop returning inactive users on the list endpoint #636
 - 🔒️(backend) require at least 5 characters to search for users #636
+- 🔒️(back) throttle user list endpoint #636
+- 🔒️(back) remove pagination and limit to 5 for user list endpoint #636
 
 
 ## [2.5.0] - 2025-03-18
