@@ -1,6 +1,6 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
+import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 
@@ -9,7 +9,7 @@ export type UsersParams = {
   docId: Doc['id'];
 };
 
-type UsersResponse = APIList<User>;
+type UsersResponse = User[];
 
 export const getUsers = async ({
   query,

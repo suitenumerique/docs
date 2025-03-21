@@ -125,7 +125,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
   }, [invitationQuery, t]);
 
   const searchUserData: QuickSearchData<User> = useMemo(() => {
-    const users = searchUsersQuery.data?.results || [];
+    const users = searchUsersQuery.data || [];
     const isEmail = isValidEmail(userQuery);
     const newUser: User = {
       id: userQuery,
