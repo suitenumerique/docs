@@ -46,19 +46,6 @@ All commit messages must adhere to the following format:
 Implemented login and signup features, and integrated OAuth2 for social login.
 ```
 
-## Changelog Update
-
-Please add a line to the changelog describing your development. The changelog entry should include a brief summary of the changes, this helps in tracking changes effectively and keeping everyone informed. We usually include the title of the pull request, followed by the pull request ID to finish the log entry. The changelog line should be less than 80 characters in total.
-
-### Example Changelog Message
-```
-## [Unreleased]
-
-## Added
-
-- ✨(frontend) add AI to the project #321
-```
-
 ## Pull Requests
 
 It is nice to add information about the purpose of the pull request to help reviewers understand the context and intent of the changes. If you can, add some pictures or a small video to show the changes.
@@ -67,7 +54,6 @@ It is nice to add information about the purpose of the pull request to help revi
 - check your commits
 - check the linting: `make lint && make frontend-lint`
 - check the tests: `make test`
-- add a changelog entry
 
 Once all the required tests have passed, you can request a review from the project maintainers.
 
