@@ -85,7 +85,7 @@ This command builds the `app` container, installs dependencies, performs databas
 
 Your Docker services should now be up and running 🎉
 
-You can access to the project by going to <http://localhost:3000>.
+You can access the project by going to <http://localhost:3000>.
 
 You will be prompted to log in, the default credentials are:
 
