@@ -96,7 +96,7 @@ class LinkReachChoices(models.TextChoices):
         """
         # If no ancestors, return all options
         if not ancestors_links:
-            return {reach: LinkRoleChoices.values for reach in cls.values}
+            return dict.fromkeys(cls.values, LinkRoleChoices.values)
 
         # Initialize result with all possible reaches and role options as sets
         result = {reach: set(LinkRoleChoices.values) for reach in cls.values}
