@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components';
 
+import { useCheckEmbedCompatibility } from '../../hook/useCheckEmbedCompatibility';
 import { DocsBlockNoteEditor } from '../../types';
 
 export const PDFPreview = (
@@ -28,25 +29,30 @@ export const PDFPreview = (
   >,
 ) => {
   const { t } = useTranslation();
+  const { isCompatible } = useCheckEmbedCompatibility();
 
   const pdfUrl = props.block.props.url;
 
   return (
-    <embed
-      src={pdfUrl}
-      type="application/pdf"
-      width="100%"
-      height="500px"
-      contentEditable={false}
-      draggable={false}
-      onClick={() => props.editor.setTextCursorPosition(props.block)}
-      aria-label={props.block.props.name}
-    >
-      <p>
-        {t('Your browser does not support PDFs.')}{' '}
-        <a href={pdfUrl}>{t('Download the pdf instead.')}</a>
-      </p>
-    </embed>
+    <>
+      {isCompatible ? (
+        <embed
+          src={pdfUrl}
+          type="application/pdf"
+          width="100%"
+          height="500px"
+          contentEditable={false}
+          draggable={false}
+          onClick={() => props.editor.setTextCursorPosition(props.block)}
+          aria-label={props.block.props.name}
+        />
+      ) : (
+        <p>
+          {t('Your browser does not support PDFs.')}{' '}
+          <a href={pdfUrl}>{t('Download the pdf instead.')}</a>
+        </p>
+      )}
+    </>
   );
 };
 
