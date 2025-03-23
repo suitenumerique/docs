@@ -210,7 +210,10 @@
       "You do not have permission to view users sharing this document or modify link settings.": "Ihnen fehlt die Berechtigung, die das Dokument teilenden Benutzer einzusehen oder die Linkeinstellungen zu ändern.",
       "Your current document will revert to this version.": "Ihr aktuelles Dokument wird auf diese Version zurückgesetzt.",
       "Your {{format}} was downloaded succesfully": "Ihr {{format}} wurde erfolgreich heruntergeladen",
-      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "sie haben dem Website-Manager einen Mangel an Barrierefreiheit gemeldet, der Ihnen den Zugriff auf Inhalte oder einen der Dienste des Portals verwehrt, und Sie haben keine zufriedenstellende Antwort erhalten."
+      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "sie haben dem Website-Manager einen Mangel an Barrierefreiheit gemeldet, der Ihnen den Zugriff auf Inhalte oder einen der Dienste des Portals verwehrt, und Sie haben keine zufriedenstellende Antwort erhalten.",
+      "Embed a pdf file": "Eine PDF-Datei einbetten",
+      "Your browser does not support PDFs.": "Ihr Browser unterstützt keine PDFs.",
+      "Download the pdf instead.": "Laden Sie stattdessen die PDF herunter."
     }
   },
   "en": {
@@ -438,7 +441,10 @@
       "home-content-open-source-part1": "Docs est construit sur <2>Django Rest Framework</2> et <6>Next.js</6>. Nous utilisons également <9>Yjs</9> et <13>BlockNote.js</13>, deux projets que nous sommes fiers de sponsoriser.",
       "home-content-open-source-part2": "Vous pouvez facilement auto-héberger Docs (consultez notre <2>documentation</2> d'installation).<br/>Docs utilise une <7>licence</7> (MIT) adaptée à l'innovation et aux entreprises.<br/>Les contributions sont les bienvenues (consultez notre feuille de route <13>ici</13>).",
       "home-content-open-source-part3": "Docs est le résultat d'un effort conjoint mené par les gouvernements français 🇫🇷🥖 <1>(DINUM)</1> et allemand 🇩🇪🥨 <5>(ZenDiS)</5>.",
-      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "vous avez signalé au responsable du site internet un défaut d'accessibilité qui vous empêche d'accéder à un contenu ou à un des services du portail et vous n'avez pas obtenu de réponse satisfaisante."
+      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "vous avez signalé au responsable du site internet un défaut d'accessibilité qui vous empêche d'accéder à un contenu ou à un des services du portail et vous n'avez pas obtenu de réponse satisfaisante.",
+      "Embed a pdf file": "Intégrer un fichier PDF",
+      "Your browser does not support PDFs.": "Votre navigateur ne prend pas en charge les fichiers PDF.",
+      "Download the pdf instead.": "Téléchargez plutôt le fichier PDF."
     }
   },
   "nl": {
@@ -664,7 +670,10 @@
       "home-content-open-source-part1": "home-content-open-source-part1",
       "home-content-open-source-part2": "home-content-open-source-part2",
       "home-content-open-source-part3": "home-content-open-source-part3",
-      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "u heeft aan de websitebeheerder gerapporteerd dat u geen toegang heeft tot de inhoud of een van de diensten van het portaal, en u hebt geen bevredigend antwoord ontvangen."
+      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "u heeft aan de websitebeheerder gerapporteerd dat u geen toegang heeft tot de inhoud of een van de diensten van het portaal, en u hebt geen bevredigend antwoord ontvangen.",
+      "Embed a pdf file": "Een PDF-bestand insluiten",
+      "Your browser does not support PDFs.": "Uw browser ondersteunt geen PDF's.",
+      "Download the pdf instead.": "Download de PDF in plaats daarvan."
     }
   },
   "tr": { "translation": {} }
