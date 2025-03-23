@@ -13,13 +13,16 @@ import { DocsBlockSchema } from '../types';
 
 import {
   getDividerReactSlashMenuItems,
+  getPdfSlackMenuItems,
   getQuoteReactSlashMenuItems,
 } from './custom-blocks';
 
 export const BlockNoteSuggestionMenu = () => {
   const editor = useBlockNoteEditor<DocsBlockSchema>();
   const { t } = useTranslation();
-  const basicBlocksName = useDictionary().slash_menu.page_break.group;
+  const dictionaryDate = useDictionary();
+  const basicBlocksName = dictionaryDate.slash_menu.page_break.group;
+  const fileBlocksName = dictionaryDate.slash_menu.file.group;
 
   const getSlashMenuItems = useMemo(() => {
     return async (query: string) =>
@@ -30,11 +33,12 @@ export const BlockNoteSuggestionMenu = () => {
             getPageBreakReactSlashMenuItems(editor),
             getQuoteReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
+            getPdfSlackMenuItems(editor, t, fileBlocksName),
           ),
           query,
         ),
       );
-  }, [basicBlocksName, editor, t]);
+  }, [basicBlocksName, fileBlocksName, editor, t]);
 
   return (
     <SuggestionMenuController
