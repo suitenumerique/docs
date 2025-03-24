@@ -59,8 +59,32 @@ def test_api_document_accesses_list_authenticated_unrelated():
     }
 
 
+def test_api_document_accesses_list_unexisting_document():
+    """
+    Listing document accesses for an unexisting document should return an empty list.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get(f"/api/v1.0/documents/{uuid4()!s}/accesses/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "count": 0,
+        "next": None,
+        "previous": None,
+        "results": [],
+    }
+
+
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_list_authenticated_related(via, mock_user_teams):
+@pytest.mark.parametrize(
+    "role", [role for role in models.RoleChoices if role not in models.PRIVILEGED_ROLES]
+)
+def test_api_document_accesses_list_authenticated_related_non_privileged(
+    via, role, mock_user_teams
+):
     """
     Authenticated users should be able to list document accesses for a document
     to which they are directly related, whatever their role in the document.
@@ -70,24 +94,114 @@ def test_api_document_accesses_list_authenticated_related(via, mock_user_teams):
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    owner = factories.UserFactory()
+    accesses = []
+
+    document_access = factories.UserDocumentAccessFactory(
+        user=owner, role=models.RoleChoices.OWNER
+    )
+    accesses.append(document_access)
+    document = document_access.document
+    if via == USER:
+        models.DocumentAccess.objects.create(
+            document=document,
+            user=user,
+            role=role,
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        models.DocumentAccess.objects.create(
+            document=document,
+            team="lasuite",
+            role=role,
+        )
+
+    access1 = factories.TeamDocumentAccessFactory(document=document)
+    access2 = factories.UserDocumentAccessFactory(document=document)
+    accesses.append(access1)
+    accesses.append(access2)
+
+    # Accesses for other documents to which the user is related should not be listed either
+    other_access = factories.UserDocumentAccessFactory(user=user)
+    factories.UserDocumentAccessFactory(document=other_access.document)
+
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+    )
+
+    # Return only owners
+    owners_accesses = [
+        access for access in accesses if access.role in models.PRIVILEGED_ROLES
+    ]
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == len(owners_accesses)
+    assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
+        [
+            {
+                "id": str(access.id),
+                "user": {
+                    "id": None,
+                    "email": None,
+                    "full_name": access.user.full_name,
+                    "short_name": access.user.short_name,
+                }
+                if access.user
+                else None,
+                "team": access.team,
+                "role": access.role,
+                "abilities": access.get_abilities(user),
+            }
+            for access in owners_accesses
+        ],
+        key=lambda x: x["id"],
+    )
+
+    for access in content["results"]:
+        assert access["role"] in models.PRIVILEGED_ROLES
+
+
+@pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("role", models.PRIVILEGED_ROLES)
+def test_api_document_accesses_list_authenticated_related_privileged_roles(
+    via, role, mock_user_teams
+):
+    """
+    Authenticated users should be able to list document accesses for a document
+    to which they are directly related, whatever their role in the document.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    owner = factories.UserFactory()
+    accesses = []
+
+    document_access = factories.UserDocumentAccessFactory(
+        user=owner, role=models.RoleChoices.OWNER
+    )
+    accesses.append(document_access)
+    document = document_access.document
     user_access = None
     if via == USER:
         user_access = models.DocumentAccess.objects.create(
             document=document,
             user=user,
-            role=random.choice(models.RoleChoices.values),
+            role=role,
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         user_access = models.DocumentAccess.objects.create(
             document=document,
             team="lasuite",
-            role=random.choice(models.RoleChoices.values),
+            role=role,
         )
 
     access1 = factories.TeamDocumentAccessFactory(document=document)
     access2 = factories.UserDocumentAccessFactory(document=document)
+    accesses.append(access1)
+    accesses.append(access2)
 
     # Accesses for other documents to which the user is related should not be listed either
     other_access = factories.UserDocumentAccessFactory(user=user)
@@ -102,7 +216,7 @@ def test_api_document_accesses_list_authenticated_related(via, mock_user_teams):
 
     assert response.status_code == 200
     content = response.json()
-    assert len(content["results"]) == 3
+    assert len(content["results"]) == 4
     assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
         [
             {
@@ -125,6 +239,13 @@ def test_api_document_accesses_list_authenticated_related(via, mock_user_teams):
                 "team": "",
                 "role": access2.role,
                 "abilities": access2.get_abilities(user),
+            },
+            {
+                "id": str(document_access.id),
+                "user": serializers.UserSerializer(instance=owner).data,
+                "team": "",
+                "role": models.RoleChoices.OWNER,
+                "abilities": document_access.get_abilities(user),
             },
         ],
         key=lambda x: x["id"],
@@ -184,7 +305,10 @@ def test_api_document_accesses_retrieve_authenticated_unrelated():
 
 
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_retrieve_authenticated_related(via, mock_user_teams):
+@pytest.mark.parametrize("role", models.RoleChoices)
+def test_api_document_accesses_retrieve_authenticated_related(
+    via, role, mock_user_teams
+):
     """
     A user who is related to a document should be allowed to retrieve the
     associated document user accesses.
@@ -196,10 +320,12 @@ def test_api_document_accesses_retrieve_authenticated_related(via, mock_user_tea
 
     document = factories.DocumentFactory()
     if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user)
+        factories.UserDocumentAccessFactory(document=document, user=user, role=role)
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
-        factories.TeamDocumentAccessFactory(document=document, team="lasuite")
+        factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role=role
+        )
 
     access = factories.UserDocumentAccessFactory(document=document)
 
@@ -207,16 +333,19 @@ def test_api_document_accesses_retrieve_authenticated_related(via, mock_user_tea
         f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
     )
 
-    access_user = serializers.UserSerializer(instance=access.user).data
+    if not role in models.PRIVILEGED_ROLES:
+        assert response.status_code == 403
+    else:
+        access_user = serializers.UserSerializer(instance=access.user).data
 
-    assert response.status_code == 200
-    assert response.json() == {
-        "id": str(access.id),
-        "user": access_user,
-        "team": "",
-        "role": access.role,
-        "abilities": access.get_abilities(user),
-    }
+        assert response.status_code == 200
+        assert response.json() == {
+            "id": str(access.id),
+            "user": access_user,
+            "team": "",
+            "role": access.role,
+            "abilities": access.get_abilities(user),
+        }
 
 
 def test_api_document_accesses_update_anonymous():

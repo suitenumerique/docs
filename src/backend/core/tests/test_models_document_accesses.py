@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 
 import pytest
 
-from core import factories
+from core import factories, models
 
 pytestmark = pytest.mark.django_db
 
@@ -294,7 +294,7 @@ def test_models_document_access_get_abilities_for_editor_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -311,7 +311,7 @@ def test_models_document_access_get_abilities_for_editor_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -333,7 +333,7 @@ def test_models_document_access_get_abilities_for_editor_of_editor_user(
 
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -353,7 +353,7 @@ def test_models_document_access_get_abilities_for_reader_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -370,7 +370,7 @@ def test_models_document_access_get_abilities_for_reader_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -392,7 +392,7 @@ def test_models_document_access_get_abilities_for_reader_of_reader_user(
 
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -412,8 +412,16 @@ def test_models_document_access_get_abilities_preset_role(django_assert_num_quer
 
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
     }
+
+
+@pytest.mark.parametrize("role", models.RoleChoices)
+def test_models_document_access_get_abilities_retrieve_own_access(role):
+    """Check abilities of self access for the owner of a document."""
+    access = factories.UserDocumentAccessFactory(role=role)
+    abilities = access.get_abilities(access.user)
+    assert abilities["retrieve"] is True

@@ -364,10 +364,9 @@ class BaseAccess(BaseModel):
     class Meta:
         abstract = True
 
-    def _get_abilities(self, resource, user):
+    def _get_roles(self, resource, user):
         """
-        Compute and return abilities for a given user taking into account
-        the current state of the object.
+        Get the roles a user has on a resource.
         """
         roles = []
         if user.is_authenticated:
@@ -381,6 +380,15 @@ class BaseAccess(BaseModel):
                     ).values_list("role", flat=True)
                 except (self._meta.model.DoesNotExist, IndexError):
                     roles = []
+
+        return roles
+
+    def _get_abilities(self, resource, user):
+        """
+        Compute and return abilities for a given user taking into account
+        the current state of the object.
+        """
+        roles = self._get_roles(resource, user)
 
         is_owner_or_admin = bool(
             set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
@@ -1103,7 +1111,41 @@ class DocumentAccess(BaseAccess):
         """
         Compute and return abilities for a given user on the document access.
         """
-        return self._get_abilities(self.document, user)
+        roles = self._get_roles(self.document, user)
+        is_owner_or_admin = bool(set(roles).intersection(set(PRIVILEGED_ROLES)))
+        if self.role == RoleChoices.OWNER:
+            can_delete = (
+                RoleChoices.OWNER in roles
+                and self.document.accesses.filter(role=RoleChoices.OWNER).count() > 1
+            )
+            set_role_to = (
+                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                if can_delete
+                else []
+            )
+        else:
+            can_delete = is_owner_or_admin
+            set_role_to = []
+            if RoleChoices.OWNER in roles:
+                set_role_to.append(RoleChoices.OWNER)
+            if is_owner_or_admin:
+                set_role_to.extend(
+                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                )
+
+        # Remove the current role as we don't want to propose it as an option
+        try:
+            set_role_to.remove(self.role)
+        except ValueError:
+            pass
+
+        return {
+            "destroy": can_delete,
+            "update": bool(set_role_to) and is_owner_or_admin,
+            "partial_update": bool(set_role_to) and is_owner_or_admin,
+            "retrieve": self.user and self.user.id == user.id or is_owner_or_admin,
+            "set_role_to": set_role_to,
+        }
 
 
 class Template(BaseModel):
