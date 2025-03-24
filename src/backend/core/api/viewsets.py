@@ -846,14 +846,15 @@ class DocumentViewSet(
         )
 
         # Get the highest readable ancestor
-        highest_readable = ancestors.readable_per_se(request.user).only("depth").first()
+        highest_readable = (
+            ancestors.readable_per_se(request.user).only("depth", "path").first()
+        )
         if highest_readable is None:
             raise (
                 drf.exceptions.PermissionDenied()
                 if request.user.is_authenticated
                 else drf.exceptions.NotAuthenticated()
             )
-
         paths_links_mapping = {}
         ancestors_links = []
         children_clause = db.Q()
@@ -876,6 +877,17 @@ class DocumentViewSet(
 
         queryset = ancestors.filter(depth__gte=highest_readable.depth) | children
         queryset = queryset.order_by("path")
+        # Annotate if the current document is the highest ancestor for the user
+        queryset = queryset.annotate(
+            is_highest_ancestor_for_user=db.Case(
+                db.When(
+                    path=db.Value(highest_readable.path),
+                    then=db.Value(True),
+                ),
+                default=db.Value(False),
+                output_field=db.BooleanField(),
+            )
+        )
         queryset = self.annotate_user_roles(queryset)
         queryset = self.annotate_is_favorite(queryset)
 

@@ -1305,3 +1305,47 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
 def test_models_documents_get_select_options(ancestors_links, select_options):
     """Validate that the "get_select_options" method operates as expected."""
     assert models.LinkReachChoices.get_select_options(ancestors_links) == select_options
+
+
+def test_models_documents_compute_ancestors_links_no_highest_readable():
+    """Test the compute_ancestors_links method."""
+    document = factories.DocumentFactory(link_reach="public")
+    assert document.compute_ancestors_links(user=AnonymousUser()) == []
+
+
+def test_models_documents_compute_ancestors_links_highest_readable(
+    django_assert_num_queries,
+):
+    """Test the compute_ancestors_links method."""
+    user = factories.UserFactory()
+    other_user = factories.UserFactory()
+    root = factories.DocumentFactory(
+        link_reach="restricted", link_role="reader", users=[user]
+    )
+
+    factories.DocumentFactory(
+        parent=root, link_reach="public", link_role="reader", users=[user]
+    )
+    child2 = factories.DocumentFactory(
+        parent=root,
+        link_reach="authenticated",
+        link_role="editor",
+        users=[user, other_user],
+    )
+    child3 = factories.DocumentFactory(
+        parent=child2,
+        link_reach="authenticated",
+        link_role="reader",
+        users=[user, other_user],
+    )
+
+    with django_assert_num_queries(2):
+        assert child3.compute_ancestors_links(user=user) == [
+            {"link_reach": root.link_reach, "link_role": root.link_role},
+            {"link_reach": child2.link_reach, "link_role": child2.link_role},
+        ]
+
+    with django_assert_num_queries(2):
+        assert child3.compute_ancestors_links(user=other_user) == [
+            {"link_reach": child2.link_reach, "link_role": child2.link_role},
+        ]

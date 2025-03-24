@@ -789,7 +789,7 @@ def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
     )
     expected_roles = {access.role for access in accesses}
 
-    with django_assert_max_num_queries(12):
+    with django_assert_max_num_queries(14):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200

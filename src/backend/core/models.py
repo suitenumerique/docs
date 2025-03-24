@@ -754,6 +754,32 @@ class Document(MP_Node, BaseModel):
 
         return dict(links_definitions)  # Convert defaultdict back to a normal dict
 
+    def compute_ancestors_links(self, user):
+        """
+        Compute the ancestors links for the current document up to the highest readable ancestor.
+        """
+        ancestors = (
+            (self.get_ancestors() | self._meta.model.objects.filter(pk=self.pk))
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
+        highest_readable = ancestors.readable_per_se(user).only("depth").first()
+
+        if highest_readable is None:
+            return []
+
+        ancestors_links = []
+        paths_links_mapping = {}
+        for ancestor in ancestors.filter(depth__gte=highest_readable.depth):
+            ancestors_links.append(
+                {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
+            )
+            paths_links_mapping[ancestor.path] = ancestors_links.copy()
+
+        ancestors_links = paths_links_mapping.get(self.path[: -self.steplen], [])
+
+        return ancestors_links
+
     def get_abilities(self, user, ancestors_links=None):
         """
         Compute and return abilities for a given user on the document.
@@ -761,7 +787,7 @@ class Document(MP_Node, BaseModel):
         if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
             ancestors_links = []
         elif ancestors_links is None:
-            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
+            ancestors_links = self.compute_ancestors_links(user=user)
 
         roles = set(
             self.get_roles(user)

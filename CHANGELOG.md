@@ -16,6 +16,10 @@ and this project adheres to
 
 - ♻️(frontend) Integrate UI kit #783
 
+## Fixed
+
+- 🐛(backend) compute ancestor_links in get_abilities if needed #725
+
 ## [2.6.0] - 2025-03-21
 
 ## Added
