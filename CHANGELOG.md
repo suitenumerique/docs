@@ -19,6 +19,7 @@ and this project adheres to
 ## Fixed
 
 - 🐛(backend) compute ancestor_links in get_abilities if needed #725
+- 🔒️(back) restrict access to document accesses #801
 
 ## [2.6.0] - 2025-03-21
 

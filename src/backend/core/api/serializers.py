@@ -27,6 +27,26 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "email", "full_name", "short_name"]
 
 
+class UserLightSerializer(UserSerializer):
+    """Serialize users with limited fields."""
+
+    id = serializers.SerializerMethodField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
+
+    def get_id(self, _user):
+        """Return always None. Here to have the same fields than in UserSerializer."""
+        return None
+
+    def get_email(self, _user):
+        """Return always None. Here to have the same fields than in UserSerializer."""
+        return None
+
+    class Meta:
+        model = models.User
+        fields = ["id", "email", "full_name", "short_name"]
+        read_only_fields = ["id", "email", "full_name", "short_name"]
+
+
 class BaseAccessSerializer(serializers.ModelSerializer):
     """Serialize template accesses."""
 
@@ -116,6 +136,17 @@ class DocumentAccessSerializer(BaseAccessSerializer):
         resource_field_name = "document"
         fields = ["id", "user", "user_id", "team", "role", "abilities"]
         read_only_fields = ["id", "abilities"]
+
+
+class DocumentAccessLightSerializer(DocumentAccessSerializer):
+    """Serialize document accesses with limited fields."""
+
+    user = UserLightSerializer(read_only=True)
+
+    class Meta:
+        model = models.DocumentAccess
+        fields = ["id", "user", "team", "role", "abilities"]
+        read_only_fields = ["id", "team", "role", "abilities"]
 
 
 class TemplateAccessSerializer(BaseAccessSerializer):

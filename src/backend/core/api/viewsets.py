@@ -1420,12 +1420,7 @@ class DocumentViewSet(
 
 class DocumentAccessViewSet(
     ResourceAccessViewsetMixin,
-    drf.mixins.CreateModelMixin,
-    drf.mixins.DestroyModelMixin,
-    drf.mixins.ListModelMixin,
-    drf.mixins.RetrieveModelMixin,
-    drf.mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
+    viewsets.ModelViewSet,
 ):
     """
     API ViewSet for all interactions with document accesses.
@@ -1457,6 +1452,32 @@ class DocumentAccessViewSet(
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
     serializer_class = serializers.DocumentAccessSerializer
+    is_current_user_owner_or_admin = False
+
+    def get_queryset(self):
+        """Return the queryset according to the action."""
+        queryset = super().get_queryset()
+
+        if self.action == "list":
+            try:
+                document = models.Document.objects.get(pk=self.kwargs["resource_id"])
+            except models.Document.DoesNotExist:
+                return queryset.none()
+
+            roles = set(document.get_roles(self.request.user))
+            is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+            self.is_current_user_owner_or_admin = is_owner_or_admin
+            if not is_owner_or_admin:
+                # Return only the document owner access
+                queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list" and not self.is_current_user_owner_or_admin:
+            return serializers.DocumentAccessLightSerializer
+
+        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         """Add a new access to the document and send an email to the new added user."""
