@@ -1,3 +1,5 @@
+# Installation in Docker
+Please refer to the [docker compose file](https://github.com/suitenumerique/docs/blob/main/docker-compose.yml)
 # Installation on a k8s cluster
 
 This document is a step-by-step guide that describes how to install Docs on a k8s cluster without AI features. It's a teaching document to learn how it's work. It needs to be adapt for production environment.
