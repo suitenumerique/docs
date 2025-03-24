@@ -445,28 +445,15 @@ class DocumentQuerySet(MP_NodeQuerySet):
         return self.filter(link_reach=LinkReachChoices.PUBLIC)
 
 
-class DocumentManager(MP_NodeManager):
+class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
     """
     Custom manager for the Document model, enabling the use of the custom
     queryset methods directly from the model manager.
     """
 
     def get_queryset(self):
-        """
-        Overrides the default get_queryset method to return a custom queryset.
-        :return: An instance of DocumentQuerySet.
-        """
-        return DocumentQuerySet(self.model, using=self._db)
-
-    def readable_per_se(self, user):
-        """
-        Filters documents based on user permissions using the custom queryset.
-        :param user: The user for whom readable documents are to be fetched.
-        :return: A queryset of documents for which the user has direct access,
-            team access or link access. This will not return all the documents
-            that a user can read because it can be obtained via an ancestor.
-        """
-        return self.get_queryset().readable_per_se(user)
+        """Sets the custom queryset as the default."""
+        return self._queryset_class(self.model).order_by("path")
 
 
 class Document(MP_Node, BaseModel):
