@@ -61,7 +61,7 @@ export function HomeContent() {
             $gap={isMobile ? '115px' : '230px'}
             $padding={{ bottom: '3rem' }}
           >
-            <Box $gap="30px">
+            <Box $gap={isMobile ? '115px' : '30px'}>
               <HomeSection
                 isColumn={false}
                 isSmallDevice={isTablet}

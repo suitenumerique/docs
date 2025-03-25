@@ -51,7 +51,11 @@ export const Header = () => {
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <IconDocs aria-label={t('Docs Logo')} width={32} />
+          <IconDocs
+            aria-label={t('Docs Logo')}
+            width={32}
+            color={colors['primary-text']}
+          />
           <Title />
         </Box>
       </StyledLink>
