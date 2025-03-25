@@ -13,6 +13,8 @@ and this project adheres to
 - 🚩(backend) add feature flag for the footer #841
 - 🔧(backend) add view to manage footer json #841
 - ✨(frontend) create generic theme #792
+- ✨(frontend) add custom css style #771
+- 🏗️ Footer configurable #792
 
 ## Changed
 
@@ -27,7 +29,6 @@ and this project adheres to
 ## Added
 
 - 📄(legal) Require contributors to sign a DCO #779
-- ✨(frontend) add custom css style #771
 
 ## Changed
 
