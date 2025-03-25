@@ -30,4 +30,37 @@ body {
 
 Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom CSS file. Once you've done this, our application will load your custom CSS file and apply the styles, changing the background color to the custom color you specified.
 
+----
+
+# **Footer Configuration** 📝
+
+The footer is configurable and can be activated with a feature flag. 🚩
+
+### New Settings 🔧
+
+The available settings for the footer are :
+
+```shellscript
+# Feature flag on the footer:
+FRONTEND_FOOTER_FEATURE_ENABLED=[boolean]
+
+# URL to build your footer thanks to a JSON at runtime:
+FRONTEND_URL_JSON_FOOTER=<http://localhost:3000/contents/footer-demo.json>
+
+# Json cache duration:
+FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT=[INT:Seconds]
+```
+
+### Example of JSON
+
+The json must follow some rules, here the example: https://github.com/suitenumerique/docs/blob/main/src/frontend/apps/impress/public/contents/footer-demo.json
+
+
+`default` is the fallback if the language is not supported.
+
+--- 
+Below is a visual example of a configured footer ⬇️:
+
+![Footer Configuration Example](./assets/footer-configurable.png)
+
 
