@@ -15,6 +15,7 @@ and this project adheres to
 ## Changed
 
 - ♻️(frontend) Integrate UI kit #783
+- 🏗️(y-provider) manage auth in y-provider app
 
 ## Fixed
 

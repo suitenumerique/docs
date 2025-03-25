@@ -380,10 +380,7 @@ class DocumentViewSet(
     9. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    10. **Collaboration Auth**: Authorize access to the collaboration server for a document.
-        Example: GET /documents/collaboration-auth/
-
-    11. **AI Transform**: Apply a transformation action on a piece of text with AI.
+    10. **AI Transform**: Apply a transformation action on a piece of text with AI.
         Example: POST /documents/{id}/ai-transform/
         Expected data:
         - text (str): The input text.
@@ -391,7 +388,7 @@ class DocumentViewSet(
         Returns: JSON response with the processed text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    12. **AI Translate**: Translate a piece of text with AI.
+    11. **AI Translate**: Translate a piece of text with AI.
         Example: POST /documents/{id}/ai-translate/
         Expected data:
         - text (str): The input text.
@@ -1207,17 +1204,6 @@ class DocumentViewSet(
             logger.debug("Failed to extract parameters from subrequest URL: %s", exc)
             raise drf.exceptions.PermissionDenied() from exc
 
-    def _auth_get_document(self, pk):
-        """
-        Retrieves the document corresponding to the given primary key (pk).
-        Raises PermissionDenied if the document is not found.
-        """
-        try:
-            return models.Document.objects.get(pk=pk)
-        except models.Document.DoesNotExist as exc:
-            logger.debug("Document with ID '%s' does not exist", pk)
-            raise drf.exceptions.PermissionDenied() from exc
-
     @drf.decorators.action(detail=False, methods=["get"], url_path="media-auth")
     def media_auth(self, request, *args, **kwargs):
         """
@@ -1264,42 +1250,6 @@ class DocumentViewSet(
         request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
-
-    @drf.decorators.action(detail=False, methods=["get"], url_path="collaboration-auth")
-    def collaboration_auth(self, request, *args, **kwargs):
-        """
-        This view is used by an Nginx subrequest to control access to a document's
-        collaboration server.
-        """
-        parsed_url = self._auth_get_original_url(request)
-        url_params = self._auth_get_url_params(
-            enums.COLLABORATION_WS_URL_PATTERN, parsed_url.query
-        )
-        document = self._auth_get_document(url_params["pk"])
-
-        abilities = document.get_abilities(request.user)
-        if not abilities.get(self.action, False):
-            logger.debug(
-                "User '%s' lacks permission for document '%s'",
-                request.user,
-                document.pk,
-            )
-            raise drf.exceptions.PermissionDenied()
-
-        if not settings.COLLABORATION_SERVER_SECRET:
-            logger.debug("Collaboration server secret is not defined")
-            raise drf.exceptions.PermissionDenied()
-
-        # Add the collaboration server secret token to the headers
-        headers = {
-            "Authorization": settings.COLLABORATION_SERVER_SECRET,
-            "X-Can-Edit": str(abilities["partial_update"]),
-        }
-
-        if request.user.is_authenticated:
-            headers["X-User-Id"] = str(request.user.id)
-
-        return drf.response.Response("authorized", headers=headers, status=200)
 
     @drf.decorators.action(
         detail=True,

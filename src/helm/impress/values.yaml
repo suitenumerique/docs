@@ -75,15 +75,11 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.customBackends Add custom backends to ingress
   customBackends: []
 
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-response-headers
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-url
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/enable-websocket
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
   annotations:
-    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Can-Edit, X-User-Id"
-    nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/collaboration-auth/
     nginx.ingress.kubernetes.io/enable-websocket: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
