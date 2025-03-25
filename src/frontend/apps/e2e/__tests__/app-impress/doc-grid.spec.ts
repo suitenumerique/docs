@@ -208,7 +208,6 @@ test.describe('Documents filters', () => {
 
     // Initial state
     await expect(allDocs).toBeVisible();
-    await expect(allDocs).toHaveCSS('background-color', 'rgb(238, 238, 238)');
     await expect(allDocs).toHaveAttribute('aria-selected', 'true');
 
     await expect(myDocs).toBeVisible();

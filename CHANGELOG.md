@@ -12,6 +12,7 @@ and this project adheres to
 
 - 🚩(backend) add feature flag for the footer #841
 - 🔧(backend) add view to manage footer json #841
+- ✨(frontend) create generic theme #792
 
 ## Changed
 

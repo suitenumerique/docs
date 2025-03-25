@@ -80,6 +80,7 @@
   --c--theme--colors--greyscale-1000: #161616;
   --c--theme--colors--primary-action: #1212ff;
   --c--theme--colors--primary-bg: #fafafa;
+  --c--theme--colors--primary-focus: #0a76f6;
   --c--theme--colors--blue-400: #7ab1e8;
   --c--theme--colors--blue-500: #417dc4;
   --c--theme--colors--blue-600: #3558a2;
@@ -448,8 +449,9 @@
     --c--theme--colors--greyscale-950
   );
   --c--components--forms-select--font-size: 14px;
-  --c--components--la-gauffre--activated: true;
-  --c--components--home-proconnect--activated: true;
+  --c--components--la-gaufre: true;
+  --c--components--home-proconnect: true;
+  --c--components--beta: true;
 }
 
 .cunningham-theme--dark {
@@ -499,6 +501,141 @@
   --c--theme--colors--danger-700: #c36666;
   --c--theme--colors--danger-800: #ae6666;
   --c--theme--colors--danger-900: #9d6666;
+}
+
+.cunningham-theme--europe {
+  --c--theme--colors--primary-action: #0073fc;
+  --c--theme--colors--primary-focus: #0067ff;
+  --c--theme--colors--primary-text: #10509b;
+  --c--theme--colors--primary-050: #f6f8fb;
+  --c--theme--colors--primary-100: #eef3f8;
+  --c--theme--colors--primary-150: #f4f4fd;
+  --c--theme--colors--primary-200: #e6edf5;
+  --c--theme--colors--primary-300: #cfdceb;
+  --c--theme--colors--primary-400: #91aed1;
+  --c--theme--colors--primary-500: #799dc7;
+  --c--theme--colors--primary-600: #3967ac;
+  --c--theme--colors--primary-700: #10489b;
+  --c--theme--colors--primary-800: #039;
+  --c--theme--colors--primary-900: #002061;
+  --c--theme--colors--primary-950: #001b52;
+  --c--theme--colors--secondary-text: #fff;
+  --c--theme--colors--secondary-50: #fffcf0;
+  --c--theme--colors--secondary-100: #fffbe5;
+  --c--theme--colors--secondary-200: #fff9db;
+  --c--theme--colors--secondary-300: #ffe671;
+  --c--theme--colors--secondary-400: #fbc11d;
+  --c--theme--colors--secondary-500: #f8ae21;
+  --c--theme--colors--secondary-600: #e7a11d;
+  --c--theme--colors--secondary-700: #946305;
+  --c--theme--colors--secondary-800: #7c5305;
+  --c--theme--colors--secondary-900: #593c03;
+  --c--theme--colors--secondary-950: #402b02;
+  --c--theme--colors--greyscale-text: #303c4b;
+  --c--theme--colors--greyscale-000: #fff;
+  --c--theme--colors--greyscale-050: #f5f6f7;
+  --c--theme--colors--greyscale-100: #edeef0;
+  --c--theme--colors--greyscale-200: #e3e5e8;
+  --c--theme--colors--greyscale-250: #dbdde0;
+  --c--theme--colors--greyscale-300: #cbcfd3;
+  --c--theme--colors--greyscale-350: #eee;
+  --c--theme--colors--greyscale-400: #8c939b;
+  --c--theme--colors--greyscale-500: #767d85;
+  --c--theme--colors--greyscale-600: #60676f;
+  --c--theme--colors--greyscale-700: #343b43;
+  --c--theme--colors--greyscale-750: #30363e;
+  --c--theme--colors--greyscale-800: #262b31;
+  --c--theme--colors--greyscale-900: #20252a;
+  --c--theme--colors--greyscale-950: #1b1f23;
+  --c--theme--colors--greyscale-1000: #14161a;
+  --c--theme--colors--success-text: #1b4d3b;
+  --c--theme--colors--success-50: #f1fcf6;
+  --c--theme--colors--success-100: #e0f9ec;
+  --c--theme--colors--success-200: #c2f2d9;
+  --c--theme--colors--success-300: #92e6bd;
+  --c--theme--colors--success-400: #5ad199;
+  --c--theme--colors--success-500: #34b67e;
+  --c--theme--colors--success-600: #25956a;
+  --c--theme--colors--success-700: #207656;
+  --c--theme--colors--success-800: #207656;
+  --c--theme--colors--success-900: #1b4d3b;
+  --c--theme--colors--success-950: #092a1f;
+  --c--theme--colors--info-text: #0078f3;
+  --c--theme--colors--info-50: #f0f6ff;
+  --c--theme--colors--info-100: #dde9fe;
+  --c--theme--colors--info-200: #c3d9fe;
+  --c--theme--colors--info-300: #9AC2FDv;
+  --c--theme--colors--info-400: #69a0fb;
+  --c--theme--colors--info-500: #447df8;
+  --c--theme--colors--info-600: #2d5eef;
+  --c--theme--colors--info-700: #234ade;
+  --c--theme--colors--info-800: #223db3;
+  --c--theme--colors--info-900: #21388d;
+  --c--theme--colors--info-950: #192456;
+  --c--theme--colors--warning-text: #d15c3d;
+  --c--theme--colors--warning-50: #fdf7f1;
+  --c--theme--colors--warning-100: #fceddd;
+  --c--theme--colors--warning-200: #f7d8bb;
+  --c--theme--colors--warning-300: #f1bb90;
+  --c--theme--colors--warning-400: #e89463;
+  --c--theme--colors--warning-500: #e17645;
+  --c--theme--colors--warning-600: #d15c3d;
+  --c--theme--colors--warning-700: #ab443d;
+  --c--theme--colors--warning-800: #883636;
+  --c--theme--colors--warning-900: #6e2f2e;
+  --c--theme--colors--warning-950: #3b1517;
+  --c--theme--colors--danger-action: #d5093b;
+  --c--theme--colors--danger-text: #fff;
+  --c--theme--colors--danger-050: #fef4f5;
+  --c--theme--colors--danger-100: #fdeaeb;
+  --c--theme--colors--danger-200: #fbdee0;
+  --c--theme--colors--danger-300: #f8c0c4;
+  --c--theme--colors--danger-400: #ee5c63;
+  --c--theme--colors--danger-500: #e00f11;
+  --c--theme--colors--danger-600: #ba0c10;
+  --c--theme--colors--danger-700: #5a2931;
+  --c--theme--colors--danger-800: #3b2329;
+  --c--theme--colors--danger-900: #331e23;
+  --c--theme--colors--danger-950: #2b181d;
+  --c--theme--colors--blue-400: #828bf9;
+  --c--theme--colors--blue-500: #6366f1;
+  --c--theme--colors--blue-600: #4e47e6;
+  --c--theme--colors--brown-400: #d9c0ad;
+  --c--theme--colors--brown-500: #b1998f;
+  --c--theme--colors--brown-600: #6c5c55;
+  --c--theme--colors--cyan-400: #39c7f1;
+  --c--theme--colors--cyan-500: #1ca9dd;
+  --c--theme--colors--cyan-600: #1886c1;
+  --c--theme--colors--gold-400: #eebe50;
+  --c--theme--colors--gold-500: #e39e3c;
+  --c--theme--colors--gold-600: #c67738;
+  --c--theme--colors--green-400: #47c6ad;
+  --c--theme--colors--green-500: #23aa9a;
+  --c--theme--colors--green-600: #158982;
+  --c--theme--colors--olive-400: #a7dc5d;
+  --c--theme--colors--olive-500: #88c145;
+  --c--theme--colors--olive-600: #67993d;
+  --c--theme--colors--orange-400: #e89463;
+  --c--theme--colors--orange-500: #e17645;
+  --c--theme--colors--orange-600: #d15c3d;
+  --c--theme--colors--pink-400: #e179c5;
+  --c--theme--colors--pink-500: #d451ad;
+  --c--theme--colors--pink-600: #c03092;
+  --c--theme--colors--purple-400: #b888fd;
+  --c--theme--colors--purple-500: #9d5af9;
+  --c--theme--colors--purple-600: #8639ee;
+  --c--theme--colors--yellow-400: #eec944;
+  --c--theme--colors--yellow-500: #ddb139;
+  --c--theme--colors--yellow-600: #bb8836;
+  --c--theme--logo--src: ;
+  --c--theme--logo--alt: ;
+  --c--theme--logo--widthHeader: ;
+  --c--theme--logo--widthFooter: ;
+  --c--theme--font--families--base: roboto flex variable, sans-serif;
+  --c--theme--font--families--accent: roboto flex variable, sans-serif;
+  --c--components--button--primary--background--color-hover: var(
+    --c--theme--colors--primary-focus
+  );
 }
 
 .clr-secondary-text {
@@ -823,6 +960,10 @@
 
 .clr-primary-bg {
   color: var(--c--theme--colors--primary-bg);
+}
+
+.clr-primary-focus {
+  color: var(--c--theme--colors--primary-focus);
 }
 
 .clr-blue-400 {
@@ -1267,6 +1408,10 @@
 
 .bg-primary-bg {
   background-color: var(--c--theme--colors--primary-bg);
+}
+
+.bg-primary-focus {
+  background-color: var(--c--theme--colors--primary-focus);
 }
 
 .bg-blue-400 {
