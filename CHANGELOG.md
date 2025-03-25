@@ -11,19 +11,20 @@ and this project adheres to
 ## Added
 
 - ✨(back) allow theme customnization using a configuration file #948
-- ✨ Add a custom callout block to the editor #892
+- ✨(frontend) Add a custom callout block to the editor #892
 - 🚩(frontend) version MIT only #911
 - ✨(backend) integrate maleware_detection from django-lasuite #936
+- 🏗️(frontend) Footer configurable #959
 - 🩺(CI) add lint spell mistakes #954
 
 ## Changed
 
-- 📝(frontend) Update documentation
-- ✅(frontend) Improve tests coverage
+- 📝(frontend) Update documentation #949
+- ✅(frontend) Improve tests coverage #949
 
 ### Removed
 
-- 🔥(back) remove footer endpoint
+- 🔥(back) remove footer endpoint #948
 
 ## [3.2.1] - 2025-05-06
 

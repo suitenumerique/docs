@@ -159,8 +159,8 @@ test.describe('Config: Not loggued', () => {
     const jsonResponse = await response.json();
     expect(jsonResponse.FRONTEND_THEME).toStrictEqual('default');
 
-    const footer = page.locator('footer').first();
+    const header = page.locator('header').first();
     // alt 'Gouvernement Logo' comes from the theme
-    await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
+    await expect(header.getByAltText('Gouvernement Logo')).toBeVisible();
   });
 });
