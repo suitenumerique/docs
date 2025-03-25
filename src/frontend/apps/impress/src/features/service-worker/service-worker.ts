@@ -103,10 +103,9 @@ const FALLBACK = {
 const precacheResources = [
   '/',
   '/index.html',
+  '/401/',
   '/404/',
-  '/accessibility/',
-  '/legal-notice/',
-  '/personal-data-cookies/',
+  '/403/',
   FALLBACK.offline,
   FALLBACK.images,
   FALLBACK.docs,
