@@ -174,6 +174,30 @@ test.describe('Config', () => {
       page.locator('#crisp-chatbox').getByText('Invalid website'),
     ).toBeVisible();
   });
+
+  test('it checks FRONTEND_CSS_URL config', async ({ page }) => {
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...config,
+            FRONTEND_CSS_URL: 'http://localhost:123465/css/style.css',
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page
+        .locator('head link[href="http://localhost:123465/css/style.css"]')
+        .first(),
+    ).toBeAttached();
+  });
 });
 
 test.describe('Config: Not loggued', () => {

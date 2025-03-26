@@ -21,6 +21,7 @@ and this project adheres to
 ## Added
 
 - 📄(legal) Require contributors to sign a DCO #779
+- ✨(frontend) add custom css style #771
 
 ## Changed
 

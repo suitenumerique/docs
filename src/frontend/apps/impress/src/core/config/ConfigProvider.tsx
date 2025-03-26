@@ -1,4 +1,5 @@
 import { Loader } from '@openfun/cunningham-react';
+import Head from 'next/head';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
@@ -54,10 +55,17 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }
 
   return (
-    <AnalyticsProvider>
-      <CrispProvider websiteId={conf?.CRISP_WEBSITE_ID}>
-        {children}
-      </CrispProvider>
-    </AnalyticsProvider>
+    <>
+      {conf?.FRONTEND_CSS_URL && (
+        <Head>
+          <link rel="stylesheet" href={conf?.FRONTEND_CSS_URL} />
+        </Head>
+      )}
+      <AnalyticsProvider>
+        <CrispProvider websiteId={conf?.CRISP_WEBSITE_ID}>
+          {children}
+        </CrispProvider>
+      </AnalyticsProvider>
+    </>
   );
 };
