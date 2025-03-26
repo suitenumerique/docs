@@ -1,20 +1,20 @@
 # Installation on a k8s cluster
 
-This document is a step-by-step guide that describes how to install Docs on a k8s cluster without AI features. It's a teaching document to learn how it's work. It needs to be adapt for production environment.
+This document is a step-by-step guide that describes how to install Docs on a k8s cluster without AI features. It's a teaching document to learn how it works. It needs to be adapted for a production environment.
 
 ## Prerequisites
 
 - k8s cluster with an nginx-ingress controller
-- an OIDC provider (if you don't have one, we will provide an example)
-- a PostgreSQL server (if you don't have one, we will provide an example)
-- a Memcached server (if you don't have one, we will provide an example)
-- a S3 bucket (if you don't have one, we will provide an example)
+- an OIDC provider (if you don't have one, we provide an example)
+- a PostgreSQL server (if you don't have one, we provide an example)
+- a Memcached server (if you don't have one, we provide an example)
+- a S3 bucket (if you don't have one, we provide an example)
 
 ### Test cluster
 
-If you do not have a test cluster, you can install everything on a local kind cluster. In this case, the simplest way is to use our script **bin/start-kind.sh**.
+If you do not have a test cluster, you can install everything on a local Kind cluster. In this case, the simplest way is to use our script **bin/start-kind.sh**.
 
-To be able to use the script, you will need to install:
+To be able to use the script, you need to install:
 
 - Docker (https://docs.docker.com/desktop/)
 - Kind (https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
@@ -96,13 +96,13 @@ ingress-nginx-admission-patch-94dvt         0/1     Completed   1          2m56s
 ingress-nginx-controller-57c548c4cd-2rx47   1/1     Running     0          2m56s
 ```
 
-When your k8s cluster is ready (the ingress nginx controller is up), you can start the deployment. This cluster is special because it uses the \*.127.0.0.1.nip.io domain and mkcert certificates to have full HTTPS support and easy domain name management.
+When your k8s cluster is ready (the ingress nginx controller is up), you can start the deployment. This cluster is special because it uses the `*.127.0.0.1.nip.io` domain and mkcert certificates to have full HTTPS support and easy domain name management.
 
-Please remember that \*.127.0.0.1.nip.io will always resolve to 127.0.0.1, except in the k8s cluster where we configure CoreDNS to answer with the ingress-nginx service IP.
+Please remember that `*.127.0.0.1.nip.io` will always resolve to `127.0.0.1`, except in the k8s cluster where we configure CoreDNS to answer with the ingress-nginx service IP.
 
 ## Preparation
 
-### What will you use to authenticate your users ?
+### What do you use to authenticate your users?
 
 Docs uses OIDC, so if you already have an OIDC provider, obtain the necessary information to use it. In the next step, we will see how to configure Django (and thus Docs) to use it. If you do not have a provider, we will show you how to deploy a local Keycloak instance (this is not a production deployment, just a demo).
 
@@ -117,9 +117,9 @@ keycloak-0              1/1     Running   0          6m48s
 keycloak-postgresql-0   1/1     Running   0          6m48s
 ```
 
-From here the important informations you will need are :
+From here the important information you will need are:
 
-```
+```yaml
 OIDC_OP_JWKS_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
 OIDC_OP_AUTHORIZATION_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
 OIDC_OP_TOKEN_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
@@ -135,7 +135,7 @@ You can find these values in **examples/keycloak.values.yaml**
 
 ### Find redis server connexion values
 
-Impress need a redis so we will start by deploying a redis :
+Docs needs a redis so we start by deploying one:
 
 ```
 $ helm install redis oci://registry-1.docker.io/bitnamicharts/redis -f examples/redis.values.yaml
@@ -148,7 +148,7 @@ redis-master-0          1/1     Running   0          35s
 
 ### Find postgresql connexion values
 
-Impress uses a postgresql db as backend so if you have a provider, obtain the necessary information to use it. If you do not have, you can install a postgresql testing environment as follow:
+Docs uses a postgresql database as backend, so if you have a provider, obtain the necessary information to use it. If you don't, you can install a postgresql testing environment as follow:
 
 ```
 $ helm install postgresql oci://registry-1.docker.io/bitnamicharts/postgresql -f examples/postgresql.values.yaml
@@ -160,9 +160,9 @@ postgresql-0            1/1     Running   0          14m
 redis-master-0          1/1     Running   0          42s
 ```
 
-From here important informations you will need are :
+From here the important information you will need are:
 
-```
+```yaml
 DB_HOST: postgres-postgresql
 DB_NAME: impress
 DB_USER: dinum
@@ -175,7 +175,7 @@ POSTGRES_PASSWORD: pass
 
 ### Find s3 bucket connexion values
 
-Impress uses a s3 bucket to store documents so if you have a provider obtain the necessary information to use it. If you do not have, you can install a local minio testing environment as follow:
+Docs uses an s3 bucket to store documents, so if you have a provider obtain the necessary information to use it. If you don't, you can install a local minio testing environment as follow:
 
 ```
 $ helm install minio oci://registry-1.docker.io/bitnamicharts/minio -f examples/minio.values.yaml
@@ -191,7 +191,7 @@ redis-master-0             1/1     Running     0          10m
 
 ## Deployment
 
-Now you are ready to deploy Impress without AI. AI requiered more dependancies (openai API). To deploy impress you need to provide all previous informations to the helm chart.
+Now you are ready to deploy Docs without AI. AI requires more dependencies (OpenAI API). To deploy Docs you need to provide all previous informations to the helm chart.
 
 ```
 $ helm repo add impress https://suitenumerique.github.io/docs/
@@ -214,7 +214,7 @@ redis-master-0                               1/1     Running     0          20m
 
 ## Test your deployment
 
-In order to test your deployment you have to login to your instance. If you use exclusively our examples you can do :
+In order to test your deployment you have to log into your instance. If you exclusively use our examples you can do:
 
 ```
 $ kubectl get ingress
@@ -227,4 +227,4 @@ impress-docs-ws                  <none>   impress.127.0.0.1.nip.io    localhost 
 keycloak                         <none>   keycloak.127.0.0.1.nip.io   localhost   80        49m
 ```
 
-You can use impress on https://impress.127.0.0.1.nip.io. The provisionning user in keycloak is impress/impress.
+You can use Docs at https://impress.127.0.0.1.nip.io. The provisionning user in keycloak is impress/impress.
