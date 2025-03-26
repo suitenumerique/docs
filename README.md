@@ -94,7 +94,7 @@ username: impress
 password: impress
 ```
 
-📝 Note that if you need to run them afterwards, you can use the eponym Make rule:
+📝 Note that if you need to run them afterwards, you can use the eponymous Make rule:
 
 ```shellscript
 $ make run
