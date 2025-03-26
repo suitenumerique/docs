@@ -34,6 +34,7 @@ export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
         color: ${color['greyscale-1000']};
         font-size: ${fontSize['xs']};
       `}
+      className="--docs--doc-share-add-member-list-item"
     >
       <Text $variation="1000" $size="xs">
         {user.full_name || user.email}

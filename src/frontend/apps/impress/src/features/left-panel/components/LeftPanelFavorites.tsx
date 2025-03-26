@@ -24,7 +24,7 @@ export const LeftPanelFavorites = () => {
   }
 
   return (
-    <Box>
+    <Box className="--docs--left-panel-favorites">
       <HorizontalSeparator $withPadding={false} />
       <Box
         $justify="center"

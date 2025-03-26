@@ -107,7 +107,10 @@ export const ModalConfirmationVersion = ({
         </Text>
       }
     >
-      <Box aria-label={t('Modal confirmation to restore the version')}>
+      <Box
+        aria-label={t('Modal confirmation to restore the version')}
+        className="--docs--modal-confirmation-version"
+      >
         <Box>
           <Text $variation="600">
             {t('Your current document will revert to this version.')}

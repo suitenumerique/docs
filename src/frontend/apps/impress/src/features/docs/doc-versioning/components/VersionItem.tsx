@@ -44,6 +44,7 @@ export const VersionItem = ({
         `}
         $hasTransition
         $minWidth="13rem"
+        className="--docs--version-item"
       >
         <Box
           $padding={{ vertical: '0.7rem', horizontal: 'small' }}

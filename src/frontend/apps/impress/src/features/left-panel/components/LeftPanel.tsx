@@ -45,7 +45,8 @@ export const LeftPanel = () => {
             min-width: 300px;
             overflow: hidden;
             border-right: 1px solid ${colors['greyscale-200']};
-        `}
+          `}
+          className="--docs--left-panel-desktop"
         >
           <Box
             $css={css`
@@ -72,6 +73,7 @@ export const LeftPanel = () => {
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
               background-color: var(--c--theme--colors--greyscale-000);
             `}
+            className="--docs--left-panel-mobile"
           >
             <Box
               data-testid="left-panel-mobile"

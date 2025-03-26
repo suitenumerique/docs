@@ -38,7 +38,12 @@ export const SimpleDocItem = ({
   const { untitledDocument } = useTrans();
 
   return (
-    <Box $direction="row" $gap={spacings.sm} $overflow="auto">
+    <Box
+      $direction="row"
+      $gap={spacings.sm}
+      $overflow="auto"
+      className="--docs--simple-doc-item"
+    >
       <Box
         $direction="row"
         $align="center"

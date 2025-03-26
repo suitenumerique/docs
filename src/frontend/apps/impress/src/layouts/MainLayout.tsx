@@ -23,7 +23,7 @@ export function MainLayout({
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
   return (
-    <div>
+    <Box className="--docs--main-layout">
       <Header />
       <Box
         $direction="row"
@@ -54,6 +54,6 @@ export function MainLayout({
           {children}
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 }

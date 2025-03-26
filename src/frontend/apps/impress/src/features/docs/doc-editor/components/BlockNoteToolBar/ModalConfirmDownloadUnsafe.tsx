@@ -59,7 +59,10 @@ export const ModalConfirmDownloadUnsafe = ({
         </Text>
       }
     >
-      <Box aria-label={t('Modal confirmation to download the attachment')}>
+      <Box
+        aria-label={t('Modal confirmation to download the attachment')}
+        className="--docs--modal-confirm-download-unsafe"
+      >
         <Box>
           <Box $direction="column" $gap="0.35rem" $margin={{ top: 'sm' }}>
             <Text $variation="700">{t('This file is flagged as unsafe.')}</Text>

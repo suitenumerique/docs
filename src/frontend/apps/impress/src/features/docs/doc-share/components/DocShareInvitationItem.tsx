@@ -84,6 +84,7 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
     <Box
       $width="100%"
       data-testid={`doc-share-invitation-row-${invitation.email}`}
+      className="--docs--doc-share-invitation-item"
     >
       <SearchUserRow
         isInvitation={true}

@@ -91,6 +91,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       $padding={{ horizontal: 'base' }}
       aria-label={t('Doc visibility card')}
       $gap={spacing['base']}
+      className="--docs--doc-visibility"
     >
       <Text $weight="700" $size="sm" $variation="700">
         {t('Link parameters')}

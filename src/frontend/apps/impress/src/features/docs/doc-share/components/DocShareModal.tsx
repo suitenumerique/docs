@@ -195,7 +195,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
           aria-label={t('Share modal')}
           $height={canViewAccesses ? modalContentHeight : 'auto'}
           $overflow="hidden"
-          className="noPadding"
+          className="--docs--doc-share-modal noPadding "
           $justify="space-between"
         >
           <Box

@@ -31,6 +31,7 @@ export const HomeHeader = () => {
       $width="100%"
       $padding={{ horizontal: 'small' }}
       $height={`${isSmallMobile ? HEADER_HEIGHT_MOBILE : HEADER_HEIGHT}px`}
+      className="--docs--home-header"
     >
       <Box
         $align="center"

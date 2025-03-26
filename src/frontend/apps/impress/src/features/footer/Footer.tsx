@@ -21,7 +21,7 @@ export const Footer = () => {
   const logo = themeTokens().logo;
 
   return (
-    <Box $position="relative" as="footer">
+    <Box $position="relative" as="footer" className="--docs--footer">
       <BlueStripe />
       <Box $padding={{ top: 'large', horizontal: 'big', bottom: 'small' }}>
         <Box
@@ -31,7 +31,7 @@ export const Footer = () => {
           $justify="space-between"
           $css="flex-wrap: wrap;"
         >
-          <Box>
+          <Box className="--docs--footer-logo">
             <Box $align="center" $gap="6rem" $direction="row">
               {logo && (
                 <Image
@@ -52,6 +52,7 @@ export const Footer = () => {
               row-gap: .5rem;
               flex-wrap: wrap;
             `}
+            className="--docs--footer-external-links"
           >
             {[
               {
@@ -99,6 +100,7 @@ export const Footer = () => {
             column-gap: 1rem;
             row-gap: .5rem;
           `}
+          className="--docs--footer-internal-links"
         >
           {[
             {
@@ -145,6 +147,7 @@ export const Footer = () => {
           $margin={{ top: 'big' }}
           $variation="600"
           $display="inline"
+          className="--docs--footer-licence"
         >
           {t('Unless otherwise stated, all content on this site is under')}{' '}
           <StyledLink

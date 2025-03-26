@@ -71,6 +71,7 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
         aria-label={t('Search modal')}
         $direction="column"
         $justify="space-between"
+        className="--docs--doc-search-modal"
       >
         <QuickSearch
           placeholder={t('Type the name of a document')}

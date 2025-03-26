@@ -53,6 +53,7 @@ export const LeftPanelTargetFilters = () => {
       $justify="center"
       $padding={{ horizontal: 'sm' }}
       $gap={spacing['2xs']}
+      className="--docs--left-panel-target-filters"
     >
       {defaultQueries.map((query) => {
         const isActive = target === query.targetQuery;

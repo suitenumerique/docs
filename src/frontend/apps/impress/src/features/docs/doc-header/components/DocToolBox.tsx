@@ -176,6 +176,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       $align="center"
       $gap="0.5rem 1.5rem"
       $wrap={isSmallMobile ? 'wrap' : 'nowrap'}
+      className="--docs--doc-toolbox"
     >
       <Box
         $direction="row"

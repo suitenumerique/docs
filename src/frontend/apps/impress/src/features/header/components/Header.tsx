@@ -39,6 +39,7 @@ export const Header = () => {
         background-color: ${colors['greyscale-000']};
         border-bottom: 1px solid ${colors['greyscale-200']};
       `}
+      className="--docs--header"
     >
       {!isDesktop && <ButtonTogglePanel />}
       <StyledLink href="/">

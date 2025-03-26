@@ -51,7 +51,7 @@ export const ModalSelectVersion = ({
         <NoPaddingStyle />
         <Box
           aria-label="version history modal"
-          className="noPadding"
+          className="--docs--modal-select-version noPadding"
           $direction="row"
           $height="100%"
           $maxHeight="calc(100vh - 2em - 12px)"

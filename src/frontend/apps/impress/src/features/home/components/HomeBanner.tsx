@@ -29,6 +29,7 @@ export default function HomeBanner() {
       $height="100vh"
       $margin={{ top: `-${getHeaderHeight(isSmallMobile)}px` }}
       $position="relative"
+      className="--docs--home-banner"
     >
       <Box
         $width="100%"

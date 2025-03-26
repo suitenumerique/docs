@@ -20,6 +20,7 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
       $css={css`
         flex-shrink: 0;
       `}
+      className="--docs--doc-share-modal-footer"
     >
       <HorizontalSeparator $withPadding={true} />
 

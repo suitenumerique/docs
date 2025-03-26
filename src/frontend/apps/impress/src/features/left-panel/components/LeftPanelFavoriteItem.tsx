@@ -38,6 +38,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         }
       `}
       key={doc.id}
+      className="--docs--left-panel-favorite-item"
     >
       <StyledLink href={`/docs/${doc.id}`} $css="overflow: auto;">
         <SimpleDocItem showAccesses doc={doc} />

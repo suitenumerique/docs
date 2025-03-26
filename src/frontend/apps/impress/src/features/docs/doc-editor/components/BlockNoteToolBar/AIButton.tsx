@@ -104,7 +104,7 @@ export function AIGroupButton() {
     <Components.Generic.Menu.Root>
       <Components.Generic.Menu.Trigger>
         <Components.FormattingToolbar.Button
-          className="bn-button bn-menu-item"
+          className="bn-button bn-menu-item --docs--ai-actions-menu-trigger"
           data-test="ai-actions"
           label="AI"
           mainTooltip={t('AI Actions')}
@@ -116,7 +116,7 @@ export function AIGroupButton() {
         />
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown
-        className="bn-menu-dropdown bn-drag-handle-menu"
+        className="bn-menu-dropdown bn-drag-handle-menu --docs--ai-actions-menu"
         sub={true}
       >
         {canAITransform && (
@@ -193,7 +193,7 @@ export function AIGroupButton() {
           <Components.Generic.Menu.Root position="right" sub={true}>
             <Components.Generic.Menu.Trigger sub={false}>
               <Components.Generic.Menu.Item
-                className="bn-menu-item"
+                className="bn-menu-item --docs--ai-translate-menu-trigger"
                 subTrigger={true}
               >
                 <Box $direction="row" $gap="0.6rem">
@@ -206,7 +206,7 @@ export function AIGroupButton() {
             </Components.Generic.Menu.Trigger>
             <Components.Generic.Menu.Dropdown
               sub={true}
-              className="bn-menu-dropdown"
+              className="bn-menu-dropdown --docs--ai-translate-menu"
             >
               {languages.map((language) => (
                 <AIMenuItemTranslate

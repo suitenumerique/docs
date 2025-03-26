@@ -38,6 +38,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
         $padding={{ top: isDesktop ? '4xl' : 'md' }}
         $gap={spacings['base']}
         aria-label={t('It is the card information about the document.')}
+        className="--docs--doc-header"
       >
         {(docIsPublic || docIsAuth) && (
           <Box

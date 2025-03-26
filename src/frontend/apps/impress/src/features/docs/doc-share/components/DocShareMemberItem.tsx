@@ -72,6 +72,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
     <Box
       $width="100%"
       data-testid={`doc-share-member-row-${access.user.email}`}
+      className="--docs--doc-share-member-item"
     >
       <SearchUserRow
         alwaysShowRight={true}

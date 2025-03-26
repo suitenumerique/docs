@@ -133,6 +133,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       $padding={{ top: 'md' }}
       $background="white"
       $css={cssEditor(readOnly)}
+      className="--docs--editor-container"
     >
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
@@ -192,7 +193,7 @@ export const BlockNoteEditorVersion = ({
   }, [setEditor, editor]);
 
   return (
-    <Box $css={cssEditor(readOnly)}>
+    <Box $css={cssEditor(readOnly)} className="--docs--editor-container">
       <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
     </Box>
   );
