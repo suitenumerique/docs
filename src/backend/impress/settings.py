@@ -586,14 +586,16 @@ class Base(Configuration):
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
+        "formatters": {
+            "simple": {
+                "format": "{asctime} {name} {levelname} {message}",
+                "style": "{",
+            },
+        },
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": values.Value(
-                    "ERROR",
-                    environ_name="LOGGING_LEVEL_HANDLERS_CONSOLE",
-                    environ_prefix=None,
-                ),
+                "formatter": "simple",
             },
         },
         # Override root logger to send it to console
