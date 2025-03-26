@@ -4,8 +4,8 @@ import uuid
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 
+import pycrdt
 import pytest
-import y_py
 
 from core import models
 
@@ -27,14 +27,13 @@ def test_populate_attachments_on_all_documents(migrator):
 
     # Create document content with an image
     file_key = f"{old_doc_with_attachments.id!s}/file"
-    ydoc = y_py.YDoc()  # pylint: disable=no-member
     image_key = f"{old_doc_with_attachments.id!s}/attachments/{uuid.uuid4()!s}.png"
-    with ydoc.begin_transaction() as txn:
-        xml_fragment = ydoc.get_xml_element("document-store")
-        xml_fragment.push_xml_element(txn, "image").set_attribute(
-            txn, "src", f"http://localhost/media/{image_key:s}"
-        )
-    update = y_py.encode_state_as_update(ydoc)  # pylint: disable=no-member
+    ydoc = pycrdt.Doc()
+    fragment = pycrdt.XmlFragment(
+        [pycrdt.XmlElement("img", {"src": f"http://localhost/media/{image_key:s}"})]
+    )
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
     base64_content = base64.b64encode(update).decode("utf-8")
     bytes_content = base64_content.encode("utf-8")
     content_file = ContentFile(bytes_content)

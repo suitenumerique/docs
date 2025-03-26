@@ -5,8 +5,8 @@ Test extract-attachments on document update in docs core app.
 import base64
 from uuid import uuid4
 
+import pycrdt
 import pytest
-import y_py
 from rest_framework.test import APIClient
 
 from core import factories
@@ -16,14 +16,15 @@ pytestmark = pytest.mark.django_db
 
 def get_ydoc_with_mages(image_keys):
     """Return a ydoc from text for testing purposes."""
-    ydoc = y_py.YDoc()  # pylint: disable=no-member
-    with ydoc.begin_transaction() as txn:
-        xml_fragment = ydoc.get_xml_element("document-store")
-        for key in image_keys:
-            xml_image = xml_fragment.push_xml_element(txn, "image")
-            xml_image.set_attribute(txn, "src", f"http://localhost/media/{key:s}")
-
-    update = y_py.encode_state_as_update(ydoc)  # pylint: disable=no-member
+    ydoc = pycrdt.Doc()
+    fragment = pycrdt.XmlFragment(
+        [
+            pycrdt.XmlElement("img", {"src": f"http://localhost/media/{key:s}"})
+            for key in image_keys
+        ]
+    )
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
     return base64.b64encode(update).decode("utf-8")
 
 

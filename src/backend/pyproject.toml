@@ -47,18 +47,19 @@ dependencies = [
     "factory_boy==3.3.3",
     "gunicorn==23.0.0",
     "jsonschema==4.23.0",
+    "lxml==5.3.1",
     "markdown==3.7",
     "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
     "openai==1.68.2",
     "psycopg[binary]==3.2.6",
+    "pycrdt==0.12.10", 
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "requests==2.32.3",
     "sentry-sdk==2.24.0",
     "url-normalize==1.4.3",
     "whitenoise==6.9.0",
-    "y-py==0.6.2",
 ]
 
 [project.urls]
