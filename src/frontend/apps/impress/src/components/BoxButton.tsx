@@ -44,6 +44,7 @@ const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
           ${$css || ''}
         `}
         {...props}
+        className={`--docs--box-button ${props.className || ''}`}
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
           if (props.disabled) {
             return;

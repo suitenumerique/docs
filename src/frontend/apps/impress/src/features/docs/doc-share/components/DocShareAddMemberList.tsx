@@ -122,6 +122,7 @@ export const DocShareAddMemberList = ({
       $css={css`
         border: 1px solid ${color['greyscale-200']};
       `}
+      className="--docs--doc-share-add-member-list"
     >
       <Box
         $direction="row"

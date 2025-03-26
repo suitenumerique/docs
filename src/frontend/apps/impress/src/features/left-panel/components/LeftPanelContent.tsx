@@ -21,6 +21,7 @@ export const LeftPanelContent = () => {
             $css={css`
               flex: 0 0 auto;
             `}
+            className="--docs--home-left-panel-content"
           >
             <SeparatedSection showSeparator={false}>
               <LeftPanelTargetFilters />

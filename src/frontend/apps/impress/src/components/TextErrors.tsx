@@ -28,7 +28,12 @@ export const TextErrors = ({
   const { t } = useTranslation();
 
   return (
-    <AlertStyled canClose={canClose} type={VariantType.ERROR} icon={icon}>
+    <AlertStyled
+      canClose={canClose}
+      type={VariantType.ERROR}
+      icon={icon}
+      className="--docs--text-errors"
+    >
       <Box $direction="column" $gap="0.2rem">
         {causes &&
           causes.map((cause, i) => (

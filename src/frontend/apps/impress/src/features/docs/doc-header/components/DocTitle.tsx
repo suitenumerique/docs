@@ -107,6 +107,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       <Box
         as="span"
         role="textbox"
+        className="--docs--doc-title-input"
         contentEditable
         defaultValue={titleDisplay || undefined}
         onKeyDownCapture={handleKeyDown}

@@ -49,6 +49,7 @@ export const UserAvatar = ({ user, background }: Props) => {
         color: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(255, 255, 255, 0.5);
       `}
+      className="--docs--user-avatar"
     >
       <Box
         $direction="row"

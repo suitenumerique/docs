@@ -20,6 +20,7 @@ export const LoadMoreText = ({
       $align="center"
       $gap="0.4rem"
       $padding={{ horizontal: '2xs', vertical: 'sm' }}
+      className="--docs--load-more"
     >
       <Icon
         $theme="primary"

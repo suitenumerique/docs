@@ -28,6 +28,7 @@ export const HorizontalSeparator = ({
           ? '#e5e5e533'
           : colorsTokens()['greyscale-100']
       }
+      className="--docs--horizontal-separator"
     />
   );
 };

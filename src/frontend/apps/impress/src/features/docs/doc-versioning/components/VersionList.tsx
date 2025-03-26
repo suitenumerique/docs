@@ -109,7 +109,10 @@ export const VersionList = ({
   }, [] as Versions[]);
 
   return (
-    <Box $css="overflow-y: auto; overflow-x: hidden;">
+    <Box
+      $css="overflow-y: auto; overflow-x: hidden;"
+      className="--docs--version-list"
+    >
       <InfiniteScroll
         hasMore={hasNextPage}
         isLoading={isFetchingNextPage}

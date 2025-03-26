@@ -36,6 +36,7 @@ export const IconBG = ({ iconName, ...textProps }: IconBGProps) => {
       $padding="4px"
       $margin="auto"
       {...textProps}
+      className={`--docs--icon-bg ${textProps.className || ''}`}
     >
       {iconName}
     </Text>

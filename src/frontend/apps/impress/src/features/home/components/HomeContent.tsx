@@ -33,10 +33,10 @@ export function HomeContent() {
   const isFrLanguage = i18n.resolvedLanguage === 'fr';
 
   return (
-    <Box as="main">
+    <Box as="main" className="--docs--home-content">
       <HomeHeader />
       {isSmallMobile && (
-        <Box $css="& .panel-header{display: none;}">
+        <Box $css="& .--docs--left-panel-header{display: none;}">
           <LeftPanel />
         </Box>
       )}

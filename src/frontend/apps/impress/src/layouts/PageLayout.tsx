@@ -20,6 +20,7 @@ export function PageLayout({
     <Box
       $minHeight={`calc(100vh - ${HEADER_HEIGHT}px)`}
       $margin={{ top: `${HEADER_HEIGHT}px` }}
+      className="--docs--page-layout"
     >
       <Header />
       <Box as="main" $width="100%" $css="flex-grow:1;">

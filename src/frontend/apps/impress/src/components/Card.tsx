@@ -14,6 +14,7 @@ export const Card = ({
 
   return (
     <Box
+      className={`--docs--card ${props.className || ''}`}
       $background="white"
       $radius="4px"
       $css={css`

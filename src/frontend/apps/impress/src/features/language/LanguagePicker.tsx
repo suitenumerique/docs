@@ -70,6 +70,7 @@ export const LanguagePicker = () => {
         aria-label={t('Language')}
         $direction="row"
         $gap="0.5rem"
+        className="--docs--language-picker-text"
       >
         <Text $isMaterialIcon $color="inherit" $size="xl">
           translate

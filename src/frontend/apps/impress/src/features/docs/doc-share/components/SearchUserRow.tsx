@@ -31,7 +31,12 @@ export const SearchUserRow = ({
       right={right}
       alwaysShowRight={alwaysShowRight}
       left={
-        <Box $direction="row" $align="center" $gap={spacings['xs']}>
+        <Box
+          $direction="row"
+          $align="center"
+          $gap={spacings['xs']}
+          className="--docs--search-user-row"
+        >
           <UserAvatar
             user={user}
             background={isInvitation ? colors['greyscale-400'] : undefined}
