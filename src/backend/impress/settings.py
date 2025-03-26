@@ -410,6 +410,9 @@ class Base(Configuration):
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
+    FRONTEND_PATH_JSON_FOOTER = values.Value(
+        None, environ_name="FRONTEND_PATH_JSON_FOOTER", environ_prefix=None
+    )
 
     # Posthog
     POSTHOG_KEY = values.DictValue(

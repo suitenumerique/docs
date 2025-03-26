@@ -9,8 +9,8 @@ import { Title } from '@/features/header';
 import { useResponsiveStore } from '@/stores';
 
 export function HomeBottom() {
-  const { componentTokens } = useCunninghamTheme();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const { currentTokens } = useCunninghamTheme();
+  const withProConnect = currentTokens?.components?.['home-proconnect'];
 
   if (!withProConnect) {
     return null;

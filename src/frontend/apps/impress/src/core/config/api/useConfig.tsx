@@ -10,6 +10,7 @@ interface ConfigResponse {
   ENVIRONMENT: string;
   COLLABORATION_WS_URL?: string;
   CRISP_WEBSITE_ID?: string;
+  FRONTEND_PATH_JSON_FOOTER?: string;
   FRONTEND_THEME?: Theme;
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;

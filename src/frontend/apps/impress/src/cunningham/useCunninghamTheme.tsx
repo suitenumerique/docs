@@ -10,9 +10,10 @@ type SpacingsTokens = Tokens['theme']['spacings'];
 type ComponentTokens = Tokens['components'];
 export type Theme = keyof typeof tokens.themes;
 
-interface AuthStore {
+interface ThemeStore {
   theme: string;
-  setTheme: (theme: Theme) => void;
+  currentTokens: Partial<Tokens>;
+  setTheme: (theme: string) => void;
   themeTokens: () => Partial<Tokens['theme']>;
   colorsTokens: () => Partial<ColorsTokens>;
   fontSizesTokens: () => Partial<FontSizesTokens>;
@@ -20,22 +21,23 @@ interface AuthStore {
   componentTokens: () => ComponentTokens;
 }
 
-export const useCunninghamTheme = create<AuthStore>((set, get) => {
+export const useCunninghamTheme = create<ThemeStore>((set, get) => {
   const currentTheme = () =>
-    merge(
-      tokens.themes['default'],
-      tokens.themes[get().theme as keyof typeof tokens.themes],
-    ) as Tokens;
+    merge(tokens.themes['default'], tokens.themes[get().theme as Theme]);
 
   return {
     theme: 'default',
+    currentTokens: tokens.themes['default'],
     themeTokens: () => currentTheme().theme,
     colorsTokens: () => currentTheme().theme.colors,
     componentTokens: () => currentTheme().components,
     spacingsTokens: () => currentTheme().theme.spacings,
     fontSizesTokens: () => currentTheme().theme.font.sizes,
-    setTheme: (theme: Theme) => {
-      set({ theme });
+    setTheme: (theme) => {
+      set({
+        theme,
+        currentTokens: tokens.themes[theme as Theme] as Partial<Tokens>,
+      });
     },
   };
 });

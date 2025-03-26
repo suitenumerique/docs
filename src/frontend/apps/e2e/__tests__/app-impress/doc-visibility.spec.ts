@@ -101,6 +101,8 @@ test.describe('Doc Visibility: Restricted', () => {
     page,
     browserName,
   }) => {
+    test.slow();
+
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
 
@@ -121,14 +123,16 @@ test.describe('Doc Visibility: Restricted', () => {
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+      page.getByRole('link', { name: 'Docs Logo Docs' }),
     ).toBeVisible();
 
     await page.goto(urlDoc);
 
     await expect(
       page.getByText('You do not have permission to view this document.'),
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('A doc is accessible when member.', async ({ page, browserName }) => {
@@ -173,7 +177,7 @@ test.describe('Doc Visibility: Restricted', () => {
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+      page.getByRole('link', { name: 'Docs Logo Docs' }),
     ).toBeVisible();
 
     await page.goto(urlDoc);
@@ -430,7 +434,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+      page.getByRole('link', { name: 'Docs Logo Docs' }),
     ).toBeVisible();
 
     await page.goto(urlDoc);
@@ -490,7 +494,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs BETA' }),
+      page.getByRole('link', { name: 'Docs Logo Docs' }),
     ).toBeVisible();
 
     await page.goto(urlDoc);

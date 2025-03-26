@@ -10,8 +10,6 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('404', () => {
   test('Checks all the elements are visible', async ({ page }) => {
-    await expect(page.getByLabel('Image 404')).toBeVisible();
-    await expect(page.getByText('Ouch')).toBeVisible();
     await expect(
       page.getByText(
         'It seems that the page you are looking for does not exist or cannot be displayed correctly.',

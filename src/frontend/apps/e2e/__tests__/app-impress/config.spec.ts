@@ -2,55 +2,14 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './common';
-
-const config = {
-  CRISP_WEBSITE_ID: null,
-  COLLABORATION_WS_URL: 'ws://localhost:8083/collaboration/ws/',
-  ENVIRONMENT: 'development',
-  FRONTEND_THEME: 'default',
-  MEDIA_BASE_URL: 'http://localhost:8083',
-  LANGUAGES: [
-    ['en-us', 'English'],
-    ['fr-fr', 'Français'],
-    ['de-de', 'Deutsch'],
-    ['nl-nl', 'Nederlands'],
-  ],
-  LANGUAGE_CODE: 'en-us',
-  POSTHOG_KEY: {},
-  SENTRY_DSN: null,
-};
+import { CONFIG, createDoc, overrideConfig, verifyDocName } from './common';
 
 test.describe('Config', () => {
-  test('it checks the config api is called', async ({ page }) => {
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/config/') && response.status() === 200,
-    );
-
-    await page.goto('/');
-
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-
-    expect(await response.json()).toStrictEqual(config);
-  });
-
   test('it checks that sentry is trying to init from config endpoint', async ({
     page,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...config,
-            SENTRY_DSN: 'https://sentry.io/123',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      SENTRY_DSN: 'https://sentry.io/123',
     });
 
     const invalidMsg = 'Invalid Sentry Dsn: https://sentry.io/123';
@@ -120,18 +79,8 @@ test.describe('Config', () => {
   test('it checks that Crisp is trying to init from config endpoint', async ({
     page,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...config,
-            CRISP_WEBSITE_ID: '1234',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      CRISP_WEBSITE_ID: '1234',
     });
 
     await page.goto('/');
@@ -145,9 +94,7 @@ test.describe('Config', () => {
 test.describe('Config: Not loggued', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('it checks that theme is configured from config endpoint', async ({
-    page,
-  }) => {
+  test('it checks the config api is called', async ({ page }) => {
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes('/config/') && response.status() === 200,
@@ -158,11 +105,6 @@ test.describe('Config: Not loggued', () => {
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
 
-    const jsonResponse = await response.json();
-    expect(jsonResponse.FRONTEND_THEME).toStrictEqual('default');
-
-    const footer = page.locator('footer').first();
-    // alt 'Gouvernement Logo' comes from the theme
-    await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
+    expect(await response.json()).toStrictEqual(CONFIG);
   });
 });

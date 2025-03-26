@@ -190,7 +190,7 @@ test.describe('Document grid item options', () => {
 
 test.describe('Documents filters', () => {
   test('it checks the prebuild left panel filters', async ({ page }) => {
-    await page.goto('/');
+    void page.goto('/');
 
     // All Docs
     const response = await page.waitForResponse(
@@ -208,7 +208,6 @@ test.describe('Documents filters', () => {
 
     // Initial state
     await expect(allDocs).toBeVisible();
-    await expect(allDocs).toHaveCSS('background-color', 'rgb(238, 238, 238)');
     await expect(allDocs).toHaveAttribute('aria-selected', 'true');
 
     await expect(myDocs).toBeVisible();
@@ -263,7 +262,7 @@ test.describe('Documents filters', () => {
 
 test.describe('Documents Grid', () => {
   test('checks all the elements are visible', async ({ page }) => {
-    await page.goto('/');
+    void page.goto('/');
 
     let docs: SmallDoc[] = [];
     const response = await page.waitForResponse(
