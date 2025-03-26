@@ -1689,6 +1689,7 @@ class ConfigView(drf.views.APIView):
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
             "FRONTEND_THEME",
+            "FRONTEND_CSS_URL",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",
             "LANGUAGES",

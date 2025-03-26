@@ -411,6 +411,10 @@ class Base(Configuration):
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
 
+    FRONTEND_CSS_URL = values.Value(
+        None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
+    )
+
     # Posthog
     POSTHOG_KEY = values.DictValue(
         None, environ_name="POSTHOG_KEY", environ_prefix=None
