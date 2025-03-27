@@ -15,6 +15,7 @@ and this project adheres to
 ## Changed
 
 - ♻️(frontend) Integrate UI kit #783
+- ✨(frontend) add pdf block to the editor #348
 
 ## Fixed
 
