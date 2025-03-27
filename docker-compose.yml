@@ -185,11 +185,15 @@ services:
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
       target: y-provider
+    command: ["yarn", "workspace", "server-y-provider", "run", "dev"]
+    working_dir: /app/frontend
     restart: unless-stopped
     env_file:
       - env.d/development/common
     ports:
       - "4444:4444"
+    volumes:
+      - ./src/frontend/:/app/frontend
 
   kc_postgresql:
     image: postgres:14.3

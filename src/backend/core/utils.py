@@ -3,7 +3,7 @@
 import base64
 import re
 
-import y_py as Y
+import pycrdt
 from bs4 import BeautifulSoup
 
 from core import enums
@@ -52,19 +52,19 @@ def base64_yjs_to_xml(base64_string):
     """Extract xml from base64 yjs document."""
 
     decoded_bytes = base64.b64decode(base64_string)
-    uint8_array = bytearray(decoded_bytes)
+    # uint8_array = bytearray(decoded_bytes)
 
-    doc = Y.YDoc()  # pylint: disable=E1101
-    Y.apply_update(doc, uint8_array)  # pylint: disable=E1101
-    return str(doc.get_xml_element("document-store"))
+    doc = pycrdt.Doc()
+    doc.apply_update(decoded_bytes)
+    return str(doc.get("document-store", type=pycrdt.XmlFragment))
 
 
 def base64_yjs_to_text(base64_string):
     """Extract text from base64 yjs document."""
 
     blocknote_structure = base64_yjs_to_xml(base64_string)
-    soup = BeautifulSoup(blocknote_structure, "html.parser")
-    return soup.get_text(separator=" ").strip()
+    soup = BeautifulSoup(blocknote_structure, "lxml-xml")
+    return soup.get_text(separator=" ", strip=True)
 
 
 def extract_attachments(content):

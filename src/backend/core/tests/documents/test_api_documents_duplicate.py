@@ -11,9 +11,9 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from django.utils import timezone
 
+import pycrdt
 import pytest
 import requests
-import y_py
 from rest_framework.test import APIClient
 
 from core import factories, models
@@ -84,13 +84,14 @@ def test_api_documents_duplicate_success(index):
     image_refs = [get_image_refs(doc_id) for doc_id in document_ids]
 
     # Create document content with the first image only
-    ydoc = y_py.YDoc()  # pylint: disable=no-member
-    with ydoc.begin_transaction() as txn:
-        xml_fragment = ydoc.get_xml_element("document-store")
-        xml_fragment.push_xml_element(txn, "image").set_attribute(
-            txn, "src", image_refs[0][1]
-        )
-    update = y_py.encode_state_as_update(ydoc)  # pylint: disable=no-member
+    ydoc = pycrdt.Doc()
+    fragment = pycrdt.XmlFragment(
+        [
+            pycrdt.XmlElement("img", {"src": image_refs[0][1]}),
+        ]
+    )
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
     base64_content = base64.b64encode(update).decode("utf-8")
 
     # Create documents
