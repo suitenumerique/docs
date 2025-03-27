@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import Icon404 from '@/assets/icons/icon-404.svg';
-import { Box, StyledLink, Text } from '@/components';
+import { Box, Icon, StyledLink, Text } from '@/components';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -33,13 +33,7 @@ const Page: NextPageWithLayout = () => {
 
       <Box $margin={{ top: 'large' }}>
         <StyledLink href="/">
-          <StyledButton
-            icon={
-              <Text $isMaterialIcon $color="white">
-                house
-              </Text>
-            }
-          >
+          <StyledButton icon={<Icon iconName="house" $color="white" />}>
             {t('Home')}
           </StyledButton>
         </StyledLink>

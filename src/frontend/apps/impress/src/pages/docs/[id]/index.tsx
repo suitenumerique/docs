@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Text, TextErrors } from '@/components';
+import { Box, Icon, TextErrors } from '@/components';
 import { DocEditor } from '@/docs/doc-editor';
 import {
   Doc,
@@ -126,9 +126,7 @@ const DocPage = ({ id }: DocProps) => {
           causes={error.cause}
           icon={
             error.status === 502 ? (
-              <Text $isMaterialIcon $theme="danger">
-                wifi_off
-              </Text>
+              <Icon iconName="wifi_off" $theme="danger" />
             ) : undefined
           }
         />
