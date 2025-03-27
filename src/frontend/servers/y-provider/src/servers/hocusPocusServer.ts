@@ -1,4 +1,5 @@
 import { Server } from '@hocuspocus/server';
+import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 
 import { fetchDocument } from '@/api/getDoc';
 import { getMe } from '@/api/getMe';
@@ -27,6 +28,12 @@ export const hocusPocusServer = Server.configure({
       return Promise.reject(new Error('Wrong room name: Unauthorized'));
     }
 
+    if (!uuidValidate(documentName) || uuidVersion(documentName) !== 4) {
+      console.error('Room name is not a valid uuid:', documentName);
+
+      return Promise.reject(new Error('Wrong room name: Unauthorized'));
+    }
+
     let can_edit = false;
 
     try {
@@ -35,7 +42,7 @@ export const hocusPocusServer = Server.configure({
       if (!document.abilities.retrieve) {
         console.error(
           'onConnect: Unauthorized to retrieve this document',
-          roomParam,
+          documentName,
         );
         return Promise.reject(new Error('Wrong abilities:Unauthorized'));
       }

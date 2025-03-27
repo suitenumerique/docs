@@ -24,6 +24,7 @@
     "cors": "2.8.5",
     "express": "4.21.2",
     "express-ws": "5.0.2",
+    "uuid": "11.1.0",
     "y-protocols": "1.0.6",
     "yjs": "*"
   },
