@@ -2,6 +2,7 @@ import {
   HocuspocusProvider,
   HocuspocusProviderWebsocket,
 } from '@hocuspocus/provider';
+import { v1 as uuidv1, v4 as uuidv4 } from 'uuid';
 import WebSocket from 'ws';
 
 const port = 5559;
@@ -52,9 +53,9 @@ describe('Server Tests', () => {
 
   test('WebSocket connection with bad origin should be closed', () => {
     const { promise, done } = promiseDone();
-
+    const room = uuidv4();
     const ws = new WebSocket(
-      `ws://localhost:${port}/collaboration/ws/?room=test-room`,
+      `ws://localhost:${port}/collaboration/ws/?room=${room}`,
       {
         headers: {
           Origin: 'http://bad-origin.com',
@@ -72,9 +73,9 @@ describe('Server Tests', () => {
 
   test('WebSocket connection without cookies header should be closed', () => {
     const { promise, done } = promiseDone();
-
+    const room = uuidv4();
     const ws = new WebSocket(
-      `ws://localhost:${port}/collaboration/ws/?room=test-room`,
+      `ws://localhost:${port}/collaboration/ws/?room=${room}`,
       {
         headers: {
           Origin: origin,
@@ -92,9 +93,46 @@ describe('Server Tests', () => {
 
   test('WebSocket connection not allowed if room not matching provider name', () => {
     const { promise, done } = promiseDone();
-
+    const room = uuidv4();
     const wsHocus = new HocuspocusProviderWebsocket({
-      url: `ws://localhost:${portWS}/?room=my-test`,
+      url: `ws://localhost:${portWS}/?room=${room}`,
+      WebSocketPolyfill: WebSocket,
+      maxAttempts: 1,
+      quiet: true,
+    });
+
+    const providerName = uuidv4();
+    const provider = new HocuspocusProvider({
+      websocketProvider: wsHocus,
+      name: providerName,
+      broadcast: false,
+      quiet: true,
+      preserveConnection: false,
+      onClose: (data) => {
+        expect(console.error).toHaveBeenCalledWith(
+          'Invalid room name - Probable hacking attempt:',
+          providerName,
+          room,
+        );
+
+        wsHocus.stopConnectionAttempt();
+        expect(data.event.reason).toBe('Forbidden');
+        wsHocus.webSocket?.close();
+        wsHocus.disconnect();
+        provider.destroy();
+        wsHocus.destroy();
+        done();
+      },
+    });
+
+    return promise;
+  });
+
+  test('WebSocket connection not allowed if room is not a valid uuid v4', () => {
+    const { promise, done } = promiseDone();
+    const room = uuidv1();
+    const wsHocus = new HocuspocusProviderWebsocket({
+      url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
       quiet: true,
@@ -102,15 +140,49 @@ describe('Server Tests', () => {
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
-      name: 'hocuspocus-test',
+      name: room,
       broadcast: false,
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
         expect(console.error).toHaveBeenCalledWith(
-          'Invalid room name - Probable hacking attempt:',
-          'hocuspocus-test',
-          'my-test',
+          'Room name is not a valid uuid:',
+          room,
+        );
+
+        wsHocus.stopConnectionAttempt();
+        expect(data.event.reason).toBe('Forbidden');
+        wsHocus.webSocket?.close();
+        wsHocus.disconnect();
+        provider.destroy();
+        wsHocus.destroy();
+        done();
+      },
+    });
+
+    return promise;
+  });
+
+  test('WebSocket connection not allowed if room is not a valid uuid', () => {
+    const { promise, done } = promiseDone();
+    const room = 'not-a-valid-uuid';
+    const wsHocus = new HocuspocusProviderWebsocket({
+      url: `ws://localhost:${portWS}/?room=${room}`,
+      WebSocketPolyfill: WebSocket,
+      maxAttempts: 1,
+      quiet: true,
+    });
+
+    const provider = new HocuspocusProvider({
+      websocketProvider: wsHocus,
+      name: room,
+      broadcast: false,
+      quiet: true,
+      preserveConnection: false,
+      onClose: (data) => {
+        expect(console.error).toHaveBeenCalledWith(
+          'Room name is not a valid uuid:',
+          room,
         );
 
         wsHocus.stopConnectionAttempt();
@@ -131,8 +203,9 @@ describe('Server Tests', () => {
 
     mockDocFetch.mockRejectedValue('');
 
+    const room = uuidv4();
     const wsHocus = new HocuspocusProviderWebsocket({
-      url: `ws://localhost:${portWS}/?room=my-test`,
+      url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
       quiet: true,
@@ -140,7 +213,7 @@ describe('Server Tests', () => {
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
-      name: 'my-test',
+      name: room,
       broadcast: false,
       quiet: true,
       preserveConnection: false,
@@ -167,6 +240,7 @@ describe('Server Tests', () => {
   test('WebSocket connection fails if user do not have correct retrieve ability', () => {
     const { promise, done } = promiseDone();
 
+    const room = uuidv4();
     mockDocFetch.mockResolvedValue({
       abilities: {
         retrieve: false,
@@ -174,7 +248,7 @@ describe('Server Tests', () => {
     });
 
     const wsHocus = new HocuspocusProviderWebsocket({
-      url: `ws://localhost:${portWS}/?room=my-test`,
+      url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
       quiet: true,
@@ -182,14 +256,14 @@ describe('Server Tests', () => {
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
-      name: 'my-test',
+      name: room,
       broadcast: false,
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
         expect(console.error).toHaveBeenCalledWith(
           'onConnect: Unauthorized to retrieve this document',
-          'my-test',
+          room,
         );
 
         wsHocus.stopConnectionAttempt();
@@ -217,19 +291,20 @@ describe('Server Tests', () => {
         },
       });
 
+      const room = uuidv4();
       const wsHocus = new HocuspocusProviderWebsocket({
-        url: `ws://localhost:${portWS}/?room=hocuspocus-test`,
+        url: `ws://localhost:${portWS}/?room=${room}`,
         WebSocketPolyfill: WebSocket,
       });
 
       const provider = new HocuspocusProvider({
         websocketProvider: wsHocus,
-        name: 'hocuspocus-test',
+        name: room,
         broadcast: false,
         quiet: true,
         onConnect: () => {
           void hocusPocusServer
-            .openDirectConnection('hocuspocus-test')
+            .openDirectConnection(room)
             .then((connection) => {
               connection.document?.getConnections().forEach((connection) => {
                 expect(connection.readOnly).toBe(!canEdit);
@@ -262,29 +337,28 @@ describe('Server Tests', () => {
       id: 'test-user-id',
     });
 
+    const room = uuidv4();
     const wsHocus = new HocuspocusProviderWebsocket({
-      url: `ws://localhost:${portWS}/?room=hocuspocus-test`,
+      url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
     });
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
-      name: 'hocuspocus-test',
+      name: room,
       broadcast: false,
       quiet: true,
       onConnect: () => {
-        void hocusPocusServer
-          .openDirectConnection('hocuspocus-test')
-          .then((connection) => {
-            connection.document?.getConnections().forEach((connection) => {
-              expect(connection.context.userId).toBe('test-user-id');
-            });
-
-            void connection.disconnect();
-            provider.destroy();
-            wsHocus.destroy();
-            done();
+        void hocusPocusServer.openDirectConnection(room).then((connection) => {
+          connection.document?.getConnections().forEach((connection) => {
+            expect(connection.context.userId).toBe('test-user-id');
           });
+
+          void connection.disconnect();
+          provider.destroy();
+          wsHocus.destroy();
+          done();
+        });
       },
     });
 
