@@ -37,19 +37,20 @@ export type Base64 = string;
 export interface Doc {
   id: string;
   title?: string;
+  children?: Doc[];
+  childrenCount?: number;
   content: Base64;
+  created_at: string;
   creator: string;
+  depth: number;
   is_favorite: boolean;
   link_reach: LinkReach;
   link_role: LinkRole;
-  user_roles: Role[];
-  created_at: string;
-  updated_at: string;
   nb_accesses_direct: number;
   nb_accesses_ancestors: number;
-  children?: Doc[];
-  childrenCount?: number;
   numchild: number;
+  updated_at: string;
+  user_roles: Role[];
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
@@ -80,3 +81,12 @@ export enum DocDefaultFilter {
   MY_DOCS = 'my_docs',
   SHARED_WITH_ME = 'shared_with_me',
 }
+
+export type DocsOrdering =
+  | 'title'
+  | 'created_at'
+  | '-created_at'
+  | 'updated_at'
+  | '-updated_at'
+  | '-title'
+  | undefined;

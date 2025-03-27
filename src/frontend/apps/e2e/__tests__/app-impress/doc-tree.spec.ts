@@ -159,6 +159,46 @@ test.describe('Doc Tree', () => {
       `doc-sub-page-item-${firstSubPageJson.id}`,
     );
   });
+
+  test('it detachs a document', async ({ page, browserName }) => {
+    await page.goto('/');
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-detach',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const [docChild] = await createDoc(
+      page,
+      'doc-tree-detach-child',
+      browserName,
+      1,
+      true,
+    );
+    await verifyDocName(page, docChild);
+
+    const docTree = page.getByTestId('doc-tree');
+    const child = docTree
+      .getByRole('treeitem')
+      .locator('.--docs-sub-page-item')
+      .filter({
+        hasText: docChild,
+      });
+    await child.hover();
+    const menu = child.getByText(`more_horiz`);
+    await menu.click();
+    await page.getByText('Convert to doc').click();
+
+    await expect(
+      page.getByRole('textbox', { name: 'doc title input' }),
+    ).not.toHaveText(docChild);
+
+    const header = page.locator('header').first();
+    await header.locator('h2').getByText('Docs').click();
+    await expect(page.getByText(docChild)).toBeVisible();
+  });
 });
 
 test.describe('Doc Tree: Inheritance', () => {

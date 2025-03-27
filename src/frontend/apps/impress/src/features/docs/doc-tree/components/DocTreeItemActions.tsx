@@ -37,7 +37,7 @@ export const DocTreeItemActions = ({
   const { togglePanel } = useLeftPanelStore();
   const copyLink = useCopyDocLink(doc.id);
   const canUpdate = isOwnerOrAdmin(doc);
-  const { isChild } = useTreeUtils(doc);
+  const { isCurrentParent } = useTreeUtils(doc);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc>();
 
@@ -66,7 +66,7 @@ export const DocTreeItemActions = ({
       icon: <Icon iconName="link" $size="24px" />,
       callback: copyLink,
     },
-    ...(isChild
+    ...(!isCurrentParent
       ? [
           {
             label: t('Convert to doc'),
