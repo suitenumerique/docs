@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { DropdownMenu, Text } from '@/components/';
+import { DropdownMenu, Icon, Text } from '@/components/';
 import { useConfig } from '@/core';
 
 import { useLanguageSynchronizer } from './hooks/useLanguageSynchronizer';
@@ -71,9 +71,7 @@ export const LanguagePicker = () => {
         $direction="row"
         $gap="0.5rem"
       >
-        <Text $isMaterialIcon $color="inherit" $size="xl">
-          translate
-        </Text>
+        <Icon iconName="translate" $color="inherit" $size="xl" />
         {currentLanguageLabel}
       </Text>
     </DropdownMenu>

@@ -75,11 +75,7 @@ export default function HomeBanner() {
           ) : (
             <Button
               onClick={() => gotoLogin()}
-              icon={
-                <Text $isMaterialIcon $color="white">
-                  bolt
-                </Text>
-              }
+              icon={<Icon iconName="bolt" $color="white" />}
             >
               {t('Start Writing')}
             </Button>

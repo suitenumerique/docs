@@ -1,7 +1,7 @@
 import { Button, Modal, ModalSize } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 
 interface ModalConfirmDownloadUnsafeProps {
   onClose: () => void;
@@ -52,9 +52,7 @@ export const ModalConfirmDownloadUnsafe = ({
           $variation="1000"
           $direction="row"
         >
-          <Text $isMaterialIcon $theme="warning">
-            warning
-          </Text>
+          <Icon iconName="warning" $theme="warning" />
           {t('Warning')}
         </Text>
       }
