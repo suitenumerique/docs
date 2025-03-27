@@ -8,6 +8,8 @@ import {
 import React, { JSX, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useConfig } from '@/core/config/api';
+
 import { getQuoteFormattingToolbarItems } from '../custom-blocks';
 
 import { AIGroupButton } from './AIButton';
@@ -20,6 +22,7 @@ export const BlockNoteToolbar = () => {
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
   const { t } = useTranslation();
+  const { data: conf } = useConfig();
 
   const toolbarItems = useMemo(() => {
     const toolbarItems = getFormattingToolbarItems([
@@ -56,13 +59,13 @@ export const BlockNoteToolbar = () => {
         {toolbarItems}
 
         {/* Extra button to do some AI powered actions */}
-        <AIGroupButton key="AIButton" />
+        {conf?.AI_FEATURE_ENABLED && <AIGroupButton key="AIButton" />}
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems]);
+  }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
 
   return (
     <>

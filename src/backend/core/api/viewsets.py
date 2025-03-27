@@ -1684,6 +1684,7 @@ class ConfigView(drf.views.APIView):
             Return a dictionary of public settings.
         """
         array_settings = [
+            "AI_FEATURE_ENABLED",
             "COLLABORATION_WS_URL",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",

@@ -5,6 +5,7 @@ import { expect, test } from '@playwright/test';
 import { createDoc, verifyDocName } from './common';
 
 const config = {
+  AI_FEATURE_ENABLED: true,
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   ENVIRONMENT: 'development',
@@ -115,6 +116,38 @@ test.describe('Config', () => {
 
     const webSocket = await webSocketPromise;
     expect(webSocket.url()).toContain('ws://localhost:4444/collaboration/ws/');
+  });
+
+  test('it checks the AI feature flag from config endpoint', async ({
+    page,
+    browserName,
+  }) => {
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...config,
+            AI_FEATURE_ENABLED: false,
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/');
+
+    await createDoc(page, 'doc-ai-feature', browserName, 1);
+
+    await page.locator('.bn-block-outer').last().fill('Anything');
+    await page.getByText('Anything').dblclick();
+    expect(
+      await page.locator('button[data-test="convertMarkdown"]').count(),
+    ).toBe(1);
+    expect(await page.locator('button[data-test="ai-actions"]').count()).toBe(
+      0,
+    );
   });
 
   test('it checks that Crisp is trying to init from config endpoint', async ({

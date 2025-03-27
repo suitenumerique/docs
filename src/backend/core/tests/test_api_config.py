@@ -49,4 +49,5 @@ def test_api_config(is_authenticated):
         "MEDIA_BASE_URL": "http://testserver/",
         "POSTHOG_KEY": {"id": "132456", "host": "https://eu.i.posthog-test.com"},
         "SENTRY_DSN": "https://sentry.test/123",
+        "AI_FEATURE_ENABLED": False,
     }
