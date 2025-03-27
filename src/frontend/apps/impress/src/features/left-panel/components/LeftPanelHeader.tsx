@@ -1,26 +1,21 @@
 import { Button, ModalSize, useModal } from '@openfun/cunningham-react';
-import { t } from 'i18next';
 import { useRouter } from 'next/router';
 import { PropsWithChildren } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
 import { DocSearchModal } from '@/docs/doc-search';
 import { useAuth } from '@/features/auth';
-import { useCreateDoc, useDocStore } from '@/features/docs/doc-management';
 import { DocSearchTarget } from '@/features/docs/doc-search/components/DocSearchFilters';
-import { useCreateChildrenDoc } from '@/features/docs/doc-tree/api/useCreateChildren';
-import { useDocTreeData } from '@/features/docs/doc-tree/context/DocTreeContext';
 import { useCmdK } from '@/hook/useCmdK';
 
 import { useLeftPanelStore } from '../stores';
+
+import { LeftPanelHeaderButton } from './LeftPanelHeaderButton';
 
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const searchModal = useModal();
   const { authenticated } = useAuth();
-  const docTreeData = useDocTreeData();
-  const tree = docTreeData?.tree;
-  const { currentDoc } = useDocStore();
   const isDoc = router.pathname === '/docs/[id]';
 
   useCmdK(() => {
@@ -34,36 +29,9 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   });
   const { togglePanel } = useLeftPanelStore();
 
-  const { mutate: createDoc } = useCreateDoc({
-    onSuccess: (doc) => {
-      void router.push(`/docs/${doc.id}`);
-      togglePanel();
-    },
-  });
-
-  const { mutate: createChildrenDoc } = useCreateChildrenDoc({
-    onSuccess: (doc) => {
-      tree?.addRootNode(doc);
-      tree?.selectNodeById(doc.id);
-      void router.push(`/docs/${doc.id}`);
-      togglePanel();
-    },
-  });
-
   const goToHome = () => {
     void router.push('/');
     togglePanel();
-  };
-
-  const createNewDoc = () => {
-    if (docTreeData && docTreeData.root && isDoc) {
-      createChildrenDoc({
-        title: t('Untitled page'),
-        parentId: docTreeData.root.id,
-      });
-    } else {
-      createDoc();
-    }
   };
 
   return (
@@ -98,15 +66,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               )}
             </Box>
 
-            {authenticated && (
-              <Button
-                color={!isDoc ? 'primary' : 'tertiary'}
-                onClick={createNewDoc}
-                disabled={currentDoc && !currentDoc.abilities.update}
-              >
-                {t(isDoc ? 'New page' : 'New doc')}
-              </Button>
-            )}
+            {authenticated && <LeftPanelHeaderButton />}
           </Box>
         </SeparatedSection>
         {children}

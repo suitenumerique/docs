@@ -8,7 +8,6 @@ import {
   useAPIInfiniteQuery,
 } from '@/api';
 
-import { DocSearchTarget } from '../../doc-search/components/DocSearchFilters';
 import { Doc } from '../types';
 
 export const isDocsOrdering = (data: string): data is DocsOrdering => {
@@ -32,8 +31,6 @@ export type DocsParams = {
   is_creator_me?: boolean;
   title?: string;
   is_favorite?: boolean;
-  target?: DocSearchTarget;
-  parent_id?: string;
 };
 
 export type DocsResponse = APIList<Doc>;
@@ -56,14 +53,9 @@ export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
   if (params.is_favorite !== undefined) {
     searchParams.set('is_favorite', params.is_favorite.toString());
   }
-  let response: Response;
-  if (params.parent_id && params.target === DocSearchTarget.CURRENT) {
-    response = await fetchAPI(
-      `documents/${params.parent_id}/descendants/?${searchParams.toString()}`,
-    );
-  } else {
-    response = await fetchAPI(`documents/?${searchParams.toString()}`);
-  }
+  const response: Response = await fetchAPI(
+    `documents/?${searchParams.toString()}`,
+  );
 
   if (!response.ok) {
     throw new APIError('Failed to get the docs', await errorCauses(response));

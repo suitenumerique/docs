@@ -1,3 +1,4 @@
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import {
   Button,
   VariantType,
@@ -44,6 +45,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const hasAccesses = doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
   const queryClient = useQueryClient();
+  const treeContext = useTreeContext<Doc>();
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
@@ -92,6 +94,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     {
       label: doc.is_favorite ? t('Unpin') : t('Pin'),
       icon: 'push_pin',
+      disabled: treeContext?.root?.id !== doc.id,
       callback: () => {
         if (doc.is_favorite) {
           removeFavoriteDoc.mutate({ id: doc.id });

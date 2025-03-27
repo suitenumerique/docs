@@ -1,11 +1,12 @@
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+
 import { Box } from '@/components';
-import { useDocStore } from '@/docs/doc-management';
+import { Doc, useDocStore } from '@/docs/doc-management';
 import { DocTree } from '@/features/docs/doc-tree/components/DocTree';
-import { useDocTreeData } from '@/features/docs/doc-tree/context/DocTreeContext';
 
 export const LeftPanelDocContent = () => {
   const { currentDoc } = useDocStore();
-  const tree = useDocTreeData();
+  const tree = useTreeContext<Doc>();
 
   if (!currentDoc || !tree) {
     return null;

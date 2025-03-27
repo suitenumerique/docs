@@ -1,16 +1,21 @@
-import { OpenMap, TreeView, TreeViewMoveResult } from '@gouvfr-lasuite/ui-kit';
+import {
+  OpenMap,
+  TreeView,
+  TreeViewMoveResult,
+  useTreeContext,
+} from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { css } from 'styled-components';
 
-import { Box, SeparatedSection, StyledLink } from '@/components';
+import { Box, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
-import { Doc } from '../../doc-management';
+import { Doc, KEY_SUB_PAGE, useDoc, useDocStore } from '../../doc-management';
 import { SimpleDocItem } from '../../docs-grid';
 import { useDocTree } from '../api/useDocTree';
 import { useMoveDoc } from '../api/useMove';
-import { useDocTreeData } from '../context/DocTreeContext';
+import { canDrag, canDrop, serializeDocToSubPage } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -21,8 +26,23 @@ type DocTreeProps = {
 export const DocTree = ({ initialTargetId }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
-  const treeData = useDocTreeData();
+  const treeContext = useTreeContext<Doc>();
+  const { currentDoc } = useDocStore();
   const router = useRouter();
+
+  const previousDocId = useRef<string | null>(initialTargetId);
+
+  const { data: rootNode } = useDoc(
+    { id: treeContext?.root?.id ?? '' },
+    {
+      enabled: !!treeContext?.root?.id,
+      initialData: treeContext?.root ?? undefined,
+      queryKey: [KEY_SUB_PAGE, { id: treeContext?.root?.id ?? '' }],
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    },
+  );
+
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
   );
@@ -39,15 +59,17 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
       targetDocumentId: result.targetModeId,
       position: result.mode,
     });
-    treeData?.tree.handleMove(result);
+    treeContext?.treeData.handleMove(result);
   };
+
   useEffect(() => {
     if (!data) {
       return;
     }
+
     const { children: rootChildren, ...root } = data;
     const children = rootChildren ?? [];
-    treeData?.setRoot(root);
+    treeContext?.setRoot(root);
     const initialOpenState: OpenMap = {};
     initialOpenState[root.id] = true;
     const serialize = (children: Doc[]) => {
@@ -61,110 +83,149 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
     };
     serialize(children);
 
-    treeData?.tree.resetTree(children);
+    treeContext?.treeData.resetTree(children);
     setInitialOpenState(initialOpenState);
     if (initialTargetId === root.id) {
-      treeData?.tree.setSelectedNode(root);
+      treeContext?.treeData.setSelectedNode(root);
     } else {
-      treeData?.tree.selectNodeById(initialTargetId);
+      treeContext?.treeData.selectNodeById(initialTargetId);
     }
+
+    // Because treeData change in the treeContext, we have a infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [data, initialTargetId]);
 
-  const rootIsSelected = treeData?.tree.selectedNode?.id === treeData?.root?.id;
+  useEffect(() => {
+    if (!currentDoc) {
+      return;
+    }
 
-  if (!initialTargetId || !treeData) {
+    const item = treeContext?.treeData.getNode(currentDoc?.id ?? '');
+    if (!item && currentDoc.id !== rootNode?.id) {
+      treeContext?.treeData.resetTree([]);
+      treeContext?.treeData.setSelectedNode(currentDoc);
+      treeContext?.setRoot(currentDoc);
+      treeContext?.setInitialTargetId(currentDoc.id);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { children, ...rest } = currentDoc;
+      treeContext?.treeData.updateNode(
+        currentDoc.id,
+        serializeDocToSubPage(rest),
+      );
+    }
+    if (currentDoc?.id && currentDoc?.id !== previousDocId.current) {
+      previousDocId.current = currentDoc?.id;
+    }
+    // we don't need to run this effect on every change of treeContext.data bacause it cause an infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentDoc, rootNode?.id]);
+
+  const rootIsSelected =
+    treeContext?.treeData.selectedNode?.id === treeContext?.root?.id;
+
+  if (!initialTargetId || !treeContext) {
     return null;
   }
 
   return (
     <Box data-testid="doc-tree" $height="100%">
-      <SeparatedSection showSeparator={false}>
-        <Box $padding={{ horizontal: 'sm' }}>
-          <Box
-            $css={css`
-              padding: ${spacing['2xs']};
-              border-radius: 4px;
-              width: 100%;
-              background-color: ${rootIsSelected
-                ? 'var(--c--theme--colors--greyscale-100)'
-                : 'transparent'};
+      <Box $padding={{ horizontal: 'sm', top: 'sm', bottom: '2px' }}>
+        <Box
+          $css={css`
+            padding: ${spacing['2xs']};
+            border-radius: 4px;
+            width: 100%;
+            background-color: ${rootIsSelected
+              ? 'var(--c--theme--colors--greyscale-100)'
+              : 'transparent'};
 
-              &:hover {
-                background-color: var(--c--theme--colors--greyscale-100);
+            &:hover {
+              background-color: var(--c--theme--colors--greyscale-100);
+            }
+
+            .doc-tree-root-item-actions {
+              display: 'flex';
+              opacity: 0;
+
+              &:has(.isOpen) {
+                opacity: 1;
               }
-
+            }
+            &:hover {
               .doc-tree-root-item-actions {
-                display: 'flex';
-                opacity: 0;
-
-                &:has(.isOpen) {
-                  opacity: 1;
-                }
+                opacity: 1;
               }
-              &:hover {
-                .doc-tree-root-item-actions {
-                  opacity: 1;
-                }
-              }
-            `}
-          >
-            {treeData.root !== null && (
-              <StyledLink
-                $css={css`
-                  width: 100%;
-                `}
-                href={`/docs/${treeData.root.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  treeData.tree.setSelectedNode(treeData.root ?? undefined);
-                  router.push(`/docs/${treeData?.root?.id}`);
-                }}
-              >
-                <Box $direction="row" $align="center" $width="100%">
-                  <SimpleDocItem doc={treeData.root} showAccesses={true} />
-                  <div className="doc-tree-root-item-actions">
-                    <DocTreeItemActions
-                      doc={treeData.root}
-                      onCreateSuccess={(createdDoc) => {
-                        const newDoc = {
-                          ...createdDoc,
-                          children: [],
-                          childrenCount: 0,
-                          parentId: treeData.root?.id ?? undefined,
-                        };
-                        treeData?.tree.addChild(null, newDoc);
-                      }}
-                    />
-                  </div>
-                </Box>
-              </StyledLink>
-            )}
-          </Box>
+            }
+          `}
+        >
+          {treeContext.root !== null && rootNode && (
+            <StyledLink
+              $css={css`
+                width: 100%;
+              `}
+              href={`/docs/${treeContext.root.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                treeContext.treeData.setSelectedNode(
+                  treeContext.root ?? undefined,
+                );
+                router.push(`/docs/${treeContext?.root?.id}`);
+              }}
+            >
+              <Box $direction="row" $align="center" $width="100%">
+                <SimpleDocItem doc={rootNode} showAccesses={true} />
+                <div className="doc-tree-root-item-actions">
+                  <DocTreeItemActions
+                    doc={rootNode}
+                    onCreateSuccess={(createdDoc) => {
+                      const newDoc = {
+                        ...createdDoc,
+                        children: [],
+                        childrenCount: 0,
+                        parentId: treeContext.root?.id ?? undefined,
+                      };
+                      treeContext?.treeData.addChild(null, newDoc);
+                    }}
+                  />
+                </div>
+              </Box>
+            </StyledLink>
+          )}
         </Box>
-      </SeparatedSection>
+      </Box>
 
-      {initialOpenState && (
+      {initialOpenState && treeContext.treeData.nodes.length > 0 && (
         <TreeView
-          handleMove={handleMove}
           initialOpenState={initialOpenState}
+          afterMove={handleMove}
           selectedNodeId={
-            treeData.tree.selectedNode?.id ??
-            treeData.initialTargetId ??
+            treeContext.treeData.selectedNode?.id ??
+            treeContext.initialTargetId ??
             undefined
           }
-          treeData={treeData.tree.nodes ?? []}
-          rootNodeId={treeData.root?.id ?? ''}
+          canDrop={({ parentNode }) => {
+            if (!rootNode) {
+              return false;
+            }
+            const parentDoc = parentNode?.data.value as Doc;
+            if (!parentDoc) {
+              return canDrop(rootNode);
+            }
+            return canDrop(parentDoc);
+          }}
+          canDrag={(node) => {
+            const doc = node.value as Doc;
+            return canDrag(doc);
+          }}
+          rootNodeId={treeContext.root?.id ?? ''}
           renderNode={(props) => {
             return (
               <DocSubPageItem
                 {...props}
                 doc={props.node.data.value as Doc}
-                loadChildren={(node) =>
-                  treeData.tree.handleLoadChildren(node.id)
-                }
-                setSelectedNode={treeData.tree.setSelectedNode}
+                setSelectedNode={treeContext.treeData.setSelectedNode}
               />
             );
           }}

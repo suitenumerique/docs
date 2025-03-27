@@ -97,7 +97,7 @@ export const ModalRemoveDoc = ({
         {!isError && (
           <Text $size="sm" $variation="600">
             {t('Are you sure you want to delete the document "{{title}}"?', {
-              title: doc.title,
+              title: doc.title ?? t('Untitled'),
             })}
           </Text>
         )}

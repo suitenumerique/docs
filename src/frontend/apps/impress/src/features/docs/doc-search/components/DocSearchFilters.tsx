@@ -37,6 +37,7 @@ export const DocSearchFilters = ({
       $height="35px"
       $justify="space-between"
       $gap="10px"
+      data-testid="doc-search-filters"
       $margin={{ vertical: 'base' }}
     >
       <Box $direction="row" $align="center" $gap="10px">

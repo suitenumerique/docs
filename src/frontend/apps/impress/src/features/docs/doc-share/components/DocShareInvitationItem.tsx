@@ -1,4 +1,5 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -8,10 +9,9 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, Role } from '@/docs/doc-management';
+import { Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 
-import { useDocTreeData } from '../../doc-tree/context/DocTreeContext';
 import { useDeleteDocInvitation, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
 
@@ -24,9 +24,10 @@ type Props = {
 };
 export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
-  const treeData = useDocTreeData();
+
   const fakeUser: User = {
     id: invitation.email,
     full_name: invitation.email,
@@ -40,7 +41,9 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
 
   const { mutate: updateDocInvitation } = useUpdateDocInvitation({
     onSuccess: () => {
-      void treeData?.tree.refreshNode(doc.id);
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
     },
     onError: (error) => {
       toast(
@@ -55,7 +58,9 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
 
   const { mutate: removeDocInvitation } = useDeleteDocInvitation({
     onSuccess: () => {
-      void treeData?.tree.refreshNode(doc.id);
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
     },
     onError: (error) => {
       toast(
