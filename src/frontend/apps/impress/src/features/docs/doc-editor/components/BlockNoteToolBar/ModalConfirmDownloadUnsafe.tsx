@@ -32,7 +32,6 @@ export const ModalConfirmDownloadUnsafe = ({
             aria-label={t('Download')}
             color="danger"
             onClick={() => {
-              console.log('onClick');
               if (onConfirm) {
                 void onConfirm();
               }
