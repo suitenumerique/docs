@@ -2,7 +2,7 @@ import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 
-import { Box, Text } from '@/components';
+import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { DocsBlockNoteEditor } from '../../types';
@@ -45,11 +45,7 @@ export const getDividerReactSlashMenuItems = (
     },
     aliases: ['divider', 'hr', 'horizontal rule', 'line', 'separator'],
     group,
-    icon: (
-      <Text $isMaterialIcon $size="18px">
-        remove
-      </Text>
-    ),
+    icon: <Icon iconName="remove" $size="18px" />,
     subtext: t('Add a horizontal line'),
   },
 ];

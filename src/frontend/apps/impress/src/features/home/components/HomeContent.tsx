@@ -2,7 +2,7 @@ import { Button } from '@openfun/cunningham-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Footer } from '@/features/footer';
 import { LeftPanel } from '@/features/left-panel';
@@ -155,11 +155,7 @@ export function HomeContent() {
                       $margin={{ top: 'small' }}
                     >
                       <Button
-                        icon={
-                          <Text $isMaterialIcon $color="white">
-                            chat
-                          </Text>
-                        }
+                        icon={<Icon iconName="chat" $color="white" />}
                         href="https://matrix.to/#/#docs-official:matrix.org"
                         target="_blank"
                       >

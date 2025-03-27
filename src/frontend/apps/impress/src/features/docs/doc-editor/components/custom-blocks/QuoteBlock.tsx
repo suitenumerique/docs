@@ -1,9 +1,8 @@
 import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import React from 'react';
 
-import { Box, Text } from '@/components';
+import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { DocsBlockNoteEditor } from '../../types';
@@ -54,11 +53,7 @@ export const getQuoteReactSlashMenuItems = (
     },
     aliases: ['quote', 'blockquote', 'citation'],
     group,
-    icon: (
-      <Text $isMaterialIcon $size="18px">
-        format_quote
-      </Text>
-    ),
+    icon: <Icon iconName="format_quote" $size="18px" />,
     subtext: t('Add a quote block'),
   },
 ];
@@ -68,10 +63,6 @@ export const getQuoteFormattingToolbarItems = (
 ): BlockTypeSelectItem => ({
   name: t('Quote'),
   type: 'quote',
-  icon: () => (
-    <Text $isMaterialIcon $size="16px">
-      format_quote
-    </Text>
-  ),
+  icon: () => <Icon iconName="format_quote" $size="16px" />,
   isSelected: (block) => block.type === 'quote',
 });
