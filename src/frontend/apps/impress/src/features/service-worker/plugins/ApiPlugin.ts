@@ -172,6 +172,7 @@ export class ApiPlugin implements WorkboxPlugin {
       content: '',
       created_at: new Date().toISOString(),
       creator: 'dummy-id',
+      depth: 1,
       is_favorite: false,
       nb_accesses_direct: 1,
       nb_accesses_ancestors: 1,
