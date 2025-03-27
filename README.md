@@ -48,12 +48,7 @@ Docs is a collaborative text editor designed to address common challenges in kno
 
 ### Test it
 
-Test Docs on your browser by logging in on this [environment](https://impress-preprod.beta.numerique.gouv.fr/)
-
-```
-email: test.docs@yopmail.com
-password: I'd<3ToTestDocs
-```
+Test Docs on your browser by visiting this [demo document](https://impress-preprod.beta.numerique.gouv.fr/docs/6ee5aac4-4fb9-457d-95bf-bb56c2467713/)
 
 ### Run it locally
 
