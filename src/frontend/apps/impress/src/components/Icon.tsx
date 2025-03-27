@@ -1,51 +1,28 @@
+import clsx from 'clsx';
 import { css } from 'styled-components';
 
 import { Text, TextType } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+export enum IconVariant {
+  Filled = 'filled',
+  Outlined = 'outlined',
+}
 
 type IconProps = TextType & {
   iconName: string;
-  isFilled?: boolean;
+  variant?: IconVariant;
 };
-export const Icon = ({ iconName, isFilled, ...textProps }: IconProps) => {
+export const Icon = ({
+  iconName,
+  variant = IconVariant.Outlined,
+  ...textProps
+}: IconProps) => {
   return (
     <Text
-      $isMaterialIcon={!isFilled}
       {...textProps}
-      className={
-        isFilled
-          ? `material-icons-filled ${textProps.className}`
-          : textProps.className
-      }
-    >
-      {iconName}
-    </Text>
-  );
-};
-
-interface IconBGProps extends TextType {
-  iconName: string;
-}
-
-export const IconBG = ({ iconName, ...textProps }: IconBGProps) => {
-  const { colorsTokens } = useCunninghamTheme();
-
-  return (
-    <Text
-      $isMaterialIcon
-      $size="36px"
-      $theme="primary"
-      $variation="600"
-      $background={colorsTokens()['greyscale-000']}
-      $css={`
-        border: 1px solid ${colorsTokens()['primary-200']}; 
-        user-select: none;
-      `}
-      $radius="12px"
-      $padding="4px"
-      $margin="auto"
-      {...textProps}
-      className={`--docs--icon-bg ${textProps.className || ''}`}
+      className={clsx('--docs--icon-bg', textProps.className, {
+        'material-icons-filled': variant === IconVariant.Filled,
+        'material-icons': variant === IconVariant.Outlined,
+      })}
     >
       {iconName}
     </Text>
@@ -58,15 +35,13 @@ type IconOptionsProps = TextType & {
 
 export const IconOptions = ({ isHorizontal, ...props }: IconOptionsProps) => {
   return (
-    <Text
+    <Icon
       {...props}
-      $isMaterialIcon
+      iconName={isHorizontal ? 'more_horiz' : 'more_vert'}
       $css={css`
         user-select: none;
         ${props.$css}
       `}
-    >
-      {isHorizontal ? 'more_horiz' : 'more_vert'}
-    </Text>
+    />
   );
 };
