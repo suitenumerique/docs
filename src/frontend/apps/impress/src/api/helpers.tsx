@@ -21,6 +21,11 @@ export type DefinedInitialDataInfiniteOptionsAPI<
   TPageParam
 >;
 
+export type InfiniteQueryConfig<Q> = Omit<
+  DefinedInitialDataInfiniteOptionsAPI<Q>,
+  'queryKey' | 'initialData' | 'getNextPageParam' | 'initialPageParam'
+>;
+
 /**
  * Custom React hook that wraps React Query's `useInfiniteQuery` for paginated API requests.
  *
@@ -38,7 +43,7 @@ export const useAPIInfiniteQuery = <T, Q extends { next?: APIList<Q>['next'] }>(
   key: string,
   api: (props: T & { page: number }) => Promise<Q>,
   param: T,
-  queryConfig?: DefinedInitialDataInfiniteOptionsAPI<Q>,
+  queryConfig?: InfiniteQueryConfig<Q>,
 ) => {
   return useInfiniteQuery<Q, APIError, InfiniteData<Q>, QueryKey, number>({
     initialPageParam: 1,
