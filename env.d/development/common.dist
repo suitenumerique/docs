@@ -50,6 +50,7 @@ OIDC_REDIRECT_ALLOWED_HOSTS=["http://localhost:8083", "http://localhost:3000"]
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
 # AI
+AI_FEATURE_ENABLED=true
 AI_BASE_URL=https://openaiendpoint.com
 AI_API_KEY=password
 AI_MODEL=llama

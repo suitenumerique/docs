@@ -18,6 +18,7 @@ and this project adheres to
 
 ## Fixed
 
+- 🐛(frontend) conditionally render AI button only when feature is enabled #782
 - 🐛(backend) compute ancestor_links in get_abilities if needed #725
 - 🔒️(back) restrict access to document accesses #801
 

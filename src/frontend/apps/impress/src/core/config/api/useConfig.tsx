@@ -14,6 +14,7 @@ interface ConfigResponse {
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
+  AI_FEATURE_ENABLED?: boolean;
 }
 
 export const getConfig = async (): Promise<ConfigResponse> => {
