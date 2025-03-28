@@ -65,7 +65,7 @@ export const BlockNoteToolbar = () => {
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, conf]);
+  }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
 
   return (
     <>
