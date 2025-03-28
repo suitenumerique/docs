@@ -1,6 +1,6 @@
 {
   "name": "packages-i18n",
-  "version": "2.6.0",
+  "version": "3.0.0",
   "private": true,
   "scripts": {
     "extract-translation": "yarn extract-translation:impress",
