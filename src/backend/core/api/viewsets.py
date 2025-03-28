@@ -1693,6 +1693,7 @@ class ConfigView(drf.views.APIView):
             "LANGUAGES",
             "LANGUAGE_CODE",
             "SENTRY_DSN",
+            "AI_FEATURE_ENABLED",
         ]
         dict_settings = {}
         for setting in array_settings:
