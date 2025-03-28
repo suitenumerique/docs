@@ -127,12 +127,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Call argocd github webhook
-        run: |
-          data='{"ref": "'$GITHUB_REF'","repository": {"html_url":"'$GITHUB_SERVER_URL'/${{ secrets.DEPLOYMENT_REPO_URL }}"}}'
-          sig=$(echo -n ${data} | openssl dgst -sha256 -hmac "${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET }}" | awk '{print "X-Hub-Signature-256: sha256="$2}')
-          curl -X POST -H 'X-GitHub-Event:push' -H "Content-Type: application/json" -H "${sig}" --data "${data}" ${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}
+      - uses: numerique-gouv/action-argocd-webhook-notification@main
+        id: notify
+        with:
+          deployment_repo_path: "${{ secrets.DEPLOYMENT_REPO_URL }}"
+          argocd_webhook_secret: "${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET }}"
+          argocd_url: "${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}"
