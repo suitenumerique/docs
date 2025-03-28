@@ -24,6 +24,8 @@ Welcome to Docs! The open source document editor where your notes can become kno
 
 ## Why use Docs ❓
 
+⚠️ **Note that Docs provides docs/pdf exporters by loading [two BlockNote packages](https://github.com/suitenumerique/docs/blob/main/src/frontend/apps/impress/package.json#L22C7-L23C53), which we use under the AGPL-3.0 licence. Until we comply with the terms of this license, we recommend that you don't run Docs as a commercial product, unless you are willing to sponsor [BlockNote](https://github.com/TypeCellOS/BlockNote).**
+
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
 ### Write
