@@ -155,6 +155,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $margin={{ bottom: 'xl' }}
         aria-label={t('Content modal to export the document')}
         $gap="1rem"
+        className="--docs--modal-export-content"
       >
         <Text $variation="600" $size="sm">
           {t('Download your document in a .docx or .pdf format.')}

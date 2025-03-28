@@ -122,6 +122,7 @@ export const TableContent = () => {
           gap: var(--c--theme--spacings--2xs);
         `}
       `}
+      className="--docs--table-content"
     >
       {!isHover && (
         <BoxButton onClick={onOpen} $justify="center" $align="center">

@@ -8,6 +8,7 @@ const config = {
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   ENVIRONMENT: 'development',
+  FRONTEND_CSS_URL: null,
   FRONTEND_THEME: 'default',
   MEDIA_BASE_URL: 'http://localhost:8083',
   LANGUAGES: [
@@ -139,6 +140,30 @@ test.describe('Config', () => {
     await expect(
       page.locator('#crisp-chatbox').getByText('Invalid website'),
     ).toBeVisible();
+  });
+
+  test('it checks FRONTEND_CSS_URL config', async ({ page }) => {
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...config,
+            FRONTEND_CSS_URL: 'http://localhost:123465/css/style.css',
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page
+        .locator('head link[href="http://localhost:123465/css/style.css"]')
+        .first(),
+    ).toBeAttached();
   });
 });
 

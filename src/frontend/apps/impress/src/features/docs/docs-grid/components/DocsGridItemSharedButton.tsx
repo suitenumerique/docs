@@ -26,6 +26,7 @@ export const DocsGridItemSharedButton = ({ doc, handleClick }: Props) => {
         </Text>
       }
       placement="top"
+      className="--docs--doc-tooltip-grid-item-shared-button"
     >
       <Button
         style={{ minWidth: '50px', justifyContent: 'center' }}

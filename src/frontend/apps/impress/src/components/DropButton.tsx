@@ -71,6 +71,7 @@ export const DropButton = ({
         onPress={() => onOpenChangeHandler(true)}
         aria-label={label}
         $css={buttonCss}
+        className="--docs--drop-button"
       >
         {button}
       </StyledButton>
@@ -79,6 +80,7 @@ export const DropButton = ({
         triggerRef={triggerRef}
         isOpen={isLocalOpen}
         onOpenChange={onOpenChangeHandler}
+        className="--docs--drop-button-popover"
       >
         {children}
       </StyledPopover>

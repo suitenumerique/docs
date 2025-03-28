@@ -119,8 +119,6 @@ export const QuickSearchStyle = createGlobalStyle`
   }
 }
 
-
-
 .c__modal__scroller:has(.quick-search-container),
 .c__modal__scroller:has(.noPadding) {
   padding: 0 !important;
@@ -138,6 +136,4 @@ export const QuickSearchStyle = createGlobalStyle`
     margin-bottom: 0;
   }
 }
-
-
 `;

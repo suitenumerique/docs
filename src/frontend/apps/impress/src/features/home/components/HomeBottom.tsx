@@ -30,6 +30,7 @@ function HomeProConnect() {
     <Box
       $justify="center"
       $height={!isMobile ? `calc(100vh - ${parentGap})` : 'auto'}
+      className="--docs--home-proconnect"
     >
       <Box
         $gap={spacings['md']}

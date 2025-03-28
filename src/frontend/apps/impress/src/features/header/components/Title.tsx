@@ -10,7 +10,12 @@ export const Title = () => {
   const spacings = theme.spacingsTokens();
 
   return (
-    <Box $direction="row" $align="center" $gap={spacings['2xs']}>
+    <Box
+      $direction="row"
+      $align="center"
+      $gap={spacings['2xs']}
+      className="--docs--title"
+    >
       <Text
         $margin="none"
         as="h2"

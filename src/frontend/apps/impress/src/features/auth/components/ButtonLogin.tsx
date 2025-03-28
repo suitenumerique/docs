@@ -18,6 +18,7 @@ export const ButtonLogin = () => {
         onClick={() => gotoLogin()}
         color="primary-text"
         aria-label={t('Login')}
+        className="--docs--button-login"
       >
         {t('Login')}
       </Button>
@@ -25,7 +26,12 @@ export const ButtonLogin = () => {
   }
 
   return (
-    <Button onClick={gotoLogout} color="primary-text" aria-label={t('Logout')}>
+    <Button
+      onClick={gotoLogout}
+      color="primary-text"
+      aria-label={t('Logout')}
+      className="--docs--button-logout"
+    >
       {t('Logout')}
     </Button>
   );
@@ -45,6 +51,7 @@ export const ProConnectButton = () => {
         }
       `}
       $radius="4px"
+      className="--docs--proconnect-button"
     >
       <ProConnectImg />
     </BoxButton>

@@ -30,7 +30,10 @@ export const InfiniteScroll = ({
   };
 
   return (
-    <Box {...boxProps}>
+    <Box
+      {...boxProps}
+      className={`--docs--infinite-scroll ${boxProps.className || ''}`}
+    >
       {children}
       <InView onChange={loadMore}>
         {!isLoading && hasMore && (

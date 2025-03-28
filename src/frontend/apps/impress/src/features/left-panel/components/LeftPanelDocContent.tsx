@@ -18,6 +18,7 @@ export const LeftPanelDocContent = () => {
       $flex={1}
       $width="100%"
       $css="width: 100%; overflow-y: auto; overflow-x: hidden;"
+      className="--docs--left-panel-doc-content"
     >
       <SeparatedSection showSeparator={false}>
         <Box $padding={{ horizontal: 'sm' }}>

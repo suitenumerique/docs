@@ -49,6 +49,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             background-color: var(--c--theme--colors--greyscale-100);
           }
         `}
+        className="--docs--doc-grid-item"
       >
         <StyledLink
           $css={css`

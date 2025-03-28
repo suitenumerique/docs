@@ -93,6 +93,7 @@ export const HomeSection = ({
         opacity: ${isVisible ? 1 : 0};
         ${$css}
       `}
+      className="--docs--home-section"
     >
       <Box
         $direction={direction}
