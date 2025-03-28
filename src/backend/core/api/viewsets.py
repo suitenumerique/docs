@@ -1059,11 +1059,7 @@ class DocumentViewSet(
             }
         )
 
-    @drf.decorators.action(
-        detail=True,
-        methods=["put"],
-        url_path="link-configuration",
-    )
+    @drf.decorators.action(detail=True, methods=["put"], url_path="link-configuration")
     def link_configuration(self, request, *args, **kwargs):
         """Update link configuration with specific rights (cf get_abilities)."""
         # Check permissions first
