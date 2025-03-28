@@ -60,6 +60,7 @@ and this project adheres to
 
 - 🧑‍💻(frontend) change literal section open source #702
 - ♻️(frontend) replace cors proxy for export #695
+- 📝(readme) remove preprod account from readme #812
 - 🚨(gitlint) Allow uppercase in commit messages #756
 - ♻️(frontend) Improve AI translations #478
 
