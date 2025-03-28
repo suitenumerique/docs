@@ -161,6 +161,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         </Text>
         <Select
           clearable={false}
+          fullWidth
           label={t('Template')}
           options={templateOptions}
           value={templateSelected}
