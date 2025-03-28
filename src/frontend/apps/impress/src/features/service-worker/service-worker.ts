@@ -65,6 +65,13 @@ self.addEventListener('install', function (event) {
   event.waitUntil(self.skipWaiting());
 });
 
+self.addEventListener('message', (event) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if (event.data?.type === 'SKIP_WAITING') {
+    void self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', function (event) {
   const cacheAllow = SW_VERSION;
 

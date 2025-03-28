@@ -21,9 +21,11 @@ describe('useSWRegister', () => {
           reject('error');
         }),
     );
+
     Object.defineProperty(navigator, 'serviceWorker', {
       value: {
         register: registerSpy,
+        addEventListener: jest.fn(),
       },
       writable: true,
     });
@@ -31,6 +33,10 @@ describe('useSWRegister', () => {
     render(<TestComponent />);
 
     expect(registerSpy).toHaveBeenCalledWith('/service-worker.js?v=123456');
+    expect(navigator.serviceWorker.addEventListener).toHaveBeenCalledWith(
+      'controllerchange',
+      expect.any(Function),
+    );
   });
 
   it('checks service-worker is not register', () => {
