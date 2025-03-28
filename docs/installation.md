@@ -2,7 +2,6 @@
 
 This document is a step-by-step guide that describes how to install Docs on a k8s cluster without AI features. It's a teaching document to learn how it's work. It needs to be adapt for production environment.
 
-
 ## Prerequisites
 
 - k8s cluster with an nginx-ingress controller
@@ -23,7 +22,7 @@ To be able to use the script, you will need to install:
 - Helm (https://helm.sh/docs/intro/quickstart/#install-helm)
 
 ```
-./bin/start-kind.sh 
+./bin/start-kind.sh
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  4700  100  4700    0     0  92867      0 --:--:-- --:--:-- --:--:-- 94000
@@ -46,11 +45,11 @@ It will expire on 24 March 2027 🗓
 2. Create kind cluster with containerd registry config dir enabled
 Creating cluster "suite" ...
  ✓ Ensuring node image (kindest/node:v1.27.3) 🖼
- ✓ Preparing nodes 📦  
- ✓ Writing configuration 📜 
- ✓ Starting control-plane 🕹️ 
- ✓ Installing CNI 🔌 
- ✓ Installing StorageClass 💾 
+ ✓ Preparing nodes 📦
+ ✓ Writing configuration 📜
+ ✓ Starting control-plane 🕹️
+ ✓ Installing CNI 🔌
+ ✓ Installing StorageClass 💾
 Set kubectl context to "kind-suite"
 You can now use your cluster with:
 
@@ -96,9 +95,10 @@ ingress-nginx-admission-create-t55ph        0/1     Completed   0          2m56s
 ingress-nginx-admission-patch-94dvt         0/1     Completed   1          2m56s
 ingress-nginx-controller-57c548c4cd-2rx47   1/1     Running     0          2m56s
 ```
-When your k8s cluster is ready (the ingress nginx controller is up), you can start the deployment. This cluster is special because it uses the *.127.0.0.1.nip.io domain and mkcert certificates to have full HTTPS support and easy domain name management.
 
-Please remember that *.127.0.0.1.nip.io will always resolve to 127.0.0.1, except in the k8s cluster where we configure CoreDNS to answer with the ingress-nginx service IP.
+When your k8s cluster is ready (the ingress nginx controller is up), you can start the deployment. This cluster is special because it uses the \*.127.0.0.1.nip.io domain and mkcert certificates to have full HTTPS support and easy domain name management.
+
+Please remember that \*.127.0.0.1.nip.io will always resolve to 127.0.0.1, except in the k8s cluster where we configure CoreDNS to answer with the ingress-nginx service IP.
 
 ## Preparation
 
@@ -228,4 +228,3 @@ keycloak                         <none>   keycloak.127.0.0.1.nip.io   localhost 
 ```
 
 You can use impress on https://impress.127.0.0.1.nip.io. The provisionning user in keycloak is impress/impress.
-
