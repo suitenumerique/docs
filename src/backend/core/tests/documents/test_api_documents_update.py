@@ -328,3 +328,22 @@ def test_api_documents_update_administrator_or_owner_of_another(via, mock_user_t
     other_document.refresh_from_db()
     other_document_values = serializers.DocumentSerializer(instance=other_document).data
     assert other_document_values == old_document_values
+
+
+def test_api_documents_update_invalid_content():
+    """
+    Updating a document with a non base64 encoded content should raise a validation error.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[[user, "owner"]])
+
+    response = client.put(
+        f"/api/v1.0/documents/{document.id!s}/",
+        {"content": "invalid content"},
+        format="json",
+    )
+    assert response.status_code == 400
+    assert response.json() == {"content": ["Invalid base64 content."]}

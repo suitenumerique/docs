@@ -1,6 +1,8 @@
 """Client serializers for the impress core app."""
 
+import binascii
 import mimetypes
+from base64 import b64decode
 
 from django.conf import settings
 from django.db.models import Q
@@ -296,6 +298,18 @@ class DocumentSerializer(ListDocumentSerializer):
                 raise serializers.ValidationError(
                     "A document with this ID already exists. You cannot override it."
                 )
+
+        return value
+
+    def validate_content(self, value):
+        """Validate the content field."""
+        if not value:
+            return None
+
+        try:
+            b64decode(value, validate=True)
+        except binascii.Error as err:
+            raise serializers.ValidationError("Invalid base64 content.") from err
 
         return value
 

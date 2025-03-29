@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- 🐛(back) validate document content in serializer #822
+
 ## [3.0.0] - 2025-03-28
 
 ## Added
