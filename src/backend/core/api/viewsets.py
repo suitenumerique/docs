@@ -1190,7 +1190,6 @@ class DocumentViewSet(
         # Extract the original URL from the request header
         original_url = request.META.get("HTTP_X_ORIGINAL_URL")
         if not original_url:
-            logger.debug( request.META )
             if not request.META.get("HTTP_X_FORWARDED_URI"):
                 logger.debug("Missing HTTP_X_ORIGINAL_URL header and HTTP_X_FORWARDED_URI http header.")
                 raise drf.exceptions.PermissionDenied()
