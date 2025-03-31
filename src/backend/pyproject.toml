@@ -25,10 +25,10 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "beautifulsoup4==4.12.3",
-    "boto3==1.37.18",
+    "beautifulsoup4==4.13.3",
+    "boto3==1.37.24",
     "Brotli==1.1.0",
-    "celery[redis]==5.4.0",
+    "celery[redis]==5.5.0",
     "django-configurations==2.5.1",
     "django-cors-headers==4.7.0",
     "django-countries==7.6.1",
@@ -40,7 +40,7 @@ dependencies = [
     "django-timezone-field>=5.1",
     "django==5.1.7",
     "django-treebeard==4.7.1",
-    "djangorestframework==3.15.2",
+    "djangorestframework==3.16.0",
     "drf_spectacular==0.28.0",
     "dockerflow==2024.4.2",
     "easy_thumbnails==2.10",
@@ -51,14 +51,14 @@ dependencies = [
     "markdown==3.7",
     "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
-    "openai==1.68.2",
+    "openai==1.70.0",
     "psycopg[binary]==3.2.6",
     "pycrdt==0.12.10", 
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "requests==2.32.3",
-    "sentry-sdk==2.24.0",
-    "url-normalize==1.4.3",
+    "sentry-sdk==2.25.0",
+    "url-normalize==2.2.0",
     "whitenoise==6.9.0",
 ]
 
@@ -86,7 +86,7 @@ dev = [
     "pytest-xdist==3.6.1",
     "responses==0.25.7",
     "ruff==0.11.2",
-    "types-requests==2.32.0.20250306",
+    "types-requests==2.32.0.20250328",
 ]
 
 [tool.setuptools]
