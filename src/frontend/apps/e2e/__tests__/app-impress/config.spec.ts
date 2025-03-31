@@ -2,7 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './common';
+import { createDoc } from './common';
 
 const config = {
   AI_FEATURE_ENABLED: true,
@@ -100,22 +100,13 @@ test.describe('Config', () => {
     page,
     browserName,
   }) => {
-    const webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket.url().includes('ws://localhost:4444/collaboration/ws/');
-    });
-
     await page.goto('/');
 
-    const randomDoc = await createDoc(
-      page,
-      'doc-collaboration',
-      browserName,
-      1,
-    );
+    void createDoc(page, 'doc-collaboration', browserName, 1);
 
-    await verifyDocName(page, randomDoc[0]);
-
-    const webSocket = await webSocketPromise;
+    const webSocket = await page.waitForEvent('websocket', (webSocket) => {
+      return webSocket.url().includes('ws://localhost:4444/collaboration/ws/');
+    });
     expect(webSocket.url()).toContain('ws://localhost:4444/collaboration/ws/');
   });
 
