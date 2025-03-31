@@ -11,6 +11,7 @@ on:
   pull_request:
     branches:
       - 'main'
+      - 'ci/trivy-fails'
 
 env:
   DOCKER_USER: 1001:127
@@ -38,7 +39,6 @@ jobs:
         with:
           docker-build-args: '--target backend-production -f Dockerfile'
           docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
-        continue-on-error: true
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -72,7 +72,6 @@ jobs:
         with:
           docker-build-args: '-f src/frontend/Dockerfile --target frontend-production'
           docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-        continue-on-error: true
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -106,8 +105,7 @@ jobs:
         uses: numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '-f src/frontend/servers/y-provider/Dockerfile --target y-provider'
-          docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-        continue-on-error: true
+          docker-image-name: 'docker.io/lasuite/impress-y-provider:${{ github.sha }}'
       -
         name: Build and push
         uses: docker/build-push-action@v6
