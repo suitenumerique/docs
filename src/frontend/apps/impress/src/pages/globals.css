@@ -68,3 +68,11 @@ main ::-webkit-scrollbar-thumb:hover,
   /* Support for IE. */
   font-feature-settings: 'liga';
 }
+
+[data-nextjs-dialog-overlay] {
+  display: none !important;
+}
+
+nextjs-portal {
+  display: none;
+}
