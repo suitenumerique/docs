@@ -58,7 +58,6 @@ dependencies = [
     "python-magic==0.4.27",
     "requests==2.32.3",
     "sentry-sdk==2.25.0",
-    "url-normalize==2.2.0",
     "whitenoise==6.9.0",
 ]
 
