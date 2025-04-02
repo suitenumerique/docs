@@ -54,11 +54,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
           className="--docs--doc-editor-header"
         >
-          {isVersion ? (
-            <DocVersionHeader title={doc.title} />
-          ) : (
-            <DocHeader doc={doc} />
-          )}
+          {isVersion ? <DocVersionHeader /> : <DocHeader doc={doc} />}
         </Box>
 
         <Box

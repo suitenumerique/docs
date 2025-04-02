@@ -34,7 +34,7 @@ type Props = TreeViewNodeProps<Doc>;
 export const DocSubPageItem = (props: Props) => {
   const doc = props.node.data.value as Doc;
   const treeContext = useTreeContext<Doc>();
-  const { untitledDocument } = useTrans();
+  const { untitledDocument } = useTrans(doc);
   const { node } = props;
   const { spacingsTokens } = useCunninghamTheme();
   const [isHover, setIsHover] = useState(false);
