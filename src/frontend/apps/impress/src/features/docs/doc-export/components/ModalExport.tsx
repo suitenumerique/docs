@@ -46,8 +46,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const [format, setFormat] = useState<DocDownloadFormat>(
     DocDownloadFormat.PDF,
   );
-  const { untitledDocument } = useTrans();
-
+  const { untitledDocument } = useTrans(doc);
   const templateOptions = useMemo(() => {
     const templateOptions = (templates?.pages || [])
       .map((page) =>
