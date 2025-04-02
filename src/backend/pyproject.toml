@@ -38,7 +38,7 @@ dependencies = [
     "django-redis==5.4.0",
     "django-storages[s3]==1.14.5",
     "django-timezone-field>=5.1",
-    "django==5.1.7",
+    "django==5.1.8",
     "django-treebeard==4.7.1",
     "djangorestframework==3.16.0",
     "drf_spectacular==0.28.0",
