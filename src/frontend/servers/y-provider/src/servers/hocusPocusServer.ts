@@ -15,21 +15,24 @@ export const hocusPocusServer = Server.configure({
     documentName,
     requestParameters,
     context,
+    request,
   }) {
     const roomParam = requestParameters.get('room');
 
     if (documentName !== roomParam) {
-      console.error(
+      logger(
         'Invalid room name - Probable hacking attempt:',
         documentName,
         requestParameters.get('room'),
       );
+      logger('UA:', request.headers['user-agent']);
+      logger('URL:', request.url);
 
       return Promise.reject(new Error('Wrong room name: Unauthorized'));
     }
 
     if (!uuidValidate(documentName) || uuidVersion(documentName) !== 4) {
-      console.error('Room name is not a valid uuid:', documentName);
+      logger('Room name is not a valid uuid:', documentName);
 
       return Promise.reject(new Error('Wrong room name: Unauthorized'));
     }
@@ -40,7 +43,7 @@ export const hocusPocusServer = Server.configure({
       const document = await fetchDocument(documentName, requestHeaders);
 
       if (!document.abilities.retrieve) {
-        console.error(
+        logger(
           'onConnect: Unauthorized to retrieve this document',
           documentName,
         );
@@ -50,7 +53,7 @@ export const hocusPocusServer = Server.configure({
       can_edit = document.abilities.update;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.error('onConnect: backend error', error.message);
+        logger('onConnect: backend error', error.message);
       }
 
       return Promise.reject(new Error('Backend error: Unauthorized'));
@@ -69,12 +72,10 @@ export const hocusPocusServer = Server.configure({
     } catch {}
 
     logger(
-      'Connection established:',
+      'Connection established on room:',
       documentName,
       'canEdit:',
       can_edit,
-      'room:',
-      requestParameters.get('room'),
     );
     return Promise.resolve();
   },

@@ -4,7 +4,7 @@ import { COLLABORATION_LOGGING } from './env';
 export function logger(...args: any[]) {
   if (COLLABORATION_LOGGING === 'true') {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    console.log(...args);
+    console.log(new Date().toISOString(), ' --- ', ...args);
   }
 }
 

@@ -15,10 +15,12 @@ jest.mock('../src/env', () => {
     COLLABORATION_SERVER_ORIGIN: origin,
     COLLABORATION_SERVER_SECRET: 'test-secret-api-key',
     COLLABORATION_BACKEND_BASE_URL: 'http://app-dev:8000',
+    COLLABORATION_LOGGING: 'true',
   };
 });
 
 console.error = jest.fn();
+console.log = jest.fn();
 
 const mockDocFetch = jest.fn();
 jest.mock('@/api/getDoc', () => ({
@@ -109,7 +111,9 @@ describe('Server Tests', () => {
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
-        expect(console.error).toHaveBeenCalledWith(
+        expect(console.log).toHaveBeenCalledWith(
+          expect.any(String),
+          ' --- ',
           'Invalid room name - Probable hacking attempt:',
           providerName,
           room,
@@ -145,7 +149,9 @@ describe('Server Tests', () => {
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
-        expect(console.error).toHaveBeenCalledWith(
+        expect(console.log).toHaveBeenLastCalledWith(
+          expect.any(String),
+          ' --- ',
           'Room name is not a valid uuid:',
           room,
         );
@@ -180,7 +186,9 @@ describe('Server Tests', () => {
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
-        expect(console.error).toHaveBeenCalledWith(
+        expect(console.log).toHaveBeenLastCalledWith(
+          expect.any(String),
+          ' --- ',
           'Room name is not a valid uuid:',
           room,
         );
@@ -218,7 +226,7 @@ describe('Server Tests', () => {
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
-        expect(console.error).toHaveBeenCalledWith(
+        expect(console.error).toHaveBeenLastCalledWith(
           '[onConnect]',
           'Backend error: Unauthorized',
         );
@@ -261,7 +269,9 @@ describe('Server Tests', () => {
       quiet: true,
       preserveConnection: false,
       onClose: (data) => {
-        expect(console.error).toHaveBeenCalledWith(
+        expect(console.log).toHaveBeenLastCalledWith(
+          expect.any(String),
+          ' --- ',
           'onConnect: Unauthorized to retrieve this document',
           room,
         );

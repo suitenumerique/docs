@@ -8,6 +8,8 @@ import {
   Y_PROVIDER_API_KEY,
 } from '@/env';
 
+import { logger } from './utils';
+
 const VALID_API_KEYS = [COLLABORATION_SERVER_SECRET, Y_PROVIDER_API_KEY];
 const allowedOrigins = COLLABORATION_SERVER_ORIGIN.split(',');
 
@@ -42,14 +44,16 @@ export const wsSecurity = (
   const origin = req.headers['origin'];
   if (!origin || !allowedOrigins.includes(origin)) {
     ws.close(4001, 'Origin not allowed');
-    console.error('CORS policy violation: Invalid Origin', origin);
+    logger('CORS policy violation: Invalid Origin', origin);
     return;
   }
 
   const cookies = req.headers['cookie'];
   if (!cookies) {
     ws.close(4001, 'No cookies');
-    console.error('CORS policy violation: No cookies');
+    logger('CORS policy violation: No cookies');
+    logger('UA:', req.headers['user-agent']);
+    logger('URL:', req.url);
     return;
   }
 
