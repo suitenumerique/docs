@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 
-import { Role } from '../types';
+import { Doc, Role } from '../types';
 
-export const useTrans = () => {
+export const useTrans = (doc?: Doc) => {
   const { t } = useTranslation();
+  const isChild = doc && doc.nb_accesses_ancestors > 1;
 
   const translatedRoles = {
     [Role.READER]: t('Reader'),
@@ -16,7 +17,7 @@ export const useTrans = () => {
     transRole: (role: Role) => {
       return translatedRoles[role];
     },
-    untitledDocument: t('Untitled document'),
+    untitledDocument: isChild ? t('Untitled page') : t('Untitled document'),
     translatedRoles,
   };
 };

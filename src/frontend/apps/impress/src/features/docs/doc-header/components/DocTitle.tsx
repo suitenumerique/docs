@@ -13,6 +13,7 @@ import {
   KEY_DOC,
   KEY_LIST_DOC,
   KEY_SUB_PAGE,
+  useDocStore,
   useTrans,
   useUpdateDoc,
 } from '@/docs/doc-management';
@@ -24,19 +25,16 @@ interface DocTitleProps {
 
 export const DocTitle = ({ doc }: DocTitleProps) => {
   if (!doc.abilities.partial_update) {
-    return <DocTitleText title={doc.title} />;
+    return <DocTitleText />;
   }
 
   return <DocTitleInput doc={doc} />;
 };
 
-interface DocTitleTextProps {
-  title?: string;
-}
-
-export const DocTitleText = ({ title }: DocTitleTextProps) => {
+export const DocTitleText = () => {
   const { isMobile } = useResponsiveStore();
-  const { untitledDocument } = useTrans();
+  const { currentDoc } = useDocStore();
+  const { untitledDocument } = useTrans(currentDoc);
 
   return (
     <Text
@@ -45,7 +43,7 @@ export const DocTitleText = ({ title }: DocTitleTextProps) => {
       $size={isMobile ? 'h4' : 'h2'}
       $variation="1000"
     >
-      {title || untitledDocument}
+      {currentDoc?.title || untitledDocument}
     </Text>
   );
 };
@@ -57,7 +55,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { colorsTokens } = useCunninghamTheme();
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
 
-  const { untitledDocument } = useTrans();
+  const { untitledDocument } = useTrans(doc);
 
   const { broadcast } = useBroadcastStore();
 
