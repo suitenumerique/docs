@@ -29,7 +29,7 @@ export const ModalRemoveDoc = ({
   const { toast } = useToastProvider();
   const { push } = useRouter();
   const pathname = usePathname();
-  const { untitledDocument } = useTrans();
+  const { untitledDocument } = useTrans(doc);
 
   const {
     mutate: removeDoc,

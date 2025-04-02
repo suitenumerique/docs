@@ -35,7 +35,7 @@ export const SimpleDocItem = ({
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
-  const { untitledDocument } = useTrans();
+  const { untitledDocument } = useTrans(doc);
 
   return (
     <Box
