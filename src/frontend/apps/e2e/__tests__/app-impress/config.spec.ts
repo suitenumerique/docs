@@ -134,7 +134,7 @@ test.describe('Config', () => {
     await createDoc(page, 'doc-ai-feature', browserName, 1);
 
     await page.locator('.bn-block-outer').last().fill('Anything');
-    await page.getByText('Anything').dblclick();
+    await page.getByText('Anything').selectText();
     expect(
       await page.locator('button[data-test="convertMarkdown"]').count(),
     ).toBe(1);

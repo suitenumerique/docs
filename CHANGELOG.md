@@ -20,6 +20,7 @@ and this project adheres to
 ## Fixed
 
 - 🐛(back) validate document content in serializer #822
+- 🐛(frontend) fix selection click past end of content #840
 
 ## [3.0.0] - 2025-03-28
 

@@ -25,7 +25,11 @@ test.describe('Doc Editor', () => {
     await editor.click();
     await editor.fill('test content');
 
-    await editor.getByText('test content').dblclick();
+    await editor
+      .getByText('test content', {
+        exact: true,
+      })
+      .selectText();
 
     const toolbar = page.locator('.bn-formatting-toolbar');
     await expect(toolbar.locator('button[data-test="bold"]')).toBeVisible();
@@ -126,7 +130,7 @@ test.describe('Doc Editor', () => {
 
     await expect(editor.getByText('[test markdown]')).toBeVisible();
 
-    await editor.getByText('[test markdown]').dblclick();
+    await editor.getByText('[test markdown]').selectText();
     await page.locator('button[data-test="convertMarkdown"]').click();
 
     await expect(editor.getByText('[test markdown]')).toBeHidden();
@@ -219,11 +223,8 @@ test.describe('Doc Editor', () => {
     await editor.fill('Hello World Doc persisted 2');
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
 
-    await page.goto('/');
-
-    await goToGridDoc(page, {
-      title: doc,
-    });
+    const urlDoc = page.url();
+    await page.goto(urlDoc);
 
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
   });
@@ -297,7 +298,7 @@ test.describe('Doc Editor', () => {
     await page.locator('.bn-block-outer').last().fill('Hello World');
 
     const editor = page.locator('.ProseMirror');
-    await editor.getByText('Hello').dblclick();
+    await editor.getByText('Hello').selectText();
 
     await page.getByRole('button', { name: 'AI' }).click();
 
@@ -380,7 +381,7 @@ test.describe('Doc Editor', () => {
       await page.locator('.bn-block-outer').last().fill('Hello World');
 
       const editor = page.locator('.ProseMirror');
-      await editor.getByText('Hello').dblclick();
+      await editor.getByText('Hello').selectText();
 
       /* eslint-disable playwright/no-conditional-expect */
       /* eslint-disable playwright/no-conditional-in-test */
