@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { css } from 'styled-components';
 
-import { Box, Icon, IconVariant, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
@@ -141,7 +141,7 @@ export const DocSubPageItem = (props: Props) => {
             </Text>
             {doc.nb_accesses_direct > 1 && (
               <Icon
-                variant={IconVariant.Filled}
+                variant="filled"
                 iconName="group"
                 $size="16px"
                 $variation="400"

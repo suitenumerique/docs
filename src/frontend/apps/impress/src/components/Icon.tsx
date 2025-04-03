@@ -2,26 +2,22 @@ import clsx from 'clsx';
 import { css } from 'styled-components';
 
 import { Text, TextType } from '@/components';
-export enum IconVariant {
-  Filled = 'filled',
-  Outlined = 'outlined',
-}
 
 type IconProps = TextType & {
   iconName: string;
-  variant?: IconVariant;
+  variant?: 'filled' | 'outlined';
 };
 export const Icon = ({
   iconName,
-  variant = IconVariant.Outlined,
+  variant = 'outlined',
   ...textProps
 }: IconProps) => {
   return (
     <Text
       {...textProps}
       className={clsx('--docs--icon-bg', textProps.className, {
-        'material-icons-filled': variant === IconVariant.Filled,
-        'material-icons': variant === IconVariant.Outlined,
+        'material-icons-filled': variant === 'filled',
+        'material-icons': variant === 'outlined',
       })}
     >
       {iconName}

@@ -9,7 +9,7 @@ import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, IconVariant } from '@/components';
+import { Box, BoxButton, Icon } from '@/components';
 import { useLeftPanelStore } from '@/features/left-panel';
 
 import { Doc, ModalRemoveDoc, useCopyDocLink } from '../../doc-management';
@@ -136,7 +136,7 @@ export const DocTreeItemActions = ({
               setIsOpen(!isOpen);
             }}
             iconName="more_horiz"
-            variant={IconVariant.Filled}
+            variant="filled"
             $theme="primary"
             $variation="600"
           />
@@ -154,7 +154,7 @@ export const DocTreeItemActions = ({
             color="primary"
           >
             <Icon
-              variant={IconVariant.Filled}
+              variant="filled"
               $variation="800"
               $theme="primary"
               iconName="add_box"
