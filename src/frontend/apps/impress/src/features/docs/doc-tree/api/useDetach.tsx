@@ -9,6 +9,15 @@ export type DetachDocParam = {
   rootId: string;
 };
 
+enum POSITION_MOVE {
+  FIRST_CHILD = 'first-child',
+  LAST_CHILD = 'last-child',
+  FIRST_SIBLING = 'first-sibling',
+  LAST_SIBLING = 'last-sibling',
+  LEFT = 'left',
+  RIGHT = 'right',
+}
+
 export const detachDoc = async ({
   documentId,
   rootId,
@@ -17,7 +26,7 @@ export const detachDoc = async ({
     method: 'POST',
     body: JSON.stringify({
       target_document_id: rootId,
-      position: 'last-sibling',
+      position: POSITION_MOVE.LAST_SIBLING,
     }),
   });
 
