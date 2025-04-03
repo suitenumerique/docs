@@ -50,7 +50,7 @@ tokens.themes.default.components = {
   },
 };
 
-const europeTheme = {
+const genericTheme = {
   theme: {
     colors: {
       'primary-action': '#0073FC',
@@ -205,7 +205,7 @@ const docsTokens = {
   ...tokens,
   themes: {
     ...tokens.themes,
-    europe: europeTheme,
+    generic: genericTheme,
   },
 };
 

@@ -82,6 +82,7 @@ export const tokens = {
           'greyscale-750': '#353535',
           'greyscale-950': '#1E1E1E',
           'greyscale-1000': '#161616',
+          'danger-050': '#FFF4F4',
           'primary-action': '#1212FF',
           'primary-bg': '#FAFAFA',
           'primary-focus': '#0A76F6',
@@ -215,6 +216,10 @@ export const tokens = {
       },
       components: {
         modal: { 'width-small': '342px' },
+        tooltip: {
+          padding: '4px 8px',
+          'background-color': 'var(--c--theme--colors--greyscale-1000)',
+        },
         button: {
           'medium-height': '40px',
           'medium-text-height': '40px',
@@ -416,7 +421,7 @@ export const tokens = {
         },
       },
     },
-    europe: {
+    generic: {
       theme: {
         colors: {
           'primary-action': '#0073FC',
