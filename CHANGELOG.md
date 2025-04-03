@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(oidc) add refresh token tools #584
+
 ## Changed
 
 - 🚨(frontend) block button when creating doc #749
