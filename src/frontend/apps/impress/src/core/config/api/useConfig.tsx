@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
+import { FooterType } from '@/features/footer/types';
 import { PostHogConf } from '@/services';
 
 interface ConfigResponse {
@@ -10,7 +11,7 @@ interface ConfigResponse {
   ENVIRONMENT: string;
   COLLABORATION_WS_URL?: string;
   CRISP_WEBSITE_ID?: string;
-  FRONTEND_PATH_JSON_FOOTER?: string;
+  FRONTEND_JSON_FOOTER?: FooterType;
   FRONTEND_THEME?: Theme;
   FRONTEND_CSS_URL?: string;
   MEDIA_BASE_URL?: string;

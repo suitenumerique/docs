@@ -42,7 +42,7 @@ test.describe('Footer', () => {
   }) => {
     await overrideConfig(page, {
       FRONTEND_THEME: 'default',
-      FRONTEND_PATH_JSON_FOOTER:
+      FRONTEND_URL_JSON_FOOTER:
         'http://localhost:3000/contents/footer-dsfr.json',
     });
 

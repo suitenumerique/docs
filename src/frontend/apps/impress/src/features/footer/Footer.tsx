@@ -11,7 +11,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Title } from '../header';
 
 import IconLink from './assets/external-link.svg';
-import { BottomInformation, FooterType, Link } from './types';
+import { BottomInformation, Link } from './types';
 
 const BlueStripe = styled.div`
   position: absolute;
@@ -34,34 +34,27 @@ export const Footer = () => {
   const resolvedLanguage = i18n.resolvedLanguage;
 
   useEffect(() => {
-    if (!conf?.FRONTEND_PATH_JSON_FOOTER) {
+    if (!conf?.FRONTEND_JSON_FOOTER) {
       return;
     }
 
-    fetch(conf.FRONTEND_PATH_JSON_FOOTER)
-      .then(async (response) => {
-        const footerJson = (await response.json()) as FooterType;
+    const footerJson = conf.FRONTEND_JSON_FOOTER;
 
-        const langData =
-          footerJson[resolvedLanguage as keyof typeof footerJson];
-        setLegalLinks(langData?.legalLinks || footerJson.default.legalLinks);
+    const langData = footerJson[resolvedLanguage as keyof typeof footerJson];
+    setLegalLinks(langData?.legalLinks || footerJson?.default?.legalLinks);
 
-        const externalLinks =
-          langData && 'externalLinks' in langData
-            ? langData.externalLinks
-            : footerJson.default.externalLinks;
-        setExternalLinks(externalLinks);
+    const externalLinks =
+      langData && 'externalLinks' in langData
+        ? langData?.externalLinks
+        : footerJson?.default?.externalLinks;
+    setExternalLinks(externalLinks);
 
-        const bottomInformation =
-          langData && 'bottomInformation' in langData
-            ? langData.bottomInformation
-            : footerJson.default.bottomInformation;
-        setBottomInformation(bottomInformation);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  }, [conf?.FRONTEND_PATH_JSON_FOOTER, resolvedLanguage]);
+    const bottomInformation =
+      langData && 'bottomInformation' in langData
+        ? langData?.bottomInformation
+        : footerJson?.default?.bottomInformation;
+    setBottomInformation(bottomInformation);
+  }, [conf?.FRONTEND_JSON_FOOTER, resolvedLanguage]);
 
   if (!legalLinks && !externalLinks && !bottomInformation) {
     return null;
