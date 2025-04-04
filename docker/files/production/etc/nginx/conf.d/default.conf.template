@@ -1,0 +1,112 @@
+upstream docs_backend {
+    server ${BACKEND_HOST}:8000 fail_timeout=0;
+}
+
+upstream docs_frontend {
+    server ${FRONTEND_HOST}:3000 fail_timeout=0;
+}
+
+server {
+    listen 8083;
+    server_name localhost;
+    charset utf-8;
+
+    # Disables server version feedback on pages and in headers
+    server_tokens off;
+
+    proxy_ssl_server_name on;
+
+    location @proxy_to_docs_backend {
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_redirect off;
+        proxy_pass http://docs_backend;
+    }
+
+    location @proxy_to_docs_frontend {
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_redirect off;
+        proxy_pass http://docs_frontend;
+    }
+
+    location / {
+        try_files $uri @proxy_to_docs_frontend;
+    }
+
+    location /api {
+        try_files $uri @proxy_to_docs_backend;
+    }
+
+    location /admin {
+        try_files $uri @proxy_to_docs_backend;
+    }
+
+    location /static {
+        try_files $uri @proxy_to_docs_backend;
+    }
+
+    # Proxy auth for collaboration server
+    location /collaboration/ws/ {
+        # Ensure WebSocket upgrade
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+
+        # Collaboration server
+        proxy_pass http://${YPROVIDER_HOST}:4444;
+
+        # Set appropriate timeout for WebSocket
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+
+        # Preserve original host and additional headers
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Origin $http_origin;
+        proxy_set_header Host $host;
+    }
+
+    location  /collaboration/api/ {
+        # Collaboration server
+        proxy_pass http://${YPROVIDER_HOST}:4444;
+        proxy_set_header Host $host;
+    }
+
+    # Proxy auth for media
+    location /media/ {
+        # Auth request configuration
+        auth_request /media-auth;
+        auth_request_set $authHeader $upstream_http_authorization;
+        auth_request_set $authDate $upstream_http_x_amz_date;
+        auth_request_set $authContentSha256 $upstream_http_x_amz_content_sha256;
+
+        # Pass specific headers from the auth response
+        proxy_set_header Authorization $authHeader;
+        proxy_set_header X-Amz-Date $authDate;
+        proxy_set_header X-Amz-Content-SHA256 $authContentSha256;
+
+        # Get resource from Minio
+        proxy_pass https://${S3_HOST}/${BUCKET_NAME}/;
+        proxy_set_header Host ${S3_HOST};
+
+        proxy_ssl_name ${S3_HOST};
+
+        add_header Content-Security-Policy "default-src 'none'" always;
+    }
+    
+    location /media-auth {
+        proxy_pass http://docs_backend/api/v1.0/documents/media-auth/;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Original-URL $request_uri;
+
+        # Prevent the body from being passed
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-Method $request_method;
+    }
+}
