@@ -38,6 +38,19 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           )}
         />
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link
+          rel="icon"
+          href="/favicon.png"
+          type="image/png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          href="/favicon-dark.png"
+          type="image/png"
+          media="(prefers-color-scheme: dark)"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <AppProvider>{getLayout(<Component {...pageProps} />)}</AppProvider>
