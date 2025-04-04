@@ -10,6 +10,8 @@ type SpacingsTokens = Tokens['theme']['spacings'];
 type ComponentTokens = Tokens['components'];
 export type Theme = keyof typeof tokens.themes;
 
+const DEFAULT_THEME = 'generic';
+
 interface ThemeStore {
   theme: string;
   currentTokens: Partial<Tokens>;
@@ -26,8 +28,8 @@ export const useCunninghamTheme = create<ThemeStore>((set, get) => {
     merge(tokens.themes['default'], tokens.themes[get().theme as Theme]);
 
   return {
-    theme: 'default',
-    currentTokens: tokens.themes['default'],
+    theme: DEFAULT_THEME,
+    currentTokens: tokens.themes[DEFAULT_THEME as Theme] as Partial<Tokens>,
     themeTokens: () => currentTheme().theme,
     colorsTokens: () => currentTheme().theme.colors,
     componentTokens: () => currentTheme().components,
