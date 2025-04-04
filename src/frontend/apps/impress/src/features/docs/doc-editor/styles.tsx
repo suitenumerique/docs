@@ -105,6 +105,12 @@ export const cssEditor = (readonly: boolean) => css`
     padding: 2px;
     border-radius: 4px;
   }
+  & .bn-inline-content {
+    width: 100%;
+  }
+  .bn-block-content[data-content-type='checkListItem'] > div {
+    width: 100%;
+  }
 
   @media screen and (width <= 768px) {
     & .bn-editor {

@@ -1,3 +1,6 @@
+@import url('@gouvfr-lasuite/ui-kit/style');
+@import url('./cunningham-tokens.css');
+
 :root {
   /**
   * Input
@@ -32,4 +35,11 @@
   --c--components--button--border-radius--active: var(
     --c--components--button--border-radius
   );
+}
+
+/**
+ * Tooltip
+*/
+.c__tooltip {
+  padding: 4px 6px;
 }

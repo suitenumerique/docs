@@ -43,20 +43,22 @@ const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
 
   const saveDoc = useCallback(() => {
     if (!canSave || !isLocalChange) {
-      return;
+      return false;
     }
 
     updateDoc({
       id: docId,
       content: toBase64(Y.encodeStateAsUpdate(yDoc)),
     });
+
+    return true;
   }, [canSave, yDoc, docId, isLocalChange, updateDoc]);
 
   const router = useRouter();
 
   useEffect(() => {
     const onSave = (e?: Event) => {
-      saveDoc();
+      const isSaving = saveDoc();
 
       /**
        * Firefox does not trigger the request everytime the user leaves the page.
@@ -65,7 +67,12 @@ const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
        * if he wants to leave the page, by adding the popup, we let the time to the
        * request to be sent, and intercepted by the service worker (for the offline part).
        */
-      if (typeof e !== 'undefined' && e.preventDefault && isFirefox()) {
+      if (
+        isSaving &&
+        typeof e !== 'undefined' &&
+        e.preventDefault &&
+        isFirefox()
+      ) {
         e.preventDefault();
       }
     };
