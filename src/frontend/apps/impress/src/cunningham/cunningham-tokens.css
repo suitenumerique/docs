@@ -454,6 +454,9 @@
     --c--theme--colors--greyscale-950
   );
   --c--components--forms-select--font-size: 14px;
+  --c--components--la-gaufre: false;
+  --c--components--home-proconnect: false;
+  --c--components--beta: false;
 }
 
 .cunningham-theme--dark {

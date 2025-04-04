@@ -364,6 +364,9 @@ export const tokens = {
           'value-color': '#1E1E1E',
           'font-size': '14px',
         },
+        'la-gaufre': false,
+        'home-proconnect': false,
+        beta: false,
       },
     },
     dark: {

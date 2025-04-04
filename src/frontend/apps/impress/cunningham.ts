@@ -40,6 +40,14 @@ tokens.themes.default.theme.colors = {
   ...tokens.themes.default.theme.colors,
   ...customColors,
 };
+tokens.themes.default.components = {
+  ...tokens.themes.default.components,
+  ...{
+    'la-gaufre': false,
+    'home-proconnect': false,
+    beta: false,
+  },
+};
 
 const dsfrTheme = {
   dsfr: {

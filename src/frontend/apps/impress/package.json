@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prettier --check . && yarn stylelint && next build",
     "build:ci": "cp .env.development .env.local && yarn build",
-    "build-theme": "cunningham -g css,ts -o src/cunningham --utility-classes && yarn prettier",
+    "build-theme": "cunningham -g css,ts -o src/cunningham --utility-classes && yarn prettier && yarn stylelint --fix",
     "start": "npx -y serve@latest out",
     "lint": "tsc --noEmit && next lint",
     "prettier": "prettier --write .",

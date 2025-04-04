@@ -13,9 +13,9 @@ const GaufreStyle = createGlobalStyle`
 `;
 
 export const LaGaufre = () => {
-  const { currentTokens } = useCunninghamTheme();
+  const { componentTokens } = useCunninghamTheme();
 
-  if (!currentTokens?.components?.['la-gaufre']) {
+  if (!componentTokens()['la-gaufre']) {
     return null;
   }
 

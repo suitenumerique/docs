@@ -3,7 +3,8 @@ import { create } from 'zustand';
 
 import { tokens } from './cunningham-tokens';
 
-type Tokens = typeof tokens.themes.default;
+type Tokens = typeof tokens.themes.default &
+  Partial<(typeof tokens.themes)[keyof typeof tokens.themes]>;
 type ColorsTokens = Tokens['theme']['colors'];
 type FontSizesTokens = Tokens['theme']['font']['sizes'];
 type SpacingsTokens = Tokens['theme']['spacings'];
@@ -13,9 +14,8 @@ export type Theme = keyof typeof tokens.themes;
 const DEFAULT_THEME = 'generic';
 
 interface ThemeStore {
-  theme: string;
-  currentTokens: Partial<Tokens>;
-  setTheme: (theme: string) => void;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
   themeTokens: () => Partial<Tokens['theme']>;
   colorsTokens: () => Partial<ColorsTokens>;
   fontSizesTokens: () => Partial<FontSizesTokens>;
@@ -25,11 +25,11 @@ interface ThemeStore {
 
 export const useCunninghamTheme = create<ThemeStore>((set, get) => {
   const currentTheme = () =>
-    merge(tokens.themes['default'], tokens.themes[get().theme as Theme]);
+    merge(tokens.themes['default'], tokens.themes[get().theme]);
 
   return {
     theme: DEFAULT_THEME,
-    currentTokens: tokens.themes[DEFAULT_THEME as Theme] as Partial<Tokens>,
+    currentTokens: tokens.themes[DEFAULT_THEME] as Partial<Tokens>,
     themeTokens: () => currentTheme().theme,
     colorsTokens: () => currentTheme().theme.colors,
     componentTokens: () => currentTheme().components,
@@ -38,7 +38,6 @@ export const useCunninghamTheme = create<ThemeStore>((set, get) => {
     setTheme: (theme) => {
       set({
         theme,
-        currentTokens: tokens.themes[theme as Theme] as Partial<Tokens>,
       });
     },
   };

@@ -15,10 +15,11 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { currentTokens, spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { componentTokens, spacingsTokens, colorsTokens } =
+    useCunninghamTheme();
   const spacings = spacingsTokens();
   const { isMobile, isSmallMobile } = useResponsiveStore();
-  const withProConnect = currentTokens?.components?.['home-proconnect'];
+  const withProConnect = componentTokens()['home-proconnect'];
   const colors = colorsTokens();
 
   return (

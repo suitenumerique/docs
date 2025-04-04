@@ -9,7 +9,7 @@ export const Title = () => {
   const theme = useCunninghamTheme();
   const spacings = theme.spacingsTokens();
   const colors = theme.colorsTokens();
-  const isBeta = theme.currentTokens?.components?.['beta'];
+  const isBeta = theme.componentTokens()['beta'];
 
   return (
     <Box
