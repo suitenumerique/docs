@@ -5,7 +5,6 @@ Test throttling on users for the AI endpoint.
 from unittest.mock import patch
 from uuid import uuid4
 
-from django.core.cache import cache
 from django.test import override_settings
 
 import pytest
@@ -27,12 +26,6 @@ class DocumentAPIView(APIView):
     def get(self, request, *args, **kwargs):
         """Minimal get method for testing purposes."""
         return Response({"message": "Success"})
-
-
-@pytest.fixture(autouse=True)
-def clear_cache():
-    """Fixture to clear the cache before each test."""
-    cache.clear()
 
 
 @override_settings(AI_USER_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})

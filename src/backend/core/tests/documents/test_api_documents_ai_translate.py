@@ -5,7 +5,6 @@ Test AI translate API endpoint for users in impress's core app.
 import random
 from unittest.mock import MagicMock, patch
 
-from django.core.cache import cache
 from django.test import override_settings
 
 import pytest
@@ -15,12 +14,6 @@ from core import factories
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture(autouse=True)
-def clear_cache():
-    """Fixture to clear the cache before each test."""
-    cache.clear()
 
 
 @pytest.fixture
