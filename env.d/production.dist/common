@@ -1,0 +1,7 @@
+DOCS_HOST=docs.domain.tld
+KEYCLOAK_HOST=id.domain.tld
+S3_HOST=storage.domain.tld
+MINIO_HOST=storage.domain.tld
+BACKEND_HOST=backend
+FRONTEND_HOST=frontend
+BUCKET_NAME=docs-media-storage
