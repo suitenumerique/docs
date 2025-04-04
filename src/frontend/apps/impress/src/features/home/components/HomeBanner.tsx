@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import DocLogo from '@/assets/icons/icon-docs.svg?url';
+import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { ProConnectButton, gotoLogin } from '@/features/auth';
@@ -15,10 +15,12 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { componentTokens, spacingsTokens } = useCunninghamTheme();
+  const { componentTokens, spacingsTokens, colorsTokens } =
+    useCunninghamTheme();
   const spacings = spacingsTokens();
   const { isMobile, isSmallMobile } = useResponsiveStore();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const withProConnect = componentTokens()['home-proconnect'];
+  const colors = colorsTokens();
 
   return (
     <Box
@@ -47,7 +49,11 @@ export default function HomeBanner() {
           $align="center"
           $gap={spacings['sm']}
         >
-          <Image src={DocLogo} alt="DocLogo" width={64} />
+          <IconDocs
+            aria-label={t('Docs Logo')}
+            width={64}
+            color={colors['primary-text']}
+          />
           <Text
             as="h2"
             $size={!isMobile ? 'xs-alt' : '2.3rem'}

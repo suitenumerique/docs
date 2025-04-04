@@ -10,7 +10,7 @@ import { useResponsiveStore } from '@/stores';
 
 export function HomeBottom() {
   const { componentTokens } = useCunninghamTheme();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const withProConnect = componentTokens()['home-proconnect'];
 
   if (!withProConnect) {
     return null;
