@@ -35,13 +35,14 @@ export const SimpleDocItem = ({
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
-  const { untitledDocument } = useTrans();
+  const { untitledDocument } = useTrans(doc);
 
   return (
     <Box
       $direction="row"
       $gap={spacings.sm}
       $overflow="auto"
+      $width="100%"
       className="--docs--simple-doc-item"
     >
       <Box

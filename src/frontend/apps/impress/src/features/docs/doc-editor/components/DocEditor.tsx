@@ -25,11 +25,8 @@ interface DocEditorProps {
 
 export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
-
   const isVersion = !!versionId && typeof versionId === 'string';
-
   const { colorsTokens } = useCunninghamTheme();
-
   const { provider } = useProviderStore();
 
   if (!provider) {
@@ -59,11 +56,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
           className="--docs--doc-editor-header"
         >
-          {isVersion ? (
-            <DocVersionHeader title={doc.title} />
-          ) : (
-            <DocHeader doc={doc} />
-          )}
+          {isVersion ? <DocVersionHeader /> : <DocHeader doc={doc} />}
         </Box>
 
         <Box

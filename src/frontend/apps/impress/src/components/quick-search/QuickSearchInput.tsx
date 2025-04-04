@@ -57,6 +57,9 @@ export const QuickSearchInput = ({
           /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus={true}
           aria-label={t('Quick search input')}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
           value={inputValue}
           role="combobox"
           placeholder={placeholder ?? t('Search')}

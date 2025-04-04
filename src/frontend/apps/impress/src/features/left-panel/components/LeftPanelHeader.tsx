@@ -1,19 +1,21 @@
 import { Button } from '@openfun/cunningham-react';
-import { t } from 'i18next';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { PropsWithChildren, useCallback, useState } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
-import { useCreateDoc } from '@/docs/doc-management';
-import { DocSearchModal } from '@/docs/doc-search';
+import { DocSearchModal, DocSearchTarget } from '@/docs/doc-search/';
 import { useAuth } from '@/features/auth';
 import { useCmdK } from '@/hook/useCmdK';
 
 import { useLeftPanelStore } from '../stores';
 
+import { LeftPanelHeaderButton } from './LeftPanelHeaderButton';
+
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const { authenticated } = useAuth();
+  const isDoc = router.pathname === '/docs/[id]';
+
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const openSearchModal = useCallback(() => {
@@ -33,20 +35,9 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   useCmdK(openSearchModal);
   const { togglePanel } = useLeftPanelStore();
 
-  const { mutate: createDoc, isPending: isCreatingDoc } = useCreateDoc({
-    onSuccess: (doc) => {
-      router.push(`/docs/${doc.id}`);
-      togglePanel();
-    },
-  });
-
   const goToHome = () => {
-    router.push('/');
+    void router.push('/');
     togglePanel();
-  };
-
-  const createNewDoc = () => {
-    createDoc();
   };
 
   return (
@@ -80,17 +71,21 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                 />
               )}
             </Box>
-            {authenticated && (
-              <Button onClick={createNewDoc} disabled={isCreatingDoc}>
-                {t('New doc')}
-              </Button>
-            )}
+
+            {authenticated && <LeftPanelHeaderButton />}
           </Box>
         </SeparatedSection>
         {children}
       </Box>
       {isSearchModalOpen && (
-        <DocSearchModal onClose={closeSearchModal} isOpen={isSearchModalOpen} />
+        <DocSearchModal
+          onClose={closeSearchModal}
+          isOpen={isSearchModalOpen}
+          showFilters={isDoc}
+          defaultFilters={{
+            target: isDoc ? DocSearchTarget.CURRENT : undefined,
+          }}
+        />
       )}
     </>
   );

@@ -1,3 +1,4 @@
+import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
 import { Loader } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
@@ -5,16 +6,17 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Text, TextErrors } from '@/components';
+import { Box, Icon, TextErrors } from '@/components';
 import { DocEditor } from '@/docs/doc-editor';
+import { KEY_AUTH, setAuthUrl } from '@/features/auth';
 import {
   Doc,
   KEY_DOC,
   useCollaboration,
   useDoc,
   useDocStore,
-} from '@/docs/doc-management/';
-import { KEY_AUTH, setAuthUrl } from '@/features/auth';
+} from '@/features/docs/doc-management/';
+import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
@@ -34,9 +36,17 @@ export function DocLayout() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      <MainLayout>
-        <DocPage id={id} />
-      </MainLayout>
+      <TreeProvider
+        initialNodeId={id}
+        onLoadChildren={async (docId: string) => {
+          const doc = await getDocChildren({ docId });
+          return subPageToTree(doc.results);
+        }}
+      >
+        <MainLayout>
+          <DocPage id={id} />
+        </MainLayout>
+      </TreeProvider>
     </>
   );
 }
@@ -84,6 +94,12 @@ const DocPage = ({ id }: DocProps) => {
     setCurrentDoc(docQuery);
   }, [docQuery, setCurrentDoc, isFetching]);
 
+  useEffect(() => {
+    return () => {
+      setCurrentDoc(undefined);
+    };
+  }, [setCurrentDoc]);
+
   /**
    * We add a broadcast task to reset the query cache
    * when the document visibility changes.
@@ -126,9 +142,7 @@ const DocPage = ({ id }: DocProps) => {
           causes={error.cause}
           icon={
             error.status === 502 ? (
-              <Text $isMaterialIcon $theme="danger">
-                wifi_off
-              </Text>
+              <Icon iconName="wifi_off" $theme="danger" />
             ) : undefined
           }
         />
