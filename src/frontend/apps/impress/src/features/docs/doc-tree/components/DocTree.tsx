@@ -96,14 +96,16 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
   }, [data, initialTargetId]);
 
   useEffect(() => {
-    if (!currentDoc) {
+    if (
+      !currentDoc ||
+      (previousDocId.current && previousDocId.current === currentDoc.id)
+    ) {
       return;
     }
 
     const item = treeContext?.treeData.getNode(currentDoc?.id ?? '');
     if (!item && currentDoc.id !== rootNode?.id) {
       treeContext?.treeData.resetTree([]);
-      treeContext?.treeData.setSelectedNode(currentDoc);
       treeContext?.setRoot(currentDoc);
       treeContext?.setInitialTargetId(currentDoc.id);
     } else if (item) {
@@ -117,6 +119,9 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
     if (currentDoc?.id && currentDoc?.id !== previousDocId.current) {
       previousDocId.current = currentDoc?.id;
     }
+
+    treeContext?.treeData.setSelectedNode(currentDoc);
+
     // we don't need to run this effect on every change of treeContext.data bacause it cause an infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDoc, rootNode?.id]);

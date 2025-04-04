@@ -12,17 +12,11 @@ import { KEY_AUTH, setAuthUrl } from '@/features/auth';
 import {
   Doc,
   KEY_DOC,
-  KEY_SUB_PAGE,
-  getDoc,
   useCollaboration,
   useDoc,
   useDocStore,
 } from '@/features/docs/doc-management/';
-import {
-  getDocChildren,
-  serializeDocToSubPage,
-  subPageToTree,
-} from '@/features/docs/doc-tree/';
+import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
@@ -31,7 +25,6 @@ export function DocLayout() {
   const {
     query: { id },
   } = useRouter();
-  const queryClient = useQueryClient();
 
   if (typeof id !== 'string') {
     return null;
@@ -45,12 +38,6 @@ export function DocLayout() {
 
       <TreeProvider
         initialNodeId={id}
-        onRefresh={async (docId: string) => {
-          const doc = await getDoc({ id: docId });
-          void queryClient.setQueryData([KEY_DOC, { id: docId }], doc);
-          void queryClient.setQueryData([KEY_SUB_PAGE, { id: docId }], doc);
-          return serializeDocToSubPage(doc);
-        }}
         onLoadChildren={async (docId: string) => {
           const doc = await getDocChildren({ docId });
           return subPageToTree(doc.results);

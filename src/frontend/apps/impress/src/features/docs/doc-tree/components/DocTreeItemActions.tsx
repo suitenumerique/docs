@@ -103,16 +103,13 @@ export const DocTreeItemActions = ({
 
   const afterDelete = () => {
     if (parentId) {
-      router.push(`/docs/${parentId}`);
-      treeContext?.treeData.selectNodeById(parentId);
       treeContext?.treeData.deleteNode(doc.id);
-      void treeContext?.treeData.refreshNode(parentId);
+      router.push(`/docs/${parentId}`);
     } else if (doc.id === treeContext?.root?.id && !parentId) {
       router.push(`/docs/`);
     } else if (treeContext && treeContext.root) {
-      router.push(`/docs/${treeContext.root.id}`);
       treeContext?.treeData.deleteNode(doc.id);
-      treeContext?.treeData.setSelectedNode(treeContext.root);
+      router.push(`/docs/${treeContext.root.id}`);
     }
   };
 
