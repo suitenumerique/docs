@@ -16,8 +16,10 @@ from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
+from django.utils.decorators import method_decorator
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.cache import cache_page
 
 import requests
 import rest_framework as drf
@@ -30,6 +32,7 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.config_services import get_footer_json
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -1688,8 +1691,8 @@ class ConfigView(drf.views.APIView):
             "COLLABORATION_WS_URL",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
-            "FRONTEND_THEME",
             "FRONTEND_CSS_URL",
+            "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",
             "LANGUAGES",
@@ -1702,3 +1705,22 @@ class ConfigView(drf.views.APIView):
                 dict_settings[setting] = getattr(settings, setting)
 
         return drf.response.Response(dict_settings)
+
+
+class FooterView(drf.views.APIView):
+    """API ViewSet for sharing the footer JSON."""
+
+    permission_classes = [AllowAny]
+
+    @method_decorator(cache_page(settings.FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT))
+    def get(self, request):
+        """
+        GET /api/v1.0/footer/
+            Return the footer JSON.
+        """
+        json_footer = (
+            get_footer_json(settings.FRONTEND_URL_JSON_FOOTER)
+            if settings.FRONTEND_URL_JSON_FOOTER
+            else {}
+        )
+        return drf.response.Response(json_footer)

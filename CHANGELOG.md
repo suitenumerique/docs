@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- 🔧(backend) add view to manage footer json #841
+
 ## Changed
 
 - 🚨(frontend) block button when creating doc #749

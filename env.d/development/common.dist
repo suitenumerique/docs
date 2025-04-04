@@ -64,3 +64,4 @@ COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
 
 # Frontend
 FRONTEND_THEME=default
+FRONTEND_URL_JSON_FOOTER=http://frontend:3000/contents/footer-demo.json

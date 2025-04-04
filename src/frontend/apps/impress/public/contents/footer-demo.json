@@ -1,0 +1,121 @@
+{
+  "default": {
+    "externalLinks": [
+      {
+        "label": "Github",
+        "href": "https://github.com/suitenumerique/docs/"
+      },
+      {
+        "label": "DINUM",
+        "href": "https://www.numerique.gouv.fr/dinum/"
+      },
+      {
+        "label": "ZenDiS",
+        "href": "https://zendis.de/"
+      },
+      {
+        "label": "BlockNote.js",
+        "href": "https://www.blocknotejs.org/"
+      }
+    ],
+    "bottomInformation": {
+      "label": "Unless otherwise stated, all content on this site is under",
+      "link": {
+        "label": "licence etalab-2.0",
+        "href": "https://github.com/etalab/licence-ouverte/blob/master/LO.md"
+      }
+    }
+  },
+  "en": {
+    "legalLinks": [
+      {
+        "label": "Legal Notice",
+        "href": "#"
+      },
+      {
+        "label": "Personal data and cookies",
+        "href": "#"
+      },
+      {
+        "label": "Accessibility",
+        "href": "#"
+      }
+    ],
+    "bottomInformation": {
+      "label": "Unless otherwise stated, all content on this site is under",
+      "link": {
+        "label": "licence MIT",
+        "href": "https://github.com/suitenumerique/docs/blob/main/LICENSE"
+      }
+    }
+  },
+  "fr": {
+    "legalLinks": [
+      {
+        "label": "Mentions légales",
+        "href": "#"
+      },
+      {
+        "label": "Données personnelles et cookies",
+        "href": "#"
+      },
+      {
+        "label": "Accessibilité",
+        "href": "#"
+      }
+    ],
+    "bottomInformation": {
+      "label": "Sauf mention contraire, tout le contenu de ce site est sous",
+      "link": {
+        "label": "licence MIT",
+        "href": "https://github.com/suitenumerique/docs/blob/main/LICENSE"
+      }
+    }
+  },
+  "de": {
+    "legalLinks": [
+      {
+        "label": "Impressum",
+        "href": "#"
+      },
+      {
+        "label": "Personenbezogene Daten und Cookies",
+        "href": "#"
+      },
+      {
+        "label": "Barrierefreiheit",
+        "href": "#"
+      }
+    ],
+    "bottomInformation": {
+      "label": "Sofern nicht anders angegeben, steht der gesamte Inhalt dieser Website unter",
+      "link": {
+        "label": "licence MIT",
+        "href": "https://github.com/suitenumerique/docs/blob/main/LICENSE"
+      }
+    }
+  },
+  "nl": {
+    "legalLinks": [
+      {
+        "label": "Wettelijke bepalingen",
+        "href": "#"
+      },
+      {
+        "label": "Persoonlijke gegevens en cookies",
+        "href": "#"
+      },
+      {
+        "label": "Toegankelijkheid",
+        "href": "#"
+      }
+    ],
+    "bottomInformation": {
+      "label": "Tenzij anders vermeld, is alle inhoud van deze site ondergebracht onder",
+      "link": {
+        "label": "licence MIT",
+        "href": "https://github.com/suitenumerique/docs/blob/main/LICENSE"
+      }
+    }
+  }
+}
