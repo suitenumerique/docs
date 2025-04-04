@@ -10,6 +10,7 @@ const config = {
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   ENVIRONMENT: 'development',
   FRONTEND_CSS_URL: null,
+  FRONTEND_FOOTER_FEATURE_ENABLED: true,
   FRONTEND_THEME: 'default',
   MEDIA_BASE_URL: 'http://localhost:8083',
   LANGUAGES: [

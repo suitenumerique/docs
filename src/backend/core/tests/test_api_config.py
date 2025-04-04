@@ -18,8 +18,9 @@ pytestmark = pytest.mark.django_db
 @override_settings(
     COLLABORATION_WS_URL="http://testcollab/",
     CRISP_WEBSITE_ID="123",
-    FRONTEND_THEME="test-theme",
     FRONTEND_CSS_URL="http://testcss/",
+    FRONTEND_FOOTER_FEATURE_ENABLED=True,
+    FRONTEND_THEME="test-theme",
     MEDIA_BASE_URL="http://testserver/",
     POSTHOG_KEY={"id": "132456", "host": "https://eu.i.posthog-test.com"},
     SENTRY_DSN="https://sentry.test/123",
@@ -39,8 +40,9 @@ def test_api_config(is_authenticated):
         "COLLABORATION_WS_URL": "http://testcollab/",
         "CRISP_WEBSITE_ID": "123",
         "ENVIRONMENT": "test",
-        "FRONTEND_THEME": "test-theme",
         "FRONTEND_CSS_URL": "http://testcss/",
+        "FRONTEND_FOOTER_FEATURE_ENABLED": True,
+        "FRONTEND_THEME": "test-theme",
         "LANGUAGES": [
             ["en-us", "English"],
             ["fr-fr", "Français"],

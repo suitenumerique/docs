@@ -413,6 +413,11 @@ class Base(Configuration):
     FRONTEND_URL_JSON_FOOTER = values.Value(
         None, environ_name="FRONTEND_URL_JSON_FOOTER", environ_prefix=None
     )
+    FRONTEND_FOOTER_FEATURE_ENABLED = values.BooleanValue(
+        default=False,
+        environ_name="FRONTEND_FOOTER_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
     FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT = values.Value(
         60 * 60 * 24,
         environ_name="FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT",

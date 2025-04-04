@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- 🚩(backend) add feature flag for the footer #841
 - 🔧(backend) add view to manage footer json #841
 
 ## Changed
