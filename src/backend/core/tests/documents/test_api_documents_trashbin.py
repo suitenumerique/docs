@@ -74,6 +74,7 @@ def test_api_documents_trashbin_format():
             "accesses_view": True,
             "ai_transform": True,
             "ai_translate": True,
+            "ancestors_links_definitions": {},
             "attachment_upload": True,
             "children_create": True,
             "children_list": True,
