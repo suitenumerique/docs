@@ -85,6 +85,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) add ancestors links definitions to document abilities #846
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 - 📝(doc) update contributing policy (commit signatures are now mandatory) #895
