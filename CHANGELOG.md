@@ -109,6 +109,10 @@ and this project adheres to
 - 🐛(backend) race condition create doc #633
 - 🐛(frontend) fix breaklines in custom blocks #908
 
+## Fixed
+
+- 🐛(backend) fix link definition select options linked to ancestors #846
+
 ## [3.1.0] - 2025-04-07
 
 ## Added

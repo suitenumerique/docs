@@ -88,7 +88,7 @@ def test_api_documents_trashbin_format():
             "link_select_options": {
                 "authenticated": ["reader", "editor"],
                 "public": ["reader", "editor"],
-                "restricted": ["reader", "editor"],
+                "restricted": None,
             },
             "media_auth": True,
             "media_check": True,
