@@ -133,6 +133,7 @@ and this project adheres to
 
 ## Fixed
 
+- 🐛(backend) fix link definition select options linked to ancestors #846
 - 🐛(back) validate document content in serializer #822
 - 🐛(frontend) fix selection click past end of content #840
 
