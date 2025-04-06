@@ -154,6 +154,7 @@ def test_models_documents_get_abilities_forbidden(
         "accesses_view": False,
         "ai_transform": False,
         "ai_translate": False,
+        "ancestors_links_definitions": {},
         "attachment_upload": False,
         "children_create": False,
         "children_list": False,
@@ -214,6 +215,7 @@ def test_models_documents_get_abilities_reader(
         "accesses_view": False,
         "ai_transform": False,
         "ai_translate": False,
+        "ancestors_links_definitions": {},
         "attachment_upload": False,
         "children_create": False,
         "children_list": True,
@@ -250,7 +252,7 @@ def test_models_documents_get_abilities_reader(
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definitions"]
     )
 
 
@@ -276,6 +278,7 @@ def test_models_documents_get_abilities_editor(
         "accesses_view": False,
         "ai_transform": is_authenticated,
         "ai_translate": is_authenticated,
+        "ancestors_links_definitions": {},
         "attachment_upload": True,
         "children_create": is_authenticated,
         "children_list": True,
@@ -311,7 +314,7 @@ def test_models_documents_get_abilities_editor(
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definitions"]
     )
 
 
@@ -327,6 +330,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "accesses_view": True,
         "ai_transform": True,
         "ai_translate": True,
+        "ancestors_links_definitions": {},
         "attachment_upload": True,
         "children_create": True,
         "children_list": True,
@@ -375,6 +379,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "accesses_view": True,
         "ai_transform": True,
         "ai_translate": True,
+        "ancestors_links_definitions": {},
         "attachment_upload": True,
         "children_create": True,
         "children_list": True,
@@ -410,7 +415,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definitions"]
     )
 
 
@@ -426,6 +431,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "accesses_view": True,
         "ai_transform": True,
         "ai_translate": True,
+        "ancestors_links_definitions": {},
         "attachment_upload": True,
         "children_create": True,
         "children_list": True,
@@ -461,7 +467,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definitions"]
     )
 
 
@@ -484,6 +490,7 @@ def test_models_documents_get_abilities_reader_user(
         # You should not access AI if it's restricted to users with specific access
         "ai_transform": access_from_link and ai_access_setting != "restricted",
         "ai_translate": access_from_link and ai_access_setting != "restricted",
+        "ancestors_links_definitions": {},
         "attachment_upload": access_from_link,
         "children_create": access_from_link,
         "children_list": True,
@@ -521,7 +528,7 @@ def test_models_documents_get_abilities_reader_user(
         assert all(
             value is False
             for key, value in document.get_abilities(user).items()
-            if key != "link_select_options"
+            if key not in ["link_select_options", "ancestors_links_definitions"]
         )
 
 
@@ -540,6 +547,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "accesses_view": True,
         "ai_transform": False,
         "ai_translate": False,
+        "ancestors_links_definitions": {},
         "attachment_upload": False,
         "children_create": False,
         "children_list": True,
