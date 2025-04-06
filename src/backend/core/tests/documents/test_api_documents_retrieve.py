@@ -42,6 +42,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
+            "ancestors_links_definitions": {},
             "link_select_options": {
                 "authenticated": ["reader", "editor"],
                 "public": ["reader", "editor"],
@@ -98,6 +99,10 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "accesses_view": False,
             "ai_transform": False,
             "ai_translate": False,
+            "ancestors_links_definitions": {
+                "public": [grand_parent.link_role],
+                parent.link_reach: [parent.link_role],
+            },
             "attachment_upload": grand_parent.link_role == "editor",
             "children_create": False,
             "children_list": True,
@@ -195,6 +200,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "accesses_view": False,
             "ai_transform": document.link_role == "editor",
             "ai_translate": document.link_role == "editor",
+            "ancestors_links_definitions": {},
             "attachment_upload": document.link_role == "editor",
             "children_create": document.link_role == "editor",
             "children_list": True,
@@ -270,6 +276,10 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "accesses_view": False,
             "ai_transform": grand_parent.link_role == "editor",
             "ai_translate": grand_parent.link_role == "editor",
+            "ancestors_links_definitions": {
+                grand_parent.link_reach: [grand_parent.link_role],
+                "restricted": [parent.link_role],
+            },
             "attachment_upload": grand_parent.link_role == "editor",
             "children_create": grand_parent.link_role == "editor",
             "children_list": True,
@@ -444,6 +454,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
     )
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    ancestors_roles = list({grand_parent.link_role, parent.link_role})
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -451,6 +462,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "accesses_view": True,
             "ai_transform": access.role != "reader",
             "ai_translate": access.role != "reader",
+            "ancestors_links_definitions": {"restricted": ancestors_roles},
             "attachment_upload": access.role != "reader",
             "children_create": access.role != "reader",
             "children_list": True,

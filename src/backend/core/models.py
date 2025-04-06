@@ -749,17 +749,16 @@ class Document(MP_Node, BaseModel):
                 roles = []
         return roles
 
-    def get_links_definitions(self, ancestors_links):
-        """Get links reach/role definitions for the current document and its ancestors."""
+    def get_ancestors_links_definitions(self, ancestors_links):
+        """Get links reach/role definitions for ancestors of the current document."""
 
-        links_definitions = defaultdict(set)
-        links_definitions[self.link_reach].add(self.link_role)
-
-        # Merge ancestor link definitions
+        ancestors_links_definitions = defaultdict(set)
         for ancestor in ancestors_links:
-            links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
+            ancestors_links_definitions[ancestor["link_reach"]].add(
+                ancestor["link_role"]
+            )
 
-        return dict(links_definitions)  # Convert defaultdict back to a normal dict
+        return ancestors_links_definitions
 
     def compute_ancestors_links(self, user):
         """
@@ -815,10 +814,20 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         # Add roles provided by the document link, taking into account its ancestors
-        links_definitions = self.get_links_definitions(ancestors_links)
-        public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
+        ancestors_links_definitions = self.get_ancestors_links_definitions(
+            ancestors_links
+        )
+
+        public_roles = ancestors_links_definitions.get(
+            LinkReachChoices.PUBLIC, set()
+        ) | ({self.link_role} if self.link_reach == LinkReachChoices.PUBLIC else set())
         authenticated_roles = (
-            links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
+            ancestors_links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
+            | (
+                {self.link_role}
+                if self.link_reach == LinkReachChoices.AUTHENTICATED
+                else set()
+            )
             if user.is_authenticated
             else set()
         )
@@ -863,6 +872,9 @@ class Document(MP_Node, BaseModel):
             "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
+            "ancestors_links_definitions": {
+                k: list(v) for k, v in ancestors_links_definitions.items()
+            },
             "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
             "tree": can_get,
             "update": can_update,
