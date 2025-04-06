@@ -31,6 +31,10 @@ and this project adheres to
 - 🐛(nginx) fix 404 when accessing a doc #866
 - 🔒️(drf) disable browsable HTML API renderer #919
 
+## Fixed
+
+- 🐛(backend) fix link definition select options linked to ancestors #846
+
 ## [3.1.0] - 2025-04-07
 
 ## Added
