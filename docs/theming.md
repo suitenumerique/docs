@@ -53,4 +53,18 @@ Below is a visual example of a configured footer ⬇️:
 
 ![Footer Configuration Example](./assets/footer-configurable.png)
 
+----
 
+# **Custom Translations** 📝
+
+The translations can be partially overridden from the theme customization file.
+
+### Settings 🔧
+
+```shellscript
+THEME_CUSTOMIZATION_FILE_PATH=<path>
+```
+
+### Example of JSON
+
+The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
