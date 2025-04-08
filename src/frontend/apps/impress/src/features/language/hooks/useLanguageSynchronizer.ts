@@ -1,37 +1,30 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useConfig } from '@/core';
-import { useAuthQuery } from '@/features/auth/api';
+import type { ConfigResponse } from '@/core/config/api/useConfig';
+import { User } from '@/features/auth';
 import { useChangeUserLanguage } from '@/features/language/api/useChangeUserLanguage';
 import { getMatchingLocales } from '@/features/language/utils/locale';
 import { availableFrontendLanguages } from '@/i18n/initI18n';
 
 export const useLanguageSynchronizer = () => {
-  const { data: conf, isSuccess: confInitialized } = useConfig();
-  const { data: user, isSuccess: userInitialized } = useAuthQuery();
   const { i18n } = useTranslation();
   const { mutateAsync: changeUserLanguage } = useChangeUserLanguage();
   const languageSynchronizing = useRef(false);
 
-  const availableBackendLanguages = useMemo(() => {
-    return conf?.LANGUAGES.map(([locale]) => locale);
-  }, [conf?.LANGUAGES]);
-
   const synchronizeLanguage = useCallback(
-    async (direction?: 'toBackend' | 'toFrontend') => {
-      if (
-        languageSynchronizing.current ||
-        !userInitialized ||
-        !confInitialized ||
-        !availableBackendLanguages ||
-        !availableFrontendLanguages
-      ) {
+    (
+      languages: ConfigResponse['LANGUAGES'],
+      user: User,
+      direction?: 'toBackend' | 'toFrontend',
+    ) => {
+      if (languageSynchronizing.current || !availableFrontendLanguages) {
         return;
       }
       languageSynchronizing.current = true;
 
       try {
+        const availableBackendLanguages = languages.map(([locale]) => locale);
         const userPreferredLanguages = user.language ? [user.language] : [];
         const setOrDetectedLanguages = i18n.languages;
 
@@ -41,25 +34,27 @@ export const useLanguageSynchronizer = () => {
           (userPreferredLanguages.length ? 'toFrontend' : 'toBackend');
 
         if (direction === 'toBackend') {
-          // Update user's preference from frontends's language
           const closestBackendLanguage =
             getMatchingLocales(
               availableBackendLanguages,
               setOrDetectedLanguages,
             )[0] || availableBackendLanguages[0];
-          await changeUserLanguage({
+          changeUserLanguage({
             userId: user.id,
             language: closestBackendLanguage,
+          }).catch((error) => {
+            console.error('Error changing user language', error);
           });
         } else {
-          // Update frontends's language from user's preference
           const closestFrontendLanguage =
             getMatchingLocales(
               availableFrontendLanguages,
               userPreferredLanguages,
             )[0] || availableFrontendLanguages[0];
           if (i18n.resolvedLanguage !== closestFrontendLanguage) {
-            await i18n.changeLanguage(closestFrontendLanguage);
+            i18n.changeLanguage(closestFrontendLanguage).catch((error) => {
+              console.error('Error changing frontend language', error);
+            });
           }
         }
       } catch (error) {
@@ -68,14 +63,7 @@ export const useLanguageSynchronizer = () => {
         languageSynchronizing.current = false;
       }
     },
-    [
-      i18n,
-      user,
-      userInitialized,
-      confInitialized,
-      availableBackendLanguages,
-      changeUserLanguage,
-    ],
+    [i18n, changeUserLanguage],
   );
 
   return { synchronizeLanguage };
