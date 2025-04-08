@@ -4,7 +4,11 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useLanguageSynchronizer } from '@/features/language/';
+import { useAuthQuery } from '@/features/auth';
+import {
+  useLanguageSynchronizer,
+  useTranslationsCustomizer,
+} from '@/features/language/';
 import { useAnalytics } from '@/libs';
 import { CrispProvider, PostHogAnalytic } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
@@ -13,10 +17,12 @@ import { useConfig } from './api/useConfig';
 
 export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { data: conf } = useConfig();
+  const { data: user } = useAuthQuery();
   const { setSentry } = useSentryStore();
   const { setTheme } = useCunninghamTheme();
   const { AnalyticsProvider } = useAnalytics();
   const { synchronizeLanguage } = useLanguageSynchronizer();
+  const { customizeTranslations } = useTranslationsCustomizer();
 
   useEffect(() => {
     if (!conf?.SENTRY_DSN) {
@@ -35,8 +41,20 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }, [conf?.FRONTEND_THEME, setTheme]);
 
   useEffect(() => {
-    void synchronizeLanguage();
-  }, [synchronizeLanguage]);
+    if (!conf?.LANGUAGES || !user) {
+      return;
+    }
+
+    synchronizeLanguage(conf.LANGUAGES, user);
+  }, [conf?.LANGUAGES, user, synchronizeLanguage]);
+
+  useEffect(() => {
+    if (!conf?.FRONTEND_CUSTOM_TRANSLATIONS_URL) {
+      return;
+    }
+
+    customizeTranslations(conf.FRONTEND_CUSTOM_TRANSLATIONS_URL);
+  }, [conf?.FRONTEND_CUSTOM_TRANSLATIONS_URL, customizeTranslations]);
 
   useEffect(() => {
     if (!conf?.POSTHOG_KEY) {
