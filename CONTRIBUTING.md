@@ -35,7 +35,7 @@ All commit messages must adhere to the following format:
 
 `<gitmoji>(type) title description`
 
-*   <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list here: <https://gitmoji.dev/>.
+*   <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list [here](https://gitmoji.dev/).
 *   **(type)**: Describe the type of change. Common types include `backend`, `frontend`, `CI`, `docker` etc...
 *   **title**: A short, descriptive title for the change.
 *   **description**: Include additional details about what was changed and why.
