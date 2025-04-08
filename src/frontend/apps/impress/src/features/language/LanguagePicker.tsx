@@ -5,6 +5,7 @@ import { css } from 'styled-components';
 
 import { DropdownMenu, Icon, Text } from '@/components/';
 import { useConfig } from '@/core';
+import { useAuthQuery } from '@/features/auth';
 
 import { useLanguageSynchronizer } from './hooks/useLanguageSynchronizer';
 import { getMatchingLocales } from './utils/locale';
@@ -12,6 +13,7 @@ import { getMatchingLocales } from './utils/locale';
 export const LanguagePicker = () => {
   const { t, i18n } = useTranslation();
   const { data: conf } = useConfig();
+  const { data: user } = useAuthQuery();
   const { synchronizeLanguage } = useLanguageSynchronizer();
   const language = i18n.languages[0];
   Settings.defaultLocale = language;
@@ -28,7 +30,9 @@ export const LanguagePicker = () => {
         i18n
           .changeLanguage(backendLocale)
           .then(() => {
-            void synchronizeLanguage('toBackend');
+            if (conf?.LANGUAGES && user) {
+              synchronizeLanguage(conf.LANGUAGES, user, 'toBackend');
+            }
           })
           .catch((err) => {
             console.error('Error changing language', err);
@@ -36,7 +40,7 @@ export const LanguagePicker = () => {
       };
       return { label, isSelected, callback };
     });
-  }, [conf, i18n, language, synchronizeLanguage]);
+  }, [conf?.LANGUAGES, i18n, language, synchronizeLanguage, user]);
 
   // Extract current language label for display
   const currentLanguageLabel =
