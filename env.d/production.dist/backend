@@ -34,11 +34,11 @@ AWS_STORAGE_BUCKET_NAME=${BUCKET_NAME}
 MEDIA_BASE_URL=https://${DOCS_HOST}
 
 # OIDC
-OIDC_OP_JWKS_ENDPOINT=https://${KEYCLOAK_HOST}/realms/docs/protocol/openid-connect/certs
-OIDC_OP_AUTHORIZATION_ENDPOINT=https://${KEYCLOAK_HOST}/realms/docs/protocol/openid-connect/auth
-OIDC_OP_TOKEN_ENDPOINT=https://${KEYCLOAK_HOST}/realms/docs/protocol/openid-connect/token
-OIDC_OP_USER_ENDPOINT=https://${KEYCLOAK_HOST}/realms/docs/protocol/openid-connect/userinfo
-OIDC_OP_LOGOUT_ENDPOINT=https://${KEYCLOAK_HOST}/docs/docs/protocol/openid-connect/logout
+OIDC_OP_JWKS_ENDPOINT=https://${KEYCLOAK_HOST}/realms/${REALM_NAME}/protocol/openid-connect/certs
+OIDC_OP_AUTHORIZATION_ENDPOINT=https://${KEYCLOAK_HOST}/realms/${REALM_NAME}/protocol/openid-connect/auth
+OIDC_OP_TOKEN_ENDPOINT=https://${KEYCLOAK_HOST}/realms/${REALM_NAME}/protocol/openid-connect/token
+OIDC_OP_USER_ENDPOINT=https://${KEYCLOAK_HOST}/realms/${REALM_NAME}/protocol/openid-connect/userinfo
+OIDC_OP_LOGOUT_ENDPOINT=https://${KEYCLOAK_HOST}/realms/${REALM_NAME}/protocol/openid-connect/logout
 OIDC_RP_CLIENT_ID=<client_id>
 OIDC_RP_CLIENT_SECRET=<client secret>
 OIDC_RP_SIGN_ALGO=RS256

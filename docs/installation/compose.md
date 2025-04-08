@@ -56,7 +56,7 @@ Authentification in Docs is managed through Open ID Connect protocol. A function
 
 For guidance, refer to our [Keycloak deployment example](../examples/compose/keycloak/README.md).
 
-If using Keycloak as your Identity Provider, set `OIDC_RP_CLIENT_ID` and `OIDC_RP_CLIENT_SECRET` variables with those of the OIDC client created for Docs.
+If using Keycloak as your Identity Provider, set `OIDC_RP_CLIENT_ID` and `OIDC_RP_CLIENT_SECRET` variables with those of the OIDC client created for Docs. By default we have set `docs` as the realm name, if you have named your realm differently, update the value `REALM_NAME` in `env.d/common`
 
 For others OIDC providers, update the variables in `env.d/backend`.
 

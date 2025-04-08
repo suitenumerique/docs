@@ -5,3 +5,4 @@ MINIO_HOST=storage.domain.tld
 BACKEND_HOST=backend
 FRONTEND_HOST=frontend
 BUCKET_NAME=docs-media-storage
+REALM_NAME=docs
