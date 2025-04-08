@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(frontend) add customization for translations #857
+
 ## [3.1.0] - 2025-04-07
 
 ## Added

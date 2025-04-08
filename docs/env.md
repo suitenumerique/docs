@@ -48,6 +48,8 @@ These are the environmental variables you can set for the impress-backend contai
 | COLLABORATION_SERVER_SECRET                     | collaboration api secret                                                                      |                                                         |
 | COLLABORATION_WS_URL                            | collaboration websocket url                                                                   |                                                         |
 | FRONTEND_THEME                                  | frontend theme to use                                                                         |                                                         |
+| FRONTEND_CSS_URL                                | URL to a custom CSS file for theming the application                                          |                                                         |
+| FRONTEND_CUSTOM_TRANSLATIONS_URL                | URL to a JSON file containing custom translations for the application                         |                                                         |
 | POSTHOG_KEY                                     | posthog key for analytics                                                                     |                                                         |
 | CRISP_WEBSITE_ID                                | crisp website id for support                                                                  |                                                         |
 | DJANGO_CELERY_BROKER_URL                        | celery broker url                                                                             | redis://redis:6379/0                                    |
