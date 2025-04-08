@@ -11,7 +11,7 @@ and this project adheres to
 ## Added
 
 - 🚩 add homepage feature flag #861
-
+- ✨(frontend) add customization for translations #857
 
 ## [3.1.0] - 2025-04-07
 
