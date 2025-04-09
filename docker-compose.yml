@@ -158,6 +158,7 @@ services:
         Y_PROVIDER_URL: "ws://localhost:4444"
         MEDIA_URL: "http://localhost:8083"
         SW_DEACTIVATED: "true"
+        AUTO_INSTALL_EXTRA_DEPS: "true"
     image: impress:frontend-development
     ports:
       - "3000:3000"

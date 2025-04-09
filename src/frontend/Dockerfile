@@ -1,13 +1,16 @@
 FROM node:20-alpine AS frontend-deps
 
+ARG AUTO_INSTALL_EXTRA_DEPS=false
+
 WORKDIR /home/frontend/
 
 COPY ./src/frontend/package.json ./package.json
+COPY ./src/frontend/bin/conditional-install.js ./bin/conditional-install.js
 COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/apps/impress/package.json ./apps/impress/package.json
 COPY ./src/frontend/packages/eslint-config-impress/package.json ./packages/eslint-config-impress/package.json
 
-RUN yarn install --frozen-lockfile
+RUN AUTO_INSTALL_EXTRA_DEPS=${AUTO_INSTALL_EXTRA_DEPS} yarn install --frozen-lockfile
 
 COPY .dockerignore ./.dockerignore
 COPY ./src/frontend/.prettierrc.js ./.prettierrc.js

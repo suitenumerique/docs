@@ -34,7 +34,7 @@ jobs:
           node-version: ${{ inputs.node_version }}
       - name: Install dependencies
         if: steps.front-node_modules.outputs.cache-hit != 'true'
-        run: cd src/frontend/ && yarn install --frozen-lockfile
+        run: cd src/frontend/ && AUTO_INSTALL_EXTRA_DEPS=true yarn install --frozen-lockfile
       - name: Cache install frontend
         if: steps.front-node_modules.outputs.cache-hit != 'true'
         uses: actions/cache@v4
