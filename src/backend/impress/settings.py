@@ -410,6 +410,11 @@ class Base(Configuration):
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
+    FRONTEND_HOMEPAGE_FEATURE_ENABLED = values.BooleanValue(
+        default=False,
+        environ_name="FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
     FRONTEND_URL_JSON_FOOTER = values.Value(
         None, environ_name="FRONTEND_URL_JSON_FOOTER", environ_prefix=None
     )
