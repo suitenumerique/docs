@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { CONFIG } from './common';
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/docs/');
 });
@@ -49,5 +51,28 @@ test.describe('Home page', () => {
     ).toHaveCount(2);
 
     await expect(footer).toBeVisible();
+  });
+
+  test('it checks the homepage feature flag', async ({ page }) => {
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...CONFIG,
+            FRONTEND_HOMEPAGE_FEATURE_ENABLED: false,
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/');
+
+    // Keyclock login page
+    await expect(
+      page.locator('.login-pf-page-header').getByText('impress'),
+    ).toBeVisible();
   });
 });

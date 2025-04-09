@@ -1,5 +1,26 @@
 import { Page, expect } from '@playwright/test';
 
+export const CONFIG = {
+  AI_FEATURE_ENABLED: true,
+  CRISP_WEBSITE_ID: null,
+  COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
+  ENVIRONMENT: 'development',
+  FRONTEND_CSS_URL: null,
+  FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,
+  FRONTEND_FOOTER_FEATURE_ENABLED: true,
+  FRONTEND_THEME: 'default',
+  MEDIA_BASE_URL: 'http://localhost:8083',
+  LANGUAGES: [
+    ['en-us', 'English'],
+    ['fr-fr', 'Français'],
+    ['de-de', 'Deutsch'],
+    ['nl-nl', 'Nederlands'],
+  ],
+  LANGUAGE_CODE: 'en-us',
+  POSTHOG_KEY: {},
+  SENTRY_DSN: null,
+};
+
 export const keyCloakSignIn = async (
   page: Page,
   browserName: string,

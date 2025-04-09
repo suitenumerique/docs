@@ -2,28 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { createDoc } from './common';
-
-const config = {
-  AI_FEATURE_ENABLED: true,
-  CRISP_WEBSITE_ID: null,
-  COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
-  ENVIRONMENT: 'development',
-  FRONTEND_CSS_URL: null,
-  FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,
-  FRONTEND_FOOTER_FEATURE_ENABLED: true,
-  FRONTEND_THEME: 'default',
-  MEDIA_BASE_URL: 'http://localhost:8083',
-  LANGUAGES: [
-    ['en-us', 'English'],
-    ['fr-fr', 'Français'],
-    ['de-de', 'Deutsch'],
-    ['nl-nl', 'Nederlands'],
-  ],
-  LANGUAGE_CODE: 'en-us',
-  POSTHOG_KEY: {},
-  SENTRY_DSN: null,
-};
+import { CONFIG, createDoc } from './common';
 
 test.describe('Config', () => {
   test('it checks the config api is called', async ({ page }) => {
@@ -37,7 +16,7 @@ test.describe('Config', () => {
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
 
-    expect(await response.json()).toStrictEqual(config);
+    expect(await response.json()).toStrictEqual(CONFIG);
   });
 
   test('it checks that sentry is trying to init from config endpoint', async ({
@@ -48,7 +27,7 @@ test.describe('Config', () => {
       if (request.method().includes('GET')) {
         await route.fulfill({
           json: {
-            ...config,
+            ...CONFIG,
             SENTRY_DSN: 'https://sentry.io/123',
           },
         });
@@ -121,7 +100,7 @@ test.describe('Config', () => {
       if (request.method().includes('GET')) {
         await route.fulfill({
           json: {
-            ...config,
+            ...CONFIG,
             AI_FEATURE_ENABLED: false,
           },
         });
@@ -152,7 +131,7 @@ test.describe('Config', () => {
       if (request.method().includes('GET')) {
         await route.fulfill({
           json: {
-            ...config,
+            ...CONFIG,
             CRISP_WEBSITE_ID: '1234',
           },
         });
@@ -174,7 +153,7 @@ test.describe('Config', () => {
       if (request.method().includes('GET')) {
         await route.fulfill({
           json: {
-            ...config,
+            ...CONFIG,
             FRONTEND_CSS_URL: 'http://localhost:123465/css/style.css',
           },
         });
