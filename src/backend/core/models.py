@@ -464,6 +464,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
         return self._queryset_class(self.model).order_by("path")
 
 
+# pylint: disable=too-many-public-methods
 class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
@@ -486,6 +487,7 @@ class Document(MP_Node, BaseModel):
     )
     deleted_at = models.DateTimeField(null=True, blank=True)
     ancestors_deleted_at = models.DateTimeField(null=True, blank=True)
+    has_deleted_children = models.BooleanField(default=False)
     duplicated_from = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -560,6 +562,12 @@ class Document(MP_Node, BaseModel):
             if has_changed:
                 content_file = ContentFile(bytes_content)
                 default_storage.save(file_key, content_file)
+
+    def is_leaf(self):
+        """
+        :returns: True if the node is has no children
+        """
+        return not self.has_deleted_children and self.numchild == 0
 
     @property
     def key_base(self):
@@ -945,7 +953,8 @@ class Document(MP_Node, BaseModel):
 
         if self.depth > 1:
             self._meta.model.objects.filter(pk=self.get_parent().pk).update(
-                numchild=models.F("numchild") - 1
+                numchild=models.F("numchild") - 1,
+                has_deleted_children=True,
             )
 
         # Mark all descendants as soft deleted
