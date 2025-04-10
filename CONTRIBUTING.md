@@ -4,7 +4,7 @@ Thank you for taking the time to contribute! Please follow these guidelines to e
 
 To get started with the project, please refer to the [README.md](https://github.com/suitenumerique/docs/blob/main/README.md) for detailed instructions.
 
-Contributors are required to sign off their commits with `git commit --sign-off`: this confirms that they have read and accepted the [Developer's Certificate of Origin 1.1](https://developercertificate.org/).
+Contributors are required to sign off their commits with `git commit --signoff`: this confirms that they have read and accepted the [Developer's Certificate of Origin 1.1](https://developercertificate.org/).
 
 Please also check out our [dev handbook](https://suitenumerique.gitbook.io/handbook) to learn our best practices.
 
@@ -35,7 +35,7 @@ All commit messages must adhere to the following format:
 
 `<gitmoji>(type) title description`
 
-*   <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list here: <https://gitmoji.dev/>.
+*   <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list [here](https://gitmoji.dev/).
 *   **(type)**: Describe the type of change. Common types include `backend`, `frontend`, `CI`, `docker` etc...
 *   **title**: A short, descriptive title for the change.
 *   **description**: Include additional details about what was changed and why.
