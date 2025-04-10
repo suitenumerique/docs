@@ -12,6 +12,7 @@ interface ConfigResponse {
   CRISP_WEBSITE_ID?: string;
   FRONTEND_THEME?: Theme;
   FRONTEND_CSS_URL?: string;
+  FRONTEND_CUSTOM_TRANSLATIONS_URL?: string;
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;

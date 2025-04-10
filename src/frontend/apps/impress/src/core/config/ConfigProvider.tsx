@@ -4,7 +4,10 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useLanguageSynchronizer } from '@/features/language/';
+import {
+  useLanguageSynchronizer,
+  useTranslationsCustomizer,
+} from '@/features/language/';
 import { useAnalytics } from '@/libs';
 import { CrispProvider, PostHogAnalytic } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
@@ -17,6 +20,7 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { setTheme } = useCunninghamTheme();
   const { AnalyticsProvider } = useAnalytics();
   const { synchronizeLanguage } = useLanguageSynchronizer();
+  const { customizeTranslations } = useTranslationsCustomizer();
 
   useEffect(() => {
     if (!conf?.SENTRY_DSN) {
@@ -35,8 +39,10 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }, [conf?.FRONTEND_THEME, setTheme]);
 
   useEffect(() => {
-    void synchronizeLanguage();
-  }, [synchronizeLanguage]);
+    void synchronizeLanguage().finally(() => {
+      void customizeTranslations();
+    });
+  }, [synchronizeLanguage, customizeTranslations]);
 
   useEffect(() => {
     if (!conf?.POSTHOG_KEY) {

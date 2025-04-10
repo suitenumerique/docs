@@ -10,6 +10,7 @@ const config = {
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   ENVIRONMENT: 'development',
   FRONTEND_CSS_URL: null,
+  FRONTEND_CUSTOM_TRANSLATIONS_URL: null,
   FRONTEND_FOOTER_FEATURE_ENABLED: true,
   FRONTEND_THEME: 'default',
   MEDIA_BASE_URL: 'http://localhost:8083',
@@ -189,6 +190,67 @@ test.describe('Config', () => {
         .locator('head link[href="http://localhost:123465/css/style.css"]')
         .first(),
     ).toBeAttached();
+  });
+
+  test('it checks FRONTEND_CUSTOM_TRANSLATIONS_URL config', async ({
+    page,
+  }) => {
+    // Create mock URL for translations
+    const mockTranslationsUrl =
+      'http://dummyhost.example.com/translations/custom.json';
+
+    // Mock the config endpoint to include the custom translations URL
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...config,
+            FRONTEND_CUSTOM_TRANSLATIONS_URL: mockTranslationsUrl,
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock the translations endpoint to return our custom translations
+    await page.route(mockTranslationsUrl, async (route) => {
+      await route.fulfill({
+        json: {
+          en: {
+            translation: {
+              Docs: 'CustomDocsEn',
+            },
+          },
+          fr: {
+            translation: {
+              Docs: 'CustomDocsFR',
+            },
+          },
+        },
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    });
+
+    // Intercept requests to the translations URL
+    const translationsPromise = page.waitForRequest((req) => {
+      return req.url() === mockTranslationsUrl;
+    });
+
+    // Navigate to the page
+    await page.goto('/');
+
+    // Verify that the application attempted to load the translations
+    const translationsRequest = await translationsPromise;
+    expect(translationsRequest).toBeTruthy();
+
+    // Extra test to prove that the translations were applied
+    await expect(page.getByText('CustomDocsEn')).toBeAttached();
   });
 });
 
