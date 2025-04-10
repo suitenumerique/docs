@@ -87,49 +87,61 @@ class LinkReachChoices(models.TextChoices):
         """
         Determines the valid select options for link reach and link role depending on the
         list of ancestors' link reach/role.
-
         Args:
             ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
                              representing the reach and role of ancestors links.
-
         Returns:
             Dictionary mapping possible reach levels to their corresponding possible roles.
         """
         # If no ancestors, return all options
         if not ancestors_links:
-            return dict.fromkeys(cls.values, LinkRoleChoices.values)
+            return {
+                reach: LinkRoleChoices.values if reach != cls.RESTRICTED else None
+                for reach in cls.values
+            }
 
         # Initialize result with all possible reaches and role options as sets
-        result = {reach: set(LinkRoleChoices.values) for reach in cls.values}
+        result = {
+            reach: set(LinkRoleChoices.values) if reach != cls.RESTRICTED else None
+            for reach in cls.values
+        }
 
         # Group roles by reach level
         reach_roles = defaultdict(set)
         for link in ancestors_links:
             reach_roles[link["link_reach"]].add(link["link_role"])
 
-        # Apply constraints based on ancestor links
-        if LinkRoleChoices.EDITOR in reach_roles[cls.RESTRICTED]:
-            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
+        # Rule 1: public/editor → override everything
+        if LinkRoleChoices.EDITOR in reach_roles.get(cls.PUBLIC, set()):
+            return {cls.PUBLIC: [LinkRoleChoices.EDITOR]}
 
-        if LinkRoleChoices.EDITOR in reach_roles[cls.AUTHENTICATED]:
+        # Rule 2: public/reader
+        if LinkRoleChoices.READER in reach_roles.get(cls.PUBLIC, set()):
+            result.get(cls.AUTHENTICATED, set()).discard(LinkRoleChoices.READER)
+            result.pop(cls.RESTRICTED, None)
+
+        # Rule 3: authenticated/editor
+        if LinkRoleChoices.EDITOR in reach_roles.get(cls.AUTHENTICATED, set()):
             result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
             result.pop(cls.RESTRICTED, None)
-        elif LinkRoleChoices.READER in reach_roles[cls.AUTHENTICATED]:
-            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
 
-        if LinkRoleChoices.EDITOR in reach_roles[cls.PUBLIC]:
-            result[cls.PUBLIC].discard(LinkRoleChoices.READER)
-            result.pop(cls.AUTHENTICATED, None)
+        # Rule 4: authenticated/reader
+        if LinkRoleChoices.READER in reach_roles.get(cls.AUTHENTICATED, set()):
             result.pop(cls.RESTRICTED, None)
-        elif LinkRoleChoices.READER in reach_roles[cls.PUBLIC]:
-            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
-            result.get(cls.RESTRICTED, set()).discard(LinkRoleChoices.READER)
 
-        # Convert roles sets to lists while maintaining the order from LinkRoleChoices
-        for reach, roles in result.items():
-            result[reach] = [role for role in LinkRoleChoices.values if role in roles]
+        # Clean up: remove empty entries and convert sets to ordered lists
+        cleaned = {}
+        for reach in cls.values:
+            if reach in result:
+                if result[reach]:
+                    cleaned[reach] = [
+                        r for r in LinkRoleChoices.values if r in result[reach]
+                    ]
+                else:
+                    # Could be [] or None (for RESTRICTED reach)
+                    cleaned[reach] = result[reach]
 
-        return result
+        return cleaned
 
 
 class DuplicateEmailError(Exception):
@@ -737,17 +749,16 @@ class Document(MP_Node, BaseModel):
                 roles = []
         return roles
 
-    def get_links_definitions(self, ancestors_links):
-        """Get links reach/role definitions for the current document and its ancestors."""
+    def get_ancestors_links_definitions(self, ancestors_links):
+        """Get links reach/role definitions for ancestors of the current document."""
 
-        links_definitions = defaultdict(set)
-        links_definitions[self.link_reach].add(self.link_role)
-
-        # Merge ancestor link definitions
+        ancestors_links_definitions = defaultdict(set)
         for ancestor in ancestors_links:
-            links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
+            ancestors_links_definitions[ancestor["link_reach"]].add(
+                ancestor["link_role"]
+            )
 
-        return dict(links_definitions)  # Convert defaultdict back to a normal dict
+        return ancestors_links_definitions
 
     def compute_ancestors_links(self, user):
         """
@@ -803,10 +814,20 @@ class Document(MP_Node, BaseModel):
         ) and not is_deleted
 
         # Add roles provided by the document link, taking into account its ancestors
-        links_definitions = self.get_links_definitions(ancestors_links)
-        public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
+        ancestors_links_definitions = self.get_ancestors_links_definitions(
+            ancestors_links
+        )
+
+        public_roles = ancestors_links_definitions.get(
+            LinkReachChoices.PUBLIC, set()
+        ) | ({self.link_role} if self.link_reach == LinkReachChoices.PUBLIC else set())
         authenticated_roles = (
-            links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
+            ancestors_links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
+            | (
+                {self.link_role}
+                if self.link_reach == LinkReachChoices.AUTHENTICATED
+                else set()
+            )
             if user.is_authenticated
             else set()
         )
@@ -850,6 +871,9 @@ class Document(MP_Node, BaseModel):
             "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
+            "ancestors_links_definitions": {
+                k: list(v) for k, v in ancestors_links_definitions.items()
+            },
             "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
             "tree": can_get,
             "update": can_update,

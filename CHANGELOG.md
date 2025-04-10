@@ -12,6 +12,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) add ancestors links definitions to document abilities #846
 - 🚩(backend) add feature flag for the footer #841
 - 🔧(backend) add view to manage footer json #841
 - ✨(frontend) add custom css style #771
@@ -23,6 +24,7 @@ and this project adheres to
 
 ## Fixed
 
+- 🐛(backend) fix link definition select options linked to ancestors #846
 - 🐛(back) validate document content in serializer #822
 - 🐛(frontend) fix selection click past end of content #840
 
