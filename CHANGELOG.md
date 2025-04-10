@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- 🐛(nginx) fix 404 when accessing a doc #866
+
 ## [3.1.0] - 2025-04-07
 
 ## Added
