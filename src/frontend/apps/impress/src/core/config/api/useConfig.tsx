@@ -5,17 +5,18 @@ import { Theme } from '@/cunningham/';
 import { PostHogConf } from '@/services';
 
 interface ConfigResponse {
-  LANGUAGES: [string, string][];
-  LANGUAGE_CODE: string;
-  ENVIRONMENT: string;
+  AI_FEATURE_ENABLED?: boolean;
   COLLABORATION_WS_URL?: string;
   CRISP_WEBSITE_ID?: string;
-  FRONTEND_THEME?: Theme;
+  ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
+  FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
+  FRONTEND_THEME?: Theme;
+  LANGUAGES: [string, string][];
+  LANGUAGE_CODE: string;
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
-  AI_FEATURE_ENABLED?: boolean;
 }
 
 export const getConfig = async (): Promise<ConfigResponse> => {

@@ -47,6 +47,11 @@ These are the environmental variables you can set for the impress-backend contai
 | COLLABORATION_API_URL                           | collaboration api host                                                                        |                                                         |
 | COLLABORATION_SERVER_SECRET                     | collaboration api secret                                                                      |                                                         |
 | COLLABORATION_WS_URL                            | collaboration websocket url                                                                   |                                                         |
+| FRONTEND_CSS_URL                                | To add a external css file to the app                                                         |                                                         |
+| FRONTEND_HOMEPAGE_FEATURE_ENABLED               | frontend feature flag to display the homepage                                                 | false                                                   |
+| FRONTEND_FOOTER_FEATURE_ENABLED                 | frontend feature flag to display the footer                                                   | false                                                   |
+| FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT              | Cache duration of the json footer                                                             | 86400                                                   |
+| FRONTEND_URL_JSON_FOOTER                        | Url with a json to configure the footer                                                       |                                                         |
 | FRONTEND_THEME                                  | frontend theme to use                                                                         |                                                         |
 | POSTHOG_KEY                                     | posthog key for analytics                                                                     |                                                         |
 | CRISP_WEBSITE_ID                                | crisp website id for support                                                                  |                                                         |

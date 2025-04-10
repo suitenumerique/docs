@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- 🚩 add homepage feature flag #861
+
+
 ## [3.1.0] - 2025-04-07
 
 ## Added
