@@ -44,6 +44,13 @@
   padding: 4px 6px;
 }
 
+/**
+ * Image System
+*/
+.c__image-system-filter {
+  filter: var(--c--components--image-system-filter);
+}
+
 @font-face {
   font-family: Inter;
   font-style: italic;

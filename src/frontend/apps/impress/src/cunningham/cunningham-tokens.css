@@ -453,6 +453,7 @@
   --c--components--la-gaufre: false;
   --c--components--home-proconnect: false;
   --c--components--beta: false;
+  --c--components--image-system-filter: ;
 }
 
 .cunningham-theme--dark {
@@ -650,6 +651,7 @@
   --c--components--button--primary--background--color-focus: var(
     --c--theme--colors--primary-focus
   );
+  --c--components--image-system-filter: saturate(0.2);
 }
 
 .clr-secondary-text {

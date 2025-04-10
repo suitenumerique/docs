@@ -358,6 +358,7 @@ export const tokens = {
         'la-gaufre': false,
         'home-proconnect': false,
         beta: false,
+        'image-system-filter': '',
       },
     },
     dark: {
@@ -568,6 +569,7 @@ export const tokens = {
             },
           },
         },
+        'image-system-filter': 'saturate(0.2)',
       },
     },
   },
