@@ -43,7 +43,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
    */
   if (!authenticated && !pathAllowed) {
     if (config?.FRONTEND_HOMEPAGE_FEATURE_ENABLED) {
-      void replace('/login');
+      void replace('/home');
     } else {
       gotoLogin();
     }
@@ -55,9 +55,9 @@ export const Auth = ({ children }: PropsWithChildren) => {
   }
 
   /**
-   * If the user is authenticated and the path is the login page, we redirect to the home page.
+   * If the user is authenticated and the path is the home page, we redirect to the index.
    */
-  if (pathname === '/login' && authenticated) {
+  if (pathname === '/home' && authenticated) {
     void replace('/');
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
