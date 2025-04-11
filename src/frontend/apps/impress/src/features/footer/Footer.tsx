@@ -1,11 +1,18 @@
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
+import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, StyledLink, Text } from '@/components/';
+import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
 
+import { Title } from '../header';
+
+import { useFooter } from './api/useFooter';
 import IconLink from './assets/external-link.svg';
+import { BottomInformation, Link } from './types';
 
 const BlueStripe = styled.div`
   position: absolute;
@@ -16,9 +23,51 @@ const BlueStripe = styled.div`
 `;
 
 export const Footer = () => {
-  const { t } = useTranslation();
-  const { themeTokens } = useCunninghamTheme();
+  const { data: config } = useConfig();
+
+  if (!config?.FRONTEND_FOOTER_FEATURE_ENABLED) {
+    return null;
+  }
+
+  return <FooterContent />;
+};
+
+export const FooterContent = () => {
+  const { t, i18n } = useTranslation();
+  const { themeTokens, colorsTokens } = useCunninghamTheme();
+  const colors = colorsTokens();
   const logo = themeTokens().logo;
+  const [legalLinks, setLegalLinks] = useState<Link[]>();
+  const [externalLinks, setExternalLinks] = useState<Link[]>();
+  const [bottomInformation, setBottomInformation] =
+    useState<BottomInformation>();
+  const resolvedLanguage = i18n.resolvedLanguage;
+  const { data: footerJson } = useFooter();
+
+  useEffect(() => {
+    if (!footerJson) {
+      return;
+    }
+
+    const langData = footerJson[resolvedLanguage as keyof typeof footerJson];
+    setLegalLinks(langData?.legalLinks || footerJson?.default?.legalLinks);
+
+    const externalLinks =
+      langData && 'externalLinks' in langData
+        ? langData?.externalLinks
+        : footerJson?.default?.externalLinks;
+    setExternalLinks(externalLinks);
+
+    const bottomInformation =
+      langData && 'bottomInformation' in langData
+        ? langData?.bottomInformation
+        : footerJson?.default?.bottomInformation;
+    setBottomInformation(bottomInformation);
+  }, [footerJson, resolvedLanguage]);
+
+  if (!legalLinks && !externalLinks && !bottomInformation) {
+    return null;
+  }
 
   return (
     <Box $position="relative" as="footer" className="--docs--footer">
@@ -33,7 +82,7 @@ export const Footer = () => {
         >
           <Box className="--docs--footer-logo">
             <Box $align="center" $gap="6rem" $direction="row">
-              {logo && (
+              {logo?.src && (
                 <Image
                   priority
                   src={logo.src}
@@ -42,6 +91,23 @@ export const Footer = () => {
                   height={0}
                   style={{ width: logo.widthFooter, height: 'auto' }}
                 />
+              )}
+              {!logo?.src && (
+                <Box
+                  $align="center"
+                  $gap="0.5rem"
+                  $direction="row"
+                  $position="relative"
+                  $height="fit-content"
+                  $css="zoom: 1.4;"
+                >
+                  <IconDocs
+                    aria-label={t('Docs Logo')}
+                    width={32}
+                    color={colors['primary-text']}
+                  />
+                  <Title />
+                </Box>
               )}
             </Box>
           </Box>
@@ -54,40 +120,24 @@ export const Footer = () => {
             `}
             className="--docs--footer-external-links"
           >
-            {[
-              {
-                label: 'legifrance.gouv.fr',
-                href: 'https://legifrance.gouv.fr/',
-              },
-              {
-                label: 'info.gouv.fr',
-                href: 'https://info.gouv.fr/',
-              },
-              {
-                label: 'service-public.fr',
-                href: 'https://service-public.fr/',
-              },
-              {
-                label: 'data.gouv.fr',
-                href: 'https://data.gouv.fr/',
-              },
-            ].map(({ label, href }) => (
-              <StyledLink
-                key={label}
-                href={href}
-                target="__blank"
-                $css={`
-                  gap:0.2rem;
-                  transition: box-shadow 0.3s;
-                  &:hover {
-                    box-shadow: 0px 2px 0 0 var(--c--theme--colors--greyscale-text);
-                  }
-                `}
-              >
-                <Text $weight="bold">{label}</Text>
-                <IconLink width={18} />
-              </StyledLink>
-            ))}
+            {externalLinks &&
+              externalLinks.map(({ label, href }) => (
+                <StyledLink
+                  key={label}
+                  href={href}
+                  target="__blank"
+                  $css={`
+                    gap:0.2rem;
+                    transition: box-shadow 0.3s;
+                    &:hover {
+                      box-shadow: 0px 2px 0 0 var(--c--theme--colors--greyscale-text);
+                    }
+                  `}
+                >
+                  <Text $weight="bold">{label}</Text>
+                  <IconLink width={18} />
+                </StyledLink>
+              ))}
           </Box>
         </Box>
         <Box
@@ -102,66 +152,59 @@ export const Footer = () => {
           `}
           className="--docs--footer-internal-links"
         >
-          {[
-            {
-              label: t('Legal Notice'),
-              href: '/legal-notice',
-            },
-            {
-              label: t('Personal data and cookies'),
-              href: '/personal-data-cookies',
-            },
-            {
-              label: t('Accessibility'),
-              href: '/accessibility',
-            },
-          ].map(({ label, href }) => (
-            <StyledLink
-              key={label}
-              href={href}
-              $css={`
-                padding-right: 1rem;
-                &:not(:last-child) {
-                  box-shadow: inset -1px 0px 0px 0px var(--c--theme--colors--greyscale-200);
-                }
-              `}
-            >
-              <Text
-                $variation="600"
-                $size="m"
-                $transition="box-shadow 0.3s"
+          {legalLinks &&
+            legalLinks.map(({ label, href }) => (
+              <StyledLink
+                key={label}
+                href={href}
                 $css={`
-                  &:hover {
-                    box-shadow: 0px 2px 0 0 var(--c--theme--colors--greyscale-text);
+                  padding-right: 1rem;
+                  &:not(:last-child) {
+                    box-shadow: inset -1px 0px 0px 0px var(--c--theme--colors--greyscale-200);
                   }
                 `}
               >
-                {label}
-              </Text>
-            </StyledLink>
-          ))}
+                <Text
+                  $variation="600"
+                  $size="m"
+                  $transition="box-shadow 0.3s"
+                  $css={`
+                    &:hover {
+                      box-shadow: 0px 2px 0 0 var(--c--theme--colors--greyscale-text);
+                    }
+                  `}
+                >
+                  {label}
+                </Text>
+              </StyledLink>
+            ))}
         </Box>
-        <Text
-          as="p"
-          $size="m"
-          $margin={{ top: 'big' }}
-          $variation="600"
-          $display="inline"
-          className="--docs--footer-licence"
-        >
-          {t('Unless otherwise stated, all content on this site is under')}{' '}
-          <StyledLink
-            href="https://github.com/etalab/licence-ouverte/blob/master/LO.md"
-            target="__blank"
-            $css={`
-              display:inline-flex;
-              box-shadow: 0px 1px 0 0 var(--c--theme--colors--greyscale-text);
-            `}
+        {bottomInformation && (
+          <Text
+            as="p"
+            $size="m"
+            $margin={{ top: 'big' }}
+            $variation="600"
+            $display="inline"
+            className="--docs--footer-licence"
           >
-            <Text $variation="600">licence etalab-2.0</Text>
-            <IconLink width={18} />
-          </StyledLink>
-        </Text>
+            {bottomInformation.label}{' '}
+            {bottomInformation.link && (
+              <StyledLink
+                href={bottomInformation.link.href}
+                target="__blank"
+                $css={`
+                  display:inline-flex;
+                  box-shadow: 0px 1px 0 0 var(--c--theme--colors--greyscale-text);
+                  gap: 0.2rem;
+                `}
+              >
+                <Text $variation="600">{bottomInformation.link.label}</Text>
+                <IconLink width={14} />
+              </StyledLink>
+            )}
+          </Text>
+        )}
       </Box>
     </Box>
   );

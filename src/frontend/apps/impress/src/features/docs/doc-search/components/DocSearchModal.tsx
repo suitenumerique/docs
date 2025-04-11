@@ -87,6 +87,7 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
                 $justify="center"
               >
                 <Image
+                  className="c__image-system-filter"
                   width={320}
                   src={EmptySearchIcon}
                   alt={t('No active search')}

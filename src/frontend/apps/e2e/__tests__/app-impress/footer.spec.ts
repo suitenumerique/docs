@@ -1,9 +1,26 @@
 import { expect, test } from '@playwright/test';
 
+import { overrideConfig } from './common';
+
 test.describe('Footer', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('checks all the elements are visible', async ({ page }) => {
+  test('checks the feature flag is working', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_FOOTER_FEATURE_ENABLED: false,
+    });
+
+    await page.goto('/');
+    await expect(page.locator('footer')).toBeHidden();
+  });
+
+  test('checks all the elements are visible with the "footer-dsfr.json"', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+    });
+
     await page.goto('/');
     const footer = page.locator('footer').first();
 
@@ -43,28 +60,4 @@ test.describe('Footer', () => {
       ),
     ).toBeVisible();
   });
-
-  const legalPages = [
-    { name: 'Legal Notice', url: '/legal-notice/' },
-    { name: 'Personal data and cookies', url: '/personal-data-cookies/' },
-    { name: 'Accessibility', url: '/accessibility/' },
-  ];
-  for (const { name, url } of legalPages) {
-    test(`checks ${name} page`, async ({ page }) => {
-      await page.goto('/');
-
-      const footer = page.locator('footer').first();
-      await footer.getByRole('link', { name }).click();
-
-      await expect(
-        page
-          .getByRole('heading', {
-            name,
-          })
-          .first(),
-      ).toBeVisible();
-
-      await expect(page).toHaveURL(url);
-    });
-  }
 });

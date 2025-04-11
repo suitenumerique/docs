@@ -32,7 +32,7 @@ export const SimpleDocItem = ({
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const spacings = spacingsTokens();
   const { untitledDocument } = useTrans();
@@ -53,9 +53,15 @@ export const SimpleDocItem = ({
         `}
       >
         {isPinned ? (
-          <PinnedDocumentIcon aria-label={t('Pin document icon')} />
+          <PinnedDocumentIcon
+            aria-label={t('Pin document icon')}
+            color={colorsTokens()['primary-500']}
+          />
         ) : (
-          <SimpleFileIcon aria-label={t('Simple document icon')} />
+          <SimpleFileIcon
+            aria-label={t('Simple document icon')}
+            color={colorsTokens()['primary-500']}
+          />
         )}
       </Box>
       <Box $justify="center" $overflow="auto">

@@ -1,15 +1,32 @@
 import { Page, expect } from '@playwright/test';
 
+export const CONFIG = {
+  AI_FEATURE_ENABLED: true,
+  CRISP_WEBSITE_ID: null,
+  COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
+  ENVIRONMENT: 'development',
+  FRONTEND_CSS_URL: null,
+  FRONTEND_FOOTER_FEATURE_ENABLED: true,
+  FRONTEND_THEME: null,
+  MEDIA_BASE_URL: 'http://localhost:8083',
+  LANGUAGES: [
+    ['en-us', 'English'],
+    ['fr-fr', 'Français'],
+    ['de-de', 'Deutsch'],
+    ['nl-nl', 'Nederlands'],
+  ],
+  LANGUAGE_CODE: 'en-us',
+  POSTHOG_KEY: {},
+  SENTRY_DSN: null,
+} as const;
+
 export const keyCloakSignIn = async (
   page: Page,
   browserName: string,
   fromHome: boolean = true,
 ) => {
   if (fromHome) {
-    await page
-      .getByRole('button', { name: 'Proconnect Login' })
-      .first()
-      .click();
+    await page.getByRole('button', { name: 'Start Writing' }).first().click();
   }
 
   const login = `user-e2e-${browserName}`;
@@ -68,9 +85,16 @@ export const createDoc = async (
 };
 
 export const verifyDocName = async (page: Page, docName: string) => {
-  const input = page.getByRole('textbox', { name: 'doc title input' });
+  await expect(
+    page.getByLabel('It is the card information about the document.'),
+  ).toBeVisible({
+    timeout: 10000,
+  });
+
   try {
-    await expect(input).toHaveText(docName);
+    await expect(
+      page.getByRole('textbox', { name: 'doc title input' }),
+    ).toHaveText(docName);
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();
   }
@@ -283,3 +307,21 @@ export const expectLoginPage = async (page: Page) =>
   await expect(
     page.getByRole('heading', { name: 'Collaborative writing' }),
   ).toBeVisible();
+
+export const overrideConfig = async (
+  page: Page,
+  newConfig: { [K in keyof typeof CONFIG]?: unknown },
+) =>
+  await page.route('**/api/v1.0/config/', async (route) => {
+    const request = route.request();
+    if (request.method().includes('GET')) {
+      await route.fulfill({
+        json: {
+          ...CONFIG,
+          ...newConfig,
+        },
+      });
+    } else {
+      await route.continue();
+    }
+  });

@@ -175,6 +175,7 @@ export const HomeSection = ({
 
         {illustration && (isSmallDevice || !video) && (
           <Image
+            className="c__image-system-filter"
             src={illustration}
             alt={t('Illustration')}
             style={{

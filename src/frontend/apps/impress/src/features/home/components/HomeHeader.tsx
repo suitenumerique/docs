@@ -17,10 +17,11 @@ export const getHeaderHeight = (isSmallMobile: boolean) =>
 
 export const HomeHeader = () => {
   const { t } = useTranslation();
-  const { themeTokens, spacingsTokens } = useCunninghamTheme();
+  const { themeTokens, spacingsTokens, colorsTokens } = useCunninghamTheme();
   const spacings = spacingsTokens();
   const logo = themeTokens().logo;
   const { isSmallMobile } = useResponsiveStore();
+  const colors = colorsTokens();
 
   return (
     <Box
@@ -45,7 +46,7 @@ export const HomeHeader = () => {
             <ButtonTogglePanel />
           </Box>
         )}
-        {!isSmallMobile && logo && (
+        {!isSmallMobile && logo?.src && (
           <Image
             priority
             src={logo.src}
@@ -62,7 +63,11 @@ export const HomeHeader = () => {
           $position="relative"
           $height="fit-content"
         >
-          <IconDocs aria-label={t('Docs Logo')} width={32} />
+          <IconDocs
+            aria-label={t('Docs Logo')}
+            width={32}
+            color={colors['primary-text']}
+          />
           <Title />
         </Box>
       </Box>

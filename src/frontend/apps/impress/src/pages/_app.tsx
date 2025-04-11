@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
 
 import { AppProvider } from '@/core/';
+import { useCunninghamTheme } from '@/cunningham';
 import { useSWRegister } from '@/features/service-worker/';
 import '@/i18n/initI18n';
 import { NextPageWithLayout } from '@/types/next';
@@ -17,6 +18,8 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useSWRegister();
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
+  const { componentTokens } = useCunninghamTheme();
+  const favicon = componentTokens()['favicon'];
 
   return (
     <>
@@ -28,17 +31,17 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             'Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.',
           )}
         />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="icon" href={favicon['ico']} sizes="any" />
+        <link rel="icon" href={favicon['png-light']} type="image/png" />
         <link
           rel="icon"
-          href="/favicon.png"
+          href={favicon['png-light']}
           type="image/png"
           media="(prefers-color-scheme: light)"
         />
         <link
           rel="icon"
-          href="/favicon-dark.png"
+          href={favicon['png-dark']}
           type="image/png"
           media="(prefers-color-scheme: dark)"
         />
