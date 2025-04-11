@@ -10,6 +10,10 @@ and this project adheres to
 
 ## [3.1.0] - 2025-04-07
 
+## Changed
+
+⚡️(frontend) reduce unblocking time for config #867
+
 ## Added
 
 - 🚩(backend) add feature flag for the footer #841
