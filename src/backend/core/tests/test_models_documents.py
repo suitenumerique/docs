@@ -1182,7 +1182,6 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
         (
             [{"link_reach": "public", "link_role": "reader"}],
             {
-                "authenticated": ["editor"],
                 "public": ["reader", "editor"],
             },
         ),
@@ -1247,7 +1246,6 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
                 {"link_reach": "public", "link_role": "reader"},
             ],
             {
-                "authenticated": ["editor"],
                 "public": ["reader", "editor"],
             },
         ),
@@ -1258,7 +1256,6 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
                 {"link_reach": "public", "link_role": "reader"},
             ],
             {
-                "authenticated": ["editor"],
                 "public": ["reader", "editor"],
             },
         ),
@@ -1268,7 +1265,7 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
                 {"link_reach": "authenticated", "link_role": "editor"},
                 {"link_reach": "public", "link_role": "reader"},
             ],
-            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+            {"public": ["reader", "editor"]},
         ),
         (
             [
