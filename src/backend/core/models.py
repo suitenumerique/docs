@@ -115,14 +115,14 @@ class LinkReachChoices(models.TextChoices):
         if LinkRoleChoices.EDITOR in reach_roles.get(cls.PUBLIC, set()):
             return {cls.PUBLIC: [LinkRoleChoices.EDITOR]}
 
-        # Rule 2: public/reader
-        if LinkRoleChoices.READER in reach_roles.get(cls.PUBLIC, set()):
-            result.get(cls.AUTHENTICATED, set()).discard(LinkRoleChoices.READER)
-            result.pop(cls.RESTRICTED, None)
-
-        # Rule 3: authenticated/editor
+        # Rule 2: authenticated/editor
         if LinkRoleChoices.EDITOR in reach_roles.get(cls.AUTHENTICATED, set()):
             result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+            result.pop(cls.RESTRICTED, None)
+
+        # Rule 3: public/reader
+        if LinkRoleChoices.READER in reach_roles.get(cls.PUBLIC, set()):
+            result.pop(cls.AUTHENTICATED, None)
             result.pop(cls.RESTRICTED, None)
 
         # Rule 4: authenticated/reader
