@@ -38,15 +38,18 @@ const customColors = {
 };
 
 const logoDsfr = tokens.themes.default.theme.logo;
-tokens.themes.default.theme.logo = {
-  src: '',
-  alt: '',
-  widthHeader: '',
-  widthFooter: '',
-};
-tokens.themes.default.theme.colors = {
-  ...tokens.themes.default.theme.colors,
-  ...customColors,
+tokens.themes.default.theme = {
+  ...tokens.themes.default.theme,
+  logo: {
+    src: '',
+    alt: '',
+    widthHeader: '',
+    widthFooter: '',
+  },
+  colors: {
+    ...tokens.themes.default.theme.colors,
+    ...customColors,
+  },
 };
 tokens.themes.default.components = {
   ...tokens.themes.default.components,
@@ -55,6 +58,11 @@ tokens.themes.default.components = {
     'home-proconnect': false,
     beta: false,
     'image-system-filter': '',
+    favicon: {
+      ico: '/assets/favicon-light.ico',
+      'png-light': '/assets/favicon-light.png',
+      'png-dark': '/assets/favicon-dark.png',
+    },
   },
 };
 
@@ -70,6 +78,11 @@ const dsfrTheme = {
       'la-gaufre': true,
       'home-proconnect': true,
       beta: true,
+      favicon: {
+        ico: '/assets/favicon-dsfr.ico',
+        'png-light': '/assets/favicon-dsfr.png',
+        'png-dark': '/assets/favicon-dark-dsfr.png',
+      },
     },
   },
 };

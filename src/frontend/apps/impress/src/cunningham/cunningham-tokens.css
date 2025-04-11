@@ -454,6 +454,9 @@
   --c--components--home-proconnect: false;
   --c--components--beta: false;
   --c--components--image-system-filter: ;
+  --c--components--favicon--ico: /assets/favicon-light.ico;
+  --c--components--favicon--png-light: /assets/favicon-light.png;
+  --c--components--favicon--png-dark: /assets/favicon-dark.png;
 }
 
 .cunningham-theme--dark {
@@ -514,6 +517,9 @@
   --c--components--la-gaufre: true;
   --c--components--home-proconnect: true;
   --c--components--beta: true;
+  --c--components--favicon--ico: /assets/favicon-dsfr.ico;
+  --c--components--favicon--png-light: /assets/favicon-dsfr.png;
+  --c--components--favicon--png-dark: /assets/favicon-dark-dsfr.png;
 }
 
 .cunningham-theme--generic {

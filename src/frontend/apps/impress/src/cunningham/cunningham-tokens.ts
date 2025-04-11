@@ -359,6 +359,11 @@ export const tokens = {
         'home-proconnect': false,
         beta: false,
         'image-system-filter': '',
+        favicon: {
+          ico: '/assets/favicon-light.ico',
+          'png-light': '/assets/favicon-light.png',
+          'png-dark': '/assets/favicon-dark.png',
+        },
       },
     },
     dark: {
@@ -423,7 +428,16 @@ export const tokens = {
           alt: 'Gouvernement Logo',
         },
       },
-      components: { 'la-gaufre': true, 'home-proconnect': true, beta: true },
+      components: {
+        'la-gaufre': true,
+        'home-proconnect': true,
+        beta: true,
+        favicon: {
+          ico: '/assets/favicon-dsfr.ico',
+          'png-light': '/assets/favicon-dsfr.png',
+          'png-dark': '/assets/favicon-dark-dsfr.png',
+        },
+      },
     },
     generic: {
       theme: {
