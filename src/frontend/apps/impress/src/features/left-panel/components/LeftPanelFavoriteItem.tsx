@@ -16,14 +16,14 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacing = spacingsTokens();
+
   return (
     <Box
       $direction="row"
       $align="center"
       $justify="space-between"
       $css={css`
-        padding: ${spacing['2xs']};
+        padding: ${spacingsTokens['2xs']};
         border-radius: 4px;
         .pinned-actions {
           opacity: ${isDesktop ? 0 : 1};

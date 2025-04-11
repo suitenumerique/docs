@@ -74,7 +74,7 @@ export function HomeContent() {
                   <Box
                     $css={css`
                       & a {
-                        color: ${colorsTokens()['primary-600']};
+                        color: ${colorsTokens['primary-600']};
                       }
                     `}
                   >

@@ -14,7 +14,7 @@ const Page: NextPageWithLayout = () => {
     <Box>
       <Box
         as="h1"
-        $background={colorsTokens()['primary-100']}
+        $background={colorsTokens['primary-100']}
         $margin="none"
         $padding="large"
       >

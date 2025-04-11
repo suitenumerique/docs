@@ -12,7 +12,7 @@ export const blockMappingDividerPDF: DocsExporterPDF['mappings']['blockMapping']
       <Text
         style={{
           marginVertical: 10,
-          backgroundColor: colorsTokens()['greyscale-300'],
+          backgroundColor: colorsTokens['greyscale-300'],
           height: '2px',
         }}
       />

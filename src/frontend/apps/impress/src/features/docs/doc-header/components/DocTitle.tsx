@@ -116,7 +116,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         onBlurCapture={(event) =>
           handleTitleSubmit(event.target.textContent || '')
         }
-        $color={colorsTokens()['greyscale-1000']}
+        $color={colorsTokens['greyscale-1000']}
         $minHeight="40px"
         $padding={{ right: 'big' }}
         $css={css`

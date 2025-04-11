@@ -67,7 +67,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
         </Box>
 
         <Box
-          $background={colorsTokens()['primary-bg']}
+          $background={colorsTokens['primary-bg']}
           $direction="row"
           $width="100%"
           $css="overflow-x: clip; flex: 1;"
