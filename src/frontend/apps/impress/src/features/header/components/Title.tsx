@@ -6,14 +6,13 @@ import { useCunninghamTheme } from '@/cunningham';
 
 export const Title = () => {
   const { t } = useTranslation();
-  const theme = useCunninghamTheme();
-  const spacings = theme.spacingsTokens();
+  const { spacingsTokens } = useCunninghamTheme();
 
   return (
     <Box
       $direction="row"
       $align="center"
-      $gap={spacings['2xs']}
+      $gap={spacingsTokens['2xs']}
       className="--docs--title"
     >
       <Text

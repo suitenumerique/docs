@@ -23,12 +23,10 @@ const MobileLeftPanelStyle = createGlobalStyle`
 export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
 
-  const theme = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { togglePanel, isPanelOpen } = useLeftPanelStore();
 
   const pathname = usePathname();
-  const colors = theme.colorsTokens();
-  const spacings = theme.spacingsTokens();
 
   useEffect(() => {
     togglePanel(false);
@@ -44,7 +42,7 @@ export const LeftPanel = () => {
             width: 300px;
             min-width: 300px;
             overflow: hidden;
-            border-right: 1px solid ${colors['greyscale-200']};
+            border-right: 1px solid ${colorsTokens['greyscale-200']};
           `}
           className="--docs--left-panel-desktop"
         >
@@ -81,13 +79,17 @@ export const LeftPanel = () => {
                 width: 100%;
                 justify-content: center;
                 align-items: center;
-                gap: ${spacings['base']};
+                gap: ${spacingsTokens['base']};
               `}
             >
               <LeftPanelHeader />
               <LeftPanelContent />
               <SeparatedSection showSeparator={false}>
-                <Box $justify="center" $align="center" $gap={spacings['sm']}>
+                <Box
+                  $justify="center"
+                  $align="center"
+                  $gap={spacingsTokens['sm']}
+                >
                   <ButtonLogin />
                   <LanguagePicker />
                 </Box>

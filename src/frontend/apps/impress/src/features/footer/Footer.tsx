@@ -18,7 +18,7 @@ const BlueStripe = styled.div`
 export const Footer = () => {
   const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
-  const logo = themeTokens().logo;
+  const logo = themeTokens.logo;
 
   return (
     <Box $position="relative" as="footer" className="--docs--footer">

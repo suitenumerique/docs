@@ -35,9 +35,7 @@ export const DropdownMenu = ({
   label,
   topMessage,
 }: PropsWithChildren<DropdownMenuProps>) => {
-  const theme = useCunninghamTheme();
-  const spacings = theme.spacingsTokens();
-  const colors = theme.colorsTokens();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(false);
   const blockButtonRef = useRef<HTMLDivElement>(null);
 
@@ -120,11 +118,11 @@ export const DropdownMenu = ({
               key={option.label}
               $align="center"
               $justify="space-between"
-              $background={colors['greyscale-000']}
-              $color={colors['primary-600']}
+              $background={colorsTokens['greyscale-000']}
+              $color={colorsTokens['primary-600']}
               $padding={{ vertical: 'xs', horizontal: 'base' }}
               $width="100%"
-              $gap={spacings['base']}
+              $gap={spacingsTokens['base']}
               $css={css`
                 border: none;
                 ${index === 0 &&
@@ -148,7 +146,11 @@ export const DropdownMenu = ({
                 }
               `}
             >
-              <Box $direction="row" $align="center" $gap={spacings['base']}>
+              <Box
+                $direction="row"
+                $align="center"
+                $gap={spacingsTokens['base']}
+              >
                 {option.icon && (
                   <Icon
                     $size="20px"

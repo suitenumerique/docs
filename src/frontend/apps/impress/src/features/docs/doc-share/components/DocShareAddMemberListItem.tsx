@@ -12,27 +12,25 @@ type Props = {
 export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
   const { spacingsTokens, colorsTokens, fontSizesTokens } =
     useCunninghamTheme();
-  const spacing = spacingsTokens();
-  const color = colorsTokens();
-  const fontSize = fontSizesTokens();
+
   return (
     <Box
       data-testid={`doc-share-add-member-${user.email}`}
-      $radius={spacing['3xs']}
+      $radius={spacingsTokens['3xs']}
       $direction="row"
       $height="fit-content"
       $justify="center"
       $align="center"
-      $gap={spacing['3xs']}
-      $background={color['greyscale-250']}
+      $gap={spacingsTokens['3xs']}
+      $background={colorsTokens['greyscale-250']}
       $padding={{
-        left: spacing['xs'],
-        right: spacing['4xs'],
-        vertical: spacing['4xs'],
+        left: spacingsTokens['xs'],
+        right: spacingsTokens['4xs'],
+        vertical: spacingsTokens['4xs'],
       }}
       $css={css`
-        color: ${color['greyscale-1000']};
-        font-size: ${fontSize['xs']};
+        color: ${colorsTokens['greyscale-1000']};
+        font-size: ${fontSizesTokens['xs']};
       `}
       className="--docs--doc-share-add-member-list-item"
     >
