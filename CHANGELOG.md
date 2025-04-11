@@ -66,6 +66,7 @@ and this project adheres to
 
 ## Added
 
+- ♿️(nix) Added nix environment declaration #751
 - 📝(doc) Added GNU Make link to README #750
 - ✨(frontend) add pinning on doc detail #711
 - 🚩(frontend) feature flag analytic on copy as html #649
