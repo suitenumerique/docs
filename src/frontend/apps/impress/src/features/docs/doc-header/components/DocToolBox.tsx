@@ -47,9 +47,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
-
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
@@ -182,7 +179,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         $direction="row"
         $align="center"
         $margin={{ left: 'auto' }}
-        $gap={spacings['2xs']}
+        $gap={spacingsTokens['2xs']}
       >
         {!isSmallMobile && (
           <>
@@ -245,12 +242,12 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             $css={css`
               border-radius: 4px;
               &:hover {
-                background-color: ${colors['greyscale-100']};
+                background-color: ${colorsTokens['greyscale-100']};
               }
               ${isSmallMobile
                 ? css`
                     padding: 10px;
-                    border: 1px solid ${colors['greyscale-300']};
+                    border: 1px solid ${colorsTokens['greyscale-300']};
                   `
                 : ''}
             `}

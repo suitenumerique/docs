@@ -27,7 +27,6 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
   const isNotAllowed =
     isOtherOwner || !!isLastOwner || !doc.abilities.accesses_manage;
 
@@ -78,7 +77,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
         alwaysShowRight={true}
         user={access.user}
         right={
-          <Box $direction="row" $align="center" $gap={spacing['2xs']}>
+          <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
               currentRole={access.role}
               onSelectRole={onUpdate}

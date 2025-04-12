@@ -34,13 +34,12 @@ export const SimpleDocItem = ({
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacings = spacingsTokens();
   const { untitledDocument } = useTrans();
 
   return (
     <Box
       $direction="row"
-      $gap={spacings.sm}
+      $gap={spacingsTokens.sm}
       $overflow="auto"
       className="--docs--simple-doc-item"
     >
@@ -73,7 +72,7 @@ export const SimpleDocItem = ({
           <Box
             $direction="row"
             $align="center"
-            $gap={spacings['3xs']}
+            $gap={spacingsTokens['3xs']}
             $margin={{ top: '-2px' }}
           >
             <Text $variation="600" $size="xs">

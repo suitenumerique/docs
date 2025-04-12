@@ -22,7 +22,6 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
   const shareModal = useModal();
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
@@ -63,7 +62,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             data-testid={`docs-grid-name-${doc.id}`}
             $direction="row"
             $align="center"
-            $gap={spacings.xs}
+            $gap={spacingsTokens.xs}
             $flex={flexLeft}
             $padding={{ right: isDesktop ? 'md' : '3xs' }}
             $maxWidth="100%"
@@ -119,7 +118,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
             </StyledLink>
           )}
 
-          <Box $direction="row" $align="center" $gap={spacings.lg}>
+          <Box $direction="row" $align="center" $gap={spacingsTokens.lg}>
             {isDesktop && (
               <DocsGridItemSharedButton
                 doc={doc}

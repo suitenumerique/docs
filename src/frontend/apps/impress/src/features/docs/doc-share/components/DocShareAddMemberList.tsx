@@ -43,8 +43,6 @@ export const DocShareAddMemberList = ({
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
   const canShare = doc.abilities.accesses_manage;
-  const spacing = spacingsTokens();
-  const color = colorsTokens();
 
   const { mutateAsync: createInvitation } = useCreateDocInvitation();
   const { mutateAsync: createDocAccess } = useCreateDocAccess();
@@ -115,12 +113,12 @@ export const DocShareAddMemberList = ({
     <Box
       data-testid="doc-share-add-member-list"
       $direction="row"
-      $padding={spacing.sm}
+      $padding={spacingsTokens.sm}
       $align="center"
-      $background={color['greyscale-050']}
-      $radius={spacing['3xs']}
+      $background={colorsTokens['greyscale-050']}
+      $radius={spacingsTokens['3xs']}
       $css={css`
-        border: 1px solid ${color['greyscale-200']};
+        border: 1px solid ${colorsTokens['greyscale-200']};
       `}
       className="--docs--doc-share-add-member-list"
     >
@@ -129,7 +127,7 @@ export const DocShareAddMemberList = ({
         $align="center"
         $wrap="wrap"
         $flex={1}
-        $gap={spacing.xs}
+        $gap={spacingsTokens.xs}
       >
         {selectedUsers.map((user) => (
           <DocShareAddMemberListItem
@@ -139,7 +137,7 @@ export const DocShareAddMemberList = ({
           />
         ))}
       </Box>
-      <Box $direction="row" $align="center" $gap={spacing.xs}>
+      <Box $direction="row" $align="center" $gap={spacingsTokens.xs}>
         <DocRoleDropdown
           canUpdate={canShare}
           currentRole={invitationRole}
