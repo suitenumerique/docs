@@ -220,57 +220,16 @@ class UserViewSet(
 class ResourceAccessViewsetMixin:
     """Mixin with methods common to all access viewsets."""
 
-    def get_permissions(self):
-        """User only needs to be authenticated to list resource accesses"""
-        if self.action == "list":
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            return super().get_permissions()
-
-        return [permission() for permission in permission_classes]
+    def filter_queryset(self, queryset):
+        """Override to filter on related resource."""
+        queryset = super().filter_queryset(queryset)
+        return queryset.filter(**{self.resource_field_name: self.kwargs["resource_id"]})
 
     def get_serializer_context(self):
         """Extra context provided to the serializer class."""
         context = super().get_serializer_context()
         context["resource_id"] = self.kwargs["resource_id"]
         return context
-
-    def get_queryset(self):
-        """Return the queryset according to the action."""
-        queryset = super().get_queryset()
-        queryset = queryset.filter(
-            **{self.resource_field_name: self.kwargs["resource_id"]}
-        )
-
-        if self.action == "list":
-            user = self.request.user
-            teams = user.teams
-            user_roles_query = (
-                queryset.filter(
-                    db.Q(user=user) | db.Q(team__in=teams),
-                    **{self.resource_field_name: self.kwargs["resource_id"]},
-                )
-                .values(self.resource_field_name)
-                .annotate(roles_array=ArrayAgg("role"))
-                .values("roles_array")
-            )
-
-            # Limit to resource access instances related to a resource THAT also has
-            # a resource access
-            # instance for the logged-in user (we don't want to list only the resource
-            # access instances pointing to the logged-in user)
-            queryset = (
-                queryset.filter(
-                    db.Q(**{f"{self.resource_field_name}__accesses__user": user})
-                    | db.Q(
-                        **{f"{self.resource_field_name}__accesses__team__in": teams}
-                    ),
-                    **{self.resource_field_name: self.kwargs["resource_id"]},
-                )
-                .annotate(user_roles=db.Subquery(user_roles_query))
-                .distinct()
-            )
-        return queryset
 
     def destroy(self, request, *args, **kwargs):
         """Forbid deleting the last owner access"""
@@ -1469,7 +1428,11 @@ class DocumentViewSet(
 
 class DocumentAccessViewSet(
     ResourceAccessViewsetMixin,
-    viewsets.ModelViewSet,
+    drf.mixins.CreateModelMixin,
+    drf.mixins.RetrieveModelMixin,
+    drf.mixins.UpdateModelMixin,
+    drf.mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     """
     API ViewSet for all interactions with document accesses.
@@ -1496,31 +1459,35 @@ class DocumentAccessViewSet(
     """
 
     lookup_field = "pk"
-    pagination_class = Pagination
     permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
     serializer_class = serializers.DocumentAccessSerializer
     is_current_user_owner_or_admin = False
 
-    def get_queryset(self):
-        """Return the queryset according to the action."""
-        queryset = super().get_queryset()
+    def list(self, request, *args, **kwargs):
+        """Return accesses for the current document with filters and annotations."""
+        user = self.request.user
+        queryset = self.filter_queryset(self.get_queryset())
 
-        if self.action == "list":
-            try:
-                document = models.Document.objects.get(pk=self.kwargs["resource_id"])
-            except models.Document.DoesNotExist:
-                return queryset.none()
+        try:
+            document = models.Document.objects.get(pk=self.kwargs["resource_id"])
+        except models.Document.DoesNotExist:
+            return drf.response.Response([])
 
-            roles = set(document.get_roles(self.request.user))
-            is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
-            self.is_current_user_owner_or_admin = is_owner_or_admin
-            if not is_owner_or_admin:
-                # Return only the document owner access
-                queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+        roles = set(document.get_roles(user))
+        if not roles:
+            return drf.response.Response([])
 
-        return queryset
+        is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        self.is_current_user_owner_or_admin = is_owner_or_admin
+        if not is_owner_or_admin:
+            # Return only the document's privileged accesses
+            queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+
+        queryset = queryset.distinct()
+        serializer = self.get_serializer(queryset, many=True)
+        return drf.response.Response(serializer.data)
 
     def get_serializer_class(self):
         if self.action == "list" and not self.is_current_user_owner_or_admin:
@@ -1638,7 +1605,6 @@ class TemplateAccessViewSet(
     ResourceAccessViewsetMixin,
     drf.mixins.CreateModelMixin,
     drf.mixins.DestroyModelMixin,
-    drf.mixins.ListModelMixin,
     drf.mixins.RetrieveModelMixin,
     drf.mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -1668,11 +1634,27 @@ class TemplateAccessViewSet(
     """
 
     lookup_field = "pk"
-    pagination_class = Pagination
     permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
     queryset = models.TemplateAccess.objects.select_related("user").all()
     resource_field_name = "template"
     serializer_class = serializers.TemplateAccessSerializer
+
+    def list(self, request, *args, **kwargs):
+        """Restrict templates returned by the list endpoint"""
+        user = self.request.user
+        teams = user.teams
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Limit to resource access instances related to a resource THAT also has
+        # a resource access instance for the logged-in user (we don't want to list
+        # only the resource access instances pointing to the logged-in user)
+        queryset = queryset.filter(
+            db.Q(template__accesses__user=user)
+            | db.Q(template__accesses__team__in=teams),
+        ).distinct()
+
+        serializer = self.get_serializer(queryset, many=True)
+        return drf.response.Response(serializer.data)
 
 
 class InvitationViewset(
