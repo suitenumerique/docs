@@ -400,44 +400,6 @@ class DocumentViewSet(
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
 
-    def annotate_is_favorite(self, queryset):
-        """
-        Annotate document queryset with the favorite status for the current user.
-        """
-        user = self.request.user
-
-        if user.is_authenticated:
-            favorite_exists_subquery = models.DocumentFavorite.objects.filter(
-                document_id=db.OuterRef("pk"), user=user
-            )
-            return queryset.annotate(is_favorite=db.Exists(favorite_exists_subquery))
-
-        return queryset.annotate(is_favorite=db.Value(False))
-
-    def annotate_user_roles(self, queryset):
-        """
-        Annotate document queryset with the roles of the current user
-        on the document or its ancestors.
-        """
-        user = self.request.user
-        output_field = ArrayField(base_field=db.CharField())
-
-        if user.is_authenticated:
-            user_roles_subquery = models.DocumentAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                document__path=Left(db.OuterRef("path"), Length("document__path")),
-            ).values_list("role", flat=True)
-
-            return queryset.annotate(
-                user_roles=db.Func(
-                    user_roles_subquery, function="ARRAY", output_field=output_field
-                )
-            )
-
-        return queryset.annotate(
-            user_roles=db.Value([], output_field=output_field),
-        )
-
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
         user = self.request.user
@@ -473,8 +435,9 @@ class DocumentViewSet(
     def filter_queryset(self, queryset):
         """Override to apply annotations to generic views."""
         queryset = super().filter_queryset(queryset)
-        queryset = self.annotate_is_favorite(queryset)
-        queryset = self.annotate_user_roles(queryset)
+        user = self.request.user
+        queryset = queryset.annotate_is_favorite(user)
+        queryset = queryset.annotate_user_roles(user)
         return queryset
 
     def get_response_for_queryset(self, queryset):
@@ -498,9 +461,10 @@ class DocumentViewSet(
         Additional annotations (e.g., `is_highest_ancestor_for_user`, favorite status) are
         applied before ordering and returning the response.
         """
-        queryset = (
-            self.get_queryset()
-        )  # Not calling filter_queryset. We do our own cooking.
+        user = self.request.user
+
+        # Not calling filter_queryset. We do our own cooking.
+        queryset = self.get_queryset()
 
         filterset = ListDocumentFilter(
             self.request.GET, queryset=queryset, request=self.request
@@ -513,7 +477,7 @@ class DocumentViewSet(
         for field in ["is_creator_me", "title"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
-        queryset = self.annotate_user_roles(queryset)
+        queryset = queryset.annotate_user_roles(user)
 
         # Among the results, we may have documents that are ancestors/descendants
         # of each other. In this case we want to keep only the highest ancestors.
@@ -530,7 +494,7 @@ class DocumentViewSet(
         )
 
         # Annotate favorite status and filter if applicable as late as possible
-        queryset = self.annotate_is_favorite(queryset)
+        queryset = queryset.annotate_is_favorite(user)
         queryset = filterset.filters["is_favorite"].filter(
             queryset, filter_data["is_favorite"]
         )
@@ -621,7 +585,7 @@ class DocumentViewSet(
             deleted_at__isnull=False,
             deleted_at__gte=models.get_trashbin_cutoff(),
         )
-        queryset = self.annotate_user_roles(queryset)
+        queryset = queryset.annotate_user_roles(self.request.user)
         queryset = queryset.filter(user_roles__contains=[models.RoleChoices.OWNER])
 
         return self.get_response_for_queryset(queryset)
@@ -815,6 +779,8 @@ class DocumentViewSet(
         List ancestors tree above the document.
         What we need to display is the tree structure opened for the current document.
         """
+        user = self.request.user
+
         try:
             current_document = self.queryset.only("depth", "path").get(pk=pk)
         except models.Document.DoesNotExist as excpt:
@@ -869,8 +835,8 @@ class DocumentViewSet(
                 output_field=db.BooleanField(),
             )
         )
-        queryset = self.annotate_user_roles(queryset)
-        queryset = self.annotate_is_favorite(queryset)
+        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate_is_favorite(user)
 
         # Pass ancestors' links definitions to the serializer as a context variable
         # in order to allow saving time while computing abilities on the instance
