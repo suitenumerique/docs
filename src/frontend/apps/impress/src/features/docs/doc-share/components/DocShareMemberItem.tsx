@@ -1,4 +1,5 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -8,7 +9,7 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Access, Doc, Role } from '@/docs/doc-management/';
+import { Access, Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
 import { useDeleteDocAccess, useUpdateDocAccess } from '../api';
@@ -23,8 +24,10 @@ type Props = {
 };
 export const DocShareMemberItem = ({ doc, access }: Props) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { isLastOwner, isOtherOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
+
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
   const spacing = spacingsTokens();
@@ -32,6 +35,11 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
     isOtherOwner || !!isLastOwner || !doc.abilities.accesses_manage;
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: () => {
       toast(t('Error during invitation update'), VariantType.ERROR, {
         duration: 4000,
@@ -40,6 +48,11 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   });
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: () => {
       toast(t('Error while deleting invitation'), VariantType.ERROR, {
         duration: 4000,
