@@ -464,6 +464,41 @@ class DocumentQuerySet(MP_NodeQuerySet):
 
         return self.filter(link_reach=LinkReachChoices.PUBLIC)
 
+    def annotate_is_favorite(self, user):
+        """
+        Annotate document queryset with the favorite status for the current user.
+        """
+        if user.is_authenticated:
+            favorite_exists_subquery = DocumentFavorite.objects.filter(
+                document_id=models.OuterRef("pk"), user=user
+            )
+            return self.annotate(is_favorite=models.Exists(favorite_exists_subquery))
+
+        return self.annotate(is_favorite=models.Value(False))
+
+    def annotate_user_roles(self, user):
+        """
+        Annotate document queryset with the roles of the current user
+        on the document or its ancestors.
+        """
+        output_field = ArrayField(base_field=models.CharField())
+
+        if user.is_authenticated:
+            user_roles_subquery = DocumentAccess.objects.filter(
+                models.Q(user=user) | models.Q(team__in=user.teams),
+                document__path=Left(models.OuterRef("path"), Length("document__path")),
+            ).values_list("role", flat=True)
+
+            return self.annotate(
+                user_roles=models.Func(
+                    user_roles_subquery, function="ARRAY", output_field=output_field
+                )
+            )
+
+        return self.annotate(
+            user_roles=models.Value([], output_field=output_field),
+        )
+
 
 class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
     """
