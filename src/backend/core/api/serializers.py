@@ -97,7 +97,7 @@ class BaseAccessSerializer(serializers.ModelSerializer):
 
             if not self.Meta.model.objects.filter(  # pylint: disable=no-member
                 Q(user=user) | Q(team__in=user.teams),
-                role__in=[models.RoleChoices.OWNER, models.RoleChoices.ADMIN],
+                role__in=models.PRIVILEGED_ROLES,
                 **{self.Meta.resource_field_name: resource_id},  # pylint: disable=no-member
             ).exists():
                 raise exceptions.PermissionDenied(
@@ -124,6 +124,10 @@ class BaseAccessSerializer(serializers.ModelSerializer):
 class DocumentAccessSerializer(BaseAccessSerializer):
     """Serialize document accesses."""
 
+    document_id = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+        source="document",
+    )
     user_id = serializers.PrimaryKeyRelatedField(
         queryset=models.User.objects.all(),
         write_only=True,
@@ -136,11 +140,11 @@ class DocumentAccessSerializer(BaseAccessSerializer):
     class Meta:
         model = models.DocumentAccess
         resource_field_name = "document"
-        fields = ["id", "user", "user_id", "team", "role", "abilities"]
-        read_only_fields = ["id", "abilities"]
+        fields = ["id", "document_id", "user", "user_id", "team", "role", "abilities"]
+        read_only_fields = ["id", "document_id", "abilities"]
 
 
-class DocumentAccessLightSerializer(DocumentAccessSerializer):
+class DocumentAccessLightSerializer(BaseAccessSerializer):
     """Serialize document accesses with limited fields."""
 
     user = UserLightSerializer(read_only=True)
