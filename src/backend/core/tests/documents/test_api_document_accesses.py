@@ -51,12 +51,7 @@ def test_api_document_accesses_list_authenticated_unrelated():
         f"/api/v1.0/documents/{document.id!s}/accesses/",
     )
     assert response.status_code == 200
-    assert response.json() == {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [],
-    }
+    assert response.json() == []
 
 
 def test_api_document_accesses_list_unexisting_document():
@@ -70,12 +65,7 @@ def test_api_document_accesses_list_unexisting_document():
 
     response = client.get(f"/api/v1.0/documents/{uuid4()!s}/accesses/")
     assert response.status_code == 200
-    assert response.json() == {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [],
-    }
+    assert response.json() == []
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -129,14 +119,14 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
         f"/api/v1.0/documents/{document.id!s}/accesses/",
     )
 
-    # Return only owners
-    owners_accesses = [
+    # Return only privileged roles
+    privileged_accesses = [
         access for access in accesses if access.role in models.PRIVILEGED_ROLES
     ]
     assert response.status_code == 200
     content = response.json()
-    assert content["count"] == len(owners_accesses)
-    assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
+    assert len(content) == len(privileged_accesses)
+    assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
             {
                 "id": str(access.id),
@@ -152,12 +142,12 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 "role": access.role,
                 "abilities": access.get_abilities(user),
             }
-            for access in owners_accesses
+            for access in privileged_accesses
         ],
         key=lambda x: x["id"],
     )
 
-    for access in content["results"]:
+    for access in content:
         assert access["role"] in models.PRIVILEGED_ROLES
 
 
@@ -216,8 +206,8 @@ def test_api_document_accesses_list_authenticated_related_privileged_roles(
 
     assert response.status_code == 200
     content = response.json()
-    assert len(content["results"]) == 4
-    assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
+    assert len(content) == 4
+    assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
             {
                 "id": str(user_access.id),
