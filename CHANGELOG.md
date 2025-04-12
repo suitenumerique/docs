@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(frontend) create generic theme #792
+- 🏗️(frontend) Footer configurable #792
+
 ## [3.1.0] - 2025-04-07
 
 ## Added

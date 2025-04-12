@@ -24,6 +24,7 @@ const Page: NextPageWithLayout = () => {
       $padding={{ bottom: '2rem' }}
     >
       <Image
+        className="c__image-system-filter"
         src={img403}
         alt={t('Image 403')}
         style={{

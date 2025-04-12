@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'feature/theme-europe'
     tags:
       - 'v*'
   pull_request:

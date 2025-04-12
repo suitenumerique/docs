@@ -1,7 +1,6 @@
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 
-import DocLogo from '@/assets/icons/icon-docs.svg?url';
+import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { ProConnectButton } from '@/features/auth';
@@ -10,7 +9,7 @@ import { useResponsiveStore } from '@/stores';
 
 export function HomeBottom() {
   const { componentTokens } = useCunninghamTheme();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const withProConnect = componentTokens()['home-proconnect'];
 
   if (!withProConnect) {
     return null;
@@ -21,10 +20,11 @@ export function HomeBottom() {
 
 function HomeProConnect() {
   const { t } = useTranslation();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const spacings = spacingsTokens();
   const { isMobile } = useResponsiveStore();
   const parentGap = '230px';
+  const colors = colorsTokens();
 
   return (
     <Box
@@ -46,7 +46,11 @@ function HomeProConnect() {
           $height="fit-content"
           $css="zoom: 1.9;"
         >
-          <Image src={DocLogo} alt="DocLogo" />
+          <IconDocs
+            aria-label={t('Docs Logo')}
+            width={34}
+            color={colors['primary-text']}
+          />
           <Title />
         </Box>
         <Text $size="md" $variation="1000" $textAlign="center">
