@@ -8,7 +8,6 @@ from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -1429,12 +1428,10 @@ class DocumentAccessViewSet(
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
     serializer_class = serializers.DocumentAccessSerializer
-    is_current_user_owner_or_admin = False
 
     def list(self, request, *args, **kwargs):
         """Return accesses for the current document with filters and annotations."""
         user = self.request.user
-        queryset = self.filter_queryset(self.get_queryset())
 
         try:
             document = models.Document.objects.get(pk=self.kwargs["resource_id"])
@@ -1445,21 +1442,34 @@ class DocumentAccessViewSet(
         if not roles:
             return drf.response.Response([])
 
-        is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
-        self.is_current_user_owner_or_admin = is_owner_or_admin
-        if not is_owner_or_admin:
+        ancestors = (
+            (document.get_ancestors() | models.Document.objects.filter(pk=document.pk))
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
+        highest_readable = ancestors.readable_per_se(user).only("depth").first()
+
+        if highest_readable is None:
+            return drf.response.Response([])
+
+        queryset = self.get_queryset()
+        queryset = queryset.filter(
+            document__in=ancestors.filter(depth__gte=highest_readable.depth)
+        )
+
+        is_privileged = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        if is_privileged:
+            serializer_class = serializers.DocumentAccessSerializer
+        else:
             # Return only the document's privileged accesses
             queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+            serializer_class = serializers.DocumentAccessLightSerializer
 
         queryset = queryset.distinct()
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = serializer_class(
+            queryset, many=True, context=self.get_serializer_context()
+        )
         return drf.response.Response(serializer.data)
-
-    def get_serializer_class(self):
-        if self.action == "list" and not self.is_current_user_owner_or_admin:
-            return serializers.DocumentAccessLightSerializer
-
-        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         """Add a new access to the document and send an email to the new added user."""
