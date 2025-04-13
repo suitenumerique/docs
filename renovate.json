@@ -10,6 +10,16 @@
       "matchPackageNames": []
     },
     {
+      "groupName": "allowed django versions",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchPackageNames": [
+        "Django"
+      ],
+      "allowedVersions": "<5.2"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
