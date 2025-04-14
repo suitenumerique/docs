@@ -12,6 +12,7 @@ and this project adheres to
 
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
+- 📝(doc) update contributing policy (commit signatures are now mandatory) #895
 
 ## Changed
 
