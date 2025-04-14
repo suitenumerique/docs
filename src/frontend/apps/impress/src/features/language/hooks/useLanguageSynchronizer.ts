@@ -16,7 +16,7 @@ export const useLanguageSynchronizer = () => {
 
   const availableBackendLanguages = useMemo(() => {
     return conf?.LANGUAGES.map(([locale]) => locale);
-  }, [conf]);
+  }, [conf?.LANGUAGES]);
 
   const synchronizeLanguage = useCallback(
     async (direction?: 'toBackend' | 'toFrontend') => {
