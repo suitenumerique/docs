@@ -26,7 +26,7 @@ releases:
           - name: KEYCLOAK_EXTRA_ARGS
             value: "--import-realm"
           - name: KC_HOSTNAME_URL
-            value: https://keycloak.127.0.0.1.nip.io
+            value: https://docs-keycloak.127.0.0.1.nip.io
       - extraVolumes:
           - name: import
             configMap:
@@ -40,12 +40,13 @@ releases:
       - proxy: edge
       - ingress:
           enabled: true
-          hostname: keycloak.127.0.0.1.nip.io
+          hostname: docs-keycloak.127.0.0.1.nip.io
       - extraDeploy:
         - apiVersion: v1
           kind: ConfigMap
           metadata:
             name: docs-keycloak
+            namespace: {{ .Namespace }}
           data:
             impress.json: |
 {{ readFile "../../docker/auth/realm.json" | replace "http://localhost:3200" "https://impress.127.0.0.1.nip.io" | indent 14 }}
