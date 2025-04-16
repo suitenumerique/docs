@@ -11,6 +11,7 @@ and this project adheres to
 ## Added
 
 - 🚩 add homepage feature flag #861
+- 📝(doc) complete contributing policy #871
 
 
 ## [3.1.0] - 2025-04-07
