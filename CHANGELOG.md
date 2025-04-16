@@ -13,6 +13,7 @@ and this project adheres to
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 - ✨(settings) Allow configuring PKCE for the SSO #886
+- 🌐(i18n) activate chinese and spanish languages #884
 
 ## Changed
 

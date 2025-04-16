@@ -667,5 +667,1789 @@
       "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": "u heeft aan de websitebeheerder gerapporteerd dat u geen toegang heeft tot de inhoud of een van de diensten van het portaal, en u hebt geen bevredigend antwoord ontvangen."
     }
   },
+  "es": {
+    "translation": {
+      "Load more": {
+        "message": "Ver más",
+        "description": ""
+      },
+      "Quick search input": {
+        "message": "Entrada de búsqueda rápida",
+        "description": ""
+      },
+      "Search": {
+        "message": "Buscar",
+        "description": ""
+      },
+      "Something bad happens, please retry.": {
+        "message": "Algo salió mal, por favor inténtelo de nuevo.",
+        "description": ""
+      },
+      "Login": {
+        "message": "Iniciar sesión",
+        "description": ""
+      },
+      "Logout": {
+        "message": "Cerrar sesión",
+        "description": ""
+      },
+      "Proconnect Login": {
+        "message": "Iniciar sesión ProConnect",
+        "description": ""
+      },
+      "Anonymous": {
+        "message": "Anónimo",
+        "description": ""
+      },
+      "AI Actions": {
+        "message": "Acciones de IA",
+        "description": ""
+      },
+      "Use as prompt": {
+        "message": "Usar como prompt",
+        "description": ""
+      },
+      "Rephrase": {
+        "message": "Reformular",
+        "description": ""
+      },
+      "Summarize": {
+        "message": "Resumir",
+        "description": ""
+      },
+      "Correct": {
+        "message": "Corregir",
+        "description": ""
+      },
+      "Beautify": {
+        "message": "Embellecer",
+        "description": ""
+      },
+      "Emojify": {
+        "message": "Emojizar",
+        "description": ""
+      },
+      "Language": {
+        "message": "Idioma",
+        "description": ""
+      },
+      "No text selected": {
+        "message": "No hay texto seleccionado",
+        "description": ""
+      },
+      "Too many requests. Please wait 60 seconds.": {
+        "message": "Demasiadas solicitudes. Por favor, espere 60 segundos.",
+        "description": ""
+      },
+      "AI seems busy! Please try again.": {
+        "message": "¡La IA parece ocupada! Por favor, inténtelo de nuevo.",
+        "description": ""
+      },
+      "Convert Markdown": {
+        "message": "Convertir a Markdown",
+        "description": ""
+      },
+      "Close the modal": {
+        "message": "Cerrar modal",
+        "description": ""
+      },
+      "Cancel": {
+        "message": "Cancelar",
+        "description": ""
+      },
+      "Download": {
+        "message": "Descargar",
+        "description": ""
+      },
+      "Download anyway": {
+        "message": "Descargar de todos modos",
+        "description": ""
+      },
+      "Warning": {
+        "message": "Aviso",
+        "description": ""
+      },
+      "Modal confirmation to download the attachment": {
+        "message": "Modal de confirmación para descargar el archivo adjunto",
+        "description": ""
+      },
+      "This file is flagged as unsafe.": {
+        "message": "Este archivo está marcado como inseguro.",
+        "description": ""
+      },
+      "Please download it only if it comes from a trusted source.": {
+        "message": "Por favor, descárguelo solo si viene de una fuente de confianza.",
+        "description": ""
+      },
+      "Divider": {
+        "message": "Separador",
+        "description": ""
+      },
+      "Add a horizontal line": {
+        "message": "Añadir una línea horizontal",
+        "description": ""
+      },
+      "Quote": {
+        "message": "Cita",
+        "description": ""
+      },
+      "Add a quote block": {
+        "message": "Añadi un bloque de tipo cita ",
+        "description": ""
+      },
+      "Empty template": {
+        "message": "Plantilla vacía",
+        "description": ""
+      },
+      "The export failed": {
+        "message": "Error al exportar",
+        "description": ""
+      },
+      "Your {{format}} was downloaded succesfully": {
+        "message": "Su {{format}} se ha descargado correctamente",
+        "description": ""
+      },
+      "Content modal to export the document": {
+        "message": "Ventana emergente para exportar el documento",
+        "description": ""
+      },
+      "Download your document in a .docx or .pdf format.": {
+        "message": "Descargue su documento en formato .docx o .pdf.",
+        "description": ""
+      },
+      "Template": {
+        "message": "Plantilla",
+        "description": ""
+      },
+      "Format": {
+        "message": "Formato",
+        "description": ""
+      },
+      "Docx": {
+        "message": "Docx",
+        "description": ""
+      },
+      "PDF": {
+        "message": "PDF",
+        "description": ""
+      },
+      "It is the card information about the document.": {
+        "message": "Es la información del documento.",
+        "description": ""
+      },
+      "Public document": {
+        "message": "Documento público",
+        "description": ""
+      },
+      "Document accessible to any connected person": {
+        "message": "Documento accesible a cualquier persona conectada",
+        "description": ""
+      },
+      "Last update: {{update}}": {
+        "message": "Última actualización: {{update}}",
+        "description": ""
+      },
+      "Document title updated successfully": {
+        "message": "El título del documento se ha actualizado correctamente",
+        "description": ""
+      },
+      "Rename": {
+        "message": "Cambiar el nombre",
+        "description": ""
+      },
+      "Share": {
+        "message": "Compartir",
+        "description": ""
+      },
+      "Export": {
+        "message": "Exportar",
+        "description": ""
+      },
+      "Copy link": {
+        "message": "Copiar enlace",
+        "description": ""
+      },
+      "Unpin": {
+        "message": "Desanclar",
+        "description": ""
+      },
+      "Pin": {
+        "message": "Anclar",
+        "description": ""
+      },
+      "Version history": {
+        "message": "Historial de versiones",
+        "description": ""
+      },
+      "Copy as {{format}}": {
+        "message": "Copiar como {{format}}",
+        "description": ""
+      },
+      "Delete document": {
+        "message": "Borrar documento",
+        "description": ""
+      },
+      "Editor unavailable": {
+        "message": "Editor no disponible",
+        "description": ""
+      },
+      "Copied to clipboard": {
+        "message": "Copiado en el portapapeles",
+        "description": ""
+      },
+      "Failed to copy to clipboard": {
+        "message": "Error al copiar al portapapeles",
+        "description": ""
+      },
+      "Open the document options": {
+        "message": "Abrir las opciones del documento",
+        "description": ""
+      },
+      "It is the document title": {
+        "message": "Es el título del documento",
+        "description": ""
+      },
+      "The document has been deleted.": {
+        "message": "El documento ha sido eliminado.",
+        "description": ""
+      },
+      "Confirm deletion": {
+        "message": "Confirmar borrado",
+        "description": ""
+      },
+      "Delete": {
+        "message": "Eliminar",
+        "description": ""
+      },
+      "Delete a doc": {
+        "message": "Eliminar un documento",
+        "description": ""
+      },
+      "Content modal to delete document": {
+        "message": "Modal para eliminar el documento",
+        "description": ""
+      },
+      "Are you sure you want to delete this document ?": {
+        "message": "¿Estás seguro de que deseas eliminar este documento?",
+        "description": ""
+      },
+      "Link Copied !": {
+        "message": "¡Enlace Copiado!",
+        "description": ""
+      },
+      "Failed to copy link": {
+        "message": "Error al copiar el enlace",
+        "description": ""
+      },
+      "Reader": {
+        "message": "Lector",
+        "description": ""
+      },
+      "Editor": {
+        "message": "Editor",
+        "description": ""
+      },
+      "Administrator": {
+        "message": "Administrador",
+        "description": ""
+      },
+      "Owner": {
+        "message": "Propietario",
+        "description": ""
+      },
+      "You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.": {
+        "message": "Eres el único propietario de este grupo, haz que otro miembro sea el propietario del grupo para poder cambiar tu propio rol o ser eliminado del documento.",
+        "description": ""
+      },
+      "You cannot update the role or remove other owner.": {
+        "message": "No puedes cambiar el rol o eliminar otro propietario.",
+        "description": ""
+      },
+      "Untitled document": {
+        "message": "Documento sin título",
+        "description": ""
+      },
+      "Select a document": {
+        "message": "Selecciona un documento",
+        "description": ""
+      },
+      "No document found": {
+        "message": "No se ha encontrado ningún documento",
+        "description": ""
+      },
+      "Search modal": {
+        "message": "Modal de búsqueda",
+        "description": ""
+      },
+      "Type the name of a document": {
+        "message": "Escribe el nombre de un documento",
+        "description": ""
+      },
+      "No active search": {
+        "message": "Ninguna búsqueda activa",
+        "description": ""
+      },
+      "Failed to create the invitation for {{email}}.": {
+        "message": "No se pudo crear la invitación para {{email}}.",
+        "description": ""
+      },
+      "Failed to add the member in the document.": {
+        "message": "Error al añadir un miembro al documento.",
+        "description": ""
+      },
+      "\"{{email}}\" is already invited to the document.": {
+        "message": "\"{{email}}\" ya ha sido invitado al documento.",
+        "description": ""
+      },
+      "\"{{email}}\" is already member of the document.": {
+        "message": "\"{{email}}\" ya es miembro del documento.",
+        "description": ""
+      },
+      "Invite": {
+        "message": "Invitar",
+        "description": ""
+      },
+      "Error during update invitation": {
+        "message": "Error al actualizar la invitación",
+        "description": ""
+      },
+      "Error during delete invitation": {
+        "message": "Error al eliminar la invitación",
+        "description": ""
+      },
+      "Error during invitation update": {
+        "message": "Error al actualizar la invitación",
+        "description": ""
+      },
+      "Error while deleting invitation": {
+        "message": "Error al eliminar la invitación",
+        "description": ""
+      },
+      "Document owner": {
+        "message": "Propietario del documento",
+        "description": ""
+      },
+      "Share with {{count}} users_one": {
+        "message": "Compartir con {{count}} usuario",
+        "description": ""
+      },
+      "Share with {{count}} users_many": {
+        "message": "Compartir con {{count}} usuarios",
+        "description": ""
+      },
+      "Share with {{count}} users_other": {
+        "message": "Compartir con {{count}} usuarios",
+        "description": ""
+      },
+      "Pending invitations": {
+        "message": "Invitaciones pendientes",
+        "description": ""
+      },
+      "Search user result": {
+        "message": "Resultado de la búsqueda de usuarios",
+        "description": ""
+      },
+      "Share modal": {
+        "message": "Modal para compartir el documento",
+        "description": ""
+      },
+      "Share the document": {
+        "message": "Compartir el documento",
+        "description": ""
+      },
+      "You do not have permission to view users sharing this document or modify link settings.": {
+        "message": "No tiene permiso para ver los usuarios que comparten este documento o modificar la configuración del enlace.",
+        "description": ""
+      },
+      "Type a name or email": {
+        "message": "Escriba un nombre o correo electrónico",
+        "description": ""
+      },
+      "List invitation card": {
+        "message": "Lista de invitación",
+        "description": ""
+      },
+      "List members card": {
+        "message": "Lista de miembros",
+        "description": ""
+      },
+      "OK": {
+        "message": "Ok",
+        "description": ""
+      },
+      "Add": {
+        "message": "Añadir",
+        "description": ""
+      },
+      "The document visibility has been updated.": {
+        "message": "Se ha actualizado la visibilidad del documento.",
+        "description": ""
+      },
+      "Doc visibility card": {
+        "message": "Accesos al documento",
+        "description": ""
+      },
+      "Link parameters": {
+        "message": "Parámetros de enlace",
+        "description": ""
+      },
+      "Visibility": {
+        "message": "Visibilidad",
+        "description": ""
+      },
+      "Visibility mode": {
+        "message": "Modo de visibilidad",
+        "description": ""
+      },
+      "Private": {
+        "message": "Privado",
+        "description": ""
+      },
+      "Connected": {
+        "message": "Conectado",
+        "description": ""
+      },
+      "Public": {
+        "message": "Público",
+        "description": ""
+      },
+      "Reading": {
+        "message": "Lectura",
+        "description": ""
+      },
+      "Edition": {
+        "message": "Edición",
+        "description": ""
+      },
+      "Only invited people can access": {
+        "message": "Solo las personas invitadas pueden acceder",
+        "description": ""
+      },
+      "Anyone with the link can view the document if they are logged in": {
+        "message": "Cualquiera con el enlace puede ver el documento si ha iniciado sesión",
+        "description": ""
+      },
+      "Anyone with the link can edit the document if they are logged in": {
+        "message": "Cualquiera con el enlace puede editar el documento si ha iniciado sesión",
+        "description": ""
+      },
+      "Anyone with the link can see the document": {
+        "message": "Cualquiera con el enlace puede ver el documento",
+        "description": ""
+      },
+      "Anyone with the link can edit the document": {
+        "message": "Cualquiera con el enlace puede editar el documento",
+        "description": ""
+      },
+      "Summary": {
+        "message": "Resumen",
+        "description": ""
+      },
+      "Version restored successfully": {
+        "message": "Versión restaurada con éxito",
+        "description": ""
+      },
+      "Restore": {
+        "message": "Recuperar",
+        "description": ""
+      },
+      "Modal confirmation to restore the version": {
+        "message": "Modal de confirmación para restaurar la versión",
+        "description": ""
+      },
+      "Your current document will revert to this version.": {
+        "message": "Tu documento actual se revertirá a esta versión.",
+        "description": ""
+      },
+      "If a member is editing, his works can be lost.": {
+        "message": "Si un miembro está editando, sus cambios pueden perderse.",
+        "description": ""
+      },
+      "Select a version on the right to restore": {
+        "message": "Seleccione una versión a la derecha para restaurarlo",
+        "description": ""
+      },
+      "History": {
+        "message": "Historial",
+        "description": ""
+      },
+      "No versions": {
+        "message": "No hay versiones",
+        "description": ""
+      },
+      "My docs": {
+        "message": "Mis documentos",
+        "description": ""
+      },
+      "Shared with me": {
+        "message": "Compartido conmigo",
+        "description": ""
+      },
+      "All docs": {
+        "message": "Todos los documentos",
+        "description": ""
+      },
+      "No documents found": {
+        "message": "No se han encontrado documentos",
+        "description": ""
+      },
+      "Name": {
+        "message": "Nombre",
+        "description": ""
+      },
+      "Updated at": {
+        "message": "Actualizado a las",
+        "description": ""
+      },
+      "More docs": {
+        "message": "Más documentos",
+        "description": ""
+      },
+      "Remove": {
+        "message": "Eliminar",
+        "description": ""
+      },
+      "Accessible to anyone": {
+        "message": "Accesible para todos",
+        "description": ""
+      },
+      "Accessible to authenticated users": {
+        "message": "Accesible a usuarios autenticados",
+        "description": ""
+      },
+      "Shared with {{count}} users_one": {
+        "message": "Compartido con {{count}} usuario",
+        "description": ""
+      },
+      "Shared with {{count}} users_many": {
+        "message": "Compartido con {{count}} usuarios",
+        "description": ""
+      },
+      "Shared with {{count}} users_other": {
+        "message": "Compartido con {{count}} usuarios",
+        "description": ""
+      },
+      "Pin document icon": {
+        "message": "Icono para marcar el documento como favorito",
+        "description": ""
+      },
+      "Simple document icon": {
+        "message": "Icono de documento simple",
+        "description": ""
+      },
+      "Legal Notice": {
+        "message": "Aviso Legal",
+        "description": ""
+      },
+      "Personal data and cookies": {
+        "message": "Datos y cookies personales",
+        "description": ""
+      },
+      "Accessibility": {
+        "message": "Accesibilidad",
+        "description": ""
+      },
+      "Unless otherwise stated, all content on this site is under": {
+        "message": "A menos que se indique lo contrario, todo el contenido de este sitio está bajo",
+        "description": ""
+      },
+      "Open the header menu": {
+        "message": "Abrir el menú de encabezado",
+        "description": ""
+      },
+      "Docs Logo": {
+        "message": "Logo de Docs",
+        "description": ""
+      },
+      "Docs": {
+        "message": "Documentos",
+        "description": ""
+      },
+      "Collaborative writing, Simplified.": {
+        "message": "Escritura colaborativa, más sencilla.",
+        "description": ""
+      },
+      "Collaborate and write in real time, without layout constraints.": {
+        "message": "Colaborar y escribir en tiempo real, sin restricciones de diseño.",
+        "description": ""
+      },
+      "Start Writing": {
+        "message": "Comenzar a escribir",
+        "description": ""
+      },
+      "Banner image": {
+        "message": "Imagen de portada",
+        "description": ""
+      },
+      "Show more": {
+        "message": "Mostrar más",
+        "description": ""
+      },
+      "Docs is already available, log in to use it now.": {
+        "message": "Docs ya está disponible, inicia sesión para empezar a usarlo.",
+        "description": ""
+      },
+      "Govs ❤️ Open Source.": {
+        "message": "Gobiernos ❤️ Código abierto.",
+        "description": ""
+      },
+      "Open Source": {
+        "message": "Código abierto",
+        "description": ""
+      },
+      "home-content-open-source-part1": {
+        "message": "home-content-open-source-part1",
+        "description": ""
+      },
+      "home-content-open-source-part2": {
+        "message": "home-content-open-source-part2",
+        "description": ""
+      },
+      "home-content-open-source-part3": {
+        "message": "home-content-open-source-part2",
+        "description": ""
+      },
+      "An uncompromising writing experience.": {
+        "message": "Una experiencia de escritura sin compromisos.",
+        "description": ""
+      },
+      "Write": {
+        "message": "Escribe",
+        "description": ""
+      },
+      "Docs offers an intuitive writing experience. Its minimalist interface favors content over layout, while offering the essentials: media import, offline mode and keyboard shortcuts for greater efficiency.": {
+        "message": "Docs ofrece una experiencia de escritura intuitiva. Su interfaz minimalista favorece el contenido sobre el diseño, mientras ofrece lo esencial: importación de medios, modo sin conexión y atajos de teclado para una mayor eficiencia.",
+        "description": ""
+      },
+      "Simple and secure collaboration.": {
+        "message": "Colaboración sencilla y segura.",
+        "description": ""
+      },
+      "Collaborate": {
+        "message": "Colabora",
+        "description": ""
+      },
+      "Docs makes real-time collaboration simple. Invite collaborators - public officials or external partners - with one click to see their changes live, while maintaining precise access control for data security.": {
+        "message": "Docs simplifica la colaboración en tiempo real. Invitar colaboradores - funcionarios públicos o socios externos - con un solo clic para ver sus cambios en vivo, manteniendo un control de acceso preciso para la seguridad de los datos.",
+        "description": ""
+      },
+      "Flexible export.": {
+        "message": "Exportación flexible.",
+        "description": ""
+      },
+      "To facilitate the circulation of documents, Docs allows you to export your content to the most common formats: PDF, Word or OpenDocument.": {
+        "message": "Para facilitar la circulación de documentos, Docs le permite exportar su contenido a los formatos más comunes: PDF, Word o OpenDocument.",
+        "description": ""
+      },
+      "A new way to organize knowledge.": {
+        "message": "Una nueva manera de organizar conocimiento.",
+        "description": ""
+      },
+      "Organize": {
+        "message": "Organiza",
+        "description": ""
+      },
+      "Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.": {
+        "message": "Docs transforma sus documentos en bases de conocimiento gracias a las subpáginas, una potente herramienta de  búsqueda y la capacidad de marcar como favorito sus documentos más importantes.",
+        "description": ""
+      },
+      "Available soon": {
+        "message": "Próximamente disponible",
+        "description": ""
+      },
+      "Illustration": {
+        "message": "Ilustración",
+        "description": ""
+      },
+      "Pinned documents": {
+        "message": "Documentos favoritos",
+        "description": ""
+      },
+      "New doc": {
+        "message": "Nuevo documento",
+        "description": ""
+      },
+      "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": {
+        "message": "Docs: su nuevo compañero para colaborar en documentos de forma eficiente, intuitiva y segura.",
+        "description": ""
+      },
+      "Image 401": {
+        "message": "Imagen 401",
+        "description": ""
+      },
+      "Log in to access the document.": {
+        "message": "Inicia sesión para acceder al documento.",
+        "description": ""
+      },
+      "Image 403": {
+        "message": "Imagen 403",
+        "description": ""
+      },
+      "You do not have permission to view this document.": {
+        "message": "No tienes permisos para ver este documento.",
+        "description": ""
+      },
+      "Home": {
+        "message": "Inicio",
+        "description": ""
+      },
+      "Ouch !": {
+        "message": "¡Vaya!",
+        "description": ""
+      },
+      "It seems that the page you are looking for does not exist or cannot be displayed correctly.": {
+        "message": "Parece que la página que buscas no existe o no puede ser mostrada correctamente.",
+        "description": ""
+      },
+      "accessibility-dinum-services": {
+        "message": "accessibility-dinum-services",
+        "description": ""
+      },
+      "Accessibility statement": {
+        "message": "Declaración de accesibilidad",
+        "description": ""
+      },
+      "Established on December 20, 2023.": {
+        "message": "Fundado el 20 de diciembre de 2023.",
+        "description": ""
+      },
+      "This accessibility statement applies to the site hosted on": {
+        "message": "Esta declaración de accesibilidad se aplica al sitio alojado en",
+        "description": ""
+      },
+      "Compliance status": {
+        "message": "Estado de conformidad",
+        "description": ""
+      },
+      "accessibility-not-audit": {
+        "message": "accessibility-not-audit",
+        "description": ""
+      },
+      "Improvement and contact": {
+        "message": "Mejoras y contacto",
+        "description": ""
+      },
+      "If you are unable to access a content or a service, you can contact the person responsible for https://lasuite.numerique.gouv.fr to be directed to an accessible alternative or to obtain the content in another form.": {
+        "message": "Si no puede acceder a un contenido o a un servicio, puede ponerse en contacto con la persona responsable de https://lasuite. numerique.gouv.fr para ser dirigido hacia una alternativa accesible u obtener el contenido de otra forma.",
+        "description": ""
+      },
+      "E-mail:": {
+        "message": "E-mail:",
+        "description": ""
+      },
+      "Address:": {
+        "message": "Dirección:",
+        "description": ""
+      },
+      "We try to respond within 2 working days.": {
+        "message": "Tratamos de responder en un plazo de 2 días laborables.",
+        "description": ""
+      },
+      "Remedies": {
+        "message": "Soluciones",
+        "description": ""
+      },
+      "This procedure should be used in the following case:": {
+        "message": "Este procedimiento deberá de utilizarse en el siguiente caso:",
+        "description": ""
+      },
+      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": {
+        "message": "ha señalado al gestor de sitios web, una falta de accesibilidad que le impide acceder al contenido o a uno de los servicios del portal y no ha recibido una respuesta satisfactoria.",
+        "description": ""
+      },
+      "You can:": {
+        "message": "Tú puedes:",
+        "description": ""
+      },
+      "accessibility-form-defenseurdesdroits": {
+        "message": "accessibility-form-defenseurdesdroits",
+        "description": ""
+      },
+      "accessibility-contact-defenseurdesdroits": {
+        "message": "accessibility-contanct-defenseurdesdroits",
+        "description": ""
+      },
+      "Send a letter by post (free of charge, no stamp needed):": {
+        "message": "Enviar una carta por correo (gratis, sin necesidad de sello):",
+        "description": ""
+      },
+      "Defender of Rights - Free response - 71120 75342 Paris CEDEX 07": {
+        "message": "Defensor de los Derechos - Respuesta gratuita - 71120 75342 París CEDEX 07",
+        "description": ""
+      },
+      "Legal notice": {
+        "message": "Aviso legal",
+        "description": ""
+      },
+      "Publisher": {
+        "message": "Editor",
+        "description": ""
+      },
+      "French Interministerial Directorate for Digital Affairs (DINUM), 20 avenue de Ségur 75007 Paris.": {
+        "message": "Dirección Interministerial francesa de Asuntos Digitales (DINUM), 20 avenue de Ségur 75007 París.",
+        "description": ""
+      },
+      "Publication Director": {
+        "message": "Director de Publicación",
+        "description": ""
+      },
+      "Stéphanie Schaer: Interministerial Digital Director (DINUM).": {
+        "message": "Stéphanie Schaer: Directora Digital Interministerial (DINUM).",
+        "description": ""
+      },
+      "Copyright": {
+        "message": "Derechos de autor",
+        "description": ""
+      },
+      "Illustration:": {
+        "message": "Ilustración:",
+        "description": ""
+      },
+      "More info?": {
+        "message": "¿Mostrar más información?",
+        "description": ""
+      },
+      "The team in charge of the digital workspace \"La Suite numérique\" can be contacted directly at": {
+        "message": "El equipo encargado del espacio de trabajo digital \"La Suite numérique\" puede ser contactado directamente en",
+        "description": ""
+      },
+      "Offline ?!": {
+        "message": "¿¡Sin conexión!?",
+        "description": ""
+      },
+      "Can't load this page, please check your internet connection.": {
+        "message": "No se puede cargar esta página, por favor compruebe su conexión a Internet.",
+        "description": ""
+      },
+      "Cookies placed": {
+        "message": "Cookies instaladas",
+        "description": ""
+      },
+      "This site places a small text file (a \"cookie\") on your computer when you visit it.": {
+        "message": "Este sitio coloca un pequeño archivo de texto (una \"cookie\") en su ordenador cuando lo visita.",
+        "description": ""
+      },
+      "This allows us to measure the number of visits and understand which pages are the most viewed.": {
+        "message": "Esto nos permite medir el número de visitas y entender qué páginas son las más visitadas.",
+        "description": ""
+      },
+      "You can oppose the tracking of your browsing on this website.": {
+        "message": "Puedes oponerte al seguimiento en este sitio web.",
+        "description": ""
+      },
+      "This will protect your privacy, but will also prevent the owner from learning from your actions and creating a better experience for you and other users.": {
+        "message": "Esto protegerá su privacidad, pero también evitará que el propietario esté al tanto de sus acciones y permitirá crear una mejor experiencia para usted y otros usuarios.",
+        "description": ""
+      },
+      "This site does not display a cookie consent banner, why?": {
+        "message": "Este sitio no muestra un banner de consentimiento de cookies, ¿por qué?",
+        "description": ""
+      },
+      "It's true, you didn't have to click on a block that covers half the page to say you agree to the placement of cookies — even if you don't know what it means!": {
+        "message": "Es cierto, no tenías que hacer clic en un bloque que cubre la mitad de la página para decir que estás de acuerdo con el uso de cookies, ¡incluso si no sabes lo que significa!",
+        "description": ""
+      },
+      "Nothing exceptional, no special privileges related to a .gouv.fr.": {
+        "message": "Nada excepcional, no hay privilegios especiales relacionados con un .gouv.fr.",
+        "description": ""
+      },
+      "We simply comply with the law, which states that certain audience measurement tools, properly configured to respect privacy, are exempt from prior authorization.": {
+        "message": "Sencillamente cumplimos con la ley, que establece que ciertas herramientas de medición de audiencia, correctamente configuradas para respetar la privacidad, están exentas de la autorización previa.",
+        "description": ""
+      }
+    }
+  },
+  "cn": {
+    "translation": {
+      "Load more": {
+        "message": "加载更多",
+        "description": ""
+      },
+      "Quick search input": {
+        "message": "快速搜索",
+        "description": ""
+      },
+      "Search": {
+        "message": "搜索",
+        "description": ""
+      },
+      "Something bad happens, please retry.": {
+        "message": "出错了，请重试。",
+        "description": ""
+      },
+      "Login": {
+        "message": "登录",
+        "description": ""
+      },
+      "Logout": {
+        "message": "退出登录",
+        "description": ""
+      },
+      "Proconnect Login": {
+        "message": "安全登录",
+        "description": ""
+      },
+      "Anonymous": {
+        "message": "匿名用户",
+        "description": ""
+      },
+      "AI Actions": {
+        "message": "使用AI",
+        "description": ""
+      },
+      "Use as prompt": {
+        "message": "用作提示",
+        "description": ""
+      },
+      "Rephrase": {
+        "message": "改写",
+        "description": ""
+      },
+      "Summarize": {
+        "message": "摘要",
+        "description": ""
+      },
+      "Correct": {
+        "message": "更正",
+        "description": ""
+      },
+      "Beautify": {
+        "message": "美化",
+        "description": ""
+      },
+      "Emojify": {
+        "message": "表情符号",
+        "description": ""
+      },
+      "Language": {
+        "message": "语言",
+        "description": ""
+      },
+      "No text selected": {
+        "message": "未选择文本",
+        "description": ""
+      },
+      "Too many requests. Please wait 60 seconds.": {
+        "message": "太多的请求。请等待 60 秒。",
+        "description": ""
+      },
+      "AI seems busy! Please try again.": {
+        "message": "AI看起来很忙！请重试。",
+        "description": ""
+      },
+      "Convert Markdown": {
+        "message": "转换为Markdown格式",
+        "description": ""
+      },
+      "Close the modal": {
+        "message": "关闭对话框",
+        "description": ""
+      },
+      "Cancel": {
+        "message": "取消",
+        "description": ""
+      },
+      "Download": {
+        "message": "下载",
+        "description": ""
+      },
+      "Download anyway": {
+        "message": "仍要下载",
+        "description": ""
+      },
+      "Warning": {
+        "message": "警告",
+        "description": ""
+      },
+      "Modal confirmation to download the attachment": {
+        "message": "下载附件",
+        "description": ""
+      },
+      "This file is flagged as unsafe.": {
+        "message": "此文件被标记为不安全的",
+        "description": ""
+      },
+      "Please download it only if it comes from a trusted source.": {
+        "message": "请从可信的来源下载。",
+        "description": ""
+      },
+      "Divider": {
+        "message": "分割线",
+        "description": ""
+      },
+      "Add a horizontal line": {
+        "message": "添加水平线",
+        "description": ""
+      },
+      "Quote": {
+        "message": "引用",
+        "description": ""
+      },
+      "Add a quote block": {
+        "message": "添加引用",
+        "description": ""
+      },
+      "Empty template": {
+        "message": "空模板",
+        "description": ""
+      },
+      "The export failed": {
+        "message": "导出失败",
+        "description": ""
+      },
+      "Your {{format}} was downloaded succesfully": {
+        "message": "你的{{format}}已成功下载",
+        "description": ""
+      },
+      "Content modal to export the document": {
+        "message": "导出文档",
+        "description": ""
+      },
+      "Download your document in a .docx or .pdf format.": {
+        "message": "以doc或者pdf格式下载。",
+        "description": ""
+      },
+      "Template": {
+        "message": "模板",
+        "description": ""
+      },
+      "Format": {
+        "message": "格式化",
+        "description": ""
+      },
+      "Docx": {
+        "message": "Doc",
+        "description": ""
+      },
+      "PDF": {
+        "message": "PDF",
+        "description": ""
+      },
+      "It is the card information about the document.": {
+        "message": "这是关于该文件的卡片信息。",
+        "description": ""
+      },
+      "Public document": {
+        "message": "公开文档",
+        "description": ""
+      },
+      "Document accessible to any connected person": {
+        "message": "任何来访的人都可以访问文档",
+        "description": ""
+      },
+      "Last update: {{update}}": {
+        "message": "上次更新: {{update}}",
+        "description": ""
+      },
+      "Document title updated successfully": {
+        "message": "文档标题更新成功",
+        "description": ""
+      },
+      "Rename": {
+        "message": "重命名",
+        "description": ""
+      },
+      "Share": {
+        "message": "共享",
+        "description": ""
+      },
+      "Export": {
+        "message": "导出",
+        "description": ""
+      },
+      "Copy link": {
+        "message": "复制链接",
+        "description": ""
+      },
+      "Unpin": {
+        "message": "取消固定",
+        "description": ""
+      },
+      "Pin": {
+        "message": "固定",
+        "description": ""
+      },
+      "Version history": {
+        "message": "历史版本",
+        "description": ""
+      },
+      "Copy as {{format}}": {
+        "message": "复制为{{format}}",
+        "description": ""
+      },
+      "Delete document": {
+        "message": "删除文档",
+        "description": ""
+      },
+      "Editor unavailable": {
+        "message": "编辑功能不可用",
+        "description": ""
+      },
+      "Copied to clipboard": {
+        "message": "已复制到剪贴板",
+        "description": ""
+      },
+      "Failed to copy to clipboard": {
+        "message": "无法复制到剪贴板",
+        "description": ""
+      },
+      "Open the document options": {
+        "message": "打开文档选项",
+        "description": ""
+      },
+      "It is the document title": {
+        "message": "这是文档标题",
+        "description": ""
+      },
+      "The document has been deleted.": {
+        "message": "文档已被删除。",
+        "description": ""
+      },
+      "Confirm deletion": {
+        "message": "删除确认",
+        "description": ""
+      },
+      "Delete": {
+        "message": "删除",
+        "description": ""
+      },
+      "Delete a doc": {
+        "message": "删除文档",
+        "description": ""
+      },
+      "Content modal to delete document": {
+        "message": "删除文档对话框",
+        "description": ""
+      },
+      "Are you sure you want to delete this document ?": {
+        "message": "确定要删除此文档？",
+        "description": ""
+      },
+      "Link Copied !": {
+        "message": "链接已复制！",
+        "description": ""
+      },
+      "Failed to copy link": {
+        "message": "复制链接失败",
+        "description": ""
+      },
+      "Reader": {
+        "message": "阅读者",
+        "description": ""
+      },
+      "Editor": {
+        "message": "编辑者",
+        "description": ""
+      },
+      "Administrator": {
+        "message": "管理员",
+        "description": ""
+      },
+      "Owner": {
+        "message": "所有者",
+        "description": ""
+      },
+      "You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.": {
+        "message": "您是当前群组唯一所有者，需先指定另一管理员，才能更改自身角色或退出文档。",
+        "description": ""
+      },
+      "You cannot update the role or remove other owner.": {
+        "message": "您无法更新角色或删除其他所有者。",
+        "description": ""
+      },
+      "Untitled document": {
+        "message": "无标题文档",
+        "description": ""
+      },
+      "Select a document": {
+        "message": "选择一个文档",
+        "description": ""
+      },
+      "No document found": {
+        "message": "找不到文档",
+        "description": ""
+      },
+      "Search modal": {
+        "message": "搜索模式",
+        "description": ""
+      },
+      "Type the name of a document": {
+        "message": "输入文档名称",
+        "description": ""
+      },
+      "No active search": {
+        "message": "未搜索到",
+        "description": ""
+      },
+      "Failed to create the invitation for {{email}}.": {
+        "message": "邀请{{email}}失败。",
+        "description": ""
+      },
+      "Failed to add the member in the document.": {
+        "message": "添加成员失败。",
+        "description": ""
+      },
+      "\"{{email}}\" is already invited to the document.": {
+        "message": "{{email}}已经被邀请过。",
+        "description": ""
+      },
+      "\"{{email}}\" is already member of the document.": {
+        "message": "{{email}}已经在成员列表中。",
+        "description": ""
+      },
+      "Invite": {
+        "message": "邀请",
+        "description": ""
+      },
+      "Error during update invitation": {
+        "message": "更新邀请时出错",
+        "description": ""
+      },
+      "Error during delete invitation": {
+        "message": "更新邀请时出错",
+        "description": ""
+      },
+      "Error during invitation update": {
+        "message": "邀请更新时出错",
+        "description": ""
+      },
+      "Error while deleting invitation": {
+        "message": "删除邀请时出错",
+        "description": ""
+      },
+      "Document owner": {
+        "message": "文档所有者",
+        "description": ""
+      },
+      "Share with {{count}} users_one": {
+        "message": "与{{count}}共享",
+        "description": ""
+      },
+      "Share with {{count}} users_many": {
+        "message": "与{{count}}共享",
+        "description": ""
+      },
+      "Share with {{count}} users_other": {
+        "message": "与{{count}}共享",
+        "description": ""
+      },
+      "Pending invitations": {
+        "message": "待邀请",
+        "description": ""
+      },
+      "Search user result": {
+        "message": "查找用户",
+        "description": ""
+      },
+      "Share modal": {
+        "message": "共享模式",
+        "description": ""
+      },
+      "Share the document": {
+        "message": "共享文档",
+        "description": ""
+      },
+      "You do not have permission to view users sharing this document or modify link settings.": {
+        "message": "您没有权限查看共享此文档或修改链接。",
+        "description": ""
+      },
+      "Type a name or email": {
+        "message": "输入姓名或邮件地址",
+        "description": ""
+      },
+      "List invitation card": {
+        "message": "邀请列表",
+        "description": ""
+      },
+      "List members card": {
+        "message": "成员列表",
+        "description": ""
+      },
+      "OK": {
+        "message": "OK",
+        "description": ""
+      },
+      "Add": {
+        "message": "新增",
+        "description": ""
+      },
+      "The document visibility has been updated.": {
+        "message": "文档可见性已更新。",
+        "description": ""
+      },
+      "Doc visibility card": {
+        "message": "文档可见列表",
+        "description": ""
+      },
+      "Link parameters": {
+        "message": "链接参数",
+        "description": ""
+      },
+      "Visibility": {
+        "message": "可见性",
+        "description": ""
+      },
+      "Visibility mode": {
+        "message": "可见模式",
+        "description": ""
+      },
+      "Private": {
+        "message": "私有",
+        "description": ""
+      },
+      "Connected": {
+        "message": "已连接",
+        "description": ""
+      },
+      "Public": {
+        "message": "公开",
+        "description": ""
+      },
+      "Reading": {
+        "message": "阅读中",
+        "description": ""
+      },
+      "Edition": {
+        "message": "编辑",
+        "description": ""
+      },
+      "Only invited people can access": {
+        "message": "只有受邀人可以访问",
+        "description": ""
+      },
+      "Anyone with the link can view the document if they are logged in": {
+        "message": "已登录的被分享人可以查看文档内容",
+        "description": ""
+      },
+      "Anyone with the link can edit the document if they are logged in": {
+        "message": "已登录的被分享人可以编辑文档内容",
+        "description": ""
+      },
+      "Anyone with the link can see the document": {
+        "message": "被分享人可以查看文档",
+        "description": ""
+      },
+      "Anyone with the link can edit the document": {
+        "message": "被分享人可以编辑文档",
+        "description": ""
+      },
+      "Summary": {
+        "message": "概要",
+        "description": ""
+      },
+      "Version restored successfully": {
+        "message": "已成功还原版本",
+        "description": ""
+      },
+      "Restore": {
+        "message": "恢复",
+        "description": ""
+      },
+      "Modal confirmation to restore the version": {
+        "message": "恢复版本的方式确认",
+        "description": ""
+      },
+      "Your current document will revert to this version.": {
+        "message": "您当前的文档将恢复到这个版本。",
+        "description": ""
+      },
+      "If a member is editing, his works can be lost.": {
+        "message": "如果其他成员在编辑，他的内容可能丢失。",
+        "description": ""
+      },
+      "Select a version on the right to restore": {
+        "message": "选择要恢复的版本",
+        "description": ""
+      },
+      "History": {
+        "message": "历史记录",
+        "description": ""
+      },
+      "No versions": {
+        "message": "暂无版本",
+        "description": ""
+      },
+      "My docs": {
+        "message": "我的文档",
+        "description": ""
+      },
+      "Shared with me": {
+        "message": "共享给我的",
+        "description": ""
+      },
+      "All docs": {
+        "message": "所有文档",
+        "description": ""
+      },
+      "No documents found": {
+        "message": "找不到文档",
+        "description": ""
+      },
+      "Name": {
+        "message": "名称",
+        "description": ""
+      },
+      "Updated at": {
+        "message": "更新于",
+        "description": ""
+      },
+      "More docs": {
+        "message": "更多文档",
+        "description": ""
+      },
+      "Remove": {
+        "message": "移除",
+        "description": ""
+      },
+      "Accessible to anyone": {
+        "message": "对所有人开放",
+        "description": ""
+      },
+      "Accessible to authenticated users": {
+        "message": "对授权用户开放",
+        "description": ""
+      },
+      "Shared with {{count}} users_one": {
+        "message": "与{{count}}共享",
+        "description": ""
+      },
+      "Shared with {{count}} users_many": {
+        "message": "与{{count}}共享",
+        "description": ""
+      },
+      "Shared with {{count}} users_other": {
+        "message": "与{{count}}共享",
+        "description": ""
+      },
+      "Pin document icon": {
+        "message": "固定文档图标",
+        "description": ""
+      },
+      "Simple document icon": {
+        "message": "简易文档图标",
+        "description": ""
+      },
+      "Legal Notice": {
+        "message": "法律声明",
+        "description": ""
+      },
+      "Personal data and cookies": {
+        "message": "个人数据和 cookie",
+        "description": ""
+      },
+      "Accessibility": {
+        "message": "无障碍",
+        "description": ""
+      },
+      "Unless otherwise stated, all content on this site is under": {
+        "message": "除非另有说明，本站点上的所有内容都在",
+        "description": ""
+      },
+      "Open the header menu": {
+        "message": "打开标题菜单",
+        "description": ""
+      },
+      "Docs Logo": {
+        "message": "文档标志",
+        "description": ""
+      },
+      "Docs": {
+        "message": "文档",
+        "description": ""
+      },
+      "Collaborative writing, Simplified.": {
+        "message": "协作写入，简体字样。",
+        "description": ""
+      },
+      "Collaborate and write in real time, without layout constraints.": {
+        "message": "实时协作和写入，不受布局限制。",
+        "description": ""
+      },
+      "Start Writing": {
+        "message": "开始记录",
+        "description": ""
+      },
+      "Banner image": {
+        "message": "Banner图像",
+        "description": ""
+      },
+      "Show more": {
+        "message": "显示更多",
+        "description": ""
+      },
+      "Docs is already available, log in to use it now.": {
+        "message": "Docs已可用，请登录使用。",
+        "description": ""
+      },
+      "Govs ❤️ Open Source.": {
+        "message": "德法政府资助、开放源码。",
+        "description": ""
+      },
+      "Open Source": {
+        "message": "开放源代码",
+        "description": ""
+      },
+      "home-content-open-source-part1": {
+        "message": "首页-第一部分",
+        "description": ""
+      },
+      "home-content-open-source-part2": {
+        "message": "首页-第二部分",
+        "description": ""
+      },
+      "home-content-open-source-part3": {
+        "message": "首页-第三部分",
+        "description": ""
+      },
+      "An uncompromising writing experience.": {
+        "message": "极致的写作体验。",
+        "description": ""
+      },
+      "Write": {
+        "message": "写入",
+        "description": ""
+      },
+      "Docs offers an intuitive writing experience. Its minimalist interface favors content over layout, while offering the essentials: media import, offline mode and keyboard shortcuts for greater efficiency.": {
+        "message": "Docs 的极简界面专注于内容创作，支持媒体导入、离线模式及快捷键操作，提升写作效率。",
+        "description": ""
+      },
+      "Simple and secure collaboration.": {
+        "message": "简单而安全的协作。",
+        "description": ""
+      },
+      "Collaborate": {
+        "message": "协作",
+        "description": ""
+      },
+      "Docs makes real-time collaboration simple. Invite collaborators - public officials or external partners - with one click to see their changes live, while maintaining precise access control for data security.": {
+        "message": "Docs 支持精确权限控制的实时协作，协作者可一键加入并查看实时修改。",
+        "description": ""
+      },
+      "Flexible export.": {
+        "message": "灵活的导出。",
+        "description": ""
+      },
+      "To facilitate the circulation of documents, Docs allows you to export your content to the most common formats: PDF, Word or OpenDocument.": {
+        "message": "Docs 支持导出为 PDF、Word、OpenDocument 等常见格式，方便文件共享与协作。",
+        "description": ""
+      },
+      "A new way to organize knowledge.": {
+        "message": "一种组织知识的新方法。",
+        "description": ""
+      },
+      "Organize": {
+        "message": "组织",
+        "description": ""
+      },
+      "Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.": {
+        "message": "Docs 通过子页面、强大的搜索功能以及固定重要文档的能力，将您的文档转化为知识库。",
+        "description": ""
+      },
+      "Available soon": {
+        "message": "即将推出",
+        "description": ""
+      },
+      "Illustration": {
+        "message": "图",
+        "description": ""
+      },
+      "Pinned documents": {
+        "message": "置顶文档",
+        "description": ""
+      },
+      "New doc": {
+        "message": "新建文档",
+        "description": ""
+      },
+      "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": {
+        "message": "Docs 为您提供高效、直观且安全的文档协作解决方案。",
+        "description": ""
+      },
+      "Image 401": {
+        "message": "图片 401",
+        "description": ""
+      },
+      "Log in to access the document.": {
+        "message": "登录以访问文档。",
+        "description": ""
+      },
+      "Image 403": {
+        "message": "图片 403",
+        "description": ""
+      },
+      "You do not have permission to view this document.": {
+        "message": "您无权查看此文档。",
+        "description": ""
+      },
+      "Home": {
+        "message": "首页",
+        "description": ""
+      },
+      "Ouch !": {
+        "message": "开始吧！",
+        "description": ""
+      },
+      "It seems that the page you are looking for does not exist or cannot be displayed correctly.": {
+        "message": "您要找的页面似乎不存在或无法正确显示。",
+        "description": ""
+      },
+      "accessibility-dinum-services": {
+        "message": "获取服务－第纳尔服务",
+        "description": ""
+      },
+      "Accessibility statement": {
+        "message": "无障碍声明",
+        "description": ""
+      },
+      "Established on December 20, 2023.": {
+        "message": "在2023年12月20日成立。",
+        "description": ""
+      },
+      "This accessibility statement applies to the site hosted on": {
+        "message": "本无障碍声明适用于托管在xx的网站",
+        "description": ""
+      },
+      "Compliance status": {
+        "message": "合规状态",
+        "description": ""
+      },
+      "accessibility-not-audit": {
+        "message": "无障碍审计——不审计",
+        "description": ""
+      },
+      "Improvement and contact": {
+        "message": "改进和联系",
+        "description": ""
+      },
+      "If you are unable to access a content or a service, you can contact the person responsible for https://lasuite.numerique.gouv.fr to be directed to an accessible alternative or to obtain the content in another form.": {
+        "message": "如果您无法访问某项内容或服务，您可以联系 https://lasuite.numerique.gouv.fr 的负责人，以获取可访问的替代方案，或以其他形式获取该内容。",
+        "description": ""
+      },
+      "E-mail:": {
+        "message": "电子邮件：",
+        "description": ""
+      },
+      "Address:": {
+        "message": "地址：",
+        "description": ""
+      },
+      "We try to respond within 2 working days.": {
+        "message": "我们努力在2个工作日内作出答复。",
+        "description": ""
+      },
+      "Remedies": {
+        "message": "补救办法",
+        "description": ""
+      },
+      "This procedure should be used in the following case:": {
+        "message": "这一程序应适用于以下情况：",
+        "description": ""
+      },
+      "you have reported to the website manager a lack of accessibility that prevents you from accessing content or one of the services of the portal and you have not received a satisfactory response.": {
+        "message": "您已向网站管理员报告了因缺乏可访问性而导致无法访问门户网站内容或服务的情况，但您没有收到令人满意的答复。",
+        "description": ""
+      },
+      "You can:": {
+        "message": "您可以：",
+        "description": ""
+      },
+      "accessibility-form-defenseurdesdroits": {
+        "message": "无障碍形式的防卫权利",
+        "description": ""
+      },
+      "accessibility-contact-defenseurdesdroits": {
+        "message": "无障碍联系――维护者权利",
+        "description": ""
+      },
+      "Send a letter by post (free of charge, no stamp needed):": {
+        "message": "通过邮寄发送信件(免费，不需要盖章)：",
+        "description": ""
+      },
+      "Defender of Rights - Free response - 71120 75342 Paris CEDEX 07": {
+        "message": "权利捍卫者 - 免费回复 - 71120 75342 巴黎 CEDEX 07",
+        "description": ""
+      },
+      "Legal notice": {
+        "message": "法律声明",
+        "description": ""
+      },
+      "Publisher": {
+        "message": "发布者",
+        "description": ""
+      },
+      "French Interministerial Directorate for Digital Affairs (DINUM), 20 avenue de Ségur 75007 Paris.": {
+        "message": "法国政府数字事务部际局（DINUM），位于巴黎第七区塞居尔大街20号，邮编75007。",
+        "description": ""
+      },
+      "Publication Director": {
+        "message": "出版主任",
+        "description": ""
+      },
+      "Stéphanie Schaer: Interministerial Digital Director (DINUM).": {
+        "message": "斯蒂芬妮·谢尔：部际数字主管（DINUM）。",
+        "description": ""
+      },
+      "Copyright": {
+        "message": "版权",
+        "description": ""
+      },
+      "Illustration:": {
+        "message": "图例：",
+        "description": ""
+      },
+      "More info?": {
+        "message": "更多信息？",
+        "description": ""
+      },
+      "The team in charge of the digital workspace \"La Suite numérique\" can be contacted directly at": {
+        "message": "负责数字工作空间 'La Suite numérique' 的团队可以直接通过以下方式联系",
+        "description": ""
+      },
+      "Offline ?!": {
+        "message": "离线?！",
+        "description": ""
+      },
+      "Can't load this page, please check your internet connection.": {
+        "message": "无法加载此页面，请检查您的网络连接。",
+        "description": ""
+      },
+      "Cookies placed": {
+        "message": "已设置的 cookies",
+        "description": ""
+      },
+      "This site places a small text file (a \"cookie\") on your computer when you visit it.": {
+        "message": "这个网站在您的电脑上放置了一个小的文本文件(“cookie”)。",
+        "description": ""
+      },
+      "This allows us to measure the number of visits and understand which pages are the most viewed.": {
+        "message": "这使我们能够衡量访问次数，并了解哪些页面是最受欢迎的。",
+        "description": ""
+      },
+      "You can oppose the tracking of your browsing on this website.": {
+        "message": "您可以反对在本网站上跟踪您的浏览活动。",
+        "description": ""
+      },
+      "This will protect your privacy, but will also prevent the owner from learning from your actions and creating a better experience for you and other users.": {
+        "message": "这将保护您的隐私，但也会阻止网站所有者从您的行为中获取信息，从而无法为您和其他用户创造更好的体验。",
+        "description": ""
+      },
+      "This site does not display a cookie consent banner, why?": {
+        "message": "这个网站没有显示 cookie 同意横幅，为什么？",
+        "description": ""
+      },
+      "It's true, you didn't have to click on a block that covers half the page to say you agree to the placement of cookies — even if you don't know what it means!": {
+        "message": "确实，您不需要点击一个覆盖页面一半的块来表示同意放置 cookies —— 即使您不知道它是什么意思！",
+        "description": ""
+      },
+      "Nothing exceptional, no special privileges related to a .gouv.fr.": {
+        "message": "没有例外, 没有与.gouv.fr相关的特殊权限。",
+        "description": ""
+      },
+      "We simply comply with the law, which states that certain audience measurement tools, properly configured to respect privacy, are exempt from prior authorization.": {
+        "message": "我们只是遵守法律，该法律规定，为尊重隐私而适当配置的某些受众计量工具免于事先批准。",
+        "description": ""
+      }
+    }
+  },
   "tr": { "translation": {} }
 }

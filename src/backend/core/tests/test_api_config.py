@@ -50,6 +50,8 @@ def test_api_config(is_authenticated):
             ["fr-fr", "Français"],
             ["de-de", "Deutsch"],
             ["nl-nl", "Nederlands"],
+            ["es-es", "Spanish"],
+            ["cn-cn", "Chinese"],
         ],
         "LANGUAGE_CODE": "en-us",
         "MEDIA_BASE_URL": "http://testserver/",

@@ -15,6 +15,8 @@ export const CONFIG = {
     ['fr-fr', 'Français'],
     ['de-de', 'Deutsch'],
     ['nl-nl', 'Nederlands'],
+    ['es-es', 'Spanish'],
+    ['cn-cn', 'Chinese'],
   ],
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
