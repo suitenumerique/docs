@@ -24,11 +24,10 @@ Welcome to Docs! The open source document editor where your notes can become kno
 
 ## Why use Docs ❓
 
-⚠️ **Note that Docs provides docs/pdf exporters by loading [two BlockNote packages](https://github.com/suitenumerique/docs/blob/main/src/frontend/apps/impress/package.json#L22C7-L23C53), which we use under the AGPL-3.0 licence. Until we comply with the terms of this license, we recommend that you don't run Docs as a commercial product, unless you are willing to sponsor [BlockNote](https://github.com/TypeCellOS/BlockNote).**
-
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
 ### Write
+
 *   😌 Simple collaborative editing without the formatting complexity of markdown
 *   🔌 Offline? No problem, keep writing, your edits will get synced when back online
 *   💅 Create clean documents with limited but beautiful formatting options and focus on content
@@ -36,13 +35,17 @@ Docs is a collaborative text editor designed to address common challenges in kno
 *   ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
 
 ### Collaborate
+
 *   🤝 Collaborate with your team in real time
 *   🔒 Granular access control to ensure your information is secure and only shared with the right people
 *   📑 Professional document exports in multiple formats (.odt, .doc, .pdf) with customizable templates
 *   📚 Built-in wiki functionality to turn your team's collaborative work into organized knowledge `ETA 02/2025`
 
 ### Self-host
+
 *   🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
+
+⚠️ For the PDF and Docx export Docs relies on XL packages from BlockNote licenced in AGPL-3.0. Please make sure you fulfill your obligations regarding BlockNote licensing (see https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE and https://www.blocknotejs.org/about#partner-with-us).
 
 ## Getting started 🔧
 
@@ -118,6 +121,7 @@ $ make run-backend
 ```
 
 **Adding content**
+
 You can create a basic demo site by running:
 
 ```shellscript
