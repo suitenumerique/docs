@@ -4,7 +4,7 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
 import { PostHogConf } from '@/services';
 
-interface ConfigResponse {
+export interface ConfigResponse {
   AI_FEATURE_ENABLED?: boolean;
   COLLABORATION_WS_URL?: string;
   CRISP_WEBSITE_ID?: string;
@@ -14,6 +14,7 @@ interface ConfigResponse {
   FRONTEND_THEME?: Theme;
   LANGUAGES: [string, string][];
   LANGUAGE_CODE: string;
+  FRONTEND_CUSTOM_TRANSLATIONS_URL?: string;
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;

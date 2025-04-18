@@ -1693,6 +1693,7 @@ class ConfigView(drf.views.APIView):
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+            "FRONTEND_CUSTOM_TRANSLATIONS_URL",
             "FRONTEND_FOOTER_FEATURE_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",

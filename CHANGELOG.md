@@ -12,7 +12,7 @@ and this project adheres to
 
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
-
+- ✨(frontend) add customization for translations #857
 
 ## [3.1.0] - 2025-04-07
 

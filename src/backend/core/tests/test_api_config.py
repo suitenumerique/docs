@@ -20,6 +20,7 @@ pytestmark = pytest.mark.django_db
     CRISP_WEBSITE_ID="123",
     FRONTEND_CSS_URL="http://testcss/",
     FRONTEND_HOMEPAGE_FEATURE_ENABLED=True,
+    FRONTEND_CUSTOM_TRANSLATIONS_URL="http://test-custom-translations/",
     FRONTEND_FOOTER_FEATURE_ENABLED=True,
     FRONTEND_THEME="test-theme",
     MEDIA_BASE_URL="http://testserver/",
@@ -43,6 +44,7 @@ def test_api_config(is_authenticated):
         "ENVIRONMENT": "test",
         "FRONTEND_CSS_URL": "http://testcss/",
         "FRONTEND_HOMEPAGE_FEATURE_ENABLED": True,
+        "FRONTEND_CUSTOM_TRANSLATIONS_URL": "http://test-custom-translations/",
         "FRONTEND_FOOTER_FEATURE_ENABLED": True,
         "FRONTEND_THEME": "test-theme",
         "LANGUAGES": [

@@ -431,6 +431,9 @@ class Base(Configuration):
     FRONTEND_CSS_URL = values.Value(
         None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
     )
+    FRONTEND_CUSTOM_TRANSLATIONS_URL = values.Value(
+        None, environ_name="FRONTEND_CUSTOM_TRANSLATIONS_URL", environ_prefix=None
+    )
 
     # Posthog
     POSTHOG_KEY = values.DictValue(
