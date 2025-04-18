@@ -7,7 +7,6 @@ from urllib.parse import unquote, urlparse
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
@@ -219,57 +218,16 @@ class UserViewSet(
 class ResourceAccessViewsetMixin:
     """Mixin with methods common to all access viewsets."""
 
-    def get_permissions(self):
-        """User only needs to be authenticated to list resource accesses"""
-        if self.action == "list":
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            return super().get_permissions()
-
-        return [permission() for permission in permission_classes]
+    def filter_queryset(self, queryset):
+        """Override to filter on related resource."""
+        queryset = super().filter_queryset(queryset)
+        return queryset.filter(**{self.resource_field_name: self.kwargs["resource_id"]})
 
     def get_serializer_context(self):
         """Extra context provided to the serializer class."""
         context = super().get_serializer_context()
         context["resource_id"] = self.kwargs["resource_id"]
         return context
-
-    def get_queryset(self):
-        """Return the queryset according to the action."""
-        queryset = super().get_queryset()
-        queryset = queryset.filter(
-            **{self.resource_field_name: self.kwargs["resource_id"]}
-        )
-
-        if self.action == "list":
-            user = self.request.user
-            teams = user.teams
-            user_roles_query = (
-                queryset.filter(
-                    db.Q(user=user) | db.Q(team__in=teams),
-                    **{self.resource_field_name: self.kwargs["resource_id"]},
-                )
-                .values(self.resource_field_name)
-                .annotate(roles_array=ArrayAgg("role"))
-                .values("roles_array")
-            )
-
-            # Limit to resource access instances related to a resource THAT also has
-            # a resource access
-            # instance for the logged-in user (we don't want to list only the resource
-            # access instances pointing to the logged-in user)
-            queryset = (
-                queryset.filter(
-                    db.Q(**{f"{self.resource_field_name}__accesses__user": user})
-                    | db.Q(
-                        **{f"{self.resource_field_name}__accesses__team__in": teams}
-                    ),
-                    **{self.resource_field_name: self.kwargs["resource_id"]},
-                )
-                .annotate(user_roles=db.Subquery(user_roles_query))
-                .distinct()
-            )
-        return queryset
 
     def destroy(self, request, *args, **kwargs):
         """Forbid deleting the last owner access"""
@@ -441,44 +399,6 @@ class DocumentViewSet(
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
 
-    def annotate_is_favorite(self, queryset):
-        """
-        Annotate document queryset with the favorite status for the current user.
-        """
-        user = self.request.user
-
-        if user.is_authenticated:
-            favorite_exists_subquery = models.DocumentFavorite.objects.filter(
-                document_id=db.OuterRef("pk"), user=user
-            )
-            return queryset.annotate(is_favorite=db.Exists(favorite_exists_subquery))
-
-        return queryset.annotate(is_favorite=db.Value(False))
-
-    def annotate_user_roles(self, queryset):
-        """
-        Annotate document queryset with the roles of the current user
-        on the document or its ancestors.
-        """
-        user = self.request.user
-        output_field = ArrayField(base_field=db.CharField())
-
-        if user.is_authenticated:
-            user_roles_subquery = models.DocumentAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                document__path=Left(db.OuterRef("path"), Length("document__path")),
-            ).values_list("role", flat=True)
-
-            return queryset.annotate(
-                user_roles=db.Func(
-                    user_roles_subquery, function="ARRAY", output_field=output_field
-                )
-            )
-
-        return queryset.annotate(
-            user_roles=db.Value([], output_field=output_field),
-        )
-
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
         user = self.request.user
@@ -514,8 +434,9 @@ class DocumentViewSet(
     def filter_queryset(self, queryset):
         """Override to apply annotations to generic views."""
         queryset = super().filter_queryset(queryset)
-        queryset = self.annotate_is_favorite(queryset)
-        queryset = self.annotate_user_roles(queryset)
+        user = self.request.user
+        queryset = queryset.annotate_is_favorite(user)
+        queryset = queryset.annotate_user_roles(user)
         return queryset
 
     def get_response_for_queryset(self, queryset):
@@ -539,9 +460,10 @@ class DocumentViewSet(
         Additional annotations (e.g., `is_highest_ancestor_for_user`, favorite status) are
         applied before ordering and returning the response.
         """
-        queryset = (
-            self.get_queryset()
-        )  # Not calling filter_queryset. We do our own cooking.
+        user = self.request.user
+
+        # Not calling filter_queryset. We do our own cooking.
+        queryset = self.get_queryset()
 
         filterset = ListDocumentFilter(
             self.request.GET, queryset=queryset, request=self.request
@@ -554,7 +476,7 @@ class DocumentViewSet(
         for field in ["is_creator_me", "title"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
-        queryset = self.annotate_user_roles(queryset)
+        queryset = queryset.annotate_user_roles(user)
 
         # Among the results, we may have documents that are ancestors/descendants
         # of each other. In this case we want to keep only the highest ancestors.
@@ -571,7 +493,7 @@ class DocumentViewSet(
         )
 
         # Annotate favorite status and filter if applicable as late as possible
-        queryset = self.annotate_is_favorite(queryset)
+        queryset = queryset.annotate_is_favorite(user)
         queryset = filterset.filters["is_favorite"].filter(
             queryset, filter_data["is_favorite"]
         )
@@ -654,7 +576,7 @@ class DocumentViewSet(
             deleted_at__isnull=False,
             deleted_at__gte=models.get_trashbin_cutoff(),
         )
-        queryset = self.annotate_user_roles(queryset)
+        queryset = queryset.annotate_user_roles(self.request.user)
         queryset = queryset.filter(user_roles__contains=[models.RoleChoices.OWNER])
 
         return self.get_response_for_queryset(queryset)
@@ -834,6 +756,8 @@ class DocumentViewSet(
         List ancestors tree above the document.
         What we need to display is the tree structure opened for the current document.
         """
+        user = self.request.user
+
         try:
             current_document = self.queryset.only("depth", "path").get(pk=pk)
         except models.Document.DoesNotExist as excpt:
@@ -888,8 +812,8 @@ class DocumentViewSet(
                 output_field=db.BooleanField(),
             )
         )
-        queryset = self.annotate_user_roles(queryset)
-        queryset = self.annotate_is_favorite(queryset)
+        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate_is_favorite(user)
 
         # Pass ancestors' links definitions to the serializer as a context variable
         # in order to allow saving time while computing abilities on the instance
@@ -1373,7 +1297,11 @@ class DocumentViewSet(
 
 class DocumentAccessViewSet(
     ResourceAccessViewsetMixin,
-    viewsets.ModelViewSet,
+    drf.mixins.CreateModelMixin,
+    drf.mixins.RetrieveModelMixin,
+    drf.mixins.UpdateModelMixin,
+    drf.mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
 ):
     """
     API ViewSet for all interactions with document accesses.
@@ -1400,37 +1328,52 @@ class DocumentAccessViewSet(
     """
 
     lookup_field = "pk"
-    pagination_class = Pagination
     permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
     serializer_class = serializers.DocumentAccessSerializer
-    is_current_user_owner_or_admin = False
 
-    def get_queryset(self):
-        """Return the queryset according to the action."""
-        queryset = super().get_queryset()
+    def list(self, request, *args, **kwargs):
+        """Return accesses for the current document with filters and annotations."""
+        user = self.request.user
 
-        if self.action == "list":
-            try:
-                document = models.Document.objects.get(pk=self.kwargs["resource_id"])
-            except models.Document.DoesNotExist:
-                return queryset.none()
+        try:
+            document = models.Document.objects.get(pk=self.kwargs["resource_id"])
+        except models.Document.DoesNotExist:
+            return drf.response.Response([])
 
-            roles = set(document.get_roles(self.request.user))
-            is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
-            self.is_current_user_owner_or_admin = is_owner_or_admin
-            if not is_owner_or_admin:
-                # Return only the document owner access
-                queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+        roles = set(document.get_roles(user))
+        if not roles:
+            return drf.response.Response([])
 
-        return queryset
+        ancestors = (
+            (document.get_ancestors() | models.Document.objects.filter(pk=document.pk))
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
+        highest_readable = ancestors.readable_per_se(user).only("depth").first()
 
-    def get_serializer_class(self):
-        if self.action == "list" and not self.is_current_user_owner_or_admin:
-            return serializers.DocumentAccessLightSerializer
+        if highest_readable is None:
+            return drf.response.Response([])
 
-        return super().get_serializer_class()
+        queryset = self.get_queryset()
+        queryset = queryset.filter(
+            document__in=ancestors.filter(depth__gte=highest_readable.depth)
+        )
+
+        is_privileged = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        if is_privileged:
+            serializer_class = serializers.DocumentAccessSerializer
+        else:
+            # Return only the document's privileged accesses
+            queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+            serializer_class = serializers.DocumentAccessLightSerializer
+
+        queryset = queryset.distinct()
+        serializer = serializer_class(
+            queryset, many=True, context=self.get_serializer_context()
+        )
+        return drf.response.Response(serializer.data)
 
     def perform_create(self, serializer):
         """Add a new access to the document and send an email to the new added user."""
@@ -1542,7 +1485,6 @@ class TemplateAccessViewSet(
     ResourceAccessViewsetMixin,
     drf.mixins.CreateModelMixin,
     drf.mixins.DestroyModelMixin,
-    drf.mixins.ListModelMixin,
     drf.mixins.RetrieveModelMixin,
     drf.mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -1572,11 +1514,27 @@ class TemplateAccessViewSet(
     """
 
     lookup_field = "pk"
-    pagination_class = Pagination
     permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
     queryset = models.TemplateAccess.objects.select_related("user").all()
     resource_field_name = "template"
     serializer_class = serializers.TemplateAccessSerializer
+
+    def list(self, request, *args, **kwargs):
+        """Restrict templates returned by the list endpoint"""
+        user = self.request.user
+        teams = user.teams
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Limit to resource access instances related to a resource THAT also has
+        # a resource access instance for the logged-in user (we don't want to list
+        # only the resource access instances pointing to the logged-in user)
+        queryset = queryset.filter(
+            db.Q(template__accesses__user=user)
+            | db.Q(template__accesses__team__in=teams),
+        ).distinct()
+
+        serializer = self.get_serializer(queryset, many=True)
+        return drf.response.Response(serializer.data)
 
 
 class InvitationViewset(

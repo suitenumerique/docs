@@ -74,6 +74,7 @@ def test_api_documents_trashbin_format():
             "accesses_view": True,
             "ai_transform": True,
             "ai_translate": True,
+            "ancestors_links_definitions": {},
             "attachment_upload": True,
             "children_create": True,
             "children_list": True,
@@ -88,7 +89,7 @@ def test_api_documents_trashbin_format():
             "link_select_options": {
                 "authenticated": ["reader", "editor"],
                 "public": ["reader", "editor"],
-                "restricted": ["reader", "editor"],
+                "restricted": None,
             },
             "media_auth": True,
             "move": False,  # Can't move a deleted document
