@@ -8,7 +8,6 @@ import { SimpleDocItem } from '@/docs/docs-grid';
 export const LeftPanelDocContent = () => {
   const { currentDoc } = useDocStore();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
   if (!currentDoc) {
     return null;
   }
@@ -24,7 +23,7 @@ export const LeftPanelDocContent = () => {
         <Box $padding={{ horizontal: 'sm' }}>
           <Box
             $css={css`
-              padding: ${spacing['2xs']};
+              padding: ${spacingsTokens['2xs']};
               border-radius: 4px;
               background-color: var(--c--theme--colors--greyscale-100);
             `}

@@ -13,8 +13,6 @@ export const LeftPanelTargetFilters = () => {
   const pathname = usePathname();
   const { togglePanel } = useLeftPanelStore();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
-  const colors = colorsTokens();
 
   const searchParams = useSearchParams();
   const target =
@@ -52,7 +50,7 @@ export const LeftPanelTargetFilters = () => {
     <Box
       $justify="center"
       $padding={{ horizontal: 'sm' }}
-      $gap={spacing['2xs']}
+      $gap={spacingsTokens['2xs']}
       className="--docs--left-panel-target-filters"
     >
       {defaultQueries.map((query) => {
@@ -67,17 +65,17 @@ export const LeftPanelTargetFilters = () => {
             aria-selected={isActive}
             $align="center"
             $justify="flex-start"
-            $gap={spacing['xs']}
-            $radius={spacing['3xs']}
+            $gap={spacingsTokens['xs']}
+            $radius={spacingsTokens['3xs']}
             $padding={{ all: '2xs' }}
             $css={css`
               cursor: pointer;
               background-color: ${isActive
-                ? colors['greyscale-100']
+                ? colorsTokens['greyscale-100']
                 : undefined};
               font-weight: ${isActive ? 700 : undefined};
               &:hover {
-                background-color: ${colors['greyscale-100']};
+                background-color: ${colorsTokens['greyscale-100']};
               }
             `}
           >

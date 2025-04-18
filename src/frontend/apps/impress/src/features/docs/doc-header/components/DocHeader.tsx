@@ -22,8 +22,6 @@ interface DocHeaderProps {
 export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
 
   const { t } = useTranslation();
   const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
@@ -36,21 +34,21 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
       <Box
         $width="100%"
         $padding={{ top: isDesktop ? '4xl' : 'md' }}
-        $gap={spacings['base']}
+        $gap={spacingsTokens['base']}
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"
       >
         {(docIsPublic || docIsAuth) && (
           <Box
             aria-label={t('Public document')}
-            $color={colors['primary-800']}
-            $background={colors['primary-050']}
-            $radius={spacings['3xs']}
+            $color={colorsTokens['primary-800']}
+            $background={colorsTokens['primary-050']}
+            $radius={spacingsTokens['3xs']}
             $direction="row"
             $padding="xs"
             $flex={1}
             $align="center"
-            $gap={spacings['3xs']}
+            $gap={spacingsTokens['3xs']}
             $css={css`
               border: 1px solid var(--c--theme--colors--primary-300, #e3e3fd);
             `}
@@ -82,7 +80,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             $align="center"
             $maxWidth="100%"
           >
-            <Box $gap={spacings['3xs']} $overflow="auto">
+            <Box $gap={spacingsTokens['3xs']} $overflow="auto">
               <DocTitle doc={doc} />
 
               <Box $direction="row">

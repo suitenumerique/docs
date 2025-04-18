@@ -16,9 +16,8 @@ import { getHeaderHeight } from './HomeHeader';
 export default function HomeBanner() {
   const { t } = useTranslation();
   const { componentTokens, spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
   const { isMobile, isSmallMobile } = useResponsiveStore();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const withProConnect = componentTokens['home-proconnect'].activated;
 
   return (
     <Box
@@ -45,7 +44,7 @@ export default function HomeBanner() {
           $width={!isMobile ? '50%' : '100%'}
           $justify="center"
           $align="center"
-          $gap={spacings['sm']}
+          $gap={spacingsTokens['sm']}
         >
           <Image src={DocLogo} alt="DocLogo" width={64} />
           <Text

@@ -24,7 +24,6 @@ type Props = {
 export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
   const fakeUser: User = {
     id: invitation.email,
     full_name: invitation.email,
@@ -91,7 +90,7 @@ export const DocShareInvitationItem = ({ doc, invitation }: Props) => {
         alwaysShowRight={true}
         user={fakeUser}
         right={
-          <Box $direction="row" $align="center" $gap={spacing['2xs']}>
+          <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
               currentRole={invitation.role}
               onSelectRole={onUpdate}

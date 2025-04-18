@@ -10,7 +10,7 @@ import { useResponsiveStore } from '@/stores';
 
 export function HomeBottom() {
   const { componentTokens } = useCunninghamTheme();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const withProConnect = componentTokens['home-proconnect'].activated;
 
   if (!withProConnect) {
     return null;
@@ -22,7 +22,6 @@ export function HomeBottom() {
 function HomeProConnect() {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
   const { isMobile } = useResponsiveStore();
   const parentGap = '230px';
 
@@ -33,14 +32,14 @@ function HomeProConnect() {
       className="--docs--home-proconnect"
     >
       <Box
-        $gap={spacings['md']}
+        $gap={spacingsTokens['md']}
         $direction="column"
         $align="center"
         $margin={{ top: isMobile ? 'none' : `-${parentGap}` }}
       >
         <Box
           $align="center"
-          $gap={spacings['3xs']}
+          $gap={spacingsTokens['3xs']}
           $direction="row"
           $position="relative"
           $height="fit-content"

@@ -32,8 +32,6 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
-  const colors = colorsTokens();
   const canManage = doc.abilities.accesses_manage;
   const [linkReach, setLinkReach] = useState<LinkReach>(doc.link_reach);
   const [docLinkRole, setDocLinkRole] = useState<LinkRole>(doc.link_role);
@@ -90,7 +88,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     <Box
       $padding={{ horizontal: 'base' }}
       aria-label={t('Doc visibility card')}
-      $gap={spacing['base']}
+      $gap={spacingsTokens['base']}
       className="--docs--doc-visibility"
     >
       <Text $weight="700" $size="sm" $variation="700">
@@ -100,7 +98,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         $direction="row"
         $align="center"
         $justify="space-between"
-        $gap={spacing['xs']}
+        $gap={spacingsTokens['xs']}
         $width="100%"
         $wrap="nowrap"
       >
@@ -108,18 +106,18 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           $direction="row"
           $align={isDesktop ? 'center' : undefined}
           $padding={{ horizontal: '2xs' }}
-          $gap={canManage ? spacing['3xs'] : spacing['base']}
+          $gap={canManage ? spacingsTokens['3xs'] : spacingsTokens['base']}
         >
           <DropdownMenu
             label={t('Visibility')}
             arrowCss={css`
-              color: ${colors['primary-800']} !important;
+              color: ${colorsTokens['primary-800']} !important;
             `}
             disabled={!canManage}
             showArrow={true}
             options={linkReachOptions}
           >
-            <Box $direction="row" $align="center" $gap={spacing['3xs']}>
+            <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
               <Icon
                 $theme={canManage ? 'primary' : 'greyscale'}
                 $variation={canManage ? '800' : '600'}
@@ -142,7 +140,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           )}
         </Box>
         {showLinkRoleOptions && (
-          <Box $direction="row" $align="center" $gap={spacing['3xs']}>
+          <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
             {linkReach !== LinkReach.RESTRICTED && (
               <DropdownMenu
                 disabled={!canManage}
