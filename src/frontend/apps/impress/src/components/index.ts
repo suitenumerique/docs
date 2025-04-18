@@ -3,6 +3,7 @@ export * from './BoxButton';
 export * from './Card';
 export * from './DropButton';
 export * from './DropdownMenu';
+export * from './EmojiPicker';
 export * from './Icon';
 export * from './InfiniteScroll';
 export * from './Link';
