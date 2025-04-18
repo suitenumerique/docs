@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/suitenumerique/docs">
-    <img alt="Docs" src="/docs/assets/docs-logo.png" width="300" />
+    <img alt="Docs" src="/documentation/assets/docs-logo-black-white.png" width="300" />
   </a>
 </p>
 
@@ -20,7 +20,7 @@ Welcome to Docs! The open source document editor where your notes can become kno
   </a>
 </p>
 
-<img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
+<img src="/documentation/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
 
 ## Why use Docs ❓
 
@@ -193,5 +193,5 @@ We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](h
 We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 
 <p align="center">
-  <img src="/docs/assets/europe_opensource.png" width="50%"/>
+  <img src="/documentation/assets/europe_opensource.png" width="50%"/>
 </p>
