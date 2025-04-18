@@ -64,6 +64,13 @@ export const cssEditor = (readonly: boolean) => css`
       height: 38px;
     }
 
+    /**
+     * Callout block
+     */
+    .bn-block:has(.node-callout) {
+      margin-block-end: 1rem;
+    }
+
     h1 {
       font-size: 1.875rem;
     }
