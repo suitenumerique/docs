@@ -25,7 +25,8 @@
     "i18n:deploy": "yarn I18N run format-deploy && yarn APP_IMPRESS prettier",
     "i18n:test": "yarn I18N run test",
     "test": "yarn server:test && yarn app:test",
-    "server:test": "yarn COLLABORATION_SERVER run test"
+    "server:test": "yarn COLLABORATION_SERVER run test",
+    "postinstall": "node ./bin/conditional-install.js"
   },
   "resolutions": {
     "@types/node": "22.13.9",
