@@ -9,6 +9,8 @@ import React, { JSX, useCallback, useMemo, useState } from 'react';
 
 import { useConfig } from '@/core/config/api';
 
+import { getCalloutFormattingToolbarItems } from '../custom-blocks';
+
 import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
@@ -23,6 +25,7 @@ export const BlockNoteToolbar = () => {
   const toolbarItems = useMemo(() => {
     const toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
+      getCalloutFormattingToolbarItems(t),
     ]);
     const fileDownloadButtonIndex = toolbarItems.findIndex(
       (item) =>
