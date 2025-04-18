@@ -13,6 +13,9 @@ and this project adheres to
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 
+## Fixed
+
+- 🐛(helm) charts generate invalid YAML for collaboration API / WS #890
 
 ## [3.1.0] - 2025-04-07
 
