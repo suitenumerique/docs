@@ -18,6 +18,7 @@ and this project adheres to
 - 🚩 add homepage feature flag #861
 - ✨(settings) Allow configuring PKCE for the SSO #886
 - 🌐(i18n) activate chinese and spanish languages #884
+- 🔧(backend) allow overwriting the data directory #893
 
 ## Changed
 

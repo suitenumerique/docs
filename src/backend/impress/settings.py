@@ -23,7 +23,7 @@ from sentry_sdk.integrations.logging import ignore_logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join("/", "data")
+DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 
 
 def get_release():
