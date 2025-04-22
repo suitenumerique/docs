@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed 
+
+- 🔒(frontend) enhance file download security #889
+
 ## Added
 
 - 🚸(backend) make document search on title accent-insensitive #874
