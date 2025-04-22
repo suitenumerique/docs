@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- 📦️(nix) package docs for NixOS #883
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 
