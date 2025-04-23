@@ -5,7 +5,7 @@ import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/docs/doc-management';
+import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
@@ -13,11 +13,13 @@ import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocsGridActions } from './DocsGridActions';
 import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
-import { SimpleDocItem } from './SimpleDocItem';
+
 type DocsGridItemProps = {
   doc: Doc;
+  dragMode?: boolean;
 };
-export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
+
+export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
@@ -45,7 +47,9 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
           cursor: pointer;
           border-radius: 4px;
           &:hover {
-            background-color: var(--c--theme--colors--greyscale-100);
+            background-color: ${dragMode
+              ? 'none'
+              : 'var(--c--theme--colors--greyscale-100)'};
           }
         `}
         className="--docs--doc-grid-item"
@@ -79,25 +83,35 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
                     : undefined
                 }
               >
-                <Tooltip
-                  content={
-                    <Text $textAlign="center" $variation="000">
-                      {isPublic
-                        ? t('Accessible to anyone')
-                        : t('Accessible to authenticated users')}
-                    </Text>
-                  }
-                  placement="top"
-                >
-                  <div>
-                    <Icon
-                      $theme="greyscale"
-                      $variation="600"
-                      $size="14px"
-                      iconName={isPublic ? 'public' : 'vpn_lock'}
-                    />
-                  </div>
-                </Tooltip>
+                {dragMode && (
+                  <Icon
+                    $theme="greyscale"
+                    $variation="600"
+                    $size="14px"
+                    iconName={isPublic ? 'public' : 'vpn_lock'}
+                  />
+                )}
+                {!dragMode && (
+                  <Tooltip
+                    content={
+                      <Text $textAlign="center" $variation="000">
+                        {isPublic
+                          ? t('Accessible to anyone')
+                          : t('Accessible to authenticated users')}
+                      </Text>
+                    }
+                    placement="top"
+                  >
+                    <div>
+                      <Icon
+                        $theme="greyscale"
+                        $variation="600"
+                        $size="14px"
+                        iconName={isPublic ? 'public' : 'vpn_lock'}
+                      />
+                    </div>
+                  </Tooltip>
+                )}
               </Box>
             )}
           </Box>

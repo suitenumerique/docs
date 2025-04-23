@@ -22,3 +22,9 @@ export const base64ToYDoc = (base64: string) => {
 export const base64ToBlocknoteXmlFragment = (base64: string) => {
   return base64ToYDoc(base64).getXmlFragment('document-store');
 };
+
+export const isOwnerOrAdmin = (doc: Doc): boolean => {
+  return doc.user_roles.some(
+    (role) => role === Role.OWNER || role === Role.ADMIN,
+  );
+};

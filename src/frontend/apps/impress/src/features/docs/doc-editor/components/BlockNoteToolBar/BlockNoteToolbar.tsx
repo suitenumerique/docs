@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useConfig } from '@/core/config/api';
 
 import { getQuoteFormattingToolbarItems } from '../custom-blocks';
+import { getInterlinkingBlockFormattingToolbarItems } from '../custom-blocks/InterlinkingBlock';
 
 import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
@@ -28,6 +29,7 @@ export const BlockNoteToolbar = () => {
     const toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
       getQuoteFormattingToolbarItems(t),
+      getInterlinkingBlockFormattingToolbarItems(t),
     ]);
     const fileDownloadButtonIndex = toolbarItems.findIndex(
       (item) =>

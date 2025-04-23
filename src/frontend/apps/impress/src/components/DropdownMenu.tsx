@@ -8,6 +8,7 @@ export type DropdownMenuOption = {
   icon?: string;
   label: string;
   testId?: string;
+  value?: string;
   callback?: () => void | Promise<unknown>;
   danger?: boolean;
   isSelected?: boolean;
@@ -23,6 +24,8 @@ export type DropdownMenuProps = {
   buttonCss?: BoxProps['$css'];
   disabled?: boolean;
   topMessage?: string;
+  selectedValues?: string[];
+  afterOpenChange?: (isOpen: boolean) => void;
 };
 
 export const DropdownMenu = ({
@@ -34,6 +37,8 @@ export const DropdownMenu = ({
   buttonCss,
   label,
   topMessage,
+  afterOpenChange,
+  selectedValues,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +46,7 @@ export const DropdownMenu = ({
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
+    afterOpenChange?.(isOpen);
   };
 
   if (disabled) {
@@ -163,7 +169,8 @@ export const DropdownMenu = ({
                   {option.label}
                 </Text>
               </Box>
-              {option.isSelected && (
+              {(option.isSelected ||
+                selectedValues?.includes(option.value ?? '')) && (
                 <Icon iconName="check" $size="20px" $theme="greyscale" />
               )}
             </BoxButton>
