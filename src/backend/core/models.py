@@ -33,6 +33,8 @@ from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
+from .choices import PRIVILEGED_ROLES, LinkReachChoices, LinkRoleChoices, RoleChoices
+
 logger = getLogger(__name__)
 
 
@@ -48,100 +50,6 @@ def get_trashbin_cutoff():
         datetime: The cutoff datetime for soft-deleted items.
     """
     return timezone.now() - timedelta(days=settings.TRASHBIN_CUTOFF_DAYS)
-
-
-class LinkRoleChoices(models.TextChoices):
-    """Defines the possible roles a link can offer on a document."""
-
-    READER = "reader", _("Reader")  # Can read
-    EDITOR = "editor", _("Editor")  # Can read and edit
-
-
-class RoleChoices(models.TextChoices):
-    """Defines the possible roles a user can have in a resource."""
-
-    READER = "reader", _("Reader")  # Can read
-    EDITOR = "editor", _("Editor")  # Can read and edit
-    ADMIN = "administrator", _("Administrator")  # Can read, edit, delete and share
-    OWNER = "owner", _("Owner")
-
-
-PRIVILEGED_ROLES = [RoleChoices.ADMIN, RoleChoices.OWNER]
-
-
-class LinkReachChoices(models.TextChoices):
-    """Defines types of access for links"""
-
-    RESTRICTED = (
-        "restricted",
-        _("Restricted"),
-    )  # Only users with a specific access can read/edit the document
-    AUTHENTICATED = (
-        "authenticated",
-        _("Authenticated"),
-    )  # Any authenticated user can access the document
-    PUBLIC = "public", _("Public")  # Even anonymous users can access the document
-
-    @classmethod
-    def get_select_options(cls, ancestors_links):
-        """
-        Determines the valid select options for link reach and link role depending on the
-        list of ancestors' link reach/role.
-        Args:
-            ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
-                             representing the reach and role of ancestors links.
-        Returns:
-            Dictionary mapping possible reach levels to their corresponding possible roles.
-        """
-        # If no ancestors, return all options
-        if not ancestors_links:
-            return {
-                reach: LinkRoleChoices.values if reach != cls.RESTRICTED else None
-                for reach in cls.values
-            }
-
-        # Initialize result with all possible reaches and role options as sets
-        result = {
-            reach: set(LinkRoleChoices.values) if reach != cls.RESTRICTED else None
-            for reach in cls.values
-        }
-
-        # Group roles by reach level
-        reach_roles = defaultdict(set)
-        for link in ancestors_links:
-            reach_roles[link["link_reach"]].add(link["link_role"])
-
-        # Rule 1: public/editor → override everything
-        if LinkRoleChoices.EDITOR in reach_roles.get(cls.PUBLIC, set()):
-            return {cls.PUBLIC: [LinkRoleChoices.EDITOR]}
-
-        # Rule 2: authenticated/editor
-        if LinkRoleChoices.EDITOR in reach_roles.get(cls.AUTHENTICATED, set()):
-            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
-            result.pop(cls.RESTRICTED, None)
-
-        # Rule 3: public/reader
-        if LinkRoleChoices.READER in reach_roles.get(cls.PUBLIC, set()):
-            result.pop(cls.AUTHENTICATED, None)
-            result.pop(cls.RESTRICTED, None)
-
-        # Rule 4: authenticated/reader
-        if LinkRoleChoices.READER in reach_roles.get(cls.AUTHENTICATED, set()):
-            result.pop(cls.RESTRICTED, None)
-
-        # Clean up: remove empty entries and convert sets to ordered lists
-        cleaned = {}
-        for reach in cls.values:
-            if reach in result:
-                if result[reach]:
-                    cleaned[reach] = [
-                        r for r in LinkRoleChoices.values if r in result[reach]
-                    ]
-                else:
-                    # Could be [] or None (for RESTRICTED reach)
-                    cleaned[reach] = result[reach]
-
-        return cleaned
 
 
 class DuplicateEmailError(Exception):
