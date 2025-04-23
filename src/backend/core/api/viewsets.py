@@ -30,7 +30,7 @@ from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import UserRateThrottle
 
-from core import authentication, enums, models
+from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 from core.utils import extract_attachments, filter_descendants
@@ -1457,12 +1457,12 @@ class DocumentAccessViewSet(
             document__in=ancestors.filter(depth__gte=highest_readable.depth)
         )
 
-        is_privileged = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        is_privileged = bool(roles.intersection(set(choices.PRIVILEGED_ROLES)))
         if is_privileged:
             serializer_class = serializers.DocumentAccessSerializer
         else:
             # Return only the document's privileged accesses
-            queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+            queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
             serializer_class = serializers.DocumentAccessLightSerializer
 
         queryset = queryset.distinct()
@@ -1704,11 +1704,11 @@ class InvitationViewset(
                 queryset.filter(
                     db.Q(
                         document__accesses__user=user,
-                        document__accesses__role__in=models.PRIVILEGED_ROLES,
+                        document__accesses__role__in=choices.PRIVILEGED_ROLES,
                     )
                     | db.Q(
                         document__accesses__team__in=teams,
-                        document__accesses__role__in=models.PRIVILEGED_ROLES,
+                        document__accesses__role__in=choices.PRIVILEGED_ROLES,
                     ),
                 )
                 # Abilities are computed based on logged-in user's role and

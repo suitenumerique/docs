@@ -8,7 +8,7 @@ from uuid import uuid4
 import pytest
 from rest_framework.test import APIClient
 
-from core import factories, models
+from core import choices, factories, models
 from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
 from core.tests.test_services_collaboration_services import (  # pylint: disable=unused-import
@@ -70,7 +70,8 @@ def test_api_document_accesses_list_unexisting_document():
 
 @pytest.mark.parametrize("via", VIA)
 @pytest.mark.parametrize(
-    "role", [role for role in models.RoleChoices if role not in models.PRIVILEGED_ROLES]
+    "role",
+    [role for role in choices.RoleChoices if role not in choices.PRIVILEGED_ROLES],
 )
 def test_api_document_accesses_list_authenticated_related_non_privileged(
     via, role, mock_user_teams
@@ -131,7 +132,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
     # Make sure only privileged roles are returned
     accesses = [grand_parent_access, parent_access, document_access, access1, access2]
     privileged_accesses = [
-        acc for acc in accesses if acc.role in models.PRIVILEGED_ROLES
+        acc for acc in accesses if acc.role in choices.PRIVILEGED_ROLES
     ]
     assert len(content) == len(privileged_accesses)
 
@@ -159,7 +160,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
 
 @pytest.mark.parametrize("via", VIA)
 @pytest.mark.parametrize(
-    "role", [role for role in models.RoleChoices if role in models.PRIVILEGED_ROLES]
+    "role", [role for role in choices.RoleChoices if role in choices.PRIVILEGED_ROLES]
 )
 def test_api_document_accesses_list_authenticated_related_privileged(
     via, role, mock_user_teams
@@ -335,7 +336,7 @@ def test_api_document_accesses_retrieve_authenticated_related(
         f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
     )
 
-    if not role in models.PRIVILEGED_ROLES:
+    if not role in choices.PRIVILEGED_ROLES:
         assert response.status_code == 403
     else:
         access_user = serializers.UserSerializer(instance=access.user).data
