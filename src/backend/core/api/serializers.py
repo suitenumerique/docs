@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 import magic
 from rest_framework import exceptions, serializers
 
-from core import enums, models, utils
+from core import choices, enums, models, utils
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
@@ -97,7 +97,7 @@ class BaseAccessSerializer(serializers.ModelSerializer):
 
             if not self.Meta.model.objects.filter(  # pylint: disable=no-member
                 Q(user=user) | Q(team__in=user.teams),
-                role__in=models.PRIVILEGED_ROLES,
+                role__in=choices.PRIVILEGED_ROLES,
                 **{self.Meta.resource_field_name: resource_id},  # pylint: disable=no-member
             ).exists():
                 raise exceptions.PermissionDenied(
