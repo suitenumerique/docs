@@ -39,7 +39,6 @@ export const DocSubPageItem = (props: Props) => {
   const { spacingsTokens } = useCunninghamTheme();
   const [isHover, setIsHover] = useState(false);
 
-  const spacing = spacingsTokens();
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
 
@@ -115,7 +114,7 @@ export const DocSubPageItem = (props: Props) => {
           data-testid={`doc-sub-page-item-${props.node.data.value.id}`}
           $width="100%"
           $direction="row"
-          $gap={spacing['xs']}
+          $gap={spacingsTokens['xs']}
           role="button"
           tabIndex={0}
           $align="center"

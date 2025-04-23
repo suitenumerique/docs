@@ -5,6 +5,7 @@ export interface Access {
   role: Role;
   team: string;
   user: User;
+  document_id: string;
   abilities: {
     destroy: boolean;
     partial_update: boolean;
@@ -23,8 +24,8 @@ export enum Role {
 
 export enum LinkReach {
   RESTRICTED = 'restricted',
-  PUBLIC = 'public',
   AUTHENTICATED = 'authenticated',
+  PUBLIC = 'public',
 }
 
 export enum LinkRole {
@@ -48,8 +49,13 @@ export interface Doc {
   link_role: LinkRole;
   nb_accesses_direct: number;
   nb_accesses_ancestors: number;
+  computed_link_reach: LinkReach;
+  computed_link_role?: LinkRole;
+  ancestors_link_reach: LinkReach;
+  ancestors_link_role?: LinkRole;
   numchild: number;
   updated_at: string;
+  user_role: Role;
   user_roles: Role[];
   abilities: {
     accesses_manage: boolean;
@@ -73,7 +79,14 @@ export interface Doc {
     versions_destroy: boolean;
     versions_list: boolean;
     versions_retrieve: boolean;
+    link_select_options: LinkSelectOption;
   };
+}
+
+export interface LinkSelectOption {
+  public?: LinkRole[];
+  authenticated?: LinkRole[];
+  restricted?: LinkRole[];
 }
 
 export enum DocDefaultFilter {

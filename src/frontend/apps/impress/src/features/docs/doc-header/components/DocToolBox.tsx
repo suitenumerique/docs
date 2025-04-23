@@ -193,7 +193,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                 }}
                 size={isSmallMobile ? 'small' : 'medium'}
                 style={{
-                  color: colors['primary-800'],
+                  color: colorsTokens['primary-800'],
                 }}
               >
                 {t('Share')}
