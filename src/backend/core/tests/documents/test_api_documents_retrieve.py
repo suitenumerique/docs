@@ -1,6 +1,7 @@
 """
 Tests for Documents API endpoint in impress's core app: retrieve
 """
+# pylint: disable=too-many-lines
 
 import random
 from datetime import timedelta
@@ -92,6 +93,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
 
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    links_definitions = document.get_ancestors_links_definitions(links)
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -115,7 +117,9 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
-            "link_select_options": models.LinkReachChoices.get_select_options(links),
+            "link_select_options": models.LinkReachChoices.get_select_options(
+                links_definitions
+            ),
             "media_auth": True,
             "media_check": True,
             "move": False,
@@ -269,6 +273,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
 
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    links_definitions = document.get_ancestors_links_definitions(links)
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -291,7 +296,9 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
-            "link_select_options": models.LinkReachChoices.get_select_options(links),
+            "link_select_options": models.LinkReachChoices.get_select_options(
+                links_definitions
+            ),
             "media_auth": True,
             "media_check": True,
             "move": False,
@@ -454,6 +461,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
     )
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    links_definitions = document.get_ancestors_links_definitions(links)
     ancestors_roles = list({grand_parent.link_role, parent.link_role})
     assert response.json() == {
         "id": str(document.id),
@@ -474,7 +482,9 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "favorite": True,
             "invite_owner": access.role == "owner",
             "link_configuration": access.role in ["administrator", "owner"],
-            "link_select_options": models.LinkReachChoices.get_select_options(links),
+            "link_select_options": models.LinkReachChoices.get_select_options(
+                links_definitions
+            ),
             "media_auth": True,
             "media_check": True,
             "move": access.role in ["administrator", "owner"],

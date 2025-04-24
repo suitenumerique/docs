@@ -61,63 +61,52 @@ class LinkReachChoices(PriorityTextChoices):
     )  # Any authenticated user can access the document
     PUBLIC = "public", _("Public")  # Even anonymous users can access the document
 
+
     @classmethod
-    def get_select_options(cls, ancestors_links):
+    def get_select_options(cls, link_reach, link_role):
         """
         Determines the valid select options for link reach and link role depending on the
-        list of ancestors' link reach/role.
-        Args:
-            ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
-                             representing the reach and role of ancestors links.
+        list of ancestors' link reach/role definitions.
         Returns:
             Dictionary mapping possible reach levels to their corresponding possible roles.
         """
         # If no ancestors, return all options
-        if not ancestors_links:
+        if not link_reach:
             return {
                 reach: LinkRoleChoices.values if reach != cls.RESTRICTED else None
                 for reach in cls.values
             }
 
-        # Initialize result with all possible reaches and role options as sets
+        # Initialize the result for all reaches with possible roles
         result = {
             reach: set(LinkRoleChoices.values) if reach != cls.RESTRICTED else None
             for reach in cls.values
         }
 
-        # Group roles by reach level
-        reach_roles = defaultdict(set)
-        for link in ancestors_links:
-            reach_roles[link["link_reach"]].add(link["link_role"])
+        # Handle special rules directly with early returns for efficiency
 
-        # Rule 1: public/editor → override everything
-        if LinkRoleChoices.EDITOR in reach_roles.get(cls.PUBLIC, set()):
-            return {cls.PUBLIC: [LinkRoleChoices.EDITOR]}
+        if link_role == LinkRoleChoices.EDITOR:
+            # Rule 1: public/editor → override everything
+            if link_reach == cls.PUBLIC:
+                return {cls.PUBLIC: [LinkRoleChoices.EDITOR]}
 
-        # Rule 2: authenticated/editor
-        if LinkRoleChoices.EDITOR in reach_roles.get(cls.AUTHENTICATED, set()):
-            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
-            result.pop(cls.RESTRICTED, None)
+            # Rule 2: authenticated/editor
+            if link_reach == cls.AUTHENTICATED:
+                result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
+                result.pop(cls.RESTRICTED, None)
 
-        # Rule 3: public/reader
-        if LinkRoleChoices.READER in reach_roles.get(cls.PUBLIC, set()):
-            result.pop(cls.AUTHENTICATED, None)
-            result.pop(cls.RESTRICTED, None)
+        if link_role == LinkRoleChoices.READER:
+            # Rule 3: public/reader
+            if link_reach == cls.PUBLIC:
+                result.pop(cls.AUTHENTICATED, None)
+                result.pop(cls.RESTRICTED, None)
 
-        # Rule 4: authenticated/reader
-        if LinkRoleChoices.READER in reach_roles.get(cls.AUTHENTICATED, set()):
-            result.pop(cls.RESTRICTED, None)
+            # Rule 4: authenticated/reader
+            if link_reach == cls.AUTHENTICATED:
+                result.pop(cls.RESTRICTED, None)
 
-        # Clean up: remove empty entries and convert sets to ordered lists
-        cleaned = {}
-        for reach in cls.values:
-            if reach in result:
-                if result[reach]:
-                    cleaned[reach] = [
-                        r for r in LinkRoleChoices.values if r in result[reach]
-                    ]
-                else:
-                    # Could be [] or None (for RESTRICTED reach)
-                    cleaned[reach] = result[reach]
-
-        return cleaned
+        # Convert sets to ordered lists where applicable
+        return {
+            reach: sorted(roles, key=LinkRoleChoices.get_priority) if roles else roles
+            for reach, roles in result.items()
+        }

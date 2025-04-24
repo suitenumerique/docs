@@ -818,7 +818,9 @@ class Document(MP_Node, BaseModel):
             "ancestors_links_definitions": {
                 k: list(v) for k, v in ancestors_links_definitions.items()
             },
-            "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
+            "link_select_options": LinkReachChoices.get_select_options(
+                ancestors_links_definitions
+            ),
             "tree": can_get,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,
