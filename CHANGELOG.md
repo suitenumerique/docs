@@ -56,7 +56,7 @@ and this project adheres to
 
 ## Added
 
-- ✨(backend) include ancestors accesses on document accesses list view # 846
+- ✨(backend) include ancestors accesses on document accesses list view #846
 - ✨(backend) add ancestors links definitions to document abilities #846
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
@@ -69,21 +69,19 @@ and this project adheres to
 
 ## Changed
 
+- ♻️(backend) simplify roles by ranking them and return only the max role #846
 - ⚡️(frontend) reduce unblocking time for config #867
 - ♻️(frontend) bind UI with ability access #900
 - ♻️(frontend) use built-in Quote block #908
 
 ## Fixed
 
+- 🐛(backend) fix link definition select options linked to ancestors #846
 - 🐛(nginx) fix 404 when accessing a doc #866
 - 🔒️(drf) disable browsable HTML API renderer #919
 - 🔒(frontend) enhance file download security #889
 - 🐛(backend) race condition create doc #633
 - 🐛(frontend) fix breaklines in custom blocks #908
-
-## Fixed
-
-- 🐛(backend) fix link definition select options linked to ancestors #846
 
 ## [3.1.0] - 2025-04-07
 

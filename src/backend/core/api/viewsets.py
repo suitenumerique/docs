@@ -440,14 +440,15 @@ class DocumentViewSet(
         queryset = queryset.annotate_user_roles(user)
         return queryset
 
-    def get_response_for_queryset(self, queryset):
+    def get_response_for_queryset(self, queryset, context=None):
         """Return paginated response for the queryset if requested."""
+        context = context or self.get_serializer_context()
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, many=True, context=context)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True, context=context)
         return drf.response.Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -457,9 +458,6 @@ class DocumentViewSet(
         This method applies filtering based on request parameters using `ListDocumentFilter`.
         It performs early filtering on model fields, annotates user roles, and removes
         descendant documents to keep only the highest ancestors readable by the current user.
-
-        Additional annotations (e.g., `is_highest_ancestor_for_user`, favorite status) are
-        applied before ordering and returning the response.
         """
         user = self.request.user
 
@@ -486,12 +484,6 @@ class DocumentViewSet(
             skip_sorting=True,
         )
         queryset = queryset.filter(path__in=root_paths)
-
-        # Annotate the queryset with an attribute marking instances as highest ancestor
-        # in order to save some time while computing abilities on the instance
-        queryset = queryset.annotate(
-            is_highest_ancestor_for_user=db.Value(True, output_field=db.BooleanField())
-        )
 
         # Annotate favorite status and filter if applicable as late as possible
         queryset = queryset.annotate_is_favorite(user)
@@ -747,7 +739,17 @@ class DocumentViewSet(
 
         queryset = filterset.qs
 
-        return self.get_response_for_queryset(queryset)
+        # Pass ancestors' links paths mapping to the serializer as a context variable
+        # in order to allow saving time while computing abilities on the instance
+        paths_links_mapping = document.compute_ancestors_links_paths_mapping()
+
+        return self.get_response_for_queryset(
+            queryset,
+            context={
+                "request": request,
+                "paths_links_mapping": paths_links_mapping,
+            },
+        )
 
     @drf.decorators.action(
         detail=True,
@@ -806,13 +808,6 @@ class DocumentViewSet(
         ancestors_links = []
         children_clause = db.Q()
         for ancestor in ancestors:
-            if ancestor.depth < highest_readable.depth:
-                continue
-
-            children_clause |= db.Q(
-                path__startswith=ancestor.path, depth=ancestor.depth + 1
-            )
-
             # Compute cache for ancestors links to avoid many queries while computing
             # abilities for his documents in the tree!
             ancestors_links.append(
@@ -820,25 +815,21 @@ class DocumentViewSet(
             )
             paths_links_mapping[ancestor.path] = ancestors_links.copy()
 
+            if ancestor.depth < highest_readable.depth:
+                continue
+
+            children_clause |= db.Q(
+                path__startswith=ancestor.path, depth=ancestor.depth + 1
+            )
+
         children = self.queryset.filter(children_clause, deleted_at__isnull=True)
 
         queryset = ancestors.filter(depth__gte=highest_readable.depth) | children
         queryset = queryset.order_by("path")
-        # Annotate if the current document is the highest ancestor for the user
-        queryset = queryset.annotate(
-            is_highest_ancestor_for_user=db.Case(
-                db.When(
-                    path=db.Value(highest_readable.path),
-                    then=db.Value(True),
-                ),
-                default=db.Value(False),
-                output_field=db.BooleanField(),
-            )
-        )
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_is_favorite(user)
 
-        # Pass ancestors' links definitions to the serializer as a context variable
+        # Pass ancestors' links paths mapping to the serializer as a context variable
         # in order to allow saving time while computing abilities on the instance
         serializer = self.get_serializer(
             queryset,
@@ -1438,8 +1429,8 @@ class DocumentAccessViewSet(
         except models.Document.DoesNotExist:
             return drf.response.Response([])
 
-        roles = set(document.get_roles(user))
-        if not roles:
+        role = document.get_role(user)
+        if role is None:
             return drf.response.Response([])
 
         ancestors = (
@@ -1457,7 +1448,7 @@ class DocumentAccessViewSet(
             document__in=ancestors.filter(depth__gte=highest_readable.depth)
         )
 
-        is_privileged = bool(roles.intersection(set(choices.PRIVILEGED_ROLES)))
+        is_privileged = role in choices.PRIVILEGED_ROLES
         if is_privileged:
             serializer_class = serializers.DocumentAccessSerializer
         else:
