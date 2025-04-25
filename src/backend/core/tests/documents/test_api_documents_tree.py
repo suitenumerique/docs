@@ -57,7 +57,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                         "updated_at": child.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [],
+                        "user_role": None,
                     },
                 ],
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -74,7 +74,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "path": document.path,
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
             {
                 "abilities": sibling1.get_abilities(AnonymousUser()),
@@ -93,7 +93,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "path": sibling1.path,
                 "title": sibling1.title,
                 "updated_at": sibling1.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
             {
                 "abilities": sibling2.get_abilities(AnonymousUser()),
@@ -112,7 +112,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "path": sibling2.path,
                 "title": sibling2.title,
                 "updated_at": sibling2.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
         ],
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -129,7 +129,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
         "path": parent.path,
         "title": parent.title,
         "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
 
 
@@ -163,7 +163,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
     response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/tree/")
 
     assert response.status_code == 200
-    assert response.json() == {
+    expected_tree = {
         "abilities": grand_parent.get_abilities(AnonymousUser()),
         "children": [
             {
@@ -193,7 +193,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                                 "updated_at": child.updated_at.isoformat().replace(
                                     "+00:00", "Z"
                                 ),
-                                "user_roles": [],
+                                "user_role": None,
                             },
                         ],
                         "created_at": document.created_at.isoformat().replace(
@@ -214,7 +214,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                         "updated_at": document.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [],
+                        "user_role": None,
                     },
                     {
                         "abilities": document_sibling.get_abilities(AnonymousUser()),
@@ -237,7 +237,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                         "updated_at": document_sibling.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [],
+                        "user_role": None,
                     },
                 ],
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -254,7 +254,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                 "path": parent.path,
                 "title": parent.title,
                 "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
             {
                 "abilities": parent_sibling.get_abilities(AnonymousUser()),
@@ -277,7 +277,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                 "updated_at": parent_sibling.updated_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
-                "user_roles": [],
+                "user_role": None,
             },
         ],
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -294,8 +294,9 @@ def test_api_documents_tree_list_anonymous_public_parent():
         "path": grand_parent.path,
         "title": grand_parent.title,
         "updated_at": grand_parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
+    assert response.json() == expected_tree
 
 
 @pytest.mark.parametrize("reach", ["restricted", "authenticated"])
@@ -366,7 +367,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                         "updated_at": child.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [],
+                        "user_role": None,
                     },
                 ],
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -383,7 +384,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                 "path": document.path,
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
             {
                 "abilities": sibling.get_abilities(user),
@@ -402,7 +403,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                 "path": sibling.path,
                 "title": sibling.title,
                 "updated_at": sibling.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
         ],
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -419,7 +420,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
         "path": parent.path,
         "title": parent.title,
         "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
 
 
@@ -488,7 +489,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                                 "updated_at": child.updated_at.isoformat().replace(
                                     "+00:00", "Z"
                                 ),
-                                "user_roles": [],
+                                "user_role": None,
                             },
                         ],
                         "created_at": document.created_at.isoformat().replace(
@@ -509,7 +510,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                         "updated_at": document.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [],
+                        "user_role": None,
                     },
                     {
                         "abilities": document_sibling.get_abilities(user),
@@ -532,7 +533,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                         "updated_at": document_sibling.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [],
+                        "user_role": None,
                     },
                 ],
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -549,7 +550,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                 "path": parent.path,
                 "title": parent.title,
                 "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [],
+                "user_role": None,
             },
             {
                 "abilities": parent_sibling.get_abilities(user),
@@ -572,7 +573,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                 "updated_at": parent_sibling.updated_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
-                "user_roles": [],
+                "user_role": None,
             },
         ],
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -589,7 +590,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
         "path": grand_parent.path,
         "title": grand_parent.title,
         "updated_at": grand_parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
 
 
@@ -664,7 +665,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
                         "updated_at": child.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [access.role],
+                        "user_role": access.role,
                     },
                 ],
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -681,7 +682,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
                 "path": document.path,
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [access.role],
+                "user_role": access.role,
             },
             {
                 "abilities": sibling.get_abilities(user),
@@ -700,7 +701,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
                 "path": sibling.path,
                 "title": sibling.title,
                 "updated_at": sibling.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [access.role],
+                "user_role": access.role,
             },
         ],
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -717,7 +718,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
         "path": parent.path,
         "title": parent.title,
         "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [access.role],
+        "user_role": access.role,
     }
 
 
@@ -790,7 +791,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                                 "updated_at": child.updated_at.isoformat().replace(
                                     "+00:00", "Z"
                                 ),
-                                "user_roles": [access.role],
+                                "user_role": access.role,
                             },
                         ],
                         "created_at": document.created_at.isoformat().replace(
@@ -811,7 +812,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                         "updated_at": document.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [access.role],
+                        "user_role": access.role,
                     },
                     {
                         "abilities": document_sibling.get_abilities(user),
@@ -834,7 +835,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                         "updated_at": document_sibling.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [access.role],
+                        "user_role": access.role,
                     },
                 ],
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -851,7 +852,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                 "path": parent.path,
                 "title": parent.title,
                 "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [access.role],
+                "user_role": access.role,
             },
             {
                 "abilities": parent_sibling.get_abilities(user),
@@ -874,7 +875,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                 "updated_at": parent_sibling.updated_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
-                "user_roles": [access.role],
+                "user_role": access.role,
             },
         ],
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -891,7 +892,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
         "path": grand_parent.path,
         "title": grand_parent.title,
         "updated_at": grand_parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [access.role],
+        "user_role": access.role,
     }
 
 
@@ -974,7 +975,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                         "updated_at": child.updated_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
-                        "user_roles": [access.role],
+                        "user_role": access.role,
                     },
                 ],
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -991,7 +992,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                 "path": document.path,
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [access.role],
+                "user_role": access.role,
             },
             {
                 "abilities": sibling.get_abilities(user),
@@ -1010,7 +1011,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                 "path": sibling.path,
                 "title": sibling.title,
                 "updated_at": sibling.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": [access.role],
+                "user_role": access.role,
             },
         ],
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
@@ -1027,5 +1028,5 @@ def test_api_documents_tree_list_authenticated_related_team_members(
         "path": parent.path,
         "title": parent.title,
         "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [access.role],
+        "user_role": access.role,
     }

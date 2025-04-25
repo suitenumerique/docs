@@ -98,7 +98,9 @@ def test_api_documents_children_create_authenticated_success(reach, role, depth)
         if i == 0:
             document = factories.DocumentFactory(link_reach=reach, link_role=role)
         else:
-            document = factories.DocumentFactory(parent=document, link_role="reader")
+            document = factories.DocumentFactory(
+                parent=document, link_reach="restricted"
+            )
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/children/",
