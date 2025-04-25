@@ -171,7 +171,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     is_favorite = serializers.BooleanField(read_only=True)
     nb_accesses_ancestors = serializers.IntegerField(read_only=True)
     nb_accesses_direct = serializers.IntegerField(read_only=True)
-    user_roles = serializers.SerializerMethodField(read_only=True)
+    user_role = serializers.SerializerMethodField(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -192,7 +192,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "path",
             "title",
             "updated_at",
-            "user_roles",
+            "user_role",
         ]
         read_only_fields = [
             "id",
@@ -209,34 +209,36 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "numchild",
             "path",
             "updated_at",
-            "user_roles",
+            "user_role",
         ]
 
-    def get_abilities(self, document) -> dict:
+    def to_representation(self, instance):
+        """Precompute once per instance"""
+        paths_links_mapping = self.context.get("paths_links_mapping")
+
+        if paths_links_mapping is not None:
+            links = paths_links_mapping.get(instance.path[: -instance.steplen], [])
+            instance.ancestors_link_definition = choices.get_equivalent_link_definition(
+                links
+            )
+
+        return super().to_representation(instance)
+
+    def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
         request = self.context.get("request")
+        if not request:
+            return {}
 
-        if request:
-            paths_links_mapping = self.context.get("paths_links_mapping", None)
-            # Retrieve ancestor links from paths_links_mapping (if provided)
-            ancestors_links = (
-                paths_links_mapping.get(document.path[: -document.steplen])
-                if paths_links_mapping
-                else None
-            )
-            return document.get_abilities(request.user, ancestors_links=ancestors_links)
+        return instance.get_abilities(request.user)
 
-        return {}
-
-    def get_user_roles(self, document):
+    def get_user_role(self, instance):
         """
         Return roles of the logged-in user for the current document,
         taking into account ancestors.
         """
         request = self.context.get("request")
-        if request:
-            return document.get_roles(request.user)
-        return []
+        return instance.get_role(request.user) if request else None
 
 
 class DocumentSerializer(ListDocumentSerializer):
@@ -263,7 +265,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "path",
             "title",
             "updated_at",
-            "user_roles",
+            "user_role",
         ]
         read_only_fields = [
             "id",
@@ -279,7 +281,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "numchild",
             "path",
             "updated_at",
-            "user_roles",
+            "user_role",
         ]
 
     def get_fields(self):
