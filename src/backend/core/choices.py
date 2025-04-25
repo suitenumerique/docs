@@ -11,10 +11,11 @@ class PriorityTextChoices(TextChoices):
     """
 
     @classmethod
-    def get_priority(cls, value):
-        """Returns the priority of the given value based on its order in the class."""
+    def get_priority(cls, role):
+        """Returns the priority of the given role based on its order in the class."""
+
         members = list(cls.__members__.values())
-        return members.index(value) + 1 if value in members else 0
+        return members.index(role) + 1 if role in members else 0
 
     @classmethod
     def max(cls, *roles):
@@ -22,7 +23,6 @@ class PriorityTextChoices(TextChoices):
         Return the highest-priority role among the given roles, using get_priority().
         If no valid roles are provided, returns None.
         """
-
         valid_roles = [role for role in roles if cls.get_priority(role) is not None]
         if not valid_roles:
             return None
@@ -60,7 +60,6 @@ class LinkReachChoices(PriorityTextChoices):
         _("Authenticated"),
     )  # Any authenticated user can access the document
     PUBLIC = "public", _("Public")  # Even anonymous users can access the document
-
 
     @classmethod
     def get_select_options(cls, link_reach, link_role):
@@ -110,3 +109,34 @@ class LinkReachChoices(PriorityTextChoices):
             reach: sorted(roles, key=LinkRoleChoices.get_priority) if roles else roles
             for reach, roles in result.items()
         }
+
+
+def get_equivalent_link_definition(ancestors_links):
+    """
+    Return the (reach, role) pair with:
+    1. Highest reach
+    2. Highest role among links having that reach
+    """
+    if not ancestors_links:
+        return {"link_reach": None, "link_role": None}
+
+    # 1) Find the highest reach
+    max_reach = max(
+        ancestors_links,
+        key=lambda link: LinkReachChoices.get_priority(link["link_reach"]),
+    )["link_reach"]
+
+    # 2) Among those, find the highest role (ignore role if RESTRICTED)
+    if max_reach == LinkReachChoices.RESTRICTED:
+        max_role = None
+    else:
+        max_role = max(
+            (
+                link["link_role"]
+                for link in ancestors_links
+                if link["link_reach"] == max_reach
+            ),
+            key=LinkRoleChoices.get_priority,
+        )
+
+    return {"link_reach": max_reach, "link_role": max_role}
