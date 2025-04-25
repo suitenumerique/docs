@@ -74,7 +74,7 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "path": document.path,
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": ["reader"],
+                "user_role": "reader",
             }
         ],
     }
