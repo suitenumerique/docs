@@ -79,11 +79,14 @@ test.describe('Config', () => {
 
   test('it checks that collaboration server is configured from config endpoint', async ({
     page,
-    browserName,
   }) => {
     await page.goto('/');
 
-    void createDoc(page, 'doc-collaboration', browserName, 1);
+    void page
+      .getByRole('button', {
+        name: 'New doc',
+      })
+      .click();
 
     const webSocket = await page.waitForEvent('websocket', (webSocket) => {
       return webSocket.url().includes('ws://localhost:4444/collaboration/ws/');

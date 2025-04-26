@@ -18,8 +18,7 @@ export const getHeaderHeight = (isSmallMobile: boolean) =>
 export const HomeHeader = () => {
   const { t } = useTranslation();
   const { themeTokens, spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
-  const logo = themeTokens().logo;
+  const logo = themeTokens.logo;
   const { isSmallMobile } = useResponsiveStore();
 
   return (
@@ -57,7 +56,7 @@ export const HomeHeader = () => {
         )}
         <Box
           $align="center"
-          $gap={spacings['3xs']}
+          $gap={spacingsTokens['3xs']}
           $direction="row"
           $position="relative"
           $height="fit-content"

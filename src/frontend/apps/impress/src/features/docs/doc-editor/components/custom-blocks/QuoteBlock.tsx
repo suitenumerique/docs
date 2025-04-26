@@ -27,7 +27,7 @@ export const QuoteBlock = createReactBlockSpec(
           $margin="0 0 1rem 0"
           $padding="0.5rem 1rem"
           style={{
-            borderLeft: `4px solid ${colorsTokens()['greyscale-300']}`,
+            borderLeft: `4px solid ${colorsTokens['greyscale-300']}`,
             fontStyle: 'italic',
             flexGrow: 1,
           }}

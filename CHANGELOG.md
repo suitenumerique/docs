@@ -13,6 +13,10 @@ and this project adheres to
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 
+## Changed
+
+⚡️(frontend) reduce unblocking time for config #867
+
 ## Fixed
 
 - 🐛(helm) charts generate invalid YAML for collaboration API / WS #890
@@ -144,6 +148,10 @@ and this project adheres to
 - ♻️(frontend) improve table pdf rendering
 - 🐛(email) invitation emails in receivers language
 
+
+## Fixed
+
+- 🐛(backend) race condition create doc #633
 
 ## [2.2.0] - 2025-02-10
 

@@ -78,6 +78,7 @@ export const createDoc = async (
     });
 
     const input = page.getByLabel('doc title input');
+    await expect(input).toBeVisible();
     await expect(input).toHaveText('');
     await input.click();
 

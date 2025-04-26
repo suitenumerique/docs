@@ -22,9 +22,9 @@ export const DividerBlock = createReactBlockSpec(
         <Box
           as="hr"
           $width="100%"
-          $background={colorsTokens()['greyscale-300']}
+          $background={colorsTokens['greyscale-300']}
           $margin="1rem 0"
-          $css={`border: 1px solid ${colorsTokens()['greyscale-300']};`}
+          $css={`border: 1px solid ${colorsTokens['greyscale-300']};`}
         />
       );
     },

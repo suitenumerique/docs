@@ -10,7 +10,6 @@ export const LeftPanelFavorites = () => {
   const { t } = useTranslation();
 
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
 
   const docs = useInfiniteDocs({
     page: 1,
@@ -29,7 +28,7 @@ export const LeftPanelFavorites = () => {
       <Box
         $justify="center"
         $padding={{ horizontal: 'sm', top: 'sm' }}
-        $gap={spacing['2xs']}
+        $gap={spacingsTokens['2xs']}
         $height="100%"
         data-testid="left-panel-favorites"
       >
