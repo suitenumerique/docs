@@ -179,6 +179,8 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
             "created_at",
             "creator",
             "depth",
@@ -197,6 +199,8 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
             "created_at",
             "creator",
             "depth",
@@ -251,6 +255,8 @@ class DocumentSerializer(ListDocumentSerializer):
         fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
             "content",
             "created_at",
             "creator",
@@ -270,6 +276,8 @@ class DocumentSerializer(ListDocumentSerializer):
         read_only_fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
             "created_at",
             "creator",
             "depth",
