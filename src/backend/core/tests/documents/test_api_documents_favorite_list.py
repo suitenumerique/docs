@@ -59,6 +59,8 @@ def test_api_document_favorite_list_authenticated_with_favorite():
         "results": [
             {
                 "abilities": document.get_abilities(user),
+                "ancestors_link_reach": None,
+                "ancestors_link_role": None,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "content": document.content,
