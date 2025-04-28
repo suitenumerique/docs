@@ -43,6 +43,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                         "ancestors_link_reach": child.ancestors_link_reach,
                         "ancestors_link_role": child.ancestors_link_role,
                         "children": [],
+                        "computed_link_reach": child.computed_link_reach,
+                        "computed_link_role": child.computed_link_role,
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -66,6 +68,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 ],
                 "ancestors_link_reach": document.ancestors_link_reach,
                 "ancestors_link_role": document.ancestors_link_role,
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
@@ -87,6 +91,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "ancestors_link_reach": sibling1.ancestors_link_reach,
                 "ancestors_link_role": sibling1.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": sibling1.computed_link_reach,
+                "computed_link_role": sibling1.computed_link_role,
                 "created_at": sibling1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling1.creator.id),
                 "depth": 2,
@@ -108,6 +114,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "ancestors_link_reach": sibling2.ancestors_link_reach,
                 "ancestors_link_role": sibling2.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": sibling2.computed_link_reach,
+                "computed_link_role": sibling2.computed_link_role,
                 "created_at": sibling2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling2.creator.id),
                 "depth": 2,
@@ -125,6 +133,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "user_role": None,
             },
         ],
+        "computed_link_reach": parent.computed_link_reach,
+        "computed_link_role": parent.computed_link_role,
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
@@ -193,6 +203,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
                                 "ancestors_link_reach": child.ancestors_link_reach,
                                 "ancestors_link_role": child.ancestors_link_role,
                                 "children": [],
+                                "computed_link_reach": child.computed_link_reach,
+                                "computed_link_role": child.computed_link_role,
                                 "created_at": child.created_at.isoformat().replace(
                                     "+00:00", "Z"
                                 ),
@@ -214,6 +226,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
                                 "user_role": None,
                             },
                         ],
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
                         "created_at": document.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -236,9 +250,11 @@ def test_api_documents_tree_list_anonymous_public_parent():
                     },
                     {
                         "abilities": document_sibling.get_abilities(AnonymousUser()),
-                        "ancestors_link_reach": document.ancestors_link_reach,
-                        "ancestors_link_role": document.ancestors_link_role,
+                        "ancestors_link_reach": document_sibling.ancestors_link_reach,
+                        "ancestors_link_role": document_sibling.ancestors_link_role,
                         "children": [],
+                        "computed_link_reach": document_sibling.computed_link_reach,
+                        "computed_link_role": document_sibling.computed_link_role,
                         "created_at": document_sibling.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -260,6 +276,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
                         "user_role": None,
                     },
                 ],
+                "computed_link_reach": parent.computed_link_reach,
+                "computed_link_role": parent.computed_link_role,
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(parent.creator.id),
                 "depth": 3,
@@ -281,6 +299,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
                 "ancestors_link_reach": parent_sibling.ancestors_link_reach,
                 "ancestors_link_role": parent_sibling.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": parent_sibling.computed_link_reach,
+                "computed_link_role": parent_sibling.computed_link_role,
                 "created_at": parent_sibling.created_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
@@ -302,6 +322,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
                 "user_role": None,
             },
         ],
+        "computed_link_reach": grand_parent.computed_link_reach,
+        "computed_link_role": grand_parent.computed_link_role,
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(grand_parent.creator.id),
         "depth": 2,
@@ -377,6 +399,8 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                         "ancestors_link_reach": child.ancestors_link_reach,
                         "ancestors_link_role": child.ancestors_link_role,
                         "children": [],
+                        "computed_link_reach": child.computed_link_reach,
+                        "computed_link_role": child.computed_link_role,
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -398,6 +422,8 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                         "user_role": None,
                     },
                 ],
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
@@ -419,6 +445,8 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                 "ancestors_link_reach": sibling.ancestors_link_reach,
                 "ancestors_link_role": sibling.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": sibling.computed_link_reach,
+                "computed_link_role": sibling.computed_link_role,
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
                 "depth": 2,
@@ -436,6 +464,8 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                 "user_role": None,
             },
         ],
+        "computed_link_reach": parent.computed_link_reach,
+        "computed_link_role": parent.computed_link_role,
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
@@ -509,6 +539,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                                 "ancestors_link_reach": child.ancestors_link_reach,
                                 "ancestors_link_role": child.ancestors_link_role,
                                 "children": [],
+                                "computed_link_reach": child.computed_link_reach,
+                                "computed_link_role": child.computed_link_role,
                                 "created_at": child.created_at.isoformat().replace(
                                     "+00:00", "Z"
                                 ),
@@ -530,6 +562,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                                 "user_role": None,
                             },
                         ],
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
                         "created_at": document.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -555,6 +589,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                         "ancestors_link_reach": document_sibling.ancestors_link_reach,
                         "ancestors_link_role": document_sibling.ancestors_link_role,
                         "children": [],
+                        "computed_link_reach": document_sibling.computed_link_reach,
+                        "computed_link_role": document_sibling.computed_link_role,
                         "created_at": document_sibling.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -576,6 +612,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                         "user_role": None,
                     },
                 ],
+                "computed_link_reach": parent.computed_link_reach,
+                "computed_link_role": parent.computed_link_role,
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(parent.creator.id),
                 "depth": 3,
@@ -594,9 +632,11 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
             },
             {
                 "abilities": parent_sibling.get_abilities(user),
-                "ancestors_link_reach": parent.ancestors_link_reach,
-                "ancestors_link_role": parent.ancestors_link_role,
+                "ancestors_link_reach": parent_sibling.ancestors_link_reach,
+                "ancestors_link_role": parent_sibling.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": parent_sibling.computed_link_reach,
+                "computed_link_role": parent_sibling.computed_link_role,
                 "created_at": parent_sibling.created_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
@@ -618,6 +658,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                 "user_role": None,
             },
         ],
+        "computed_link_reach": grand_parent.computed_link_reach,
+        "computed_link_role": grand_parent.computed_link_role,
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(grand_parent.creator.id),
         "depth": 2,
@@ -695,6 +737,8 @@ def test_api_documents_tree_list_authenticated_related_direct():
                         "ancestors_link_reach": child.ancestors_link_reach,
                         "ancestors_link_role": child.ancestors_link_role,
                         "children": [],
+                        "computed_link_reach": child.computed_link_reach,
+                        "computed_link_role": child.computed_link_role,
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -716,6 +760,8 @@ def test_api_documents_tree_list_authenticated_related_direct():
                         "user_role": access.role,
                     },
                 ],
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
@@ -737,6 +783,8 @@ def test_api_documents_tree_list_authenticated_related_direct():
                 "ancestors_link_reach": sibling.ancestors_link_reach,
                 "ancestors_link_role": sibling.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": sibling.computed_link_reach,
+                "computed_link_role": sibling.computed_link_role,
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
                 "depth": 2,
@@ -754,6 +802,8 @@ def test_api_documents_tree_list_authenticated_related_direct():
                 "user_role": access.role,
             },
         ],
+        "computed_link_reach": parent.computed_link_reach,
+        "computed_link_role": parent.computed_link_role,
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
@@ -830,7 +880,9 @@ def test_api_documents_tree_list_authenticated_related_parent():
                                 "abilities": child.get_abilities(user),
                                 "ancestors_link_reach": child.ancestors_link_reach,
                                 "ancestors_link_role": child.ancestors_link_role,
+                                "computed_link_reach": child.computed_link_reach,
                                 "children": [],
+                                "computed_link_role": child.computed_link_role,
                                 "created_at": child.created_at.isoformat().replace(
                                     "+00:00", "Z"
                                 ),
@@ -852,6 +904,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
                                 "user_role": access.role,
                             },
                         ],
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
                         "created_at": document.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -877,6 +931,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
                         "ancestors_link_reach": document_sibling.ancestors_link_reach,
                         "ancestors_link_role": document_sibling.ancestors_link_role,
                         "children": [],
+                        "computed_link_reach": document_sibling.computed_link_reach,
+                        "computed_link_role": document_sibling.computed_link_role,
                         "created_at": document_sibling.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -898,6 +954,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
                         "user_role": access.role,
                     },
                 ],
+                "computed_link_reach": parent.computed_link_reach,
+                "computed_link_role": parent.computed_link_role,
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(parent.creator.id),
                 "depth": 3,
@@ -919,6 +977,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
                 "ancestors_link_reach": parent_sibling.ancestors_link_reach,
                 "ancestors_link_role": parent_sibling.ancestors_link_role,
                 "children": [],
+                "computed_link_reach": parent_sibling.computed_link_reach,
+                "computed_link_role": parent_sibling.computed_link_role,
                 "created_at": parent_sibling.created_at.isoformat().replace(
                     "+00:00", "Z"
                 ),
@@ -940,6 +1000,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
                 "user_role": access.role,
             },
         ],
+        "computed_link_reach": grand_parent.computed_link_reach,
+        "computed_link_role": grand_parent.computed_link_role,
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(grand_parent.creator.id),
         "depth": 2,
@@ -1025,6 +1087,8 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                         "ancestors_link_reach": "restricted",
                         "ancestors_link_role": None,
                         "children": [],
+                        "computed_link_reach": child.computed_link_reach,
+                        "computed_link_role": child.computed_link_role,
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
                         ),
@@ -1046,6 +1110,8 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                         "user_role": access.role,
                     },
                 ],
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
@@ -1067,6 +1133,8 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                 "ancestors_link_reach": "restricted",
                 "ancestors_link_role": None,
                 "children": [],
+                "computed_link_reach": sibling.computed_link_reach,
+                "computed_link_role": sibling.computed_link_role,
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
                 "depth": 2,
@@ -1084,6 +1152,8 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                 "user_role": access.role,
             },
         ],
+        "computed_link_reach": parent.computed_link_reach,
+        "computed_link_role": parent.computed_link_role,
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
