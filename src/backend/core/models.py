@@ -493,6 +493,7 @@ class Document(MP_Node, BaseModel):
         """Initialize cache property."""
         super().__init__(*args, **kwargs)
         self._ancestors_link_definition = None
+        self._computed_link_definition = None
 
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
@@ -717,6 +718,11 @@ class Document(MP_Node, BaseModel):
         return paths_links_mapping
 
     @property
+    def link_definition(self):
+        """Returns link reach/role as a definition in dictionary format."""
+        return {"link_reach": self.link_reach, "link_role": self.link_role}
+
+    @property
     def ancestors_link_definition(self):
         """Link definition equivalent to all document's ancestors."""
         if getattr(self, "_ancestors_link_definition", None) is None:
@@ -745,6 +751,28 @@ class Document(MP_Node, BaseModel):
     def ancestors_link_role(self):
         """Link role equivalent to all document's ancestors."""
         return self.ancestors_link_definition["link_role"]
+
+    @property
+    def computed_link_definition(self):
+        """
+        Link reach/role on the document, combining inherited ancestors' link
+        definitions and the document's own link definition.
+        """
+        if getattr(self, "_computed_link_definition", None) is None:
+            self._computed_link_definition = get_equivalent_link_definition(
+                [self.ancestors_link_definition, self.link_definition]
+            )
+        return self._computed_link_definition
+
+    @property
+    def computed_link_reach(self):
+        """Actual link reach on the document."""
+        return self.computed_link_definition["link_reach"]
+
+    @property
+    def computed_link_role(self):
+        """Actual link role on the document."""
+        return self.computed_link_definition["link_role"]
 
     def get_abilities(self, user):
         """
