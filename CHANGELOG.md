@@ -19,6 +19,7 @@ and this project adheres to
 - ✨(settings) Allow configuring PKCE for the SSO #886
 - 🌐(i18n) activate chinese and spanish languages #884
 - 🔧(backend) allow overwriting the data directory #893
+- ✨(backend) support `_FILE` environment variables for secrets #912 
 
 ## Changed
 
