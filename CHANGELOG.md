@@ -24,7 +24,7 @@ and this project adheres to
 - ✅(frontend) Improve tests coverage
 - ⬆️(docker) upgrade backend image to python 3.13 #973
 - ⬆️(docker) upgrade node images to alpine 3.21
-
+- ✨(backend) support `_FILE` environment variables for secrets #912
 
 ### Removed
 
