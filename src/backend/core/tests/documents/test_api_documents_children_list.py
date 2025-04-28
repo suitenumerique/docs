@@ -35,6 +35,8 @@ def test_api_documents_children_list_anonymous_public_standalone(
         "results": [
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": "public",
+                "ancestors_link_role": document.link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 2,
@@ -53,6 +55,8 @@ def test_api_documents_children_list_anonymous_public_standalone(
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": "public",
+                "ancestors_link_role": document.link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 2,
@@ -101,6 +105,8 @@ def test_api_documents_children_list_anonymous_public_parent(django_assert_num_q
         "results": [
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": child1.ancestors_link_reach,
+                "ancestors_link_role": child1.ancestors_link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 4,
@@ -119,6 +125,8 @@ def test_api_documents_children_list_anonymous_public_parent(django_assert_num_q
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": child2.ancestors_link_reach,
+                "ancestors_link_role": child2.ancestors_link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 4,
@@ -186,6 +194,8 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
         "results": [
             {
                 "abilities": child1.get_abilities(user),
+                "ancestors_link_reach": reach,
+                "ancestors_link_role": document.link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 2,
@@ -204,6 +214,8 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
             },
             {
                 "abilities": child2.get_abilities(user),
+                "ancestors_link_reach": reach,
+                "ancestors_link_role": document.link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 2,
@@ -257,6 +269,8 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
         "results": [
             {
                 "abilities": child1.get_abilities(user),
+                "ancestors_link_reach": child1.ancestors_link_reach,
+                "ancestors_link_role": child1.ancestors_link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 4,
@@ -275,6 +289,8 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
             },
             {
                 "abilities": child2.get_abilities(user),
+                "ancestors_link_reach": child2.ancestors_link_reach,
+                "ancestors_link_role": child2.ancestors_link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 4,
@@ -347,6 +363,7 @@ def test_api_documents_children_list_authenticated_related_direct(
         )
 
     assert response.status_code == 200
+    link_role = None if document.link_reach == "restricted" else document.link_role
     assert response.json() == {
         "count": 2,
         "next": None,
@@ -354,6 +371,8 @@ def test_api_documents_children_list_authenticated_related_direct(
         "results": [
             {
                 "abilities": child1.get_abilities(user),
+                "ancestors_link_reach": document.link_reach,
+                "ancestors_link_role": link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 2,
@@ -372,6 +391,8 @@ def test_api_documents_children_list_authenticated_related_direct(
             },
             {
                 "abilities": child2.get_abilities(user),
+                "ancestors_link_reach": document.link_reach,
+                "ancestors_link_role": link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 2,
@@ -428,6 +449,8 @@ def test_api_documents_children_list_authenticated_related_parent(
         "results": [
             {
                 "abilities": child1.get_abilities(user),
+                "ancestors_link_reach": "restricted",
+                "ancestors_link_role": None,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 4,
@@ -446,6 +469,8 @@ def test_api_documents_children_list_authenticated_related_parent(
             },
             {
                 "abilities": child2.get_abilities(user),
+                "ancestors_link_reach": "restricted",
+                "ancestors_link_role": None,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 4,
@@ -554,6 +579,8 @@ def test_api_documents_children_list_authenticated_related_team_members(
         "results": [
             {
                 "abilities": child1.get_abilities(user),
+                "ancestors_link_reach": "restricted",
+                "ancestors_link_role": None,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child1.creator.id),
                 "depth": 2,
@@ -572,6 +599,8 @@ def test_api_documents_children_list_authenticated_related_team_members(
             },
             {
                 "abilities": child2.get_abilities(user),
+                "ancestors_link_reach": "restricted",
+                "ancestors_link_role": None,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(child2.creator.id),
                 "depth": 2,

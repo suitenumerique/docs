@@ -32,12 +32,16 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
     assert response.status_code == 200
     assert response.json() == {
         "abilities": parent.get_abilities(AnonymousUser()),
+        "ancestors_link_reach": parent.ancestors_link_reach,
+        "ancestors_link_role": parent.ancestors_link_role,
         "children": [
             {
                 "abilities": document.get_abilities(AnonymousUser()),
                 "children": [
                     {
                         "abilities": child.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": child.ancestors_link_reach,
+                        "ancestors_link_role": child.ancestors_link_role,
                         "children": [],
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -60,6 +64,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                         "user_role": None,
                     },
                 ],
+                "ancestors_link_reach": document.ancestors_link_reach,
+                "ancestors_link_role": document.ancestors_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
@@ -78,6 +84,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
             },
             {
                 "abilities": sibling1.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": sibling1.ancestors_link_reach,
+                "ancestors_link_role": sibling1.ancestors_link_role,
                 "children": [],
                 "created_at": sibling1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling1.creator.id),
@@ -97,6 +105,8 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
             },
             {
                 "abilities": sibling2.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": sibling2.ancestors_link_reach,
+                "ancestors_link_role": sibling2.ancestors_link_role,
                 "children": [],
                 "created_at": sibling2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling2.creator.id),
@@ -165,15 +175,23 @@ def test_api_documents_tree_list_anonymous_public_parent():
     assert response.status_code == 200
     expected_tree = {
         "abilities": grand_parent.get_abilities(AnonymousUser()),
+        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+        "ancestors_link_role": grand_parent.ancestors_link_role,
         "children": [
             {
                 "abilities": parent.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": parent.ancestors_link_reach,
+                "ancestors_link_role": parent.ancestors_link_role,
                 "children": [
                     {
                         "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
                         "children": [
                             {
                                 "abilities": child.get_abilities(AnonymousUser()),
+                                "ancestors_link_reach": child.ancestors_link_reach,
+                                "ancestors_link_role": child.ancestors_link_role,
                                 "children": [],
                                 "created_at": child.created_at.isoformat().replace(
                                     "+00:00", "Z"
@@ -218,6 +236,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
                     },
                     {
                         "abilities": document_sibling.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
                         "children": [],
                         "created_at": document_sibling.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -258,6 +278,8 @@ def test_api_documents_tree_list_anonymous_public_parent():
             },
             {
                 "abilities": parent_sibling.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": parent_sibling.ancestors_link_reach,
+                "ancestors_link_role": parent_sibling.ancestors_link_role,
                 "children": [],
                 "created_at": parent_sibling.created_at.isoformat().replace(
                     "+00:00", "Z"
@@ -342,12 +364,18 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
     assert response.status_code == 200
     assert response.json() == {
         "abilities": parent.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
         "children": [
             {
                 "abilities": document.get_abilities(user),
+                "ancestors_link_reach": document.ancestors_link_reach,
+                "ancestors_link_role": document.ancestors_link_role,
                 "children": [
                     {
                         "abilities": child.get_abilities(user),
+                        "ancestors_link_reach": child.ancestors_link_reach,
+                        "ancestors_link_role": child.ancestors_link_role,
                         "children": [],
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -388,6 +416,8 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
             },
             {
                 "abilities": sibling.get_abilities(user),
+                "ancestors_link_reach": sibling.ancestors_link_reach,
+                "ancestors_link_role": sibling.ancestors_link_role,
                 "children": [],
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
@@ -461,15 +491,23 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
     assert response.status_code == 200
     assert response.json() == {
         "abilities": grand_parent.get_abilities(user),
+        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+        "ancestors_link_role": grand_parent.ancestors_link_role,
         "children": [
             {
                 "abilities": parent.get_abilities(user),
+                "ancestors_link_reach": parent.ancestors_link_reach,
+                "ancestors_link_role": parent.ancestors_link_role,
                 "children": [
                     {
                         "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
                         "children": [
                             {
                                 "abilities": child.get_abilities(user),
+                                "ancestors_link_reach": child.ancestors_link_reach,
+                                "ancestors_link_role": child.ancestors_link_role,
                                 "children": [],
                                 "created_at": child.created_at.isoformat().replace(
                                     "+00:00", "Z"
@@ -514,6 +552,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                     },
                     {
                         "abilities": document_sibling.get_abilities(user),
+                        "ancestors_link_reach": document_sibling.ancestors_link_reach,
+                        "ancestors_link_role": document_sibling.ancestors_link_role,
                         "children": [],
                         "created_at": document_sibling.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -554,6 +594,8 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
             },
             {
                 "abilities": parent_sibling.get_abilities(user),
+                "ancestors_link_reach": parent.ancestors_link_reach,
+                "ancestors_link_role": parent.ancestors_link_role,
                 "children": [],
                 "created_at": parent_sibling.created_at.isoformat().replace(
                     "+00:00", "Z"
@@ -640,12 +682,18 @@ def test_api_documents_tree_list_authenticated_related_direct():
     assert response.status_code == 200
     assert response.json() == {
         "abilities": parent.get_abilities(user),
+        "ancestors_link_reach": parent.ancestors_link_reach,
+        "ancestors_link_role": parent.ancestors_link_role,
         "children": [
             {
                 "abilities": document.get_abilities(user),
+                "ancestors_link_reach": document.ancestors_link_reach,
+                "ancestors_link_role": document.ancestors_link_role,
                 "children": [
                     {
                         "abilities": child.get_abilities(user),
+                        "ancestors_link_reach": child.ancestors_link_reach,
+                        "ancestors_link_role": child.ancestors_link_role,
                         "children": [],
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -686,6 +734,8 @@ def test_api_documents_tree_list_authenticated_related_direct():
             },
             {
                 "abilities": sibling.get_abilities(user),
+                "ancestors_link_reach": sibling.ancestors_link_reach,
+                "ancestors_link_role": sibling.ancestors_link_role,
                 "children": [],
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
@@ -763,15 +813,23 @@ def test_api_documents_tree_list_authenticated_related_parent():
     assert response.status_code == 200
     assert response.json() == {
         "abilities": grand_parent.get_abilities(user),
+        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+        "ancestors_link_role": grand_parent.ancestors_link_role,
         "children": [
             {
                 "abilities": parent.get_abilities(user),
+                "ancestors_link_reach": parent.ancestors_link_reach,
+                "ancestors_link_role": parent.ancestors_link_role,
                 "children": [
                     {
                         "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
                         "children": [
                             {
                                 "abilities": child.get_abilities(user),
+                                "ancestors_link_reach": child.ancestors_link_reach,
+                                "ancestors_link_role": child.ancestors_link_role,
                                 "children": [],
                                 "created_at": child.created_at.isoformat().replace(
                                     "+00:00", "Z"
@@ -816,6 +874,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
                     },
                     {
                         "abilities": document_sibling.get_abilities(user),
+                        "ancestors_link_reach": document_sibling.ancestors_link_reach,
+                        "ancestors_link_role": document_sibling.ancestors_link_role,
                         "children": [],
                         "created_at": document_sibling.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -856,6 +916,8 @@ def test_api_documents_tree_list_authenticated_related_parent():
             },
             {
                 "abilities": parent_sibling.get_abilities(user),
+                "ancestors_link_reach": parent_sibling.ancestors_link_reach,
+                "ancestors_link_role": parent_sibling.ancestors_link_role,
                 "children": [],
                 "created_at": parent_sibling.created_at.isoformat().replace(
                     "+00:00", "Z"
@@ -950,12 +1012,18 @@ def test_api_documents_tree_list_authenticated_related_team_members(
     assert response.status_code == 200
     assert response.json() == {
         "abilities": parent.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
         "children": [
             {
                 "abilities": document.get_abilities(user),
+                "ancestors_link_reach": "restricted",
+                "ancestors_link_role": None,
                 "children": [
                     {
                         "abilities": child.get_abilities(user),
+                        "ancestors_link_reach": "restricted",
+                        "ancestors_link_role": None,
                         "children": [],
                         "created_at": child.created_at.isoformat().replace(
                             "+00:00", "Z"
@@ -996,6 +1064,8 @@ def test_api_documents_tree_list_authenticated_related_team_members(
             },
             {
                 "abilities": sibling.get_abilities(user),
+                "ancestors_link_reach": "restricted",
+                "ancestors_link_role": None,
                 "children": [],
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),

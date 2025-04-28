@@ -102,6 +102,8 @@ def test_api_documents_trashbin_format():
             "versions_list": True,
             "versions_retrieve": True,
         },
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
         "depth": 1,

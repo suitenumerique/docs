@@ -63,6 +63,8 @@ def test_api_documents_list_format():
     assert results[0] == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
         "depth": 1,
