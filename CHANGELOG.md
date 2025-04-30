@@ -28,6 +28,7 @@ and this project adheres to
 ## Fixed
 
 - 🐛(nginx) fix 404 when accessing a doc #866
+- 🔒️(drf) disable browsable HTML API renderer #919
 
 ## [3.1.0] - 2025-04-07
 
