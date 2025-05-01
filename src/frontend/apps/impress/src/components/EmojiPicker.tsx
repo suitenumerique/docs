@@ -18,7 +18,7 @@ export interface Emoji {
 
 export interface EmojiDataCategory {
   name: string;
-  id?: string;
+  id: string;
   emojis: string[];
 }
 

@@ -88,8 +88,8 @@ const CalloutBlockElement: ReactCustomBlockImplementation = ({
 
   return (
     <Box
-      $padding="0.5rem 1rem"
-      $gap="0.5rem"
+      $padding="1rem"
+      $gap="0.625rem"
       style={{
         flexGrow: 1,
         flexDirection: 'row',
@@ -97,9 +97,9 @@ const CalloutBlockElement: ReactCustomBlockImplementation = ({
     >
       <Text
         $as="span"
+        className="docs--editor-callout-block-emoji"
         contentEditable={false}
         onClick={toggleEmojiPicker}
-        style={{ cursor: 'pointer' }}
       >
         {block.props.emoji}
       </Text>
@@ -110,7 +110,11 @@ const CalloutBlockElement: ReactCustomBlockImplementation = ({
           onClickOutside={handleClickOutside}
         />
       )}
-      <Box as="p" className="inline-content" ref={contentRef} />
+      <Box
+        as="p"
+        className="inline-content"
+        ref={contentRef}
+      />
     </Box>
   );
 };

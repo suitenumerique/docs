@@ -62,10 +62,52 @@ export const cssEditor = (readonly: boolean) => css`
     }
 
     /**
-     * Callout block
+     * Callout, Paragraph and Heading blocks
      */
-    .bn-block:has(.node-callout) {
-      margin-block-end: 1rem;
+
+    .bn-block {
+      border-radius: var(--c--theme--spacings--3xs);
+    }
+
+    .bn-block-outer {
+      border-radius: var(--c--theme--spacings--3xs);
+    }
+
+    .bn-block-content[data-content-type='paragraph'],
+    .bn-block-content[data-content-type='heading'] {
+      padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
+      border-radius: var(--c--theme--spacings--3xs);
+    }
+
+    .bn-block:has(.node-callout),
+    .bn-block:has(.bn-block-content[data-content-type='heading']),
+    .bn-block:has(.bn-block-content[data-content-type='paragraph']) {
+      margin-block-end: var(--c--theme--spacings--t);
+    }
+
+    /**
+     * Emoji Picker
+     */
+
+    .docs--editor-callout-block-emoji {
+      cursor: pointer;
+
+      border-radius: var(--c--theme--spacings--3xs);
+
+      font-size: 1.125rem;
+      text-align: center;
+
+      min-width: 28px;
+      width: 28px;
+      height: 28px;
+
+      transition-property: color, background-color, border-color;
+      transition-timing-function: var(--c--theme--transitions-ease-out);
+      transition-duration: 100ms;
+    }
+
+    .docs--editor-callout-block-emoji:hover {
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     h1 {
