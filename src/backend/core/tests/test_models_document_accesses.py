@@ -123,7 +123,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_allowed():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -155,7 +155,7 @@ def test_models_document_access_get_abilities_for_owner_of_owner():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -172,7 +172,7 @@ def test_models_document_access_get_abilities_for_owner_of_administrator():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["owner", "editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -189,7 +189,7 @@ def test_models_document_access_get_abilities_for_owner_of_editor():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["owner", "administrator", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -206,7 +206,7 @@ def test_models_document_access_get_abilities_for_owner_of_reader():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["owner", "administrator", "editor"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -243,7 +243,7 @@ def test_models_document_access_get_abilities_for_administrator_of_administrator
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator"],
     }
 
 
@@ -260,7 +260,7 @@ def test_models_document_access_get_abilities_for_administrator_of_editor():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "reader"],
+        "set_role_to": ["reader", "editor", "administrator"],
     }
 
 
@@ -277,7 +277,7 @@ def test_models_document_access_get_abilities_for_administrator_of_reader():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "editor"],
+        "set_role_to": ["reader", "editor", "administrator"],
     }
 
 
@@ -400,12 +400,12 @@ def test_models_document_access_get_abilities_for_reader_of_reader_user(
 
 
 def test_models_document_access_get_abilities_preset_role(django_assert_num_queries):
-    """No query is done if the role is preset, e.g., with a query annotation."""
+    """No query is done if user roles are preset on the document, e.g., with a query annotation."""
     access = factories.UserDocumentAccessFactory(role="reader")
     user = factories.UserDocumentAccessFactory(
         document=access.document, role="reader"
     ).user
-    access.user_roles = ["reader"]
+    access.set_user_roles_tuple(None, "reader")
 
     with django_assert_num_queries(0):
         abilities = access.get_abilities(user)
