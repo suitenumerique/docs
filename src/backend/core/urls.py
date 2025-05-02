@@ -4,6 +4,7 @@ from django.conf import settings
 from django.urls import include, path, re_path
 
 from lasuite.oidc_login.urls import urlpatterns as oidc_urls
+from lasuite.oidc_resource_server.urls import urlpatterns as resource_server_urls
 from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
@@ -44,6 +45,7 @@ urlpatterns = [
             [
                 *router.urls,
                 *oidc_urls,
+                *resource_server_urls,
                 re_path(
                     r"^documents/(?P<resource_id>[0-9a-z-]*)/",
                     include(document_related_router.urls),
