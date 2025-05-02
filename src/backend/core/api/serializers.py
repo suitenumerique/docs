@@ -124,6 +124,7 @@ class DocumentAccessSerializer(BaseAccessSerializer):
         allow_null=True,
     )
     user = UserSerializer(read_only=True)
+    max_ancestors_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.DocumentAccess
@@ -136,8 +137,13 @@ class DocumentAccessSerializer(BaseAccessSerializer):
             "team",
             "role",
             "abilities",
+            "max_ancestors_role",
         ]
-        read_only_fields = ["id", "document_id", "abilities"]
+        read_only_fields = ["id", "document_id", "abilities", "max_ancestors_role"]
+
+    def get_max_ancestors_role(self, instance):
+        """Return max_ancestors_role if annotated; else None."""
+        return getattr(instance, "max_ancestors_role", None)
 
 
 class DocumentAccessLightSerializer(DocumentAccessSerializer):
@@ -155,6 +161,7 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
             "team",
             "role",
             "abilities",
+            "max_ancestors_role",
         ]
         read_only_fields = [
             "id",
@@ -162,6 +169,7 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
             "team",
             "role",
             "abilities",
+            "max_ancestors_role",
         ]
 
 
