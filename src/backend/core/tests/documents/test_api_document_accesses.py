@@ -148,6 +148,9 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 else None,
                 "team": access.team,
                 "role": access.role,
+                "max_ancestors_role": access.role
+                if access.document_id != document.id
+                else None,
                 "abilities": {
                     "destroy": False,
                     "partial_update": False,
@@ -248,6 +251,9 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                 }
                 if access.user
                 else None,
+                "max_ancestors_role": access.role
+                if access.document_id != document.id
+                else None,
                 "team": access.team,
                 "role": access.role,
                 "abilities": access.get_abilities(user),
@@ -256,6 +262,174 @@ def test_api_document_accesses_list_authenticated_related_privileged(
         ],
         key=lambda x: x["id"],
     )
+
+
+@pytest.mark.parametrize(
+    "roles,results",
+    [
+        [
+            ["administrator", "reader", "reader", "reader"],
+            [
+                ["reader", "editor", "administrator"],
+                [],
+                [],
+                ["reader", "editor", "administrator"],
+            ],
+        ],
+        [
+            ["owner", "reader", "reader", "reader"],
+            [[], [], [], ["reader", "editor", "administrator", "owner"]],
+        ],
+        [
+            ["owner", "reader", "reader", "owner"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+    ],
+)
+def test_api_document_accesses_list_authenticated_related_same_user(roles, results):
+    """
+    The maximum role across ancestor documents and set_role_to optionsfor
+    a given user should be filled as expected.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create documents structured as a tree
+    grand_parent = factories.DocumentFactory(link_reach="authenticated")
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+
+    # Create accesses for another user
+    other_user = factories.UserFactory()
+    accesses = [
+        factories.UserDocumentAccessFactory(
+            document=document, user=user, role=roles[0]
+        ),
+        factories.UserDocumentAccessFactory(
+            document=grand_parent, user=other_user, role=roles[1]
+        ),
+        factories.UserDocumentAccessFactory(
+            document=parent, user=other_user, role=roles[2]
+        ),
+        factories.UserDocumentAccessFactory(
+            document=document, user=other_user, role=roles[3]
+        ),
+    ]
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 4
+
+    for result in content:
+        assert (
+            result["max_ancestors_role"] is None
+            if result["user"]["id"] == str(user.id)
+            else choices.RoleChoices.max(roles[1], roles[2])
+        )
+
+    result_dict = {
+        result["id"]: result["abilities"]["set_role_to"] for result in content
+    }
+    assert [result_dict[str(access.id)] for access in accesses] == results
+
+
+@pytest.mark.parametrize(
+    "roles,results",
+    [
+        [
+            ["administrator", "reader", "reader", "reader"],
+            [
+                ["reader", "editor", "administrator"],
+                [],
+                [],
+                ["reader", "editor", "administrator"],
+            ],
+        ],
+        [
+            ["owner", "reader", "reader", "reader"],
+            [[], [], [], ["reader", "editor", "administrator", "owner"]],
+        ],
+        [
+            ["owner", "reader", "reader", "owner"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+        [
+            ["reader", "reader", "reader", "owner"],
+            [["reader", "editor", "administrator", "owner"], [], [], []],
+        ],
+        [
+            ["reader", "administrator", "reader", "editor"],
+            [[], ["reader", "editor", "administrator"], [], []],
+        ],
+        [
+            ["reader", "editor", "administrator", "editor"],
+            [[], [], ["editor", "administrator"], []],
+        ],
+    ],
+)
+def test_api_document_accesses_list_authenticated_related_same_team(
+    roles, results, mock_user_teams
+):
+    """
+    The maximum role across ancestor documents and set_role_to optionsfor
+    a given team should be filled as expected.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create documents structured as a tree
+    grand_parent = factories.DocumentFactory(link_reach="authenticated")
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+
+    mock_user_teams.return_value = ["lasuite", "unknown"]
+    accesses = [
+        factories.UserDocumentAccessFactory(
+            document=document, user=user, role=roles[0]
+        ),
+        # Create accesses for a team
+        factories.TeamDocumentAccessFactory(
+            document=grand_parent, team="lasuite", role=roles[1]
+        ),
+        factories.TeamDocumentAccessFactory(
+            document=parent, team="lasuite", role=roles[2]
+        ),
+        factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role=roles[3]
+        ),
+    ]
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 4
+
+    for result in content:
+        assert (
+            result["max_ancestors_role"] is None
+            if result["user"] and result["user"]["id"] == str(user.id)
+            else choices.RoleChoices.max(roles[1], roles[2])
+        )
+
+    result_dict = {
+        result["id"]: result["abilities"]["set_role_to"] for result in content
+    }
+    assert [result_dict[str(access.id)] for access in accesses] == results
 
 
 def test_api_document_accesses_retrieve_anonymous():
@@ -353,6 +527,7 @@ def test_api_document_accesses_retrieve_authenticated_related(
             "user": access_user,
             "team": "",
             "role": access.role,
+            "max_ancestors_role": None,
             "abilities": access.get_abilities(user),
         }
 
