@@ -1469,23 +1469,35 @@ class DocumentAccessViewSet(
         )
 
         # Annotate more information on roles
+        path_to_key_to_max_ancestors_role = defaultdict(
+            lambda: defaultdict(lambda: None)
+        )
         path_to_ancestors_roles = defaultdict(list)
         path_to_role = defaultdict(lambda: None)
         for access in accesses:
-            if access.user_id == user.id or access.team in user.teams:
-                parent_path = access.document_path[: -models.Document.steplen]
-                if parent_path:
-                    path_to_ancestors_roles[access.document_path].extend(
-                        path_to_ancestors_roles[parent_path]
-                    )
-                    path_to_ancestors_roles[access.document_path].append(
-                        path_to_role[parent_path]
-                    )
-                else:
-                    path_to_ancestors_roles[access.document_path] = []
+            key = access.target_key
+            path = access.document.path
+            parent_path = path[: -models.Document.steplen]
 
-                path_to_role[access.document_path] = choices.RoleChoices.max(
-                    path_to_role[access.document_path], access.role
+            path_to_key_to_max_ancestors_role[path][key] = choices.RoleChoices.max(
+                path_to_key_to_max_ancestors_role[path][key], access.role
+            )
+
+            if parent_path:
+                path_to_key_to_max_ancestors_role[path][key] = choices.RoleChoices.max(
+                    path_to_key_to_max_ancestors_role[parent_path][key],
+                    path_to_key_to_max_ancestors_role[path][key],
+                )
+                path_to_ancestors_roles[path].extend(
+                    path_to_ancestors_roles[parent_path]
+                )
+                path_to_ancestors_roles[path].append(path_to_role[parent_path])
+            else:
+                path_to_ancestors_roles[path] = []
+
+            if access.user_id == user.id or access.team in user.teams:
+                path_to_role[path] = choices.RoleChoices.max(
+                    path_to_role[path], access.role
                 )
 
         # serialize and return the response
@@ -1493,9 +1505,16 @@ class DocumentAccessViewSet(
         serializer_class = self.get_serializer_class()
         serialized_data = []
         for access in accesses:
+            path = access.document.path
+            parent_path = path[: -models.Document.steplen]
+            access.max_ancestors_role = (
+                path_to_key_to_max_ancestors_role[parent_path][access.target_key]
+                if parent_path
+                else None
+            )
             access.set_user_roles_tuple(
-                choices.RoleChoices.max(*path_to_ancestors_roles[access.document_path]),
-                path_to_role.get(access.document_path),
+                choices.RoleChoices.max(*path_to_ancestors_roles[path]),
+                path_to_role.get(path),
             )
             serializer = serializer_class(access, context=context)
             serialized_data.append(serializer.data)

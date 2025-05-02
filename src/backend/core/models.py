@@ -1141,7 +1141,9 @@ class DocumentAccess(BaseAccess):
                 set_role_to.append(RoleChoices.OWNER)
 
         # Filter out roles that would be lower than the one the user already has
-        ancestors_role_priority = RoleChoices.get_priority(ancestors_role)
+        ancestors_role_priority = RoleChoices.get_priority(
+            getattr(self, "max_ancestors_role", None)
+        )
         set_role_to = [
             candidate_role
             for candidate_role in set_role_to
