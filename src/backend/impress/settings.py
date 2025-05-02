@@ -239,8 +239,7 @@ class Base(Configuration):
             ("fr-fr", "Français"),
             ("de-de", "Deutsch"),
             ("nl-nl", "Nederlands"),
-            ("es-es", "Spanish"),
-            ("cn-cn", "Chinese"),
+            ("es-es", "Español"),
         )
     )
 
