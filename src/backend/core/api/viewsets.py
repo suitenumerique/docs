@@ -4,6 +4,7 @@
 import json
 import logging
 import uuid
+from collections import defaultdict
 from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
@@ -1418,49 +1419,88 @@ class DocumentAccessViewSet(
     permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
-    serializer_class = serializers.DocumentAccessSerializer
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the viewset and define default value for contextual document."""
+        super().__init__(*args, **kwargs)
+        self.document = None
+
+    def initial(self, request, *args, **kwargs):
+        """Retrieve self.document with annotated user roles."""
+        super().initial(request, *args, **kwargs)
+
+        try:
+            self.document = models.Document.objects.annotate_user_roles(
+                self.request.user
+            ).get(pk=self.kwargs["resource_id"])
+        except models.Document.DoesNotExist as excpt:
+            raise Http404() from excpt
+
+    def get_serializer_class(self):
+        """Use light serializer for unprivileged users."""
+        return (
+            serializers.DocumentAccessSerializer
+            if self.document.get_role(self.request.user) in choices.PRIVILEGED_ROLES
+            else serializers.DocumentAccessLightSerializer
+        )
 
     def list(self, request, *args, **kwargs):
         """Return accesses for the current document with filters and annotations."""
-        user = self.request.user
+        user = request.user
 
-        try:
-            document = models.Document.objects.get(pk=self.kwargs["resource_id"])
-        except models.Document.DoesNotExist:
-            return drf.response.Response([])
-
-        role = document.get_role(user)
-        if role is None:
+        role = self.document.get_role(user)
+        if not role:
             return drf.response.Response([])
 
         ancestors = (
-            (document.get_ancestors() | models.Document.objects.filter(pk=document.pk))
-            .filter(ancestors_deleted_at__isnull=True)
-            .order_by("path")
-        )
-        highest_readable = ancestors.readable_per_se(user).only("depth").first()
+            self.document.get_ancestors()
+            | models.Document.objects.filter(pk=self.document.pk)
+        ).filter(ancestors_deleted_at__isnull=True)
 
-        if highest_readable is None:
-            return drf.response.Response([])
+        queryset = self.get_queryset().filter(document__in=ancestors)
 
-        queryset = self.get_queryset()
-        queryset = queryset.filter(
-            document__in=ancestors.filter(depth__gte=highest_readable.depth)
-        )
-
-        is_privileged = role in choices.PRIVILEGED_ROLES
-        if is_privileged:
-            serializer_class = serializers.DocumentAccessSerializer
-        else:
-            # Return only the document's privileged accesses
+        if role not in choices.PRIVILEGED_ROLES:
             queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
-            serializer_class = serializers.DocumentAccessLightSerializer
 
-        queryset = queryset.distinct()
-        serializer = serializer_class(
-            queryset, many=True, context=self.get_serializer_context()
+        accesses = list(
+            queryset.annotate(document_path=db.F("document__path")).order_by(
+                "document_path"
+            )
         )
-        return drf.response.Response(serializer.data)
+
+        # Annotate more information on roles
+        path_to_ancestors_roles = defaultdict(list)
+        path_to_role = defaultdict(lambda: None)
+        for access in accesses:
+            if access.user_id == user.id or access.team in user.teams:
+                parent_path = access.document_path[: -models.Document.steplen]
+                if parent_path:
+                    path_to_ancestors_roles[access.document_path].extend(
+                        path_to_ancestors_roles[parent_path]
+                    )
+                    path_to_ancestors_roles[access.document_path].append(
+                        path_to_role[parent_path]
+                    )
+                else:
+                    path_to_ancestors_roles[access.document_path] = []
+
+                path_to_role[access.document_path] = choices.RoleChoices.max(
+                    path_to_role[access.document_path], access.role
+                )
+
+        # serialize and return the response
+        context = self.get_serializer_context()
+        serializer_class = self.get_serializer_class()
+        serialized_data = []
+        for access in accesses:
+            access.set_user_roles_tuple(
+                choices.RoleChoices.max(*path_to_ancestors_roles[access.document_path]),
+                path_to_role.get(access.document_path),
+            )
+            serializer = serializer_class(access, context=context)
+            serialized_data.append(serializer.data)
+
+        return drf.response.Response(serialized_data)
 
     def perform_create(self, serializer):
         """Add a new access to the document and send an email to the new added user."""

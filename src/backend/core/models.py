@@ -289,66 +289,6 @@ class BaseAccess(BaseModel):
     class Meta:
         abstract = True
 
-    def _get_role(self, resource, user):
-        """
-        Get the role a user has on a resource.
-        """
-        roles = []
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = resource.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except (self._meta.model.DoesNotExist, IndexError):
-                    roles = []
-
-        return RoleChoices.max(*roles)
-
-    def _get_abilities(self, resource, user):
-        """
-        Compute and return abilities for a given user taking into account
-        the current state of the object.
-        """
-        role = self._get_role(resource, user)
-        is_owner_or_admin = role in (RoleChoices.OWNER, RoleChoices.ADMIN)
-
-        if self.role == RoleChoices.OWNER:
-            can_delete = (role == RoleChoices.OWNER) and resource.accesses.filter(
-                role=RoleChoices.OWNER
-            ).count() > 1
-            set_role_to = (
-                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                if can_delete
-                else []
-            )
-        else:
-            can_delete = is_owner_or_admin
-            set_role_to = []
-            if role == RoleChoices.OWNER:
-                set_role_to.append(RoleChoices.OWNER)
-            if is_owner_or_admin:
-                set_role_to.extend(
-                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                )
-
-        # Remove the current role as we don't want to propose it as an option
-        try:
-            set_role_to.remove(self.role)
-        except ValueError:
-            pass
-
-        return {
-            "destroy": can_delete,
-            "update": bool(set_role_to),
-            "partial_update": bool(set_role_to),
-            "retrieve": bool(role),
-            "set_role_to": set_role_to,
-        }
-
 
 class DocumentQuerySet(MP_NodeQuerySet):
     """
@@ -1097,53 +1037,122 @@ class DocumentAccess(BaseAccess):
     def __str__(self):
         return f"{self.user!s} is {self.role:s} in document {self.document!s}"
 
+    def __init__(self, *args, **kwargs):
+        """initialize cache attribute."""
+        super().__init__(*args, **kwargs)
+        self._prefetched_user_roles_tuple = None
+
     def save(self, *args, **kwargs):
         """Override save to clear the document's cache for number of accesses."""
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+
+    @property
+    def target_key(self):
+        """Get a unique key for the actor targeted by the access, without possible conflict."""
+        return f"user:{self.user_id!s}" if self.user_id else f"team:{self.team:s}"
 
     def delete(self, *args, **kwargs):
         """Override delete to clear the document's cache for number of accesses."""
         super().delete(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
 
+    def set_user_roles_tuple(self, ancestors_role, current_role):
+        """
+        Set a precomputed (ancestor_role, current_role) tuple for this instance.
+
+        This avoids querying the database in `get_roles_tuple()` and is useful
+        when roles are already known, such as in bulk serialization.
+
+        Args:
+            ancestor_role (str | None): Highest role on any ancestor document.
+            current_role (str | None): Role on the current document.
+        """
+        self._prefetched_user_roles_tuple = (ancestors_role, current_role)
+
+    def get_user_roles_tuple(self, user):
+        """
+        Return a tuple of:
+        - the highest role the user has on any ancestor of the document
+        - the role the user has on the current document
+
+        If roles have been explicitly set using `set_user_roles_tuple()`,
+        those will be returned instead of querying the database.
+
+        This allows viewsets or serializers to precompute roles for performance
+        when handling multiple documents at once.
+
+        Args:
+            user (User): The user whose roles are being evaluated.
+
+        Returns:
+            tuple[str | None, str | None]: (max_ancestor_role, current_document_role)
+        """
+        if not user.is_authenticated:
+            return None, None
+
+        if self._prefetched_user_roles_tuple is not None:
+            return self._prefetched_user_roles_tuple
+
+        ancestors = (
+            self.document.get_ancestors() | Document.objects.filter(pk=self.document_id)
+        ).filter(ancestors_deleted_at__isnull=True)
+
+        access_tuples = DocumentAccess.objects.filter(
+            models.Q(user=user) | models.Q(team__in=user.teams),
+            document__in=ancestors,
+        ).values_list("document_id", "role")
+
+        ancestors_roles = []
+        current_roles = []
+        for doc_id, role in access_tuples:
+            if doc_id == self.document_id:
+                current_roles.append(role)
+            else:
+                ancestors_roles.append(role)
+
+        return RoleChoices.max(*ancestors_roles), RoleChoices.max(*current_roles)
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document access.
         """
-        role = self._get_role(self.document, user)
+        ancestors_role, current_role = self.get_user_roles_tuple(user)
+        role = RoleChoices.max(ancestors_role, current_role)
         is_owner_or_admin = role in PRIVILEGED_ROLES
+
         if self.role == RoleChoices.OWNER:
             can_delete = (
                 role == RoleChoices.OWNER
-                and self.document.accesses.filter(role=RoleChoices.OWNER).count() > 1
+                and DocumentAccess.objects.filter(
+                    document_id=self.document_id, role=RoleChoices.OWNER
+                ).count()
+                > 1
             )
-            set_role_to = (
-                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                if can_delete
-                else []
-            )
+            set_role_to = RoleChoices.values if can_delete else []
         else:
             can_delete = is_owner_or_admin
             set_role_to = []
-            if role == RoleChoices.OWNER:
-                set_role_to.append(RoleChoices.OWNER)
             if is_owner_or_admin:
                 set_role_to.extend(
-                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                    [RoleChoices.READER, RoleChoices.EDITOR, RoleChoices.ADMIN]
                 )
+            if role == RoleChoices.OWNER:
+                set_role_to.append(RoleChoices.OWNER)
 
-        # Remove the current role as we don't want to propose it as an option
-        try:
-            set_role_to.remove(self.role)
-        except ValueError:
-            pass
+        # Filter out roles that would be lower than the one the user already has
+        ancestors_role_priority = RoleChoices.get_priority(ancestors_role)
+        set_role_to = [
+            candidate_role
+            for candidate_role in set_role_to
+            if RoleChoices.get_priority(candidate_role) > ancestors_role_priority
+        ]
 
         return {
             "destroy": can_delete,
             "update": bool(set_role_to) and is_owner_or_admin,
             "partial_update": bool(set_role_to) and is_owner_or_admin,
-            "retrieve": self.user and self.user.id == user.id or is_owner_or_admin,
+            "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
         }
 
@@ -1245,11 +1254,65 @@ class TemplateAccess(BaseAccess):
     def __str__(self):
         return f"{self.user!s} is {self.role:s} in template {self.template!s}"
 
+    def get_role(self, user):
+        """
+        Get the role a user has on a resource.
+        """
+        if not user.is_authenticated:
+            return None
+
+        try:
+            roles = self.user_roles or []
+        except AttributeError:
+            teams = user.teams
+            try:
+                roles = self.template.accesses.filter(
+                    models.Q(user=user) | models.Q(team__in=teams),
+                ).values_list("role", flat=True)
+            except (Template.DoesNotExist, IndexError):
+                roles = []
+
+        return RoleChoices.max(*roles)
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the template access.
         """
-        return self._get_abilities(self.template, user)
+        role = self.get_role(user)
+        is_owner_or_admin = role in PRIVILEGED_ROLES
+
+        if self.role == RoleChoices.OWNER:
+            can_delete = (role == RoleChoices.OWNER) and self.template.accesses.filter(
+                role=RoleChoices.OWNER
+            ).count() > 1
+            set_role_to = (
+                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                if can_delete
+                else []
+            )
+        else:
+            can_delete = is_owner_or_admin
+            set_role_to = []
+            if role == RoleChoices.OWNER:
+                set_role_to.append(RoleChoices.OWNER)
+            if is_owner_or_admin:
+                set_role_to.extend(
+                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                )
+
+        # Remove the current role as we don't want to propose it as an option
+        try:
+            set_role_to.remove(self.role)
+        except ValueError:
+            pass
+
+        return {
+            "destroy": can_delete,
+            "update": bool(set_role_to),
+            "partial_update": bool(set_role_to),
+            "retrieve": bool(role),
+            "set_role_to": set_role_to,
+        }
 
 
 class Invitation(BaseModel):
