@@ -169,6 +169,7 @@ def test_api_document_accesses_create_authenticated_administrator(via, mock_user
         "id": str(new_document_access.id),
         "team": "",
         "role": role,
+        "max_ancestors_role": None,
         "user": other_user,
     }
     assert len(mail.outbox) == 1
@@ -228,6 +229,7 @@ def test_api_document_accesses_create_authenticated_owner(via, mock_user_teams):
         "user": other_user,
         "team": "",
         "role": role,
+        "max_ancestors_role": None,
         "abilities": new_document_access.get_abilities(user),
     }
     assert len(mail.outbox) == 1
@@ -293,6 +295,7 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
             "user": other_user_data,
             "team": "",
             "role": role,
+            "max_ancestors_role": None,
             "abilities": new_document_access.get_abilities(user),
         }
         assert len(mail.outbox) == index + 1
