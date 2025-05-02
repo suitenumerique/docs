@@ -1,0 +1,390 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: lasuite-docs\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-04-29 11:48+0000\n"
+"PO-Revision-Date: 2025-05-02 13:35\n"
+"Last-Translator: \n"
+"Language-Team: Slovenian\n"
+"Language: sl_SI\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3;\n"
+"X-Crowdin-Project: lasuite-docs\n"
+"X-Crowdin-Project-ID: 754523\n"
+"X-Crowdin-Language: sl\n"
+"X-Crowdin-File: backend-impress.pot\n"
+"X-Crowdin-File-ID: 18\n"
+
+#: build/lib/core/admin.py:37 core/admin.py:37
+msgid "Personal info"
+msgstr "Osebni podatki"
+
+#: build/lib/core/admin.py:50 build/lib/core/admin.py:138 core/admin.py:50
+#: core/admin.py:138
+msgid "Permissions"
+msgstr "Dovoljenja"
+
+#: build/lib/core/admin.py:62 core/admin.py:62
+msgid "Important dates"
+msgstr "Pomembni datumi"
+
+#: build/lib/core/admin.py:148 core/admin.py:148
+msgid "Tree structure"
+msgstr "Drevesna struktura"
+
+#: build/lib/core/api/filters.py:47 core/api/filters.py:47
+msgid "Title"
+msgstr "Naslov"
+
+#: build/lib/core/api/filters.py:61 core/api/filters.py:61
+msgid "Creator is me"
+msgstr "Ustvaril sem jaz"
+
+#: build/lib/core/api/filters.py:64 core/api/filters.py:64
+msgid "Favorite"
+msgstr "Priljubljena"
+
+#: build/lib/core/api/serializers.py:446 core/api/serializers.py:446
+msgid "A new document was created on your behalf!"
+msgstr "Nov dokument je bil ustvarjen v vašem imenu!"
+
+#: build/lib/core/api/serializers.py:450 core/api/serializers.py:450
+msgid "You have been granted ownership of a new document:"
+msgstr "Dodeljeno vam je bilo lastništvo nad novim dokumentom:"
+
+#: build/lib/core/api/serializers.py:586 core/api/serializers.py:586
+msgid "Body"
+msgstr "Telo"
+
+#: build/lib/core/api/serializers.py:589 core/api/serializers.py:589
+msgid "Body type"
+msgstr "Vrsta telesa"
+
+#: build/lib/core/api/serializers.py:595 core/api/serializers.py:595
+msgid "Format"
+msgstr "Oblika"
+
+#: build/lib/core/api/viewsets.py:966 core/api/viewsets.py:966
+#, python-brace-format
+msgid "copy of {title}"
+msgstr ""
+
+#: build/lib/core/enums.py:35 core/enums.py:35
+msgid "First child"
+msgstr "Prvi otrok"
+
+#: build/lib/core/enums.py:36 core/enums.py:36
+msgid "Last child"
+msgstr "Zadnji otrok"
+
+#: build/lib/core/enums.py:37 core/enums.py:37
+msgid "First sibling"
+msgstr "Prvi brat in sestra"
+
+#: build/lib/core/enums.py:38 core/enums.py:38
+msgid "Last sibling"
+msgstr "Zadnji brat in sestra"
+
+#: build/lib/core/enums.py:39 core/enums.py:39
+msgid "Left"
+msgstr "Levo"
+
+#: build/lib/core/enums.py:40 core/enums.py:40
+msgid "Right"
+msgstr "Desno"
+
+#: build/lib/core/models.py:56 build/lib/core/models.py:63 core/models.py:56
+#: core/models.py:63
+msgid "Reader"
+msgstr "Bralec"
+
+#: build/lib/core/models.py:57 build/lib/core/models.py:64 core/models.py:57
+#: core/models.py:64
+msgid "Editor"
+msgstr "Urednik"
+
+#: build/lib/core/models.py:65 core/models.py:65
+msgid "Administrator"
+msgstr "Skrbnik"
+
+#: build/lib/core/models.py:66 core/models.py:66
+msgid "Owner"
+msgstr "Lastnik"
+
+#: build/lib/core/models.py:77 core/models.py:77
+msgid "Restricted"
+msgstr "Omejeno"
+
+#: build/lib/core/models.py:81 core/models.py:81
+msgid "Authenticated"
+msgstr "Preverjeno"
+
+#: build/lib/core/models.py:83 core/models.py:83
+msgid "Public"
+msgstr "Javno"
+
+#: build/lib/core/models.py:154 core/models.py:154
+msgid "id"
+msgstr ""
+
+#: build/lib/core/models.py:155 core/models.py:155
+msgid "primary key for the record as UUID"
+msgstr "primarni ključ za zapis kot UUID"
+
+#: build/lib/core/models.py:161 core/models.py:161
+msgid "created on"
+msgstr "ustvarjen na"
+
+#: build/lib/core/models.py:162 core/models.py:162
+msgid "date and time at which a record was created"
+msgstr "datum in čas, ko je bil zapis ustvarjen"
+
+#: build/lib/core/models.py:167 core/models.py:167
+msgid "updated on"
+msgstr "posodobljeno dne"
+
+#: build/lib/core/models.py:168 core/models.py:168
+msgid "date and time at which a record was last updated"
+msgstr "datum in čas, ko je bil zapis nazadnje posodobljen"
+
+#: build/lib/core/models.py:204 core/models.py:204
+msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
+msgstr "Nismo mogli najti uporabnika s tem sub, vendar je e-poštni naslov že povezan z registriranim uporabnikom."
+
+#: build/lib/core/models.py:217 core/models.py:217
+msgid "Enter a valid sub. This value may contain only letters, numbers, and @/./+/-/_/: characters."
+msgstr "Vnesite veljavno sub. Ta vrednost lahko vsebuje samo črke, številke in znake @/./+/-/_/:."
+
+#: build/lib/core/models.py:223 core/models.py:223
+msgid "sub"
+msgstr ""
+
+#: build/lib/core/models.py:225 core/models.py:225
+msgid "Required. 255 characters or fewer. Letters, numbers, and @/./+/-/_/: characters only."
+msgstr "Obvezno. 255 znakov ali manj. Samo črke, številke in znaki @/./+/-/_/: ."
+
+#: build/lib/core/models.py:234 core/models.py:234
+msgid "full name"
+msgstr "polno ime"
+
+#: build/lib/core/models.py:235 core/models.py:235
+msgid "short name"
+msgstr "kratko ime"
+
+#: build/lib/core/models.py:237 core/models.py:237
+msgid "identity email address"
+msgstr "elektronski naslov identitete"
+
+#: build/lib/core/models.py:242 core/models.py:242
+msgid "admin email address"
+msgstr "elektronski naslov skrbnika"
+
+#: build/lib/core/models.py:249 core/models.py:249
+msgid "language"
+msgstr "jezik"
+
+#: build/lib/core/models.py:250 core/models.py:250
+msgid "The language in which the user wants to see the interface."
+msgstr "Jezik, v katerem uporabnik želi videti vmesnik."
+
+#: build/lib/core/models.py:258 core/models.py:258
+msgid "The timezone in which the user wants to see times."
+msgstr "Časovni pas, v katerem želi uporabnik videti uro."
+
+#: build/lib/core/models.py:261 core/models.py:261
+msgid "device"
+msgstr "naprava"
+
+#: build/lib/core/models.py:263 core/models.py:263
+msgid "Whether the user is a device or a real user."
+msgstr "Ali je uporabnik naprava ali pravi uporabnik."
+
+#: build/lib/core/models.py:266 core/models.py:266
+msgid "staff status"
+msgstr "kadrovski status"
+
+#: build/lib/core/models.py:268 core/models.py:268
+msgid "Whether the user can log into this admin site."
+msgstr "Ali se uporabnik lahko prijavi na to skrbniško mesto."
+
+#: build/lib/core/models.py:271 core/models.py:271
+msgid "active"
+msgstr "aktivni"
+
+#: build/lib/core/models.py:274 core/models.py:274
+msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
+msgstr "Ali je treba tega uporabnika obravnavati kot aktivnega. Namesto brisanja računov počistite to izbiro."
+
+#: build/lib/core/models.py:286 core/models.py:286
+msgid "user"
+msgstr "uporabnik"
+
+#: build/lib/core/models.py:287 core/models.py:287
+msgid "users"
+msgstr "uporabniki"
+
+#: build/lib/core/models.py:470 build/lib/core/models.py:1154
+#: core/models.py:470 core/models.py:1154
+msgid "title"
+msgstr "naslov"
+
+#: build/lib/core/models.py:471 core/models.py:471
+msgid "excerpt"
+msgstr "odlomek"
+
+#: build/lib/core/models.py:519 core/models.py:519
+msgid "Document"
+msgstr "Dokument"
+
+#: build/lib/core/models.py:520 core/models.py:520
+msgid "Documents"
+msgstr "Dokumenti"
+
+#: build/lib/core/models.py:532 build/lib/core/models.py:872 core/models.py:532
+#: core/models.py:872
+msgid "Untitled Document"
+msgstr "Dokument brez naslova"
+
+#: build/lib/core/models.py:907 core/models.py:907
+#, python-brace-format
+msgid "{name} shared a document with you!"
+msgstr "{name} je delil dokument z vami!"
+
+#: build/lib/core/models.py:911 core/models.py:911
+#, python-brace-format
+msgid "{name} invited you with the role \"{role}\" on the following document:"
+msgstr "{name} vas je povabil z vlogo \"{role}\" na naslednjem dokumentu:"
+
+#: build/lib/core/models.py:917 core/models.py:917
+#, python-brace-format
+msgid "{name} shared a document with you: {title}"
+msgstr "{name} je delil dokument z vami: {title}"
+
+#: build/lib/core/models.py:1015 core/models.py:1015
+msgid "Document/user link trace"
+msgstr "Dokument/sled povezave uporabnika"
+
+#: build/lib/core/models.py:1016 core/models.py:1016
+msgid "Document/user link traces"
+msgstr "Sledi povezav dokumenta/uporabnika"
+
+#: build/lib/core/models.py:1022 core/models.py:1022
+msgid "A link trace already exists for this document/user."
+msgstr "Za ta dokument/uporabnika že obstaja sled povezave."
+
+#: build/lib/core/models.py:1045 core/models.py:1045
+msgid "Document favorite"
+msgstr "Priljubljeni dokument"
+
+#: build/lib/core/models.py:1046 core/models.py:1046
+msgid "Document favorites"
+msgstr "Priljubljeni dokumenti"
+
+#: build/lib/core/models.py:1052 core/models.py:1052
+msgid "This document is already targeted by a favorite relation instance for the same user."
+msgstr "Ta dokument je že ciljno usmerjen s priljubljenim primerkom relacije za istega uporabnika."
+
+#: build/lib/core/models.py:1074 core/models.py:1074
+msgid "Document/user relation"
+msgstr "Odnos dokument/uporabnik"
+
+#: build/lib/core/models.py:1075 core/models.py:1075
+msgid "Document/user relations"
+msgstr "Odnosi dokument/uporabnik"
+
+#: build/lib/core/models.py:1081 core/models.py:1081
+msgid "This user is already in this document."
+msgstr "Ta uporabnik je že v tem dokumentu."
+
+#: build/lib/core/models.py:1087 core/models.py:1087
+msgid "This team is already in this document."
+msgstr "Ta ekipa je že v tem dokumentu."
+
+#: build/lib/core/models.py:1093 build/lib/core/models.py:1241
+#: core/models.py:1093 core/models.py:1241
+msgid "Either user or team must be set, not both."
+msgstr "Nastaviti je treba bodisi uporabnika ali ekipo, a ne obojega."
+
+#: build/lib/core/models.py:1155 core/models.py:1155
+msgid "description"
+msgstr "opis"
+
+#: build/lib/core/models.py:1156 core/models.py:1156
+msgid "code"
+msgstr "koda"
+
+#: build/lib/core/models.py:1157 core/models.py:1157
+msgid "css"
+msgstr "css"
+
+#: build/lib/core/models.py:1159 core/models.py:1159
+msgid "public"
+msgstr "javno"
+
+#: build/lib/core/models.py:1161 core/models.py:1161
+msgid "Whether this template is public for anyone to use."
+msgstr "Ali je ta predloga javna za uporabo."
+
+#: build/lib/core/models.py:1167 core/models.py:1167
+msgid "Template"
+msgstr "Predloga"
+
+#: build/lib/core/models.py:1168 core/models.py:1168
+msgid "Templates"
+msgstr "Predloge"
+
+#: build/lib/core/models.py:1222 core/models.py:1222
+msgid "Template/user relation"
+msgstr "Odnos predloga/uporabnik"
+
+#: build/lib/core/models.py:1223 core/models.py:1223
+msgid "Template/user relations"
+msgstr "Odnosi med predlogo in uporabnikom"
+
+#: build/lib/core/models.py:1229 core/models.py:1229
+msgid "This user is already in this template."
+msgstr "Ta uporabnik je že v tej predlogi."
+
+#: build/lib/core/models.py:1235 core/models.py:1235
+msgid "This team is already in this template."
+msgstr "Ta ekipa je že v tej predlogi."
+
+#: build/lib/core/models.py:1258 core/models.py:1258
+msgid "email address"
+msgstr "elektronski naslov"
+
+#: build/lib/core/models.py:1277 core/models.py:1277
+msgid "Document invitation"
+msgstr "Vabilo na dokument"
+
+#: build/lib/core/models.py:1278 core/models.py:1278
+msgid "Document invitations"
+msgstr "Vabila na dokument"
+
+#: build/lib/core/models.py:1298 core/models.py:1298
+msgid "This email is already associated to a registered user."
+msgstr "Ta e-poštni naslov je že povezan z registriranim uporabnikom."
+
+#: core/templates/mail/html/invitation.html:162
+#: core/templates/mail/text/invitation.txt:3
+msgid "Logo email"
+msgstr "E-pošta z logotipom"
+
+#: core/templates/mail/html/invitation.html:209
+#: core/templates/mail/text/invitation.txt:10
+msgid "Open"
+msgstr "Odpri"
+
+#: core/templates/mail/html/invitation.html:226
+#: core/templates/mail/text/invitation.txt:14
+msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
+msgstr " Dokumenti, vaše novo bistveno orodje za organiziranje, skupno rabo in skupinsko sodelovanje pri dokumentih. "
+
+#: core/templates/mail/html/invitation.html:233
+#: core/templates/mail/text/invitation.txt:16
+#, python-format
+msgid " Brought to you by %(brandname)s "
+msgstr " Pod okriljem %(brandname)s "
+
