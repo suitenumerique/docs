@@ -12,10 +12,12 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from resource_server import urls as resource_server_urls
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("core.urls")),
-]
+] + resource_server_urls.urlpatterns
 
 if settings.DEBUG:
     urlpatterns = (
