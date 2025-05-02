@@ -18,6 +18,7 @@ const nextConfig = {
   generateBuildId: () => buildId,
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
+    MIT_ONLY: process.env.MIT_ONLY,
   },
   webpack(config, { isServer }) {
     // Grab the existing rule that handles SVG imports
