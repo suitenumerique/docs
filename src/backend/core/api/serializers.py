@@ -32,21 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
 class UserLightSerializer(UserSerializer):
     """Serialize users with limited fields."""
 
-    id = serializers.SerializerMethodField(read_only=True)
-    email = serializers.SerializerMethodField(read_only=True)
-
-    def get_id(self, _user):
-        """Return always None. Here to have the same fields than in UserSerializer."""
-        return None
-
-    def get_email(self, _user):
-        """Return always None. Here to have the same fields than in UserSerializer."""
-        return None
-
     class Meta:
         model = models.User
-        fields = ["id", "email", "full_name", "short_name"]
-        read_only_fields = ["id", "email", "full_name", "short_name"]
+        fields = ["full_name", "short_name"]
+        read_only_fields = ["full_name", "short_name"]
 
 
 class BaseAccessSerializer(serializers.ModelSerializer):
@@ -59,11 +48,11 @@ class BaseAccessSerializer(serializers.ModelSerializer):
         validated_data.pop("user", None)
         return super().update(instance, validated_data)
 
-    def get_abilities(self, access) -> dict:
+    def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
         request = self.context.get("request")
         if request:
-            return access.get_abilities(request.user)
+            return instance.get_abilities(request.user)
         return {}
 
     def validate(self, attrs):
@@ -77,7 +66,6 @@ class BaseAccessSerializer(serializers.ModelSerializer):
         # Update
         if self.instance:
             can_set_role_to = self.instance.get_abilities(user)["set_role_to"]
-
             if role and role not in can_set_role_to:
                 message = (
                     f"You are only allowed to set role to {', '.join(can_set_role_to)}"
@@ -140,19 +128,41 @@ class DocumentAccessSerializer(BaseAccessSerializer):
     class Meta:
         model = models.DocumentAccess
         resource_field_name = "document"
-        fields = ["id", "document_id", "user", "user_id", "team", "role", "abilities"]
+        fields = [
+            "id",
+            "document_id",
+            "user",
+            "user_id",
+            "team",
+            "role",
+            "abilities",
+        ]
         read_only_fields = ["id", "document_id", "abilities"]
 
 
-class DocumentAccessLightSerializer(BaseAccessSerializer):
+class DocumentAccessLightSerializer(DocumentAccessSerializer):
     """Serialize document accesses with limited fields."""
 
     user = UserLightSerializer(read_only=True)
 
     class Meta:
         model = models.DocumentAccess
-        fields = ["id", "user", "team", "role", "abilities"]
-        read_only_fields = ["id", "team", "role", "abilities"]
+        resource_field_name = "document"
+        fields = [
+            "id",
+            "document_id",
+            "user",
+            "team",
+            "role",
+            "abilities",
+        ]
+        read_only_fields = [
+            "id",
+            "document_id",
+            "team",
+            "role",
+            "abilities",
+        ]
 
 
 class TemplateAccessSerializer(BaseAccessSerializer):
