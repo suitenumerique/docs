@@ -30,6 +30,7 @@ and this project adheres to
 
 - 🐛(nginx) fix 404 when accessing a doc #866
 - 🔒️(drf) disable browsable HTML API renderer #919
+- 🐛(CI) fix download translations workflow #922
 
 ## [3.1.0] - 2025-04-07
 

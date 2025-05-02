@@ -56,6 +56,11 @@ jobs:
       - name: generate translations files
         working-directory: src/frontend
         run: yarn i18n:deploy
+      
+      - name: Clean untracked files to prevent checkout failures
+        run: |
+          sudo git clean -fdx src/backend/locale/
+          
       # Create a new PR
       - name: Create a new Pull Request with new translated strings
         uses: peter-evans/create-pull-request@v7
