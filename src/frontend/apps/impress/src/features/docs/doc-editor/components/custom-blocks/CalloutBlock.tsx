@@ -1,20 +1,37 @@
-import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
+import {
+  CustomBlockConfig,
+  DefaultInlineContentSchema,
+  DefaultStyleSchema,
+  defaultProps,
+  insertOrUpdateBlock,
+} from '@blocknote/core';
 import {
   BlockTypeSelectItem,
   ReactCustomBlockImplementation,
   ReactCustomBlockRenderProps,
   createReactBlockSpec,
   useBlockNoteEditor,
-  useEditorSelectionChange,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
 
-import { Box, Emoji, EmojiPicker, Icon, Text } from '@/components';
+import {
+  Box,
+  Emoji,
+  EmojiDataCategory,
+  EmojiPicker,
+  Icon,
+  Text,
+} from '@/components';
 
-import { DocsBlockNoteEditor } from '../../types';
+import {
+  DocsBlockNoteEditor,
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+} from '../../types';
 
-const calloutEmojisCategory = {
+const calloutEmojisCategory: EmojiDataCategory = {
   name: 'Callout',
   id: 'callout',
   emojis: [
@@ -47,8 +64,22 @@ const calloutEmojisCategory = {
   ],
 } as const;
 
+const calloutBlockConfig = {
+  type: 'callout',
+  propSchema: {
+    textAlignment: defaultProps.textAlignment,
+    backgroundColor: defaultProps.backgroundColor,
+    emoji: { default: '💡' },
+  },
+  content: 'inline',
+} satisfies CustomBlockConfig;
+
 const useCalloutBlock = () => {
-  const editor = useBlockNoteEditor();
+  const editor = useBlockNoteEditor<
+    DocsBlockSchema,
+    DocsInlineContentSchema,
+    DocsStyleSchema
+  >();
   const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
 
   const toggleEmojiPicker = (e: React.MouseEvent) => {
@@ -61,8 +92,7 @@ const useCalloutBlock = () => {
 
   const handleEmojiSelect = (emoji: Emoji) => {
     const { block } = editor.getTextCursorPosition();
-    const { native } = emoji;
-    editor.updateBlock(block, { props: { emoji: native } });
+    editor.updateBlock(block, { props: { emoji: emoji.native } });
     setOpenEmojiPicker(false);
   };
 
@@ -74,17 +104,30 @@ const useCalloutBlock = () => {
   };
 };
 
-const CalloutBlockElement: ReactCustomBlockImplementation = ({
+const CalloutBlockElement = ({
   block,
   editor,
   contentRef,
-}: ReactCustomBlockRenderProps) => {
+}: ReactCustomBlockRenderProps<
+  typeof calloutBlockConfig,
+  DefaultInlineContentSchema,
+  DefaultStyleSchema
+>) => {
   const {
     openEmojiPicker,
     toggleEmojiPicker,
     handleClickOutside,
     handleEmojiSelect,
   } = useCalloutBlock();
+
+  // Temporary: sets a yellow background color to a callout block when added by
+  // the user, while keeping the colors menu on the drag handler usable for
+  // this custom block.
+  useEffect(() => {
+    if (!block.content.length && block.props.backgroundColor === 'default') {
+      editor.updateBlock(block, { props: { backgroundColor: 'yellow' } });
+    }
+  }, []);
 
   return (
     <Box
@@ -96,7 +139,7 @@ const CalloutBlockElement: ReactCustomBlockImplementation = ({
       }}
     >
       <Text
-        $as="span"
+        as="span"
         className="docs--editor-callout-block-emoji"
         contentEditable={false}
         onClick={toggleEmojiPicker}
@@ -110,26 +153,22 @@ const CalloutBlockElement: ReactCustomBlockImplementation = ({
           onClickOutside={handleClickOutside}
         />
       )}
-      <Box
-        as="p"
-        className="inline-content"
-        ref={contentRef}
-      />
+      <Box as="p" className="inline-content" ref={contentRef} />
     </Box>
   );
 };
 
+const calloutImplementation = {
+  render: CalloutBlockElement,
+} satisfies ReactCustomBlockImplementation<
+  typeof calloutBlockConfig,
+  DefaultInlineContentSchema,
+  DefaultStyleSchema
+>;
+
 export const CalloutBlock = createReactBlockSpec(
-  {
-    type: 'callout',
-    propSchema: {
-      textAlignment: defaultProps.textAlignment,
-      backgroundColor: defaultProps.backgroundColor,
-      emoji: { default: '💡' },
-    },
-    content: 'inline',
-  },
-  { render: CalloutBlockElement },
+  calloutBlockConfig,
+  calloutImplementation,
 );
 
 export const getCalloutReactSlashMenuItems = (
@@ -137,19 +176,19 @@ export const getCalloutReactSlashMenuItems = (
   t: TFunction<'translation', undefined>,
   group: string,
 ) => [
-    {
-      title: t('Callout'),
-      onItemClick: () => {
-        insertOrUpdateBlock(editor, {
-          type: 'callout',
-        });
-      },
-      aliases: ['callout', 'encadré', 'hervorhebung', 'benadrukken'],
-      group,
-      icon: <Icon iconName="font_download" $size="18px" />,
-      subtext: t('Add a callout block'),
+  {
+    title: t('Callout'),
+    onItemClick: () => {
+      insertOrUpdateBlock(editor, {
+        type: 'callout',
+      });
     },
-  ];
+    aliases: ['callout', 'encadré', 'hervorhebung', 'benadrukken'],
+    group,
+    icon: <Icon iconName="font_download" $size="18px" />,
+    subtext: t('Add a callout block'),
+  },
+];
 
 export const getCalloutFormattingToolbarItems = (
   t: TFunction<'translation', undefined>,

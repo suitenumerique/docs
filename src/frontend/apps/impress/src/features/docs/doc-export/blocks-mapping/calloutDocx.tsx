@@ -1,6 +1,8 @@
 import { Paragraph, ShadingType, TextRun } from 'docx';
 
-const docxcolors = {
+import { DocsExporterDocx } from '../types';
+
+const docxcolors: { [k: string]: string } = {
   default: 'auto',
   gray: 'ebeced',
   brown: 'eae5e3',
@@ -13,15 +15,16 @@ const docxcolors = {
   pink: 'fadbea',
 };
 
-export const blockMappingCalloutDocx = (block, exporter) => {
-  return new Paragraph({
-    shading: {
-      type: ShadingType.DIAGONAL_CROSS,
-      fill: docxcolors[block.props.backgroundColor], // todo: make this variable from the block props
-    },
-    children: [
-      new TextRun(block.props.emoji + ' '),
-      ...exporter.transformInlineContent(block.content),
-    ],
-  });
-};
+export const blockMappingCalloutDocx: DocsExporterDocx['mappings']['blockMapping']['callout'] =
+  (block, exporter) => {
+    return new Paragraph({
+      shading: {
+        type: ShadingType.DIAGONAL_CROSS,
+        fill: docxcolors[block.props.backgroundColor],
+      },
+      children: [
+        new TextRun(block.props.emoji + ' '),
+        ...exporter.transformInlineContent(block.content),
+      ],
+    });
+  };
