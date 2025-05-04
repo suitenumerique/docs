@@ -127,18 +127,46 @@ def test_models_document_access_get_abilities_for_owner_of_self_allowed():
     }
 
 
-def test_models_document_access_get_abilities_for_owner_of_self_last():
+def test_models_document_access_get_abilities_for_owner_of_self_last_on_root(
+    django_assert_num_queries,
+):
     """
-    Check abilities of self access for the owner of a document when there is only one owner left.
+    Check abilities of self access for the owner of a root document when there
+    is only one owner left.
     """
     access = factories.UserDocumentAccessFactory(role="owner")
-    abilities = access.get_abilities(access.user)
+
+    with django_assert_num_queries(2):
+        abilities = access.get_abilities(access.user)
+
     assert abilities == {
         "destroy": False,
         "retrieve": True,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+    }
+
+
+def test_models_document_access_get_abilities_for_owner_of_self_last_on_child(
+    django_assert_num_queries,
+):
+    """
+    Check abilities of self access for the owner of a child document when there
+    is only one owner left.
+    """
+    parent = factories.DocumentFactory()
+    access = factories.UserDocumentAccessFactory(document__parent=parent, role="owner")
+
+    with django_assert_num_queries(1):
+        abilities = access.get_abilities(access.user)
+
+    assert abilities == {
+        "destroy": True,
+        "retrieve": True,
+        "update": True,
+        "partial_update": True,
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 

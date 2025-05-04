@@ -224,12 +224,7 @@ def test_api_document_accesses_list_authenticated_related_privileged(
     other_access = factories.UserDocumentAccessFactory(user=user)
     factories.UserDocumentAccessFactory(document=other_access.document)
 
-    nb_queries = 3
-    if role == "owner":
-        # Queries that secure the owner status
-        nb_queries += sum(acc.role == "owner" for acc in document_accesses)
-
-    with django_assert_num_queries(nb_queries):
+    with django_assert_num_queries(3):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
 
     assert response.status_code == 200
@@ -943,7 +938,7 @@ def test_api_document_accesses_update_owner(
 
 
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_update_owner_self(
+def test_api_document_accesses_update_owner_self_root(
     via,
     mock_user_teams,
     mock_reset_connections,  # pylint: disable=redefined-outer-name
@@ -1002,6 +997,51 @@ def test_api_document_accesses_update_owner_self(
         assert response.status_code == 200
         access.refresh_from_db()
         assert access.role == new_role
+
+
+@pytest.mark.parametrize("via", VIA)
+def test_api_document_accesses_update_owner_self_child(
+    via,
+    mock_user_teams,
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
+):
+    """
+    A user who is owner of a document should be allowed to update
+    their own user access even if they are the only owner in the document,
+    provided the document is not a root.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
+    access = None
+    if via == USER:
+        access = factories.UserDocumentAccessFactory(
+            document=document, user=user, role="owner"
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        access = factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role="owner"
+        )
+
+    old_values = serializers.DocumentAccessSerializer(instance=access).data
+    new_role = random.choice(["administrator", "editor", "reader"])
+
+    user_id = str(access.user_id) if via == USER else None
+    with mock_reset_connections(document.id, user_id):
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            data={**old_values, "role": new_role},
+            format="json",
+        )
+
+    assert response.status_code == 200
+    access.refresh_from_db()
+    assert access.role == new_role
 
 
 # Delete
@@ -1184,17 +1224,16 @@ def test_api_document_accesses_delete_owners(
             f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
         )
 
-        assert response.status_code == 204
-        assert models.DocumentAccess.objects.count() == 1
+    assert response.status_code == 204
+    assert models.DocumentAccess.objects.count() == 1
 
 
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_delete_owners_last_owner(via, mock_user_teams):
+def test_api_document_accesses_delete_owners_last_owner_root(via, mock_user_teams):
     """
-    It should not be possible to delete the last owner access from a document
+    It should not be possible to delete the last owner access from a root document
     """
     user = factories.UserFactory(with_owned_document=True)
-
     client = APIClient()
     client.force_login(user)
 
@@ -1217,3 +1256,63 @@ def test_api_document_accesses_delete_owners_last_owner(via, mock_user_teams):
 
     assert response.status_code == 403
     assert models.DocumentAccess.objects.count() == 2
+
+
+def test_api_document_accesses_delete_owners_last_owner_child_user(
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
+):
+    """
+    It should be possible to delete the last owner access from a document that is not a root.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
+    access = None
+    access = factories.UserDocumentAccessFactory(
+        document=document, user=user, role="owner"
+    )
+
+    assert models.DocumentAccess.objects.count() == 2
+    with mock_reset_connections(document.id, str(access.user_id)):
+        response = client.delete(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+        )
+
+    assert response.status_code == 204
+    assert models.DocumentAccess.objects.count() == 1
+
+
+@pytest.mark.skip(
+    reason="Pending fix on https://github.com/suitenumerique/docs/issues/969"
+)
+def test_api_document_accesses_delete_owners_last_owner_child_team(
+    mock_user_teams,
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
+):
+    """
+    It should be possible to delete the last owner access from a document that
+    is not a root.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory()
+    document = factories.DocumentFactory(parent=parent)
+    access = None
+    mock_user_teams.return_value = ["lasuite", "unknown"]
+    access = factories.TeamDocumentAccessFactory(
+        document=document, team="lasuite", role="owner"
+    )
+
+    assert models.DocumentAccess.objects.count() == 2
+    with mock_reset_connections(document.id, str(access.user_id)):
+        response = client.delete(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+        )
+
+    assert response.status_code == 204
+    assert models.DocumentAccess.objects.count() == 1

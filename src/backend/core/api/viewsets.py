@@ -231,43 +231,6 @@ class ResourceAccessViewsetMixin:
         context["resource_id"] = self.kwargs["resource_id"]
         return context
 
-    def destroy(self, request, *args, **kwargs):
-        """Forbid deleting the last owner access"""
-        instance = self.get_object()
-        resource = getattr(instance, self.resource_field_name)
-
-        # Check if the access being deleted is the last owner access for the resource
-        if (
-            instance.role == "owner"
-            and resource.accesses.filter(role="owner").count() == 1
-        ):
-            return drf.response.Response(
-                {"detail": "Cannot delete the last owner access for the resource."},
-                status=drf.status.HTTP_403_FORBIDDEN,
-            )
-
-        return super().destroy(request, *args, **kwargs)
-
-    def perform_update(self, serializer):
-        """Check that we don't change the role if it leads to losing the last owner."""
-        instance = serializer.instance
-
-        # Check if the role is being updated and the new role is not "owner"
-        if (
-            "role" in self.request.data
-            and self.request.data["role"] != models.RoleChoices.OWNER
-        ):
-            resource = getattr(instance, self.resource_field_name)
-            # Check if the access being updated is the last owner access for the resource
-            if (
-                instance.role == models.RoleChoices.OWNER
-                and resource.accesses.filter(role=models.RoleChoices.OWNER).count() == 1
-            ):
-                message = "Cannot change the role to a non-owner role for the last owner access."
-                raise drf.exceptions.PermissionDenied({"detail": message})
-
-        serializer.save()
-
 
 class DocumentMetadata(drf.metadata.SimpleMetadata):
     """Custom metadata class to add information"""
@@ -646,7 +609,7 @@ class DocumentViewSet(
 
         position = validated_data["position"]
         message = None
-
+        owner_accesses = []
         if position in [
             enums.MoveNodePositionChoices.FIRST_CHILD,
             enums.MoveNodePositionChoices.LAST_CHILD,
@@ -656,12 +619,15 @@ class DocumentViewSet(
                     "You do not have permission to move documents "
                     "as a child to this target document."
                 )
-        elif not target_document.is_root():
-            if not target_document.get_parent().get_abilities(user).get("move"):
-                message = (
-                    "You do not have permission to move documents "
-                    "as a sibling of this target document."
-                )
+        elif target_document.is_root():
+            owner_accesses = document.get_root().accesses.filter(
+                role=models.RoleChoices.OWNER
+            )
+        elif not target_document.get_parent().get_abilities(user).get("move"):
+            message = (
+                "You do not have permission to move documents "
+                "as a sibling of this target document."
+            )
 
         if message:
             return drf.response.Response(
@@ -670,6 +636,19 @@ class DocumentViewSet(
             )
 
         document.move(target_document, pos=position)
+
+        # Make sure we have at least one owner
+        if (
+            owner_accesses
+            and not document.accesses.filter(role=models.RoleChoices.OWNER).exists()
+        ):
+            for owner_access in owner_accesses:
+                models.DocumentAccess.objects.update_or_create(
+                    document=document,
+                    user=owner_access.user,
+                    team=owner_access.team,
+                    defaults={"role": models.RoleChoices.OWNER},
+                )
 
         return drf.response.Response(
             {"message": "Document moved successfully."}, status=status.HTTP_200_OK
@@ -717,11 +696,7 @@ class DocumentViewSet(
                     creator=request.user,
                     **serializer.validated_data,
                 )
-                models.DocumentAccess.objects.create(
-                    document=child_document,
-                    user=request.user,
-                    role=models.RoleChoices.OWNER,
-                )
+
             # Set the created instance to the serializer
             serializer.instance = child_document
 
