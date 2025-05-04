@@ -12,6 +12,7 @@ from django.utils import timezone
 
 import pytest
 import requests
+from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from core import factories, models
@@ -52,9 +53,11 @@ def test_api_documents_media_auth_anonymous_public():
     factories.DocumentFactory(id=document_id, link_reach="public", attachments=[key])
 
     original_url = f"http://localhost/media/{key:s}"
-    response = APIClient().get(
-        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
-    )
+    now = timezone.now()
+    with freeze_time(now):
+        response = APIClient().get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
+        )
 
     assert response.status_code == 200
 
@@ -64,7 +67,7 @@ def test_api_documents_media_auth_anonymous_public():
         "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
         in authorization
     )
-    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
+    assert response["X-Amz-Date"] == now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
     file_url = f"{settings.AWS_S3_ENDPOINT_URL:s}/impress-media-storage/{key:s}"
@@ -167,9 +170,11 @@ def test_api_documents_media_auth_anonymous_attachments():
     parent = factories.DocumentFactory(link_reach="public")
     factories.DocumentFactory(parent=parent, link_reach="restricted", attachments=[key])
 
-    response = APIClient().get(
-        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
-    )
+    now = timezone.now()
+    with freeze_time(now):
+        response = APIClient().get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
+        )
 
     assert response.status_code == 200
 
@@ -179,7 +184,7 @@ def test_api_documents_media_auth_anonymous_attachments():
         "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
         in authorization
     )
-    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
+    assert response["X-Amz-Date"] == now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
     file_url = f"{settings.AWS_S3_ENDPOINT_URL:s}/impress-media-storage/{key:s}"
@@ -221,9 +226,11 @@ def test_api_documents_media_auth_authenticated_public_or_authenticated(reach):
 
     factories.DocumentFactory(id=document_id, link_reach=reach, attachments=[key])
 
-    response = client.get(
-        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
-    )
+    now = timezone.now()
+    with freeze_time(now):
+        response = client.get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
+        )
 
     assert response.status_code == 200
 
@@ -233,7 +240,7 @@ def test_api_documents_media_auth_authenticated_public_or_authenticated(reach):
         "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
         in authorization
     )
-    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
+    assert response["X-Amz-Date"] == now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
     file_url = f"{settings.AWS_S3_ENDPOINT_URL:s}/impress-media-storage/{key:s}"
@@ -307,9 +314,11 @@ def test_api_documents_media_auth_related(via, mock_user_teams):
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(document=document, team="lasuite")
 
-    response = client.get(
-        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
-    )
+    now = timezone.now()
+    with freeze_time(now):
+        response = client.get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
+        )
 
     assert response.status_code == 200
 
@@ -319,7 +328,7 @@ def test_api_documents_media_auth_related(via, mock_user_teams):
         "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
         in authorization
     )
-    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
+    assert response["X-Amz-Date"] == now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
     file_url = f"{settings.AWS_S3_ENDPOINT_URL:s}/impress-media-storage/{key:s}"
@@ -373,10 +382,12 @@ def test_api_documents_media_auth_missing_status_metadata():
 
     factories.DocumentFactory(id=document_id, link_reach="public", attachments=[key])
 
+    now = timezone.now()
     original_url = f"http://localhost/media/{key:s}"
-    response = APIClient().get(
-        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
-    )
+    with freeze_time(now):
+        response = APIClient().get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
+        )
 
     assert response.status_code == 200
 
@@ -386,7 +397,7 @@ def test_api_documents_media_auth_missing_status_metadata():
         "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
         in authorization
     )
-    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
+    assert response["X-Amz-Date"] == now.strftime("%Y%m%dT%H%M%SZ")
 
     s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
     file_url = f"{settings.AWS_S3_ENDPOINT_URL:s}/impress-media-storage/{key:s}"

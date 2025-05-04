@@ -14,6 +14,7 @@ from django.utils import timezone
 import pycrdt
 import pytest
 import requests
+from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from core import factories, models
@@ -133,19 +134,21 @@ def test_api_documents_duplicate_success(index):
 
     # Ensure access persists after the owner loses access to the original document
     models.DocumentAccess.objects.filter(document=document).delete()
-    response = client.get(
-        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=image_refs[0][1]
-    )
+
+    now = timezone.now()
+    with freeze_time(now):
+        response = client.get(
+            "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=image_refs[0][1]
+        )
 
     assert response.status_code == 200
-
+    assert response["X-Amz-Date"] == now.strftime("%Y%m%dT%H%M%SZ")
     authorization = response["Authorization"]
     assert "AWS4-HMAC-SHA256 Credential=" in authorization
     assert (
         "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
         in authorization
     )
-    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
 
     s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
     response = requests.get(
