@@ -114,7 +114,8 @@ def test_api_documents_children_create_authenticated_success(reach, role, depth)
     child = Document.objects.get(id=response.json()["id"])
     assert child.title == "my child"
     assert child.link_reach == "restricted"
-    assert child.accesses.filter(role="owner", user=user).exists()
+    # Access objects on the child are not necessary
+    assert child.accesses.exists() is False
 
 
 @pytest.mark.parametrize("depth", [1, 2, 3])
@@ -182,7 +183,8 @@ def test_api_documents_children_create_related_success(role, depth):
     child = Document.objects.get(id=response.json()["id"])
     assert child.title == "my child"
     assert child.link_reach == "restricted"
-    assert child.accesses.filter(role="owner", user=user).exists()
+    # Access objects on the child are not necessary
+    assert child.accesses.exists() is False
 
 
 def test_api_documents_children_create_authenticated_title_null():
