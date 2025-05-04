@@ -98,6 +98,7 @@ and this project adheres to
 
 ## Changed
 
+- ♻️(backend) stop requiring owner for non-root documents #846
 - ♻️(backend) simplify roles by ranking them and return only the max role #846
 - ⚡️(frontend) reduce unblocking time for config #867
 - ♻️(frontend) bind UI with ability access #900

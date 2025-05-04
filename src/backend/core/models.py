@@ -1122,9 +1122,12 @@ class DocumentAccess(BaseAccess):
         is_owner_or_admin = role in PRIVILEGED_ROLES
 
         if self.role == RoleChoices.OWNER:
-            can_delete = (
-                role == RoleChoices.OWNER
-                and DocumentAccess.objects.filter(
+            can_delete = role == RoleChoices.OWNER and (
+                # check if document is not root trying to avoid an extra query
+                # "document_path" is annotated by the viewset's list method
+                len(getattr(self, "document_path", "")) > Document.steplen
+                or not self.document.is_root()
+                or DocumentAccess.objects.filter(
                     document_id=self.document_id, role=RoleChoices.OWNER
                 ).count()
                 > 1
