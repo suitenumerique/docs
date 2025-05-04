@@ -226,12 +226,7 @@ def test_api_document_accesses_list_authenticated_related_privileged(
     other_access = factories.UserDocumentAccessFactory(user=user)
     factories.UserDocumentAccessFactory(document=other_access.document)
 
-    nb_queries = 3
-    if role == "owner":
-        # Queries that secure the owner status
-        nb_queries += sum(acc.role == "owner" for acc in document_accesses)
-
-    with django_assert_num_queries(nb_queries):
+    with django_assert_num_queries(3):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
 
     assert response.status_code == 200
@@ -278,7 +273,12 @@ def test_api_document_accesses_list_authenticated_related_privileged(
         ],
         [
             ["owner", "reader", "reader", "reader"],
-            [[], [], [], ["reader", "editor", "administrator", "owner"]],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
         ],
         [
             ["owner", "reader", "reader", "owner"],
@@ -355,7 +355,12 @@ def test_api_document_accesses_list_authenticated_related_same_user(roles, resul
         ],
         [
             ["owner", "reader", "reader", "reader"],
-            [[], [], [], ["reader", "editor", "administrator", "owner"]],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
         ],
         [
             ["owner", "reader", "reader", "owner"],
@@ -368,7 +373,12 @@ def test_api_document_accesses_list_authenticated_related_same_user(roles, resul
         ],
         [
             ["reader", "reader", "reader", "owner"],
-            [["reader", "editor", "administrator", "owner"], [], [], []],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
         ],
         [
             ["reader", "administrator", "reader", "editor"],
