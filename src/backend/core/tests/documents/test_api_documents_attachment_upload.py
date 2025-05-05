@@ -4,6 +4,7 @@ Test file uploads API endpoint for users in impress's core app.
 
 import re
 import uuid
+from unittest import mock
 
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -12,6 +13,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories
+from core.api.viewsets import malware_detection
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
@@ -59,7 +61,8 @@ def test_api_documents_attachment_upload_anonymous_success():
     file = SimpleUploadedFile(name="test.png", content=PIXEL, content_type="image/png")
 
     url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
-    response = APIClient().post(url, {"file": file}, format="multipart")
+    with mock.patch.object(malware_detection, "analyse_file") as mock_analyse_file:
+        response = APIClient().post(url, {"file": file}, format="multipart")
 
     assert response.status_code == 201
 
@@ -74,12 +77,13 @@ def test_api_documents_attachment_upload_anonymous_success():
     assert document.attachments == [f"{document.id!s}/attachments/{file_id!s}.png"]
 
     # Now, check the metadata of the uploaded file
-    key = file_path.replace("/media", "")
+    key = file_path.replace("/media/", "")
+    mock_analyse_file.assert_called_once_with(key, document_id=document.id)
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
 
-    assert file_head["Metadata"] == {"owner": "None"}
+    assert file_head["Metadata"] == {"owner": "None", "status": "processing"}
     assert file_head["ContentType"] == "image/png"
     assert file_head["ContentDisposition"] == 'inline; filename="test.png"'
 
@@ -139,13 +143,18 @@ def test_api_documents_attachment_upload_authenticated_success(reach, role):
     file = SimpleUploadedFile(name="test.png", content=PIXEL, content_type="image/png")
 
     url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
-    response = client.post(url, {"file": file}, format="multipart")
+    with mock.patch.object(malware_detection, "analyse_file") as mock_analyse_file:
+        response = client.post(url, {"file": file}, format="multipart")
 
     assert response.status_code == 201
 
     pattern = re.compile(rf"^/media/{document.id!s}/attachments/(.*)\.png")
     match = pattern.search(response.json()["file"])
     file_id = match.group(1)
+
+    mock_analyse_file.assert_called_once_with(
+        f"{document.id!s}/attachments/{file_id!s}.png", document_id=document.id
+    )
 
     # Validate that file_id is a valid UUID
     uuid.UUID(file_id)
@@ -210,7 +219,8 @@ def test_api_documents_attachment_upload_success(via, role, mock_user_teams):
     file = SimpleUploadedFile(name="test.png", content=PIXEL, content_type="image/png")
 
     url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
-    response = client.post(url, {"file": file}, format="multipart")
+    with mock.patch.object(malware_detection, "analyse_file") as mock_analyse_file:
+        response = client.post(url, {"file": file}, format="multipart")
 
     assert response.status_code == 201
 
@@ -226,11 +236,12 @@ def test_api_documents_attachment_upload_success(via, role, mock_user_teams):
     assert document.attachments == [f"{document.id!s}/attachments/{file_id!s}.png"]
 
     # Now, check the metadata of the uploaded file
-    key = file_path.replace("/media", "")
+    key = file_path.replace("/media/", "")
+    mock_analyse_file.assert_called_once_with(key, document_id=document.id)
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
-    assert file_head["Metadata"] == {"owner": str(user.id)}
+    assert file_head["Metadata"] == {"owner": str(user.id), "status": "processing"}
     assert file_head["ContentType"] == "image/png"
     assert file_head["ContentDisposition"] == 'inline; filename="test.png"'
 
@@ -304,7 +315,8 @@ def test_api_documents_attachment_upload_fix_extension(
     url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
 
     file = SimpleUploadedFile(name=name, content=content)
-    response = client.post(url, {"file": file}, format="multipart")
+    with mock.patch.object(malware_detection, "analyse_file") as mock_analyse_file:
+        response = client.post(url, {"file": file}, format="multipart")
 
     assert response.status_code == 201
 
@@ -324,11 +336,16 @@ def test_api_documents_attachment_upload_fix_extension(
     uuid.UUID(file_id)
 
     # Now, check the metadata of the uploaded file
-    key = file_path.replace("/media", "")
+    key = file_path.replace("/media/", "")
+    mock_analyse_file.assert_called_once_with(key, document_id=document.id)
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
-    assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
+    assert file_head["Metadata"] == {
+        "owner": str(user.id),
+        "is_unsafe": "true",
+        "status": "processing",
+    }
     assert file_head["ContentType"] == content_type
     assert file_head["ContentDisposition"] == f'attachment; filename="{name:s}"'
 
@@ -364,7 +381,8 @@ def test_api_documents_attachment_upload_unsafe():
     file = SimpleUploadedFile(
         name="script.exe", content=b"\x4d\x5a\x90\x00\x03\x00\x00\x00"
     )
-    response = client.post(url, {"file": file}, format="multipart")
+    with mock.patch.object(malware_detection, "analyse_file") as mock_analyse_file:
+        response = client.post(url, {"file": file}, format="multipart")
 
     assert response.status_code == 201
 
@@ -381,11 +399,16 @@ def test_api_documents_attachment_upload_unsafe():
     file_id = file_id.replace("-unsafe", "")
     uuid.UUID(file_id)
 
+    key = file_path.replace("/media/", "")
+    mock_analyse_file.assert_called_once_with(key, document_id=document.id)
     # Now, check the metadata of the uploaded file
-    key = file_path.replace("/media", "")
     file_head = default_storage.connection.meta.client.head_object(
         Bucket=default_storage.bucket_name, Key=key
     )
-    assert file_head["Metadata"] == {"owner": str(user.id), "is_unsafe": "true"}
+    assert file_head["Metadata"] == {
+        "owner": str(user.id),
+        "is_unsafe": "true",
+        "status": "processing",
+    }
     assert file_head["ContentType"] == "application/octet-stream"
     assert file_head["ContentDisposition"] == 'attachment; filename="script.exe"'

@@ -24,6 +24,7 @@ from django.views.decorators.cache import cache_page
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -1156,7 +1157,10 @@ class DocumentViewSet(
 
         # Prepare metadata for storage
         extra_args = {
-            "Metadata": {"owner": str(request.user.id)},
+            "Metadata": {
+                "owner": str(request.user.id),
+                "status": enums.DocumentAttachmentStatus.PROCESSING,
+            },
             "ContentType": serializer.validated_data["content_type"],
         }
         file_unsafe = ""
@@ -1187,6 +1191,8 @@ class DocumentViewSet(
         # Make the attachment readable by document readers
         document.attachments.append(key)
         document.save()
+
+        malware_detection.analyse_file(key, document_id=document.id)
 
         return drf.response.Response(
             {"file": f"{settings.MEDIA_URL:s}{key:s}"},
@@ -1269,6 +1275,19 @@ class DocumentViewSet(
 
         if not readable_attachments_paths:
             logger.debug("User '%s' lacks permission for attachment", user)
+            raise drf.exceptions.PermissionDenied()
+
+        # Check if the attachment is ready
+        s3_client = default_storage.connection.meta.client
+        bucket_name = default_storage.bucket_name
+        head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
+        metadata = head_resp.get("Metadata", {})
+        # In order to be compatible with existing upload without `status` metadata,
+        # we consider them as ready.
+        if (
+            metadata.get("status", enums.DocumentAttachmentStatus.READY)
+            != enums.DocumentAttachmentStatus.READY
+        ):
             raise drf.exceptions.PermissionDenied()
 
         # Generate S3 authorization headers using the extracted URL parameters
