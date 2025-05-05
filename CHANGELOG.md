@@ -20,6 +20,7 @@ and this project adheres to
 - 🌐(i18n) activate chinese and spanish languages #884
 - 🔧(backend) allow overwriting the data directory #893
 - ➕(backend) add  `django-lasuite` dependency #839
+- 🚩(frontend) version MIT only #911
 
 ## Changed
 

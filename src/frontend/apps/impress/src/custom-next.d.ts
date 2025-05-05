@@ -21,5 +21,6 @@ namespace NodeJS {
   interface ProcessEnv {
     NEXT_PUBLIC_API_ORIGIN?: string;
     NEXT_PUBLIC_SW_DEACTIVATED?: string;
+    PUBLISH_AS_MIT?: string;
   }
 }

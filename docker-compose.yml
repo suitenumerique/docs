@@ -155,8 +155,7 @@ services:
       target: frontend-production
       args:
         API_ORIGIN: "http://localhost:8071"
-        Y_PROVIDER_URL: "ws://localhost:4444"
-        MEDIA_URL: "http://localhost:8083"
+        PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-development
     ports:
