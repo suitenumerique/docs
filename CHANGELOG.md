@@ -8,9 +8,7 @@ and this project adheres to
 
 ## [Unreleased]
 
-## Fixed 
-
-- 🔒(frontend) enhance file download security #889
+## [3.2.0] - 2025-05-05
 
 ## Added
 
@@ -20,16 +18,21 @@ and this project adheres to
 - 🌐(i18n) activate chinese and spanish languages #884
 - 🔧(backend) allow overwriting the data directory #893
 - ➕(backend) add  `django-lasuite` dependency #839
+- ✨(frontend) advanced table features #908
 
 ## Changed
 
 - ⚡️(frontend) reduce unblocking time for config #867
 - ♻️(frontend) bind UI with ability access #900
+- ♻️(frontend) use built-in Quote block #908
 
 ## Fixed
 
 - 🐛(nginx) fix 404 when accessing a doc #866
 - 🔒️(drf) disable browsable HTML API renderer #919
+- 🔒(frontend) enhance file download security #889
+- 🐛(backend) race condition create doc #633
+- 🐛(frontend) fix breaklines in custom blocks #908
 
 ## [3.1.0] - 2025-04-07
 
@@ -157,11 +160,6 @@ and this project adheres to
 - 🐛(backend) allow any type of extensions for media download #671
 - ♻️(frontend) improve table pdf rendering
 - 🐛(email) invitation emails in receivers language
-
-
-## Fixed
-
-- 🐛(backend) race condition create doc #633
 
 ## [2.2.0] - 2025-02-10
 
@@ -551,7 +549,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.1.0...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.2.0...main
+[v3.2.0]: https://github.com/numerique-gouv/impress/releases/v3.2.0
 [v3.1.0]: https://github.com/numerique-gouv/impress/releases/v3.1.0
 [v3.0.0]: https://github.com/numerique-gouv/impress/releases/v3.0.0
 [v2.6.0]: https://github.com/numerique-gouv/impress/releases/v2.6.0

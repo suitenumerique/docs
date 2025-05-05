@@ -1,6 +1,6 @@
 {
   "name": "server-y-provider",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Y.js provider for docs",
   "repository": "https://github.com/numerique-gouv/impress",
   "license": "MIT",
