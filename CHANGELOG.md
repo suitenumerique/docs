@@ -14,6 +14,9 @@ and this project adheres to
 
 ## Added
 
+- ✨(frontend) multi-pages #701
+- ✨(backend) include ancestors accesses on document accesses list view #846
+- ✨(backend) add ancestors links reach and role to document API #846
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 - ✨(settings) Allow configuring PKCE for the SSO #886
@@ -23,11 +26,14 @@ and this project adheres to
 
 ## Changed
 
+- ♻️(backend) stop requiring owner for non-root documents #846
+- ♻️(backend) simplify roles by ranking them and return only the max role #846
 - ⚡️(frontend) reduce unblocking time for config #867
 - ♻️(frontend) bind UI with ability access #900
 
 ## Fixed
 
+- 🐛(backend) fix link definition select options linked to ancestors #846
 - 🐛(nginx) fix 404 when accessing a doc #866
 - 🔒️(drf) disable browsable HTML API renderer #919
 
@@ -35,6 +41,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) add ancestors links definitions to document abilities #846
 - 🚩(backend) add feature flag for the footer #841
 - 🔧(backend) add view to manage footer json #841
 - ✨(frontend) add custom css style #771
@@ -46,6 +53,7 @@ and this project adheres to
 
 ## Fixed
 
+- 🐛(backend) fix link definition select options linked to ancestors #846
 - 🐛(back) validate document content in serializer #822
 - 🐛(frontend) fix selection click past end of content #840
 

@@ -6,7 +6,6 @@ Declare and configure the models for the impress core application
 import hashlib
 import smtplib
 import uuid
-from collections import defaultdict
 from datetime import timedelta
 from logging import getLogger
 
@@ -33,6 +32,14 @@ from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
 
+from .choices import (
+    PRIVILEGED_ROLES,
+    LinkReachChoices,
+    LinkRoleChoices,
+    RoleChoices,
+    get_equivalent_link_definition,
+)
+
 logger = getLogger(__name__)
 
 
@@ -48,88 +55,6 @@ def get_trashbin_cutoff():
         datetime: The cutoff datetime for soft-deleted items.
     """
     return timezone.now() - timedelta(days=settings.TRASHBIN_CUTOFF_DAYS)
-
-
-class LinkRoleChoices(models.TextChoices):
-    """Defines the possible roles a link can offer on a document."""
-
-    READER = "reader", _("Reader")  # Can read
-    EDITOR = "editor", _("Editor")  # Can read and edit
-
-
-class RoleChoices(models.TextChoices):
-    """Defines the possible roles a user can have in a resource."""
-
-    READER = "reader", _("Reader")  # Can read
-    EDITOR = "editor", _("Editor")  # Can read and edit
-    ADMIN = "administrator", _("Administrator")  # Can read, edit, delete and share
-    OWNER = "owner", _("Owner")
-
-
-PRIVILEGED_ROLES = [RoleChoices.ADMIN, RoleChoices.OWNER]
-
-
-class LinkReachChoices(models.TextChoices):
-    """Defines types of access for links"""
-
-    RESTRICTED = (
-        "restricted",
-        _("Restricted"),
-    )  # Only users with a specific access can read/edit the document
-    AUTHENTICATED = (
-        "authenticated",
-        _("Authenticated"),
-    )  # Any authenticated user can access the document
-    PUBLIC = "public", _("Public")  # Even anonymous users can access the document
-
-    @classmethod
-    def get_select_options(cls, ancestors_links):
-        """
-        Determines the valid select options for link reach and link role depending on the
-        list of ancestors' link reach/role.
-
-        Args:
-            ancestors_links: List of dictionaries, each with 'link_reach' and 'link_role' keys
-                             representing the reach and role of ancestors links.
-
-        Returns:
-            Dictionary mapping possible reach levels to their corresponding possible roles.
-        """
-        # If no ancestors, return all options
-        if not ancestors_links:
-            return dict.fromkeys(cls.values, LinkRoleChoices.values)
-
-        # Initialize result with all possible reaches and role options as sets
-        result = {reach: set(LinkRoleChoices.values) for reach in cls.values}
-
-        # Group roles by reach level
-        reach_roles = defaultdict(set)
-        for link in ancestors_links:
-            reach_roles[link["link_reach"]].add(link["link_role"])
-
-        # Apply constraints based on ancestor links
-        if LinkRoleChoices.EDITOR in reach_roles[cls.RESTRICTED]:
-            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
-
-        if LinkRoleChoices.EDITOR in reach_roles[cls.AUTHENTICATED]:
-            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
-            result.pop(cls.RESTRICTED, None)
-        elif LinkRoleChoices.READER in reach_roles[cls.AUTHENTICATED]:
-            result[cls.RESTRICTED].discard(LinkRoleChoices.READER)
-
-        if LinkRoleChoices.EDITOR in reach_roles[cls.PUBLIC]:
-            result[cls.PUBLIC].discard(LinkRoleChoices.READER)
-            result.pop(cls.AUTHENTICATED, None)
-            result.pop(cls.RESTRICTED, None)
-        elif LinkRoleChoices.READER in reach_roles[cls.PUBLIC]:
-            result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
-            result.get(cls.RESTRICTED, set()).discard(LinkRoleChoices.READER)
-
-        # Convert roles sets to lists while maintaining the order from LinkRoleChoices
-        for reach, roles in result.items():
-            result[reach] = [role for role in LinkRoleChoices.values if role in roles]
-
-        return result
 
 
 class DuplicateEmailError(Exception):
@@ -364,69 +289,6 @@ class BaseAccess(BaseModel):
     class Meta:
         abstract = True
 
-    def _get_roles(self, resource, user):
-        """
-        Get the roles a user has on a resource.
-        """
-        roles = []
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = resource.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except (self._meta.model.DoesNotExist, IndexError):
-                    roles = []
-
-        return roles
-
-    def _get_abilities(self, resource, user):
-        """
-        Compute and return abilities for a given user taking into account
-        the current state of the object.
-        """
-        roles = self._get_roles(resource, user)
-
-        is_owner_or_admin = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
-        )
-        if self.role == RoleChoices.OWNER:
-            can_delete = (
-                RoleChoices.OWNER in roles
-                and resource.accesses.filter(role=RoleChoices.OWNER).count() > 1
-            )
-            set_role_to = (
-                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                if can_delete
-                else []
-            )
-        else:
-            can_delete = is_owner_or_admin
-            set_role_to = []
-            if RoleChoices.OWNER in roles:
-                set_role_to.append(RoleChoices.OWNER)
-            if is_owner_or_admin:
-                set_role_to.extend(
-                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                )
-
-        # Remove the current role as we don't want to propose it as an option
-        try:
-            set_role_to.remove(self.role)
-        except ValueError:
-            pass
-
-        return {
-            "destroy": can_delete,
-            "update": bool(set_role_to),
-            "partial_update": bool(set_role_to),
-            "retrieve": bool(roles),
-            "set_role_to": set_role_to,
-        }
-
 
 class DocumentQuerySet(MP_NodeQuerySet):
     """
@@ -452,6 +314,41 @@ class DocumentQuerySet(MP_NodeQuerySet):
 
         return self.filter(link_reach=LinkReachChoices.PUBLIC)
 
+    def annotate_is_favorite(self, user):
+        """
+        Annotate document queryset with the favorite status for the current user.
+        """
+        if user.is_authenticated:
+            favorite_exists_subquery = DocumentFavorite.objects.filter(
+                document_id=models.OuterRef("pk"), user=user
+            )
+            return self.annotate(is_favorite=models.Exists(favorite_exists_subquery))
+
+        return self.annotate(is_favorite=models.Value(False))
+
+    def annotate_user_roles(self, user):
+        """
+        Annotate document queryset with the roles of the current user
+        on the document or its ancestors.
+        """
+        output_field = ArrayField(base_field=models.CharField())
+
+        if user.is_authenticated:
+            user_roles_subquery = DocumentAccess.objects.filter(
+                models.Q(user=user) | models.Q(team__in=user.teams),
+                document__path=Left(models.OuterRef("path"), Length("document__path")),
+            ).values_list("role", flat=True)
+
+            return self.annotate(
+                user_roles=models.Func(
+                    user_roles_subquery, function="ARRAY", output_field=output_field
+                )
+            )
+
+        return self.annotate(
+            user_roles=models.Value([], output_field=output_field),
+        )
+
 
 class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
     """
@@ -464,6 +361,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
         return self._queryset_class(self.model).order_by("path")
 
 
+# pylint: disable=too-many-public-methods
 class Document(MP_Node, BaseModel):
     """Pad document carrying the content."""
 
@@ -486,6 +384,7 @@ class Document(MP_Node, BaseModel):
     )
     deleted_at = models.DateTimeField(null=True, blank=True)
     ancestors_deleted_at = models.DateTimeField(null=True, blank=True)
+    has_deleted_children = models.BooleanField(default=False)
     duplicated_from = models.ForeignKey(
         "self",
         on_delete=models.SET_NULL,
@@ -531,6 +430,12 @@ class Document(MP_Node, BaseModel):
     def __str__(self):
         return str(self.title) if self.title else str(_("Untitled Document"))
 
+    def __init__(self, *args, **kwargs):
+        """Initialize cache property."""
+        super().__init__(*args, **kwargs)
+        self._ancestors_link_definition = None
+        self._computed_link_definition = None
+
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
         super().save(*args, **kwargs)
@@ -560,6 +465,12 @@ class Document(MP_Node, BaseModel):
             if has_changed:
                 content_file = ContentFile(bytes_content)
                 default_storage.save(file_key, content_file)
+
+    def is_leaf(self):
+        """
+        :returns: True if the node is has no children
+        """
+        return not self.has_deleted_children and self.numchild == 0
 
     @property
     def key_base(self):
@@ -718,38 +629,22 @@ class Document(MP_Node, BaseModel):
             cache_key = document.get_nb_accesses_cache_key()
             cache.delete(cache_key)
 
-    def get_roles(self, user):
+    def get_role(self, user):
         """Return the roles a user has on a document."""
         if not user.is_authenticated:
-            return []
+            return None
 
         try:
             roles = self.user_roles or []
         except AttributeError:
-            try:
-                roles = DocumentAccess.objects.filter(
-                    models.Q(user=user) | models.Q(team__in=user.teams),
-                    document__path=Left(
-                        models.Value(self.path), Length("document__path")
-                    ),
-                ).values_list("role", flat=True)
-            except (models.ObjectDoesNotExist, IndexError):
-                roles = []
-        return roles
+            roles = DocumentAccess.objects.filter(
+                models.Q(user=user) | models.Q(team__in=user.teams),
+                document__path=Left(models.Value(self.path), Length("document__path")),
+            ).values_list("role", flat=True)
 
-    def get_links_definitions(self, ancestors_links):
-        """Get links reach/role definitions for the current document and its ancestors."""
+        return RoleChoices.max(*roles)
 
-        links_definitions = defaultdict(set)
-        links_definitions[self.link_reach].add(self.link_role)
-
-        # Merge ancestor link definitions
-        for ancestor in ancestors_links:
-            links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
-
-        return dict(links_definitions)  # Convert defaultdict back to a normal dict
-
-    def compute_ancestors_links(self, user):
+    def compute_ancestors_links_paths_mapping(self):
         """
         Compute the ancestors links for the current document up to the highest readable ancestor.
         """
@@ -758,63 +653,114 @@ class Document(MP_Node, BaseModel):
             .filter(ancestors_deleted_at__isnull=True)
             .order_by("path")
         )
-        highest_readable = ancestors.readable_per_se(user).only("depth").first()
-
-        if highest_readable is None:
-            return []
-
         ancestors_links = []
         paths_links_mapping = {}
-        for ancestor in ancestors.filter(depth__gte=highest_readable.depth):
+
+        for ancestor in ancestors:
             ancestors_links.append(
                 {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
             )
             paths_links_mapping[ancestor.path] = ancestors_links.copy()
 
-        ancestors_links = paths_links_mapping.get(self.path[: -self.steplen], [])
+        return paths_links_mapping
 
-        return ancestors_links
+    @property
+    def link_definition(self):
+        """Returns link reach/role as a definition in dictionary format."""
+        return {"link_reach": self.link_reach, "link_role": self.link_role}
 
-    def get_abilities(self, user, ancestors_links=None):
+    @property
+    def ancestors_link_definition(self):
+        """Link defintion equivalent to all document's ancestors."""
+        if getattr(self, "_ancestors_link_definition", None) is None:
+            if self.depth <= 1:
+                ancestors_links = []
+            else:
+                mapping = self.compute_ancestors_links_paths_mapping()
+                ancestors_links = mapping.get(self.path[: -self.steplen], [])
+            self._ancestors_link_definition = get_equivalent_link_definition(
+                ancestors_links
+            )
+
+        return self._ancestors_link_definition
+
+    @ancestors_link_definition.setter
+    def ancestors_link_definition(self, definition):
+        """Cache the ancestors_link_definition."""
+        self._ancestors_link_definition = definition
+
+    @property
+    def ancestors_link_reach(self):
+        """Link reach equivalent to all document's ancestors."""
+        return self.ancestors_link_definition["link_reach"]
+
+    @property
+    def ancestors_link_role(self):
+        """Link role equivalent to all document's ancestors."""
+        return self.ancestors_link_definition["link_role"]
+
+    @property
+    def computed_link_definition(self):
+        """
+        Link reach/role on the document, combining inherited ancestors' link
+        definitions and the document's own link definition.
+        """
+        if getattr(self, "_computed_link_definition", None) is None:
+            self._computed_link_definition = get_equivalent_link_definition(
+                [self.ancestors_link_definition, self.link_definition]
+            )
+        return self._computed_link_definition
+
+    @property
+    def computed_link_reach(self):
+        """Actual link reach on the document."""
+        return self.computed_link_definition["link_reach"]
+
+    @property
+    def computed_link_role(self):
+        """Actual link role on the document."""
+        return self.computed_link_definition["link_role"]
+
+    def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document.
         """
-        if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
-            ancestors_links = []
-        elif ancestors_links is None:
-            ancestors_links = self.compute_ancestors_links(user=user)
-
-        roles = set(
-            self.get_roles(user)
-        )  # at this point only roles based on specific access
+        # First get the role based on specific access
+        role = self.get_role(user)
 
         # Characteristics that are based only on specific access
-        is_owner = RoleChoices.OWNER in roles
+        is_owner = role == RoleChoices.OWNER
         is_deleted = self.ancestors_deleted_at and not is_owner
-        is_owner_or_admin = (is_owner or RoleChoices.ADMIN in roles) and not is_deleted
+        is_owner_or_admin = (is_owner or role == RoleChoices.ADMIN) and not is_deleted
 
         # Compute access roles before adding link roles because we don't
         # want anonymous users to access versions (we wouldn't know from
         # which date to allow them anyway)
         # Anonymous users should also not see document accesses
-        has_access_role = bool(roles) and not is_deleted
+        has_access_role = bool(role) and not is_deleted
         can_update_from_access = (
-            is_owner_or_admin or RoleChoices.EDITOR in roles
+            is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
 
-        # Add roles provided by the document link, taking into account its ancestors
-        links_definitions = self.get_links_definitions(ancestors_links)
-        public_roles = links_definitions.get(LinkReachChoices.PUBLIC, set())
-        authenticated_roles = (
-            links_definitions.get(LinkReachChoices.AUTHENTICATED, set())
-            if user.is_authenticated
-            else set()
+        link_select_options = LinkReachChoices.get_select_options(
+            **self.ancestors_link_definition
         )
-        roles = roles | public_roles | authenticated_roles
+        link_definition = get_equivalent_link_definition(
+            [
+                self.ancestors_link_definition,
+                {"link_reach": self.link_reach, "link_role": self.link_role},
+            ]
+        )
 
-        can_get = bool(roles) and not is_deleted
+        link_reach = link_definition["link_reach"]
+        if link_reach == LinkReachChoices.PUBLIC or (
+            link_reach == LinkReachChoices.AUTHENTICATED and user.is_authenticated
+        ):
+            role = RoleChoices.max(role, link_definition["link_role"])
+
+        can_get = bool(role) and not is_deleted
         can_update = (
-            is_owner_or_admin or RoleChoices.EDITOR in roles
+            is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
@@ -850,7 +796,7 @@ class Document(MP_Node, BaseModel):
             "restore": is_owner,
             "retrieve": can_get,
             "media_auth": can_get,
-            "link_select_options": LinkReachChoices.get_select_options(ancestors_links),
+            "link_select_options": link_select_options,
             "tree": can_get,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,
@@ -945,7 +891,8 @@ class Document(MP_Node, BaseModel):
 
         if self.depth > 1:
             self._meta.model.objects.filter(pk=self.get_parent().pk).update(
-                numchild=models.F("numchild") - 1
+                numchild=models.F("numchild") - 1,
+                has_deleted_children=True,
             )
 
         # Mark all descendants as soft deleted
@@ -1102,48 +1049,94 @@ class DocumentAccess(BaseAccess):
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
 
+    @property
+    def target_key(self):
+        """Get a unique for the actor targeted by the access, without possible conflict."""
+        return f"user:{self.user_id!s}" if self.user_id else f"team:{self.team:s}"
+
     def delete(self, *args, **kwargs):
         """Override delete to clear the document's cache for number of accesses."""
         super().delete(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
 
+    def get_roles_tuple(self, user):
+        """
+        Get a tuple of:
+        - the role equivalent to all ancestors of the
+          document related to the current access
+        - the role the user has on the current access
+        """
+        if not user.is_authenticated:
+            return None, None
+
+        try:
+            return self.user_roles_tuple
+        except AttributeError:
+            ancestors = (
+                self.document.get_ancestors()
+                | Document.objects.filter(pk=self.document_id)
+            ).filter(ancestors_deleted_at__isnull=True)
+
+            access_tuples = DocumentAccess.objects.filter(
+                models.Q(user=user) | models.Q(team__in=user.teams),
+                document__in=ancestors,
+            ).values_list("document_id", "role")
+
+            ancestors_roles = []
+            current_roles = []
+            for doc_id, role in access_tuples:
+                if doc_id == self.document_id:
+                    current_roles.append(role)
+                else:
+                    ancestors_roles.append(role)
+
+            return RoleChoices.max(*ancestors_roles), RoleChoices.max(*current_roles)
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document access.
         """
-        roles = self._get_roles(self.document, user)
-        is_owner_or_admin = bool(set(roles).intersection(set(PRIVILEGED_ROLES)))
+        ancestors_role, current_role = self.get_roles_tuple(user)
+        role = RoleChoices.max(ancestors_role, current_role)
+        is_owner_or_admin = role in PRIVILEGED_ROLES
+
         if self.role == RoleChoices.OWNER:
-            can_delete = (
-                RoleChoices.OWNER in roles
-                and self.document.accesses.filter(role=RoleChoices.OWNER).count() > 1
+            can_delete = role == RoleChoices.OWNER and (
+                # check if document is not root trying to avoid an extra query
+                # "document_path" is annotated by the viewset's list method
+                len(getattr(self, "document_path", "")) > Document.steplen
+                or not self.document.is_root()
+                or DocumentAccess.objects.filter(
+                    document_id=self.document_id, role=RoleChoices.OWNER
+                ).count()
+                > 1
             )
-            set_role_to = (
-                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                if can_delete
-                else []
-            )
+            set_role_to = RoleChoices.values if can_delete else []
         else:
             can_delete = is_owner_or_admin
             set_role_to = []
-            if RoleChoices.OWNER in roles:
-                set_role_to.append(RoleChoices.OWNER)
             if is_owner_or_admin:
                 set_role_to.extend(
-                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                    [RoleChoices.READER, RoleChoices.EDITOR, RoleChoices.ADMIN]
                 )
+            if role == RoleChoices.OWNER:
+                set_role_to.append(RoleChoices.OWNER)
 
-        # Remove the current role as we don't want to propose it as an option
-        try:
-            set_role_to.remove(self.role)
-        except ValueError:
-            pass
+        # Filter out roles that would be lower than the one the user already has
+        ancestors_role_priority = RoleChoices.get_priority(ancestors_role)
+        set_role_to = [
+            candidate_role
+            for candidate_role in set_role_to
+            if RoleChoices.get_priority(candidate_role) >= ancestors_role_priority
+        ]
+        if len(set_role_to) == 1:
+            set_role_to = []
 
         return {
             "destroy": can_delete,
             "update": bool(set_role_to) and is_owner_or_admin,
             "partial_update": bool(set_role_to) and is_owner_or_admin,
-            "retrieve": self.user and self.user.id == user.id or is_owner_or_admin,
+            "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
         }
 
@@ -1245,11 +1238,65 @@ class TemplateAccess(BaseAccess):
     def __str__(self):
         return f"{self.user!s} is {self.role:s} in template {self.template!s}"
 
+    def get_role(self, user):
+        """
+        Get the role a user has on a resource.
+        """
+        if not user.is_authenticated:
+            return None
+
+        try:
+            roles = self.user_roles or []
+        except AttributeError:
+            teams = user.teams
+            try:
+                roles = self.template.accesses.filter(
+                    models.Q(user=user) | models.Q(team__in=teams),
+                ).values_list("role", flat=True)
+            except (Template.DoesNotExist, IndexError):
+                roles = []
+
+        return RoleChoices.max(*roles)
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the template access.
         """
-        return self._get_abilities(self.template, user)
+        role = self.get_role(user)
+        is_owner_or_admin = role in (RoleChoices.OWNER, RoleChoices.ADMIN)
+
+        if self.role == RoleChoices.OWNER:
+            can_delete = (role == RoleChoices.OWNER) and self.template.accesses.filter(
+                role=RoleChoices.OWNER
+            ).count() > 1
+            set_role_to = (
+                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                if can_delete
+                else []
+            )
+        else:
+            can_delete = is_owner_or_admin
+            set_role_to = []
+            if role == RoleChoices.OWNER:
+                set_role_to.append(RoleChoices.OWNER)
+            if is_owner_or_admin:
+                set_role_to.extend(
+                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                )
+
+        # Remove the current role as we don't want to propose it as an option
+        try:
+            set_role_to.remove(self.role)
+        except ValueError:
+            pass
+
+        return {
+            "destroy": can_delete,
+            "update": bool(set_role_to),
+            "partial_update": bool(set_role_to),
+            "retrieve": bool(role),
+            "set_role_to": set_role_to,
+        }
 
 
 class Invitation(BaseModel):
