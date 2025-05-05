@@ -42,7 +42,7 @@ const doc = {
 
 beforeEach(() => {
   Analytics.clearAnalytics();
-  process.env.MIT_ONLY = 'false';
+  process.env.PUBLISH_AS_MIT = 'false';
 });
 
 describe('DocToolBox "Copy as HTML" option', () => {

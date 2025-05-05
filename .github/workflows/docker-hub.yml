@@ -81,7 +81,7 @@ jobs:
           target: frontend-production
           build-args: |
             DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-            MIT_ONLY=false
+            PUBLISH_AS_MIT=false
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

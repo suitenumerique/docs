@@ -15,8 +15,8 @@ jest.mock('@/features/docs/doc-export/', () => ({
   ModalExport: () => <span>ModalExport</span>,
 }));
 
-it('DocToolBox dynamic import: loads DocToolBox when MIT_ONLY is true', async () => {
-  process.env.MIT_ONLY = 'true';
+it('DocToolBox dynamic import: loads DocToolBox when PUBLISH_AS_MIT is true', async () => {
+  process.env.PUBLISH_AS_MIT = 'true';
 
   const { DocToolBox } = await import('../components/DocToolBox');
 

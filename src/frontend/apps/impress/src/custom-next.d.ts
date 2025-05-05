@@ -19,8 +19,8 @@ declare module '*.svg?url' {
 
 namespace NodeJS {
   interface ProcessEnv {
-    MIT_ONLY?: string;
     NEXT_PUBLIC_API_ORIGIN?: string;
     NEXT_PUBLIC_SW_DEACTIVATED?: string;
+    PUBLISH_AS_MIT?: string;
   }
 }

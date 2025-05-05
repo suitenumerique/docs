@@ -16,7 +16,7 @@ interface DocToolBoxProps {
 }
 
 const DocToolBoxLicence = dynamic(() =>
-  process.env.MIT_ONLY === 'false'
+  process.env.PUBLISH_AS_MIT === 'false'
     ? import('./DocToolBoxLicenceAGPL').then((mod) => mod.DocToolBoxLicenceAGPL)
     : import('./DocToolBoxLicenceMIT').then((mod) => mod.DocToolBoxLicenceMIT),
 );
