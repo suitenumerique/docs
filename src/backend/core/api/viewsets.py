@@ -17,6 +17,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
@@ -389,7 +390,7 @@ class DocumentViewSet(
     ordering_fields = ["created_at", "updated_at", "title"]
     pagination_class = Pagination
     permission_classes = [
-        permissions.DocumentAccessPermission,
+        permissions.DocumentPermission,
     ]
     queryset = models.Document.objects.all()
     serializer_class = serializers.DocumentSerializer
@@ -798,7 +799,7 @@ class DocumentViewSet(
         try:
             current_document = self.queryset.only("depth", "path").get(pk=pk)
         except models.Document.DoesNotExist as excpt:
-            raise drf.exceptions.NotFound from excpt
+            raise drf.exceptions.NotFound() from excpt
 
         ancestors = (
             (current_document.get_ancestors() | self.queryset.filter(pk=pk))
@@ -858,7 +859,10 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=True,
         methods=["post"],
-        permission_classes=[permissions.IsAuthenticated, permissions.AccessPermission],
+        permission_classes=[
+            permissions.IsAuthenticated,
+            permissions.DocumentPermission,
+        ],
         url_path="duplicate",
     )
     @transaction.atomic
@@ -1354,25 +1358,19 @@ class DocumentAccessViewSet(
     """
 
     lookup_field = "pk"
-    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    permission_classes = [permissions.DocumentAccessPermission]
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the viewset and define default value for contextual document."""
-        super().__init__(*args, **kwargs)
-        self.document = None
-
-    def initial(self, request, *args, **kwargs):
-        """Retrieve self.document with annotated user roles."""
-        super().initial(request, *args, **kwargs)
-
+    @cached_property
+    def document(self):
+        """Get related document from resource ID in url and annotate user roles."""
         try:
-            self.document = models.Document.objects.annotate_user_roles(
-                self.request.user
-            ).get(pk=self.kwargs["resource_id"])
+            return models.Document.objects.annotate_user_roles(self.request.user).get(
+                pk=self.kwargs["resource_id"]
+            )
         except models.Document.DoesNotExist as excpt:
-            raise Http404() from excpt
+            raise drf.exceptions.NotFound() from excpt
 
     def get_serializer_class(self):
         """Use light serializer for unprivileged users."""
@@ -1449,8 +1447,24 @@ class DocumentAccessViewSet(
         return drf.response.Response(serialized_data)
 
     def perform_create(self, serializer):
-        """Add a new access to the document and send an email to the new added user."""
-        access = serializer.save()
+        """
+        Actually create the new document access:
+        - Ensures the `document_id` is explicitly set from the URL
+        - If the assigned role is `OWNER`, checks that the requesting user is an owner
+          of the document. This is the only permission check deferred until this step;
+          all other access checks are handled earlier in the permission lifecycle.
+        - Sends an invitation email to the newly added user after saving the access.
+        """
+        role = serializer.validated_data.get("role")
+        if (
+            role == choices.RoleChoices.OWNER
+            and self.document.get_role(self.request.user) != choices.RoleChoices.OWNER
+        ):
+            raise drf.exceptions.PermissionDenied(
+                "Only owners of a document can assign other users as owners."
+            )
+
+        access = serializer.save(document_id=self.kwargs["resource_id"])
 
         access.document.send_invitation_email(
             access.user.email,
@@ -1496,7 +1510,7 @@ class TemplateViewSet(
     filter_backends = [drf.filters.OrderingFilter]
     permission_classes = [
         permissions.IsAuthenticatedOrSafe,
-        permissions.AccessPermission,
+        permissions.ResourceWithAccessPermission,
     ]
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "title"]
@@ -1587,10 +1601,18 @@ class TemplateAccessViewSet(
     """
 
     lookup_field = "pk"
-    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    permission_classes = [permissions.TemplateAccessPermission]
     queryset = models.TemplateAccess.objects.select_related("user").all()
     resource_field_name = "template"
     serializer_class = serializers.TemplateAccessSerializer
+
+    @cached_property
+    def template(self):
+        """Get related template from resource ID in url."""
+        try:
+            return models.Template.objects.get(pk=self.kwargs["resource_id"])
+        except models.Template.DoesNotExist as excpt:
+            raise drf.exceptions.NotFound() from excpt
 
     def list(self, request, *args, **kwargs):
         """Restrict templates returned by the list endpoint"""
@@ -1608,6 +1630,26 @@ class TemplateAccessViewSet(
 
         serializer = self.get_serializer(queryset, many=True)
         return drf.response.Response(serializer.data)
+
+    def perform_create(self, serializer):
+        """
+        Actually create the new template access:
+        - Ensures the `template_id` is explicitly set from the URL.
+        - If the assigned role is `OWNER`, checks that the requesting user is an owner
+          of the document. This is the only permission check deferred until this step;
+          all other access checks are handled earlier in the permission lifecycle.
+        """
+        role = serializer.validated_data.get("role")
+        if (
+            role == choices.RoleChoices.OWNER
+            and choices.RoleChoices.OWNER
+            not in self.template.get_roles(self.request.user)
+        ):
+            raise drf.exceptions.PermissionDenied(
+                "Only owners of a template can assign other users as owners."
+            )
+
+        serializer.save(template_id=self.kwargs["resource_id"])
 
 
 class InvitationViewset(
@@ -1641,7 +1683,7 @@ class InvitationViewset(
     pagination_class = Pagination
     permission_classes = [
         permissions.CanCreateInvitationPermission,
-        permissions.AccessPermission,
+        permissions.ResourceWithAccessPermission,
     ]
     queryset = (
         models.Invitation.objects.all()
