@@ -20,6 +20,16 @@
       "allowedVersions": "<5.2"
     },
     {
+      "groupName": "allowed redis versions",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchPackageNames": [
+        "redis"
+      ],
+      "allowedVersions": "<6.0.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
