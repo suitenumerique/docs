@@ -1184,10 +1184,10 @@ class Template(BaseModel):
     def __str__(self):
         return self.title
 
-    def get_roles(self, user):
+    def get_role(self, user):
         """Return the roles a user has on a resource as an iterable."""
         if not user.is_authenticated:
-            return []
+            return None
 
         try:
             roles = self.user_roles or []
@@ -1198,21 +1198,20 @@ class Template(BaseModel):
                 ).values_list("role", flat=True)
             except (models.ObjectDoesNotExist, IndexError):
                 roles = []
-        return roles
+
+        return RoleChoices.max(*roles)
 
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the template.
         """
-        roles = self.get_roles(user)
-        is_owner_or_admin = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
-        )
-        can_get = self.is_public or bool(roles)
-        can_update = is_owner_or_admin or RoleChoices.EDITOR in roles
+        role = self.get_role(user)
+        is_owner_or_admin = role in PRIVILEGED_ROLES
+        can_get = self.is_public or bool(role)
+        can_update = is_owner_or_admin or role == RoleChoices.EDITOR
 
         return {
-            "destroy": RoleChoices.OWNER in roles,
+            "destroy": role == RoleChoices.OWNER,
             "generate_document": can_get,
             "accesses_manage": is_owner_or_admin,
             "update": can_update,

@@ -5,12 +5,11 @@ import mimetypes
 from base64 import b64decode
 
 from django.conf import settings
-from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 
 import magic
-from rest_framework import exceptions, serializers
+from rest_framework import serializers
 
 from core import choices, enums, models, utils
 from core.services.ai_services import AI_ACTIONS
@@ -38,78 +37,7 @@ class UserLightSerializer(UserSerializer):
         read_only_fields = ["full_name", "short_name"]
 
 
-class BaseAccessSerializer(serializers.ModelSerializer):
-    """Serialize template accesses."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-
-    def update(self, instance, validated_data):
-        """Make "user" field is readonly but only on update."""
-        validated_data.pop("user", None)
-        return super().update(instance, validated_data)
-
-    def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return instance.get_abilities(request.user)
-        return {}
-
-    def validate(self, attrs):
-        """
-        Check access rights specific to writing (create/update)
-        """
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-        role = attrs.get("role")
-
-        # Update
-        if self.instance:
-            can_set_role_to = self.instance.get_abilities(user)["set_role_to"]
-            if role and role not in can_set_role_to:
-                message = (
-                    f"You are only allowed to set role to {', '.join(can_set_role_to)}"
-                    if can_set_role_to
-                    else "You are not allowed to set this role for this template."
-                )
-                raise exceptions.PermissionDenied(message)
-
-        # Create
-        else:
-            try:
-                resource_id = self.context["resource_id"]
-            except KeyError as exc:
-                raise exceptions.ValidationError(
-                    "You must set a resource ID in kwargs to create a new access."
-                ) from exc
-
-            if not self.Meta.model.objects.filter(  # pylint: disable=no-member
-                Q(user=user) | Q(team__in=user.teams),
-                role__in=choices.PRIVILEGED_ROLES,
-                **{self.Meta.resource_field_name: resource_id},  # pylint: disable=no-member
-            ).exists():
-                raise exceptions.PermissionDenied(
-                    "You are not allowed to manage accesses for this resource."
-                )
-
-            if (
-                role == models.RoleChoices.OWNER
-                and not self.Meta.model.objects.filter(  # pylint: disable=no-member
-                    Q(user=user) | Q(team__in=user.teams),
-                    role=models.RoleChoices.OWNER,
-                    **{self.Meta.resource_field_name: resource_id},  # pylint: disable=no-member
-                ).exists()
-            ):
-                raise exceptions.PermissionDenied(
-                    "Only owners of a resource can assign other users as owners."
-                )
-
-        # pylint: disable=no-member
-        attrs[f"{self.Meta.resource_field_name}_id"] = self.context["resource_id"]
-        return attrs
-
-
-class DocumentAccessSerializer(BaseAccessSerializer):
+class DocumentAccessSerializer(serializers.ModelSerializer):
     """Serialize document accesses."""
 
     document_id = serializers.PrimaryKeyRelatedField(
@@ -124,6 +52,7 @@ class DocumentAccessSerializer(BaseAccessSerializer):
         allow_null=True,
     )
     user = UserSerializer(read_only=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
     max_ancestors_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -141,9 +70,21 @@ class DocumentAccessSerializer(BaseAccessSerializer):
         ]
         read_only_fields = ["id", "document_id", "abilities", "max_ancestors_role"]
 
+    def get_abilities(self, instance) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return instance.get_abilities(request.user)
+        return {}
+
     def get_max_ancestors_role(self, instance):
         """Return max_ancestors_role if annotated; else None."""
         return getattr(instance, "max_ancestors_role", None)
+
+    def update(self, instance, validated_data):
+        """Make "user" field is readonly but only on update."""
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
 
 
 class DocumentAccessLightSerializer(DocumentAccessSerializer):
@@ -173,14 +114,28 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
         ]
 
 
-class TemplateAccessSerializer(BaseAccessSerializer):
+class TemplateAccessSerializer(serializers.ModelSerializer):
     """Serialize template accesses."""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.TemplateAccess
         resource_field_name = "template"
         fields = ["id", "user", "team", "role", "abilities"]
         read_only_fields = ["id", "abilities"]
+
+    def get_abilities(self, instance) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return instance.get_abilities(request.user)
+        return {}
+
+    def update(self, instance, validated_data):
+        """Make "user" field is readonly but only on update."""
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
 
 
 class ListDocumentSerializer(serializers.ModelSerializer):
@@ -692,11 +647,8 @@ class InvitationSerializer(serializers.ModelSerializer):
 
         # If the role is OWNER, check if the user has OWNER access
         if role == models.RoleChoices.OWNER:
-            if not models.DocumentAccess.objects.filter(
-                Q(user=user) | Q(team__in=user.teams),
-                document=document_id,
-                role=models.RoleChoices.OWNER,
-            ).exists():
+            user_role = models.Document.objects.get(id=document_id).get_role(user)
+            if user_role != models.RoleChoices.OWNER:
                 raise serializers.ValidationError(
                     "Only owners of a document can invite other users as owners."
                 )

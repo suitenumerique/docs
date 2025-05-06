@@ -103,32 +103,37 @@ def test_api_document_accesses_create_authenticated_reader_or_editor(
     assert not models.DocumentAccess.objects.filter(user=other_user).exists()
 
 
+@pytest.mark.parametrize("depth", [1, 2, 3])
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_create_authenticated_administrator(via, mock_user_teams):
+def test_api_document_accesses_create_authenticated_administrator(
+    via, depth, mock_user_teams
+):
     """
-    Administrators of a document should be able to create document accesses
-    except for the "owner" role.
+    Administrators of a document (direct or by heritage) should be able to create
+    document accesses except for the "owner" role.
     An email should be sent to the accesses to notify them of the adding.
     """
     user = factories.UserFactory(with_owned_document=True)
-
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
     if via == USER:
         factories.UserDocumentAccessFactory(
-            document=document, user=user, role="administrator"
+            document=documents[0], user=user, role="administrator"
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role="administrator"
+            document=documents[0], team="lasuite", role="administrator"
         )
 
     other_user = factories.UserFactory(language="en-us")
-
-    # It should not be allowed to create an owner access
+    document = documents[-1]
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/accesses/",
         {
@@ -140,7 +145,7 @@ def test_api_document_accesses_create_authenticated_administrator(via, mock_user
 
     assert response.status_code == 403
     assert response.json() == {
-        "detail": "Only owners of a resource can assign other users as owners."
+        "detail": "Only owners of a document can assign other users as owners."
     }
 
     # It should be allowed to create a lower access
@@ -184,28 +189,35 @@ def test_api_document_accesses_create_authenticated_administrator(via, mock_user
     assert "docs/" + str(document.id) + "/" in email_content
 
 
+@pytest.mark.parametrize("depth", [1, 2, 3])
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_create_authenticated_owner(via, mock_user_teams):
+def test_api_document_accesses_create_authenticated_owner(via, depth, mock_user_teams):
     """
-    Owners of a document should be able to create document accesses whatever the role.
-    An email should be sent to the accesses to notify them of the adding.
+    Owners of a document (direct or by heritage) should be able to create document accesses
+    whatever the role. An email should be sent to the accesses to notify them of the adding.
     """
     user = factories.UserFactory()
 
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
     if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+        factories.UserDocumentAccessFactory(
+            document=documents[0], user=user, role="owner"
+        )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role="owner"
+            document=documents[0], team="lasuite", role="owner"
         )
 
     other_user = factories.UserFactory(language="en-us")
-
+    document = documents[-1]
     role = random.choice([role[0] for role in models.RoleChoices.choices])
 
     assert len(mail.outbox) == 0
