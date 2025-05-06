@@ -6,6 +6,7 @@ from django.http import Http404
 
 from rest_framework import permissions
 
+from core import choices
 from core.models import DocumentAccess, RoleChoices, get_trashbin_cutoff
 
 ACTION_FOR_METHOD_TO_PERMISSION = {
@@ -96,25 +97,26 @@ class CanCreateInvitationPermission(permissions.BasePermission):
         ).exists()
 
 
-class AccessPermission(permissions.BasePermission):
-    """Permission class for access objects."""
+class ResourceWithAccessPermission(permissions.BasePermission):
+    """A permission class for templates and invitations."""
 
     def has_permission(self, request, view):
+        """check create permission for templates."""
         return request.user.is_authenticated or view.action != "create"
 
     def has_object_permission(self, request, view, obj):
         """Check permission for a given object."""
         abilities = obj.get_abilities(request.user)
         action = view.action
-        try:
-            action = ACTION_FOR_METHOD_TO_PERMISSION[view.action][request.method]
-        except KeyError:
-            pass
         return abilities.get(action, False)
 
 
-class DocumentAccessPermission(AccessPermission):
+class DocumentPermission(permissions.BasePermission):
     """Subclass to handle soft deletion specificities."""
+
+    def has_permission(self, request, view):
+        """check create permission for documents."""
+        return request.user.is_authenticated or view.action != "create"
 
     def has_object_permission(self, request, view, obj):
         """
@@ -127,10 +129,45 @@ class DocumentAccessPermission(AccessPermission):
         ) and deleted_at < get_trashbin_cutoff():
             raise Http404
 
-        # Compute permission first to ensure the "user_roles" attribute is set
-        has_permission = super().has_object_permission(request, view, obj)
+        abilities = obj.get_abilities(request.user)
+        action = view.action
+        try:
+            action = ACTION_FOR_METHOD_TO_PERMISSION[view.action][request.method]
+        except KeyError:
+            pass
+
+        has_permission = abilities.get(action, False)
 
         if obj.ancestors_deleted_at and not RoleChoices.OWNER in obj.user_roles:
             raise Http404
 
         return has_permission
+
+
+class ResourceAccessPermission(IsAuthenticated):
+    """Permission class for document access objects."""
+
+    def has_permission(self, request, view):
+        """check create permission for accesses in documents tree."""
+        if super().has_permission(request, view) is False:
+            return False
+
+        if view.action == "create":
+            role = getattr(view, view.resource_field_name).get_role(request.user)
+            if role not in choices.PRIVILEGED_ROLES:
+                raise exceptions.PermissionDenied(
+                    "You are not allowed to manage accesses for this resource."
+                )
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        """Check permission for a given object."""
+        abilities = obj.get_abilities(request.user)
+
+        requested_role = request.data.get("role")
+        if requested_role and requested_role not in abilities.get("set_role_to", []):
+            return False
+
+        action = view.action
+        return abilities.get(action, False)
