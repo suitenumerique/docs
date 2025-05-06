@@ -1,4 +1,4 @@
-import { HocuspocusProvider } from '@hocuspocus/provider';
+import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
@@ -12,10 +12,12 @@ export interface UseCollaborationStore {
   ) => HocuspocusProvider;
   destroyProvider: () => void;
   provider: HocuspocusProvider | undefined;
+  isConnected: boolean;
 }
 
 const defaultValues = {
   provider: undefined,
+  isConnected: false,
 };
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
@@ -33,6 +35,11 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       url: wsUrl,
       name: storeId,
       document: doc,
+      onStatus: ({ status }) => {
+        set({
+          isConnected: status === WebSocketStatus.Connected,
+        });
+      },
     });
 
     set({

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { Doc } from '@/docs/doc-management';
+import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
 import { useUploadFile } from '../hook';
@@ -48,7 +48,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
 
-  const readOnly = !doc.abilities.partial_update;
+  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+
   useSaveDoc(doc.id, provider.document, !readOnly);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage;

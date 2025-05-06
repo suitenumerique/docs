@@ -102,7 +102,7 @@ export const verifyDocName = async (page: Page, docName: string) => {
 export const addNewMember = async (
   page: Page,
   index: number,
-  role: 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader',
+  role: 'Administrator' | 'Owner' | 'Editor' | 'Reader',
   fillText: string = 'user ',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(

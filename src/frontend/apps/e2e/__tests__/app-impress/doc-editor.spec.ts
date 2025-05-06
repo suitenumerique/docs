@@ -4,6 +4,8 @@ import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
 import {
+  CONFIG,
+  addNewMember,
   createDoc,
   goToGridDoc,
   mockedDocument,
@@ -363,7 +365,7 @@ test.describe('Doc Editor', () => {
           partial_update: true,
           retrieve: true,
         },
-        link_reach: 'public',
+        link_reach: 'restricted',
         link_role: 'editor',
         created_at: '2021-09-01T09:00:00Z',
         title: '',
@@ -451,5 +453,54 @@ test.describe('Doc Editor', () => {
 
     const svgBuffer = await cs.toBuffer(await download.createReadStream());
     expect(svgBuffer.toString()).toContain('Hello svg');
+  });
+
+  test('it checks block editing when not connected to collab server', async ({
+    page,
+  }) => {
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...CONFIG,
+            COLLABORATION_WS_URL: 'ws://localhost:5555/collaboration/ws/',
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/');
+
+    void page
+      .getByRole('button', {
+        name: 'New doc',
+      })
+      .click();
+
+    const card = page.getByLabel('It is the card information');
+    await expect(
+      card.getByText('Your network do not allow you to edit'),
+    ).toBeHidden();
+    const editor = page.locator('.ProseMirror');
+
+    await expect(editor).toHaveAttribute('contenteditable', 'true');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await addNewMember(page, 0, 'Editor', 'impress');
+
+    // Close the modal
+    await page.getByRole('button', { name: 'close' }).first().click();
+
+    await expect(
+      card.getByText('Your network do not allow you to edit'),
+    ).toBeVisible({
+      timeout: 10000,
+    });
+
+    await expect(editor).toHaveAttribute('contenteditable', 'false');
   });
 });
