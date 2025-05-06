@@ -27,12 +27,13 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { DividerBlock } from './custom-blocks';
+import { CalloutBlock, DividerBlock } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      callout: CalloutBlock,
       divider: DividerBlock,
     },
   }),

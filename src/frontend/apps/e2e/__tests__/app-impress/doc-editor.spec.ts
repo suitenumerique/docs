@@ -452,4 +452,63 @@ test.describe('Doc Editor', () => {
     const svgBuffer = await cs.toBuffer(await download.createReadStream());
     expect(svgBuffer.toString()).toContain('Hello svg');
   });
+
+  test('it checks if callout block renders with its emoji picker', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-toolbar', browserName, 1);
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Add a callout block').click();
+    await page.locator('.inline-content').fill('example text');
+
+    await expect(page.locator('.bn-block').first()).toBeVisible();
+    await expect(page.locator('.bn-block').first()).toHaveAttribute(
+      'data-background-color',
+      'yellow',
+    );
+
+    await expect(
+      page.locator('.docs--editor-callout-block-emoji'),
+    ).toBeVisible();
+    await expect(page.locator('.docs--editor-callout-block-emoji')).toHaveText(
+      '💡',
+    );
+
+    await page.locator('.docs--editor-callout-block-emoji').click();
+    await expect(page.locator('em-emoji-picker')).toBeVisible();
+  });
+
+  test('it checks if callout block updates background color and emoji on user actions', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-toolbar', browserName, 1);
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Add a callout block').click();
+    await page.locator('.inline-content').fill('example text');
+
+    await page.locator('.docs--editor-callout-block-emoji').click();
+    await page.locator('button[aria-label="⚠️"]').click();
+    await expect(page.locator('.docs--editor-callout-block-emoji')).toHaveText(
+      '⚠️',
+    );
+
+    await expect(page.locator('.inline-content')).toHaveText('example text');
+
+    await page.locator('.bn-side-menu > button').last().click();
+    await page.locator('.mantine-Menu-dropdown > button').last().click();
+    await page.locator('.bn-color-picker-dropdown > button').last().click();
+
+    await expect(page.locator('.bn-block').first()).toHaveAttribute(
+      'data-background-color',
+      'pink',
+    );
+  });
 });

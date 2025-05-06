@@ -6,8 +6,11 @@ import {
   useDictionary,
 } from '@blocknote/react';
 import React, { JSX, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
+
+import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
@@ -18,11 +21,13 @@ export const BlockNoteToolbar = () => {
   const dict = useDictionary();
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
+  const { t } = useTranslation();
   const { data: conf } = useConfig();
 
   const toolbarItems = useMemo(() => {
     const toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
+      getCalloutFormattingToolbarItems(t),
     ]);
     const fileDownloadButtonIndex = toolbarItems.findIndex(
       (item) =>
