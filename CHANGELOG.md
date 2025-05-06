@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) integrate maleware_detection from django-lasuite
+
 ## [3.2.0] - 2025-05-05
 
 ## Added

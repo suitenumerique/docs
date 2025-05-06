@@ -3,6 +3,7 @@ Core application enums declaration
 """
 
 import re
+from enum import StrEnum
 
 from django.conf import global_settings, settings
 from django.db import models
@@ -38,3 +39,10 @@ class MoveNodePositionChoices(models.TextChoices):
     LAST_SIBLING = "last-sibling", _("Last sibling")
     LEFT = "left", _("Left")
     RIGHT = "right", _("Right")
+
+
+class DocumentAttachmentStatus(StrEnum):
+    """Defines the possible statuses for an attachment."""
+
+    PROCESSING = "processing"
+    READY = "ready"

@@ -15,6 +15,7 @@ import requests
 from rest_framework.test import APIClient
 
 from core import factories, models
+from core.enums import DocumentAttachmentStatus
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
@@ -45,6 +46,7 @@ def test_api_documents_media_auth_anonymous_public():
         Key=key,
         Body=BytesIO(b"my prose"),
         ContentType="text/plain",
+        Metadata={"status": DocumentAttachmentStatus.READY},
     )
 
     factories.DocumentFactory(id=document_id, link_reach="public", attachments=[key])
@@ -93,7 +95,15 @@ def test_api_documents_media_auth_extensions():
     keys = []
     for ext in extensions:
         filename = f"{uuid4()!s}.{ext:s}"
-        keys.append(f"{document_id!s}/attachments/{filename:s}")
+        key = f"{document_id!s}/attachments/{filename:s}"
+        default_storage.connection.meta.client.put_object(
+            Bucket=default_storage.bucket_name,
+            Key=key,
+            Body=BytesIO(b"my prose"),
+            ContentType="text/plain",
+            Metadata={"status": DocumentAttachmentStatus.READY},
+        )
+        keys.append(key)
 
     factories.DocumentFactory(link_reach="public", attachments=keys)
 
@@ -142,6 +152,7 @@ def test_api_documents_media_auth_anonymous_attachments():
         Key=key,
         Body=BytesIO(b"my prose"),
         ContentType="text/plain",
+        Metadata={"status": DocumentAttachmentStatus.READY},
     )
 
     factories.DocumentFactory(id=document_id, link_reach="restricted")
@@ -205,6 +216,7 @@ def test_api_documents_media_auth_authenticated_public_or_authenticated(reach):
         Key=key,
         Body=BytesIO(b"my prose"),
         ContentType="text/plain",
+        Metadata={"status": DocumentAttachmentStatus.READY},
     )
 
     factories.DocumentFactory(id=document_id, link_reach=reach, attachments=[key])
@@ -283,6 +295,7 @@ def test_api_documents_media_auth_related(via, mock_user_teams):
         Key=key,
         Body=BytesIO(b"my prose"),
         ContentType="text/plain",
+        Metadata={"status": DocumentAttachmentStatus.READY},
     )
 
     document = factories.DocumentFactory(
@@ -296,6 +309,73 @@ def test_api_documents_media_auth_related(via, mock_user_teams):
 
     response = client.get(
         "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=media_url
+    )
+
+    assert response.status_code == 200
+
+    authorization = response["Authorization"]
+    assert "AWS4-HMAC-SHA256 Credential=" in authorization
+    assert (
+        "SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="
+        in authorization
+    )
+    assert response["X-Amz-Date"] == timezone.now().strftime("%Y%m%dT%H%M%SZ")
+
+    s3_url = urlparse(settings.AWS_S3_ENDPOINT_URL)
+    file_url = f"{settings.AWS_S3_ENDPOINT_URL:s}/impress-media-storage/{key:s}"
+    response = requests.get(
+        file_url,
+        headers={
+            "authorization": authorization,
+            "x-amz-date": response["x-amz-date"],
+            "x-amz-content-sha256": response["x-amz-content-sha256"],
+            "Host": f"{s3_url.hostname:s}:{s3_url.port:d}",
+        },
+        timeout=1,
+    )
+    assert response.content.decode("utf-8") == "my prose"
+
+
+def test_api_documents_media_auth_not_ready_status():
+    """Attachments with status not ready should not be accessible"""
+    document_id = uuid4()
+    filename = f"{uuid4()!s}.jpg"
+    key = f"{document_id!s}/attachments/{filename:s}"
+    default_storage.connection.meta.client.put_object(
+        Bucket=default_storage.bucket_name,
+        Key=key,
+        Body=BytesIO(b"my prose"),
+        ContentType="text/plain",
+        Metadata={"status": DocumentAttachmentStatus.PROCESSING},
+    )
+
+    factories.DocumentFactory(id=document_id, link_reach="public", attachments=[key])
+
+    original_url = f"http://localhost/media/{key:s}"
+    response = APIClient().get(
+        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
+    )
+
+    assert response.status_code == 403
+
+
+def test_api_documents_media_auth_missing_status_metadata():
+    """Attachments without status metadata should be considered as ready"""
+    document_id = uuid4()
+    filename = f"{uuid4()!s}.jpg"
+    key = f"{document_id!s}/attachments/{filename:s}"
+    default_storage.connection.meta.client.put_object(
+        Bucket=default_storage.bucket_name,
+        Key=key,
+        Body=BytesIO(b"my prose"),
+        ContentType="text/plain",
+    )
+
+    factories.DocumentFactory(id=document_id, link_reach="public", attachments=[key])
+
+    original_url = f"http://localhost/media/{key:s}"
+    response = APIClient().get(
+        "/api/v1.0/documents/media-auth/", HTTP_X_ORIGINAL_URL=original_url
     )
 
     assert response.status_code == 200

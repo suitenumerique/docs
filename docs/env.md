@@ -98,3 +98,5 @@ These are the environmental variables you can set for the impress-backend contai
 | DJANGO_CSRF_TRUSTED_ORIGINS                     | CSRF trusted origins                                                                          | []                                                      |
 | REDIS_URL                                       | cache url                                                                                     | redis://redis:6379/1                                    |
 | CACHES_DEFAULT_TIMEOUT                          | cache default timeout                                                                         | 30                                                      |
+| MALWARE_DETECTION_BACKEND                       | The malware detection backend use from the django-lasuite package                             | lasuite.malware_detection.backends.dummy.DummyBackend           |
+| MALWARE_DETECTION_PARAMETERS                    | A dict containing all the parameters to initiate the malware detection backend                | {"callback_path": "core.malware_detection.malware_detection_callback",} |

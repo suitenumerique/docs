@@ -317,6 +317,7 @@ class Base(Configuration):
         "django.contrib.staticfiles",
         # OIDC third party
         "mozilla_django_oidc",
+        "lasuite.malware_detection",
     ]
 
     # Cache
@@ -678,6 +679,21 @@ class Base(Configuration):
                 "propagate": False,
             },
         },
+    }
+
+    MALWARE_DETECTION = {
+        "BACKEND": values.Value(
+            "lasuite.malware_detection.backends.dummy.DummyBackend",
+            environ_name="MALWARE_DETECTION_BACKEND",
+            environ_prefix=None,
+        ),
+        "PARAMETERS": values.DictValue(
+            default={
+                "callback_path": "core.malware_detection.malware_detection_callback",
+            },
+            environ_name="MALWARE_DETECTION_PARAMETERS",
+            environ_prefix=None,
+        ),
     }
 
     API_USERS_LIST_LIMIT = values.PositiveIntegerValue(
