@@ -439,6 +439,18 @@ class Base(Configuration):
         None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
     )
 
+    THEME_CUSTOMIZATION_FILE_PATH = values.Value(
+        os.path.join(BASE_DIR, "configuration/theme/default.json"),
+        environ_name="THEME_CUSTOMIZATION_FILE_PATH",
+        environ_prefix=None,
+    )
+
+    THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.Value(
+        60 * 60 * 24,
+        environ_name="THEME_CUSTOMIZATION_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # Posthog
     POSTHOG_KEY = values.DictValue(
         None, environ_name="POSTHOG_KEY", environ_prefix=None

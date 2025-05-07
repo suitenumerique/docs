@@ -98,3 +98,6 @@ These are the environmental variables you can set for the impress-backend contai
 | DJANGO_CSRF_TRUSTED_ORIGINS                     | CSRF trusted origins                                                                          | []                                                      |
 | REDIS_URL                                       | cache url                                                                                     | redis://redis:6379/1                                    |
 | CACHES_DEFAULT_TIMEOUT                          | cache default timeout                                                                         | 30                                                      |
+| CACHES_KEY_PREFIX                               | The prefix used to every cache keys.                                                          | docs                                                    |
+| THEME_CUSTOMIZATION_FILE_PATH                   | full path to the file customizing the theme. An example is provided in src/backend/impress/configuration/theme/default.json | BASE_DIR/impress/configuration/theme/default.json       |
+| THEME_CUSTOMIZATION_CACHE_TIMEOUT               | Cache duration for the customization settings                                                  | 86400                                                   |

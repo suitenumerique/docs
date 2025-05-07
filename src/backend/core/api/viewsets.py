@@ -1,6 +1,7 @@
 """API endpoints"""
 # pylint: disable=too-many-lines
 
+import json
 import logging
 import uuid
 from urllib.parse import unquote, urlparse
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import connection, transaction
@@ -16,10 +18,8 @@ from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
-from django.utils.decorators import method_decorator
-from django.utils.text import capfirst
+from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_page
 
 import requests
 import rest_framework as drf
@@ -1728,23 +1728,41 @@ class ConfigView(drf.views.APIView):
             if hasattr(settings, setting):
                 dict_settings[setting] = getattr(settings, setting)
 
+        dict_settings["theme_customization"] = self._load_theme_customization()
+
         return drf.response.Response(dict_settings)
 
+    def _load_theme_customization(self):
+        if not settings.THEME_CUSTOMIZATION_FILE_PATH:
+            return {}
 
-class FooterView(drf.views.APIView):
-    """API ViewSet for sharing the footer JSON."""
-
-    permission_classes = [AllowAny]
-
-    @method_decorator(cache_page(settings.FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT))
-    def get(self, request):
-        """
-        GET /api/v1.0/footer/
-            Return the footer JSON.
-        """
-        json_footer = (
-            get_footer_json(settings.FRONTEND_URL_JSON_FOOTER)
-            if settings.FRONTEND_URL_JSON_FOOTER
-            else {}
+        cache_key = (
+            f"theme_customization_{slugify(settings.THEME_CUSTOMIZATION_FILE_PATH)}"
         )
-        return drf.response.Response(json_footer)
+        theme_customization = cache.get(cache_key, {})
+        if theme_customization:
+            return theme_customization
+
+        try:
+            with open(
+                settings.THEME_CUSTOMIZATION_FILE_PATH, "r", encoding="utf-8"
+            ) as f:
+                theme_customization = json.load(f)
+        except FileNotFoundError:
+            logger.error(
+                "Configuration file not found: %s",
+                settings.THEME_CUSTOMIZATION_FILE_PATH,
+            )
+        except json.JSONDecodeError:
+            logger.error(
+                "Configuration file is not a valid JSON: %s",
+                settings.THEME_CUSTOMIZATION_FILE_PATH,
+            )
+        else:
+            cache.set(
+                cache_key,
+                theme_customization,
+                settings.THEME_CUSTOMIZATION_CACHE_TIMEOUT,
+            )
+
+        return theme_customization

@@ -72,6 +72,7 @@ services:
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
+      - ./configuration:/configuration
     depends_on:
         postgresql:
             condition: service_healthy
