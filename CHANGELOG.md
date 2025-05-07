@@ -11,6 +11,7 @@ and this project adheres to
 ## Changed
 
 - 🎨(frontend) Simplify if statement
+- 🎨(frontend) Simplify redundant conditional expression
 
 ## [3.2.1] - 2025-05-06
 
