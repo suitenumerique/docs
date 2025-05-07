@@ -96,7 +96,7 @@ test.describe('Doc Routing', () => {
   });
 });
 
-test.describe('Doc Routing: Not loggued', () => {
+test.describe('Doc Routing: Not logged', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('checks redirect to a doc after login', async ({

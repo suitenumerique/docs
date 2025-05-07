@@ -41,7 +41,7 @@ export const useLanguageSynchronizer = () => {
           (userPreferredLanguages.length ? 'toFrontend' : 'toBackend');
 
         if (direction === 'toBackend') {
-          // Update user's preference from frontends's language
+          // Update user's preference from frontend's language
           const closestBackendLanguage =
             getMatchingLocales(
               availableBackendLanguages,

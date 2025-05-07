@@ -29,7 +29,7 @@ describe('fetchAPI', () => {
     });
   });
 
-  it('check the versionning', () => {
+  it('check the versioning', () => {
     fetchMock.mock('http://test.jest/api/v2.0/some/url', 200);
 
     void fetchAPI('some/url', {}, '2.0');

@@ -15,7 +15,7 @@ const jsonI18n = {};
 // Fetch the files in the locales folder
 fs.readdirSync(folderPath).map((language) => {
   const languagePath = path.join(folderPath, path.sep, language);
-  // Crowdin output file in folder, we want to treat only these ones
+  // Crowdin output file in folder, we want to treat only these
   if (!fs.lstatSync(languagePath).isDirectory()) {
     return;
   }

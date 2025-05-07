@@ -175,7 +175,7 @@ test.describe('Config', () => {
   });
 });
 
-test.describe('Config: Not loggued', () => {
+test.describe('Config: Not logged', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('it checks that theme is configured from config endpoint', async ({
