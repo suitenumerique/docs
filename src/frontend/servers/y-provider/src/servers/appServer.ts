@@ -17,8 +17,6 @@ import { logger } from '../utils';
 /**
  * init the collaboration server.
  *
- * @param port - The port on which the server listens.
- * @param serverSecret - The secret key for API authentication.
  * @returns An object containing the Express app, Hocuspocus server, and HTTP server instance.
  */
 export const initServer = () => {

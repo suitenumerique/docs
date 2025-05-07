@@ -19,9 +19,16 @@ export function downloadFile(blob: Blob, filename: string) {
 }
 
 /**
- * Convert SVG to PNG
- * @param svgText - The SVG text to convert
- * @returns The PNG data URL
+ * Converts an SVG string into a PNG image and returns it as a data URL.
+ *
+ * This function creates a canvas, parses the SVG, calculates the appropriate height
+ * to preserve the aspect ratio, and renders the SVG onto the canvas using Canvg.
+ *
+ * @param {string} svgText - The raw SVG markup to convert.
+ * @param {number} width - The desired width of the output PNG (height is auto-calculated to preserve aspect ratio).
+ * @returns {Promise<string>} A Promise that resolves to a PNG image encoded as a base64 data URL.
+ *
+ * @throws Will throw an error if the canvas context cannot be initialized.
  */
 export async function convertSvgToPng(svgText: string, width: number) {
   // Create a canvas and render the SVG onto it
