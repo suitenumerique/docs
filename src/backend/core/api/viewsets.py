@@ -1340,7 +1340,20 @@ class DocumentAccessViewSet(
 
     lookup_field = "pk"
     permission_classes = [permissions.DocumentAccessPermission]
-    queryset = models.DocumentAccess.objects.select_related("user").all()
+    queryset = models.DocumentAccess.objects.select_related("user", "document").only(
+        "id",
+        "created_at",
+        "role",
+        "team",
+        "user__id",
+        "user__short_name",
+        "user__full_name",
+        "user__email",
+        "user__language",
+        "document__id",
+        "document__path",
+        "document__depth",
+    )
     resource_field_name = "document"
 
     @cached_property
@@ -1379,11 +1392,7 @@ class DocumentAccessViewSet(
         if role not in choices.PRIVILEGED_ROLES:
             queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
 
-        accesses = list(
-            queryset.annotate(document_path=db.F("document__path")).order_by(
-                "document_path"
-            )
-        )
+        accesses = list(queryset.order_by("document__path"))
 
         # Annotate more information on roles
         path_to_key_to_max_ancestors_role = defaultdict(
