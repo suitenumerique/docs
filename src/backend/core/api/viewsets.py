@@ -1448,11 +1448,7 @@ class DocumentAccessViewSet(
         if role not in choices.PRIVILEGED_ROLES:
             queryset = queryset.filter(role__in=choices.PRIVILEGED_ROLES)
 
-        accesses = list(
-            queryset.annotate(document_path=db.F("document__path")).order_by(
-                "document_path"
-            )
-        )
+        accesses = list(queryset.order_by("document__path"))
 
         # Annotate more information on roles
         path_to_key_to_max_ancestors_role = defaultdict(
