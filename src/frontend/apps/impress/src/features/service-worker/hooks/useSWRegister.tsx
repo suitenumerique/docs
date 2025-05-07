@@ -30,11 +30,22 @@ export const useSWRegister = () => {
         });
 
       const currentController = navigator.serviceWorker.controller;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      const onControllerChange = () => {
         if (currentController) {
           window.location.reload();
         }
-      });
+      };
+      navigator.serviceWorker.addEventListener(
+        'controllerchange',
+        onControllerChange,
+      );
+
+      return () => {
+        navigator.serviceWorker.removeEventListener(
+          'controllerchange',
+          onControllerChange,
+        );
+      };
     }
   }, []);
 };

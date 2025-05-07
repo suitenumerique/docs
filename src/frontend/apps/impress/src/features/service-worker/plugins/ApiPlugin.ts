@@ -3,9 +3,9 @@ import { WorkboxPlugin } from 'workbox-core';
 import { Doc, DocsResponse } from '@/docs/doc-management';
 import { LinkReach, LinkRole } from '@/docs/doc-management/types';
 
-import { DBRequest, DocsDB } from './DocsDB';
-import { RequestSerializer } from './RequestSerializer';
-import { SyncManager } from './SyncManager';
+import { DBRequest, DocsDB } from '../DocsDB';
+import { RequestSerializer } from '../RequestSerializer';
+import { SyncManager } from '../SyncManager';
 
 interface OptionsReadonly {
   tableName: 'doc-list' | 'doc-item';

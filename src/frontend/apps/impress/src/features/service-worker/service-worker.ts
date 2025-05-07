@@ -19,8 +19,9 @@ import {
 } from 'workbox-strategies';
 
 // eslint-disable-next-line import/order
-import { ApiPlugin } from './ApiPlugin';
 import { DAYS_EXP, SW_DEV_URL, SW_VERSION, getCacheNameVersion } from './conf';
+import { ApiPlugin } from './plugins/ApiPlugin';
+import { OfflinePlugin } from './plugins/OfflinePlugin';
 import { isApiUrl } from './service-worker-api';
 
 // eslint-disable-next-line import/order
@@ -150,6 +151,7 @@ registerRoute(
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60 * DAYS_EXP }),
+      new OfflinePlugin(),
     ],
   }),
 );
@@ -166,6 +168,7 @@ registerRoute(
       new ExpirationPlugin({
         maxAgeSeconds: 24 * 60 * 60 * DAYS_EXP,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',
@@ -230,6 +233,20 @@ registerRoute(
       }),
     ],
   }),
+);
+
+/**
+ * External urls post cache strategy
+ * It is interesting to intercept the request
+ * to have a fine grain control about if the user is
+ * online or offline
+ */
+registerRoute(
+  ({ url }) => !url.href.includes(self.location.origin) && !isApiUrl(url.href),
+  new NetworkOnly({
+    plugins: [new OfflinePlugin()],
+  }),
+  'POST',
 );
 
 /**
