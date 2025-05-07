@@ -12,6 +12,7 @@ and this project adheres to
 
 - 🎨(frontend) Simplify if statement
 - 🎨(frontend) Simplify redundant conditional expression
+- 🎨(frontend) Remove unnecessary local variable
 
 ## [3.2.1] - 2025-05-06
 

@@ -35,8 +35,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    const cleanupResizeListener = initializeResizeListener();
-    return cleanupResizeListener;
+    return initializeResizeListener();
   }, [initializeResizeListener]);
 
   useEffect(() => {
