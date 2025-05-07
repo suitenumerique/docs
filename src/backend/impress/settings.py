@@ -897,6 +897,11 @@ class Production(Base):
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
+            "KEY_PREFIX": values.Value(
+                "docs",
+                environ_name="CACHES_KEY_PREFIX",
+                environ_prefix=None,
+            ),
         },
     }
 

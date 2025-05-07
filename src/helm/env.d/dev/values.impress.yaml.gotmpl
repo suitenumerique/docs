@@ -63,6 +63,7 @@ backend:
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
+    CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
     command:
       - "/bin/sh"
