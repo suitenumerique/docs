@@ -127,7 +127,7 @@ def test_api_documents_attachment_upload_authenticated_forbidden(reach, role):
 )
 def test_api_documents_attachment_upload_authenticated_success(reach, role):
     """
-    Autenticated users who are not related to a document should be able to upload
+    Authenticated users who are not related to a document should be able to upload
     a file when the link reach and role permit it.
     """
     user = factories.UserFactory()
@@ -255,7 +255,7 @@ def test_api_documents_attachment_upload_invalid(client):
 
 
 def test_api_documents_attachment_upload_size_limit_exceeded(settings):
-    """The uploaded file should not exceeed the maximum size in settings."""
+    """The uploaded file should not exceed the maximum size in settings."""
     settings.DOCUMENT_IMAGE_MAX_SIZE = 1048576  # 1 MB for test
 
     user = factories.UserFactory()
