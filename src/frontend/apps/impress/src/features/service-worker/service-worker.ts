@@ -181,7 +181,7 @@ registerRoute(
 );
 
 /**
- * Cache stategy static files images (images / svg)
+ * Cache strategy static files images (images / svg)
  */
 registerRoute(
   ({ request }) => request.destination === 'image',
@@ -197,7 +197,7 @@ registerRoute(
 );
 
 /**
- * Cache stategy static files fonts
+ * Cache strategy static files fonts
  */
 googleFontsCache();
 registerRoute(
@@ -214,7 +214,7 @@ registerRoute(
 );
 
 /**
- * Cache stategy static files (css, js, workers)
+ * Cache strategy static files (css, js, workers)
  */
 registerRoute(
   ({ request }) =>

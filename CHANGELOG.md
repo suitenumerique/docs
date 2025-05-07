@@ -11,6 +11,7 @@ and this project adheres to
 ## Changed
 
 - ✏️(backend) Fix some typo
+- ✏️(frontend) Fix some typo
 
 ## [3.2.1] - 2025-05-06
 
