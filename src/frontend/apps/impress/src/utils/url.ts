@@ -40,11 +40,7 @@ export function isSafeUrl(url: string): boolean {
     }
 
     // Check for directory traversal attempts
-    if (url.includes('..') || url.includes('../') || url.includes('..\\')) {
-      return false;
-    }
-
-    return true;
+    return !(url.includes('..') || url.includes('../') || url.includes('..\\'));
   } catch {
     return false;
   }

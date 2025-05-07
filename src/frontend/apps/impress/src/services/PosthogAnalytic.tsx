@@ -25,14 +25,10 @@ export class PostHogAnalytic extends AbstractAnalytic {
   }
 
   public isFeatureFlagActivated(flagName: string): boolean {
-    if (
+    return !(
       posthog.featureFlags.getFlags().includes(flagName) &&
       posthog.isFeatureEnabled(flagName) === false
-    ) {
-      return false;
-    }
-
-    return true;
+    );
   }
 }
 
