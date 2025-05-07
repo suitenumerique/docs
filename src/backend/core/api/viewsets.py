@@ -1523,14 +1523,15 @@ class DocumentAccessViewSet(
 
         access = serializer.save(document_id=self.kwargs["resource_id"])
 
-        access.document.send_invitation_email(
-            access.user.email,
-            access.role,
-            self.request.user,
-            access.user.language
-            or self.request.user.language
-            or settings.LANGUAGE_CODE,
-        )
+        if access.user:
+            access.document.send_invitation_email(
+                access.user.email,
+                access.role,
+                self.request.user,
+                access.user.language
+                or self.request.user.language
+                or settings.LANGUAGE_CODE,
+            )
 
     def perform_update(self, serializer):
         """Update an access to the document and notify the collaboration server."""
