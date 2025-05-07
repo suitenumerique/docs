@@ -21,7 +21,6 @@ pytestmark = pytest.mark.django_db
     COLLABORATION_WS_URL="http://testcollab/",
     CRISP_WEBSITE_ID="123",
     FRONTEND_CSS_URL="http://testcss/",
-    FRONTEND_FOOTER_FEATURE_ENABLED=True,
     FRONTEND_THEME="test-theme",
     MEDIA_BASE_URL="http://testserver/",
     POSTHOG_KEY={"id": "132456", "host": "https://eu.i.posthog-test.com"},
@@ -45,7 +44,6 @@ def test_api_config(is_authenticated):
         "ENVIRONMENT": "test",
         "FRONTEND_CSS_URL": "http://testcss/",
         "FRONTEND_HOMEPAGE_FEATURE_ENABLED": True,
-        "FRONTEND_FOOTER_FEATURE_ENABLED": True,
         "FRONTEND_THEME": "test-theme",
         "LANGUAGES": [
             ["en-us", "English"],

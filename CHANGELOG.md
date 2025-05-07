@@ -12,6 +12,10 @@ and this project adheres to
 
 - ✨(back) allow theme customnization using a configuration file #948
 
+### Removed
+
+- 🔥(back) remove footer endpoint
+
 ## [3.2.1] - 2025-05-06
 
 ## Fixed

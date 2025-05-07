@@ -32,7 +32,6 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
-from core.services.config_services import get_footer_json
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -1715,7 +1714,6 @@ class ConfigView(drf.views.APIView):
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
-            "FRONTEND_FOOTER_FEATURE_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",
