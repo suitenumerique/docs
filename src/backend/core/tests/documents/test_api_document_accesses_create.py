@@ -170,12 +170,16 @@ def test_api_document_accesses_create_authenticated_administrator(
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
         "abilities": new_document_access.get_abilities(user),
-        "document_id": str(new_document_access.document_id),
+        "document": {
+            "id": str(new_document_access.document_id),
+            "depth": new_document_access.document.depth,
+            "path": new_document_access.document.path,
+        },
         "id": str(new_document_access.id),
+        "user": other_user,
         "team": "",
         "role": role,
         "max_ancestors_role": None,
-        "user": other_user,
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -236,7 +240,11 @@ def test_api_document_accesses_create_authenticated_owner(via, depth, mock_user_
     new_document_access = models.DocumentAccess.objects.filter(user=other_user).get()
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
-        "document_id": str(new_document_access.document_id),
+        "document": {
+            "id": str(new_document_access.document_id),
+            "path": new_document_access.document.path,
+            "depth": new_document_access.document.depth,
+        },
         "id": str(new_document_access.id),
         "user": other_user,
         "team": "",
@@ -302,7 +310,11 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
         ).get()
         other_user_data = serializers.UserSerializer(instance=other_user).data
         assert response.json() == {
-            "document_id": str(new_document_access.document_id),
+            "document": {
+                "id": str(new_document_access.document_id),
+                "path": new_document_access.document.path,
+                "depth": new_document_access.document.depth,
+            },
             "id": str(new_document_access.id),
             "user": other_user_data,
             "team": "",
