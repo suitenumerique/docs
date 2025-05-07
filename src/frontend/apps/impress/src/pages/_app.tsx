@@ -1,3 +1,4 @@
+import debug from 'debug';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +18,19 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useSWRegister();
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
+
+  if (process.env.NODE_ENV === 'development') {
+    /**
+     *  Add and enable new debug namespaces as needed
+     *
+     *  They can also be enabled via DEBUG environment variable
+     *    Example: DEBUG=features:language,no-cache
+     *
+     *  They can also be enabled in the browser console
+     *    Example: window.debug = 'features:language,no-cache';
+     */
+    debug.enable(['no-cache', 'features:language'].join(','));
+  }
 
   return (
     <>
