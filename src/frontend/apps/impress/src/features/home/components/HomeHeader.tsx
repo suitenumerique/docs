@@ -6,7 +6,7 @@ import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonTogglePanel, Title } from '@/features/header/';
 import { LaGaufre } from '@/features/header/components/LaGaufre';
-import { LanguagePicker } from '@/features/language';
+import { LanguagePicker } from '@/features/language/components';
 import { useResponsiveStore } from '@/stores';
 
 export const HEADER_HEIGHT = 91;
