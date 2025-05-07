@@ -162,6 +162,7 @@ ingressMedia:
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-url
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-response-headers
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/upstream-vhost
+  ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/configuration-snippet
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/media-auth/
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
@@ -309,6 +310,16 @@ backend:
   ## @param backend.pdb.enabled Enable pdb on backend
   pdb:
     enabled: true
+
+  ## @param backend.themeCustomization.enabled Enable theme customization
+  ## @param backend.themeCustomization.file_content Content of the theme customization file. Must be a json object.
+  ## @param backend.themeCustomization.mount_path Path where the customization file will be mounted in the backend deployment.
+  themeCustomization:
+    enabled: false
+    file_content: ""
+    mount_path: /app/configuration/theme/
+
+
 
 ## @section frontend
 

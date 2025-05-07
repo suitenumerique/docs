@@ -90,6 +90,11 @@ spec:
               subPath: {{ .subPath | default "" }}
               readOnly: {{ .readOnly }}
             {{- end }}
+            {{- if .Values.backend.themeCustomization.enabled }}
+            - name: theme-customization
+              mountPath: {{ .Values.backend.themeCustomization.mount_path }}
+              readOnly: true
+            {{- end }}
       {{- with .Values.backend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -116,6 +121,11 @@ spec:
           persistentVolumeClaim:
             claimName: "{{ $fullName }}-{{ $name }}"
           {{- end }}
+        {{- end }}
+        {{- if .Values.backend.themeCustomization.enabled }}
+        - name: theme-customization
+          configMap:
+            name: docs-theme-customization
         {{- end }}
         {{- range .Values.backend.extraVolumes }}
         - name: {{ .name }}

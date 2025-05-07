@@ -1,0 +1,10 @@
+{{- if .Values.backend.themeCustomization.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docs-theme-customization
+  namespace: {{ .Release.Namespace }}
+data:
+  default.json: |
+    {{ .Values.backend.themeCustomization.file_content | toJson | indent 4 }}
+{{- end }}

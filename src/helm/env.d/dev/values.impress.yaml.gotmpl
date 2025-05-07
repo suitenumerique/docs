@@ -87,6 +87,10 @@ backend:
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
+  themeCustomization:
+    enabled: true
+    file_content: {{ readFile "./configuration/theme/demo.json" }}
+
   # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
@@ -101,7 +105,6 @@ backend:
         items:
         - key: cacert.pem
           path: cacert.pem
-
 frontend:
   envVars:
     PORT: 8080
