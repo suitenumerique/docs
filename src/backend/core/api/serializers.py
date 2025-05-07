@@ -37,83 +37,6 @@ class UserLightSerializer(UserSerializer):
         read_only_fields = ["full_name", "short_name"]
 
 
-class DocumentAccessSerializer(serializers.ModelSerializer):
-    """Serialize document accesses."""
-
-    document_id = serializers.PrimaryKeyRelatedField(
-        read_only=True,
-        source="document",
-    )
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=models.User.objects.all(),
-        write_only=True,
-        source="user",
-        required=False,
-        allow_null=True,
-    )
-    user = UserSerializer(read_only=True)
-    abilities = serializers.SerializerMethodField(read_only=True)
-    max_ancestors_role = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.DocumentAccess
-        resource_field_name = "document"
-        fields = [
-            "id",
-            "document_id",
-            "user",
-            "user_id",
-            "team",
-            "role",
-            "abilities",
-            "max_ancestors_role",
-        ]
-        read_only_fields = ["id", "document_id", "abilities", "max_ancestors_role"]
-
-    def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return instance.get_abilities(request.user)
-        return {}
-
-    def get_max_ancestors_role(self, instance):
-        """Return max_ancestors_role if annotated; else None."""
-        return getattr(instance, "max_ancestors_role", None)
-
-    def update(self, instance, validated_data):
-        """Make "user" field is readonly but only on update."""
-        validated_data.pop("user", None)
-        return super().update(instance, validated_data)
-
-
-class DocumentAccessLightSerializer(DocumentAccessSerializer):
-    """Serialize document accesses with limited fields."""
-
-    user = UserLightSerializer(read_only=True)
-
-    class Meta:
-        model = models.DocumentAccess
-        resource_field_name = "document"
-        fields = [
-            "id",
-            "document_id",
-            "user",
-            "team",
-            "role",
-            "abilities",
-            "max_ancestors_role",
-        ]
-        read_only_fields = [
-            "id",
-            "document_id",
-            "team",
-            "role",
-            "abilities",
-            "max_ancestors_role",
-        ]
-
-
 class TemplateAccessSerializer(serializers.ModelSerializer):
     """Serialize template accesses."""
 
@@ -220,6 +143,15 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         """
         request = self.context.get("request")
         return instance.get_role(request.user) if request else None
+
+
+class DocumentLightSerializer(serializers.ModelSerializer):
+    """Minial document serializer for nesting in document accesses."""
+
+    class Meta:
+        model = models.Document
+        fields = ["id", "path", "depth"]
+        read_only_fields = ["id", "path", "depth"]
 
 
 class DocumentSerializer(ListDocumentSerializer):
@@ -354,6 +286,82 @@ class DocumentSerializer(ListDocumentSerializer):
             )
 
         return super().save(**kwargs)
+
+
+class DocumentAccessSerializer(serializers.ModelSerializer):
+    """Serialize document accesses."""
+
+    document = DocumentLightSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.User.objects.all(),
+        write_only=True,
+        source="user",
+        required=False,
+        allow_null=True,
+    )
+    user = UserSerializer(read_only=True)
+    team = serializers.CharField(required=False, allow_blank=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
+    max_ancestors_role = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.DocumentAccess
+        resource_field_name = "document"
+        fields = [
+            "id",
+            "document",
+            "user",
+            "user_id",
+            "team",
+            "role",
+            "abilities",
+            "max_ancestors_role",
+        ]
+        read_only_fields = ["id", "document", "abilities", "max_ancestors_role"]
+
+    def get_abilities(self, instance) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return instance.get_abilities(request.user)
+        return {}
+
+    def get_max_ancestors_role(self, instance):
+        """Return max_ancestors_role if annotated; else None."""
+        return getattr(instance, "max_ancestors_role", None)
+
+    def update(self, instance, validated_data):
+        """Make "user" field readonly but only on update."""
+        validated_data.pop("team", None)
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
+
+
+class DocumentAccessLightSerializer(DocumentAccessSerializer):
+    """Serialize document accesses with limited fields."""
+
+    user = UserLightSerializer(read_only=True)
+
+    class Meta:
+        model = models.DocumentAccess
+        resource_field_name = "document"
+        fields = [
+            "id",
+            "document",
+            "user",
+            "team",
+            "role",
+            "abilities",
+            "max_ancestors_role",
+        ]
+        read_only_fields = [
+            "id",
+            "document",
+            "team",
+            "role",
+            "abilities",
+            "max_ancestors_role",
+        ]
 
 
 class ServerCreateDocumentSerializer(serializers.Serializer):

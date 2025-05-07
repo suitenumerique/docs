@@ -139,7 +139,11 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
         [
             {
                 "id": str(access.id),
-                "document_id": str(access.document_id),
+                "document": {
+                    "id": str(access.document_id),
+                    "path": access.document.path,
+                    "depth": access.document.depth,
+                },
                 "user": {
                     "full_name": access.user.full_name,
                     "short_name": access.user.short_name,
@@ -234,7 +238,11 @@ def test_api_document_accesses_list_authenticated_related_privileged(
         [
             {
                 "id": str(access.id),
-                "document_id": str(access.document_id),
+                "document": {
+                    "id": str(access.document_id),
+                    "path": access.document.path,
+                    "depth": access.document.depth,
+                },
                 "user": {
                     "id": str(access.user.id),
                     "email": access.user.email,
@@ -600,7 +608,11 @@ def test_api_document_accesses_retrieve_authenticated_related(
         assert response.json() == {
             "id": str(access.id),
             "abilities": access.get_abilities(user),
-            "document_id": str(access.document_id),
+            "document": {
+                "id": str(access.document_id),
+                "path": access.document.path,
+                "depth": access.document.depth,
+            },
             "user": access_user,
             "team": "",
             "role": access.role,

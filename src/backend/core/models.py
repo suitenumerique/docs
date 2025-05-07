@@ -1124,9 +1124,7 @@ class DocumentAccess(BaseAccess):
         if self.role == RoleChoices.OWNER:
             can_delete = role == RoleChoices.OWNER and (
                 # check if document is not root trying to avoid an extra query
-                # "document_path" is annotated by the viewset's list method
-                len(getattr(self, "document_path", "")) > Document.steplen
-                or not self.document.is_root()
+                self.document.depth > 1
                 or DocumentAccess.objects.filter(
                     document_id=self.document_id, role=RoleChoices.OWNER
                 ).count()
