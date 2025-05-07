@@ -15,6 +15,7 @@ and this project adheres to
 - 🎨(frontend) Remove unnecessary local variable
 - 🎨(frontend) Remove var usage instead of let/const
 - 📝(frontend) Update documentation
+- ✅(frontend) Improve tests coverage
 
 ## Fixed
 
