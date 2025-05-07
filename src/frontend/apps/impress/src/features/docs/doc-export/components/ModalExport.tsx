@@ -10,7 +10,7 @@ import {
   useToastProvider,
 } from '@openfun/cunningham-react';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 

@@ -10,7 +10,7 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import React, { PropsWithChildren, ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isAPIError } from '@/api';

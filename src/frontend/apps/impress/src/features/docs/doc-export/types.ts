@@ -7,6 +7,7 @@ import {
   Table,
   TextRun,
 } from 'docx';
+import React from 'react';
 
 import {
   DocsBlockSchema,
