@@ -654,7 +654,9 @@ def test_api_document_accesses_update_authenticated_reader_or_editor(
 
 
 @pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("create_for", VIA)
 def test_api_document_accesses_update_administrator_except_owner(
+    create_for,
     via,
     mock_user_teams,
     mock_reset_connections,  # pylint: disable=redefined-outer-name
@@ -687,9 +689,12 @@ def test_api_document_accesses_update_administrator_except_owner(
 
     new_values = {
         "id": uuid4(),
-        "user_id": factories.UserFactory().id,
         "role": random.choice(["administrator", "editor", "reader"]),
     }
+    if create_for == USER:
+        new_values["user_id"] = factories.UserFactory().id
+    elif create_for == TEAM:
+        new_values["team"] = "new-team"
 
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
@@ -825,7 +830,9 @@ def test_api_document_accesses_update_administrator_to_owner(
 
 
 @pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("create_for", VIA)
 def test_api_document_accesses_update_owner(
+    create_for,
     via,
     mock_user_teams,
     mock_reset_connections,  # pylint: disable=redefined-outer-name
@@ -856,9 +863,12 @@ def test_api_document_accesses_update_owner(
 
     new_values = {
         "id": uuid4(),
-        "user_id": factories.UserFactory().id,
         "role": random.choice(models.RoleChoices.values),
     }
+    if create_for == USER:
+        new_values["user_id"] = factories.UserFactory().id
+    elif create_for == TEAM:
+        new_values["team"] = "new-team"
 
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
