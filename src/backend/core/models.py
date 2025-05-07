@@ -747,7 +747,7 @@ class Document(MP_Node, BaseModel):
         for ancestor in ancestors_links:
             links_definitions[ancestor["link_reach"]].add(ancestor["link_role"])
 
-        return dict(links_definitions)  # Convert defaultdict back to a normal dict
+        return dict(links_definitions)  # Convert default dict back to a normal dict
 
     def compute_ancestors_links(self, user):
         """
