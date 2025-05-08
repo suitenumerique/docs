@@ -57,4 +57,8 @@ urlpatterns = [
     ),
     path(f"api/{settings.API_VERSION}/config/", viewsets.ConfigView.as_view()),
     path(f"api/{settings.API_VERSION}/footer/", viewsets.FooterView.as_view()),
+    path(
+        f"api/{settings.API_VERSION}/custom-translations/",
+        viewsets.CustomTranslationsView.as_view(),
+    ),
 ]

@@ -42,10 +42,10 @@ Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom 
 
 ### How to Use
 
-To provide custom translations, set the `FRONTEND_CUSTOM_TRANSLATIONS_URL` environment variable to the URL of your custom translations JSON file:
+To provide custom translations, set the `FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS` environment variable to the URL of your custom translations JSON file:
 
 ```javascript
-FRONTEND_CUSTOM_TRANSLATIONS_URL=http://example.com/custom-translations.json
+FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS=http://example.com/custom-translations.json
 ```
 
 Once you've set this variable, our application will load your custom translations and apply them to the user interface.
@@ -64,16 +64,16 @@ Let's say you want to customize some key phrases in the application. Create a JS
   "en": {
     "translation": {
       "Docs": "MyApp",
-      "Create New Document": "+"
+      "New doc": "+"
     }
   },
   "de": {
     "translation": {
       "Docs": "MeineApp",
-      "Create New Document": "+"
+      "New doc": "+"
     }
   }
 }
 ```
 
-Then set the `FRONTEND_CUSTOM_TRANSLATIONS_URL` environment variable to the URL of this JSON file. The application will load these translations and override the default ones where specified.
+Then set the `FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS` environment variable to the URL of this JSON file. The application will load these translations and override the default ones where specified.

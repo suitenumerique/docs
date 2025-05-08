@@ -1,18 +1,18 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
+import debug from 'debug';
 import { Resource } from 'i18next';
 
-import { APIError, errorCauses } from '@/api';
-import { assert } from '@/utils';
+import { APIError, errorCauses, fetchAPI } from '@/api';
 
 // Queries are separated from mutations to allow for better separation of concerns.
 // Queries are responsible for R (READ) in CRUD.
 
 // --- Read ---
-const readCustomTranslations = async (url: URL): Promise<Resource> => {
-  const response = await fetch(url);
+const readCustomTranslations = async (): Promise<Resource> => {
+  const response = await fetchAPI('custom-translations/');
   if (!response.ok) {
     throw new APIError(
-      'Failed to fetch custom translations',
+      `Couldn't fetch custom translations: ${response.statusText}`,
       await errorCauses(response),
     );
   }
@@ -22,16 +22,12 @@ const readCustomTranslations = async (url: URL): Promise<Resource> => {
 // --- Query-Hook ---
 export const QKEY_CUSTOM_TRANSLATIONS = 'translations_custom';
 export function useCustomTranslationsQuery(
-  url?: URL,
   queryConfig?: UseQueryOptions<Resource, APIError, Resource>,
 ) {
   return useQuery<Resource, APIError, Resource>({
-    queryKey: [QKEY_CUSTOM_TRANSLATIONS, url],
-    queryFn: () => {
-      assert(url);
-      return readCustomTranslations(url);
-    },
-    enabled: !!url,
+    queryKey: [QKEY_CUSTOM_TRANSLATIONS],
+    queryFn: readCustomTranslations,
+    staleTime: debug.enabled('no-cache') ? 0 : 1000 * 60 * 60 * 24, // 24 hours
     ...queryConfig,
   });
 }

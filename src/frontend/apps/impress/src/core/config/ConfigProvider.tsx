@@ -20,8 +20,8 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   const { setTheme } = useCunninghamTheme();
   const { AnalyticsProvider } = useAnalytics();
 
+  useCustomTranslations();
   useSynchronizedLanguage();
-  useCustomTranslations(conf?.FRONTEND_CUSTOM_TRANSLATIONS_URL);
 
   useEffect(() => {
     if (!conf?.SENTRY_DSN) {

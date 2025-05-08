@@ -58,7 +58,14 @@ class Base(Configuration):
     * DB_USER
     """
 
-    DEBUG = False
+    DEBUG_RAW = values.Value(
+        default=False,
+        environ_name="DEBUG",
+        environ_prefix=None,
+    )
+    DEBUG_NAMESPACES = DEBUG_RAW.split(",") if isinstance(DEBUG_RAW, str) else []
+    DEBUG = bool(DEBUG_RAW)
+
     USE_SWAGGER = False
 
     API_VERSION = "v1.0"
@@ -438,8 +445,13 @@ class Base(Configuration):
     FRONTEND_CSS_URL = values.Value(
         None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
     )
-    FRONTEND_CUSTOM_TRANSLATIONS_URL = values.Value(
-        None, environ_name="FRONTEND_CUSTOM_TRANSLATIONS_URL", environ_prefix=None
+    FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS = values.Value(
+        None, environ_name="FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS", environ_prefix=None
+    )
+    FRONTEND_CUSTOM_TRANSLATIONS_VIEW_CACHE_TIMEOUT = values.Value(
+        60 * 60 * 24,
+        environ_name="FRONTEND_CUSTOM_TRANSLATIONS_VIEW_CACHE_TIMEOUT",
+        environ_prefix=None,
     )
 
     # Posthog
@@ -782,6 +794,16 @@ class Development(Base):
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000"]
     DEBUG = True
+
+    # Enable debug namespaces as needed
+    #
+    # They can also be enabled via DEBUG environment variable
+    #   DEBUG="features:language,no-cache,..."
+    #
+    # DEBUG_NAMESPACES = [
+    #     'no-cache',
+    #     'features:language'
+    # ]
 
     SESSION_COOKIE_NAME = "impress_sessionid"
 

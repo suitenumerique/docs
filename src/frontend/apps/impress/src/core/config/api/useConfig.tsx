@@ -15,7 +15,6 @@ export interface ConfigResponse {
   FRONTEND_THEME?: Theme;
   LANGUAGES: [string, string][];
   LANGUAGE_CODE: string;
-  FRONTEND_CUSTOM_TRANSLATIONS_URL?: string;
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;

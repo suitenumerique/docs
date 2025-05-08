@@ -19,7 +19,7 @@ from django.http import Http404, StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, never_cache
 
 import requests
 import rest_framework as drf
@@ -32,7 +32,7 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
-from core.services.config_services import get_footer_json
+from core.services.config_services import debug_enabled, get_json_from_url
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -1715,7 +1715,6 @@ class ConfigView(drf.views.APIView):
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
-            "FRONTEND_CUSTOM_TRANSLATIONS_URL",
             "FRONTEND_FOOTER_FEATURE_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
@@ -1737,15 +1736,42 @@ class FooterView(drf.views.APIView):
 
     permission_classes = [AllowAny]
 
-    @method_decorator(cache_page(settings.FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT))
+    @method_decorator(
+        never_cache
+        if debug_enabled("no-cache")
+        else cache_page(settings.FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT)
+    )
     def get(self, request):
         """
         GET /api/v1.0/footer/
             Return the footer JSON.
         """
         json_footer = (
-            get_footer_json(settings.FRONTEND_URL_JSON_FOOTER)
+            get_json_from_url(settings.FRONTEND_URL_JSON_FOOTER)
             if settings.FRONTEND_URL_JSON_FOOTER
             else {}
         )
         return drf.response.Response(json_footer)
+
+
+class CustomTranslationsView(drf.views.APIView):
+    """API ViewSet for sharing the custom-translations JSON."""
+
+    permission_classes = [AllowAny]
+
+    @method_decorator(
+        never_cache
+        if debug_enabled("no-cache")
+        else cache_page(settings.FRONTEND_CUSTOM_TRANSLATIONS_VIEW_CACHE_TIMEOUT)
+    )
+    def get(self, request):
+        """
+        GET /api/v1.0/custom-translations/
+            Return the custom-translations JSON.
+        """
+        json = (
+            get_json_from_url(settings.FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS)
+            if settings.FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS
+            else {}
+        )
+        return drf.response.Response(json)

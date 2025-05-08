@@ -7,7 +7,7 @@ Here we describe all environment variables that can be set for the docs applicat
 These are the environmental variables you can set for the impress-backend container.
 
 | Option                                          | Description                                                                                   | default                                                 |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+|-------------------------------------------------|-----------------------------------------------------------------------------------------------|---------------------------------------------------------|
 | DJANGO_ALLOWED_HOSTS                            | allowed hosts                                                                                 | []                                                      |
 | DJANGO_SECRET_KEY                               | secret key                                                                                    |                                                         |
 | DJANGO_SERVER_TO_SERVER_API_TOKENS              |                                                                                               | []                                                      |
@@ -51,10 +51,10 @@ These are the environmental variables you can set for the impress-backend contai
 | FRONTEND_HOMEPAGE_FEATURE_ENABLED               | frontend feature flag to display the homepage                                                 | false                                                   |
 | FRONTEND_FOOTER_FEATURE_ENABLED                 | frontend feature flag to display the footer                                                   | false                                                   |
 | FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT              | Cache duration of the json footer                                                             | 86400                                                   |
-| FRONTEND_URL_JSON_FOOTER                        | Url with a json to configure the footer                                                       |                                                         |
+| FRONTEND_CUSTOM_TRANSLATIONS_VIEW_CACHE_TIMEOUT | Cache duration of the json custom translations                                                | 86400                                                   |
+| FRONTEND_URL_JSON_FOOTER                        | Url to a JSON to configure the footer                                                         |                                                         |
+| FRONTEND_URL_JSON_CUSTOM_TRANSLATIONS           | Url to a JSON to overwrite the translations                                                   |                                                         |
 | FRONTEND_THEME                                  | frontend theme to use                                                                         |                                                         |
-| FRONTEND_CSS_URL                                | URL to a custom CSS file for theming the application                                          |                                                         |
-| FRONTEND_CUSTOM_TRANSLATIONS_URL                | URL to a JSON file containing custom translations for the application                         |                                                         |
 | POSTHOG_KEY                                     | posthog key for analytics                                                                     |                                                         |
 | CRISP_WEBSITE_ID                                | crisp website id for support                                                                  |                                                         |
 | DJANGO_CELERY_BROKER_URL                        | celery broker url                                                                             | redis://redis:6379/0                                    |

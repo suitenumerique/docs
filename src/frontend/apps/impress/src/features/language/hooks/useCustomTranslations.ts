@@ -1,34 +1,17 @@
 import { Resource } from 'i18next';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCustomTranslationsQuery } from '@/features/language/api/useCustomTranslationsQuery';
+import { useCustomTranslationsQuery } from '@/features/language';
 
-export const useCustomTranslations = (customTranslationsUrlString?: string) => {
+export const useCustomTranslations = () => {
   const { i18n } = useTranslation();
-
-  // Parse the URL string safely
-  const customTranslationsUrl = useMemo(() => {
-    if (!customTranslationsUrlString) {
-      return undefined;
-    }
-    try {
-      return new URL(customTranslationsUrlString);
-    } catch (error) {
-      console.error('Invalid custom translations URL:', error);
-      return undefined;
-    }
-  }, [customTranslationsUrlString]);
-
-  // Query the custom translations
-  const { data: customTranslations } = useCustomTranslationsQuery(
-    customTranslationsUrl,
-  );
+  const { data: currentCustomTranslations } = useCustomTranslationsQuery();
 
   // Overwrite translations with a resource
   const customizeTranslations = useCallback(
-    (customTranslations: Resource) => {
-      Object.entries(customTranslations).forEach(([lng, namespaces]) => {
+    (currentCustomTranslations: Resource) => {
+      Object.entries(currentCustomTranslations).forEach(([lng, namespaces]) => {
         Object.entries(namespaces).forEach(([ns, value]) => {
           i18n.addResourceBundle(lng, ns, value, true, true);
         });
@@ -39,8 +22,14 @@ export const useCustomTranslations = (customTranslationsUrlString?: string) => {
     [i18n],
   );
 
+  useEffect(() => {
+    if (currentCustomTranslations) {
+      customizeTranslations(currentCustomTranslations);
+    }
+  }, [currentCustomTranslations, customizeTranslations]);
+
   return {
-    customTranslations,
+    currentCustomTranslations,
     customizeTranslations,
   };
 };
