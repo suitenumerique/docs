@@ -149,7 +149,7 @@ COPY docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impr
 ARG DOCKER_USER
 USER ${DOCKER_USER}
 
-# Copy statics
+# Copy statistics
 COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 
 # Copy impress mails

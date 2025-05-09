@@ -4,7 +4,7 @@
  * See:
  * https://github.com/TypeCellOS/BlockNote/blob/004c0bf720fe1415c497ad56449015c5f4dd7ba0/packages/xl-pdf-exporter/src/pdf/util/table/Table.tsx
  *
- * We succeded to manage the colspan, but rowspan is not supported yet.
+ * We succeeded to manage the colspan, but rowspan is not supported yet.
  */
 
 import { TD, TR, Table } from '@ag-media/react-pdf-table';

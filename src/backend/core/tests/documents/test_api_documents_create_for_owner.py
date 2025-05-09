@@ -279,7 +279,7 @@ def test_api_documents_create_for_owner_existing_user_email_no_sub_with_fallback
     """
     It should be possible to create a document on behalf of a pre-existing user for
     who the sub was not found if the settings allow it. This edge case should not
-    happen in a healthy OIDC federation but can be usefull if an OIDC provider modifies
+    happen in a healthy OIDC federation but can be useful if an OIDC provider modifies
     users sub on each login for example...
     """
     user = factories.UserFactory(language="en-us")

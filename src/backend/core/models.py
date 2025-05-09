@@ -544,9 +544,9 @@ class Document(MP_Node, BaseModel):
                 response = default_storage.connection.meta.client.head_object(
                     Bucket=default_storage.bucket_name, Key=file_key
                 )
-            except ClientError as excpt:
+            except ClientError as except:
                 # If the error is a 404, the object doesn't exist, so we should create it.
-                if excpt.response["Error"]["Code"] == "404":
+                if except.response["Error"]["Code"] == "404":
                     has_changed = True
                 else:
                     raise

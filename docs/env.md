@@ -39,7 +39,7 @@ These are the environmental variables you can set for the impress-backend contai
 | DJANGO_EMAIL_PORT                               | port used to connect to email host                                                            |                                                         |
 | DJANGO_EMAIL_USE_TLS                            | use tls for email host connection                                                             | false                                                   |
 | DJANGO_EMAIL_USE_SSL                            | use sstl for email host connection                                                            | false                                                   |
-| DJANGO_EMAIL_FROM                               | email adress used as sender                                                                   | from@example.com                                        |
+| DJANGO_EMAIL_FROM                               | email address used as sender                                                                   | from@example.com                                        |
 | DJANGO_CORS_ALLOW_ALL_ORIGINS                   | allow all CORS origins                                                                        | true                                                    |
 | DJANGO_CORS_ALLOWED_ORIGINS                     | list of origins allowed for CORS                                                              | []                                                      |
 | DJANGO_CORS_ALLOWED_ORIGIN_REGEXES              | list of origins allowed for CORS using regulair expressions                                   | []                                                      |
@@ -62,11 +62,11 @@ These are the environmental variables you can set for the impress-backend contai
 | OIDC_RP_CLIENT_ID                               | client id used for OIDC                                                                       | impress                                                 |
 | OIDC_RP_CLIENT_SECRET                           | client secret used for OIDC                                                                   |                                                         |
 | OIDC_OP_JWKS_ENDPOINT                           | JWKS endpoint for OIDC                                                                        |                                                         |
-| OIDC_OP_AUTHORIZATION_ENDPOINT                  | Autorization endpoint for OIDC                                                                |                                                         |
+| OIDC_OP_AUTHORIZATION_ENDPOINT                  | Authorization endpoint for OIDC                                                                |                                                         |
 | OIDC_OP_TOKEN_ENDPOINT                          | Token endpoint for OIDC                                                                       |                                                         |
 | OIDC_OP_USER_ENDPOINT                           | User endpoint for OIDC                                                                        |                                                         |
 | OIDC_OP_LOGOUT_ENDPOINT                         | Logout endpoint for OIDC                                                                      |                                                         |
-| OIDC_AUTH_REQUEST_EXTRA_PARAMS                  | OIDC extra auth paramaters                                                                    | {}                                                      |
+| OIDC_AUTH_REQUEST_EXTRA_PARAMS                  | OIDC extra auth parameters                                                                    | {}                                                      |
 | OIDC_RP_SCOPES                                  | scopes requested for OIDC                                                                     | openid email                                            |
 | LOGIN_REDIRECT_URL                              | login redirect url                                                                            |                                                         |
 | LOGIN_REDIRECT_URL_FAILURE                      | login redirect url on failure                                                                 |                                                         |
@@ -76,7 +76,7 @@ These are the environmental variables you can set for the impress-backend contai
 | OIDC_REDIRECT_ALLOWED_HOSTS                     | Allowed hosts for OIDC redirect url                                                           | []                                                      |
 | OIDC_STORE_ID_TOKEN                             | Store OIDC token                                                                              | true                                                    |
 | OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION       | faillback to email for identification                                                         | true                                                    |
-| OIDC_ALLOW_DUPLICATE_EMAILS                     | Allow dupplicate emails                                                                       | false                                                   |
+| OIDC_ALLOW_DUPLICATE_EMAILS                     | Allow duplicate emails                                                                       | false                                                   |
 | USER_OIDC_ESSENTIAL_CLAIMS                      | essential claims in OIDC token                                                                | []                                                      |
 | OIDC_USERINFO_FULLNAME_FIELDS                   | OIDC token claims to create full name                                                         | ["first_name", "last_name"]                             |
 | OIDC_USERINFO_SHORTNAME_FIELD                   | OIDC token claims to create shortname                                                         | first_name                                              |
