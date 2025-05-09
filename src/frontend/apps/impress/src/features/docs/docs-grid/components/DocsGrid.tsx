@@ -46,12 +46,11 @@ export const DocsGrid = ({
     void fetchNextPage();
   };
 
-  const title =
-    target === DocDefaultFilter.MY_DOCS
-      ? t('My docs')
-      : target === DocDefaultFilter.SHARED_WITH_ME
-        ? t('Shared with me')
-        : t('All docs');
+  const title = {
+      [DocDefaultFilter.MY_DOCS]: t('My docs'),
+      [DocDefaultFilter.SHARED_WITH_ME]: t('Shared with me'),
+      [DocDefaultFilter.ALL_DOCS]: t('All docs'),
+  }[target]
 
   return (
     <Box
