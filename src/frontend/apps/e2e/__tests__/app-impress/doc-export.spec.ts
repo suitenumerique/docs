@@ -79,7 +79,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page
+    void page
       .getByRole('button', {
         name: 'Download',
       })
@@ -129,7 +129,7 @@ test.describe('Doc Export', () => {
     await page.getByRole('combobox', { name: 'Format' }).click();
     await page.getByRole('option', { name: 'Docx' }).click();
 
-    await page
+    void page
       .getByRole('button', {
         name: 'Download',
       })
@@ -206,7 +206,7 @@ test.describe('Doc Export', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    await page
+    void page
       .getByRole('button', {
         name: 'Download',
       })
@@ -235,7 +235,7 @@ test.describe('Doc Export', () => {
     // Trigger slash menu to show menu
     await editor.click();
     await editor.fill('/');
-    await page.getByText('Add a quote block').click();
+    await page.getByText('Quote or excerpt').click();
 
     await expect(
       editor.locator('.bn-block-content[data-content-type="quote"]'),
@@ -254,7 +254,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page
+    void page
       .getByRole('button', {
         name: 'Download',
       })
@@ -298,7 +298,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page
+    void page
       .getByRole('button', {
         name: 'Download',
       })

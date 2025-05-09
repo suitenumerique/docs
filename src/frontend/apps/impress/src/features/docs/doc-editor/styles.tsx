@@ -57,9 +57,6 @@ export const cssEditor = (readonly: boolean) => css`
     .bn-side-menu[data-block-type='heading'][data-level='3'] {
       height: 35px;
     }
-    .bn-side-menu[data-block-type='quote'] {
-      height: 46px;
-    }
     .bn-side-menu[data-block-type='divider'] {
       height: 38px;
     }
@@ -84,11 +81,19 @@ export const cssEditor = (readonly: boolean) => css`
     }
   }
 
-  .bn-editor {
+  & .bn-editor {
     color: var(--c--theme--colors--greyscale-700);
+
+    /**
+    * Quotes
+    */
+    blockquote {
+      border-left: 4px solid var(--c--theme--colors--greyscale-300);
+      font-style: italic;
+    }
   }
 
-  .bn-block-outer:not(:first-child) {
+  & .bn-block-outer:not(:first-child) {
     &:has(h1) {
       margin-top: 32px;
     }
@@ -104,12 +109,6 @@ export const cssEditor = (readonly: boolean) => css`
     background-color: gainsboro;
     padding: 2px;
     border-radius: 4px;
-  }
-  & .bn-inline-content {
-    width: 100%;
-  }
-  .bn-block-content[data-content-type='checkListItem'] > div {
-    width: 100%;
   }
 
   @media screen and (width <= 768px) {

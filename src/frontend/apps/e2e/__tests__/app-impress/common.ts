@@ -15,6 +15,7 @@ export const CONFIG = {
     ['fr-fr', 'Français'],
     ['de-de', 'Deutsch'],
     ['nl-nl', 'Nederlands'],
+    ['es-es', 'Español'],
   ],
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
@@ -78,6 +79,7 @@ export const createDoc = async (
     });
 
     const input = page.getByLabel('doc title input');
+    await expect(input).toBeVisible();
     await expect(input).toHaveText('');
     await input.click();
 

@@ -31,13 +31,13 @@ backend:
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    USER_OIDC_FIELD_TO_SHORTNAME: "given_name"
-    USER_OIDC_FIELDS_TO_FULLNAME: "given_name,usual_name"
-    OIDC_OP_JWKS_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
-    OIDC_OP_AUTHORIZATION_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
-    OIDC_OP_TOKEN_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
-    OIDC_OP_USER_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
-    OIDC_OP_LOGOUT_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
+    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
+    OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
+    OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
     OIDC_RP_CLIENT_ID: impress
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
@@ -50,7 +50,6 @@ backend:
     DB_USER: dinum
     DB_PASSWORD: pass
     DB_PORT: 5432
-    FRONTEND_HOMEPAGE_FEATURE_ENABLED: true
     FRONTEND_FOOTER_FEATURE_ENABLED: true
     FRONTEND_URL_JSON_FOOTER: https://impress.127.0.0.1.nip.io/contents/footer-demo.json
     POSTGRES_DB: impress

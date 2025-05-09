@@ -791,7 +791,7 @@ def test_models_documents__email_invitation__success_fr():
 
     assert (
         f"Test Sender2 (sender2@example.com) vous a invité avec le rôle &quot;propriétaire&quot; "
-        f"sur le document suivant: {document.title}" in email_content
+        f"sur le document suivant : {document.title}" in email_content
     )
     assert f"docs/{document.id}/" in email_content
 

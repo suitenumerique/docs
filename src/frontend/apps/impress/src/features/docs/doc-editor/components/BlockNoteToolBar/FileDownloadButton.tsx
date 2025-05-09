@@ -15,6 +15,7 @@ import { useCallback, useMemo } from 'react';
 import { RiDownload2Fill } from 'react-icons/ri';
 
 import { downloadFile, exportResolveFileUrl } from '@/docs/doc-export';
+import { isSafeUrl } from '@/utils/url';
 
 export const FileDownloadButton = ({
   open,
@@ -59,7 +60,11 @@ export const FileDownloadButton = ({
        */
       if (!url.includes(window.location.hostname) && !url.includes('base64')) {
         if (!editor.resolveFileUrl) {
-          window.open(url);
+          if (!isSafeUrl(url)) {
+            return;
+          }
+
+          window.open(url, '_blank', 'noopener,noreferrer');
         } else {
           void editor
             .resolveFileUrl(url)

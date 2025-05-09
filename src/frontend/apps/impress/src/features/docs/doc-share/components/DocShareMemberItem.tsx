@@ -23,12 +23,16 @@ type Props = {
 };
 export const DocShareMemberItem = ({ doc, access }: Props) => {
   const { t } = useTranslation();
-  const { isLastOwner, isOtherOwner } = useWhoAmI(access);
+  const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
-  const isNotAllowed =
-    isOtherOwner || !!isLastOwner || !doc.abilities.accesses_manage;
+
+  const message = isLastOwner
+    ? t(
+        'You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.',
+      )
+    : undefined;
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
     onError: () => {
@@ -63,7 +67,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
       label: t('Delete'),
       icon: 'delete',
       callback: onRemove,
-      disabled: isNotAllowed,
+      disabled: !access.abilities.destroy,
     },
   ];
 
@@ -82,8 +86,8 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
               currentRole={access.role}
               onSelectRole={onUpdate}
               canUpdate={doc.abilities.accesses_manage}
-              isLastOwner={isLastOwner}
-              isOtherOwner={!!isOtherOwner}
+              message={message}
+              rolesAllowed={access.abilities.set_role_to}
             />
 
             {isDesktop && doc.abilities.accesses_manage && (

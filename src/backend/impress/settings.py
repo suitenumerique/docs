@@ -23,7 +23,7 @@ from sentry_sdk.integrations.logging import ignore_logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join("/", "data")
+DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 
 
 def get_release():
@@ -239,6 +239,7 @@ class Base(Configuration):
             ("fr-fr", "Français"),
             ("de-de", "Deutsch"),
             ("nl-nl", "Nederlands"),
+            ("es-es", "Español"),
         )
     )
 
@@ -332,6 +333,12 @@ class Base(Configuration):
             "rest_framework.parsers.JSONParser",
             "nested_multipart_parser.drf.DrfNestedParser",
         ],
+        "DEFAULT_RENDERER_CLASSES": [
+            # 🔒️ Disable BrowsableAPIRenderer which provides forms allowing a user to
+            # see all the data in the database (ie a serializer with a ForeignKey field
+            # will generate a form with a field with all possible values of the FK).
+            "rest_framework.renderers.JSONRenderer",
+        ],
         "EXCEPTION_HANDLER": "core.api.exception_handler",
         "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
         "PAGE_SIZE": 20,
@@ -411,7 +418,7 @@ class Base(Configuration):
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
     FRONTEND_HOMEPAGE_FEATURE_ENABLED = values.BooleanValue(
-        default=False,
+        default=True,
         environ_name="FRONTEND_HOMEPAGE_FEATURE_ENABLED",
         environ_prefix=None,
     )
@@ -520,6 +527,28 @@ class Base(Configuration):
         environ_name="OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION",
         environ_prefix=None,
     )
+    OIDC_USE_PKCE = values.BooleanValue(
+        default=False, environ_name="OIDC_USE_PKCE", environ_prefix=None
+    )
+    OIDC_PKCE_CODE_CHALLENGE_METHOD = values.Value(
+        default="S256",
+        environ_name="OIDC_PKCE_CODE_CHALLENGE_METHOD",
+        environ_prefix=None,
+    )
+    OIDC_PKCE_CODE_VERIFIER_SIZE = values.IntegerValue(
+        default=64, environ_name="OIDC_PKCE_CODE_VERIFIER_SIZE", environ_prefix=None
+    )
+    OIDC_STORE_ACCESS_TOKEN = values.BooleanValue(
+        default=False, environ_name="OIDC_STORE_ACCESS_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN = values.BooleanValue(
+        default=False, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+        default=None,
+        environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
 
     # WARNING: Enabling this setting allows multiple user accounts to share the same email
     # address. This may cause security issues and is not recommended for production use when
@@ -533,14 +562,23 @@ class Base(Configuration):
     USER_OIDC_ESSENTIAL_CLAIMS = values.ListValue(
         default=[], environ_name="USER_OIDC_ESSENTIAL_CLAIMS", environ_prefix=None
     )
-    USER_OIDC_FIELDS_TO_FULLNAME = values.ListValue(
-        default=["first_name", "last_name"],
-        environ_name="USER_OIDC_FIELDS_TO_FULLNAME",
+
+    OIDC_USERINFO_FULLNAME_FIELDS = values.ListValue(
+        default=values.ListValue(  # retrocompatibility
+            default=["first_name", "last_name"],
+            environ_name="USER_OIDC_FIELDS_TO_FULLNAME",
+            environ_prefix=None,
+        ),
+        environ_name="OIDC_USERINFO_FULLNAME_FIELDS",
         environ_prefix=None,
     )
-    USER_OIDC_FIELD_TO_SHORTNAME = values.Value(
-        default="first_name",
-        environ_name="USER_OIDC_FIELD_TO_SHORTNAME",
+    OIDC_USERINFO_SHORTNAME_FIELD = values.Value(
+        default=values.Value(  # retrocompatibility
+            default="first_name",
+            environ_name="USER_OIDC_FIELD_TO_SHORTNAME",
+            environ_prefix=None,
+        ),
+        environ_name="OIDC_USERINFO_SHORTNAME_FIELD",
         environ_prefix=None,
     )
 

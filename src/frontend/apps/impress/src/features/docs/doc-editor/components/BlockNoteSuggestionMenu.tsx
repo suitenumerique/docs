@@ -11,10 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DocsBlockSchema } from '../types';
 
-import {
-  getDividerReactSlashMenuItems,
-  getQuoteReactSlashMenuItems,
-} from './custom-blocks';
+import { getDividerReactSlashMenuItems } from './custom-blocks';
 
 export const BlockNoteSuggestionMenu = () => {
   const editor = useBlockNoteEditor<DocsBlockSchema>();
@@ -28,7 +25,6 @@ export const BlockNoteSuggestionMenu = () => {
           combineByGroup(
             getDefaultReactSlashMenuItems(editor),
             getPageBreakReactSlashMenuItems(editor),
-            getQuoteReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,

@@ -1,9 +1,9 @@
 module.exports = {
   root: true,
-  extends: ["impress/playwright"],
+  extends: ['impress/playwright'],
   parserOptions: {
     tsconfigRootDir: __dirname,
-    project: ["./tsconfig.json"],
+    project: ['./tsconfig.json'],
   },
-  ignorePatterns: ["node_modules"],
+  ignorePatterns: ['node_modules'],
 };
