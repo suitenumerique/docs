@@ -65,49 +65,22 @@ class LinkReachChoices(PriorityTextChoices):
     def get_select_options(cls, link_reach, link_role):
         """
         Determines the valid select options for link reach and link role depending on the
-        list of ancestors' link reach/role definitions.
+        ancestors' link reach/role given as arguments.
         Returns:
             Dictionary mapping possible reach levels to their corresponding possible roles.
         """
-        # If no ancestors, return all options
-        if not link_reach:
-            return {
-                reach: LinkRoleChoices.values if reach != cls.RESTRICTED else None
-                for reach in cls.values
-            }
-
-        # Initialize the result for all reaches with possible roles
-        result = {
-            reach: set(LinkRoleChoices.values) if reach != cls.RESTRICTED else None
-            for reach in cls.values
-        }
-
-        # Handle special rules directly with early returns for efficiency
-
-        if link_role == LinkRoleChoices.EDITOR:
-            # Rule 1: public/editor → override everything
-            if link_reach == cls.PUBLIC:
-                return {cls.PUBLIC: [LinkRoleChoices.EDITOR]}
-
-            # Rule 2: authenticated/editor
-            if link_reach == cls.AUTHENTICATED:
-                result[cls.AUTHENTICATED].discard(LinkRoleChoices.READER)
-                result.pop(cls.RESTRICTED, None)
-
-        if link_role == LinkRoleChoices.READER:
-            # Rule 3: public/reader
-            if link_reach == cls.PUBLIC:
-                result.pop(cls.AUTHENTICATED, None)
-                result.pop(cls.RESTRICTED, None)
-
-            # Rule 4: authenticated/reader
-            if link_reach == cls.AUTHENTICATED:
-                result.pop(cls.RESTRICTED, None)
-
-        # Convert sets to ordered lists where applicable
         return {
-            reach: sorted(roles, key=LinkRoleChoices.get_priority) if roles else roles
-            for reach, roles in result.items()
+            reach: [
+                role
+                for role in LinkRoleChoices.values
+                if LinkRoleChoices.get_priority(role)
+                >= LinkRoleChoices.get_priority(link_role)
+            ]
+            if reach != cls.RESTRICTED
+            else None
+            for reach in cls.values
+            if LinkReachChoices.get_priority(reach)
+            >= LinkReachChoices.get_priority(link_reach)
         }
 
 
