@@ -1178,7 +1178,6 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
 @pytest.mark.parametrize(
     "reach, role, select_options",
     [
-        # One ancestor
         (
             "public",
             "reader",
@@ -1198,7 +1197,7 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
         (
             "authenticated",
             "editor",
-            {"authenticated": ["editor"], "public": ["reader", "editor"]},
+            {"authenticated": ["editor"], "public": ["editor"]},
         ),
         (
             "restricted",
@@ -1214,18 +1213,16 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
             "editor",
             {
                 "restricted": None,
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
+                "authenticated": ["editor"],
+                "public": ["editor"],
             },
         ),
-        # No ancestors (edge case)
+        # Edge cases
         (
             "public",
             None,
             {
                 "public": ["reader", "editor"],
-                "authenticated": ["reader", "editor"],
-                "restricted": None,
             },
         ),
         (
