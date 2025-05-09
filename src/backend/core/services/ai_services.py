@@ -44,7 +44,7 @@ AI_ACTIONS = {
 }
 
 AI_TRANSLATE = (
-    "Keep the same html stucture and formatting. "
+    "Keep the same html structure and formatting. "
     "Translate the content in the html to the specified language {language:s}. "
     "Check the translation for accuracy and make any necessary corrections. "
     "Do not provide any other information."

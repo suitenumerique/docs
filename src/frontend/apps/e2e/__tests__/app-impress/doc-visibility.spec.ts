@@ -329,7 +329,7 @@ test.describe('Doc Visibility: Public', () => {
 test.describe('Doc Visibility: Authenticated', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('A doc is not accessible when unauthentified.', async ({
+  test('A doc is not accessible when unauthenticated.', async ({
     page,
     browserName,
   }) => {
