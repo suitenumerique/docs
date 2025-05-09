@@ -1,6 +1,7 @@
 """
 Test document accesses API endpoints for users in impress's core app.
 """
+# pylint: disable=too-many-lines
 
 import random
 from uuid import uuid4
@@ -8,7 +9,7 @@ from uuid import uuid4
 import pytest
 from rest_framework.test import APIClient
 
-from core import factories, models
+from core import choices, factories, models
 from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
 from core.tests.test_services_collaboration_services import (  # pylint: disable=unused-import
@@ -51,12 +52,7 @@ def test_api_document_accesses_list_authenticated_unrelated():
         f"/api/v1.0/documents/{document.id!s}/accesses/",
     )
     assert response.status_code == 200
-    assert response.json() == {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [],
-    }
+    assert response.json() == []
 
 
 def test_api_document_accesses_list_unexisting_document():
@@ -69,39 +65,46 @@ def test_api_document_accesses_list_unexisting_document():
     client.force_login(user)
 
     response = client.get(f"/api/v1.0/documents/{uuid4()!s}/accesses/")
-    assert response.status_code == 200
-    assert response.json() == {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [],
-    }
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Not found."}
 
 
 @pytest.mark.parametrize("via", VIA)
 @pytest.mark.parametrize(
-    "role", [role for role in models.RoleChoices if role not in models.PRIVILEGED_ROLES]
+    "role",
+    [role for role in choices.RoleChoices if role not in choices.PRIVILEGED_ROLES],
 )
 def test_api_document_accesses_list_authenticated_related_non_privileged(
-    via, role, mock_user_teams
+    via, role, mock_user_teams, django_assert_num_queries
 ):
     """
-    Authenticated users should be able to list document accesses for a document
-    to which they are directly related, whatever their role in the document.
+    Authenticated users with no privileged role should only be able to list document
+    accesses associated with privileged roles for a document, including from ancestors.
     """
     user = factories.UserFactory()
-
     client = APIClient()
     client.force_login(user)
 
-    owner = factories.UserFactory()
-    accesses = []
-
-    document_access = factories.UserDocumentAccessFactory(
-        user=owner, role=models.RoleChoices.OWNER
+    # Create documents structured as a tree
+    unreadable_ancestor = factories.DocumentFactory(link_reach="restricted")
+    # make all documents below the grand parent readable without a specific access for the user
+    grand_parent = factories.DocumentFactory(
+        parent=unreadable_ancestor, link_reach="authenticated"
     )
-    accesses.append(document_access)
-    document = document_access.document
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
+    # Create accesses related to each document
+    accesses = (
+        factories.UserDocumentAccessFactory(document=unreadable_ancestor),
+        factories.UserDocumentAccessFactory(document=grand_parent),
+        factories.UserDocumentAccessFactory(document=parent),
+        factories.UserDocumentAccessFactory(document=document),
+        factories.TeamDocumentAccessFactory(document=document),
+    )
+    factories.UserDocumentAccessFactory(document=child)
+
     if via == USER:
         models.DocumentAccess.objects.create(
             document=document,
@@ -116,33 +119,32 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
             role=role,
         )
 
-    access1 = factories.TeamDocumentAccessFactory(document=document)
-    access2 = factories.UserDocumentAccessFactory(document=document)
-    accesses.append(access1)
-    accesses.append(access2)
-
     # Accesses for other documents to which the user is related should not be listed either
     other_access = factories.UserDocumentAccessFactory(user=user)
     factories.UserDocumentAccessFactory(document=other_access.document)
 
-    response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/accesses/",
-    )
+    with django_assert_num_queries(3):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
 
-    # Return only owners
-    owners_accesses = [
-        access for access in accesses if access.role in models.PRIVILEGED_ROLES
-    ]
     assert response.status_code == 200
     content = response.json()
-    assert content["count"] == len(owners_accesses)
-    assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
+
+    # Make sure only privileged roles are returned
+    privileged_accesses = [
+        acc for acc in accesses if acc.role in choices.PRIVILEGED_ROLES
+    ]
+    assert len(content) == len(privileged_accesses)
+
+    assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
             {
                 "id": str(access.id),
+                "document": {
+                    "id": str(access.document_id),
+                    "path": access.document.path,
+                    "depth": access.document.depth,
+                },
                 "user": {
-                    "id": None,
-                    "email": None,
                     "full_name": access.user.full_name,
                     "short_name": access.user.short_name,
                 }
@@ -150,40 +152,48 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 else None,
                 "team": access.team,
                 "role": access.role,
-                "abilities": access.get_abilities(user),
+                "max_ancestors_role": access.role
+                if access.document_id != document.id
+                else None,
+                "abilities": {
+                    "destroy": False,
+                    "partial_update": False,
+                    "retrieve": False,
+                    "set_role_to": [],
+                    "update": False,
+                },
             }
-            for access in owners_accesses
+            for access in privileged_accesses
         ],
         key=lambda x: x["id"],
     )
 
-    for access in content["results"]:
-        assert access["role"] in models.PRIVILEGED_ROLES
-
 
 @pytest.mark.parametrize("via", VIA)
-@pytest.mark.parametrize("role", models.PRIVILEGED_ROLES)
-def test_api_document_accesses_list_authenticated_related_privileged_roles(
-    via, role, mock_user_teams
+@pytest.mark.parametrize(
+    "role", [role for role in choices.RoleChoices if role in choices.PRIVILEGED_ROLES]
+)
+def test_api_document_accesses_list_authenticated_related_privileged(
+    via, role, mock_user_teams, django_assert_num_queries
 ):
     """
-    Authenticated users should be able to list document accesses for a document
-    to which they are directly related, whatever their role in the document.
+    Authenticated users with a privileged role should be able to list all
+    document accesses whatever the role, including from ancestors.
     """
     user = factories.UserFactory()
-
     client = APIClient()
     client.force_login(user)
 
-    owner = factories.UserFactory()
-    accesses = []
-
-    document_access = factories.UserDocumentAccessFactory(
-        user=owner, role=models.RoleChoices.OWNER
+    # Create documents structured as a tree
+    unreadable_ancestor = factories.DocumentFactory(link_reach="restricted")
+    # make all documents below the grand parent readable without a specific access for the user
+    grand_parent = factories.DocumentFactory(
+        parent=unreadable_ancestor, link_reach="authenticated"
     )
-    accesses.append(document_access)
-    document = document_access.document
-    user_access = None
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
     if via == USER:
         user_access = models.DocumentAccess.objects.create(
             document=document,
@@ -197,59 +207,247 @@ def test_api_document_accesses_list_authenticated_related_privileged_roles(
             team="lasuite",
             role=role,
         )
+    else:
+        raise RuntimeError()
 
-    access1 = factories.TeamDocumentAccessFactory(document=document)
-    access2 = factories.UserDocumentAccessFactory(document=document)
-    accesses.append(access1)
-    accesses.append(access2)
+    # Create accesses related to each document
+    ancestors_accesses = [
+        # Access on unreadable ancestor should still be listed
+        # as the related user gains access to our document
+        factories.UserDocumentAccessFactory(document=unreadable_ancestor),
+        factories.UserDocumentAccessFactory(document=grand_parent),
+        factories.UserDocumentAccessFactory(document=parent),
+    ]
+    document_accesses = [
+        factories.UserDocumentAccessFactory(document=document),
+        factories.TeamDocumentAccessFactory(document=document),
+        factories.UserDocumentAccessFactory(document=document),
+        user_access,
+    ]
+    factories.UserDocumentAccessFactory(document=child)
 
     # Accesses for other documents to which the user is related should not be listed either
     other_access = factories.UserDocumentAccessFactory(user=user)
     factories.UserDocumentAccessFactory(document=other_access.document)
 
-    response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/accesses/",
-    )
-
-    access2_user = serializers.UserSerializer(instance=access2.user).data
-    base_user = serializers.UserSerializer(instance=user).data
+    with django_assert_num_queries(3):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
 
     assert response.status_code == 200
     content = response.json()
-    assert len(content["results"]) == 4
-    assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
+    assert len(content) == 7
+    assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
             {
-                "id": str(user_access.id),
-                "user": base_user if via == "user" else None,
-                "team": "lasuite" if via == "team" else "",
-                "role": user_access.role,
-                "abilities": user_access.get_abilities(user),
-            },
-            {
-                "id": str(access1.id),
-                "user": None,
-                "team": access1.team,
-                "role": access1.role,
-                "abilities": access1.get_abilities(user),
-            },
-            {
-                "id": str(access2.id),
-                "user": access2_user,
-                "team": "",
-                "role": access2.role,
-                "abilities": access2.get_abilities(user),
-            },
-            {
-                "id": str(document_access.id),
-                "user": serializers.UserSerializer(instance=owner).data,
-                "team": "",
-                "role": models.RoleChoices.OWNER,
-                "abilities": document_access.get_abilities(user),
-            },
+                "id": str(access.id),
+                "document": {
+                    "id": str(access.document_id),
+                    "path": access.document.path,
+                    "depth": access.document.depth,
+                },
+                "user": {
+                    "id": str(access.user.id),
+                    "email": access.user.email,
+                    "language": access.user.language,
+                    "full_name": access.user.full_name,
+                    "short_name": access.user.short_name,
+                }
+                if access.user
+                else None,
+                "max_ancestors_role": access.role
+                if access.document_id != document.id
+                else None,
+                "team": access.team,
+                "role": access.role,
+                "abilities": access.get_abilities(user),
+            }
+            for access in ancestors_accesses + document_accesses
         ],
         key=lambda x: x["id"],
     )
+
+
+@pytest.mark.parametrize(
+    "roles,results",
+    [
+        [
+            ["administrator", "reader", "reader", "reader"],
+            [
+                ["reader", "editor", "administrator"],
+                [],
+                [],
+                ["reader", "editor", "administrator"],
+            ],
+        ],
+        [
+            ["owner", "reader", "reader", "reader"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+        [
+            ["owner", "reader", "reader", "owner"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+    ],
+)
+def test_api_document_accesses_list_authenticated_related_same_user(roles, results):
+    """
+    The maximum role across ancestor documents and set_role_to optionsfor
+    a given user should be filled as expected.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create documents structured as a tree
+    grand_parent = factories.DocumentFactory(link_reach="authenticated")
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+
+    # Create accesses for another user
+    other_user = factories.UserFactory()
+    accesses = [
+        factories.UserDocumentAccessFactory(
+            document=document, user=user, role=roles[0]
+        ),
+        factories.UserDocumentAccessFactory(
+            document=grand_parent, user=other_user, role=roles[1]
+        ),
+        factories.UserDocumentAccessFactory(
+            document=parent, user=other_user, role=roles[2]
+        ),
+        factories.UserDocumentAccessFactory(
+            document=document, user=other_user, role=roles[3]
+        ),
+    ]
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 4
+
+    for result in content:
+        assert (
+            result["max_ancestors_role"] is None
+            if result["user"]["id"] == str(user.id)
+            else choices.RoleChoices.max(roles[1], roles[2])
+        )
+
+    result_dict = {
+        result["id"]: result["abilities"]["set_role_to"] for result in content
+    }
+    assert [result_dict[str(access.id)] for access in accesses] == results
+
+
+@pytest.mark.parametrize(
+    "roles,results",
+    [
+        [
+            ["administrator", "reader", "reader", "reader"],
+            [
+                ["reader", "editor", "administrator"],
+                [],
+                [],
+                ["reader", "editor", "administrator"],
+            ],
+        ],
+        [
+            ["owner", "reader", "reader", "reader"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+        [
+            ["owner", "reader", "reader", "owner"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+        [
+            ["reader", "reader", "reader", "owner"],
+            [
+                ["reader", "editor", "administrator", "owner"],
+                [],
+                [],
+                ["reader", "editor", "administrator", "owner"],
+            ],
+        ],
+        [
+            ["reader", "administrator", "reader", "editor"],
+            [[], ["reader", "editor", "administrator"], [], []],
+        ],
+        [
+            ["reader", "editor", "administrator", "editor"],
+            [[], [], ["editor", "administrator"], []],
+        ],
+    ],
+)
+def test_api_document_accesses_list_authenticated_related_same_team(
+    roles, results, mock_user_teams
+):
+    """
+    The maximum role across ancestor documents and set_role_to optionsfor
+    a given team should be filled as expected.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create documents structured as a tree
+    grand_parent = factories.DocumentFactory(link_reach="authenticated")
+    parent = factories.DocumentFactory(parent=grand_parent)
+    document = factories.DocumentFactory(parent=parent)
+
+    mock_user_teams.return_value = ["lasuite", "unknown"]
+    accesses = [
+        factories.UserDocumentAccessFactory(
+            document=document, user=user, role=roles[0]
+        ),
+        # Create accesses for a team
+        factories.TeamDocumentAccessFactory(
+            document=grand_parent, team="lasuite", role=roles[1]
+        ),
+        factories.TeamDocumentAccessFactory(
+            document=parent, team="lasuite", role=roles[2]
+        ),
+        factories.TeamDocumentAccessFactory(
+            document=document, team="lasuite", role=roles[3]
+        ),
+    ]
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert len(content) == 4
+
+    for result in content:
+        assert (
+            result["max_ancestors_role"] is None
+            if result["user"] and result["user"]["id"] == str(user.id)
+            else choices.RoleChoices.max(roles[1], roles[2])
+        )
+
+    result_dict = {
+        result["id"]: result["abilities"]["set_role_to"] for result in content
+    }
+    assert [result_dict[str(access.id)] for access in accesses] == results
 
 
 def test_api_document_accesses_retrieve_anonymous():
@@ -307,7 +505,9 @@ def test_api_document_accesses_retrieve_authenticated_unrelated():
 @pytest.mark.parametrize("via", VIA)
 @pytest.mark.parametrize("role", models.RoleChoices)
 def test_api_document_accesses_retrieve_authenticated_related(
-    via, role, mock_user_teams
+    via,
+    role,
+    mock_user_teams,
 ):
     """
     A user who is related to a document should be allowed to retrieve the
@@ -333,7 +533,7 @@ def test_api_document_accesses_retrieve_authenticated_related(
         f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
     )
 
-    if not role in models.PRIVILEGED_ROLES:
+    if not role in choices.PRIVILEGED_ROLES:
         assert response.status_code == 403
     else:
         access_user = serializers.UserSerializer(instance=access.user).data
@@ -341,9 +541,15 @@ def test_api_document_accesses_retrieve_authenticated_related(
         assert response.status_code == 200
         assert response.json() == {
             "id": str(access.id),
+            "document": {
+                "id": str(access.document_id),
+                "path": access.document.path,
+                "depth": access.document.depth,
+            },
             "user": access_user,
             "team": "",
             "role": access.role,
+            "max_ancestors_role": None,
             "abilities": access.get_abilities(user),
         }
 
@@ -448,7 +654,9 @@ def test_api_document_accesses_update_authenticated_reader_or_editor(
 
 
 @pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("create_for", VIA)
 def test_api_document_accesses_update_administrator_except_owner(
+    create_for,
     via,
     mock_user_teams,
     mock_reset_connections,  # pylint: disable=redefined-outer-name
@@ -481,32 +689,30 @@ def test_api_document_accesses_update_administrator_except_owner(
 
     new_values = {
         "id": uuid4(),
-        "user_id": factories.UserFactory().id,
         "role": random.choice(["administrator", "editor", "reader"]),
     }
+    if create_for == USER:
+        new_values["user_id"] = factories.UserFactory().id
+    elif create_for == TEAM:
+        new_values["team"] = "new-team"
 
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
-        if new_data["role"] == old_values["role"]:
+        with mock_reset_connections(document.id, str(access.user_id)):
             response = client.put(
                 f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
                 data=new_data,
                 format="json",
             )
-            assert response.status_code == 403
-        else:
-            with mock_reset_connections(document.id, str(access.user_id)):
-                response = client.put(
-                    f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-                    data=new_data,
-                    format="json",
-                )
-                assert response.status_code == 200
+            assert response.status_code == 200
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
         if field == "role":
-            assert updated_values == {**old_values, "role": new_values["role"]}
+            assert updated_values == {
+                **old_values,
+                "role": new_values["role"],
+            }
         else:
             assert updated_values == old_values
 
@@ -601,7 +807,7 @@ def test_api_document_accesses_update_administrator_to_owner(
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
         # We are not allowed or not really updating the role
-        if field == "role" or new_data["role"] == old_values["role"]:
+        if field == "role":
             response = client.put(
                 f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
                 data=new_data,
@@ -624,7 +830,9 @@ def test_api_document_accesses_update_administrator_to_owner(
 
 
 @pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("create_for", VIA)
 def test_api_document_accesses_update_owner(
+    create_for,
     via,
     mock_user_teams,
     mock_reset_connections,  # pylint: disable=redefined-outer-name
@@ -655,36 +863,32 @@ def test_api_document_accesses_update_owner(
 
     new_values = {
         "id": uuid4(),
-        "user_id": factories.UserFactory().id,
         "role": random.choice(models.RoleChoices.values),
     }
+    if create_for == USER:
+        new_values["user_id"] = factories.UserFactory().id
+    elif create_for == TEAM:
+        new_values["team"] = "new-team"
 
     for field, value in new_values.items():
         new_data = {**old_values, field: value}
-        if (
-            new_data["role"] == old_values["role"]
-        ):  # we are not really updating the role
+        with mock_reset_connections(document.id, str(access.user_id)):
             response = client.put(
                 f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
                 data=new_data,
                 format="json",
             )
-            assert response.status_code == 403
-        else:
-            with mock_reset_connections(document.id, str(access.user_id)):
-                response = client.put(
-                    f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
-                    data=new_data,
-                    format="json",
-                )
 
-                assert response.status_code == 200
+            assert response.status_code == 200
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
 
         if field == "role":
-            assert updated_values == {**old_values, "role": new_values["role"]}
+            assert updated_values == {
+                **old_values,
+                "role": new_values["role"],
+            }
         else:
             assert updated_values == old_values
 
