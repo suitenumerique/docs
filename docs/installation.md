@@ -228,3 +228,22 @@ keycloak                         <none>   keycloak.127.0.0.1.nip.io   localhost 
 ```
 
 You can use Docs at https://impress.127.0.0.1.nip.io. The provisionning user in keycloak is impress/impress.
+
+# Installation on NixOS
+
+Using the nix module provided in the repo, you can add in your NixOS configuration:
+```nix
+imports = [ "${pathToRepo}/nix/module.nix" ];
+nixpkgs.overlays = [ (import "${pathToRepo}/nix/overlay.nix") ];
+
+services.docs = {
+  enable = true;
+  domain = "docs.example.com";
+  s3.url = "https://s3.example.com";
+  database.createLocally = true;
+  redis.createLocally = true;
+  config = {
+    # your configuration
+  };
+};
+```
