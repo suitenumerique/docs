@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- 🐛(tests) override AI feature flag in config test #950
+
 ## [3.2.1] - 2025-05-06
 
 ## Fixed
