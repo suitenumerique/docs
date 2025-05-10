@@ -48,10 +48,7 @@ const nextConfig = {
           swDest: '../public/service-worker.js',
           include: [
             ({ asset }) => {
-              if (asset.name.match(/.*(static).*/)) {
-                return true;
-              }
-              return false;
+              return !!asset.name.match(/.*(static).*/);
             },
           ],
         }),

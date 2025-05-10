@@ -31,7 +31,7 @@ const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      setIsLocalChange(transaction.local ? true : false);
+      setIsLocalChange(transaction.local);
     };
 
     yDoc.on('update', onUpdate);

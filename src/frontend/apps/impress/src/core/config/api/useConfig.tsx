@@ -53,13 +53,11 @@ export function useConfig() {
   const cachedData = getCachedTranslation();
   const oneHour = 1000 * 60 * 60;
 
-  const response = useQuery<ConfigResponse, APIError, ConfigResponse>({
+  return useQuery<ConfigResponse, APIError, ConfigResponse>({
     queryKey: [KEY_CONFIG],
     queryFn: () => getConfig(),
     initialData: cachedData,
     staleTime: oneHour,
     initialDataUpdatedAt: Date.now() - oneHour, // Force initial data to be considered stale
   });
-
-  return response;
 }

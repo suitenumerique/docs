@@ -8,6 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- 🎨(frontend) Simplify if statement
+- 🎨(frontend) Simplify redundant conditional expression
+- 🎨(frontend) Remove unnecessary local variable
+- 🎨(frontend) Remove var usage instead of let/const
+- 📝(frontend) Update documentation
+- ✅(frontend) Improve tests coverage
+
+## Fixed
+
+- 🐛(frontend) Add explicit React import to ensure JSX compatibility
+
 ## [3.2.1] - 2025-05-06
 
 ## Fixed
