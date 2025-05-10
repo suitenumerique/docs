@@ -422,21 +422,20 @@ class Base(Configuration):
         environ_name="FRONTEND_HOMEPAGE_FEATURE_ENABLED",
         environ_prefix=None,
     )
-    FRONTEND_URL_JSON_FOOTER = values.Value(
-        None, environ_name="FRONTEND_URL_JSON_FOOTER", environ_prefix=None
-    )
-    FRONTEND_FOOTER_FEATURE_ENABLED = values.BooleanValue(
-        default=False,
-        environ_name="FRONTEND_FOOTER_FEATURE_ENABLED",
-        environ_prefix=None,
-    )
-    FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT = values.Value(
-        60 * 60 * 24,
-        environ_name="FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT",
-        environ_prefix=None,
-    )
     FRONTEND_CSS_URL = values.Value(
         None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
+    )
+
+    THEME_CUSTOMIZATION_FILE_PATH = values.Value(
+        os.path.join(BASE_DIR, "configuration/theme/default.json"),
+        environ_name="THEME_CUSTOMIZATION_FILE_PATH",
+        environ_prefix=None,
+    )
+
+    THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.Value(
+        60 * 60 * 24,
+        environ_name="THEME_CUSTOMIZATION_CACHE_TIMEOUT",
+        environ_prefix=None,
     )
 
     # Posthog
@@ -898,6 +897,11 @@ class Production(Base):
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
+            "KEY_PREFIX": values.Value(
+                "docs",
+                environ_name="CACHES_KEY_PREFIX",
+                environ_prefix=None,
+            ),
         },
     }
 

@@ -87,6 +87,9 @@ RUN wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
 # Copy entrypoint
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 
+# Copy configuration
+VOLUME [ "/configuration" ]
+
 # Give the "root" group the same permissions as the "root" user on /etc/passwd
 # to allow a user belonging to the root group to add new users; typically the
 # docker user (see entrypoint).
