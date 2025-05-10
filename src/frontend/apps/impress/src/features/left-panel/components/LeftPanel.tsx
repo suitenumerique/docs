@@ -6,7 +6,7 @@ import { Box, SeparatedSection } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
 import { HEADER_HEIGHT } from '@/features/header/conf';
-import { LanguagePicker } from '@/features/language';
+import { LanguagePicker } from '@/features/language/components';
 import { useResponsiveStore } from '@/stores';
 
 import { useLeftPanelStore } from '../stores';

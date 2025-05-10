@@ -18,6 +18,28 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
 
+  if (process.env.NODE_ENV === 'development') {
+    /**
+     *  Enable debug namespaces as needed
+     *
+     *  They can be enabled:
+     *
+     *    via DEBUG environment variable
+     *      DEBUG="features:language,no-cache,..."
+     *
+     *    via browser console
+     *      window.debug = "features:language,no-cache,...";
+     *
+     *    via Local storage
+     *      window.localStorage.debug = "features:language,no-cache,...";
+     *
+     *    via code (uses Local storage)
+     *      import debug from 'debug';
+     *      debug.enable('no-cache,features:language,...');
+     */
+    //debug.enable('no-cache,features:language');
+  }
+
   return (
     <>
       <Head>
