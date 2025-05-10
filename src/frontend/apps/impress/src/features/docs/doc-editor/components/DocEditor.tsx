@@ -25,7 +25,6 @@ interface DocEditorProps {
 
 export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
-
   const isVersion = !!versionId && typeof versionId === 'string';
 
   const { colorsTokens } = useCunninghamTheme();

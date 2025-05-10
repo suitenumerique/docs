@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
 
 import { AppProvider } from '@/core/';
-import { useSWRegister } from '@/features/service-worker/';
+import { useOffline, useSWRegister } from '@/features/service-worker/';
 import '@/i18n/initI18n';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -15,6 +15,7 @@ type AppPropsWithLayout = AppProps & {
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useSWRegister();
+  useOffline();
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
 

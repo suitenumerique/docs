@@ -26,6 +26,7 @@ describe('useSWRegister', () => {
       value: {
         register: registerSpy,
         addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
       },
       writable: true,
     });

@@ -4,8 +4,8 @@
 
 import '@testing-library/jest-dom';
 
-import { ApiPlugin } from '../ApiPlugin';
 import { RequestSerializer } from '../RequestSerializer';
+import { ApiPlugin } from '../plugins/ApiPlugin';
 
 const mockedGet = jest.fn().mockResolvedValue({});
 const mockedGetAllKeys = jest.fn().mockResolvedValue([]);

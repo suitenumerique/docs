@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+🛂(frontend) block edition to not connected users #945
+
 ## [3.2.1] - 2025-05-06
 
 ## Fixed

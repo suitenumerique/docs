@@ -1,17 +1,20 @@
 import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import { Box, HorizontalSeparator, Icon, Text } from '@/components';
+import { Box, HorizontalSeparator, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
   LinkReach,
+  Role,
   currentDocRole,
+  useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { AlertNetwork } from './AlertNetwork';
+import { AlertPublic } from './AlertPublic';
 import { DocTitle } from './DocTitle';
 import { DocToolBox } from './DocToolBox';
 
@@ -20,51 +23,26 @@ interface DocHeaderProps {
 }
 
 export const DocHeader = ({ doc }: DocHeaderProps) => {
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-
   const { t } = useTranslation();
+  const { transRole } = useTrans();
+  const { isEditable } = useIsCollaborativeEditable(doc);
   const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
   const docIsAuth = doc.link_reach === LinkReach.AUTHENTICATED;
-
-  const { transRole } = useTrans();
 
   return (
     <>
       <Box
         $width="100%"
-        $padding={{ top: isDesktop ? '4xl' : 'md' }}
+        $padding={{ top: isDesktop ? '50px' : 'md' }}
         $gap={spacingsTokens['base']}
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"
       >
+        {!isEditable && <AlertNetwork />}
         {(docIsPublic || docIsAuth) && (
-          <Box
-            aria-label={t('Public document')}
-            $color={colorsTokens['primary-800']}
-            $background={colorsTokens['primary-050']}
-            $radius={spacingsTokens['3xs']}
-            $direction="row"
-            $padding="xs"
-            $flex={1}
-            $align="center"
-            $gap={spacingsTokens['3xs']}
-            $css={css`
-              border: 1px solid var(--c--theme--colors--primary-300, #e3e3fd);
-            `}
-          >
-            <Icon
-              $theme="primary"
-              $variation="800"
-              data-testid="public-icon"
-              iconName={docIsPublic ? 'public' : 'vpn_lock'}
-            />
-            <Text $theme="primary" $variation="800">
-              {docIsPublic
-                ? t('Public document')
-                : t('Document accessible to any connected person')}
-            </Text>
-          </Box>
+          <AlertPublic isPublicDoc={docIsPublic} />
         )}
         <Box
           $direction="row"
@@ -86,8 +64,18 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
               <Box $direction="row">
                 {isDesktop && (
                   <>
-                    <Text $variation="600" $size="s" $weight="bold">
-                      {transRole(currentDocRole(doc.abilities))}&nbsp;·&nbsp;
+                    <Text
+                      $variation="600"
+                      $size="s"
+                      $weight="bold"
+                      $theme={isEditable ? 'greyscale' : 'warning'}
+                    >
+                      {transRole(
+                        isEditable
+                          ? currentDocRole(doc.abilities)
+                          : Role.READER,
+                      )}
+                      &nbsp;·&nbsp;
                     </Text>
                     <Text $variation="600" $size="s">
                       {t('Last update: {{update}}', {
