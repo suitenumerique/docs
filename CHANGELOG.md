@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+🩺(CI) add lint spell mistakes #954
+
 ## [3.2.1] - 2025-05-06
 
 ## Fixed
