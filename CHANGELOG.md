@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- 🚀(frontend) Adds api caching #961
 - ✨(back) allow theme customnization using a configuration file #948
 - ✨ Add a custom callout block to the editor #892
 - 🚩(frontend) version MIT only #911

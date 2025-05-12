@@ -1,7 +1,11 @@
 import { CunninghamProvider } from '@openfun/cunningham-react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { QueryClient } from '@tanstack/react-query';
+import type { Persister } from '@tanstack/react-query-persist-client';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import debug from 'debug';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
@@ -18,6 +22,7 @@ import { ConfigProvider } from './config/';
  */
 const defaultOptions = {
   queries: {
+    staleTime: debug.enabled('no-cache') ? 0 : 1000 * 60 * 3, // 3 minutes
     staleTime: 1000 * 60 * 3,
     retry: 1,
   },
@@ -29,10 +34,20 @@ const queryClient = new QueryClient({
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { theme } = useCunninghamTheme();
   const { replace } = useRouter();
-
   const initializeResizeListener = useResponsiveStore(
     (state) => state.initializeResizeListener,
   );
+
+  const persister = useMemo(() => {
+    // Create persister only when the browser is available
+    if (typeof window !== 'undefined') {
+      return createSyncStoragePersister({
+        storage: window.localStorage,
+      });
+    }
+    // Return undefined otherwise (PersistQueryClientProvider handles undefined persister gracefully)
+    return undefined;
+  }, []);
 
   useEffect(() => {
     return initializeResizeListener();
@@ -60,12 +75,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [replace]);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: persister as Persister }}
+    >
       <CunninghamProvider theme={theme}>
         <ConfigProvider>
           <Auth>{children}</Auth>
         </ConfigProvider>
       </CunninghamProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
