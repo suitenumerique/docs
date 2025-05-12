@@ -14,6 +14,7 @@ and this project adheres to
 - ✨ Add a custom callout block to the editor #892
 - 🚩(frontend) version MIT only #911
 - ✨(backend) integrate maleware_detection from django-lasuite #936
+- ♻️ Refactored permissions check from serializers to permission class #343
 
 ## Changed
 

@@ -134,3 +134,59 @@ class DocumentAccessPermission(AccessPermission):
             raise Http404
 
         return has_permission
+
+
+class CanManageAccessPermission(permissions.BasePermission):
+    """
+    Permission class to check access rights specific to writing (create/update)
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+
+        if not (bool(request.auth) or user.is_authenticated):
+            return False
+
+        if view.action == "create":
+            try:
+                resource_id = view.kwargs["resource_id"]
+            except KeyError as exc:
+                raise exceptions.ValidationError(
+                    f"You must set a resource ID in kwargs to create a new access."
+                ) from exc
+
+            if not view.queryset.model.objects.filter(  # pylint: disable=no-member
+                Q(user=user) | Q(team__in=user.teams),
+                role__in=[RoleChoices.OWNER, RoleChoices.ADMIN],  # pylint: disable=no-member
+                **{view.resource_field_name: resource_id},
+            ).exists():
+                raise exceptions.PermissionDenied(
+                    "You are not allowed to manage accesses for this resource."
+                )
+
+            role = request.data.get("role")
+            if (
+                role == RoleChoices.OWNER
+                and not view.queryset.model.objects.filter(
+                    Q(user=user) | Q(team__in=user.teams),
+                    **{view.resource_field_name: resource_id},
+                    role=RoleChoices.OWNER,
+                ).exists()
+            ):
+                raise exceptions.PermissionDenied(
+                    "Only owners of a resource can assign other users as owners."
+                )
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        if view.action in ["update", "partial_update"]:
+            role = request.data.get("role")
+            can_set_role_to = obj.get_abilities(request.user).get("set_role_to", [])
+            if role and role not in can_set_role_to:
+                message = (
+                    f"You are only allowed to set role to {', '.join(can_set_role_to)}"
+                    if can_set_role_to
+                    else f"You are not allowed to set this role for this {getattr(view, 'resource_field_name', 'resource')}."
+                )
+                raise exceptions.PermissionDenied(message)
+        return True
