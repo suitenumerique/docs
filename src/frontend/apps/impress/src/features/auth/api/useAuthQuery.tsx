@@ -1,4 +1,5 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
+import debug from 'debug';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
@@ -33,7 +34,7 @@ export function useAuthQuery(
   return useQuery<User, APIError, User>({
     queryKey: [KEY_AUTH],
     queryFn: getMe,
-    staleTime: 1000 * 60 * 15, // 15 minutes
+    staleTime: debug.enabled('no-cache') ? 0 : 1000 * 60 * 15, // 15 minutes
     ...queryConfig,
   });
 }

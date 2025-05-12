@@ -17,13 +17,16 @@ import { ConfigProvider } from './config/';
  * QueryClient:
  *  - defaultOptions:
  *    - staleTime:
- *      - global cache duration - we decided 3 minutes
- *      - It can be overridden to each query
+ *      - global time until cache is considered stale and will be refetched in the background
+ *        - instant if debug flag "no-cache" active - 3 minutes otherwise
+ *    - gcTime:
+ *      - global time until cache is purged from the persister and needs to be renewed
+ *        - since its cached in localStorage, we can set it to a long time (48h)
  */
 const defaultOptions = {
   queries: {
     staleTime: debug.enabled('no-cache') ? 0 : 1000 * 60 * 3, // 3 minutes
-    staleTime: 1000 * 60 * 3,
+    gcTime: debug.enabled('no-cache') ? 0 : 1000 * 60 * 60 * 48, // 48 hours
     retry: 1,
   },
 };
