@@ -17,6 +17,7 @@ and this project adheres to
 - ✨(backend) integrate maleware_detection from django-lasuite #936
 - 🩺(CI) add lint spell mistakes #954
 - 🛂(frontend) block edition to not connected users #945
+- ♻️ Refactored permissions check from serializers to permission class #343
 
 ## Changed
 
