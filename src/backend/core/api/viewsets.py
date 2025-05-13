@@ -672,7 +672,7 @@ class DocumentViewSet(
         authentication_classes=[authentication.ServerToServerAuthentication],
         detail=False,
         methods=["post"],
-        permission_classes=[],
+        permission_classes=[permissions.IsAuthenticated],
         url_path="create-for-owner",
     )
     @transaction.atomic

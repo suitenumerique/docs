@@ -6,6 +6,15 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
+class AuthenticatedServer:
+    """
+    Simple class to represent an authenticated server to be used along the
+    IsAuthenticated permission.
+    """
+
+    is_authenticated = True
+
+
 class ServerToServerAuthentication(BaseAuthentication):
     """
     Custom authentication class for server-to-server requests.
@@ -39,13 +48,16 @@ class ServerToServerAuthentication(BaseAuthentication):
         # Validate token format and existence
         auth_parts = auth_header.split(" ")
         if len(auth_parts) != 2 or auth_parts[0] != self.TOKEN_TYPE:
-            raise AuthenticationFailed("Invalid authorization header.")
+            # Do not raise here to leave the door open for other authentication methods
+            return None
 
         token = auth_parts[1]
         if token not in settings.SERVER_TO_SERVER_API_TOKENS:
-            raise AuthenticationFailed("Invalid server-to-server token.")
+            # Do not raise here to leave the door open for other authentication methods
+            return None
 
-        # Authentication is successful, but no user is authenticated
+        # Authentication is successful
+        return AuthenticatedServer(), token
 
     def authenticate_header(self, request):
         """Return the WWW-Authenticate header value."""
