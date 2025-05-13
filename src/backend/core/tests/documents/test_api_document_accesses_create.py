@@ -176,10 +176,11 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_user(
             "path": new_document_access.document.path,
         },
         "id": str(new_document_access.id),
-        "user": other_user,
-        "team": "",
-        "role": role,
         "max_ancestors_role": None,
+        "max_role": role,
+        "role": role,
+        "team": "",
+        "user": other_user,
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -266,10 +267,11 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_team(
             "path": new_document_access.document.path,
         },
         "id": str(new_document_access.id),
-        "user": None,
-        "team": "new-team",
-        "role": role,
         "max_ancestors_role": None,
+        "max_role": role,
+        "role": role,
+        "team": "new-team",
+        "user": None,
     }
     assert len(mail.outbox) == 0
 
@@ -323,17 +325,18 @@ def test_api_document_accesses_create_authenticated_owner_share_to_user(
     new_document_access = models.DocumentAccess.objects.filter(user=other_user).get()
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
+        "abilities": new_document_access.get_abilities(user),
         "document": {
             "id": str(new_document_access.document_id),
-            "path": new_document_access.document.path,
             "depth": new_document_access.document.depth,
+            "path": new_document_access.document.path,
         },
         "id": str(new_document_access.id),
-        "user": other_user,
-        "team": "",
-        "role": role,
         "max_ancestors_role": None,
-        "abilities": new_document_access.get_abilities(user),
+        "max_role": role,
+        "role": role,
+        "team": "",
+        "user": other_user,
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -396,17 +399,18 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
     new_document_access = models.DocumentAccess.objects.filter(team="new-team").get()
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
+        "abilities": new_document_access.get_abilities(user),
         "document": {
             "id": str(new_document_access.document_id),
             "path": new_document_access.document.path,
             "depth": new_document_access.document.depth,
         },
         "id": str(new_document_access.id),
-        "user": None,
-        "team": "new-team",
-        "role": role,
         "max_ancestors_role": None,
-        "abilities": new_document_access.get_abilities(user),
+        "max_role": role,
+        "role": role,
+        "team": "new-team",
+        "user": None,
     }
     assert len(mail.outbox) == 0
 
@@ -457,17 +461,18 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
         ).get()
         other_user_data = serializers.UserSerializer(instance=other_user).data
         assert response.json() == {
+            "abilities": new_document_access.get_abilities(user),
             "document": {
                 "id": str(new_document_access.document_id),
                 "path": new_document_access.document.path,
                 "depth": new_document_access.document.depth,
             },
             "id": str(new_document_access.id),
-            "user": other_user_data,
-            "team": "",
-            "role": role,
             "max_ancestors_role": None,
-            "abilities": new_document_access.get_abilities(user),
+            "max_role": role,
+            "role": role,
+            "team": "",
+            "user": other_user_data,
         }
         assert len(mail.outbox) == index + 1
         email = mail.outbox[index]
