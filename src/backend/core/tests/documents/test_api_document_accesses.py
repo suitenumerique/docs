@@ -153,6 +153,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                 "team": access.team,
                 "role": access.role,
                 "max_ancestors_role": None,
+                "max_role": access.role,
                 "abilities": {
                     "destroy": False,
                     "partial_update": False,
@@ -253,6 +254,7 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                 if access.user
                 else None,
                 "max_ancestors_role": None,
+                "max_role": access.role,
                 "team": access.team,
                 "role": access.role,
                 "abilities": access.get_abilities(user),
@@ -774,10 +776,11 @@ def test_api_document_accesses_update_administrator_except_owner(
 
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
-        if field == "role":
+        if field in ["role", "max_role"]:
             assert updated_values == {
                 **old_values,
                 "role": new_values["role"],
+                "max_role": new_values["role"],
             }
         else:
             assert updated_values == old_values
@@ -950,10 +953,11 @@ def test_api_document_accesses_update_owner(
         access.refresh_from_db()
         updated_values = serializers.DocumentAccessSerializer(instance=access).data
 
-        if field == "role":
+        if field in ["role", "max_role"]:
             assert updated_values == {
                 **old_values,
                 "role": new_values["role"],
+                "max_role": new_values["role"],
             }
         else:
             assert updated_values == old_values

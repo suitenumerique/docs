@@ -303,6 +303,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     team = serializers.CharField(required=False, allow_blank=True)
     abilities = serializers.SerializerMethodField(read_only=True)
     max_ancestors_role = serializers.SerializerMethodField(read_only=True)
+    max_role = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.DocumentAccess
@@ -316,8 +317,15 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "role",
             "abilities",
             "max_ancestors_role",
+            "max_role",
         ]
-        read_only_fields = ["id", "document", "abilities", "max_ancestors_role"]
+        read_only_fields = [
+            "id",
+            "document",
+            "abilities",
+            "max_ancestors_role",
+            "max_role",
+        ]
 
     def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
@@ -329,6 +337,13 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     def get_max_ancestors_role(self, instance):
         """Return max_ancestors_role if annotated; else None."""
         return getattr(instance, "max_ancestors_role", None)
+
+    def get_max_role(self, instance):
+        """Return max_ancestors_role if annotated; else None."""
+        return choices.RoleChoices.max(
+            getattr(instance, "max_ancestors_role", None),
+            instance.role,
+        )
 
     def update(self, instance, validated_data):
         """Make "user" field readonly but only on update."""
@@ -353,6 +368,7 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
             "role",
             "abilities",
             "max_ancestors_role",
+            "max_role",
         ]
         read_only_fields = [
             "id",
@@ -361,6 +377,7 @@ class DocumentAccessLightSerializer(DocumentAccessSerializer):
             "role",
             "abilities",
             "max_ancestors_role",
+            "max_role",
         ]
 
 
