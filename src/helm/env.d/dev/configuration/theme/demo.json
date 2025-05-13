@@ -1,6 +1,12 @@
 {
   "footer": {
     "default": {
+      "logo": {
+        "src": "/assets/icon-docs.svg",
+        "width": "54px",
+        "alt": "Docs Logo",
+        "withTitle": true
+      },
       "externalLinks": [
         {
           "label": "Github",

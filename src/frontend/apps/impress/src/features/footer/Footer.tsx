@@ -22,7 +22,7 @@ const BlueStripe = styled.div`
 export const Footer = () => {
   const { data: config } = useConfig();
   const footerJson = config?.theme_customization?.footer;
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [legalLinks, setLegalLinks] = useState<Link[]>();
   const [externalLinks, setExternalLinks] = useState<Link[]>();
   const [bottomInformation, setBottomInformation] =
@@ -82,7 +82,7 @@ export const Footer = () => {
                     <Image
                       priority
                       src={logo.src}
-                      alt={logo?.alt || 'Logo'}
+                      alt={logo?.alt || t('Logo')}
                       width={0}
                       height={0}
                       style={{ width: logo?.width || 'auto', height: 'auto' }}

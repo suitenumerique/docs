@@ -44,7 +44,7 @@ THEME_CUSTOMIZATION_FILE_PATH=<path>
 
 ### Example of JSON
 
-The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/backend/impress/configuration/theme/default.json
+The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
 
 `footer.default` is the fallback if the language is not supported.
 
