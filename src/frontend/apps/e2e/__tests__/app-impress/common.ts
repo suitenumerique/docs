@@ -22,6 +22,24 @@ export const CONFIG = {
   theme_customization: {},
 };
 
+export const overrideConfig = async (
+  page: Page,
+  newConfig: { [K in keyof typeof CONFIG]?: unknown },
+) =>
+  await page.route('**/api/v1.0/config/', async (route) => {
+    const request = route.request();
+    if (request.method().includes('GET')) {
+      await route.fulfill({
+        json: {
+          ...CONFIG,
+          ...newConfig,
+        },
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
 export const keyCloakSignIn = async (
   page: Page,
   browserName: string,

@@ -2,7 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { CONFIG, createDoc } from './common';
+import { CONFIG, createDoc, overrideConfig } from './common';
 
 test.describe('Config', () => {
   test('it checks the config api is called', async ({ page }) => {
@@ -16,24 +16,19 @@ test.describe('Config', () => {
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
 
-    expect(await response.json()).toStrictEqual(CONFIG);
+    const json = (await response.json()) as typeof CONFIG;
+    const { theme_customization, ...configApi } = json;
+    expect(theme_customization).toBeDefined();
+    const { theme_customization: _, ...CONFIG_LEFT } = CONFIG;
+
+    expect(configApi).toStrictEqual(CONFIG_LEFT);
   });
 
   test('it checks that sentry is trying to init from config endpoint', async ({
     page,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...CONFIG,
-            SENTRY_DSN: 'https://sentry.io/123',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      SENTRY_DSN: 'https://sentry.io/123',
     });
 
     const invalidMsg = 'Invalid Sentry Dsn: https://sentry.io/123';
@@ -98,18 +93,8 @@ test.describe('Config', () => {
     page,
     browserName,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...CONFIG,
-            AI_FEATURE_ENABLED: false,
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      AI_FEATURE_ENABLED: false,
     });
 
     await page.goto('/');
@@ -129,18 +114,8 @@ test.describe('Config', () => {
   test('it checks that Crisp is trying to init from config endpoint', async ({
     page,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...CONFIG,
-            CRISP_WEBSITE_ID: '1234',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      CRISP_WEBSITE_ID: '1234',
     });
 
     await page.goto('/');
@@ -151,18 +126,8 @@ test.describe('Config', () => {
   });
 
   test('it checks FRONTEND_CSS_URL config', async ({ page }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...CONFIG,
-            FRONTEND_CSS_URL: 'http://localhost:123465/css/style.css',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      FRONTEND_CSS_URL: 'http://localhost:123465/css/style.css',
     });
 
     await page.goto('/');
