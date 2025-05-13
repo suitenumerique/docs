@@ -17,7 +17,7 @@ class CollaborationService:
     def reset_connections(self, room, user_id=None):
         """
         Reset connections of a room in the collaboration server.
-        Reseting a connection means that the user will be disconnected and will
+        Resetting a connection means that the user will be disconnected and will
         have to reconnect to the collaboration server, with updated rights.
         """
         endpoint = "reset-connections"
