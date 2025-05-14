@@ -25,6 +25,7 @@ from django.utils.translation import gettext_lazy as _
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from knox.auth import TokenAuthentication
 from lasuite.malware_detection import malware_detection
 from lasuite.oidc_resource_server.authentication import ResourceServerAuthentication
 from rest_framework import filters, status, viewsets
@@ -671,6 +672,7 @@ class DocumentViewSet(
         authentication_classes=[
             authentication.ServerToServerAuthentication,
             ResourceServerAuthentication,
+            TokenAuthentication,
         ],
         detail=False,
         methods=["post"],
