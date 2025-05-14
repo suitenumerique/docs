@@ -8,12 +8,18 @@ from lasuite.oidc_resource_server.urls import urlpatterns as resource_server_url
 from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
+from core.user_token import viewsets as user_token_viewsets
 
 # - Main endpoints
 router = DefaultRouter()
 router.register("templates", viewsets.TemplateViewSet, basename="templates")
 router.register("documents", viewsets.DocumentViewSet, basename="documents")
 router.register("users", viewsets.UserViewSet, basename="users")
+router.register(
+    "user-tokens",
+    user_token_viewsets.UserTokenViewset,
+    basename="user_tokens",
+)
 
 # - Routes nested under a document
 document_related_router = DefaultRouter()
