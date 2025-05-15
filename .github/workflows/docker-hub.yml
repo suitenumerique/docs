@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'feature/doc-dnd'
     tags:
       - 'v*'
   pull_request:
