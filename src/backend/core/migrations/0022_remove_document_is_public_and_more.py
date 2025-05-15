@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0020_remove_is_public_add_field_attachments_and_duplicated_from"),
+        ("core", "0021_activate_unaccent_extension"),
     ]
 
     operations = [
