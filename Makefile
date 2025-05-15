@@ -93,7 +93,6 @@ build: cache ?= --no-cache
 build: ## build the project containers
 	@$(MAKE) build-backend cache=$(cache)
 	@$(MAKE) build-yjs-provider cache=$(cache)
-	@$(MAKE) build-frontend cache=$(cache)
 .PHONY: build
 
 build-backend: cache ?=
@@ -128,7 +127,6 @@ run-backend: ## Start only the backend application and all needed services
 run: ## start the wsgi (production) and development server
 run: 
 	@$(MAKE) run-backend
-	@$(COMPOSE) up --force-recreate -d frontend
 .PHONY: run
 
 status: ## an alias for "docker compose ps"

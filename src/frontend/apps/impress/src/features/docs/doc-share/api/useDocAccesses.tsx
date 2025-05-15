@@ -15,18 +15,15 @@ export type DocAccessesParam = {
   ordering?: string;
 };
 
-export type DocAccessesAPIParams = DocAccessesParam & {
-  page: number;
-};
+export type DocAccessesAPIParams = DocAccessesParam & {};
 
 type AccessesResponse = APIList<Access>;
 
 export const getDocAccesses = async ({
-  page,
   docId,
   ordering,
-}: DocAccessesAPIParams): Promise<AccessesResponse> => {
-  let url = `documents/${docId}/accesses/?page=${page}`;
+}: DocAccessesAPIParams): Promise<Access[]> => {
+  let url = `documents/${docId}/accesses/`;
 
   if (ordering) {
     url += '&ordering=' + ordering;
@@ -41,16 +38,16 @@ export const getDocAccesses = async ({
     );
   }
 
-  return response.json() as Promise<AccessesResponse>;
+  return (await response.json()) as Access[];
 };
 
 export const KEY_LIST_DOC_ACCESSES = 'docs-accesses';
 
 export function useDocAccesses(
   params: DocAccessesAPIParams,
-  queryConfig?: UseQueryOptions<AccessesResponse, APIError, AccessesResponse>,
+  queryConfig?: UseQueryOptions<Access[], APIError, Access[]>,
 ) {
-  return useQuery<AccessesResponse, APIError, AccessesResponse>({
+  return useQuery<Access[], APIError, Access[]>({
     queryKey: [KEY_LIST_DOC_ACCESSES, params],
     queryFn: () => getDocAccesses(params),
     ...queryConfig,

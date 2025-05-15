@@ -70,6 +70,7 @@ const DocPage = ({ id }: DocProps) => {
   );
 
   const [doc, setDoc] = useState<Doc>();
+
   const { setCurrentDoc } = useDocStore();
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();

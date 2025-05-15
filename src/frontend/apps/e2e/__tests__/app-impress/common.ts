@@ -188,7 +188,26 @@ export const goToGridDoc = async (
   return docTitle as string;
 };
 
-export const mockedDocument = async (page: Page, json: object) => {
+export const updateDocTitle = async (page: Page, title: string) => {
+  const input = page.getByLabel('doc title input');
+  await expect(input).toBeVisible();
+  await expect(input).toHaveText('');
+  await input.click();
+  await input.fill(title);
+  await input.click();
+  await verifyDocName(page, title);
+};
+
+export const getWaitForCreateDoc = (page: Page) => {
+  return page.waitForResponse(
+    (response) =>
+      response.url().includes('/documents/') &&
+      response.url().includes('/children/') &&
+      response.request().method() === 'POST',
+  );
+};
+
+export const mockedDocument = async (page: Page, data: object) => {
   await page.route('**/documents/**/', async (route) => {
     const request = route.request();
     if (
@@ -203,7 +222,7 @@ export const mockedDocument = async (page: Page, json: object) => {
           id: 'mocked-document-id',
           content: '',
           title: 'Mocked document',
-          accesses: [],
+          path: '000000',
           abilities: {
             destroy: false, // Means not owner
             link_configuration: false,
@@ -214,11 +233,21 @@ export const mockedDocument = async (page: Page, json: object) => {
             update: false,
             partial_update: false, // Means not editor
             retrieve: true,
+            link_select_options: {
+              public: ['reader', 'editor'],
+              authenticated: ['reader', 'editor'],
+              restricted: null,
+            },
           },
           link_reach: 'restricted',
+          computed_link_reach: 'restricted',
+          computed_link_role: 'reader',
+          ancestors_link_reach: null,
+          ancestors_link_role: null,
           created_at: '2021-09-01T09:00:00Z',
+          user_role: 'owner',
           user_roles: ['owner'],
-          ...json,
+          ...data,
         },
       });
     } else {
@@ -291,30 +320,32 @@ export const mockedAccesses = async (page: Page, json?: object) => {
       request.url().includes('page=')
     ) {
       await route.fulfill({
-        json: {
-          count: 1,
-          next: null,
-          previous: null,
-          results: [
-            {
-              id: 'bc8bbbc5-a635-4f65-9817-fd1e9ec8ef87',
-              user: {
-                id: 'b4a21bb3-722e-426c-9f78-9d190eda641c',
-                email: 'test@accesses.test',
-              },
-              team: '',
-              role: 'reader',
-              abilities: {
-                destroy: true,
-                update: true,
-                partial_update: true,
-                retrieve: true,
-                set_role_to: ['administrator', 'editor'],
-              },
-              ...json,
+        json: [
+          {
+            id: 'bc8bbbc5-a635-4f65-9817-fd1e9ec8ef87',
+            user: {
+              id: 'b4a21bb3-722e-426c-9f78-9d190eda641c',
+              email: 'test@accesses.test',
             },
-          ],
-        },
+            team: '',
+            max_ancestors_role: null,
+            max_role: 'reader',
+            role: 'reader',
+            document: {
+              id: 'mocked-document-id',
+              path: '000000',
+              depth: 1,
+            },
+            abilities: {
+              destroy: true,
+              update: true,
+              partial_update: true,
+              retrieve: true,
+              set_role_to: ['administrator', 'editor'],
+            },
+            ...json,
+          },
+        ],
       });
     } else {
       await route.continue();

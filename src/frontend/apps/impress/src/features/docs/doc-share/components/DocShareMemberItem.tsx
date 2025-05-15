@@ -19,13 +19,18 @@ import { DocRoleDropdown } from './DocRoleDropdown';
 import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
-  doc: Doc;
+  doc?: Doc;
   access: Access;
+  isInherited?: boolean;
 };
-export const DocShareMemberItem = ({ doc, access }: Props) => {
+export const DocShareMemberItem = ({
+  doc,
+  access,
+  isInherited = false,
+}: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { isLastOwner, isOtherOwner } = useWhoAmI(access);
+  const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
 
   const { isDesktop } = useResponsiveStore();
@@ -39,6 +44,9 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
     onSuccess: () => {
+      if (!doc) {
+        return;
+      }
       void queryClient.invalidateQueries({
         queryKey: [KEY_SUB_PAGE, { id: doc.id }],
       });
@@ -52,6 +60,9 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
     onSuccess: () => {
+      if (!doc) {
+        return;
+      }
       void queryClient.invalidateQueries({
         queryKey: [KEY_SUB_PAGE, { id: doc.id }],
       });
@@ -64,6 +75,9 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   });
 
   const onUpdate = (newRole: Role) => {
+    if (!doc) {
+      return;
+    }
     updateDocAccess({
       docId: doc.id,
       role: newRole,
@@ -72,6 +86,9 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
   };
 
   const onRemove = () => {
+    if (!doc) {
+      return;
+    }
     removeDocAccess({ accessId: access.id, docId: doc.id });
   };
 
@@ -83,6 +100,10 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
       disabled: !access.abilities.destroy,
     },
   ];
+
+  const canUpdate = isInherited
+    ? false
+    : (doc?.abilities.accesses_manage ?? false);
 
   return (
     <Box
@@ -96,14 +117,14 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
-              currentRole={access.role}
+              currentRole={isInherited ? access.max_role : access.role}
               onSelectRole={onUpdate}
-              canUpdate={doc.abilities.accesses_manage}
+              canUpdate={canUpdate}
               message={message}
               rolesAllowed={access.abilities.set_role_to}
             />
 
-            {isDesktop && doc.abilities.accesses_manage && (
+            {isDesktop && canUpdate && (
               <DropdownMenu options={moreActions}>
                 <IconOptions
                   isHorizontal
