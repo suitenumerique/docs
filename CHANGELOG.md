@@ -60,6 +60,10 @@ and this project adheres to
 - 🐛(backend) race condition create doc #633
 - 🐛(frontend) fix breaklines in custom blocks #908
 
+## Fixed
+
+- 🐛(helm) charts generate invalid YAML for collaboration API / WS #890
+
 ## [3.1.0] - 2025-04-07
 
 ## Added
