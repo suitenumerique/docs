@@ -173,6 +173,36 @@ test.describe('Config', () => {
         .first(),
     ).toBeAttached();
   });
+
+  test('it checks theme_customization.translations config', async ({
+    page,
+  }) => {
+    await page.route('**/api/v1.0/config/', async (route) => {
+      const request = route.request();
+      if (request.method().includes('GET')) {
+        await route.fulfill({
+          json: {
+            ...CONFIG,
+            theme_customization: {
+              translations: {
+                en: {
+                  translation: {
+                    Docs: 'MyCustomDocs',
+                  },
+                },
+              },
+            },
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('MyCustomDocs')).toBeAttached();
+  });
 });
 
 test.describe('Config: Not loggued', () => {

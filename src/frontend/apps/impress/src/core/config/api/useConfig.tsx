@@ -1,10 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
+import { Resource } from 'i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
 import { PostHogConf } from '@/services';
 
-interface ConfigResponse {
+interface ThemeCustomization {
+  translations?: Resource;
+}
+
+export interface ConfigResponse {
   AI_FEATURE_ENABLED?: boolean;
   COLLABORATION_WS_URL?: string;
   CRISP_WEBSITE_ID?: string;
@@ -17,6 +22,7 @@ interface ConfigResponse {
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
+  theme_customization?: ThemeCustomization;
 }
 
 const LOCAL_STORAGE_KEY = 'docs_config';

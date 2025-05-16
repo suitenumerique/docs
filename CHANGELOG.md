@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- ✨(frontend) add customization for translations #857
 - ✨(back) allow theme customnization using a configuration file #948
 - ✨ Add a custom callout block to the editor #892
 - 🚩(frontend) version MIT only #911
@@ -24,9 +25,10 @@ and this project adheres to
 - ⬆️(docker) upgrade node images to alpine 3.21
 
 
-### Removed
+## Removed
 
 - 🔥(back) remove footer endpoint
+
 
 ## [3.2.1] - 2025-05-06
 
