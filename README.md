@@ -3,7 +3,17 @@
     <img alt="Docs" src="/docs/assets/banner-docs.png" width="100%" />
   </a>
 </p>
-
+<p align="center">
+  <a href="https://github.com/suitenumerique/docs/stargazers/">
+    <img src="https://img.shields.io/github/stars/suitenumerique/docs" alt="">
+  </a>
+  <a href='http://makeapullrequest.com'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
+  <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
+  <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
+    <img alt="GitHub closed issues" src="https://img.shields.io/github/license/suitenumerique/docs"/>
+  </a>    
+</p>
 <p align="center">
   <a href="https://matrix.to/#/#docs-official:matrix.org">
     Chat on Matrix
@@ -16,11 +26,10 @@
   </a>
 </p>
 
-<img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
-
 # La Suite Docs : Collaborative Text Editing
-
 Docs, where your notes can become knowledge through live collaboration.
+
+<img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
 
 ## Why use Docs ❓
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
