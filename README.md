@@ -7,7 +7,7 @@
   <a href="https://github.com/suitenumerique/docs/stargazers/">
     <img src="https://img.shields.io/github/stars/suitenumerique/docs" alt="">
   </a>
-  <a href='http://makeapullrequest.com'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
+  <a href='https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
   <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
   <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
   <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
@@ -57,7 +57,9 @@ Available methods: Helm chart, Nix package
 
 In the works: Docker Compose, YunoHost
 
-⚠️ For the PDF and Docx export Docs relies on XL packages from BlockNote licenced in AGPL-3.0. Please make sure you fulfill your [BlockNote licensing](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE) or [sponsorship](https://www.blocknotejs.org/about#partner-with-us) obligations.
+⚠️ For the PDF and Docx export Docs relies on XL packages from BlockNote licenced in AGPL-3.0 which are not MIT compatible. 
+You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true, and that way you'll build an image of the application without the features that are not MIT compatible. 
+If you run Docs `PUBLISH_AS_MIT` set to false make sure you fulfill your [BlockNote licensing](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE) or [sponsorship](https://www.blocknotejs.org/about#partner-with-us) obligations.
 
 ## Getting started 🔧
 
