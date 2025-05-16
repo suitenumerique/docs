@@ -1,17 +1,13 @@
 ---
 name: 🤗 Support Question
 about: If you have a question 💬, or something was not clear from the docs!
-
+labels: ["support", "triage"]
 ---
+## Support request
+**Checks before filing**
+Please make sure you have read our [main Readme](https://github.com/suitenumerique/docs).
 
-<!-- ^ Click "Preview" for a nicer view! ^
-We primarily use GitHub as an issue tracker. If however you're encountering an issue not covered in the docs, we may be able to help! -->
-
----
-
-Please make sure you have read our [main Readme](https://github.com/numerique-gouv/impress).
-
-Also make sure it was not already answered in [an open or close issue](https://github.com/numerique-gouv/impress/issues).
+Also make sure it was not already answered in [an open or close issue](https://github.com/suitenumerique/docs/issues?q=is%3Aissue%20state%3Aopen%20label%3Asupport).
 
 If your question was not covered, and you feel like it should be, fire away! We'd love to improve our docs! 👌
 
