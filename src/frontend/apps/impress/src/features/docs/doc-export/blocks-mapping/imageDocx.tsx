@@ -21,6 +21,7 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
     const blob = await exporter.resolveFile(block.props.url);
     let pngConverted: string | undefined;
     let dimensions: { width: number; height: number } | undefined;
+    let previewWidth = block.props.previewWidth || undefined;
 
     if (!blob.type.includes('image')) {
       return [];
@@ -28,7 +29,9 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
 
     if (blob.type.includes('svg')) {
       const svgText = await blob.text();
-      pngConverted = await convertSvgToPng(svgText, block.props.previewWidth);
+      const FALLBACK_SIZE = 536;
+      previewWidth = previewWidth || blob.size || FALLBACK_SIZE;
+      pngConverted = await convertSvgToPng(svgText, previewWidth);
       const img = new Image();
       img.src = pngConverted;
       await new Promise((resolve) => {
@@ -47,8 +50,7 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
 
     const { width, height } = dimensions;
 
-    let previewWidth = block.props.previewWidth;
-    if (previewWidth > MAX_WIDTH) {
+    if (previewWidth && previewWidth > MAX_WIDTH) {
       previewWidth = MAX_WIDTH;
     }
 
@@ -69,8 +71,8 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
                 }
               : undefined,
             transformation: {
-              width: previewWidth,
-              height: (previewWidth / width) * height,
+              width: previewWidth || width,
+              height: ((previewWidth || width) / width) * height,
             },
           }),
         ],

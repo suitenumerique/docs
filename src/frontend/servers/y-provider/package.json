@@ -16,10 +16,10 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.29.1",
+    "@blocknote/server-util": "0.30.0",
     "@hocuspocus/server": "2.15.2",
-    "@sentry/node": "9.15.0",
-    "@sentry/profiling-node": "9.15.0",
+    "@sentry/node": "9.19.0",
+    "@sentry/profiling-node": "9.19.0",
     "axios": "1.9.0",
     "cors": "2.8.5",
     "express": "5.1.0",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@hocuspocus/provider": "2.15.2",
-    "@types/cors": "2.8.17",
+    "@types/cors": "2.8.18",
     "@types/express": "5.0.1",
     "@types/express-ws": "3.0.5",
     "@types/jest": "29.5.14",
@@ -41,8 +41,8 @@
     "eslint-config-impress": "*",
     "jest": "29.7.0",
     "nodemon": "3.1.10",
-    "supertest": "7.1.0",
-    "ts-jest": "29.3.2",
+    "supertest": "7.1.1",
+    "ts-jest": "29.3.3",
     "ts-node": "10.9.2",
     "tsc-alias": "1.8.16",
     "typescript": "*",
