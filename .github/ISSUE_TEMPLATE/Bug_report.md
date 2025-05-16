@@ -1,7 +1,7 @@
 ---
 name: 🐛 Bug Report
 about: If something is not working as expected 🤔.
-
+labels: ["bug", "triage"]
 ---
 
 ## Bug Report
@@ -18,8 +18,8 @@ A clear and concise description of what you expected to happen (or code).
 3. And then the bug happens!
 
 **Environment**
-- Impress version:
-- Platform:
+- Docs version:
+- Instance url:
 
 **Possible Solution**
 <!--- Only if you have suggestions on a fix for the bug -->
