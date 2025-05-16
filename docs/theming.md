@@ -30,4 +30,27 @@ body {
 
 Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom CSS file. Once you've done this, our application will load your custom CSS file and apply the styles, changing the background color to the custom color you specified.
 
+----
+
+# **Footer Configuration** 📝
+
+The footer is configurable from the theme customization file.
+
+### Settings 🔧
+
+```shellscript
+THEME_CUSTOMIZATION_FILE_PATH=<path>
+```
+
+### Example of JSON
+
+The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+
+`footer.default` is the fallback if the language is not supported.
+
+--- 
+Below is a visual example of a configured footer ⬇️:
+
+![Footer Configuration Example](./assets/footer-configurable.png)
+
 

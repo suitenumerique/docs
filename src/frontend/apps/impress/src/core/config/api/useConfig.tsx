@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
+import { FooterType } from '@/features/footer';
 import { PostHogConf } from '@/services';
+
+interface ThemeCustomization {
+  footer?: FooterType;
+}
 
 interface ConfigResponse {
   AI_FEATURE_ENABLED?: boolean;
@@ -17,6 +22,7 @@ interface ConfigResponse {
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
+  theme_customization?: ThemeCustomization;
 }
 
 const LOCAL_STORAGE_KEY = 'docs_config';
