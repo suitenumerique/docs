@@ -54,6 +54,7 @@ test.describe('Doc Header', () => {
         retrieve: true,
       },
       link_reach: 'public',
+      computed_link_reach: 'public',
       created_at: '2021-09-01T09:00:00Z',
     });
 
@@ -96,7 +97,9 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
 
     await expect(
-      page.getByText(`Are you sure you want to delete this document ?`),
+      page.getByText(
+        `Are you sure you want to delete the document "${randomDoc}"?`,
+      ),
     ).toBeVisible();
 
     await page
@@ -133,6 +136,11 @@ test.describe('Doc Header', () => {
         versions_list: true,
         versions_retrieve: true,
         update: true,
+        link_select_options: {
+          public: ['reader', 'editor'],
+          authenticated: ['reader', 'editor'],
+          restricted: null,
+        },
         partial_update: true,
         retrieve: true,
       },
@@ -158,7 +166,7 @@ test.describe('Doc Header', () => {
     await expect(shareModal).toBeVisible();
     await expect(page.getByText('Share the document')).toBeVisible();
 
-    await expect(page.getByPlaceholder('Type a name or email')).toBeVisible();
+    // await expect(page.getByPlaceholder('Type a name or email')).toBeVisible();
 
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();

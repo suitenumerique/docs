@@ -8,6 +8,7 @@ import {
   Doc,
   LinkReach,
   currentDocRole,
+  getDocLinkReach,
   useTrans,
 } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
@@ -24,8 +25,8 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { isDesktop } = useResponsiveStore();
 
   const { t } = useTranslation();
-  const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
-  const docIsAuth = doc.link_reach === LinkReach.AUTHENTICATED;
+  const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
+  const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
 
   const { transRole } = useTrans();
 

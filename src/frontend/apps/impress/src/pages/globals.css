@@ -76,3 +76,25 @@ main ::-webkit-scrollbar-thumb:hover,
 nextjs-portal {
   display: none;
 }
+
+
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--c--theme--colors--greyscale-050) 30%,
+    var(--c--theme--colors--greyscale-100) 50%,
+    var(--c--theme--colors--greyscale-050) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
