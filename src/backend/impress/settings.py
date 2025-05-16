@@ -462,7 +462,9 @@ class Base(Configuration):
     # Session
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default"
-    SESSION_COOKIE_AGE = 60 * 60 * 12
+    SESSION_COOKIE_AGE = values.IntegerValue(
+        default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
+    )
 
     # OIDC - Authorization Code Flow
     OIDC_CREATE_USER = values.BooleanValue(
