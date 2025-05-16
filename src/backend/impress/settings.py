@@ -58,7 +58,14 @@ class Base(Configuration):
     * DB_USER
     """
 
-    DEBUG = False
+    DEBUG_RAW = values.Value(
+        default=False,
+        environ_name="DEBUG",
+        environ_prefix=None,
+    )
+    DEBUG_NAMESPACES = DEBUG_RAW.split(",") if isinstance(DEBUG_RAW, str) else []
+    DEBUG = bool(DEBUG_RAW)
+
     USE_SWAGGER = False
 
     API_VERSION = "v1.0"
@@ -761,6 +768,9 @@ class Base(Configuration):
                 "OIDC_ALLOW_DUPLICATE_EMAILS cannot be set to True simultaneously. "
             )
 
+        if cls.DEBUG and "no-cache" in cls.DEBUG_NAMESPACES:
+            cls.THEME_CUSTOMIZATION_CACHE_TIMEOUT = 0
+
 
 class Build(Base):
     """Settings used when the application is built.
@@ -794,6 +804,17 @@ class Development(Base):
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000"]
     DEBUG = True
+
+    # Enable debug namespaces as needed
+    #
+    # DEBUG_NAMESPACES = [
+    #     'no-cache',
+    #     'features:language'
+    # ]
+    #
+    # They can be enabled in all environments
+    # via DEBUG environment variable
+    #   DEBUG="features:language,no-cache,..."
 
     SESSION_COOKIE_NAME = "impress_sessionid"
 
