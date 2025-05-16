@@ -56,6 +56,7 @@ backend:
     POSTGRES_USER: dinum
     POSTGRES_PASSWORD: pass
     REDIS_URL: redis://default:pass@redis-master:6379/1
+    DJANGO_CELERY_BROKER_URL: redis://default:pass@redis-master:6379/1
     AWS_S3_ENDPOINT_URL: http://minio.impress.svc.cluster.local:9000
     AWS_S3_ACCESS_KEY_ID: root
     AWS_S3_SECRET_ACCESS_KEY: password
@@ -98,7 +99,7 @@ backend:
       mountPath: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
       subPath: cacert.pem
 
-  # Exra volumes to manage our local custom CA and avoid to set ssl_verify: false
+  # Extra volumes to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumes:
     - name: certs
       configMap:

@@ -10,7 +10,7 @@ type TextSizes = keyof typeof sizes;
 
 export interface TextProps extends BoxProps {
   as?: 'p' | 'span' | 'div' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-  $elipsis?: boolean;
+  $ellipsis?: boolean;
   $weight?: CSSProperties['fontWeight'];
   $textAlign?: CSSProperties['textAlign'];
   $size?: TextSizes | (string & {});
@@ -50,8 +50,8 @@ export const TextStyled = styled(Box)<TextProps>`
   ${({ $theme, $variation }) =>
     `color: var(--c--theme--colors--${$theme}-${$variation});`}
   ${({ $color }) => $color && `color: ${$color};`}
-  ${({ $elipsis }) =>
-    $elipsis &&
+  ${({ $ellipsis }) =>
+    $ellipsis &&
     `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`}
 `;
 

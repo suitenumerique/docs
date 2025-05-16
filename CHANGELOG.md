@@ -14,6 +14,7 @@ and this project adheres to
 - ✨ Add a custom callout block to the editor #892
 - 🚩(frontend) version MIT only #911
 - ✨(backend) integrate maleware_detection from django-lasuite #936
+- 🩺(CI) add lint spell mistakes #954
 - ♻️ Refactored permissions check from serializers to permission class #343
 
 ## Changed
@@ -557,7 +558,7 @@ and this project adheres to
 - ⚡️(e2e) unique login between tests (#80)
 - ⚡️(CI) improve e2e job (#86)
 - ♻️(frontend) improve the error and message info ui (#93)
-- ✏️(frontend) change all occurences of pad to doc (#99)
+- ✏️(frontend) change all occurrences of pad to doc (#99)
 
 ## Fixed
 

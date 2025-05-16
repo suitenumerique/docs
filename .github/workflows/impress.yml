@@ -61,6 +61,25 @@ jobs:
             exit 1
           fi
 
+  lint-spell-mistakes:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install codespell
+        run: pip install --user codespell
+      - name: Check for typos
+        run: |
+          codespell \
+            --check-filenames \
+            --ignore-words-list "Dokument,afterAll,excpt,statics" \
+            --skip "./git/" \
+            --skip "**/*.po" \
+            --skip "**/*.pot" \
+            --skip "**/*.json" \
+            --skip "**/yarn.lock"
+
   lint-back:
     runs-on: ubuntu-latest
     defaults:

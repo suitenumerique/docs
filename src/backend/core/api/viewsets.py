@@ -576,7 +576,7 @@ class DocumentViewSet(
             queryset, filter_data["is_favorite"]
         )
 
-        # Apply ordering only now that everyting is filtered and annotated
+        # Apply ordering only now that everything is filtered and annotated
         queryset = filters.OrderingFilter().filter_queryset(
             self.request, queryset, self
         )
@@ -889,7 +889,7 @@ class DocumentViewSet(
             )
 
             # Compute cache for ancestors links to avoid many queries while computing
-            # abilties for his documents in the tree!
+            # abilities for his documents in the tree!
             ancestors_links.append(
                 {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
             )

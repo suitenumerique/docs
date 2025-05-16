@@ -99,7 +99,7 @@ def test_api_documents_ai_translate_anonymous_success(mock_create):
             {
                 "role": "system",
                 "content": (
-                    "Keep the same html stucture and formatting. "
+                    "Keep the same html structure and formatting. "
                     "Translate the content in the html to the specified language Spanish. "
                     "Check the translation for accuracy and make any necessary corrections. "
                     "Do not provide any other information."
@@ -172,7 +172,7 @@ def test_api_documents_ai_translate_authenticated_forbidden(reach, role):
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_translate_authenticated_success(mock_create, reach, role):
     """
-    Autenticated who are not related to a document should be able to request AI translate
+    Authenticated who are not related to a document should be able to request AI translate
     if the link reach and role permit it.
     """
     user = factories.UserFactory()
@@ -197,7 +197,7 @@ def test_api_documents_ai_translate_authenticated_success(mock_create, reach, ro
             {
                 "role": "system",
                 "content": (
-                    "Keep the same html stucture and formatting. "
+                    "Keep the same html structure and formatting. "
                     "Translate the content in the html to the "
                     "specified language Colombian Spanish. "
                     "Check the translation for accuracy and make any necessary corrections. "
@@ -274,7 +274,7 @@ def test_api_documents_ai_translate_success(mock_create, via, role, mock_user_te
             {
                 "role": "system",
                 "content": (
-                    "Keep the same html stucture and formatting. "
+                    "Keep the same html structure and formatting. "
                     "Translate the content in the html to the "
                     "specified language Colombian Spanish. "
                     "Check the translation for accuracy and make any necessary corrections. "

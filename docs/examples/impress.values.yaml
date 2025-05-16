@@ -82,13 +82,13 @@ backend:
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
-  # Exra volume to manage our local custom CA and avoid to set ssl_verify: false
+  # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
       mountPath: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
       subPath: cacert.pem
 
-  # Exra volume to manage our local custom CA and avoid to set ssl_verify: false
+  # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumes:
     - name: certs
       configMap:

@@ -141,7 +141,7 @@ test.describe('Doc Export', () => {
 
   /**
    * This test tell us that the export to pdf is working with images
-   * but it does not tell us if the images are beeing displayed correctly
+   * but it does not tell us if the images are being displayed correctly
    * in the pdf.
    *
    * TODO:  Check if the images are displayed correctly in the pdf

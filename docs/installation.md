@@ -133,7 +133,7 @@ OIDC_RP_SCOPES: "openid email"
 
 You can find these values in **examples/keycloak.values.yaml**
 
-### Find redis server connexion values
+### Find redis server connection values
 
 Docs needs a redis so we start by deploying one:
 
@@ -146,7 +146,7 @@ keycloak-postgresql-0   1/1     Running   0          26m
 redis-master-0          1/1     Running   0          35s
 ```
 
-### Find postgresql connexion values
+### Find postgresql connection values
 
 Docs uses a postgresql database as backend, so if you have a provider, obtain the necessary information to use it. If you don't, you can install a postgresql testing environment as follow:
 
@@ -173,7 +173,7 @@ POSTGRES_USER: dinum
 POSTGRES_PASSWORD: pass
 ```
 
-### Find s3 bucket connexion values
+### Find s3 bucket connection values
 
 Docs uses an s3 bucket to store documents, so if you have a provider obtain the necessary information to use it. If you don't, you can install a local minio testing environment as follow:
 
@@ -191,7 +191,7 @@ redis-master-0             1/1     Running     0          10m
 
 ## Deployment
 
-Now you are ready to deploy Docs without AI. AI requires more dependencies (OpenAI API). To deploy Docs you need to provide all previous informations to the helm chart.
+Now you are ready to deploy Docs without AI. AI requires more dependencies (OpenAI API). To deploy Docs you need to provide all previous information to the helm chart.
 
 ```
 $ helm repo add impress https://suitenumerique.github.io/docs/

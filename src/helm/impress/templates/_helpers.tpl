@@ -51,7 +51,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-transform dictionnary of environment variables
+transform dictionary of environment variables
 Usage : {{ include "impress.env.transformDict" .Values.envVars }}
 
 Example:
@@ -164,6 +164,18 @@ Requires top level scope
 */}}
 {{- define "impress.yProvider.fullname" -}}
 {{ include "impress.fullname" . }}-y-provider
+{{- end }}
+
+
+{{/*
+Full name for the Celery Worker
+
+Requires top level scope
+*/}}
+
+
+{{- define "impress.celery.worker.fullname" -}}
+{{ include "impress.fullname" . }}-celery-worker
 {{- end }}
 
 {{/*

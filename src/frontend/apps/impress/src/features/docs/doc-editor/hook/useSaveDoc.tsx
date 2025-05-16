@@ -61,7 +61,7 @@ const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
       const isSaving = saveDoc();
 
       /**
-       * Firefox does not trigger the request everytime the user leaves the page.
+       * Firefox does not trigger the request every time the user leaves the page.
        * Plus the request is not intercepted by the service worker.
        * So we prevent the default behavior to have the popup asking the user
        * if he wants to leave the page, by adding the popup, we let the time to the

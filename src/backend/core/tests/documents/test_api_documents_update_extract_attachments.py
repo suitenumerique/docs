@@ -31,7 +31,7 @@ def get_ydoc_with_mages(image_keys):
 def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_queries):
     """
     When an anonymous user updates a document, the attachment keys extracted from the
-    updated content should be added to the list of "attachments" ot the document if these
+    updated content should be added to the list of "attachments" to the document if these
     attachments are already readable by anonymous users.
     """
     image_keys = [f"{uuid4()!s}/attachments/{uuid4()!s}.png" for _ in range(4)]
@@ -78,7 +78,7 @@ def test_api_documents_update_new_attachment_keys_authenticated(
 ):
     """
     When an authenticated user updates a document, the attachment keys extracted from the
-    updated content should be added to the list of "attachments" ot the document if these
+    updated content should be added to the list of "attachments" to the document if these
     attachments are already readable by the editing user.
     """
     user = factories.UserFactory()
