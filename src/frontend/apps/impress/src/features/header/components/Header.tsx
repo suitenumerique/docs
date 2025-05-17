@@ -1,3 +1,4 @@
+import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -59,6 +60,13 @@ export const Header = () => {
       ) : (
         <Box $align="center" $gap={spacingsTokens['sm']} $direction="row">
           <ButtonLogin />
+          <Button
+            onClick={() => (window.location.href = '/user-tokens')}
+            aria-label={t('API Tokens', 'API Tokens')}
+            color="primary-text"
+          >
+            {t('API Tokens', 'API Tokens')}
+          </Button>
           <LanguagePicker />
           <LaGaufre />
         </Box>

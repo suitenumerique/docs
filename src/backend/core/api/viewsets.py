@@ -24,7 +24,9 @@ from django.utils.translation import gettext_lazy as _
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from knox.auth import TokenAuthentication
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_resource_server.authentication import ResourceServerAuthentication
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -429,9 +431,7 @@ class DocumentViewSet(
     ordering = ["-updated_at"]
     ordering_fields = ["created_at", "updated_at", "title"]
     pagination_class = Pagination
-    permission_classes = [
-        permissions.DocumentAccessPermission,
-    ]
+    permission_classes = [permissions.DocumentAccessPermission]
     queryset = models.Document.objects.all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
@@ -668,10 +668,14 @@ class DocumentViewSet(
         return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(
-        authentication_classes=[authentication.ServerToServerAuthentication],
+        authentication_classes=[
+            authentication.ServerToServerAuthentication,
+            ResourceServerAuthentication,
+            TokenAuthentication,
+        ],
         detail=False,
         methods=["post"],
-        permission_classes=[],
+        permission_classes=[permissions.IsAuthenticated],
         url_path="create-for-owner",
     )
     @transaction.atomic
