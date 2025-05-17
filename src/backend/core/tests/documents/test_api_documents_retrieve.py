@@ -1,6 +1,7 @@
 """
 Tests for Documents API endpoint in impress's core app: retrieve
 """
+# pylint: disable=too-many-lines
 
 import random
 from datetime import timedelta
@@ -11,7 +12,7 @@ from django.utils import timezone
 import pytest
 from rest_framework.test import APIClient
 
-from core import factories, models
+from core import choices, factories, models
 
 pytestmark = pytest.mark.django_db
 
@@ -45,7 +46,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "link_select_options": {
                 "authenticated": ["reader", "editor"],
                 "public": ["reader", "editor"],
-                "restricted": ["reader", "editor"],
+                "restricted": None,
             },
             "media_auth": True,
             "move": False,
@@ -58,6 +59,10 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "versions_list": False,
             "versions_retrieve": False,
         },
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -72,7 +77,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
 
 
@@ -90,6 +95,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
 
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    links_definition = choices.get_equivalent_link_definition(links)
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -109,7 +115,9 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "favorite": False,
             "invite_owner": False,
             "link_configuration": False,
-            "link_select_options": models.LinkReachChoices.get_select_options(links),
+            "link_select_options": models.LinkReachChoices.get_select_options(
+                **links_definition
+            ),
             "media_auth": True,
             "move": False,
             "partial_update": grand_parent.link_role == "editor",
@@ -121,6 +129,10 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "versions_list": False,
             "versions_retrieve": False,
         },
+        "ancestors_link_reach": "public",
+        "ancestors_link_role": grand_parent.link_role,
+        "computed_link_reach": "public",
+        "computed_link_role": grand_parent.link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -135,7 +147,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
 
 
@@ -207,7 +219,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "link_select_options": {
                 "authenticated": ["reader", "editor"],
                 "public": ["reader", "editor"],
-                "restricted": ["reader", "editor"],
+                "restricted": None,
             },
             "media_auth": True,
             "move": False,
@@ -220,6 +232,10 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "versions_list": False,
             "versions_retrieve": False,
         },
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -234,7 +250,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
     assert (
         models.LinkTrace.objects.filter(document=document, user=user).exists() is True
@@ -260,6 +276,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
 
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    links_definition = choices.get_equivalent_link_definition(links)
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -278,7 +295,9 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
-            "link_select_options": models.LinkReachChoices.get_select_options(links),
+            "link_select_options": models.LinkReachChoices.get_select_options(
+                **links_definition
+            ),
             "move": False,
             "media_auth": True,
             "partial_update": grand_parent.link_role == "editor",
@@ -290,6 +309,10 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "versions_list": False,
             "versions_retrieve": False,
         },
+        "ancestors_link_reach": reach,
+        "ancestors_link_role": grand_parent.link_role,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -304,7 +327,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [],
+        "user_role": None,
     }
 
 
@@ -400,6 +423,10 @@ def test_api_documents_retrieve_authenticated_related_direct():
     assert response.json() == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "creator": str(document.creator.id),
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -414,7 +441,7 @@ def test_api_documents_retrieve_authenticated_related_direct():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [access.role],
+        "user_role": access.role,
     }
 
 
@@ -440,6 +467,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
     )
     assert response.status_code == 200
     links = document.get_ancestors().values("link_reach", "link_role")
+    link_definition = choices.get_equivalent_link_definition(links)
     assert response.json() == {
         "id": str(document.id),
         "abilities": {
@@ -458,7 +486,9 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "favorite": True,
             "invite_owner": access.role == "owner",
             "link_configuration": access.role in ["administrator", "owner"],
-            "link_select_options": models.LinkReachChoices.get_select_options(links),
+            "link_select_options": models.LinkReachChoices.get_select_options(
+                **link_definition
+            ),
             "media_auth": True,
             "move": access.role in ["administrator", "owner"],
             "partial_update": access.role != "reader",
@@ -470,6 +500,10 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "versions_list": True,
             "versions_retrieve": True,
         },
+        "ancestors_link_reach": "restricted",
+        "ancestors_link_role": None,
+        "computed_link_reach": "restricted",
+        "computed_link_role": None,
         "content": document.content,
         "creator": str(document.creator.id),
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -484,7 +518,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [access.role],
+        "user_role": access.role,
     }
 
 
@@ -580,16 +614,16 @@ def test_api_documents_retrieve_authenticated_related_team_none(mock_user_teams)
 
 
 @pytest.mark.parametrize(
-    "teams,roles",
+    "teams,role",
     [
-        [["readers"], ["reader"]],
-        [["unknown", "readers"], ["reader"]],
-        [["editors"], ["editor"]],
-        [["unknown", "editors"], ["editor"]],
+        [["readers"], "reader"],
+        [["unknown", "readers"], "reader"],
+        [["editors"], "editor"],
+        [["unknown", "editors"], "editor"],
     ],
 )
 def test_api_documents_retrieve_authenticated_related_team_members(
-    teams, roles, mock_user_teams
+    teams, role, mock_user_teams
 ):
     """
     Authenticated users should be allowed to retrieve a document to which they
@@ -622,6 +656,10 @@ def test_api_documents_retrieve_authenticated_related_team_members(
     assert response.json() == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -636,20 +674,20 @@ def test_api_documents_retrieve_authenticated_related_team_members(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": roles,
+        "user_role": role,
     }
 
 
 @pytest.mark.parametrize(
-    "teams,roles",
+    "teams,role",
     [
-        [["administrators"], ["administrator"]],
-        [["editors", "administrators"], ["administrator", "editor"]],
-        [["unknown", "administrators"], ["administrator"]],
+        [["administrators"], "administrator"],
+        [["editors", "administrators"], "administrator"],
+        [["unknown", "administrators"], "administrator"],
     ],
 )
 def test_api_documents_retrieve_authenticated_related_team_administrators(
-    teams, roles, mock_user_teams
+    teams, role, mock_user_teams
 ):
     """
     Authenticated users should be allowed to retrieve a document to which they
@@ -684,6 +722,10 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
     assert response.json() == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -698,21 +740,21 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": roles,
+        "user_role": role,
     }
 
 
 @pytest.mark.parametrize(
-    "teams,roles",
+    "teams,role",
     [
-        [["owners"], ["owner"]],
-        [["owners", "administrators"], ["owner", "administrator"]],
-        [["members", "administrators", "owners"], ["owner", "administrator"]],
-        [["unknown", "owners"], ["owner"]],
+        [["owners"], "owner"],
+        [["owners", "administrators"], "owner"],
+        [["members", "administrators", "owners"], "owner"],
+        [["unknown", "owners"], "owner"],
     ],
 )
 def test_api_documents_retrieve_authenticated_related_team_owners(
-    teams, roles, mock_user_teams
+    teams, role, mock_user_teams
 ):
     """
     Authenticated users should be allowed to retrieve a restricted document to which
@@ -746,6 +788,10 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
     assert response.json() == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "content": document.content,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
@@ -760,11 +806,11 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": roles,
+        "user_role": role,
     }
 
 
-def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
+def test_api_documents_retrieve_user_role(django_assert_max_num_queries):
     """
     Roles should be annotated on querysets taking into account all documents ancestors.
     """
@@ -787,15 +833,14 @@ def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
         factories.UserDocumentAccessFactory(document=parent, user=user),
         factories.UserDocumentAccessFactory(document=document, user=user),
     )
-    expected_roles = {access.role for access in accesses}
+    expected_role = choices.RoleChoices.max(*[access.role for access in accesses])
 
     with django_assert_max_num_queries(14):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
 
-    user_roles = response.json()["user_roles"]
-    assert set(user_roles) == expected_roles
+    assert response.json()["user_role"] == expected_role
 
 
 def test_api_documents_retrieve_numqueries_with_link_trace(django_assert_num_queries):
