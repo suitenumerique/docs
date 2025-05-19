@@ -15,9 +15,8 @@ export const subPageToTree = (children: Doc[]): TreeViewDataType<Doc>[] => {
 };
 
 export const isOwnerOrAdmin = (doc: Doc): boolean => {
-  return doc.user_roles.some(
-    (role) => role === Role.OWNER || role === Role.ADMIN,
-  );
+  const userRole = doc.user_role;
+  return userRole === Role.OWNER || userRole === Role.ADMIN;
 };
 
 export const canDrag = (doc: Doc): boolean => {

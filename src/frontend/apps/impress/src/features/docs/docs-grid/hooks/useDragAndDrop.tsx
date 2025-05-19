@@ -21,7 +21,7 @@ export function useDragAndDrop(
   const [selectedDoc, setSelectedDoc] = useState<Doc>();
   const [canDrop, setCanDrop] = useState<boolean>();
 
-  const canDrag = selectedDoc?.user_roles.some((role) => role === Role.OWNER);
+  const canDrag = selectedDoc?.user_role === Role.OWNER;
 
   const mouseSensor = useSensor(MouseSensor, { activationConstraint });
   const touchSensor = useSensor(TouchSensor, { activationConstraint });
