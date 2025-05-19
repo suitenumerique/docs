@@ -99,6 +99,9 @@ export const DropdownMenu = ({
             $size="xs"
             $weight="bold"
             $padding={{ vertical: 'xs', horizontal: 'base' }}
+            $css={css`
+              white-space: pre-line;
+            `}
           >
             {topMessage}
           </Text>

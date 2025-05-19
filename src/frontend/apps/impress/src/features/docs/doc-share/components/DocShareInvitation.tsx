@@ -33,7 +33,7 @@ type DocShareInvitationItemProps = {
   invitation: Invitation;
 };
 
-const DocShareInvitationItem = ({
+export const DocShareInvitationItem = ({
   doc,
   invitation,
 }: DocShareInvitationItemProps) => {

@@ -39,7 +39,6 @@ export const DocSubPageItem = (props: Props) => {
   const { spacingsTokens } = useCunninghamTheme();
   const [isHover, setIsHover] = useState(false);
 
-  const spacing = spacingsTokens();
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
 
@@ -74,8 +73,9 @@ export const DocSubPageItem = (props: Props) => {
         .then((allChildren) => {
           node.open();
 
-          router.push(`/docs/${doc.id}`);
+          router.push(`/docs/${createdDoc.id}`);
           treeContext?.treeData.setChildren(node.data.value.id, allChildren);
+          treeContext?.treeData.setSelectedNode(createdDoc);
           togglePanel();
         })
         .catch(console.error);
@@ -89,6 +89,7 @@ export const DocSubPageItem = (props: Props) => {
       treeContext?.treeData.addChild(node.data.value.id, newDoc);
       node.open();
       router.push(`/docs/${createdDoc.id}`);
+      treeContext?.treeData.setSelectedNode(newDoc);
       togglePanel();
     }
   };
@@ -115,7 +116,7 @@ export const DocSubPageItem = (props: Props) => {
           data-testid={`doc-sub-page-item-${props.node.data.value.id}`}
           $width="100%"
           $direction="row"
-          $gap={spacing['xs']}
+          $gap={spacingsTokens['xs']}
           role="button"
           tabIndex={0}
           $align="center"
@@ -139,7 +140,7 @@ export const DocSubPageItem = (props: Props) => {
             <Text $css={ItemTextCss} $size="sm" $variation="1000">
               {doc.title || untitledDocument}
             </Text>
-            {doc.nb_accesses_direct > 1 && (
+            {doc.nb_accesses_direct >= 1 && (
               <Icon
                 variant="filled"
                 iconName="group"

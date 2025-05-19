@@ -11,22 +11,26 @@ import {
   QuickSearchGroup,
 } from '@/components/quick-search/';
 import { User } from '@/features/auth';
-import { Doc } from '@/features/docs';
+import { Access, Doc } from '@/features/docs';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
-import { KEY_LIST_USER, useUsers } from '../api';
-
 import {
-  ButtonAccessRequest,
-  QuickSearchGroupAccessRequest,
-} from './DocShareAccessRequest';
+  KEY_LIST_USER,
+  useDocAccesses,
+  useDocInvitationsInfinite,
+  useUsers,
+} from '../api';
+import { Invitation } from '../types';
+
+import { DocInheritedShareContent } from './DocInheritedShareContent';
+import { ButtonAccessRequest } from './DocShareAccessRequest';
 import { DocShareAddMemberList } from './DocShareAddMemberList';
 import {
+  DocShareInvitationItem,
   DocShareModalInviteUserRow,
-  QuickSearchGroupInvitation,
 } from './DocShareInvitation';
-import { QuickSearchGroupMember } from './DocShareMember';
+import { DocShareMemberItem } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
 
 const ShareModalStyle = createGlobalStyle`
@@ -69,6 +73,10 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     setInputValue('');
   };
 
+  const { data: membersQuery } = useDocAccesses({
+    docId: doc.id,
+  });
+
   const searchUsersQuery = useUsers(
     { query: userQuery, docId: doc.id },
     {
@@ -76,6 +84,23 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
       queryKey: [KEY_LIST_USER, { query: userQuery }],
     },
   );
+
+  const membersData: QuickSearchData<Access> = useMemo(() => {
+    const members: Access[] =
+      membersQuery?.filter((access) => access.document.id === doc.id) ?? [];
+
+    const count = doc.nb_accesses_direct > 1 ? doc.nb_accesses_direct : 1;
+
+    return {
+      groupName:
+        count === 1
+          ? t('Document owner')
+          : t('Share with {{count}} users', {
+              count: count,
+            }),
+      elements: members,
+    };
+  }, [membersQuery, doc.id, doc.nb_accesses_direct, t]);
 
   const onFilter = useDebouncedCallback((str: string) => {
     setUserQuery(str);
@@ -102,6 +127,18 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
 
     setListHeight(height);
   };
+
+  const inheritedAccesses = useMemo(() => {
+    return (
+      membersQuery?.filter((access) => access.document.id !== doc.id) ?? []
+    );
+  }, [membersQuery, doc.id]);
+
+  // const rootDoc = treeContext?.root;
+  const isRootDoc = false;
+
+  const showInheritedShareContent =
+    inheritedAccesses.length > 0 && showMemberSection && !isRootDoc;
 
   return (
     <>
@@ -188,12 +225,22 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                   loading={searchUsersQuery.isLoading}
                   placeholder={t('Type a name or email')}
                 >
+                  {inheritedAccesses.length > 0 &&
+                    showInheritedShareContent && (
+                      <DocInheritedShareContent
+                        rawAccesses={
+                          membersQuery?.filter(
+                            (access) => access.document.id !== doc.id,
+                          ) ?? []
+                        }
+                      />
+                    )}
                   {showMemberSection ? (
-                    <>
-                      <QuickSearchGroupAccessRequest doc={doc} />
-                      <QuickSearchGroupInvitation doc={doc} />
-                      <QuickSearchGroupMember doc={doc} />
-                    </>
+                    <QuickSearchMemberSection
+                      doc={doc}
+                      hasInheritedShareContent={inheritedAccesses.length > 0}
+                      membersData={membersData}
+                    />
                   ) : (
                     <QuickSearchInviteInputSection
                       searchUsersRawData={searchUsersQuery.data}
@@ -257,10 +304,93 @@ const QuickSearchInviteInputSection = ({
   }, [onSelect, searchUsersRawData, t, userQuery]);
 
   return (
-    <QuickSearchGroup
-      group={searchUserData}
-      onSelect={onSelect}
-      renderElement={(user) => <DocShareModalInviteUserRow user={user} />}
-    />
+    <Box
+      aria-label={t('List search user result card')}
+      $padding={{ horizontal: 'base', bottom: '3xs' }}
+    >
+      <QuickSearchGroup
+        group={searchUserData}
+        onSelect={onSelect}
+        renderElement={(user) => <DocShareModalInviteUserRow user={user} />}
+      />
+    </Box>
+  );
+};
+
+interface QuickSearchMemberSectionProps {
+  doc: Doc;
+  membersData: QuickSearchData<Access>;
+  hasInheritedShareContent?: boolean;
+}
+
+const QuickSearchMemberSection = ({
+  doc,
+  membersData,
+  hasInheritedShareContent = false,
+}: QuickSearchMemberSectionProps) => {
+  const { t } = useTranslation();
+  const { data, hasNextPage, fetchNextPage } = useDocInvitationsInfinite({
+    docId: doc.id,
+  });
+
+  const invitationsData: QuickSearchData<Invitation> = useMemo(() => {
+    const invitations = data?.pages.flatMap((page) => page.results) || [];
+
+    return {
+      groupName: t('Pending invitations'),
+      elements: invitations,
+      endActions: hasNextPage
+        ? [
+            {
+              content: <Text data-testid="load-more-invitations" />,
+              onSelect: () => void fetchNextPage(),
+            },
+          ]
+        : undefined,
+    };
+  }, [data?.pages, fetchNextPage, hasNextPage, t]);
+
+  const showSeparator =
+    invitationsData.elements.length > 0 && membersData.elements.length > 0;
+
+  if (
+    invitationsData.elements.length === 0 &&
+    membersData.elements.length === 0
+  ) {
+    return null;
+  }
+
+  return (
+    <>
+      {hasInheritedShareContent && <HorizontalSeparator $withPadding={false} />}
+      {invitationsData.elements.length > 0 && (
+        <Box
+          aria-label={t('List invitation card')}
+          $padding={{ horizontal: 'base', bottom: '3xs' }}
+          $margin={{ bottom: showSeparator ? 'base' : undefined }}
+        >
+          <QuickSearchGroup
+            group={invitationsData}
+            renderElement={(invitation) => (
+              <DocShareInvitationItem doc={doc} invitation={invitation} />
+            )}
+          />
+        </Box>
+      )}
+
+      {showSeparator && <HorizontalSeparator $withPadding={false} />}
+
+      <Box
+        aria-label={t('List members card')}
+        $padding={{ horizontal: 'base', bottom: '3xs' }}
+      >
+        <QuickSearchGroup
+          group={membersData}
+          renderElement={(access) => (
+            <DocShareMemberItem doc={doc} access={access} />
+          )}
+        />
+      </Box>
+    </>
   );
 };

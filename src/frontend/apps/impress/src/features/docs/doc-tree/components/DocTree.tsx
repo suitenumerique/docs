@@ -25,7 +25,7 @@ type DocTreeProps = {
 };
 export const DocTree = ({ initialTargetId }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
+
   const treeContext = useTreeContext<Doc>();
   const { currentDoc } = useDocStore();
   const router = useRouter();
@@ -134,11 +134,25 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
   }
 
   return (
-    <Box data-testid="doc-tree" $height="100%">
-      <Box $padding={{ horizontal: 'sm', top: 'sm', bottom: '-1px' }}>
+    <Box
+      data-testid="doc-tree"
+      $height="100%"
+      $css={css`
+        .c__tree-view--container {
+          z-index: 1;
+          margin-top: -10px;
+        }
+      `}
+    >
+      <Box
+        $padding={{ horizontal: 'sm', top: 'sm', bottom: '4px' }}
+        $css={css`
+          z-index: 2;
+        `}
+      >
         <Box
           $css={css`
-            padding: ${spacing['2xs']};
+            padding: ${spacingsTokens['2xs']};
             border-radius: 4px;
             width: 100%;
             background-color: ${rootIsSelected

@@ -8,32 +8,31 @@ import {
   DropdownMenu,
   DropdownMenuOption,
   IconOptions,
-  LoadMoreText,
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { Access, Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
-import {
-  useDeleteDocAccess,
-  useDocAccessesInfinite,
-  useUpdateDocAccess,
-} from '../api';
+import { useDeleteDocAccess, useDocAccesses, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
-  doc: Doc;
+  doc?: Doc;
   access: Access;
+  isInherited?: boolean;
 };
-
-const DocShareMemberItem = ({ doc, access }: Props) => {
+export const DocShareMemberItem = ({
+  doc,
+  access,
+  isInherited = false,
+}: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { isLastOwner, isOtherOwner } = useWhoAmI(access);
+  const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
 
   const { isDesktop } = useResponsiveStore();
@@ -47,6 +46,9 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
     onSuccess: () => {
+      if (!doc) {
+        return;
+      }
       void queryClient.invalidateQueries({
         queryKey: [KEY_SUB_PAGE, { id: doc.id }],
       });
@@ -60,6 +62,9 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
     onSuccess: () => {
+      if (!doc) {
+        return;
+      }
       void queryClient.invalidateQueries({
         queryKey: [KEY_SUB_PAGE, { id: doc.id }],
       });
@@ -72,6 +77,9 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
   });
 
   const onUpdate = (newRole: Role) => {
+    if (!doc) {
+      return;
+    }
     updateDocAccess({
       docId: doc.id,
       role: newRole,
@@ -80,6 +88,9 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
   };
 
   const onRemove = () => {
+    if (!doc) {
+      return;
+    }
     removeDocAccess({ accessId: access.id, docId: doc.id });
   };
 
@@ -91,6 +102,10 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
       disabled: !access.abilities.destroy,
     },
   ];
+
+  const canUpdate = isInherited
+    ? false
+    : (doc?.abilities.accesses_manage ?? false);
 
   return (
     <Box
@@ -104,14 +119,14 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
-              currentRole={access.role}
+              currentRole={isInherited ? access.max_role : access.role}
               onSelectRole={onUpdate}
-              canUpdate={doc.abilities.accesses_manage}
+              canUpdate={canUpdate}
               message={message}
               rolesAllowed={access.abilities.set_role_to}
             />
 
-            {isDesktop && doc.abilities.accesses_manage && (
+            {isDesktop && canUpdate && (
               <DropdownMenu options={moreActions}>
                 <IconOptions
                   isHorizontal
@@ -135,15 +150,14 @@ export const QuickSearchGroupMember = ({
   doc,
 }: QuickSearchGroupMemberProps) => {
   const { t } = useTranslation();
-  const membersQuery = useDocAccessesInfinite({
+  const membersQuery = useDocAccesses({
     docId: doc.id,
   });
 
   const membersData: QuickSearchData<Access> = useMemo(() => {
-    const members =
-      membersQuery.data?.pages.flatMap((page) => page.results) || [];
+    const members = membersQuery.data || [];
 
-    const count = membersQuery.data?.pages[0]?.count ?? 1;
+    const count = members.length;
 
     return {
       groupName:
@@ -153,14 +167,7 @@ export const QuickSearchGroupMember = ({
               count: count,
             }),
       elements: members,
-      endActions: membersQuery.hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-members" />,
-              onSelect: () => void membersQuery.fetchNextPage(),
-            },
-          ]
-        : undefined,
+      endActions: undefined,
     };
   }, [membersQuery, t]);
 
