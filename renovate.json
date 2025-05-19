@@ -26,6 +26,8 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@hocuspocus/provider",
+        "@hocuspocus/server",
         "eslint",
         "fetch-mock",
         "node",
