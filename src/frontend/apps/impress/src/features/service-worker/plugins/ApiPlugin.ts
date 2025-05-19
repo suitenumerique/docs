@@ -1,7 +1,7 @@
 import { WorkboxPlugin } from 'workbox-core';
 
 import { Doc, DocsResponse } from '@/docs/doc-management';
-import { LinkReach, LinkRole } from '@/docs/doc-management/types';
+import { LinkReach, LinkRole, Role } from '@/docs/doc-management/types';
 
 import { DBRequest, DocsDB } from '../DocsDB';
 import { RequestSerializer } from '../RequestSerializer';
@@ -201,10 +201,21 @@ export class ApiPlugin implements WorkboxPlugin {
         versions_destroy: true,
         versions_list: true,
         versions_retrieve: true,
+        link_select_options: {
+          public: [LinkRole.READER, LinkRole.EDITOR],
+          authenticated: [LinkRole.READER, LinkRole.EDITOR],
+          restricted: undefined,
+        },
       },
       link_reach: LinkReach.RESTRICTED,
       link_role: LinkRole.READER,
-      user_roles: [],
+      user_roles: [Role.OWNER],
+      user_role: Role.OWNER,
+      path: '',
+      computed_link_reach: LinkReach.RESTRICTED,
+      computed_link_role: LinkRole.READER,
+      ancestors_link_reach: LinkReach.RESTRICTED,
+      ancestors_link_role: undefined,
     };
 
     await DocsDB.cacheResponse(
