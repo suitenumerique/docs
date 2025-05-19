@@ -1,3 +1,4 @@
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import {
   Button,
   VariantType,
@@ -5,7 +6,7 @@ import {
   useToastProvider,
 } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -46,7 +47,20 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const hasAccesses = doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
+  const treeContext = useTreeContext<Doc>();
+
+  /**
+   * Following the change where there is no default owner when adding a sub-page,
+   * we need to handle both the case where the doc is the root and the case of sub-pages.
+   */
+  const hasAccesses = useMemo(() => {
+    if (treeContext?.root?.id === doc.id) {
+      return doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
+    }
+
+    return doc.nb_accesses_direct >= 1 && doc.abilities.accesses_view;
+  }, [doc, treeContext?.root]);
+
   const queryClient = useQueryClient();
   const { toast } = useToastProvider();
 

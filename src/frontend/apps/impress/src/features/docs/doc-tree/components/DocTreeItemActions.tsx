@@ -4,13 +4,12 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useModal } from '@openfun/cunningham-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
-import { useLeftPanelStore } from '@/features/left-panel';
 
 import { Doc, ModalRemoveDoc, useCopyDocLink } from '../../doc-management';
 import { useCreateChildrenDoc } from '../api/useCreateChildren';
@@ -34,7 +33,7 @@ export const DocTreeItemActions = ({
   const router = useRouter();
   const { t } = useTranslation();
   const deleteModal = useModal();
-  const { togglePanel } = useLeftPanelStore();
+
   const copyLink = useCopyDocLink(doc.id);
   const canUpdate = isOwnerOrAdmin(doc);
   const { isCurrentParent } = useTreeUtils(doc);
@@ -53,7 +52,7 @@ export const DocTreeItemActions = ({
           treeContext.treeData.deleteNode(doc.id);
           if (treeContext.root) {
             treeContext.treeData.setSelectedNode(treeContext.root);
-            router.push(`/docs/${treeContext.root.id}`);
+            void router.push(`/docs/${treeContext.root.id}`);
           }
         },
       },
@@ -93,23 +92,20 @@ export const DocTreeItemActions = ({
   ];
 
   const { mutate: createChildrenDoc } = useCreateChildrenDoc({
-    onSuccess: (doc) => {
-      onCreateSuccess?.(doc);
-      togglePanel();
-      router.push(`/docs/${doc.id}`);
-      treeContext?.treeData.setSelectedNode(doc);
+    onSuccess: (newDoc) => {
+      onCreateSuccess?.(newDoc);
     },
   });
 
   const afterDelete = () => {
     if (parentId) {
       treeContext?.treeData.deleteNode(doc.id);
-      router.push(`/docs/${parentId}`);
+      void router.push(`/docs/${parentId}`);
     } else if (doc.id === treeContext?.root?.id && !parentId) {
-      router.push(`/docs/`);
+      void router.push(`/docs/`);
     } else if (treeContext && treeContext.root) {
       treeContext?.treeData.deleteNode(doc.id);
-      router.push(`/docs/${treeContext.root.id}`);
+      void router.push(`/docs/${treeContext.root.id}`);
     }
   };
 

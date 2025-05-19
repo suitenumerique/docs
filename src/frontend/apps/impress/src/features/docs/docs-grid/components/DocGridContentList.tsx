@@ -152,10 +152,11 @@ export const DraggableDocGridItem = ({
   canDrag,
   updateCanDrop,
 }: DocGridItemProps) => {
-  const canDropItem = doc.user_roles.some(
-    (role) =>
-      role === Role.ADMIN || role === Role.OWNER || role === Role.EDITOR,
-  );
+  const userRole = doc.user_role;
+  const canDropItem =
+    userRole === Role.ADMIN ||
+    userRole === Role.OWNER ||
+    userRole === Role.EDITOR;
 
   return (
     <Droppable
