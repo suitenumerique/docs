@@ -25,7 +25,10 @@ test.describe('Document search', () => {
     );
     await verifyDocName(page, doc2Title);
     await page.goto('/');
-    await page.getByRole('button', { name: 'search' }).click();
+    await page
+      .getByTestId('left-panel-desktop')
+      .getByRole('button', { name: 'search' })
+      .click();
 
     await expect(
       page.getByRole('img', { name: 'No active search' }),

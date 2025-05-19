@@ -212,6 +212,7 @@ const data = [
     title: 'Can drop and drag',
     updated_at: '2025-03-14T14:45:27.699542Z',
     user_roles: ['owner'],
+    user_role: 'owner',
   },
   {
     id: 'can-only-drop',
@@ -260,6 +261,7 @@ const data = [
 
     updated_at: '2025-03-14T14:45:27.699542Z',
     user_roles: ['editor'],
+    user_role: 'editor',
   },
   {
     id: 'no-drop-and-no-drag',
@@ -307,5 +309,6 @@ const data = [
     title: 'No drop and no drag',
     updated_at: '2025-03-14T14:44:16.032774Z',
     user_roles: ['reader'],
+    user_role: 'reader',
   },
 ];
