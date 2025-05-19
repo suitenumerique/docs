@@ -26,9 +26,10 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@hocuspocus/provider",
+        "@hocuspocus/server",
         "eslint",
         "fetch-mock",
-        "prosemirror-model",
         "node",
         "node-fetch",
         "workbox-webpack-plugin"

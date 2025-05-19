@@ -410,5 +410,9 @@ def test_api_documents_attachment_upload_unsafe():
         "is_unsafe": "true",
         "status": "processing",
     }
-    assert file_head["ContentType"] == "application/octet-stream"
+    # Depending the libmagic version, the content type may change.
+    assert file_head["ContentType"] in [
+        "application/x-dosexec",
+        "application/octet-stream",
+    ]
     assert file_head["ContentDisposition"] == 'attachment; filename="script.exe"'
