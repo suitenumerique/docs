@@ -1,4 +1,9 @@
-FROM node:20-alpine AS frontend-deps
+FROM node:24-alpine AS frontend-deps
+
+# Upgrade system packages to install security updates
+RUN apk update && \
+  apk upgrade && \
+  rm -rf /var/cache/apk/*
 
 WORKDIR /home/frontend/
 
@@ -45,7 +50,19 @@ ENV NEXT_PUBLIC_PUBLISH_AS_MIT=${PUBLISH_AS_MIT}
 RUN yarn build
 
 # ---- Front-end image ----
-FROM nginxinc/nginx-unprivileged:1.26-alpine AS frontend-production
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS frontend-production
+
+# Remove the upgrade part once nginx has published
+# a new image that fixes the CVE related to libxml2
+ARG UID=101
+USER root
+
+# Upgrade system packages to install security updates
+RUN apk update && \
+  apk upgrade && \
+  rm -rf /var/cache/apk/*
+
+USER $UID
 
 # Un-privileged user running the application
 ARG DOCKER_USER

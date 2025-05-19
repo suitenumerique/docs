@@ -12,6 +12,7 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
   async (block, exporter) => {
     const blob = await exporter.resolveFile(block.props.url);
     let pngConverted: string | undefined;
+    let width = block.props.previewWidth || undefined;
 
     if (!blob.type.includes('image')) {
       return <View wrap={false} />;
@@ -19,7 +20,9 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
 
     if (blob.type.includes('svg')) {
       const svgText = await blob.text();
-      pngConverted = await convertSvgToPng(svgText, block.props.previewWidth);
+      const FALLBACK_SIZE = 536;
+      width = width || blob.size || FALLBACK_SIZE;
+      pngConverted = await convertSvgToPng(svgText, width);
     }
 
     return (
@@ -27,7 +30,7 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
         <Image
           src={pngConverted || blob}
           style={{
-            width: block.props.previewWidth * PIXELS_PER_POINT,
+            width: width ? width * PIXELS_PER_POINT : undefined,
             maxWidth: '100%',
           }}
         />

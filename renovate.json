@@ -28,7 +28,6 @@
       "matchPackageNames": [
         "eslint",
         "fetch-mock",
-        "prosemirror-model",
         "node",
         "node-fetch",
         "workbox-webpack-plugin"

@@ -1,4 +1,11 @@
-FROM node:20-alpine AS y-provider-builder
+FROM node:22.9-alpine AS base
+
+# Upgrade system packages to install security updates
+RUN apk update && \
+  apk upgrade && \
+  rm -rf /var/cache/apk/*
+
+FROM base AS y-provider-builder
 
 WORKDIR /home/frontend/
 
@@ -15,7 +22,7 @@ COPY ./src/frontend/servers/y-provider ./servers/y-provider
 WORKDIR /home/frontend/servers/y-provider
 RUN yarn build
 
-FROM node:20-alpine AS y-provider
+FROM base AS y-provider
 
 WORKDIR /home/frontend/
 

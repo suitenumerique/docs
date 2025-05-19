@@ -40,6 +40,18 @@ tokens.themes.default.theme.colors = {
   ...customColors,
 };
 
+tokens.themes.default.theme = {
+  ...tokens.themes.default.theme,
+  ...{
+    logo: {
+      src: '/assets/logo-gouv.svg',
+      widthHeader: '110px',
+      widthFooter: '220px',
+      alt: 'Gouvernement Logo',
+    },
+  },
+};
+
 tokens.themes.default.components = {
   ...tokens.themes.default.components,
   ...{

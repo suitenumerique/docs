@@ -5,6 +5,7 @@ import { PropsWithChildren } from 'react';
 import { Box } from '@/components';
 import { useConfig } from '@/core';
 
+import { HOME_URL } from '../conf';
 import { useAuth } from '../hooks';
 import { getAuthUrl, gotoLogin } from '../utils';
 
@@ -43,7 +44,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
    */
   if (!authenticated && !pathAllowed) {
     if (config?.FRONTEND_HOMEPAGE_FEATURE_ENABLED) {
-      void replace('/home');
+      void replace(HOME_URL);
     } else {
       gotoLogin();
     }
@@ -57,7 +58,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
   /**
    * If the user is authenticated and the path is the home page, we redirect to the index.
    */
-  if (pathname === '/home' && authenticated) {
+  if (pathname === HOME_URL && authenticated) {
     void replace('/');
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
