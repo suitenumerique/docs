@@ -107,8 +107,36 @@ These are the environment variables you can set for the `impress-backend` contai
 
 These are the environment variables you can set to build the `impress-frontend` image.
 
+Depending on how you are building the front-end application, this variable is used in different ways.
+
+If you want to build the Docker image, this variable is used as an argument in the build command.
+
+Example:
+
+```
+docker build -f src/frontend/Dockerfile --target frontend-production --build-arg PUBLISH_AS_MIT=false docs-frontend:latest
+``` 
+
+If you want to build the front-end application using the yarn build command, you can edit the file `src/frontend/apps/impress/.env` with the `NODE_ENV=production` environment variable and modify it. Alternatively, you can use the listed environment variables with the prefix `NEXT_PUBLIC_` (for example, `NEXT_PUBLIC_PUBLISH_AS_MIT=false`).
+
+Example:
+
+```
+cd src/frontend/apps/impress
+NODE_ENV=production NEXT_PUBLIC_PUBLISH_AS_MIT=false yarn build
+```
+
 | Option                                          | Description                                                                                   | default                                                 |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | API_ORIGIN                                      | backend domain - it uses the current domain if not initialized                                |                                                         |
 | SW_DEACTIVATED                                  | To not install the service worker                                                             |                                                         |
-| PUBLISH_AS_MIT                                  | MIT licence does not include the export feature                                               | true                                                    |
+| PUBLISH_AS_MIT                                  | Removes packages whose licences are incompatible with the MIT licence (see  below)                                               | true                                                    |
+
+Packages with licences incompatible with the MIT licence:
+* `xl-docx-exporter`: [AGPL-3.0](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE), 
+* `xl-pdf-exporter`: [AGPL-3.0](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE) 
+
+In `.env.development`, `PUBLISH_AS_MIT` is set to `false`, allowing developers to test Docs with all its features.
+
+⚠️ If you run Docs in production with `PUBLISH_AS_MIT` set to `false` make sure you fulfill your [BlockNote licensing](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE) or [subscription](https://www.blocknotejs.org/about#partner-with-us) obligations.
+
