@@ -170,6 +170,7 @@ test.describe('Document grid item options', () => {
               link_reach: 'restricted',
               created_at: '2021-09-01T09:00:00Z',
               user_roles: ['editor'],
+              user_role: 'editor',
             },
           ],
         },

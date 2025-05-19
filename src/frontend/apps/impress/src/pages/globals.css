@@ -77,7 +77,6 @@ nextjs-portal {
   display: none;
 }
 
-
 .skeleton {
   background: linear-gradient(
     100deg,
@@ -94,6 +93,7 @@ nextjs-portal {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
