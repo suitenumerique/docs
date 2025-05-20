@@ -14,7 +14,7 @@ import {
 import { createRootSubPage, createSubPageFromParent } from './sub-pages-utils';
 
 test.describe('Inherited share accesses', () => {
-  test('Vérifie l’héritage des accès', async ({ page, browserName }) => {
+  test('it checks inherited accesses', async ({ page, browserName }) => {
     await page.goto('/');
     const [titleParent] = await createDoc(page, 'root-doc', browserName, 1);
     const docTree = page.getByTestId('doc-tree');
@@ -53,7 +53,7 @@ test.describe('Inherited share accesses', () => {
     await expect(user.getByText('Owner')).toBeVisible();
   });
 
-  test('Vérifie le message si il y a un accès hérité', async ({
+  test('it checks that the highest role is displayed', async ({
     page,
     browserName,
   }) => {
@@ -107,7 +107,7 @@ test.describe('Inherited share accesses', () => {
 });
 
 test.describe('Inherited share link', () => {
-  test('Vérifie si le lien est bien hérité', async ({ page, browserName }) => {
+  test('it checks if the link is inherited', async ({ page, browserName }) => {
     await page.goto('/');
     // Create root doc
     await createDoc(page, 'root-doc', browserName, 1);
@@ -126,7 +126,7 @@ test.describe('Inherited share link', () => {
     // await verifyShareLink(page, 'Connected', 'Reading');
   });
 
-  test('Vérification du message de warning lorsque les règles de partage diffèrent', async ({
+  test('it checks warning message when sharing rules differ', async ({
     page,
     browserName,
   }) => {
@@ -155,7 +155,7 @@ test.describe('Inherited share link', () => {
     await expect(page.getByText('Sharing rules differ from the')).toBeHidden();
   });
 
-  test('Vérification des possibilités de liens hérités', async ({
+  test('it checks inherited link possibilities', async ({
     page,
     browserName,
   }) => {
