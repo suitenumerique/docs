@@ -1496,7 +1496,7 @@ class DocumentAccessViewSet(
         serializer_class = self.get_serializer_class()
         serialized_data = []
         for access in accesses:
-            access.user_roles_tuple = (
+            access.set_user_roles_tuple(
                 choices.RoleChoices.max(*path_to_ancestors_roles[access.document_path]),
                 path_to_role.get(access.document_path),
             )

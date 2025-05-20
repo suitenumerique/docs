@@ -1052,44 +1052,70 @@ class DocumentAccess(BaseAccess):
         super().delete(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
 
-    def get_roles_tuple(self, user):
+    def set_user_roles_tuple(self, ancestors_role, current_role):
         """
-        Get a tuple of:
-        - the role equivalent to all ancestors of the
-          document related to the current access
-        - the role the user has on the current access
+        Set a precomputed (ancestor_role, current_role) tuple for this instance.
+
+        This avoids querying the database in `get_roles_tuple()` and is useful
+        when roles are already known, such as in bulk serialization.
+
+        Args:
+            ancestor_role (str | None): Highest role on any ancestor document.
+            current_role (str | None): Role on the current document.
+        """
+        # pylint: disable=attribute-defined-outside-init
+        self._prefetched_user_roles_tuple = (ancestors_role, current_role)
+
+    def get_user_roles_tuple(self, user):
+        """
+        Return a tuple of:
+        - the highest role the user has on any ancestor of the document
+        - the role the user has on the current document
+
+        If roles have been explicitly set using `set_user_roles_tuple()`,
+        those will be returned instead of querying the database.
+
+        This allows viewsets or serializers to precompute roles for performance
+        when handling multiple documents at once.
+
+        Args:
+            user (User): The user whose roles are being evaluated.
+
+        Returns:
+            tuple[str | None, str | None]: (max_ancestor_role, current_document_role)
         """
         if not user.is_authenticated:
             return None, None
 
         try:
-            return self.user_roles_tuple
+            return self._prefetched_user_roles_tuple
         except AttributeError:
-            ancestors = (
-                self.document.get_ancestors()
-                | Document.objects.filter(pk=self.document_id)
-            ).filter(ancestors_deleted_at__isnull=True)
+            pass
 
-            access_tuples = DocumentAccess.objects.filter(
-                models.Q(user=user) | models.Q(team__in=user.teams),
-                document__in=ancestors,
-            ).values_list("document_id", "role")
+        ancestors = (
+            self.document.get_ancestors() | Document.objects.filter(pk=self.document_id)
+        ).filter(ancestors_deleted_at__isnull=True)
 
-            ancestors_roles = []
-            current_roles = []
-            for doc_id, role in access_tuples:
-                if doc_id == self.document_id:
-                    current_roles.append(role)
-                else:
-                    ancestors_roles.append(role)
+        access_tuples = DocumentAccess.objects.filter(
+            models.Q(user=user) | models.Q(team__in=user.teams),
+            document__in=ancestors,
+        ).values_list("document_id", "role")
 
-            return RoleChoices.max(*ancestors_roles), RoleChoices.max(*current_roles)
+        ancestors_roles = []
+        current_roles = []
+        for doc_id, role in access_tuples:
+            if doc_id == self.document_id:
+                current_roles.append(role)
+            else:
+                ancestors_roles.append(role)
+
+        return RoleChoices.max(*ancestors_roles), RoleChoices.max(*current_roles)
 
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document access.
         """
-        ancestors_role, current_role = self.get_roles_tuple(user)
+        ancestors_role, current_role = self.get_user_roles_tuple(user)
         role = RoleChoices.max(ancestors_role, current_role)
         is_owner_or_admin = role in PRIVILEGED_ROLES
 

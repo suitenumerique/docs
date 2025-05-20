@@ -405,7 +405,7 @@ def test_models_document_access_get_abilities_preset_role(django_assert_num_quer
     user = factories.UserDocumentAccessFactory(
         document=access.document, role="reader"
     ).user
-    access.user_roles_tuple = (None, "reader")
+    access.set_user_roles_tuple(None, "reader")
 
     with django_assert_num_queries(0):
         abilities = access.get_abilities(user)
