@@ -50,7 +50,7 @@ test.describe('Doc grid dnd', () => {
     await page.mouse.move(
       dropZoneBoundingBox.x + dropZoneBoundingBox.width / 2,
       dropZoneBoundingBox.y + dropZoneBoundingBox.height / 2,
-      { steps: 10 }, // Rendre le mouvement plus fluide
+      { steps: 10 }, // Make the movement smoother
     );
 
     const dragOverlay = page.getByTestId('drag-doc-overlay');
@@ -62,7 +62,7 @@ test.describe('Doc grid dnd', () => {
     await expect(dragOverlay).toBeHidden();
   });
 
-  test('it checks cant drop when we have not the minimum role', async ({
+  test("it checks can't drop when we have not the minimum role", async ({
     page,
   }) => {
     await mockedListDocs(page, data);
@@ -113,7 +113,7 @@ test.describe('Doc grid dnd', () => {
     await page.mouse.up();
   });
 
-  test('it checks cant drag when we have not the minimum role', async ({
+  test("it checks can't drag when we have not the minimum role", async ({
     page,
   }) => {
     await mockedListDocs(page, data);

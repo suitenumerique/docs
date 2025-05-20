@@ -160,7 +160,7 @@ test.describe('Doc Tree', () => {
     );
   });
 
-  test('it detachs a document', async ({ page, browserName }) => {
+  test('it detaches a document', async ({ page, browserName }) => {
     await page.goto('/');
     const [docParent] = await createDoc(
       page,

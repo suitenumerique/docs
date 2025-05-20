@@ -113,7 +113,7 @@ test.describe('Document search', () => {
 });
 
 test.describe('Sub page search', () => {
-  test('it check the precense of filters in search modal', async ({
+  test('it check the presence of filters in search modal', async ({
     page,
     browserName,
   }) => {

@@ -242,6 +242,9 @@ export const mockedDocument = async (page: Page, data: object) => {
       !request.url().includes('accesses') &&
       !request.url().includes('invitations')
     ) {
+      const { abilities, ...rest } = data as unknown as {
+        abilities?: Record<string, unknown>;
+      };
       await route.fulfill({
         json: {
           id: 'mocked-document-id',
@@ -263,6 +266,7 @@ export const mockedDocument = async (page: Page, data: object) => {
               authenticated: ['reader', 'editor'],
               restricted: null,
             },
+            ...abilities,
           },
           link_reach: 'restricted',
           computed_link_reach: 'restricted',
@@ -272,7 +276,7 @@ export const mockedDocument = async (page: Page, data: object) => {
           created_at: '2021-09-01T09:00:00Z',
           user_role: 'owner',
           user_roles: ['owner'],
-          ...data,
+          ...rest,
         },
       });
     } else {
@@ -339,10 +343,10 @@ export const mockedInvitations = async (page: Page, json?: object) => {
 export const mockedAccesses = async (page: Page, json?: object) => {
   await page.route('**/accesses/**/', async (route) => {
     const request = route.request();
+    console.log('oui');
     if (
       request.method().includes('GET') &&
-      request.url().includes('accesses') &&
-      request.url().includes('page=')
+      request.url().includes('accesses')
     ) {
       await route.fulfill({
         json: [
@@ -366,6 +370,11 @@ export const mockedAccesses = async (page: Page, json?: object) => {
               update: true,
               partial_update: true,
               retrieve: true,
+              link_select_options: {
+                public: ['reader', 'editor'],
+                authenticated: ['reader', 'editor'],
+                restricted: null,
+              },
               set_role_to: ['administrator', 'editor'],
             },
             ...json,

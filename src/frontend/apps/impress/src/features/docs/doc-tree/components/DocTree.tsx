@@ -122,7 +122,7 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
 
     treeContext?.treeData.setSelectedNode(currentDoc);
 
-    // we don't need to run this effect on every change of treeContext.data bacause it cause an infinite loop
+    // we don't need to run this effect on every change of treeContext.data because it cause an infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDoc, rootNode?.id]);
 
