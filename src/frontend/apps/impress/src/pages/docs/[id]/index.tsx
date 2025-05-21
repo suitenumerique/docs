@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, TextErrors } from '@/components';
+import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
 import {
   Doc,
@@ -14,7 +15,7 @@ import {
   useDoc,
   useDocStore,
 } from '@/docs/doc-management/';
-import { KEY_AUTH, setAuthUrl } from '@/features/auth';
+import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { MainLayout } from '@/layouts';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
@@ -56,6 +57,14 @@ const DocPage = ({ id }: DocProps) => {
     {
       staleTime: 0,
       queryKey: [KEY_DOC, { id }],
+      retryDelay: 1000,
+      retry: (failureCount, error) => {
+        if (error.status == 403 || error.status == 401 || error.status == 404) {
+          return false;
+        } else {
+          return failureCount < DEFAULT_QUERY_RETRY;
+        }
+      },
     },
   );
 
@@ -66,6 +75,7 @@ const DocPage = ({ id }: DocProps) => {
   const { replace } = useRouter();
   useCollaboration(doc?.id, doc?.content);
   const { t } = useTranslation();
+  const { authenticated } = useAuth();
 
   useEffect(() => {
     if (!docQuery || isFetching) {
@@ -93,23 +103,24 @@ const DocPage = ({ id }: DocProps) => {
   }, [addTask, doc?.id, queryClient]);
 
   if (isError && error) {
-    if (error.status === 403) {
-      void replace(`/403`);
-      return null;
-    }
+    if ([403, 404, 401].includes(error.status)) {
+      if (error.status === 401) {
+        if (authenticated) {
+          queryClient.setQueryData([KEY_AUTH], {
+            user: null,
+            authenticated: false,
+          });
+        }
+        setAuthUrl();
+      }
 
-    if (error.status === 404) {
-      void replace(`/404`);
-      return null;
-    }
+      void replace(`/${error.status}`);
 
-    if (error.status === 401) {
-      void queryClient.resetQueries({
-        queryKey: [KEY_AUTH],
-      });
-      setAuthUrl();
-      void replace(`/401`);
-      return null;
+      return (
+        <Box $align="center" $justify="center" $height="100%">
+          <Loader />
+        </Box>
+      );
     }
 
     return (
