@@ -8,9 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.3.0] - 2025-05-06
+
 ### Added
 
-- ✨(back) add endpoint checking media status
+- ✨(backend) add endpoint checking media status #984
 - ✨(backend) allow setting session cookie age via env var #977
 - ✨(backend) allow theme customnization using a configuration file #948
 - ✨(frontend) Add a custom callout block to the editor #892
@@ -20,7 +22,7 @@ and this project adheres to
 - 🩺(CI) add lint spell mistakes #954
 - ✨(frontend) create generic theme #792
 - 🛂(frontend) block edition to not connected users #945
-- 🚸 Let loader during upload analyze #984
+- 🚸(frontend) Let loader during upload analyze #984
 - 🚩(frontend) feature flag on blocking edition #997
 
 ### Changed
@@ -28,13 +30,15 @@ and this project adheres to
 - 📝(frontend) Update documentation #949
 - ✅(frontend) Improve tests coverage #949
 - ⬆️(docker) upgrade backend image to python 3.13 #973
-- ⬆️(docker) upgrade node images to alpine 3.21
-- 🐛(y-provider) increase JSON size limits for transcription conversion
+- ⬆️(docker) upgrade node images to alpine 3.21 #973
 
+### Fixed
+- 🐛(y-provider) increase JSON size limits for transcription conversion #989
 
 ### Removed
 
 - 🔥(back) remove footer endpoint #948
+
 
 ## [3.2.1] - 2025-05-06
 
@@ -586,7 +590,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.2.1...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.3.0...main
+[v3.3.0]: https://github.com/numerique-gouv/impress/releases/v3.3.0
 [v3.2.1]: https://github.com/numerique-gouv/impress/releases/v3.2.1
 [v3.2.0]: https://github.com/numerique-gouv/impress/releases/v3.2.0
 [v3.1.0]: https://github.com/numerique-gouv/impress/releases/v3.1.0
