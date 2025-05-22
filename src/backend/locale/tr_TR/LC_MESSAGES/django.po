@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-29 11:48+0000\n"
-"PO-Revision-Date: 2025-05-05 07:07\n"
+"POT-Creation-Date: 2025-05-22 12:09+0000\n"
+"PO-Revision-Date: 2025-05-22 14:16\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "Language: tr_TR\n"
@@ -66,32 +66,32 @@ msgstr ""
 msgid "Format"
 msgstr ""
 
-#: build/lib/core/api/viewsets.py:966 core/api/viewsets.py:966
+#: build/lib/core/api/viewsets.py:967 core/api/viewsets.py:967
 #, python-brace-format
 msgid "copy of {title}"
 msgstr ""
 
-#: build/lib/core/enums.py:35 core/enums.py:35
+#: build/lib/core/enums.py:36 core/enums.py:36
 msgid "First child"
 msgstr ""
 
-#: build/lib/core/enums.py:36 core/enums.py:36
+#: build/lib/core/enums.py:37 core/enums.py:37
 msgid "Last child"
 msgstr ""
 
-#: build/lib/core/enums.py:37 core/enums.py:37
+#: build/lib/core/enums.py:38 core/enums.py:38
 msgid "First sibling"
 msgstr ""
 
-#: build/lib/core/enums.py:38 core/enums.py:38
+#: build/lib/core/enums.py:39 core/enums.py:39
 msgid "Last sibling"
 msgstr ""
 
-#: build/lib/core/enums.py:39 core/enums.py:39
+#: build/lib/core/enums.py:40 core/enums.py:40
 msgid "Left"
 msgstr ""
 
-#: build/lib/core/enums.py:40 core/enums.py:40
+#: build/lib/core/enums.py:41 core/enums.py:41
 msgid "Right"
 msgstr ""
 
@@ -225,8 +225,8 @@ msgstr ""
 msgid "users"
 msgstr ""
 
-#: build/lib/core/models.py:470 build/lib/core/models.py:1154
-#: core/models.py:470 core/models.py:1154
+#: build/lib/core/models.py:470 build/lib/core/models.py:1155
+#: core/models.py:470 core/models.py:1155
 msgid "title"
 msgstr ""
 
@@ -242,128 +242,128 @@ msgstr ""
 msgid "Documents"
 msgstr ""
 
-#: build/lib/core/models.py:532 build/lib/core/models.py:872 core/models.py:532
-#: core/models.py:872
+#: build/lib/core/models.py:532 build/lib/core/models.py:873 core/models.py:532
+#: core/models.py:873
 msgid "Untitled Document"
 msgstr ""
 
-#: build/lib/core/models.py:907 core/models.py:907
+#: build/lib/core/models.py:908 core/models.py:908
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr ""
 
-#: build/lib/core/models.py:911 core/models.py:911
+#: build/lib/core/models.py:912 core/models.py:912
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr ""
 
-#: build/lib/core/models.py:917 core/models.py:917
+#: build/lib/core/models.py:918 core/models.py:918
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr ""
 
-#: build/lib/core/models.py:1015 core/models.py:1015
+#: build/lib/core/models.py:1016 core/models.py:1016
 msgid "Document/user link trace"
 msgstr ""
 
-#: build/lib/core/models.py:1016 core/models.py:1016
+#: build/lib/core/models.py:1017 core/models.py:1017
 msgid "Document/user link traces"
 msgstr ""
 
-#: build/lib/core/models.py:1022 core/models.py:1022
+#: build/lib/core/models.py:1023 core/models.py:1023
 msgid "A link trace already exists for this document/user."
 msgstr ""
 
-#: build/lib/core/models.py:1045 core/models.py:1045
+#: build/lib/core/models.py:1046 core/models.py:1046
 msgid "Document favorite"
 msgstr ""
 
-#: build/lib/core/models.py:1046 core/models.py:1046
+#: build/lib/core/models.py:1047 core/models.py:1047
 msgid "Document favorites"
 msgstr ""
 
-#: build/lib/core/models.py:1052 core/models.py:1052
+#: build/lib/core/models.py:1053 core/models.py:1053
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr ""
 
-#: build/lib/core/models.py:1074 core/models.py:1074
+#: build/lib/core/models.py:1075 core/models.py:1075
 msgid "Document/user relation"
 msgstr ""
 
-#: build/lib/core/models.py:1075 core/models.py:1075
+#: build/lib/core/models.py:1076 core/models.py:1076
 msgid "Document/user relations"
 msgstr ""
 
-#: build/lib/core/models.py:1081 core/models.py:1081
+#: build/lib/core/models.py:1082 core/models.py:1082
 msgid "This user is already in this document."
 msgstr ""
 
-#: build/lib/core/models.py:1087 core/models.py:1087
+#: build/lib/core/models.py:1088 core/models.py:1088
 msgid "This team is already in this document."
 msgstr ""
 
-#: build/lib/core/models.py:1093 build/lib/core/models.py:1241
-#: core/models.py:1093 core/models.py:1241
+#: build/lib/core/models.py:1094 build/lib/core/models.py:1242
+#: core/models.py:1094 core/models.py:1242
 msgid "Either user or team must be set, not both."
 msgstr ""
 
-#: build/lib/core/models.py:1155 core/models.py:1155
+#: build/lib/core/models.py:1156 core/models.py:1156
 msgid "description"
 msgstr ""
 
-#: build/lib/core/models.py:1156 core/models.py:1156
+#: build/lib/core/models.py:1157 core/models.py:1157
 msgid "code"
 msgstr ""
 
-#: build/lib/core/models.py:1157 core/models.py:1157
+#: build/lib/core/models.py:1158 core/models.py:1158
 msgid "css"
 msgstr ""
 
-#: build/lib/core/models.py:1159 core/models.py:1159
+#: build/lib/core/models.py:1160 core/models.py:1160
 msgid "public"
 msgstr ""
 
-#: build/lib/core/models.py:1161 core/models.py:1161
+#: build/lib/core/models.py:1162 core/models.py:1162
 msgid "Whether this template is public for anyone to use."
 msgstr ""
 
-#: build/lib/core/models.py:1167 core/models.py:1167
+#: build/lib/core/models.py:1168 core/models.py:1168
 msgid "Template"
 msgstr ""
 
-#: build/lib/core/models.py:1168 core/models.py:1168
+#: build/lib/core/models.py:1169 core/models.py:1169
 msgid "Templates"
 msgstr ""
 
-#: build/lib/core/models.py:1222 core/models.py:1222
+#: build/lib/core/models.py:1223 core/models.py:1223
 msgid "Template/user relation"
 msgstr ""
 
-#: build/lib/core/models.py:1223 core/models.py:1223
+#: build/lib/core/models.py:1224 core/models.py:1224
 msgid "Template/user relations"
 msgstr ""
 
-#: build/lib/core/models.py:1229 core/models.py:1229
+#: build/lib/core/models.py:1230 core/models.py:1230
 msgid "This user is already in this template."
 msgstr ""
 
-#: build/lib/core/models.py:1235 core/models.py:1235
+#: build/lib/core/models.py:1236 core/models.py:1236
 msgid "This team is already in this template."
 msgstr ""
 
-#: build/lib/core/models.py:1258 core/models.py:1258
+#: build/lib/core/models.py:1259 core/models.py:1259
 msgid "email address"
 msgstr ""
 
-#: build/lib/core/models.py:1277 core/models.py:1277
+#: build/lib/core/models.py:1278 core/models.py:1278
 msgid "Document invitation"
 msgstr ""
 
-#: build/lib/core/models.py:1278 core/models.py:1278
+#: build/lib/core/models.py:1279 core/models.py:1279
 msgid "Document invitations"
 msgstr ""
 
-#: build/lib/core/models.py:1298 core/models.py:1298
+#: build/lib/core/models.py:1299 core/models.py:1299
 msgid "This email is already associated to a registered user."
 msgstr ""
 
