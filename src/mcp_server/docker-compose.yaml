@@ -1,0 +1,28 @@
+services:
+  docs_mcp-server:
+    build:
+      context: .
+      args:
+        DOCKER_USER: ${DOCKER_USER:-1000}
+    user: ${DOCKER_USER:-1000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    ports:
+        - "4200:4200"
+
+    develop:
+      # Create a `watch` configuration to update the app
+      watch:
+        # Sync the working directory with the `/app` directory in the container
+        - action: sync+restart
+          path: ./docs_mcp_server
+          target: /app/docs_mcp_server/
+          # Exclude the project virtual environment
+          ignore:
+            - .venv/
+
+        # Rebuild the image on changes to the `pyproject.toml`
+        - action: rebuild
+          path: ./pyproject.toml
