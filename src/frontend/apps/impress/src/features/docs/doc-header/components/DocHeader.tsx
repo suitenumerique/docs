@@ -8,6 +8,7 @@ import {
   LinkReach,
   Role,
   currentDocRole,
+  getDocLinkReach,
   useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
@@ -28,8 +29,8 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { t } = useTranslation();
   const { transRole } = useTrans();
   const { isEditable } = useIsCollaborativeEditable(doc);
-  const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
-  const docIsAuth = doc.link_reach === LinkReach.AUTHENTICATED;
+  const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
+  const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
 
   return (
     <>

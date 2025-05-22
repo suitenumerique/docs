@@ -22,6 +22,8 @@
     "@blocknote/react": "0.30.0",
     "@blocknote/xl-docx-exporter": "0.30.0",
     "@blocknote/xl-pdf-exporter": "0.30.0",
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/modifiers": "9.0.0",
     "@emoji-mart/data": "1.2.1",
     "@emoji-mart/react": "1.1.1",
     "@fontsource/material-icons": "5.2.5",

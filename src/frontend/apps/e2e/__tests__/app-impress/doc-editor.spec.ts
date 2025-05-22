@@ -173,6 +173,7 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello World Doc 2')).toBeHidden();
     await expect(editor.getByText('Hello World Doc 1')).toBeVisible();
 
+    await page.goto('/');
     await page
       .getByRole('button', {
         name: 'New doc',

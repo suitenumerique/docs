@@ -5,11 +5,7 @@ import { useCunninghamTheme } from '@/cunningham';
 
 import { DocTitleText } from './DocTitle';
 
-interface DocVersionHeaderProps {
-  title?: string;
-}
-
-export const DocVersionHeader = ({ title }: DocVersionHeaderProps) => {
+export const DocVersionHeader = () => {
   const { spacingsTokens } = useCunninghamTheme();
 
   const { t } = useTranslation();
@@ -23,7 +19,7 @@ export const DocVersionHeader = ({ title }: DocVersionHeaderProps) => {
         aria-label={t('It is the document title')}
         className="--docs--doc-version-header"
       >
-        <DocTitleText title={title} />
+        <DocTitleText />
         <HorizontalSeparator />
       </Box>
     </>

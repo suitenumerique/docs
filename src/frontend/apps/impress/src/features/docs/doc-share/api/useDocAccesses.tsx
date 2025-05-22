@@ -1,13 +1,6 @@
-import {
-  DefinedInitialDataInfiniteOptions,
-  InfiniteData,
-  QueryKey,
-  UseQueryOptions,
-  useInfiniteQuery,
-  useQuery,
-} from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
+import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Access } from '@/docs/doc-management';
 
 export type DocAccessesParam = {
@@ -15,18 +8,13 @@ export type DocAccessesParam = {
   ordering?: string;
 };
 
-export type DocAccessesAPIParams = DocAccessesParam & {
-  page: number;
-};
-
-type AccessesResponse = APIList<Access>;
+export type DocAccessesAPIParams = DocAccessesParam & {};
 
 export const getDocAccesses = async ({
-  page,
   docId,
   ordering,
-}: DocAccessesAPIParams): Promise<AccessesResponse> => {
-  let url = `documents/${docId}/accesses/?page=${page}`;
+}: DocAccessesAPIParams): Promise<Access[]> => {
+  let url = `documents/${docId}/accesses/`;
 
   if (ordering) {
     url += '&ordering=' + ordering;
@@ -41,54 +29,18 @@ export const getDocAccesses = async ({
     );
   }
 
-  return response.json() as Promise<AccessesResponse>;
+  return (await response.json()) as Access[];
 };
 
 export const KEY_LIST_DOC_ACCESSES = 'docs-accesses';
 
 export function useDocAccesses(
   params: DocAccessesAPIParams,
-  queryConfig?: UseQueryOptions<AccessesResponse, APIError, AccessesResponse>,
+  queryConfig?: UseQueryOptions<Access[], APIError, Access[]>,
 ) {
-  return useQuery<AccessesResponse, APIError, AccessesResponse>({
+  return useQuery<Access[], APIError, Access[]>({
     queryKey: [KEY_LIST_DOC_ACCESSES, params],
     queryFn: () => getDocAccesses(params),
-    ...queryConfig,
-  });
-}
-
-/**
- * @param param Used for infinite scroll pagination
- * @param queryConfig
- * @returns
- */
-export function useDocAccessesInfinite(
-  param: DocAccessesParam,
-  queryConfig?: DefinedInitialDataInfiniteOptions<
-    AccessesResponse,
-    APIError,
-    InfiniteData<AccessesResponse>,
-    QueryKey,
-    number
-  >,
-) {
-  return useInfiniteQuery<
-    AccessesResponse,
-    APIError,
-    InfiniteData<AccessesResponse>,
-    QueryKey,
-    number
-  >({
-    initialPageParam: 1,
-    queryKey: [KEY_LIST_DOC_ACCESSES, param],
-    queryFn: ({ pageParam }) =>
-      getDocAccesses({
-        ...param,
-        page: pageParam,
-      }),
-    getNextPageParam(lastPage, allPages) {
-      return lastPage.next ? allPages.length + 1 : undefined;
-    },
     ...queryConfig,
   });
 }

@@ -1,14 +1,15 @@
-import { css } from 'styled-components';
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 
-import { Box, SeparatedSection } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import { useDocStore } from '@/docs/doc-management';
-import { SimpleDocItem } from '@/docs/docs-grid';
+import { Box } from '@/components';
+import { Doc, useDocStore } from '@/docs/doc-management';
+import { DocTree } from '@/features/docs/doc-tree/components/DocTree';
 
 export const LeftPanelDocContent = () => {
   const { currentDoc } = useDocStore();
-  const { spacingsTokens } = useCunninghamTheme();
-  if (!currentDoc) {
+
+  const tree = useTreeContext<Doc>();
+
+  if (!currentDoc || !tree) {
     return null;
   }
 
@@ -19,19 +20,9 @@ export const LeftPanelDocContent = () => {
       $css="width: 100%; overflow-y: auto; overflow-x: hidden;"
       className="--docs--left-panel-doc-content"
     >
-      <SeparatedSection showSeparator={false}>
-        <Box $padding={{ horizontal: 'sm' }}>
-          <Box
-            $css={css`
-              padding: ${spacingsTokens['2xs']};
-              border-radius: 4px;
-              background-color: var(--c--theme--colors--greyscale-100);
-            `}
-          >
-            <SimpleDocItem doc={currentDoc} showAccesses={true} />
-          </Box>
-        </Box>
-      </SeparatedSection>
+      {tree.initialTargetId && (
+        <DocTree initialTargetId={tree.initialTargetId} />
+      )}
     </Box>
   );
 };
