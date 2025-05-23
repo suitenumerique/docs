@@ -14,6 +14,7 @@ and this project adheres to
 
 ### Changed
 
+- 📌(yjs) stop pinning node to minor version on yjs docker image #1005
 - 🧑‍💻(docker) add .next to .dockerignore #1055
 - 🧑‍💻(docker) handle frontend development images with docker compose #1033
 - 🧑‍💻(docker) add y-provider config to development environment #1057

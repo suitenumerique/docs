@@ -1,4 +1,4 @@
-FROM node:22.9-alpine AS base
+FROM node:22-alpine AS base
 
 # Upgrade system packages to install security updates
 RUN apk update && \
