@@ -39,6 +39,7 @@ export const HomeHeader = () => {
         $width={isSmallMobile ? '100%' : 'auto'}
         $justify="center"
       >
+        Bonjour Twake
         {isSmallMobile && (
           <Box $position="absolute" $css="left: 1rem;">
             <ButtonTogglePanel />
