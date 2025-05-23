@@ -233,10 +233,23 @@ backend:
  ## @param backend.migrate.restartPolicy backend migrate job restart policy
   migrate:
     command:
-      - "python"
-      - "manage.py"
-      - "migrate"
-      - "--no-input"
+      - "/bin/sh"
+      - "-c"
+      - |
+        pip install django-extensions
+        python manage.py migrate --no-input
+        python manage.py shell -c "
+        from django.contrib.sites.models import Site
+        import os
+        site_domain = os.environ.get('DJANGO_SITE_DOMAIN', 'example.com')
+        site_name = os.environ.get('DJANGO_SITE_NAME', site_domain)
+        site, created = Site.objects.get_or_create(id=1, defaults={'domain': site_domain, 'name': site_name})
+        if not created:
+            site.domain = site_domain
+            site.name = site_name
+            site.save()
+        print(f'Site updated: {site.domain}')
+        "
     restartPolicy: Never
 
  ## @param backend.createsuperuser.command backend migrate command
