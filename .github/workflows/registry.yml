@@ -1,0 +1,61 @@
+name: Registry Workflow
+run-name: Registry Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+env:
+  REGISTRY: ghcr.io
+  DOCKER_USER: 1001:127
+
+jobs:
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Log in to the container registry
+        uses: docker/login-action@3.4.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: backend-production
+          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+          push: true
+          tags: cozy/impress-backend:{{ github.event.inputs.message }}
+
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Log in to the container registry
+        uses: docker/login-action@3.4.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./src/frontend/Dockerfile
+          target: frontend-production
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+            PUBLISH_AS_MIT=false
+          push: true
+          tags: cozy/impress-frontend:{{ github.event.inputs.message }}
