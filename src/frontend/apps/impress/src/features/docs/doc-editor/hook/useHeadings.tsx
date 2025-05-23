@@ -9,7 +9,7 @@ export const useHeadings = (editor: DocsBlockNoteEditor) => {
   useEffect(() => {
     setHeadings(editor);
 
-    editor?.onEditorContentChange(() => {
+    editor?.onChange(() => {
       setHeadings(editor);
     });
 

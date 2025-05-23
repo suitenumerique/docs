@@ -178,7 +178,6 @@ export const BlockNoteEditorVersion = ({
   initialContent,
 }: BlockNoteEditorVersionProps) => {
   const readOnly = true;
-  const { setEditor } = useEditorStore();
   const editor = useCreateBlockNote(
     {
       collaboration: {
@@ -193,15 +192,6 @@ export const BlockNoteEditorVersion = ({
     },
     [initialContent],
   );
-  useHeadings(editor);
-
-  useEffect(() => {
-    setEditor(editor);
-
-    return () => {
-      setEditor(undefined);
-    };
-  }, [setEditor, editor]);
 
   return (
     <Box $css={cssEditor(readOnly)} className="--docs--editor-container">

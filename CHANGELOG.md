@@ -31,10 +31,13 @@ and this project adheres to
 - ⬆️(docker) upgrade node images to alpine 3.21
 - 🐛(y-provider) increase JSON size limits for transcription conversion
 
-
 ### Removed
 
 - 🔥(back) remove footer endpoint #948
+
+### Fixed
+
+🐛(frontend) table of content disappearing #982
 
 ## [3.2.1] - 2025-05-06
 
