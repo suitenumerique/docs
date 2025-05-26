@@ -50,6 +50,31 @@ ingress:
   ## @param ingress.customBackends Add custom backends to ingress
   customBackends: []
 
+## @param ingressMcpServer.enabled whether to enable the Ingress or not
+## @param ingressMcpServer.className IngressClass to use for the Ingress
+## @param ingressMcpServer.host Host for the Ingress
+## @param ingressMcpServer.path Path to use for the Ingress
+ingressMcpServer:
+  enabled: false
+  className: null
+  host: impress.example.com
+  path: /mcp/docs/
+  ## @param ingressMcpServer.hosts Additional host to configure for the Ingress
+  hosts: []
+  #  - chart-example.local
+  ## @param ingressMcpServer.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressMcpServer.tls.secretName Secret name for TLS config
+  ## @skip ingressMcpServer.tls.additional
+  ## @extra ingressMcpServer.tls.additional[].secretName Secret name for additional TLS config
+  ## @extra ingressMcpServer.tls.additional[].hosts[] Hosts for additional TLS config
+  tls:
+    enabled: true
+    secretName: null
+    additional: []
+
+  ## @param ingressMcpServer.customBackends Add custom backends to ingress
+  customBackends: []
+
 ## @param ingressCollaborationWS.enabled whether to enable the Ingress or not
 ## @param ingressCollaborationWS.className IngressClass to use for the Ingress
 ## @param ingressCollaborationWS.host Host for the Ingress
@@ -348,6 +373,93 @@ backend:
         timeoutSeconds: 5
 
 
+## @section mcpServer
+
+mcpServer:
+  ## @param mcpServer.image.repository Repository to use to pull impress's MCP server container image
+  ## @param mcpServer.image.tag impress's MCP server container tag
+  ## @param mcpServer.image.pullPolicy MCP server container image pull policy
+  image:
+    repository: lasuite/impress-mcp-server
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  ## @param mcpServer.command Override the MCP server container command
+  command: []
+
+  ## @param mcpServer.args Override the backend container args
+  args: []
+
+  ## @param mcpServer.envVars Configure MCP server container environment variables
+  envVars: []
+
+  ## @param mcpServer.replicas Amount of backend replicas
+  replicas: 3
+
+  ## @param mcpServer.podAnnotations Annotations to add to the MCP server Pod
+  podAnnotations: {}
+
+  ## @param mcpServer.dpAnnotations Annotations to add to the MCP server Deployment
+  dpAnnotations: {}
+
+  ## @param mcpServer.sidecars Add sidecars containers to MCP server deployment
+  sidecars: []
+
+  ## @param mcpServer.securityContext Configure MCP server Pod security context
+  securityContext: null
+
+  ## @param mcpServer.service.type frontend Service type
+  ## @param mcpServer.service.port frontend Service listening port
+  ## @param mcpServer.service.targetPort frontend container listening port
+  ## @param mcpServer.service.annotations Annotations to add to the frontend Service
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 4200
+    annotations: {}
+
+  ## @param mcpServer.probes Configure probe for frontend
+  ## @extra mcpServer.probes.liveness.path Configure path for frontend HTTP liveness probe
+  ## @extra mcpServer.probes.liveness.targetPort Configure port for frontend HTTP liveness probe
+  ## @extra mcpServer.probes.liveness.initialDelaySeconds Configure initial delay for frontend liveness probe
+  ## @extra mcpServer.probes.liveness.initialDelaySeconds Configure timeout for frontend liveness probe
+  ## @extra mcpServer.probes.startup.path Configure path for frontend HTTP startup probe
+  ## @extra mcpServer.probes.startup.targetPort Configure port for frontend HTTP startup probe
+  ## @extra mcpServer.probes.startup.initialDelaySeconds Configure initial delay for frontend startup probe
+  ## @extra mcpServer.probes.startup.initialDelaySeconds Configure timeout for frontend startup probe
+  ## @extra mcpServer.probes.readiness.path Configure path for frontend HTTP readiness probe
+  ## @extra mcpServer.probes.readiness.targetPort Configure port for frontend HTTP readiness probe
+  ## @extra mcpServer.probes.readiness.initialDelaySeconds Configure initial delay for frontend readiness probe
+  ## @extra mcpServer.probes.readiness.initialDelaySeconds Configure timeout for frontend readiness probe
+  probes: {}
+
+  ## @param mcpServer.resources Resource requirements for the frontend container
+  resources: {}
+
+  ## @param mcpServer.persistence Additional volumes to create and mount on the backend. Used for debugging purposes
+  ## @extra mcpServer.persistence.volume-name.size Size of the additional volume
+  ## @extra mcpServer.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
+  ## @extra mcpServer.persistence.volume-name.mountPath Path where the volume should be mounted to
+  persistence: {}
+
+  ## @param mcpServer.extraVolumeMounts Additional volumes to mount on the backend.
+  extraVolumeMounts: [ ]
+
+  ## @param mcpServer.extraVolumes Additional volumes to mount on the backend.
+  extraVolumes: []
+
+  ## @param mcpServer.nodeSelector Node selector for the backend Pod
+  nodeSelector: {}
+
+  ## @param mcpServer.affinity Affinity for the backend Pod
+  affinity: {}
+
+  ## @param mcpServer.tolerations Tolerations for the backend Pod
+  tolerations: []
+
+  ## @param mcpServer.pdb.enabled Enable pdb on backend
+  pdb:
+    enabled: true
 
 ## @section frontend
 

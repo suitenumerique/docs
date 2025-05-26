@@ -1,0 +1,153 @@
+{{- $envVars := include "impress.common.env" (list . .Values.mcpServer) -}}
+{{- $fullName := include "impress.mcpServer.fullname" . -}}
+{{- $component := "mcp-server" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    {{- with .Values.mcpServer.dpAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.backend.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "impress.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end}}
+      shareProcessNamespace: {{ .Values.backend.shareProcessNamespace }}
+      containers:
+        {{- with .Values.mcpServer.sidecars }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        - name: {{ .Chart.Name }}
+          image: "{{ (.Values.mcpServer.image | default dict).repository }}:{{ (.Values.mcpServer.image | default dict).tag }}"
+          imagePullPolicy: {{ (.Values.mcpServer.image | default dict).pullPolicy }}
+          {{- with .Values.mcpServer.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.mcpServer.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if $envVars}}
+            {{- $envVars | indent 12 }}
+            {{- end }}
+          {{- with .Values.mcpServer.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.mcpServer.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.mcpServer.probes.liveness }}
+          livenessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.mcpServer.probes.liveness (dict "targetPort" .Values.mcpServer.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.mcpServer.probes.readiness }}
+          readinessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.mcpServer.probes.readiness (dict "targetPort" .Values.mcpServer.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.mcpServer.probes.startup }}
+          startupProbe:
+            {{- include "impress.probes.abstract" (merge .Values.mcpServer.probes.startup (dict "targetPort" .Values.mcpServer.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- with .Values.mcpServer.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- range $index, $value := .Values.mountFiles }}
+            - name: "files-{{ $index }}"
+              mountPath: {{ $value.path }}
+              subPath: content
+            {{- end }}
+            {{- range $name, $volume := .Values.mcpServer.persistence }}
+            - name: "{{ $name }}"
+              mountPath: "{{ $volume.mountPath }}"
+            {{- end }}
+            {{- range .Values.mcpServer.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath | default "" }}
+              readOnly: {{ .readOnly }}
+            {{- end }}
+      {{- with .Values.mcpServer.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mcpServer.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mcpServer.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- range $index, $value := .Values.mountFiles }}
+        - name: "files-{{ $index }}"
+          configMap:
+            name: "{{ include "impress.fullname" $ }}-files-{{ $index }}"
+        {{- end }}
+        {{- range $name, $volume := .Values.mcpServer.persistence }}
+        - name: "{{ $name }}"
+          {{- if eq $volume.type "emptyDir" }}
+          emptyDir: {}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: "{{ $fullName }}-{{ $name }}"
+          {{- end }}
+        {{- end }}
+        {{- range .Values.mcpServer.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{ toYaml .hostPath | nindent 12 }}
+          {{- else if .csi }}
+          csi:
+            {{- toYaml .csi | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+---
+{{ if .Values.mcpServer.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+{{ end }}

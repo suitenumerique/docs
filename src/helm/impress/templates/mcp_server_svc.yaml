@@ -1,0 +1,21 @@
+{{- $envVars := include "impress.common.env" (list . .Values.mcpServer) -}}
+{{- $fullName := include "impress.mcpServer.fullname" . -}}
+{{- $component := "mcp-server" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+  annotations:
+    {{- toYaml $.Values.mcpServer.service.annotations | nindent 4 }}
+spec:
+  type: {{ .Values.mcpServer.service.type }}
+  ports:
+    - port: {{ .Values.mcpServer.service.port }}
+      targetPort: {{ .Values.mcpServer.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}

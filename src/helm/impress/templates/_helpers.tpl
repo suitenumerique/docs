@@ -179,6 +179,15 @@ Requires top level scope
 {{- end }}
 
 {{/*
+Full name for the MCP server
+
+Requires top level scope
+*/}}
+{{- define "impress.mcpServer.fullname" -}}
+{{ include "impress.fullname" . }}-mcp-server
+{{- end }}
+
+{{/*
 Usage : {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" .Values.path.to.the.image1) }}
 */}}
 {{- define "impress.secret.dockerconfigjson.name" }}
