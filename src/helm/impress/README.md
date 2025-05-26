@@ -134,7 +134,7 @@
 | `backend.pdb.enabled`                                 | Enable pdb on backend                                                              | `true`                                                                                                                        |
 | `backend.themeCustomization.enabled`                  | Enable theme customization                                                         | `false`                                                                                                                       |
 | `backend.themeCustomization.file_content`             | Content of the theme customization file. Must be a json object.                    | `""`                                                                                                                          |
-| `backend.themeCustomization.mount_path`               | Path where the customization file will be mounted in the backend deployment.       | `/app/configuration/theme/`                                                                                                   |
+| `backend.themeCustomization.mount_path`               | Path where the customization file will be mounted in the backend deployment.       | `/app/impress/configuration/theme`                                                                                            |
 | `backend.celery.replicas`                             | Amount of celery replicas                                                          | `1`                                                                                                                           |
 | `backend.celery.command`                              | Override the celery container command                                              | `[]`                                                                                                                          |
 | `backend.celery.args`                                 | Override the celery container args                                                 | `["celery","-A","impress.celery_app","worker","-l","INFO","-n","impress@%h"]`                                                 |
@@ -200,6 +200,7 @@
 
 | Name                                   | Description                                                 | Value                     |
 | -------------------------------------- | ----------------------------------------------------------- | ------------------------- |
+| `posthog.enabled`                      | Enable or disable posthog integration                       | `true`                    |
 | `posthog.ingress.enabled`              | Enable or disable the ingress resource creation             | `false`                   |
 | `posthog.ingress.className`            | Kubernetes ingress class name to use (e.g., nginx, traefik) | `nil`                     |
 | `posthog.ingress.host`                 | Primary hostname for the ingress resource                   | `impress.example.com`     |

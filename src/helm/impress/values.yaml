@@ -451,6 +451,7 @@ frontend:
 
 posthog:
 
+  ## @param posthog.enabled Enable or disable posthog integration
   ## @param posthog.ingress.enabled Enable or disable the ingress resource creation
   ## @param posthog.ingress.className Kubernetes ingress class name to use (e.g., nginx, traefik)
   ## @param posthog.ingress.host Primary hostname for the ingress resource
@@ -460,6 +461,7 @@ posthog:
   ## @param posthog.ingress.tls.additional Additional TLS configurations for extra hosts/certificates
   ## @param posthog.ingress.customBackends Custom backend service configurations for the ingress
   ## @param posthog.ingress.annotations Additional Kubernetes annotations to apply to the ingress
+  enabled: true
   ingress:
     enabled: false
     className: null

@@ -1,4 +1,4 @@
-{{- if .Values.posthog.ingressAssets.enabled -}}
+{{- if and .Values.posthog.enabled .Values.posthog.ingressAssets.enabled -}}
 {{- $envVars := include "impress.common.env" (list . .Values.posthog) -}}
 {{- $fullName := include "impress.posthog.fullname" . -}}
 {{- $component := "posthog" -}}

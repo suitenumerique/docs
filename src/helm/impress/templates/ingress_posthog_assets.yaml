@@ -1,4 +1,4 @@
-{{- if .Values.posthog.ingressAssets.enabled -}}
+{{- if and .Values.posthog.enabled .Values.posthog.ingressAssets.enabled -}}
 {{- $fullName := include "impress.fullname" . -}}
 {{- if and .Values.posthog.ingressAssets.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.posthog.ingressAssets.annotations "kubernetes.io/ingress.class") }}
