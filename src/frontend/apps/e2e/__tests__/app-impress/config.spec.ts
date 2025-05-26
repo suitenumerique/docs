@@ -121,7 +121,7 @@ test.describe('Config', () => {
   });
 });
 
-test.describe('Config: Not loggued', () => {
+test.describe('Config: Not logged', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('it checks the config api is called', async ({ page }) => {

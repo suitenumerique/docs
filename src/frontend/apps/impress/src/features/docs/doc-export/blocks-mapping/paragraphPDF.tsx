@@ -5,7 +5,7 @@ import { DocsExporterPDF } from '../types';
 export const blockMappingParagraphPDF: DocsExporterPDF['mappings']['blockMapping']['paragraph'] =
   (block, exporter) => {
     /**
-     * Breakline in the editor are not rendered in the PDF
+     * Break line in the editor are not rendered in the PDF
      * By adding a space if the block is empty we ensure that the block is rendered
      */
     if (Array.isArray(block.content)) {

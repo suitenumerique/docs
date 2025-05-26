@@ -404,7 +404,7 @@ class DocumentViewSet(
 
         Example:
         - Ascending: GET /api/v1.0/documents/?ordering=created_at
-        - Desceding: GET /api/v1.0/documents/?ordering=-title
+        - Descending: GET /api/v1.0/documents/?ordering=-title
 
     ### Filtering:
         - `is_creator_me=true`: Returns documents created by the current user.

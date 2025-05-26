@@ -18,7 +18,7 @@ the following command inside your docker container:
 
 ## [3.3.0] - 2025-05-22
 
-⚠️ For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under AGPL-3.0 and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/docs/env.md) for more information.
+⚠️ For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under AGPL-3.0 and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
 
 The footer is now configurable from a customization file. To override the default one, you can
 use the `THEME_CUSTOMIZATION_FILE_PATH` environment variable to point to your customization file.

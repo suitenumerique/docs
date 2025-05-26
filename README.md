@@ -97,7 +97,7 @@ This command builds the `app` container, installs dependencies, performs databas
 
 Your Docker services should now be up and running 🎉
 
-You can access to the project by going to <http://localhost:3000>.
+You can access the project by going to <http://localhost:3000>.
 
 You will be prompted to log in. The default credentials are:
 
@@ -106,7 +106,7 @@ username: impress
 password: impress
 ```
 
-📝 Note that if you need to run them afterwards, you can use the eponym Make rule:
+📝 Note that if you need to run them afterwards, you can use the eponymous Make rule:
 
 ```shellscript
 $ make run
