@@ -9,7 +9,7 @@ from django.core import mail
 import pytest
 from rest_framework.test import APIClient
 
-from core import factories, models
+from core import choices, factories, models
 from core.api import serializers
 from core.tests.conftest import TEAM, USER, VIA
 
@@ -29,7 +29,7 @@ def test_api_document_accesses_create_anonymous():
         {
             "user_id": str(other_user.id),
             "document": str(document.id),
-            "role": random.choice(models.RoleChoices.values),
+            "role": random.choice(choices.RoleChoices.values),
         },
         format="json",
     )
@@ -88,7 +88,7 @@ def test_api_document_accesses_create_authenticated_reader_or_editor(
 
     other_user = factories.UserFactory()
 
-    for new_role in [role[0] for role in models.RoleChoices.choices]:
+    for new_role in choices.RoleChoices.values:
         response = client.post(
             f"/api/v1.0/documents/{document.id!s}/accesses/",
             {
@@ -110,7 +110,7 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_user(
 ):
     """
     Administrators of a document (direct or by heritage) should be able to create
-    document accesses except for the "owner" role.
+    document accesses for a user except for the "owner" role.
     An email should be sent to the accesses to notify them of the adding.
     """
     user = factories.UserFactory(with_owned_document=True)
@@ -150,7 +150,7 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_user(
 
     # It should be allowed to create a lower access
     role = random.choice(
-        [role[0] for role in models.RoleChoices.choices if role[0] != "owner"]
+        [role for role in choices.RoleChoices.values if role != "owner"]
     )
 
     assert len(mail.outbox) == 0
@@ -201,7 +201,7 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_team(
 ):
     """
     Administrators of a document (direct or by heritage) should be able to create
-    document accesses except for the "owner" role.
+    document accesses for a team except for the "owner" role.
     An email should be sent to the accesses to notify them of the adding.
     """
     user = factories.UserFactory(with_owned_document=True)
@@ -241,7 +241,7 @@ def test_api_document_accesses_create_authenticated_administrator_share_to_team(
 
     # It should be allowed to create a lower access
     role = random.choice(
-        [role[0] for role in models.RoleChoices.choices if role[0] != "owner"]
+        [role for role in choices.RoleChoices.values if role != "owner"]
     )
 
     assert len(mail.outbox) == 0
@@ -283,7 +283,8 @@ def test_api_document_accesses_create_authenticated_owner_share_to_user(
 ):
     """
     Owners of a document (direct or by heritage) should be able to create document accesses
-    whatever the role. An email should be sent to the accesses to notify them of the adding.
+    for a user, whatever the role. An email should be sent to the accesses to notify them
+    of the adding.
     """
     user = factories.UserFactory()
 
@@ -307,7 +308,7 @@ def test_api_document_accesses_create_authenticated_owner_share_to_user(
 
     other_user = factories.UserFactory(language="en-us")
     document = documents[-1]
-    role = random.choice([role[0] for role in models.RoleChoices.choices])
+    role = random.choice(choices.RoleChoices.values)
 
     assert len(mail.outbox) == 0
 
@@ -357,7 +358,8 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
 ):
     """
     Owners of a document (direct or by heritage) should be able to create document accesses
-    whatever the role. An email should be sent to the accesses to notify them of the adding.
+    for a team whatever the role. An email should be sent to the accesses to notify them of
+    the adding.
     """
     user = factories.UserFactory()
 
@@ -381,7 +383,7 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
 
     other_user = factories.UserFactory(language="en-us")
     document = documents[-1]
-    role = random.choice([role[0] for role in models.RoleChoices.choices])
+    role = random.choice(choices.RoleChoices.values)
 
     assert len(mail.outbox) == 0
 
@@ -415,6 +417,121 @@ def test_api_document_accesses_create_authenticated_owner_share_to_team(
     assert len(mail.outbox) == 0
 
 
+@pytest.mark.parametrize("override_role", choices.RoleChoices.values)
+@pytest.mark.parametrize("parent_role", choices.RoleChoices.values)
+def test_api_document_accesses_create_authenticated_higher_role_to_user(
+    parent_role, override_role
+):
+    """
+    It should not be allowed to create a document access override for a user
+    with a role lower or equal to the inherited role.
+    """
+    user, other_user = factories.UserFactory.create_batch(2)
+
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(
+        users=([user, "owner"], [other_user, parent_role])
+    )
+    document = factories.DocumentFactory(parent=parent)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+        {
+            "user_id": str(other_user.id),
+            "role": override_role,
+        },
+        format="json",
+    )
+
+    get_priority = choices.RoleChoices.get_priority
+    if get_priority(override_role) > get_priority(parent_role):
+        assert response.status_code == 201
+        assert models.DocumentAccess.objects.filter(user=other_user).count() == 2
+    else:
+        assert response.status_code == 400
+        assert response.json() == {
+            "role": [
+                "Role overrides must be greater than the inherited role: "
+                f"{parent_role}/{override_role}"
+            ],
+        }
+        assert models.DocumentAccess.objects.filter(user=other_user).count() == 1
+
+
+@pytest.mark.parametrize("override_role", choices.RoleChoices.values)
+@pytest.mark.parametrize("parent_role", choices.RoleChoices.values)
+def test_api_document_accesses_create_authenticated_higher_role_to_team(
+    parent_role, override_role, mock_user_teams
+):
+    """
+    It should not be allowed to create a document access override for a team
+    with a role lower or equal to the inherited role.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    mock_user_teams.return_value = ["lasuite", "unknown"]
+
+    parent = factories.DocumentFactory(
+        users=[[user, "owner"]], teams=[["lasuite", parent_role]]
+    )
+    document = factories.DocumentFactory(parent=parent)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+        {
+            "team": "lasuite",
+            "role": override_role,
+        },
+        format="json",
+    )
+
+    get_priority = choices.RoleChoices.get_priority
+    if get_priority(override_role) > get_priority(parent_role):
+        assert response.status_code == 201
+        assert models.DocumentAccess.objects.filter(team="lasuite").count() == 2
+    else:
+        assert response.status_code == 400
+        assert response.json() == {
+            "role": [
+                "Role overrides must be greater than the inherited role: "
+                f"{parent_role}/{override_role}"
+            ],
+        }
+        assert models.DocumentAccess.objects.filter(team="lasuite").count() == 1
+
+
+def test_api_document_accesses_create_authenticated_user_and_team():
+    """Trying to create a document access with a user and a team should return a 400 error."""
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[[user, "owner"]])
+    other_user = factories.UserFactory(language="en-us")
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+        {
+            "user_id": str(other_user.id),
+            "team": "lasuite",
+            "role": "reader",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "__all__": ["Either user or team must be set, not both."]
+    }
+    assert models.DocumentAccess.objects.count() == 1
+
+
 @pytest.mark.parametrize("via", VIA)
 def test_api_document_accesses_create_email_in_receivers_language(via, mock_user_teams):
     """
@@ -434,7 +551,7 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
             document=document, team="lasuite", role="owner"
         )
 
-    role = random.choice([role[0] for role in models.RoleChoices.choices])
+    role = random.choice(choices.RoleChoices.values)
 
     assert len(mail.outbox) == 0
 
