@@ -339,11 +339,52 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
         return getattr(instance, "max_ancestors_role", None)
 
     def get_max_role(self, instance):
-        """Return max_ancestors_role if annotated; else None."""
+        """Return max role."""
         return choices.RoleChoices.max(
             getattr(instance, "max_ancestors_role", None),
             instance.role,
         )
+
+    def validate(self, attrs):
+        """
+        Ensure the selected role is greater than or equal to the maximum role
+        found in any ancestor document for the same user/team.
+        """
+
+        if self.instance:
+            document = self.instance.document
+            user = self.instance.user
+            team = self.instance.team
+        else:
+            document_id = self.context["resource_id"]
+            document = models.Document.objects.get(id=document_id)
+            team = attrs.get("team")
+            user = attrs.get("user")
+
+        ancestors = document.get_ancestors().filter(ancestors_deleted_at__isnull=True)
+        access_qs = models.DocumentAccess.objects.filter(document__in=ancestors)
+
+        if user:
+            access_qs = access_qs.filter(user=user)
+        if team:
+            access_qs = access_qs.filter(team=team)
+
+        ancestor_roles = access_qs.values_list("role", flat=True)
+        inherited_role = choices.RoleChoices.max(*ancestor_roles)
+
+        role = attrs.get("role")
+        get_priority = choices.RoleChoices.get_priority
+        if inherited_role and get_priority(inherited_role) >= get_priority(role):
+            raise serializers.ValidationError(
+                {
+                    "role": (
+                        "Role overrides must be greater than the inherited role: "
+                        f"{inherited_role}/{role}"
+                    )
+                }
+            )
+
+        return super().validate(attrs)
 
     def update(self, instance, validated_data):
         """Make "user" field readonly but only on update."""

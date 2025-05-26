@@ -140,9 +140,9 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
             {
                 "id": str(access.id),
                 "document": {
+                    "depth": access.document.depth,
                     "id": str(access.document_id),
                     "path": access.document.path,
-                    "depth": access.document.depth,
                 },
                 "user": {
                     "full_name": access.user.full_name,
@@ -240,9 +240,9 @@ def test_api_document_accesses_list_authenticated_related_privileged(
             {
                 "id": str(access.id),
                 "document": {
+                    "depth": access.document.depth,
                     "id": str(access.document_id),
                     "path": access.document.path,
-                    "depth": access.document.depth,
                 },
                 "user": {
                     "id": str(access.user.id),
@@ -611,14 +611,15 @@ def test_api_document_accesses_retrieve_authenticated_related(
             "id": str(access.id),
             "abilities": access.get_abilities(user),
             "document": {
+                "depth": access.document.depth,
                 "id": str(access.document_id),
                 "path": access.document.path,
-                "depth": access.document.depth,
             },
             "user": access_user,
             "team": "",
             "role": access.role,
             "max_ancestors_role": None,
+            "max_role": access.role,
         }
 
 
@@ -961,6 +962,119 @@ def test_api_document_accesses_update_owner(
             }
         else:
             assert updated_values == old_values
+
+
+@pytest.mark.parametrize("new_override_role", choices.RoleChoices.values)
+@pytest.mark.parametrize("parent_role", choices.RoleChoices.values)
+def test_api_document_accesses_update_higher_role_to_user(
+    parent_role,
+    new_override_role,
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
+):
+    """
+    It should not be allowed to update the role of a document access override
+    for a user with a role lower or equal to the inherited role.
+    """
+    user, other_user = factories.UserFactory.create_batch(2)
+
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(
+        users=[[user, "owner"], [other_user, parent_role]]
+    )
+    document = factories.DocumentFactory(parent=parent)
+
+    override_role = random.choice(choices.RoleChoices.values)
+    access = factories.UserDocumentAccessFactory(
+        document=document, user=other_user, role=override_role
+    )
+
+    get_priority = choices.RoleChoices.get_priority
+    if get_priority(new_override_role) > get_priority(parent_role):
+        with mock_reset_connections(document.id, str(access.user_id)):
+            response = client.put(
+                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+                data={"role": new_override_role},
+                format="json",
+            )
+
+        assert response.status_code == 200
+        access.refresh_from_db()
+        assert access.role == new_override_role
+    else:
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            data={"role": new_override_role},
+            format="json",
+        )
+        assert response.status_code == 400
+        access.refresh_from_db()
+        assert access.role == override_role
+        assert response.json() == {
+            "role": [
+                "Role overrides must be greater than the inherited role: "
+                f"{parent_role}/{new_override_role}"
+            ],
+        }
+
+
+@pytest.mark.skip(
+    reason="Pending fix on https://github.com/suitenumerique/docs/issues/969"
+)
+@pytest.mark.parametrize("new_override_role", choices.RoleChoices.values)
+@pytest.mark.parametrize("parent_role", choices.RoleChoices.values)
+def test_api_document_accesses_update_higher_role_to_team(
+    parent_role,
+    new_override_role,
+    mock_reset_connections,  # pylint: disable=redefined-outer-name
+):
+    """
+    It should not be allowed to update the role of a document access override
+    for a team with a role lower or equal to the inherited role.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(
+        users=[[user, "owner"]], teams=[["lasuite", parent_role]]
+    )
+    document = factories.DocumentFactory(parent=parent)
+
+    override_role = random.choice(choices.RoleChoices.values)
+    access = factories.TeamDocumentAccessFactory(
+        document=document, team="lasuite", role=override_role
+    )
+
+    get_priority = choices.RoleChoices.get_priority
+    if get_priority(new_override_role) > get_priority(parent_role):
+        with mock_reset_connections(document.id, str(access.user_id)):
+            response = client.put(
+                f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+                data={"role": new_override_role},
+                format="json",
+            )
+
+        assert response.status_code == 200
+        access.refresh_from_db()
+        assert access.role == new_override_role
+    else:
+        response = client.put(
+            f"/api/v1.0/documents/{document.id!s}/accesses/{access.id!s}/",
+            data={"role": new_override_role},
+            format="json",
+        )
+        assert response.status_code == 400
+        access.refresh_from_db()
+        assert access.role == override_role
+        assert response.json() == {
+            "role": [
+                "Role overrides must be greater than the inherited role: "
+                f"{parent_role}/{new_override_role}"
+            ],
+        }
 
 
 @pytest.mark.parametrize("via", VIA)
