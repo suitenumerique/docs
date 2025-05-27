@@ -128,8 +128,16 @@ export async function waitForLanguageSwitch(
   lang: TestLanguageValue,
 ) {
   const header = page.locator('header').first();
-  await header.getByRole('button', { name: 'arrow_drop_down' }).click();
+  const languagePicker = header.locator('.--docs--language-picker-text');
+  const isAlreadyTargetLanguage = await languagePicker
+    .innerText()
+    .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
 
+  if (isAlreadyTargetLanguage) {
+    return;
+  }
+
+  await languagePicker.click();
   const responsePromise = page.waitForResponse(
     (resp) =>
       resp.url().includes('/user') && resp.request().method() === 'PATCH',

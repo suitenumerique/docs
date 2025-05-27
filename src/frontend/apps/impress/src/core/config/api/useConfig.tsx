@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Resource } from 'i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
@@ -7,9 +8,10 @@ import { PostHogConf } from '@/services';
 
 interface ThemeCustomization {
   footer?: FooterType;
+  translations?: Resource;
 }
 
-interface ConfigResponse {
+export interface ConfigResponse {
   AI_FEATURE_ENABLED?: boolean;
   COLLABORATION_WS_URL?: string;
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY?: boolean;

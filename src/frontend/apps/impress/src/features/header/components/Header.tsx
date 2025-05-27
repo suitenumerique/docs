@@ -5,7 +5,7 @@ import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, StyledLink } from '@/components/';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
-import { LanguagePicker } from '@/features/language';
+import { LanguagePicker } from '@/features/language/components';
 import { useResponsiveStore } from '@/stores';
 
 import { HEADER_HEIGHT } from '../conf';
