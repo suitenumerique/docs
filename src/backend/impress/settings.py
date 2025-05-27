@@ -472,6 +472,8 @@ class Base(Configuration):
     )
 
     # OIDC - Authorization Code Flow
+    OIDC_AUTHENTICATE_CLASS = "lasuite.oidc_login.views.OIDCAuthenticationRequestView"
+    OIDC_CALLBACK_CLASS = "lasuite.oidc_login.views.OIDCAuthenticationCallbackView"
     OIDC_CREATE_USER = values.BooleanValue(
         default=True,
         environ_name="OIDC_CREATE_USER",
@@ -555,6 +557,9 @@ class Base(Configuration):
         default=None,
         environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
         environ_prefix=None,
+    )
+    OIDC_REDIRECT_FIELD_NAME = values.Value(
+        "returnTo", environ_name="OIDC_REDIRECT_FIELD_NAME", environ_prefix=None
     )
 
     # WARNING: Enabling this setting allows multiple user accounts to share the same email

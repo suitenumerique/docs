@@ -45,7 +45,10 @@ export const getConfig = async (): Promise<ConfigResponse> => {
   const response = await fetchAPI(`config/`);
 
   if (!response.ok) {
-    throw new APIError('Failed to get the doc', await errorCauses(response));
+    throw new APIError(
+      'Failed to get the configurations',
+      await errorCauses(response),
+    );
   }
 
   const config = response.json() as Promise<ConfigResponse>;

@@ -7,7 +7,7 @@ import { useConfig } from '@/core';
 
 import { HOME_URL } from '../conf';
 import { useAuth } from '../hooks';
-import { getAuthUrl, gotoLogin } from '../utils';
+import { gotoLogin } from '../utils';
 
 export const Auth = ({ children }: PropsWithChildren) => {
   const { isLoading, pathAllowed, isFetchedAfterMount, authenticated } =
@@ -21,22 +21,6 @@ export const Auth = ({ children }: PropsWithChildren) => {
         <Loader />
       </Box>
     );
-  }
-
-  /**
-   * If the user is authenticated and wanted initially to access a document,
-   * we redirect to the document page.
-   */
-  if (authenticated) {
-    const authUrl = getAuthUrl();
-    if (authUrl) {
-      void replace(authUrl);
-      return (
-        <Box $height="100vh" $width="100vw" $align="center" $justify="center">
-          <Loader />
-        </Box>
-      );
-    }
   }
 
   /**
