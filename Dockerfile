@@ -7,8 +7,7 @@ FROM python:3.13.3-alpine AS base
 RUN python -m pip install --upgrade pip setuptools
 
 # Upgrade system packages to install security updates
-RUN apk update && \
-  apk upgrade
+RUN apk upgrade --no-cache
 
 # ---- Back-end builder image ----
 FROM base AS back-builder
@@ -45,7 +44,7 @@ FROM base AS link-collector
 ARG IMPRESS_STATIC_ROOT=/data/static
 
 # Install pango & rdfind
-RUN apk add \
+RUN apk add --no-cache \
   pango \
   rdfind
 
@@ -71,7 +70,7 @@ FROM base AS core
 ENV PYTHONUNBUFFERED=1
 
 # Install required system libs
-RUN apk add \
+RUN apk add --no-cache \
   cairo \
   file \
   font-noto \
@@ -117,7 +116,7 @@ FROM core AS backend-development
 USER root:root
 
 # Install psql
-RUN apk add postgresql-client
+RUN apk add --no-cache postgresql-client
 
 # Uninstall impress and re-install it in editable mode along with development
 # dependencies
