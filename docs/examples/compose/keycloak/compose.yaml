@@ -1,0 +1,36 @@
+services:
+  kc_postgresql:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
+    env_file:
+    - env.d/kc_postgresql
+    volumes:
+    - ./data/keycloak:/var/lib/postgresql/data/pgdata
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1.3
+    command: ["start"]
+    env_file:
+    - env.d/kc_postgresql
+    - env.d/keycloak
+    # Uncomment and set your values if using our nginx proxy example
+    # environment:
+    # - VIRTUAL_HOST=id.yourdomain.tld # used by nginx proxy 
+    # - VIRTUAL_PORT=8080 # used by nginx proxy
+    # - LETSENCRYPT_HOST=id.yourdomain.tld # used by lets encrypt to generate TLS certificate
+    depends_on:
+      kc_postgresql::
+        condition: service_healthy
+        restart: true
+# Uncomment if using our nginx proxy example
+#    networks:
+#    - proxy-tier
+#    - default
+#
+#networks:
+#  proxy-tier:
+#    external: true
