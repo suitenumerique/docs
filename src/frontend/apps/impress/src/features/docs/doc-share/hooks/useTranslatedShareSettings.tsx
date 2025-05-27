@@ -13,7 +13,7 @@ export const useTranslatedShareSettings = () => {
 
   const linkModeTranslations = {
     [LinkRole.READER]: t('Reading'),
-    [LinkRole.EDITOR]: t('Edition'),
+    [LinkRole.EDITOR]: t('Editing'),
   };
 
   const linkReachChoices = {

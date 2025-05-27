@@ -291,7 +291,7 @@ test.describe('Doc Visibility: Public', () => {
     ).toBeVisible();
 
     await page.getByLabel('Visibility mode').click();
-    await page.getByLabel('Edition').click();
+    await page.getByLabel('Editing').click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),
@@ -472,7 +472,7 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     const urlDoc = page.url();
     await page.getByLabel('Visibility mode').click();
-    await page.getByLabel('Edition').click();
+    await page.getByLabel('Editing').click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),
