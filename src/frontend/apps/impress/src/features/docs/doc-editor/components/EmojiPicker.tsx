@@ -1,4 +1,4 @@
-import data from '@emoji-mart/data';
+import { EmojiMartData } from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,19 +6,15 @@ import { useTranslation } from 'react-i18next';
 import { Box } from '@/components';
 
 interface EmojiPickerProps {
+  emojiData: EmojiMartData;
   categories: string[];
-  custom: {
-    name: string;
-    id: string;
-    emojis: string[];
-  }[];
   onClickOutside: () => void;
   onEmojiSelect: ({ native }: { native: string }) => void;
 }
 
 export const EmojiPicker = ({
+  emojiData,
   categories,
-  custom,
   onClickOutside,
   onEmojiSelect,
 }: EmojiPickerProps) => {
@@ -27,9 +23,8 @@ export const EmojiPicker = ({
   return (
     <Box $position="absolute" $zIndex={1000} $margin="2rem 0 0 0">
       <Picker
+        data={emojiData}
         categories={categories}
-        custom={custom}
-        data={data}
         locale={i18n.resolvedLanguage}
         navPosition="none"
         onClickOutside={onClickOutside}

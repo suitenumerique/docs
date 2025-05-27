@@ -72,8 +72,7 @@ export const cssEditor = (readonly: boolean) => css`
       border-radius: var(--c--theme--spacings--3xs);
     }
 
-    .bn-block-content[data-content-type='paragraph'],
-    .bn-block-content[data-content-type='heading'] {
+    .bn-block[data-background-color] > .bn-block-content {
       padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
       border-radius: var(--c--theme--spacings--3xs);
     }

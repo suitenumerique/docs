@@ -10,52 +10,7 @@ import { Box, BoxButton, Icon } from '@/components';
 import { DocsBlockNoteEditor } from '../../types';
 import { EmojiPicker } from '../EmojiPicker';
 
-const calloutCustom = [
-  {
-    name: 'Callout',
-    id: 'callout',
-    emojis: [
-      'bulb',
-      'point_right',
-      'point_up',
-      'ok_hand',
-      'key',
-      'construction',
-      'warning',
-      'fire',
-      'pushpin',
-      'scissors',
-      'question',
-      'no_entry',
-      'no_entry_sign',
-      'alarm_clock',
-      'phone',
-      'rotating_light',
-      'recycle',
-      'white_check_mark',
-      'lock',
-      'paperclip',
-      'book',
-      'speaking_head_in_silhouette',
-      'arrow_right',
-      'loudspeaker',
-      'hammer_and_wrench',
-      'gear',
-    ],
-  },
-];
-
-const calloutCategories = [
-  'callout',
-  'people',
-  'nature',
-  'foods',
-  'activity',
-  'places',
-  'flags',
-  'objects',
-  'symbols',
-];
+import InitEmojiCallout from './initEmojiCallout';
 
 export const CalloutBlock = createReactBlockSpec(
   {
@@ -124,8 +79,8 @@ export const CalloutBlock = createReactBlockSpec(
 
           {openEmojiPicker && (
             <EmojiPicker
-              categories={calloutCategories}
-              custom={calloutCustom}
+              emojiData={InitEmojiCallout.emojidata}
+              categories={InitEmojiCallout.calloutCategories}
               onClickOutside={onClickOutside}
               onEmojiSelect={onEmojiSelect}
             />
