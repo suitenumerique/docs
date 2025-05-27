@@ -9,7 +9,15 @@ type AnalyticEventUser = {
   email: string;
 };
 
-export type AnalyticEvent = AnalyticEventClick | AnalyticEventUser;
+export type AnalyticEventGeneric = {
+  eventName: string;
+  [key: string]: string | number;
+};
+
+export type AnalyticEvent =
+  | AnalyticEventClick
+  | AnalyticEventUser
+  | AnalyticEventGeneric;
 
 export abstract class AbstractAnalytic {
   public constructor() {
