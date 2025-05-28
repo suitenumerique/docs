@@ -2,10 +2,12 @@
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
+from rest_framework.response import Response
 from openai import OpenAI
-
+import logging
 from core import enums
+
+log = logging.getLogger(__name__)
 
 AI_ACTIONS = {
     "prompt": (
@@ -91,3 +93,18 @@ class AIService:
         language_display = enums.ALL_LANGUAGES.get(language, language)
         system_content = AI_TRANSLATE.format(language=language_display)
         return self.call_ai_api(system_content, text)
+    
+    def proxy(self, data:dict) -> dict:
+        """Proxy AI API requests to the configured AI provider."""
+        try:
+            if 'stream' in data:
+                data['stream'] = False
+
+            log.debug(f"Proxying AI request with data: {data}")
+
+            response = self.client.chat.completions.create(**data)
+            return response.model_dump()
+        
+        except Exception as exc:
+            log.error(f"Error in AI proxy: {str(exc)}")
+            raise RuntimeError(f"Failed to proxy AI request: {str(exc)}") from exc

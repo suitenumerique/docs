@@ -703,6 +703,25 @@ class AITranslateSerializer(serializers.Serializer):
         return value
 
 
+class AIProxySerializer(serializers.Serializer):
+    """Serializer for AI proxy requests."""
+    
+    messages = serializers.ListField(required=True)
+    model = serializers.CharField(required=True)
+    
+    def validate(self, attrs):
+        """Additional validation for the proxy request."""
+        # Ensure we have at least one message
+        if not attrs.get('messages'):
+            raise serializers.ValidationError("At least one message is required")
+        
+        # Ensure each message has the required fields
+        for message in attrs.get('messages', []):
+            if not isinstance(message, dict) or 'role' not in message or 'content' not in message:
+                raise serializers.ValidationError("Each message must have 'role' and 'content' fields")
+        
+        return attrs
+
 class MoveDocumentSerializer(serializers.Serializer):
     """
     Serializer for validating input data to move a document within the tree structure.
