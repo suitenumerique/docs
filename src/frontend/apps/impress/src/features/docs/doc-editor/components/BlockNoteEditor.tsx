@@ -54,6 +54,15 @@ interface BlockNoteEditorProps {
   provider: HocuspocusProvider;
 }
 
+const toto = createAIExtension({
+  stream: false,
+  model,
+  agentCursor: {
+    name: 'Albert',
+    color: '#8bc6ff',
+  },
+});
+
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
@@ -153,6 +162,23 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
             name: 'Albert',
             color: '#8bc6ff',
           },
+          // promptBuilder: async (editor, opts) => {
+          //   if (opts.selectedBlocks) {
+          //     const data = await getDataForPromptWithSelection(editor, {
+          //       selectedBlocks: opts.selectedBlocks,
+          //     });
+          //     return promptManipulateSelectionJSONBlocks({
+          //       ...data,
+          //       userPrompt: opts.userPrompt,
+          //     });
+          //   } else {
+          //     const data = await getDataForPromptNoSelection(editor, opts);
+          //     return promptManipulateDocumentUseJSONBlocks({
+          //       ...data,
+          //       userPrompt: opts.userPrompt,
+          //     });
+          //   }
+          // },
         }),
       ],
       tables: {
