@@ -1150,6 +1150,12 @@ class DocumentAccess(BaseAccess):
             for candidate_role in set_role_to
             if RoleChoices.get_priority(candidate_role) > ancestors_role_priority
         ]
+        child_set_role_to = [
+            candidate_role
+            for candidate_role in set_role_to
+            if RoleChoices.get_priority(candidate_role)
+            > RoleChoices.get_priority(self.role)
+        ]
 
         return {
             "destroy": can_delete,
@@ -1157,6 +1163,7 @@ class DocumentAccess(BaseAccess):
             "partial_update": bool(set_role_to) and is_owner_or_admin,
             "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
+            "child_set_role_to": child_set_role_to,
         }
 
 

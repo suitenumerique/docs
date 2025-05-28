@@ -159,6 +159,7 @@ def test_api_document_accesses_list_authenticated_related_non_privileged(
                     "partial_update": False,
                     "retrieve": False,
                     "set_role_to": [],
+                    "child_set_role_to": [],
                     "update": False,
                 },
             }
@@ -326,196 +327,284 @@ def test_api_document_accesses_retrieve_set_role_to_child():
 
 
 @pytest.mark.parametrize(
-    "roles,results",
+    "self_role, other_grandparent, other_parent, other_document",
     [
-        [
-            ["administrator", "reader", "reader", "reader"],
-            [
-                ["reader", "editor", "administrator"],
-                [],
-                [],
-                ["editor", "administrator"],
-            ],
-        ],
-        [
-            ["owner", "reader", "reader", "reader"],
-            [
-                ["reader", "editor", "administrator", "owner"],
-                [],
-                [],
-                ["editor", "administrator", "owner"],
-            ],
-        ],
-        [
-            ["owner", "reader", "reader", "owner"],
-            [
-                ["reader", "editor", "administrator", "owner"],
-                [],
-                [],
-                ["editor", "administrator", "owner"],
-            ],
-        ],
+        # Test case 1
+        (
+            {
+                "role": "administrator",
+                "set_role_to": ["reader", "editor", "administrator"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "reader",
+                "set_role_to": ["editor", "administrator"],
+                "child_set_role_to": ["editor", "administrator"],
+            },
+        ),
+        # Test case 2
+        (
+            {
+                "role": "owner",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "reader",
+                "set_role_to": ["editor", "administrator", "owner"],
+                "child_set_role_to": ["editor", "administrator", "owner"],
+            },
+        ),
+        # Test case 3
+        (
+            {
+                "role": "owner",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+            {"role": "administrator", "set_role_to": [], "child_set_role_to": []},
+            {"role": None},
+            {
+                "role": "reader",  # May happen after a move
+                "set_role_to": ["owner"],
+                "child_set_role_to": ["owner"],
+            },
+        ),
+        # Test case 4
+        (
+            {
+                "role": "owner",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "owner",
+                "set_role_to": ["editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+        ),
     ],
 )
-def test_api_document_accesses_list_authenticated_related_same_user(roles, results):
+def test_api_document_accesses_list_authenticated_related_same_user(
+    self_role, other_grandparent, other_parent, other_document
+):
     """
-    The maximum role across ancestor documents and set_role_to options for
-    a given user should be filled as expected.
+    Test correct 'set_role_to' and 'child_set_role_to' values for each access.
     """
     user = factories.UserFactory()
+    other_user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
 
-    # Create documents structured as a tree
+    # Create document hierarchy
     grand_parent = factories.DocumentFactory(link_reach="authenticated")
     parent = factories.DocumentFactory(parent=grand_parent)
     document = factories.DocumentFactory(parent=parent)
 
-    # Create accesses for another user
-    other_user = factories.UserFactory()
-    accesses = [
-        factories.UserDocumentAccessFactory(
-            document=document, user=user, role=roles[0]
-        ),
-        factories.UserDocumentAccessFactory(
-            document=grand_parent, user=other_user, role=roles[1]
-        ),
-        factories.UserDocumentAccessFactory(
-            document=parent, user=other_user, role=roles[2]
-        ),
-        factories.UserDocumentAccessFactory(
-            document=document, user=other_user, role=roles[3]
-        ),
+    # Accesses: (document, user, spec)
+    access_specs = [
+        (document, user, self_role),
+        (grand_parent, other_user, other_grandparent),
+        (parent, other_user, other_parent),
+        (document, other_user, other_document),
     ]
 
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+    accesses = []
+    for doc, usr, spec in access_specs:
+        if spec["role"] is not None:
+            access = factories.UserDocumentAccessFactory(
+                document=doc, user=usr, role=spec["role"]
+            )
+            accesses.append((access, spec))
 
+    response = client.get(f"/api/v1.0/documents/{document.id}/accesses/")
     assert response.status_code == 200
-    content = response.json()
-    assert len(content) == 4
 
-    for result in content:
-        assert (
-            result["max_ancestors_role"] is None
-            if result["user"]["id"] == str(user.id)
-            else choices.RoleChoices.max(roles[1], roles[2])
-        )
+    content_by_id = {entry["id"]: entry for entry in response.json()}
 
-    result_dict = {
-        result["id"]: result["abilities"]["set_role_to"] for result in content
-    }
-    assert [result_dict[str(access.id)] for access in accesses] == results
+    for access, expected in accesses:
+        abilities = content_by_id[str(access.id)]["abilities"]
+        assert abilities["set_role_to"] == expected["set_role_to"]
+        assert abilities["child_set_role_to"] == expected["child_set_role_to"]
 
 
 @pytest.mark.parametrize(
-    "roles,results",
+    "self_role, other_grandparent, other_parent, other_document",
     [
-        [
-            ["administrator", "reader", "reader", "reader"],
-            [
-                ["reader", "editor", "administrator"],
-                [],
-                [],
-                ["editor", "administrator"],
-            ],
-        ],
-        [
-            ["owner", "reader", "reader", "reader"],
-            [
-                ["reader", "editor", "administrator", "owner"],
-                [],
-                [],
-                ["editor", "administrator", "owner"],
-            ],
-        ],
-        [
-            ["owner", "reader", "reader", "owner"],
-            [
-                ["reader", "editor", "administrator", "owner"],
-                [],
-                [],
-                ["editor", "administrator", "owner"],
-            ],
-        ],
-        [
-            ["reader", "reader", "reader", "owner"],
-            [
-                ["reader", "editor", "administrator", "owner"],
-                [],
-                [],
-                ["editor", "administrator", "owner"],
-            ],
-        ],
-        [
-            ["reader", "administrator", "reader", "editor"],
-            [
-                ["reader", "editor", "administrator"],
-                ["reader", "editor", "administrator"],
-                [],
-                [],
-            ],
-        ],
-        [
-            ["editor", "editor", "administrator", "editor"],
-            [
-                ["reader", "editor", "administrator"],
-                [],
-                ["administrator"],
-                [],
-            ],
-        ],
+        # Test case 1
+        (
+            {
+                "role": "administrator",
+                "set_role_to": ["reader", "editor", "administrator"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "reader",
+                "set_role_to": ["editor", "administrator"],
+                "child_set_role_to": ["editor", "administrator"],
+            },
+        ),
+        # Test case 2
+        (
+            {
+                "role": "owner",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "reader",
+                "set_role_to": ["editor", "administrator", "owner"],
+                "child_set_role_to": ["editor", "administrator", "owner"],
+            },
+        ),
+        # Test case 3
+        (
+            {
+                "role": "owner",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "owner",
+                "set_role_to": ["editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+        ),
+        # Test case 4
+        (
+            {
+                "role": "reader",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": ["editor", "administrator", "owner"],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "owner",
+                "set_role_to": ["editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+        ),
+        # Test case 5
+        (
+            {
+                "role": "reader",
+                "set_role_to": ["reader", "editor", "administrator"],
+                "child_set_role_to": ["editor", "administrator"],
+            },
+            {
+                "role": "administrator",
+                "set_role_to": ["reader", "editor", "administrator"],
+                "child_set_role_to": [],
+            },
+            {"role": "reader", "set_role_to": [], "child_set_role_to": []},
+            {"role": "editor", "set_role_to": [], "child_set_role_to": []},
+        ),
+        # Test case 6
+        (
+            {
+                "role": "owner",
+                "set_role_to": ["reader", "editor", "administrator", "owner"],
+                "child_set_role_to": [],
+            },
+            {
+                "role": "administrator",
+                "set_role_to": ["reader", "editor", "administrator"],
+                "child_set_role_to": [],
+            },
+            {"role": None},
+            {
+                "role": "reader",  # May happen after a move
+                "set_role_to": ["owner"],
+                "child_set_role_to": ["owner"],
+            },
+        ),
+        # Test case 7
+        (
+            {
+                "role": "editor",
+                "set_role_to": ["reader", "editor", "administrator"],
+                "child_set_role_to": ["administrator"],
+            },
+            {"role": "editor", "set_role_to": [], "child_set_role_to": []},
+            {
+                "role": "administrator",
+                "set_role_to": ["administrator"],
+                "child_set_role_to": [],
+            },
+            {"role": "editor", "set_role_to": [], "child_set_role_to": []},
+        ),
     ],
 )
 def test_api_document_accesses_list_authenticated_related_same_team(
-    roles, results, mock_user_teams
+    self_role, other_grandparent, other_parent, other_document, mock_user_teams
 ):
     """
-    The maximum role across ancestor documents and set_role_to optionsfor
-    a given team should be filled as expected.
+    Test correct 'set_role_to' values from team-based access and max_ancestors_role logic.
     """
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
 
-    # Create documents structured as a tree
+    # Create document hierarchy
     grand_parent = factories.DocumentFactory(link_reach="authenticated")
     parent = factories.DocumentFactory(parent=grand_parent)
     document = factories.DocumentFactory(parent=parent)
 
     mock_user_teams.return_value = ["lasuite", "unknown"]
+
     accesses = [
-        factories.UserDocumentAccessFactory(
-            document=document, user=user, role=roles[0]
-        ),
-        # Create accesses for a team
-        factories.TeamDocumentAccessFactory(
-            document=grand_parent, team="lasuite", role=roles[1]
-        ),
-        factories.TeamDocumentAccessFactory(
-            document=parent, team="lasuite", role=roles[2]
-        ),
-        factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role=roles[3]
-        ),
+        (
+            factories.UserDocumentAccessFactory(
+                document=document,
+                user=user,
+                role=self_role["role"],
+            ),
+            self_role,
+        )
     ]
 
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+    # --- Team-based accesses ---
+    team_access_specs = [
+        (grand_parent, other_grandparent),
+        (parent, other_parent),
+        (document, other_document),
+    ]
 
+    for doc, spec in team_access_specs:
+        if spec["role"] is not None:
+            accesses.append(
+                (
+                    factories.TeamDocumentAccessFactory(
+                        document=doc,
+                        team="lasuite",
+                        role=spec["role"],
+                    ),
+                    spec,
+                )
+            )
+
+    response = client.get(f"/api/v1.0/documents/{document.id}/accesses/")
     assert response.status_code == 200
-    content = response.json()
-    assert len(content) == 4
 
-    for result in content:
-        assert (
-            result["max_ancestors_role"] is None
-            if result["user"] and result["user"]["id"] == str(user.id)
-            else choices.RoleChoices.max(roles[1], roles[2])
-        )
+    content_by_id = {entry["id"]: entry for entry in response.json()}
 
-    result_dict = {
-        result["id"]: result["abilities"]["set_role_to"] for result in content
-    }
-    assert [result_dict[str(access.id)] for access in accesses] == results
+    for access, expected in accesses:
+        abilities = content_by_id[str(access.id)]["abilities"]
+        assert abilities["set_role_to"] == expected["set_role_to"]
+        assert abilities["child_set_role_to"] == expected["child_set_role_to"]
 
 
 def test_api_document_accesses_retrieve_anonymous():

@@ -90,6 +90,7 @@ def test_models_document_access_get_abilities_anonymous():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -104,6 +105,7 @@ def test_models_document_access_get_abilities_authenticated():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -124,6 +126,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_allowed():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator", "owner"],
+        "child_set_role_to": [],
     }
 
 
@@ -145,6 +148,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_last_on_root(
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -167,6 +171,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_last_on_child(
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator", "owner"],
+        "child_set_role_to": [],
     }
 
 
@@ -184,6 +189,7 @@ def test_models_document_access_get_abilities_for_owner_of_owner():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator", "owner"],
+        "child_set_role_to": [],
     }
 
 
@@ -201,6 +207,7 @@ def test_models_document_access_get_abilities_for_owner_of_administrator():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator", "owner"],
+        "child_set_role_to": ["owner"],
     }
 
 
@@ -218,6 +225,7 @@ def test_models_document_access_get_abilities_for_owner_of_editor():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator", "owner"],
+        "child_set_role_to": ["administrator", "owner"],
     }
 
 
@@ -235,6 +243,7 @@ def test_models_document_access_get_abilities_for_owner_of_reader():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator", "owner"],
+        "child_set_role_to": ["editor", "administrator", "owner"],
     }
 
 
@@ -255,6 +264,7 @@ def test_models_document_access_get_abilities_for_administrator_of_owner():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -272,6 +282,7 @@ def test_models_document_access_get_abilities_for_administrator_of_administrator
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator"],
+        "child_set_role_to": [],
     }
 
 
@@ -289,6 +300,7 @@ def test_models_document_access_get_abilities_for_administrator_of_editor():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator"],
+        "child_set_role_to": ["administrator"],
     }
 
 
@@ -306,6 +318,7 @@ def test_models_document_access_get_abilities_for_administrator_of_reader():
         "update": True,
         "partial_update": True,
         "set_role_to": ["reader", "editor", "administrator"],
+        "child_set_role_to": ["editor", "administrator"],
     }
 
 
@@ -326,6 +339,7 @@ def test_models_document_access_get_abilities_for_editor_of_owner():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -343,6 +357,7 @@ def test_models_document_access_get_abilities_for_editor_of_administrator():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -365,6 +380,7 @@ def test_models_document_access_get_abilities_for_editor_of_editor_user(
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -385,6 +401,7 @@ def test_models_document_access_get_abilities_for_reader_of_owner():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -402,6 +419,7 @@ def test_models_document_access_get_abilities_for_reader_of_administrator():
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -424,6 +442,7 @@ def test_models_document_access_get_abilities_for_reader_of_reader_user(
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
@@ -444,6 +463,7 @@ def test_models_document_access_get_abilities_preset_role(django_assert_num_quer
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+        "child_set_role_to": [],
     }
 
 
