@@ -1451,24 +1451,23 @@ class DocumentAccessViewSet(
         accesses = list(queryset.order_by("document__path"))
 
         # Annotate more information on roles
-        path_to_key_to_max_ancestors_role = defaultdict(
-            lambda: defaultdict(lambda: None)
-        )
+        # - accesses of the user (direct or via a team)
         path_to_ancestors_roles = defaultdict(list)
         path_to_role = defaultdict(lambda: None)
+        # - accesses of other users and teams
+        key_to_path_to_max_ancestors_role = defaultdict(
+            lambda: defaultdict(lambda: None)
+        )
         for access in accesses:
             key = access.target_key
             path = access.document.path
             parent_path = path[: -models.Document.steplen]
 
-            path_to_key_to_max_ancestors_role[path][key] = choices.RoleChoices.max(
-                path_to_key_to_max_ancestors_role[path][key], access.role
-            )
-
             if parent_path:
-                path_to_key_to_max_ancestors_role[path][key] = choices.RoleChoices.max(
-                    path_to_key_to_max_ancestors_role[parent_path][key],
-                    path_to_key_to_max_ancestors_role[path][key],
+                key_to_path_to_max_ancestors_role[key][parent_path] = (
+                    choices.RoleChoices.max(
+                        *key_to_path_to_max_ancestors_role[key].values()
+                    )
                 )
                 path_to_ancestors_roles[path].extend(
                     path_to_ancestors_roles[parent_path]
@@ -1476,6 +1475,10 @@ class DocumentAccessViewSet(
                 path_to_ancestors_roles[path].append(path_to_role[parent_path])
             else:
                 path_to_ancestors_roles[path] = []
+
+            key_to_path_to_max_ancestors_role[key][path] = choices.RoleChoices.max(
+                key_to_path_to_max_ancestors_role[key][parent_path], access.role
+            )
 
             if access.user_id == user.id or access.team in user.teams:
                 path_to_role[path] = choices.RoleChoices.max(
@@ -1490,7 +1493,7 @@ class DocumentAccessViewSet(
             path = access.document.path
             parent_path = path[: -models.Document.steplen]
             access.max_ancestors_role = (
-                path_to_key_to_max_ancestors_role[parent_path][access.target_key]
+                key_to_path_to_max_ancestors_role[access.target_key][parent_path]
                 if parent_path
                 else None
             )
