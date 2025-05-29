@@ -51,10 +51,6 @@ spec:
             pathType: ImplementationSpecific
             {{- end }}
             backend:
-              service:
-                name: {{ include "impress.yProvider.fullname" . }}
-                port:
-                  number: {{ .Values.yProvider.service.port }}
               {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
               service:
                 name: {{ include "impress.yProvider.fullname" . }}
