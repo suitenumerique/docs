@@ -89,6 +89,29 @@ In Cursor settings, in the MCP section, you can add a new MCP server with the fo
 }
 ```
 
+### In VSCode IDE
+
+In VSCode settings, you can add a new MCP server with the following configuration:
+
+```json
+// .vscode/settings.json
+{
+  "chat.mcp.discovery.enabled": true,
+  "chat.mcp.enabled": true
+}
+```
+
+```json
+// .vscode/mcp.json
+{
+  "servers": {
+    "docs": {
+      "url": "http://localhost:4200/mcp/docs"
+    }
+  }
+}
+```
+
 ### Locally with `mcphost` and `ollama`
 
 1. Install [mcphost](https://github.com/mark3labs/mcphost)
