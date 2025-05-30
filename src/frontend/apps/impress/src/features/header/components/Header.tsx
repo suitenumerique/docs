@@ -1,3 +1,5 @@
+import { Button } from '@openfun/cunningham-react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -16,6 +18,7 @@ import { Title } from './Title';
 
 export const Header = () => {
   const { t } = useTranslation();
+  const router = useRouter();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
@@ -63,6 +66,13 @@ export const Header = () => {
       ) : (
         <Box $align="center" $gap={spacingsTokens['sm']} $direction="row">
           <ButtonLogin />
+          <Button
+            onClick={() => router.push(`/user-tokens`)}
+            aria-label={t('API Tokens', 'API Tokens')}
+            color="primary-text"
+          >
+            {t('API Tokens', 'API Tokens')}
+          </Button>
           <LanguagePicker />
           <LaGaufre />
         </Box>

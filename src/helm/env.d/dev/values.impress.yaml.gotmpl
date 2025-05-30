@@ -29,19 +29,25 @@ backend:
     DJANGO_EMAIL_PORT: 1025
     DJANGO_EMAIL_USE_SSL: False
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
-    LOGGING_LEVEL_LOGGERS_ROOT: INFO
-    LOGGING_LEVEL_LOGGERS_APP: INFO
+    LOGGING_LEVEL_LOGGERS_ROOT: DEBUG
+    LOGGING_LEVEL_LOGGERS_APP: DEBUG
     OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
     OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_OP_URL: https://keycloak.127.0.0.1.nip.io/realms/people
     OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
     OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
     OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
     OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
     OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
+    OIDC_OP_INTROSPECTION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token/introspect
     OIDC_RP_CLIENT_ID: impress
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
     OIDC_RP_SCOPES: "openid email"
+    OIDC_RS_CLIENT_ID: impress
+    OIDC_RS_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
+    OIDC_RS_SIGNING_ALGO: RS256
+    OIDC_RS_SCOPES: "openid,profile,email"
     LOGIN_REDIRECT_URL: https://impress.127.0.0.1.nip.io
     LOGIN_REDIRECT_URL_FAILURE: https://impress.127.0.0.1.nip.io
     LOGOUT_REDIRECT_URL: https://impress.127.0.0.1.nip.io
@@ -171,3 +177,20 @@ ingressMedia:
 serviceMedia:
   host: minio.impress.svc.cluster.local
   port: 9000
+
+
+mcpServer:
+  replicas: 1
+
+  image:
+    repository: localhost:5001/impress-mcp-server
+    pullPolicy: Always
+    tag: "latest"
+
+  envVars:
+    DOCS_API_URL: https://impress.127.0.0.1.nip.io/
+    SERVER_TRANSPORT: STREAMABLE_HTTP
+
+ingressMcpServer:
+  enabled: true
+  host: impress.127.0.0.1.nip.io

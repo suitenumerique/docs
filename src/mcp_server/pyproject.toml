@@ -1,0 +1,98 @@
+[project]
+name = "mcp-server"
+dynamic = ["version"]
+description = "MCP server implementation for Docs"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {file = "LICENSE"}
+authors = [
+    {name = "DINUM", email = "dev@mail.numerique.gouv.fr"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "dotenv>=0.9.9",
+    "fastmcp>=2.3.4",
+    "httpx>=0.28.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "docs_mcp_server.__version__"}
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+lint.select = [
+    # pycodestyle
+    "E", "W",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # flake8-logging-format
+    "G",
+    # flake8-pie
+    "PIE",
+    # flake8-comprehensions
+    "C4",
+    # flake8-django
+    "DJ",
+    # flake8-bandit
+    "S",
+    # flake8-builtins
+    "A",
+    # flake8-datetimez
+    "DTZ",
+    # flake8-gettext
+    "INT",
+    # Pylint
+    "PL",
+    # flake8-fixme
+    "FIX",
+    # flake8-self
+    "SLF",
+    # flake8-return
+    "RET",
+    # pep8-naming (N)
+    "N",
+    # pydocstyle
+    "D",
+    # flake8-pytest-style (PT)
+    "PT",
+]
+lint.ignore = [
+    # incorrect-blank-line-before-class
+    "D203",
+    # missing-blank-line-after-summary
+    "D205",
+    # multi-line-summary-first-line
+    "D212",
+]
+lint.per-file-ignores = {"**/tests/*"= [
+    # flake8-bandit
+    "S",
+    # flake8-self
+    "SLF",
+    # magic-value-comparison
+    "PLR2004",
+]}
+
+[tool.ruff.lint.isort]
+known-first-party = ["mcp_server"]

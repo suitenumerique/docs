@@ -5,13 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
-    tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - 'main'
-      - 'ci/trivy-fails'
+      - 'do-not-merge/hackathon-2025'
 
 env:
   DOCKER_USER: 1001:127
@@ -31,7 +25,6 @@ jobs:
           images: lasuite/impress-backend
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
@@ -43,10 +36,10 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v6
         with:
+          push: true
           context: .
           target: backend-production
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -64,7 +57,6 @@ jobs:
           images: lasuite/impress-frontend
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
@@ -76,13 +68,13 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v6
         with:
+          push: true
           context: .
           file: ./src/frontend/Dockerfile
           target: frontend-production
           build-args: |
             DOCKER_USER=${{ env.DOCKER_USER }}:-1000
             PUBLISH_AS_MIT=false
-          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -100,7 +92,6 @@ jobs:
           images: lasuite/impress-y-provider
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
@@ -112,11 +103,34 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v6
         with:
+          push: true
           context: .
           file: ./src/frontend/servers/y-provider/Dockerfile
           target: y-provider
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-and-push-mcp-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: lasuite/impress-mcp-server
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: ./src/mcp_server
+          file: ./src/mcp_server/Dockerfile
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}:-1000
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -125,7 +139,6 @@ jobs:
       - build-and-push-frontend
       - build-and-push-backend
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
     steps:
       - uses: numerique-gouv/action-argocd-webhook-notification@main
         id: notify

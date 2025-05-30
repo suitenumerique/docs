@@ -39,10 +39,19 @@ docker_build(
     ]
 )
 
+docker_build(
+    'localhost:5001/impress-mcp-server:latest',
+    context='../src/mcp_server',
+    dockerfile='../src/mcp_server/Dockerfile',
+)
+
 k8s_resource('impress-docs-backend-migrate', resource_deps=['postgres-postgresql'])
 k8s_resource('impress-docs-backend-createsuperuser', resource_deps=['impress-docs-backend-migrate'])
 k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate'])
-k8s_yaml(local('cd ../src/helm && helmfile -n impress -e dev template .'))
+
+# helmfile in docker mount the current working directory and the helmfile.yaml
+# requires the keycloak config in another directory
+k8s_yaml(local('cd .. && helmfile -n impress -e ${DEV_ENV:-dev} template --file ./src/helm/helmfile.yaml'))
 
 migration = '''
 set -eu

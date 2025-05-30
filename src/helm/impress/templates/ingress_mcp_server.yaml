@@ -1,0 +1,89 @@
+{{- if .Values.ingressMcpServer.enabled -}}
+{{- $fullName := include "impress.fullname" . -}}
+{{- if and .Values.ingressMcpServer.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.ingressMcpServer.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.ingressMcpServer.annotations "kubernetes.io/ingress.class" .Values.ingressMcpServer.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-mcp-server
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.labels" . | nindent 4 }}
+  {{- with .Values.ingressMcpServer.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.ingressMcpServer.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.ingressMcpServer.className }}
+  {{- end }}
+  {{- if .Values.ingressMcpServer.tls.enabled }}
+  tls:
+    {{- if .Values.ingressMcpServer.host }}
+    - secretName: {{ .Values.ingressMcpServer.tls.secretName | default (printf "%s-tls" $fullName) | quote }}
+      hosts:
+        - {{ .Values.ingressMcpServer.host | quote }}
+    {{- end }}
+    {{- range .Values.ingressMcpServer.tls.additional }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- if .Values.ingressMcpServer.host }}
+    - host: {{ .Values.ingressMcpServer.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingressMcpServer.path | quote }}
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.mcpServer.fullname" . }}
+                port:
+                  number: {{ .Values.mcpServer.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.mcpServer.fullname" . }}
+              servicePort: {{ .Values.mcpServer.service.port }}
+            {{- end }}
+          {{- with .Values.ingressMcpServer.customBackends }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+    {{- end }}
+    {{- range .Values.ingressMcpServer.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: {{ $.Values.ingressMcpServer.path | quote }}
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.mcpServer.fullname" $ }}
+                port:
+                  number: {{ $.Values.mcpServer.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.mcpServer.fullname" $ }}
+              servicePort: {{ $.Values.mcpServer.service.port }}
+            {{- end }}
+          {{- with $.Values.ingressMcpServer.customBackends }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+    {{- end }}
+{{- end }}
