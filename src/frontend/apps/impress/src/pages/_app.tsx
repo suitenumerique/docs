@@ -26,6 +26,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
     <>
       <Head>
         <title>{t('Docs')}</title>
+        <meta property="og:title" content={t('Docs')} key="title" />
         <meta
           name="description"
           content={t(

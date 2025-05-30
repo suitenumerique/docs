@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) fix meta title #1017
+
+
 ## [3.3.0] - 2025-05-06
 
 ### Added
