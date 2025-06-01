@@ -19,6 +19,7 @@
     "app:build": "yarn APP_IMPRESS run build",
     "app:test": "yarn APP_IMPRESS run test",
     "ci:build": "yarn APP_IMPRESS run build:ci",
+    "build": "yarn APP_IMPRESS run build && yarn COLLABORATION_SERVER run build",
     "e2e:test": "yarn APP_E2E run test",
     "lint": "yarn APP_IMPRESS run lint && yarn APP_E2E run lint && yarn workspace eslint-config-impress run lint && yarn I18N run lint && yarn COLLABORATION_SERVER run lint",
     "i18n:extract": "yarn I18N run extract-translation",
