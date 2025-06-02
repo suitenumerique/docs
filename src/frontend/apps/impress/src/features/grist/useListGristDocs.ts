@@ -43,7 +43,7 @@ export const useListGristDocs = (): { docs: Doc[] } => {
     const response = await gristFetchApi(url);
     if (!response.ok) {
       throw new APIError(
-        'Failed to request ai transform',
+        'Failed to fetch Grist documents',
         await errorCauses(response),
       );
     }

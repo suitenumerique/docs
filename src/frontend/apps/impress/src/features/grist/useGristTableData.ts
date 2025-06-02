@@ -19,7 +19,7 @@ export const useGristTableData = ({
       const response = await gristFetchApi(url);
       if (!response.ok) {
         throw new APIError(
-          'Failed to request ai transform',
+          'Failed to fetch Grist table data',
           await errorCauses(response),
         );
       }
