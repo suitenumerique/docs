@@ -29,48 +29,68 @@ const initialOptions: ChartOptions = {
 
 const ChartEditorContainer = styled.div`
   max-width: 80rem;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   padding: 1.5rem;
   background-color: #f9fafb;
   min-height: 100vh;
 `;
+
 const ChartEditorHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
 `;
+
 const ChartEditorTitle = styled.h1`
   font-size: 1.875rem;
   font-weight: bold;
   color: #111827;
   margin-bottom: 0.5rem;
 `;
+
 const ChartEditorSubtitle = styled.p`
   color: #4b5563;
 `;
-const ChartEditorGrid = styled.div`
+
+const ChartEditorGrid = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'showEditor',
+})<{ showEditor: boolean }>`
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: ${({ showEditor }: { showEditor: boolean }) =>
+    showEditor ? '2fr 1fr' : '1fr'};
   gap: 2rem;
-  @media (min-width: 1024px) {
-    grid-template-columns: 1fr 1fr;
+  transition: grid-template-columns 0.3s ease-in-out;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: 1fr;
   }
 `;
-const ChartEditorPanel = styled.div`
+
+const PreviewContainer = styled.div`
+  width: 100%;
+  height: 100%;
+`;
+
+const ControlPanel = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 `;
-const ChartEditorCard = styled.div`
+
+const ControlGroupCard = styled.div`
   background: #fff;
   border-radius: 0.5rem;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   border: 1px solid #e5e7eb;
   padding: 1.5rem;
 `;
+
 const ChartEditorButtonRow = styled.div`
   display: flex;
   gap: 1rem;
 `;
+
 const ExportButton = styled.button`
   padding: 0.5rem 1rem;
   background: #4f46e5;
@@ -81,10 +101,22 @@ const ExportButton = styled.button`
     background: #4338ca;
   }
 `;
+
 const ChartEditorSticky = styled.div`
   @media (min-width: 1024px) {
     position: sticky;
     top: 1.5rem;
+  }
+`;
+
+const ToggleButton = styled.button`
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  &:hover {
+    color: #111827;
   }
 `;
 
@@ -93,6 +125,7 @@ export const ChartEditor: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData>(initialData);
   const [chartOptions, setChartOptions] =
     useState<ChartOptions>(initialOptions);
+  const [showEditor, setShowEditor] = useState(true);
 
   const config: ChartConfig = {
     type: chartType,
@@ -116,34 +149,41 @@ export const ChartEditor: React.FC = () => {
   return (
     <ChartEditorContainer>
       <ChartEditorHeader>
-        <ChartEditorTitle>Chart Editor</ChartEditorTitle>
-        <ChartEditorSubtitle>
-          Create and customize your charts with live preview
-        </ChartEditorSubtitle>
+        <div>
+          <ChartEditorTitle>Chart Editor</ChartEditorTitle>
+          <ChartEditorSubtitle>
+            Create and customize your charts with live preview
+          </ChartEditorSubtitle>
+        </div>
+        <ToggleButton onClick={() => setShowEditor((prev) => !prev)}>
+          &#x2026;
+        </ToggleButton>
       </ChartEditorHeader>
-      <ChartEditorGrid>
-        {/* Left Panel - Controls */}
-        <ChartEditorPanel>
-          <ChartEditorCard>
-            <ChartTypeSelector value={chartType} onChange={setChartType} />
-          </ChartEditorCard>
-          <ChartEditorCard>
-            <ChartOptionsForm
-              options={chartOptions}
-              onChange={setChartOptions}
-            />
-          </ChartEditorCard>
-          <ChartEditorCard>
-            <DataInputForm data={chartData} onChange={setChartData} />
-          </ChartEditorCard>
-          <ChartEditorButtonRow>
-            <ExportButton onClick={exportConfig}>Export Config</ExportButton>
-          </ChartEditorButtonRow>
-        </ChartEditorPanel>
-        {/* Right Panel - Preview */}
-        <ChartEditorSticky>
+
+      <ChartEditorGrid showEditor={showEditor}>
+        <PreviewContainer>
           <LiveChartPreview config={config} />
-        </ChartEditorSticky>
+        </PreviewContainer>
+
+        {showEditor && (
+          <ControlPanel>
+            <ControlGroupCard>
+              <ChartTypeSelector value={chartType} onChange={setChartType} />
+            </ControlGroupCard>
+            <ControlGroupCard>
+              <ChartOptionsForm
+                options={chartOptions}
+                onChange={setChartOptions}
+              />
+            </ControlGroupCard>
+            <ControlGroupCard>
+              <DataInputForm data={chartData} onChange={setChartData} />
+            </ControlGroupCard>
+            <ChartEditorButtonRow>
+              <ExportButton onClick={exportConfig}>Export Config</ExportButton>
+            </ChartEditorButtonRow>
+          </ControlPanel>
+        )}
       </ChartEditorGrid>
     </ChartEditorContainer>
   );
