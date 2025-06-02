@@ -3,7 +3,6 @@ import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import React, { useEffect } from 'react';
-import { css } from 'styled-components';
 
 import { Box, Icon } from '@/components';
 
@@ -15,12 +14,11 @@ export const DatabaseBlock = createReactBlockSpec(
     propSchema: {
       textAlignment: defaultProps.textAlignment,
       backgroundColor: defaultProps.backgroundColor,
-      emoji: { default: '💡' },
     },
     content: 'inline',
   },
   {
-    render: ({ block, editor, contentRef }) => {
+    render: ({ block, editor }) => {
       // Temporary: sets a yellow background color to a database block when added by
       // the user, while keeping the colors menu on the drag handler usable for
       // this custom block.
@@ -29,7 +27,7 @@ export const DatabaseBlock = createReactBlockSpec(
           !block.content.length &&
           block.props.backgroundColor === 'default'
         ) {
-          editor.updateBlock(block, { props: { backgroundColor: 'yellow' } });
+          editor.updateBlock(block, { props: { backgroundColor: 'orange' } });
         }
       }, [block, editor]);
 
@@ -42,7 +40,7 @@ export const DatabaseBlock = createReactBlockSpec(
             flexDirection: 'row',
           }}
         >
-          <Box as="p" className="inline-content" ref={contentRef} />
+          <Box as="p">🏗️ Database block is in development</Box>
         </Box>
       );
     },
