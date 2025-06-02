@@ -98,7 +98,7 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
     return blocks
 
 
-def import_notion(token: str):
+def import_notion(token: str) -> list[NotionPage]:
     """Recursively imports all Notion pages and blocks accessible using the given token."""
     session = build_notion_session(token)
     root_pages = fetch_root_pages(session)
@@ -106,3 +106,4 @@ def import_notion(token: str):
         blocks = fetch_block_children(session, page.id)
         logger.info(f"Page {page.get_title()} (id {page.id})")
         logger.info(blocks)
+    return root_pages
