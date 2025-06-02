@@ -11,7 +11,7 @@ import {
   ResizableFileBlockWrapper,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { css } from 'styled-components';
 
 import { Box, Icon } from '@/components';
@@ -38,18 +38,47 @@ export const IFrameViewer = (
   props: ReactCustomBlockRenderProps<typeof iframeBlockConfig>,
 ) => {
   const url = props.block.props.url;
-  const aspectRatio = props.block.props.aspectRatio || 16 / 9;
+  const aspectRatio = props.block.props.aspectRatio || 4 / 3;
   //   const url = 'http://localhost:8484/o/docs/pmqLaKmSrf3h/Untitled-document/p/2';
   const [iframeError, setIframeError] = React.useState(false);
+  const containerRef = useRef(null);
+  const [isResizing, setIsResizing] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const wrapperEl = containerRef.current.closest(
+      '.bn-file-block-content-wrapper',
+    );
+
+    const startResizing = () => {
+      setIsResizing(true);
+    };
+    const stopResizing = () => {
+      setIsResizing(false);
+    };
+
+    wrapperEl.addEventListener('pointerdown', startResizing);
+    document.addEventListener('pointerup', stopResizing);
+
+    return () => {
+      wrapperEl.removeEventListener('pointerdown', startResizing);
+      document.removeEventListener('pointerdown', stopResizing);
+    };
+  }, []);
+
   if (!url) {
     return <Box>No URL provided for embed.</Box>;
   }
 
   return !iframeError ? (
     <div
+      ref={containerRef}
       style={{
         position: 'relative',
+        padding: '10px',
         width: '100%',
+        background: '#ff0000',
         paddingTop: `${100 / aspectRatio}%`, // padding-top sets height relative to width
       }}
     >
@@ -68,6 +97,17 @@ export const IFrameViewer = (
         title="Embedded content"
         onError={() => setIframeError(true)}
       />
+      {isResizing && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'transparent',
+            pointerEvents: 'all',
+            zIndex: 10,
+          }}
+        />
+      )}
     </div>
   ) : (
     <Box
