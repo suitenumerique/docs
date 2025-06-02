@@ -32,7 +32,7 @@ const LatexRenderer = ({
           throwOnError: false,
         });
       } catch {
-        containerRef.current.innerHTML = 'Invalid LaTeX formula';
+        containerRef.current.innerHTML = '/!\\ Invalid LaTeX formula';
       }
     }
   }, [formula]);
