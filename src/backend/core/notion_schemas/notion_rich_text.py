@@ -48,6 +48,8 @@ class NotionRichTextType(StrEnum):
 
 class NotionRichTextText(BaseModel):
     type: Literal[NotionRichTextType.TEXT] = NotionRichTextType.TEXT
+    content: str
+    link: str | None
 
 
 class NotionRichTextMention(BaseModel):

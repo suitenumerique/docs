@@ -11,10 +11,13 @@ from .notion_rich_text import NotionRichText
 
 
 class NotionBlock(BaseModel):
+    id: str
     created_time: datetime
     last_edited_time: datetime
     archived: bool
     specific: "NotionBlockSpecifics"
+    has_children: bool
+    children: list["NotionBlock"] = Field(init=False, default_factory=list)
 
     @model_validator(mode="before")
     @classmethod
@@ -72,9 +75,6 @@ class NotionBlockType(StrEnum):
 class NotionHeadingBase(BaseModel):
     """https://developers.notion.com/reference/block#headings"""
 
-    block_type: Literal[
-        NotionBlockType.HEADING_1, NotionBlockType.HEADING_2, NotionBlockType.HEADING_3
-    ]
     rich_text: list[NotionRichText]
     color: NotionColor
     is_toggleable: bool = False

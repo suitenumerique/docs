@@ -1,128 +1,109 @@
+import logging
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any
+
 import requests
+from pydantic import TypeAdapter
+from requests import Session
+
+from ..notion_schemas.notion_block import NotionBlock
+from ..notion_schemas.notion_page import NotionPage
+
+logger = logging.getLogger(__name__)
 
 
-class PageType(Enum):
-    PAGE = "page"
-    DATABASE = "database"
+def build_notion_session(token: str) -> Session:
+    session = Session()
+    session.headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28",
+    }
+    return session
 
 
-class Page:
-    def __init__(self, type, id, name):
-        self.type = type
-        self.id = id
-        self.name = name
-
-    def __repr__(self):
-        return f"\n  Page(type={self.type}, id='{self.id}', name='{self.name}')"
-
-
-def search_notion(token: str, start_cursor: str):
-    response = requests.post(
+def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
+    response = session.post(
         "https://api.notion.com/v1/search",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28",
+        json={
             "start_cursor": start_cursor if start_cursor else None,
             "value": "page",
         },
     )
 
     if response.status_code == 200:
-        print("✅ Requête réussie !")
+        logger.info("✅ Requête réussie !")
         return response.json()
     else:
-        print(f"❌ Erreur lors de la requête : {response.status_code}")
-        print(response.text)
+        logger.error(f"❌ Erreur lors de la requête : {response.status_code}")
+        logger.debug(response.text)
+        raise ValueError
 
 
-def fetch_root_pages(token: str):
+def fetch_root_pages(session: Session) -> list[NotionPage]:
     pages = []
-    cursor = None
+    cursor = ""
     has_more = True
 
     while has_more:
-        response = search_notion(token, start_cursor=cursor)
+        response = search_notion(session, start_cursor=cursor)
 
         for item in response["results"]:
-            if item.get("parent", {}).get("type") == "workspace":
-                obj_type = item["object"]
-                if obj_type == "page":
-                    page_type = PageType.PAGE
-                    rich_texts = next(
-                        (
-                            prop["title"]
-                            for prop in item["properties"].values()
-                            if prop["type"] == "title"
-                        ),
-                        [],
-                    )
-                else:
-                    page_type = PageType.DATABASE
-                    rich_texts = item.title
+            if item.get("parent", {}).get("type") != "workspace":
+                continue
 
-                pages.append(
-                    Page(
-                        type=page_type,
-                        id=item["id"],
-                        name="".join(
-                            rich_text["plain_text"] for rich_text in rich_texts
-                        ),
-                    )
-                )
+            assert item["object"] == "page"
+
+            pages.append(NotionPage.model_validate(item))
 
         has_more = response.get("has_more", False)
-        cursor = response.get("next_cursor")
+        cursor = response.get("next_cursor", "")
 
     return pages
 
 
-def fetch_blocks(token: str, block_id: str):
-    response = requests.get(
+def fetch_blocks(session: Session, block_id: str, start_cursor: str) -> dict[str, Any]:
+    response = session.get(
         f"https://api.notion.com/v1/blocks/{block_id}/children",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28",
+        params={
+            "start_cursor": start_cursor if start_cursor else None,
         },
     )
 
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"❌ Erreur lors de la requête : {response.status_code}")
-        print(response.text)
+        logger.debug(response.text)
+        raise ValueError(f"❌ Erreur lors de la requête : {response.status_code}")
 
 
-def fetch_block_children(token: str, block_id: str):
-    blocks = []
-    cursor = None
+def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
+    blocks: list[NotionBlock] = []
+    cursor = ""
     has_more = True
 
     while has_more:
-        response = fetch_blocks(token, block_id)
+        response = fetch_blocks(session, block_id, cursor)
 
-        blocks.extend(response["results"])
+        blocks.extend(
+            TypeAdapter(list[NotionBlock]).validate_python(response["results"])
+        )
 
         has_more = response.get("has_more", False)
-        cursor = response.get("next_cursor")
+        cursor = response.get("next_cursor", "")
 
-    children = []
     for block in blocks:
-        if block["has_children"]:
-            response = fetch_block_children(token, block["id"])
-            children.extend(response)
+        if block.has_children:
+            block.children = fetch_block_children(session, block.id)
 
-    blocks.extend(children)
     return blocks
 
 
 def import_notion(token: str):
     """Recursively imports all Notion pages and blocks accessible using the given token."""
-    root_pages = fetch_root_pages(token)
-    for root_page in root_pages:
-        page_content = fetch_block_children(token, root_page.id)
-        print(f"Page {root_page.id}")
-        print(page_content)
-        print()
+    session = build_notion_session(token)
+    root_pages = fetch_root_pages(session)
+    for page in root_pages:
+        blocks = fetch_block_children(session, page.id)
+        logger.info(f"Page {page.get_title()} (id {page.id})")
+        logger.info(blocks)
