@@ -1863,14 +1863,9 @@ def notion_import_run(request):
 
     pages = import_notion(request.session['notion_token'])
 
-    document_content = YdocConverter().convert_blocks([
-        {
-            "type": "paragraph",
-            "content": "Bonjour à toustes zé à toussent",
-        },
-    ])
+    for page, blocks in pages:
+        document_content = YdocConverter().convert_blocks(blocks)
 
-    for page in pages:
         obj = models.Document.add_root(
             depth=1,
             creator=request.user,
