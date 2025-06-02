@@ -52,11 +52,16 @@ export const DatabaseGrid = () => {
     const newColDef: ColDef = {
       field: columnName,
     };
-    const addColumn = colDefs.pop();
-    setColDefs((prev) => [...prev, newColDef]);
-    if (addColumn !== undefined) {
-      setColDefs((prev) => [...prev, addColumn]);
-    }
+
+    setColDefs((prev) => {
+      const addColumn = prev.pop();
+
+      return [
+        ...prev,
+        newColDef,
+        ...(addColumn !== undefined ? [addColumn] : []),
+      ];
+    });
     setAddColumnToggleOpen(false);
   };
 
