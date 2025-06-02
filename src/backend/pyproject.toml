@@ -43,6 +43,7 @@ dependencies = [
     "django-treebeard==4.7.1",
     "djangorestframework==3.16.0",
     "drf_spectacular==0.28.0",
+    "drf-spectacular-sidecar==2025.5.1",
     "dockerflow==2024.4.2",
     "easy_thumbnails==2.10",
     "factory_boy==3.3.3",
