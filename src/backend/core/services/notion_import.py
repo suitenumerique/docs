@@ -23,12 +23,16 @@ def build_notion_session(token: str) -> Session:
 
 
 def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
+    req_data = {}
+    if start_cursor:
+        req_data = {
+            "start_cursor": start_cursor,
+            "value": "page",
+        }
+
     response = session.post(
         "https://api.notion.com/v1/search",
-        json={
-            "start_cursor": start_cursor if start_cursor else None,
-            "value": "page",
-        },
+        json=req_data,
     )
 
     if response.status_code == 200:
