@@ -3,17 +3,35 @@ import { AgGridReact } from 'ag-grid-react';
 import { useRef, useState } from 'react';
 
 import { Box } from '@/components';
+import { useGristTableData } from '@/features/grist';
 
 import { AddButtonComponent } from './AddColumnButton';
 
-export const DatabaseGrid = () => {
+export const DatabaseGrid = ({
+  documentId,
+  tableId,
+}: {
+  documentId: string;
+  tableId: string;
+}) => {
   const gridRef = useRef(null);
+
+  const { tableData } = useGristTableData({
+    documentId,
+    tableId,
+  });
+
+  console.log(Object.keys(tableData));
 
   const [rowData, setRowData] = useState([
     { make: 'Tesla', model: 'Model Y', price: 64950, electric: true },
     { make: 'Ford', model: 'F-Series', price: 33850, electric: false },
     { make: 'Toyota', model: 'Corolla', price: 29600, electric: false },
   ]);
+
+  const columns = Object.keys(tableData).filter(
+    (key) => key !== 'id' && key !== 'manualSort',
+  );
 
   // Column Definitions: Defines the columns to be displayed.
   const [colDefs, setColDefs] = useState<ColDef[]>([
