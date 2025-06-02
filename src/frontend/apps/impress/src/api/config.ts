@@ -20,3 +20,5 @@ export const backendUrl = () =>
  */
 export const baseApiUrl = (apiVersion: string = '1.0') =>
   `${backendUrl()}/api/v${apiVersion}/`;
+
+export const gristApiUrl = () => 'http://localhost:8484/api/';
