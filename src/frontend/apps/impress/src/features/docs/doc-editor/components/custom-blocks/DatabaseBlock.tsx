@@ -53,6 +53,7 @@ export const DatabaseBlock = createReactBlockSpec(
 
       const defaultColDef = {
         flex: 1,
+        editable: true,
       };
       return (
         <Box
