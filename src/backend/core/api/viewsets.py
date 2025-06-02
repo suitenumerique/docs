@@ -1861,27 +1861,28 @@ def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
 
-    import_notion(request.session['notion_token'])
+    pages = import_notion(request.session['notion_token'])
 
-    #document_content = YdocConverter().convert_blocks([
-    #    {
-    #        "type": "paragraph",
-    #        "content": "Bonjour à toustes zé à toussent",
-    #    },
-    #])
+    document_content = YdocConverter().convert_blocks([
+        {
+            "type": "paragraph",
+            "content": "Bonjour à toustes zé à toussent",
+        },
+    ])
 
-    #obj = models.Document.add_root(
-    #    depth=1,
-    #    creator=request.user,
-    #    title="J'aime les courgettes",
-    #    link_reach=models.LinkReachChoices.RESTRICTED,
-    #    content=document_content,
-    #)
+    for page in pages:
+        obj = models.Document.add_root(
+            depth=1,
+            creator=request.user,
+            title=page.get_title() or "J'aime les courgettes",
+            link_reach=models.LinkReachChoices.RESTRICTED,
+            content=document_content,
+        )
 
-    #models.DocumentAccess.objects.create(
-    #    document=obj,
-    #    user=request.user,
-    #    role=models.RoleChoices.OWNER,
-    #)
+        models.DocumentAccess.objects.create(
+            document=obj,
+            user=request.user,
+            role=models.RoleChoices.OWNER,
+        )
 
     return drf.response.Response({"sava": "oui et toi ?"})
