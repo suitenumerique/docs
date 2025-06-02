@@ -1,17 +1,21 @@
 import { Button, Input } from '@openfun/cunningham-react';
+import { useState } from 'react';
 
 import { Box, DropButton, Text } from '@/components';
 
 export const AddButtonComponent = ({
+  addColumn,
   isOpen,
   setIsOpen,
 }: {
+  addColumn: (columnName: string) => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
 }) => {
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
   };
+  const [columnName, setColumnName] = useState('');
 
   return (
     <DropButton
@@ -28,11 +32,19 @@ export const AddButtonComponent = ({
         <Text $variation="600" $size="s" $weight="bold" $theme="greyscale">
           Ajouter une colonne
         </Text>
-        <Input label="Column label"></Input>
+        <Input
+          label="Column label"
+          onChange={(event) => {
+            setColumnName(event.target.value);
+          }}
+        ></Input>
         <Button
           size="small"
           onClick={() => {
-            setIsOpen(false);
+            if (columnName.trim() === '') {
+              return;
+            }
+            addColumn(columnName);
           }}
           style={{ alignSelf: 'end', width: 'fit-content' }}
         >
