@@ -101,9 +101,8 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
 def convert_block(block: NotionBlock) -> Any:
     if isinstance(block.specific, NotionParagraph):
         content = ""
-        if len(block.specific.rich_text) > 0:
-            # TODO: handle multiple of these
-            content = block.specific.rich_text[0].plain_text
+        for rich_text in block.specific.rich_text:
+            content += rich_text.plain_text
         return {
             "type": "paragraph",
             "content": content,
