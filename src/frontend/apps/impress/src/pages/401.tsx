@@ -1,7 +1,7 @@
 import { Button } from '@openfun/cunningham-react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import img401 from '@/assets/icons/icon-401.png';
@@ -13,7 +13,18 @@ import { NextPageWithLayout } from '@/types/next';
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
-  const { replace } = useRouter();
+  const router = useRouter();
+  const { replace } = router;
+
+  const [returnTo, setReturnTo] = useState<string | undefined>(undefined);
+  const { returnTo: returnToParams } = router.query;
+
+  useEffect(() => {
+    if (returnToParams) {
+      setReturnTo(returnToParams as string);
+      void replace('/401');
+    }
+  }, [returnToParams, replace]);
 
   useEffect(() => {
     if (authenticated) {
@@ -43,7 +54,7 @@ const Page: NextPageWithLayout = () => {
           {t('Log in to access the document.')}
         </Text>
 
-        <Button onClick={() => gotoLogin(false)} aria-label={t('Login')}>
+        <Button onClick={() => gotoLogin(returnTo)} aria-label={t('Login')}>
           {t('Login')}
         </Button>
       </Box>

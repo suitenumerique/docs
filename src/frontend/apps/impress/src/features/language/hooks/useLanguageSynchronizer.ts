@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core';
-import { useAuthQuery } from '@/features/auth/api';
+import { useAuthQuery } from '@/features/auth';
 import { useChangeUserLanguage } from '@/features/language/api/useChangeUserLanguage';
 import { getMatchingLocales } from '@/features/language/utils/locale';
 import { availableFrontendLanguages } from '@/i18n/initI18n';

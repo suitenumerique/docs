@@ -4,10 +4,12 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
-import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
+import { Auth, KEY_AUTH } from '@/features/auth';
 import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';
+
+export const DEFAULT_QUERY_RETRY = 1;
 
 /**
  * QueryClient:
@@ -19,7 +21,7 @@ import { ConfigProvider } from './config/';
 const defaultOptions = {
   queries: {
     staleTime: 1000 * 60 * 3,
-    retry: 1,
+    retry: DEFAULT_QUERY_RETRY,
   },
 };
 const queryClient = new QueryClient({
@@ -51,8 +53,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             void queryClient.resetQueries({
               queryKey: [KEY_AUTH],
             });
-            setAuthUrl();
-            void replace(`/401`);
+            void replace(
+              `/401?returnTo=${encodeURIComponent(window.location.pathname)}`,
+            );
           }
         },
       },

@@ -19,7 +19,6 @@ export const getDoc = async ({ id }: DocParams): Promise<Doc> => {
 };
 
 export const KEY_DOC = 'doc';
-export const KEY_DOC_VISIBILITY = 'doc-visibility';
 
 export function useDoc(
   param: DocParams,

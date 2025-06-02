@@ -1,27 +1,12 @@
 import { terminateCrispSession } from '@/services/Crisp';
 
-import { LOGIN_URL, LOGOUT_URL, PATH_AUTH_LOCAL_STORAGE } from './conf';
+import { LOGIN_URL, LOGOUT_URL } from './conf';
 
-export const getAuthUrl = () => {
-  const path_auth = localStorage.getItem(PATH_AUTH_LOCAL_STORAGE);
-  if (path_auth) {
-    localStorage.removeItem(PATH_AUTH_LOCAL_STORAGE);
-    return path_auth;
-  }
-};
-
-export const setAuthUrl = () => {
-  if (window.location.pathname !== '/') {
-    localStorage.setItem(PATH_AUTH_LOCAL_STORAGE, window.location.pathname);
-  }
-};
-
-export const gotoLogin = (withRedirect = true) => {
-  if (withRedirect) {
-    setAuthUrl();
-  }
-
-  window.location.replace(LOGIN_URL);
+export const gotoLogin = (returnTo = '/', isSilent = false) => {
+  const authenticateUrl =
+    LOGIN_URL +
+    `?silent=${encodeURIComponent(isSilent)}&returnTo=${window.location.origin + returnTo}`;
+  window.location.replace(authenticateUrl);
 };
 
 export const gotoLogout = () => {
