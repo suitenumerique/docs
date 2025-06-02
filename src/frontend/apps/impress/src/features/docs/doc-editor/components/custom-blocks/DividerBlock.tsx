@@ -26,6 +26,7 @@ export const DividerBlock = createReactBlockSpec(
           $margin="1rem 0"
           $css={`border: 1px solid ${colorsTokens['greyscale-300']};`}
         />
+        
       );
     },
   },
