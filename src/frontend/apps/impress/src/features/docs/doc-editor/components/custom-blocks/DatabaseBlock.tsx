@@ -5,6 +5,7 @@ import { TFunction } from 'i18next';
 import React, { useEffect } from 'react';
 
 import { Box, Icon } from '@/components';
+import { useGristTable } from '@/features/grist';
 
 import { DocsBlockNoteEditor } from '../../types';
 
@@ -14,22 +15,34 @@ export const DatabaseBlock = createReactBlockSpec(
     propSchema: {
       textAlignment: defaultProps.textAlignment,
       backgroundColor: defaultProps.backgroundColor,
+      documentId: {
+        type: 'string',
+        default: '',
+      },
+      tableId: {
+        type: 'string',
+        default: '',
+      },
     },
     content: 'inline',
   },
   {
-    render: ({ block, editor }) => {
-      // Temporary: sets a orange background color to a database block when added by
-      // the user, while keeping the colors menu on the drag handler usable for
-      // this custom block.
+    render: ({ block, editor, contentRef }) => {
+      const { tableData } = useGristTable({
+        tableId: block.props.tableId,
+        documentId: block.props.documentId,
+      });
+
       useEffect(() => {
         if (
           !block.content.length &&
           block.props.backgroundColor === 'default'
         ) {
           editor.updateBlock(block, { props: { backgroundColor: 'orange' } });
+        } else {
+          editor.updateBlock(block, { content: JSON.stringify(tableData) });
         }
-      }, [block, editor]);
+      }, [block, editor, tableData]);
 
       return (
         <Box
@@ -40,7 +53,7 @@ export const DatabaseBlock = createReactBlockSpec(
             flexDirection: 'row',
           }}
         >
-          <Box as="p">🏗️ Database block is in development</Box>{' '}
+          <Box as="p" className="inline-content" ref={contentRef} />
         </Box>
       );
     },
