@@ -1,6 +1,6 @@
 import { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Box } from '@/components';
 import { useGristTableData } from '@/features/grist';
@@ -21,34 +21,51 @@ export const DatabaseGrid = ({
     tableId,
   });
 
-  const rowData = [
-    { make: 'Tesla', model: 'Model Y', price: 64950, electric: true },
-    { make: 'Ford', model: 'F-Series', price: 33850, electric: false },
-    { make: 'Toyota', model: 'Corolla', price: 29600, electric: false },
-  ];
+  const [rowData, setRowData] =
+    useState<Record<string, string | number | boolean>[]>();
+  const [colDefs, setColDefs] = useState<ColDef[]>();
 
-  // Column Definitions: Defines the columns to be displayed.
-  const [colDefs, setColDefs] = useState<ColDef[]>([
-    { field: 'make', sort: 'desc' },
-    {
-      field: 'model',
+  const addColumnColDef: ColDef = {
+    headerComponentParams: {
+      innerHeaderComponent: () =>
+        AddButtonComponent({
+          addColumn,
+        }),
     },
-    { field: 'price' },
-    { field: 'electric' },
-    {
-      headerComponentParams: {
-        innerHeaderComponent: () =>
-          AddButtonComponent({
-            addColumn,
-          }),
-      },
-      unSortIcon: false,
-      editable: false,
-      sortable: false,
-      spanRows: true,
-      filter: false,
-    },
-  ]);
+    unSortIcon: false,
+    editable: false,
+    sortable: false,
+    spanRows: true,
+    filter: false,
+  };
+
+  useEffect(() => {
+    const filteredEntries = Object.entries(tableData).filter(
+      ([key]) => key !== 'id' && key !== 'manualSort',
+    );
+
+    const rowData1: Record<string, string | number | boolean>[] = [];
+
+    const numRows = filteredEntries[0]?.[1].length;
+
+    for (let i = 0; i < numRows; i++) {
+      const row: Record<string, string | boolean | number> = {};
+      for (const [key, values] of filteredEntries) {
+        row[key] = values[i] ?? '';
+      }
+      rowData1.push(row);
+    }
+
+    setRowData(rowData1);
+
+    const columnNames = Object.keys(Object.fromEntries(filteredEntries));
+    const columns: ColDef[] = columnNames.map((key) => ({
+      field: key,
+    }));
+
+    setColDefs(columns.concat(addColumnColDef));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableData]);
 
   const defaultColDef = {
     flex: 1,
