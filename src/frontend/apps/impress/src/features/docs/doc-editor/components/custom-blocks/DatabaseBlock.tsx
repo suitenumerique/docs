@@ -45,8 +45,9 @@ export const DatabaseBlock = createReactBlockSpec(
         {
           field: 'model',
           unSortIcon: true,
+          filter: true,
         },
-        { field: 'price', unSortIcon: true },
+        { field: 'price', unSortIcon: true, filter: true },
         { field: 'electric' },
       ]);
 
