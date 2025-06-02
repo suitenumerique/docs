@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+🔧(git) set LF line endings for all text files #1032
+
+
 ## [3.3.0] - 2025-05-06
 
 ### Added
