@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Icon } from '@/components';
 
 import { CodeEditor } from '../../../CodeEditor/index';
+import { blockStyles } from '../../shared/styles';
 import { useMermaid } from '../hooks/useMermaid';
 import type { MermaidRendererProps } from '../types';
 
@@ -47,11 +48,7 @@ export const MermaidRenderer = ({
     <Box
       ref={blockRef}
       $padding="1rem"
-      style={{
-        width: '100%',
-        overflowX: 'auto',
-        cursor: 'pointer',
-      }}
+      style={blockStyles.container}
       onClick={() => setIsLocalEditing(true)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -68,15 +65,7 @@ export const MermaidRenderer = ({
         }}
       />
       {!diagram.trim() && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            color: '#666',
-          }}
-        >
+        <div style={blockStyles.placeholder}>
           <Icon iconName="account_tree" $size="18px" />
           Click here to edit the Mermaid diagram.
         </div>
@@ -86,10 +75,7 @@ export const MermaidRenderer = ({
           $margin="0.5rem 0 0 0"
           $padding="0.5rem"
           $background="#fff3f3"
-          style={{
-            borderRadius: '4px',
-            color: '#d32f2f',
-          }}
+          style={blockStyles.error}
         >
           {error || mermaidError}
         </Box>

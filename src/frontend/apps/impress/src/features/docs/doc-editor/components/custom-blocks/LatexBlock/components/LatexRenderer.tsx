@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Icon } from '@/components';
 
 import { CodeEditor } from '../../../CodeEditor/index';
+import { blockStyles } from '../../shared/styles';
 import type { LatexRendererProps } from '../types';
 
 export const LatexRenderer = ({
@@ -32,11 +33,7 @@ export const LatexRenderer = ({
     <Box
       ref={blockRef}
       $padding="1rem"
-      style={{
-        width: '100%',
-        overflowX: 'auto',
-        cursor: 'pointer',
-      }}
+      style={blockStyles.container}
       onClick={() => setIsLocalEditing(true)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -53,15 +50,7 @@ export const LatexRenderer = ({
         }}
       />
       {!formula.trim() && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            color: '#666',
-          }}
-        >
+        <div style={blockStyles.placeholder}>
           <Icon iconName="functions" $size="18px" />
           Click here to edit the LaTeX formula.
         </div>
