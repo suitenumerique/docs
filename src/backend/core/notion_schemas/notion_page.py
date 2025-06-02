@@ -24,5 +24,5 @@ class NotionPage(BaseModel):
         if title_property is None:
             return None
 
-        rich_text = title_property["title"]  # This could be parsed using NotionRichText
+        rich_text = title_property["title"][0]  # This could be parsed using NotionRichText
         return rich_text["plain_text"]
