@@ -1,6 +1,5 @@
 import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
-import { Input } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
@@ -10,6 +9,7 @@ import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import { DocsBlockNoteEditor } from '../../types';
+import { CodeEditor } from '../CodeEditor';
 
 const LatexRenderer = ({
   formula,
@@ -20,9 +20,6 @@ const LatexRenderer = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { colorsTokens } = useCunninghamTheme();
-  const [inputValue, setInputValue] = useState(formula);
   const [isLocalEditing, setIsLocalEditing] = useState(false);
 
   useEffect(() => {
@@ -38,37 +35,6 @@ const LatexRenderer = ({
     }
   }, [formula]);
 
-  useEffect(() => {
-    if (isLocalEditing && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isLocalEditing]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        blockRef.current &&
-        !blockRef.current.contains(event.target as Node)
-      ) {
-        setIsLocalEditing(false);
-      }
-    };
-
-    if (isLocalEditing) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isLocalEditing]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    onFormulaChange?.(newValue);
-  };
-
   const handleClick = () => {
     setIsLocalEditing(true);
   };
@@ -77,10 +43,8 @@ const LatexRenderer = ({
     <Box
       ref={blockRef}
       $padding="1rem"
-      // $background={colorsTokens['greyscale-100']}
       style={{
         width: '100%',
-
         overflowX: 'auto',
         cursor: 'pointer',
       }}
@@ -93,18 +57,14 @@ const LatexRenderer = ({
       role="button"
       tabIndex={0}
     >
-      {isLocalEditing && (
-        <Box $gap="1rem">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder="Enter LaTeX formula..."
-            fullWidth
-          />
-        </Box>
-      )}
       <div ref={containerRef} />
+      {isLocalEditing && (
+        <CodeEditor
+          value={formula}
+          onChange={onFormulaChange}
+          onClose={() => setIsLocalEditing(false)}
+        />
+      )}
     </Box>
   );
 };
