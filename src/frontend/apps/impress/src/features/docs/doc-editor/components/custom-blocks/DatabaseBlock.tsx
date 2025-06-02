@@ -61,7 +61,6 @@ export const DatabaseBlock = createReactBlockSpec(
           style={{
             flexGrow: 1,
             flexDirection: 'row',
-            height: '500px',
             width: '100%',
           }}
         >
@@ -78,6 +77,7 @@ export const DatabaseBlock = createReactBlockSpec(
                   rowData={rowData}
                   columnDefs={colDefs}
                   defaultColDef={defaultColDef}
+                  domLayout="autoHeight"
                 />
               </Box>
             </Box>
