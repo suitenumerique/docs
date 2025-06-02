@@ -19,3 +19,5 @@ class NotionColor(StrEnum):
     PINK_BACKGROUND = "pink_background"
     PURPLE = "purple"
     PURPLE_BACKGROUND = "purple_background"
+    RED = "red"
+    RED_BACKGROUND = "red_background"
