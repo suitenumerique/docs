@@ -68,14 +68,6 @@ const DocPage = ({ id }: DocProps) => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (doc?.title) {
-      setTimeout(() => {
-        document.title = `${doc.title} - ${t('Docs')}`;
-      }, 100);
-    }
-  }, [doc?.title, t]);
-
-  useEffect(() => {
     if (!docQuery || isFetching) {
       return;
     }
@@ -142,7 +134,21 @@ const DocPage = ({ id }: DocProps) => {
     );
   }
 
-  return <DocEditor doc={doc} />;
+  return (
+    <>
+      <Head>
+        <title>
+          {doc.title} - {t('Docs')}
+        </title>
+        <meta
+          property="og:title"
+          content={`${doc.title} - ${t('Docs')}`}
+          key="title"
+        />
+      </Head>
+      <DocEditor doc={doc} />
+    </>
+  );
 };
 
 const Page: NextPageWithLayout = () => {
