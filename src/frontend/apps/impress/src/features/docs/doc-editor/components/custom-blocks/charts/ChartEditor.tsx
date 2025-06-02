@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styled from 'styled-components';
 
 import { ChartOptionsForm } from './ChartOptionsForm';
 import { ChartTypeSelector } from './ChartTypeSelector';
@@ -26,6 +27,67 @@ const initialOptions: ChartOptions = {
   yAxisLabel: 'Values',
 };
 
+const ChartEditorContainer = styled.div`
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  min-height: 100vh;
+`;
+const ChartEditorHeader = styled.div`
+  margin-bottom: 2rem;
+`;
+const ChartEditorTitle = styled.h1`
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 0.5rem;
+`;
+const ChartEditorSubtitle = styled.p`
+  color: #4b5563;
+`;
+const ChartEditorGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
+const ChartEditorPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+const ChartEditorCard = styled.div`
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+`;
+const ChartEditorButtonRow = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+const ExportButton = styled.button`
+  padding: 0.5rem 1rem;
+  background: #4f46e5;
+  color: #fff;
+  border-radius: 0.375rem;
+  transition: background 0.2s;
+  &:hover {
+    background: #4338ca;
+  }
+`;
+const ChartEditorSticky = styled.div`
+  @media (min-width: 1024px) {
+    position: sticky;
+    top: 1.5rem;
+  }
+`;
+
 export const ChartEditor: React.FC = () => {
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [chartData, setChartData] = useState<ChartData>(initialData);
@@ -52,47 +114,37 @@ export const ChartEditor: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Chart Editor</h1>
-        <p className="text-gray-600">
+    <ChartEditorContainer>
+      <ChartEditorHeader>
+        <ChartEditorTitle>Chart Editor</ChartEditorTitle>
+        <ChartEditorSubtitle>
           Create and customize your charts with live preview
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        </ChartEditorSubtitle>
+      </ChartEditorHeader>
+      <ChartEditorGrid>
         {/* Left Panel - Controls */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <ChartEditorPanel>
+          <ChartEditorCard>
             <ChartTypeSelector value={chartType} onChange={setChartType} />
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          </ChartEditorCard>
+          <ChartEditorCard>
             <ChartOptionsForm
               options={chartOptions}
               onChange={setChartOptions}
             />
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          </ChartEditorCard>
+          <ChartEditorCard>
             <DataInputForm data={chartData} onChange={setChartData} />
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              onClick={exportConfig}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Export Config
-            </button>
-          </div>
-        </div>
-
+          </ChartEditorCard>
+          <ChartEditorButtonRow>
+            <ExportButton onClick={exportConfig}>Export Config</ExportButton>
+          </ChartEditorButtonRow>
+        </ChartEditorPanel>
         {/* Right Panel - Preview */}
-        <div className="lg:sticky lg:top-6">
+        <ChartEditorSticky>
           <LiveChartPreview config={config} />
-        </div>
-      </div>
-    </div>
+        </ChartEditorSticky>
+      </ChartEditorGrid>
+    </ChartEditorContainer>
   );
 };

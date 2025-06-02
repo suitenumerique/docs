@@ -1,9 +1,35 @@
 import React from 'react';
+import styled from 'styled-components';
+
+import { ChartType } from './types';
 
 interface ChartTypeSelectorProps {
   value: ChartType;
   onChange: (type: ChartType) => void;
 }
+
+const SelectorContainer = styled.div`
+  margin-bottom: 1rem;
+`;
+const Label = styled.label`
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+`;
+const Select = styled.select`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  &:focus {
+    outline: none;
+    border-color: transparent;
+    box-shadow: 0 0 0 2px #3b82f6;
+  }
+`;
 
 export const ChartTypeSelector: React.FC<ChartTypeSelectorProps> = ({
   value,
@@ -16,21 +42,18 @@ export const ChartTypeSelector: React.FC<ChartTypeSelectorProps> = ({
   ];
 
   return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Chart Type
-      </label>
-      <select
+    <SelectorContainer>
+      <Label>Chart Type</Label>
+      <Select
         value={value}
         onChange={(e) => onChange(e.target.value as ChartType)}
-        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       >
         {chartTypes.map((type) => (
           <option key={type.value} value={type.value}>
             {type.label}
           </option>
         ))}
-      </select>
-    </div>
+      </Select>
+    </SelectorContainer>
   );
 };

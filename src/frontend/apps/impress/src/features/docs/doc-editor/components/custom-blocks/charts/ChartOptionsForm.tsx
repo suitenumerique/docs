@@ -1,4 +1,5 @@
 import React from 'react';
+import styled from 'styled-components';
 
 import { ChartOptions } from './types';
 
@@ -6,6 +7,60 @@ interface ChartOptionsFormProps {
   options: ChartOptions;
   onChange: (options: ChartOptions) => void;
 }
+
+const FormContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 1rem;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  &:focus {
+    outline: none;
+    border-color: transparent;
+    box-shadow: 0 0 0 2px #3b82f6;
+  }
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+`;
+
+const Checkbox = styled.input`
+  margin-right: 0.5rem;
+  height: 1rem;
+  width: 1rem;
+  color: #2563eb;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+`;
+
+const CheckboxText = styled.span`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+`;
 
 export const ChartOptionsForm: React.FC<ChartOptionsFormProps> = ({
   options,
@@ -16,59 +71,45 @@ export const ChartOptionsForm: React.FC<ChartOptionsFormProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-800 mb-4">Chart Options</h3>
-
+    <FormContainer>
+      <SectionTitle>Chart Options</SectionTitle>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Chart Title
-        </label>
-        <input
+        <Label>Chart Title</Label>
+        <Input
           type="text"
           value={options.title}
           onChange={(e) => updateOption('title', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Enter chart title"
         />
       </div>
-
       <div>
-        <label className="flex items-center">
-          <input
+        <CheckboxLabel>
+          <Checkbox
             type="checkbox"
             checked={options.showLegend}
             onChange={(e) => updateOption('showLegend', e.target.checked)}
-            className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
-          <span className="text-sm font-medium text-gray-700">Show Legend</span>
-        </label>
+          <CheckboxText>Show Legend</CheckboxText>
+        </CheckboxLabel>
       </div>
-
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          X-Axis Label
-        </label>
-        <input
+        <Label>X-Axis Label</Label>
+        <Input
           type="text"
           value={options.xAxisLabel}
           onChange={(e) => updateOption('xAxisLabel', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Enter X-axis label"
         />
       </div>
-
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Y-Axis Label
-        </label>
-        <input
+        <Label>Y-Axis Label</Label>
+        <Input
           type="text"
           value={options.yAxisLabel}
           onChange={(e) => updateOption('yAxisLabel', e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Enter Y-axis label"
         />
       </div>
-    </div>
+    </FormContainer>
   );
 };
