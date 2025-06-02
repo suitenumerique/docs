@@ -149,10 +149,10 @@ export const getDatabaseReactSlashMenuItems = (
         type: 'database',
       });
     },
-    aliases: ['database', 'encadré', 'hervorhebung', 'benadrukken'],
+    aliases: ['database', 'db', 'base de donnée'],
     group,
-    icon: <Icon iconName="lightbulb" $size="18px" />,
-    subtext: t('Add a database block'),
+    icon: <Icon iconName="storage" $size="18px" />,
+    subtext: t('Create database view synced with Grist'),
   },
 ];
 
@@ -161,6 +161,6 @@ export const getDatabaseFormattingToolbarItems = (
 ): BlockTypeSelectItem => ({
   name: t('Database'),
   type: 'database',
-  icon: () => <Icon iconName="lightbulb" $size="16px" />,
+  icon: () => <Icon iconName="storage" $size="16px" />,
   isSelected: (block) => block.type === 'database',
 });
