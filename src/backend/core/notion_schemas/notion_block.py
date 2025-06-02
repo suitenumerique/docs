@@ -198,6 +198,7 @@ class NotionBlockUnsupported(BaseModel):
         NotionBlockType.TO_DO,
         NotionBlockType.TOGGLE,
         NotionBlockType.VIDEO,
+        NotionBlockType.UNSUPPORTED,
     ]
 
 
