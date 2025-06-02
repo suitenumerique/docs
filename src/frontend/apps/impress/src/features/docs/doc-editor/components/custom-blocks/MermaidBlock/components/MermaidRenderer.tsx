@@ -3,20 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@/components';
 
 import { CodeEditor } from '../../../CodeEditor/index';
+import { useMermaid } from '../hooks/useMermaid';
 import type { MermaidRendererProps } from '../types';
-
-interface MermaidModule {
-  initialize: (config: {
-    startOnLoad: boolean;
-    theme: string;
-    securityLevel: string;
-  }) => void;
-  render: (id: string, text: string) => Promise<{ svg: string }>;
-}
-
-interface MermaidImport {
-  default: MermaidModule;
-}
 
 export const MermaidRenderer = ({
   diagram,
@@ -25,29 +13,8 @@ export const MermaidRenderer = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef<HTMLDivElement>(null);
   const [isLocalEditing, setIsLocalEditing] = useState(false);
+  const { mermaidModule, error: mermaidError } = useMermaid();
   const [error, setError] = useState<string | null>(null);
-  const [mermaidModule, setMermaidModule] = useState<MermaidModule | null>(
-    null,
-  );
-
-  useEffect(() => {
-    const loadMermaid = async () => {
-      try {
-        const mermaid = (await import('mermaid')) as MermaidImport;
-        mermaid.default.initialize({
-          startOnLoad: true,
-          theme: 'default',
-          securityLevel: 'loose',
-        });
-        setMermaidModule(mermaid.default);
-      } catch (error) {
-        console.error('Failed to load Mermaid:', error);
-        setError('Failed to load Mermaid');
-      }
-    };
-
-    void loadMermaid();
-  }, []);
 
   useEffect(() => {
     if (containerRef.current && mermaidModule) {
@@ -69,7 +36,6 @@ export const MermaidRenderer = ({
           }
         }
       };
-
       void renderDiagram();
     }
   }, [diagram, mermaidModule]);
@@ -93,7 +59,7 @@ export const MermaidRenderer = ({
       tabIndex={0}
     >
       <div ref={containerRef} />
-      {error && (
+      {(error || mermaidError) && (
         <Box
           $margin="0.5rem 0 0 0"
           $padding="0.5rem"
@@ -103,7 +69,7 @@ export const MermaidRenderer = ({
             color: '#d32f2f',
           }}
         >
-          {error}
+          {error || mermaidError}
         </Box>
       )}
       {isLocalEditing && (

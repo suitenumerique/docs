@@ -51,6 +51,7 @@ export const LatexRenderer = ({
         <CodeEditor
           value={formula}
           onChange={onFormulaChange}
+          language="latex"
           onClickOutside={() => setIsLocalEditing(false)}
           parentRef={blockRef}
         />
