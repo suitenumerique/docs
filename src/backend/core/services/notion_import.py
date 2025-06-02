@@ -9,12 +9,13 @@ from requests import Session
 
 from ..notion_schemas.notion_block import (
     NotionBlock,
-    NotionParagraph,
     NotionHeading1,
     NotionHeading2,
     NotionHeading3,
+    NotionParagraph,
 )
 from ..notion_schemas.notion_page import NotionPage
+from ..notion_schemas.notion_rich_text import NotionRichText
 
 logger = logging.getLogger(__name__)
 
@@ -104,23 +105,21 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
     return blocks
 
 
+def convert_rich_texts(rich_texts: list[NotionRichText]) -> str:
+    return "".join(rich_text.plain_text for rich_text in rich_texts)
+
+
 def convert_block(block: NotionBlock) -> dict[str, Any] | None:
     match block.specific:
         case NotionParagraph():
-            content = ""
-            for rich_text in block.specific.rich_text:
-                content += rich_text.plain_text
             return {
                 "type": "paragraph",
-                "content": content,
+                "content": convert_rich_texts(block.specific.rich_text),
             }
         case NotionHeading1() | NotionHeading2() | NotionHeading3():
-            content = ""
-            for rich_text in block.specific.rich_text:
-                content += rich_text.plain_text
             return {
                 "type": "heading",
-                "content": content,
+                "content": convert_rich_texts(block.specific.rich_text),
             }
 
 
