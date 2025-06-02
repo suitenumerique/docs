@@ -40,19 +40,19 @@ export const DatabaseBlock = createReactBlockSpec(
 
       // Column Definitions: Defines the columns to be displayed.
       const colDefs: ColDef[] = [
-        { field: 'make', unSortIcon: true, sort: 'desc' },
+        { field: 'make', sort: 'desc' },
         {
           field: 'model',
-          unSortIcon: true,
           filter: true,
         },
-        { field: 'price', unSortIcon: true, filter: true },
+        { field: 'price', filter: true },
         { field: 'electric' },
       ];
 
       const defaultColDef = {
         flex: 1,
         editable: true,
+        unSortIcon: true,
       };
       return (
         <Box
