@@ -1,13 +1,13 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
-import { Button } from '@openfun/cunningham-react';
+import { Button, Input } from '@openfun/cunningham-react';
 import { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { TFunction } from 'i18next';
 import React, { useRef, useState } from 'react';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, DropButton, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
@@ -31,6 +31,8 @@ export const DatabaseBlock = createReactBlockSpec(
   },
   {
     render: ({ block, editor }) => {
+      const [addColumnToggleOpen, setAddColumnToggleOpen] = useState(false);
+
       const gridRef = useRef(null);
 
       const [rowData, setRowData] = useState([
@@ -38,6 +40,53 @@ export const DatabaseBlock = createReactBlockSpec(
         { make: 'Ford', model: 'F-Series', price: 33850, electric: false },
         { make: 'Toyota', model: 'Corolla', price: 29600, electric: false },
       ]);
+
+      const AddButtonComponent = ({
+        isOpen,
+        setIsOpen,
+      }: {
+        isOpen: boolean;
+        setIsOpen: (open: boolean) => void;
+      }) => {
+        const onOpenChange = (isOpen: boolean) => {
+          setIsOpen(isOpen);
+        };
+
+        return (
+          <DropButton
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            label="add column"
+            button={
+              <Box style={{ padding: '0.25rem', gap: '16px' }} color="tertiary">
+                <span className="material-icons">add</span>
+              </Box>
+            }
+          >
+            <Box style={{ padding: '10px', gap: '10px' }}>
+              <Text
+                $variation="600"
+                $size="s"
+                $weight="bold"
+                $theme="greyscale"
+              >
+                Ajouter une colonne
+              </Text>
+              <Input label="Column label"></Input>
+              <Button
+                size="small"
+                onClick={() => {
+                  setIsOpen(false);
+                  console.log('Column added', addColumnToggleOpen);
+                }}
+                style={{ alignSelf: 'end', width: 'fit-content' }}
+              >
+                Valider
+              </Button>
+            </Box>
+          </DropButton>
+        );
+      };
 
       // Column Definitions: Defines the columns to be displayed.
       const [colDefs, setColDefs] = useState<ColDef[]>([
@@ -48,6 +97,19 @@ export const DatabaseBlock = createReactBlockSpec(
         },
         { field: 'price', filter: true },
         { field: 'electric' },
+        {
+          headerComponentParams: {
+            innerHeaderComponent: () =>
+              AddButtonComponent({
+                isOpen: addColumnToggleOpen,
+                setIsOpen: setAddColumnToggleOpen,
+              }),
+          },
+          unSortIcon: false,
+          editable: false,
+          sortable: false,
+          spanRows: true,
+        },
       ]);
 
       const defaultColDef = {
@@ -79,6 +141,7 @@ export const DatabaseBlock = createReactBlockSpec(
                   columnDefs={colDefs}
                   defaultColDef={defaultColDef}
                   domLayout="autoHeight"
+                  enableCellSpan={true}
                 />
               </Box>
             </Box>
