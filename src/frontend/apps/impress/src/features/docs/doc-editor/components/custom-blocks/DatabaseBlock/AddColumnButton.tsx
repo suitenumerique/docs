@@ -5,15 +5,12 @@ import { Box, DropButton, Text } from '@/components';
 
 export const AddButtonComponent = ({
   addColumn,
-  isOpen,
-  setIsOpen,
 }: {
   addColumn: (columnName: string) => void;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
 }) => {
-  const onOpenChange = (isOpen: boolean) => {
-    setIsOpen(isOpen);
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpenChange = (open: boolean) => {
+    setIsOpen(open);
   };
   const [columnName, setColumnName] = useState('');
 
@@ -45,6 +42,7 @@ export const AddButtonComponent = ({
               return;
             }
             addColumn(columnName);
+            setIsOpen(false);
           }}
           style={{ alignSelf: 'end', width: 'fit-content' }}
         >

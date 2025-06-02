@@ -8,7 +8,6 @@ import { AddButtonComponent } from './AddColumnButton';
 
 export const DatabaseGrid = () => {
   const gridRef = useRef(null);
-  const [addColumnToggleOpen, setAddColumnToggleOpen] = useState(false);
 
   const [rowData, setRowData] = useState([
     { make: 'Tesla', model: 'Model Y', price: 64950, electric: true },
@@ -29,8 +28,6 @@ export const DatabaseGrid = () => {
         innerHeaderComponent: () =>
           AddButtonComponent({
             addColumn,
-            isOpen: addColumnToggleOpen,
-            setIsOpen: setAddColumnToggleOpen,
           }),
       },
       unSortIcon: false,
@@ -62,7 +59,6 @@ export const DatabaseGrid = () => {
         ...(addColumn !== undefined ? [addColumn] : []),
       ];
     });
-    setAddColumnToggleOpen(false);
   };
 
   return (
