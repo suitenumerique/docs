@@ -80,8 +80,6 @@ class YdocConverter:
     def convert_blocks(self, blocks):
         """Convert a list of blocks into our internal format using an external microservice."""
 
-        print('BONJOUR')
-        print(settings.Y_PROVIDER_API_BASE_URL)
         try:
             response = requests.post(
                 f"{settings.Y_PROVIDER_API_BASE_URL}{settings.BLOCKS_CONVERSION_API_ENDPOINT}/",
