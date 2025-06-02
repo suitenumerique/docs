@@ -12,6 +12,10 @@ and this project adheres to
 
 - ✨(frontend) add customization for translations #857
 
+### Change
+
+- 🧑‍💻(docker): set image name for y-provider in docker-compose.yml #1056
+
 ## [3.3.0] - 2025-05-06
 
 ### Added

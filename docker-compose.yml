@@ -180,6 +180,7 @@ services:
 
   y-provider:
     user: ${DOCKER_USER:-1000}
+    image: impress:y-provider
     build: 
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
