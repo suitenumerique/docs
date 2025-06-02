@@ -21,6 +21,7 @@ export const BlockNoteSuggestionMenu = () => {
   const editor = useBlockNoteEditor<DocsBlockSchema>();
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
+  const advancedBlocksName = useDictionary().slash_menu.table.group;
 
   const getSlashMenuItems = useMemo(() => {
     return async (query: string) =>
@@ -31,7 +32,7 @@ export const BlockNoteSuggestionMenu = () => {
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
-            getEmbedReactSlashMenuItems(editor, t, basicBlocksName),
+            getEmbedReactSlashMenuItems(editor, t, advancedBlocksName),
           ),
           query,
         ),
