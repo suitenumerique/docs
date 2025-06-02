@@ -59,9 +59,9 @@ export const getDatabaseReactSlashMenuItems = (
         type: 'database',
       });
     },
-    aliases: ['database', 'encadré', 'hervorhebung', 'benadrukken'],
+    aliases: ['database', 'db', 'base de données'],
     group,
-    icon: <Icon iconName="lightbulb" $size="18px" />,
-    subtext: t('Add a database block'),
+    icon: <Icon iconName="storage" $size="18px" />,
+    subtext: t('Create database view synced with Grist'),
   },
 ];
