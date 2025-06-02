@@ -176,9 +176,25 @@ class NotionLinkPreview(BaseModel):
     url: str
 
 
-class NotionBlockUnsupported(BaseModel):
-    """FIXME: Maybe https://github.com/pydantic/pydantic/discussions/4928#discussioncomment-13079554 would be better"""
+class NotionTable(BaseModel):
+    """https://developers.notion.com/reference/block#table
 
+    The children of this block are NotionTableRow blocks."""
+
+    block_type: Literal[NotionBlockType.TABLE] = NotionBlockType.TABLE
+    table_width: int
+    has_column_header: bool
+    has_row_header: bool
+
+
+class NotionTableRow(BaseModel):
+    """https://developers.notion.com/reference/block#table-row"""
+
+    block_type: Literal[NotionBlockType.TABLE_ROW] = NotionBlockType.TABLE_ROW
+    cells: list[list[NotionRichText]]  # Each cell is a list of rich text objects
+
+
+class NotionBlockUnsupported(BaseModel):
     block_type: str
     raw: dict[str, Any] | None = None
 
@@ -206,7 +222,10 @@ NotionBlockSpecifics = Annotated[
         | NotionDivider
         | NotionEmbed
         | NotionFile
-        | NotionImage,
+        | NotionImage
+        | NotionLinkPreview
+        | NotionTable
+        | NotionTableRow,
         Discriminator(discriminator="block_type"),
     ]
     | NotionBlockUnsupported,
