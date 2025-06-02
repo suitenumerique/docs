@@ -9,6 +9,7 @@ import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
   convertMarkdownHandler,
+  convertBlocksHandler,
 } from '../handlers';
 import { corsMiddleware, httpSecurity, wsSecurity } from '../middlewares';
 import { routes } from '../routes';
@@ -50,6 +51,8 @@ export const initServer = () => {
    * Route to convert markdown
    */
   app.post(routes.CONVERT_MARKDOWN, httpSecurity, convertMarkdownHandler);
+
+  app.post(routes.CONVERT_BLOCKS, httpSecurity, convertBlocksHandler);
 
   Sentry.setupExpressErrorHandler(app);
 

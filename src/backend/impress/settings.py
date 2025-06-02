@@ -628,6 +628,11 @@ class Base(Configuration):
         environ_name="CONVERSION_API_ENDPOINT",
         environ_prefix=None,
     )
+    BLOCKS_CONVERSION_API_ENDPOINT = values.Value(
+        default="convert-blocks",
+        environ_name="BLOCKS_CONVERSION_API_ENDPOINT",
+        environ_prefix=None,
+    )
     CONVERSION_API_CONTENT_FIELD = values.Value(
         default="content",
         environ_name="CONVERSION_API_CONTENT_FIELD",
