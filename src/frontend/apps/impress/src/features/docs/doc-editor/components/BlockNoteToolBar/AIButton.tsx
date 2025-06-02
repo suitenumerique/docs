@@ -21,6 +21,7 @@ import {
   AITransformActions,
   useDocAITransform,
   useDocAITranslate,
+  useDocAIFactCheck,
 } from '../../api';
 
 type LanguageTranslate = {
@@ -54,6 +55,37 @@ const sortByPopularLanguages = (
     // If neither a nor b is in the popular list, maintain their relative order
     return 0;
   });
+};
+
+const AIMenuItemFactCheck = ({
+  docId,
+  icon,
+  children,
+}: PropsWithChildren<{ docId: string; icon?: ReactNode }>) => {
+  const { mutateAsync: requestAI, isPending } = useDocAIFactCheck();
+  const editor = useBlockNoteEditor();
+
+  const requestAIFactCheck = async (selectedBlocks: Block[]) => {
+    const text = await editor.blocksToMarkdownLossy(selectedBlocks);
+
+    const responseAI = await requestAI({
+      text,
+      docId,
+    });
+
+    if (!responseAI?.answer) {
+      throw new Error('No response from AI');
+    }
+
+    const markdown = await editor.tryParseMarkdownToBlocks(responseAI.answer);
+    editor.replaceBlocks(selectedBlocks, markdown);
+  };
+
+  return (
+    <AIMenuItem icon={icon} requestAI={requestAIFactCheck} isPending={isPending}>
+      {children}
+    </AIMenuItem>
+  );
 };
 
 export function AIGroupButton() {
@@ -159,6 +191,12 @@ export function AIGroupButton() {
             >
               {t('Emojify')}
             </AIMenuItemTransform>
+            <AIMenuItemFactCheck
+              docId={currentDoc.id}
+              icon={<Icon iconName="published_with_changes" $size="s" />}
+            >
+              {t('Fact Check')}
+            </AIMenuItemFactCheck>
           </>
         )}
         {canAITranslate && (
