@@ -12,6 +12,7 @@ export const LatexBlock = createReactBlockSpec(blockSpec, {
       editor.updateBlock(block, {
         props: {
           formula: newFormula,
+          textAlignment: block.props.textAlignment,
         },
       });
     };
