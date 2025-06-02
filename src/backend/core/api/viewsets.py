@@ -1465,6 +1465,33 @@ class DocumentViewSet(
                 {"error": f"Failed to fetch resource: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        name="Fact check a piece of text with AI",
+        url_path="ai-fact-check",
+        throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
+    )
+    def ai_fact_check(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/ai-fact-check
+        with expected data:
+        - text: str
+        Return JSON response with the fact-checked text.
+        """
+        self.get_object()
+
+        text = request.data.get("text")
+        if not text:
+            return drf.response.Response(
+                {"detail": "Missing 'text' field."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        response = AIService().fact_check(text)
+
+        return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 
 
 class DocumentAccessViewSet(

@@ -45,6 +45,7 @@ dependencies = [
     "dockerflow==2024.4.2",
     "easy_thumbnails==2.10",
     "factory_boy==3.3.3",
+    "factverifai==0.0.1",
     "gunicorn==23.0.0",
     "jsonschema==4.24.0",
     "lxml==5.4.0",

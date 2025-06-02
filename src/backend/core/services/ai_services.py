@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from factverifai import fact_check
 
 from openai import OpenAI
 
@@ -91,3 +92,7 @@ class AIService:
         language_display = enums.ALL_LANGUAGES.get(language, language)
         system_content = AI_TRANSLATE.format(language=language_display)
         return self.call_ai_api(system_content, text)
+    
+    def fact_check(self, text):
+        """Fact check the provided text."""
+        return fact_check(text)
