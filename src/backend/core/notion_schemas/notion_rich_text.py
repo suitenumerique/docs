@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Discriminator, model_validator
+from pydantic import BaseModel, Discriminator, ValidationError, model_validator
 
 from .notion_color import NotionColor
 
@@ -31,7 +31,8 @@ class NotionRichText(BaseModel):
         if not isinstance(data, dict):
             return data
 
-        assert "type" in data, "Type must be specified"
+        if "type" not in data:
+            raise ValidationError("Type must be specified")
         data_type = data.pop("type")
         data["specific"] = data.pop(data_type)
         data["specific"]["type"] = data_type

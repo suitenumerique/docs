@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Discriminator, Field, model_validator
+from pydantic import BaseModel, Discriminator, Field, ValidationError, model_validator
 
 from .notion_color import NotionColor
 from .notion_rich_text import NotionRichText
@@ -22,10 +22,12 @@ class NotionBlock(BaseModel):
         if not isinstance(data, dict):
             return data
 
-        assert "type" in data, "Type must be specified"
+        if "type" not in data:
+            raise ValidationError("Type must be specified")
+
         data_type = data.pop("type")
         data["specific"] = data.pop(data_type)
-        data["specific"]["type"] = data_type
+        data["specific"]["block_type"] = data_type
 
         return data
 
@@ -39,6 +41,7 @@ class NotionBlockType(StrEnum):
     CALLOUT = "callout"
     CHILD_DATABASE = "child_database"
     CHILD_PAGE = "child_page"
+    CODE = "code"
     COLUMN = "column"
     COLUMN_LIST = "column_list"
     DIVIDER = "divider"
@@ -66,10 +69,10 @@ class NotionBlockType(StrEnum):
     VIDEO = "video"
 
 
-class NotionBlockHeadingBase(BaseModel):
+class NotionHeadingBase(BaseModel):
     """https://developers.notion.com/reference/block#headings"""
 
-    type: Literal[
+    block_type: Literal[
         NotionBlockType.HEADING_1, NotionBlockType.HEADING_2, NotionBlockType.HEADING_3
     ]
     rich_text: list[NotionRichText]
@@ -77,28 +80,112 @@ class NotionBlockHeadingBase(BaseModel):
     is_toggleable: bool = False
 
 
-class NotionBlockHeading1(NotionBlockHeadingBase):
-    type: Literal[NotionBlockType.HEADING_1] = NotionBlockType.HEADING_1
+class NotionHeading1(NotionHeadingBase):
+    block_type: Literal[NotionBlockType.HEADING_1] = NotionBlockType.HEADING_1
 
 
-class NotionBlockHeading2(NotionBlockHeadingBase):
-    type: Literal[NotionBlockType.HEADING_2] = NotionBlockType.HEADING_2
+class NotionHeading2(NotionHeadingBase):
+    block_type: Literal[NotionBlockType.HEADING_2] = NotionBlockType.HEADING_2
 
 
-class NotionBlockHeading3(NotionBlockHeadingBase):
-    type: Literal[NotionBlockType.HEADING_3] = NotionBlockType.HEADING_3
+class NotionHeading3(NotionHeadingBase):
+    block_type: Literal[NotionBlockType.HEADING_3] = NotionBlockType.HEADING_3
 
 
 class NotionParagraph(BaseModel):
     """https://developers.notion.com/reference/block#paragraph"""
 
-    type: Literal[NotionBlockType.PARAGRAPH] = NotionBlockType.PARAGRAPH
+    block_type: Literal[NotionBlockType.PARAGRAPH] = NotionBlockType.PARAGRAPH
     rich_text: list[NotionRichText]
     color: NotionColor
     children: list["NotionBlock"] = Field(default_factory=list)
 
 
+class NotionBulletedListItem(BaseModel):
+    """https://developers.notion.com/reference/block#bulleted-list-item"""
+
+    block_type: Literal[NotionBlockType.BULLETED_LIST_ITEM] = (
+        NotionBlockType.BULLETED_LIST_ITEM
+    )
+    rich_text: list[NotionRichText]
+    color: NotionColor
+    children: list["NotionBlock"] = Field(default_factory=list)
+
+
+class NotionNumberedListItem(BaseModel):
+    """https://developers.notion.com/reference/block#numbered-list-item"""
+
+    block_type: Literal[NotionBlockType.NUMBERED_LIST_ITEM] = (
+        NotionBlockType.NUMBERED_LIST_ITEM
+    )
+    rich_text: list[NotionRichText]
+    color: NotionColor
+    children: list["NotionBlock"] = Field(default_factory=list)
+
+
+class NotionCode(BaseModel):
+    """https://developers.notion.com/reference/block#code"""
+
+    block_type: Literal[NotionBlockType.CODE] = NotionBlockType.CODE
+    caption: list[NotionRichText]
+    rich_text: list[NotionRichText]
+    language: str  # Actually an enum
+
+
+class NotionDivider(BaseModel):
+    """https://developers.notion.com/reference/block#divider"""
+
+    block_type: Literal[NotionBlockType.DIVIDER] = NotionBlockType.DIVIDER
+
+
+class NotionEmbed(BaseModel):
+    """https://developers.notion.com/reference/block#embed"""
+
+    block_type: Literal[NotionBlockType.EMBED] = NotionBlockType.EMBED
+    url: str
+
+
+class NotionFileType(StrEnum):
+    FILE = "file"
+    EXTERNAL = "external"
+    FILE_UPLOAD = "file_upload"
+
+
+class NotionFile(BaseModel):
+    # FIXME: this is actually another occurrence of type discriminating
+    """https://developers.notion.com/reference/block#file"""
+
+    block_type: Literal[NotionBlockType.FILE] = NotionBlockType.FILE
+    caption: list[NotionRichText]
+    type: NotionFileType
+    ...
+
+
+class NotionImage(BaseModel):
+    """https://developers.notion.com/reference/block#image"""
+
+    block_type: Literal[NotionBlockType.IMAGE] = NotionBlockType.IMAGE
+    # FIXME: this actually contains a file reference which will be defined for the above, but with the "image" attribute
+
+
+class NotionLinkPreview(BaseModel):
+    """https://developers.notion.com/reference/block#link-preview"""
+
+    block_type: Literal[NotionBlockType.LINK_PREVIEW] = NotionBlockType.LINK_PREVIEW
+    url: str
+
+
 NotionBlockSpecifics = Annotated[
-    NotionBlockHeading1 | NotionBlockHeading2 | NotionBlockHeading3,
-    Discriminator(discriminator="type"),
+    NotionHeading1
+    | NotionHeading2
+    | NotionHeading3
+    | NotionParagraph
+    | NotionNumberedListItem
+    | NotionBulletedListItem
+    | NotionCode
+    | NotionDivider
+    | NotionEmbed
+    | NotionFile
+    | NotionImage,
+    Discriminator(discriminator="block_type"),
 ]
