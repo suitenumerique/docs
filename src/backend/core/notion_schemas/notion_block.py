@@ -179,42 +179,36 @@ class NotionLinkPreview(BaseModel):
 class NotionBlockUnsupported(BaseModel):
     """FIXME: Maybe https://github.com/pydantic/pydantic/discussions/4928#discussioncomment-13079554 would be better"""
 
-    block_type: Literal[
-        NotionBlockType.BOOKMARK,
-        NotionBlockType.BREADCRUMB,
-        NotionBlockType.CALLOUT,
-        NotionBlockType.CHILD_DATABASE,
-        NotionBlockType.CHILD_PAGE,
-        NotionBlockType.COLUMN,
-        NotionBlockType.COLUMN_LIST,
-        NotionBlockType.EQUATION,
-        NotionBlockType.LINK_TO_PAGE,
-        NotionBlockType.PDF,
-        NotionBlockType.QUOTE,
-        NotionBlockType.SYNCED_BLOCK,
-        NotionBlockType.TABLE,
-        NotionBlockType.TABLE_OF_CONTENTS,
-        NotionBlockType.TABLE_ROW,
-        NotionBlockType.TEMPLATE,
-        NotionBlockType.TO_DO,
-        NotionBlockType.TOGGLE,
-        NotionBlockType.VIDEO,
-        NotionBlockType.UNSUPPORTED,
-    ]
+    block_type: str
+    raw: dict[str, Any] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def put_all_in_raw(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+
+        if "raw" not in data:
+            data["raw"] = data.copy()
+
+        return data
 
 
 NotionBlockSpecifics = Annotated[
-    NotionHeading1
-    | NotionHeading2
-    | NotionHeading3
-    | NotionParagraph
-    | NotionNumberedListItem
-    | NotionBulletedListItem
-    | NotionCode
-    | NotionDivider
-    | NotionEmbed
-    | NotionFile
-    | NotionImage
+    Annotated[
+        NotionHeading1
+        | NotionHeading2
+        | NotionHeading3
+        | NotionParagraph
+        | NotionNumberedListItem
+        | NotionBulletedListItem
+        | NotionCode
+        | NotionDivider
+        | NotionEmbed
+        | NotionFile
+        | NotionImage,
+        Discriminator(discriminator="block_type"),
+    ]
     | NotionBlockUnsupported,
-    Discriminator(discriminator="block_type"),
+    Field(union_mode="left_to_right"),
 ]
