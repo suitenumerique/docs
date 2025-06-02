@@ -41,10 +41,13 @@ export const DatabaseBlock = createReactBlockSpec(
 
       // Column Definitions: Defines the columns to be displayed.
       const [colDefs, setColDefs] = useState<ColDef[]>([
-        { field: 'make' } as const,
-        { field: 'model' } as const,
-        { field: 'price' } as const,
-        { field: 'electric' } as const,
+        { field: 'make', unSortIcon: true, sort: 'desc' },
+        {
+          field: 'model',
+          unSortIcon: true,
+        },
+        { field: 'price', unSortIcon: true },
+        { field: 'electric' },
       ]);
 
       const defaultColDef = {
