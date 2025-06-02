@@ -157,7 +157,23 @@ services:
         API_ORIGIN: "http://localhost:8071"
         PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
+    image: impress:frontend-production
+    ports:
+      - "3000:3000"
+
+  frontend-development:
+    user: "${DOCKER_USER:-1000}"
+    build: 
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
+      target: impress-dev
+      args:
+        API_ORIGIN: "http://localhost:8071"
+        PUBLISH_AS_MIT: "false"
+        SW_DEACTIVATED: "true"
     image: impress:frontend-development
+    volumes:
+      - ./src/frontend:/home/frontend
     ports:
       - "3000:3000"
 

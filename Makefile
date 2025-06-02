@@ -128,7 +128,7 @@ run-backend: ## Start only the backend application and all needed services
 run: ## start the wsgi (production) and development server
 run: 
 	@$(MAKE) run-backend
-	@$(COMPOSE) up --force-recreate -d frontend
+	@$(COMPOSE) up --force-recreate -d frontend-development
 .PHONY: run
 
 status: ## an alias for "docker compose ps"
@@ -315,7 +315,7 @@ frontend-lint: ## run the frontend linter
 .PHONY: frontend-lint
 
 run-frontend-development: ## Run the frontend in development mode
-	@$(COMPOSE) stop frontend
+	@$(COMPOSE) stop frontend frontend-development
 	cd $(PATH_FRONT_IMPRESS) && yarn dev
 .PHONY: run-frontend-development
 
