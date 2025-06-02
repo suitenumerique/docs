@@ -1,20 +1,19 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
+import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
+import { Button } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
-import React, { useEffect } from 'react';
 
-import { Box, Icon } from '@/components';
-import { useGristTable } from '@/features/grist';
+import { Box, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
+import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
+import { DatabaseTableDisplay } from '../DatabaseTableDisplay';
 
 export const DatabaseBlock = createReactBlockSpec(
   {
     type: 'database',
     propSchema: {
-      textAlignment: defaultProps.textAlignment,
-      backgroundColor: defaultProps.backgroundColor,
       documentId: {
         type: 'string',
         default: '',
@@ -27,23 +26,7 @@ export const DatabaseBlock = createReactBlockSpec(
     content: 'inline',
   },
   {
-    render: ({ block, editor, contentRef }) => {
-      const { tableData } = useGristTable({
-        tableId: block.props.tableId,
-        documentId: block.props.documentId,
-      });
-
-      useEffect(() => {
-        if (
-          !block.content.length &&
-          block.props.backgroundColor === 'default'
-        ) {
-          editor.updateBlock(block, { props: { backgroundColor: 'orange' } });
-        } else {
-          editor.updateBlock(block, { content: JSON.stringify(tableData) });
-        }
-      }, [block, editor, tableData]);
-
+    render: ({ block, editor }) => {
       return (
         <Box
           $padding="1rem"
@@ -53,7 +36,35 @@ export const DatabaseBlock = createReactBlockSpec(
             flexDirection: 'row',
           }}
         >
-          <Box as="p" className="inline-content" ref={contentRef} />
+          <Box as="div" />
+          {block.props.documentId && block.props.tableId ? (
+            <Box>
+              <DatabaseTableDisplay
+                documentId={block.props.documentId}
+                tableId={block.props.tableId}
+              />
+            </Box>
+          ) : (
+            <Box
+              style={{
+                flexDirection: 'column',
+                gap: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <Button>Créer une nouvelle base de données vide</Button>
+              <Text>ou</Text>
+              <DatabaseSourceSelector
+                onSourceSelected={({ documentId, tableId }) => {
+                  editor.updateBlock(block, {
+                    props: { documentId: documentId.toString(), tableId },
+                  });
+                }}
+              />
+            </Box>
+          )}
         </Box>
       );
     },
