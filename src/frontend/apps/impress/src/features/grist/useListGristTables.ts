@@ -17,16 +17,12 @@ export interface Fields {
 }
 
 export const useListGristTables = (
-  documentId?: number,
-): { tables: Table[] | null } => {
-  const [tables, setTables] = useState<Table[] | null>(null);
+  documentId: number,
+): { tables: Table[] | undefined } => {
+  const [tables, setTables] = useState<Table[]>();
 
   useEffect(() => {
     const fetchTables = async () => {
-      if (!documentId) {
-        console.warn('Document ID is required to fetch Grist tables');
-        return;
-      }
       const url = `docs/${documentId}/tables`;
       const response = await gristFetchApi(url);
       if (!response.ok) {
@@ -37,6 +33,7 @@ export const useListGristTables = (
       }
       return (await response.json()) as Promise<TableDescription>; // Adjusted to return an array of Table objects
     };
+
     fetchTables()
       .then((response) => {
         if (response) {
