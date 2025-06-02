@@ -673,6 +673,22 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    NOTION_CLIENT_ID = values.Value(
+        default=None,
+        environ_name="NOTION_CLIENT_ID",
+        environ_prefix=None,
+    )
+    NOTION_CLIENT_SECRET = values.Value(
+        default=None,
+        environ_name="NOTION_CLIENT_SECRET",
+        environ_prefix=None,
+    )
+    NOTION_REDIRECT_URI = values.Value(
+        default=None,
+        environ_name="NOTION_REDIRECT_URI",
+        environ_prefix=None,
+    )
+
     # Logging
     # We want to make it easy to log to console but by default we log production
     # to Sentry and don't want to log to console.

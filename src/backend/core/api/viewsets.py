@@ -18,6 +18,7 @@ from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
@@ -37,6 +38,8 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.converter_services import YdocConverter
+from core.services.notion_import import import_notion
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
@@ -2072,3 +2075,95 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+
+@drf.decorators.api_view()
+def notion_import_redirect(request):
+    query = urlencode(
+        {
+            "client_id": settings.NOTION_CLIENT_ID,
+            "response_type": "code",
+            "owner": "user",
+            "redirect_uri": settings.NOTION_REDIRECT_URI,
+        }
+    )
+    return redirect("https://api.notion.com/v1/oauth/authorize?" + query)
+
+
+@drf.decorators.api_view()
+def notion_import_callback(request):
+    code = request.GET.get("code")
+    resp = requests.post(
+        "https://api.notion.com/v1/oauth/token",
+        auth=requests.auth.HTTPBasicAuth(
+            settings.NOTION_CLIENT_ID, settings.NOTION_CLIENT_SECRET
+        ),
+        headers={"Accept": "application/json"},
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": settings.NOTION_REDIRECT_URI,
+        },
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    request.session["notion_token"] = data["access_token"]
+    return redirect(f"{settings.FRONTEND_URL}/import-notion/")
+
+
+def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_page_id):
+    document_content = YdocConverter().convert_blocks(imported_doc.blocks)
+
+    obj = parent_doc.add_child(
+        creator=user,
+        title=imported_doc.page.get_title() or "Child page",
+        content=document_content,
+    )
+
+    models.DocumentAccess.objects.create(
+        document=obj,
+        user=user,
+        role=models.RoleChoices.OWNER,
+    )
+
+    imported_docs_by_page_id[imported_doc.page.id] = obj
+
+    for child in imported_doc.children:
+        _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
+
+
+def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
+    document_content = YdocConverter().convert_blocks(imported_doc.blocks)
+
+    obj = models.Document.add_root(
+        depth=1,
+        creator=user,
+        title=imported_doc.page.get_title() or "Imported Notion page",
+        link_reach=models.LinkReachChoices.RESTRICTED,
+        content=document_content,
+    )
+
+    models.DocumentAccess.objects.create(
+        document=obj,
+        user=user,
+        role=models.RoleChoices.OWNER,
+    )
+
+    imported_docs_by_page_id[imported_doc.page.id] = obj
+
+    for child in imported_doc.children:
+        _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
+
+
+@drf.decorators.api_view(["POST"])
+def notion_import_run(request):
+    if "notion_token" not in request.session:
+        raise drf.exceptions.PermissionDenied()
+
+    imported_docs = import_notion(request.session["notion_token"])
+
+    imported_docs_by_page_id = {}
+    for imported_doc in imported_docs:
+        _import_notion_root_page(imported_doc, request.user, imported_docs_by_page_id)
+
+    return drf.response.Response({})
