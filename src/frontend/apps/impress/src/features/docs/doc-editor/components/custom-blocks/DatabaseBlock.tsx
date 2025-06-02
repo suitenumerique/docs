@@ -2,7 +2,10 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { Button } from '@openfun/cunningham-react';
+import { ColDef } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
 import { TFunction } from 'i18next';
+import React, { useRef } from 'react';
 
 import { Box, Icon, Text } from '@/components';
 
@@ -27,6 +30,25 @@ export const DatabaseBlock = createReactBlockSpec(
   },
   {
     render: ({ block, editor }) => {
+      const gridRef = useRef(null);
+
+      const rowData = [
+        { make: 'Tesla', model: 'Model Y', price: 64950, electric: true },
+        { make: 'Ford', model: 'F-Series', price: 33850, electric: false },
+        { make: 'Toyota', model: 'Corolla', price: 29600, electric: false },
+      ];
+
+      // Column Definitions: Defines the columns to be displayed.
+      const colDefs: ColDef[] = [
+        { field: 'make' } as const,
+        { field: 'model' } as const,
+        { field: 'price' } as const,
+        { field: 'electric' } as const,
+      ];
+
+      const defaultColDef = {
+        flex: 1,
+      };
       return (
         <Box
           $padding="1rem"
@@ -34,6 +56,8 @@ export const DatabaseBlock = createReactBlockSpec(
           style={{
             flexGrow: 1,
             flexDirection: 'row',
+            height: '500px',
+            width: '100%',
           }}
         >
           <Box as="div" />
@@ -43,6 +67,14 @@ export const DatabaseBlock = createReactBlockSpec(
                 documentId={block.props.documentId}
                 tableId={block.props.tableId}
               />
+              <Box style={{ height: '100%', width: '100%' }}>
+                <AgGridReact
+                  ref={gridRef}
+                  rowData={rowData}
+                  columnDefs={colDefs}
+                  defaultColDef={defaultColDef}
+                />
+              </Box>
             </Box>
           ) : (
             <Box
