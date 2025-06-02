@@ -7,7 +7,7 @@ import requests
 from pydantic import TypeAdapter
 from requests import Session
 
-from ..notion_schemas.notion_block import NotionBlock
+from ..notion_schemas.notion_block import NotionBlock, NotionParagraph
 from ..notion_schemas.notion_page import NotionPage
 
 logger = logging.getLogger(__name__)
@@ -99,12 +99,15 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
 
 
 def convert_block(block: NotionBlock) -> Any:
-    match type(block):
-        case NotionParagraph:
-            return {
-                "type": "paragraph",
-                "content": block.rich_text[0].plain_text # TODO: handle multiple
-            }
+    if isinstance(block.specific, NotionParagraph):
+        content = ""
+        if len(block.specific.rich_text) > 0:
+            # TODO: handle multiple of these
+            content = block.specific.rich_text[0].plain_text
+        return {
+            "type": "paragraph",
+            "content": content,
+        }
 
 
 def convert_block_list(blocks: list[NotionBlock]) -> Any:
