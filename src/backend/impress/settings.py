@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+# pylint: disable=too-many-lines
+
+import datetime
 import os
 import tomllib
 from socket import gethostbyname, gethostname
@@ -59,7 +62,7 @@ class Base(Configuration):
     """
 
     DEBUG = False
-    USE_SWAGGER = False
+    USE_SWAGGER = values.BooleanValue(False, environ_name="USE_SWAGGER", environ_prefix=None)
 
     API_VERSION = "v1.0"
 
@@ -303,6 +306,7 @@ class Base(Configuration):
         "django_filters",
         "dockerflow.django",
         "rest_framework",
+        "knox",
         "parler",
         "treebeard",
         "easy_thumbnails",
@@ -318,6 +322,7 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        "drf_spectacular_sidecar"
     ]
 
     # Cache
@@ -327,8 +332,9 @@ class Base(Configuration):
 
     REST_FRAMEWORK = {
         "DEFAULT_AUTHENTICATION_CLASSES": (
-            "mozilla_django_oidc.contrib.drf.OIDCAuthentication",
             "rest_framework.authentication.SessionAuthentication",
+            "knox.auth.TokenAuthentication",
+            "lasuite.oidc_resource_server.authentication.ResourceServerAuthentication",
         ),
         "DEFAULT_PARSER_CLASSES": [
             "rest_framework.parsers.JSONParser",
@@ -593,6 +599,72 @@ class Base(Configuration):
         default=True, environ_name="ALLOW_LOGOUT_GET_METHOD", environ_prefix=None
     )
 
+    # OIDC - Docs as a resource server
+    OIDC_OP_URL = values.Value(
+        default=None, environ_name="OIDC_OP_URL", environ_prefix=None
+    )
+    OIDC_OP_INTROSPECTION_ENDPOINT = values.Value(
+        environ_name="OIDC_OP_INTROSPECTION_ENDPOINT", environ_prefix=None
+    )
+    OIDC_VERIFY_SSL = values.BooleanValue(
+        default=True, environ_name="OIDC_VERIFY_SSL", environ_prefix=None
+    )
+    OIDC_TIMEOUT = values.IntegerValue(
+        default=3, environ_name="OIDC_TIMEOUT", environ_prefix=None
+    )
+    OIDC_PROXY = values.Value(None, environ_name="OIDC_PROXY", environ_prefix=None)
+
+    OIDC_RS_BACKEND_CLASS = "lasuite.oidc_resource_server.backend.ResourceServerBackend"
+    OIDC_RS_AUDIENCE_CLAIM = values.Value(  # The claim used to identify the audience
+        default="client_id", environ_name="OIDC_RS_AUDIENCE_CLAIM", environ_prefix=None
+    )
+    OIDC_RS_PRIVATE_KEY_STR = values.Value(
+        default=None,
+        environ_name="OIDC_RS_PRIVATE_KEY_STR",
+        environ_prefix=None,
+    )
+    OIDC_RS_ENCRYPTION_KEY_TYPE = values.Value(
+        default="RSA",
+        environ_name="OIDC_RS_ENCRYPTION_KEY_TYPE",
+        environ_prefix=None,
+    )
+    OIDC_RS_ENCRYPTION_ALGO = values.Value(
+        default="RSA-OAEP",
+        environ_name="OIDC_RS_ENCRYPTION_ALGO",
+        environ_prefix=None,
+    )
+    OIDC_RS_ENCRYPTION_ENCODING = values.Value(
+        default="A256GCM",
+        environ_name="OIDC_RS_ENCRYPTION_ENCODING",
+        environ_prefix=None,
+    )
+    OIDC_RS_CLIENT_ID = values.Value(
+        None, environ_name="OIDC_RS_CLIENT_ID", environ_prefix=None
+    )
+    OIDC_RS_CLIENT_SECRET = values.Value(
+        None,
+        environ_name="OIDC_RS_CLIENT_SECRET",
+        environ_prefix=None,
+    )
+    OIDC_RS_SIGNING_ALGO = values.Value(
+        default="ES256", environ_name="OIDC_RS_SIGNING_ALGO", environ_prefix=None
+    )
+    OIDC_RS_SCOPES = values.ListValue(
+        [], environ_name="OIDC_RS_SCOPES", environ_prefix=None
+    )
+
+    # User token (knox)
+    REST_KNOX = {
+        "SECURE_HASH_ALGORITHM": "hashlib.sha512",
+        "AUTH_TOKEN_CHARACTER_LENGTH": 64,
+        "TOKEN_TTL": datetime.timedelta(hours=24 * 7),
+        "TOKEN_LIMIT_PER_USER": None,
+        "AUTO_REFRESH": False,
+        "AUTO_REFRESH_MAX_TTL": None,
+        "MIN_REFRESH_INTERVAL": 60,
+        "AUTH_HEADER_PREFIX": "Token",
+    }
+
     # AI service
     AI_FEATURE_ENABLED = values.BooleanValue(
         default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
@@ -784,7 +856,7 @@ class Build(Base):
     This environment should not be used to run the application. Just to build it with non-blocking
     settings.
     """
-
+    USE_SWAGGER = True
     SECRET_KEY = values.Value("DummyKey")
     STORAGES = {
         "default": {
@@ -839,7 +911,7 @@ class Development(Base):
 
     def __init__(self):
         # pylint: disable=invalid-name
-        self.INSTALLED_APPS += ["django_extensions", "drf_spectacular_sidecar"]
+        self.INSTALLED_APPS += ["django_extensions"]
 
 
 class Test(Base):
@@ -851,10 +923,6 @@ class Test(Base):
     USE_SWAGGER = True
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
-
-    def __init__(self):
-        # pylint: disable=invalid-name
-        self.INSTALLED_APPS += ["drf_spectacular_sidecar"]
 
 
 class ContinuousIntegration(Test):
