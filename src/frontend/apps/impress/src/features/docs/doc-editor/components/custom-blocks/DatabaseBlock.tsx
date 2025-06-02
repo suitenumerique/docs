@@ -2,18 +2,16 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { Button } from '@openfun/cunningham-react';
-import { ColDef } from 'ag-grid-community';
-import { AgGridReact } from 'ag-grid-react';
 import { TFunction } from 'i18next';
-import React, { useRef, useState } from 'react';
+import React from 'react';
 
-import { Box, Icon } from '@/components';
+import { Box, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
 import { DatabaseTableDisplay } from '../DatabaseTableDisplay';
 
-import { AddButtonComponent } from './DatabaseBlock/AddColumnButton';
+import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
 
 export const DatabaseBlock = createReactBlockSpec(
   {
@@ -32,45 +30,6 @@ export const DatabaseBlock = createReactBlockSpec(
   },
   {
     render: ({ block, editor }) => {
-      const [addColumnToggleOpen, setAddColumnToggleOpen] = useState(false);
-
-      const gridRef = useRef(null);
-
-      const rowData = [
-        { make: 'Tesla', model: 'Model Y', price: 64950, electric: true },
-        { make: 'Ford', model: 'F-Series', price: 33850, electric: false },
-        { make: 'Toyota', model: 'Corolla', price: 29600, electric: false },
-      ];
-
-      // Column Definitions: Defines the columns to be displayed.
-      const colDefs: ColDef[] = [
-        { field: 'make', sort: 'desc' },
-        {
-          field: 'model',
-          filter: true,
-        },
-        { field: 'price', filter: true },
-        { field: 'electric' },
-        {
-          headerComponentParams: {
-            innerHeaderComponent: () =>
-              AddButtonComponent({
-                isOpen: addColumnToggleOpen,
-                setIsOpen: setAddColumnToggleOpen,
-              }),
-          },
-          unSortIcon: false,
-          editable: false,
-          sortable: false,
-          spanRows: true,
-        },
-      ];
-
-      const defaultColDef = {
-        flex: 1,
-        editable: true,
-        unSortIcon: true,
-      };
       return (
         <Box
           $padding="1rem"
@@ -89,14 +48,7 @@ export const DatabaseBlock = createReactBlockSpec(
                 tableId={block.props.tableId}
               />
               <Box style={{ height: '100%', width: '100%' }}>
-                <AgGridReact
-                  ref={gridRef}
-                  rowData={rowData}
-                  columnDefs={colDefs}
-                  defaultColDef={defaultColDef}
-                  domLayout="autoHeight"
-                  enableCellSpan={true}
-                />
+                <DatabaseGrid />
               </Box>
             </Box>
           ) : (
