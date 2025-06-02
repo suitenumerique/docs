@@ -1,36 +1,33 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
+import { Button } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
-import React, { useEffect } from 'react';
 
-import { Box, Icon } from '@/components';
+import { Box, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
+import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
+import { DatabaseTableDisplay } from '../DatabaseTableDisplay';
 
 export const DatabaseBlock = createReactBlockSpec(
   {
     type: 'database',
     propSchema: {
-      textAlignment: defaultProps.textAlignment,
       backgroundColor: defaultProps.backgroundColor,
+      documentId: {
+        type: 'string',
+        default: '',
+      },
+      tableId: {
+        type: 'string',
+        default: '',
+      },
     },
     content: 'inline',
   },
   {
     render: ({ block, editor }) => {
-      // Temporary: sets a yellow background color to a database block when added by
-      // the user, while keeping the colors menu on the drag handler usable for
-      // this custom block.
-      useEffect(() => {
-        if (
-          !block.content.length &&
-          block.props.backgroundColor === 'default'
-        ) {
-          editor.updateBlock(block, { props: { backgroundColor: 'orange' } });
-        }
-      }, [block, editor]);
-
       return (
         <Box
           $padding="1rem"
@@ -40,7 +37,41 @@ export const DatabaseBlock = createReactBlockSpec(
             flexDirection: 'row',
           }}
         >
-          <Box as="p">🏗️ Database block is in development</Box>
+          <Box as="div" />
+          {block.props.documentId && block.props.tableId ? (
+            <Box>
+              <DatabaseTableDisplay
+                documentId={block.props.documentId}
+                tableId={block.props.tableId}
+              />
+            </Box>
+          ) : (
+            <Box
+              style={{
+                flexDirection: 'column',
+                gap: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <Button
+                onClick={() => {
+                  console.log('coucou');
+                }}
+              >
+                Créer une nouvelle base de données vide
+              </Button>
+              <Text>ou</Text>
+              <DatabaseSourceSelector
+                onSourceSelected={({ documentId, tableId }) => {
+                  editor.updateBlock(block, {
+                    props: { documentId: documentId.toString(), tableId },
+                  });
+                }}
+              />
+            </Box>
+          )}
         </Box>
       );
     },
