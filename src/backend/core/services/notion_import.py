@@ -98,18 +98,19 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
     return blocks
 
 
-def convert_block(block: NotionBlock) -> Any:
-    if isinstance(block.specific, NotionParagraph):
-        content = ""
-        for rich_text in block.specific.rich_text:
-            content += rich_text.plain_text
-        return {
-            "type": "paragraph",
-            "content": content,
-        }
+def convert_block(block: NotionBlock) -> dict[str, Any] | None:
+    match block.specific:
+        case NotionParagraph():
+            content = ""
+            for rich_text in block.specific.rich_text:
+                content += rich_text.plain_text
+            return {
+                "type": "paragraph",
+                "content": content,
+            }
 
 
-def convert_block_list(blocks: list[NotionBlock]) -> Any:
+def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
     converted_blocks = []
     for block in blocks:
         converted_block = convert_block(block)
@@ -119,7 +120,7 @@ def convert_block_list(blocks: list[NotionBlock]) -> Any:
     return converted_blocks
 
 
-def import_notion(token: str) -> list[(NotionPage, Any)]:
+def import_notion(token: str) -> list[tuple[NotionPage, list[dict[str, Any]]]]:
     """Recursively imports all Notion pages and blocks accessible using the given token."""
     session = build_notion_session(token)
     root_pages = fetch_root_pages(session)

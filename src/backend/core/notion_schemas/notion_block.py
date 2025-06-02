@@ -18,6 +18,7 @@ class NotionBlock(BaseModel):
     specific: "NotionBlockSpecifics"
     has_children: bool
     children: list["NotionBlock"] = Field(init=False, default_factory=list)
+    # This is not part of the API response, but is used to store children blocks
 
     @model_validator(mode="before")
     @classmethod

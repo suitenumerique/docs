@@ -2041,21 +2041,26 @@ class ConfigView(drf.views.APIView):
 
         return theme_customization
 
+
 notion_client_id = "206d872b-594c-80de-94ff-003760c352e4"
 notion_client_secret = "XXX"
 notion_redirect_uri = "https://emersion.fr/notion-redirect"
+
 
 @drf.decorators.api_view()
 def notion_import_redirect(request):
     if "notion_token" in request.session:
         return redirect("/api/v1.0/notion_import/run")
-    query = urlencode({
-        "client_id": notion_client_id,
-        "response_type": "code",
-        "owner": "user",
-        "redirect_uri": notion_redirect_uri,
-    })
+    query = urlencode(
+        {
+            "client_id": notion_client_id,
+            "response_type": "code",
+            "owner": "user",
+            "redirect_uri": notion_redirect_uri,
+        }
+    )
     return redirect("https://api.notion.com/v1/oauth/authorize?" + query)
+
 
 @drf.decorators.api_view()
 def notion_import_callback(request):
@@ -2075,15 +2080,16 @@ def notion_import_callback(request):
     request.session["notion_token"] = data["access_token"]
     return redirect("/api/v1.0/notion_import/run")
 
+
 # @drf.decorators.api_view(["POST"])
 @drf.decorators.api_view()
 def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
 
-    pages = import_notion(request.session['notion_token'])
+    pages_and_blocks = import_notion(request.session["notion_token"])
 
-    for page, blocks in pages:
+    for page, blocks in pages_and_blocks:
         document_content = YdocConverter().convert_blocks(blocks)
 
         obj = models.Document.add_root(
