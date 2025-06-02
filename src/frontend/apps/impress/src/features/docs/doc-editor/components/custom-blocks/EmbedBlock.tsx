@@ -1,11 +1,20 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
-import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
+import {
+  insertOrUpdateBlock,
+  FileBlockConfig,
+  PropSchema,
+} from '@blocknote/core';
+import {
+  BlockTypeSelectItem,
+  createReactBlockSpec,
+  ReactCustomBlockRenderProps,
+  ResizableFileBlockWrapper,
+} from '@blocknote/react';
 import { TFunction } from 'i18next';
-import React, { useEffect, useState, FormEvent, ChangeEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon } from '@/components';
+import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 
@@ -115,9 +124,9 @@ export const getEmbedReactSlashMenuItems = (
         type: 'embed',
       });
     },
-    aliases: ['embed', 'iframe', 'link'],
+    aliases: ['newEmbed', 'iframeBN', 'linkBN'],
     group,
-    icon: <Icon iconName="link" $size="18px" />,
+    icon: <Icon iconName="language" $size="18px" />,
     subtext: t('Add an embed block'),
   },
 ];
@@ -128,5 +137,5 @@ export const getEmbedFormattingToolbarItems = (
   name: t('Embed'),
   type: 'embed',
   icon: () => <Icon iconName="link" $size="16px" />,
-  isSelected: (block: any) => block.type === 'embed',
+  isSelected: (block: { type: string }) => block.type === 'embed',
 });
