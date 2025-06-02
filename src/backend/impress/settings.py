@@ -855,7 +855,7 @@ class Build(Base):
     This environment should not be used to run the application. Just to build it with non-blocking
     settings.
     """
-
+    USE_SWAGGER = True
     SECRET_KEY = values.Value("DummyKey")
     STORAGES = {
         "default": {
