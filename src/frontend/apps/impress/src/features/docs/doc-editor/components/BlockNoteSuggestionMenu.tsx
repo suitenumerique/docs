@@ -13,6 +13,7 @@ import { DocsBlockSchema } from '../types';
 
 import {
   getCalloutReactSlashMenuItems,
+  getDatabaseReactSlashMenuItems,
   getDividerReactSlashMenuItems,
 } from './custom-blocks';
 
@@ -20,6 +21,7 @@ export const BlockNoteSuggestionMenu = () => {
   const editor = useBlockNoteEditor<DocsBlockSchema>();
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
+  const advancedBlocksName = useDictionary().slash_menu.table.group;
 
   const getSlashMenuItems = useMemo(() => {
     return async (query: string) =>
@@ -29,12 +31,13 @@ export const BlockNoteSuggestionMenu = () => {
             getDefaultReactSlashMenuItems(editor),
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
+            getDatabaseReactSlashMenuItems(editor, t, advancedBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
         ),
       );
-  }, [basicBlocksName, editor, t]);
+  }, [basicBlocksName, advancedBlocksName, editor, t]);
 
   return (
     <SuggestionMenuController
