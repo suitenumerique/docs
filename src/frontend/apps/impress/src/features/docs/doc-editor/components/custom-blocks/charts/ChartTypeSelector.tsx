@@ -2,22 +2,13 @@ import React from 'react';
 import styled from 'styled-components';
 
 import { ChartType } from './types';
+import { CollapsibleCard } from './CollapsibleCard';
 
 interface ChartTypeSelectorProps {
   value: ChartType;
   onChange: (type: ChartType) => void;
 }
 
-const SelectorContainer = styled.div`
-  margin-bottom: 1rem;
-`;
-const Label = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.5rem;
-`;
 const Select = styled.select`
   width: 100%;
   padding: 0.5rem;
@@ -42,8 +33,7 @@ export const ChartTypeSelector: React.FC<ChartTypeSelectorProps> = ({
   ];
 
   return (
-    <SelectorContainer>
-      <Label>Chart Type</Label>
+    <CollapsibleCard title="Chart Type" defaultOpen={true}>
       <Select
         value={value}
         onChange={(e) => onChange(e.target.value as ChartType)}
@@ -54,6 +44,6 @@ export const ChartTypeSelector: React.FC<ChartTypeSelectorProps> = ({
           </option>
         ))}
       </Select>
-    </SelectorContainer>
+    </CollapsibleCard>
   );
 };

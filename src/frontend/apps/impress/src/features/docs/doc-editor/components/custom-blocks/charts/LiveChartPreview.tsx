@@ -39,13 +39,6 @@ const PreviewContainer = styled.div`
   border-radius: 0.5rem;
 `;
 
-const PreviewTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: #1f2937;
-  margin-bottom: 1rem;
-`;
-
 const PreviewChartWrapper = styled.div`
   height: 24rem;
 `;
@@ -103,7 +96,6 @@ export const LiveChartPreview: React.FC<LiveChartPreviewProps> = ({
 
   return (
     <PreviewContainer>
-      <PreviewTitle>Live Preview</PreviewTitle>
       <PreviewChartWrapper>{renderChart()}</PreviewChartWrapper>
     </PreviewContainer>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 import { ChartOptions } from './types';
+import { CollapsibleCard } from './CollapsibleCard';
 
 interface ChartOptionsFormProps {
   options: ChartOptions;
@@ -12,13 +13,6 @@ const FormContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-`;
-
-const SectionTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: #1f2937;
-  margin-bottom: 1rem;
 `;
 
 const Label = styled.label`
@@ -71,45 +65,47 @@ export const ChartOptionsForm: React.FC<ChartOptionsFormProps> = ({
   };
 
   return (
-    <FormContainer>
-      <SectionTitle>Chart Options</SectionTitle>
-      <div>
-        <Label>Chart Title</Label>
-        <Input
-          type="text"
-          value={options.title}
-          onChange={(e) => updateOption('title', e.target.value)}
-          placeholder="Enter chart title"
-        />
-      </div>
-      <div>
-        <CheckboxLabel>
-          <Checkbox
-            type="checkbox"
-            checked={options.showLegend}
-            onChange={(e) => updateOption('showLegend', e.target.checked)}
+    <CollapsibleCard title="Chart Options" defaultOpen={true}>
+      <FormContainer>
+        {/* <SectionTitle>Chart Options</SectionTitle> */}
+        <div>
+          <Label>Chart Title</Label>
+          <Input
+            type="text"
+            value={options.title}
+            onChange={(e) => updateOption('title', e.target.value)}
+            placeholder="Enter chart title"
           />
-          <CheckboxText>Show Legend</CheckboxText>
-        </CheckboxLabel>
-      </div>
-      <div>
-        <Label>X-Axis Label</Label>
-        <Input
-          type="text"
-          value={options.xAxisLabel}
-          onChange={(e) => updateOption('xAxisLabel', e.target.value)}
-          placeholder="Enter X-axis label"
-        />
-      </div>
-      <div>
-        <Label>Y-Axis Label</Label>
-        <Input
-          type="text"
-          value={options.yAxisLabel}
-          onChange={(e) => updateOption('yAxisLabel', e.target.value)}
-          placeholder="Enter Y-axis label"
-        />
-      </div>
-    </FormContainer>
+        </div>
+        <div>
+          <CheckboxLabel>
+            <Checkbox
+              type="checkbox"
+              checked={options.showLegend}
+              onChange={(e) => updateOption('showLegend', e.target.checked)}
+            />
+            <CheckboxText>Show Legend</CheckboxText>
+          </CheckboxLabel>
+        </div>
+        <div>
+          <Label>X-Axis Label</Label>
+          <Input
+            type="text"
+            value={options.xAxisLabel}
+            onChange={(e) => updateOption('xAxisLabel', e.target.value)}
+            placeholder="Enter X-axis label"
+          />
+        </div>
+        <div>
+          <Label>Y-Axis Label</Label>
+          <Input
+            type="text"
+            value={options.yAxisLabel}
+            onChange={(e) => updateOption('yAxisLabel', e.target.value)}
+            placeholder="Enter Y-axis label"
+          />
+        </div>
+      </FormContainer>
+    </CollapsibleCard>
   );
 };

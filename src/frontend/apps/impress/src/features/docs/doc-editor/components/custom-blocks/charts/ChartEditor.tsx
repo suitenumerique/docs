@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { ChartOptionsForm } from './ChartOptionsForm';
 import { ChartTypeSelector } from './ChartTypeSelector';
+import { CollapsibleCard } from './CollapsibleCard';
 import { DataInputForm } from './DataInputForm';
 import { LiveChartPreview } from './LiveChartPreview';
 import { ChartConfig, ChartData, ChartOptions, ChartType } from './types';
@@ -78,13 +79,13 @@ const ControlPanel = styled.div`
   gap: 1.5rem;
 `;
 
-const ControlGroupCard = styled.div`
-  background: #fff;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  border: 1px solid #e5e7eb;
-  padding: 1.5rem;
-`;
+// const CollapsibleCard = styled.div`
+//   background: #fff;
+//   border-radius: 0.5rem;
+//   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+//   border: 1px solid #e5e7eb;
+//   padding: 1.5rem;
+// `;
 
 const ChartEditorButtonRow = styled.div`
   display: flex;
@@ -99,13 +100,6 @@ const ExportButton = styled.button`
   transition: background 0.2s;
   &:hover {
     background: #4338ca;
-  }
-`;
-
-const ChartEditorSticky = styled.div`
-  @media (min-width: 1024px) {
-    position: sticky;
-    top: 1.5rem;
   }
 `;
 
@@ -167,21 +161,17 @@ export const ChartEditor: React.FC = () => {
 
         {showEditor && (
           <ControlPanel>
-            <ControlGroupCard>
-              <ChartTypeSelector value={chartType} onChange={setChartType} />
-            </ControlGroupCard>
-            <ControlGroupCard>
-              <ChartOptionsForm
-                options={chartOptions}
-                onChange={setChartOptions}
-              />
-            </ControlGroupCard>
-            <ControlGroupCard>
+            <ChartTypeSelector value={chartType} onChange={setChartType} />
+            <ChartOptionsForm
+              options={chartOptions}
+              onChange={setChartOptions}
+            />
+            {/* <CollapsibleCard>
               <DataInputForm data={chartData} onChange={setChartData} />
-            </ControlGroupCard>
+            </CollapsibleCard>
             <ChartEditorButtonRow>
               <ExportButton onClick={exportConfig}>Export Config</ExportButton>
-            </ChartEditorButtonRow>
+            </ChartEditorButtonRow> */}
           </ControlPanel>
         )}
       </ChartEditorGrid>
