@@ -76,3 +76,5 @@ db.sqlite3
 .vscode/
 *.iml
 .devcontainer
+
+**/package-lock.json
