@@ -169,6 +169,13 @@ class NotionImage(BaseModel):
     # FIXME: this actually contains a file reference which will be defined for the above, but with the "image" attribute
 
 
+class NotionVideo(BaseModel):
+    """https://developers.notion.com/reference/block#video"""
+
+    block_type: Literal[NotionBlockType.VIDEO] = NotionBlockType.VIDEO
+    # FIXME: this actually contains a file reference which will be defined for the above, but with the "video" attribute
+
+
 class NotionLinkPreview(BaseModel):
     """https://developers.notion.com/reference/block#link-preview"""
 
@@ -192,6 +199,15 @@ class NotionTableRow(BaseModel):
 
     block_type: Literal[NotionBlockType.TABLE_ROW] = NotionBlockType.TABLE_ROW
     cells: list[list[NotionRichText]]  # Each cell is a list of rich text objects
+
+
+class NotionChildPage(BaseModel):
+    """https://developers.notion.com/reference/block#child-page
+
+    My guess is that the actual child page is a child of this block ? We don't have the id..."""
+
+    block_type: Literal[NotionBlockType.CHILD_PAGE] = NotionBlockType.CHILD_PAGE
+    title: str
 
 
 class NotionBlockUnsupported(BaseModel):
@@ -223,9 +239,11 @@ NotionBlockSpecifics = Annotated[
         | NotionEmbed
         | NotionFile
         | NotionImage
+        | NotionVideo
         | NotionLinkPreview
         | NotionTable
-        | NotionTableRow,
+        | NotionTableRow
+        | NotionChildPage,
         Discriminator(discriminator="block_type"),
     ]
     | NotionBlockUnsupported,
