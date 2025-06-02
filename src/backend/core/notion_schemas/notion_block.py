@@ -175,6 +175,32 @@ class NotionLinkPreview(BaseModel):
     url: str
 
 
+class NotionBlockUnsupported(BaseModel):
+    """FIXME: Maybe https://github.com/pydantic/pydantic/discussions/4928#discussioncomment-13079554 would be better"""
+
+    block_type: Literal[
+        NotionBlockType.BOOKMARK,
+        NotionBlockType.BREADCRUMB,
+        NotionBlockType.CALLOUT,
+        NotionBlockType.CHILD_DATABASE,
+        NotionBlockType.CHILD_PAGE,
+        NotionBlockType.COLUMN,
+        NotionBlockType.COLUMN_LIST,
+        NotionBlockType.EQUATION,
+        NotionBlockType.LINK_TO_PAGE,
+        NotionBlockType.PDF,
+        NotionBlockType.QUOTE,
+        NotionBlockType.SYNCED_BLOCK,
+        NotionBlockType.TABLE,
+        NotionBlockType.TABLE_OF_CONTENTS,
+        NotionBlockType.TABLE_ROW,
+        NotionBlockType.TEMPLATE,
+        NotionBlockType.TO_DO,
+        NotionBlockType.TOGGLE,
+        NotionBlockType.VIDEO,
+    ]
+
+
 NotionBlockSpecifics = Annotated[
     NotionHeading1
     | NotionHeading2
@@ -186,6 +212,7 @@ NotionBlockSpecifics = Annotated[
     | NotionDivider
     | NotionEmbed
     | NotionFile
-    | NotionImage,
+    | NotionImage
+    | NotionBlockUnsupported,
     Discriminator(discriminator="block_type"),
 ]
