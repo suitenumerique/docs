@@ -38,6 +38,7 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.converter_services import YdocConverter
 from core.services.notion_import import import_notion
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
@@ -2079,5 +2080,28 @@ def notion_import_callback(request):
 def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
-    import_notion(request.session["notion_token"])
+
+    import_notion(request.session['notion_token'])
+
+    #document_content = YdocConverter().convert_blocks([
+    #    {
+    #        "type": "paragraph",
+    #        "content": "Bonjour à toustes zé à toussent",
+    #    },
+    #])
+
+    #obj = models.Document.add_root(
+    #    depth=1,
+    #    creator=request.user,
+    #    title="J'aime les courgettes",
+    #    link_reach=models.LinkReachChoices.RESTRICTED,
+    #    content=document_content,
+    #)
+
+    #models.DocumentAccess.objects.create(
+    #    document=obj,
+    #    user=request.user,
+    #    role=models.RoleChoices.OWNER,
+    #)
+
     return drf.response.Response({"sava": "oui et toi ?"})
