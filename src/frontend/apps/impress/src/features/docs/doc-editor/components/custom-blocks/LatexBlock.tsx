@@ -13,26 +13,21 @@ import { DocsBlockNoteEditor } from '../../types';
 
 const LatexRenderer = ({
   formula,
+  isEditing,
   onFormulaChange,
-  editor,
-  block,
 }: {
   formula: string;
+  isEditing?: boolean;
   onFormulaChange?: (formula: string) => void;
-  editor: DocsBlockNoteEditor;
-  block: any;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
   const { colorsTokens } = useCunninghamTheme();
   const [inputValue, setInputValue] = useState(formula);
-  const [isEditing, setIsEditing] = useState(false);
 
-  // Live preview
   useEffect(() => {
     if (containerRef.current) {
       try {
-        katex.render(isEditing ? inputValue : formula, containerRef.current, {
+        katex.render(formula, containerRef.current, {
           displayMode: true,
           throwOnError: false,
         });
@@ -40,49 +35,23 @@ const LatexRenderer = ({
         containerRef.current.innerHTML = 'Invalid LaTeX formula';
       }
     }
-  }, [formula, inputValue, isEditing]);
-
-  // Click outside detection
-  useEffect(() => {
-    if (!isEditing) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        boxRef.current &&
-        !boxRef.current.contains(event.target as Node)
-      ) {
-        setIsEditing(false);
-        // Optionally, update the formula when leaving edit mode
-        if (inputValue !== formula) {
-          onFormulaChange?.(inputValue);
-        }
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isEditing, inputValue, formula, onFormulaChange]);
+  }, [formula]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleBoxClick = () => {
-    if (editor.isEditable) setIsEditing(true);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onFormulaChange?.(newValue);
   };
 
   return (
     <Box
-      ref={boxRef}
       $padding="1rem"
       $background={colorsTokens['greyscale-100']}
       style={{
         borderRadius: '4px',
         border: `1px solid ${colorsTokens['greyscale-300']}`,
         overflowX: 'auto',
-        cursor: editor.isEditable ? 'pointer' : 'default',
       }}
-      onClick={handleBoxClick}
     >
       {isEditing ? (
         <Box $gap="1rem">
@@ -91,14 +60,11 @@ const LatexRenderer = ({
             onChange={handleInputChange}
             placeholder="Enter LaTeX formula..."
             fullWidth
-            autoFocus
           />
           <div ref={containerRef} />
         </Box>
       ) : (
-        <Box $gap="0.5rem">
-          <div ref={containerRef} />
-        </Box>
+        <div ref={containerRef} />
       )}
     </Box>
   );
@@ -118,6 +84,9 @@ export const LatexBlock = createReactBlockSpec(
   },
   {
     render: ({ block, editor }) => {
+      const isEditing =
+        editor.isEditable && block.props.backgroundColor === 'default';
+
       const handleFormulaChange = (newFormula: string) => {
         editor.updateBlock(block, {
           props: { formula: newFormula },
@@ -127,9 +96,8 @@ export const LatexBlock = createReactBlockSpec(
       return (
         <LatexRenderer
           formula={block.props.formula}
+          isEditing={isEditing}
           onFormulaChange={handleFormulaChange}
-          editor={editor}
-          block={block}
         />
       );
     },
