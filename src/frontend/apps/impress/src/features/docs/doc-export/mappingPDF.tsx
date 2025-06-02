@@ -10,6 +10,7 @@ import {
   blockMappingTablePDF,
 } from './blocks-mapping';
 import { DocsExporterPDF } from './types';
+import { blockMappingEmbedPDF } from './blocks-mapping/embedPDF';
 
 export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
   ...pdfDefaultSchemaMappings,
@@ -22,5 +23,6 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
+    embed: blockMappingEmbedPDF,
   },
 };

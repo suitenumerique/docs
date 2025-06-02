@@ -14,6 +14,7 @@ import { DocsBlockSchema } from '../types';
 import {
   getCalloutReactSlashMenuItems,
   getDividerReactSlashMenuItems,
+  getEmbedReactSlashMenuItems,
 } from './custom-blocks';
 
 export const BlockNoteSuggestionMenu = () => {
@@ -30,6 +31,7 @@ export const BlockNoteSuggestionMenu = () => {
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
+            getEmbedReactSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
         ),
