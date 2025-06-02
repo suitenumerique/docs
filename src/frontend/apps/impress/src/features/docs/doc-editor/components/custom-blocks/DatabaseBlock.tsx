@@ -2,7 +2,7 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import React from 'react';
+import { useState } from 'react';
 
 import { Box, Icon } from '@/components';
 
@@ -28,6 +28,14 @@ export const DatabaseBlock = createReactBlockSpec(
   },
   {
     render: ({ block, editor }) => {
+      const getGristApiKey = (): string | null => {
+        return localStorage.getItem('grist_api_key');
+      };
+
+      const [gristApiKeyModal, setGristApiKey] = useState<string | null>(
+        getGristApiKey,
+      );
+
       return (
         <Box
           style={{
@@ -58,6 +66,7 @@ export const DatabaseBlock = createReactBlockSpec(
               }}
             />
           )}
+          {gristApiKeyModal === null && <p>modal open</p>}
         </Box>
       );
     },
