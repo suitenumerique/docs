@@ -5446,24 +5446,32 @@
     unplugin "1.0.1"
     uuid "^9.0.0"
 
-"@shikijs/core@^3.2.1":
-  version "3.4.1"
-  resolved "https://registry.npmjs.org/@shikijs/core/-/core-3.4.1.tgz"
-  integrity sha512-GCqSd3KXRTKX1sViP7fIyyyf6do2QVg+fTd4IT00ucYCVSKiSN8HbFbfyjGsoZePNKWcQqXe4U4rrz2IVldG5A==
+"@shikijs/core@^3.2.1", "@shikijs/core@3.4.2":
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/@shikijs/core/-/core-3.4.2.tgz"
+  integrity sha512-AG8vnSi1W2pbgR2B911EfGqtLE9c4hQBYkv/x7Z+Kt0VxhgQKcW7UNDVYsu9YxwV6u+OJrvdJrMq6DNWoBjihQ==
   dependencies:
-    "@shikijs/types" "3.4.1"
+    "@shikijs/types" "3.4.2"
     "@shikijs/vscode-textmate" "^10.0.2"
     "@types/hast" "^3.0.4"
     hast-util-to-html "^9.0.5"
 
-"@shikijs/engine-javascript@^3.2.1":
-  version "3.4.1"
-  resolved "https://registry.npmjs.org/@shikijs/engine-javascript/-/engine-javascript-3.4.1.tgz"
-  integrity sha512-oGvRqN3Bsk+cGzmCb/5Kt/LfD7uyA8vCUUawyqmLti/AYNV7++zIZFEW8JwW5PrpPNWWx9RcZ/chnYLedzlVIQ==
+"@shikijs/engine-javascript@^3.2.1", "@shikijs/engine-javascript@3.4.2":
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/@shikijs/engine-javascript/-/engine-javascript-3.4.2.tgz"
+  integrity sha512-1/adJbSMBOkpScCE/SB6XkjJU17ANln3Wky7lOmrnpl+zBdQ1qXUJg2GXTYVHRq+2j3hd1DesmElTXYDgtfSOQ==
   dependencies:
-    "@shikijs/types" "3.4.1"
+    "@shikijs/types" "3.4.2"
     "@shikijs/vscode-textmate" "^10.0.2"
     oniguruma-to-es "^4.3.3"
+
+"@shikijs/engine-oniguruma@3.4.2":
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-3.4.2.tgz"
+  integrity sha512-zcZKMnNndgRa3ORja6Iemsr3DrLtkX3cAF7lTJkdMB6v9alhlBsX9uNiCpqofNrXOvpA3h6lHcLJxgCIhVOU5Q==
+  dependencies:
+    "@shikijs/types" "3.4.2"
+    "@shikijs/vscode-textmate" "^10.0.2"
 
 "@shikijs/langs-precompiled@^3.2.1":
   version "3.4.1"
@@ -5473,19 +5481,19 @@
     "@shikijs/types" "3.4.1"
     oniguruma-to-es "^4.3.3"
 
-"@shikijs/langs@^3.2.1":
-  version "3.4.1"
-  resolved "https://registry.npmjs.org/@shikijs/langs/-/langs-3.4.1.tgz"
-  integrity sha512-v5A5ApJYcrcPLHcwAi0bViUU+Unh67UaXU9gGX3qfr2z3AqlqSZbC00W/3J4+tfGJASzwrWDro2R1er6SsCL1Q==
+"@shikijs/langs@^3.2.1", "@shikijs/langs@3.4.2":
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/@shikijs/langs/-/langs-3.4.2.tgz"
+  integrity sha512-H6azIAM+OXD98yztIfs/KH5H4PU39t+SREhmM8LaNXyUrqj2mx+zVkr8MWYqjceSjDw9I1jawm1WdFqU806rMA==
   dependencies:
-    "@shikijs/types" "3.4.1"
+    "@shikijs/types" "3.4.2"
 
-"@shikijs/themes@^3.2.1":
-  version "3.4.1"
-  resolved "https://registry.npmjs.org/@shikijs/themes/-/themes-3.4.1.tgz"
-  integrity sha512-XOJgs55mVVMZtNVJx1NVmdcfXG9HIyZGh7qpCw/Ok5UMjWgkmb8z15TgcmF3ItvHItijiIMl9BLcNO/tFSGl1w==
+"@shikijs/themes@^3.2.1", "@shikijs/themes@3.4.2":
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/@shikijs/themes/-/themes-3.4.2.tgz"
+  integrity sha512-qAEuAQh+brd8Jyej2UDDf+b4V2g1Rm8aBIdvt32XhDPrHvDkEnpb7Kzc9hSuHUxz0Iuflmq7elaDuQAP9bHIhg==
   dependencies:
-    "@shikijs/types" "3.4.1"
+    "@shikijs/types" "3.4.2"
 
 "@shikijs/types@^1.29.2 || ^2.0.0 || ^3.0.0", "@shikijs/types@3.2.1":
   version "3.2.1"
@@ -5499,6 +5507,14 @@
   version "3.4.1"
   resolved "https://registry.npmjs.org/@shikijs/types/-/types-3.4.1.tgz"
   integrity sha512-4flT+pToGqRBb0UhGqXTV7rCqUS3fhc8z3S2Djc3E5USKhXwadeKGFVNB2rKXfohlrEozNJMtMiZaN8lfdj/ZQ==
+  dependencies:
+    "@shikijs/vscode-textmate" "^10.0.2"
+    "@types/hast" "^3.0.4"
+
+"@shikijs/types@3.4.2":
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/@shikijs/types/-/types-3.4.2.tgz"
+  integrity sha512-zHC1l7L+eQlDXLnxvM9R91Efh2V4+rN3oMVS2swCBssbj2U/FBwybD1eeLaq8yl/iwT+zih8iUbTBCgGZOYlVg==
   dependencies:
     "@shikijs/vscode-textmate" "^10.0.2"
     "@types/hast" "^3.0.4"
@@ -14046,6 +14062,20 @@ shebang-regex@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
+
+shiki@^3.4.2:
+  version "3.4.2"
+  resolved "https://registry.npmjs.org/shiki/-/shiki-3.4.2.tgz"
+  integrity sha512-wuxzZzQG8kvZndD7nustrNFIKYJ1jJoWIPaBpVe2+KHSvtzMi4SBjOxrigs8qeqce/l3U0cwiC+VAkLKSunHQQ==
+  dependencies:
+    "@shikijs/core" "3.4.2"
+    "@shikijs/engine-javascript" "3.4.2"
+    "@shikijs/engine-oniguruma" "3.4.2"
+    "@shikijs/langs" "3.4.2"
+    "@shikijs/themes" "3.4.2"
+    "@shikijs/types" "3.4.2"
+    "@shikijs/vscode-textmate" "^10.0.2"
+    "@types/hast" "^3.0.4"
 
 shimmer@^1.2.1:
   version "1.2.1"

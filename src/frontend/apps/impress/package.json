@@ -53,6 +53,7 @@
     "react-i18next": "15.5.2",
     "react-intersection-observer": "9.16.0",
     "react-select": "5.10.1",
+    "shiki": "^3.4.2",
     "styled-components": "6.1.18",
     "use-debounce": "10.0.4",
     "y-protocols": "1.0.6",

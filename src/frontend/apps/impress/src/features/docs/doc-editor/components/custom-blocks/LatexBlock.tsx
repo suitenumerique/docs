@@ -6,7 +6,6 @@ import 'katex/dist/katex.min.css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Box, Icon } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { CodeEditor } from '../CodeEditor';
@@ -16,7 +15,7 @@ const LatexRenderer = ({
   onFormulaChange,
 }: {
   formula: string;
-  onFormulaChange?: (formula: string) => void;
+  onFormulaChange: (formula: string) => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef<HTMLDivElement>(null);
@@ -62,7 +61,8 @@ const LatexRenderer = ({
         <CodeEditor
           value={formula}
           onChange={onFormulaChange}
-          onClose={() => setIsLocalEditing(false)}
+          onClickOutside={() => setIsLocalEditing(false)}
+          parentRef={blockRef}
         />
       )}
     </Box>
