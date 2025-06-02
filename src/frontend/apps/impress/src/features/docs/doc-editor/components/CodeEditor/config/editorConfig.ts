@@ -24,6 +24,44 @@ export const initializeMonaco = async () => {
       ],
     },
   });
+
+  // Register Mermaid language
+  monaco.languages.register({ id: 'mermaid' });
+  monaco.languages.setMonarchTokensProvider('mermaid', {
+    tokenizer: {
+      root: [
+        // Graph types
+        [
+          /^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|gantt|pie|erDiagram|journey)\s/,
+          'keyword',
+        ],
+        // Direction
+        [/^(TD|BT|RL|LR)\s/, 'keyword'],
+        // Node definitions
+        [/[A-Za-z0-9_]+\[.*?\]/, 'string'],
+        [/[A-Za-z0-9_]+\(.*?\)/, 'string'],
+        [/[A-Za-z0-9_]+{.*?}/, 'string'],
+        [/[A-Za-z0-9_]+>.*?</, 'string'],
+        [/[A-Za-z0-9_]+\[.*?\]>.*?</, 'string'],
+        // Arrows
+        [/-->|==>|-.->|==>|--o|--x|--|==|===|----|====/, 'operator'],
+        // Comments
+        [/%%/, 'comment'],
+        [/%%[^%]*/, 'comment'],
+        // Numbers
+        [/\d+/, 'number'],
+        // Brackets
+        [/[{}[\]]/, 'delimiter.bracket'],
+        // Strings
+        [/"[^"]*"/, 'string'],
+        // Keywords
+        [
+          /^(subgraph|end|class|state|note|participant|actor|as|title|dateFormat|axisFormat|section|task|milestone|entity|relationship|journey|section|task|milestone)\b/,
+          'keyword',
+        ],
+      ],
+    },
+  });
 };
 
 export const getEditorOptions = (

@@ -1,13 +1,15 @@
 import { defaultProps } from '@blocknote/core';
 
-export const defaultFormula =
-  '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{2\\pi}';
+export const defaultDiagram = `graph TD
+    A[Start] --> B{Is it?}
+    B -- Yes --> C[OK]
+    B -- No --> D[End]`;
 
 export const blockSpec = {
-  type: 'latex',
+  type: 'mermaid',
   propSchema: {
-    formula: {
-      default: defaultFormula,
+    diagram: {
+      default: defaultDiagram,
     },
     textAlignment: defaultProps.textAlignment,
     backgroundColor: defaultProps.backgroundColor,

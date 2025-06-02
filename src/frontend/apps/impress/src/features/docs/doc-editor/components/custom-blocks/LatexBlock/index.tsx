@@ -4,13 +4,17 @@ import React from 'react';
 import { LatexRenderer } from './components/LatexRenderer';
 import { getLatexReactSlashMenuItems } from './components/SlashMenuItems';
 import { blockSpec } from './config/blockConfig';
-import type { LatexBlockProps } from './types';
 
 export const LatexBlock = createReactBlockSpec(blockSpec, {
-  render: ({ block, editor }: LatexBlockProps) => {
+  render: (props) => {
+    const { block, editor } = props;
     const handleFormulaChange = (newFormula: string) => {
       editor.updateBlock(block, {
-        props: { formula: newFormula },
+        props: {
+          formula: newFormula,
+          textAlignment: block.props.textAlignment,
+          backgroundColor: block.props.backgroundColor,
+        },
       });
     };
 

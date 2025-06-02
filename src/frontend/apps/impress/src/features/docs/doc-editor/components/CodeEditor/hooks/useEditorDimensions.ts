@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { EditorDimensions } from '../types';
 
 export const useEditorDimensions = (
-  parentRef?: React.RefObject<HTMLDivElement>,
+  parentRef?: React.RefObject<HTMLDivElement | null>,
 ) => {
   const [dimensions, setDimensions] = useState<EditorDimensions>({
     height: 0,

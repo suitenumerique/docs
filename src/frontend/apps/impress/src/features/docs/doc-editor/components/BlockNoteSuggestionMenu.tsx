@@ -15,6 +15,7 @@ import {
   getCalloutReactSlashMenuItems,
   getDividerReactSlashMenuItems,
   getLatexReactSlashMenuItems,
+  getMermaidReactSlashMenuItems,
 } from './custom-blocks';
 
 export const BlockNoteSuggestionMenu = () => {
@@ -32,6 +33,7 @@ export const BlockNoteSuggestionMenu = () => {
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
             getLatexReactSlashMenuItems(editor, t, basicBlocksName),
+            getMermaidReactSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
         ),

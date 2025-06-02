@@ -4,14 +4,14 @@ import React from 'react';
 
 import { Icon } from '@/components';
 
+import type { DocsBlockNoteEditor } from '../../../../types';
 import { defaultFormula } from '../config/blockConfig';
-import type { SlashMenuItemProps } from '../types';
 
-export const getLatexReactSlashMenuItems = ({
-  editor,
-  t,
-  group,
-}: SlashMenuItemProps) => [
+export const getLatexReactSlashMenuItems = (
+  editor: DocsBlockNoteEditor,
+  t: TFunction<'translation', undefined>,
+  group: string,
+) => [
   {
     title: t('LaTeX Formula'),
     onItemClick: () => {

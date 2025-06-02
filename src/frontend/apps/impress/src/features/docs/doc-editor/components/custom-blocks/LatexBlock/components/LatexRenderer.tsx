@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Box } from '@/components';
 
-import { CodeEditor } from '../../CodeEditor';
+import { CodeEditor } from '../../../CodeEditor';
 import type { LatexRendererProps } from '../types';
 
 export const LatexRenderer = ({
