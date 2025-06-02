@@ -9,7 +9,6 @@ import { Box, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
-import { DatabaseTableDisplay } from '../DatabaseTableDisplay';
 
 import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
 
@@ -42,14 +41,11 @@ export const DatabaseBlock = createReactBlockSpec(
         >
           <Box as="div" />
           {block.props.documentId && block.props.tableId ? (
-            <Box>
-              <DatabaseTableDisplay
+            <Box style={{ height: '100%', width: '100%' }}>
+              <DatabaseGrid
                 documentId={block.props.documentId}
                 tableId={block.props.tableId}
               />
-              <Box style={{ height: '100%', width: '100%' }}>
-                <DatabaseGrid />
-              </Box>
             </Box>
           ) : (
             <Box
