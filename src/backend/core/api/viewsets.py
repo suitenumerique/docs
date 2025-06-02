@@ -35,6 +35,7 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.notion_import import import_notion
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -1853,9 +1854,10 @@ def notion_import_callback(request):
     request.session["notion_token"] = data["access_token"]
     return redirect("/api/v1.0/notion_import/run")
 
-#@drf.decorators.api_view(["POST"])
+# @drf.decorators.api_view(["POST"])
 @drf.decorators.api_view()
 def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
+    import_notion(request.session["notion_token"])
     return drf.response.Response({"sava": "oui et toi ?"})
