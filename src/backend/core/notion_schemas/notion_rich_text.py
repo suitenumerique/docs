@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Discriminator, ValidationError, model_validator
+from pydantic import BaseModel, Discriminator, Field, ValidationError, model_validator
 
 from .notion_color import NotionColor
 
@@ -46,10 +46,14 @@ class NotionRichTextType(StrEnum):
     EQUATION = "equation"
 
 
+class NotionLink(BaseModel):
+    url: str
+
+
 class NotionRichTextText(BaseModel):
     type: Literal[NotionRichTextType.TEXT] = NotionRichTextType.TEXT
     content: str
-    link: str | None
+    link: NotionLink | None
 
 
 class NotionRichTextMention(BaseModel):
