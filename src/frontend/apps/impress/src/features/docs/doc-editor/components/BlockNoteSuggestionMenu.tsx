@@ -13,6 +13,7 @@ import { DocsBlockSchema } from '../types';
 
 import {
   getCalloutReactSlashMenuItems,
+  getDatabaseReactSlashMenuItems,
   getDividerReactSlashMenuItems,
 } from './custom-blocks';
 
@@ -29,6 +30,7 @@ export const BlockNoteSuggestionMenu = () => {
             getDefaultReactSlashMenuItems(editor),
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
+            getDatabaseReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
