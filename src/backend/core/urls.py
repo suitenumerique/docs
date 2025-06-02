@@ -52,6 +52,11 @@ urlpatterns = [
                     r"^templates/(?P<resource_id>[0-9a-z-]*)/",
                     include(template_related_router.urls),
                 ),
+                path("notion_import/", include([
+                    path("redirect", viewsets.notion_import_redirect),
+                    path("callback", viewsets.notion_import_callback),
+                    path("run", viewsets.notion_import_run),
+                ]))
             ]
         ),
     ),

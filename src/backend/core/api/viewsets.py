@@ -5,7 +5,7 @@ import json
 import logging
 import uuid
 from collections import defaultdict
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlparse, urlencode
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -19,6 +19,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.utils.functional import cached_property
+from django.shortcuts import redirect
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -1817,3 +1818,44 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+notion_client_id = "206d872b-594c-80de-94ff-003760c352e4"
+notion_client_secret = "XXX"
+notion_redirect_uri = "https://emersion.fr/notion-redirect"
+
+@drf.decorators.api_view()
+def notion_import_redirect(request):
+    if "notion_token" in request.session:
+        return redirect("/api/v1.0/notion_import/run")
+    query = urlencode({
+        "client_id": notion_client_id,
+        "response_type": "code",
+        "owner": "user",
+        "redirect_uri": notion_redirect_uri,
+    })
+    return redirect("https://api.notion.com/v1/oauth/authorize?" + query)
+
+@drf.decorators.api_view()
+def notion_import_callback(request):
+    code = request.GET.get("code")
+    resp = requests.post(
+        "https://api.notion.com/v1/oauth/token",
+        auth=requests.auth.HTTPBasicAuth(notion_client_id, notion_client_secret),
+        headers={"Accept": "application/json"},
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": notion_redirect_uri,
+        },
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    request.session["notion_token"] = data["access_token"]
+    return redirect("/api/v1.0/notion_import/run")
+
+#@drf.decorators.api_view(["POST"])
+@drf.decorators.api_view()
+def notion_import_run(request):
+    if "notion_token" not in request.session:
+        raise drf.exceptions.PermissionDenied()
+    return drf.response.Response({"sava": "oui et toi ?"})
