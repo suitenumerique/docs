@@ -13,16 +13,17 @@ import { DocsBlockNoteEditor } from '../../types';
 
 const LatexRenderer = ({
   formula,
-  isEditing,
   onFormulaChange,
 }: {
   formula: string;
-  isEditing?: boolean;
   onFormulaChange?: (formula: string) => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const blockRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { colorsTokens } = useCunninghamTheme();
   const [inputValue, setInputValue] = useState(formula);
+  const [isLocalEditing, setIsLocalEditing] = useState(false);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -37,35 +38,73 @@ const LatexRenderer = ({
     }
   }, [formula]);
 
+  useEffect(() => {
+    if (isLocalEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLocalEditing]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        blockRef.current &&
+        !blockRef.current.contains(event.target as Node)
+      ) {
+        setIsLocalEditing(false);
+      }
+    };
+
+    if (isLocalEditing) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isLocalEditing]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     onFormulaChange?.(newValue);
   };
 
+  const handleClick = () => {
+    setIsLocalEditing(true);
+  };
+
   return (
     <Box
+      ref={blockRef}
       $padding="1rem"
-      $background={colorsTokens['greyscale-100']}
+      // $background={colorsTokens['greyscale-100']}
       style={{
-        borderRadius: '4px',
-        border: `1px solid ${colorsTokens['greyscale-300']}`,
+        width: '100%',
+
         overflowX: 'auto',
+        cursor: 'pointer',
       }}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
-      {isEditing ? (
+      {isLocalEditing && (
         <Box $gap="1rem">
           <Input
+            ref={inputRef}
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Enter LaTeX formula..."
             fullWidth
           />
-          <div ref={containerRef} />
         </Box>
-      ) : (
-        <div ref={containerRef} />
       )}
+      <div ref={containerRef} />
     </Box>
   );
 };
@@ -84,9 +123,6 @@ export const LatexBlock = createReactBlockSpec(
   },
   {
     render: ({ block, editor }) => {
-      const isEditing =
-        editor.isEditable && block.props.backgroundColor === 'default';
-
       const handleFormulaChange = (newFormula: string) => {
         editor.updateBlock(block, {
           props: { formula: newFormula },
@@ -96,7 +132,6 @@ export const LatexBlock = createReactBlockSpec(
       return (
         <LatexRenderer
           formula={block.props.formula}
-          isEditing={isEditing}
           onFormulaChange={handleFormulaChange}
         />
       );
