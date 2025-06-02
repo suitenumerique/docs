@@ -11,7 +11,9 @@ export const useGristTableData = ({
   documentId,
   tableId,
 }: UseGristTableDataArguments) => {
-  const [tableData, setTableData] = useState<Record<string, unknown>>({});
+  const [tableData, setTableData] = useState<
+    Record<string, (string | number | boolean)[]>
+  >({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +30,7 @@ export const useGristTableData = ({
 
     fetchData()
       .then((res) => {
-        setTableData(res as Record<string, unknown>);
+        setTableData(res as Record<string, (string | number | boolean)[]>);
       })
       .catch((error) => {
         console.error('Error fetching Grist table data:', error);
