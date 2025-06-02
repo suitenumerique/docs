@@ -2,9 +2,9 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Box } from '@/components';
+import { Box, Icon } from '@/components';
 
-import { CodeEditor } from '../../../CodeEditor';
+import { CodeEditor } from '../../../CodeEditor/index';
 import type { LatexRendererProps } from '../types';
 
 export const LatexRenderer = ({
@@ -46,7 +46,26 @@ export const LatexRenderer = ({
       role="button"
       tabIndex={0}
     >
-      <div ref={containerRef} />
+      <div
+        ref={containerRef}
+        style={{
+          display: formula.trim() ? 'block' : 'none',
+        }}
+      />
+      {!formula.trim() && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            color: '#666',
+          }}
+        >
+          <Icon iconName="functions" $size="18px" />
+          Click here to edit the LaTeX formula.
+        </div>
+      )}
       {isLocalEditing && (
         <CodeEditor
           value={formula}

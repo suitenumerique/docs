@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Box } from '@/components';
+import { Box, Icon } from '@/components';
 
 import { CodeEditor } from '../../../CodeEditor/index';
 import { useMermaid } from '../hooks/useMermaid';
@@ -15,19 +15,22 @@ export const MermaidRenderer = ({
   const [isLocalEditing, setIsLocalEditing] = useState(false);
   const { mermaidModule, error: mermaidError } = useMermaid();
   const [error, setError] = useState<string | null>(null);
+  const diagramId = useRef(
+    `mermaid-diagram-${Math.random().toString(36).substr(2, 9)}`,
+  );
 
   useEffect(() => {
     if (containerRef.current && mermaidModule) {
       const renderDiagram = async () => {
         try {
           const { svg } = await mermaidModule.render(
-            'mermaid-diagram',
+            diagramId.current,
             diagram,
           );
           if (containerRef.current) {
             containerRef.current.innerHTML = svg;
           }
-          setError(null);
+          setError('');
         } catch (error) {
           console.error('Mermaid rendering error:', error);
           setError('Invalid Mermaid diagram');
@@ -58,8 +61,27 @@ export const MermaidRenderer = ({
       role="button"
       tabIndex={0}
     >
-      <div ref={containerRef} />
-      {(error || mermaidError) && (
+      <div
+        ref={containerRef}
+        style={{
+          display: diagram.trim() && !error && !mermaidError ? 'block' : 'none',
+        }}
+      />
+      {!diagram.trim() && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            color: '#666',
+          }}
+        >
+          <Icon iconName="account_tree" $size="18px" />
+          Click here to edit the Mermaid diagram.
+        </div>
+      )}
+      {diagram.trim() && (error || mermaidError) && (
         <Box
           $margin="0.5rem 0 0 0"
           $padding="0.5rem"

@@ -1,5 +1,3 @@
-import { defaultProps } from '@blocknote/core';
-
 export const defaultDiagram = `graph TD
     A[Start] --> B{Is it?}
     B -- Yes --> C[OK]
@@ -11,8 +9,6 @@ export const blockSpec = {
     diagram: {
       default: defaultDiagram,
     },
-    textAlignment: defaultProps.textAlignment,
-    backgroundColor: defaultProps.backgroundColor,
   },
   content: 'none',
 } as const;

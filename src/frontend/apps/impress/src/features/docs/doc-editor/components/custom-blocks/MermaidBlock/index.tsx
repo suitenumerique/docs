@@ -12,8 +12,6 @@ export const MermaidBlock = createReactBlockSpec(blockSpec, {
       editor.updateBlock(block, {
         props: {
           diagram: newDiagram,
-          textAlignment: block.props.textAlignment,
-          backgroundColor: block.props.backgroundColor,
         },
       });
     };
