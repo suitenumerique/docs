@@ -126,5 +126,5 @@ def import_notion(token: str) -> list[(NotionPage, Any)]:
         blocks = fetch_block_children(session, page.id)
         logger.info(f"Page {page.get_title()} (id {page.id})")
         logger.info(blocks)
-        pages_and_blocks.append((page, convert_blocks(blocks)))
+        pages_and_blocks.append((page, convert_block_list(blocks)))
     return pages_and_blocks
