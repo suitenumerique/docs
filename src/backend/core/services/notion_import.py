@@ -35,13 +35,11 @@ def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
         json=req_data,
     )
 
-    if response.status_code == 200:
-        logger.info("✅ Requête réussie !")
-        return response.json()
-    else:
-        logger.error(f"❌ Erreur lors de la requête : {response.status_code}")
-        logger.debug(response.text)
-        raise ValueError
+    if response.status_code != 200:
+        print(response.json())
+
+    response.raise_for_status()
+    return response.json()
 
 
 def fetch_root_pages(session: Session) -> list[NotionPage]:
@@ -74,11 +72,8 @@ def fetch_blocks(session: Session, block_id: str, start_cursor: str) -> dict[str
         },
     )
 
-    if response.status_code == 200:
-        return response.json()
-    else:
-        logger.debug(response.text)
-        raise ValueError(f"❌ Erreur lors de la requête : {response.status_code}")
+    response.raise_for_status()
+    return response.json()
 
 
 def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
