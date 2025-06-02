@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 📌(yjs) stop pinning node to minor version on yjs docker image #1005
+
 ## [3.3.0] - 2025-05-06
 
 ### Added
