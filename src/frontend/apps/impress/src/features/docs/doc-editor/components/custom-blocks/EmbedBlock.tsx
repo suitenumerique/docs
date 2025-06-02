@@ -152,8 +152,8 @@ export const IframeBlock = (
   return (
     <ResizableFileBlockWrapper
       {...(props as any)}
-      buttonText="Embed"
-      buttonIcon={<Icon iconName="language" $size="18px" />}
+      buttonText="Add a callout block"
+      buttonIcon={<Icon iconName="link" $size="18px" />}
     >
       <IFrameViewer {...(props as any)} />
     </ResizableFileBlockWrapper>
@@ -178,17 +178,17 @@ export const getEmbedReactSlashMenuItems = (
         type: 'embed',
       });
     },
-    aliases: ['newEmbed', 'iframeBN', 'linkBN'],
+    aliases: ['embed', 'link', 'integration', 'lien'],
     group,
     icon: <Icon iconName="language" $size="18px" />,
-    subtext: t('Add an embed block'),
+    subtext: t('Add an embedded website'),
   },
 ];
 
 export const getEmbedFormattingToolbarItems = (
   t: TFunction<'translation', undefined>,
 ): BlockTypeSelectItem => ({
-  name: t('Embed'),
+  name: t('Add an embedded website'),
   type: 'embed',
   icon: () => <Icon iconName="link" $size="16px" />,
   isSelected: (block: { type: string }) => block.type === 'embed',

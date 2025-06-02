@@ -34,7 +34,7 @@ export const BlockNoteSuggestionMenu = () => {
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDatabaseReactSlashMenuItems(editor, t, advancedBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
-            getEmbedReactSlashMenuItems(editor, t, basicBlocksName),
+            getEmbedReactSlashMenuItems(editor, t, advancedBlocksName),
           ),
           query,
         ),
