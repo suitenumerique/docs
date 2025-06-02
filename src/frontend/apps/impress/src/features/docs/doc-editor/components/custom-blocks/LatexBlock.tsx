@@ -34,10 +34,6 @@ const LatexRenderer = ({
     }
   }, [formula]);
 
-  const handleClick = () => {
-    setIsLocalEditing(true);
-  };
-
   return (
     <Box
       ref={blockRef}
@@ -47,10 +43,10 @@ const LatexRenderer = ({
         overflowX: 'auto',
         cursor: 'pointer',
       }}
-      onClick={handleClick}
+      onClick={() => setIsLocalEditing(true)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          handleClick();
+          setIsLocalEditing(true);
         }
       }}
       role="button"
