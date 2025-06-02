@@ -112,7 +112,7 @@ export class ApiPlugin implements WorkboxPlugin {
   };
 
   /**
-   * When we get an network error.
+   * When we get a network error.
    */
   handlerDidError: WorkboxPlugin['handlerDidError'] = async ({ request }) => {
     if (!this.isFetchDidFailed) {

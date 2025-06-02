@@ -270,7 +270,7 @@ test.describe('Doc Export', () => {
   });
 
   /**
-   * We cannot assert the line break is visible in the pdf but we can assert the
+   * We cannot assert the line break is visible in the pdf, but we can assert the
    * line break is visible in the editor and that the pdf is generated.
    */
   test('it exports the doc with divider', async ({ page, browserName }) => {

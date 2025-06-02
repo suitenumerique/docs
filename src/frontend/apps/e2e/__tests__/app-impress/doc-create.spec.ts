@@ -31,7 +31,7 @@ test.describe('Doc Create', () => {
   });
 });
 
-test.describe('Doc Create: Not loggued', () => {
+test.describe('Doc Create: Not logged', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('it creates a doc server way', async ({

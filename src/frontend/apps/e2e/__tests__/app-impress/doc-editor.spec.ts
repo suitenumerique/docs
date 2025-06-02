@@ -95,7 +95,7 @@ test.describe('Doc Editor', () => {
 
     const selectVisibility = page.getByLabel('Visibility', { exact: true });
 
-    // When the visibility is changed, the ws should closed the connection (backend signal)
+    // When the visibility is changed, the ws should close the connection (backend signal)
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
