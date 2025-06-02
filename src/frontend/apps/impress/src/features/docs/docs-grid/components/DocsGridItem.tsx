@@ -40,7 +40,7 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
         $align="center"
         role="row"
         $gap="20px"
-        $padding={{ vertical: '2xs', horizontal: isDesktop ? 'base' : 'xs' }}
+        $padding={{ vertical: '4xs', horizontal: isDesktop ? 'base' : 'xs' }}
         $css={css`
           cursor: pointer;
           border-radius: 4px;

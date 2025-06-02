@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+-🐛(frontend) fix multiple EmojiPicker #1012
+
+
 ## [3.3.0] - 2025-05-06
 
 ### Added

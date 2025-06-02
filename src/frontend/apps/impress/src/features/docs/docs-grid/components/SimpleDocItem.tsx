@@ -50,6 +50,7 @@ export const SimpleDocItem = ({
           background-color: transparent;
           filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
         `}
+        $padding={`${spacingsTokens['3xs']} 0`}
       >
         {isPinned ? (
           <PinnedDocumentIcon
