@@ -40,7 +40,7 @@ export const DatabaseGrid = ({
 
   useEffect(() => {
     const filteredEntries = Object.entries(tableData).filter(
-      ([key]) => key !== 'id' && key !== 'manualSort',
+      ([key]) => key !== 'manualSort',
     );
 
     const rowData1: DatabaseRow[] = [];
@@ -61,6 +61,7 @@ export const DatabaseGrid = ({
 
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
+      hide: key === 'id',
       colSpan: (params: ColSpanParams<Record<string, string>, unknown>) =>
         newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
