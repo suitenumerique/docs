@@ -1,6 +1,6 @@
 import { Button } from '@openfun/cunningham-react';
 import Image from 'next/image';
-import { ReactElement } from 'react';
+import { ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -15,6 +15,9 @@ const StyledButton = styled(Button)`
 
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
+  useEffect(() => {
+    document.title = t('Page Not Found – Erreur 404 – Docs');
+  }, [t]);
 
   return (
     <Box
@@ -35,9 +38,7 @@ const Page: NextPageWithLayout = () => {
 
       <Box $align="center" $gap="0.8rem">
         <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
-          {t(
-            'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
-          )}
+          {t('You do not have permission to view this document.')}
         </Text>
 
         <StyledLink href="/">

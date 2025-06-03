@@ -1,6 +1,6 @@
 import { Button } from '@openfun/cunningham-react';
 import Image from 'next/image';
-import { ReactElement } from 'react';
+import { ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -15,6 +15,9 @@ const StyledButton = styled(Button)`
 
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
+  useEffect(() => {
+    document.title = t('Access Denied - Erreur 403 - Docs');
+  }, [t]);
 
   return (
     <Box
