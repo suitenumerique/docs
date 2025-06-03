@@ -1,14 +1,13 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
-import { Button } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
 import React from 'react';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
+import { DatabaseSelector } from '../DatabaseSelector';
 
 import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
 
@@ -48,25 +47,13 @@ export const DatabaseBlock = createReactBlockSpec(
               />
             </Box>
           ) : (
-            <Box
-              style={{
-                flexDirection: 'column',
-                gap: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
+            <DatabaseSelector
+              onDatabaseSelected={({ documentId, tableId }) => {
+                editor.updateBlock(block, {
+                  props: { documentId: documentId.toString(), tableId },
+                });
               }}
-            >
-              <Button>Créer une nouvelle base de données vide</Button>
-              <Text>ou</Text>
-              <DatabaseSourceSelector
-                onSourceSelected={({ documentId, tableId }) => {
-                  editor.updateBlock(block, {
-                    props: { documentId: documentId.toString(), tableId },
-                  });
-                }}
-              />
-            </Box>
+            />
           )}
         </Box>
       );
