@@ -10,6 +10,7 @@ from ..notion_schemas.notion_block import (
     NotionBulletedListItem,
     NotionCallout,
     NotionChildPage,
+    NotionCode,
     NotionColumn,
     NotionColumnList,
     NotionDivider,
@@ -304,6 +305,16 @@ def convert_block(
                     "content": convert_rich_texts(block.specific.rich_text),
                     "checked": block.specific.checked,
                     "children": convert_block_list(block.children, attachments),
+                }
+            ]
+        case NotionCode():
+            return [
+                {
+                    "type": "codeBlock",
+                    "content": "".join(
+                        rich_text.plain_text for rich_text in block.specific.rich_text
+                    ),
+                    "props": {"language": block.specific.language},
                 }
             ]
         case NotionUnsupported():
