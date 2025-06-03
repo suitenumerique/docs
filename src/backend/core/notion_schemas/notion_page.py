@@ -56,3 +56,6 @@ class NotionPage(BaseModel):
         # This could be parsed using NotionRichText
         rich_text = title_property["title"][0]
         return rich_text["plain_text"]
+
+    def is_root(self):
+        return isinstance(self.parent, NotionParentWorkspace)
