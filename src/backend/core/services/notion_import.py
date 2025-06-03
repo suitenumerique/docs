@@ -131,14 +131,23 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
 def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]:
     content = []
     for rich_text in rich_texts:
-        stylestab = convert_annotations(rich_text.annotations)
-        content.append(
-            {
-                "type": "text",
-                "text": rich_text.plain_text,
-                "styles": stylestab,
-            }
-        )
+        if rich_text.href:
+            content.append(
+                {
+                    "type" : "link",
+                    "content" : rich_text.plain_text,
+                    "href" : rich_text.href,
+                }
+            )
+        else :
+            stylestab = convert_annotations(rich_text.annotations)
+            content.append(
+                {
+                    "type" : "text",
+                    "text" : rich_text.plain_text,
+                    "styles" : stylestab,
+                }
+            )
     return content
 
 
