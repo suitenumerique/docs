@@ -78,7 +78,7 @@ export const getDatabaseReactSlashMenuItems = (
         type: 'database',
       });
     },
-    aliases: ['database', 'db', 'base de donnée'],
+    aliases: ['database', 'db', 'base de donnée', 'grist'],
     group,
     icon: <Icon iconName="storage" $size="18px" />,
     subtext: t('Create database view synced with Grist'),
