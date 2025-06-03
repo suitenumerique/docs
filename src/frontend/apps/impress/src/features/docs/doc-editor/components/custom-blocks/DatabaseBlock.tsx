@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
+import { insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import React from 'react';
@@ -15,7 +15,6 @@ export const DatabaseBlock = createReactBlockSpec(
   {
     type: 'database',
     propSchema: {
-      backgroundColor: defaultProps.backgroundColor,
       documentId: {
         type: 'string',
         default: '',
