@@ -33,28 +33,33 @@ export const GristApiKeyModal = ({
       title={<Box $align="flex-start">{translation('Grist API Key')}</Box>}
     >
       <Box>
-        <Text>
+        <Text style={{ marginBottom: '16px' }}>
           {translation(
             'To sync your data with Grist, you need to provide an API Key',
           )}
         </Text>
-        <Text style={{ fontWeight: 'bold' }}>
+        <Text style={{ fontWeight: 'bold', marginBottom: '8px' }}>
           {translation('How to find you API Key')}:
         </Text>
         <Text>1. {translation('Connect to your Grist account')}</Text>
         <Text>2. {translation('Go to Profile settings > API > API Key')}</Text>
-        <Text>3. {translation('Create a new API Key and copy it')}</Text>
+        <Text style={{ marginBottom: '16px' }}>
+          3. {translation('Create a new API Key and copy it')}
+        </Text>
+        <Input
+          label={translation('Grist API Key')}
+          onChange={(event) => {
+            const value = event.target.value;
+            setGristApiKey(value);
+          }}
+        />
+        <Button
+          onClick={validateGristApiKey}
+          style={{ alignSelf: 'end', width: 'fit-content', marginTop: '16px' }}
+        >
+          {translation('Validate API Key')}
+        </Button>
       </Box>
-      <Input
-        label={translation('Grist API Key')}
-        onChange={(event) => {
-          const value = event.target.value;
-          setGristApiKey(value);
-        }}
-      />
-      <Button onClick={validateGristApiKey}>
-        {translation('Validate API Key')}
-      </Button>
     </Modal>
   );
 };
