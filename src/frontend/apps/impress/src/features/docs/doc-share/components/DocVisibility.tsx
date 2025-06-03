@@ -65,6 +65,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     linkReachTranslations,
   ).map((key) => ({
     label: linkReachTranslations[key as LinkReach],
+    ariaHidden: true,
     icon: linkReachChoices[key as LinkReach].icon,
     callback: () => updateReach(key as LinkReach),
     isSelected: linkReach === (key as LinkReach),
@@ -122,6 +123,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
                 $theme={canManage ? 'primary' : 'greyscale'}
                 $variation={canManage ? '800' : '600'}
                 iconName={linkReachChoices[linkReach].icon}
+                aria-hidden={true}
               />
               <Text
                 $theme={canManage ? 'primary' : 'greyscale'}

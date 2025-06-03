@@ -36,7 +36,7 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
           fullWidth={false}
           onClick={copyDocLink}
           color="tertiary"
-          icon={<span className="material-icons">add_link</span>}
+          icon={<span className="material-icons" aria-hidden="true">add_link</span>}
         >
           {t('Copy link')}
         </Button>
