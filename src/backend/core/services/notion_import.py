@@ -245,12 +245,15 @@ def convert_block(block: NotionBlock) -> list[dict[str, Any]]:
                 }
             ]
         case NotionUnsupported():
-            str_raw = json.dumps(block.specific.raw, indent=2)
             return [
                 {
                     "type": "paragraph",
                     "content": f"This should be a {block.specific.block_type}, not yet supported in docs",
-                }
+                },
+                # {
+                #     "type": "quote",
+                #     "content": json.dumps(block.specific.raw, indent=2),
+                # },
             ]
         case _:
             return [
