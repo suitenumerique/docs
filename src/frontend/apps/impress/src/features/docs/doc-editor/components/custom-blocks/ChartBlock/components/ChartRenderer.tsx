@@ -45,25 +45,28 @@ export const ChartRenderer = ({
   const [yValue, setyValue] = useState([] as number[]);
 
   useEffect(() => {
-      const preParsed = formula.split('\n');
-      console.log(ce.parse(preParsed[0]).json);
-      const fn = ce.parse(preParsed[0]).compile();
-      let min = -5.0;
-      let max = 5.0;
-      let num = 50;
+      try {
+        const preParsed = formula.split('\n');
+        const fn = ce.parse(preParsed[0]).compile();
+        let min = -5.0;
+        let max = 5.0;
+        let num = 50;
 
-      if(preParsed.length > 1) {
-        const secondParse = preParsed[1].split(',');
-        console.log(secondParse);
-        min = Number(secondParse[0])
-        max = Number(secondParse[1])
-        num = (secondParse.length > 2) && (Number(secondParse[2]) <= 200) ? Number(secondParse[2]) : num;
-        console.log(num)
+        if(preParsed.length > 1) {
+          const secondParse = preParsed[1].split(',');
+          min = Number(secondParse[0])
+          max = Number(secondParse[1])
+          num = (secondParse.length > 2) && (Number(secondParse[2]) <= 200) ? Number(secondParse[2]) : num;
+        }
+
+        const arr = makeArr(min, max, num); 
+        setxValue(arr);
+        setyValue(arr.map(val => Number(fn({x : val})))); 
+      } catch {
+        setxValue([-5, 5]);
+        setyValue([0, 0]);
       }
-
-      const arr = makeArr(min, max, num); 
-      setxValue(arr);
-      setyValue(arr.map(val => Number(fn({x : val}))));    
+         
   }, [formula]);
 
   return (
