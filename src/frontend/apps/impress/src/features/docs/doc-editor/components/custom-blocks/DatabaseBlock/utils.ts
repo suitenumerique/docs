@@ -15,6 +15,14 @@ export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: 'fitCellContents',
 };
 
+export const defaultColDef = {
+  flex: 1,
+  filter: true,
+  editable: true,
+  unSortIcon: true,
+  minWidth: 200,
+};
+
 export const createNewRow = ({
   columnNames,
   value = undefined,
