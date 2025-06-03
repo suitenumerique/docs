@@ -11,6 +11,7 @@ import {
 
 import { AddButtonComponent } from './AddColumnButton';
 import { AddRowButton } from './AddRowButton';
+import { createNewRow } from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -73,13 +74,10 @@ export const DatabaseGrid = ({
       rowData1.push(row);
     }
 
-    const addNewRow: Record<string, string> = {};
-    for (const [key] of filteredEntries) {
-      addNewRow[key] = '+ new row';
-    }
-    rowData1.push(addNewRow);
-
     setRowData(rowData1);
+
+    const addNewRow = createNewRow('+ new row', colDefs ?? []);
+    rowData1.push(addNewRow);
 
     const columnNames = Object.keys(Object.fromEntries(filteredEntries));
     const columns: ColDef[] = columnNames.map((key) => ({
@@ -94,9 +92,8 @@ export const DatabaseGrid = ({
             params: { values: params.data },
           };
 
-          if (Object.values(params.data)[0].includes('new')) {
+          if (Object.values(params.data)[0]?.includes('new')) {
             return addRowButton;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           }
           return undefined;
         }
@@ -105,6 +102,7 @@ export const DatabaseGrid = ({
     }));
 
     setColDefs(columns.concat(addColumnColDef));
+
     // Ignore addColumnColDef
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
