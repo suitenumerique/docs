@@ -5,7 +5,7 @@ import {
   ICellRendererParams,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -88,7 +88,7 @@ export const DatabaseGrid = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
 
-  useEffect(() => {
+  const addNewRowRow = useMemo(() => {
     const columnNames = getColumnNames(colDefs);
     const lastRow = rowData?.[rowData.length - 1];
     if (lastRow && Object.values(lastRow).length > 0) {
@@ -98,7 +98,8 @@ export const DatabaseGrid = ({
       }
     }
     const addNewRow = createNewRow({ value: ADD_NEW_ROW, columnNames });
-    setRowData((prev) => [...(prev ? prev : []), addNewRow]);
+
+   return addNewRow;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colDefs]);
 
@@ -138,11 +139,6 @@ export const DatabaseGrid = ({
   const onCellEditingStopped = useCallback(
     (event: CellEditingStoppedEvent<DatabaseRow, DatabaseRow>) => {
       const { oldValue, newValue, data } = event;
-      console.log('Cell editing stopped:', {
-        oldValue,
-        newValue,
-        data,
-      });
 
       if (data === undefined) {
         return;
@@ -172,6 +168,7 @@ export const DatabaseGrid = ({
           domLayout="autoHeight"
           enableCellSpan={true}
           onCellEditingStopped={onCellEditingStopped}
+          pinnedBottomRowData={[addNewRowRow]}
         />
       </Box>
       <AddButtonComponent addColumn={addColumn} />
