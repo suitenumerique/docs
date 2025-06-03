@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Any
 
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter
 from requests import Session
 
 from ..notion_schemas.notion_block import (
@@ -135,7 +135,7 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
                 {
                     "type": "link",
                     "content": [convert_rich_text(rich_text)],
-                    "href": rich_text.href,
+                    "href": rich_text.href,  # FIXME: if it was a notion link, we should convert it to a link to the document
                 }
             )
         else:
@@ -154,6 +154,11 @@ def convert_rich_text(rich_text: NotionRichText) -> dict[str, Any]:
 class ImportedAttachment(BaseModel):
     block: Any
     file: NotionFileHosted
+
+
+class ImportedChildPage(BaseModel):
+    child_page_block: NotionBlock
+    block_to_update: Any
 
 
 def convert_image(
@@ -185,17 +190,21 @@ def convert_image(
 
 
 def convert_block(
-    block: NotionBlock, attachments: list[ImportedAttachment]
+    block: NotionBlock,
+    attachments: list[ImportedAttachment],
+    child_page_blocks: list[ImportedChildPage],
 ) -> list[dict[str, Any]]:
     match block.specific:
         case NotionColumnList():
             columns_content = []
             for column in block.children:
-                columns_content.extend(convert_block(column, attachments))
+                columns_content.extend(
+                    convert_block(column, attachments, child_page_blocks)
+                )
             return columns_content
         case NotionColumn():
             return [
-                convert_block(child_content, attachments)[0]
+                convert_block(child_content, attachments, child_page_blocks)[0]
                 for child_content in block.children
             ]
 
@@ -222,7 +231,7 @@ def convert_block(
                 }
             ]
         # case NotionDivider():
-        #     return {"type": "divider", "properties": {}}
+        #     return [{"type": "divider"}]
         case NotionCallout():
             return [
                 {
@@ -289,7 +298,11 @@ def convert_block(
                 {
                     "type": "bulletListItem",
                     "content": convert_rich_texts(block.specific.rich_text),
-                    "children": convert_block_list(block.children, attachments),
+                    "children": convert_block_list(
+                        block.children,
+                        attachments,
+                        child_page_blocks,
+                    ),
                 }
             ]
         case NotionNumberedListItem():
@@ -297,7 +310,11 @@ def convert_block(
                 {
                     "type": "numberedListItem",
                     "content": convert_rich_texts(block.specific.rich_text),
-                    "children": convert_block_list(block.children, attachments),
+                    "children": convert_block_list(
+                        block.children,
+                        attachments,
+                        child_page_blocks,
+                    ),
                 }
             ]
         case NotionToDo():
@@ -306,7 +323,11 @@ def convert_block(
                     "type": "checkListItem",
                     "content": convert_rich_texts(block.specific.rich_text),
                     "checked": block.specific.checked,
-                    "children": convert_block_list(block.children, attachments),
+                    "children": convert_block_list(
+                        block.children,
+                        attachments,
+                        child_page_blocks,
+                    ),
                 }
             ]
         case NotionCode():
@@ -333,6 +354,22 @@ def convert_block(
                     ],
                 }
             ]
+        case NotionChildPage():
+            # TODO: convert to a link
+            res = {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "link",
+                        "content": f"Child page: {block.specific.title}",
+                        "href": "about:blank",  # populated later on
+                    },
+                ],
+            }
+            child_page_blocks.append(
+                ImportedChildPage(child_page_block=block, block_to_update=res)
+            )
+            return [res]
         case NotionUnsupported():
             return [
                 {
@@ -368,19 +405,22 @@ def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]
 
 
 def convert_block_list(
-    blocks: list[NotionBlock], attachments: list[ImportedAttachment]
+    blocks: list[NotionBlock],
+    attachments: list[ImportedAttachment],
+    child_page_blocks: list[ImportedChildPage],
 ) -> list[dict[str, Any]]:
     converted_blocks = []
     for block in blocks:
-        converted_blocks.extend(convert_block(block, attachments))
+        converted_blocks.extend(convert_block(block, attachments, child_page_blocks))
     return converted_blocks
 
 
 class ImportedDocument(BaseModel):
     page: NotionPage
-    blocks: list[dict[str, Any]] = []
-    children: list["ImportedDocument"] = []
-    attachments: list[ImportedAttachment] = []
+    blocks: list[dict[str, Any]] = Field(default_factory=list)
+    children: list["ImportedDocument"] = Field(default_factory=list)
+    attachments: list[ImportedAttachment] = Field(default_factory=list)
+    child_page_blocks: list[ImportedChildPage] = Field(default_factory=list)
 
 
 def find_block_child_page(block_id: str, all_pages: list[NotionPage]):
@@ -393,48 +433,30 @@ def find_block_child_page(block_id: str, all_pages: list[NotionPage]):
     return None
 
 
-def convert_child_pages(
-    session: Session,
-    parent: NotionPage,
-    blocks: list[NotionBlock],
-    all_pages: list[NotionPage],
-) -> list[ImportedDocument]:
-    children = []
-
-    for page in all_pages:
-        if (
-            isinstance(page.parent, NotionParentPage)
-            and page.parent.page_id == parent.id
-        ):
-            children.append(import_page(session, page, all_pages))
-
-    for block in blocks:
-        if not isinstance(block.specific, NotionChildPage):
-            continue
-
-        # TODO: doesn't work, never finds the child
-        child_page = find_block_child_page(block.id, all_pages)
-        if child_page == None:
-            logger.warning(f"Cannot find child page of block {block.id}")
-            continue
-        children.append(import_page(session, child_page, all_pages))
-
-    return children
-
-
 def import_page(
-    session: Session, page: NotionPage, all_pages: list[NotionPage]
+    session: Session,
+    page: NotionPage,
+    child_page_blocs_ids_to_parent_page_ids: dict[str, str],
 ) -> ImportedDocument:
     blocks = fetch_block_children(session, page.id)
     logger.info(f"Page {page.get_title()} (id {page.id})")
     logger.info(blocks)
-    attachments = []
-    converted_blocks = convert_block_list(blocks, attachments)
+    attachments: list[ImportedAttachment] = []
+
+    child_page_blocks: list[ImportedChildPage] = []
+
+    converted_blocks = convert_block_list(blocks, attachments, child_page_blocks)
+
+    for child_page_block in child_page_blocks:
+        child_page_blocs_ids_to_parent_page_ids[
+            child_page_block.child_page_block.id
+        ] = page.id
+
     return ImportedDocument(
         page=page,
         blocks=converted_blocks,
-        children=convert_child_pages(session, page, blocks, all_pages),
         attachments=attachments,
+        child_page_blocks=child_page_blocks,
     )
 
 
@@ -442,8 +464,31 @@ def import_notion(token: str) -> list[ImportedDocument]:
     """Recursively imports all Notion pages and blocks accessible using the given token."""
     session = build_notion_session(token)
     all_pages = fetch_all_pages(session)
-    docs = []
+    docs_by_page_id: dict[str, ImportedDocument] = {}
+    child_page_blocs_ids_to_parent_page_ids: dict[str, str] = {}
     for page in all_pages:
-        if isinstance(page.parent, NotionParentWorkspace):
-            docs.append(import_page(session, page, all_pages))
-    return docs
+        docs_by_page_id[page.id] = import_page(
+            session, page, child_page_blocs_ids_to_parent_page_ids
+        )
+
+    root_pages = []
+    for page in all_pages:
+        if isinstance(page.parent, NotionParentPage):
+            docs_by_page_id[page.parent.page_id].children.append(
+                docs_by_page_id[page.id]
+            )
+        elif isinstance(page.parent, NotionParentBlock):
+            parent_page_id = child_page_blocs_ids_to_parent_page_ids.get(page.id)
+            if parent_page_id:
+                docs_by_page_id[parent_page_id].children.append(
+                    docs_by_page_id[page.id]
+                )
+            else:
+                logger.warning(
+                    f"Page {page.id} has a parent block, but no parent page found."
+                )
+        elif isinstance(page.parent, NotionParentWorkspace):
+            # This is a root page, not a child of another page
+            root_pages.append(docs_by_page_id[page.id])
+
+    return root_pages
