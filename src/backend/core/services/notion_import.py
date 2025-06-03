@@ -16,6 +16,7 @@ from ..notion_schemas.notion_block import (
     NotionHeading2,
     NotionHeading3,
     NotionNumberedListItem,
+    NotionImage,
     NotionParagraph,
     NotionTable,
     NotionTableRow,
@@ -28,7 +29,9 @@ from ..notion_schemas.notion_page import (
     NotionParentPage,
     NotionParentWorkspace,
 )
+from ..notion_schemas.notion_page import NotionPage, NotionParentWorkspace, NotionParentBlock, NotionParentPage
 from ..notion_schemas.notion_rich_text import NotionRichText, NotionRichTextAnnotation
+from ..notion_schemas.notion_file import NotionFileHosted, NotionFileExternal
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +142,34 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
     return content
 
 
-def convert_block(block: NotionBlock) -> list[dict[str, Any]]:
+class ImportedAttachment(BaseModel):
+    block: Any
+    file: NotionFileHosted
+
+
+def convert_image(image: NotionImage, attachments: list[ImportedAttachment]):
+    # TODO: NotionFileUpload
+    match image.file:
+        case NotionFileExternal():
+            return [{
+                "type": "image",
+                "props": {
+                    "url": image.file.external["url"],
+                },
+            }]
+        case NotionFileHosted():
+            block = {
+                "type": "image",
+                "props": {
+                    "url": "about:blank", # populated later on
+                },
+            }
+            attachments.append(ImportedAttachment(block=block, file=image.file))
+
+            return [block]
+
+
+def convert_block(block: NotionBlock, attachments: list[ImportedAttachment]) -> list[dict[str, Any]]:
     match block.specific:
         case NotionColumnList():
             columns_content = []
@@ -157,6 +187,8 @@ def convert_block(block: NotionBlock) -> list[dict[str, Any]]:
                     "content": content,
                 }
             ]
+        case NotionImage():
+            return convert_image(block.specific, attachments)
         case NotionHeading1() | NotionHeading2() | NotionHeading3():
             return [
                 {
@@ -282,10 +314,10 @@ def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]
     return res
 
 
-def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
+def convert_block_list(blocks: list[NotionBlock], attachments: list[ImportedAttachment]) -> list[dict[str, Any]]:
     converted_blocks = []
     for block in blocks:
-        converted_blocks.extend(convert_block(block))
+        converted_blocks.extend(convert_block(block, attachments))
     return converted_blocks
 
 
@@ -293,6 +325,7 @@ class ImportedDocument(BaseModel):
     page: NotionPage
     blocks: list[dict[str, Any]] = []
     children: list["ImportedDocument"] = []
+    attachments: list[ImportedAttachment] = []
 
 
 def find_block_child_page(block_id: str, all_pages: list[NotionPage]):
@@ -340,10 +373,13 @@ def import_page(
     blocks = fetch_block_children(session, page.id)
     logger.info(f"Page {page.get_title()} (id {page.id})")
     logger.info(blocks)
+    attachments = []
+    converted_blocks = convert_block_list(blocks, attachments)
     return ImportedDocument(
         page=page,
-        blocks=convert_block_list(blocks),
+        blocks=converted_blocks,
         children=convert_child_pages(session, page, blocks, all_pages),
+        attachments=attachments,
     )
 
 
