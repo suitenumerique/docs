@@ -28,7 +28,7 @@ The customization file must be a JSON file and must follow the rules described i
 ## [3.0.0] - 2025-03-28
 
 We are not using the nginx auth request anymore to access the collaboration server (`yProvider`)
-The authentication is now managed directly from the yProvider server. 
+The authentication is now managed directly from the yProvider server.
 You must remove the annotation `nginx.ingress.kubernetes.io/auth-url` from the `ingressCollaborationWS`.
 
 This means as well that the yProvider server must be able to access the Django server.

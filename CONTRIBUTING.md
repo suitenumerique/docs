@@ -25,9 +25,9 @@ When creating an issue, please provide the following details:
 
 ## Selecting an issue
 
-We use a [GitHub Project](https://github.com/orgs/numerique-gouv/projects/13) in order to prioritize our workload. 
+We use a [GitHub Project](https://github.com/orgs/numerique-gouv/projects/13) in order to prioritize our workload.
 
-Please check in priority the issues that are in the **todo** column and have a higher priority (P0 -> P2). 
+Please check in priority the issues that are in the **todo** column and have a higher priority (P0 -> P2).
 
 ## Commit Message Format
 
@@ -35,19 +35,19 @@ All commit messages must adhere to the following format:
 
 `<gitmoji>(type) title description`
 
-*   <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list [here](https://gitmoji.dev/).
-*   **(type)**: Describe the type of change. Common types include `backend`, `frontend`, `CI`, `docker` etc...
-*   **title**: A short, descriptive title for the change (*)
-*   **blank line after the commit title
-*   **description**: Include additional details on why you made the changes (**).
-    
-    (*) ⚠️ **Make sure you add no space between the emoji and the (type) but add a space after the closing parenthesis of the type and use no caps!**
-    (**) ⚠️ **Commit description message is mandatory and shouldn't be too long**
+- <**gitmoji**>: Use a gitmoji to represent the purpose of the commit. For example, ✨ for adding a new feature or 🔥 for removing something, see the list [here](https://gitmoji.dev/).
+- **(type)**: Describe the type of change. Common types include `backend`, `frontend`, `CI`, `docker` etc...
+- **title**: A short, descriptive title for the change (\*)
+- \*\*blank line after the commit title
+- **description**: Include additional details on why you made the changes (\*\*).
+
+  (\*) ⚠️ **Make sure you add no space between the emoji and the (type) but add a space after the closing parenthesis of the type and use no caps!**
+  (**) ⚠️ **Commit description message is mandatory and shouldn't be too long\*\*
 
 ### Example Commit Message
 
 ```
-✨(frontend) add user authentication logic 
+✨(frontend) add user authentication logic
 
 Implemented login and signup features, and integrated OAuth2 for social login.
 ```
@@ -57,6 +57,7 @@ Implemented login and signup features, and integrated OAuth2 for social login.
 Please add a line to the changelog describing your development. The changelog entry should include a brief summary of the changes, this helps in tracking changes effectively and keeping everyone informed. We usually include the title of the pull request, followed by the pull request ID to finish the log entry. The changelog line should be less than 80 characters in total.
 
 ### Example Changelog Message
+
 ```
 ## [Unreleased]
 
@@ -69,7 +70,8 @@ Please add a line to the changelog describing your development. The changelog en
 
 It is nice to add information about the purpose of the pull request to help reviewers understand the context and intent of the changes. If you can, add some pictures or a small video to show the changes.
 
-### Don't forget to: 
+### Don't forget to:
+
 - signoff your commits
 - sign your commits with your key (SSH, GPG etc.)
 - check your commits (see warnings above)
@@ -94,7 +96,8 @@ If you need any help while contributing, feel free to open a discussion or ask f
 Thank you for your contributions! 👍
 
 ## Contribute to BlockNote
-We use [BlockNote](https://www.blocknotejs.org/) for the text editing features of Docs. 
+
+We use [BlockNote](https://www.blocknotejs.org/) for the text editing features of Docs.
 If you find and issue with the editor you can [report it](https://github.com/TypeCellOS/BlockNote/issues) directly on their repository.
 
 Please consider contributing to BlockNotejs, as a library, it's useful to many projects not just Docs.

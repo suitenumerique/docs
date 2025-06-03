@@ -77,8 +77,8 @@ const AIMenuItemFactCheck = ({
       !responseAI ||
       !responseAI.answer ||
       typeof responseAI.answer !== 'object'
-      ) {
-        throw new Error('No response from AI');
+    ) {
+      throw new Error('No response from AI');
     }
 
     const { claim, accuracy, justification, references } = responseAI.answer;
@@ -100,7 +100,11 @@ const AIMenuItemFactCheck = ({
   };
 
   return (
-    <AIMenuItem icon={icon} requestAI={requestAIFactCheck} isPending={isPending}>
+    <AIMenuItem
+      icon={icon}
+      requestAI={requestAIFactCheck}
+      isPending={isPending}
+    >
       {children}
     </AIMenuItem>
   );

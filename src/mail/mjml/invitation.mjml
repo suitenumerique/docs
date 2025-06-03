@@ -40,16 +40,15 @@
             align="center"
           />
           <mj-text>
-            {% blocktrans %}
-              Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team.
-            {% endblocktrans %}
+            {% blocktrans %} Docs, your new essential tool for organizing,
+            sharing and collaborating on your documents as a team. {%
+            endblocktrans %}
           </mj-text>
           <!-- Signature -->
           <mj-text>
             <p>
-              {% blocktrans %}
-                Brought to you by {{brandname}}
-              {% endblocktrans %}
+              {% blocktrans %} Brought to you by {{brandname}} {% endblocktrans
+              %}
             </p>
           </mj-text>
         </mj-column>

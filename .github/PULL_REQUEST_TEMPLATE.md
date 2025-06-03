@@ -2,7 +2,6 @@
 
 Description...
 
-
 ## Proposal
 
 Description...

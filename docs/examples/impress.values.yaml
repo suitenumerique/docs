@@ -94,8 +94,8 @@ backend:
       configMap:
         name: certifi
         items:
-        - key: cacert.pem
-          path: cacert.pem
+          - key: cacert.pem
+            path: cacert.pem
 frontend:
   envVars:
     PORT: 8080
@@ -135,7 +135,7 @@ ingress:
 ingressCollaborationWS:
   enabled: true
   host: impress.127.0.0.1.nip.io
-  
+
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://impress.127.0.0.1.nip.io/api/v1.0/documents/collaboration-auth/
 
@@ -160,4 +160,3 @@ ingressMedia:
 serviceMedia:
   host: minio.impress.svc.cluster.local
   port: 9000
-

@@ -1,4 +1,5 @@
 # Contributor Covenant Code of Conduct
+
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
@@ -42,7 +43,7 @@ Examples of unacceptable behavior include:
 
 ## Enforcement Guidelines
 
-- Community leaders will follow these Community Impact Guidelines in determining the consequences for any action they deem in violation of the following Code of Conduct 
+- Community leaders will follow these Community Impact Guidelines in determining the consequences for any action they deem in violation of the following Code of Conduct
 
 ## Code of Conduct:
 

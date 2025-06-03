@@ -1,49 +1,31 @@
 <mj-head>
-    <mj-title>{{ title }}</mj-title>
-    <mj-preview>
-        <!--
+  <mj-title>{{ title }}</mj-title>
+  <mj-preview>
+    <!--
             We load django tags here, in this way there are put within the body in html output
             so the html-to-text command includes it within its output
         -->
-        {% load i18n static extra_tags %}
-        {{ title }}
-    </mj-preview>
-    <mj-attributes>
-        <mj-font name="Roboto" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" />
-        <mj-all
-            font-family="Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif"
-            font-size="16px"
-            line-height="normal"
-            color="#3A3A3A"
-        />
-    </mj-attributes>
-    <mj-style>
-        /* Reset */
-        h1, h2, h3, h4, h5, h6, p {
-            margin: 0;
-            padding: 0;
-            line-height: normal;
-        }
-
-        a {
-            color: #000091;
-        }
-    </mj-style>
-    <mj-style>
-        /* Global styles */
-        h1 {
-            color: #161616;
-            font-size: 1.4rem;
-        }
-
-        .wrapper {
-            background: #FFFFFF;
-            border-radius: 0 0 6px 6px;
-            box-shadow: 0 0 6px rgba(2 117 180 / 0.3);
-        }
-
-        .wrapper-logo td{
-            padding: 0!important;
-        }
-    </mj-style>
+    {% load i18n static extra_tags %} {{ title }}
+  </mj-preview>
+  <mj-attributes>
+    <mj-font
+      name="Roboto"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap"
+    />
+    <mj-all
+      font-family="Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif"
+      font-size="16px"
+      line-height="normal"
+      color="#3A3A3A"
+    />
+  </mj-attributes>
+  <mj-style>
+    /* Reset */ h1, h2, h3, h4, h5, h6, p { margin: 0; padding: 0; line-height:
+    normal; } a { color: #000091; }
+  </mj-style>
+  <mj-style>
+    /* Global styles */ h1 { color: #161616; font-size: 1.4rem; } .wrapper {
+    background: #FFFFFF; border-radius: 0 0 6px 6px; box-shadow: 0 0 6px rgba(2
+    117 180 / 0.3); } .wrapper-logo td{ padding: 0!important; }
+  </mj-style>
 </mj-head>

@@ -322,7 +322,6 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
-        "drf_spectacular_sidecar"
     ]
 
     # Cache

@@ -27,30 +27,35 @@
 </p>
 
 # La Suite Docs : Collaborative Text Editing
+
 Docs, where your notes can become knowledge through live collaboration.
 
 <img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
 
 ## Why use Docs ❓
+
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
 It offers a scalable and secure alternative to tools such as Google Docs, Notion (without the dbs), Outline, or Confluence.
 
 ### Write
-* 😌 Get simple, accessible online editing for your team.
-* 💅 Create clean documents with beautiful formatting options.
-* 🖌️ Focus on your content using either the in-line editor, or [the Markdown syntax](https://www.markdownguide.org/basic-syntax/).
-* 🧱 Quickly design your page thanks to the many block types, accessible from the `/` slash commands, as well as keyboard shortcuts.
-* 🔌 Write offline! Your edits will be synced once you're back online.
-* ✨ Save time thanks to our AI actions, such as rephrasing, summarizing, fixing typos, translating, etc. You can even turn your selected text into a prompt!
+
+- 😌 Get simple, accessible online editing for your team.
+- 💅 Create clean documents with beautiful formatting options.
+- 🖌️ Focus on your content using either the in-line editor, or [the Markdown syntax](https://www.markdownguide.org/basic-syntax/).
+- 🧱 Quickly design your page thanks to the many block types, accessible from the `/` slash commands, as well as keyboard shortcuts.
+- 🔌 Write offline! Your edits will be synced once you're back online.
+- ✨ Save time thanks to our AI actions, such as rephrasing, summarizing, fixing typos, translating, etc. You can even turn your selected text into a prompt!
 
 ### Work together
-* 🤝 Enjoy live editing! See your team collaborate in real time.
-* 🔒 Keep your information secure thanks to granular access control. Only share with the right people.
-* 📑 Export your content in multiple formats (`.odt`, `.docx`, `.pdf`) with customizable templates.
-* 📚 Turn your team's collaborative work into organized knowledge with Subpages.
+
+- 🤝 Enjoy live editing! See your team collaborate in real time.
+- 🔒 Keep your information secure thanks to granular access control. Only share with the right people.
+- 📑 Export your content in multiple formats (`.odt`, `.docx`, `.pdf`) with customizable templates.
+- 📚 Turn your team's collaborative work into organized knowledge with Subpages.
 
 ### Self-host
+
 🚀 Docs is easy to install on your own servers
 
 Available methods: Helm chart, Nix package
@@ -170,7 +175,7 @@ Want to know where the project is headed? [🗺️ Checkout our roadmap](https:/
 
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is a public-driven initiative, our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public-driven initiative, our licence choice is an invitation for private sector actors to use, sell and contribute to the project.
 
 ## Contributing 🙌
 
@@ -200,11 +205,11 @@ docs
 
 Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
 
-We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/). 
-
+We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
 ### Gov ❤️ open source
-Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
+
+Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)).
 
 We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 

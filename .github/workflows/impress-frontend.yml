@@ -9,11 +9,10 @@ on:
       - "*"
 
 jobs:
-
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
-      node_version: '20.x'
+      node_version: "20.x"
       with-front-dependencies-installation: true
 
   test-front:

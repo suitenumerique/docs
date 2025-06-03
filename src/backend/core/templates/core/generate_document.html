@@ -1,14 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Generate Document</title>
-</head>
-<body>
+  </head>
+  <body>
     <h2>Generate Document</h2>
     <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Generate PDF</button>
+      {% csrf_token %} {{ form.as_p }}
+      <button type="submit">Generate PDF</button>
     </form>
-</body>
+  </body>
 </html>

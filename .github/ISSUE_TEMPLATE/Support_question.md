@@ -3,7 +3,9 @@ name: 🤗 Support Question
 about: If you have a question 💬, or something was not clear from the docs!
 labels: ["support", "triage"]
 ---
+
 ## Support request
+
 **Checks before filing**
 Please make sure you have read our [main Readme](https://github.com/suitenumerique/docs).
 

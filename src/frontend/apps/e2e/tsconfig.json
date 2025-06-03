@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+    "incremental": true
   },
   "include": ["**/*.ts", "**/*.d.ts"],
   "exclude": ["node_modules"]

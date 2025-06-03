@@ -20,4 +20,5 @@ If you can, explain how users will be able to use this and possibly write out so
 Maybe add a screenshot or design?
 
 **Do you want to work on it through a Pull Request?**
+
 <!-- Make sure to coordinate with us before you spend too much time working on an implementation! -->

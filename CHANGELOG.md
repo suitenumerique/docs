@@ -33,12 +33,12 @@ and this project adheres to
 - ⬆️(docker) upgrade node images to alpine 3.21 #973
 
 ### Fixed
+
 - 🐛(y-provider) increase JSON size limits for transcription conversion #989
 
 ### Removed
 
 - 🔥(back) remove footer endpoint #948
-
 
 ## [3.2.1] - 2025-05-06
 
@@ -46,7 +46,6 @@ and this project adheres to
 
 - 🐛(frontend) fix list copy paste #943
 - 📝(doc) update contributing policy (commit signatures are now mandatory) #895
-
 
 ## [3.2.0] - 2025-05-05
 
@@ -58,7 +57,7 @@ and this project adheres to
 - ✨(settings) Allow configuring PKCE for the SSO #886
 - 🌐(i18n) activate chinese and spanish languages #884
 - 🔧(backend) allow overwriting the data directory #893
-- ➕(backend) add  `django-lasuite` dependency #839
+- ➕(backend) add `django-lasuite` dependency #839
 - ✨(frontend) advanced table features #908
 
 ## Changed
@@ -109,7 +108,6 @@ and this project adheres to
 - 🐛(backend) compute ancestor_links in get_abilities if needed #725
 - 🔒️(back) restrict access to document accesses #801
 
-
 ## [2.6.0] - 2025-03-21
 
 ## Added
@@ -127,7 +125,6 @@ and this project adheres to
 - 🔒️(backend) require at least 5 characters to search for users #636
 - 🔒️(back) throttle user list endpoint #636
 - 🔒️(back) remove pagination and limit to 5 for user list endpoint #636
-
 
 ## [2.5.0] - 2025-03-18
 
@@ -151,14 +148,13 @@ and this project adheres to
 ## Fixed
 
 - 🐛(frontend) SVG export #706
-- 🐛(frontend) remove scroll listener table content  #688
+- 🐛(frontend) remove scroll listener table content #688
 - 🔒️(back) restrict access to favorite_list endpoint #690
-- 🐛(backend) refactor to fix filtering on children 
-    and descendants views #695
+- 🐛(backend) refactor to fix filtering on children
+  and descendants views #695
 - 🐛(action) fix notify-argocd workflow #713
 - 🚨(helm) fix helmfile lint #736
 - 🚚(frontend) redirect to 401 page when 401 error #759
-
 
 ## [2.4.0] - 2025-03-06
 
@@ -173,7 +169,6 @@ and this project adheres to
 ## Fixed
 
 - 🐛(frontend) fix collaboration error #684
-
 
 ## [2.3.0] - 2025-03-03
 

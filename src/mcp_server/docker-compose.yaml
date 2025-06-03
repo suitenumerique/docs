@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     ports:
-        - "4200:4200"
+      - "4200:4200"
 
     develop:
       # Create a `watch` configuration to update the app

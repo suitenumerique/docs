@@ -3,14 +3,14 @@ name: Update crowdin sources
 on:
   workflow_dispatch:
   push:
-    branches: 
+    branches:
       - main
 
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
-      node_version: '20.x'
+      node_version: "20.x"
       with-front-dependencies-installation: true
       with-build_mails: true
 

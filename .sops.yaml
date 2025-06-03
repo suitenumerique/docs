@@ -1,10 +1,10 @@
 creation_rules:
   - path_regex: ./*
     key_groups:
-    - age:
-      - age15fyxdwmg5mvldtqqus87xspuws2u0cpvwheehrtvkexj4tnsqqysw6re2x # jacques
-      - age16hnlml8yv4ynwy0seer57g8qww075crd0g7nsundz3pj4wk7m3vqftszg7 # github-repo
-      - age1plkp8td6zzfcavjusmsfrlk54t9vn8jjxm8zaz7cmnr7kzl2nfnsd54hwg # Anthony Le-Courric
-      - age12g6f5fse25tgrwweleh4jls3qs52hey2edh759smulwmk5lnzadslu2cp3 # Antoine Lebaud
-      - age1hnhuzj96ktkhpyygvmz0x9h8mfvssz7ss6emmukags644mdhf4msajk93r # Samuel Paccoud
+      - age:
+          - age15fyxdwmg5mvldtqqus87xspuws2u0cpvwheehrtvkexj4tnsqqysw6re2x # jacques
+          - age16hnlml8yv4ynwy0seer57g8qww075crd0g7nsundz3pj4wk7m3vqftszg7 # github-repo
+          - age1plkp8td6zzfcavjusmsfrlk54t9vn8jjxm8zaz7cmnr7kzl2nfnsd54hwg # Anthony Le-Courric
+          - age12g6f5fse25tgrwweleh4jls3qs52hey2edh759smulwmk5lnzadslu2cp3 # Antoine Lebaud
+          - age1hnhuzj96ktkhpyygvmz0x9h8mfvssz7ss6emmukags644mdhf4msajk93r # Samuel Paccoud
 
