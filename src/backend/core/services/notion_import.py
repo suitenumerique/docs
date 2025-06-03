@@ -136,22 +136,26 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
     return content
 
 
-def convert_block(block: NotionBlock) -> dict[str, Any] | None:
+def convert_block(block: NotionBlock) -> list[dict[str, Any]] | None:
     match block.specific:
         case NotionParagraph():
             content = convert_rich_texts(block.specific.rich_text)
-            return {
-                "type": "paragraph",
-                "content": content,
-            }
+            return [
+                {
+                    "type": "paragraph",
+                    "content": content,
+                }
+            ]
         case NotionHeading1() | NotionHeading2() | NotionHeading3():
-            return {
-                "type": "heading",
-                "content": convert_rich_texts(block.specific.rich_text),
-                "level": block.specific.block_type.value.split("_")[
-                    -1
-                ],  # e.g., "1", "2", or "3"
-            }
+            return [
+                {
+                    "type": "heading",
+                    "content": convert_rich_texts(block.specific.rich_text),
+                    "level": block.specific.block_type.value.split("_")[
+                        -1
+                    ],  # e.g., "1", "2", or "3"
+                }
+            ]
         # case NotionDivider():
         #     return {
         #         "type": "divider",
@@ -159,25 +163,27 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
         case NotionTable():
             rows: list[NotionTableRow] = [child.specific for child in block.children]  # type: ignore # I don't know how to assert properly
             if len(rows) == 0:
-                return {
-                    "type": "paragraph",
-                    "content": "Empty table ?!",
-                }
+                return [
+                    {
+                        "type": "paragraph",
+                        "content": "Empty table ?!",
+                    }
+                ]
 
             n_columns = len(
                 rows[0].cells
             )  # I'll assume all rows have the same number of cells
             if n_columns == 0:
-                return {
+                return [{
                     "type": "paragraph",
                     "content": "Empty row ?!",
-                }
+                }]
             if not all(len(row.cells) == n_columns for row in rows):
-                return {
+                return [{
                     "type": "paragraph",
                     "content": "Rows have different number of cells ?!",
-                }
-            return {
+                }]
+            return [{
                 "type": "table",
                 "content": {
                     "type": "tableContent",
@@ -202,31 +208,33 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
                         for row in rows
                     ],
                 },
-            }
+            }]
         case NotionBulletedListItem():
-            return {
+            return [{
                 "type": "bulletListItem",
                 "content": convert_rich_texts(block.specific.rich_text),
                 "children": convert_block_list(block.children),
-            }
+            }]
         case NotionNumberedListItem():
-            return {
+            return [{
                 "type": "numberedListItem",
                 "content": convert_rich_texts(block.specific.rich_text),
                 "children": convert_block_list(block.children),
-            }
+            }]
 
         case NotionUnsupported():
             str_raw = json.dumps(block.specific.raw, indent=2)
-            return {
-                "type": "paragraph",
-                "content": f"This should be a {block.specific.block_type}, not yet supported in docs",
-            }
+            return [
+                {
+                    "type": "paragraph",
+                    "content": f"This should be a {block.specific.block_type}, not yet supported in docs",
+                }
+            ]
         case _:
-            return {
+            return [{
                 "type": "paragraph",
                 "content": f"This should be a {block.specific.block_type}, not yet handled by the importer",
-            }
+            }]
 
 
 def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]:
@@ -251,9 +259,9 @@ def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
     converted_blocks = []
     for block in blocks:
         converted_block = convert_block(block)
-        if converted_block == None:
+        if len(converted_block) == 0:
             continue
-        converted_blocks.append(converted_block)
+        converted_blocks.extend(converted_block)
     return converted_blocks
 
 
