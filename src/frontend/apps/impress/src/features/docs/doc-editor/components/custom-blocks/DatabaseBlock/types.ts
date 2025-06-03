@@ -1,1 +1,1 @@
-export type DatabaseRow = Record<string, string | number | boolean>;
+export type DatabaseRow = Record<string, string | number | boolean | undefined>;
