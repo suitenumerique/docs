@@ -1,8 +1,22 @@
 import { Button } from '@openfun/cunningham-react';
-import { CustomCellRendererProps } from 'ag-grid-react';
 
-export const AddRowButton = (props: CustomCellRendererProps) => {
-  console.log('AddRowButton props', props);
+import { useColumns, useRows } from './hooks';
+import { createNewRow } from './utils';
+
+export const AddRowButton = () => {
+  const { setRowData } = useRows();
+  const { colDefs } = useColumns();
+
+  const addRow = () => {
+    const newRow = createNewRow('', colDefs);
+    setRowData((prev) => {
+      if (prev === undefined) {
+        return [newRow];
+      }
+      return [...prev, newRow];
+    });
+  };
+
   const color = '#817E77';
   return (
     <Button
@@ -19,6 +33,11 @@ export const AddRowButton = (props: CustomCellRendererProps) => {
         left: '-12px',
         padding: 0,
         width: '100%',
+      }}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        addRow();
       }}
     >
       new row
