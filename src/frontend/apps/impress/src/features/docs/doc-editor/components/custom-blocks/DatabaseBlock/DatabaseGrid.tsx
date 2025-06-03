@@ -11,6 +11,7 @@ import {
 
 import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
+import { DatabaseRow } from './types';
 import { addRowCellRenderer, autoSizeStrategy, createNewRow } from './utils';
 
 export const DatabaseGrid = ({
@@ -61,12 +62,12 @@ export const DatabaseGrid = ({
       ([key]) => key !== 'id' && key !== 'manualSort',
     );
 
-    const rowData1: Record<string, string | number | boolean>[] = [];
+    const rowData1: DatabaseRow[] = [];
 
     const numRows = filteredEntries[0]?.[1].length;
 
     for (let i = 0; i < numRows; i++) {
-      const row: Record<string, string | boolean | number> = {};
+      const row: DatabaseRow = {};
       for (const [key, values] of filteredEntries) {
         row[key] = values[i] ?? '';
       }
