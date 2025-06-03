@@ -460,35 +460,18 @@ def import_page(
     )
 
 
-def import_notion(token: str) -> list[ImportedDocument]:
-    """Recursively imports all Notion pages and blocks accessible using the given token."""
-    session = build_notion_session(token)
-    all_pages = fetch_all_pages(session)
-    docs_by_page_id: dict[str, ImportedDocument] = {}
-    child_page_blocs_ids_to_parent_page_ids: dict[str, str] = {}
-    for page in all_pages:
-        docs_by_page_id[page.id] = import_page(
-            session, page, child_page_blocs_ids_to_parent_page_ids
-        )
-
-    root_pages = []
-    for page in all_pages:
-        if isinstance(page.parent, NotionParentPage):
-            docs_by_page_id[page.parent.page_id].children.append(
-                docs_by_page_id[page.id]
+def link_child_page_to_parent(
+    page: NotionPage,
+    docs_by_page_id: dict[str, ImportedDocument],
+    child_page_blocs_ids_to_parent_page_ids: dict[str, str],
+):
+    if isinstance(page.parent, NotionParentPage):
+        docs_by_page_id[page.parent.page_id].children.append(docs_by_page_id[page.id])
+    elif isinstance(page.parent, NotionParentBlock):
+        parent_page_id = child_page_blocs_ids_to_parent_page_ids.get(page.id)
+        if parent_page_id:
+            docs_by_page_id[parent_page_id].children.append(docs_by_page_id[page.id])
+        else:
+            logger.warning(
+                f"Page {page.id} has a parent block, but no parent page found."
             )
-        elif isinstance(page.parent, NotionParentBlock):
-            parent_page_id = child_page_blocs_ids_to_parent_page_ids.get(page.id)
-            if parent_page_id:
-                docs_by_page_id[parent_page_id].children.append(
-                    docs_by_page_id[page.id]
-                )
-            else:
-                logger.warning(
-                    f"Page {page.id} has a parent block, but no parent page found."
-                )
-        elif isinstance(page.parent, NotionParentWorkspace):
-            # This is a root page, not a child of another page
-            root_pages.append(docs_by_page_id[page.id])
-
-    return root_pages

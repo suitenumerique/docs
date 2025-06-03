@@ -64,7 +64,7 @@ urlpatterns = [
                         [
                             path("redirect", viewsets.notion_import_redirect),
                             path("callback", viewsets.notion_import_callback),
-                            path("run", viewsets.notion_import_run),
+                            path("run", viewsets.NotionImportRunView.as_view()),
                         ]
                     ),
                 ),
