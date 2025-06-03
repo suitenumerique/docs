@@ -1,5 +1,5 @@
 import { Loader } from '@openfun/cunningham-react';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Text } from '@/components';
@@ -10,12 +10,7 @@ import { NextPageWithLayout } from '@/types/next';
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
 
-  const { mutate: importNotion } = useImportNotion();
-
-  useEffect(() => {
-    importNotion();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { percentageValue } = useImportNotion();
 
   return (
     <Box
@@ -31,6 +26,9 @@ const Page: NextPageWithLayout = () => {
         {t('Please stay on this page and be patient')}
       </Text>
       <Loader />
+      <Text as="p" $margin={{ top: '10px', bottom: '30px' }}>
+        {percentageValue}%
+      </Text>
     </Box>
   );
 };
