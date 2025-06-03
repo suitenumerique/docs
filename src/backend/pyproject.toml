@@ -75,7 +75,6 @@ dependencies = [
 dev = [
     "django-extensions==4.1",
     "django-test-migrations==1.5.0",
-    "drf-spectacular-sidecar==2025.6.1",
     "freezegun==1.5.2",
     "ipdb==0.13.13",
     "ipython==9.3.0",
