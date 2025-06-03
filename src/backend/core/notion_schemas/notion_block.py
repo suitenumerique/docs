@@ -212,6 +212,18 @@ class NotionTableRow(BaseModel):
     cells: list[list[NotionRichText]]  # Each cell is a list of rich text objects
 
 
+class NotionColumnList(BaseModel):
+    """https://developers.notion.com/reference/block#column-list-and-column"""
+
+    block_type: Literal[NotionBlockType.COLUMN_LIST] = NotionBlockType.COLUMN_LIST
+
+
+class NotionColumn(BaseModel):
+    """https://developers.notion.com/reference/block#column-list-and-column"""
+
+    block_type: Literal[NotionBlockType.COLUMN] = NotionBlockType.COLUMN
+
+
 class NotionChildPage(BaseModel):
     """https://developers.notion.com/reference/block#child-page
 
@@ -247,6 +259,8 @@ NotionBlockSpecifics = Annotated[
         | NotionBulletedListItem
         | NotionToDo
         | NotionCode
+        | NotionColumn
+        | NotionColumnList
         | NotionDivider
         | NotionEmbed
         | NotionFile
