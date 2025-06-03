@@ -1854,13 +1854,30 @@ def notion_import_callback(request):
     return redirect(f"{settings.FRONTEND_URL}/import-notion/")
 
 
-def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_page_id):
-    document_content = YdocConverter().convert_blocks(imported_doc.blocks)
+def _import_notion_doc_content(imported_doc, obj, user):
+    for att in imported_doc.attachments:
+        extra_args = {
+            "Metadata": {
+                "owner": str(user.id),
+                "status": enums.DocumentAttachmentStatus.READY, # TODO
+            },
+        }
+        file_id = uuid.uuid4()
+        key = f"{obj.key_base}/{enums.ATTACHMENTS_FOLDER:s}/{file_id!s}.raw"
+        with requests.get(att.file.file["url"], stream=True) as resp:
+            default_storage.connection.meta.client.upload_fileobj(
+                resp.raw, default_storage.bucket_name, key
+            )
+        obj.attachments.append(key)
+        att.block["props"]["url"] = f"{settings.MEDIA_BASE_URL}{settings.MEDIA_URL}{key}"
 
+    obj.content = YdocConverter().convert_blocks(imported_doc.blocks)
+    obj.save()
+
+def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_page_id):
     obj = parent_doc.add_child(
         creator=user,
         title=imported_doc.page.get_title() or "J'aime les carottes",
-        content=document_content,
     )
 
     models.DocumentAccess.objects.create(
@@ -1868,6 +1885,8 @@ def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_p
         user=user,
         role=models.RoleChoices.OWNER,
     )
+
+    _import_notion_doc_content(imported_doc, obj, user)
 
     imported_docs_by_page_id[imported_doc.page.id] = obj
 
@@ -1876,14 +1895,11 @@ def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_p
 
 
 def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
-    document_content = YdocConverter().convert_blocks(imported_doc.blocks)
-
     obj = models.Document.add_root(
         depth=1,
         creator=user,
         title=imported_doc.page.get_title() or "J'aime les courgettes",
         link_reach=models.LinkReachChoices.RESTRICTED,
-        content=document_content,
     )
 
     models.DocumentAccess.objects.create(
@@ -1892,13 +1908,15 @@ def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
         role=models.RoleChoices.OWNER,
     )
 
+    _import_notion_doc_content(imported_doc, obj, user)
+
     imported_docs_by_page_id[imported_doc.page.id] = obj
 
     for child in imported_doc.children:
         _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
 
 
-@drf.decorators.api_view(["POST"])
+@drf.decorators.api_view(["GET", "POST"]) # TODO: drop GET (used for testing)
 def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
