@@ -1,14 +1,14 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
-import { Button } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
 import React from 'react';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { DatabaseSelector } from '../DatabaseSelector';
+
 import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
 
 export const DatabaseBlock = createReactBlockSpec(
@@ -37,23 +37,23 @@ export const DatabaseBlock = createReactBlockSpec(
             width: '100%',
           }}
         >
-            {block.props.documentId && block.props.tableId ? (
-              <Box style={{ height: '100%', width: '100%' }}>
-                <DatabaseGrid
-                  documentId={block.props.documentId}
-                  tableId={block.props.tableId}
-                />
-              </Box>
-            ) : (
-              <DatabaseSelector
-                onDatabaseSelected={({ documentId, tableId }) => {
-                  editor.updateBlock(block, {
-                    props: { documentId: documentId.toString(), tableId },
-                  });
-                }}
+          {block.props.documentId && block.props.tableId ? (
+            <Box style={{ height: '100%', width: '100%' }}>
+              <DatabaseGrid
+                documentId={block.props.documentId}
+                tableId={block.props.tableId}
               />
-            )}
-          </Box>
+            </Box>
+          ) : (
+            <DatabaseSelector
+              onDatabaseSelected={({ documentId, tableId }) => {
+                editor.updateBlock(block, {
+                  props: { documentId: documentId.toString(), tableId },
+                });
+              }}
+            />
+          )}
+        </Box>
       );
     },
   },
