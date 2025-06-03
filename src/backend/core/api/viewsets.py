@@ -36,9 +36,16 @@ from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import YdocConverter
-from core.services.notion_import import build_notion_session, fetch_all_pages, import_page
+from core.services.notion_import import (
+    ImportedDocument,
+    build_notion_session,
+    fetch_all_pages,
+    import_page,
+    link_child_page_to_parent,
+)
 from core.utils import extract_attachments, filter_descendants
 
+from ..notion_schemas.notion_page import NotionPage
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter
 
@@ -1840,7 +1847,9 @@ def notion_import_callback(request):
     code = request.GET.get("code")
     resp = requests.post(
         "https://api.notion.com/v1/oauth/token",
-        auth=requests.auth.HTTPBasicAuth(settings.NOTION_CLIENT_ID, settings.NOTION_CLIENT_SECRET),
+        auth=requests.auth.HTTPBasicAuth(
+            settings.NOTION_CLIENT_ID, settings.NOTION_CLIENT_SECRET
+        ),
         headers={"Accept": "application/json"},
         data={
             "grant_type": "authorization_code",
@@ -1859,7 +1868,7 @@ def _import_notion_doc_content(imported_doc, obj, user):
         extra_args = {
             "Metadata": {
                 "owner": str(user.id),
-                "status": enums.DocumentAttachmentStatus.READY, # TODO
+                "status": enums.DocumentAttachmentStatus.READY,  # TODO
             },
         }
         file_id = uuid.uuid4()
@@ -1869,12 +1878,15 @@ def _import_notion_doc_content(imported_doc, obj, user):
                 resp.raw, default_storage.bucket_name, key
             )
         obj.attachments.append(key)
-        att.block["props"]["url"] = f"{settings.MEDIA_BASE_URL}{settings.MEDIA_URL}{key}"
+        att.block["props"]["url"] = (
+            f"{settings.MEDIA_BASE_URL}{settings.MEDIA_URL}{key}"
+        )
 
     obj.content = YdocConverter().convert_blocks(imported_doc.blocks)
     obj.save()
 
-def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_page_id):
+
+def _import_notion_child_page(imported_doc, parent_doc, user, imported_ids):
     obj = parent_doc.add_child(
         creator=user,
         title=imported_doc.page.get_title() or "J'aime les carottes",
@@ -1888,13 +1900,13 @@ def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_p
 
     _import_notion_doc_content(imported_doc, obj, user)
 
-    imported_docs_by_page_id[imported_doc.page.id] = obj
+    imported_ids.append(imported_doc.page.id)
 
     for child in imported_doc.children:
-        _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
+        _import_notion_child_page(child, obj, user, imported_ids)
 
 
-def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
+def _import_notion_root_page(imported_doc, user) -> list[str]:
     obj = models.Document.add_root(
         depth=1,
         creator=user,
@@ -1908,44 +1920,64 @@ def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
         role=models.RoleChoices.OWNER,
     )
 
+    imported_ids = [imported_doc.page.id]
+
     _import_notion_doc_content(imported_doc, obj, user)
 
-    imported_docs_by_page_id[imported_doc.page.id] = obj
-
     for child in imported_doc.children:
-        _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
+        _import_notion_child_page(child, obj, user, imported_ids)
+
+    return imported_ids
 
 
-def _generate_notion_progress(root_pages, page_statuses):
-    raw = json.dumps([{
-        "title": page.get_title(),
-        "status": page_statuses[page.id],
-    } for page in root_pages])
+def _generate_notion_progress(
+    all_pages: list[NotionPage], page_statuses: dict[str, str]
+) -> str:
+    raw = json.dumps(
+        [
+            {
+                "title": page.get_title(),
+                "status": page_statuses[page.id],
+            }
+            for page in all_pages
+        ]
+    )
     return f"data: {raw}\n\n"
 
 
 def _notion_import_event_stream(request):
     session = build_notion_session(request.session["notion_token"])
     all_pages = fetch_all_pages(session)
-    root_pages = [page for page in all_pages if page.is_root()]
 
     page_statuses = {}
-    for page in root_pages:
+    for page in all_pages:
         page_statuses[page.id] = "pending"
 
-    yield _generate_notion_progress(root_pages, page_statuses)
+    yield _generate_notion_progress(all_pages, page_statuses)
 
-    imported_docs = []
-    for page in root_pages:
-        imported_docs.append(import_page(session, page, all_pages))
+    docs_by_page_id: dict[str, ImportedDocument] = {}
+    child_page_blocs_ids_to_parent_page_ids: dict[str, str] = {}
+
+    for page in all_pages:
+        docs_by_page_id[page.id] = import_page(
+            session, page, child_page_blocs_ids_to_parent_page_ids
+        )
         page_statuses[page.id] = "fetched"
-        yield _generate_notion_progress(root_pages, page_statuses)
+        yield _generate_notion_progress(all_pages, page_statuses)
 
-    imported_docs_by_page_id = {}
-    for imported_doc in imported_docs:
-        _import_notion_root_page(imported_doc, request.user, imported_docs_by_page_id)
-        page_statuses[imported_doc.page.id] = "imported"
-        yield _generate_notion_progress(root_pages, page_statuses)
+    for page in all_pages:
+        link_child_page_to_parent(
+            page, docs_by_page_id, child_page_blocs_ids_to_parent_page_ids
+        )
+
+    root_docs = [doc for doc in docs_by_page_id.values() if doc.page.is_root()]
+
+    for root_doc in root_docs:
+        imported_ids = _import_notion_root_page(root_doc, request.user)
+        for imported_id in imported_ids:
+            page_statuses[imported_id] = "imported"
+
+        yield _generate_notion_progress(all_pages, page_statuses)
 
 
 class IgnoreClientContentNegotiation(drf.negotiation.BaseContentNegotiation):
@@ -1955,6 +1987,7 @@ class IgnoreClientContentNegotiation(drf.negotiation.BaseContentNegotiation):
     def select_renderer(self, request, renderers, format_suffix):
         return (renderers[0], renderers[0].media_type)
 
+
 class NotionImportRunView(drf.views.APIView):
     content_negotiation_class = IgnoreClientContentNegotiation
 
@@ -1962,5 +1995,7 @@ class NotionImportRunView(drf.views.APIView):
         if "notion_token" not in request.session:
             raise drf.exceptions.PermissionDenied()
 
-        #return drf.response.Response({"sava": "oui et toi ?"})
-        return StreamingHttpResponse(_notion_import_event_stream(request), content_type='text/event-stream')
+        # return drf.response.Response({"sava": "oui et toi ?"})
+        return StreamingHttpResponse(
+            _notion_import_event_stream(request), content_type="text/event-stream"
+        )
