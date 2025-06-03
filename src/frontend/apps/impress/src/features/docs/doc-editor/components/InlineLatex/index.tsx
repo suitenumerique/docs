@@ -7,7 +7,18 @@ export * from './components/InlineLatexButton';
 export const InlineLatex = createReactInlineContentSpec(inlineLatexConfig, {
   render: ({ inlineContent, updateInlineContent }) => (
     <LatexComponent
+      updateCatchFocus={(catchFocus) => {
+        console.log('catchFocus', catchFocus);
+        updateInlineContent({
+          type: 'inlineLatex',
+          props: {
+            formula: inlineContent.props.formula,
+            catchFocus: catchFocus,
+          },
+        });
+      }}
       formula={inlineContent.props.formula}
+      catchFocus={inlineContent.props.catchFocus}
       updateFormula={(newFormula) => {
         if (newFormula.trim() === '') {
           updateInlineContent({ type: 'text', text: '' });

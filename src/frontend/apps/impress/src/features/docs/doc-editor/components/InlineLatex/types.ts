@@ -15,6 +15,9 @@ export type InlineLatexConfig = {
     formula: {
       default: '';
     };
+    catchFocus: {
+      default: false;
+    };
   };
   content: 'none';
 };
@@ -24,6 +27,9 @@ export const inlineLatexConfig: InlineLatexConfig = {
   propSchema: {
     formula: {
       default: '',
+    },
+    catchFocus: {
+      default: false,
     },
   },
   content: 'none',

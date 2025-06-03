@@ -7,11 +7,15 @@ import { styles } from '../styles';
 interface LatexComponentProps {
   formula: string;
   updateFormula: (newFormula: string) => void;
+  updateCatchFocus: (catchFocus: boolean) => void;
+  catchFocus?: boolean;
 }
 
 export const LatexComponent: React.FC<LatexComponentProps> = ({
   formula,
   updateFormula,
+  updateCatchFocus,
+  catchFocus,
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +30,18 @@ export const LatexComponent: React.FC<LatexComponentProps> = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (catchFocus && containerRef.current) {
+      setIsEditing(true);
+      // Small delay to ensure the element is mounted
+      setTimeout(() => {
+        containerRef.current?.focus();
+        selectAllText();
+        updateCatchFocus(false);
+      }, 0);
+    }
+  }, [catchFocus, updateCatchFocus]);
 
   useEffect(() => {
     if (!isEditing && containerRef.current) {
@@ -115,7 +131,25 @@ export const LatexComponent: React.FC<LatexComponentProps> = ({
   };
 
   const handleInput = (e: React.FormEvent<HTMLSpanElement>) => {
+    const selection = window.getSelection();
+    const range = selection?.getRangeAt(0);
+    const start = range?.startOffset || 0;
+
     setEditValue(e.currentTarget.textContent || '');
+
+    // Restore cursor position after state update
+    requestAnimationFrame(() => {
+      if (containerRef.current && selection && range) {
+        const newRange = document.createRange();
+        newRange.setStart(
+          containerRef.current.firstChild || containerRef.current,
+          start,
+        );
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+    });
   };
 
   if (isEditing) {
