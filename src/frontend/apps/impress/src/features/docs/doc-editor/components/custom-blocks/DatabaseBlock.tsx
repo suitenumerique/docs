@@ -24,7 +24,8 @@ export const DatabaseBlock = createReactBlockSpec(
         default: '',
       },
     },
-    content: 'inline',
+    content: 'none',
+    isSelectable: false,
   },
   {
     render: ({ block, editor }) => {
