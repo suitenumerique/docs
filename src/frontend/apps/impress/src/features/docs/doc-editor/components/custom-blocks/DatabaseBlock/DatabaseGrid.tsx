@@ -1,6 +1,6 @@
-import { ColDef } from 'ag-grid-community';
+import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -10,6 +10,8 @@ import {
 } from '@/features/grist';
 
 import { AddButtonComponent } from './AddColumnButton';
+import { useColumns, useRows } from './hooks';
+import { addRowCellRenderer, createNewRow } from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -27,9 +29,18 @@ export const DatabaseGrid = ({
 
   const { createColumns } = useGristCrudColumns();
 
-  const [rowData, setRowData] =
-    useState<Record<string, string | number | boolean>[]>();
-  const [colDefs, setColDefs] = useState<ColDef[]>();
+  const { rowData, setRowData } = useRows();
+  const { colDefs, setColDefs } = useColumns();
+
+  const newRowColSpan = (params: ColSpanParams<Record<string, string>>) => {
+    const colsValues = params.data ?? {};
+    const isNewRow = Object.values(colsValues)[0]?.includes('new');
+    if (isNewRow) {
+      return Object.keys(colsValues).length;
+    }
+
+    return 1;
+  };
 
   const addColumnColDef: ColDef = {
     headerComponentParams: {
@@ -65,14 +76,28 @@ export const DatabaseGrid = ({
     setRowData(rowData1);
 
     const columnNames = Object.keys(Object.fromEntries(filteredEntries));
+
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
+      colSpan: newRowColSpan,
+      cellRendererSelector: (
+        params: ICellRendererParams<Record<string, string>>,
+      ) => addRowCellRenderer(params, columnNames, setRowData),
     }));
 
     setColDefs(columns.concat(addColumnColDef));
+
     // Ignore addColumnColDef
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
+
+  useEffect(() => {
+    const columnNames = (colDefs ?? [])
+      .map((col) => col.field)
+      .filter((col) => col !== undefined);
+    const addNewRow = createNewRow('+ new  row', columnNames);
+    setRowData((prev) => [...(prev ? prev : []), addNewRow]);
+  }, [colDefs, gridRef, setRowData]);
 
   const defaultColDef = {
     flex: 1,
