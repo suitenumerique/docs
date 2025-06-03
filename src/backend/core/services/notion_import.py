@@ -257,14 +257,15 @@ def convert_block(
                         "content": "Rows have different number of cells ?!",
                     }
                 ]
+            SEEMINGLY_DEFAULT_WIDTH = 128
             return [
                 {
                     "type": "table",
                     "content": {
                         "type": "tableContent",
                         "columnWidths": [
-                            1000 / n_columns for _ in range(n_columns)
-                        ],  # TODO
+                            SEEMINGLY_DEFAULT_WIDTH for _ in range(n_columns)
+                        ],
                         "headerRows": int(block.specific.has_column_header),
                         "headerColumns": int(block.specific.has_row_header),
                         "props": {
