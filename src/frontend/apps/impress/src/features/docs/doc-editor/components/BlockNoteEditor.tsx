@@ -35,6 +35,7 @@ import {
   DividerBlock,
   LatexBlock,
   MermaidBlock,
+  ChartBlock
 } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
@@ -45,6 +46,7 @@ export const blockNoteSchema = withPageBreak(
       divider: DividerBlock,
       latex: LatexBlock,
       mermaid: MermaidBlock,
+      chart: ChartBlock
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
