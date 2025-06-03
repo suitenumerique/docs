@@ -1,6 +1,6 @@
-import { ColDef } from 'ag-grid-community';
+import { ColDef, ColSpanParams, themeQuartz } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -30,6 +30,16 @@ export const DatabaseGrid = ({
   const [rowData, setRowData] =
     useState<Record<string, string | number | boolean>[]>();
   const [colDefs, setColDefs] = useState<ColDef[]>();
+
+  const newRowColSpan = (params: ColSpanParams<Record<string, string>>) => {
+    const colsValues = params.data ?? {};
+    const isNewRow = Object.values(colsValues)[0]?.includes('new');
+    if (isNewRow) {
+      return Object.keys(colsValues).length;
+    }
+
+    return 1;
+  };
 
   const addColumnColDef: ColDef = {
     headerComponentParams: {
@@ -62,11 +72,18 @@ export const DatabaseGrid = ({
       rowData1.push(row);
     }
 
+    const addNewRow: Record<string, string> = {};
+    for (const [key] of filteredEntries) {
+      addNewRow[key] = '+ new row';
+    }
+    rowData1.push(addNewRow);
+
     setRowData(rowData1);
 
     const columnNames = Object.keys(Object.fromEntries(filteredEntries));
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
+      colSpan: newRowColSpan,
     }));
 
     setColDefs(columns.concat(addColumnColDef));
@@ -78,7 +95,16 @@ export const DatabaseGrid = ({
     filter: true,
     editable: true,
     unSortIcon: true,
+    spanRows: true,
   };
+
+  const theme = useMemo(() => {
+    return themeQuartz.withParams({
+      pinnedRowBorder: {
+        width: 2,
+      },
+    });
+  }, []);
 
   const addColumn = (columnName: string) => {
     const newColDef: ColDef = {
@@ -115,6 +141,7 @@ export const DatabaseGrid = ({
         defaultColDef={defaultColDef}
         domLayout="autoHeight"
         enableCellSpan={true}
+        theme={theme}
       />
     </Box>
   );
