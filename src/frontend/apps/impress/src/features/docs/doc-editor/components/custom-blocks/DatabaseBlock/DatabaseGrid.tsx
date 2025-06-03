@@ -1,4 +1,4 @@
-import { ColDef, ICellRendererParams } from 'ag-grid-community';
+import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useEffect } from 'react';
 
@@ -60,7 +60,8 @@ export const DatabaseGrid = ({
 
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
-      colSpan: newRowColSpan,
+      colSpan: (params: ColSpanParams<Record<string, string>, unknown>) =>
+        newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
       ) => addRowCellRenderer(params, columnNames, setRowData),
@@ -97,20 +98,15 @@ export const DatabaseGrid = ({
     const columnNames = getColumnNames(colDefs);
     const newColDef: ColDef = {
       field: columnName,
-      colSpan: newRowColSpan,
+      colSpan: (params: ColSpanParams<Record<string, string>, unknown>) =>
+        newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
       ) => addRowCellRenderer(params, columnNames, setRowData),
     };
 
     setColDefs((prev) => {
-      const addColumn = prev?.pop();
-
-      return [
-        ...(prev !== undefined ? prev : []),
-        newColDef,
-        ...(addColumn !== undefined ? [addColumn] : []),
-      ];
+      return [...(prev !== undefined ? prev : []), newColDef];
     });
 
     void createColumns(documentId, tableId, [
