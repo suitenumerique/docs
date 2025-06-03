@@ -69,7 +69,7 @@ export const useGristCrudRecords = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(records),
+        body: JSON.stringify({ records }),
       });
 
       if (!response.ok) {

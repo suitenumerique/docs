@@ -1,11 +1,17 @@
-import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
+import {
+  CellEditingStoppedEvent,
+  ColDef,
+  ColSpanParams,
+  ICellRendererParams,
+} from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { Box } from '@/components';
 import {
   ColumnType,
   useGristCrudColumns,
+  useGristCrudRecords,
   useGristTableData,
 } from '@/features/grist';
 
@@ -34,6 +40,7 @@ export const DatabaseGrid = ({
   });
 
   const { createColumns } = useGristCrudColumns();
+  const { updateRecords } = useGristCrudRecords();
 
   const { rowData, setRowData } = useRows();
   const { colDefs, setColDefs } = useColumns();
@@ -128,6 +135,28 @@ export const DatabaseGrid = ({
     ]);
   };
 
+  const onCellEditingStopped = useCallback(
+    (event: CellEditingStoppedEvent<DatabaseRow, DatabaseRow>) => {
+      const { oldValue, newValue, data } = event;
+
+      if (data === undefined) {
+        return;
+      }
+      const { id: rowId, ...updatedRow } = data;
+
+      if (!(typeof rowId === 'number') || oldValue === newValue) {
+        return;
+      }
+
+      void updateRecords(documentId, tableId, [
+        { id: rowId, fields: updatedRow },
+      ]);
+    },
+    // disable updateRecords
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [documentId, tableId],
+  );
+
   return (
     <>
       <Box style={{ height: '100%', width: '100%' }}>
@@ -137,6 +166,7 @@ export const DatabaseGrid = ({
           defaultColDef={defaultColDef}
           domLayout="autoHeight"
           enableCellSpan={true}
+          onCellEditingStopped={onCellEditingStopped}
         />
       </Box>
       <AddButtonComponent addColumn={addColumn} />
