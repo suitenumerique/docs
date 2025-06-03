@@ -16,6 +16,7 @@ import {
   ADD_NEW_ROW,
   addRowCellRenderer,
   createNewRow,
+  defaultColDef,
   getColumnNames,
   newRowColSpan,
 } from './utils';
@@ -85,14 +86,6 @@ export const DatabaseGrid = ({
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colDefs]);
-
-  const defaultColDef = {
-    flex: 1,
-    filter: true,
-    editable: true,
-    unSortIcon: true,
-    minWidth: 200,
-  };
 
   const addColumn = (columnName: string) => {
     const columnNames = getColumnNames(colDefs);
