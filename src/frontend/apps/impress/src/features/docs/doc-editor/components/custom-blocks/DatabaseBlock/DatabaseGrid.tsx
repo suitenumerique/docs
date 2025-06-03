@@ -115,10 +115,10 @@ export const DatabaseGrid = ({
     };
 
     setColDefs((prev) => {
-      const addColumn = prev.pop();
+      const addColumn = prev?.pop();
 
       return [
-        ...prev,
+        ...(prev !== undefined ? prev : []),
         newColDef,
         ...(addColumn !== undefined ? [addColumn] : []),
       ];
