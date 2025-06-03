@@ -14,8 +14,9 @@ from ..notion_schemas.notion_block import (
     NotionHeading2,
     NotionHeading3,
     NotionParagraph,
+    NotionChildPage,
 )
-from ..notion_schemas.notion_page import NotionPage
+from ..notion_schemas.notion_page import NotionPage, NotionParentWorkspace, NotionParentBlock, NotionParentPage
 from ..notion_schemas.notion_rich_text import NotionRichText
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
     return response.json()
 
 
-def fetch_root_pages(session: Session) -> list[NotionPage]:
+def fetch_all_pages(session: Session) -> list[NotionPage]:
     pages = []
     cursor = ""
     has_more = True
@@ -59,9 +60,6 @@ def fetch_root_pages(session: Session) -> list[NotionPage]:
         response = search_notion(session, start_cursor=cursor)
 
         for item in response["results"]:
-            if item.get("parent", {}).get("type") != "workspace":
-                continue
-
             assert item["object"] == "page"
 
             pages.append(NotionPage.model_validate(item))
@@ -143,17 +141,60 @@ def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
 
 class ImportedDocument(BaseModel):
     page: NotionPage
-    blocks: list[dict[str, Any]]
+    blocks: list[dict[str, Any]] = []
+    children: list["ImportedDocument"] = []
+
+def find_page(id: str, pages: list[NotionPage]):
+    for page in all_pages:
+        if page.id == id:
+            return page
+    return None
+
+def find_block_child_page(block_id: str, all_pages: list[NotionPage]):
+    for page in all_pages:
+        if isinstance(page.parent, NotionParentBlock) and page.parent.block_id == block_id:
+            return page
+    return None
+
+
+def convert_child_pages(session: Session, parent: NotionPage, blocks: list[NotionBlock], all_pages: list[NotionPage]) -> list[ImportedDocument]:
+    children = []
+
+    for page in all_pages:
+        if isinstance(page.parent, NotionParentPage) and page.parent.page_id == parent.id:
+            children.append(import_page(session, page, all_pages))
+
+    for block in blocks:
+        if not isinstance(block.specific, NotionChildPage):
+            continue
+
+        # TODO
+        #parent_page = find_block_child_page(block.id, all_pages)
+        #if parent_page == None:
+        #    logger.warning(f"Cannot find parent of block {block.id}")
+        #    continue
+        #children.append(import_page(session, parent_page, all_pages))
+
+    return children
+
+
+def import_page(session: Session, page: NotionPage, all_pages: list[NotionPage]) -> ImportedDocument:
+    blocks = fetch_block_children(session, page.id)
+    logger.info(f"Page {page.get_title()} (id {page.id})")
+    logger.info(blocks)
+    return ImportedDocument(
+        page=page,
+        blocks=convert_block_list(blocks),
+        children=convert_child_pages(session, page, blocks, all_pages),
+    )
 
 
 def import_notion(token: str) -> list[ImportedDocument]:
     """Recursively imports all Notion pages and blocks accessible using the given token."""
     session = build_notion_session(token)
-    root_pages = fetch_root_pages(session)
+    all_pages = fetch_all_pages(session)
     docs = []
-    for page in root_pages:
-        blocks = fetch_block_children(session, page.id)
-        logger.info(f"Page {page.get_title()} (id {page.id})")
-        logger.info(blocks)
-        docs.append(ImportedDocument(page=page, blocks=convert_block_list(blocks)))
+    for page in all_pages:
+        if isinstance(page.parent, NotionParentWorkspace):
+            docs.append(import_page(session, page, all_pages))
     return docs
