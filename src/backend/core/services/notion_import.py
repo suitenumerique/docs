@@ -15,23 +15,22 @@ from ..notion_schemas.notion_block import (
     NotionHeading1,
     NotionHeading2,
     NotionHeading3,
-    NotionNumberedListItem,
     NotionImage,
+    NotionNumberedListItem,
     NotionParagraph,
     NotionTable,
     NotionTableRow,
     NotionToDo,
     NotionUnsupported,
 )
+from ..notion_schemas.notion_file import NotionFileExternal, NotionFileHosted
 from ..notion_schemas.notion_page import (
     NotionPage,
     NotionParentBlock,
     NotionParentPage,
     NotionParentWorkspace,
 )
-from ..notion_schemas.notion_page import NotionPage, NotionParentWorkspace, NotionParentBlock, NotionParentPage
 from ..notion_schemas.notion_rich_text import NotionRichText, NotionRichTextAnnotation
-from ..notion_schemas.notion_file import NotionFileHosted, NotionFileExternal
 
 logger = logging.getLogger(__name__)
 
@@ -147,29 +146,37 @@ class ImportedAttachment(BaseModel):
     file: NotionFileHosted
 
 
-def convert_image(image: NotionImage, attachments: list[ImportedAttachment]):
+def convert_image(
+    image: NotionImage, attachments: list[ImportedAttachment]
+) -> list[dict[str, Any]]:
     # TODO: NotionFileUpload
     match image.file:
         case NotionFileExternal():
-            return [{
-                "type": "image",
-                "props": {
-                    "url": image.file.external["url"],
-                },
-            }]
+            return [
+                {
+                    "type": "image",
+                    "props": {
+                        "url": image.file.external["url"],
+                    },
+                }
+            ]
         case NotionFileHosted():
             block = {
                 "type": "image",
                 "props": {
-                    "url": "about:blank", # populated later on
+                    "url": "about:blank",  # populated later on
                 },
             }
             attachments.append(ImportedAttachment(block=block, file=image.file))
 
             return [block]
+        case _:
+            return [{"paragraph": {"content": "Unsupported image type"}}]
 
 
-def convert_block(block: NotionBlock, attachments: list[ImportedAttachment]) -> list[dict[str, Any]]:
+def convert_block(
+    block: NotionBlock, attachments: list[ImportedAttachment]
+) -> list[dict[str, Any]]:
     match block.specific:
         case NotionColumnList():
             columns_content = []
@@ -177,7 +184,10 @@ def convert_block(block: NotionBlock, attachments: list[ImportedAttachment]) -> 
                 columns_content.extend(convert_block(column, attachments))
             return columns_content
         case NotionColumn():
-            return [convert_block(child_content, attachments)[0] for child_content in block.children]
+            return [
+                convert_block(child_content, attachments)[0]
+                for child_content in block.children
+            ]
 
         case NotionParagraph():
             content = convert_rich_texts(block.specific.rich_text)
@@ -314,7 +324,9 @@ def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]
     return res
 
 
-def convert_block_list(blocks: list[NotionBlock], attachments: list[ImportedAttachment]) -> list[dict[str, Any]]:
+def convert_block_list(
+    blocks: list[NotionBlock], attachments: list[ImportedAttachment]
+) -> list[dict[str, Any]]:
     converted_blocks = []
     for block in blocks:
         converted_blocks.extend(convert_block(block, attachments))
