@@ -211,7 +211,7 @@ class NotionChildPage(BaseModel):
     title: str
 
 
-class NotionBlockUnsupported(BaseModel):
+class NotionUnsupported(BaseModel):
     block_type: str
     raw: dict[str, Any] | None = None
 
@@ -247,6 +247,6 @@ NotionBlockSpecifics = Annotated[
         | NotionChildPage,
         Discriminator(discriminator="block_type"),
     ]
-    | NotionBlockUnsupported,
+    | NotionUnsupported,
     Field(union_mode="left_to_right"),
 ]
