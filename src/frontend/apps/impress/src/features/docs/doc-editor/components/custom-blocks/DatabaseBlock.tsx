@@ -40,6 +40,17 @@ export const DatabaseBlock = createReactBlockSpec(
         gristApiKey === null,
       );
 
+      if (openGristApiKeyModal === true) {
+        return (
+          <GristApiKeyModal
+            isOpen={openGristApiKeyModal}
+            setOpen={setOpenGristApiKeyModal}
+            gristApiKey={gristApiKey}
+            setGristApiKey={setGristApiKey}
+          />
+        );
+      }
+
       return (
         <Box
           style={{
@@ -68,15 +79,6 @@ export const DatabaseBlock = createReactBlockSpec(
                   props: { documentId: documentId.toString(), tableId },
                 });
               }}
-            />
-          )}
-
-          {openGristApiKeyModal && (
-            <GristApiKeyModal
-              isOpen={openGristApiKeyModal}
-              setOpen={setOpenGristApiKeyModal}
-              gristApiKey={gristApiKey}
-              setGristApiKey={setGristApiKey}
             />
           )}
         </Box>
