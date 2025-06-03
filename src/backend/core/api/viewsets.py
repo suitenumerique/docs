@@ -1947,10 +1947,20 @@ def _notion_import_event_stream(request):
         page_statuses[imported_doc.page.id] = "imported"
         yield _generate_notion_progress(root_pages, page_statuses)
 
-@drf.decorators.api_view(["GET", "POST"]) # TODO: drop GET (used for testing)
-def notion_import_run(request):
-    if "notion_token" not in request.session:
-        raise drf.exceptions.PermissionDenied()
 
-    #return drf.response.Response({"sava": "oui et toi ?"})
-    return StreamingHttpResponse(_notion_import_event_stream(request), content_type='text/event-stream')
+class IgnoreClientContentNegotiation(drf.negotiation.BaseContentNegotiation):
+    def select_parser(self, request, parsers):
+        return parsers[0]
+
+    def select_renderer(self, request, renderers, format_suffix):
+        return (renderers[0], renderers[0].media_type)
+
+class NotionImportRunView(drf.views.APIView):
+    content_negotiation_class = IgnoreClientContentNegotiation
+
+    def get(self, request, format=None):
+        if "notion_token" not in request.session:
+            raise drf.exceptions.PermissionDenied()
+
+        #return drf.response.Response({"sava": "oui et toi ?"})
+        return StreamingHttpResponse(_notion_import_event_stream(request), content_type='text/event-stream')
