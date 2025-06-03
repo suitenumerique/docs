@@ -1,10 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 import { DocsBlockNoteEditor } from '../../../types';
 
 export const useLatexDetection = (editor: DocsBlockNoteEditor) => {
-  // const lastKeyRef = useRef<string>('');
-
   useEffect(() => {
     if (!editor) {
       return;
@@ -27,9 +25,6 @@ export const useLatexDetection = (editor: DocsBlockNoteEditor) => {
             },
           },
         ]);
-
-        // Reset the last key
-        // lastKeyRef.current = '';
       }
     };
 
