@@ -1,19 +1,27 @@
 import { Button } from '@openfun/cunningham-react';
+import { Dispatch, SetStateAction } from 'react';
 
-import { useColumns, useRows } from './hooks';
 import { createNewRow } from './utils';
 
-export const AddRowButton = () => {
-  const { setRowData } = useRows();
-  const { colDefs } = useColumns();
-
+export const AddRowButton = ({
+  columns,
+  setRowData,
+}: {
+  columns: string[];
+  setRowData: Dispatch<
+    SetStateAction<Record<string, string | number | boolean>[] | undefined>
+  >;
+}) => {
   const addRow = () => {
-    const newRow = createNewRow('', colDefs);
+    const newRow = createNewRow('', columns);
     setRowData((prev) => {
       if (prev === undefined) {
         return [newRow];
       }
-      return [...prev, newRow];
+      const updatedRows = [...prev];
+      // Insert at the second-to-last position
+      updatedRows.splice(updatedRows.length - 1, 0, newRow);
+      return updatedRows;
     });
   };
 
