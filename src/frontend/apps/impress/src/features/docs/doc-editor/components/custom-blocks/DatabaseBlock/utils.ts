@@ -1,13 +1,13 @@
-import { ColDef, ICellRendererParams } from 'ag-grid-community';
+import { ICellRendererParams } from 'ag-grid-community';
+import { Dispatch, SetStateAction } from 'react';
 
 import { AddRowButton } from './AddRowButton';
 
 export const createNewRow = (
   value: string | undefined,
-  columns: ColDef[] | undefined,
+  columnNames: string[] | undefined,
 ) => {
   const defaultValue = value ?? '';
-  const columnNames = columns?.map((col) => col.field);
   const addNewRow: Record<string, string> = {};
   columnNames?.forEach((name) => {
     if (name !== undefined) {
@@ -20,10 +20,15 @@ export const createNewRow = (
 
 export const addRowCellRenderer = (
   params: ICellRendererParams<Record<string, string>>,
+  columns: string[] | undefined,
+  setRowData: Dispatch<
+    SetStateAction<Record<string, string | number | boolean>[] | undefined>
+  >,
 ) => {
   if (params.data) {
     const addRowButton = {
       component: AddRowButton,
+      params: { columns, setRowData },
     };
     if (Object.values(params.data)[0]?.includes('new')) {
       return addRowButton;

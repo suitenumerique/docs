@@ -1,4 +1,4 @@
-import { ColDef, ColSpanParams } from 'ag-grid-community';
+import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useEffect, useRef } from 'react';
 
@@ -80,7 +80,9 @@ export const DatabaseGrid = ({
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
       colSpan: newRowColSpan,
-      cellRendererSelector: addRowCellRenderer,
+      cellRendererSelector: (
+        params: ICellRendererParams<Record<string, string>>,
+      ) => addRowCellRenderer(params, columnNames, setRowData),
     }));
 
     setColDefs(columns.concat(addColumnColDef));
@@ -90,7 +92,10 @@ export const DatabaseGrid = ({
   }, [tableData]);
 
   useEffect(() => {
-    const addNewRow = createNewRow('+ new  row', colDefs ?? []);
+    const columnNames = (colDefs ?? [])
+      .map((col) => col.field)
+      .filter((col) => col !== undefined);
+    const addNewRow = createNewRow('+ new  row', columnNames);
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
   }, [colDefs, gridRef, setRowData]);
 
@@ -99,7 +104,6 @@ export const DatabaseGrid = ({
     filter: true,
     editable: true,
     unSortIcon: true,
-    spanRows: true,
   };
 
   const addColumn = (columnName: string) => {
