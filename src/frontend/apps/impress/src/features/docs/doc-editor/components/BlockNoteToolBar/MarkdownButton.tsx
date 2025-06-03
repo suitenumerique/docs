@@ -7,6 +7,8 @@ import { forEach, isArray } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import parseMarkdownWithLatex from './utils';
+
 type Block = {
   type: string;
   text: string;
@@ -63,7 +65,11 @@ export function MarkdownButton() {
 
         const blockMarkdown =
           await editor.tryParseMarkdownToBlocks(fullContent);
-        editor.replaceBlocks([block.id], blockMarkdown);
+        console.log('blockMarkdown', blockMarkdown);
+        const blockMarkdownWithLatex = parseMarkdownWithLatex(blockMarkdown);
+        console.log('blockMarkdownWithLatex', blockMarkdownWithLatex);
+
+        editor.replaceBlocks([block.id], blockMarkdownWithLatex);
       } catch (error) {
         console.error('Error parsing Markdown:', error);
       }
