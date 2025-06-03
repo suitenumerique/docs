@@ -6,6 +6,7 @@ from pydantic import BaseModel, Discriminator, Field, ValidationError, model_val
 
 from .notion_color import NotionColor
 from .notion_rich_text import NotionRichText
+from .notion_file import NotionFile
 
 """Usage: NotionBlock.model_validate(response.json())"""
 
@@ -166,7 +167,7 @@ class NotionImage(BaseModel):
     """https://developers.notion.com/reference/block#image"""
 
     block_type: Literal[NotionBlockType.IMAGE] = NotionBlockType.IMAGE
-    # FIXME: this actually contains a file reference which will be defined for the above, but with the "image" attribute
+    file: NotionFile
 
 
 class NotionVideo(BaseModel):
