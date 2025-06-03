@@ -44,11 +44,18 @@ export const addRowCellRenderer = (
   params: ICellRendererParams<Record<string, string>>,
   columns: string[] | undefined,
   setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>,
+  {
+    documentId,
+    tableId,
+  }: {
+    documentId: string;
+    tableId: string;
+  },
 ) => {
   if (params.data) {
     const addRowButton = {
       component: AddRowButton,
-      params: { columns, setRowData },
+      params: { columns, setRowData, documentId, tableId },
     };
     if (Object.values(params.data)[0] === ADD_NEW_ROW) {
       return addRowButton;
