@@ -160,7 +160,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       editorWillPaste = false;
 
       const changes = getChanges();
-      console.log(changes);
       changes.forEach((change) => {
         if (change.type === 'update' || change.type === 'insert') {
           const [newBlock] = parseMarkdownWithLatex([change.block]);
