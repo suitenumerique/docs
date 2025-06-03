@@ -93,7 +93,10 @@ class YdocConverter:
                 timeout=settings.CONVERSION_API_TIMEOUT,
                 verify=settings.CONVERSION_API_SECURE,
             )
-            response.raise_for_status()
+            if not response.ok:
+                raise ValueError(
+                    f"Conversion service returned an error: {response.status_code} - {response.text}"
+                )
             conversion_response = response.json()
 
         except requests.RequestException as err:

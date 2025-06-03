@@ -42,6 +42,6 @@ export const convertBlocksHandler = async (
     res.status(200).json({ content });
   } catch (e) {
     logger('conversion failed:', e);
-    res.status(500).json({ error: 'An error occurred' });
+    res.status(500).json({ error: String(e) });
   }
 };
