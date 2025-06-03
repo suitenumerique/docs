@@ -9,7 +9,7 @@ import '@blocknote/core/fonts/inter.css';
 import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
+import { SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,7 @@ import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import parseMarkdownWithLatex from './BlockNoteToolBar/utils';
 import { InlineLatex } from './InlineLatex/';
+import getInlineLatexMenuItems from './InlineLatex/components/InlineLatexContentSpec';
 import { useLatexDetection } from './InlineLatex/hooks/useLatexDetection';
 import {
   CalloutBlock,
@@ -208,6 +209,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         <BlockNoteSuggestionMenu />
 
         <BlockNoteToolbar />
+
+        <SuggestionMenuController
+          triggerCharacter="$"
+          getItems={async (query) => getInlineLatexMenuItems(editor, query)}
+        />
       </BlockNoteView>
     </Box>
   );
@@ -249,6 +255,10 @@ export const BlockNoteEditorVersion = ({
   return (
     <Box $css={cssEditor(readOnly)} className="--docs--editor-container">
       <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
+      <SuggestionMenuController
+        triggerCharacter="$"
+        getItems={async (query) => getInlineLatexMenuItems(editor)}
+      />
     </Box>
   );
 };
