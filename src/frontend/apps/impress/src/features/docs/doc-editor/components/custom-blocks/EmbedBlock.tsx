@@ -23,7 +23,7 @@ export const iframePropSchema: PropSchema = {
   caption: { default: '' },
   name: { default: '' },
   showPreview: { default: true },
-  previewWidth: { type: 'number', default: undefined },
+  previewWidth: { default: 500 },
 };
 
 export const iframeBlockConfig = {
@@ -38,7 +38,7 @@ export const IFrameViewer = (
   props: ReactCustomBlockRenderProps<typeof iframeBlockConfig>,
 ) => {
   const url = props.block.props.url;
-  const aspectRatio = props.block.props.aspectRatio || 4 / 3;
+  const aspectRatio = props.block.props.aspectRatio || 16 / 9;
   //   const url = 'http://localhost:8484/o/docs/pmqLaKmSrf3h/Untitled-document/p/2';
   const [iframeError, setIframeError] = React.useState(false);
   const containerRef = useRef(null);
@@ -76,9 +76,7 @@ export const IFrameViewer = (
       ref={containerRef}
       style={{
         position: 'relative',
-        padding: '10px',
         width: '100%',
-        background: '#ff0000',
         paddingTop: `${100 / aspectRatio}%`, // padding-top sets height relative to width
       }}
     >
