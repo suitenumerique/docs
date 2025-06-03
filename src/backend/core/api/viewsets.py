@@ -36,7 +36,7 @@ from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import YdocConverter
-from core.services.notion_import import import_notion
+from core.services.notion_import import build_notion_session, fetch_all_pages, import_page
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -1916,15 +1916,41 @@ def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
         _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
 
 
+def _generate_notion_progress(root_pages, page_statuses):
+    raw = json.dumps([{
+        "title": page.get_title(),
+        "status": page_statuses[page.id],
+    } for page in root_pages])
+    return f"data: {raw}\n\n"
+
+
+def _notion_import_event_stream(request):
+    session = build_notion_session(request.session["notion_token"])
+    all_pages = fetch_all_pages(session)
+    root_pages = [page for page in all_pages if page.is_root()]
+
+    page_statuses = {}
+    for page in root_pages:
+        page_statuses[page.id] = "pending"
+
+    yield _generate_notion_progress(root_pages, page_statuses)
+
+    imported_docs = []
+    for page in root_pages:
+        imported_docs.append(import_page(session, page, all_pages))
+        page_statuses[page.id] = "fetched"
+        yield _generate_notion_progress(root_pages, page_statuses)
+
+    imported_docs_by_page_id = {}
+    for imported_doc in imported_docs:
+        _import_notion_root_page(imported_doc, request.user, imported_docs_by_page_id)
+        page_statuses[imported_doc.page.id] = "imported"
+        yield _generate_notion_progress(root_pages, page_statuses)
+
 @drf.decorators.api_view(["GET", "POST"]) # TODO: drop GET (used for testing)
 def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
 
-    imported_docs = import_notion(request.session["notion_token"])
-
-    imported_docs_by_page_id = {}
-    for imported_doc in imported_docs:
-        _import_notion_root_page(imported_doc, request.user, imported_docs_by_page_id)
-
-    return drf.response.Response({"sava": "oui et toi ?"})
+    #return drf.response.Response({"sava": "oui et toi ?"})
+    return StreamingHttpResponse(_notion_import_event_stream(request), content_type='text/event-stream')
