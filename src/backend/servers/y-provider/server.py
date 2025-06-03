@@ -42,7 +42,7 @@ async def main():
     websocket_server = MyWebsocketServer()
     app = ASGIServer(websocket_server)
     config = Config()
-    config.bind = ["localhost:4444"]
+    config.bind = ["0.0.0.0:4444"]
     async with websocket_server:
         await serve(app, config, mode="asgi")
 
