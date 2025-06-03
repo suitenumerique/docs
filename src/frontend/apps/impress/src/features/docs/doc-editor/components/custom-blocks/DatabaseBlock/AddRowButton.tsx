@@ -1,16 +1,24 @@
 import { Button } from '@openfun/cunningham-react';
 import { Dispatch, SetStateAction } from 'react';
 
+import { useGristCrudRecords } from '@/features/grist/useGristCrudRecords';
+
 import { DatabaseRow } from './types';
 import { createNewRow } from './utils';
 
 export const AddRowButton = ({
   columns,
   setRowData,
+  documentId,
+  tableId,
 }: {
+  documentId: string;
+  tableId: string;
   columns: string[];
   setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>;
 }) => {
+  const { createRecords } = useGristCrudRecords();
+
   const addRow = () => {
     const newRow = createNewRow({ columnNames: columns });
     setRowData((prev: DatabaseRow[] | undefined) => {
@@ -22,6 +30,8 @@ export const AddRowButton = ({
       updatedRows.splice(updatedRows.length - 1, 0, newRow);
       return updatedRows;
     });
+
+    void createRecords(documentId, tableId, [{ fields: newRow }]);
   };
 
   const color = '#817E77';

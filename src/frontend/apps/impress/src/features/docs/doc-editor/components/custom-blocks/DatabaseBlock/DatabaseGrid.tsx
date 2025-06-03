@@ -16,6 +16,7 @@ import {
   ADD_NEW_ROW,
   addRowCellRenderer,
   createNewRow,
+  defaultColDef,
   getColumnNames,
   newRowColSpan,
 } from './utils';
@@ -39,7 +40,7 @@ export const DatabaseGrid = ({
 
   useEffect(() => {
     const filteredEntries = Object.entries(tableData).filter(
-      ([key]) => key !== 'id' && key !== 'manualSort',
+      ([key]) => key !== 'manualSort',
     );
 
     const rowData1: DatabaseRow[] = [];
@@ -60,11 +61,19 @@ export const DatabaseGrid = ({
 
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
+      hide: key === 'id',
       colSpan: (params: ColSpanParams<Record<string, string>, unknown>) =>
         newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
-      ) => addRowCellRenderer(params, columnNames, setRowData),
+      ) =>
+        addRowCellRenderer({
+          params,
+          columnNames,
+          setRowData,
+          documentId,
+          tableId,
+        }),
     }));
 
     setColDefs(columns);
@@ -86,14 +95,6 @@ export const DatabaseGrid = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colDefs]);
 
-  const defaultColDef = {
-    flex: 1,
-    filter: true,
-    editable: true,
-    unSortIcon: true,
-    minWidth: 200,
-  };
-
   const addColumn = (columnName: string) => {
     const columnNames = getColumnNames(colDefs);
     const newColDef: ColDef = {
@@ -102,7 +103,14 @@ export const DatabaseGrid = ({
         newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
-      ) => addRowCellRenderer(params, columnNames, setRowData),
+      ) =>
+        addRowCellRenderer({
+          documentId,
+          tableId,
+          params,
+          columnNames,
+          setRowData,
+        }),
     };
 
     setColDefs((prev) => {
