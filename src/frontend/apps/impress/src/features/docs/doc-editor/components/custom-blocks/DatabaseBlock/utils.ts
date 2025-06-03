@@ -1,4 +1,5 @@
 import {
+  ColDef,
   ColSpanParams,
   ICellRendererParams,
   SizeColumnsToContentStrategy,
@@ -58,3 +59,6 @@ export const newRowColSpan = (
 
   return 1;
 };
+
+export const getColumnNames = (colDefs: ColDef[] | undefined) =>
+  (colDefs ?? []).map((col) => col.field).filter((col) => col !== undefined);
