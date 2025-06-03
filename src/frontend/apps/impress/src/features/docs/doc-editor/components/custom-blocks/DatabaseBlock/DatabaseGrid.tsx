@@ -1,6 +1,6 @@
 import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -12,7 +12,7 @@ import {
 import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
 import { DatabaseRow } from './types';
-import { addRowCellRenderer, autoSizeStrategy, createNewRow } from './utils';
+import { addRowCellRenderer, createNewRow } from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -21,8 +21,6 @@ export const DatabaseGrid = ({
   documentId: string;
   tableId: string;
 }) => {
-  const gridRef = useRef(null);
-
   const { tableData } = useGristTableData({
     documentId,
     tableId,
@@ -41,20 +39,6 @@ export const DatabaseGrid = ({
     }
 
     return 1;
-  };
-
-  const addColumnColDef: ColDef = {
-    headerComponentParams: {
-      innerHeaderComponent: () =>
-        AddButtonComponent({
-          addColumn,
-        }),
-    },
-    unSortIcon: false,
-    editable: false,
-    sortable: false,
-    spanRows: true,
-    filter: false,
   };
 
   useEffect(() => {
@@ -86,7 +70,8 @@ export const DatabaseGrid = ({
       ) => addRowCellRenderer(params, columnNames, setRowData),
     }));
 
-    setColDefs(columns.concat(addColumnColDef));
+    setColDefs(columns);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
 
@@ -96,14 +81,13 @@ export const DatabaseGrid = ({
       .filter((col) => col !== undefined);
     const addNewRow = createNewRow({ value: '+ new  row', columnNames });
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
-  }, [colDefs, gridRef, setRowData]);
+  }, [colDefs, setRowData]);
 
   const defaultColDef = {
     flex: 1,
     filter: true,
     editable: true,
     unSortIcon: true,
-    suppressSizeToFit: true,
     minWidth: 200,
   };
 
@@ -134,16 +118,17 @@ export const DatabaseGrid = ({
   };
 
   return (
-    <Box style={{ height: '100%', width: '100%' }}>
-      <AgGridReact
-        ref={gridRef}
-        rowData={rowData}
-        columnDefs={colDefs}
-        defaultColDef={defaultColDef}
-        domLayout="autoHeight"
-        enableCellSpan={true}
-        autoSizeStrategy={autoSizeStrategy}
-      />
-    </Box>
+    <>
+      <Box style={{ height: '100%', width: '100%' }}>
+        <AgGridReact
+          rowData={rowData}
+          columnDefs={colDefs}
+          defaultColDef={defaultColDef}
+          domLayout="autoHeight"
+          enableCellSpan={true}
+        />
+      </Box>
+      <AddButtonComponent addColumn={addColumn} />
+    </>
   );
 };

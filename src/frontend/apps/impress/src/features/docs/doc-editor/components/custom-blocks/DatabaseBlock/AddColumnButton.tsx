@@ -19,8 +19,17 @@ export const AddButtonComponent = ({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       label="add column"
+      buttonStyle={{ marginBottom: 'auto' }}
       button={
-        <Box style={{ padding: '0.25rem', gap: '16px' }} color="tertiary">
+        <Box
+          style={{
+            padding: '0.25rem',
+            gap: '16px',
+            display: 'flex',
+            marginTop: '8px',
+          }}
+          color="tertiary"
+        >
           <span className="material-icons">add</span>
         </Box>
       }

@@ -37,7 +37,13 @@ export const DatabaseBlock = createReactBlockSpec(
           }}
         >
           {block.props.documentId && block.props.tableId ? (
-            <Box style={{ height: '100%', width: '100%' }}>
+            <Box
+              style={{
+                height: '100%',
+                width: '100%',
+                flexDirection: 'row',
+              }}
+            >
               <DatabaseGrid
                 documentId={block.props.documentId}
                 tableId={block.props.tableId}
