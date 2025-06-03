@@ -65,7 +65,11 @@ export const DatabaseGrid = ({
         newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
-      ) => addRowCellRenderer(params, columnNames, setRowData),
+      ) =>
+        addRowCellRenderer(params, columnNames, setRowData, {
+          documentId,
+          tableId,
+        }),
     }));
 
     setColDefs(columns);
@@ -95,7 +99,11 @@ export const DatabaseGrid = ({
         newRowColSpan(params, columnNames.length + 1),
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
-      ) => addRowCellRenderer(params, columnNames, setRowData),
+      ) =>
+        addRowCellRenderer(params, columnNames, setRowData, {
+          documentId,
+          tableId,
+        }),
     };
 
     setColDefs((prev) => {
