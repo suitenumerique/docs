@@ -112,6 +112,7 @@ const precacheResources = [
   '/accessibility/',
   '/legal-notice/',
   '/personal-data-cookies/',
+  '/import-notion',
   FALLBACK.offline,
   FALLBACK.images,
   FALLBACK.docs,

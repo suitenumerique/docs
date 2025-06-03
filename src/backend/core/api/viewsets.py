@@ -1851,7 +1851,7 @@ def notion_import_callback(request):
     resp.raise_for_status()
     data = resp.json()
     request.session["notion_token"] = data["access_token"]
-    return redirect("/api/v1.0/notion_import/run")
+    return redirect(f"{settings.FRONTEND_URL}/import-notion/")
 
 
 def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_page_id):
@@ -1898,8 +1898,7 @@ def _import_notion_root_page(imported_doc, user, imported_docs_by_page_id):
         _import_notion_child_page(child, obj, user, imported_docs_by_page_id)
 
 
-# @drf.decorators.api_view(["POST"])
-@drf.decorators.api_view()
+@drf.decorators.api_view(["POST"])
 def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
