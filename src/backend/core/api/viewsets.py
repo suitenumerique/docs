@@ -1822,19 +1822,14 @@ class ConfigView(drf.views.APIView):
         return theme_customization
 
 
-notion_client_id = "206d872b-594c-80de-94ff-003760c352e4"
-notion_client_secret = "XXX"
-notion_redirect_uri = "https://emersion.fr/notion-redirect"
-
-
 @drf.decorators.api_view()
 def notion_import_redirect(request):
     query = urlencode(
         {
-            "client_id": notion_client_id,
+            "client_id": settings.NOTION_CLIENT_ID,
             "response_type": "code",
             "owner": "user",
-            "redirect_uri": notion_redirect_uri,
+            "redirect_uri": settings.NOTION_REDIRECT_URI,
         }
     )
     return redirect("https://api.notion.com/v1/oauth/authorize?" + query)
@@ -1845,12 +1840,12 @@ def notion_import_callback(request):
     code = request.GET.get("code")
     resp = requests.post(
         "https://api.notion.com/v1/oauth/token",
-        auth=requests.auth.HTTPBasicAuth(notion_client_id, notion_client_secret),
+        auth=requests.auth.HTTPBasicAuth(settings.NOTION_CLIENT_ID, settings.NOTION_CLIENT_SECRET),
         headers={"Accept": "application/json"},
         data={
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": notion_redirect_uri,
+            "redirect_uri": settings.NOTION_REDIRECT_URI,
         },
     )
     resp.raise_for_status()
