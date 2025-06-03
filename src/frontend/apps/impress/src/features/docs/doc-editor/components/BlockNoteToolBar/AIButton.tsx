@@ -73,12 +73,30 @@ const AIMenuItemFactCheck = ({
       docId,
     });
 
-    if (!responseAI?.answer) {
-      throw new Error('No response from AI');
+    if (
+      !responseAI ||
+      !responseAI.answer ||
+      typeof responseAI.answer !== 'object'
+      ) {
+        throw new Error('No response from AI');
     }
 
-    const markdown = await editor.tryParseMarkdownToBlocks(responseAI.answer);
-    editor.replaceBlocks(selectedBlocks, markdown);
+    const { claim, accuracy, justification, references } = responseAI.answer;
+
+    let markdown = `> **Claim:** ${claim}\n\n`;
+    markdown += `**Accuracy:** ${accuracy}\n\n`;
+    markdown += `${justification}\n\n`;
+
+    if (Array.isArray(references) && references.length > 0) {
+      markdown += `**References:**\n`;
+      references.forEach((ref: string, idx: number) => {
+        markdown += `[${idx + 1}](${ref}) `;
+      });
+      markdown += '\n';
+    }
+
+    const blocks = await editor.tryParseMarkdownToBlocks(markdown);
+    editor.replaceBlocks(selectedBlocks, blocks);
   };
 
   return (

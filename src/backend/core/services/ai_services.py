@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+import json
 
 from openai import OpenAI
 
@@ -95,4 +96,8 @@ class AIService:
     
     def fact_check(self, text):
         """Fact check the provided text."""
-        return fact_check(text)
+        json_data = fact_check(text)
+        data = json.loads(json_data)
+        if not data:
+            raise RuntimeError("Fact check response does not contain an answer")
+        return json_data
