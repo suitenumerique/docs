@@ -24,7 +24,7 @@ export const getChartReactSlashMenuItems = (
     },
     aliases: ['latex', 'math', 'formula', 'equation', 'katex'],
     group,
-    icon: <Icon iconName="functions" $size="18px" />,
+    icon: <Icon iconName="line_axis" $size="18px" />,
     subtext: t('Plot a function defined with latex'),
   },
 ];

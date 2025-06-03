@@ -19,7 +19,7 @@ export function InlineLatexButton() {
     }
   };
 
-  if (!Components) {
+  if (!Components || !editor.getSelectedText()) {
     return null;
   }
 
