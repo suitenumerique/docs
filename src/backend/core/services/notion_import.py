@@ -215,8 +215,11 @@ def convert_block(
         case NotionCallout():
             return [
                 {
-                    "type": "comment",
+                    "type": "quote",
                     "content": convert_rich_texts(block.specific.rich_text),
+                    "props": {
+                        "backgroundColor": "yellow",  # TODO: use the callout color
+                    },
                 }
             ]
         case NotionTable():
@@ -380,8 +383,8 @@ def convert_child_pages(
         # TODO: doesn't work, never finds the child
         child_page = find_block_child_page(block.id, all_pages)
         if child_page == None:
-           logger.warning(f"Cannot find child page of block {block.id}")
-           continue
+            logger.warning(f"Cannot find child page of block {block.id}")
+            continue
         children.append(import_page(session, child_page, all_pages))
 
     return children

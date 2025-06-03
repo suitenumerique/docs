@@ -277,7 +277,8 @@ NotionBlockSpecifics = Annotated[
         | NotionLinkPreview
         | NotionTable
         | NotionTableRow
-        | NotionChildPage,
+        | NotionChildPage
+        | NotionCallout,
         Discriminator(discriminator="block_type"),
     ]
     | NotionUnsupported,
