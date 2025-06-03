@@ -8,7 +8,12 @@ export type DocAIFactCheck = {
 };
 
 export type DocAIFactCheckResponse = {
-  answer: string;
+  answer: {
+    claim: string;
+    accuracy: string;
+    justification: string;
+    references: string[];
+  };
 };
 
 export const docAIFactCheck = async ({
