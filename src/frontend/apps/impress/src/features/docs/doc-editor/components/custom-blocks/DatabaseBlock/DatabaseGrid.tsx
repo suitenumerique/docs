@@ -96,7 +96,7 @@ export const DatabaseGrid = ({
     const columnNames = (colDefs ?? [])
       .map((col) => col.field)
       .filter((col) => col !== undefined);
-    const addNewRow = createNewRow('+ new  row', columnNames);
+    const addNewRow = createNewRow({ value: '+ new  row', columnNames });
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
   }, [colDefs, gridRef, setRowData]);
 

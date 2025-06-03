@@ -11,15 +11,17 @@ export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: 'fitCellContents',
 };
 
-export const createNewRow = (
-  value: string | undefined,
-  columnNames: string[] | undefined,
-) => {
-  const defaultValue = value ?? '';
-  const addNewRow: Record<string, string> = {};
+export const createNewRow = ({
+  columnNames,
+  value = undefined,
+}: {
+  value?: string;
+  columnNames: string[] | undefined;
+}) => {
+  const addNewRow: DatabaseRow = {};
   columnNames?.forEach((name) => {
     if (name !== undefined) {
-      addNewRow[name] = defaultValue;
+      addNewRow[name] = value;
     }
   });
 
