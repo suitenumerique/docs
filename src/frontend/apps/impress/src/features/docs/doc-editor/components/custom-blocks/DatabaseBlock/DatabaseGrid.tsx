@@ -76,10 +76,8 @@ export const DatabaseGrid = ({
 
     setRowData(rowData1);
 
-    const addNewRow = createNewRow('+ new row', colDefs ?? []);
-    rowData1.push(addNewRow);
-
     const columnNames = Object.keys(Object.fromEntries(filteredEntries));
+
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
       colSpan: newRowColSpan,
@@ -104,6 +102,11 @@ export const DatabaseGrid = ({
     setColDefs(columns.concat(addColumnColDef));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
+
+  useEffect(() => {
+    const addNewRow = createNewRow('+ new  row', colDefs ?? []);
+    setRowData((prev) => [...(prev ? prev : []), addNewRow]);
+  }, [colDefs, gridRef, setRowData]);
 
   const defaultColDef = {
     flex: 1,
