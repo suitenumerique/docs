@@ -40,22 +40,23 @@ export const createNewRow = ({
   return addNewRow;
 };
 
-export const addRowCellRenderer = (
-  params: ICellRendererParams<Record<string, string>>,
-  columns: string[] | undefined,
-  setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>,
-  {
-    documentId,
-    tableId,
-  }: {
-    documentId: string;
-    tableId: string;
-  },
-) => {
+export const addRowCellRenderer = ({
+  params,
+  columnNames,
+  setRowData,
+  documentId,
+  tableId,
+}: {
+  params: ICellRendererParams<Record<string, string>>;
+  columnNames: string[] | undefined;
+  setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>;
+  documentId: string;
+  tableId: string;
+}) => {
   if (params.data) {
     const addRowButton = {
       component: AddRowButton,
-      params: { columns, setRowData, documentId, tableId },
+      params: { columns: columnNames, setRowData, documentId, tableId },
     };
     if (Object.values(params.data)[0] === ADD_NEW_ROW) {
       return addRowButton;
