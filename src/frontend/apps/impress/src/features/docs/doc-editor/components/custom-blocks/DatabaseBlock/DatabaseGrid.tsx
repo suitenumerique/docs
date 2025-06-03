@@ -12,7 +12,12 @@ import {
 import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
 import { DatabaseRow } from './types';
-import { addRowCellRenderer, createNewRow, newRowColSpan } from './utils';
+import {
+  addRowCellRenderer,
+  createNewRow,
+  getColumnNames,
+  newRowColSpan,
+} from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -66,9 +71,7 @@ export const DatabaseGrid = ({
   }, [tableData]);
 
   useEffect(() => {
-    const columnNames = (colDefs ?? [])
-      .map((col) => col.field)
-      .filter((col) => col !== undefined);
+    const columnNames = getColumnNames(colDefs);
     const addNewRow = createNewRow({ value: '+ new  row', columnNames });
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
   }, [colDefs, setRowData]);
@@ -82,8 +85,13 @@ export const DatabaseGrid = ({
   };
 
   const addColumn = (columnName: string) => {
+    const columnNames = getColumnNames(colDefs);
     const newColDef: ColDef = {
       field: columnName,
+      colSpan: newRowColSpan,
+      cellRendererSelector: (
+        params: ICellRendererParams<Record<string, string>>,
+      ) => addRowCellRenderer(params, columnNames, setRowData),
     };
 
     setColDefs((prev) => {
