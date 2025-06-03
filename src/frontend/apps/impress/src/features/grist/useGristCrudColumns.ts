@@ -1,10 +1,21 @@
 import { gristFetchApi } from '@/api';
 
+export enum ColumnType {
+  TEXT = 'Text',
+  NUMBER = 'Numeric',
+  BOOLEAN = 'Bool',
+}
+
+type ColumnInput = {
+  type: ColumnType;
+  label: string;
+};
+
 export const useGristCrudColumns = () => {
   const createColumns = async (
     documentId: string,
     tableId: string,
-    columns: { id: string; fields: unknown }[],
+    columns: { id: string; fields: ColumnInput }[],
   ) => {
     const url = `docs/${documentId}/tables/${tableId}/columns`;
     try {
@@ -13,7 +24,7 @@ export const useGristCrudColumns = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(columns),
+        body: JSON.stringify({ columns }),
       });
 
       if (!response.ok) {

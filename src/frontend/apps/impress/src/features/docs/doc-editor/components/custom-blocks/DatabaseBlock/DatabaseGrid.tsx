@@ -3,7 +3,11 @@ import { AgGridReact } from 'ag-grid-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Box } from '@/components';
-import { useGristTableData } from '@/features/grist';
+import {
+  ColumnType,
+  useGristCrudColumns,
+  useGristTableData,
+} from '@/features/grist';
 
 import { AddButtonComponent } from './AddColumnButton';
 
@@ -20,6 +24,8 @@ export const DatabaseGrid = ({
     documentId,
     tableId,
   });
+
+  const { createColumns } = useGristCrudColumns();
 
   const [rowData, setRowData] =
     useState<Record<string, string | number | boolean>[]>();
@@ -88,6 +94,16 @@ export const DatabaseGrid = ({
         ...(addColumn !== undefined ? [addColumn] : []),
       ];
     });
+
+    void createColumns(documentId, tableId, [
+      {
+        id: columnName,
+        fields: {
+          label: columnName,
+          type: ColumnType.TEXT,
+        },
+      },
+    ]);
   };
 
   return (
