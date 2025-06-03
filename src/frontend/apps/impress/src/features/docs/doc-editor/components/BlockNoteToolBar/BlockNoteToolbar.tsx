@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
+import { InlineLatexButton } from '../InlineLatex/components/InlineLatexButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { AIGroupButton } from './AIButton';
@@ -57,6 +58,9 @@ export const BlockNoteToolbar = () => {
     return (
       <FormattingToolbar>
         {toolbarItems}
+
+        {/* Extra button to insert latex */}
+        <InlineLatexButton key="InlineLatexButton" />
 
         {/* Extra button to do some AI powered actions */}
         {conf?.AI_FEATURE_ENABLED && <AIGroupButton key="AIButton" />}

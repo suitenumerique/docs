@@ -2,6 +2,7 @@ import { codeBlock } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
   defaultBlockSpecs,
+  defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
@@ -27,6 +28,7 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import { InlineLatex } from './InlineLatex/';
 import {
   CalloutBlock,
   DividerBlock,
@@ -42,6 +44,10 @@ export const blockNoteSchema = withPageBreak(
       divider: DividerBlock,
       latex: LatexBlock,
       mermaid: MermaidBlock,
+    },
+    inlineContentSpecs: {
+      ...defaultInlineContentSpecs,
+      inlineLatex: InlineLatex,
     },
   }),
 );
