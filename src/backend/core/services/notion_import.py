@@ -136,21 +136,22 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
         if rich_text.href:
             content.append(
                 {
-                    "type": "link",
-                    "content": rich_text.plain_text,
-                    "href": rich_text.href,
+                    "type" : "link",
+                    "content" : [convert_rich_text(rich_text)],
+                    "href" : rich_text.href,
                 }
             )
-        else:
-            stylestab = convert_annotations(rich_text.annotations)
-            content.append(
-                {
-                    "type": "text",
-                    "text": rich_text.plain_text,
-                    "styles": stylestab,
-                }
-            )
+        else :
+            content.append(convert_rich_text(rich_text))
     return content
+
+
+def convert_rich_text(rich_text: NotionRichText) -> dict[str, Any]:
+    return {
+        "type" : "text",
+        "text" : rich_text.plain_text,
+        "styles" : convert_annotations(rich_text.annotations),
+    }
 
 
 class ImportedAttachment(BaseModel):
