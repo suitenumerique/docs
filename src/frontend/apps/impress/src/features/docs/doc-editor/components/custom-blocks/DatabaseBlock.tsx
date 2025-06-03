@@ -1,17 +1,16 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
-import { Button, Input, Modal, ModalSize } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { DatabaseSelector } from '../DatabaseSelector';
 
 import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
+import { GristApiKeyModal } from './DatabaseBlock/GristApiKeyModal';
 
 export const DatabaseBlock = createReactBlockSpec(
   {
@@ -33,20 +32,12 @@ export const DatabaseBlock = createReactBlockSpec(
       const getGristApiKey = (): string | null => {
         return localStorage.getItem('grist_api_key');
       };
-      const validateGristApiKey = (): void => {
-        if (gristApiKeyModal !== null) {
-          localStorage.setItem('grist_api_key', gristApiKeyModal);
-        }
-        setOpenGristApiKeyModal(false);
-      };
 
-      const { t: translation } = useTranslation();
-
-      const [gristApiKeyModal, setGristApiKey] = useState<string | null>(
+      const [gristApiKey, setGristApiKey] = useState<string | null>(
         getGristApiKey,
       );
       const [openGristApiKeyModal, setOpenGristApiKeyModal] = useState<boolean>(
-        gristApiKeyModal === null,
+        gristApiKey === null,
       );
 
       return (
@@ -81,42 +72,12 @@ export const DatabaseBlock = createReactBlockSpec(
           )}
 
           {openGristApiKeyModal && (
-            <Modal
+            <GristApiKeyModal
               isOpen={openGristApiKeyModal}
-              closeOnClickOutside
-              data-testid="doc-share-modal"
-              aria-label={translation('Configure Grist API Key')}
-              size={ModalSize.SMALL}
-              onClose={() => setOpenGristApiKeyModal(false)}
-              title={
-                <Box $align="flex-start">{translation('Base de données')}</Box>
-              }
-            >
-              <Box>
-                <Text>
-                  Pour synchroniser vos données avec Grist vous devez fournir
-                  une clé API.
-                </Text>
-                <Text style={{ fontWeight: 'bold' }}>
-                  Comment obtenir votre clé API :
-                </Text>
-                <Text>1. Connectez-vous à votre compte Grist</Text>
-                <Text>
-                  2. Allez dans Paramètres du compte {'>'} API {'>'} Clé API
-                </Text>
-                <Text>3. Créez une nouvelle clé et copiez-la</Text>
-              </Box>
-              <Input
-                label="Grist API key"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setGristApiKey(value);
-                }}
-              />
-              <Button onClick={validateGristApiKey}>
-                {translation('Valider la clé API')}
-              </Button>
-            </Modal>
+              setOpen={setOpenGristApiKeyModal}
+              gristApiKey={gristApiKey}
+              setGristApiKey={setGristApiKey}
+            />
           )}
         </Box>
       );
