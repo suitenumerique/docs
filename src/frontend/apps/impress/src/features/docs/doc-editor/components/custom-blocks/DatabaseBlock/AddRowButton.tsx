@@ -12,7 +12,7 @@ export const AddRowButton = ({
   setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>;
 }) => {
   const addRow = () => {
-    const newRow = createNewRow('', columns);
+    const newRow = createNewRow({ columnNames: columns });
     setRowData((prev: DatabaseRow[] | undefined) => {
       if (prev === undefined) {
         return [newRow];
