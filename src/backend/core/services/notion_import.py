@@ -9,6 +9,8 @@ from ..notion_schemas.notion_block import (
     NotionBlock,
     NotionBulletedListItem,
     NotionChildPage,
+    NotionColumn,
+    NotionColumnList,
     NotionDivider,
     NotionHeading1,
     NotionHeading2,
@@ -138,6 +140,14 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
 
 def convert_block(block: NotionBlock) -> list[dict[str, Any]] | None:
     match block.specific:
+        case NotionColumnList():
+            columns_content = []
+            for column in block.children:
+                columns_content.extend(convert_block(column))
+            return columns_content
+        case NotionColumn():
+            return [convert_block(child_content)[0] for child_content in block.children]
+
         case NotionParagraph():
             content = convert_rich_texts(block.specific.rich_text)
             return [
