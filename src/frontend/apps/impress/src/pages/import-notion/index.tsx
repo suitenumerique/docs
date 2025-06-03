@@ -10,7 +10,7 @@ import { NextPageWithLayout } from '@/types/next';
 const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
 
-  const { percentageValue } = useImportNotion();
+  const { importState, percentageValue } = useImportNotion();
 
   return (
     <Box
@@ -29,6 +29,13 @@ const Page: NextPageWithLayout = () => {
       <Text as="p" $margin={{ top: '10px', bottom: '30px' }}>
         {percentageValue}%
       </Text>
+      <Box>
+        {importState?.map((page) => (
+          <Text
+            key={page.title}
+          >{`${page.title} - ${t(`Notion import ${page.status}`)}`}</Text>
+        ))}
+      </Box>
     </Box>
   );
 };
