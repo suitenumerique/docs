@@ -9,6 +9,7 @@ from requests import Session
 
 from ..notion_schemas.notion_block import (
     NotionBlock,
+    NotionDivider,
     NotionHeading1,
     NotionHeading2,
     NotionHeading3,
@@ -120,6 +121,13 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
             return {
                 "type": "heading",
                 "content": convert_rich_texts(block.specific.rich_text),
+                "level": block.specific.block_type.value.split("_")[
+                    -1
+                ],  # e.g., "1", "2", or "3"
+            }
+        case NotionDivider():
+            return {
+                "type": "divider",
             }
 
 
