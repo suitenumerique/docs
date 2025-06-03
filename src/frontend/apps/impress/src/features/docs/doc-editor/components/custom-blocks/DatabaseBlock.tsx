@@ -30,15 +30,12 @@ export const DatabaseBlock = createReactBlockSpec(
     render: ({ block, editor }) => {
       return (
         <Box
-          $padding="1rem"
-          $gap="0.625rem"
           style={{
             flexGrow: 1,
             flexDirection: 'row',
             width: '100%',
           }}
         >
-          <Box as="div" />
           {block.props.documentId && block.props.tableId ? (
             <Box style={{ height: '100%', width: '100%' }}>
               <DatabaseGrid
