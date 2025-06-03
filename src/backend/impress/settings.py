@@ -431,6 +431,7 @@ class Base(Configuration):
     )
 
     # Frontend
+    FRONTEND_URL = values.Value(None, environ_name="FRONTEND_URL", environ_prefix=None)
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
