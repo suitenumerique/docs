@@ -66,7 +66,10 @@ export const DatabaseGrid = ({
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
       ) =>
-        addRowCellRenderer(params, columnNames, setRowData, {
+        addRowCellRenderer({
+          params,
+          columnNames,
+          setRowData,
           documentId,
           tableId,
         }),
@@ -100,9 +103,12 @@ export const DatabaseGrid = ({
       cellRendererSelector: (
         params: ICellRendererParams<Record<string, string>>,
       ) =>
-        addRowCellRenderer(params, columnNames, setRowData, {
+        addRowCellRenderer({
           documentId,
           tableId,
+          params,
+          columnNames,
+          setRowData,
         }),
     };
 
