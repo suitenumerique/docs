@@ -1829,8 +1829,6 @@ notion_redirect_uri = "https://emersion.fr/notion-redirect"
 
 @drf.decorators.api_view()
 def notion_import_redirect(request):
-    if "notion_token" in request.session:
-        return redirect("/api/v1.0/notion_import/run")
     query = urlencode(
         {
             "client_id": notion_client_id,
