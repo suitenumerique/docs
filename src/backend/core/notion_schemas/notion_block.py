@@ -182,7 +182,7 @@ class NotionImage(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def move_type_inward_and_rename(cls, data: Any) -> Any:
+    def move_file_type_inward_and_rename(cls, data: Any) -> Any:
         if not isinstance(data, dict):
             return data
         return {"block_type": "image", "file": data}
@@ -200,6 +200,14 @@ class NotionLinkPreview(BaseModel):
 
     block_type: Literal[NotionBlockType.LINK_PREVIEW] = NotionBlockType.LINK_PREVIEW
     url: str
+
+
+class NotionBookmark(BaseModel):
+    """https://developers.notion.com/reference/block#bookmark"""
+
+    block_type: Literal[NotionBlockType.BOOKMARK] = NotionBlockType.BOOKMARK
+    url: str
+    caption: list[NotionRichText] = Field(default_factory=list)
 
 
 class NotionTable(BaseModel):
@@ -278,7 +286,9 @@ NotionBlockSpecifics = Annotated[
         | NotionTable
         | NotionTableRow
         | NotionChildPage
-        | NotionCallout,
+        | NotionCallout
+        | NotionLinkPreview
+        | NotionBookmark,
         Discriminator(discriminator="block_type"),
     ]
     | NotionUnsupported,

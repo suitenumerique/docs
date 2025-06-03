@@ -7,6 +7,7 @@ from requests import Session
 
 from ..notion_schemas.notion_block import (
     NotionBlock,
+    NotionBookmark,
     NotionBulletedListItem,
     NotionCallout,
     NotionChildPage,
@@ -135,18 +136,18 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
         if rich_text.href:
             content.append(
                 {
-                    "type" : "link",
-                    "content" : rich_text.plain_text,
-                    "href" : rich_text.href,
+                    "type": "link",
+                    "content": rich_text.plain_text,
+                    "href": rich_text.href,
                 }
             )
-        else :
+        else:
             stylestab = convert_annotations(rich_text.annotations)
             content.append(
                 {
-                    "type" : "text",
-                    "text" : rich_text.plain_text,
-                    "styles" : stylestab,
+                    "type": "text",
+                    "text": rich_text.plain_text,
+                    "styles": stylestab,
                 }
             )
     return content
@@ -315,6 +316,20 @@ def convert_block(
                         rich_text.plain_text for rich_text in block.specific.rich_text
                     ),
                     "props": {"language": block.specific.language},
+                }
+            ]
+        case NotionBookmark():
+            caption = convert_rich_texts(block.specific.caption) or block.specific.url
+            return [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "link",
+                            "content": caption,
+                            "href": block.specific.url,
+                        },
+                    ],
                 }
             ]
         case NotionUnsupported():
