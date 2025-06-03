@@ -30,31 +30,30 @@ export const GristApiKeyModal = ({
       aria-label={translation('Configure Grist API Key')}
       size={ModalSize.SMALL}
       onClose={() => setOpen(false)}
-      title={<Box $align="flex-start">{translation('Base de données')}</Box>}
+      title={<Box $align="flex-start">{translation('Grist API Key')}</Box>}
     >
       <Box>
         <Text>
-          Pour synchroniser vos données avec Grist vous devez fournir une clé
-          API.
+          {translation(
+            'To sync your data with Grist, you need to provide an API Key',
+          )}
         </Text>
         <Text style={{ fontWeight: 'bold' }}>
-          Comment obtenir votre clé API :
+          {translation('How to find you API Key')}:
         </Text>
-        <Text>1. Connectez-vous à votre compte Grist</Text>
-        <Text>
-          2. Allez dans Paramètres du compte {'>'} API {'>'} Clé API
-        </Text>
-        <Text>3. Créez une nouvelle clé et copiez-la</Text>
+        <Text>1. {translation('Connect to your Grist account')}</Text>
+        <Text>2. {translation('Go to Profile settings > API > API Key')}</Text>
+        <Text>3. {translation('Create a new API Key and copy it')}</Text>
       </Box>
       <Input
-        label="Grist API key"
+        label={translation('Grist API Key')}
         onChange={(event) => {
           const value = event.target.value;
           setGristApiKey(value);
         }}
       />
       <Button onClick={validateGristApiKey}>
-        {translation('Valider la clé API')}
+        {translation('Validate API Key')}
       </Button>
     </Modal>
   );
