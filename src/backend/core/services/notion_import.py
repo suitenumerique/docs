@@ -207,11 +207,13 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
             return {
                 "type": "bulletListItem",
                 "content": convert_rich_texts(block.specific.rich_text),
+                "children": convert_block_list(block.children),
             }
         case NotionNumberedListItem():
             return {
                 "type": "numberedListItem",
                 "content": convert_rich_texts(block.specific.rich_text),
+                "children": convert_block_list(block.children),
             }
 
         case NotionUnsupported():
