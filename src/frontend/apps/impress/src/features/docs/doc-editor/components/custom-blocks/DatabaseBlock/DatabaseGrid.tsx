@@ -139,11 +139,6 @@ export const DatabaseGrid = ({
   const onCellEditingStopped = useCallback(
     (event: CellEditingStoppedEvent<DatabaseRow, DatabaseRow>) => {
       const { oldValue, newValue, data } = event;
-      console.log('Cell editing stopped:', {
-        oldValue,
-        newValue,
-        data,
-      });
 
       if (data === undefined) {
         return;
