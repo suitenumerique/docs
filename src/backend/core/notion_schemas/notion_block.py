@@ -5,8 +5,8 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Discriminator, Field, ValidationError, model_validator
 
 from .notion_color import NotionColor
-from .notion_rich_text import NotionRichText
 from .notion_file import NotionFile
+from .notion_rich_text import NotionRichText
 
 """Usage: NotionBlock.model_validate(response.json())"""
 
@@ -125,6 +125,16 @@ class NotionNumberedListItem(BaseModel):
     children: list["NotionBlock"] = Field(default_factory=list)
 
 
+class NotionToDo(BaseModel):
+    """https://developers.notion.com/reference/block#to-do"""
+
+    block_type: Literal[NotionBlockType.TO_DO] = NotionBlockType.TO_DO
+    rich_text: list[NotionRichText]
+    checked: bool
+    color: NotionColor
+    children: list["NotionBlock"] = Field(default_factory=list)
+
+
 class NotionCode(BaseModel):
     """https://developers.notion.com/reference/block#code"""
 
@@ -235,6 +245,7 @@ NotionBlockSpecifics = Annotated[
         | NotionParagraph
         | NotionNumberedListItem
         | NotionBulletedListItem
+        | NotionToDo
         | NotionCode
         | NotionDivider
         | NotionEmbed
