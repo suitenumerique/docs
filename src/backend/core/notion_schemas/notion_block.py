@@ -166,20 +166,12 @@ class NotionEmbed(BaseModel):
     url: str
 
 
-class NotionFileType(StrEnum):
-    FILE = "file"
-    EXTERNAL = "external"
-    FILE_UPLOAD = "file_upload"
-
-
-class NotionFile(BaseModel):
+class NotionBlockFile(BaseModel):
     # FIXME: this is actually another occurrence of type discriminating
     """https://developers.notion.com/reference/block#file"""
 
     block_type: Literal[NotionBlockType.FILE] = NotionBlockType.FILE
-    caption: list[NotionRichText]
-    type: NotionFileType
-    ...
+    # TODO: NotionFile
 
 
 class NotionImage(BaseModel):
@@ -187,6 +179,13 @@ class NotionImage(BaseModel):
 
     block_type: Literal[NotionBlockType.IMAGE] = NotionBlockType.IMAGE
     file: NotionFile
+
+    @model_validator(mode="before")
+    @classmethod
+    def move_file_type_inward_and_rename(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        return {"block_type": "image", "file": data}
 
 
 class NotionVideo(BaseModel):
@@ -280,7 +279,7 @@ NotionBlockSpecifics = Annotated[
         | NotionColumnList
         | NotionDivider
         | NotionEmbed
-        | NotionFile
+        | NotionBlockFile
         | NotionImage
         | NotionVideo
         | NotionLinkPreview
