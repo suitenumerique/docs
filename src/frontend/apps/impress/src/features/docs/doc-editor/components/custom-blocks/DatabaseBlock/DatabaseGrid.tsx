@@ -11,7 +11,7 @@ import {
 
 import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
-import { addRowCellRenderer, createNewRow } from './utils';
+import { addRowCellRenderer, autoSizeStrategy, createNewRow } from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -104,6 +104,8 @@ export const DatabaseGrid = ({
     filter: true,
     editable: true,
     unSortIcon: true,
+    suppressSizeToFit: true,
+    minWidth: 200,
   };
 
   const addColumn = (columnName: string) => {
@@ -141,6 +143,7 @@ export const DatabaseGrid = ({
         defaultColDef={defaultColDef}
         domLayout="autoHeight"
         enableCellSpan={true}
+        autoSizeStrategy={autoSizeStrategy}
       />
     </Box>
   );

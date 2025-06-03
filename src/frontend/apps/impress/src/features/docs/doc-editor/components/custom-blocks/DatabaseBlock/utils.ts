@@ -1,7 +1,14 @@
-import { ICellRendererParams } from 'ag-grid-community';
+import {
+  ICellRendererParams,
+  SizeColumnsToContentStrategy,
+} from 'ag-grid-community';
 import { Dispatch, SetStateAction } from 'react';
 
 import { AddRowButton } from './AddRowButton';
+
+export const autoSizeStrategy: SizeColumnsToContentStrategy = {
+  type: 'fitCellContents',
+};
 
 export const createNewRow = (
   value: string | undefined,
