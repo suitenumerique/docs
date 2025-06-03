@@ -8,7 +8,6 @@ export const blockSpec = {
     formula: {
       default: defaultFormula,
     },
-    textAlignment: defaultProps.textAlignment,
     backgroundColor: defaultProps.backgroundColor,
   },
   content: 'none',
