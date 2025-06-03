@@ -1,9 +1,16 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { Block, StyleSchema, StyledText } from '@blocknote/core';
 
 export default function parseMarkdownWithLatex(blocks: Block[]): Block[] {
   return blocks.map((block) => {
-    if (block.type === 'paragraph' && block.content) {
+    if (
+      (block.type === 'paragraph' ||
+        block.type == 'bulletListItem' ||
+        block.type == 'numberedListItem' ||
+        block.type == 'heading') &&
+      block.content
+    ) {
       const newContent: StyledText<StyleSchema>[] = [];
       let currentText = '';
       let isInLatex = false;

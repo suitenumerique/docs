@@ -28,6 +28,7 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import parseMarkdownWithLatex from './BlockNoteToolBar/utils';
 import { InlineLatex } from './InlineLatex/';
 import { useLatexDetection } from './InlineLatex/hooks/useLatexDetection';
 import {
@@ -78,6 +79,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     ? 'Reader'
     : user?.full_name || user?.email || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
+
+  let editorWillPaste = false;
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
@@ -140,9 +143,32 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       uploadFile,
       schema: blockNoteSchema,
+      pasteHandler: ({ event, editor }) => {
+        const text = event.clipboardData?.getData('text/plain');
+        if (text) {
+          editorWillPaste = true;
+          void editor.pasteMarkdown(text);
+        }
+        return true;
+      },
     },
     [collabName, lang, provider, uploadFile],
   );
+
+  editor.onChange((editor, { getChanges }) => {
+    if (editorWillPaste) {
+      editorWillPaste = false;
+
+      const changes = getChanges();
+      console.log(changes);
+      changes.forEach((change) => {
+        if (change.type === 'update' || change.type === 'insert') {
+          const [newBlock] = parseMarkdownWithLatex([change.block]);
+          editor.updateBlock(change.block.id, newBlock);
+        }
+      });
+    }
+  });
 
   useHeadings(editor);
   useUploadStatus(editor);
