@@ -1860,15 +1860,15 @@ def notion_import_run(request):
     if "notion_token" not in request.session:
         raise drf.exceptions.PermissionDenied()
 
-    pages_and_blocks = import_notion(request.session["notion_token"])
+    imported_docs = import_notion(request.session["notion_token"])
 
-    for page, blocks in pages_and_blocks:
-        document_content = YdocConverter().convert_blocks(blocks)
+    for imported_doc in imported_docs:
+        document_content = YdocConverter().convert_blocks(imported_doc.blocks)
 
         obj = models.Document.add_root(
             depth=1,
             creator=request.user,
-            title=page.get_title() or "J'aime les courgettes",
+            title=imported_doc.page.get_title() or "J'aime les courgettes",
             link_reach=models.LinkReachChoices.RESTRICTED,
             content=document_content,
         )
