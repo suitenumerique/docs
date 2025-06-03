@@ -28,11 +28,13 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+
 import {
   CalloutBlock,
   DatabaseBlock,
   DividerBlock,
   ReactEmbedBlock,
+  GristChartBlock,
 } from './custom-blocks';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -45,6 +47,7 @@ export const blockNoteSchema = withPageBreak(
       database: DatabaseBlock,
       divider: DividerBlock,
       embed: ReactEmbedBlock,
+      grist_chart: GristChartBlock,
     },
   }),
 );
