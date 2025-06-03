@@ -369,12 +369,12 @@ def convert_child_pages(
         if not isinstance(block.specific, NotionChildPage):
             continue
 
-        # TODO
-        # parent_page = find_block_child_page(block.id, all_pages)
-        # if parent_page == None:
-        #    logger.warning(f"Cannot find parent of block {block.id}")
-        #    continue
-        # children.append(import_page(session, parent_page, all_pages))
+        # TODO: doesn't work, never finds the child
+        child_page = find_block_child_page(block.id, all_pages)
+        if child_page == None:
+           logger.warning(f"Cannot find child page of block {block.id}")
+           continue
+        children.append(import_page(session, child_page, all_pages))
 
     return children
 
