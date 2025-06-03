@@ -22,6 +22,14 @@ export const GristChartBlock = createReactBlockSpec(
         type: 'string',
         default: '',
       },
+      chartType: {
+        type: 'string',
+        default: 'bar',
+      },
+      chartOptions: {
+        type: 'object',
+        default: {},
+      },
     },
     content: 'none',
   },
@@ -36,7 +44,17 @@ export const GristChartBlock = createReactBlockSpec(
           }}
         >
           {block.props.documentId && block.props.tableId ? (
-            <ChartEditor />
+            <ChartEditor
+              documentId={block.props.documentId}
+              tableId={block.props.tableId}
+              chartType={block.props.chartType} // Passage de chartType
+              chartOptions={block.props.chartOptions} // Passage de chartOptions
+              onChartConfigChange={({ chartType, chartOptions }) => {
+                editor.updateBlock(block, {
+                  props: { chartType, chartOptions },
+                });
+              }}
+            />
           ) : (
             <DatabaseSelector
               onDatabaseSelected={({ documentId, tableId }) => {

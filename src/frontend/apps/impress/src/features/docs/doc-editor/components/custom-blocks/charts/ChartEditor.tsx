@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 import { ChartOptionsForm } from './ChartOptionsForm';
 import { ChartTypeSelector } from './ChartTypeSelector';
-import { CollapsibleCard } from './CollapsibleCard';
-import { DataInputForm } from './DataInputForm';
 import { LiveChartPreview } from './LiveChartPreview';
 import { ChartConfig, ChartData, ChartOptions, ChartType } from './types';
+import { useGristTableData } from '@/features/grist';
 
 const initialData: ChartData = {
   labels: ['January', 'February', 'March', 'April', 'May'],
@@ -79,30 +78,6 @@ const ControlPanel = styled.div`
   gap: 1.5rem;
 `;
 
-// const CollapsibleCard = styled.div`
-//   background: #fff;
-//   border-radius: 0.5rem;
-//   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-//   border: 1px solid #e5e7eb;
-//   padding: 1.5rem;
-// `;
-
-const ChartEditorButtonRow = styled.div`
-  display: flex;
-  gap: 1rem;
-`;
-
-const ExportButton = styled.button`
-  padding: 0.5rem 1rem;
-  background: #4f46e5;
-  color: #fff;
-  border-radius: 0.375rem;
-  transition: background 0.2s;
-  &:hover {
-    background: #4338ca;
-  }
-`;
-
 const ToggleButton = styled.button`
   font-size: 1.5rem;
   background: none;
@@ -114,30 +89,76 @@ const ToggleButton = styled.button`
   }
 `;
 
-export const ChartEditor: React.FC = () => {
-  const [chartType, setChartType] = useState<ChartType>('bar');
-  const [chartData, setChartData] = useState<ChartData>(initialData);
-  const [chartOptions, setChartOptions] =
-    useState<ChartOptions>(initialOptions);
+export interface ChartEditorProps {
+  documentId: string;
+  tableId: string;
+  chartType: ChartType; // Ajout de chartType
+  chartOptions: ChartOptions; // Ajout de chartOptions
+  onChartConfigChange: (config: { chartType: ChartType; chartOptions: ChartOptions }) => void;
+}
+
+export const ChartEditor: React.FC<ChartEditorProps> = ({
+  documentId,
+  tableId,
+  chartType: initialChartType, // Utilisation des valeurs initiales
+  chartOptions: initialChartOptions,
+  onChartConfigChange,
+}) => {
+  const [chartType, setChartType] = useState<ChartType>(initialChartType);
+  const [chartData, setChartData] = useState<ChartData>({
+    labels: [],
+    datasets: [],
+  });
+  const [chartOptions, setChartOptions] = useState<ChartOptions>(initialChartOptions);
   const [showEditor, setShowEditor] = useState(true);
+
+  // Récupération des données Grist
+  const { tableData } = useGristTableData({
+    documentId,
+    tableId,
+  });
+
+  // Transformation des données Grist en données pour le graphique
+  useEffect(() => {
+    const transformTableDataToChartData = (tableData: Record<string, any>) => {
+      const filteredEntries = Object.entries(tableData).filter(
+        ([key]) => key !== 'id' && key !== 'manualSort',
+      );
+
+      if (filteredEntries.length === 0) {
+        return { labels: [], datasets: [] };
+      }
+
+      const labels = filteredEntries[0][1].map((value: any) => String(value ?? ''));
+      const datasets = filteredEntries.slice(1).map(([key, values], idx) => ({
+        id: `dataset-${idx}`,
+        label: key,
+        data: values.map((v) =>
+          typeof v === 'number'
+            ? v
+            : typeof v === 'string' && !isNaN(Number(v))
+            ? Number(v)
+            : 0
+        ),
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        borderColor: 'rgba(53, 162, 235, 1)',
+      }));
+
+      return { labels, datasets };
+    };
+
+    setChartData(transformTableDataToChartData(tableData));
+  }, [tableData]);
+
+  // Communication des modifications de configuration au parent
+  useEffect(() => {
+    onChartConfigChange({ chartType, chartOptions });
+  }, [chartType, chartOptions]);
 
   const config: ChartConfig = {
     type: chartType,
     data: chartData,
     options: chartOptions,
-  };
-
-  const exportConfig = () => {
-    const configJson = JSON.stringify(config, null, 2);
-    const blob = new Blob([configJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'chart-config.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -166,12 +187,6 @@ export const ChartEditor: React.FC = () => {
               options={chartOptions}
               onChange={setChartOptions}
             />
-            {/* <CollapsibleCard>
-              <DataInputForm data={chartData} onChange={setChartData} />
-            </CollapsibleCard>
-            <ChartEditorButtonRow>
-              <ExportButton onClick={exportConfig}>Export Config</ExportButton>
-            </ChartEditorButtonRow> */}
           </ControlPanel>
         )}
       </ChartEditorGrid>
