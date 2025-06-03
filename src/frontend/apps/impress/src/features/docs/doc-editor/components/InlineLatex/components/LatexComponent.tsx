@@ -113,6 +113,15 @@ export const LatexComponent: React.FC<LatexComponentProps> = ({
         e.preventDefault();
         e.stopPropagation();
         selectAllText();
+      } else if (e.key === 'Backspace') {
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+
+        if (range?.startOffset === 0 && editValue === '') {
+          e.preventDefault();
+          setIsEditing(false);
+          updateFormula('');
+        }
       }
     } else {
       if (e.key === 'Enter' || e.key === ' ') {
