@@ -1,4 +1,5 @@
 import {
+  ColSpanParams,
   ICellRendererParams,
   SizeColumnsToContentStrategy,
 } from 'ag-grid-community';
@@ -44,4 +45,16 @@ export const addRowCellRenderer = (
     return undefined;
   }
   return undefined;
+};
+
+export const newRowColSpan = (
+  params: ColSpanParams<Record<string, string>>,
+) => {
+  const colsValues = params.data ?? {};
+  const isNewRow = Object.values(colsValues)[0]?.includes('new');
+  if (isNewRow) {
+    return Object.keys(colsValues).length;
+  }
+
+  return 1;
 };
