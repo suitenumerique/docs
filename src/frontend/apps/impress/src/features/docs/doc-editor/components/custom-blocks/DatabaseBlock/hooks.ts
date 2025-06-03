@@ -1,6 +1,8 @@
 import { ColDef } from 'ag-grid-community';
 import { useState } from 'react';
 
+import { DatabaseRow } from './types';
+
 export const useColumns = () => {
   const [colDefs, setColDefs] = useState<ColDef[]>();
 
@@ -8,8 +10,7 @@ export const useColumns = () => {
 };
 
 export const useRows = () => {
-  const [rowData, setRowData] =
-    useState<Record<string, string | number | boolean>[]>();
+  const [rowData, setRowData] = useState<DatabaseRow[]>();
 
   return { rowData, setRowData };
 };

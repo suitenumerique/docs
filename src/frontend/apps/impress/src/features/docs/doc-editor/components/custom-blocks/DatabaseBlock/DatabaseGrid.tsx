@@ -1,6 +1,6 @@
-import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
+import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -11,7 +11,14 @@ import {
 
 import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
-import { addRowCellRenderer, createNewRow } from './utils';
+import { DatabaseRow } from './types';
+import {
+  ADD_NEW_ROW,
+  addRowCellRenderer,
+  createNewRow,
+  getColumnNames,
+  newRowColSpan,
+} from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -20,8 +27,6 @@ export const DatabaseGrid = ({
   documentId: string;
   tableId: string;
 }) => {
-  const gridRef = useRef(null);
-
   const { tableData } = useGristTableData({
     documentId,
     tableId,
@@ -32,41 +37,17 @@ export const DatabaseGrid = ({
   const { rowData, setRowData } = useRows();
   const { colDefs, setColDefs } = useColumns();
 
-  const newRowColSpan = (params: ColSpanParams<Record<string, string>>) => {
-    const colsValues = params.data ?? {};
-    const isNewRow = Object.values(colsValues)[0]?.includes('new');
-    if (isNewRow) {
-      return Object.keys(colsValues).length;
-    }
-
-    return 1;
-  };
-
-  const addColumnColDef: ColDef = {
-    headerComponentParams: {
-      innerHeaderComponent: () =>
-        AddButtonComponent({
-          addColumn,
-        }),
-    },
-    unSortIcon: false,
-    editable: false,
-    sortable: false,
-    spanRows: true,
-    filter: false,
-  };
-
   useEffect(() => {
     const filteredEntries = Object.entries(tableData).filter(
       ([key]) => key !== 'id' && key !== 'manualSort',
     );
 
-    const rowData1: Record<string, string | number | boolean>[] = [];
+    const rowData1: DatabaseRow[] = [];
 
     const numRows = filteredEntries[0]?.[1].length;
 
     for (let i = 0; i < numRows; i++) {
-      const row: Record<string, string | boolean | number> = {};
+      const row: DatabaseRow = {};
       for (const [key, values] of filteredEntries) {
         row[key] = values[i] ?? '';
       }
@@ -85,37 +66,48 @@ export const DatabaseGrid = ({
       ) => addRowCellRenderer(params, columnNames, setRowData),
     }));
 
-    setColDefs(columns.concat(addColumnColDef));
+    setColDefs(columns);
 
-    // Ignore addColumnColDef
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
 
   useEffect(() => {
-    const columnNames = (colDefs ?? [])
-      .map((col) => col.field)
-      .filter((col) => col !== undefined);
-    const addNewRow = createNewRow('+ new  row', columnNames);
+    const columnNames = getColumnNames(colDefs);
+    const lastRow = rowData?.[rowData.length - 1];
+    if (lastRow && Object.values(lastRow).length > 0) {
+      const lastRowValue = Object.values(lastRow)[0];
+      if (lastRowValue === ADD_NEW_ROW) {
+        return;
+      }
+    }
+    const addNewRow = createNewRow({ value: ADD_NEW_ROW, columnNames });
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
-  }, [colDefs, gridRef, setRowData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colDefs]);
 
   const defaultColDef = {
     flex: 1,
     filter: true,
     editable: true,
     unSortIcon: true,
+    minWidth: 200,
   };
 
   const addColumn = (columnName: string) => {
+    const columnNames = getColumnNames(colDefs);
     const newColDef: ColDef = {
       field: columnName,
+      colSpan: newRowColSpan,
+      cellRendererSelector: (
+        params: ICellRendererParams<Record<string, string>>,
+      ) => addRowCellRenderer(params, columnNames, setRowData),
     };
 
     setColDefs((prev) => {
-      const addColumn = prev.pop();
+      const addColumn = prev?.pop();
 
       return [
-        ...prev,
+        ...(prev !== undefined ? prev : []),
         newColDef,
         ...(addColumn !== undefined ? [addColumn] : []),
       ];
@@ -133,15 +125,17 @@ export const DatabaseGrid = ({
   };
 
   return (
-    <Box style={{ height: '100%', width: '100%' }}>
-      <AgGridReact
-        ref={gridRef}
-        rowData={rowData}
-        columnDefs={colDefs}
-        defaultColDef={defaultColDef}
-        domLayout="autoHeight"
-        enableCellSpan={true}
-      />
-    </Box>
+    <>
+      <Box style={{ height: '100%', width: '100%' }}>
+        <AgGridReact
+          rowData={rowData}
+          columnDefs={colDefs}
+          defaultColDef={defaultColDef}
+          domLayout="autoHeight"
+          enableCellSpan={true}
+        />
+      </Box>
+      <AddButtonComponent addColumn={addColumn} />
+    </>
   );
 };

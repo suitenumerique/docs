@@ -1,6 +1,7 @@
 import { Button } from '@openfun/cunningham-react';
 import { Dispatch, SetStateAction } from 'react';
 
+import { DatabaseRow } from './types';
 import { createNewRow } from './utils';
 
 export const AddRowButton = ({
@@ -8,13 +9,11 @@ export const AddRowButton = ({
   setRowData,
 }: {
   columns: string[];
-  setRowData: Dispatch<
-    SetStateAction<Record<string, string | number | boolean>[] | undefined>
-  >;
+  setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>;
 }) => {
   const addRow = () => {
-    const newRow = createNewRow('', columns);
-    setRowData((prev) => {
+    const newRow = createNewRow({ columnNames: columns });
+    setRowData((prev: DatabaseRow[] | undefined) => {
       if (prev === undefined) {
         return [newRow];
       }

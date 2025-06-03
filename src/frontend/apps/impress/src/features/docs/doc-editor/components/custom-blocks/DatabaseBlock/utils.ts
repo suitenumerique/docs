@@ -1,17 +1,31 @@
-import { ICellRendererParams } from 'ag-grid-community';
+import {
+  ColDef,
+  ColSpanParams,
+  ICellRendererParams,
+  SizeColumnsToContentStrategy,
+} from 'ag-grid-community';
 import { Dispatch, SetStateAction } from 'react';
 
 import { AddRowButton } from './AddRowButton';
+import { DatabaseRow } from './types';
 
-export const createNewRow = (
-  value: string | undefined,
-  columnNames: string[] | undefined,
-) => {
-  const defaultValue = value ?? '';
-  const addNewRow: Record<string, string> = {};
+export const ADD_NEW_ROW = 'add-new-row';
+
+export const autoSizeStrategy: SizeColumnsToContentStrategy = {
+  type: 'fitCellContents',
+};
+
+export const createNewRow = ({
+  columnNames,
+  value = undefined,
+}: {
+  value?: string;
+  columnNames: string[] | undefined;
+}) => {
+  const addNewRow: DatabaseRow = {};
   columnNames?.forEach((name) => {
     if (name !== undefined) {
-      addNewRow[name] = defaultValue;
+      addNewRow[name] = value;
     }
   });
 
@@ -21,19 +35,32 @@ export const createNewRow = (
 export const addRowCellRenderer = (
   params: ICellRendererParams<Record<string, string>>,
   columns: string[] | undefined,
-  setRowData: Dispatch<
-    SetStateAction<Record<string, string | number | boolean>[] | undefined>
-  >,
+  setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>,
 ) => {
   if (params.data) {
     const addRowButton = {
       component: AddRowButton,
       params: { columns, setRowData },
     };
-    if (Object.values(params.data)[0]?.includes('new')) {
+    if (Object.values(params.data)[0] === ADD_NEW_ROW) {
       return addRowButton;
     }
     return undefined;
   }
   return undefined;
 };
+
+export const newRowColSpan = (
+  params: ColSpanParams<Record<string, string>>,
+) => {
+  const colsValues = params.data ?? {};
+  const isNewRow = Object.values(colsValues)[0] === ADD_NEW_ROW;
+  if (isNewRow) {
+    return Object.keys(colsValues).length;
+  }
+
+  return 1;
+};
+
+export const getColumnNames = (colDefs: ColDef[] | undefined) =>
+  (colDefs ?? []).map((col) => col.field).filter((col) => col !== undefined);
