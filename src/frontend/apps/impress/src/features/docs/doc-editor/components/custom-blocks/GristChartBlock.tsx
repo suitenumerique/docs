@@ -2,20 +2,53 @@ import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 
-import { Icon } from '@/components';
+import {Box, Icon} from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 
 import { ChartEditor } from './charts/ChartEditor';
+import { DatabaseSelector } from '../DatabaseSelector';
+import React from "react";
 
 export const GristChartBlock = createReactBlockSpec(
   {
     type: 'grist_chart',
-    propSchema: {},
+    propSchema: {
+      documentId: {
+        type: 'string',
+        default: '',
+      },
+      tableId: {
+        type: 'string',
+        default: '',
+      },
+    },
     content: 'none',
   },
   {
-    render: ChartEditor,
+    render: ({ block, editor }) => {
+      return (
+        <Box
+          style={{
+            flexGrow: 1,
+            flexDirection: 'row',
+            width: '100%',
+          }}
+        >
+          {block.props.documentId && block.props.tableId ? (
+            <ChartEditor />
+          ) : (
+            <DatabaseSelector
+              onDatabaseSelected={({ documentId, tableId }) => {
+                editor.updateBlock(block, {
+                  props: { documentId: documentId.toString(), tableId },
+                });
+              }}
+            />
+          )}
+        </Box>
+      );
+    },
   },
 );
 
