@@ -1,11 +1,7 @@
-from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Discriminator, Field, ValidationError, model_validator
-
-from .notion_rich_text import NotionRichText
-from .notion_file import NotionFile
+from pydantic import BaseModel, Discriminator
 
 
 class NotionParentType(StrEnum):
@@ -35,10 +31,7 @@ class NotionParentBlock(BaseModel):
 
 
 NotionParent = Annotated[
-    NotionParentDatabase
-    | NotionParentPage
-    | NotionParentWorkspace
-    | NotionParentBlock,
+    NotionParentDatabase | NotionParentPage | NotionParentWorkspace | NotionParentBlock,
     Discriminator(discriminator="type"),
 ]
 
@@ -60,5 +53,6 @@ class NotionPage(BaseModel):
         if title_property is None:
             return None
 
-        rich_text = title_property["title"][0]  # This could be parsed using NotionRichText
+        # This could be parsed using NotionRichText
+        rich_text = title_property["title"][0]
         return rich_text["plain_text"]

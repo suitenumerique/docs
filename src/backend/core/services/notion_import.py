@@ -1,26 +1,23 @@
 import json
 import logging
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
-import requests
 from pydantic import BaseModel, TypeAdapter
 from requests import Session
 
 from ..notion_schemas.notion_block import (
     NotionBlock,
+    NotionBulletedListItem,
     NotionChildPage,
     NotionDivider,
     NotionHeading1,
     NotionHeading2,
     NotionHeading3,
+    NotionNumberedListItem,
     NotionParagraph,
     NotionTable,
     NotionTableRow,
     NotionUnsupported,
-    NotionBulletedListItem,
-    NotionNumberedListItem,
 )
 from ..notion_schemas.notion_page import (
     NotionPage,
@@ -44,10 +41,10 @@ def build_notion_session(token: str) -> Session:
 
 def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
     req_data = {
-            "filter": {
-                "value": "page",
-                "property": "object",
-            },
+        "filter": {
+            "value": "page",
+            "property": "object",
+        },
     }
     if start_cursor:
         req_data = {
@@ -131,9 +128,9 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
         stylestab = convert_annotations(rich_text.annotations)
         content.append(
             {
-                "type" : "text",
-                "text" : rich_text.plain_text,
-                "styles" : stylestab,
+                "type": "text",
+                "text": rich_text.plain_text,
+                "styles": stylestab,
             }
         )
     return content
@@ -184,24 +181,20 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
                 "type": "table",
                 "content": {
                     "type": "tableContent",
-                    "columnWidths": [1000 / n_columns for _ in range(n_columns)],
+                    "columnWidths": [
+                        1000 / n_columns for _ in range(n_columns)
+                    ],  # TODO
                     "headerRows": int(block.specific.has_column_header),
                     "headerColumns": int(block.specific.has_row_header),
                     "props": {
-                        "textColor": "default",
+                        "textColor": "default",  # TODO
                     },
                     "rows": [
                         {
                             "cells": [
                                 {
                                     "type": "tableCell",
-                                    "content": [
-                                        {
-                                            "type": "text",
-                                            "text": convert_rich_texts(cell),
-                                            "styles": {},
-                                        }
-                                    ],
+                                    "content": convert_rich_texts(cell),
                                 }
                                 for cell in row.cells
                             ]
@@ -211,20 +204,14 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
                 },
             }
         case NotionBulletedListItem():
-            content = ""
-            for rich_text in block.specific.rich_text:
-                content += rich_text.plain_text
             return {
                 "type": "bulletListItem",
-                "content": content,
+                "content": convert_rich_texts(block.specific.rich_text),
             }
         case NotionNumberedListItem():
-            content = ""
-            for rich_text in block.specific.rich_text:
-                content += rich_text.plain_text
             return {
                 "type": "numberedListItem",
-                "content": content,
+                "content": convert_rich_texts(block.specific.rich_text),
             }
 
         case NotionUnsupported():
@@ -238,7 +225,7 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
                 "type": "paragraph",
                 "content": f"This should be a {block.specific.block_type}, not yet handled by the importer",
             }
-        
+
 
 def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]:
     res = {}
@@ -250,15 +237,12 @@ def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]
         res["underline"] = "true"
     if annotations.strikethrough:
         res["strike"] = "true"
-    if annotations.color:
-        if '_' in str(annotations.color):
-            tmp = str(annotations.color)
-            res["backgroundColor"] = tmp[:tmp.rfind("_")].lower()
-        else:
-            res["textColor"] = str(annotations.color).lower()
-    return res
 
-            
+    if "_" in annotations.color:
+        res["backgroundColor"] = annotations.color.split("_")[0].lower()
+    else:
+        res["textColor"] = annotations.color.lower()
+    return res
 
 
 def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
@@ -275,13 +259,6 @@ class ImportedDocument(BaseModel):
     page: NotionPage
     blocks: list[dict[str, Any]] = []
     children: list["ImportedDocument"] = []
-
-
-def find_page(id: str, pages: list[NotionPage]):
-    for page in all_pages:
-        if page.id == id:
-            return page
-    return None
 
 
 def find_block_child_page(block_id: str, all_pages: list[NotionPage]):
