@@ -19,6 +19,8 @@ from ..notion_schemas.notion_block import (
     NotionTable,
     NotionTableRow,
     NotionUnsupported,
+    NotionBulletedListItem,
+    NotionNumberedListItem,
 )
 from ..notion_schemas.notion_page import (
     NotionPage,
@@ -41,11 +43,19 @@ def build_notion_session(token: str) -> Session:
 
 
 def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
-    req_data = {}
+    req_data = {
+            "filter": {
+                "value": "page",
+                "property": "object",
+            },
+    }
     if start_cursor:
         req_data = {
             "start_cursor": start_cursor,
-            "value": "page",
+            "filter": {
+                "value": "page",
+                "property": "object",
+            },
         }
 
     response = session.post(
@@ -188,6 +198,22 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
                         for row in rows
                     ],
                 },
+            }
+        case NotionBulletedListItem():
+            content = ""
+            for rich_text in block.specific.rich_text:
+                content += rich_text.plain_text
+            return {
+                "type": "bulletListItem",
+                "content": content,
+            }
+        case NotionNumberedListItem():
+            content = ""
+            for rich_text in block.specific.rich_text:
+                content += rich_text.plain_text
+            return {
+                "type": "numberedListItem",
+                "content": content,
             }
 
         case NotionUnsupported():
