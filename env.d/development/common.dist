@@ -61,3 +61,6 @@ COLLABORATION_BACKEND_BASE_URL=http://app-dev:8000
 COLLABORATION_SERVER_ORIGIN=http://localhost:3000
 COLLABORATION_SERVER_SECRET=my-secret
 COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
+
+Y_PROVIDER_API_BASE_URL=http://y-provider:4444/api/
+Y_PROVIDER_API_KEY=yprovider-api-key

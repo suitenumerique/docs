@@ -12,6 +12,10 @@ and this project adheres to
 
 - ✨(frontend) add customization for translations #857
 
+### Changed
+
+- 🧑‍💻(docker): add y-provider config to development environment #1057
+
 ## [3.3.0] - 2025-05-06
 
 ### Added
