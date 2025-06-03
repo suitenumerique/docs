@@ -174,10 +174,10 @@ def convert_block(block: NotionBlock, attachments: list[ImportedAttachment]) -> 
         case NotionColumnList():
             columns_content = []
             for column in block.children:
-                columns_content.extend(convert_block(column))
+                columns_content.extend(convert_block(column, attachments))
             return columns_content
         case NotionColumn():
-            return [convert_block(child_content)[0] for child_content in block.children]
+            return [convert_block(child_content, attachments)[0] for child_content in block.children]
 
         case NotionParagraph():
             content = convert_rich_texts(block.specific.rich_text)
