@@ -5,9 +5,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Discriminator, Field, ValidationError, model_validator
 
 from .notion_rich_text import NotionRichText
-
-
-class NotionFile(BaseModel): ...
+from .notion_file import NotionFile
 
 
 class NotionParentType(StrEnum):
