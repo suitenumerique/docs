@@ -1,6 +1,6 @@
-import { ColDef, ColSpanParams, themeQuartz } from 'ag-grid-community';
+import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/features/grist';
 
 import { AddButtonComponent } from './AddColumnButton';
+import { AddRowButton } from './AddRowButton';
 
 export const DatabaseGrid = ({
   documentId,
@@ -84,6 +85,23 @@ export const DatabaseGrid = ({
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
       colSpan: newRowColSpan,
+      cellRendererSelector: (
+        params: ICellRendererParams<Record<string, string>>,
+      ) => {
+        if (params.data) {
+          const addRowButton = {
+            component: AddRowButton,
+            params: { values: params.data },
+          };
+
+          if (Object.values(params.data)[0].includes('new')) {
+            return addRowButton;
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          }
+          return undefined;
+        }
+        return undefined;
+      },
     }));
 
     setColDefs(columns.concat(addColumnColDef));
@@ -98,24 +116,16 @@ export const DatabaseGrid = ({
     spanRows: true,
   };
 
-  const theme = useMemo(() => {
-    return themeQuartz.withParams({
-      pinnedRowBorder: {
-        width: 2,
-      },
-    });
-  }, []);
-
   const addColumn = (columnName: string) => {
     const newColDef: ColDef = {
       field: columnName,
     };
 
     setColDefs((prev) => {
-      const addColumn = prev.pop();
+      const addColumn = prev?.pop();
 
       return [
-        ...prev,
+        ...(prev ?? []),
         newColDef,
         ...(addColumn !== undefined ? [addColumn] : []),
       ];
@@ -141,7 +151,6 @@ export const DatabaseGrid = ({
         defaultColDef={defaultColDef}
         domLayout="autoHeight"
         enableCellSpan={true}
-        theme={theme}
       />
     </Box>
   );
