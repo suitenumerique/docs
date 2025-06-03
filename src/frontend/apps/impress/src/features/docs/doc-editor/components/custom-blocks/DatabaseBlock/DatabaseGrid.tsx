@@ -1,6 +1,6 @@
 import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { Box } from '@/components';
 import {
@@ -11,6 +11,7 @@ import {
 
 import { AddButtonComponent } from './AddColumnButton';
 import { AddRowButton } from './AddRowButton';
+import { useColumns, useRows } from './hooks';
 import { createNewRow } from './utils';
 
 export const DatabaseGrid = ({
@@ -29,9 +30,8 @@ export const DatabaseGrid = ({
 
   const { createColumns } = useGristCrudColumns();
 
-  const [rowData, setRowData] =
-    useState<Record<string, string | number | boolean>[]>();
-  const [colDefs, setColDefs] = useState<ColDef[]>();
+  const { rowData, setRowData } = useRows();
+  const { colDefs, setColDefs } = useColumns();
 
   const newRowColSpan = (params: ColSpanParams<Record<string, string>>) => {
     const colsValues = params.data ?? {};
