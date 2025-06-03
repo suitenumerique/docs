@@ -14,6 +14,7 @@ export const Icon = ({
 }: IconProps) => {
   return (
     <Text
+      aria-hidden={!!!textProps['aria-label']}
       {...textProps}
       className={clsx('--docs--icon-bg', textProps.className, {
         'material-icons-filled': variant === 'filled',

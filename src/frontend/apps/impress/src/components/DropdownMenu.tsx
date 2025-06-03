@@ -1,5 +1,6 @@
 import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
 import { Fragment, PropsWithChildren, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
@@ -45,6 +46,7 @@ export const DropdownMenu = ({
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(false);
   const blockButtonRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
@@ -162,6 +164,7 @@ export const DropdownMenu = ({
                   $direction="row"
                   $align="center"
                   $gap={spacingsTokens['base']}
+                  aria-selected={option.isSelected ? true : undefined}
                 >
                   {option.icon && (
                     <Icon
@@ -177,7 +180,14 @@ export const DropdownMenu = ({
                 </Box>
                 {(option.isSelected ||
                   selectedValues?.includes(option.value ?? '')) && (
-                  <Icon iconName="check" $size="20px" $theme="greyscale" />
+                  <Icon
+                    role="img"
+                    iconName="check"
+                    $size="20px"
+                    $theme="greyscale"
+                    aria-label={t('Checked')}
+                    aria-hidden="false"
+                  />
                 )}
               </BoxButton>
               {option.showSeparator && (

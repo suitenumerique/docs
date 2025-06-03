@@ -252,6 +252,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
+            aria-label={t('Export the document')}
           />
         )}
         <DropdownMenu options={options}>
