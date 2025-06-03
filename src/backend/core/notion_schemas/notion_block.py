@@ -144,6 +144,15 @@ class NotionCode(BaseModel):
     language: str  # Actually an enum
 
 
+class NotionCallout(BaseModel):
+    """https://developers.notion.com/reference/block#callout"""
+
+    block_type: Literal[NotionBlockType.CALLOUT] = NotionBlockType.CALLOUT
+    rich_text: list[NotionRichText]
+    # icon: Any # could be an emoji or an image
+    color: NotionColor
+
+
 class NotionDivider(BaseModel):
     """https://developers.notion.com/reference/block#divider"""
 
@@ -176,7 +185,7 @@ class NotionImage(BaseModel):
     def move_type_inward_and_rename(cls, data: Any) -> Any:
         if not isinstance(data, dict):
             return data
-        return { "block_type": "image", "file": data }
+        return {"block_type": "image", "file": data}
 
 
 class NotionVideo(BaseModel):

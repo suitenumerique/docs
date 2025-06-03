@@ -8,6 +8,7 @@ from requests import Session
 from ..notion_schemas.notion_block import (
     NotionBlock,
     NotionBulletedListItem,
+    NotionCallout,
     NotionChildPage,
     NotionColumn,
     NotionColumnList,
@@ -211,6 +212,13 @@ def convert_block(
             ]
         # case NotionDivider():
         #     return {"type": "divider", "properties": {}}
+        case NotionCallout():
+            return [
+                {
+                    "type": "comment",
+                    "content": convert_rich_texts(block.specific.rich_text),
+                }
+            ]
         case NotionTable():
             rows: list[NotionTableRow] = [child.specific for child in block.children]  # type: ignore # I don't know how to assert properly
             if len(rows) == 0:
@@ -266,7 +274,7 @@ def convert_block(
                 {
                     "type": "bulletListItem",
                     "content": convert_rich_texts(block.specific.rich_text),
-                    "children": convert_block_list(block.children),
+                    "children": convert_block_list(block.children, attachments),
                 }
             ]
         case NotionNumberedListItem():
@@ -274,7 +282,7 @@ def convert_block(
                 {
                     "type": "numberedListItem",
                     "content": convert_rich_texts(block.specific.rich_text),
-                    "children": convert_block_list(block.children),
+                    "children": convert_block_list(block.children, attachments),
                 }
             ]
         case NotionToDo():
@@ -283,7 +291,7 @@ def convert_block(
                     "type": "checkListItem",
                     "content": convert_rich_texts(block.specific.rich_text),
                     "checked": block.specific.checked,
-                    "children": convert_block_list(block.children),
+                    "children": convert_block_list(block.children, attachments),
                 }
             ]
         case NotionUnsupported():
