@@ -1,4 +1,6 @@
-import { ColDef } from 'ag-grid-community';
+import { ColDef, ICellRendererParams } from 'ag-grid-community';
+
+import { AddRowButton } from './AddRowButton';
 
 export const createNewRow = (
   value: string | undefined,
@@ -14,4 +16,19 @@ export const createNewRow = (
   });
 
   return addNewRow;
+};
+
+export const addRowCellRenderer = (
+  params: ICellRendererParams<Record<string, string>>,
+) => {
+  if (params.data) {
+    const addRowButton = {
+      component: AddRowButton,
+    };
+    if (Object.values(params.data)[0]?.includes('new')) {
+      return addRowButton;
+    }
+    return undefined;
+  }
+  return undefined;
 };
