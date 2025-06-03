@@ -13,6 +13,7 @@ import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
 import { DatabaseRow } from './types';
 import {
+  ADD_NEW_ROW,
   addRowCellRenderer,
   createNewRow,
   getColumnNames,
@@ -72,9 +73,17 @@ export const DatabaseGrid = ({
 
   useEffect(() => {
     const columnNames = getColumnNames(colDefs);
-    const addNewRow = createNewRow({ value: '+ new  row', columnNames });
+    const lastRow = rowData?.[rowData.length - 1];
+    if (lastRow && Object.values(lastRow).length > 0) {
+      const lastRowValue = Object.values(lastRow)[0];
+      if (lastRowValue === ADD_NEW_ROW) {
+        return;
+      }
+    }
+    const addNewRow = createNewRow({ value: ADD_NEW_ROW, columnNames });
     setRowData((prev) => [...(prev ? prev : []), addNewRow]);
-  }, [colDefs, setRowData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colDefs]);
 
   const defaultColDef = {
     flex: 1,

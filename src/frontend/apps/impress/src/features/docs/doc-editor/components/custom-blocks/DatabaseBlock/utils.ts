@@ -9,6 +9,8 @@ import { Dispatch, SetStateAction } from 'react';
 import { AddRowButton } from './AddRowButton';
 import { DatabaseRow } from './types';
 
+export const ADD_NEW_ROW = 'add-new-row';
+
 export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: 'fitCellContents',
 };
@@ -40,7 +42,7 @@ export const addRowCellRenderer = (
       component: AddRowButton,
       params: { columns, setRowData },
     };
-    if (Object.values(params.data)[0]?.includes('new')) {
+    if (Object.values(params.data)[0] === ADD_NEW_ROW) {
       return addRowButton;
     }
     return undefined;
@@ -52,7 +54,7 @@ export const newRowColSpan = (
   params: ColSpanParams<Record<string, string>>,
 ) => {
   const colsValues = params.data ?? {};
-  const isNewRow = Object.values(colsValues)[0]?.includes('new');
+  const isNewRow = Object.values(colsValues)[0] === ADD_NEW_ROW;
   if (isNewRow) {
     return Object.keys(colsValues).length;
   }
