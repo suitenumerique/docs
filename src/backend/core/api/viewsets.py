@@ -1863,6 +1863,12 @@ def _import_notion_child_page(imported_doc, parent_doc, user, imported_docs_by_p
         content=document_content,
     )
 
+    models.DocumentAccess.objects.create(
+        document=obj,
+        user=user,
+        role=models.RoleChoices.OWNER,
+    )
+
     imported_docs_by_page_id[imported_doc.page.id] = obj
 
     for child in imported_doc.children:
