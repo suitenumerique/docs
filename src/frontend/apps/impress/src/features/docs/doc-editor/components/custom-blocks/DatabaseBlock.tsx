@@ -39,8 +39,8 @@ export const DatabaseBlock = createReactBlockSpec(
       const [openGristApiKeyModal, setOpenGristApiKeyModal] = useState<boolean>(
         gristApiKey === null,
       );
-
-      if (openGristApiKeyModal === true) {
+      
+      if (openGristApiKeyModal) {
         return (
           <GristApiKeyModal
             isOpen={openGristApiKeyModal}
