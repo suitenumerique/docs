@@ -29,6 +29,7 @@ import { randomColor } from '../utils';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { InlineLatex } from './InlineLatex/';
+import { useLatexDetection } from './InlineLatex/hooks/useLatexDetection';
 import {
   CalloutBlock,
   DividerBlock,
@@ -143,6 +144,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   useHeadings(editor);
   useUploadStatus(editor);
+  useLatexDetection(editor);
 
   useEffect(() => {
     setEditor(editor);
@@ -177,6 +179,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         theme="light"
       >
         <BlockNoteSuggestionMenu />
+
         <BlockNoteToolbar />
       </BlockNoteView>
     </Box>

@@ -10,7 +10,7 @@ export const InlineLatex = createReactInlineContentSpec(inlineLatexConfig, {
       formula={inlineContent.props.formula}
       updateFormula={(newFormula) => {
         if (newFormula.trim() === '') {
-          updateInlineContent({ type: 'inlineLatex', props: { formula: '' } });
+          updateInlineContent({ type: 'text', text: '' });
         } else {
           updateInlineContent({
             type: 'inlineLatex',
