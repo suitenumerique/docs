@@ -31,7 +31,7 @@ export const useListGristTables = (
           await errorCauses(response),
         );
       }
-      return (await response.json()) as Promise<TableDescription>; // Adjusted to return an array of Table objects
+      return (await response.json()) as Promise<TableDescription>;
     };
 
     fetchTables()
