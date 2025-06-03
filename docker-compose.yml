@@ -141,8 +141,8 @@ services:
     depends_on:
       app-dev:
         condition: service_started
-      #y-provider:
-      #  condition: service_started
+      y-provider:
+        condition: service_started
       keycloak:
         condition: service_healthy
         restart: true
@@ -178,17 +178,17 @@ services:
     volumes:
       - ".:/app"
 
-  #y-provider:
-  #  user: ${DOCKER_USER:-1000}
-  #  build: 
-  #    context: .
-  #    dockerfile: ./src/frontend/servers/y-provider/Dockerfile
-  #    target: y-provider
-  #  restart: unless-stopped
-  #  env_file:
-  #    - env.d/development/common
-  #  ports:
-  #    - "4444:4444"
+  y-provider:
+    user: ${DOCKER_USER:-1000}
+    build:
+      context: .
+      dockerfile: ./src/backend/servers/y-provider/Dockerfile
+      #target: y-provider
+    restart: unless-stopped
+    env_file:
+      - env.d/development/common
+    ports:
+      - "4444:4444"
 
   kc_postgresql:
     image: postgres:14.3
