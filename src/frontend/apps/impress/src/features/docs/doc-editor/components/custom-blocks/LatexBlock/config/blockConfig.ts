@@ -1,6 +1,6 @@
 import { defaultProps } from '@blocknote/core';
 export const defaultFormula =
-  '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{2\\pi}';
+  '\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}';
 
 export const blockSpec = {
   type: 'latex',
