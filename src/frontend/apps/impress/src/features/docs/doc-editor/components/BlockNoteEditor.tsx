@@ -32,10 +32,10 @@ import { InlineLatex } from './InlineLatex/';
 import { useLatexDetection } from './InlineLatex/hooks/useLatexDetection';
 import {
   CalloutBlock,
+  ChartBlock,
   DividerBlock,
   LatexBlock,
   MermaidBlock,
-  ChartBlock
 } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
@@ -46,7 +46,7 @@ export const blockNoteSchema = withPageBreak(
       divider: DividerBlock,
       latex: LatexBlock,
       mermaid: MermaidBlock,
-      chart: ChartBlock
+      chart: ChartBlock,
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,

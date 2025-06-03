@@ -78,3 +78,5 @@ db.sqlite3
 .devcontainer
 
 **/package-lock.json
+src/frontend/package-lock.json
+src/frontend/yarn.lock

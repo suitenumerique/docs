@@ -7016,6 +7016,11 @@
     "@webassemblyjs/ast" "1.14.1"
     "@xtuc/long" "4.2.2"
 
+"@xmldom/xmldom@0.9.8":
+  version "0.9.8"
+  resolved "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.9.8.tgz"
+  integrity sha512-p96FSY54r+WJ50FIOsCOjyj/wavs8921hG5+kVMmZgKcvIKxMXHTrjNJvRgWa/zuX3B6t2lijLNFaOyuxUH+2A==
+
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"
   resolved "https://registry.npmjs.org/@xtuc/ieee754/-/ieee754-1.2.0.tgz"
@@ -7170,18 +7175,20 @@ anymatch@^3.0.3, anymatch@^3.1.3, anymatch@~3.1.2:
     "@blocknote/react" "0.31.1"
     "@blocknote/xl-docx-exporter" "0.31.1"
     "@blocknote/xl-pdf-exporter" "0.31.1"
+    "@cortex-js/compute-engine" "^0.29.1"
     "@emoji-mart/data" "1.2.1"
     "@emoji-mart/react" "1.1.1"
     "@fontsource/material-icons" "5.2.5"
     "@gouvfr-lasuite/integration" "1.0.3"
     "@gouvfr-lasuite/ui-kit" "0.7.0"
     "@hocuspocus/provider" "2.15.2"
+    "@monaco-editor/react" "^4.7.0"
     "@openfun/cunningham-react" "3.1.0"
     "@react-pdf/renderer" "4.3.0"
     "@sentry/nextjs" "9.22.0"
     "@tanstack/react-query" "5.77.1"
     "@types/katex" "^0.16.7"
-    canvg "4.0.3"
+    chart.js "^4.4.9"
     clsx "2.1.1"
     cmdk "1.1.1"
     crisp-sdk-web "1.0.25"
@@ -7198,12 +7205,14 @@ anymatch@^3.0.3, anymatch@^3.1.3, anymatch@~3.1.2:
     posthog-js "1.246.0"
     react "*"
     react-aria-components "1.9.0"
+    react-chartjs-2 "^5.3.0"
     react-dom "*"
     react-i18next "15.5.2"
     react-intersection-observer "9.16.0"
     react-select "5.10.1"
     shiki "^3.4.2"
     styled-components "6.1.18"
+    tex-to-svg "^0.2.0"
     use-debounce "10.0.4"
     y-protocols "1.0.6"
     yjs "*"
@@ -7758,7 +7767,7 @@ caniuse-lite@^1.0.30001579, caniuse-lite@^1.0.30001716:
   resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001718.tgz"
   integrity sha512-AflseV1ahcSunK53NfEs9gFWgOEmzr0f+kaMFA4xiLZlr9Hzt7HxcSpIFcnNCUkz6R6dWKa54rUz3HUmI3nVcw==
 
-canvg@4.0.3:
+canvg@^4.0.3:
   version "4.0.3"
   resolved "https://registry.npmjs.org/canvg/-/canvg-4.0.3.tgz"
   integrity sha512-fKzMoMBwus3CWo1Uy8XJc4tqqn98RoRrGV6CsIkaNiQT5lOeHuMh4fOt+LXLzn2Wqtr4p/c2TOLz4xtu4oBlFA==
@@ -8056,6 +8065,11 @@ commander@13.0.0:
   version "13.0.0"
   resolved "https://registry.npmjs.org/commander/-/commander-13.0.0.tgz"
   integrity sha512-oPYleIY8wmTVzkvQq10AEok6YcTC4sRUBl8F9gVuwchGVUCTbl/vhLTaQqutuuySYOsu8YTgV+OxKc/8Yvx+mQ==
+
+commander@13.1.0:
+  version "13.1.0"
+  resolved "https://registry.npmjs.org/commander/-/commander-13.1.0.tgz"
+  integrity sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==
 
 commander@7:
   version "7.2.0"
@@ -9548,6 +9562,11 @@ eslint@*, "eslint@^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9", "eslint@^3 
     optionator "^0.9.3"
     strip-ansi "^6.0.1"
     text-table "^0.2.0"
+
+esm@^3.2.25:
+  version "3.2.25"
+  resolved "https://registry.npmjs.org/esm/-/esm-3.2.25.tgz"
+  integrity sha512-U1suiZ2oDVWv4zPO56S0NcR5QriEahGtdN2OR6FiOG4WJvcjBVFB0qI4+eKoWFH483PKGuLuu6V8Z4T5g63UVA==
 
 espree@^9.6.0, espree@^9.6.1:
   version "9.6.1"
@@ -12083,6 +12102,16 @@ math-intrinsics@^1.1.0:
   resolved "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz"
   integrity sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==
 
+mathjax-full@^3.1.0:
+  version "3.2.2"
+  resolved "https://registry.npmjs.org/mathjax-full/-/mathjax-full-3.2.2.tgz"
+  integrity sha512-+LfG9Fik+OuI8SLwsiR02IVdjcnRCy5MufYLi0C3TdMT56L/pjB0alMVGgoWJF8pN9Rc7FESycZB9BMNWIid5w==
+  dependencies:
+    esm "^3.2.25"
+    mhchemparser "^4.1.0"
+    mj-context-menu "^0.6.1"
+    speech-rule-engine "^4.0.6"
+
 mathml-tag-names@^2.1.3:
   version "2.1.3"
   resolved "https://registry.npmjs.org/mathml-tag-names/-/mathml-tag-names-2.1.3.tgz"
@@ -12316,6 +12345,11 @@ methods@^1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/methods/-/methods-1.1.2.tgz"
   integrity sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==
+
+mhchemparser@^4.1.0:
+  version "4.2.1"
+  resolved "https://registry.npmjs.org/mhchemparser/-/mhchemparser-4.2.1.tgz"
+  integrity sha512-kYmyrCirqJf3zZ9t/0wGgRZ4/ZJw//VwaRVGA75C4nhE60vtnIzhl9J9ndkX/h6hxSN7pjg/cE0VxbnNM+bnDQ==
 
 micromark-core-commonmark@^2.0.0:
   version "2.0.3"
@@ -12698,6 +12732,11 @@ minipass@^4.2.4:
   version "7.1.2"
   resolved "https://registry.npmjs.org/minipass/-/minipass-7.1.2.tgz"
   integrity sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==
+
+mj-context-menu@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.npmjs.org/mj-context-menu/-/mj-context-menu-0.6.1.tgz"
+  integrity sha512-7NO5s6n10TIV96d4g2uDpG7ZDpIhMh0QNfGdJw/W47JswFcosz457wqz/b5sAKvl12sxINGFCn80NZHKwxQEXA==
 
 mktemp@~0.4.0:
   version "0.4.0"
@@ -15229,6 +15268,15 @@ space-separated-tokens@^2.0.0:
   resolved "https://registry.npmjs.org/space-separated-tokens/-/space-separated-tokens-2.0.2.tgz"
   integrity sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==
 
+speech-rule-engine@^4.0.6:
+  version "4.1.2"
+  resolved "https://registry.npmjs.org/speech-rule-engine/-/speech-rule-engine-4.1.2.tgz"
+  integrity sha512-S6ji+flMEga+1QU79NDbwZ8Ivf0S/MpupQQiIC0rTpU/ZTKgcajijJJb1OcByBQDjrXCN1/DJtGz4ZJeBMPGJw==
+  dependencies:
+    "@xmldom/xmldom" "0.9.8"
+    commander "13.1.0"
+    wicked-good-xpath "1.3.0"
+
 sprintf-js@^1.1.1:
   version "1.1.3"
   resolved "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.1.3.tgz"
@@ -15733,6 +15781,13 @@ test-exclude@^6.0.0:
     "@istanbuljs/schema" "^0.1.2"
     glob "^7.1.4"
     minimatch "^3.0.4"
+
+tex-to-svg@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.npmjs.org/tex-to-svg/-/tex-to-svg-0.2.0.tgz"
+  integrity sha512-YkP5V4O3u+i2odO5ETEISjVTemfzrx+YeG/XHXRoq3sfL0p8q4zDdlP/h+mna/4tEu6EylJOKzJws3iOnzU/rA==
+  dependencies:
+    mathjax-full "^3.1.0"
 
 text-decoder@^1.1.0:
   version "1.2.3"
@@ -16749,6 +16804,11 @@ which@^2.0.1, which@^2.0.2:
   integrity sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==
   dependencies:
     isexe "^2.0.0"
+
+wicked-good-xpath@1.3.0:
+  version "1.3.0"
+  resolved "https://registry.npmjs.org/wicked-good-xpath/-/wicked-good-xpath-1.3.0.tgz"
+  integrity sha512-Gd9+TUn5nXdwj/hFsPVx5cuHHiF5Bwuc30jZ4+ronF1qHK5O7HD0sgmXWSEgwKquT3ClLoKPVbO6qGwVwLzvAw==
 
 word-wrap@^1.2.5:
   version "1.2.5"

@@ -9,3 +9,6 @@ export * from './paragraphPDF';
 export * from './quoteDocx';
 export * from './quotePDF';
 export * from './tablePDF';
+export * from './latexBlockPDF';
+export * from './mermaidBlockPDF';
+export * from './chartBlockPDF';

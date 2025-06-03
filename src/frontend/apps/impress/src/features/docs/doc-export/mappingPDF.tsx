@@ -2,13 +2,17 @@ import { pdfDefaultSchemaMappings } from '@blocknote/xl-pdf-exporter';
 
 import {
   blockMappingCalloutPDF,
+  blockMappingChartBlockPDF,
   blockMappingDividerPDF,
   blockMappingHeadingPDF,
   blockMappingImagePDF,
+  blockMappingLatexBlockPDF,
+  blockMappingMermaidBlockPDF,
   blockMappingParagraphPDF,
   blockMappingQuotePDF,
   blockMappingTablePDF,
 } from './blocks-mapping';
+import { blockMappingInlineLatexPDF } from './inline-mapping';
 import { DocsExporterPDF } from './types';
 
 export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
@@ -22,5 +26,12 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
+    latex: blockMappingLatexBlockPDF,
+    mermaid: blockMappingMermaidBlockPDF,
+    chart: blockMappingChartBlockPDF,
+  },
+  inlineContentMapping: {
+    ...pdfDefaultSchemaMappings.inlineContentMapping,
+    inlineLatex: blockMappingInlineLatexPDF,
   },
 };
