@@ -6523,7 +6523,7 @@
 
 "@types/node@22.10.7":
   version "22.10.7"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/@types/node/-/node-22.10.7.tgz#14a1ca33fd0ebdd9d63593ed8d3fbc882a6d28d7"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.7.tgz#14a1ca33fd0ebdd9d63593ed8d3fbc882a6d28d7"
   integrity sha512-V09KvXxFiutGp6B7XkpaDXlNadZxrzajcY50EuoLIpQ6WWYCSvf19lVIazzfIzQvhUN2HjX12spLojTnhuKlGg==
   dependencies:
     undici-types "~6.20.0"
@@ -7064,19 +7064,19 @@ acorn@^8.1.0, acorn@^8.11.0, acorn@^8.14.0, acorn@^8.4.1, acorn@^8.8.1, acorn@^8
 
 ag-charts-types@11.3.1:
   version "11.3.1"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/ag-charts-types/-/ag-charts-types-11.3.1.tgz#5664cb61ecb3c8318e22bd1eb60cc4c4dfbb261e"
+  resolved "https://registry.yarnpkg.com/ag-charts-types/-/ag-charts-types-11.3.1.tgz#5664cb61ecb3c8318e22bd1eb60cc4c4dfbb261e"
   integrity sha512-kUSSypwsmkQDT5Oqgcr3zYQShzQuhvYeHaT1l2ocUrz3hBzkIiYwzp9CVG3Vs//M9TUCJLTcR0CBIr9ADhPITw==
 
 ag-grid-community@33.3.1:
   version "33.3.1"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/ag-grid-community/-/ag-grid-community-33.3.1.tgz#598a3322dda944455d0ca69ce3a8f32403b0a0cb"
+  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-33.3.1.tgz#598a3322dda944455d0ca69ce3a8f32403b0a0cb"
   integrity sha512-c3JXKY5K5V5KVZ6rhFc13hK/8UzaZNwTqL70YKkqUbqwOcogDVVeG4I25W6o5YOlFO6LFN/5xFnFPASWn4LwBw==
   dependencies:
     ag-charts-types "11.3.1"
 
 ag-grid-react@^33.3.1:
   version "33.3.1"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/ag-grid-react/-/ag-grid-react-33.3.1.tgz#b6c10e922b493c79408e09335bb30c91135a1aea"
+  resolved "https://registry.yarnpkg.com/ag-grid-react/-/ag-grid-react-33.3.1.tgz#b6c10e922b493c79408e09335bb30c91135a1aea"
   integrity sha512-CHuuHxzuz2rsKuyxjuGnBadwm0/I2DCG4j1WgIa2wJkdlTUrcKjF6RD9qwfRLYKA4P40shG640emVuU6/qiZLA==
   dependencies:
     ag-grid-community "33.3.1"
@@ -13395,7 +13395,7 @@ react-dom@*:
 
 react-dom@19.0.0:
   version "19.0.0"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/react-dom/-/react-dom-19.0.0.tgz#43446f1f01c65a4cd7f7588083e686a6726cfb57"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.0.0.tgz#43446f1f01c65a4cd7f7588083e686a6726cfb57"
   integrity sha512-4GV5sHFG0e/0AD4X+ySy6UJd3jVl1iNsNHdpad0qhABJ11twS3TTBnseqsKurKcsNqCEFeGL3uLpVChpIO3QfQ==
   dependencies:
     scheduler "^0.25.0"
@@ -13634,7 +13634,7 @@ react@*:
 
 react@19.0.0:
   version "19.0.0"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/react/-/react-19.0.0.tgz#6e1969251b9f108870aa4bff37a0ce9ddfaaabdd"
+  resolved "https://registry.yarnpkg.com/react/-/react-19.0.0.tgz#6e1969251b9f108870aa4bff37a0ce9ddfaaabdd"
   integrity sha512-V8AVnmPIICiWpGfm6GLzCR/W5FXLchHop40W4nXBmdlEceh16rCN8O8LNWm5bh5XUX91fh7KpA+W0TgMKmgTpQ==
 
 readable-stream@^3.4.0:
@@ -14118,7 +14118,7 @@ scheduler@0.25.0-rc-603e6108-20241029:
 
 scheduler@^0.25.0:
   version "0.25.0"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/scheduler/-/scheduler-0.25.0.tgz#336cd9768e8cceebf52d3c80e3dcf5de23e7e015"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0.tgz#336cd9768e8cceebf52d3c80e3dcf5de23e7e015"
   integrity sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA==
 
 scheduler@^0.26.0:
@@ -15259,7 +15259,7 @@ underscore.string@~3.3.4:
 
 undici-types@~6.20.0:
   version "6.20.0"
-  resolved "https://artifactory.laforge.cloud.bpifrance.fr/artifactory/api/npm/npm-all/undici-types/-/undici-types-6.20.0.tgz#8171bf22c1f588d1554d55bf204bc624af388433"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.20.0.tgz#8171bf22c1f588d1554d55bf204bc624af388433"
   integrity sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==
 
 undici-types@~6.21.0:
