@@ -28,7 +28,7 @@ from ..notion_schemas.notion_page import (
     NotionParentPage,
     NotionParentWorkspace,
 )
-from ..notion_schemas.notion_rich_text import NotionRichText
+from ..notion_schemas.notion_rich_text import NotionRichText, NotionRichTextAnnotation
 
 logger = logging.getLogger(__name__)
 
@@ -125,16 +125,27 @@ def fetch_block_children(session: Session, block_id: str) -> list[NotionBlock]:
     return blocks
 
 
-def convert_rich_texts(rich_texts: list[NotionRichText]) -> str:
-    return "".join(rich_text.plain_text for rich_text in rich_texts)
+def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]:
+    content = []
+    for rich_text in rich_texts:
+        stylestab = convert_annotations(rich_text.annotations)
+        content.append(
+            {
+                "type" : "text",
+                "text" : rich_text.plain_text,
+                "styles" : stylestab,
+            }
+        )
+    return content
 
 
 def convert_block(block: NotionBlock) -> dict[str, Any] | None:
     match block.specific:
         case NotionParagraph():
+            content = convert_rich_texts(block.specific.rich_text)
             return {
                 "type": "paragraph",
-                "content": convert_rich_texts(block.specific.rich_text),
+                "content": content,
             }
         case NotionHeading1() | NotionHeading2() | NotionHeading3():
             return {
@@ -227,6 +238,27 @@ def convert_block(block: NotionBlock) -> dict[str, Any] | None:
                 "type": "paragraph",
                 "content": f"This should be a {block.specific.block_type}, not yet handled by the importer",
             }
+        
+
+def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]:
+    res = {}
+    if annotations.bold:
+        res["bold"] = "true"
+    if annotations.italic:
+        res["italic"] = "true"
+    if annotations.underline:
+        res["underline"] = "true"
+    if annotations.strikethrough:
+        res["strike"] = "true"
+    if annotations.color:
+        if '_' in str(annotations.color):
+            tmp = str(annotations.color)
+            res["backgroundColor"] = tmp[:tmp.rfind("_")].lower()
+        else:
+            res["textColor"] = str(annotations.color).lower()
+    return res
+
+            
 
 
 def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
