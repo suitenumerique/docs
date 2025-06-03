@@ -1,4 +1,4 @@
-import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
+import { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useEffect } from 'react';
 
@@ -12,7 +12,7 @@ import {
 import { AddButtonComponent } from './AddColumnButton';
 import { useColumns, useRows } from './hooks';
 import { DatabaseRow } from './types';
-import { addRowCellRenderer, createNewRow } from './utils';
+import { addRowCellRenderer, createNewRow, newRowColSpan } from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -30,16 +30,6 @@ export const DatabaseGrid = ({
 
   const { rowData, setRowData } = useRows();
   const { colDefs, setColDefs } = useColumns();
-
-  const newRowColSpan = (params: ColSpanParams<Record<string, string>>) => {
-    const colsValues = params.data ?? {};
-    const isNewRow = Object.values(colsValues)[0]?.includes('new');
-    if (isNewRow) {
-      return Object.keys(colsValues).length;
-    }
-
-    return 1;
-  };
 
   useEffect(() => {
     const filteredEntries = Object.entries(tableData).filter(
@@ -126,7 +116,6 @@ export const DatabaseGrid = ({
           defaultColDef={defaultColDef}
           domLayout="autoHeight"
           enableCellSpan={true}
-          // autoSizeStrategy={autoSizeStrategy}
         />
       </Box>
       <AddButtonComponent addColumn={addColumn} />
