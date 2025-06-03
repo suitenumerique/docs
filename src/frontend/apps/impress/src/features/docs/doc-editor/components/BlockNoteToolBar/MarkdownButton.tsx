@@ -65,9 +65,7 @@ export function MarkdownButton() {
 
         const blockMarkdown =
           await editor.tryParseMarkdownToBlocks(fullContent);
-        console.log('blockMarkdown', blockMarkdown);
         const blockMarkdownWithLatex = parseMarkdownWithLatex(blockMarkdown);
-        console.log('blockMarkdownWithLatex', blockMarkdownWithLatex);
 
         editor.replaceBlocks([block.id], blockMarkdownWithLatex);
       } catch (error) {

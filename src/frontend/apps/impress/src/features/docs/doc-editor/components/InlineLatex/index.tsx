@@ -8,7 +8,6 @@ export const InlineLatex = createReactInlineContentSpec(inlineLatexConfig, {
   render: ({ inlineContent, updateInlineContent }) => (
     <LatexComponent
       updateCatchFocus={(catchFocus) => {
-        console.log('catchFocus', catchFocus);
         updateInlineContent({
           type: 'inlineLatex',
           props: {
