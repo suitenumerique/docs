@@ -128,22 +128,20 @@ export const IFrameViewer = (
 export const IframeToExternalHTML = (
   props: ReactCustomBlockRenderProps<typeof iframeBlockConfig, any, any>,
 ) => {
-  if (!props.block.props.url) {
-    return <p>Add embed</p>;
-  }
-  //   return (
-  //     <iframe
-  //       src={props.block.props.url}
-  //       title="Embedded content"
-  //       style={{
-  //         width: '100%',
-  //         minHeight: '300px',
-  //         border: '1px solid #eee',
-  //         borderRadius: '6px',
-  //       }}
-  //       allowFullScreen
-  //     />
-  //   );
+  <iframe
+    src={props.block.props.url}
+    className="bn-visual-media"
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      border: 'none',
+    }}
+    allowFullScreen
+    title="Embedded content"
+  />;
 };
 
 export const IframeBlock = (
