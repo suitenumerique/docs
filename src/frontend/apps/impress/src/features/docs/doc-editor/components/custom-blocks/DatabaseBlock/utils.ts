@@ -5,6 +5,7 @@ import {
 import { Dispatch, SetStateAction } from 'react';
 
 import { AddRowButton } from './AddRowButton';
+import { DatabaseRow } from './types';
 
 export const autoSizeStrategy: SizeColumnsToContentStrategy = {
   type: 'fitCellContents',
@@ -28,9 +29,7 @@ export const createNewRow = (
 export const addRowCellRenderer = (
   params: ICellRendererParams<Record<string, string>>,
   columns: string[] | undefined,
-  setRowData: Dispatch<
-    SetStateAction<Record<string, string | number | boolean>[] | undefined>
-  >,
+  setRowData: Dispatch<SetStateAction<DatabaseRow[] | undefined>>,
 ) => {
   if (params.data) {
     const addRowButton = {
