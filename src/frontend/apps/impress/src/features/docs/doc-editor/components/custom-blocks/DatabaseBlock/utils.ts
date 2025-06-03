@@ -52,11 +52,12 @@ export const addRowCellRenderer = (
 
 export const newRowColSpan = (
   params: ColSpanParams<Record<string, string>>,
+  columnNumber: number,
 ) => {
   const colsValues = params.data ?? {};
   const isNewRow = Object.values(colsValues)[0] === ADD_NEW_ROW;
   if (isNewRow) {
-    return Object.keys(colsValues).length;
+    return columnNumber;
   }
 
   return 1;
