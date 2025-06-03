@@ -57,6 +57,7 @@ export const DatabaseBlock = createReactBlockSpec(
                   props: { documentId: documentId.toString(), tableId },
                 });
               }}
+              allowCreateSource
             />
           )}
         </Box>
