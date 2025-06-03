@@ -3,12 +3,14 @@ import { defaultProps, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { Button } from '@openfun/cunningham-react';
 import { TFunction } from 'i18next';
+import React from 'react';
 
 import { Box, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
-import { DatabaseTableDisplay } from '../DatabaseTableDisplay';
+
+import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
 
 export const DatabaseBlock = createReactBlockSpec(
   {
@@ -35,12 +37,13 @@ export const DatabaseBlock = createReactBlockSpec(
           style={{
             flexGrow: 1,
             flexDirection: 'row',
+            width: '100%',
           }}
         >
           <Box as="div" />
           {block.props.documentId && block.props.tableId ? (
-            <Box>
-              <DatabaseTableDisplay
+            <Box style={{ height: '100%', width: '100%' }}>
+              <DatabaseGrid
                 documentId={block.props.documentId}
                 tableId={block.props.tableId}
               />

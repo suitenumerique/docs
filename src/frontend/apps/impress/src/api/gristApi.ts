@@ -2,10 +2,11 @@ import { gristApiUrl } from './config';
 
 export const gristFetchApi = async (input: string, init?: RequestInit) => {
   const apiUrl = `${gristApiUrl()}${input}`;
+  const bearerToken = `Bearer ${process.env.NEXT_PUBLIC_GRIST_API_KEY}`;
 
   const headers = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer 26c3446a0165be92f25cacbda4cff1a18ef42d59`,
+    Authorization: bearerToken,
   };
 
   return await fetch(apiUrl, {
