@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
-import { Box, DropdownMenu, Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useListGristTables } from '@/features/grist';
 import { Doc, useListGristDocs } from '@/features/grist/useListGristDocs';
+import { Spinner } from '@gouvfr-lasuite/ui-kit';
+import { Select } from '@openfun/cunningham-react';
 
 type DatabaseSourceSelectorProps = {
   onSourceSelected: (args: { documentId: number; tableId: string }) => void;
@@ -12,19 +14,32 @@ const TableSelector = ({
   documentId,
   onSourceSelected,
 }: { documentId: number } & DatabaseSourceSelectorProps) => {
-  const { tables } = useListGristTables(documentId);
-  return tables ? (
-    <DropdownMenu
-      options={tables.map(({ id }) => ({
-        label: id,
-        value: id,
-        callback: () => onSourceSelected({ documentId, tableId: id }),
-      }))}
-      showArrow
-    >
-      <Text>Sélectionner une table Grist existante</Text>
-    </DropdownMenu>
-  ) : (
+  const { tables, isLoading } = useListGristTables(documentId);
+  if (tables) {
+    return (
+      <Select
+        label="Sélectionner une table Grist existante"
+        options={tables.map(({ id }) => ({
+          label: id,
+          value: id,
+          render: () => <Text style={{ padding: 10 }}>{id}</Text>,
+        }))}
+        onChange={(e) => {
+          // TODO: handle better :)
+          // @ts-expect-error
+          onSourceSelected({ documentId, tableId: e.target.value });
+        }}
+      />
+    );
+  }
+  if (isLoading) {
+    return (
+      <Box style={{ flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+        <Spinner /> <Text>Chargement des tables...</Text>
+      </Box>
+    );
+  }
+  return (
     <Box>
       <Text>No tables available</Text>
     </Box>
@@ -38,17 +53,20 @@ export const DatabaseSourceSelector = ({
   const { docs } = useListGristDocs();
 
   return (
-    <Box>
-      <DropdownMenu
+    <Box style={{ flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+      <Select
+        label={selectedDoc?.name ?? 'Sélectionner un document Grist'}
         options={docs.map((doc) => ({
           label: doc.name,
-          value: doc.id,
-          callback: () => setSelectedDoc(doc),
+          value: doc.id.toString(),
+          render: () => <Text style={{ padding: 10 }}>{doc.name}</Text>,
         }))}
-        showArrow
-      >
-        <Text>{selectedDoc?.name ?? 'Sélectionner un document Grist'}</Text>
-      </DropdownMenu>
+        onChange={(e) =>
+          setSelectedDoc(
+            docs.find((doc) => doc.id.toString() === e.target.value),
+          )
+        }
+      />
       {selectedDoc && (
         <TableSelector
           documentId={selectedDoc.id}

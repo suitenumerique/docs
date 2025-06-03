@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, gristFetchApi } from '@/api';
 
@@ -16,36 +16,36 @@ export interface Fields {
   onDemand: boolean;
 }
 
+const listTables = async (documentId: number) => {
+  const url = `docs/${documentId}/tables`;
+  const response = await gristFetchApi(url);
+
+  if (!response.ok) {
+    throw new APIError(
+      'Failed to fetch Grist tables',
+      await errorCauses(response),
+    );
+  }
+
+  const tableDescription = (await response.json()) as TableDescription;
+  return tableDescription.tables;
+};
+
+type UseListGristTablesReturnType = {
+  tables: Table[] | undefined;
+  isLoading: boolean;
+};
+
 export const useListGristTables = (
   documentId: number,
-): { tables: Table[] | undefined } => {
-  const [tables, setTables] = useState<Table[]>();
-
-  useEffect(() => {
-    const fetchTables = async () => {
-      const url = `docs/${documentId}/tables`;
-      const response = await gristFetchApi(url);
-      if (!response.ok) {
-        throw new APIError(
-          'Failed to fetch Grist tables',
-          await errorCauses(response),
-        );
-      }
-      return (await response.json()) as Promise<TableDescription>; // Adjusted to return an array of Table objects
-    };
-
-    fetchTables()
-      .then((response) => {
-        if (response) {
-          setTables(response.tables);
-        }
-      })
-      .catch((error) => {
-        console.error('Error fetching Grist documents:', error);
-      });
-  }, [documentId]);
+): UseListGristTablesReturnType => {
+  const { data: tables, isLoading } = useQuery<Table[]>({
+    queryKey: ['listTables', documentId],
+    queryFn: () => listTables(documentId),
+  });
 
   return {
     tables,
+    isLoading,
   };
 };
