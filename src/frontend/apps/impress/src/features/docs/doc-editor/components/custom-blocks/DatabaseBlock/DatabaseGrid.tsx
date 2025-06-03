@@ -1,4 +1,4 @@
-import { ColDef, ColSpanParams, ICellRendererParams } from 'ag-grid-community';
+import { ColDef, ColSpanParams } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import { useEffect, useRef } from 'react';
 
@@ -10,9 +10,8 @@ import {
 } from '@/features/grist';
 
 import { AddButtonComponent } from './AddColumnButton';
-import { AddRowButton } from './AddRowButton';
 import { useColumns, useRows } from './hooks';
-import { createNewRow } from './utils';
+import { addRowCellRenderer, createNewRow } from './utils';
 
 export const DatabaseGrid = ({
   documentId,
@@ -81,22 +80,7 @@ export const DatabaseGrid = ({
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
       colSpan: newRowColSpan,
-      cellRendererSelector: (
-        params: ICellRendererParams<Record<string, string>>,
-      ) => {
-        if (params.data) {
-          const addRowButton = {
-            component: AddRowButton,
-            params: { values: params.data },
-          };
-
-          if (Object.values(params.data)[0]?.includes('new')) {
-            return addRowButton;
-          }
-          return undefined;
-        }
-        return undefined;
-      },
+      cellRendererSelector: addRowCellRenderer,
     }));
 
     setColDefs(columns.concat(addColumnColDef));
