@@ -8,8 +8,7 @@ import React from 'react';
 import { Box, Icon, Text } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-import { DatabaseSourceSelector } from '../DatabaseSourceSelector';
-
+import { DatabaseSelector } from '../DatabaseSelector';
 import { DatabaseGrid } from './DatabaseBlock/DatabaseGrid';
 
 export const DatabaseBlock = createReactBlockSpec(
@@ -49,31 +48,13 @@ export const DatabaseBlock = createReactBlockSpec(
               />
             </Box>
           ) : (
-            <Box
-              style={{
-                flexDirection: 'column',
-                gap: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
+            <DatabaseSelector
+              onDatabaseSelected={({ documentId, tableId }) => {
+                editor.updateBlock(block, {
+                  props: { documentId: documentId.toString(), tableId },
+                });
               }}
-            >
-              <Button
-                onClick={() => {
-                  console.log('coucou');
-                }}
-              >
-                Créer une nouvelle base de données vide
-              </Button>
-              <Text>ou</Text>
-              <DatabaseSourceSelector
-                onSourceSelected={({ documentId, tableId }) => {
-                  editor.updateBlock(block, {
-                    props: { documentId: documentId.toString(), tableId },
-                  });
-                }}
-              />
-            </Box>
+            />
           )}
         </Box>
       );
