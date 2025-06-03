@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 
 import requests
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 from requests import Session
 
 from ..notion_schemas.notion_block import NotionBlock, NotionParagraph
@@ -120,14 +120,19 @@ def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
     return converted_blocks
 
 
-def import_notion(token: str) -> list[tuple[NotionPage, list[dict[str, Any]]]]:
+class ImportedDocument(BaseModel):
+    page: NotionPage
+    blocks: list[dict[str, Any]]
+
+
+def import_notion(token: str) -> list[ImportedDocument]:
     """Recursively imports all Notion pages and blocks accessible using the given token."""
     session = build_notion_session(token)
     root_pages = fetch_root_pages(session)
-    pages_and_blocks = []
+    docs = []
     for page in root_pages:
         blocks = fetch_block_children(session, page.id)
         logger.info(f"Page {page.get_title()} (id {page.id})")
         logger.info(blocks)
-        pages_and_blocks.append((page, convert_block_list(blocks)))
-    return pages_and_blocks
+        docs.append(ImportedDocument(page=page, blocks=convert_block_list(blocks)))
+    return docs
