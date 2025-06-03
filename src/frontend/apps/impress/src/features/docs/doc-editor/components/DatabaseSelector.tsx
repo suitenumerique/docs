@@ -9,10 +9,12 @@ import styled from 'styled-components';
 
 type DatabaseSelectorProps = {
   onDatabaseSelected: (params: { documentId: string; tableId: string }) => void;
+  allowCreateSource?: boolean;
 };
 
 export const DatabaseSelector = ({
   onDatabaseSelected,
+  allowCreateSource = false,
 }: DatabaseSelectorProps) => {
   const { createTable } = useGristCreateDocAndTable();
   const { currentDoc } = useDocStore();
@@ -46,23 +48,34 @@ export const DatabaseSelector = ({
         <Icon iconName="storage" color="rgb(62, 152, 255)" />
       </Box>
       <Title>Source de données</Title>
-      <Description>Choisissez votre méthode de création</Description>
+      {allowCreateSource && (
+        <Description>Choisissez votre méthode de création</Description>
+      )}
       <OptionsWrapper>
-        <Option>
-          <Box
-            style={{ flexDirection: 'row', justifyContent: 'space-between' }}
-          >
-            <Box>
-              <OptionTitle>Créer une nouvelle base de données vide</OptionTitle>
-              <Description>Partir d'une base de données vierge</Description>
-            </Box>
-            <Button
-              onClick={handleCreateNewDatabase}
-              icon={<Icon iconName="add" $color="white" />}
-            ></Button>
-          </Box>
-        </Option>
-        <Text style={{ fontWeight: 600, fontSize: 14 }}>ou</Text>
+        {allowCreateSource && (
+          <>
+            <Option>
+              <Box
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Box>
+                  <OptionTitle>
+                    Créer une nouvelle base de données vide
+                  </OptionTitle>
+                  <Description>Partir d'une base de données vierge</Description>
+                </Box>
+                <Button
+                  onClick={handleCreateNewDatabase}
+                  icon={<Icon iconName="add" $color="white" />}
+                ></Button>
+              </Box>
+            </Option>
+            <Text style={{ fontWeight: 600, fontSize: 14 }}>ou</Text>
+          </>
+        )}
         <Option>
           <Box style={{ marginBottom: 10 }}>
             <OptionTitle>
