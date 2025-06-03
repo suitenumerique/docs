@@ -19,6 +19,7 @@ from ..notion_schemas.notion_block import (
     NotionParagraph,
     NotionTable,
     NotionTableRow,
+    NotionToDo,
     NotionUnsupported,
 )
 from ..notion_schemas.notion_page import (
@@ -138,7 +139,7 @@ def convert_rich_texts(rich_texts: list[NotionRichText]) -> list[dict[str, Any]]
     return content
 
 
-def convert_block(block: NotionBlock) -> list[dict[str, Any]] | None:
+def convert_block(block: NotionBlock) -> list[dict[str, Any]]:
     match block.specific:
         case NotionColumnList():
             columns_content = []
@@ -167,9 +168,7 @@ def convert_block(block: NotionBlock) -> list[dict[str, Any]] | None:
                 }
             ]
         # case NotionDivider():
-        #     return {
-        #         "type": "divider",
-        #     }
+        #     return {"type": "divider", "properties": {}}
         case NotionTable():
             rows: list[NotionTableRow] = [child.specific for child in block.children]  # type: ignore # I don't know how to assert properly
             if len(rows) == 0:
@@ -184,54 +183,67 @@ def convert_block(block: NotionBlock) -> list[dict[str, Any]] | None:
                 rows[0].cells
             )  # I'll assume all rows have the same number of cells
             if n_columns == 0:
-                return [{
-                    "type": "paragraph",
-                    "content": "Empty row ?!",
-                }]
+                return [{"type": "paragraph", "content": "Empty row ?!"}]
             if not all(len(row.cells) == n_columns for row in rows):
-                return [{
-                    "type": "paragraph",
-                    "content": "Rows have different number of cells ?!",
-                }]
-            return [{
-                "type": "table",
-                "content": {
-                    "type": "tableContent",
-                    "columnWidths": [
-                        1000 / n_columns for _ in range(n_columns)
-                    ],  # TODO
-                    "headerRows": int(block.specific.has_column_header),
-                    "headerColumns": int(block.specific.has_row_header),
-                    "props": {
-                        "textColor": "default",  # TODO
+                return [
+                    {
+                        "type": "paragraph",
+                        "content": "Rows have different number of cells ?!",
+                    }
+                ]
+            return [
+                {
+                    "type": "table",
+                    "content": {
+                        "type": "tableContent",
+                        "columnWidths": [
+                            1000 / n_columns for _ in range(n_columns)
+                        ],  # TODO
+                        "headerRows": int(block.specific.has_column_header),
+                        "headerColumns": int(block.specific.has_row_header),
+                        "props": {
+                            "textColor": "default",  # TODO
+                        },
+                        "rows": [
+                            {
+                                "cells": [
+                                    {
+                                        "type": "tableCell",
+                                        "content": convert_rich_texts(cell),
+                                    }
+                                    for cell in row.cells
+                                ]
+                            }
+                            for row in rows
+                        ],
                     },
-                    "rows": [
-                        {
-                            "cells": [
-                                {
-                                    "type": "tableCell",
-                                    "content": convert_rich_texts(cell),
-                                }
-                                for cell in row.cells
-                            ]
-                        }
-                        for row in rows
-                    ],
-                },
-            }]
+                }
+            ]
         case NotionBulletedListItem():
-            return [{
-                "type": "bulletListItem",
-                "content": convert_rich_texts(block.specific.rich_text),
-                "children": convert_block_list(block.children),
-            }]
+            return [
+                {
+                    "type": "bulletListItem",
+                    "content": convert_rich_texts(block.specific.rich_text),
+                    "children": convert_block_list(block.children),
+                }
+            ]
         case NotionNumberedListItem():
-            return [{
-                "type": "numberedListItem",
-                "content": convert_rich_texts(block.specific.rich_text),
-                "children": convert_block_list(block.children),
-            }]
-
+            return [
+                {
+                    "type": "numberedListItem",
+                    "content": convert_rich_texts(block.specific.rich_text),
+                    "children": convert_block_list(block.children),
+                }
+            ]
+        case NotionToDo():
+            return [
+                {
+                    "type": "checkListItem",
+                    "content": convert_rich_texts(block.specific.rich_text),
+                    "checked": block.specific.checked,
+                    "children": convert_block_list(block.children),
+                }
+            ]
         case NotionUnsupported():
             str_raw = json.dumps(block.specific.raw, indent=2)
             return [
@@ -241,10 +253,12 @@ def convert_block(block: NotionBlock) -> list[dict[str, Any]] | None:
                 }
             ]
         case _:
-            return [{
-                "type": "paragraph",
-                "content": f"This should be a {block.specific.block_type}, not yet handled by the importer",
-            }]
+            return [
+                {
+                    "type": "paragraph",
+                    "content": f"This should be a {block.specific.block_type}, not yet handled by the importer",
+                }
+            ]
 
 
 def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]:
@@ -268,10 +282,7 @@ def convert_annotations(annotations: NotionRichTextAnnotation) -> dict[str, str]
 def convert_block_list(blocks: list[NotionBlock]) -> list[dict[str, Any]]:
     converted_blocks = []
     for block in blocks:
-        converted_block = convert_block(block)
-        if len(converted_block) == 0:
-            continue
-        converted_blocks.extend(converted_block)
+        converted_blocks.extend(convert_block(block))
     return converted_blocks
 
 
