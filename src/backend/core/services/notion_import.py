@@ -216,9 +216,11 @@ def convert_block(
                 {
                     "type": "heading",
                     "content": convert_rich_texts(block.specific.rich_text),
-                    "level": block.specific.block_type.value.split("_")[
-                        -1
-                    ],  # e.g., "1", "2", or "3"
+                    "props": {
+                        "level": block.specific.block_type.value.split("_")[
+                            -1
+                        ],  # e.g., "1", "2", or "3"
+                    },
                 }
             ]
         # case NotionDivider():
