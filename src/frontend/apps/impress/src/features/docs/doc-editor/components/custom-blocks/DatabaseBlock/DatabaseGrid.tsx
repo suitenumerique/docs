@@ -46,34 +46,27 @@ export const DatabaseGrid = ({
 
     const rowData1: Record<string, string | number | boolean>[] = [];
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    console.log('filtered entries', filteredEntries[0]);
     const numRows = filteredEntries[0]?.[1].length;
 
     for (let i = 0; i < numRows; i++) {
       const row: Record<string, string | boolean | number> = {};
       for (const [key, values] of filteredEntries) {
-        console.log('values', values[i]);
         row[key] = values[i] ?? '';
       }
       rowData1.push(row);
     }
 
-    console.log('rowData1', rowData1);
     setRowData(rowData1);
 
     const columnNames = Object.keys(Object.fromEntries(filteredEntries));
     const columns: ColDef[] = columnNames.map((key) => ({
       field: key,
     }));
-    console.log('columns', columns);
 
     setColDefs(columns.concat(addColumnColDef));
+    // Ignore addColumnColDef
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableData]);
-
-  // Column Definitions: Defines the columns to be displayed.
-
-  console.log('colDefs', colDefs);
 
   const defaultColDef = {
     flex: 1,
