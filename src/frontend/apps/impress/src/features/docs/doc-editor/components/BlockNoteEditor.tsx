@@ -34,12 +34,12 @@ import getInlineLatexMenuItems from './InlineLatex/components/InlineLatexContent
 import { useLatexDetection } from './InlineLatex/hooks/useLatexDetection';
 import {
   CalloutBlock,
-  ChartBlock,
   DividerBlock,
   LatexBlock,
   MermaidBlock,
   ChartBlock,
-  LatexAIBlock
+  LatexAIBlock,
+  MermaidAIBlock
 } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
@@ -52,6 +52,7 @@ export const blockNoteSchema = withPageBreak(
       mermaid: MermaidBlock,
       chart: ChartBlock,
       latexai: LatexAIBlock,
+      mermaidai: MermaidAIBlock
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,

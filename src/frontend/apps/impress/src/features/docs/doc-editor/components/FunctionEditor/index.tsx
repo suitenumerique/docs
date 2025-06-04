@@ -88,7 +88,7 @@ export const FunctionEditor = ({
       <div style={divContainer}>
         <div style={leftButtonsContainer}>
           
-          <Button style={{background : 'none'}} onClick={() => { setLocalFunctions(prev => [...prev, defaultNewFunction]); }}><Icon iconName="add" $size="30px" $color="black" /></Button>
+          <Button style={{background : 'none'}} onClick={() => { setLocalFunctions(prev => (prev.length < 5) ? [...prev, defaultNewFunction] : prev); }}><Icon iconName="add" $size="30px" $color="black" /></Button>
           <br></br>
           <Button style={{background : 'none'}} onClick={() => { setLocalFunctions(prev => (prev.length > 1) ? prev.slice(0, -1) : prev); }}><Icon iconName="remove" $size="30px" $color="black" /></Button>
         </div>
@@ -98,9 +98,9 @@ export const FunctionEditor = ({
           <p style={{width : '32%', display : 'inline-block', marginLeft : '0%'}}><div dangerouslySetInnerHTML={{__html: katex.renderToString(`x_{\\text{min}}`)}}></div></p>
           <p style={{width : '32%', display : 'inline-block', marginLeft : '2%'}}><div dangerouslySetInnerHTML={{__html: katex.renderToString(`x_{\\text{max}}`)}}></div></p>
           <p style={{width : '32%', display : 'inline-block', marginLeft : '2%'}}><div dangerouslySetInnerHTML={{__html: katex.renderToString(`n_{\\text{points}}`)}}></div></p>
-          <input type='number' style={{padding : '5px', width : '32%', borderRadius: '5px', border : "1px solid grey"}} value={localMin} onChange={(e) => setLocalMin(Number(e.target.value)) }/>
-          <input type='number' style={{width : '32%', marginLeft : '2%', padding : '5px', borderRadius: '5px', border : "1px solid grey"}} value={localMax} onChange={(e) => setLocalMax(Number(e.target.value)) }/>
-          <input type='number' style={{width : '32%', marginLeft : '2%', padding : '5px', borderRadius: '5px', border : "1px solid grey"}} value={localNum} onChange={(e) => setLocalNum(formatNum(Number(e.target.value))) }/>
+          <input type='number' style={{padding : '5px', width : '32%', borderRadius: '5px', border : "1px solid grey"}} value={localMin} onChange={(e) => onChange(localFunctions, Number(e.target.value), localMax, localNum) }/>
+          <input type='number' style={{width : '32%', marginLeft : '2%', padding : '5px', borderRadius: '5px', border : "1px solid grey"}} value={localMax} onChange={(e) => onChange(localFunctions, localMin,  Number(e.target.value), localNum) }/>
+          <input type='number' style={{width : '32%', marginLeft : '2%', padding : '5px', borderRadius: '5px', border : "1px solid grey"}} value={localNum} onChange={(e) => onChange(localFunctions, localMin,  localMax, formatNum(Number(e.target.value))) }/>
         </div>
         
         <div style={rightButtonsContainer}>

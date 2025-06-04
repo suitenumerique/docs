@@ -13,22 +13,28 @@ import { FunctionEditor } from '../../../FunctionEditor';
 import type { ChartRendererProps } from '../types';
 import { count } from 'console';
 
+const colors = [
+  'rgb(0, 0, 145)',
+  'rgb(255, 0, 0)',
+  'rgb(0, 255, 0)',
+  'rgb(75, 192, 192)',
+  'rgb(0, 0, 0)',
+  'rgb(160, 0, 160)',
+]
+
 const computeChartConfig = (xValue : number[], yValue : number[][]) => {
   let _datasets = [] as any[];
   yValue.forEach((y, i) => {
-      const color = Math.round(i*(255/yValue.length));
       _datasets.push({
         type: 'line',
         label: '',
         data: y.map((val, i) => {return {x : xValue[i], y : val}}),
         fill: false,
-        borderColor: 'rgb(0, 0,'+ color.toString()+')',
+        borderColor: colors[i],
         tension: 0.1
       })
     }
   );
-
-  console.log(xValue);
 
   return {
     labels : makeArr(xValue[0], xValue[xValue.length - 1], 5).map(val => Math.round(val * 100) / 100),
@@ -57,9 +63,7 @@ export const ChartRenderer = ({
   const [yValue, setyValue] = useState([] as number[][]);
 
   useEffect(() => {
-    console.log("Changed occured !!")
     try {
-      console.log(num);
       const arr = makeArr(min, max, num); 
       let prepareY = [] as number[][];
       functions.forEach(fun => {
@@ -67,7 +71,6 @@ export const ChartRenderer = ({
           const fn = ce.parse(fun).compile()
           prepareY.push(arr.map(val => Number(fn({x : val}))))
         } catch {
-          console.log("ouille ouille");
           prepareY.push(Array.from({length: num+1}, () => NaN));
         }
       });
@@ -75,7 +78,6 @@ export const ChartRenderer = ({
       setxValue(arr);
       setyValue(prepareY);
     } catch {
-      console.log("aie aie");
       setxValue([-5, 5]);
       setyValue([[NaN, NaN]]);
     } 

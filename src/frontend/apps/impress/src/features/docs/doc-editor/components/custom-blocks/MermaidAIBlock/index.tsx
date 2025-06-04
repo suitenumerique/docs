@@ -4,11 +4,11 @@ import { Box, Icon } from '@/components';
 
 import { callAlbertAI} from '../shared/calls'
 
-import { getLatexAIReactSlashMenuItems } from './components/SlashMenuItems';
+import { getMermaidAIReactSlashMenuItems } from './components/SlashMenuItems';
 import { blockStyles } from '../shared/styles';
 import { blockSpec } from './config/blockConfig';
 
-export const LatexAIBlock = createReactBlockSpec(blockSpec, {
+export const MermaidAIBlock = createReactBlockSpec(blockSpec, {
   render: (props) => {
     const { block, editor } = props;
     const [prompt, setPrompt] = useState("");
@@ -20,9 +20,9 @@ export const LatexAIBlock = createReactBlockSpec(blockSpec, {
         style={blockStyles.container}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
-            callAlbertAI('latex', prompt).then((res) => {
+            callAlbertAI('mermaid', prompt).then((res) => {
               editor.replaceBlocks([block.id], [{
-                type : 'latex',
+                type : 'mermaid',
                 props : {
                   formula : res
                 }
@@ -40,4 +40,4 @@ export const LatexAIBlock = createReactBlockSpec(blockSpec, {
   },
 });
 
-export { getLatexAIReactSlashMenuItems };
+export { getMermaidAIReactSlashMenuItems };
