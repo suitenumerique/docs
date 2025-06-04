@@ -9,21 +9,30 @@ import {Scatter} from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, CategoryScale} from 'chart.js';
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Title);
 
-import { CodeEditor } from '../../../CodeEditor';
+import { FunctionEditor } from '../../../FunctionEditor';
 import type { ChartRendererProps } from '../types';
 import { count } from 'console';
 
-const computeChartConfig = (xValue : number[], yValue : number[]) => {
+const computeChartConfig = (xValue : number[], yValue : number[][]) => {
+  let _datasets = [] as any[];
+  yValue.forEach((y, i) => {
+      const color = Math.round(i*(255/yValue.length));
+      _datasets.push({
+        type: 'line',
+        label: '',
+        data: y.map((val, i) => {return {x : xValue[i], y : val}}),
+        fill: false,
+        borderColor: 'rgb(0, 0,'+ color.toString()+')',
+        tension: 0.1
+      })
+    }
+  );
+
+  console.log(xValue);
+
   return {
     labels : makeArr(xValue[0], xValue[xValue.length - 1], 5).map(val => Math.round(val * 100) / 100),
-    datasets : [{
-      type: 'line',
-      label: '',
-      data: yValue.map((val, i) => {return {x : xValue[i], y : val}}),
-      fill: false,
-      borderColor: 'rgb(0, 0, 145)',
-      tension: 0.1
-    }]
+    datasets : _datasets
   }
 };
 
@@ -36,38 +45,41 @@ const makeArr = (startValue : number, stopValue : number, cardinality : number )
 }
 
 export const ChartRenderer = ({
-  formula,
+  functions,
+  min,
+  max,
+  num,
   onFormulaChange,
 }: ChartRendererProps) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const [isLocalEditing, setIsLocalEditing] = useState(false);
   const [xValue, setxValue] = useState([] as number[]);
-  const [yValue, setyValue] = useState([] as number[]);
+  const [yValue, setyValue] = useState([] as number[][]);
 
   useEffect(() => {
-      try {
-        const preParsed = formula.split('\n');
-        const fn = ce.parse(preParsed[0]).compile();
-        let min = -5.0;
-        let max = 5.0;
-        let num = 50;
-
-        if(preParsed.length > 1) {
-          const secondParse = preParsed[1].split(',');
-          min = Number(secondParse[0])
-          max = Number(secondParse[1])
-          num = (secondParse.length > 2) && (Number(secondParse[2]) <= 200) ? Number(secondParse[2]) : num;
+    console.log("Changed occured !!")
+    try {
+      console.log(num);
+      const arr = makeArr(min, max, num); 
+      let prepareY = [] as number[][];
+      functions.forEach(fun => {
+        try {
+          const fn = ce.parse(fun).compile()
+          prepareY.push(arr.map(val => Number(fn({x : val}))))
+        } catch {
+          console.log("ouille ouille");
+          prepareY.push(Array.from({length: num+1}, () => NaN));
         }
+      });
 
-        const arr = makeArr(min, max, num); 
-        setxValue(arr);
-        setyValue(arr.map(val => Number(fn({x : val})))); 
-      } catch {
-        setxValue([-5, 5]);
-        setyValue([0, 0]);
-      }
-         
-  }, [formula]);
+      setxValue(arr);
+      setyValue(prepareY);
+    } catch {
+      console.log("aie aie");
+      setxValue([-5, 5]);
+      setyValue([[NaN, NaN]]);
+    } 
+  }, [functions, min, max, num]);
 
   return (
     <Box
@@ -107,8 +119,11 @@ export const ChartRenderer = ({
         }}
       />
       {isLocalEditing && (
-        <CodeEditor
-          value={formula}
+        <FunctionEditor
+          functions={functions}
+          min={min}
+          max={max}
+          num={num}
           onChange={onFormulaChange}
           onClickOutside={() => setIsLocalEditing(false)}
           parentRef={blockRef}

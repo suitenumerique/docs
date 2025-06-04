@@ -1,8 +1,11 @@
 import type { Block, BlockNoteEditor } from '@blocknote/core';
 
 export interface ChartRendererProps {
-  formula: string;
-  onFormulaChange: (formula: string) => void;
+  functions: string[];
+  min: number;
+  max: number;
+  num: number;
+  onFormulaChange: (functions: string[], min : number, max : number, num : number) => void;
 }
 
 export interface ChartBlockProps {
