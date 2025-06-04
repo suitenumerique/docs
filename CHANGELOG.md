@@ -20,6 +20,7 @@ and this project adheres to
 - ✨(backend) allow setting session cookie age via env var #977
 - ✨(backend) allow theme customnization using a configuration file #948
 - ✨(frontend) Add a custom callout block to the editor #892
+- ✨(frontend) Add a custom database block to the editor #892
 - 🚩(frontend) version MIT only #911
 - ✨(backend) integrate maleware_detection from django-lasuite #936
 - 🏗️(frontend) Footer configurable #959

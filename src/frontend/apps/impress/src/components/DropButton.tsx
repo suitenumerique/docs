@@ -1,4 +1,5 @@
 import {
+  CSSProperties,
   PropsWithChildren,
   ReactNode,
   useEffect,
@@ -38,6 +39,7 @@ const StyledButton = styled(Button)<StyledButtonProps>`
 export interface DropButtonProps {
   button: ReactNode;
   buttonCss?: BoxProps['$css'];
+  buttonStyle?: CSSProperties;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   label?: string;
@@ -46,6 +48,7 @@ export interface DropButtonProps {
 export const DropButton = ({
   button,
   buttonCss,
+  buttonStyle,
   isOpen = false,
   onOpenChange,
   children,
@@ -77,6 +80,7 @@ export const DropButton = ({
           ${buttonCss};
         `}
         className="--docs--drop-button"
+        style={buttonStyle}
       >
         {button}
       </StyledButton>

@@ -1,5 +1,7 @@
 export * from './calloutDocx';
 export * from './calloutPDF';
+export * from './databaseDocx';
+export * from './databasePDF';
 export * from './dividerDocx';
 export * from './dividerPDF';
 export * from './headingPDF';
