@@ -38,6 +38,8 @@ import {
   DividerBlock,
   LatexBlock,
   MermaidBlock,
+  ChartBlock,
+  LatexAIBlock
 } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
@@ -49,6 +51,7 @@ export const blockNoteSchema = withPageBreak(
       latex: LatexBlock,
       mermaid: MermaidBlock,
       chart: ChartBlock,
+      latexai: LatexAIBlock,
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
