@@ -687,17 +687,21 @@ class Base(Configuration):
         default=True, environ_name="ALLOW_LOGOUT_GET_METHOD", environ_prefix=None
     )
 
-    # AI service
-    AI_FEATURE_ENABLED = values.BooleanValue(
-        default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
-    )
-    AI_API_KEY = SecretFileValue(None, environ_name="AI_API_KEY", environ_prefix=None)
-    AI_BASE_URL = values.Value(None, environ_name="AI_BASE_URL", environ_prefix=None)
-    AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
+    # AI settings
     AI_ALLOW_REACH_FROM = values.Value(
         choices=("public", "authenticated", "restricted"),
         default="authenticated",
         environ_name="AI_ALLOW_REACH_FROM",
+        environ_prefix=None,
+    )
+    AI_API_KEY = SecretFileValue(None, environ_name="AI_API_KEY", environ_prefix=None)
+    AI_BASE_URL = values.Value(None, environ_name="AI_BASE_URL", environ_prefix=None)
+    AI_BOT = values.DictValue(
+        default={
+            "name": _("Docs AI"),
+            "color": "#8bc6ff",
+        },
+        environ_name="AI_BOT",
         environ_prefix=None,
     )
     AI_DOCUMENT_RATE_THROTTLE_RATES = {
@@ -705,6 +709,10 @@ class Base(Configuration):
         "hour": 100,
         "day": 500,
     }
+    AI_FEATURE_ENABLED = values.BooleanValue(
+        default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
+    )
+    AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
     AI_USER_RATE_THROTTLE_RATES = {
         "minute": 3,
         "hour": 50,
