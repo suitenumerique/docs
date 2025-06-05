@@ -12,6 +12,7 @@ and this project adheres to
 - ✨ Import of documents #1609
 - 🚨(CI) gives warning if theme not updated #1811
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
+- ✨(frontend) integrate new Blocknote AI feature #1016
 
 ### Changed
 
