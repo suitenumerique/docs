@@ -171,7 +171,7 @@ services:
     working_dir: /app
 
   node:
-    image: node:18
+    image: node:22
     user: "${DOCKER_USER:-1000}"
     environment:
       HOME: /tmp 

@@ -10,7 +10,7 @@ jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
-      node_version: '20.x'
+      node_version: '22.x'
       with-front-dependencies-installation: true
       with-build_mails: true
 

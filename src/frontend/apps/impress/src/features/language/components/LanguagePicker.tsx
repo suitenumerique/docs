@@ -1,42 +1,33 @@
-import { Settings } from 'luxon';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { DropdownMenu, Icon, Text } from '@/components/';
 import { useConfig } from '@/core';
-
-import { useLanguageSynchronizer } from './hooks/useLanguageSynchronizer';
-import { getMatchingLocales } from './utils/locale';
+import { useAuthQuery } from '@/features/auth';
+import {
+  getMatchingLocales,
+  useSynchronizedLanguage,
+} from '@/features/language';
 
 export const LanguagePicker = () => {
   const { t, i18n } = useTranslation();
   const { data: conf } = useConfig();
-  const { synchronizeLanguage } = useLanguageSynchronizer();
-  const language = i18n.languages[0];
-  Settings.defaultLocale = language;
+  const { data: user } = useAuthQuery();
+  const { changeLanguageSynchronized } = useSynchronizedLanguage();
+  const language = i18n.language;
 
   // Compute options for dropdown
   const optionsPicker = useMemo(() => {
     const backendOptions = conf?.LANGUAGES ?? [[language, language]];
-    return backendOptions.map(([backendLocale, label]) => {
-      // Determine if the option is selected
-      const isSelected =
-        getMatchingLocales([backendLocale], [language]).length > 0;
-      // Define callback for updating both frontend and backend languages
-      const callback = () => {
-        i18n
-          .changeLanguage(backendLocale)
-          .then(() => {
-            void synchronizeLanguage('toBackend');
-          })
-          .catch((err) => {
-            console.error('Error changing language', err);
-          });
+    return backendOptions.map(([backendLocale, backendLabel]) => {
+      return {
+        label: backendLabel,
+        isSelected: getMatchingLocales([backendLocale], [language]).length > 0,
+        callback: () => changeLanguageSynchronized(backendLocale, user),
       };
-      return { label, isSelected, callback };
     });
-  }, [conf, i18n, language, synchronizeLanguage]);
+  }, [changeLanguageSynchronized, conf?.LANGUAGES, language, user]);
 
   // Extract current language label for display
   const currentLanguageLabel =

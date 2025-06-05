@@ -58,12 +58,12 @@ export const useDeleteDocInvitation = (
         queryKey: [KEY_LIST_DOC_INVITATIONS],
       });
       if (options?.onSuccess) {
-        options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, context);
       }
     },
     onError: (error, variables, context) => {
       if (options?.onError) {
-        options.onError(error, variables, context);
+        void options.onError(error, variables, context);
       }
     },
   });

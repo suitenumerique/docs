@@ -4,36 +4,38 @@ import { initReactI18next } from 'react-i18next';
 
 import resources from './translations.json';
 
-export const availableFrontendLanguages: readonly string[] =
-  Object.keys(resources);
+// Add an initialization guard
+let isInitialized = false;
 
-i18next
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'en',
-    debug: false,
-    detection: {
-      order: ['cookie', 'navigator'], // detection order
-      caches: ['cookie'], // Use cookies to store the language preference
-      lookupCookie: 'docs_language',
-      cookieMinutes: 525600, // Expires after one year
-      cookieOptions: {
-        path: '/',
-        sameSite: 'lax',
+// Initialize i18next with the base translations only once
+if (!isInitialized && !i18next.isInitialized) {
+  isInitialized = true;
+
+  i18next
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources,
+      fallbackLng: 'en',
+      debug: false,
+      detection: {
+        order: ['cookie', 'navigator'],
+        caches: ['cookie'],
+        lookupCookie: 'docs_language',
+        cookieMinutes: 525600,
+        cookieOptions: {
+          path: '/',
+          sameSite: 'lax',
+        },
       },
-    },
-    interpolation: {
-      escapeValue: false,
-    },
-    preload: availableFrontendLanguages,
-    lowerCaseLng: true,
-    nsSeparator: false,
-    keySeparator: false,
-  })
-  .catch(() => {
-    throw new Error('i18n initialization failed');
-  });
+      interpolation: {
+        escapeValue: false,
+      },
+      lowerCaseLng: true,
+      nsSeparator: false,
+      keySeparator: false,
+    })
+    .catch((e) => console.error('i18n initialization failed:', e));
+}
 
 export default i18next;

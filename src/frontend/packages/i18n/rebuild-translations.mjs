@@ -8,11 +8,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { hideBin } from 'yargs/helpers';
-import yargs from 'yargs/yargs';
+import yargs from 'yargs';
 
 // Get our args
-const argv = yargs(hideBin(process.argv)).argv;
+const argv = yargs(process.argv).argv;
 const { app, output, language } = argv;
 
 const folderPath = './locales/' + app;

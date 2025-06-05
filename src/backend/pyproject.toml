@@ -26,9 +26,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4==4.13.4",
-    "boto3==1.38.18",
+    "boto3==1.38.27",
     "Brotli==1.1.0",
-    "celery[redis]==5.5.2",
+    "celery[redis]==5.5.3",
     "django-configurations==2.5.1",
     "django-cors-headers==4.7.0",
     "django-countries==7.6.1",
@@ -46,19 +46,19 @@ dependencies = [
     "easy_thumbnails==2.10",
     "factory_boy==3.3.3",
     "gunicorn==23.0.0",
-    "jsonschema==4.23.0",
+    "jsonschema==4.24.0",
     "lxml==5.4.0",
     "markdown==3.8",
     "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
-    "openai==1.79.0",
+    "openai==1.82.1",
     "psycopg[binary]==3.2.9",
-    "pycrdt==0.12.19", 
+    "pycrdt==0.12.20", 
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "redis<6.0.0",
     "requests==2.32.3",
-    "sentry-sdk==2.28.0",
+    "sentry-sdk==2.29.1",
     "whitenoise==6.9.0",
 ]
 
@@ -72,10 +72,10 @@ dependencies = [
 dev = [
     "django-extensions==4.1",
     "django-test-migrations==1.5.0",
-    "drf-spectacular-sidecar==2025.5.1",
-    "freezegun==1.5.1",
+    "drf-spectacular-sidecar==2025.6.1",
+    "freezegun==1.5.2",
     "ipdb==0.13.13",
-    "ipython==9.2.0",
+    "ipython==9.3.0",
     "pyfakefs==5.8.0",
     "pylint-django==2.6.1",
     "pylint==3.3.7",
@@ -83,10 +83,10 @@ dev = [
     "pytest-django==4.11.1",
     "pytest==8.3.5",
     "pytest-icdiff==0.9",
-    "pytest-xdist==3.6.1",
+    "pytest-xdist==3.7.0",
     "responses==0.25.7",
-    "ruff==0.11.10",
-    "types-requests==2.32.0.20250515",
+    "ruff==0.11.12",
+    "types-requests==2.32.0.20250602",
 ]
 
 [tool.setuptools]

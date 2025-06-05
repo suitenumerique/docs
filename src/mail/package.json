@@ -14,7 +14,7 @@
     "build": "yarn build-mjml-to-html && yarn build-html-to-plain-text"
   },
   "volta": {
-    "node": "16.15.1"
+    "node": "22"
   },
   "repository": "https://github.com/numerique-gouv/impress",
   "author": "DINUM",

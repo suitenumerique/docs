@@ -1,4 +1,12 @@
 {
+  "translations": {
+    "en": {
+      "translation": {
+        "Docs": "MyDocs",
+        "New doc": "+"
+      }
+    }
+  },
   "footer": {
     "default": {
       "logo": {

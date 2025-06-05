@@ -13,7 +13,7 @@ jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
-      node_version: '20.x'
+      node_version: '22.x'
       with-front-dependencies-installation: true
 
   test-front:
@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.x"
 
       - name: Restore the frontend cache
         uses: actions/cache@v4
@@ -48,7 +48,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.x"
       - name: Restore the frontend cache
         uses: actions/cache@v4
         with:
@@ -70,7 +70,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.x"
 
       - name: Restore the frontend cache
         uses: actions/cache@v4
@@ -109,7 +109,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.x"
 
       - name: Restore the frontend cache
         uses: actions/cache@v4
