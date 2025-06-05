@@ -281,6 +281,104 @@ test.describe('Doc Editor', () => {
     );
   });
 
+  test('it checks the AI feature', async ({ page, browserName }) => {
+    await page.route(/.*\/ai-proxy\//, async (route) => {
+      const request = route.request();
+      if (request.method().includes('POST')) {
+        await route.fulfill({
+          json: {
+            id: 'chatcmpl-b1e7a9e456ca41f78fec130d552a6bf5',
+            choices: [
+              {
+                finish_reason: 'stop',
+                index: 0,
+                logprobs: null,
+                message: {
+                  content: '',
+                  refusal: null,
+                  role: 'assistant',
+                  annotations: null,
+                  audio: null,
+                  function_call: null,
+                  tool_calls: [
+                    {
+                      id: 'chatcmpl-tool-2e3567dfecf94a4c85e27a3528337718',
+                      function: {
+                        arguments:
+                          '{"operations": [{"type": "update", "id": "initialBlockId$", "block": "<p>Bonjour le monde</p>"}]}',
+                        name: 'json',
+                      },
+                      type: 'function',
+                    },
+                  ],
+                  reasoning_content: null,
+                },
+                stop_reason: null,
+              },
+            ],
+            created: 1749549477,
+            model: 'neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8',
+            object: 'chat.completion',
+            service_tier: null,
+            system_fingerprint: null,
+            usage: {
+              completion_tokens: 0,
+              prompt_tokens: 204,
+              total_tokens: 204,
+              completion_tokens_details: null,
+              prompt_tokens_details: null,
+              details: [
+                {
+                  id: 'chatcmpl-b1e7a9e456ca41f78fec130d552a6bf5',
+                  model: 'neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8',
+                  prompt_tokens: 204,
+                  completion_tokens: 0,
+                  total_tokens: 204,
+                },
+              ],
+            },
+            prompt_logprobs: null,
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await createDoc(page, 'doc-ai', browserName, 1);
+
+    await page.locator('.bn-block-outer').last().fill('Hello World');
+
+    const editor = page.locator('.ProseMirror');
+    await editor.getByText('Hello World').selectText();
+
+    // Check from toolbar
+    await page.getByRole('button', { name: 'Ask AI' }).click();
+
+    await expect(
+      page.getByRole('option', { name: 'Improve Writing' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('option', { name: 'Fix Spelling' }),
+    ).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Translate' })).toBeVisible();
+
+    await page.getByRole('option', { name: 'Translate' }).click();
+    await page.getByPlaceholder('Ask AI anything…').fill('French');
+    await page.getByPlaceholder('Ask AI anything…').press('Enter');
+    await expect(editor.getByText('Docs AI')).toBeVisible();
+    await page
+      .locator('p.bn-mt-suggestion-menu-item-title')
+      .getByText('Accept')
+      .click();
+
+    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+
+    // Check Suggestion menu
+    await page.locator('.bn-block-outer').last().fill('/');
+    await expect(page.getByText('Write with AI')).toBeVisible();
+  });
+
   test('it checks the AI buttons', async ({ page, browserName }) => {
     await page.route(/.*\/ai-translate\//, async (route) => {
       const request = route.request();
