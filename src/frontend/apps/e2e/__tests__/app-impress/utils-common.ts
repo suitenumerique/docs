@@ -9,6 +9,10 @@ export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
+  AI_BOT: {
+    name: 'Docs AI',
+    color: '#8bc6ff',
+  },
   AI_FEATURE_ENABLED: true,
   API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
   CRISP_WEBSITE_ID: null,

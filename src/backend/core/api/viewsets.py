@@ -2555,6 +2555,7 @@ class ConfigView(drf.views.APIView):
             Return a dictionary of public settings.
         """
         array_settings = [
+            "AI_BOT",
             "AI_FEATURE_ENABLED",
             "API_USERS_SEARCH_QUERY_MIN_LENGTH",
             "COLLABORATION_WS_URL",
