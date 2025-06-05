@@ -19,7 +19,9 @@ pytestmark = pytest.mark.django_db
 
 
 @override_settings(
+    AI_BOT={"name": "Test Bot", "color": "#000000"},
     AI_FEATURE_ENABLED=False,
+    AI_MODEL="test-model",
     COLLABORATION_WS_URL="http://testcollab/",
     COLLABORATION_WS_NOT_CONNECTED_READY_ONLY=True,
     CRISP_WEBSITE_ID="123",
@@ -43,6 +45,9 @@ def test_api_config(is_authenticated):
     response = client.get("/api/v1.0/config/")
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
+        "AI_BOT": {"name": "Test Bot", "color": "#000000"},
+        "AI_FEATURE_ENABLED": False,
+        "AI_MODEL": "test-model",
         "AI_FEATURE_ENABLED": False,
         "COLLABORATION_WS_URL": "http://testcollab/",
         "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY": True,
