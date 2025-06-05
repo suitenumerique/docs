@@ -44,28 +44,10 @@ def test_api_ai__client_error(mock_create):
     mock_create.side_effect = OpenAIError("Mocked client error")
 
     with pytest.raises(
-        OpenAIError,
-        match="Mocked client error",
-    ):
-        AIService().transform("hello", "prompt")
-
-
-@override_settings(
-    AI_BASE_URL="http://example.com", AI_API_KEY="test-key", AI_MODEL="test-model"
-)
-@patch("openai.resources.chat.completions.Completions.create")
-def test_api_ai__client_invalid_response(mock_create):
-    """Fail when the client response is invalid"""
-
-    mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=None))]
-    )
-
-    with pytest.raises(
         RuntimeError,
-        match="AI response does not contain an answer",
+        match="Failed to proxy AI request: Mocked client error",
     ):
-        AIService().transform("hello", "prompt")
+        AIService().proxy({"messages": [{"role": "user", "content": "hello"}]})
 
 
 @override_settings(
@@ -75,10 +57,35 @@ def test_api_ai__client_invalid_response(mock_create):
 def test_api_ai__success(mock_create):
     """The AI request should work as expect when called with valid arguments."""
 
-    mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content="Salut"))]
-    )
+    mock_response = MagicMock()
+    mock_response.model_dump.return_value = {
+        "id": "chatcmpl-test",
+        "object": "chat.completion",
+        "created": 1234567890,
+        "model": "test-model",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "Salut"},
+                "finish_reason": "stop",
+            }
+        ],
+    }
+    mock_create.return_value = mock_response
 
-    response = AIService().transform("hello", "prompt")
+    response = AIService().proxy({"messages": [{"role": "user", "content": "hello"}]})
 
-    assert response == {"answer": "Salut"}
+    expected_response = {
+        "id": "chatcmpl-test",
+        "object": "chat.completion",
+        "created": 1234567890,
+        "model": "test-model",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "Salut"},
+                "finish_reason": "stop",
+            }
+        ],
+    }
+    assert response == expected_response
