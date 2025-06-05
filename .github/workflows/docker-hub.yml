@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'refacto/blocknote-ai'
     tags:
       - 'v*'
   pull_request:
