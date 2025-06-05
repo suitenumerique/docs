@@ -252,7 +252,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         comments={showComments}
         aria-label={t('Document editor')}
       >
-        <AIMenuController aiMenu={AIMenu} />
+        {aiExtension && <AIMenuController aiMenu={AIMenu} />}
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>

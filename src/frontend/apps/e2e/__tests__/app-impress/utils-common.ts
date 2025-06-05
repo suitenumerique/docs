@@ -4,7 +4,12 @@ export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
+  AI_BOT: {
+    name: 'Docs AI',
+    color: '#8bc6ff',
+  },
   AI_FEATURE_ENABLED: true,
+  AI_MODEL: 'llama',
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,
