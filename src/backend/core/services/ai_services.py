@@ -1,5 +1,7 @@
 """AI services."""
 
+import logging
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
@@ -9,6 +11,8 @@ if settings.LANGFUSE_PUBLIC_KEY:
     from langfuse.openai import OpenAI
 else:
     from openai import OpenAI
+    
+log = logging.getLogger(__name__)
 
 
 AI_ACTIONS = {
@@ -96,3 +100,10 @@ class AIService:
         language_display = enums.ALL_LANGUAGES.get(language, language)
         system_content = AI_TRANSLATE.format(language=language_display)
         return self.call_ai_api(system_content, text)
+
+    def proxy(self, data: dict) -> dict:
+        """Proxy AI API requests to the configured AI provider."""
+        data["stream"] = False
+
+        response = self.client.chat.completions.create(**data)
+        return response.model_dump()

@@ -29,6 +29,7 @@ interface Doc {
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
+    ai_proxy: boolean;
     ai_transform: boolean;
     ai_translate: boolean;
     attachment_upload: boolean;
