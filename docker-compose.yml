@@ -180,10 +180,10 @@ services:
 
   y-provider:
     user: ${DOCKER_USER:-1000}
-    build: 
+    build:
       context: .
-      dockerfile: ./src/frontend/servers/y-provider/Dockerfile
-      target: y-provider
+      dockerfile: ./src/backend/servers/y-provider/Dockerfile
+      #target: y-provider
     restart: unless-stopped
     env_file:
       - env.d/development/common
