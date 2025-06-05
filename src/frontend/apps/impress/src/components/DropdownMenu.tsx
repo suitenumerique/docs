@@ -1,5 +1,6 @@
 import { PropsWithChildren, useRef, useState } from 'react';
 import { css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
@@ -13,6 +14,7 @@ export type DropdownMenuOption = {
   isSelected?: boolean;
   disabled?: boolean;
   show?: boolean;
+  ariaHidden?: boolean;
 };
 
 export type DropdownMenuProps = {
@@ -38,6 +40,7 @@ export const DropdownMenu = ({
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(false);
   const blockButtonRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
@@ -106,6 +109,7 @@ export const DropdownMenu = ({
             <BoxButton
               role="menuitem"
               aria-label={option.label}
+              aria-selected={option.isSelected ? true : undefined}
               data-testid={option.testId}
               $direction="row"
               disabled={isDisabled}
@@ -157,6 +161,7 @@ export const DropdownMenu = ({
                     $theme="greyscale"
                     $variation={isDisabled ? '400' : '1000'}
                     iconName={option.icon}
+                    aria-hidden={option.ariaHidden}
                   />
                 )}
                 <Text $variation={isDisabled ? '400' : '1000'}>
@@ -164,7 +169,12 @@ export const DropdownMenu = ({
                 </Text>
               </Box>
               {option.isSelected && (
-                <Icon iconName="check" $size="20px" $theme="greyscale" />
+                <Box>
+                  <Icon iconName="check" $size="20px" $theme="greyscale" aria-hidden="true"/>
+                  <Text className="visually-hidden">
+                    {t('Checked')}
+                  </Text>
+                </Box>
               )}
             </BoxButton>
           );

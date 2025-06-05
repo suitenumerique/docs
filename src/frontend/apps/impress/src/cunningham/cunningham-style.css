@@ -51,6 +51,31 @@
   filter: var(--c--components--image-system-filter);
 }
 
+/**
+ * Visually-hidden
+*/
+.visually-hidden,
+.visually-hidden-focusable:not(:focus, :focus-within) {
+	border: 0 !important;
+	clip-path: inset(50%) !important;
+	height: 1px !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	padding: 0 !important;
+	width: 1px !important;
+	white-space: nowrap !important;
+}
+
+.visually-hidden:not(caption),
+.visually-hidden-focusable:not(caption):not(:focus, :focus-within){
+	position: absolute !important;
+}
+
+.visually-hidden *,
+.visually-hidden-focusable:not(:focus, :focus-within) * {
+	overflow: hidden !important;
+}
+
 @font-face {
   font-family: Inter;
   font-style: italic;
