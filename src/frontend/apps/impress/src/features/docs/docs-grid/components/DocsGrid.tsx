@@ -1,12 +1,10 @@
 import { Button } from '@openfun/cunningham-react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
 import { Box, Card, Text } from '@/components';
 import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
-import { useImportDoc } from '@/features/docs/doc-management/api/useImportDoc';
 import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
@@ -23,25 +21,6 @@ export const DocsGrid = ({
   const { t } = useTranslation();
 
   const { isDesktop } = useResponsiveStore();
-  const { mutate: importDoc } = useImportDoc({ onSuccess: () => {} });
-  const [isDragActive, setIsDragActive] = useState(false);
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragActive(true);
-  };
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragActive(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith('.docx')) {
-      importDoc(file);
-    }
-  };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragActive(false);
-  };
   const { flexLeft, flexRight } = useResponsiveDocGrid();
 
   const {
@@ -82,17 +61,6 @@ export const DocsGrid = ({
       $maxHeight="calc(100vh - 52px - 2rem)"
       $align="center"
       className="--docs--doc-grid"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      $css={
-        isDragActive
-          ? css`
-              border: 2px dashed var(--c--theme--colors--primary-600);
-              background-color: var(--c--theme--colors--greyscale-050);
-            `
-          : undefined
-      }
     >
       <DocsGridLoader isLoading={isRefetching || loading} />
       <Card
