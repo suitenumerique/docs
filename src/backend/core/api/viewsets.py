@@ -338,21 +338,8 @@ class DocumentViewSet(
     9. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    10. **AI Transform**: Apply a transformation action on a piece of text with AI.
-        Example: POST /documents/{id}/ai-transform/
-        Expected data:
-        - text (str): The input text.
-        - action (str): The transformation type, one of [prompt, correct, rephrase, summarize].
-        Returns: JSON response with the processed text.
-        Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
-
-    11. **AI Translate**: Translate a piece of text with AI.
-        Example: POST /documents/{id}/ai-translate/
-        Expected data:
-        - text (str): The input text.
-        - language (str): The target language, chosen from settings.LANGUAGES.
-        Returns: JSON response with the translated text.
-        Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
+    10. **AI Proxy**: Proxy an AI request to an external AI service.
+        Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
     ### Ordering: created_at, updated_at, is_favorite, title
 
@@ -1641,6 +1628,31 @@ class DocumentViewSet(
             }
 
         return drf.response.Response(body, status=drf.status.HTTP_200_OK)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        name="Proxy AI requests to the AI provider",
+        url_path="ai-proxy",
+        throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
+    )
+    def ai_proxy(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/ai-proxy
+        Proxy AI requests to the configured AI provider.
+        This endpoint forwards requests to the AI provider and returns the complete response.
+        """
+        # Check permissions first
+        self.get_object()
+
+        if not settings.AI_FEATURE_ENABLED:
+            raise ValidationError("AI feature is not enabled.")
+
+        serializer = serializers.AIProxySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        response = AIService().proxy(request.data)
+        return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 
     @drf.decorators.action(
         detail=True,
