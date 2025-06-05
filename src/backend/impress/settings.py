@@ -415,6 +415,9 @@ class Base(Configuration):
     )
 
     # Frontend
+    FRONTEND_URL = values.Value(
+        None, environ_name="FRONTEND_URL", environ_prefix=None
+    )
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
     )
@@ -628,6 +631,11 @@ class Base(Configuration):
         environ_name="CONVERSION_API_ENDPOINT",
         environ_prefix=None,
     )
+    BLOCKS_CONVERSION_API_ENDPOINT = values.Value(
+        default="convert-blocks",
+        environ_name="BLOCKS_CONVERSION_API_ENDPOINT",
+        environ_prefix=None,
+    )
     CONVERSION_API_CONTENT_FIELD = values.Value(
         default="content",
         environ_name="CONVERSION_API_CONTENT_FIELD",
@@ -641,6 +649,22 @@ class Base(Configuration):
     CONVERSION_API_SECURE = values.Value(
         default=False,
         environ_name="CONVERSION_API_SECURE",
+        environ_prefix=None,
+    )
+
+    NOTION_CLIENT_ID = values.Value(
+        default="206d872b-594c-80de-94ff-003760c352e4",
+        environ_name="NOTION_CLIENT_ID",
+        environ_prefix=None,
+    )
+    NOTION_CLIENT_SECRET = values.Value(
+        default="secret_DG710zB8ZGFEXyKW7HFlN6QScqGeczPFBcKFhPYRlsZ",
+        environ_name="NOTION_CLIENT_SECRET",
+        environ_prefix=None,
+    )
+    NOTION_REDIRECT_URI = values.Value(
+        default="https://emersion.fr/notion-redirect",
+        environ_name="NOTION_REDIRECT_URI",
         environ_prefix=None,
     )
 

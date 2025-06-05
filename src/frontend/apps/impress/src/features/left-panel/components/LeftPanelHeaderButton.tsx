@@ -31,9 +31,11 @@ export const LeftPanelHeaderHomeButton = () => {
     },
   });
   return (
-    <Button color="primary" onClick={() => createDoc()}>
-      {t('New doc')}
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button color="primary" onClick={() => createDoc()}>
+        {t('New doc')}
+      </Button>
+    </div>
   );
 };
 

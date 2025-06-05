@@ -9,7 +9,7 @@ import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
-import { DocGridContentList } from './DocGridContentList';
+import { DocsGridItem } from './DocsGridItem';
 import { DocsGridLoader } from './DocsGridLoader';
 
 type DocsGridProps = {
@@ -37,9 +37,6 @@ export const DocsGrid = ({
         is_creator_me: target === DocDefaultFilter.MY_DOCS,
       }),
   });
-
-  const docs = data?.pages.flatMap((page) => page.results) ?? [];
-
   const loading = isFetching || isLoading;
   const hasDocs = data?.pages.some((page) => page.results.length > 0);
   const loadMore = (inView: boolean) => {
@@ -118,7 +115,11 @@ export const DocsGrid = ({
               )}
             </Box>
 
-            <DocGridContentList docs={docs} />
+            {data?.pages.map((currentPage) => {
+              return currentPage.results.map((doc) => (
+                <DocsGridItem doc={doc} key={doc.id} />
+              ));
+            })}
 
             {hasNextPage && !loading && (
               <InView
