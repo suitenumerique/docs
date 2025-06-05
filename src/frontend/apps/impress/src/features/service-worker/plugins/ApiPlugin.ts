@@ -182,6 +182,7 @@ export class ApiPlugin implements WorkboxPlugin {
       abilities: {
         accesses_manage: true,
         accesses_view: true,
+        ai_proxy: true,
         ai_transform: true,
         ai_translate: true,
         attachment_upload: true,
