@@ -3,6 +3,7 @@ import { createAIExtension, createBlockNoteAIClient } from '@blocknote/xl-ai';
 import { useMemo } from 'react';
 
 import { fetchAPI } from '@/api';
+import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
 
 const client = createBlockNoteAIClient({
@@ -17,7 +18,13 @@ const client = createBlockNoteAIClient({
  * Custom prompts can be invoked using the pattern !promptName in the AI input field.
  */
 export const useAI = (docId: Doc['id']) => {
+  const conf = useConfig().data;
+
   return useMemo(() => {
+    if (!conf?.AI_MODEL) {
+      return null;
+    }
+
     const openai = createOpenAI({
       ...client.getProviderSettings('openai'),
       fetch: (input, init) => {
@@ -31,17 +38,14 @@ export const useAI = (docId: Doc['id']) => {
         });
       },
     });
-    const model = openai.chat('neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8');
+    const model = openai.chat(conf.AI_MODEL);
 
     const extension = createAIExtension({
       stream: false,
       model,
-      agentCursor: {
-        name: 'Albert',
-        color: '#8bc6ff',
-      },
+      agentCursor: conf?.AI_BOT,
     });
 
     return extension;
-  }, [docId]);
+  }, [docId, conf?.AI_BOT, conf?.AI_MODEL]);
 };

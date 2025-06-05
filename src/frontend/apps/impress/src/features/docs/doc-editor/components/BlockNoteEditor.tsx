@@ -121,7 +121,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
       dictionary: { ...locales[lang as keyof typeof locales], ai: aiEn },
-      extensions: [aiExtension],
+      extensions: aiExtension ? [aiExtension] : [],
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -169,7 +169,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editable={!readOnly}
         theme="light"
       >
-        <AIMenuController aiMenu={AIMenu} />
+        {aiExtension && <AIMenuController aiMenu={AIMenu} />}
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>

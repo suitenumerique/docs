@@ -82,6 +82,7 @@ These are the environment variables you can set for the `impress-backend` contai
 | ALLOW_LOGOUT_GET_METHOD                         | Allow get logout method                                                                       | true                                                    |
 | AI_API_KEY                                      | AI key to be used for AI Base url                                                             |                                                         |
 | AI_BASE_URL                                     | OpenAI compatible AI base url                                                                 |                                                         |
+| AI_BOT                                          | Information to give to the frontend about the AI bot                                          | { "name": "Docs AI", "color": "#8bc6ff" }               |
 | AI_MODEL                                        | AI Model to use                                                                               |                                                         |
 | AI_ALLOW_REACH_FROM                             | Users that can use AI must be this level. options are "public", "authenticated", "restricted" | authenticated                                           |
 | AI_FEATURE_ENABLED                              | Enable AI options                                                                             | false                                                   |

@@ -9,6 +9,7 @@ import {
   createDoc,
   goToGridDoc,
   mockedDocument,
+  overrideConfig,
   verifyDocName,
 } from './common';
 
@@ -282,6 +283,15 @@ test.describe('Doc Editor', () => {
   });
 
   test('it checks the AI feature', async ({ page, browserName }) => {
+    await overrideConfig(page, {
+      AI_BOT: {
+        name: 'Albert AI',
+        color: '#8bc6ff',
+      },
+    });
+
+    await page.goto('/');
+
     await page.route(/.*\/ai-proxy\//, async (route) => {
       const request = route.request();
       if (request.method().includes('POST')) {
@@ -366,7 +376,7 @@ test.describe('Doc Editor', () => {
     await page.getByRole('option', { name: 'Translate' }).click();
     await page.getByPlaceholder('Ask AI anything…').fill('French');
     await page.getByPlaceholder('Ask AI anything…').press('Enter');
-    await expect(editor.getByText('Docs AI')).toBeVisible();
+    await expect(editor.getByText('Albert AI')).toBeVisible();
     await page
       .locator('p.bn-mt-suggestion-menu-item-title')
       .getByText('Accept')
