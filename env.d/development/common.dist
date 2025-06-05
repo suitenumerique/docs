@@ -31,6 +31,9 @@ AWS_S3_ACCESS_KEY_ID=impress
 AWS_S3_SECRET_ACCESS_KEY=password
 MEDIA_BASE_URL=http://localhost:8083
 
+# Gaufre
+GAUFREJS_URL=https://integration.lasuite.numerique.gouv.fr/api/v1/gaufre.js
+
 # OIDC
 OIDC_OP_JWKS_ENDPOINT=http://nginx:8083/realms/impress/protocol/openid-connect/certs
 OIDC_OP_AUTHORIZATION_ENDPOINT=http://localhost:8083/realms/impress/protocol/openid-connect/auth
