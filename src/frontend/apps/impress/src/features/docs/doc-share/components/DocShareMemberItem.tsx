@@ -93,6 +93,8 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
             {isDesktop && doc.abilities.accesses_manage && (
               <DropdownMenu options={moreActions}>
                 <IconOptions
+                  aria-label={t('More actions')}
+                  aria-hidden="true"
                   isHorizontal
                   data-testid="doc-share-member-more-actions"
                   $variation="600"
