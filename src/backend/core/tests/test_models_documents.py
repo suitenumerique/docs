@@ -152,6 +152,7 @@ def test_models_documents_get_abilities_forbidden(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -213,6 +214,7 @@ def test_models_documents_get_abilities_reader(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -276,6 +278,7 @@ def test_models_documents_get_abilities_editor(
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": False,
+        "ai_proxy": is_authenticated,
         "ai_transform": is_authenticated,
         "ai_translate": is_authenticated,
         "attachment_upload": True,
@@ -328,6 +331,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
     expected_abilities = {
         "accesses_manage": True,
         "accesses_view": True,
+        "ai_proxy": True,
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
@@ -377,6 +381,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
     expected_abilities = {
         "accesses_manage": True,
         "accesses_view": True,
+        "ai_proxy": True,
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
@@ -429,6 +434,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     expected_abilities = {
         "accesses_manage": False,
         "accesses_view": True,
+        "ai_proxy": True,
         "ai_transform": True,
         "ai_translate": True,
         "attachment_upload": True,
@@ -488,6 +494,7 @@ def test_models_documents_get_abilities_reader_user(
         "accesses_view": True,
         # If you get your editor rights from the link role and not your access role
         # You should not access AI if it's restricted to users with specific access
+        "ai_proxy": access_from_link and ai_access_setting != "restricted",
         "ai_transform": access_from_link and ai_access_setting != "restricted",
         "ai_translate": access_from_link and ai_access_setting != "restricted",
         "attachment_upload": access_from_link,
@@ -545,6 +552,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
     assert abilities == {
         "accesses_manage": False,
         "accesses_view": True,
+        "ai_proxy": False,
         "ai_transform": False,
         "ai_translate": False,
         "attachment_upload": False,
@@ -592,6 +600,7 @@ def test_models_document_get_abilities_ai_access_authenticated(is_authenticated,
     document = factories.DocumentFactory(link_reach=reach, link_role="editor")
 
     abilities = document.get_abilities(user)
+    assert abilities["ai_proxy"] is True
     assert abilities["ai_transform"] is True
     assert abilities["ai_translate"] is True
 
@@ -611,6 +620,7 @@ def test_models_document_get_abilities_ai_access_public(is_authenticated, reach)
     document = factories.DocumentFactory(link_reach=reach, link_role="editor")
 
     abilities = document.get_abilities(user)
+    assert abilities["ai_proxy"] == is_authenticated
     assert abilities["ai_transform"] == is_authenticated
     assert abilities["ai_translate"] == is_authenticated
 

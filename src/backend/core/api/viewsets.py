@@ -1353,6 +1353,28 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=True,
         methods=["post"],
+        name="Proxy AI requests to the AI provider",
+        url_path="ai-proxy",
+        throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
+    )
+    def ai_proxy(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/ai-proxy
+        Proxy AI requests to the configured AI provider.
+        This endpoint forwards requests to the AI provider and returns the complete response.
+        """
+        # Check permissions first
+        self.get_object()
+
+        serializer = serializers.AIProxySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        response = AIService().proxy(request.data)
+        return drf.response.Response(response, status=drf.status.HTTP_200_OK)
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
         name="Apply a transformation action on a piece of text with AI",
         url_path="ai-transform",
         throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
