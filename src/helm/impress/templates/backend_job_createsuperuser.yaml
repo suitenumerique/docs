@@ -14,6 +14,8 @@ metadata:
   labels:
     {{- include "impress.common.labels" (list . $component) | nindent 4 }}
 spec:
+  ttlSecondsAfterFinished: {{ .Values.backend.jobs.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.backend.jobs.backoffLimit }}
   template:
     metadata:
       annotations:
