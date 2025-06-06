@@ -10,9 +10,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
+import { AIToolbarButton } from '../AI';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
-import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
@@ -56,10 +56,9 @@ export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
-        {toolbarItems}
+        {conf?.AI_FEATURE_ENABLED && <AIToolbarButton />}
 
-        {/* Extra button to do some AI powered actions */}
-        {conf?.AI_FEATURE_ENABLED && <AIGroupButton key="AIButton" />}
+        {toolbarItems}
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />

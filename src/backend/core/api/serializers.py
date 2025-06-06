@@ -13,7 +13,6 @@ import magic
 from rest_framework import exceptions, serializers
 
 from core import enums, models, utils
-from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
     YdocConverter,
@@ -673,34 +672,30 @@ class VersionFilterSerializer(serializers.Serializer):
     )
 
 
-class AITransformSerializer(serializers.Serializer):
-    """Serializer for AI transform requests."""
+class AIProxySerializer(serializers.Serializer):
+    """Serializer for AI proxy requests."""
 
-    action = serializers.ChoiceField(choices=AI_ACTIONS, required=True)
-    text = serializers.CharField(required=True)
+    messages = serializers.ListField(required=True)
+    model = serializers.CharField(required=True)
 
-    def validate_text(self, value):
-        """Ensure the text field is not empty."""
+    def validate(self, attrs):
+        """Additional validation for the proxy request."""
+        # Ensure we have at least one message
+        if not attrs.get("messages"):
+            raise serializers.ValidationError("At least one message is required")
 
-        if len(value.strip()) == 0:
-            raise serializers.ValidationError("Text field cannot be empty.")
-        return value
+        # Ensure each message has the required fields
+        for message in attrs.get("messages", []):
+            if (
+                not isinstance(message, dict)
+                or "role" not in message
+                or "content" not in message
+            ):
+                raise serializers.ValidationError(
+                    "Each message must have 'role' and 'content' fields"
+                )
 
-
-class AITranslateSerializer(serializers.Serializer):
-    """Serializer for AI translate requests."""
-
-    language = serializers.ChoiceField(
-        choices=tuple(enums.ALL_LANGUAGES.items()), required=True
-    )
-    text = serializers.CharField(required=True)
-
-    def validate_text(self, value):
-        """Ensure the text field is not empty."""
-
-        if len(value.strip()) == 0:
-            raise serializers.ValidationError("Text field cannot be empty.")
-        return value
+        return attrs
 
 
 class MoveDocumentSerializer(serializers.Serializer):

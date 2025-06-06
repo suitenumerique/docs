@@ -11,6 +11,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add customization for translations #857
+- ✨(frontend) integrate new Blocknote AI feature #5060
 
 ## [3.3.0] - 2025-05-06
 
