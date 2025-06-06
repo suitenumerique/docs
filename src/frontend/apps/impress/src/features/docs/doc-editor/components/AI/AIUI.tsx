@@ -1,9 +1,4 @@
 import { useBlockNoteEditor, useComponentsContext } from '@blocknote/react';
-import {
-  AIMenu as AIMenuDefault,
-  getAIExtension,
-  getDefaultAIMenuItems,
-} from '@blocknote/xl-ai';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -17,6 +12,12 @@ import {
   DocsInlineContentSchema,
   DocsStyleSchema,
 } from '../../types';
+
+import {
+  AIMenuDefault,
+  getAIExtension,
+  getDefaultAIMenuItems,
+} from './libAGPL';
 
 export function AIMenu() {
   return (
