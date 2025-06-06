@@ -213,9 +213,11 @@
       "You do not have permission to view users sharing this document or modify link settings.": "Ihnen fehlt die Berechtigung, die das Dokument teilenden Benutzer einzusehen oder die Linkeinstellungen zu ändern.",
       "Your current document will revert to this version.": "Ihr aktuelles Dokument wird auf diese Version zurückgesetzt.",
       "Your {{format}} was downloaded succesfully": "Ihr {{format}} wurde erfolgreich heruntergeladen",
-      "home-content-open-source-part1": "Doms ist auf <2>Django Rest Framework</2> und <6>Next.js</6> aufgebaut. Wir verwenden auch <9>Yjs</9> und <13>BlockNote.js</13>, zwei Projekte, die wir mit Stolz sponsern.",
+      "home-content-open-source-part1": "Doms ist t auf <2>Django Rest Framework</2> und <6>Next.js</6> aufgebaut. Wir verwenden auch <9>Yjs</9> und <13>BlockNote.js</13>, zwei Projekte, die wir mit Stolz sponsern.",
       "home-content-open-source-part2": "Sie können Docs ganz einfach selbst hosten (lesen Sie unsere <2>Installationsdokumentation</2>).<br/>Docs verwendet eine <7>Lizenz</7> (MIT), die auf Innovation und Unternehmen zugeschnitten ist.<br/>Beiträge sind willkommen (lesen Sie unsere Roadmap <13>hier</13>).\n",
-      "home-content-open-source-part3": "Docs ist das Ergebnis einer gemeinsamen Anstrengung, die von der französischen Regierung 🇫🇷🥖 <1>(DINUM)</1> und der deutschen Regierung 🇩🇪🥨 <5>(ZenDiS)</5> geleitet wurde. “, „home-content-open-source-part3“: „Docs ist das Ergebnis einer gemeinsamen Anstrengung, die von der französischen Regierung 🇫🇷🥖 <1>(DINUM)</1> und der deutschen Regierung 🇩🇪🥨 <5>(ZenDiS)</5> geleitet wird."
+      "home-content-open-source-part3": "Docs ist das Ergebnis einer gemeinsamen Anstrengung, die von der französischen Regierung 🇫🇷🥖 <1>(DINUM)</1> und der deutschen Regierung 🇩🇪🥨 <5>(ZenDiS)</5> geleitet wurde. “, „home-content-open-source-part3“: „Docs ist das Ergebnis einer gemeinsamen Anstrengung, die von der französischen Regierung 🇫🇷🥖 <1>(DINUM)</1> und der deutschen Regierung 🇩🇪🥨 <5>(ZenDiS)</5> geleitet wird.",
+      "Access Denied - Erreur 403 - Docs": "Zugriff verweigert - Fehler 403 - Docs",
+      "Page Not Found – Erreur 404 – Docs": "Seite nicht gefunden - Fehler 404 - Docs"
     }
   },
   "en": {
@@ -406,7 +408,9 @@
       "Your {{format}} was downloaded succesfully": "Su {{format}} se ha descargado correctamente",
       "home-content-open-source-part1": "Docs está construido sobre <2>Django Rest Framework</2> y <6>Next.js</6>. También utilizamos <9>Yjs</9> y <13>BlockNote.js</13>, dos proyectos que estamos orgullosos de patrocinar.",
       "home-content-open-source-part2": "Puede autoalojar fácilmente Docs (consulte nuestra <2>documentación</2> de instalación).<br/>Docs utiliza una <7>licencia</7> (MIT) adecuada para la innovación y las empresas.<br/>Se aceptan contribuciones (consulte nuestra hoja de ruta <13>aquí</13>).",
-      "home-content-open-source-part3": "Docs es el resultado de un esfuerzo conjunto llevado a cabo por los gobiernos francés 🇫🇷🥖 <1>(DINUM)</1> y alemán 🇩🇪🥨 <5>(ZenDiS)</5>."
+      "home-content-open-source-part3": "Docs es el resultado de un esfuerzo conjunto llevado a cabo por los gobiernos francés 🇫🇷🥖 <1>(DINUM)</1> y alemán 🇩🇪🥨 <5>(ZenDiS)</5>.",
+      "Access Denied - Erreur 403 - Docs": "Acceso denegado - Error 403 - Docs",
+      "Page Not Found – Erreur 404 – Docs": "Página no encontrada - Error 404 - Docs"
     }
   },
   "fr": {
@@ -430,7 +434,7 @@
       "Anyone with the link can edit the document if they are logged in": "N'importe qui avec le lien peut éditer le document à condition qu'il soit connecté",
       "Anyone with the link can see the document": "N'importe qui avec le lien peut voir le document",
       "Anyone with the link can view the document if they are logged in": "N'importe qui avec le lien peut voir le document à condition qu'il soit connecté",
-      "Are you sure you want to delete this document ?": "Êtes-vous sûr(e) de vouloir supprimer ce document ?",
+      "Are you sure you want to delete this document ?": "Êtes-vous sûr(e) de vouloir supprimer ce document ?",
       "Available soon": "Disponible prochainement",
       "Banner image": "Image de la bannière",
       "Beautify": "Embellir",
@@ -598,7 +602,9 @@
       "Your {{format}} was downloaded succesfully": "Votre {{format}} a été téléchargé avec succès",
       "home-content-open-source-part1": "Docs est construit sur <2>Django Rest Framework</2> et <6>Next.js</6>. Nous utilisons également <9>Yjs</9> et <13>BlockNote.js</13>, deux projets que nous sommes fiers de sponsoriser.",
       "home-content-open-source-part2": "Vous pouvez facilement auto-héberger Docs (consultez notre <2>documentation</2> d'installation).<br/>Docs utilise une <7>licence</7> (MIT) adaptée à l'innovation et aux entreprises.<br/>Les contributions sont les bienvenues (consultez notre feuille de route <13>ici</13>).",
-      "home-content-open-source-part3": "Docs est le résultat d'un effort conjoint mené par les gouvernements français 🇫🇷🥖 <1>(DINUM)</1> et allemand 🇩🇪🥨 <5>(ZenDiS)</5>."
+      "home-content-open-source-part3": "Docs est le résultat d'un effort conjoint mené par les gouvernements français 🇫🇷🥖 <1>(DINUM)</1> et allemand 🇩🇪🥨 <5>(ZenDiS)</5>.",
+      "Access Denied - Erreur 403 - Docs": "Accès refusé - Erreur 403 - Docs",
+      "Page Not Found – Erreur 404 – Docs": "Page non trouvée - Erreur 404 - Docs"
     }
   },
   "it": {
@@ -934,7 +940,9 @@
       "Your {{format}} was downloaded succesfully": "Jouw {{format}} is succesvol gedownload",
       "home-content-open-source-part1": "Docs is gebouwd op <2>Django Rest Framework</2> en <6>Next.js</6>. We gebruiken ook <9>Yjs</9> en <13>BlockNote.js</13>, twee projecten die we met trots sponsoren.",
       "home-content-open-source-part2": "U kunt Docs eenvoudig zelf hosten (zie onze <2>installatiedocumentatie</2>).<br/>Docs gebruikt een <7>licentie</7> (MIT) die is afgestemd op innovatie en ondernemingen.<br/>Bijdragen zijn welkom (zie onze routekaart <13>hier</13>).",
-      "home-content-open-source-part3": "Docs is het resultaat van een gezamenlijke inspanning geleid door de Franse 🇫🇷🥖 <1>(DINUM)</1> en Duitse 🇩🇪🥨 <5>(ZenDiS)</5> overheden."
+      "home-content-open-source-part3": "Docs is het resultaat van een gezamenlijke inspanning geleid door de Franse 🇫🇷🥖 <1>(DINUM)</1> en Duitse 🇩🇪🥨 <5>(ZenDiS)</5> overheden.",
+      "Access Denied - Erreur 403 - Docs": "Toegang geweigerd - Fout 403 - Docs",
+      "Page Not Found – Erreur 404 – Docs": "Pagina niet gevonden - Fout 404 - Docs"
     }
   },
   "pt": { "translation": {} },
