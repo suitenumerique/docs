@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { create } from 'zustand';
 
 import { DocsBlockNoteEditor, HeadingBlock } from '../types';
@@ -24,7 +25,7 @@ export interface UseHeadingStore {
   resetHeadings: () => void;
 }
 
-export const useHeadingStore = create<UseHeadingStore>((set) => ({
+export const useHeadingStore = create<UseHeadingStore>((set, get) => ({
   headings: [],
   setHeadings: (editor) => {
     const headingBlocks = editor?.document
@@ -36,7 +37,9 @@ export const useHeadingStore = create<UseHeadingStore>((set) => ({
         ),
       })) as unknown as HeadingBlock[];
 
-    set(() => ({ headings: headingBlocks }));
+    if (!_.isEqual(get().headings, headingBlocks)) {
+      set(() => ({ headings: headingBlocks }));
+    }
   },
   resetHeadings: () => set(() => ({ headings: [] })),
 }));

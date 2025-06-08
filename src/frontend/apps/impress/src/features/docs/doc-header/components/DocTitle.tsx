@@ -107,6 +107,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       <Box
         as="span"
         role="textbox"
+        className="--docs--doc-title-input"
         contentEditable
         defaultValue={titleDisplay || undefined}
         onKeyDownCapture={handleKeyDown}
@@ -115,7 +116,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         onBlurCapture={(event) =>
           handleTitleSubmit(event.target.textContent || '')
         }
-        $color={colorsTokens()['greyscale-1000']}
+        $color={colorsTokens['greyscale-1000']}
         $minHeight="40px"
         $padding={{ right: 'big' }}
         $css={css`

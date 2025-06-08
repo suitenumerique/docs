@@ -1,27 +1,31 @@
 """API endpoints"""
 # pylint: disable=too-many-lines
 
+import json
 import logging
 import uuid
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.db import connection, transaction
 from django.db import models as db
-from django.db import transaction
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
-from django.utils.text import capfirst
+from django.urls import reverse
+from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
 
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -380,10 +384,7 @@ class DocumentViewSet(
     9. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    10. **Collaboration Auth**: Authorize access to the collaboration server for a document.
-        Example: GET /documents/collaboration-auth/
-
-    11. **AI Transform**: Apply a transformation action on a piece of text with AI.
+    10. **AI Transform**: Apply a transformation action on a piece of text with AI.
         Example: POST /documents/{id}/ai-transform/
         Expected data:
         - text (str): The input text.
@@ -391,7 +392,7 @@ class DocumentViewSet(
         Returns: JSON response with the processed text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    12. **AI Translate**: Translate a piece of text with AI.
+    11. **AI Translate**: Translate a piece of text with AI.
         Example: POST /documents/{id}/ai-translate/
         Expected data:
         - text (str): The input text.
@@ -576,7 +577,7 @@ class DocumentViewSet(
             queryset, filter_data["is_favorite"]
         )
 
-        # Apply ordering only now that everyting is filtered and annotated
+        # Apply ordering only now that everything is filtered and annotated
         queryset = filters.OrderingFilter().filter_queryset(
             self.request, queryset, self
         )
@@ -607,6 +608,14 @@ class DocumentViewSet(
     @transaction.atomic
     def perform_create(self, serializer):
         """Set the current user as creator and owner of the newly created object."""
+
+        # locks the table to ensure safe concurrent access
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
+                "IN SHARE ROW EXCLUSIVE MODE;"
+            )
+
         obj = models.Document.add_root(
             creator=self.request.user,
             **serializer.validated_data,
@@ -666,10 +675,19 @@ class DocumentViewSet(
         permission_classes=[],
         url_path="create-for-owner",
     )
+    @transaction.atomic
     def create_for_owner(self, request):
         """
         Create a document on behalf of a specified owner (pre-existing user or invited).
         """
+
+        # locks the table to ensure safe concurrent access
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
+                "IN SHARE ROW EXCLUSIVE MODE;"
+            )
+
         # Deserialize and validate the data
         serializer = serializers.ServerCreateDocumentSerializer(data=request.data)
         if not serializer.is_valid():
@@ -775,7 +793,12 @@ class DocumentViewSet(
             serializer.is_valid(raise_exception=True)
 
             with transaction.atomic():
-                child_document = document.add_child(
+                # "select_for_update" locks the table to ensure safe concurrent access
+                locked_parent = models.Document.objects.select_for_update().get(
+                    pk=document.pk
+                )
+
+                child_document = locked_parent.add_child(
                     creator=request.user,
                     **serializer.validated_data,
                 )
@@ -846,14 +869,15 @@ class DocumentViewSet(
         )
 
         # Get the highest readable ancestor
-        highest_readable = ancestors.readable_per_se(request.user).only("depth").first()
+        highest_readable = (
+            ancestors.readable_per_se(request.user).only("depth", "path").first()
+        )
         if highest_readable is None:
             raise (
                 drf.exceptions.PermissionDenied()
                 if request.user.is_authenticated
                 else drf.exceptions.NotAuthenticated()
             )
-
         paths_links_mapping = {}
         ancestors_links = []
         children_clause = db.Q()
@@ -866,7 +890,7 @@ class DocumentViewSet(
             )
 
             # Compute cache for ancestors links to avoid many queries while computing
-            # abilties for his documents in the tree!
+            # abilities for his documents in the tree!
             ancestors_links.append(
                 {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
             )
@@ -876,6 +900,17 @@ class DocumentViewSet(
 
         queryset = ancestors.filter(depth__gte=highest_readable.depth) | children
         queryset = queryset.order_by("path")
+        # Annotate if the current document is the highest ancestor for the user
+        queryset = queryset.annotate(
+            is_highest_ancestor_for_user=db.Case(
+                db.When(
+                    path=db.Value(highest_readable.path),
+                    then=db.Value(True),
+                ),
+                default=db.Value(False),
+                output_field=db.BooleanField(),
+            )
+        )
         queryset = self.annotate_user_roles(queryset)
         queryset = self.annotate_is_favorite(queryset)
 
@@ -1122,7 +1157,10 @@ class DocumentViewSet(
 
         # Prepare metadata for storage
         extra_args = {
-            "Metadata": {"owner": str(request.user.id)},
+            "Metadata": {
+                "owner": str(request.user.id),
+                "status": enums.DocumentAttachmentStatus.PROCESSING,
+            },
             "ContentType": serializer.validated_data["content_type"],
         }
         file_unsafe = ""
@@ -1154,8 +1192,18 @@ class DocumentViewSet(
         document.attachments.append(key)
         document.save()
 
+        malware_detection.analyse_file(key, document_id=document.id)
+
+        url = reverse(
+            "documents-media-check",
+            kwargs={"pk": document.id},
+        )
+        parameters = urlencode({"key": key})
+
         return drf.response.Response(
-            {"file": f"{settings.MEDIA_URL:s}{key:s}"},
+            {
+                "file": f"{url:s}?{parameters:s}",
+            },
             status=drf.status.HTTP_201_CREATED,
         )
 
@@ -1193,17 +1241,6 @@ class DocumentViewSet(
             return match.groupdict()
         except (ValueError, AttributeError) as exc:
             logger.debug("Failed to extract parameters from subrequest URL: %s", exc)
-            raise drf.exceptions.PermissionDenied() from exc
-
-    def _auth_get_document(self, pk):
-        """
-        Retrieves the document corresponding to the given primary key (pk).
-        Raises PermissionDenied if the document is not found.
-        """
-        try:
-            return models.Document.objects.get(pk=pk)
-        except models.Document.DoesNotExist as exc:
-            logger.debug("Document with ID '%s' does not exist", pk)
             raise drf.exceptions.PermissionDenied() from exc
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="media-auth")
@@ -1248,46 +1285,70 @@ class DocumentViewSet(
             logger.debug("User '%s' lacks permission for attachment", user)
             raise drf.exceptions.PermissionDenied()
 
+        # Check if the attachment is ready
+        s3_client = default_storage.connection.meta.client
+        bucket_name = default_storage.bucket_name
+        try:
+            head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
+        except ClientError as err:
+            raise drf.exceptions.PermissionDenied() from err
+        metadata = head_resp.get("Metadata", {})
+        # In order to be compatible with existing upload without `status` metadata,
+        # we consider them as ready.
+        if (
+            metadata.get("status", enums.DocumentAttachmentStatus.READY)
+            != enums.DocumentAttachmentStatus.READY
+        ):
+            raise drf.exceptions.PermissionDenied()
+
         # Generate S3 authorization headers using the extracted URL parameters
         request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
 
-    @drf.decorators.action(detail=False, methods=["get"], url_path="collaboration-auth")
-    def collaboration_auth(self, request, *args, **kwargs):
+    @drf.decorators.action(detail=True, methods=["get"], url_path="media-check")
+    def media_check(self, request, *args, **kwargs):
         """
-        This view is used by an Nginx subrequest to control access to a document's
-        collaboration server.
+        Check if the media is ready to be served.
         """
-        parsed_url = self._auth_get_original_url(request)
-        url_params = self._auth_get_url_params(
-            enums.COLLABORATION_WS_URL_PATTERN, parsed_url.query
-        )
-        document = self._auth_get_document(url_params["pk"])
+        document = self.get_object()
 
-        abilities = document.get_abilities(request.user)
-        if not abilities.get(self.action, False):
-            logger.debug(
-                "User '%s' lacks permission for document '%s'",
-                request.user,
-                document.pk,
+        key = request.query_params.get("key")
+        if not key:
+            return drf.response.Response(
+                {"detail": "Missing 'key' query parameter"},
+                status=drf.status.HTTP_400_BAD_REQUEST,
             )
-            raise drf.exceptions.PermissionDenied()
 
-        if not settings.COLLABORATION_SERVER_SECRET:
-            logger.debug("Collaboration server secret is not defined")
-            raise drf.exceptions.PermissionDenied()
+        if key not in document.attachments:
+            return drf.response.Response(
+                {"detail": "Attachment missing"},
+                status=drf.status.HTTP_404_NOT_FOUND,
+            )
 
-        # Add the collaboration server secret token to the headers
-        headers = {
-            "Authorization": settings.COLLABORATION_SERVER_SECRET,
-            "X-Can-Edit": str(abilities["partial_update"]),
+        # Check if the attachment is ready
+        s3_client = default_storage.connection.meta.client
+        bucket_name = default_storage.bucket_name
+        try:
+            head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
+        except ClientError as err:
+            logger.error("Client Error fetching file %s metadata: %s", key, err)
+            return drf.response.Response(
+                {"detail": "Media not found"},
+                status=drf.status.HTTP_404_NOT_FOUND,
+            )
+        metadata = head_resp.get("Metadata", {})
+
+        body = {
+            "status": metadata.get("status", enums.DocumentAttachmentStatus.PROCESSING),
         }
+        if metadata.get("status") == enums.DocumentAttachmentStatus.READY:
+            body = {
+                "status": enums.DocumentAttachmentStatus.READY,
+                "file": f"{settings.MEDIA_URL:s}{key:s}",
+            }
 
-        if request.user.is_authenticated:
-            headers["X-User-Id"] = str(request.user.id)
-
-        return drf.response.Response("authorized", headers=headers, status=200)
+        return drf.response.Response(body, status=drf.status.HTTP_200_OK)
 
     @drf.decorators.action(
         detail=True,
@@ -1408,12 +1469,7 @@ class DocumentViewSet(
 
 class DocumentAccessViewSet(
     ResourceAccessViewsetMixin,
-    drf.mixins.CreateModelMixin,
-    drf.mixins.DestroyModelMixin,
-    drf.mixins.ListModelMixin,
-    drf.mixins.RetrieveModelMixin,
-    drf.mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
+    viewsets.ModelViewSet,
 ):
     """
     API ViewSet for all interactions with document accesses.
@@ -1445,6 +1501,32 @@ class DocumentAccessViewSet(
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
     serializer_class = serializers.DocumentAccessSerializer
+    is_current_user_owner_or_admin = False
+
+    def get_queryset(self):
+        """Return the queryset according to the action."""
+        queryset = super().get_queryset()
+
+        if self.action == "list":
+            try:
+                document = models.Document.objects.get(pk=self.kwargs["resource_id"])
+            except models.Document.DoesNotExist:
+                return queryset.none()
+
+            roles = set(document.get_roles(self.request.user))
+            is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+            self.is_current_user_owner_or_admin = is_owner_or_admin
+            if not is_owner_or_admin:
+                # Return only the document owner access
+                queryset = queryset.filter(role__in=models.PRIVILEGED_ROLES)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "list" and not self.is_current_user_owner_or_admin:
+            return serializers.DocumentAccessLightSerializer
+
+        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         """Add a new access to the document and send an email to the new added user."""
@@ -1701,9 +1783,13 @@ class ConfigView(drf.views.APIView):
             Return a dictionary of public settings.
         """
         array_settings = [
+            "AI_FEATURE_ENABLED",
             "COLLABORATION_WS_URL",
+            "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
+            "FRONTEND_CSS_URL",
+            "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",
@@ -1716,4 +1802,41 @@ class ConfigView(drf.views.APIView):
             if hasattr(settings, setting):
                 dict_settings[setting] = getattr(settings, setting)
 
+        dict_settings["theme_customization"] = self._load_theme_customization()
+
         return drf.response.Response(dict_settings)
+
+    def _load_theme_customization(self):
+        if not settings.THEME_CUSTOMIZATION_FILE_PATH:
+            return {}
+
+        cache_key = (
+            f"theme_customization_{slugify(settings.THEME_CUSTOMIZATION_FILE_PATH)}"
+        )
+        theme_customization = cache.get(cache_key, {})
+        if theme_customization:
+            return theme_customization
+
+        try:
+            with open(
+                settings.THEME_CUSTOMIZATION_FILE_PATH, "r", encoding="utf-8"
+            ) as f:
+                theme_customization = json.load(f)
+        except FileNotFoundError:
+            logger.error(
+                "Configuration file not found: %s",
+                settings.THEME_CUSTOMIZATION_FILE_PATH,
+            )
+        except json.JSONDecodeError:
+            logger.error(
+                "Configuration file is not a valid JSON: %s",
+                settings.THEME_CUSTOMIZATION_FILE_PATH,
+            )
+        else:
+            cache.set(
+                cache_key,
+                theme_customization,
+                settings.THEME_CUSTOMIZATION_CACHE_TIMEOUT,
+            )
+
+        return theme_customization

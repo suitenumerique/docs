@@ -1,6 +1,4 @@
-@import url('@gouvfr-lasuite/ui-kit/style');
-@import url('../cunningham/cunningham-tokens.css');
-@import url('../cunningham/cunningham-custom-tokens.css');
+@import url('../cunningham/cunningham-style.css');
 @import url('@fontsource/material-icons');
 
 body {

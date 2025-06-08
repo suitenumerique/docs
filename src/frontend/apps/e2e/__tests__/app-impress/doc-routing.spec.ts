@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 import { expect, test } from '@playwright/test';
 
 import {
@@ -101,8 +103,9 @@ test.describe('Doc Routing: Not loggued', () => {
     page,
     browserName,
   }) => {
-    await mockedDocument(page, { link_reach: 'public' });
-    await page.goto('/docs/mocked-document-id/');
+    const uuid = crypto.randomUUID();
+    await mockedDocument(page, { link_reach: 'public', id: uuid });
+    await page.goto(`/docs/${uuid}/`);
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
     await page.getByRole('button', { name: 'Login' }).click();
     await keyCloakSignIn(page, browserName, false);

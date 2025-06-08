@@ -23,18 +23,23 @@ export const SearchUserRow = ({
 }: Props) => {
   const hasFullName = user.full_name != null && user.full_name !== '';
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
 
   return (
     <QuickSearchItemContent
       right={right}
       alwaysShowRight={alwaysShowRight}
       left={
-        <Box $direction="row" $align="center" $gap={spacings['xs']}>
+        <Box
+          $direction="row"
+          $align="center"
+          $gap={spacingsTokens['xs']}
+          className="--docs--search-user-row"
+        >
           <UserAvatar
             user={user}
-            background={isInvitation ? colors['greyscale-400'] : undefined}
+            background={
+              isInvitation ? colorsTokens['greyscale-400'] : undefined
+            }
           />
           <Box $direction="column">
             <Text $size="sm" $weight="500" $variation="1000">

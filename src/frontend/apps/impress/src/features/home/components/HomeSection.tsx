@@ -36,7 +36,6 @@ export const HomeSection = ({
 }: HomeSectionProps) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
 
   const { isSmallMobile } = useResponsiveStore();
 
@@ -93,20 +92,21 @@ export const HomeSection = ({
         opacity: ${isVisible ? 1 : 0};
         ${$css}
       `}
+      className="--docs--home-section"
     >
       <Box
         $direction={direction}
-        $gap={!isSmallDevice ? spacings['lg'] : spacings['sm']}
+        $gap={!isSmallDevice ? spacingsTokens['lg'] : spacingsTokens['sm']}
         $maxHeight="100%"
         $height="auto"
         $width="100%"
       >
         <Box
-          $gap={spacings['sm']}
+          $gap={spacingsTokens['sm']}
           $maxWidth="850px"
           $css={direction === 'column' ? '100%' : `flex-basis: ${textWidth};`}
         >
-          <Box $direction="row" $gap={spacings['sm']} $wrap="wrap">
+          <Box $direction="row" $gap={spacingsTokens['sm']} $wrap="wrap">
             <SectionTag tag={tag} />
             {availableSoon && (
               <SectionTag tag={t('Available soon')} availableSoon />
@@ -174,6 +174,7 @@ export const HomeSection = ({
 
         {illustration && (isSmallDevice || !video) && (
           <Image
+            className="c__image-system-filter"
             src={illustration}
             alt={t('Illustration')}
             style={{
@@ -199,14 +200,14 @@ const SectionTag = ({
   availableSoon?: boolean;
 }) => {
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
   return (
     <Box
       $background={
-        !availableSoon ? colors['primary-100'] : colors['warning-100']
+        !availableSoon
+          ? colorsTokens['primary-100']
+          : colorsTokens['warning-100']
       }
-      $padding={{ horizontal: spacings['sm'], vertical: '6px' }}
+      $padding={{ horizontal: spacingsTokens['sm'], vertical: '6px' }}
       $css={css`
         align-self: flex-start;
         border-radius: 4px;

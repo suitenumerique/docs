@@ -5,7 +5,6 @@ Test AI transform API endpoint for users in impress's core app.
 import random
 from unittest.mock import MagicMock, patch
 
-from django.core.cache import cache
 from django.test import override_settings
 
 import pytest
@@ -15,12 +14,6 @@ from core import factories
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture(autouse=True)
-def clear_cache():
-    """Fixture to clear the cache before each test."""
-    cache.clear()
 
 
 @pytest.fixture
@@ -157,7 +150,7 @@ def test_api_documents_ai_transform_authenticated_forbidden(reach, role):
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_transform_authenticated_success(mock_create, reach, role):
     """
-    Autenticated who are not related to a document should be able to request AI transform
+    Authenticated who are not related to a document should be able to request AI transform
     if the link reach and role permit it.
     """
     user = factories.UserFactory()

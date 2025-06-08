@@ -3,32 +3,22 @@ import { css } from 'styled-components';
 import { DropdownMenu, DropdownMenuOption, Text } from '@/components';
 import { Role, useTrans } from '@/docs/doc-management/';
 
-type Props = {
-  currentRole: Role;
-  onSelectRole?: (role: Role) => void;
+type DocRoleDropdownProps = {
   canUpdate?: boolean;
-  isLastOwner?: boolean;
-  isOtherOwner?: boolean;
+  currentRole: Role;
+  message?: string;
+  onSelectRole: (role: Role) => void;
+  rolesAllowed?: Role[];
 };
+
 export const DocRoleDropdown = ({
   canUpdate = true,
   currentRole,
+  message,
   onSelectRole,
-  isLastOwner,
-  isOtherOwner,
-}: Props) => {
-  const { transRole, translatedRoles, getNotAllowedMessage } = useTrans();
-
-  const roles: DropdownMenuOption[] = Object.keys(translatedRoles).map(
-    (key) => {
-      return {
-        label: transRole(key as Role),
-        callback: () => onSelectRole?.(key as Role),
-        disabled: isLastOwner || isOtherOwner,
-        isSelected: currentRole === (key as Role),
-      };
-    },
-  );
+  rolesAllowed,
+}: DocRoleDropdownProps) => {
+  const { transRole, translatedRoles } = useTrans();
 
   if (!canUpdate) {
     return (
@@ -38,13 +28,20 @@ export const DocRoleDropdown = ({
     );
   }
 
+  const roles: DropdownMenuOption[] = Object.keys(translatedRoles).map(
+    (key) => {
+      return {
+        label: transRole(key as Role),
+        callback: () => onSelectRole?.(key as Role),
+        disabled: rolesAllowed && !rolesAllowed.includes(key as Role),
+        isSelected: currentRole === (key as Role),
+      };
+    },
+  );
+
   return (
     <DropdownMenu
-      topMessage={getNotAllowedMessage(
-        canUpdate,
-        !!isLastOwner,
-        !!isOtherOwner,
-      )}
+      topMessage={message}
       label="doc-role-dropdown"
       showArrow={true}
       options={roles}

@@ -7,6 +7,7 @@ from faker import Faker
 from rest_framework.test import APIClient
 
 from core import factories
+from core.api.filters import remove_accents
 
 fake = Faker()
 pytestmark = pytest.mark.django_db
@@ -49,14 +50,16 @@ def test_api_documents_descendants_filter_unknown_field():
     [
         ("Project Alpha", 1),  # Exact match
         ("project", 2),  # Partial match (case-insensitive)
-        ("Guide", 1),  # Word match within a title
+        ("Guide", 2),  # Word match within a title
         ("Special", 0),  # No match (nonexistent keyword)
         ("2024", 2),  # Match by numeric keyword
-        ("", 5),  # Empty string
+        ("", 6),  # Empty string
+        ("velo", 1),  # Accent-insensitive match (velo vs vélo)
+        ("bêta", 1),  # Accent-insensitive match (bêta vs beta)
     ],
 )
 def test_api_documents_descendants_filter_title(query, nb_results):
-    """Authenticated users should be able to search documents by their title."""
+    """Authenticated users should be able to search documents by their unaccented title."""
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
@@ -70,6 +73,7 @@ def test_api_documents_descendants_filter_title(query, nb_results):
         "User Guide",
         "Financial Report 2024",
         "Annual Review 2024",
+        "Guide du vélo urbain",  # <-- Title with accent for accent-insensitive test
     ]
     for title in titles:
         factories.DocumentFactory(title=title, parent=document)
@@ -85,4 +89,7 @@ def test_api_documents_descendants_filter_title(query, nb_results):
 
     # Ensure all results contain the query in their title
     for result in results:
-        assert query.lower().strip() in result["title"].lower()
+        assert (
+            remove_accents(query).lower().strip()
+            in remove_accents(result["title"]).lower()
+        )

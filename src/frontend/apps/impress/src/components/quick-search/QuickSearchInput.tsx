@@ -27,7 +27,6 @@ export const QuickSearchInput = ({
 }: Props) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
 
   if (children) {
     return (
@@ -44,7 +43,7 @@ export const QuickSearchInput = ({
         $direction="row"
         $align="center"
         className="quick-search-input"
-        $gap={spacing['2xs']}
+        $gap={spacingsTokens['2xs']}
         $padding={{ all: 'base' }}
       >
         {!loading && <Icon iconName="search" $variation="600" />}

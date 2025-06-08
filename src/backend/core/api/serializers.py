@@ -1,6 +1,8 @@
 """Client serializers for the impress core app."""
 
+import binascii
 import mimetypes
+from base64 import b64decode
 
 from django.conf import settings
 from django.db.models import Q
@@ -24,6 +26,26 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = ["id", "email", "full_name", "short_name", "language"]
+        read_only_fields = ["id", "email", "full_name", "short_name"]
+
+
+class UserLightSerializer(UserSerializer):
+    """Serialize users with limited fields."""
+
+    id = serializers.SerializerMethodField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
+
+    def get_id(self, _user):
+        """Return always None. Here to have the same fields than in UserSerializer."""
+        return None
+
+    def get_email(self, _user):
+        """Return always None. Here to have the same fields than in UserSerializer."""
+        return None
+
+    class Meta:
+        model = models.User
+        fields = ["id", "email", "full_name", "short_name"]
         read_only_fields = ["id", "email", "full_name", "short_name"]
 
 
@@ -116,6 +138,17 @@ class DocumentAccessSerializer(BaseAccessSerializer):
         resource_field_name = "document"
         fields = ["id", "user", "user_id", "team", "role", "abilities"]
         read_only_fields = ["id", "abilities"]
+
+
+class DocumentAccessLightSerializer(DocumentAccessSerializer):
+    """Serialize document accesses with limited fields."""
+
+    user = UserLightSerializer(read_only=True)
+
+    class Meta:
+        model = models.DocumentAccess
+        fields = ["id", "user", "team", "role", "abilities"]
+        read_only_fields = ["id", "team", "role", "abilities"]
 
 
 class TemplateAccessSerializer(BaseAccessSerializer):
@@ -265,6 +298,18 @@ class DocumentSerializer(ListDocumentSerializer):
                 raise serializers.ValidationError(
                     "A document with this ID already exists. You cannot override it."
                 )
+
+        return value
+
+    def validate_content(self, value):
+        """Validate the content field."""
+        if not value:
+            return None
+
+        try:
+            b64decode(value, validate=True)
+        except binascii.Error as err:
+            raise serializers.ValidationError("Invalid base64 content.") from err
 
         return value
 

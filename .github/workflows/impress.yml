@@ -61,6 +61,25 @@ jobs:
             exit 1
           fi
 
+  lint-spell-mistakes:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install codespell
+        run: pip install --user codespell
+      - name: Check for typos
+        run: |
+          codespell \
+            --check-filenames \
+            --ignore-words-list "Dokument,afterAll,excpt,statics" \
+            --skip "./git/" \
+            --skip "**/*.po" \
+            --skip "**/*.pot" \
+            --skip "**/*.json" \
+            --skip "**/yarn.lock"
+
   lint-back:
     runs-on: ubuntu-latest
     defaults:
@@ -72,7 +91,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.12.6"
+          python-version: "3.13.3"
       - name: Upgrade pip and setuptools
         run: pip install --upgrade pip setuptools
       - name: Install development dependencies
@@ -167,7 +186,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.12.6"
+          python-version: "3.13.3"
 
       - name: Install development dependencies
         run: pip install --user .[dev]

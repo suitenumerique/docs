@@ -6,7 +6,9 @@ import {
   useState,
 } from 'react';
 import { Button, Popover } from 'react-aria-components';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+
+import { useCunninghamTheme } from '@/cunningham';
 
 import { BoxProps } from './Box';
 
@@ -27,11 +29,9 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   background: none;
   outline: none;
   transition: all 0.2s ease-in-out;
-  font-family: Marianne, Arial, serif;
   font-weight: 500;
   font-size: 0.938rem;
   padding: 0;
-  text-wrap: nowrap;
   ${({ $css }) => $css};
 `;
 
@@ -51,6 +51,8 @@ export const DropButton = ({
   children,
   label,
 }: PropsWithChildren<DropButtonProps>) => {
+  const { themeTokens } = useCunninghamTheme();
+  const font = themeTokens['font']?.['families']['base'];
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
 
   const triggerRef = useRef(null);
@@ -70,7 +72,11 @@ export const DropButton = ({
         ref={triggerRef}
         onPress={() => onOpenChangeHandler(true)}
         aria-label={label}
-        $css={buttonCss}
+        $css={css`
+          font-family: ${font};
+          ${buttonCss};
+        `}
+        className="--docs--drop-button"
       >
         {button}
       </StyledButton>
@@ -79,6 +85,7 @@ export const DropButton = ({
         triggerRef={triggerRef}
         isOpen={isLocalOpen}
         onOpenChange={onOpenChangeHandler}
+        className="--docs--drop-button-popover"
       >
         {children}
       </StyledPopover>

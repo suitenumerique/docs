@@ -16,14 +16,14 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacing = spacingsTokens();
+
   return (
     <Box
       $direction="row"
       $align="center"
       $justify="space-between"
       $css={css`
-        padding: ${spacing['2xs']};
+        padding: ${spacingsTokens['2xs']};
         border-radius: 4px;
         .pinned-actions {
           opacity: ${isDesktop ? 0 : 1};
@@ -38,6 +38,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         }
       `}
       key={doc.id}
+      className="--docs--left-panel-favorite-item"
     >
       <StyledLink href={`/docs/${doc.id}`} $css="overflow: auto;">
         <SimpleDocItem showAccesses doc={doc} />

@@ -25,7 +25,6 @@ interface DocEditorProps {
 
 export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
-
   const isVersion = !!versionId && typeof versionId === 'string';
 
   const { colorsTokens } = useCunninghamTheme();
@@ -49,8 +48,16 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           <TableContent />
         </Box>
       )}
-      <Box $maxWidth="868px" $width="100%" $height="100%">
-        <Box $padding={{ horizontal: isDesktop ? '54px' : 'base' }}>
+      <Box
+        $maxWidth="868px"
+        $width="100%"
+        $height="100%"
+        className="--docs--doc-editor"
+      >
+        <Box
+          $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
+          className="--docs--doc-editor-header"
+        >
           {isVersion ? (
             <DocVersionHeader title={doc.title} />
           ) : (
@@ -59,11 +66,12 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
         </Box>
 
         <Box
-          $background={colorsTokens()['primary-bg']}
+          $background={colorsTokens['primary-bg']}
           $direction="row"
           $width="100%"
           $css="overflow-x: clip; flex: 1;"
           $position="relative"
+          className="--docs--doc-editor-content"
         >
           <Box $css="flex:1;" $position="relative" $width="100%">
             {isVersion ? (
@@ -115,7 +123,7 @@ export const DocVersionEditor = ({
     }
 
     return (
-      <Box $margin="large">
+      <Box $margin="large" className="--docs--doc-version-editor-error">
         <TextErrors
           causes={error.cause}
           icon={

@@ -19,8 +19,9 @@ import {
 } from 'workbox-strategies';
 
 // eslint-disable-next-line import/order
-import { ApiPlugin } from './ApiPlugin';
 import { DAYS_EXP, SW_DEV_URL, SW_VERSION, getCacheNameVersion } from './conf';
+import { ApiPlugin } from './plugins/ApiPlugin';
+import { OfflinePlugin } from './plugins/OfflinePlugin';
 import { isApiUrl } from './service-worker-api';
 
 // eslint-disable-next-line import/order
@@ -38,11 +39,15 @@ setCacheNameDetails({
 });
 
 /**
- * In development, use NetworkFirst strategy, in production use CacheFirst strategy
- * We will be able to test the application in development without having to clear the cache.
- * @param url
- * @param options
- * @returns strategy
+ * Chooses the appropriate caching strategy based on the environment and request context.
+ *
+ * - In **development**, or for **API requests**, or **HTML pages**, it returns a `NetworkFirst` strategy
+ *   to prioritize fresh responses and ease debugging without needing to clear caches.
+ * - In **production** (for non-API, non-HTML content), it returns a `CacheFirst` strategy
+ *   to favor performance and offline access.
+ *
+ * @param {NetworkFirstOptions | StrategyOptions} [options] - Configuration options for the caching strategy.
+ * @returns {NetworkFirst | CacheFirst} The selected Workbox strategy instance.
  */
 const getStrategy = (
   options?: NetworkFirstOptions | StrategyOptions,
@@ -63,6 +68,13 @@ cleanupOutdatedCaches();
 
 self.addEventListener('install', function (event) {
   event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('message', (event) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if (event.data?.type === 'SKIP_WAITING') {
+    void self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', function (event) {
@@ -96,10 +108,9 @@ const FALLBACK = {
 const precacheResources = [
   '/',
   '/index.html',
+  '/401/',
   '/404/',
-  '/accessibility/',
-  '/legal-notice/',
-  '/personal-data-cookies/',
+  '/403/',
   FALLBACK.offline,
   FALLBACK.images,
   FALLBACK.docs,
@@ -143,6 +154,7 @@ registerRoute(
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({ maxAgeSeconds: 24 * 60 * 60 * DAYS_EXP }),
+      new OfflinePlugin(),
     ],
   }),
 );
@@ -159,6 +171,7 @@ registerRoute(
       new ExpirationPlugin({
         maxAgeSeconds: 24 * 60 * 60 * DAYS_EXP,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',
@@ -174,7 +187,7 @@ registerRoute(
 );
 
 /**
- * Cache stategy static files images (images / svg)
+ * Cache strategy static files images (images / svg)
  */
 registerRoute(
   ({ request }) => request.destination === 'image',
@@ -190,7 +203,7 @@ registerRoute(
 );
 
 /**
- * Cache stategy static files fonts
+ * Cache strategy static files fonts
  */
 googleFontsCache();
 registerRoute(
@@ -207,7 +220,7 @@ registerRoute(
 );
 
 /**
- * Cache stategy static files (css, js, workers)
+ * Cache strategy static files (css, js, workers)
  */
 registerRoute(
   ({ request }) =>
@@ -223,6 +236,20 @@ registerRoute(
       }),
     ],
   }),
+);
+
+/**
+ * External urls post cache strategy
+ * It is interesting to intercept the request
+ * to have a fine grain control about if the user is
+ * online or offline
+ */
+registerRoute(
+  ({ url }) => !url.href.includes(self.location.origin) && !isApiUrl(url.href),
+  new NetworkOnly({
+    plugins: [new OfflinePlugin()],
+  }),
+  'POST',
 );
 
 /**

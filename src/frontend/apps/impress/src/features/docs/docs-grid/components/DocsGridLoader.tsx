@@ -31,6 +31,7 @@ export const DocsGridLoader = ({ isLoading }: DocsGridLoaderProps) => {
         $background="rgba(255, 255, 255, 0.5)"
         $zIndex={998}
         $position="absolute"
+        className="--docs--doc-grid-loader"
       >
         <Loader />
       </Box>

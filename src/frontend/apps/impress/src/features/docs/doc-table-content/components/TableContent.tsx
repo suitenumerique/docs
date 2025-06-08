@@ -13,7 +13,6 @@ export const TableContent = () => {
   const { headings } = useHeadingStore();
   const { editor } = useEditorStore();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
 
   const [headingIdHighlight, setHeadingIdHighlight] = useState<string>();
 
@@ -122,6 +121,7 @@ export const TableContent = () => {
           gap: var(--c--theme--spacings--2xs);
         `}
       `}
+      className="--docs--table-content"
     >
       {!isHover && (
         <BoxButton onClick={onOpen} $justify="center" $align="center">
@@ -157,7 +157,7 @@ export const TableContent = () => {
             </BoxButton>
           </Box>
           <Box
-            $gap={spacing['3xs']}
+            $gap={spacingsTokens['3xs']}
             $css={css`
               overflow-y: auto;
             `}

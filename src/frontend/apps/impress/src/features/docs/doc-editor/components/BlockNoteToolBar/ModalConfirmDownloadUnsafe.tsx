@@ -1,7 +1,7 @@
 import { Button, Modal, ModalSize } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 
 interface ModalConfirmDownloadUnsafeProps {
   onClose: () => void;
@@ -32,7 +32,6 @@ export const ModalConfirmDownloadUnsafe = ({
             aria-label={t('Download')}
             color="danger"
             onClick={() => {
-              console.log('onClick');
               if (onConfirm) {
                 void onConfirm();
               }
@@ -52,14 +51,15 @@ export const ModalConfirmDownloadUnsafe = ({
           $variation="1000"
           $direction="row"
         >
-          <Text $isMaterialIcon $theme="warning">
-            warning
-          </Text>
+          <Icon iconName="warning" $theme="warning" />
           {t('Warning')}
         </Text>
       }
     >
-      <Box aria-label={t('Modal confirmation to download the attachment')}>
+      <Box
+        aria-label={t('Modal confirmation to download the attachment')}
+        className="--docs--modal-confirm-download-unsafe"
+      >
         <Box>
           <Box $direction="column" $gap="0.35rem" $margin={{ top: 'sm' }}>
             <Text $variation="700">{t('This file is flagged as unsafe.')}</Text>

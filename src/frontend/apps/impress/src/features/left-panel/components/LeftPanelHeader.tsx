@@ -1,7 +1,7 @@
-import { Button, ModalSize, useModal } from '@openfun/cunningham-react';
+import { Button } from '@openfun/cunningham-react';
 import { t } from 'i18next';
 import { useRouter } from 'next/navigation';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useCallback, useState } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
 import { useCreateDoc } from '@/docs/doc-management';
@@ -13,20 +13,27 @@ import { useLeftPanelStore } from '../stores';
 
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
-  const searchModal = useModal();
   const { authenticated } = useAuth();
-  useCmdK(() => {
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+  const openSearchModal = useCallback(() => {
     const isEditorToolbarOpen =
       document.getElementsByClassName('bn-formatting-toolbar').length > 0;
     if (isEditorToolbarOpen) {
       return;
     }
 
-    searchModal.open();
-  });
+    setIsSearchModalOpen(true);
+  }, []);
+
+  const closeSearchModal = useCallback(() => {
+    setIsSearchModalOpen(false);
+  }, []);
+
+  useCmdK(openSearchModal);
   const { togglePanel } = useLeftPanelStore();
 
-  const { mutate: createDoc } = useCreateDoc({
+  const { mutate: createDoc, isPending: isCreatingDoc } = useCreateDoc({
     onSuccess: (doc) => {
       router.push(`/docs/${doc.id}`);
       togglePanel();
@@ -44,7 +51,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
 
   return (
     <>
-      <Box $width="100%" className="panel-header">
+      <Box $width="100%" className="--docs--left-panel-header">
         <SeparatedSection>
           <Box
             $padding={{ horizontal: 'sm' }}
@@ -64,7 +71,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               />
               {authenticated && (
                 <Button
-                  onClick={searchModal.open}
+                  onClick={openSearchModal}
                   size="medium"
                   color="tertiary-text"
                   icon={
@@ -74,14 +81,16 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
               )}
             </Box>
             {authenticated && (
-              <Button onClick={createNewDoc}>{t('New doc')}</Button>
+              <Button onClick={createNewDoc} disabled={isCreatingDoc}>
+                {t('New doc')}
+              </Button>
             )}
           </Box>
         </SeparatedSection>
         {children}
       </Box>
-      {searchModal.isOpen && (
-        <DocSearchModal {...searchModal} size={ModalSize.LARGE} />
+      {isSearchModalOpen && (
+        <DocSearchModal onClose={closeSearchModal} isOpen={isSearchModalOpen} />
       )}
     </>
   );

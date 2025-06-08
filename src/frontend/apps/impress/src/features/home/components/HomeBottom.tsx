@@ -1,7 +1,6 @@
-import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 
-import DocLogo from '@/assets/icons/icon-docs.svg?url';
+import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { ProConnectButton } from '@/features/auth';
@@ -10,7 +9,7 @@ import { useResponsiveStore } from '@/stores';
 
 export function HomeBottom() {
   const { componentTokens } = useCunninghamTheme();
-  const withProConnect = componentTokens()['home-proconnect'].activated;
+  const withProConnect = componentTokens['home-proconnect'];
 
   if (!withProConnect) {
     return null;
@@ -21,8 +20,7 @@ export function HomeBottom() {
 
 function HomeProConnect() {
   const { t } = useTranslation();
-  const { spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isMobile } = useResponsiveStore();
   const parentGap = '230px';
 
@@ -30,22 +28,27 @@ function HomeProConnect() {
     <Box
       $justify="center"
       $height={!isMobile ? `calc(100vh - ${parentGap})` : 'auto'}
+      className="--docs--home-proconnect"
     >
       <Box
-        $gap={spacings['md']}
+        $gap={spacingsTokens['md']}
         $direction="column"
         $align="center"
         $margin={{ top: isMobile ? 'none' : `-${parentGap}` }}
       >
         <Box
           $align="center"
-          $gap={spacings['3xs']}
+          $gap={spacingsTokens['3xs']}
           $direction="row"
           $position="relative"
           $height="fit-content"
           $css="zoom: 1.9;"
         >
-          <Image src={DocLogo} alt="DocLogo" />
+          <IconDocs
+            aria-label={t('Docs Logo')}
+            width={34}
+            color={colorsTokens['primary-text']}
+          />
           <Title />
         </Box>
         <Text $size="md" $variation="1000" $textAlign="center">

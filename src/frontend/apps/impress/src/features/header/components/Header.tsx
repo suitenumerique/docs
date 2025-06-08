@@ -16,11 +16,8 @@ import { Title } from './Title';
 
 export const Header = () => {
   const { t } = useTranslation();
-  const theme = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-
-  const spacings = theme.spacingsTokens();
-  const colors = theme.colorsTokens();
 
   return (
     <Box
@@ -35,31 +32,36 @@ export const Header = () => {
         align-items: center;
         justify-content: space-between;
         height: ${HEADER_HEIGHT}px;
-        padding: 0 ${spacings['base']};
-        background-color: ${colors['greyscale-000']};
-        border-bottom: 1px solid ${colors['greyscale-200']};
+        padding: 0 ${spacingsTokens['base']};
+        background-color: ${colorsTokens['greyscale-000']};
+        border-bottom: 1px solid ${colorsTokens['greyscale-200']};
       `}
+      className="--docs--header"
     >
       {!isDesktop && <ButtonTogglePanel />}
       <StyledLink href="/">
         <Box
           $align="center"
-          $gap={spacings['3xs']}
+          $gap={spacingsTokens['3xs']}
           $direction="row"
           $position="relative"
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <IconDocs aria-label={t('Docs Logo')} width={32} />
+          <IconDocs
+            aria-label={t('Docs Logo')}
+            width={32}
+            color={colorsTokens['primary-text']}
+          />
           <Title />
         </Box>
       </StyledLink>
       {!isDesktop ? (
-        <Box $direction="row" $gap={spacings['sm']}>
+        <Box $direction="row" $gap={spacingsTokens['sm']}>
           <LaGaufre />
         </Box>
       ) : (
-        <Box $align="center" $gap={spacings['sm']} $direction="row">
+        <Box $align="center" $gap={spacingsTokens['sm']} $direction="row">
           <ButtonLogin />
           <LanguagePicker />
           <LaGaufre />

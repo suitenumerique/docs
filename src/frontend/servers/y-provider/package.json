@@ -1,6 +1,6 @@
 {
   "name": "server-y-provider",
-  "version": "2.6.0",
+  "version": "3.3.0",
   "description": "Y.js provider for docs",
   "repository": "https://github.com/numerique-gouv/impress",
   "license": "MIT",
@@ -13,37 +13,39 @@
     "test": "jest"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.23.2",
+    "@blocknote/server-util": "0.31.1",
     "@hocuspocus/server": "2.15.2",
-    "@sentry/node": "9.3.0",
-    "@sentry/profiling-node": "9.3.0",
+    "@sentry/node": "9.26.0",
+    "@sentry/profiling-node": "9.26.0",
+    "axios": "1.9.0",
     "cors": "2.8.5",
-    "express": "4.21.2",
+    "express": "5.1.0",
     "express-ws": "5.0.2",
+    "uuid": "11.1.0",
     "y-protocols": "1.0.6",
     "yjs": "*"
   },
   "devDependencies": {
     "@hocuspocus/provider": "2.15.2",
-    "@types/cors": "2.8.17",
-    "@types/express": "5.0.0",
+    "@types/cors": "2.8.18",
+    "@types/express": "5.0.2",
     "@types/express-ws": "3.0.5",
     "@types/jest": "29.5.14",
     "@types/node": "*",
-    "@types/supertest": "6.0.2",
-    "@types/ws": "8.5.14",
+    "@types/supertest": "6.0.3",
+    "@types/ws": "8.18.1",
     "cross-env": "7.0.3",
     "eslint-config-impress": "*",
     "jest": "29.7.0",
-    "nodemon": "3.1.9",
-    "supertest": "7.0.0",
-    "ts-jest": "29.2.6",
+    "nodemon": "3.1.10",
+    "supertest": "7.1.1",
+    "ts-jest": "29.3.4",
     "ts-node": "10.9.2",
-    "tsc-alias": "1.8.11",
+    "tsc-alias": "1.8.16",
     "typescript": "*",
-    "ws": "8.18.1"
+    "ws": "8.18.2"
   }
 }

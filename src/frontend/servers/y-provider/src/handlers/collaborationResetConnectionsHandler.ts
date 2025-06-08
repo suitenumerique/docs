@@ -14,14 +14,7 @@ export const collaborationResetConnectionsHandler = (
   const room = req.query.room;
   const userId = req.headers['x-user-id'];
 
-  logger(
-    'Resetting connections in room:',
-    room,
-    'for user:',
-    userId,
-    'room:',
-    room,
-  );
+  logger('Resetting connections in room:', room, 'for user:', userId);
 
   if (!room) {
     res.status(400).json({ error: 'Room name not provided' });
@@ -43,8 +36,8 @@ export const collaborationResetConnectionsHandler = (
       }
 
       doc.getConnections().forEach((connection) => {
-        const connectionUserId = connection.request.headers['x-user-id'];
-        if (connectionUserId === userId) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (connection.context.userId === userId) {
           connection.close();
         }
       });

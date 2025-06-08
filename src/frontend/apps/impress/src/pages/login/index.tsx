@@ -1,8 +1,10 @@
-import { HomeContent } from '@/features/home';
-import { NextPageWithLayout } from '@/types/next';
+import { useRouter } from 'next/router';
 
-const Page: NextPageWithLayout = () => {
-  return <HomeContent />;
+import { HOME_URL } from '@/features/auth';
+
+const Page = () => {
+  const { replace } = useRouter();
+  void replace(HOME_URL);
 };
 
 export default Page;

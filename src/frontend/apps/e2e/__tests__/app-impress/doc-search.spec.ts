@@ -86,7 +86,7 @@ test.describe('Document search', () => {
     const editor = page.locator('.ProseMirror');
     await editor.click();
     await editor.fill('Hello world');
-    await editor.getByText('Hello world').dblclick();
+    await editor.getByText('Hello world').selectText();
 
     await page.keyboard.press('Control+k');
     await expect(page.getByRole('textbox', { name: 'Edit URL' })).toBeVisible();

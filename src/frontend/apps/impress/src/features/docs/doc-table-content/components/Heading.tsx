@@ -58,8 +58,9 @@ export const Heading = ({
         });
       }}
       $radius="4px"
-      $background={isActive ? `${colorsTokens()['greyscale-100']}` : 'none'}
+      $background={isActive ? `${colorsTokens['greyscale-100']}` : 'none'}
       $css="text-align: left;"
+      className="--docs--table-content-heading"
     >
       <Text
         $width="100%"

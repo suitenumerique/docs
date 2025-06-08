@@ -1,173 +1,47 @@
-import {
-  Button,
-  VariantType,
-  useModal,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { Button, useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import {
-  Box,
-  DropdownMenu,
-  DropdownMenuOption,
-  Icon,
-  IconOptions,
-} from '@/components';
+import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore } from '@/docs/doc-editor/';
-import { ModalExport } from '@/docs/doc-export/';
-import {
-  Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
-  ModalRemoveDoc,
-  useCopyDocLink,
-  useCreateFavoriteDoc,
-  useDeleteFavoriteDoc,
-} from '@/docs/doc-management';
-import { DocShareModal } from '@/docs/doc-share';
-import {
-  KEY_LIST_DOC_VERSIONS,
-  ModalSelectVersion,
-} from '@/docs/doc-versioning';
-import { useAnalytics } from '@/libs';
+import { Doc } from '@/docs/doc-management';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { useResponsiveStore } from '@/stores';
 
 interface DocToolBoxProps {
   doc: Doc;
 }
 
+const DocToolBoxLicence = dynamic(() =>
+  process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false'
+    ? import('./DocToolBoxLicenceAGPL').then((mod) => mod.DocToolBoxLicenceAGPL)
+    : import('./DocToolBoxLicenceMIT').then((mod) => mod.DocToolBoxLicenceMIT),
+);
+
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const hasAccesses = doc.nb_accesses_direct > 1 && doc.abilities.accesses_view;
   const queryClient = useQueryClient();
 
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
 
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
-
-  const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
-  const [isModalExportOpen, setIsModalExportOpen] = useState(false);
-  const selectHistoryModal = useModal();
+  const modalHistory = useModal();
   const modalShare = useModal();
 
-  const { isSmallMobile, isDesktop } = useResponsiveStore();
-  const { editor } = useEditorStore();
-  const { toast } = useToastProvider();
-  const copyDocLink = useCopyDocLink(doc.id);
-  const { isFeatureFlagActivated } = useAnalytics();
-  const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
-  });
-  const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
-  });
-
-  const options: DropdownMenuOption[] = [
-    ...(isSmallMobile
-      ? [
-          {
-            label: t('Share'),
-            icon: 'group',
-            callback: modalShare.open,
-          },
-          {
-            label: t('Export'),
-            icon: 'download',
-            callback: () => {
-              setIsModalExportOpen(true);
-            },
-          },
-          {
-            label: t('Copy link'),
-            icon: 'add_link',
-            callback: copyDocLink,
-          },
-        ]
-      : []),
-    {
-      label: doc.is_favorite ? t('Unpin') : t('Pin'),
-      icon: 'push_pin',
-      callback: () => {
-        if (doc.is_favorite) {
-          removeFavoriteDoc.mutate({ id: doc.id });
-        } else {
-          makeFavoriteDoc.mutate({ id: doc.id });
-        }
-      },
-      testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
-    },
-    {
-      label: t('Version history'),
-      icon: 'history',
-      disabled: !doc.abilities.versions_list,
-      callback: () => {
-        selectHistoryModal.open();
-      },
-      show: isDesktop,
-    },
-
-    {
-      label: t('Copy as {{format}}', { format: 'Markdown' }),
-      icon: 'content_copy',
-      callback: () => {
-        void copyCurrentEditorToClipboard('markdown');
-      },
-    },
-    {
-      label: t('Copy as {{format}}', { format: 'HTML' }),
-      icon: 'content_copy',
-      callback: () => {
-        void copyCurrentEditorToClipboard('html');
-      },
-      show: isFeatureFlagActivated('CopyAsHTML'),
-    },
-    {
-      label: t('Delete document'),
-      icon: 'delete',
-      disabled: !doc.abilities.destroy,
-      callback: () => {
-        setIsModalRemoveOpen(true);
-      },
-    },
-  ];
-
-  const copyCurrentEditorToClipboard = async (
-    asFormat: 'html' | 'markdown',
-  ) => {
-    if (!editor) {
-      toast(t('Editor unavailable'), VariantType.ERROR, { duration: 3000 });
-      return;
-    }
-
-    try {
-      const editorContentFormatted =
-        asFormat === 'html'
-          ? await editor.blocksToHTMLLossy()
-          : await editor.blocksToMarkdownLossy();
-      await navigator.clipboard.writeText(editorContentFormatted);
-      toast(t('Copied to clipboard'), VariantType.SUCCESS, { duration: 3000 });
-    } catch (error) {
-      console.error(error);
-      toast(t('Failed to copy to clipboard'), VariantType.ERROR, {
-        duration: 3000,
-      });
-    }
-  };
+  const { isSmallMobile } = useResponsiveStore();
 
   useEffect(() => {
-    if (selectHistoryModal.isOpen) {
+    if (modalHistory.isOpen) {
       return;
     }
 
     void queryClient.resetQueries({
       queryKey: [KEY_LIST_DOC_VERSIONS],
     });
-  }, [selectHistoryModal.isOpen, queryClient]);
+  }, [modalHistory.isOpen, queryClient]);
 
   return (
     <Box
@@ -176,12 +50,13 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       $align="center"
       $gap="0.5rem 1.5rem"
       $wrap={isSmallMobile ? 'wrap' : 'nowrap'}
+      className="--docs--doc-toolbox"
     >
       <Box
         $direction="row"
         $align="center"
         $margin={{ left: 'auto' }}
-        $gap={spacings['2xs']}
+        $gap={spacingsTokens['2xs']}
       >
         {!isSmallMobile && (
           <>
@@ -224,55 +99,12 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           </>
         )}
 
-        {!isSmallMobile && (
-          <Button
-            color="tertiary-text"
-            icon={
-              <Icon iconName="download" $theme="primary" $variation="800" />
-            }
-            onClick={() => {
-              setIsModalExportOpen(true);
-            }}
-            size={isSmallMobile ? 'small' : 'medium'}
-          />
-        )}
-        <DropdownMenu options={options}>
-          <IconOptions
-            isHorizontal
-            $theme="primary"
-            $padding={{ all: 'xs' }}
-            $css={css`
-              border-radius: 4px;
-              &:hover {
-                background-color: ${colors['greyscale-100']};
-              }
-              ${isSmallMobile
-                ? css`
-                    padding: 10px;
-                    border: 1px solid ${colors['greyscale-300']};
-                  `
-                : ''}
-            `}
-            aria-label={t('Open the document options')}
-          />
-        </DropdownMenu>
-      </Box>
-
-      {modalShare.isOpen && (
-        <DocShareModal onClose={() => modalShare.close()} doc={doc} />
-      )}
-      {isModalExportOpen && (
-        <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
-      )}
-      {isModalRemoveOpen && (
-        <ModalRemoveDoc onClose={() => setIsModalRemoveOpen(false)} doc={doc} />
-      )}
-      {selectHistoryModal.isOpen && (
-        <ModalSelectVersion
-          onClose={() => selectHistoryModal.close()}
+        <DocToolBoxLicence
           doc={doc}
+          modalHistory={modalHistory}
+          modalShare={modalShare}
         />
-      )}
+      </Box>
     </Box>
   );
 };

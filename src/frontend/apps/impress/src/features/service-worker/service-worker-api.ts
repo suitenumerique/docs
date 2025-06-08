@@ -3,10 +3,11 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { registerRoute } from 'workbox-routing';
 import { NetworkFirst, NetworkOnly } from 'workbox-strategies';
 
-import { ApiPlugin } from './ApiPlugin';
 import { DocsDB } from './DocsDB';
 import { SyncManager } from './SyncManager';
 import { DAYS_EXP, SW_DEV_API, getCacheNameVersion } from './conf';
+import { ApiPlugin } from './plugins/ApiPlugin';
+import { OfflinePlugin } from './plugins/OfflinePlugin';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -37,6 +38,7 @@ registerRoute(
         type: 'list',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',
@@ -52,6 +54,7 @@ registerRoute(
         type: 'item',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',
@@ -66,6 +69,7 @@ registerRoute(
         type: 'update',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'PATCH',
@@ -79,6 +83,7 @@ registerRoute(
         type: 'create',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'POST',
@@ -93,6 +98,7 @@ registerRoute(
         type: 'delete',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'DELETE',
@@ -111,6 +117,7 @@ registerRoute(
         type: 'synch',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',

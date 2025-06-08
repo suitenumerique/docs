@@ -15,7 +15,7 @@ const GaufreStyle = createGlobalStyle`
 export const LaGaufre = () => {
   const { componentTokens } = useCunninghamTheme();
 
-  if (!componentTokens()['la-gauffre'].activated) {
+  if (!componentTokens['la-gaufre']) {
     return null;
   }
 

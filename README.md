@@ -1,13 +1,19 @@
 <p align="center">
   <a href="https://github.com/suitenumerique/docs">
-    <img alt="Docs" src="/docs/assets/docs-logo.png" width="300" />
+    <img alt="Docs" src="/docs/assets/banner-docs.png" width="100%" />
   </a>
 </p>
-
 <p align="center">
-Welcome to Docs! The open source document editor where your notes can become knowledge through live collaboration
+  <a href="https://github.com/suitenumerique/docs/stargazers/">
+    <img src="https://img.shields.io/github/stars/suitenumerique/docs" alt="">
+  </a>
+  <a href='https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
+  <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
+  <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
+    <img alt="GitHub closed issues" src="https://img.shields.io/github/license/suitenumerique/docs"/>
+  </a>    
 </p>
-
 <p align="center">
   <a href="https://matrix.to/#/#docs-official:matrix.org">
     Chat on Matrix
@@ -20,46 +26,52 @@ Welcome to Docs! The open source document editor where your notes can become kno
   </a>
 </p>
 
+# La Suite Docs : Collaborative Text Editing
+Docs, where your notes can become knowledge through live collaboration.
+
 <img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
 
 ## Why use Docs ❓
-
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
-### Write
-*   😌 Simple collaborative editing without the formatting complexity of markdown
-*   🔌 Offline? No problem, keep writing, your edits will get synced when back online
-*   💅 Create clean documents with limited but beautiful formatting options and focus on content
-*   🧱 Built for productivity (markdown support, many block types, slash commands, keyboard shortcuts).
-*   ✨ Save time thanks to our AI actions (generate, sum up, correct, translate)
+It offers a scalable and secure alternative to tools such as Google Docs, Notion (without the dbs), Outline, or Confluence.
 
-### Collaborate
-*   🤝 Collaborate with your team in real time
-*   🔒 Granular access control to ensure your information is secure and only shared with the right people
-*   📑 Professional document exports in multiple formats (.odt, .doc, .pdf) with customizable templates
-*   📚 Built-in wiki functionality to turn your team's collaborative work into organized knowledge `ETA 02/2025`
+### Write
+* 😌 Get simple, accessible online editing for your team.
+* 💅 Create clean documents with beautiful formatting options.
+* 🖌️ Focus on your content using either the in-line editor, or [the Markdown syntax](https://www.markdownguide.org/basic-syntax/).
+* 🧱 Quickly design your page thanks to the many block types, accessible from the `/` slash commands, as well as keyboard shortcuts.
+* 🔌 Write offline! Your edits will be synced once you're back online.
+* ✨ Save time thanks to our AI actions, such as rephrasing, summarizing, fixing typos, translating, etc. You can even turn your selected text into a prompt!
+
+### Work together
+* 🤝 Enjoy live editing! See your team collaborate in real time.
+* 🔒 Keep your information secure thanks to granular access control. Only share with the right people.
+* 📑 Export your content in multiple formats (`.odt`, `.docx`, `.pdf`) with customizable templates.
+* 📚 Turn your team's collaborative work into organized knowledge with Subpages.
 
 ### Self-host
-*   🚀 Easy to install, scalable and secure alternative to Notion, Outline or Confluence
+🚀 Docs is easy to install on your own servers
+
+Available methods: Helm chart, Nix package
+
+In the works: Docker Compose, YunoHost
+
+⚠️ For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under AGPL-3.0 and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
 
 ## Getting started 🔧
 
 ### Test it
 
-Test Docs on your browser by logging in on this [environment](https://impress-preprod.beta.numerique.gouv.fr/)
+You can test Docs on your browser by visiting this [demo document](https://impress-preprod.beta.numerique.gouv.fr/docs/6ee5aac4-4fb9-457d-95bf-bb56c2467713/)
 
-```
-email: test.docs@yopmail.com
-password: I'd<3ToTestDocs
-```
+### Run Docs locally
 
-### Run it locally
-
-> ⚠️ Running Docs locally using the methods described below is for testing purposes only.  It is based on building Docs using Minio as the S3 storage solution but you can choose any S3 compatible object storage of your choice.
+> ⚠️ The methods described below for running Docs locally is **for testing purposes only**. It is based on building Docs using [Minio](https://min.io/) as an S3-compatible storage solution. Of course you can choose any S3-compatible storage solution.
 
 **Prerequisite**
 
-Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop:
+Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop, then type:
 
 ```shellscript
 $ docker -v
@@ -71,7 +83,7 @@ $ docker compose version
 Docker Compose version v2.32.4
 ```
 
-> ⚠️ You may need to run the following commands with sudo but this can be avoided by adding your user to the `docker` group.
+> ⚠️ You may need to run the following commands with `sudo`, but this can be avoided by adding your user to the local `docker` group.
 
 **Project bootstrap**
 
@@ -81,13 +93,13 @@ The easiest way to start working on the project is to use [GNU Make](https://www
 $ make bootstrap FLUSH_ARGS='--no-input'
 ```
 
-This command builds the `app` container, installs dependencies, performs database migrations and compile translations. It's a good idea to use this command each time you are pulling code from the project repository to avoid dependency-related or migration-related issues.
+This command builds the `app` container, installs dependencies, performs database migrations and compiles translations. It's a good idea to use this command each time you are pulling code from the project repository to avoid dependency-related or migration-related issues.
 
 Your Docker services should now be up and running 🎉
 
 You can access to the project by going to <http://localhost:3000>.
 
-You will be prompted to log in, the default credentials are:
+You will be prompted to log in. The default credentials are:
 
 ```
 username: impress
@@ -121,13 +133,14 @@ $ make run-backend
 ```
 
 **Adding content**
-You can create a basic demo site by running:
+
+You can create a basic demo site by running this command:
 
 ```shellscript
 $ make demo
 ```
 
-Finally, you can check all available Make rules using:
+Finally, you can check all available Make rules using this command:
 
 ```shellscript
 $ make help
@@ -135,7 +148,7 @@ $ make help
 
 **Django admin**
 
-You can access the Django admin site at
+You can access the Django admin site at:
 
 <http://localhost:8071/admin>.
 
@@ -147,7 +160,7 @@ $ make superuser
 
 ## Feedback 🙋‍♂️🙋‍♀️
 
-We'd love to hear your thoughts and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
+We'd love to hear your thoughts, and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
 
 ## Roadmap
 
@@ -157,7 +170,7 @@ Want to know where the project is headed? [🗺️ Checkout our roadmap](https:/
 
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is a public driven initiative our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public-driven initiative, our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
 
 ## Contributing 🙌
 
@@ -165,9 +178,9 @@ This project is intended to be community-driven, so please, do not hesitate to [
 
 You can help us with translations on [Crowdin](https://crowdin.com/project/lasuite-docs).
 
-If you intend to make pull requests see [CONTRIBUTING](https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md) for guidelines.
+If you intend to make pull requests, see [CONTRIBUTING](https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md) for guidelines.
 
-Directory structure:
+## Directory structure:
 
 ```markdown
 docs
@@ -185,13 +198,13 @@ docs
 
 ### Stack
 
-Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/).
+Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
+
+We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/). 
+
 
 ### Gov ❤️ open source
-
 Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
-
-We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
 We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 

@@ -14,10 +14,11 @@ export const Card = ({
 
   return (
     <Box
+      className={`--docs--card ${props.className || ''}`}
       $background="white"
       $radius="4px"
       $css={css`
-        border: 1px solid ${colorsTokens()['greyscale-200']};
+        border: 1px solid ${colorsTokens['greyscale-200']};
         ${$css}
       `}
       {...props}

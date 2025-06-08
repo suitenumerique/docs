@@ -1,4 +1,9 @@
-FROM node:20-alpine AS frontend-deps
+FROM node:24-alpine AS frontend-deps
+
+# Upgrade system packages to install security updates
+RUN apk update && \
+  apk upgrade && \
+  rm -rf /var/cache/apk/*
 
 WORKDIR /home/frontend/
 
@@ -39,10 +44,13 @@ ENV NEXT_PUBLIC_API_ORIGIN=${API_ORIGIN}
 ARG SW_DEACTIVATED
 ENV NEXT_PUBLIC_SW_DEACTIVATED=${SW_DEACTIVATED}
 
+ARG PUBLISH_AS_MIT
+ENV NEXT_PUBLIC_PUBLISH_AS_MIT=${PUBLISH_AS_MIT}
+
 RUN yarn build
 
 # ---- Front-end image ----
-FROM nginxinc/nginx-unprivileged:1.26-alpine AS frontend-production
+FROM nginxinc/nginx-unprivileged:alpine3.21 AS frontend-production
 
 # Un-privileged user running the application
 ARG DOCKER_USER

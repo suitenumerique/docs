@@ -3,6 +3,7 @@ Core application enums declaration
 """
 
 import re
+from enum import StrEnum
 
 from django.conf import global_settings, settings
 from django.db import models
@@ -20,7 +21,6 @@ MEDIA_STORAGE_URL_PATTERN = re.compile(
 MEDIA_STORAGE_URL_EXTRACT = re.compile(
     f"{settings.MEDIA_URL:s}({UUID_REGEX}/{ATTACHMENTS_FOLDER}/{UUID_REGEX}{FILE_EXT_REGEX})"
 )
-COLLABORATION_WS_URL_PATTERN = re.compile(rf"(?:^|&)room=(?P<pk>{UUID_REGEX})(?:&|$)")
 
 
 # In Django's code base, `LANGUAGES` is set by default with all supported languages.
@@ -39,3 +39,10 @@ class MoveNodePositionChoices(models.TextChoices):
     LAST_SIBLING = "last-sibling", _("Last sibling")
     LEFT = "left", _("Left")
     RIGHT = "right", _("Right")
+
+
+class DocumentAttachmentStatus(StrEnum):
+    """Defines the possible statuses for an attachment."""
+
+    PROCESSING = "processing"
+    READY = "ready"

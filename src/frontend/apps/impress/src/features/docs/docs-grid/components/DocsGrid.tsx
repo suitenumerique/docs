@@ -60,6 +60,7 @@ export const DocsGrid = ({
       $maxWidth="960px"
       $maxHeight="calc(100vh - 52px - 2rem)"
       $align="center"
+      className="--docs--doc-grid"
     >
       <DocsGridLoader isLoading={isRefetching || loading} />
       <Card

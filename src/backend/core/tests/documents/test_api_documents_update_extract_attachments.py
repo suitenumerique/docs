@@ -5,8 +5,8 @@ Test extract-attachments on document update in docs core app.
 import base64
 from uuid import uuid4
 
+import pycrdt
 import pytest
-import y_py
 from rest_framework.test import APIClient
 
 from core import factories
@@ -16,21 +16,22 @@ pytestmark = pytest.mark.django_db
 
 def get_ydoc_with_mages(image_keys):
     """Return a ydoc from text for testing purposes."""
-    ydoc = y_py.YDoc()  # pylint: disable=no-member
-    with ydoc.begin_transaction() as txn:
-        xml_fragment = ydoc.get_xml_element("document-store")
-        for key in image_keys:
-            xml_image = xml_fragment.push_xml_element(txn, "image")
-            xml_image.set_attribute(txn, "src", f"http://localhost/media/{key:s}")
-
-    update = y_py.encode_state_as_update(ydoc)  # pylint: disable=no-member
+    ydoc = pycrdt.Doc()
+    fragment = pycrdt.XmlFragment(
+        [
+            pycrdt.XmlElement("img", {"src": f"http://localhost/media/{key:s}"})
+            for key in image_keys
+        ]
+    )
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
     return base64.b64encode(update).decode("utf-8")
 
 
 def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_queries):
     """
     When an anonymous user updates a document, the attachment keys extracted from the
-    updated content should be added to the list of "attachments" ot the document if these
+    updated content should be added to the list of "attachments" to the document if these
     attachments are already readable by anonymous users.
     """
     image_keys = [f"{uuid4()!s}/attachments/{uuid4()!s}.png" for _ in range(4)]
@@ -77,7 +78,7 @@ def test_api_documents_update_new_attachment_keys_authenticated(
 ):
     """
     When an authenticated user updates a document, the attachment keys extracted from the
-    updated content should be added to the list of "attachments" ot the document if these
+    updated content should be added to the list of "attachments" to the document if these
     attachments are already readable by the editing user.
     """
     user = factories.UserFactory()

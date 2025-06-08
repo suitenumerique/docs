@@ -19,11 +19,10 @@ export function MainLayout({
 }: PropsWithChildren<MainLayoutProps>) {
   const { isDesktop } = useResponsiveStore();
   const { colorsTokens } = useCunninghamTheme();
-  const colors = colorsTokens();
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
   return (
-    <div>
+    <Box className="--docs--main-layout">
       <Header />
       <Box
         $direction="row"
@@ -43,8 +42,8 @@ export function MainLayout({
           }}
           $background={
             currentBackgroundColor === 'white'
-              ? colors['greyscale-000']
-              : colors['greyscale-050']
+              ? colorsTokens['greyscale-000']
+              : colorsTokens['greyscale-050']
           }
           $css={css`
             overflow-y: auto;
@@ -54,6 +53,6 @@ export function MainLayout({
           {children}
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 }

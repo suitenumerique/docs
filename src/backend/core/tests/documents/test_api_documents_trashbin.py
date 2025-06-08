@@ -91,6 +91,7 @@ def test_api_documents_trashbin_format():
                 "restricted": ["reader", "editor"],
             },
             "media_auth": True,
+            "media_check": True,
             "move": False,  # Can't move a deleted document
             "partial_update": True,
             "restore": True,

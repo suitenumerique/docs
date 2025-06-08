@@ -364,10 +364,9 @@ class BaseAccess(BaseModel):
     class Meta:
         abstract = True
 
-    def _get_abilities(self, resource, user):
+    def _get_roles(self, resource, user):
         """
-        Compute and return abilities for a given user taking into account
-        the current state of the object.
+        Get the roles a user has on a resource.
         """
         roles = []
         if user.is_authenticated:
@@ -381,6 +380,15 @@ class BaseAccess(BaseModel):
                     ).values_list("role", flat=True)
                 except (self._meta.model.DoesNotExist, IndexError):
                     roles = []
+
+        return roles
+
+    def _get_abilities(self, resource, user):
+        """
+        Compute and return abilities for a given user taking into account
+        the current state of the object.
+        """
+        roles = self._get_roles(resource, user)
 
         is_owner_or_admin = bool(
             set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
@@ -445,28 +453,15 @@ class DocumentQuerySet(MP_NodeQuerySet):
         return self.filter(link_reach=LinkReachChoices.PUBLIC)
 
 
-class DocumentManager(MP_NodeManager):
+class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
     """
     Custom manager for the Document model, enabling the use of the custom
     queryset methods directly from the model manager.
     """
 
     def get_queryset(self):
-        """
-        Overrides the default get_queryset method to return a custom queryset.
-        :return: An instance of DocumentQuerySet.
-        """
-        return DocumentQuerySet(self.model, using=self._db)
-
-    def readable_per_se(self, user):
-        """
-        Filters documents based on user permissions using the custom queryset.
-        :param user: The user for whom readable documents are to be fetched.
-        :return: A queryset of documents for which the user has direct access,
-            team access or link access. This will not return all the documents
-            that a user can read because it can be obtained via an ancestor.
-        """
-        return self.get_queryset().readable_per_se(user)
+        """Sets the custom queryset as the default."""
+        return self._queryset_class(self.model).order_by("path")
 
 
 class Document(MP_Node, BaseModel):
@@ -754,6 +749,32 @@ class Document(MP_Node, BaseModel):
 
         return dict(links_definitions)  # Convert defaultdict back to a normal dict
 
+    def compute_ancestors_links(self, user):
+        """
+        Compute the ancestors links for the current document up to the highest readable ancestor.
+        """
+        ancestors = (
+            (self.get_ancestors() | self._meta.model.objects.filter(pk=self.pk))
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
+        highest_readable = ancestors.readable_per_se(user).only("depth").first()
+
+        if highest_readable is None:
+            return []
+
+        ancestors_links = []
+        paths_links_mapping = {}
+        for ancestor in ancestors.filter(depth__gte=highest_readable.depth):
+            ancestors_links.append(
+                {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
+            )
+            paths_links_mapping[ancestor.path] = ancestors_links.copy()
+
+        ancestors_links = paths_links_mapping.get(self.path[: -self.steplen], [])
+
+        return ancestors_links
+
     def get_abilities(self, user, ancestors_links=None):
         """
         Compute and return abilities for a given user on the document.
@@ -761,7 +782,7 @@ class Document(MP_Node, BaseModel):
         if self.depth <= 1 or getattr(self, "is_highest_ancestor_for_user", False):
             ancestors_links = []
         elif ancestors_links is None:
-            ancestors_links = self.get_ancestors().values("link_reach", "link_role")
+            ancestors_links = self.compute_ancestors_links(user=user)
 
         roles = set(
             self.get_roles(user)
@@ -814,6 +835,7 @@ class Document(MP_Node, BaseModel):
             "ai_transform": ai_access,
             "ai_translate": ai_access,
             "attachment_upload": can_update,
+            "media_check": can_get,
             "children_list": can_get,
             "children_create": can_update and user.is_authenticated,
             "collaboration_auth": can_get,
@@ -1090,7 +1112,41 @@ class DocumentAccess(BaseAccess):
         """
         Compute and return abilities for a given user on the document access.
         """
-        return self._get_abilities(self.document, user)
+        roles = self._get_roles(self.document, user)
+        is_owner_or_admin = bool(set(roles).intersection(set(PRIVILEGED_ROLES)))
+        if self.role == RoleChoices.OWNER:
+            can_delete = (
+                RoleChoices.OWNER in roles
+                and self.document.accesses.filter(role=RoleChoices.OWNER).count() > 1
+            )
+            set_role_to = (
+                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                if can_delete
+                else []
+            )
+        else:
+            can_delete = is_owner_or_admin
+            set_role_to = []
+            if RoleChoices.OWNER in roles:
+                set_role_to.append(RoleChoices.OWNER)
+            if is_owner_or_admin:
+                set_role_to.extend(
+                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
+                )
+
+        # Remove the current role as we don't want to propose it as an option
+        try:
+            set_role_to.remove(self.role)
+        except ValueError:
+            pass
+
+        return {
+            "destroy": can_delete,
+            "update": bool(set_role_to) and is_owner_or_admin,
+            "partial_update": bool(set_role_to) and is_owner_or_admin,
+            "retrieve": self.user and self.user.id == user.id or is_owner_or_admin,
+            "set_role_to": set_role_to,
+        }
 
 
 class Template(BaseModel):

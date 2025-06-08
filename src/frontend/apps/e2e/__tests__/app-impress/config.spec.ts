@@ -2,55 +2,14 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './common';
-
-const config = {
-  CRISP_WEBSITE_ID: null,
-  COLLABORATION_WS_URL: 'ws://localhost:8083/collaboration/ws/',
-  ENVIRONMENT: 'development',
-  FRONTEND_THEME: 'default',
-  MEDIA_BASE_URL: 'http://localhost:8083',
-  LANGUAGES: [
-    ['en-us', 'English'],
-    ['fr-fr', 'Français'],
-    ['de-de', 'Deutsch'],
-    ['nl-nl', 'Nederlands'],
-  ],
-  LANGUAGE_CODE: 'en-us',
-  POSTHOG_KEY: {},
-  SENTRY_DSN: null,
-};
+import { CONFIG, createDoc, overrideConfig } from './common';
 
 test.describe('Config', () => {
-  test('it checks the config api is called', async ({ page }) => {
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/config/') && response.status() === 200,
-    );
-
-    await page.goto('/');
-
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-
-    expect(await response.json()).toStrictEqual(config);
-  });
-
   test('it checks that sentry is trying to init from config endpoint', async ({
     page,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...config,
-            SENTRY_DSN: 'https://sentry.io/123',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      SENTRY_DSN: 'https://sentry.io/123',
     });
 
     const invalidMsg = 'Invalid Sentry Dsn: https://sentry.io/123';
@@ -96,42 +55,48 @@ test.describe('Config', () => {
 
   test('it checks that collaboration server is configured from config endpoint', async ({
     page,
+  }) => {
+    await page.goto('/');
+
+    void page
+      .getByRole('button', {
+        name: 'New doc',
+      })
+      .click();
+
+    const webSocket = await page.waitForEvent('websocket', (webSocket) => {
+      return webSocket.url().includes('ws://localhost:4444/collaboration/ws/');
+    });
+    expect(webSocket.url()).toContain('ws://localhost:4444/collaboration/ws/');
+  });
+
+  test('it checks the AI feature flag from config endpoint', async ({
+    page,
     browserName,
   }) => {
-    const webSocketPromise = page.waitForEvent('websocket', (webSocket) => {
-      return webSocket.url().includes('ws://localhost:8083/collaboration/ws/');
+    await overrideConfig(page, {
+      AI_FEATURE_ENABLED: false,
     });
 
     await page.goto('/');
 
-    const randomDoc = await createDoc(
-      page,
-      'doc-collaboration',
-      browserName,
-      1,
+    await createDoc(page, 'doc-ai-feature', browserName, 1);
+
+    await page.locator('.bn-block-outer').last().fill('Anything');
+    await page.getByText('Anything').selectText();
+    expect(
+      await page.locator('button[data-test="convertMarkdown"]').count(),
+    ).toBe(1);
+    expect(await page.locator('button[data-test="ai-actions"]').count()).toBe(
+      0,
     );
-
-    await verifyDocName(page, randomDoc[0]);
-
-    const webSocket = await webSocketPromise;
-    expect(webSocket.url()).toContain('ws://localhost:8083/collaboration/ws/');
   });
 
   test('it checks that Crisp is trying to init from config endpoint', async ({
     page,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...config,
-            CRISP_WEBSITE_ID: '1234',
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    await overrideConfig(page, {
+      CRISP_WEBSITE_ID: '1234',
     });
 
     await page.goto('/');
@@ -140,14 +105,46 @@ test.describe('Config', () => {
       page.locator('#crisp-chatbox').getByText('Invalid website'),
     ).toBeVisible();
   });
+
+  test('it checks FRONTEND_CSS_URL config', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_CSS_URL: 'http://localhost:123465/css/style.css',
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page
+        .locator('head link[href="http://localhost:123465/css/style.css"]')
+        .first(),
+    ).toBeAttached();
+  });
+
+  test('it checks theme_customization.translations config', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      theme_customization: {
+        translations: {
+          en: {
+            translation: {
+              Docs: 'MyCustomDocs',
+            },
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('MyCustomDocs')).toBeAttached();
+  });
 });
 
 test.describe('Config: Not loggued', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('it checks that theme is configured from config endpoint', async ({
-    page,
-  }) => {
+  test('it checks the config api is called', async ({ page }) => {
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes('/config/') && response.status() === 200,
@@ -158,11 +155,25 @@ test.describe('Config: Not loggued', () => {
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
 
-    const jsonResponse = await response.json();
-    expect(jsonResponse.FRONTEND_THEME).toStrictEqual('default');
+    const json = (await response.json()) as typeof CONFIG;
+    const { theme_customization, ...configApi } = json;
+    expect(theme_customization).toBeDefined();
+    const { theme_customization: _, ...CONFIG_LEFT } = CONFIG;
 
-    const footer = page.locator('footer').first();
+    expect(configApi).toStrictEqual(CONFIG_LEFT);
+  });
+
+  test('it checks that theme is configured from config endpoint', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+    });
+
+    await page.goto('/');
+
+    const header = page.locator('header').first();
     // alt 'Gouvernement Logo' comes from the theme
-    await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
+    await expect(header.getByAltText('Gouvernement Logo')).toBeVisible();
   });
 });

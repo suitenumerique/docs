@@ -75,15 +75,11 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.customBackends Add custom backends to ingress
   customBackends: []
 
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-response-headers
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-url
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/enable-websocket
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
   annotations:
-    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Can-Edit, X-User-Id"
-    nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/collaboration-auth/
     nginx.ingress.kubernetes.io/enable-websocket: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
@@ -166,6 +162,7 @@ ingressMedia:
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-url
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-response-headers
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/upstream-vhost
+  ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/configuration-snippet
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/media-auth/
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
@@ -313,6 +310,44 @@ backend:
   ## @param backend.pdb.enabled Enable pdb on backend
   pdb:
     enabled: true
+
+  ## @param backend.themeCustomization.enabled Enable theme customization
+  ## @param backend.themeCustomization.file_content Content of the theme customization file. Must be a json object.
+  ## @param backend.themeCustomization.mount_path Path where the customization file will be mounted in the backend deployment.
+  themeCustomization:
+    enabled: false
+    file_content: ""
+    mount_path: /app/impress/configuration/theme
+
+
+  ## @param backend.celery.replicas Amount of celery replicas
+  ## @param backend.celery.command Override the celery container command
+  ## @param backend.celery.args Override the celery container args
+  ## @param backend.celery.resources Resource requirements for the celery container
+  ## @param backend.celery.probes.liveness.exec.command Override the celery container liveness probe command
+  ## @param backend.celery.probes.liveness.initialDelaySeconds Initial delay for the celery container liveness probe
+  ## @param backend.celery.probes.liveness.timeoutSeconds Timeout for the celery container liveness probe
+  ## @param backend.celery.probes.readiness.exec.command Override the celery container readiness probe command
+  ## @param backend.celery.probes.readiness.initialDelaySeconds Initial delay for the celery container readiness probe
+  ## @param backend.celery.probes.readiness.timeoutSeconds Timeout for the celery container readiness probe
+  celery:
+    replicas: 1
+    command: []
+    args: ["celery", "-A", "impress.celery_app", "worker", "-l", "INFO", "-n", "impress@%h"]
+    resources: {}
+    probes:
+      liveness:
+        exec:
+          command: ["/bin/sh", "-c", "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME"]
+        initialDelaySeconds: 60
+        timeoutSeconds: 5
+      readiness:
+        exec:
+          command: ["/bin/sh", "-c", "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME"]
+        initialDelaySeconds: 15
+        timeoutSeconds: 5
+
+
 
 ## @section frontend
 

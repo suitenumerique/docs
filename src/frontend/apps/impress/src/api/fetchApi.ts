@@ -23,11 +23,9 @@ export const fetchAPI = async (
     delete headers?.['Content-Type' as keyof typeof headers];
   }
 
-  const response = await fetch(apiUrl, {
+  return await fetch(apiUrl, {
     ...init,
     credentials: 'include',
     headers,
   });
-
-  return response;
 };

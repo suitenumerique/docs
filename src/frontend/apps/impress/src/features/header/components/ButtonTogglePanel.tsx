@@ -21,6 +21,7 @@ export const ButtonTogglePanel = () => {
           iconName={isPanelOpen ? 'close' : 'menu'}
         />
       }
+      className="--docs--button-toggle-panel"
     />
   );
 };

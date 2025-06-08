@@ -1,5 +1,7 @@
 """API filters for Impress' core application."""
 
+import unicodedata
+
 from django.utils.translation import gettext_lazy as _
 
 import django_filters
@@ -7,13 +9,42 @@ import django_filters
 from core import models
 
 
-class DocumentFilter(django_filters.FilterSet):
+def remove_accents(value):
+    """Remove accents from a string (vélo -> velo)."""
+    return "".join(
+        c
+        for c in unicodedata.normalize("NFD", value)
+        if unicodedata.category(c) != "Mn"
+    )
+
+
+class AccentInsensitiveCharFilter(django_filters.CharFilter):
     """
-    Custom filter for filtering documents.
+    A custom CharFilter that filters on the accent-insensitive value searched.
     """
 
-    title = django_filters.CharFilter(
-        field_name="title", lookup_expr="icontains", label=_("Title")
+    def filter(self, qs, value):
+        """
+        Apply the filter to the queryset using the unaccented version of the field.
+
+        Args:
+            qs: The queryset to filter.
+            value: The value to search for in the unaccented field.
+        Returns:
+            A filtered queryset.
+        """
+        if value:
+            value = remove_accents(value)
+        return super().filter(qs, value)
+
+
+class DocumentFilter(django_filters.FilterSet):
+    """
+    Custom filter for filtering documents on title (accent and case insensitive).
+    """
+
+    title = AccentInsensitiveCharFilter(
+        field_name="title", lookup_expr="unaccent__icontains", label=_("Title")
     )
 
     class Meta:

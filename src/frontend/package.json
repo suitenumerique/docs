@@ -1,6 +1,6 @@
 {
   "name": "impress",
-  "version": "2.6.0",
+  "version": "3.3.0",
   "private": true,
   "workspaces": {
     "packages": [
@@ -28,15 +28,15 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@types/node": "22.13.9",
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
-    "@typescript-eslint/eslint-plugin": "8.26.0",
-    "@typescript-eslint/parser": "8.26.0",
+    "@types/node": "22.15.29",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.6",
+    "@typescript-eslint/eslint-plugin": "8.33.1",
+    "@typescript-eslint/parser": "8.33.1",
     "eslint": "8.57.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "typescript": "5.8.2",
-    "yjs": "13.6.23"
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "typescript": "5.8.3",
+    "yjs": "13.6.27"
   }
 }

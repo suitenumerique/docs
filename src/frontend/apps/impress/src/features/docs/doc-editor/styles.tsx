@@ -57,11 +57,25 @@ export const cssEditor = (readonly: boolean) => css`
     .bn-side-menu[data-block-type='heading'][data-level='3'] {
       height: 35px;
     }
-    .bn-side-menu[data-block-type='quote'] {
-      height: 46px;
-    }
     .bn-side-menu[data-block-type='divider'] {
       height: 38px;
+    }
+
+    /**
+     * Callout, Paragraph and Heading blocks
+     */
+    .bn-block {
+      border-radius: var(--c--theme--spacings--3xs);
+    }
+
+    .bn-block-outer {
+      border-radius: var(--c--theme--spacings--3xs);
+    }
+
+    .bn-block-content[data-content-type='paragraph'],
+    .bn-block-content[data-content-type='heading'] {
+      padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
+      border-radius: var(--c--theme--spacings--3xs);
     }
 
     h1 {
@@ -84,11 +98,19 @@ export const cssEditor = (readonly: boolean) => css`
     }
   }
 
-  .bn-editor {
+  & .bn-editor {
     color: var(--c--theme--colors--greyscale-700);
+
+    /**
+    * Quotes
+    */
+    blockquote {
+      border-left: 4px solid var(--c--theme--colors--greyscale-300);
+      font-style: italic;
+    }
   }
 
-  .bn-block-outer:not(:first-child) {
+  & .bn-block-outer:not(:first-child) {
     &:has(h1) {
       margin-top: 32px;
     }

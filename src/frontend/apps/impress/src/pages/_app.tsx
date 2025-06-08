@@ -1,10 +1,10 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AppProvider } from '@/core/';
-import { useSWRegister } from '@/features/service-worker/';
+import { useCunninghamTheme } from '@/cunningham';
+import { useOffline, useSWRegister } from '@/features/service-worker/';
 import '@/i18n/initI18n';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -16,16 +16,11 @@ type AppPropsWithLayout = AppProps & {
 
 export default function App({ Component, pageProps }: AppPropsWithLayout) {
   useSWRegister();
+  useOffline();
   const getLayout = Component.getLayout ?? ((page) => page);
   const { t } = useTranslation();
-
-  useEffect(() => {
-    console.log(
-      `%c
-                                                                                                                                                \r\n \u2588\u2588\u2557    \u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2557      \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2557   \u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557     \u2588\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u2588\u2588\u2557    \u2588\u2588\u2557    \u2588\u2588\u2557 \r\n \u2588\u2588\u2551    \u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2551     \u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D    \u255A\u2550\u2550\u2588\u2588\u2554\u2550\u2550\u255D\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557    \u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2554\u2550\u2550\u2550\u2588\u2588\u2557\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255D    \u2588\u2588\u2551    \u2588\u2588\u2551    \u2588\u2588\u2551 \r\n \u2588\u2588\u2551 \u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551     \u2588\u2588\u2551     \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2588\u2588\u2588\u2588\u2554\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557         \u2588\u2588\u2551   \u2588\u2588\u2551   \u2588\u2588\u2551    \u2588\u2588\u2551  \u2588\u2588\u2551\u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2551     \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557    \u2588\u2588\u2551    \u2588\u2588\u2551    \u2588\u2588\u2551 \r\n \u2588\u2588\u2551\u2588\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D  \u2588\u2588\u2551     \u2588\u2588\u2551     \u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2551\u255A\u2588\u2588\u2554\u255D\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255D         \u2588\u2588\u2551   \u2588\u2588\u2551   \u2588\u2588\u2551    \u2588\u2588\u2551  \u2588\u2588\u2551\u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2551     \u255A\u2550\u2550\u2550\u2550\u2588\u2588\u2551    \u255A\u2550\u255D    \u255A\u2550\u255D    \u255A\u2550\u255D \r\n \u255A\u2588\u2588\u2588\u2554\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u2588\u2588\u2551 \u255A\u2550\u255D \u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557       \u2588\u2588\u2551   \u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D    \u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255D\u255A\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2551    \u2588\u2588\u2557    \u2588\u2588\u2557    \u2588\u2588\u2557 \r\n  \u255A\u2550\u2550\u255D\u255A\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u2550\u2550\u2550\u2550\u255D \u255A\u2550\u255D     \u255A\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D       \u255A\u2550\u255D    \u255A\u2550\u2550\u2550\u2550\u2550\u255D     \u255A\u2550\u2550\u2550\u2550\u2550\u255D  \u255A\u2550\u2550\u2550\u2550\u2550\u255D  \u255A\u2550\u2550\u2550\u2550\u2550\u255D\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u255D    \u255A\u2550\u255D    \u255A\u2550\u255D    \u255A\u2550\u255D \r\n                                                                                                                                                \r`,
-      'font-size: 11px;line-height:15px;background-image: linear-gradient(#000091, #005f91);color: transparent;background-clip: text;',
-    );
-  }, []);
+  const { componentTokens } = useCunninghamTheme();
+  const favicon = componentTokens['favicon'];
 
   return (
     <>
@@ -37,7 +32,20 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             'Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.',
           )}
         />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href={favicon['ico']} sizes="any" />
+        <link rel="icon" href={favicon['png-light']} type="image/png" />
+        <link
+          rel="icon"
+          href={favicon['png-light']}
+          type="image/png"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          href={favicon['png-dark']}
+          type="image/png"
+          media="(prefers-color-scheme: dark)"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <AppProvider>{getLayout(<Component {...pageProps} />)}</AppProvider>

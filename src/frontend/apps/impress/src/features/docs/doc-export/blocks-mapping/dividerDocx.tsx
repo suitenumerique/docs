@@ -14,7 +14,7 @@ export const blockMappingDividerDocx: DocsExporterDocx['mappings']['blockMapping
       },
       border: {
         top: {
-          color: colorsTokens()['greyscale-300'],
+          color: colorsTokens['greyscale-300'],
           size: 1,
           style: 'single',
           space: 1,

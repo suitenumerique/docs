@@ -1,20 +1,39 @@
 import { expect, test } from '@playwright/test';
 
-import { expectLoginPage, keyCloakSignIn } from './common';
+import { expectLoginPage, keyCloakSignIn, overrideConfig } from './common';
 
 test.describe('Header', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
-
   test('checks all the elements are visible', async ({ page }) => {
+    await page.goto('/');
+
     const header = page.locator('header').first();
 
     await expect(header.getByLabel('Docs Logo')).toBeVisible();
     await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
-      'color',
-      'rgb(0, 0, 145)',
+      'font-family',
+      /Roboto/i,
     );
+
+    await expect(
+      header.getByRole('button', {
+        name: 'Logout',
+      }),
+    ).toBeVisible();
+
+    await expect(header.getByText('English')).toBeVisible();
+  });
+
+  test('checks all the elements are visible with DSFR theme', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+    });
+    await page.goto('/');
+
+    const header = page.locator('header').first();
+
+    await expect(header.getByLabel('Docs Logo')).toBeVisible();
     await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
       'font-family',
       /Marianne/i,
@@ -36,6 +55,11 @@ test.describe('Header', () => {
   });
 
   test('checks La Gauffre interaction', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+    });
+    await page.goto('/');
+
     const header = page.locator('header').first();
 
     await expect(
@@ -68,11 +92,13 @@ test.describe('Header', () => {
 test.describe('Header mobile', () => {
   test.use({ viewport: { width: 500, height: 1200 } });
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
+  test('it checks the header when mobile with DSFR theme', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+    });
 
-  test('it checks the header when mobile', async ({ page }) => {
+    await page.goto('/');
+
     const header = page.locator('header').first();
 
     await expect(header.getByLabel('Open the header menu')).toBeVisible();

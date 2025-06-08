@@ -1,7 +1,7 @@
 {
   "extends": ["github>numerique-gouv/renovate-configuration"],
   "dependencyDashboard": true,
-  "labels": ["dependencies", "noChangeLog"],
+  "labels": ["dependencies", "noChangeLog", "automated"],
   "packageRules": [
     {
       "enabled": false,
@@ -10,10 +10,24 @@
       "matchPackageNames": []
     },
     {
+      "groupName": "allowed django versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["Django"],
+      "allowedVersions": "<5.2"
+    },
+    {
+      "groupName": "allowed redis versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["redis"],
+      "allowedVersions": "<6.0.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@hocuspocus/provider",
+        "@hocuspocus/server",
         "eslint",
         "fetch-mock",
         "node",

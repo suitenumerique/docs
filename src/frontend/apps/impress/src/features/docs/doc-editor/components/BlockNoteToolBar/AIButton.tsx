@@ -14,7 +14,7 @@ import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isAPIError } from '@/api';
-import { Box, Text } from '@/components';
+import { Box, Icon } from '@/components';
 import { useDocOptions, useDocStore } from '@/docs/doc-management/';
 
 import {
@@ -104,19 +104,15 @@ export function AIGroupButton() {
     <Components.Generic.Menu.Root>
       <Components.Generic.Menu.Trigger>
         <Components.FormattingToolbar.Button
-          className="bn-button bn-menu-item"
+          className="bn-button bn-menu-item --docs--ai-actions-menu-trigger"
           data-test="ai-actions"
           label="AI"
           mainTooltip={t('AI Actions')}
-          icon={
-            <Text $isMaterialIcon $size="l">
-              auto_awesome
-            </Text>
-          }
+          icon={<Icon iconName="auto_awesome" $size="l" />}
         />
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown
-        className="bn-menu-dropdown bn-drag-handle-menu"
+        className="bn-menu-dropdown bn-drag-handle-menu --docs--ai-actions-menu"
         sub={true}
       >
         {canAITransform && (
@@ -124,66 +120,42 @@ export function AIGroupButton() {
             <AIMenuItemTransform
               action="prompt"
               docId={currentDoc.id}
-              icon={
-                <Text $isMaterialIcon $size="s">
-                  text_fields
-                </Text>
-              }
+              icon={<Icon iconName="text_fields" $size="s" />}
             >
               {t('Use as prompt')}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="rephrase"
               docId={currentDoc.id}
-              icon={
-                <Text $isMaterialIcon $size="s">
-                  refresh
-                </Text>
-              }
+              icon={<Icon iconName="refresh" $size="s" />}
             >
               {t('Rephrase')}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="summarize"
               docId={currentDoc.id}
-              icon={
-                <Text $isMaterialIcon $size="s">
-                  summarize
-                </Text>
-              }
+              icon={<Icon iconName="summarize" $size="s" />}
             >
               {t('Summarize')}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="correct"
               docId={currentDoc.id}
-              icon={
-                <Text $isMaterialIcon $size="s">
-                  check
-                </Text>
-              }
+              icon={<Icon iconName="check" $size="s" />}
             >
               {t('Correct')}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="beautify"
               docId={currentDoc.id}
-              icon={
-                <Text $isMaterialIcon $size="s">
-                  draw
-                </Text>
-              }
+              icon={<Icon iconName="draw" $size="s" />}
             >
               {t('Beautify')}
             </AIMenuItemTransform>
             <AIMenuItemTransform
               action="emojify"
               docId={currentDoc.id}
-              icon={
-                <Text $isMaterialIcon $size="s">
-                  emoji_emotions
-                </Text>
-              }
+              icon={<Icon iconName="emoji_emotions" $size="s" />}
             >
               {t('Emojify')}
             </AIMenuItemTransform>
@@ -193,20 +165,18 @@ export function AIGroupButton() {
           <Components.Generic.Menu.Root position="right" sub={true}>
             <Components.Generic.Menu.Trigger sub={false}>
               <Components.Generic.Menu.Item
-                className="bn-menu-item"
+                className="bn-menu-item --docs--ai-translate-menu-trigger"
                 subTrigger={true}
               >
                 <Box $direction="row" $gap="0.6rem">
-                  <Text $isMaterialIcon $size="s">
-                    translate
-                  </Text>
+                  <Icon iconName="translate" $size="s" />
                   {t('Language')}
                 </Box>
               </Components.Generic.Menu.Item>
             </Components.Generic.Menu.Trigger>
             <Components.Generic.Menu.Dropdown
               sub={true}
-              className="bn-menu-dropdown"
+              className="bn-menu-dropdown --docs--ai-translate-menu"
             >
               {languages.map((language) => (
                 <AIMenuItemTranslate

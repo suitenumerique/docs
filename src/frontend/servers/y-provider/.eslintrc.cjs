@@ -10,5 +10,8 @@ module.exports = {
       rootDir: __dirname,
     },
   },
-  ignorePatterns: ['node_modules', '.eslintrc.js'],
+  rules: {
+    '@next/next/no-html-link-for-pages': 'off',
+  },
+  ignorePatterns: ['node_modules'],
 };

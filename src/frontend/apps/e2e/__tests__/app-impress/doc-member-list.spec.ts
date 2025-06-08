@@ -152,12 +152,7 @@ test.describe('Document list members', () => {
     await expect(soloOwner).toBeHidden();
     await list.click();
 
-    const otherOwner = page.getByText(
-      `You cannot update the role or remove other owner.`,
-    );
-
     await newUserRoles.click();
-    await expect(otherOwner).toBeVisible();
     await list.click();
 
     await currentUserRole.click();

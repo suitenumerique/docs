@@ -1,4 +1,4 @@
-var config = {
+const config = {
   rootDir: './__tests__',
   testEnvironment: 'node',
   transform: {

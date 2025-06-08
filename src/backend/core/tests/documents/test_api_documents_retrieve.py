@@ -48,6 +48,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
                 "restricted": ["reader", "editor"],
             },
             "media_auth": True,
+            "media_check": True,
             "move": False,
             "partial_update": document.link_role == "editor",
             "restore": False,
@@ -111,6 +112,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "link_configuration": False,
             "link_select_options": models.LinkReachChoices.get_select_options(links),
             "media_auth": True,
+            "media_check": True,
             "move": False,
             "partial_update": grand_parent.link_role == "editor",
             "restore": False,
@@ -210,6 +212,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
                 "restricted": ["reader", "editor"],
             },
             "media_auth": True,
+            "media_check": True,
             "move": False,
             "partial_update": document.link_role == "editor",
             "restore": False,
@@ -279,8 +282,9 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "invite_owner": False,
             "link_configuration": False,
             "link_select_options": models.LinkReachChoices.get_select_options(links),
-            "move": False,
             "media_auth": True,
+            "media_check": True,
+            "move": False,
             "partial_update": grand_parent.link_role == "editor",
             "restore": False,
             "retrieve": True,
@@ -460,6 +464,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "link_configuration": access.role in ["administrator", "owner"],
             "link_select_options": models.LinkReachChoices.get_select_options(links),
             "media_auth": True,
+            "media_check": True,
             "move": access.role in ["administrator", "owner"],
             "partial_update": access.role != "reader",
             "restore": access.role == "owner",
@@ -789,7 +794,7 @@ def test_api_documents_retrieve_user_roles(django_assert_max_num_queries):
     )
     expected_roles = {access.role for access in accesses}
 
-    with django_assert_max_num_queries(12):
+    with django_assert_max_num_queries(14):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200

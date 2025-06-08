@@ -310,7 +310,7 @@ def test_api_documents_move_authenticated_deleted_target_as_child(position):
 def test_api_documents_move_authenticated_deleted_target_as_sibling(position):
     """
     It should not be possible to move a document as a sibling of a deleted target document
-    if the user has no rigths on its parent.
+    if the user has no rights on its parent.
     """
     user = factories.UserFactory()
     client = APIClient()

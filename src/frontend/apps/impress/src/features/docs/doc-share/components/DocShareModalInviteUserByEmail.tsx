@@ -12,7 +12,11 @@ type Props = {
 export const DocShareModalInviteUserRow = ({ user }: Props) => {
   const { t } = useTranslation();
   return (
-    <Box $width="100%" data-testid={`search-user-row-${user.email}`}>
+    <Box
+      $width="100%"
+      data-testid={`search-user-row-${user.email}`}
+      className="--docs--doc-share-modal-invite-user-row"
+    >
       <SearchUserRow
         user={user}
         right={

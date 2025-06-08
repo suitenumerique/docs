@@ -1,5 +1,5 @@
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
@@ -23,20 +23,14 @@ const MobileLeftPanelStyle = createGlobalStyle`
 export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
 
-  const theme = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { togglePanel, isPanelOpen } = useLeftPanelStore();
 
   const pathname = usePathname();
-  const colors = theme.colorsTokens();
-  const spacings = theme.spacingsTokens();
-
-  const toggle = useCallback(() => {
-    togglePanel(false);
-  }, [togglePanel]);
 
   useEffect(() => {
-    toggle();
-  }, [pathname, toggle]);
+    togglePanel(false);
+  }, [pathname, togglePanel]);
 
   return (
     <>
@@ -48,8 +42,9 @@ export const LeftPanel = () => {
             width: 300px;
             min-width: 300px;
             overflow: hidden;
-            border-right: 1px solid ${colors['greyscale-200']};
-        `}
+            border-right: 1px solid ${colorsTokens['greyscale-200']};
+          `}
+          className="--docs--left-panel-desktop"
         >
           <Box
             $css={css`
@@ -76,6 +71,7 @@ export const LeftPanel = () => {
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
               background-color: var(--c--theme--colors--greyscale-000);
             `}
+            className="--docs--left-panel-mobile"
           >
             <Box
               data-testid="left-panel-mobile"
@@ -83,13 +79,17 @@ export const LeftPanel = () => {
                 width: 100%;
                 justify-content: center;
                 align-items: center;
-                gap: ${spacings['base']};
+                gap: ${spacingsTokens['base']};
               `}
             >
               <LeftPanelHeader />
               <LeftPanelContent />
               <SeparatedSection showSeparator={false}>
-                <Box $justify="center" $align="center" $gap={spacings['sm']}>
+                <Box
+                  $justify="center"
+                  $align="center"
+                  $gap={spacingsTokens['sm']}
+                >
                   <ButtonLogin />
                   <LanguagePicker />
                 </Box>

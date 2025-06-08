@@ -32,13 +32,17 @@ export const SimpleDocItem = ({
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacings = spacingsTokens();
   const { untitledDocument } = useTrans();
 
   return (
-    <Box $direction="row" $gap={spacings.sm} $overflow="auto">
+    <Box
+      $direction="row"
+      $gap={spacingsTokens.sm}
+      $overflow="auto"
+      className="--docs--simple-doc-item"
+    >
       <Box
         $direction="row"
         $align="center"
@@ -48,9 +52,15 @@ export const SimpleDocItem = ({
         `}
       >
         {isPinned ? (
-          <PinnedDocumentIcon aria-label={t('Pin document icon')} />
+          <PinnedDocumentIcon
+            aria-label={t('Pin document icon')}
+            color={colorsTokens['primary-500']}
+          />
         ) : (
-          <SimpleFileIcon aria-label={t('Simple document icon')} />
+          <SimpleFileIcon
+            aria-label={t('Simple document icon')}
+            color={colorsTokens['primary-500']}
+          />
         )}
       </Box>
       <Box $justify="center" $overflow="auto">
@@ -68,7 +78,7 @@ export const SimpleDocItem = ({
           <Box
             $direction="row"
             $align="center"
-            $gap={spacings['3xs']}
+            $gap={spacingsTokens['3xs']}
             $margin={{ top: '-2px' }}
           >
             <Text $variation="600" $size="xs">

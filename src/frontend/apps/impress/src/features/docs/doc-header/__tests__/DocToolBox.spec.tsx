@@ -42,6 +42,7 @@ const doc = {
 
 beforeEach(() => {
   Analytics.clearAnalytics();
+  process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = 'false';
 });
 
 describe('DocToolBox "Copy as HTML" option', () => {
@@ -51,7 +52,9 @@ describe('DocToolBox "Copy as HTML" option', () => {
     render(<DocToolBox doc={doc as any} />, {
       wrapper: AppWrapper,
     });
-    const optionsButton = screen.getByLabelText('Open the document options');
+    const optionsButton = await screen.findByLabelText(
+      'Open the document options',
+    );
     await userEvent.click(optionsButton);
     expect(await screen.findByText('Copy as HTML')).toBeInTheDocument();
   });

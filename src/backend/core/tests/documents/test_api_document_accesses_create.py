@@ -304,7 +304,7 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
             )
         elif expected_language == "fr-fr":
             assert (
-                f"{user.full_name} a partagé un document avec vous: {document.title}".lower()
+                f"{user.full_name} a partagé un document avec vous : {document.title}".lower()
                 in email_subject.lower()
             )
         assert "docs/" + str(document.id) + "/" in email_content.lower()

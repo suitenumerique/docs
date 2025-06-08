@@ -2,7 +2,7 @@ import { Button } from '@openfun/cunningham-react';
 import { Trans, useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Footer } from '@/features/footer';
 import { LeftPanel } from '@/features/left-panel';
@@ -33,10 +33,10 @@ export function HomeContent() {
   const isFrLanguage = i18n.resolvedLanguage === 'fr';
 
   return (
-    <Box as="main">
+    <Box as="main" className="--docs--home-content">
       <HomeHeader />
       {isSmallMobile && (
-        <Box $css="& .panel-header{display: none;}">
+        <Box $css="& .--docs--left-panel-header{display: none;}">
           <LeftPanel />
         </Box>
       )}
@@ -61,7 +61,7 @@ export function HomeContent() {
             $gap={isMobile ? '115px' : '230px'}
             $padding={{ bottom: '3rem' }}
           >
-            <Box $gap="30px">
+            <Box $gap={isMobile ? '115px' : '30px'}>
               <HomeSection
                 isColumn={false}
                 isSmallDevice={isTablet}
@@ -74,7 +74,7 @@ export function HomeContent() {
                   <Box
                     $css={css`
                       & a {
-                        color: ${colorsTokens()['primary-600']};
+                        color: ${colorsTokens['primary-600']};
                       }
                     `}
                   >
@@ -155,11 +155,7 @@ export function HomeContent() {
                       $margin={{ top: 'small' }}
                     >
                       <Button
-                        icon={
-                          <Text $isMaterialIcon $color="white">
-                            chat
-                          </Text>
-                        }
+                        icon={<Icon iconName="chat" $color="white" />}
                         href="https://matrix.to/#/#docs-official:matrix.org"
                         target="_blank"
                       >

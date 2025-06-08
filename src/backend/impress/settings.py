@@ -23,7 +23,7 @@ from sentry_sdk.integrations.logging import ignore_logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join("/", "data")
+DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 
 
 def get_release():
@@ -239,6 +239,7 @@ class Base(Configuration):
             ("fr-fr", "Français"),
             ("de-de", "Deutsch"),
             ("nl-nl", "Nederlands"),
+            ("es-es", "Español"),
         )
     )
 
@@ -316,6 +317,7 @@ class Base(Configuration):
         "django.contrib.staticfiles",
         # OIDC third party
         "mozilla_django_oidc",
+        "lasuite.malware_detection",
     ]
 
     # Cache
@@ -331,6 +333,12 @@ class Base(Configuration):
         "DEFAULT_PARSER_CLASSES": [
             "rest_framework.parsers.JSONParser",
             "nested_multipart_parser.drf.DrfNestedParser",
+        ],
+        "DEFAULT_RENDERER_CLASSES": [
+            # 🔒️ Disable BrowsableAPIRenderer which provides forms allowing a user to
+            # see all the data in the database (ie a serializer with a ForeignKey field
+            # will generate a form with a field with all possible values of the FK).
+            "rest_framework.renderers.JSONRenderer",
         ],
         "EXCEPTION_HANDLER": "core.api.exception_handler",
         "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -405,10 +413,35 @@ class Base(Configuration):
     COLLABORATION_WS_URL = values.Value(
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
     )
+    COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = values.BooleanValue(
+        False,
+        environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+        environ_prefix=None,
+    )
 
     # Frontend
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
+    )
+    FRONTEND_HOMEPAGE_FEATURE_ENABLED = values.BooleanValue(
+        default=True,
+        environ_name="FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
+    FRONTEND_CSS_URL = values.Value(
+        None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
+    )
+
+    THEME_CUSTOMIZATION_FILE_PATH = values.Value(
+        os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
+        environ_name="THEME_CUSTOMIZATION_FILE_PATH",
+        environ_prefix=None,
+    )
+
+    THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.Value(
+        60 * 60 * 24,
+        environ_name="THEME_CUSTOMIZATION_CACHE_TIMEOUT",
+        environ_prefix=None,
     )
 
     # Posthog
@@ -434,7 +467,9 @@ class Base(Configuration):
     # Session
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default"
-    SESSION_COOKIE_AGE = 60 * 60 * 12
+    SESSION_COOKIE_AGE = values.PositiveIntegerValue(
+        default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
+    )
 
     # OIDC - Authorization Code Flow
     OIDC_CREATE_USER = values.BooleanValue(
@@ -499,6 +534,28 @@ class Base(Configuration):
         environ_name="OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION",
         environ_prefix=None,
     )
+    OIDC_USE_PKCE = values.BooleanValue(
+        default=False, environ_name="OIDC_USE_PKCE", environ_prefix=None
+    )
+    OIDC_PKCE_CODE_CHALLENGE_METHOD = values.Value(
+        default="S256",
+        environ_name="OIDC_PKCE_CODE_CHALLENGE_METHOD",
+        environ_prefix=None,
+    )
+    OIDC_PKCE_CODE_VERIFIER_SIZE = values.IntegerValue(
+        default=64, environ_name="OIDC_PKCE_CODE_VERIFIER_SIZE", environ_prefix=None
+    )
+    OIDC_STORE_ACCESS_TOKEN = values.BooleanValue(
+        default=False, environ_name="OIDC_STORE_ACCESS_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN = values.BooleanValue(
+        default=False, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+        default=None,
+        environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
 
     # WARNING: Enabling this setting allows multiple user accounts to share the same email
     # address. This may cause security issues and is not recommended for production use when
@@ -512,14 +569,23 @@ class Base(Configuration):
     USER_OIDC_ESSENTIAL_CLAIMS = values.ListValue(
         default=[], environ_name="USER_OIDC_ESSENTIAL_CLAIMS", environ_prefix=None
     )
-    USER_OIDC_FIELDS_TO_FULLNAME = values.ListValue(
-        default=["first_name", "last_name"],
-        environ_name="USER_OIDC_FIELDS_TO_FULLNAME",
+
+    OIDC_USERINFO_FULLNAME_FIELDS = values.ListValue(
+        default=values.ListValue(  # retrocompatibility
+            default=["first_name", "last_name"],
+            environ_name="USER_OIDC_FIELDS_TO_FULLNAME",
+            environ_prefix=None,
+        ),
+        environ_name="OIDC_USERINFO_FULLNAME_FIELDS",
         environ_prefix=None,
     )
-    USER_OIDC_FIELD_TO_SHORTNAME = values.Value(
-        default="first_name",
-        environ_name="USER_OIDC_FIELD_TO_SHORTNAME",
+    OIDC_USERINFO_SHORTNAME_FIELD = values.Value(
+        default=values.Value(  # retrocompatibility
+            default="first_name",
+            environ_name="USER_OIDC_FIELD_TO_SHORTNAME",
+            environ_prefix=None,
+        ),
+        environ_name="OIDC_USERINFO_SHORTNAME_FIELD",
         environ_prefix=None,
     )
 
@@ -528,6 +594,9 @@ class Base(Configuration):
     )
 
     # AI service
+    AI_FEATURE_ENABLED = values.BooleanValue(
+        default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
+    )
     AI_API_KEY = values.Value(None, environ_name="AI_API_KEY", environ_prefix=None)
     AI_BASE_URL = values.Value(None, environ_name="AI_BASE_URL", environ_prefix=None)
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
@@ -586,14 +655,16 @@ class Base(Configuration):
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
+        "formatters": {
+            "simple": {
+                "format": "{asctime} {name} {levelname} {message}",
+                "style": "{",
+            },
+        },
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": values.Value(
-                    "ERROR",
-                    environ_name="LOGGING_LEVEL_HANDLERS_CONSOLE",
-                    environ_prefix=None,
-                ),
+                "formatter": "simple",
             },
         },
         # Override root logger to send it to console
@@ -613,7 +684,31 @@ class Base(Configuration):
                 ),
                 "propagate": False,
             },
+            "docs.security": {
+                "handlers": ["console"],
+                "level": values.Value(
+                    "INFO",
+                    environ_name="LOGGING_LEVEL_LOGGERS_SECURITY",
+                    environ_prefix=None,
+                ),
+                "propagate": False,
+            },
         },
+    }
+
+    MALWARE_DETECTION = {
+        "BACKEND": values.Value(
+            "lasuite.malware_detection.backends.dummy.DummyBackend",
+            environ_name="MALWARE_DETECTION_BACKEND",
+            environ_prefix=None,
+        ),
+        "PARAMETERS": values.DictValue(
+            default={
+                "callback_path": "core.malware_detection.malware_detection_callback",
+            },
+            environ_name="MALWARE_DETECTION_PARAMETERS",
+            environ_prefix=None,
+        ),
     }
 
     API_USERS_LIST_LIMIT = values.PositiveIntegerValue(
@@ -834,6 +929,11 @@ class Production(Base):
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
+            "KEY_PREFIX": values.Value(
+                "docs",
+                environ_name="CACHES_KEY_PREFIX",
+                environ_prefix=None,
+            ),
         },
     }
 

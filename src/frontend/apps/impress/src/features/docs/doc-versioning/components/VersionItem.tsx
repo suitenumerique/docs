@@ -24,7 +24,6 @@ export const VersionItem = ({
   isActive,
 }: VersionItemProps) => {
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
 
   const [isModalVersionOpen, setIsModalVersionOpen] = useState(false);
 
@@ -33,17 +32,18 @@ export const VersionItem = ({
       <Box
         $width="100%"
         as="li"
-        $background={isActive ? colorsTokens()['greyscale-100'] : 'transparent'}
-        $radius={spacing['3xs']}
+        $background={isActive ? colorsTokens['greyscale-100'] : 'transparent'}
+        $radius={spacingsTokens['3xs']}
         $css={`
           cursor: pointer;
 
           &:hover {
-            background: ${colorsTokens()['greyscale-100']};
+            background: ${colorsTokens['greyscale-100']};
           }
         `}
         $hasTransition
         $minWidth="13rem"
+        className="--docs--version-item"
       >
         <Box
           $padding={{ vertical: '0.7rem', horizontal: 'small' }}

@@ -1,6 +1,6 @@
 {
   "name": "mail_mjml",
-  "version": "2.6.0",
+  "version": "3.3.0",
   "description": "An util to generate html and text django's templates from mjml templates",
   "type": "module",
   "dependencies": {
@@ -14,7 +14,7 @@
     "build": "yarn build-mjml-to-html && yarn build-html-to-plain-text"
   },
   "volta": {
-    "node": "16.15.1"
+    "node": "22"
   },
   "repository": "https://github.com/numerique-gouv/impress",
   "author": "DINUM",

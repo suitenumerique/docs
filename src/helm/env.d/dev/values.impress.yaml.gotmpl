@@ -31,13 +31,13 @@ backend:
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    USER_OIDC_FIELD_TO_SHORTNAME: "given_name"
-    USER_OIDC_FIELDS_TO_FULLNAME: "given_name,usual_name"
-    OIDC_OP_JWKS_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
-    OIDC_OP_AUTHORIZATION_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
-    OIDC_OP_TOKEN_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
-    OIDC_OP_USER_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
-    OIDC_OP_LOGOUT_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
+    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
+    OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
+    OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
     OIDC_RP_CLIENT_ID: impress
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
@@ -54,6 +54,7 @@ backend:
     POSTGRES_USER: dinum
     POSTGRES_PASSWORD: pass
     REDIS_URL: redis://default:pass@redis-master:6379/1
+    DJANGO_CELERY_BROKER_URL: redis://default:pass@redis-master:6379/1
     AWS_S3_ENDPOINT_URL: http://minio.impress.svc.cluster.local:9000
     AWS_S3_ACCESS_KEY_ID: root
     AWS_S3_SECRET_ACCESS_KEY: password
@@ -61,6 +62,7 @@ backend:
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
+    CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
     command:
       - "/bin/sh"
@@ -85,13 +87,17 @@ backend:
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
+  themeCustomization:
+    enabled: true
+    file_content: {{ readFile "./configuration/theme/demo.json" }}
+
   # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
-      mountPath: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+      mountPath: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
       subPath: cacert.pem
 
-  # Exra volumes to manage our local custom CA and avoid to set ssl_verify: false
+  # Extra volumes to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumes:
     - name: certs
       configMap:
@@ -99,7 +105,6 @@ backend:
         items:
         - key: cacert.pem
           path: cacert.pem
-
 frontend:
   envVars:
     PORT: 8080
@@ -124,6 +129,7 @@ yProvider:
     tag: "latest"
 
   envVars:
+    COLLABORATION_BACKEND_BASE_URL: https://impress.127.0.0.1.nip.io
     COLLABORATION_LOGGING: true
     COLLABORATION_SERVER_ORIGIN: https://impress.127.0.0.1.nip.io
     COLLABORATION_SERVER_SECRET: my-secret
@@ -136,9 +142,6 @@ ingress:
 ingressCollaborationWS:
   enabled: true
   host: impress.127.0.0.1.nip.io
-  
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://impress.127.0.0.1.nip.io/api/v1.0/documents/collaboration-auth/
 
 ingressCollaborationApi:
   enabled: true

@@ -4,6 +4,7 @@ Tests for Documents API endpoint in impress's core app: create
 
 # pylint: disable=W0621
 
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 from django.core import mail
@@ -278,7 +279,7 @@ def test_api_documents_create_for_owner_existing_user_email_no_sub_with_fallback
     """
     It should be possible to create a document on behalf of a pre-existing user for
     who the sub was not found if the settings allow it. This edge case should not
-    happen in a healthy OIDC federation but can be usefull if an OIDC provider modifies
+    happen in a healthy OIDC federation but can be useful if an OIDC provider modifies
     users sub on each login for example...
     """
     user = factories.UserFactory(language="en-us")
@@ -423,6 +424,36 @@ def test_api_documents_create_for_owner_new_user_no_sub_no_fallback_allow_duplic
     user = User.objects.create(email=user.email, password="!")
     document.refresh_from_db()
     assert document.creator == user
+
+
+@pytest.mark.django_db(transaction=True)
+def test_api_documents_create_document_race_condition():
+    """
+    It should be possible to create several documents at the same time
+    without causing any race conditions or data integrity issues.
+    """
+
+    def create_document(title):
+        user = factories.UserFactory()
+        client = APIClient()
+        client.force_login(user)
+        return client.post(
+            "/api/v1.0/documents/",
+            {
+                "title": title,
+            },
+            format="json",
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future1 = executor.submit(create_document, "my document 1")
+        future2 = executor.submit(create_document, "my document 2")
+
+        response1 = future1.result()
+        response2 = future2.result()
+
+        assert response1.status_code == 201
+        assert response2.status_code == 201
 
 
 @patch.object(ServerCreateDocumentSerializer, "_send_email_notification")

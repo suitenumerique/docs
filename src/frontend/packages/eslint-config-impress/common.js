@@ -13,6 +13,10 @@ const eslintTS = [
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^_', argsIgnorePattern: '^_' },
+      ],
       'sort-imports': [
         'error',
         {
@@ -56,6 +60,7 @@ const globalRules = {
     'error',
     { varsIgnorePattern: '^_', argsIgnorePattern: '^_' },
   ],
+  'no-var': 'error',
   'react/jsx-curly-brace-presence': [
     'error',
     { props: 'never', children: 'never', propElementValues: 'always' },
