@@ -94,7 +94,10 @@ export interface ChartEditorProps {
   tableId: string;
   chartType: ChartType; // Ajout de chartType
   chartOptions: ChartOptions; // Ajout de chartOptions
-  onChartConfigChange: (config: { chartType: ChartType; chartOptions: ChartOptions }) => void;
+  onChartConfigChange: (config: {
+    chartType: ChartType;
+    chartOptions: ChartOptions;
+  }) => void;
 }
 
 export const ChartEditor: React.FC<ChartEditorProps> = ({
@@ -109,7 +112,8 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
     labels: [],
     datasets: [],
   });
-  const [chartOptions, setChartOptions] = useState<ChartOptions>(initialChartOptions);
+  const [chartOptions, setChartOptions] =
+    useState<ChartOptions>(initialChartOptions);
   const [showEditor, setShowEditor] = useState(true);
 
   // Récupération des données Grist
@@ -129,16 +133,18 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
         return { labels: [], datasets: [] };
       }
 
-      const labels = filteredEntries[0][1].map((value: any) => String(value ?? ''));
+      const labels = filteredEntries[0][1].map((value: any) =>
+        String(value ?? ''),
+      );
       const datasets = filteredEntries.slice(1).map(([key, values], idx) => ({
         id: `dataset-${idx}`,
         label: key,
-        data: values.map((v) =>
+        data: values.map((v: unknown) =>
           typeof v === 'number'
             ? v
             : typeof v === 'string' && !isNaN(Number(v))
-            ? Number(v)
-            : 0
+              ? Number(v)
+              : 0,
         ),
         backgroundColor: 'rgba(53, 162, 235, 0.5)',
         borderColor: 'rgba(53, 162, 235, 1)',

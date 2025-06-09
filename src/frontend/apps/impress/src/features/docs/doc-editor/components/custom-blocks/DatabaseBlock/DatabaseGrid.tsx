@@ -99,7 +99,7 @@ export const DatabaseGrid = ({
     }
     const addNewRow = createNewRow({ value: ADD_NEW_ROW, columnNames });
 
-   return addNewRow;
+    return addNewRow;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colDefs]);
 

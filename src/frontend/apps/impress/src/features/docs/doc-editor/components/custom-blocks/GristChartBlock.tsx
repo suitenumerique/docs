@@ -2,13 +2,13 @@ import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 
-import {Box, Icon} from '@/components';
+import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 
 import { ChartEditor } from './charts/ChartEditor';
 import { DatabaseSelector } from '../DatabaseSelector';
-import React from "react";
+import React from 'react';
 
 export const GristChartBlock = createReactBlockSpec(
   {
