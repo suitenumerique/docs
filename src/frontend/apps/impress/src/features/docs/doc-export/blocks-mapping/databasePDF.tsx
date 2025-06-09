@@ -20,15 +20,12 @@ const styles = StyleSheet.create({
 });
 
 export const blockMappingDatabasePDF: DocsExporterPDF['mappings']['blockMapping']['database'] =
-  (block, exporter) => {
+  (_, __) => {
     return (
       <View wrap={false} style={styles.wrapper}>
-        <Text debug={false} style={styles.emoji}>
-          {block.props.emoji}
-        </Text>
+        <Text debug={false} style={styles.emoji}></Text>
         <Text debug={false} style={styles.text}>
           {' '}
-          {exporter.transformInlineContent(block.content)}{' '}
         </Text>
       </View>
     );

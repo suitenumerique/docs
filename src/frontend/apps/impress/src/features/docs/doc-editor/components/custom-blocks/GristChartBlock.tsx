@@ -1,40 +1,44 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
+import React from 'react';
 
 import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
+import { DatabaseSelector } from '../DatabaseSelector';
 
 import { ChartEditor } from './charts/ChartEditor';
-import { DatabaseSelector } from '../DatabaseSelector';
-import React from 'react';
+import { ChartType } from './charts/types';
 
 export const GristChartBlock = createReactBlockSpec(
   {
     type: 'grist_chart',
     propSchema: {
       documentId: {
-        type: 'string',
         default: '',
       },
       tableId: {
-        type: 'string',
         default: '',
       },
       chartType: {
-        type: 'string',
         default: 'bar',
       },
       chartOptions: {
         type: 'object',
-        default: {},
+        default: '',
       },
     },
     content: 'none',
   },
   {
     render: ({ block, editor }) => {
+      const chartOptions = {
+        title: block.props.chartOptions,
+        showLegend: true,
+        xAxisLabel: '',
+        yAxisLabel: '',
+      };
       return (
         <Box
           style={{
@@ -47,11 +51,11 @@ export const GristChartBlock = createReactBlockSpec(
             <ChartEditor
               documentId={block.props.documentId}
               tableId={block.props.tableId}
-              chartType={block.props.chartType} // Passage de chartType
-              chartOptions={block.props.chartOptions} // Passage de chartOptions
+              chartType={block.props.chartType as ChartType} // Passage de chartType
+              chartOptions={chartOptions} // Passage de chartOptions
               onChartConfigChange={({ chartType, chartOptions }) => {
                 editor.updateBlock(block, {
-                  props: { chartType, chartOptions },
+                  props: { chartType, chartOptions: chartOptions.title },
                 });
               }}
             />

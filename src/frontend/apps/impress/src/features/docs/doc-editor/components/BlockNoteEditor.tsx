@@ -28,13 +28,12 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-
 import {
   CalloutBlock,
   DatabaseBlock,
   DividerBlock,
-  ReactEmbedBlock,
   GristChartBlock,
+  ReactEmbedBlock,
 } from './custom-blocks';
 
 ModuleRegistry.registerModules([AllCommunityModule]);

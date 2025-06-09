@@ -1,14 +1,16 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import {
-  insertOrUpdateBlock,
   FileBlockConfig,
+  InlineContentSchema,
   PropSchema,
+  StyleSchema,
+  insertOrUpdateBlock,
 } from '@blocknote/core';
 import {
   BlockTypeSelectItem,
-  createReactBlockSpec,
   ReactCustomBlockRenderProps,
   ResizableFileBlockWrapper,
+  createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import React, { useEffect, useRef, useState } from 'react';
@@ -18,12 +20,29 @@ import { Box, Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 
-export const iframePropSchema: PropSchema = {
+export const iframePropSchema: PropSchema & {
+  caption: {
+    default: '';
+  };
+  name: {
+    default: '';
+  };
+  url?: {
+    default: '';
+  };
+  showPreview?: {
+    default: boolean;
+  };
+  previewWidth?: {
+    default: undefined;
+    type: 'number';
+  };
+} = {
   url: { default: '' },
   caption: { default: '' },
   name: { default: '' },
   showPreview: { default: true },
-  previewWidth: { default: 500 },
+  previewWidth: { default: undefined, type: 'number' },
 };
 
 export const iframeBlockConfig = {
@@ -35,21 +54,29 @@ export const iframeBlockConfig = {
 } satisfies FileBlockConfig;
 
 export const IFrameViewer = (
-  props: ReactCustomBlockRenderProps<typeof iframeBlockConfig>,
+  props: ReactCustomBlockRenderProps<
+    typeof iframeBlockConfig,
+    InlineContentSchema,
+    StyleSchema
+  >,
 ) => {
   const url = props.block.props.url;
   const aspectRatio = props.block.props.aspectRatio || 16 / 9;
-  //   const url = 'http://localhost:8484/o/docs/pmqLaKmSrf3h/Untitled-document/p/2';
+
   const [iframeError, setIframeError] = React.useState(false);
   const containerRef = useRef(null);
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
-    const wrapperEl = containerRef.current.closest(
-      '.bn-file-block-content-wrapper',
-    );
+    const currentEl = containerRef.current as HTMLElement;
+    const wrapperEl = currentEl.closest('.bn-file-block-content-wrapper');
+    if (!wrapperEl) {
+      return;
+    }
 
     const startResizing = () => {
       setIsResizing(true);
@@ -124,8 +151,12 @@ export const IFrameViewer = (
 };
 
 export const IframeToExternalHTML = (
-  props: ReactCustomBlockRenderProps<typeof iframeBlockConfig, any, any>,
-) => {
+  props: ReactCustomBlockRenderProps<
+    typeof iframeBlockConfig,
+    InlineContentSchema,
+    StyleSchema
+  >,
+) => (
   <iframe
     src={props.block.props.url}
     className="bn-visual-media"
@@ -139,19 +170,23 @@ export const IframeToExternalHTML = (
     }}
     allowFullScreen
     title="Embedded content"
-  />;
-};
+  />
+);
 
 export const IframeBlock = (
-  props: ReactCustomBlockRenderProps<typeof iframeBlockConfig, any, any>,
+  props: ReactCustomBlockRenderProps<
+    typeof iframeBlockConfig,
+    InlineContentSchema,
+    StyleSchema
+  >,
 ) => {
   return (
     <ResizableFileBlockWrapper
-      {...(props as any)}
+      {...(props as any)} // eslint-disable-line @typescript-eslint/no-explicit-any
       buttonText="Add a callout block"
       buttonIcon={<Icon iconName="link" $size="18px" />}
     >
-      <IFrameViewer {...(props as any)} />
+      <IFrameViewer {...props} />
     </ResizableFileBlockWrapper>
   );
 };

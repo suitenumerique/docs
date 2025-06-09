@@ -1,14 +1,15 @@
-import { Button, Radio, RadioGroup } from '@openfun/cunningham-react';
-import React, { useState } from 'react';
+import { Button } from '@openfun/cunningham-react';
+import React from 'react';
+import styled from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
 import { DatabaseSourceSelector } from '@/docs/doc-editor/components/DatabaseSourceSelector';
 import { useGristCreateDocAndTable } from '@/features/grist/useGristCreateTable';
+
 import { useDocStore } from '../../doc-management';
-import styled from 'styled-components';
 
 type DatabaseSelectorProps = {
-  onDatabaseSelected: (params: { documentId: string; tableId: string }) => void;
+  onDatabaseSelected: (args: { documentId: string; tableId: string }) => void;
   allowCreateSource?: boolean;
 };
 
@@ -65,7 +66,9 @@ export const DatabaseSelector = ({
                   <OptionTitle>
                     Créer une nouvelle base de données vide
                   </OptionTitle>
-                  <Description>Partir d'une base de données vierge</Description>
+                  <Description>
+                    Partir d&apos;une base de données vierge
+                  </Description>
                 </Box>
                 <Button
                   onClick={handleCreateNewDatabase}

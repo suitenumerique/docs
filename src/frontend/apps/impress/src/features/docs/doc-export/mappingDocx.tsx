@@ -1,3 +1,4 @@
+import { BlockMapping } from '@blocknote/core';
 import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
 
 import {
@@ -18,5 +19,5 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     database: blockMappingDatabaseDocx,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
-  },
+  } as BlockMapping<any, any, any, any, any>, // eslint-disable-line @typescript-eslint/no-explicit-any,
 };

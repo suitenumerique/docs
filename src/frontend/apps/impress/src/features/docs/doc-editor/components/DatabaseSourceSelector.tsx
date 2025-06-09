@@ -1,13 +1,13 @@
+import { Spinner } from '@gouvfr-lasuite/ui-kit';
+import { Select } from '@openfun/cunningham-react';
 import { useState } from 'react';
 
 import { Box, Text } from '@/components';
 import { useListGristTables } from '@/features/grist';
 import { Doc, useListGristDocs } from '@/features/grist/useListGristDocs';
-import { Spinner } from '@gouvfr-lasuite/ui-kit';
-import { Select } from '@openfun/cunningham-react';
 
 type DatabaseSourceSelectorProps = {
-  onSourceSelected: (args: { documentId: number; tableId: string }) => void;
+  onSourceSelected: (args: { documentId: string; tableId: string }) => void;
 };
 
 const TableSelector = ({
@@ -26,7 +26,7 @@ const TableSelector = ({
         }))}
         onChange={(e) => {
           // TODO: handle better :)
-          // @ts-expect-error
+          // @ts-expect-error wip
           onSourceSelected({ documentId, tableId: e.target.value });
         }}
       />

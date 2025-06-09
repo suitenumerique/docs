@@ -1,3 +1,4 @@
+import { BlockMapping } from '@blocknote/core';
 import { pdfDefaultSchemaMappings } from '@blocknote/xl-pdf-exporter';
 
 import {
@@ -24,5 +25,5 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
-  },
+  } as BlockMapping<any, any, any, any, any>, // eslint-disable-line @typescript-eslint/no-explicit-any,
 };

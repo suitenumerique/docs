@@ -6,15 +6,13 @@ import { docxBlockPropsToStyles } from '../utils';
 export const blockMappingDatabaseDocx: DocsExporterDocx['mappings']['blockMapping']['database'] =
   (block, exporter) => {
     return new Paragraph({
-      ...docxBlockPropsToStyles(block.props, exporter.options.colors),
+      ...docxBlockPropsToStyles({}, exporter.options.colors),
       spacing: { before: 10, after: 10 },
       children: [
         new TextRun({
           text: ' ',
           break: 1,
         }),
-        new TextRun('   ' + block.props.emoji + ' '),
-        ...exporter.transformInlineContent(block.content),
         new TextRun({
           text: ' ',
           break: 1,

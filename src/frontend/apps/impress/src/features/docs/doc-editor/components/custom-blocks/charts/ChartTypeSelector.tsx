@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { ChartType } from './types';
 import { CollapsibleCard } from './CollapsibleCard';
+import { ChartType } from './types';
 
 interface ChartTypeSelectorProps {
   value: ChartType;

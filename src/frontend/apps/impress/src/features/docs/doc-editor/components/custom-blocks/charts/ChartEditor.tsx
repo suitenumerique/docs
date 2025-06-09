@@ -1,31 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+
+import { useGristTableData } from '@/features/grist';
 
 import { ChartOptionsForm } from './ChartOptionsForm';
 import { ChartTypeSelector } from './ChartTypeSelector';
 import { LiveChartPreview } from './LiveChartPreview';
-import { ChartConfig, ChartData, ChartOptions, ChartType } from './types';
-import { useGristTableData } from '@/features/grist';
-
-const initialData: ChartData = {
-  labels: ['January', 'February', 'March', 'April', 'May'],
-  datasets: [
-    {
-      id: 'dataset-1',
-      label: 'Sales',
-      data: [65, 59, 80, 81, 56],
-      backgroundColor: 'rgba(53, 162, 235, 0.5)',
-      borderColor: 'rgba(53, 162, 235, 1)',
-    },
-  ],
-};
-
-const initialOptions: ChartOptions = {
-  title: 'My Chart',
-  showLegend: true,
-  xAxisLabel: 'Months',
-  yAxisLabel: 'Values',
-};
+import {
+  ChartConfig,
+  ChartData,
+  ChartOptions,
+  ChartType,
+  Dataset,
+} from './types';
 
 const ChartEditorContainer = styled.div`
   max-width: 80rem;
@@ -124,6 +111,7 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
 
   // Transformation des données Grist en données pour le graphique
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const transformTableDataToChartData = (tableData: Record<string, any>) => {
       const filteredEntries = Object.entries(tableData).filter(
         ([key]) => key !== 'id' && key !== 'manualSort',
@@ -133,22 +121,18 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
         return { labels: [], datasets: [] };
       }
 
-      const labels = filteredEntries[0][1].map((value: any) =>
-        String(value ?? ''),
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const labels = filteredEntries[0][1].map((value: unknown) =>
+        String(value),
+      ) as string[];
       const datasets = filteredEntries.slice(1).map(([key, values], idx) => ({
         id: `dataset-${idx}`,
         label: key,
-        data: values.map((v: unknown) =>
-          typeof v === 'number'
-            ? v
-            : typeof v === 'string' && !isNaN(Number(v))
-              ? Number(v)
-              : 0,
-        ),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        data: values.map((v: unknown) => convertUnknownToNumber(v)),
         backgroundColor: 'rgba(53, 162, 235, 0.5)',
         borderColor: 'rgba(53, 162, 235, 1)',
-      }));
+      })) as Dataset[];
 
       return { labels, datasets };
     };
@@ -156,10 +140,19 @@ export const ChartEditor: React.FC<ChartEditorProps> = ({
     setChartData(transformTableDataToChartData(tableData));
   }, [tableData]);
 
+  const convertUnknownToNumber = (v: unknown) => {
+    if (typeof v === 'number') {
+      return v;
+    } else if (typeof v === 'string' && !isNaN(Number(v))) {
+      return Number(v);
+    }
+    return 0;
+  };
+
   // Communication des modifications de configuration au parent
   useEffect(() => {
     onChartConfigChange({ chartType, chartOptions });
-  }, [chartType, chartOptions]);
+  }, [chartType, chartOptions, onChartConfigChange]);
 
   const config: ChartConfig = {
     type: chartType,

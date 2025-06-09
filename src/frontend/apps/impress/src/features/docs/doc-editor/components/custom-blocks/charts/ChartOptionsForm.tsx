@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { ChartOptions } from './types';
 import { CollapsibleCard } from './CollapsibleCard';
+import { ChartOptions } from './types';
 
 interface ChartOptionsFormProps {
   options: ChartOptions;

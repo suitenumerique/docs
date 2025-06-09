@@ -161,7 +161,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
 
   useEffect(() => {
     const blocksAnalyze = editor?.document.filter(
-      (block) => 'url' in block.props && block.props.url.includes(ANALYZE_URL),
+      (block) => 'url' in block.props && block.props.url?.includes(ANALYZE_URL),
     );
 
     if (!blocksAnalyze?.length) {
@@ -173,7 +173,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
         return;
       }
 
-      blockAnalyzeProcess(editor, block.id, block.props.url);
+      blockAnalyzeProcess(editor, block.id, block.props.url ?? '');
     });
   }, [blockAnalyzeProcess, editor]);
 
@@ -192,7 +192,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
         blockChanges.type !== 'update' ||
         !('url' in blockChanges.block.props) ||
         ('url' in blockChanges.block.props &&
-          !blockChanges.block.props.url.includes(ANALYZE_URL))
+          !blockChanges.block.props.url?.includes(ANALYZE_URL))
       ) {
         return;
       }
@@ -200,7 +200,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       blockAnalyzeProcess(
         editor,
         blockChanges.block.id,
-        blockChanges.block.props.url,
+        blockChanges.block.props.url ?? '',
       );
     });
   }, [blockAnalyzeProcess, mediaUrl, editor, t]);
