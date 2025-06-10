@@ -20,6 +20,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useProviderStore } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
@@ -46,7 +47,6 @@ import {
   PdfBlock,
   UploadLoaderBlock,
 } from './custom-blocks';
-
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
@@ -104,7 +104,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
-  const aiExtension = useAI?.(doc.id);
+  const conf = useConfig().data;
+  const aiAllowed = !!(conf?.AI_FEATURE_ENABLED && doc.abilities?.ai_proxy);
+  const aiExtension = useAI?.(doc.id, aiAllowed);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -266,11 +268,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         comments={showComments}
         aria-label={t('Document editor')}
       >
-        {aiExtension && AIMenuController && AIMenu && (
+        {aiAllowed && AIMenuController && AIMenu && (
           <AIMenuController aiMenu={AIMenu} />
         )}
-        <BlockNoteSuggestionMenu />
-        <BlockNoteToolbar />
+        <BlockNoteSuggestionMenu aiAllowed={aiAllowed} />
+        <BlockNoteToolbar aiAllowed={aiAllowed} />
       </BlockNoteView>
     </Box>
   );
@@ -337,7 +339,7 @@ export const BlockNoteReader = ({
         slashMenu={false}
         comments={false}
       >
-        <BlockNoteToolbar />
+        <BlockNoteToolbar aiAllowed={false} />
       </BlockNoteView>
     </Box>
   );

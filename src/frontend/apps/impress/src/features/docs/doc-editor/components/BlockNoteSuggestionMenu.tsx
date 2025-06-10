@@ -11,8 +11,6 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useConfig } from '@/core';
-
 import {
   DocsBlockSchema,
   DocsInlineContentSchema,
@@ -32,7 +30,11 @@ const getMultiColumnSlashMenuItems =
 
 const getAISlashMenuItems = BlockNoteAI?.getAISlashMenuItems;
 
-export const BlockNoteSuggestionMenu = () => {
+export const BlockNoteSuggestionMenu = ({
+  aiAllowed,
+}: {
+  aiAllowed: boolean;
+}) => {
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
     DocsInlineContentSchema,
@@ -44,7 +46,6 @@ export const BlockNoteSuggestionMenu = () => {
   const fileBlocksName = dictionaryDate.slash_menu.file.group;
 
   const getInterlinkingMenuItems = useGetInterlinkingMenuItems();
-  const { data: conf } = useConfig();
 
   const getSlashMenuItems = useMemo(() => {
     // We insert it after the "Code Block" item to have the interlinking block displayed after the basic blocks
@@ -56,9 +57,7 @@ export const BlockNoteSuggestionMenu = () => {
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
-      conf?.AI_FEATURE_ENABLED && getAISlashMenuItems
-        ? getAISlashMenuItems(editor)
-        : [],
+      aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
     );
 
     const index = combinedMenu.findIndex(
@@ -80,7 +79,7 @@ export const BlockNoteSuggestionMenu = () => {
     t,
     fileBlocksName,
     basicBlocksName,
-    conf?.AI_FEATURE_ENABLED,
+    aiAllowed,
     getInterlinkingMenuItems,
   ]);
 

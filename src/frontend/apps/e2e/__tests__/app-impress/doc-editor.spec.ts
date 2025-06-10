@@ -696,6 +696,53 @@ test.describe('Doc Editor', () => {
     });
   });
 
+  test(`it checks ai_proxy ability`, async ({ page, browserName }) => {
+    await mockedDocument(page, {
+      accesses: [
+        {
+          id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
+          role: 'owner',
+          user: {
+            email: 'super@owner.com',
+            full_name: 'Super Owner',
+          },
+        },
+      ],
+      abilities: {
+        destroy: true, // Means owner
+        link_configuration: true,
+        ai_proxy: false,
+        accesses_manage: true,
+        accesses_view: true,
+        update: true,
+        partial_update: true,
+        retrieve: true,
+      },
+      link_reach: 'restricted',
+      link_role: 'editor',
+      created_at: '2021-09-01T09:00:00Z',
+      title: '',
+    });
+
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-ai-proxy',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    await page.locator('.bn-block-outer').last().fill('Hello World');
+
+    const editor = page.locator('.ProseMirror');
+    await editor.getByText('Hello').selectText();
+
+    await expect(page.getByRole('button', { name: 'Ask AI' })).toBeHidden();
+    await page.locator('.bn-block-outer').last().fill('/');
+    await expect(page.getByText('Write with AI')).toBeHidden();
+  });
+
   test('it downloads unsafe files', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
 

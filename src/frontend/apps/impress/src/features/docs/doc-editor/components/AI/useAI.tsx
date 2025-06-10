@@ -6,10 +6,14 @@ import { fetchAPI } from '@/api';
 import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
 
-export const useAI = (docId: Doc['id']) => {
+export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
   const conf = useConfig().data;
 
   return useMemo(() => {
+    if (!aiAllowed) {
+      return null;
+    }
+
     const extension = AIExtension({
       transport: new DefaultChatTransport({
         fetch: (input, init) => {
@@ -27,5 +31,5 @@ export const useAI = (docId: Doc['id']) => {
     });
 
     return extension;
-  }, [conf?.AI_BOT, docId]);
+  }, [conf?.AI_BOT, docId, aiAllowed]);
 };

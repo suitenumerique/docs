@@ -21,7 +21,7 @@ import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
 
 const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
 
-export const BlockNoteToolbar = () => {
+export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
   const dict = useDictionary();
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
@@ -72,7 +72,7 @@ export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
-        {conf?.AI_FEATURE_ENABLED && AIToolbarButton && <AIToolbarButton />}
+        {aiAllowed && AIToolbarButton && <AIToolbarButton />}
 
         <CommentToolbarButton />
 
@@ -87,7 +87,7 @@ export const BlockNoteToolbar = () => {
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
+  }, [toolbarItems, aiAllowed, conf?.AI_FEATURE_ENABLED]);
 
   return (
     <>
