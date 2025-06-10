@@ -57,7 +57,7 @@ dependencies = [
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "redis<6.0.0",
-    "requests==2.32.3",
+    "requests==2.32.4",
     "sentry-sdk==2.29.1",
     "whitenoise==6.9.0",
 ]
