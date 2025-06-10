@@ -8,7 +8,6 @@ import {
   useBlockNoteEditor,
   useDictionary,
 } from '@blocknote/react';
-import { getAISlashMenuItems } from '@blocknote/xl-ai';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +19,7 @@ import {
   DocsStyleSchema,
 } from '../types';
 
+import BlockNoteAI from './AI';
 import {
   getCalloutReactSlashMenuItems,
   getPdfReactSlashMenuItems,
@@ -29,6 +29,8 @@ import XLMultiColumn from './xl-multi-column';
 
 const getMultiColumnSlashMenuItems =
   XLMultiColumn?.getMultiColumnSlashMenuItems;
+
+const getAISlashMenuItems = BlockNoteAI?.getAISlashMenuItems;
 
 export const BlockNoteSuggestionMenu = () => {
   const editor = useBlockNoteEditor<
@@ -54,7 +56,9 @@ export const BlockNoteSuggestionMenu = () => {
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
-      conf?.AI_FEATURE_ENABLED ? getAISlashMenuItems(editor) : [],
+      conf?.AI_FEATURE_ENABLED && getAISlashMenuItems
+        ? getAISlashMenuItems(editor)
+        : [],
     );
 
     const index = combinedMenu.findIndex(
