@@ -26,7 +26,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4==4.13.4",
-    "boto3==1.38.27",
+    "boto3==1.38.33",
     "Brotli==1.1.0",
     "celery[redis]==5.5.3",
     "django-configurations==2.5.1",
@@ -38,7 +38,7 @@ dependencies = [
     "django-redis==5.4.0",
     "django-storages[s3]==1.14.6",
     "django-timezone-field>=5.1",
-    "django==5.1.9",
+    "django==5.1.10",
     "django-treebeard==4.7.1",
     "djangorestframework==3.16.0",
     "drf_spectacular==0.28.0",
@@ -51,13 +51,13 @@ dependencies = [
     "markdown==3.8",
     "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
-    "openai==1.82.1",
+    "openai==1.85.0",
     "psycopg[binary]==3.2.9",
     "pycrdt==0.12.20", 
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "redis<6.0.0",
-    "requests==2.32.3",
+    "requests==2.32.4",
     "sentry-sdk==2.29.1",
     "whitenoise==6.9.0",
 ]
@@ -81,11 +81,11 @@ dev = [
     "pylint==3.3.7",
     "pytest-cov==6.1.1",
     "pytest-django==4.11.1",
-    "pytest==8.3.5",
+    "pytest==8.4.0",
     "pytest-icdiff==0.9",
     "pytest-xdist==3.7.0",
     "responses==0.25.7",
-    "ruff==0.11.12",
+    "ruff==0.11.13",
     "types-requests==2.32.0.20250602",
 ]
 
