@@ -5,13 +5,9 @@ import {
   withPageBreak,
 } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
-import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
-import { AIMenuController } from '@blocknote/xl-ai';
-import { en as aiEn } from '@blocknote/xl-ai/locales';
-import '@blocknote/xl-ai/style.css';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,13 +18,14 @@ import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
 import { useHeadings, useUploadFile, useUploadStatus } from '../hook/';
+import { useDictionary } from '../hook/useDictionary';
 import useSaveDoc from '../hook/useSaveDoc';
 import { useEditorStore } from '../stores';
 import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
-import { AIMenu, useAI } from './AI';
+import { AIMenu, AIMenuController, useAI } from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { CalloutBlock, DividerBlock } from './custom-blocks';
@@ -57,8 +54,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
 
   useSaveDoc(doc.id, provider.document, !readOnly);
-  const { i18n } = useTranslation();
-  const lang = i18n.resolvedLanguage;
+  const dictionary = useDictionary();
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
   const aiExtension = useAI(doc.id);
@@ -120,7 +116,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
-      dictionary: { ...locales[lang as keyof typeof locales], ai: aiEn },
+      dictionary,
       extensions: aiExtension ? [aiExtension] : [],
       tables: {
         splitCells: true,
@@ -131,7 +127,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [collabName, lang, provider, uploadFile],
+    [aiExtension, collabName, dictionary, provider, uploadFile],
   );
 
   useHeadings(editor);

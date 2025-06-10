@@ -77,7 +77,7 @@ test.describe.serial('Language', () => {
     page,
     browserName,
   }) => {
-    await createDoc(page, 'doc-toolbar', browserName, 1);
+    await createDoc(page, 'doc-translations-slash', browserName, 1);
 
     const header = page.locator('header').first();
     const editor = page.locator('.ProseMirror');

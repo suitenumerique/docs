@@ -1,15 +1,12 @@
 import { createOpenAI } from '@ai-sdk/openai';
-import {
-  createAIExtension,
-  createBlockNoteAIClient,
-  llmFormats,
-} from '@blocknote/xl-ai';
 import { CoreMessage } from 'ai';
 import { useMemo } from 'react';
 
 import { fetchAPI } from '@/api';
 import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
+
+import { useModuleAI } from './useModuleAI';
 
 const systemPrompts: Record<
   'add-assistant' | 'add-formatting' | 'add-edit-instruction',
@@ -39,11 +36,6 @@ const userPrompts: Record<string, string> = {
     'Summarize the selected text into a concise paragraph. Add a small summarize title above the text.',
 };
 
-const client = createBlockNoteAIClient({
-  baseURL: ``,
-  apiKey: '',
-});
-
 /**
  * Custom implementation of the PromptBuilder that allows for using predefined prompts.
  *
@@ -52,14 +44,22 @@ const client = createBlockNoteAIClient({
  */
 export const useAI = (docId: Doc['id']) => {
   const conf = useConfig().data;
+  const modules = useModuleAI();
 
   return useMemo(() => {
-    if (!conf?.AI_MODEL) {
-      return null;
+    if (!modules || !conf?.AI_MODEL) {
+      return;
     }
 
+    const { llmFormats, createAIExtension, createBlockNoteAIClient } = modules;
+
+    const clientAI = createBlockNoteAIClient({
+      baseURL: ``,
+      apiKey: '',
+    });
+
     const openai = createOpenAI({
-      ...client.getProviderSettings('openai'),
+      ...clientAI.getProviderSettings('openai'),
       fetch: (input, init) => {
         // Create a new headers object without the Authorization header
         const headers = new Headers(init?.headers);
@@ -76,7 +76,7 @@ export const useAI = (docId: Doc['id']) => {
     const extension = createAIExtension({
       stream: false,
       model,
-      agentCursor: conf?.AI_BOT,
+      agentCursor: conf.AI_BOT,
       // Create a custom promptBuilder that extends the default one
       promptBuilder: async (editor, opts): Promise<Array<CoreMessage>> => {
         const defaultPromptBuilder = llmFormats.html.defaultPromptBuilder;
@@ -155,5 +155,5 @@ export const useAI = (docId: Doc['id']) => {
     });
 
     return extension;
-  }, [conf?.AI_BOT, conf?.AI_MODEL, docId]);
+  }, [conf?.AI_BOT, conf?.AI_MODEL, docId, modules]);
 };
