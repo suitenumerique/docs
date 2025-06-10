@@ -121,7 +121,7 @@ test.describe('Language', () => {
       LANGUAGE_CODE: 'en-us',
     });
 
-    await createDoc(page, 'doc-toolbar', browserName, 1);
+    await createDoc(page, 'doc-translations-slash', browserName, 1);
 
     const { editor, suggestionMenu } = await openSuggestionMenu({ page });
     await expect(

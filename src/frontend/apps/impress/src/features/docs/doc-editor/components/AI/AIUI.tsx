@@ -4,6 +4,7 @@ import {
   getAIExtension,
   getDefaultAIMenuItems,
 } from '@blocknote/xl-ai';
+import '@blocknote/xl-ai/style.css';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
