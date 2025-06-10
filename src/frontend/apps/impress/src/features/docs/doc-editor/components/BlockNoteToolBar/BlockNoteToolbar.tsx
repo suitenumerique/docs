@@ -10,13 +10,15 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
-import { AIToolbarButton } from '../AI';
+import BlockNoteAI from '../AI';
 import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
+
+const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
 
 export const BlockNoteToolbar = () => {
   const dict = useDictionary();
@@ -69,7 +71,7 @@ export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
-        {conf?.AI_FEATURE_ENABLED && <AIToolbarButton />}
+        {conf?.AI_FEATURE_ENABLED && AIToolbarButton && <AIToolbarButton />}
 
         <CommentToolbarButton />
 
