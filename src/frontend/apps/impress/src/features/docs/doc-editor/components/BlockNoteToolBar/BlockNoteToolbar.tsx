@@ -8,8 +8,6 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useConfig } from '@/core/config/api';
-
 import BlockNoteAI from '../AI';
 import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
@@ -20,12 +18,11 @@ import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
 
 const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
 
-export const BlockNoteToolbar = () => {
+export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
   const dict = useDictionary();
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
   const { t } = useTranslation();
-  const { data: conf } = useConfig();
 
   const toolbarItems = useMemo(() => {
     let toolbarItems = getFormattingToolbarItems([
@@ -71,7 +68,7 @@ export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
-        {conf?.AI_FEATURE_ENABLED && AIToolbarButton && <AIToolbarButton />}
+        {aiAllowed && AIToolbarButton && <AIToolbarButton />}
 
         <CommentToolbarButton />
 
@@ -81,7 +78,7 @@ export const BlockNoteToolbar = () => {
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
+  }, [toolbarItems, aiAllowed]);
 
   return (
     <>

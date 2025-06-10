@@ -8,12 +8,12 @@ import { Doc } from '@/docs/doc-management';
 
 import { usePromptAI } from './usePromptAI';
 
-export const useAI = (docId: Doc['id']) => {
+export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
   const conf = useConfig().data;
   const promptBuilder = usePromptAI();
 
   return useMemo(() => {
-    if (!conf?.AI_MODEL) {
+    if (!aiAllowed || !conf?.AI_MODEL) {
       return;
     }
 
@@ -40,5 +40,5 @@ export const useAI = (docId: Doc['id']) => {
     });
 
     return extension;
-  }, [conf, docId, promptBuilder]);
+  }, [aiAllowed, conf, docId, promptBuilder]);
 };
