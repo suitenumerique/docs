@@ -487,7 +487,16 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello World')).toBeVisible();
   });
 
-  test('it checks the AI buttons feature', async ({ page, browserName }) => {
+  /**
+   * We have to skip this test for the CI for now, we cannot assert
+   * it because of `process.env.NEXT_PUBLIC_PUBLISH_AS_MIT` that is set
+   * at build time.
+   * It can be interesting to keep it for local tests.
+   */
+  test.skip('it checks the AI buttons feature', async ({
+    page,
+    browserName,
+  }) => {
     await page.route(/.*\/ai-translate\//, async (route) => {
       const request = route.request();
       if (request.method().includes('POST')) {
@@ -540,7 +549,13 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
   });
 
-  test('it checks the AI buttons', async ({ page, browserName }) => {
+  /**
+   * We have to skip this test for the CI for now, we cannot assert
+   * it because of `process.env.NEXT_PUBLIC_PUBLISH_AS_MIT` that is set
+   * at build time.
+   * It can be interesting to keep it for local tests.
+   */
+  test.skip('it checks the AI buttons', async ({ page, browserName }) => {
     await page.route(/.*\/ai-translate\//, async (route) => {
       const request = route.request();
       if (request.method().includes('POST')) {
@@ -593,12 +608,18 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
   });
 
+  /**
+   * We have to skip this test for the CI for now, we cannot assert
+   * it because of `process.env.NEXT_PUBLIC_PUBLISH_AS_MIT` that is set
+   * at build time.
+   * It can be interesting to keep it for local tests.
+   */
   [
     { ai_transform: false, ai_translate: false },
     { ai_transform: true, ai_translate: false },
     { ai_transform: false, ai_translate: true },
   ].forEach(({ ai_transform, ai_translate }) => {
-    test(`it checks AI buttons when can transform is at "${ai_transform}" and can translate is at "${ai_translate}"`, async ({
+    test.skip(`it checks AI buttons when can transform is at "${ai_transform}" and can translate is at "${ai_translate}"`, async ({
       page,
       browserName,
     }) => {

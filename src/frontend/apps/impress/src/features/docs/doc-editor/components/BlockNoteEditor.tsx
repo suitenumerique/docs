@@ -12,9 +12,6 @@ import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
-import { AIMenuController } from '@blocknote/xl-ai';
-import { en as aiEn } from '@blocknote/xl-ai/locales';
-import '@blocknote/xl-ai/style.css';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +36,7 @@ import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
-import { AIMenu, useAI } from './AI';
+import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { cssComments, useComments } from './comments/';
@@ -49,6 +46,11 @@ import {
   PdfBlock,
   UploadLoaderBlock,
 } from './custom-blocks';
+
+const AIMenu = BlockNoteAI?.AIMenu;
+const AIMenuController = BlockNoteAI?.AIMenuController;
+const useAI = BlockNoteAI?.useAI;
+const localesAI = BlockNoteAI?.localesAI;
 import {
   InterlinkingLinkInlineContent,
   InterlinkingSearchInlineContent,
@@ -87,7 +89,6 @@ interface BlockNoteEditorProps {
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
-  const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
@@ -96,14 +97,14 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const showComments = canSeeComment;
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   let lang = i18n.resolvedLanguage;
   if (!lang || !(lang in locales)) {
     lang = 'en';
   }
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
-  const aiExtension = useAI(doc.id);
+  const aiExtension = useAI?.(doc.id);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -173,7 +174,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         ...(multiColumnLocales && {
           multi_column:
             multiColumnLocales[lang as keyof typeof multiColumnLocales],
-          ai: aiEn,
+          ai: localesAI?.[lang as keyof typeof localesAI],
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
@@ -214,7 +215,15 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [cursorName, lang, provider, uploadFile, threadStore, resolveUsers],
+    [
+      aiExtension,
+      cursorName,
+      lang,
+      provider,
+      uploadFile,
+      threadStore,
+      resolveUsers,
+    ],
   );
 
   useHeadings(editor);
@@ -257,7 +266,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         comments={showComments}
         aria-label={t('Document editor')}
       >
-        {aiExtension && <AIMenuController aiMenu={AIMenu} />}
+        {aiExtension && AIMenuController && AIMenu && (
+          <AIMenuController aiMenu={AIMenu} />
+        )}
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>
