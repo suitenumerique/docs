@@ -12,11 +12,11 @@ import { Doc } from '@/docs/doc-management';
  * This extends the default HTML promptBuilder from BlockNote to support custom prompt templates.
  * Custom prompts can be invoked using the pattern !promptName in the AI input field.
  */
-export const useAI = (docId: Doc['id']) => {
+export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
   const conf = useConfig().data;
 
   return useMemo(() => {
-    if (!conf?.AI_MODEL) {
+    if (!aiAllowed || !conf?.AI_MODEL) {
       return null;
     }
 
@@ -49,5 +49,5 @@ export const useAI = (docId: Doc['id']) => {
     });
 
     return extension;
-  }, [conf?.AI_MODEL, conf?.AI_BOT, conf?.AI_STREAM, docId]);
+  }, [aiAllowed, conf?.AI_MODEL, conf?.AI_BOT, conf?.AI_STREAM, docId]);
 };
