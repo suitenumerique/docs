@@ -40,7 +40,7 @@ These are the environment variables you can set for the `impress-backend` contai
 | DJANGO_EMAIL_USE_TLS                            | use tls for email host connection                                                             | false                                                   |
 | DJANGO_EMAIL_USE_SSL                            | use sstl for email host connection                                                            | false                                                   |
 | DJANGO_EMAIL_FROM                               | email address used as sender                                                                  | from@example.com                                        |
-| DJANGO_CORS_ALLOW_ALL_ORIGINS                   | allow all CORS origins                                                                        | true                                                    |
+| DJANGO_CORS_ALLOW_ALL_ORIGINS                   | allow all CORS origins                                                                        | false                                                    |
 | DJANGO_CORS_ALLOWED_ORIGINS                     | list of origins allowed for CORS                                                              | []                                                      |
 | DJANGO_CORS_ALLOWED_ORIGIN_REGEXES              | list of origins allowed for CORS using regulair expressions                                   | []                                                      |
 | SENTRY_DSN                                      | sentry host                                                                                   |                                                         |
