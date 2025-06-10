@@ -42,12 +42,13 @@ const userPrompts: Record<string, string> = {
  * This extends the default HTML promptBuilder from BlockNote to support custom prompt templates.
  * Custom prompts can be invoked using the pattern !promptName in the AI input field.
  */
-export const useAI = (docId: Doc['id']) => {
+export const useAI = (doc: Doc) => {
   const conf = useConfig().data;
   const modules = useModuleAI();
+  const aiAllowed = !!(conf?.AI_FEATURE_ENABLED && doc.abilities?.ai_proxy);
 
   return useMemo(() => {
-    if (!modules || !conf?.AI_MODEL) {
+    if (!aiAllowed || !modules || !conf?.AI_MODEL) {
       return;
     }
 
@@ -65,7 +66,7 @@ export const useAI = (docId: Doc['id']) => {
         const headers = new Headers(init?.headers);
         headers.delete('Authorization');
 
-        return fetchAPI(`documents/${docId}/ai-proxy/`, {
+        return fetchAPI(`documents/${doc.id}/ai-proxy/`, {
           ...init,
           headers,
         });
@@ -155,5 +156,5 @@ export const useAI = (docId: Doc['id']) => {
     });
 
     return extension;
-  }, [conf?.AI_BOT, conf?.AI_MODEL, docId, modules]);
+  }, [aiAllowed, conf?.AI_BOT, conf?.AI_MODEL, doc.id, modules]);
 };

@@ -57,7 +57,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const dictionary = useDictionary();
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
-  const aiExtension = useAI(doc.id);
+  const aiExtension = useAI(doc);
+  const aiAllowed = !!aiExtension;
 
   const collabName = readOnly
     ? 'Reader'
@@ -165,9 +166,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editable={!readOnly}
         theme="light"
       >
-        {aiExtension && <AIMenuController aiMenu={AIMenu} />}
-        <BlockNoteSuggestionMenu />
-        <BlockNoteToolbar />
+        {aiAllowed && <AIMenuController aiMenu={AIMenu} />}
+        <BlockNoteSuggestionMenu aiAllowed={aiAllowed} />
+        <BlockNoteToolbar aiAllowed={aiAllowed} />
       </BlockNoteView>
     </Box>
   );

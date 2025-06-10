@@ -9,8 +9,6 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useConfig } from '@/core';
-
 import { DocsBlockSchema } from '../types';
 
 import { modGetAISlashMenuItems } from './AI';
@@ -19,11 +17,14 @@ import {
   getDividerReactSlashMenuItems,
 } from './custom-blocks';
 
-export const BlockNoteSuggestionMenu = () => {
+export const BlockNoteSuggestionMenu = ({
+  aiAllowed,
+}: {
+  aiAllowed: boolean;
+}) => {
   const editor = useBlockNoteEditor<DocsBlockSchema>();
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
-  const { data: conf } = useConfig();
 
   const getSlashMenuItems = useMemo(() => {
     return async (query: string) => {
@@ -36,15 +37,13 @@ export const BlockNoteSuggestionMenu = () => {
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
-            conf?.AI_FEATURE_ENABLED && getAISlashMenuItems
-              ? getAISlashMenuItems(editor)
-              : [],
+            aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
           ),
           query,
         ),
       );
     };
-  }, [basicBlocksName, editor, t, conf?.AI_FEATURE_ENABLED]);
+  }, [basicBlocksName, editor, t, aiAllowed]);
 
   return (
     <SuggestionMenuController
