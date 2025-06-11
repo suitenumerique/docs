@@ -18,7 +18,7 @@ test.describe('Doc Export', () => {
     await createDoc(page, 'doc-editor', browserName, 1);
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
@@ -75,7 +75,7 @@ test.describe('Doc Export', () => {
 
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
@@ -122,7 +122,7 @@ test.describe('Doc Export', () => {
 
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
@@ -186,7 +186,7 @@ test.describe('Doc Export', () => {
 
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
@@ -250,7 +250,7 @@ test.describe('Doc Export', () => {
 
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
@@ -294,7 +294,7 @@ test.describe('Doc Export', () => {
 
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
