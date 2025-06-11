@@ -384,21 +384,8 @@ class DocumentViewSet(
     9. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    10. **AI Transform**: Apply a transformation action on a piece of text with AI.
-        Example: POST /documents/{id}/ai-transform/
-        Expected data:
-        - text (str): The input text.
-        - action (str): The transformation type, one of [prompt, correct, rephrase, summarize].
-        Returns: JSON response with the processed text.
-        Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
-
-    11. **AI Translate**: Translate a piece of text with AI.
-        Example: POST /documents/{id}/ai-translate/
-        Expected data:
-        - text (str): The input text.
-        - language (str): The target language, chosen from settings.LANGUAGES.
-        Returns: JSON response with the translated text.
-        Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
+    10. **AI Proxy**: Proxy an AI request to an external AI service.
+        Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
     ### Ordering: created_at, updated_at, is_favorite, title
 
@@ -1364,6 +1351,9 @@ class DocumentViewSet(
         """
         # Check permissions first
         self.get_object()
+
+        if not settings.AI_FEATURE_ENABLED:
+            raise ValidationError("AI feature is not enabled.")
 
         serializer = serializers.AIProxySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

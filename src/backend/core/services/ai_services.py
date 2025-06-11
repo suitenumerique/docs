@@ -25,12 +25,7 @@ class AIService:
 
     def proxy(self, data: dict) -> dict:
         """Proxy AI API requests to the configured AI provider."""
-        try:
-            data["stream"] = False
+        data["stream"] = False
 
-            response = self.client.chat.completions.create(**data)
-            return response.model_dump()
-
-        except Exception as exc:
-            log.error("Error in AI proxy: %s", str(exc))
-            raise RuntimeError(f"Failed to proxy AI request: {str(exc)}") from exc
+        response = self.client.chat.completions.create(**data)
+        return response.model_dump()

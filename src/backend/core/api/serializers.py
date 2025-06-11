@@ -675,17 +675,19 @@ class VersionFilterSerializer(serializers.Serializer):
 class AIProxySerializer(serializers.Serializer):
     """Serializer for AI proxy requests."""
 
-    messages = serializers.ListField(required=True)
+    messages = serializers.ListField(
+        required=True,
+        child=serializers.DictField(
+            child=serializers.CharField(required=True),
+        ),
+        allow_empty=False,
+    )
     model = serializers.CharField(required=True)
 
-    def validate(self, attrs):
-        """Additional validation for the proxy request."""
-        # Ensure we have at least one message
-        if not attrs.get("messages"):
-            raise serializers.ValidationError("At least one message is required")
-
+    def validate_messages(self, messages):
+        """Validate messages structure."""
         # Ensure each message has the required fields
-        for message in attrs.get("messages", []):
+        for message in messages:
             if (
                 not isinstance(message, dict)
                 or "role" not in message
@@ -695,7 +697,14 @@ class AIProxySerializer(serializers.Serializer):
                     "Each message must have 'role' and 'content' fields"
                 )
 
-        return attrs
+        return messages
+
+    def validate_model(self, value):
+        """Validate model value is the same than settings.AI_MODEL"""
+        if value != settings.AI_MODEL:
+            raise serializers.ValidationError(f"{value} is not a valid model")
+
+        return value
 
 
 class MoveDocumentSerializer(serializers.Serializer):

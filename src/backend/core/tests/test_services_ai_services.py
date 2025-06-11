@@ -44,8 +44,8 @@ def test_api_ai__client_error(mock_create):
     mock_create.side_effect = OpenAIError("Mocked client error")
 
     with pytest.raises(
-        RuntimeError,
-        match="Failed to proxy AI request: Mocked client error",
+        OpenAIError,
+        match="Mocked client error",
     ):
         AIService().proxy({"messages": [{"role": "user", "content": "hello"}]})
 

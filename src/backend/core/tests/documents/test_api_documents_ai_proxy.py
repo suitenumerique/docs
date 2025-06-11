@@ -16,13 +16,13 @@ from core.tests.conftest import TEAM, USER, VIA
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def ai_settings():
+@pytest.fixture(autouse=True)
+def ai_settings(settings):
     """Fixture to set AI settings."""
-    with override_settings(
-        AI_BASE_URL="http://example.com", AI_API_KEY="test-key", AI_MODEL="llama"
-    ):
-        yield
+    settings.AI_MODEL = "llama"
+    settings.AI_BASE_URL = "http://example.com"
+    settings.AI_API_KEY = "test-key"
+    settings.AI_FEATURE_ENABLED = True
 
 
 @override_settings(
@@ -62,7 +62,6 @@ def test_api_documents_ai_proxy_anonymous_forbidden(reach, role):
 
 
 @override_settings(AI_ALLOW_REACH_FROM="public")
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_anonymous_success(mock_create):
     """
@@ -90,7 +89,6 @@ def test_api_documents_ai_proxy_anonymous_success(mock_create):
         "usage": {"prompt_tokens": 9, "completion_tokens": 12, "total_tokens": 21},
     }
     mock_create.return_value = mock_response
-
     url = f"/api/v1.0/documents/{document.id!s}/ai-proxy/"
     response = APIClient().post(
         url,
@@ -119,7 +117,6 @@ def test_api_documents_ai_proxy_anonymous_success(mock_create):
 
 
 @override_settings(AI_ALLOW_REACH_FROM=random.choice(["authenticated", "restricted"]))
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_anonymous_limited_by_setting(mock_create):
     """
@@ -186,7 +183,6 @@ def test_api_documents_ai_proxy_authenticated_forbidden(reach, role):
         ("public", "editor"),
     ],
 )
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_authenticated_success(mock_create, reach, role):
     """
@@ -269,7 +265,6 @@ def test_api_documents_ai_proxy_reader(via, mock_user_teams):
 
 @pytest.mark.parametrize("role", ["editor", "administrator", "owner"])
 @pytest.mark.parametrize("via", VIA)
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_success(mock_create, via, role, mock_user_teams):
     """Users with sufficient permissions should be able to request AI proxy."""
@@ -337,7 +332,7 @@ def test_api_documents_ai_proxy_empty_messages():
     response = client.post(url, {"messages": [], "model": "llama"}, format="json")
 
     assert response.status_code == 400
-    assert response.json() == {"non_field_errors": ["At least one message is required"]}
+    assert response.json() == {"messages": ["This list may not be empty."]}
 
 
 def test_api_documents_ai_proxy_missing_model():
@@ -380,7 +375,9 @@ def test_api_documents_ai_proxy_invalid_message_format():
     )
 
     assert response.status_code == 400
-    assert "Each message must have 'role' and 'content' fields" in str(response.json())
+    assert response.json() == {
+        "messages": ["Each message must have 'role' and 'content' fields"]
+    }
 
     # Test with invalid message format (missing content)
     response = client.post(
@@ -393,7 +390,9 @@ def test_api_documents_ai_proxy_invalid_message_format():
     )
 
     assert response.status_code == 400
-    assert "Each message must have 'role' and 'content' fields" in str(response.json())
+    assert response.json() == {
+        "messages": ["Each message must have 'role' and 'content' fields"]
+    }
 
     # Test with non-dict message
     response = client.post(
@@ -406,10 +405,11 @@ def test_api_documents_ai_proxy_invalid_message_format():
     )
 
     assert response.status_code == 400
-    assert "Each message must have 'role' and 'content' fields" in str(response.json())
+    assert response.json() == {
+        "messages": {"0": ['Expected a dictionary of items but got type "str".']}
+    }
 
 
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_stream_disabled(mock_create):
     """Stream should be automatically disabled in AI proxy requests."""
@@ -444,7 +444,6 @@ def test_api_documents_ai_proxy_stream_disabled(mock_create):
     )
 
 
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_additional_parameters(mock_create):
     """AI proxy should pass through additional parameters to the AI service."""
@@ -485,7 +484,6 @@ def test_api_documents_ai_proxy_additional_parameters(mock_create):
 
 
 @override_settings(AI_DOCUMENT_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_throttling_document(mock_create):
     """
@@ -530,7 +528,6 @@ def test_api_documents_ai_proxy_throttling_document(mock_create):
     }
 
 
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_complex_conversation(mock_create):
     """AI proxy should handle complex conversations with multiple messages."""
@@ -595,7 +592,6 @@ def test_api_documents_ai_proxy_complex_conversation(mock_create):
 
 
 @override_settings(AI_USER_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})
-@pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_throttling_user(mock_create):
     """
@@ -641,9 +637,7 @@ def test_api_documents_ai_proxy_throttling_user(mock_create):
 
 
 @override_settings(AI_USER_RATE_THROTTLE_RATES={"minute": 10, "hour": 6, "day": 10})
-@pytest.mark.usefixtures("ai_settings")
-@patch("openai.resources.chat.completions.Completions.create")
-def test_api_documents_ai_proxy_different_models(mock_create):
+def test_api_documents_ai_proxy_different_models():
     """AI proxy should work with different AI models."""
     user = factories.UserFactory()
 
@@ -655,26 +649,8 @@ def test_api_documents_ai_proxy_different_models(mock_create):
     models_to_test = ["gpt-3.5-turbo", "gpt-4", "claude-3", "llama-2"]
 
     for model_name in models_to_test:
-        mock_response = MagicMock()
-        mock_response.model_dump.return_value = {
-            "id": f"chatcmpl-{model_name}",
-            "model": model_name,
-            "choices": [
-                {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": f"Response from {model_name}",
-                    },
-                    "finish_reason": "stop",
-                }
-            ],
-        }
-        mock_create.return_value = mock_response
-
-        url = f"/api/v1.0/documents/{document.id!s}/ai-proxy/"
         response = client.post(
-            url,
+            f"/api/v1.0/documents/{document.id!s}/ai-proxy/",
             {
                 "messages": [{"role": "user", "content": "Hello"}],
                 "model": model_name,
@@ -682,17 +658,29 @@ def test_api_documents_ai_proxy_different_models(mock_create):
             format="json",
         )
 
-        assert response.status_code == 200
-        response_data = response.json()
-        assert response_data["model"] == model_name
-        assert (
-            response_data["choices"][0]["message"]["content"]
-            == f"Response from {model_name}"
-        )
+        assert response.status_code == 400
+        assert response.json() == {"model": [f"{model_name} is not a valid model"]}
 
-        # Verify the correct model was used in the API call
-        mock_create.assert_called_with(
-            messages=[{"role": "user", "content": "Hello"}],
-            model=model_name,
-            stream=False,
-        )
+
+def test_api_documents_ai_proxy_ai_feature_disabled(settings):
+    """When the settings AI_FEATURE_ENABLED is set to False, the endpoint is not reachable."""
+    settings.AI_FEATURE_ENABLED = False
+
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(link_reach="public", link_role="editor")
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/ai-proxy/",
+        {
+            "messages": [{"role": "user", "content": "Hello"}],
+            "model": "llama",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == ["AI feature is not enabled."]
