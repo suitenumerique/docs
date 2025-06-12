@@ -75,7 +75,7 @@ export const useAI = (doc: Doc) => {
     const model = openai.chat(conf.AI_MODEL);
 
     const extension = createAIExtension({
-      stream: false,
+      stream: conf.AI_STREAM,
       model,
       agentCursor: conf.AI_BOT,
       // Create a custom promptBuilder that extends the default one
@@ -156,5 +156,5 @@ export const useAI = (doc: Doc) => {
     });
 
     return extension;
-  }, [aiAllowed, conf?.AI_BOT, conf?.AI_MODEL, doc.id, modules]);
+  }, [aiAllowed, conf, doc.id, modules]);
 };
