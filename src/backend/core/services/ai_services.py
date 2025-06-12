@@ -1,16 +1,21 @@
 """AI services."""
 
+import json
 import logging
+from typing import Generator
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+
+from openai import OpenAI as OpenAI_Client
+from openai import OpenAIError
 
 from core import enums
 
 if settings.LANGFUSE_PUBLIC_KEY:
     from langfuse.openai import OpenAI
 else:
-    from openai import OpenAI
+    OpenAI = OpenAI_Client
     
 log = logging.getLogger(__name__)
 
@@ -101,9 +106,30 @@ class AIService:
         system_content = AI_TRANSLATE.format(language=language_display)
         return self.call_ai_api(system_content, text)
 
-    def proxy(self, data: dict) -> dict:
+    def proxy(self, data: dict, stream: bool = False) -> Generator[str, None, None]:
         """Proxy AI API requests to the configured AI provider."""
-        data["stream"] = False
+        data["stream"] = stream
+        try:
+            return self.client.chat.completions.create(**data)
+        except OpenAIError as e:
+            raise RuntimeError(f"Failed to proxy AI request: {e}") from e
 
-        response = self.client.chat.completions.create(**data)
-        return response.model_dump()
+    def stream(self, data: dict) -> Generator[str, None, None]:
+        """Stream AI API requests to the configured AI provider."""
+
+        try:
+            stream = self.proxy(data, stream=True)
+            for chunk in stream:
+                try:
+                    chunk_dict = (
+                        chunk.model_dump() if hasattr(chunk, "model_dump") else chunk
+                    )
+                    chunk_json = json.dumps(chunk_dict)
+                    yield f"data: {chunk_json}\n\n"
+                except (AttributeError, TypeError) as e:
+                    log.error("Error serializing chunk: %s, chunk: %s", e, chunk)
+                    continue
+        except (OpenAIError, RuntimeError, OSError, ValueError) as e:
+            log.error("Streaming error: %s", e)
+
+        yield "data: [DONE]\n\n"

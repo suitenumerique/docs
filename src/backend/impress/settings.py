@@ -713,6 +713,9 @@ class Base(Configuration):
         default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
     )
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
+    AI_STREAM = values.BooleanValue(
+        default=True, environ_name="AI_STREAM", environ_prefix=None
+    )
     AI_USER_RATE_THROTTLE_RATES = {
         "minute": 3,
         "hour": 50,

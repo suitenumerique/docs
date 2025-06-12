@@ -21,6 +21,7 @@ pytestmark = pytest.mark.django_db
 @override_settings(
     AI_BOT={"name": "Test Bot", "color": "#000000"},
     AI_FEATURE_ENABLED=False,
+    AI_STREAM=True,
     API_USERS_SEARCH_QUERY_MIN_LENGTH=6,
     COLLABORATION_WS_URL="http://testcollab/",
     COLLABORATION_WS_NOT_CONNECTED_READY_ONLY=True,
@@ -47,6 +48,7 @@ def test_api_config(is_authenticated):
     assert response.json() == {
         "AI_BOT": {"name": "Test Bot", "color": "#000000"},
         "AI_FEATURE_ENABLED": False,
+        "AI_STREAM": True,
         "API_USERS_SEARCH_QUERY_MIN_LENGTH": 6,
         "COLLABORATION_WS_URL": "http://testcollab/",
         "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY": True,
