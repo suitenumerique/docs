@@ -1358,8 +1358,20 @@ class DocumentViewSet(
         serializer = serializers.AIProxySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        response = AIService().proxy(request.data)
-        return drf.response.Response(response, status=drf.status.HTTP_200_OK)
+        ai_service = AIService()
+
+        if settings.AI_STREAM:
+            return StreamingHttpResponse(
+                ai_service.stream(request.data),
+                content_type="text/event-stream",
+                status=drf.status.HTTP_200_OK,
+            )
+        else:
+            ai_response = ai_service.proxy(request.data)
+            return drf.response.Response(
+                ai_response.model_dump(),
+                status=drf.status.HTTP_200_OK,
+            )
 
     @drf.decorators.action(
         detail=True,
@@ -1741,6 +1753,7 @@ class ConfigView(drf.views.APIView):
             "AI_BOT",
             "AI_FEATURE_ENABLED",
             "AI_MODEL",
+            "AI_STREAM",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
             "CRISP_WEBSITE_ID",
