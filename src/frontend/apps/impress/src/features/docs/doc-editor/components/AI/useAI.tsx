@@ -33,7 +33,7 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
     const model = openai.chat(conf.AI_MODEL);
 
     const extension = createAIExtension({
-      stream: false,
+      stream: conf.AI_STREAM,
       model,
       agentCursor: conf?.AI_BOT,
       promptBuilder: promptBuilder(llmFormats.html.defaultPromptBuilder),
