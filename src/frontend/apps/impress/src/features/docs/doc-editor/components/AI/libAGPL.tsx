@@ -2,7 +2,6 @@ export {
   AIMenu as AIMenuDefault,
   AIMenuController,
   createAIExtension,
-  createBlockNoteAIClient,
   getAIExtension,
   getAISlashMenuItems,
   getDefaultAIMenuItems,
