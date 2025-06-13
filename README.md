@@ -11,7 +11,7 @@
   <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
   <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
   <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
-    <img alt="GitHub closed issues" src="https://img.shields.io/github/license/suitenumerique/docs"/>
+    <img alt="MIT License" src="https://img.shields.io/github/license/suitenumerique/docs"/>
   </a>    
 </p>
 <p align="center">
@@ -162,15 +162,15 @@ $ make superuser
 
 We'd love to hear your thoughts, and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
 
-## Roadmap
+## Roadmap 💡
 
 Want to know where the project is headed? [🗺️ Checkout our roadmap](https://github.com/orgs/numerique-gouv/projects/13/views/11)
 
-## Licence 📝
+## License 📝
 
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is a public-driven initiative, our licence choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public-driven initiative, our license choice is an invitation for private sector actors to use, sell and contribute to the project. 
 
 ## Contributing 🙌
 
