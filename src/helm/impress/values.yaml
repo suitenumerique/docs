@@ -201,6 +201,12 @@ backend:
   ## @param backend.migrateJobAnnotations Annotations for the migrate job
   migrateJobAnnotations: {}
 
+  ## @param backend.jobs.ttlSecondsAfterFinished Period to wait before remove jobs
+  ## @param backend.jobs.backoffLimit Numbers of jobs retries
+  jobs:
+    ttlSecondsAfterFinished: 30
+    backoffLimit: 2
+
   ## @param backend.securityContext Configure backend Pod security context
   securityContext: null
 
@@ -234,10 +240,18 @@ backend:
  ## @param backend.migrate.restartPolicy backend migrate job restart policy
   migrate:
     command:
-      - "python"
-      - "manage.py"
-      - "migrate"
-      - "--no-input"
+      - /bin/sh
+      - "-c"
+      - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
+
+        python manage.py migrate --no-input
     restartPolicy: Never
 
  ## @param backend.createsuperuser.command backend migrate command
@@ -247,6 +261,14 @@ backend:
       - "/bin/sh"
       - "-c"
       - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
+
         python manage.py createsuperuser --email $DJANGO_SUPERUSER_EMAIL --password $DJANGO_SUPERUSER_PASSWORD
     restartPolicy: Never
 
