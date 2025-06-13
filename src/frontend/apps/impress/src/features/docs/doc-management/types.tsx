@@ -49,8 +49,7 @@ export interface Doc {
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
-    ai_transform: boolean;
-    ai_translate: boolean;
+    ai_proxy: boolean;
     attachment_upload: boolean;
     children_create: boolean;
     children_list: boolean;
