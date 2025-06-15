@@ -85,7 +85,7 @@ backend:
   # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
-      mountPath: /usr/local/lib/python3.12/site-packages/certifi/cacert.pem
+      mountPath: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
       subPath: cacert.pem
 
   # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
@@ -121,6 +121,22 @@ yProvider:
     COLLABORATION_SERVER_ORIGIN: https://impress.127.0.0.1.nip.io
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
+    COLLABORATION_BACKEND_BASE_URL: https://impress.127.0.0.1.nip.io
+    NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/cacert.pem
+
+  # Mount the certificate so yProvider can establish tls with the backend
+  extraVolumeMounts:
+    - name: certs
+      mountPath: /usr/local/share/ca-certificates/cacert.pem
+      subPath: cacert.pem
+
+  extraVolumes:
+    - name: certs
+      configMap:
+        name: certifi
+        items:
+        - key: cacert.pem
+          path: cacert.pem
 
 posthog:
   ingress:
@@ -135,9 +151,6 @@ ingress:
 ingressCollaborationWS:
   enabled: true
   host: impress.127.0.0.1.nip.io
-  
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://impress.127.0.0.1.nip.io/api/v1.0/documents/collaboration-auth/
 
 ingressCollaborationApi:
   enabled: true
