@@ -30,6 +30,10 @@ class TestAnalytic extends AbstractAnalytic {
 
 jest.mock('@/features/docs/doc-export/', () => ({
   ModalExport: () => <span>ModalExport</span>,
+  useModuleExport: () => ({
+    exportToPdf: jest.fn(),
+    exportToDocx: jest.fn(),
+  }),
 }));
 
 const doc = {
