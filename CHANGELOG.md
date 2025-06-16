@@ -11,6 +11,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add customization for translations #857
+- (doc) add documentation to install with compose #855
 
 ### Changed
 
