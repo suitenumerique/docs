@@ -424,7 +424,7 @@ test.describe('Doc Header', () => {
   });
 
   test('it pins a document', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, `Favorite doc`, browserName);
+    const [docTitle] = await createDoc(page, `Pin doc`, browserName);
 
     await page.getByLabel('Open the document options').click();
 
@@ -455,6 +455,37 @@ test.describe('Doc Header', () => {
     // Check is unpinned
     await expect(row.getByLabel('Pin document icon')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
+  });
+
+  test('it duplicates a document', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, `Duplicate doc`, browserName);
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await editor.fill('Hello Duplicated World');
+
+    await page.reload();
+
+    await page.getByLabel('Open the document options').click();
+
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await expect(
+      page.getByText('Document duplicated successfully!'),
+    ).toBeVisible();
+
+    await page.goto('/');
+
+    const duplicateTitle = 'Copy of ' + docTitle;
+
+    const row = await getGridRow(page, duplicateTitle);
+
+    await expect(row.getByText(duplicateTitle)).toBeVisible();
+
+    await row.getByText(`more_horiz`).click();
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    const duplicateDuplicateTitle = 'Copy of ' + duplicateTitle;
+    await page.getByText(duplicateDuplicateTitle).click();
+    await expect(page.getByText('Hello Duplicated World')).toBeVisible();
   });
 });
 
