@@ -11,6 +11,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add customization for translations #857
+- ✨(frontend) Duplicate a doc #1078
 
 ### Changed
 

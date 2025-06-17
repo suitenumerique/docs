@@ -1,3 +1,3 @@
 export * from './api';
-export * from './components';
+export * from './hooks/useModuleExport';
 export * from './utils';
