@@ -31,7 +31,13 @@ const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      setIsLocalChange(transaction.local);
+      /**
+       * When the AI edit the doc transaction.local is false,
+       * so we check if the origin is null to know if the change
+       * is local or not.
+       * TODO: see if we can get the local changes from the AI
+       */
+      setIsLocalChange(transaction.local || transaction.origin === null);
     };
 
     yDoc.on('update', onUpdate);
