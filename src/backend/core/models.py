@@ -1149,6 +1149,65 @@ class DocumentAccess(BaseAccess):
         }
 
 
+class DocumentAskForAccess(BaseModel):
+    """Relation model to ask for access to a document."""
+
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name="ask_for_accesses"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="ask_for_accesses"
+    )
+
+    role = models.CharField(
+        max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
+    )
+
+    class Meta:
+        db_table = "impress_document_ask_for_access"
+        verbose_name = _("Document ask for access")
+        verbose_name_plural = _("Document ask for accesses")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "document"],
+                name="unique_document_ask_for_access_user",
+                violation_error_message=_(
+                    "This user has already asked for access to this document."
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user!s} asked for access to document {self.document!s}"
+
+    def get_abilities(self, user):
+        """Compute and return abilities for a given user."""
+        roles = []
+
+        if user.is_authenticated:
+            teams = user.teams
+            try:
+                roles = self.user_roles or []
+            except AttributeError:
+                try:
+                    roles = self.document.accesses.filter(
+                        models.Q(user=user) | models.Q(team__in=teams),
+                    ).values_list("role", flat=True)
+                except (self._meta.model.DoesNotExist, IndexError):
+                    roles = []
+
+        is_admin_or_owner = bool(
+            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
+        )
+
+        return {
+            "destroy": is_admin_or_owner,
+            "update": is_admin_or_owner,
+            "partial_update": is_admin_or_owner,
+            "retrieve": is_admin_or_owner,
+        }
+
+
 class Template(BaseModel):
     """HTML and CSS code used for formatting the print around the MarkDown body."""
 

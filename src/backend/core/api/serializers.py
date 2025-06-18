@@ -664,6 +664,29 @@ class InvitationSerializer(serializers.ModelSerializer):
         return role
 
 
+class DocumentAskForAccessCreateSerializer(serializers.Serializer):
+    """Serializer for creating a document ask for access."""
+
+    role = serializers.ChoiceField(choices=models.RoleChoices.choices, required=False, default=models.RoleChoices.READER)
+
+
+class DocumentAskForAccessSerializer(serializers.ModelSerializer):
+    """Serializer for document ask for access model"""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.DocumentAskForAccess
+        fields = ["id", "document", "user", "role", "created_at", "abilities"]
+        read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
+
+    def get_abilities(self, invitation) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return invitation.get_abilities(request.user)
+        return {}
+    
 class VersionFilterSerializer(serializers.Serializer):
     """Validate version filters applied to the list endpoint."""
 

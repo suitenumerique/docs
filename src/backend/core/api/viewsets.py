@@ -1772,6 +1772,71 @@ class InvitationViewset(
         )
 
 
+class DocumentAskForAccessViewSet(
+    drf.mixins.ListModelMixin,
+    drf.mixins.RetrieveModelMixin,
+    drf.mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """API ViewSet for asking for access to a document."""
+
+    lookup_field = "id"
+    pagination_class = Pagination
+    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    queryset = models.DocumentAskForAccess.objects.all()
+    serializer_class = serializers.DocumentAskForAccessSerializer
+    _document = None
+
+    def get_document_or_404(self):
+        """Get the document related to the viewset or raise a 404 error."""
+        if self._document is None:
+            try:
+                self._document = models.Document.objects.get(
+                    pk=self.kwargs["resource_id"]
+                )
+            except models.Document.DoesNotExist as e:
+                raise drf.exceptions.NotFound("Document not found.") from e
+        return self._document
+
+    def get_queryset(self):
+        """Return the queryset according to the action."""
+        document = self.get_document_or_404()
+
+        queryset = super().get_queryset()
+        queryset = queryset.filter(document=document)
+
+        roles = set(document.get_roles(self.request.user))
+        is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        # self.is_current_user_owner_or_admin = is_owner_or_admin
+        if not is_owner_or_admin:
+            queryset = queryset.filter(user=self.request.user)
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Create a document ask for access resource."""
+        document = self.get_document_or_404()
+
+        serializer = serializers.DocumentAskForAccessCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        queryset = self.get_queryset()
+
+        if queryset.filter(user=request.user).exists():
+            return drf.response.Response(
+                {"detail": "You already ask to access to this document."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        models.DocumentAskForAccess.objects.create(
+            document=document,
+            user=request.user,
+            role=serializer.validated_data["role"],
+        )
+
+        return drf.response.Response(status=drf.status.HTTP_201_CREATED)
+
+
 class ConfigView(drf.views.APIView):
     """API ViewSet for sharing some public settings."""
 
