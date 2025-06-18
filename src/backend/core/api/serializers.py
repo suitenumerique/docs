@@ -664,10 +664,22 @@ class InvitationSerializer(serializers.ModelSerializer):
         return role
 
 
+class RoleSerializer(serializers.Serializer):
+    """Serializer validating role choices."""
+
+    role = serializers.ChoiceField(
+        choices=models.RoleChoices.choices, required=False, allow_null=True
+    )
+
+
 class DocumentAskForAccessCreateSerializer(serializers.Serializer):
     """Serializer for creating a document ask for access."""
 
-    role = serializers.ChoiceField(choices=models.RoleChoices.choices, required=False, default=models.RoleChoices.READER)
+    role = serializers.ChoiceField(
+        choices=models.RoleChoices.choices,
+        required=False,
+        default=models.RoleChoices.READER,
+    )
 
 
 class DocumentAskForAccessSerializer(serializers.ModelSerializer):
@@ -686,7 +698,8 @@ class DocumentAskForAccessSerializer(serializers.ModelSerializer):
         if request:
             return invitation.get_abilities(request.user)
         return {}
-    
+
+
 class VersionFilterSerializer(serializers.Serializer):
     """Validate version filters applied to the list endpoint."""
 

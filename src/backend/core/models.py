@@ -1205,7 +1205,21 @@ class DocumentAskForAccess(BaseModel):
             "update": is_admin_or_owner,
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
+            "accept": is_admin_or_owner,
         }
+
+    def accept(self, role=None):
+        """Accept a document ask for access resource."""
+        if role is None:
+            role = self.role
+
+        DocumentAccess.objects.update_or_create(
+            document=self.document,
+            user=self.user,
+            defaults={"role": role},
+            create_defaults={"role": role},
+        )
+        self.delete()
 
 
 class Template(BaseModel):

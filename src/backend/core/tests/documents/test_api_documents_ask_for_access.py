@@ -5,8 +5,13 @@ import uuid
 import pytest
 from rest_framework.test import APIClient
 
-from core.factories import DocumentAskForAccessFactory, DocumentFactory, UserFactory
-from core.models import DocumentAskForAccess, RoleChoices
+from core.factories import (
+    DocumentAskForAccessFactory,
+    DocumentFactory,
+    UserDocumentAccessFactory,
+    UserFactory,
+)
+from core.models import DocumentAccess, DocumentAskForAccess, RoleChoices
 
 pytestmark = pytest.mark.django_db
 
@@ -182,6 +187,7 @@ def test_api_documents_ask_for_access_list_authenticated_own_request():
                     "+00:00", "Z"
                 ),
                 "abilities": {
+                    "accept": False,
                     "destroy": False,
                     "update": False,
                     "partial_update": False,
@@ -269,6 +275,7 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
                     "+00:00", "Z"
                 ),
                 "abilities": {
+                    "accept": True,
                     "destroy": True,
                     "update": True,
                     "partial_update": True,
@@ -356,6 +363,7 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
             "+00:00", "Z"
         ),
         "abilities": {
+            "accept": True,
             "destroy": True,
             "update": True,
             "partial_update": True,
@@ -434,3 +442,172 @@ def test_api_documents_ask_for_access_delete_owner_or_admin(role):
     assert not DocumentAskForAccess.objects.filter(
         id=document_ask_for_access.id
     ).exists()
+
+
+## Accept
+
+
+def test_api_documents_ask_for_access_accept_anonymous():
+    """Anonymous users should not be able to accept document ask for access."""
+    document = DocumentFactory()
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/"
+    )
+    assert response.status_code == 401
+
+
+def test_api_documents_ask_for_access_accept_authenticated():
+    """Authenticated users should not be able to accept document ask for access."""
+    document = DocumentFactory()
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(UserFactory())
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/"
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize("role", [RoleChoices.READER, RoleChoices.EDITOR])
+def test_api_documents_ask_for_access_accept_authenticated_non_owner_or_admin(role):
+    """Non owner or admin users should not be able to accept document ask for access."""
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, role)])
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/"
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
+def test_api_documents_ask_for_access_accept_owner_or_admin(role):
+    """Owner or admin users should be able to accept document ask for access."""
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, role)])
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/"
+    )
+    assert response.status_code == 204
+
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
+    assert DocumentAccess.objects.filter(
+        document=document, user=document_ask_for_access.user, role=RoleChoices.READER
+    ).exists()
+
+
+@pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
+def test_api_documents_ask_for_access_accept_authenticated_specific_role(role):
+    """
+    Owner or admin users should be able to accept document ask for access with a specific role.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, role)])
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": RoleChoices.EDITOR},
+    )
+    assert response.status_code == 204
+
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
+    assert DocumentAccess.objects.filter(
+        document=document, user=document_ask_for_access.user, role=RoleChoices.EDITOR
+    ).exists()
+
+
+@pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
+def test_api_documents_ask_for_access_accept_authenticated_owner_or_admin_update_access(
+    role,
+):
+    """
+    Owner or admin users should be able to accept document ask for access and update the access.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, role)])
+    document_access = UserDocumentAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, user=document_access.user, role=RoleChoices.EDITOR
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": RoleChoices.EDITOR},
+    )
+    assert response.status_code == 204
+
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
+    document_access.refresh_from_db()
+    assert document_access.role == RoleChoices.EDITOR
+
+
+@pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])
+# pylint: disable=line-too-long
+def test_api_documents_ask_for_access_accept_authenticated_owner_or_admin_update_access_with_specific_role(
+    role,
+):
+    """
+    Owner or admin users should be able to accept document ask for access and update the access
+    with a specific role.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, role)])
+    document_access = UserDocumentAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, user=document_access.user, role=RoleChoices.EDITOR
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": RoleChoices.ADMIN},
+    )
+    assert response.status_code == 204
+
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
+    document_access.refresh_from_db()
+    assert document_access.role == RoleChoices.ADMIN

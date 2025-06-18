@@ -1836,6 +1836,17 @@ class DocumentAskForAccessViewSet(
 
         return drf.response.Response(status=drf.status.HTTP_201_CREATED)
 
+    @drf.decorators.action(detail=True, methods=["post"])
+    def accept(self, request, *args, **kwargs):
+        """Accept a document ask for access resource."""
+        document_ask_for_access = self.get_object()
+
+        serializer = serializers.RoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        document_ask_for_access.accept(role=serializer.validated_data.get("role"))
+        return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
+
 
 class ConfigView(drf.views.APIView):
     """API ViewSet for sharing some public settings."""
