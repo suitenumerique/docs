@@ -10,6 +10,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
@@ -27,13 +28,16 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { CalloutBlock, DividerBlock } from './custom-blocks';
+import { CalloutBlock, DatabaseBlock, DividerBlock } from './custom-blocks';
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
       callout: CalloutBlock,
+      database: DatabaseBlock,
       divider: DividerBlock,
     },
   }),
