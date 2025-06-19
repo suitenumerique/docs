@@ -104,6 +104,8 @@ const DocPage = ({ id }: DocProps) => {
 
   if (isError && error) {
     if ([403, 404, 401].includes(error.status)) {
+      let replacePath = `/${error.status}`;
+
       if (error.status === 401) {
         if (authenticated) {
           queryClient.setQueryData([KEY_AUTH], {
@@ -112,9 +114,11 @@ const DocPage = ({ id }: DocProps) => {
           });
         }
         setAuthUrl();
+      } else if (error.status === 403) {
+        replacePath = `/docs/${id}/403`;
       }
 
-      void replace(`/${error.status}`);
+      void replace(replacePath);
 
       return (
         <Box $align="center" $justify="center" $height="100%">

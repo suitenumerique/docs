@@ -218,7 +218,10 @@
   --c--components--button--primary--color-active: #fff;
   --c--components--button--primary--color-focus-visible: #fff;
   --c--components--button--primary--disabled: var(
-    --c--theme--colors--greyscale-500
+    --c--theme--colors--greyscale-400
+  );
+  --c--components--button--primary--background--disabled: var(
+    --c--theme--colors--greyscale-100
   );
   --c--components--button--primary-text--background--color: var(
     --c--theme--colors--primary-text

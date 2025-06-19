@@ -229,7 +229,8 @@ export const tokens = {
             'color-hover': '#fff',
             'color-active': '#fff',
             'color-focus-visible': '#fff',
-            disabled: '#7C7C7C',
+            disabled: 'var(--c--theme--colors--greyscale-400)',
+            'background--disabled': 'var(--c--theme--colors--greyscale-100)',
           },
           'primary-text': {
             'background--color': '#000091',

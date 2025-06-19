@@ -76,3 +76,18 @@ export enum DocDefaultFilter {
   MY_DOCS = 'my_docs',
   SHARED_WITH_ME = 'shared_with_me',
 }
+
+export interface AccessRequest {
+  id: string;
+  document: string;
+  user: User;
+  role: Role;
+  created_at: string;
+  abilities: {
+    destroy: boolean;
+    update: boolean;
+    partial_update: boolean;
+    retrieve: boolean;
+    accept: boolean;
+  };
+}
