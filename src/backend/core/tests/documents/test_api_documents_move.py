@@ -124,8 +124,8 @@ def test_api_documents_move_authenticated_target_roles_mocked(
     target_role, target_parent_role, position
 ):
     """
-    Authenticated users with insufficient permissions on the target document (or its
-    parent depending on the position chosen), should not be allowed to move documents.
+    Only authenticated users with sufficient permissions on the target document (or its
+    parent depending on the position chosen), should be allowed to move documents.
     """
 
     user = factories.UserFactory()
@@ -206,6 +206,107 @@ def test_api_documents_move_authenticated_target_roles_mocked(
             in response.json()["target_document_id"]
         )
         assert document.is_root() is True
+
+
+def test_api_documents_move_authenticated_no_owner_user_and_team():
+    """
+    Moving a document with no owner to the root of the tree should automatically declare
+    the owner of the previous root of the document as owner of the document itself.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent_owner = factories.UserFactory()
+    parent = factories.DocumentFactory(
+        users=[(parent_owner, "owner")], teams=[("lasuite", "owner")]
+    )
+    # A document with no owner
+    document = factories.DocumentFactory(parent=parent, users=[(user, "administrator")])
+    child = factories.DocumentFactory(parent=document)
+    target = factories.DocumentFactory()
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "first-sibling"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Document moved successfully."}
+    assert list(target.get_siblings()) == [document, parent, target]
+
+    document.refresh_from_db()
+    assert list(document.get_children()) == [child]
+    assert document.accesses.count() == 3
+    assert document.accesses.get(user__isnull=False, role="owner").user == parent_owner
+    assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
+    assert document.accesses.get(role="administrator").user == user
+
+
+def test_api_documents_move_authenticated_no_owner_same_user():
+    """
+    Moving a document should not fail if the user moving a document with no owner was
+    at the same time owner of the previous root and has a role on the document being moved.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(
+        users=[(user, "owner")], teams=[("lasuite", "owner")]
+    )
+    # A document with no owner
+    document = factories.DocumentFactory(parent=parent, users=[(user, "reader")])
+    child = factories.DocumentFactory(parent=document)
+    target = factories.DocumentFactory()
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "first-sibling"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Document moved successfully."}
+    assert list(target.get_siblings()) == [document, parent, target]
+
+    document.refresh_from_db()
+    assert list(document.get_children()) == [child]
+    assert document.accesses.count() == 2
+    assert document.accesses.get(user__isnull=False, role="owner").user == user
+    assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
+
+
+def test_api_documents_move_authenticated_no_owner_same_team():
+    """
+    Moving a document should not fail if the team that is owner of the document root was
+    already declared on the document with a different role.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(teams=[("lasuite", "owner")])
+    # A document with no owner but same team
+    document = factories.DocumentFactory(
+        parent=parent, users=[(user, "administrator")], teams=[("lasuite", "reader")]
+    )
+    child = factories.DocumentFactory(parent=document)
+    target = factories.DocumentFactory()
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/move/",
+        data={"target_document_id": str(target.id), "position": "first-sibling"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Document moved successfully."}
+    assert list(target.get_siblings()) == [document, parent, target]
+
+    document.refresh_from_db()
+    assert list(document.get_children()) == [child]
+    assert document.accesses.count() == 2
+    assert document.accesses.get(user__isnull=False, role="administrator").user == user
+    assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
 
 
 def test_api_documents_move_authenticated_deleted_document():
