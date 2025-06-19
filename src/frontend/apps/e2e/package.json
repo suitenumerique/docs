@@ -2,8 +2,9 @@
   "name": "app-e2e",
   "version": "3.3.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --config ./eslint.config.js",
     "install-playwright": "playwright install --with-deps",
     "test": "playwright test",
     "test:ui": "yarn test --ui",

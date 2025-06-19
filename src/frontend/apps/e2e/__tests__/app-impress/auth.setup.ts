@@ -45,11 +45,11 @@ const saveStorageState = async (
 };
 
 async function globalSetup(config: FullConfig) {
-  /* eslint-disable @typescript-eslint/no-non-null-assertion */
+   
   const chromeConfig = config.projects.find((p) => p.name === 'chromium')!;
   const firefoxConfig = config.projects.find((p) => p.name === 'firefox')!;
   const webkitConfig = config.projects.find((p) => p.name === 'webkit')!;
-  /* eslint-enable @typescript-eslint/no-non-null-assertion */
+   
 
   await saveStorageState(chromeConfig);
   await saveStorageState(webkitConfig);

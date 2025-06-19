@@ -8,7 +8,7 @@
     "format-deploy": "yarn format-deploy:impress",
     "format-deploy:impress": "node ./format-deploy.mjs --app=impress --output=../../apps/impress/src/i18n/translations.json",
     "format-rebuild-fr:impress": "node ./rebuild-translations.mjs --language=fr --app=impress --output=../../apps/impress/src/i18n/translations.json",
-    "lint": "eslint --ext .js,.ts,.mjs .",
+    "lint": "eslint --config ./eslint.config.js .",
     "test": "jest"
   },
   "dependencies": {
