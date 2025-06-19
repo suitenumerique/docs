@@ -28,7 +28,7 @@ and this project adheres to
 -🐛(frontend) fix multiple EmojiPicker #1012
 -🐛(frontend) fix meta title #1017
 -🔧(git) set LF line endings for all text files #1032
-
+-📝(docs) minor fixes to docs/env.md
 
 ## [3.3.0] - 2025-05-06
 
