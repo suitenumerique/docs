@@ -13,6 +13,7 @@ and this project adheres to
 - ✨(frontend) add customization for translations #857
 - 📝(project) add troubleshoot doc #1066
 - 📝(project) add system-requirement doc #1066
+- 🔧(front) configure x-frame-options to DENY in nginx conf #1084
 
 ### Changed
 
