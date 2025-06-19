@@ -25,6 +25,8 @@ from django.utils.translation import gettext_lazy as _
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from csp.constants import NONE
+from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
@@ -1412,6 +1414,7 @@ class DocumentViewSet(
         name="",
         url_path="cors-proxy",
     )
+    @csp_update({"img-src": [NONE, "data:"]})
     def cors_proxy(self, request, *args, **kwargs):
         """
         GET /api/v1.0/documents/<resource_id>/cors-proxy
@@ -1452,7 +1455,6 @@ class DocumentViewSet(
                 content_type=content_type,
                 headers={
                     "Content-Disposition": "attachment;",
-                    "Content-Security-Policy": "default-src 'none'; img-src 'none' data:;",
                 },
                 status=response.status_code,
             )
