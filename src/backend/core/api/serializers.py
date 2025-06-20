@@ -686,10 +686,18 @@ class DocumentAskForAccessSerializer(serializers.ModelSerializer):
     """Serializer for document ask for access model"""
 
     abilities = serializers.SerializerMethodField(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.User.objects.all(),
+        write_only=True,
+        source="user",
+        required=False,
+        allow_null=True,
+    )
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = models.DocumentAskForAccess
-        fields = ["id", "document", "user", "role", "created_at", "abilities"]
+        fields = ["id", "document", "user", "user_id","role", "created_at", "abilities"]
         read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
 
     def get_abilities(self, invitation) -> dict:
