@@ -102,7 +102,8 @@ These are the environment variables you can set for the `impress-backend` contai
 | MALWARE_DETECTION_PARAMETERS                    | A dict containing all the parameters to initiate the malware detection backend                | {"callback_path": "core.malware_detection.malware_detection_callback",} |
 | THEME_CUSTOMIZATION_FILE_PATH                   | full path to the file customizing the theme. An example is provided in src/backend/impress/configuration/theme/default.json | BASE_DIR/impress/configuration/theme/default.json       |
 | THEME_CUSTOMIZATION_CACHE_TIMEOUT               | Cache duration for the customization settings                                                  | 86400                                                   |
-
+| CONTENT_SECURITY_POLICY_EXCLUDE_URL_PREFIXES    | Url with this prefix will not have the header Content-Security-Policy included                |                                                         |
+| CONTENT_SECURITY_POLICY_DIRECTIVES              | A dict of directives set in the Content-Security-Policy header                                | All directives are set to 'none'                        |
 
 ## impress-frontend image
 

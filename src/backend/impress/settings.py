@@ -18,8 +18,11 @@ from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
 from configurations import Configuration, values
+from csp.constants import NONE
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
+
+# pylint: disable=too-many-lines
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -285,6 +288,7 @@ class Base(Configuration):
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
+        "csp.middleware.CSPMiddleware",
     ]
 
     AUTHENTICATION_BACKENDS = [
@@ -318,6 +322,7 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        "csp",
     ]
 
     # Cache
@@ -716,6 +721,38 @@ class Base(Configuration):
         environ_name="API_USERS_LIST_LIMIT",
         environ_prefix=None,
     )
+
+    # Content Security Policy
+    # See https://content-security-policy.com/ for more information.
+    CONTENT_SECURITY_POLICY = {
+        "EXCLUDE_URL_PREFIXES": values.ListValue(
+            [],
+            environ_name="CONTENT_SECURITY_POLICY_EXCLUDE_URL_PREFIXES",
+            environ_prefix=None,
+        ),
+        "DIRECTIVES": values.DictValue(
+            default={
+                "default-src": [NONE],
+                "script-src": [NONE],
+                "style-src": [NONE],
+                "img-src": [NONE],
+                "connect-src": [NONE],
+                "font-src": [NONE],
+                "object-src": [NONE],
+                "media-src": [NONE],
+                "frame-src": [NONE],
+                "child-src": [NONE],
+                "form-action": [NONE],
+                "frame-ancestors": [NONE],
+                "base-uri": [NONE],
+                "worker-src": [NONE],
+                "manifest-src": [NONE],
+                "prefetch-src": [NONE],
+            },
+            environ_name="CONTENT_SECURITY_POLICY_DIRECTIVES",
+            environ_prefix=None,
+        ),
+    }
 
     # pylint: disable=invalid-name
     @property

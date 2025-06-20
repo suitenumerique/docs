@@ -62,6 +62,25 @@ def test_api_config(is_authenticated):
         "AI_FEATURE_ENABLED": False,
         "theme_customization": {},
     }
+    policy_list = sorted(response.headers["Content-Security-Policy"].split("; "))
+    assert policy_list == [
+        "base-uri 'none'",
+        "child-src 'none'",
+        "connect-src 'none'",
+        "default-src 'none'",
+        "font-src 'none'",
+        "form-action 'none'",
+        "frame-ancestors 'none'",
+        "frame-src 'none'",
+        "img-src 'none'",
+        "manifest-src 'none'",
+        "media-src 'none'",
+        "object-src 'none'",
+        "prefetch-src 'none'",
+        "script-src 'none'",
+        "style-src 'none'",
+        "worker-src 'none'",
+    ]
 
 
 @override_settings(

@@ -32,6 +32,7 @@ dependencies = [
     "django-configurations==2.5.1",
     "django-cors-headers==4.7.0",
     "django-countries==7.6.1",
+    "django-csp==4.0",
     "django-filter==25.1",
     "django-lasuite[all]==0.0.9",
     "django-parler==2.3",
