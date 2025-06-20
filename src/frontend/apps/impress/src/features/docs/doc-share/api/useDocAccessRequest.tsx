@@ -6,7 +6,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
+import {
+  APIError,
+  APIList,
+  errorCauses,
+  fetchAPI,
+  useAPIInfiniteQuery,
+} from '@/api';
 import { AccessRequest, Doc, Role } from '@/docs/doc-management';
 
 import { OptionType } from '../types';
@@ -100,3 +106,13 @@ export function useDocAccessRequests(
     ...queryConfig,
   });
 }
+
+export const useDocAccessRequestsInfinite = (
+  params: GetDocAccessRequestsParams,
+) => {
+  return useAPIInfiniteQuery(
+    KEY_LIST_DOC_ACCESS_REQUESTS,
+    getDocAccessRequests,
+    params,
+  );
+};

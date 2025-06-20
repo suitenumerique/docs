@@ -17,6 +17,7 @@ import { isValidEmail } from '@/utils';
 
 import { KEY_LIST_USER, useUsers } from '../api';
 
+import { QuickSearchGroupAccessRequest } from './DocShareAccessRequest';
 import { DocShareAddMemberList } from './DocShareAddMemberList';
 import {
   DocShareModalInviteUserRow,
@@ -173,6 +174,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                 >
                   {showMemberSection ? (
                     <>
+                      <QuickSearchGroupAccessRequest doc={doc} />
                       <QuickSearchGroupInvitation doc={doc} />
                       <QuickSearchGroupMember doc={doc} />
                     </>
