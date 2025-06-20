@@ -1828,11 +1828,24 @@ class DocumentAskForAccessViewSet(
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
 
-        models.DocumentAskForAccess.objects.create(
+        ask_for_access = models.DocumentAskForAccess.objects.create(
             document=document,
             user=request.user,
             role=serializer.validated_data["role"],
         )
+
+        # Send email to document owners/admins
+        owner_admin_accesses = models.DocumentAccess.objects.filter(
+            document=document, role__in=models.PRIVILEGED_ROLES
+        ).select_related("user")
+
+        for access in owner_admin_accesses:
+            if access.user and access.user.email:
+                ask_for_access.send_ask_for_access_email(
+                    access.user.email,
+                    request.user,
+                    access.user.language or settings.LANGUAGE_CODE,
+                )
 
         return drf.response.Response(status=drf.status.HTTP_201_CREATED)
 

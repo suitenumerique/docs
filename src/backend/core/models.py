@@ -876,8 +876,8 @@ class Document(MP_Node, BaseModel):
         )
 
         with override(language):
-            msg_html = render_to_string("mail/html/invitation.html", context)
-            msg_plain = render_to_string("mail/text/invitation.txt", context)
+            msg_html = render_to_string("mail/html/template.html", context)
+            msg_plain = render_to_string("mail/text/template.txt", context)
             subject = str(subject)  # Force translation
 
             try:
@@ -1220,6 +1220,38 @@ class DocumentAskForAccess(BaseModel):
             create_defaults={"role": role},
         )
         self.delete()
+
+    def send_ask_for_access_email(self, email, sender, language=None):
+        """
+        Method allowing a user to send an email notification when asking for access to a document.
+        """
+
+        language = language or get_language()
+        sender_name = sender.full_name or sender.email
+        sender_name_email = (
+            f"{sender.full_name:s} ({sender.email})"
+            if sender.full_name
+            else sender.email
+        )
+
+        with override(language):
+            context = {
+                "title": _("{name} would like access to a document!").format(
+                    name=sender_name
+                ),
+                "message": _(
+                    "{name} would like access to the following document:"
+                ).format(name=sender_name_email),
+            }
+            subject = (
+                context["title"]
+                if not self.document.title
+                else _("{name} is asking for access to the document: {title}").format(
+                    name=sender_name, title=self.document.title
+                )
+            )
+
+        self.document.send_email(subject, [email], context, language)
 
 
 class Template(BaseModel):
