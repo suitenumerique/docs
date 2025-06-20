@@ -1,4 +1,5 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -6,13 +7,19 @@ import {
   DropdownMenu,
   DropdownMenuOption,
   IconOptions,
+  LoadMoreText,
 } from '@/components';
+import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { Access, Doc, Role } from '@/docs/doc-management/';
 import { useResponsiveStore } from '@/stores';
 
-import { useDeleteDocAccess, useUpdateDocAccess } from '../api';
-import { useWhoAmI } from '../hooks/';
+import {
+  useDeleteDocAccess,
+  useDocAccessesInfinite,
+  useUpdateDocAccess,
+} from '../api';
+import { useWhoAmI } from '../hooks';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 import { SearchUserRow } from './SearchUserRow';
@@ -21,7 +28,8 @@ type Props = {
   doc: Doc;
   access: Access;
 };
-export const DocShareMemberItem = ({ doc, access }: Props) => {
+
+const DocShareMemberItem = ({ doc, access }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
@@ -36,7 +44,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
     onError: () => {
-      toast(t('Error during invitation update'), VariantType.ERROR, {
+      toast(t('Error while updating the member role.'), VariantType.ERROR, {
         duration: 4000,
       });
     },
@@ -44,7 +52,7 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
 
   const { mutate: removeDocAccess } = useDeleteDocAccess({
     onError: () => {
-      toast(t('Error while deleting invitation'), VariantType.ERROR, {
+      toast(t('Error while deleting the member.'), VariantType.ERROR, {
         duration: 4000,
       });
     },
@@ -101,6 +109,55 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
             )}
           </Box>
         }
+      />
+    </Box>
+  );
+};
+
+interface QuickSearchGroupMemberProps {
+  doc: Doc;
+}
+
+export const QuickSearchGroupMember = ({
+  doc,
+}: QuickSearchGroupMemberProps) => {
+  const { t } = useTranslation();
+  const membersQuery = useDocAccessesInfinite({
+    docId: doc.id,
+  });
+
+  const membersData: QuickSearchData<Access> = useMemo(() => {
+    const members =
+      membersQuery.data?.pages.flatMap((page) => page.results) || [];
+
+    const count = membersQuery.data?.pages[0]?.count ?? 1;
+
+    return {
+      groupName:
+        count === 1
+          ? t('Document owner')
+          : t('Share with {{count}} users', {
+              count: count,
+            }),
+      elements: members,
+      endActions: membersQuery.hasNextPage
+        ? [
+            {
+              content: <LoadMoreText data-testid="load-more-members" />,
+              onSelect: () => void membersQuery.fetchNextPage(),
+            },
+          ]
+        : undefined,
+    };
+  }, [membersQuery, t]);
+
+  return (
+    <Box aria-label={t('List members card')}>
+      <QuickSearchGroup
+        group={membersData}
+        renderElement={(access) => (
+          <DocShareMemberItem doc={doc} access={access} />
+        )}
       />
     </Box>
   );

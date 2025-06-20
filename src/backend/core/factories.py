@@ -183,6 +183,17 @@ class TeamDocumentAccessFactory(factory.django.DjangoModelFactory):
     role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
 
 
+class DocumentAskForAccessFactory(factory.django.DjangoModelFactory):
+    """Create fake document ask for access for testing."""
+
+    class Meta:
+        model = models.DocumentAskForAccess
+
+    document = factory.SubFactory(DocumentFactory)
+    user = factory.SubFactory(UserFactory)
+    role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
+
+
 class TemplateFactory(factory.django.DjangoModelFactory):
     """A factory to create templates"""
 

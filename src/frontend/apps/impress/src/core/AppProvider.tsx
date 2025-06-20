@@ -9,6 +9,8 @@ import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';
 
+export const DEFAULT_QUERY_RETRY = 1;
+
 /**
  * QueryClient:
  *  - defaultOptions:
@@ -19,7 +21,7 @@ import { ConfigProvider } from './config/';
 const defaultOptions = {
   queries: {
     staleTime: 1000 * 60 * 3,
-    retry: 1,
+    retry: DEFAULT_QUERY_RETRY,
   },
 };
 const queryClient = new QueryClient({

@@ -1,8 +1,11 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { DEFAULT_QUERY_RETRY } from '@/core';
 
 import { User } from './types';
+
+type UserResponse = User | null;
 
 /**
  * Asynchronously retrieves the current user's data from the API.
@@ -14,8 +17,13 @@ import { User } from './types';
  * @throws {Error} Throws an error if the API request fails.
  * @returns {Promise<User>} A promise that resolves to the user data.
  */
-export const getMe = async (): Promise<User> => {
+export const getMe = async (): Promise<UserResponse> => {
   const response = await fetchAPI(`users/me/`);
+
+  if (response.status === 401) {
+    return null;
+  }
+
   if (!response.ok) {
     throw new APIError(
       `Couldn't fetch user data: ${response.statusText}`,
@@ -28,12 +36,19 @@ export const getMe = async (): Promise<User> => {
 export const KEY_AUTH = 'auth';
 
 export function useAuthQuery(
-  queryConfig?: UseQueryOptions<User, APIError, User>,
+  queryConfig?: UseQueryOptions<UserResponse, APIError, UserResponse>,
 ) {
-  return useQuery<User, APIError, User>({
+  return useQuery<UserResponse, APIError, UserResponse>({
     queryKey: [KEY_AUTH],
     queryFn: getMe,
     staleTime: 1000 * 60 * 15, // 15 minutes
+    retry: (failureCount, error) => {
+      // we assume that a 401 means the user is not logged in
+      if (error.status == 401) {
+        return false;
+      }
+      return failureCount < DEFAULT_QUERY_RETRY;
+    },
     ...queryConfig,
   });
 }
