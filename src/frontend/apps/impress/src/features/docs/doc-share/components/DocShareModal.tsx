@@ -4,30 +4,26 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, HorizontalSeparator, LoadMoreText, Text } from '@/components';
+import { Box, HorizontalSeparator, Text } from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
 import { User } from '@/features/auth';
-import { Access, Doc } from '@/features/docs';
+import { Doc } from '@/features/docs';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
-import {
-  KEY_LIST_USER,
-  useDocAccessesInfinite,
-  useDocInvitationsInfinite,
-  useUsers,
-} from '../api';
-import { Invitation } from '../types';
+import { KEY_LIST_USER, useUsers } from '../api';
 
 import { DocShareAddMemberList } from './DocShareAddMemberList';
-import { DocShareInvitationItem } from './DocShareInvitationItem';
-import { DocShareMemberItem } from './DocShareMemberItem';
+import {
+  DocShareModalInviteUserRow,
+  QuickSearchGroupInvitation,
+} from './DocShareInvitation';
+import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
-import { DocShareModalInviteUserRow } from './DocShareModalInviteUserByEmail';
 
 const ShareModalStyle = createGlobalStyle`
   .c__modal__title {
@@ -66,10 +62,6 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     setInputValue('');
   };
 
-  const membersQuery = useDocAccessesInfinite({
-    docId: doc.id,
-  });
-
   const searchUsersQuery = useUsers(
     { query: userQuery, docId: doc.id },
     {
@@ -77,31 +69,6 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
       queryKey: [KEY_LIST_USER, { query: userQuery }],
     },
   );
-
-  const membersData: QuickSearchData<Access> = useMemo(() => {
-    const members =
-      membersQuery.data?.pages.flatMap((page) => page.results) || [];
-
-    const count = membersQuery.data?.pages[0]?.count ?? 1;
-
-    return {
-      groupName:
-        count === 1
-          ? t('Document owner')
-          : t('Share with {{count}} users', {
-              count: count,
-            }),
-      elements: members,
-      endActions: membersQuery.hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-members" />,
-              onSelect: () => void membersQuery.fetchNextPage(),
-            },
-          ]
-        : undefined,
-    };
-  }, [membersQuery, t]);
 
   const onFilter = useDebouncedCallback((str: string) => {
     setUserQuery(str);
@@ -205,10 +172,10 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                   placeholder={t('Type a name or email')}
                 >
                   {showMemberSection ? (
-                    <QuickSearchMemberSection
-                      doc={doc}
-                      membersData={membersData}
-                    />
+                    <>
+                      <QuickSearchGroupInvitation doc={doc} />
+                      <QuickSearchGroupMember doc={doc} />
+                    </>
                   ) : (
                     <QuickSearchInviteInputSection
                       searchUsersRawData={searchUsersQuery.data}
@@ -277,61 +244,5 @@ const QuickSearchInviteInputSection = ({
       onSelect={onSelect}
       renderElement={(user) => <DocShareModalInviteUserRow user={user} />}
     />
-  );
-};
-
-interface QuickSearchMemberSectionProps {
-  doc: Doc;
-  membersData: QuickSearchData<Access>;
-}
-
-const QuickSearchMemberSection = ({
-  doc,
-  membersData,
-}: QuickSearchMemberSectionProps) => {
-  const { t } = useTranslation();
-  const { data, hasNextPage, fetchNextPage } = useDocInvitationsInfinite({
-    docId: doc.id,
-  });
-
-  const invitationsData: QuickSearchData<Invitation> = useMemo(() => {
-    const invitations = data?.pages.flatMap((page) => page.results) || [];
-
-    return {
-      groupName: t('Pending invitations'),
-      elements: invitations,
-      endActions: hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-invitations" />,
-              onSelect: () => void fetchNextPage(),
-            },
-          ]
-        : undefined,
-    };
-  }, [data?.pages, fetchNextPage, hasNextPage, t]);
-
-  return (
-    <>
-      {invitationsData.elements.length > 0 && (
-        <Box aria-label={t('List invitation card')}>
-          <QuickSearchGroup
-            group={invitationsData}
-            renderElement={(invitation) => (
-              <DocShareInvitationItem doc={doc} invitation={invitation} />
-            )}
-          />
-        </Box>
-      )}
-
-      <Box aria-label={t('List members card')}>
-        <QuickSearchGroup
-          group={membersData}
-          renderElement={(access) => (
-            <DocShareMemberItem doc={doc} access={access} />
-          )}
-        />
-      </Box>
-    </>
   );
 };
