@@ -13,6 +13,7 @@ export type DropdownMenuOption = {
   danger?: boolean;
   isSelected?: boolean;
   disabled?: boolean;
+  padding?: BoxProps['$padding'];
   show?: boolean;
 };
 
@@ -129,7 +130,9 @@ export const DropdownMenu = ({
               $justify="space-between"
               $background={colorsTokens['greyscale-000']}
               $color={colorsTokens['primary-600']}
-              $padding={{ vertical: 'xs', horizontal: 'base' }}
+              $padding={
+                option.padding ?? { vertical: 'xs', horizontal: 'base' }
+              }
               $width="100%"
               $gap={spacingsTokens['base']}
               $css={css`
