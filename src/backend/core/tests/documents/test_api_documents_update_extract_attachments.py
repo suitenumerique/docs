@@ -50,7 +50,7 @@ def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_qu
     with django_assert_num_queries(11):
         response = APIClient().put(
             f"/api/v1.0/documents/{document.id!s}/",
-            {"content": get_ydoc_with_mages(image_keys)},
+            {"content": get_ydoc_with_mages(image_keys), "websocket": True},
             format="json",
         )
     assert response.status_code == 200
@@ -63,7 +63,7 @@ def test_api_documents_update_new_attachment_keys_anonymous(django_assert_num_qu
     with django_assert_num_queries(7):
         response = APIClient().put(
             f"/api/v1.0/documents/{document.id!s}/",
-            {"content": get_ydoc_with_mages(image_keys[:2])},
+            {"content": get_ydoc_with_mages(image_keys[:2]), "websocket": True},
             format="json",
         )
     assert response.status_code == 200

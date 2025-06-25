@@ -32,6 +32,7 @@ from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import UserRateThrottle
+from sentry_sdk import capture_exception
 
 from core import authentication, enums, models
 from core.services.ai_services import AIService
@@ -633,6 +634,54 @@ class DocumentViewSet(
     def perform_destroy(self, instance):
         """Override to implement a soft delete instead of dumping the record in database."""
         instance.soft_delete()
+
+    def perform_update(self, serializer):
+        """Check rules about collaboration."""
+        if serializer.validated_data.get("websocket"):
+            return super().perform_update(serializer)
+
+        try:
+            connection_info = CollaborationService().get_document_connection_info(
+                serializer.instance.id,
+                self.request.session.session_key,
+            )
+        except requests.HTTPError as e:
+            capture_exception(e)
+            connection_info = {
+                "count": 0,
+                "exists": False,
+            }
+
+        if connection_info["count"] == 0:
+            # No websocket mode
+            logger.debug("update without connection found in the websocket server")
+            cache_key = f"docs:no-websocket:{serializer.instance.id}"
+            current_editor = cache.get(cache_key)
+            if not current_editor:
+                cache.set(
+                    cache_key,
+                    self.request.session.session_key,
+                    settings.NO_WEBSOCKET_CACHE_TIMEOUT,
+                )
+            elif current_editor != self.request.session.session_key:
+                raise drf.exceptions.PermissionDenied(
+                    "You are not allowed to edit this document."
+                )
+            cache.touch(cache_key, settings.NO_WEBSOCKET_CACHE_TIMEOUT)
+            return super().perform_update(serializer)
+
+        if connection_info["exists"]:
+            # Websocket mode
+            logger.debug("session key found in the websocket server")
+            return super().perform_update(serializer)
+
+        logger.debug(
+            "Users connected to the websocket but current editor not connected to it. Can not edit."
+        )
+
+        raise drf.exceptions.PermissionDenied(
+            "You are not allowed to edit this document."
+        )
 
     @drf.decorators.action(
         detail=False,
