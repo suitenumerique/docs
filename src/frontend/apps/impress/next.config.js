@@ -1,6 +1,6 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
-const { InjectManifest } = require('workbox-webpack-plugin');
+import { InjectManifest } from 'workbox-webpack-plugin';
 
 const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 
@@ -62,4 +62,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

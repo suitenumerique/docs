@@ -2,6 +2,7 @@
   "name": "app-impress",
   "version": "3.3.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "prettier --check . && yarn stylelint && next build",
