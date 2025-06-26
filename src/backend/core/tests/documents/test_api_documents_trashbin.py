@@ -75,6 +75,7 @@ def test_api_documents_trashbin_format():
             "ai_transform": True,
             "ai_translate": True,
             "attachment_upload": True,
+            "can_edit": True,
             "children_create": True,
             "children_list": True,
             "collaboration_auth": True,

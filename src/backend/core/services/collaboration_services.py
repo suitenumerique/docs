@@ -67,5 +67,5 @@ class CollaborationService:
                 f"Failed to get document connection info. Status code: {response.status_code}, "
                 f"Response: {response.text}"
             )
-
-        return response.json()
+        result = response.json()
+        return result.get("count", 0), result.get("exists", False)
