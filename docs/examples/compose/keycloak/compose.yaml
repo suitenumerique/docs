@@ -23,7 +23,7 @@ services:
     # - VIRTUAL_PORT=8080 # used by nginx proxy
     # - LETSENCRYPT_HOST=id.yourdomain.tld # used by lets encrypt to generate TLS certificate
     depends_on:
-      kc_postgresql::
+      kc_postgresql:
         condition: service_healthy
         restart: true
 # Uncomment if using our nginx proxy example
