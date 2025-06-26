@@ -439,3 +439,56 @@ def test_api_documents_attachment_upload_unsafe():
         "application/octet-stream",
     ]
     assert file_head["ContentDisposition"] == 'attachment; filename="script.exe"'
+
+
+def test_api_documents_attachment_upload_unsafe_mime_types_disabled(settings):
+    """A file with an unsafe mime type but checking disabled should not be tagged as unsafe."""
+    settings.DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED = False
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    url = f"/api/v1.0/documents/{document.id!s}/attachment-upload/"
+
+    file = SimpleUploadedFile(
+        name="script.exe", content=b"\x4d\x5a\x90\x00\x03\x00\x00\x00"
+    )
+    with mock.patch.object(malware_detection, "analyse_file") as mock_analyse_file:
+        response = client.post(url, {"file": file}, format="multipart")
+
+    assert response.status_code == 201
+
+    pattern = re.compile(rf"^{document.id!s}/attachments/(.*)\.exe")
+    url_parsed = urlparse(response.json()["file"])
+    assert url_parsed.path == f"/api/v1.0/documents/{document.id!s}/media-check/"
+    query = parse_qs(url_parsed.query)
+    assert query["key"][0] is not None
+    file_path = query["key"][0]
+    match = pattern.search(file_path)
+    file_id = match.group(1)
+
+    document.refresh_from_db()
+    assert document.attachments == [f"{document.id!s}/attachments/{file_id!s}.exe"]
+
+    assert "-unsafe" not in file_id
+    # Validate that file_id is a valid UUID
+    uuid.UUID(file_id)
+
+    key = file_path.replace("/media/", "")
+    mock_analyse_file.assert_called_once_with(key, document_id=document.id)
+    # Now, check the metadata of the uploaded file
+    file_head = default_storage.connection.meta.client.head_object(
+        Bucket=default_storage.bucket_name, Key=key
+    )
+    assert file_head["Metadata"] == {
+        "owner": str(user.id),
+        "status": "processing",
+    }
+    # Depending the libmagic version, the content type may change.
+    assert file_head["ContentType"] in [
+        "application/x-dosexec",
+        "application/octet-stream",
+    ]
+    assert file_head["ContentDisposition"] == 'attachment; filename="script.exe"'

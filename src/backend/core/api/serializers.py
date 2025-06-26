@@ -517,16 +517,17 @@ class FileUploadSerializer(serializers.Serializer):
         mime = magic.Magic(mime=True)
         magic_mime_type = mime.from_buffer(file.read(1024))
         file.seek(0)  # Reset file pointer to the beginning after reading
+        self.context["is_unsafe"] = False
+        if settings.DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED:
+            self.context["is_unsafe"] = (
+                magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
+            )
 
-        self.context["is_unsafe"] = (
-            magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
-        )
+            extension_mime_type, _ = mimetypes.guess_type(file.name)
 
-        extension_mime_type, _ = mimetypes.guess_type(file.name)
-
-        # Try guessing a coherent extension from the mimetype
-        if extension_mime_type != magic_mime_type:
-            self.context["is_unsafe"] = True
+            # Try guessing a coherent extension from the mimetype
+            if extension_mime_type != magic_mime_type:
+                self.context["is_unsafe"] = True
 
         guessed_ext = mimetypes.guess_extension(magic_mime_type)
         # Missing extensions or extensions longer than 5 characters (it's as long as an extension
