@@ -11,6 +11,9 @@ server {
     server_name localhost;
     charset utf-8;
 
+    # increase max upload size
+    client_max_body_size 10m;
+
     # Disables server version feedback on pages and in headers
     server_tokens off;
 
