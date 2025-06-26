@@ -68,7 +68,7 @@ server {
         proxy_set_header Host $host;
     }
 
-    location  /collaboration/api/ {
+    location /collaboration/api/ {
         # Collaboration server
         proxy_pass http://${YPROVIDER_HOST}:4444;
         proxy_set_header Host $host;
@@ -95,7 +95,7 @@ server {
 
         add_header Content-Security-Policy "default-src 'none'" always;
     }
-    
+
     location /media-auth {
         proxy_pass http://docs_backend/api/v1.0/documents/media-auth/;
         proxy_set_header X-Forwarded-Proto https;
