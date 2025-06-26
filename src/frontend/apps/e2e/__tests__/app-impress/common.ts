@@ -90,7 +90,7 @@ export const createDoc = async (
 
     await page
       .getByRole('button', {
-        name: isChild ? 'New page' : 'New doc',
+        name: 'New doc',
       })
       .click();
 
@@ -220,6 +220,7 @@ export const updateDocTitle = async (page: Page, title: string) => {
   await input.click();
   await input.fill(title);
   await input.click();
+  await input.blur();
   await verifyDocName(page, title);
 };
 
@@ -302,6 +303,24 @@ export const mockedListDocs = async (page: Page, data: object[] = []) => {
 };
 
 export const mockedInvitations = async (page: Page, json?: object) => {
+  let result = [
+    {
+      id: '120ec765-43af-4602-83eb-7f4e1224548a',
+      abilities: {
+        destroy: true,
+        update: true,
+        partial_update: true,
+        retrieve: true,
+      },
+      created_at: '2024-10-03T12:19:26.107687Z',
+      email: 'test@invitation.test',
+      document: '4888c328-8406-4412-9b0b-c0ba5b9e5fb6',
+      role: 'editor',
+      issuer: '7380f42f-02eb-4ad5-b8f0-037a0e66066d',
+      is_expired: false,
+      ...json,
+    },
+  ];
   await page.route('**/invitations/**/', async (route) => {
     const request = route.request();
     if (
@@ -309,41 +328,39 @@ export const mockedInvitations = async (page: Page, json?: object) => {
       request.url().includes('invitations') &&
       request.url().includes('page=')
     ) {
+      console.log('GET');
       await route.fulfill({
         json: {
           count: 1,
           next: null,
           previous: null,
-          results: [
-            {
-              id: '120ec765-43af-4602-83eb-7f4e1224548a',
-              abilities: {
-                destroy: true,
-                update: true,
-                partial_update: true,
-                retrieve: true,
-              },
-              created_at: '2024-10-03T12:19:26.107687Z',
-              email: 'test@invitation.test',
-              document: '4888c328-8406-4412-9b0b-c0ba5b9e5fb6',
-              role: 'editor',
-              issuer: '7380f42f-02eb-4ad5-b8f0-037a0e66066d',
-              is_expired: false,
-              ...json,
-            },
-          ],
+          results: result,
         },
       });
     } else {
       await route.continue();
     }
   });
+
+  await page.route(
+    '**/invitations/120ec765-43af-4602-83eb-7f4e1224548a/**/',
+    async (route) => {
+      const request = route.request();
+      if (request.method().includes('DELETE')) {
+        result = [];
+
+        await route.fulfill({
+          json: {},
+        });
+      }
+    },
+  );
 };
 
 export const mockedAccesses = async (page: Page, json?: object) => {
   await page.route('**/accesses/**/', async (route) => {
     const request = route.request();
-    console.log('oui');
+
     if (
       request.method().includes('GET') &&
       request.url().includes('accesses')

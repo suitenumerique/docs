@@ -12,7 +12,6 @@ import { useRouter } from 'next/router';
 import { Box, Text, TextErrors } from '@/components';
 
 import { useRemoveDoc } from '../api/useRemoveDoc';
-import { useTrans } from '../hooks';
 import { Doc } from '../types';
 
 interface ModalRemoveDocProps {
@@ -29,7 +28,8 @@ export const ModalRemoveDoc = ({
   const { toast } = useToastProvider();
   const { push } = useRouter();
   const pathname = usePathname();
-  const { untitledDocument } = useTrans(doc);
+
+  const hasChildren = doc.numchild && doc.numchild > 0;
 
   const {
     mutate: removeDoc,
@@ -82,7 +82,7 @@ export const ModalRemoveDoc = ({
           </Button>
         </>
       }
-      size={ModalSize.SMALL}
+      size={ModalSize.MEDIUM}
       title={
         <Text
           $size="h6"
@@ -100,11 +100,13 @@ export const ModalRemoveDoc = ({
         className="--docs--modal-remove-doc"
       >
         {!isError && (
-          <Text $size="sm" $variation="600">
-            {t('Are you sure you want to delete the document "{{title}}"?', {
-              title: doc.title ?? untitledDocument,
-            })}
-          </Text>
+          <>
+            <Text $size="sm" $variation="600">
+              {t(
+                'This document will be permanently deleted. This action is irreversible.',
+              )}
+            </Text>
+          </>
         )}
 
         {isError && <TextErrors causes={error.cause} />}

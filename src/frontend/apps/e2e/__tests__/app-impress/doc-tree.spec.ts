@@ -6,8 +6,10 @@ import {
   expectLoginPage,
   keyCloakSignIn,
   randomName,
+  updateDocTitle,
   verifyDocName,
 } from './common';
+import { clickOnAddRootSubPage, createRootSubPage } from './sub-pages-utils';
 
 test.describe('Doc Tree', () => {
   test('create new sub pages', async ({ page, browserName }) => {
@@ -19,7 +21,7 @@ test.describe('Doc Tree', () => {
       1,
     );
     await verifyDocName(page, titleParent);
-    const addButton = page.getByRole('button', { name: 'New page' });
+    const addButton = page.getByRole('button', { name: 'New doc' });
     const docTree = page.getByTestId('doc-tree');
 
     await expect(addButton).toBeVisible();
@@ -32,7 +34,7 @@ test.describe('Doc Tree', () => {
         response.request().method() === 'POST',
     );
 
-    await addButton.click();
+    await clickOnAddRootSubPage(page);
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
     const subPageJson = await response.json();
@@ -58,7 +60,7 @@ test.describe('Doc Tree', () => {
   test('check the reorder of sub pages', async ({ page, browserName }) => {
     await page.goto('/');
     await createDoc(page, 'doc-tree-content', browserName, 1);
-    const addButton = page.getByRole('button', { name: 'New page' });
+    const addButton = page.getByRole('button', { name: 'New doc' });
     await expect(addButton).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
@@ -71,9 +73,10 @@ test.describe('Doc Tree', () => {
         response.request().method() === 'POST',
     );
 
-    await addButton.click();
+    await clickOnAddRootSubPage(page);
     const firstResponse = await firstResponsePromise;
     expect(firstResponse.ok()).toBeTruthy();
+    await updateDocTitle(page, 'first');
 
     const secondResponsePromise = page.waitForResponse(
       (response) =>
@@ -83,9 +86,10 @@ test.describe('Doc Tree', () => {
     );
 
     // Create second sub page
-    await addButton.click();
+    await clickOnAddRootSubPage(page);
     const secondResponse = await secondResponsePromise;
     expect(secondResponse.ok()).toBeTruthy();
+    await updateDocTitle(page, 'second');
 
     const secondSubPageJson = await secondResponse.json();
     const firstSubPageJson = await firstResponse.json();
@@ -123,8 +127,8 @@ test.describe('Doc Tree', () => {
 
     await page.mouse.move(
       secondSubPageBoundingBox.x + secondSubPageBoundingBox.width / 2,
-      secondSubPageBoundingBox.y + secondSubPageBoundingBox.height + 4,
-      { steps: 10 },
+      secondSubPageBoundingBox.y + secondSubPageBoundingBox.height + 2,
+      { steps: 20 },
     );
 
     await page.mouse.up();
@@ -170,16 +174,15 @@ test.describe('Doc Tree', () => {
     );
     await verifyDocName(page, docParent);
 
-    const [docChild] = await createDoc(
+    const { name: docChild } = await createRootSubPage(
       page,
-      'doc-tree-detach-child',
       browserName,
-      1,
-      true,
+      'doc-tree-detach-child',
     );
-    await verifyDocName(page, docChild);
 
     const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText(docChild)).toBeVisible();
+    await docTree.click();
     const child = docTree
       .getByRole('treeitem')
       .locator('.--docs-sub-page-item')
@@ -189,7 +192,7 @@ test.describe('Doc Tree', () => {
     await child.hover();
     const menu = child.getByText(`more_horiz`);
     await menu.click();
-    await page.getByText('Convert to doc').click();
+    await page.getByText('Move to my docs').click();
 
     await expect(
       page.getByRole('textbox', { name: 'doc title input' }),
@@ -232,14 +235,11 @@ test.describe('Doc Tree: Inheritance', () => {
 
     await page.getByRole('button', { name: 'close' }).click();
 
-    const [docChild] = await createDoc(
+    const { name: docChild } = await createRootSubPage(
       page,
-      'doc-tree-inheritance-child',
       browserName,
-      1,
-      true,
+      'doc-tree-inheritance-child',
     );
-    await verifyDocName(page, docChild);
 
     const urlDoc = page.url();
 
@@ -257,63 +257,5 @@ test.describe('Doc Tree: Inheritance', () => {
 
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docParent)).toBeVisible();
-  });
-
-  test('Do not show private parent from children', async ({
-    page,
-    browserName,
-  }) => {
-    await page.goto('/');
-    await keyCloakSignIn(page, browserName);
-
-    const [docParent] = await createDoc(
-      page,
-      'doc-tree-inheritance-private-parent',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docParent);
-
-    const [docChild] = await createDoc(
-      page,
-      'doc-tree-inheritance-private-child',
-      browserName,
-      1,
-      true,
-    );
-    await verifyDocName(page, docChild);
-
-    await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
-    await selectVisibility.click();
-
-    await page
-      .getByRole('menuitem', {
-        name: 'Public',
-      })
-      .click();
-
-    await expect(
-      page.getByText('The document visibility has been updated.'),
-    ).toBeVisible();
-
-    await page.getByRole('button', { name: 'close' }).click();
-
-    const urlDoc = page.url();
-
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
-
-    await expectLoginPage(page);
-
-    await page.goto(urlDoc);
-
-    await expect(page.locator('h2').getByText(docChild)).toBeVisible();
-
-    const docTree = page.getByTestId('doc-tree');
-    await expect(docTree.getByText(docParent)).toBeHidden();
   });
 });

@@ -44,10 +44,11 @@ const ShareModalStyle = createGlobalStyle`
 
 type Props = {
   doc: Doc;
+  isRootDoc?: boolean;
   onClose: () => void;
 };
 
-export const DocShareModal = ({ doc, onClose }: Props) => {
+export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +62,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
   const [inputValue, setInputValue] = useState('');
 
   const [listHeight, setListHeight] = useState<string>('400px');
-  const canShare = doc.abilities.accesses_manage;
+  const canShare = doc.abilities.accesses_manage && isRootDoc;
   const canViewAccesses = doc.abilities.accesses_view;
   const showMemberSection = inputValue === '' && selectedUsers.length === 0;
   const showFooter = selectedUsers.length === 0 && !inputValue;
@@ -134,9 +135,6 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     );
   }, [membersQuery, doc.id]);
 
-  // const rootDoc = treeContext?.root;
-  const isRootDoc = false;
-
   const showInheritedShareContent =
     inheritedAccesses.length > 0 && showMemberSection && !isRootDoc;
 
@@ -170,10 +168,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
           >
             <Box ref={selectedUsersRef}>
               {canShare && selectedUsers.length > 0 && (
-                <Box
-                  $padding={{ horizontal: 'base' }}
-                  $margin={{ top: '11px' }}
-                >
+                <Box $padding={{ horizontal: 'base' }} $margin={{ top: '12x' }}>
                   <DocShareAddMemberList
                     doc={doc}
                     selectedUsers={selectedUsers}
@@ -186,7 +181,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                   />
                 </Box>
               )}
-              {!canViewAccesses && <HorizontalSeparator />}
+              {!canViewAccesses && <HorizontalSeparator customPadding="12px" />}
             </Box>
 
             <Box data-testid="doc-share-quick-search">
@@ -254,7 +249,13 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
           </Box>
 
           <Box ref={handleRef}>
-            {showFooter && <DocShareModalFooter doc={doc} onClose={onClose} />}
+            {showFooter && (
+              <DocShareModalFooter
+                doc={doc}
+                onClose={onClose}
+                canEditVisibility={canShare}
+              />
+            )}
           </Box>
         </Box>
       </Modal>
@@ -333,8 +334,11 @@ const QuickSearchMemberSection = ({
     docId: doc.id,
   });
 
+  console.log('data', data);
+
   const invitationsData: QuickSearchData<Invitation> = useMemo(() => {
     const invitations = data?.pages.flatMap((page) => page.results) || [];
+    console.log('invitations', invitations);
 
     return {
       groupName: t('Pending invitations'),
@@ -366,8 +370,8 @@ const QuickSearchMemberSection = ({
       {invitationsData.elements.length > 0 && (
         <Box
           aria-label={t('List invitation card')}
-          $padding={{ horizontal: 'base', bottom: '3xs' }}
-          $margin={{ bottom: showSeparator ? 'base' : undefined }}
+          $padding={{ horizontal: 'base' }}
+          $margin={{ bottom: showSeparator ? 'md' : undefined }}
         >
           <QuickSearchGroup
             group={invitationsData}

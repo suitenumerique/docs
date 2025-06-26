@@ -154,7 +154,7 @@ test.describe('Sub page search', () => {
       1,
     );
     await verifyDocName(page, doc1Title);
-    await page.getByRole('button', { name: 'New page' }).click();
+    await page.getByRole('button', { name: 'New doc' }).click();
     await verifyDocName(page, '');
     await page.getByRole('textbox', { name: 'doc title input' }).click();
     await page

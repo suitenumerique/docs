@@ -117,6 +117,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           doc={doc}
           modalHistory={modalHistory}
           modalShare={modalShare}
+          isRootDoc={treeContext?.root?.id === doc.id}
         />
       </Box>
     </Box>

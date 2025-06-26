@@ -15,7 +15,7 @@ export type DocInvitationsParams = {
 };
 
 export type DocInvitationsAPIParams = DocInvitationsParams & {
-  page: number;
+  page?: number;
 };
 
 type DocInvitationsResponse = APIList<Invitation>;

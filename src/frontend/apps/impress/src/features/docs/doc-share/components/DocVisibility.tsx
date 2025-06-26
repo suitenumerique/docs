@@ -34,14 +34,15 @@ import Undo from './../assets/undo.svg';
 
 interface DocVisibilityProps {
   doc: Doc;
+  canEdit?: boolean;
 }
 
-export const DocVisibility = ({ doc }: DocVisibilityProps) => {
+export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const canManage = doc.abilities.accesses_manage;
+  const canManage = doc.abilities.accesses_manage && canEdit;
   const [linkReach, setLinkReach] = useState<LinkReach>(getDocLinkReach(doc));
   const [docLinkRole, setDocLinkRole] = useState<LinkRole>(
     doc.computed_link_role ?? LinkRole.READER,

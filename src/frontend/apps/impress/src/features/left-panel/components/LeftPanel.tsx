@@ -41,7 +41,7 @@ export const LeftPanel = () => {
             height: calc(100vh - ${HEADER_HEIGHT}px);
             width: 300px;
             min-width: 300px;
-            overflow: hidden;
+            
             border-right: 1px solid ${colorsTokens['greyscale-200']};
           `}
           className="--docs--left-panel-desktop"
@@ -70,6 +70,8 @@ export const LeftPanel = () => {
               position: fixed;
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
               background-color: var(--c--theme--colors--greyscale-000);
+              overflow-y: auto;
+              overflow-x: hidden;
             `}
             className="--docs--left-panel-mobile"
           >

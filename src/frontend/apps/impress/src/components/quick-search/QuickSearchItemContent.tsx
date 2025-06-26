@@ -24,7 +24,7 @@ export const QuickSearchItemContent = ({
     <Box
       $direction="row"
       $align="center"
-      $padding={{ horizontal: '2xs', vertical: '3xs' }}
+      $padding={{ horizontal: '2xs', vertical: '4xs' }}
       $justify="space-between"
       $width="100%"
     >

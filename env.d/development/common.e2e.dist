@@ -3,3 +3,7 @@ BURST_THROTTLE_RATES="200/minute"
 COLLABORATION_API_URL=http://y-provider:4444/collaboration/api/
 SUSTAINED_THROTTLE_RATES="200/hour"
 Y_PROVIDER_API_BASE_URL=http://y-provider:4444/api/
+THEME_CUSTOMIZATION_FILE_PATH="" #force theme_customization to be empty
+#COLLABORATION_API_URL=http://y-provider:4444/collaboration/api/
+#Y_PROVIDER_API_BASE_URL=http://y-provider:4444/api/
+

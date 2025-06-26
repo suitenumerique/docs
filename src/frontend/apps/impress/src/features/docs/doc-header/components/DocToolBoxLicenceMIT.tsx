@@ -31,12 +31,14 @@ interface DocToolBoxLicenceProps {
   doc: Doc;
   modalHistory: ModalType;
   modalShare: ModalType;
+  isRootDoc?: boolean;
 }
 
 export const DocToolBoxLicenceMIT = ({
   doc,
   modalHistory,
   modalShare,
+  isRootDoc = true,
 }: DocToolBoxLicenceProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -152,7 +154,11 @@ export const DocToolBoxLicenceMIT = ({
       </DropdownMenu>
 
       {modalShare.isOpen && (
-        <DocShareModal onClose={() => modalShare.close()} doc={doc} />
+        <DocShareModal
+          onClose={() => modalShare.close()}
+          doc={doc}
+          isRootDoc={isRootDoc}
+        />
       )}
       {isModalRemoveOpen && (
         <ModalRemoveDoc onClose={() => setIsModalRemoveOpen(false)} doc={doc} />

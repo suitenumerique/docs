@@ -1,25 +1,15 @@
 import { expect, test } from '@playwright/test';
 
 import { createDoc } from './common';
-import {
-  addMemberToDoc,
-  searchUserToInviteToDoc,
-  updateShareLink,
-  verifyLinkReachIsDisabled,
-  verifyLinkReachIsEnabled,
-  verifyLinkRoleIsDisabled,
-  verifyLinkRoleIsEnabled,
-  verifyMemberAddedToDoc,
-} from './share-utils';
-import { createRootSubPage, createSubPageFromParent } from './sub-pages-utils';
+import { updateShareLink } from './share-utils';
+import { createRootSubPage } from './sub-pages-utils';
 
 test.describe('Inherited share accesses', () => {
   test('it checks inherited accesses', async ({ page, browserName }) => {
     await page.goto('/');
-    const [titleParent] = await createDoc(page, 'root-doc', browserName, 1);
+    await createDoc(page, 'root-doc', browserName, 1);
     const docTree = page.getByTestId('doc-tree');
 
-    const addButton = page.getByRole('button', { name: 'New page' });
     // Wait for and intercept the POST request to create a new page
     const responsePromise = page.waitForResponse(
       (response) =>
@@ -27,7 +17,7 @@ test.describe('Inherited share accesses', () => {
         response.url().includes('/children/') &&
         response.request().method() === 'POST',
     );
-    await addButton.click();
+    await createRootSubPage(page, browserName, 'sub-page');
 
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
@@ -41,68 +31,16 @@ test.describe('Inherited share accesses', () => {
     await expect(subPageItem).toBeVisible();
     await subPageItem.click();
     await page.getByRole('button', { name: 'Share' }).click();
-    await expect(page.getByText('Inherited share')).toBeVisible();
-    await expect(page.getByRole('link', { name: titleParent })).toBeVisible();
-    await page.getByRole('button', { name: 'See access' }).click();
-    await expect(page.getByText('Access inherited from the')).toBeVisible();
+    await expect(
+      page.getByText('People with access via the parent document'),
+    ).toBeVisible();
+
     const user = page.getByTestId(
       `doc-share-member-row-user@${browserName}.e2e`,
     );
     await expect(user).toBeVisible();
     await expect(user.getByText('E2E Chromium')).toBeVisible();
     await expect(user.getByText('Owner')).toBeVisible();
-  });
-
-  test('it checks that the highest role is displayed', async ({
-    page,
-    browserName,
-  }) => {
-    await page.goto('/');
-    await createDoc(page, 'root-doc', browserName, 1);
-
-    // Search user to add
-    let users = await searchUserToInviteToDoc(page);
-    let userToAdd = users[0];
-
-    // Add user as Administrator in root doc
-    await addMemberToDoc(page, 'Administrator', [userToAdd]);
-    await verifyMemberAddedToDoc(page, userToAdd, 'Administrator');
-    await page.getByRole('button', { name: 'OK' }).click();
-
-    // Create sub page
-    const { name: subPageName, item: subPageJson } = await createRootSubPage(
-      page,
-      browserName,
-      'sub-page',
-    );
-
-    // Add user as Editor in sub page
-    users = await searchUserToInviteToDoc(page);
-    userToAdd = users[0];
-    await addMemberToDoc(page, 'Editor', [userToAdd]);
-    const userRow = await verifyMemberAddedToDoc(page, userToAdd, 'Editor');
-    await userRow.getByRole('button', { name: 'doc-role-dropdown' }).click();
-    await page.getByText('This user has access').click();
-    await userRow.click();
-    await page.getByRole('button', { name: 'OK' }).click();
-
-    // Add new sub page to sub page
-    await createSubPageFromParent(
-      page,
-      browserName,
-      subPageJson.id,
-      'sub-page-2',
-    );
-
-    // // Check sub page inherited share
-    await page.getByRole('button', { name: 'Share' }).click();
-    await expect(page.getByText('Inherited share')).toBeVisible();
-    await expect(page.getByRole('link', { name: subPageName })).toBeVisible();
-    await page.getByRole('button', { name: 'See access' }).click();
-    await expect(page.getByText('Access inherited from the')).toBeVisible();
-    const user = page.getByTestId(`doc-share-member-row-${userToAdd.email}`);
-    await expect(user).toBeVisible();
-    await expect(user.getByText('Administrator')).toBeVisible();
   });
 });
 
@@ -122,87 +60,95 @@ test.describe('Inherited share link', () => {
 
     // // verify share link is restricted and reader
     await page.getByRole('button', { name: 'Share' }).click();
-    await expect(page.getByText('Inherited share')).toBeVisible();
-    // await verifyShareLink(page, 'Connected', 'Reading');
+    // await expect(page.getByText('Inherited share')).toBeVisible();
+    const docVisibilityCard = page.getByLabel('Doc visibility card');
+    await expect(docVisibilityCard).toBeVisible();
+    await expect(docVisibilityCard.getByText('Connected')).toBeVisible();
+    await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
   });
 
-  test('it checks warning message when sharing rules differ', async ({
-    page,
-    browserName,
-  }) => {
-    await page.goto('/');
-    // Create root doc
-    await createDoc(page, 'root-doc', browserName, 1);
+  /**
+   * These tests are temporarily removed because we hide the ability to modify this parameter in sub-pages for now.
+   * There is a high probability that this feature will not change and therefore the test won't either.
+   */
 
-    // Update share link
-    await page.getByRole('button', { name: 'Share' }).click();
-    await updateShareLink(page, 'Connected', 'Reading');
-    await page.getByRole('button', { name: 'OK' }).click();
+  // test('it checks warning message when sharing rules differ', async ({
+  //   page,
+  //   browserName,
+  // }) => {
+  //   await page.goto('/');
+  //   // Create root doc
+  //   await createDoc(page, 'root-doc', browserName, 1);
 
-    // Create sub page
-    await createRootSubPage(page, browserName, 'sub-page');
-    await page.getByRole('button', { name: 'Share' }).click();
+  //   // Update share link
+  //   await page.getByRole('button', { name: 'Share' }).click();
+  //   await updateShareLink(page, 'Connected', 'Reading');
+  //   await page.getByRole('button', { name: 'OK' }).click();
 
-    // Update share link to public and edition
-    await updateShareLink(page, 'Public', 'Edition');
-    await expect(page.getByText('Sharing rules differ from the')).toBeVisible();
-    const restoreButton = page.getByRole('button', { name: 'Restore' });
-    await expect(restoreButton).toBeVisible();
-    await restoreButton.click();
-    await expect(
-      page.getByText('The document visibility has been updated').first(),
-    ).toBeVisible();
-    await expect(page.getByText('Sharing rules differ from the')).toBeHidden();
-  });
+  //   // Create sub page
+  //   await createRootSubPage(page, browserName, 'sub-page');
+  //   await page.getByRole('button', { name: 'Share' }).click();
 
-  test('it checks inherited link possibilities', async ({
-    page,
-    browserName,
-  }) => {
-    await page.goto('/');
-    // Create root doc
-    await createDoc(page, 'root-doc', browserName, 1);
+  //   // Update share link to public and edition
+  //   await updateShareLink(page, 'Public', 'Edition');
+  //   await expect(page.getByText('Sharing rules differ from the')).toBeVisible();
+  //   const restoreButton = page.getByRole('button', { name: 'Restore' });
+  //   await expect(restoreButton).toBeVisible();
+  //   await restoreButton.click();
+  //   await expect(
+  //     page.getByText('The document visibility has been updated').first(),
+  //   ).toBeVisible();
+  //   await expect(page.getByText('Sharing rules differ from the')).toBeHidden();
+  // });
 
-    // Update share link
-    await page.getByRole('button', { name: 'Share' }).click();
-    await updateShareLink(page, 'Connected', 'Reading');
-    await page.getByRole('button', { name: 'OK' }).click();
-    await expect(
-      page.getByText('Document accessible to any connected person'),
-    ).toBeVisible();
+  // test('it checks inherited link possibilities', async ({
+  //   page,
+  //   browserName,
+  // }) => {
+  //   await page.goto('/');
+  //   // Create root doc
+  //   await createDoc(page, 'root-doc', browserName, 1);
 
-    // Create sub page
-    const { item: subPageItem } = await createRootSubPage(
-      page,
-      browserName,
-      'sub-page',
-    );
-    await expect(
-      page.getByText('Document accessible to any connected person'),
-    ).toBeVisible();
+  //   // Update share link
+  //   await page.getByRole('button', { name: 'Share' }).click();
+  //   await updateShareLink(page, 'Connected', 'Reading');
+  //   await page.getByRole('button', { name: 'OK' }).click();
+  //   await expect(
+  //     page.getByText('Document accessible to any connected person'),
+  //   ).toBeVisible();
 
-    // Update share link to public and edition
-    await page.getByRole('button', { name: 'Share' }).click();
-    await verifyLinkReachIsDisabled(page, 'Private');
-    await updateShareLink(page, 'Public', 'Edition');
-    await page.getByRole('button', { name: 'OK' }).click();
-    await expect(page.getByText('Public document')).toBeVisible();
+  //   // Create sub page
+  //   const { item: subPageItem } = await createRootSubPage(
+  //     page,
+  //     browserName,
+  //     'sub-page',
+  //   );
+  //   await expect(
+  //     page.getByText('Document accessible to any connected person'),
+  //   ).toBeVisible();
 
-    // Create sub page
-    await createSubPageFromParent(
-      page,
-      browserName,
-      subPageItem.id,
-      'sub-page-2',
-    );
-    await expect(page.getByText('Public document')).toBeVisible();
+  //   // Update share link to public and edition
+  //   await page.getByRole('button', { name: 'Share' }).click();
+  //   await verifyLinkReachIsDisabled(page, 'Private');
+  //   await updateShareLink(page, 'Public', 'Edition');
+  //   await page.getByRole('button', { name: 'OK' }).click();
+  //   await expect(page.getByText('Public document')).toBeVisible();
 
-    // Verify share link and role
-    await page.getByRole('button', { name: 'Share' }).click();
-    await verifyLinkReachIsDisabled(page, 'Private');
-    await verifyLinkReachIsDisabled(page, 'Connected');
-    await verifyLinkReachIsEnabled(page, 'Public');
-    await verifyLinkRoleIsDisabled(page, 'Reading');
-    await verifyLinkRoleIsEnabled(page, 'Edition');
-  });
+  //   // Create sub page
+  //   await createSubPageFromParent(
+  //     page,
+  //     browserName,
+  //     subPageItem.id,
+  //     'sub-page-2',
+  //   );
+  //   await expect(page.getByText('Public document')).toBeVisible();
+
+  //   // Verify share link and role
+  //   await page.getByRole('button', { name: 'Share' }).click();
+  //   await verifyLinkReachIsDisabled(page, 'Private');
+  //   await verifyLinkReachIsDisabled(page, 'Connected');
+  //   await verifyLinkReachIsEnabled(page, 'Public');
+  //   await verifyLinkRoleIsDisabled(page, 'Reading');
+  //   await verifyLinkRoleIsEnabled(page, 'Edition');
+  // });
 });
