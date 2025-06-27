@@ -11,12 +11,19 @@ import { useTranslation } from 'react-i18next';
 
 import { DocsBlockSchema } from '../types';
 
+import BlockNoteAI from './AI';
 import {
   getCalloutReactSlashMenuItems,
   getDividerReactSlashMenuItems,
 } from './custom-blocks';
 
-export const BlockNoteSuggestionMenu = () => {
+const getAISlashMenuItems = BlockNoteAI?.getAISlashMenuItems;
+
+export const BlockNoteSuggestionMenu = ({
+  aiAllowed,
+}: {
+  aiAllowed: boolean;
+}) => {
   const editor = useBlockNoteEditor<DocsBlockSchema>();
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
@@ -30,11 +37,12 @@ export const BlockNoteSuggestionMenu = () => {
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
+            aiAllowed && getAISlashMenuItems ? getAISlashMenuItems(editor) : [],
           ),
           query,
         ),
       );
-  }, [basicBlocksName, editor, t]);
+  }, [basicBlocksName, editor, t, aiAllowed]);
 
   return (
     <SuggestionMenuController

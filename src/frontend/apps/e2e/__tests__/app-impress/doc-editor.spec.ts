@@ -9,6 +9,7 @@ import {
   createDoc,
   goToGridDoc,
   mockedDocument,
+  overrideConfig,
   verifyDocName,
 } from './common';
 
@@ -285,13 +286,72 @@ test.describe('Doc Editor', () => {
     );
   });
 
-  test('it checks the AI buttons', async ({ page, browserName }) => {
-    await page.route(/.*\/ai-translate\//, async (route) => {
+  test('it checks the AI feature', async ({ page, browserName }) => {
+    await overrideConfig(page, {
+      AI_BOT: {
+        name: 'Albert AI',
+        color: '#8bc6ff',
+      },
+    });
+
+    await page.goto('/');
+
+    await page.route(/.*\/ai-proxy\//, async (route) => {
       const request = route.request();
       if (request.method().includes('POST')) {
         await route.fulfill({
           json: {
-            answer: 'Bonjour le monde',
+            id: 'chatcmpl-b1e7a9e456ca41f78fec130d552a6bf5',
+            choices: [
+              {
+                finish_reason: 'stop',
+                index: 0,
+                logprobs: null,
+                message: {
+                  content: '',
+                  refusal: null,
+                  role: 'assistant',
+                  annotations: null,
+                  audio: null,
+                  function_call: null,
+                  tool_calls: [
+                    {
+                      id: 'chatcmpl-tool-2e3567dfecf94a4c85e27a3528337718',
+                      function: {
+                        arguments:
+                          '{"operations": [{"type": "update", "id": "initialBlockId$", "block": "<p>Bonjour le monde</p>"}]}',
+                        name: 'json',
+                      },
+                      type: 'function',
+                    },
+                  ],
+                  reasoning_content: null,
+                },
+                stop_reason: null,
+              },
+            ],
+            created: 1749549477,
+            model: 'neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8',
+            object: 'chat.completion',
+            service_tier: null,
+            system_fingerprint: null,
+            usage: {
+              completion_tokens: 0,
+              prompt_tokens: 204,
+              total_tokens: 204,
+              completion_tokens_details: null,
+              prompt_tokens_details: null,
+              details: [
+                {
+                  id: 'chatcmpl-b1e7a9e456ca41f78fec130d552a6bf5',
+                  model: 'neuralmagic/Meta-Llama-3.1-70B-Instruct-FP8',
+                  prompt_tokens: 204,
+                  completion_tokens: 0,
+                  total_tokens: 204,
+                },
+              ],
+            },
+            prompt_logprobs: null,
           },
         });
       } else {
@@ -304,122 +364,80 @@ test.describe('Doc Editor', () => {
     await page.locator('.bn-block-outer').last().fill('Hello World');
 
     const editor = page.locator('.ProseMirror');
-    await editor.getByText('Hello').selectText();
+    await editor.getByText('Hello World').selectText();
 
-    await page.getByRole('button', { name: 'AI' }).click();
+    // Check from toolbar
+    await page.getByRole('button', { name: 'Ask AI' }).click();
 
     await expect(
-      page.getByRole('menuitem', { name: 'Use as prompt' }),
+      page.getByRole('option', { name: 'Improve Writing' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('menuitem', { name: 'Rephrase' }),
+      page.getByRole('option', { name: 'Fix Spelling' }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Summarize' }),
-    ).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: 'Correct' })).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Language' }),
-    ).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Translate' })).toBeVisible();
 
-    await page.getByRole('menuitem', { name: 'Language' }).hover();
-    await expect(
-      page.getByRole('menuitem', { name: 'English', exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'French', exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'German', exact: true }),
-    ).toBeVisible();
-
-    await page.getByRole('menuitem', { name: 'English', exact: true }).click();
+    await page.getByRole('option', { name: 'Translate' }).click();
+    await page.getByPlaceholder('Ask AI anything…').fill('French');
+    await page.getByPlaceholder('Ask AI anything…').press('Enter');
+    await expect(editor.getByText('Albert AI')).toBeVisible();
+    await page
+      .locator('p.bn-mt-suggestion-menu-item-title')
+      .getByText('Accept')
+      .click();
 
     await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+
+    // Check Suggestion menu
+    await page.locator('.bn-block-outer').last().fill('/');
+    await expect(page.getByText('Write with AI')).toBeVisible();
   });
 
-  [
-    { ai_transform: false, ai_translate: false },
-    { ai_transform: true, ai_translate: false },
-    { ai_transform: false, ai_translate: true },
-  ].forEach(({ ai_transform, ai_translate }) => {
-    test(`it checks AI buttons when can transform is at "${ai_transform}" and can translate is at "${ai_translate}"`, async ({
-      page,
-      browserName,
-    }) => {
-      await mockedDocument(page, {
-        accesses: [
-          {
-            id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
-            role: 'owner',
-            user: {
-              email: 'super@owner.com',
-              full_name: 'Super Owner',
-            },
+  test(`it checks ai_proxy ability`, async ({ page, browserName }) => {
+    await mockedDocument(page, {
+      accesses: [
+        {
+          id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
+          role: 'owner',
+          user: {
+            email: 'super@owner.com',
+            full_name: 'Super Owner',
           },
-        ],
-        abilities: {
-          destroy: true, // Means owner
-          link_configuration: true,
-          ai_transform,
-          ai_translate,
-          accesses_manage: true,
-          accesses_view: true,
-          update: true,
-          partial_update: true,
-          retrieve: true,
         },
-        link_reach: 'restricted',
-        link_role: 'editor',
-        created_at: '2021-09-01T09:00:00Z',
-        title: '',
-      });
-
-      const [randomDoc] = await createDoc(
-        page,
-        'doc-editor-ai',
-        browserName,
-        1,
-      );
-
-      await verifyDocName(page, randomDoc);
-
-      await page.locator('.bn-block-outer').last().fill('Hello World');
-
-      const editor = page.locator('.ProseMirror');
-      await editor.getByText('Hello').selectText();
-
-      /* eslint-disable playwright/no-conditional-expect */
-      /* eslint-disable playwright/no-conditional-in-test */
-      if (!ai_transform && !ai_translate) {
-        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
-        return;
-      }
-
-      await page.getByRole('button', { name: 'AI' }).click();
-
-      if (ai_transform) {
-        await expect(
-          page.getByRole('menuitem', { name: 'Use as prompt' }),
-        ).toBeVisible();
-      } else {
-        await expect(
-          page.getByRole('menuitem', { name: 'Use as prompt' }),
-        ).toBeHidden();
-      }
-
-      if (ai_translate) {
-        await expect(
-          page.getByRole('menuitem', { name: 'Language' }),
-        ).toBeVisible();
-      } else {
-        await expect(
-          page.getByRole('menuitem', { name: 'Language' }),
-        ).toBeHidden();
-      }
-      /* eslint-enable playwright/no-conditional-expect */
-      /* eslint-enable playwright/no-conditional-in-test */
+      ],
+      abilities: {
+        destroy: true, // Means owner
+        link_configuration: true,
+        ai_proxy: false,
+        accesses_manage: true,
+        accesses_view: true,
+        update: true,
+        partial_update: true,
+        retrieve: true,
+      },
+      link_reach: 'restricted',
+      link_role: 'editor',
+      created_at: '2021-09-01T09:00:00Z',
+      title: '',
     });
+
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-ai-proxy',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    await page.locator('.bn-block-outer').last().fill('Hello World');
+
+    const editor = page.locator('.ProseMirror');
+    await editor.getByText('Hello').selectText();
+
+    await expect(page.getByRole('button', { name: 'Ask AI' })).toBeHidden();
+    await page.locator('.bn-block-outer').last().fill('/');
+    await expect(page.getByText('Write with AI')).toBeHidden();
   });
 
   test('it downloads unsafe files', async ({ page, browserName }) => {

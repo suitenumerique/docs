@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useConfig } from '@/core';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
@@ -25,9 +26,15 @@ import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
+import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { CalloutBlock, DividerBlock } from './custom-blocks';
+
+const AIMenu = BlockNoteAI?.AIMenu;
+const AIMenuController = BlockNoteAI?.AIMenuController;
+const useAI = BlockNoteAI?.useAI;
+const localesAI = BlockNoteAI?.localesAI;
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -47,16 +54,18 @@ interface BlockNoteEditorProps {
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
-  const { t } = useTranslation();
 
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
 
   useSaveDoc(doc.id, provider.document, !readOnly);
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const lang = i18n.resolvedLanguage;
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const conf = useConfig().data;
+  const aiAllowed = !!(conf?.AI_FEATURE_ENABLED && doc.abilities?.ai_proxy);
+  const aiExtension = useAI?.(doc.id, aiAllowed);
 
   const collabName = readOnly
     ? 'Reader'
@@ -115,7 +124,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
-      dictionary: locales[lang as keyof typeof locales],
+      dictionary: {
+        ...locales[lang as keyof typeof locales],
+        ai: localesAI?.[lang as keyof typeof localesAI],
+      },
+      extensions: aiExtension ? [aiExtension] : [],
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -125,7 +138,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [collabName, lang, provider, uploadFile],
+    [aiExtension, collabName, lang, provider, uploadFile],
   );
 
   useHeadings(editor);
@@ -163,8 +176,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editable={!readOnly}
         theme="light"
       >
-        <BlockNoteSuggestionMenu />
-        <BlockNoteToolbar />
+        {aiAllowed && AIMenuController && AIMenu && (
+          <AIMenuController aiMenu={AIMenu} />
+        )}
+        <BlockNoteSuggestionMenu aiAllowed={aiAllowed} />
+        <BlockNoteToolbar aiAllowed={aiAllowed} />
       </BlockNoteView>
     </Box>
   );
