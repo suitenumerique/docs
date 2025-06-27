@@ -1,4 +1,8 @@
-import { useModal } from '@openfun/cunningham-react';
+import {
+  VariantType,
+  useModal,
+  useToastProvider,
+} from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
@@ -8,6 +12,7 @@ import {
   ModalRemoveDoc,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
+  useDuplicateDoc,
 } from '@/docs/doc-management';
 
 interface DocsGridActionsProps {
@@ -20,8 +25,21 @@ export const DocsGridActions = ({
   openShareModal,
 }: DocsGridActionsProps) => {
   const { t } = useTranslation();
+  const { toast } = useToastProvider();
 
   const deleteModal = useModal();
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: () => {
+      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
+        duration: 3000,
+      });
+    },
+  });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalideQueries: [KEY_LIST_DOC],
@@ -52,7 +70,17 @@ export const DocsGridActions = ({
 
       testId: `docs-grid-actions-share-${doc.id}`,
     },
-
+    {
+      label: t('Duplicate'),
+      icon: 'call_split',
+      disabled: !doc.abilities.duplicate,
+      callback: () => {
+        duplicateDoc({
+          docId: doc.id,
+          with_accesses: false,
+        });
+      },
+    },
     {
       label: t('Remove'),
       icon: 'delete',
