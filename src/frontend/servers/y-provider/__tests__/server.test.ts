@@ -39,20 +39,20 @@ describe('Server Tests', () => {
     });
   });
 
-  it('should allow JSON payloads up to 500kb for the CONVERT_MARKDOWN route', async () => {
+  it('should allow JSON payloads up to 500kb for the CONVERT route', async () => {
     const largePayload = 'a'.repeat(400 * 1024); // 400kb payload
     const response = await request(app)
-      .post(routes.CONVERT_MARKDOWN)
+      .post(routes.CONVERT)
       .send({ data: largePayload })
       .set('Content-Type', 'application/json');
 
     expect(response.status).not.toBe(413);
   });
 
-  it('should reject JSON payloads larger than 500kb for the CONVERT_MARKDOWN route', async () => {
+  it('should reject JSON payloads larger than 500kb for the CONVERT route', async () => {
     const oversizedPayload = 'a'.repeat(501 * 1024); // 501kb payload
     const response = await request(app)
-      .post(routes.CONVERT_MARKDOWN)
+      .post(routes.CONVERT)
       .send({ data: oversizedPayload })
       .set('Content-Type', 'application/json');
 

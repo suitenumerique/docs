@@ -16,7 +16,7 @@ interface ErrorResponse {
   error: string;
 }
 
-export const convertMarkdownHandler = async (
+export const convertHandler = async (
   req: Request<
     object,
     ConversionResponse | ErrorResponse,

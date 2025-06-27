@@ -629,7 +629,7 @@ class Base(Configuration):
 
     # Conversion endpoint
     CONVERSION_API_ENDPOINT = values.Value(
-        default="convert-markdown",
+        default="convert",
         environ_name="CONVERSION_API_ENDPOINT",
         environ_prefix=None,
     )
