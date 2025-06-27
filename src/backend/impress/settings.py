@@ -76,7 +76,7 @@ class Base(Configuration):
     DATABASES = {
         "default": {
             "ENGINE": values.Value(
-                "django.db.backends.postgresql_psycopg2",
+                "django.db.backends.postgresql",
                 environ_name="DB_ENGINE",
                 environ_prefix=None,
             ),
