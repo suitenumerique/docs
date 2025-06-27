@@ -72,6 +72,7 @@ export const DropdownMenu = ({
                 `
               }
               iconName={isOpen ? 'arrow_drop_up' : 'arrow_drop_down'}
+              aria-hidden="true"
             />
           </Box>
         ) : (
