@@ -8,7 +8,7 @@ import { PORT } from '../env';
 import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
-  convertMarkdownHandler,
+  convertHandler,
 } from '../handlers';
 import { corsMiddleware, httpSecurity, wsSecurity } from '../middlewares';
 import { routes } from '../routes';
@@ -22,7 +22,7 @@ import { logger } from '../utils';
 export const initServer = () => {
   const { app } = expressWebsockets(express());
   app.use((req, res, next) => {
-    if (req.path === routes.CONVERT_MARKDOWN) {
+    if (req.path === routes.CONVERT) {
       // Large transcript files are bigger than the default '100kb' limit
       return express.json({ limit: '500kb' })(req, res, next);
     }
@@ -47,9 +47,9 @@ export const initServer = () => {
   );
 
   /**
-   * Route to convert markdown
+   * Route to convert Markdown or BlockNote blocks
    */
-  app.post(routes.CONVERT_MARKDOWN, httpSecurity, convertMarkdownHandler);
+  app.post(routes.CONVERT, httpSecurity, convertHandler);
 
   Sentry.setupExpressErrorHandler(app);
 
