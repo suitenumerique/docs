@@ -1,13 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  BROWSERS,
   createDoc,
   expectLoginPage,
   keyCloakSignIn,
   verifyDocName,
 } from './common';
-
-const browsersName = ['chromium', 'webkit', 'firefox'];
 
 test.describe('Doc Visibility', () => {
   test.beforeEach(async ({ page }) => {
@@ -118,18 +117,20 @@ test.describe('Doc Visibility: Restricted', () => {
       })
       .click();
 
-    const otherBrowser = browsersName.find((b) => b !== browserName);
+    const otherBrowser = BROWSERS.find((b) => b !== browserName);
 
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(
       page.getByRole('link', { name: 'Docs Logo Docs' }),
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout: 10000,
+    });
 
     await page.goto(urlDoc);
 
     await expect(
-      page.getByText('You do not have permission to view this document.'),
+      page.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible({
       timeout: 10000,
     });
@@ -150,7 +151,7 @@ test.describe('Doc Visibility: Restricted', () => {
       name: 'Quick search input',
     });
 
-    const otherBrowser = browsersName.find((b) => b !== browserName);
+    const otherBrowser = BROWSERS.find((b) => b !== browserName);
     const username = `user@${otherBrowser}.test`;
     await inputSearch.fill(username);
     await page.getByRole('option', { name: username }).click();
@@ -262,11 +263,20 @@ test.describe('Doc Visibility: Public', () => {
     await expect(page.locator('h2').getByText(docTitle)).toBeVisible();
     await expect(page.getByRole('button', { name: 'search' })).toBeHidden();
     await expect(page.getByRole('button', { name: 'New doc' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
     const card = page.getByLabel('It is the card information');
     await expect(card).toBeVisible();
-
     await expect(card.getByText('Reader')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await expect(
+      page.getByText(
+        'You do not have permission to view users sharing this document or modify link settings.',
+      ),
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole('button', { name: 'Request access' }),
+    ).toBeHidden();
   });
 
   test('It checks a public doc in editable mode', async ({
@@ -430,7 +440,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       })
       .click();
 
-    const otherBrowser = browsersName.find((b) => b !== browserName);
+    const otherBrowser = BROWSERS.find((b) => b !== browserName);
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(
@@ -443,6 +453,18 @@ test.describe('Doc Visibility: Authenticated', () => {
     await page.getByRole('button', { name: 'Share' }).click();
     await page.getByRole('button', { name: 'Copy link' }).click();
     await expect(page.getByText('Link Copied !')).toBeVisible();
+
+    await expect(
+      page.getByText(
+        'You do not have permission to view users sharing this document or modify link settings.',
+      ),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Request access' }).click();
+
+    await expect(
+      page.getByRole('button', { name: 'Request access' }),
+    ).toBeDisabled();
   });
 
   test('It checks a authenticated doc in editable mode', async ({
@@ -490,7 +512,7 @@ test.describe('Doc Visibility: Authenticated', () => {
       })
       .click();
 
-    const otherBrowser = browsersName.find((b) => b !== browserName);
+    const otherBrowser = BROWSERS.find((b) => b !== browserName);
     await keyCloakSignIn(page, otherBrowser!);
 
     await expect(

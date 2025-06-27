@@ -1,12 +1,18 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, randomName } from './common';
-
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
+import {
+  BROWSERS,
+  createDoc,
+  keyCloakSignIn,
+  randomName,
+  verifyDocName,
+} from './common';
 
 test.describe('Document create member', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
   test('it selects 2 users and 1 invitation', async ({ page, browserName }) => {
     const inputFill = 'user ';
     const responsePromise = page.waitForResponse(
@@ -201,5 +207,91 @@ test.describe('Document create member', () => {
     await page.getByLabel('Delete').click();
 
     await expect(userInvitation).toBeHidden();
+  });
+});
+
+test.describe('Document create member: Multiple login', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('It creates a member from a request coming from a 403 page', async ({
+    page,
+    browserName,
+  }) => {
+    test.slow();
+
+    await page.goto('/');
+    await keyCloakSignIn(page, browserName);
+
+    const [docTitle] = await createDoc(
+      page,
+      'Member access request',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, docTitle);
+
+    const urlDoc = page.url();
+
+    await page
+      .getByRole('button', {
+        name: 'Logout',
+      })
+      .click();
+
+    const otherBrowser = BROWSERS.find((b) => b !== browserName);
+
+    await keyCloakSignIn(page, otherBrowser!);
+
+    await expect(
+      page.getByRole('link', { name: 'Docs Logo Docs' }),
+    ).toBeVisible();
+
+    await page.goto(urlDoc);
+
+    await expect(
+      page.getByText('Insufficient access rights to view the document.'),
+    ).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole('button', { name: 'Request access' }).click();
+
+    await expect(
+      page.getByText('Your access request for this document is pending.'),
+    ).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'Logout',
+      })
+      .click();
+
+    await page.goto('/');
+    await keyCloakSignIn(page, browserName);
+
+    await expect(
+      page.getByRole('link', { name: 'Docs Logo Docs' }),
+    ).toBeVisible();
+
+    await page.goto(urlDoc);
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(page.getByText('Access Requests')).toBeVisible();
+    await expect(page.getByText(`E2E ${otherBrowser}`)).toBeVisible();
+
+    const emailRequest = `user@${otherBrowser}.test`;
+    await expect(page.getByText(emailRequest)).toBeVisible();
+    const container = page.getByTestId(
+      `doc-share-access-request-row-${emailRequest}`,
+    );
+    await container.getByLabel('doc-role-dropdown').click();
+    await page.getByLabel('Administrator').click();
+    await container.getByRole('button', { name: 'Approve' }).click();
+
+    await expect(page.getByText('Access Requests')).toBeHidden();
+    await expect(page.getByText('Share with 2 users')).toBeVisible();
+    await expect(page.getByText(`E2E ${otherBrowser}`)).toBeVisible();
   });
 });

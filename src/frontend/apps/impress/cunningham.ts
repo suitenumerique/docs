@@ -65,6 +65,16 @@ tokens.themes.default.components = {
       'png-light': '/assets/favicon-light.png',
       'png-dark': '/assets/favicon-dark.png',
     },
+    button: {
+      ...tokens.themes.default.components.button,
+      primary: {
+        ...tokens.themes.default.components.button.primary,
+        ...{
+          'background--disabled': 'var(--c--theme--colors--greyscale-100)',
+        },
+        disabled: 'var(--c--theme--colors--greyscale-400)',
+      },
+    },
   },
 };
 

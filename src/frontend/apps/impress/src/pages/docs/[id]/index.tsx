@@ -1,11 +1,10 @@
-import { Loader } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, TextErrors } from '@/components';
+import { Box, Icon, Loading, TextErrors } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
 import {
@@ -104,6 +103,8 @@ const DocPage = ({ id }: DocProps) => {
 
   if (isError && error) {
     if ([403, 404, 401].includes(error.status)) {
+      let replacePath = `/${error.status}`;
+
       if (error.status === 401) {
         if (authenticated) {
           queryClient.setQueryData([KEY_AUTH], {
@@ -112,15 +113,13 @@ const DocPage = ({ id }: DocProps) => {
           });
         }
         setAuthUrl();
+      } else if (error.status === 403) {
+        replacePath = `/docs/${id}/403`;
       }
 
-      void replace(`/${error.status}`);
+      void replace(replacePath);
 
-      return (
-        <Box $align="center" $justify="center" $height="100%">
-          <Loader />
-        </Box>
-      );
+      return <Loading />;
     }
 
     return (
@@ -138,11 +137,7 @@ const DocPage = ({ id }: DocProps) => {
   }
 
   if (!doc) {
-    return (
-      <Box $align="center" $justify="center" $height="100%">
-        <Loader />
-      </Box>
-    );
+    return <Loading />;
   }
 
   return (

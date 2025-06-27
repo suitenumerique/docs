@@ -14,7 +14,8 @@ and this project adheres to
 - 📝(project) add troubleshoot doc #1066
 - 📝(project) add system-requirement doc #1066
 - 🔧(front) configure x-frame-options to DENY in nginx conf #1084
--  (doc) add documentation to install with compose #855
+- ✨Ask for access #1081
+- 📝(doc) add documentation to install with compose #855
 
 ### Changed
 
@@ -26,11 +27,12 @@ and this project adheres to
 
 ### Fixed
 
--🐛(frontend) table of content disappearing #982
--🐛(frontend) fix multiple EmojiPicker #1012
--🐛(frontend) fix meta title #1017
--🔧(git) set LF line endings for all text files #1032
--📝(docs) minor fixes to docs/env.md
+- 🐛(frontend) table of content disappearing #982
+- 🐛(frontend) fix multiple EmojiPicker #1012
+- 🐛(frontend) fix meta title #1017
+- 🔧(git) set LF line endings for all text files #1032
+- 📝(docs) minor fixes to docs/env.md
+
 
 ## [3.3.0] - 2025-05-06
 

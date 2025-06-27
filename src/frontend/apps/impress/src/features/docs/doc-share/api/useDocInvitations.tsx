@@ -1,13 +1,12 @@
-import {
-  DefinedInitialDataInfiniteOptions,
-  InfiniteData,
-  QueryKey,
-  UseQueryOptions,
-  useInfiniteQuery,
-  useQuery,
-} from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
+import {
+  APIError,
+  APIList,
+  errorCauses,
+  fetchAPI,
+  useAPIInfiniteQuery,
+} from '@/api';
 import { Invitation } from '@/docs/doc-share/types';
 
 export type DocInvitationsParams = {
@@ -66,33 +65,10 @@ export function useDocInvitations(
  * @param queryConfig
  * @returns
  */
-export function useDocInvitationsInfinite(
-  param: DocInvitationsParams,
-  queryConfig?: DefinedInitialDataInfiniteOptions<
-    DocInvitationsResponse,
-    APIError,
-    InfiniteData<DocInvitationsResponse>,
-    QueryKey,
-    number
-  >,
-) {
-  return useInfiniteQuery<
-    DocInvitationsResponse,
-    APIError,
-    InfiniteData<DocInvitationsResponse>,
-    QueryKey,
-    number
-  >({
-    initialPageParam: 1,
-    queryKey: [KEY_LIST_DOC_INVITATIONS, param],
-    queryFn: ({ pageParam }) =>
-      getDocInvitations({
-        ...param,
-        page: pageParam,
-      }),
-    getNextPageParam(lastPage, allPages) {
-      return lastPage.next ? allPages.length + 1 : undefined;
-    },
-    ...queryConfig,
-  });
+export function useDocInvitationsInfinite(params: DocInvitationsParams) {
+  return useAPIInfiniteQuery(
+    KEY_LIST_DOC_INVITATIONS,
+    getDocInvitations,
+    params,
+  );
 }
