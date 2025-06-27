@@ -2,7 +2,7 @@ import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, HorizontalSeparator } from '@/components';
+import { Box, HorizontalSeparator, Icon } from '@/components';
 import { Doc, useCopyDocLink } from '@/features/docs';
 
 import { DocVisibility } from './DocVisibility';
@@ -36,7 +36,7 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
           fullWidth={false}
           onClick={copyDocLink}
           color="tertiary"
-          icon={<span className="material-icons">add_link</span>}
+          icon={<Icon iconName="add_link" />}
         >
           {t('Copy link')}
         </Button>
