@@ -8,12 +8,14 @@ import { useCreateDoc } from '@/docs/doc-management';
 import { DocSearchModal } from '@/docs/doc-search';
 import { useAuth } from '@/features/auth';
 import { useCmdK } from '@/hook/useCmdK';
+import { useAnalytics } from '@/libs';
 
 import { useLeftPanelStore } from '../stores';
 
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const router = useRouter();
   const { authenticated } = useAuth();
+  const { trackEvent } = useAnalytics();
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const openSearchModal = useCallback(() => {
@@ -23,8 +25,10 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
       return;
     }
 
+    trackEvent({ eventName: 'openSearchModal', position: 'LeftPanelHeader' });
+
     setIsSearchModalOpen(true);
-  }, []);
+  }, [trackEvent]);
 
   const closeSearchModal = useCallback(() => {
     setIsSearchModalOpen(false);
@@ -46,6 +50,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   };
 
   const createNewDoc = () => {
+    trackEvent({ eventName: 'createNewDoc', position: 'LeftPanelHeader' });
     createDoc();
   };
 

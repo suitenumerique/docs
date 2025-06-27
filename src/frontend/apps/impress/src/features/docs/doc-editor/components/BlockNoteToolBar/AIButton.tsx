@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { isAPIError } from '@/api';
 import { Box, Icon } from '@/components';
 import { useDocOptions, useDocStore } from '@/docs/doc-management/';
+import { useAnalytics } from '@/libs';
 
 import {
   AITransformActions,
@@ -217,21 +218,43 @@ const AIMenuItemTransform = ({
   children,
   icon,
 }: PropsWithChildren<AIMenuItemTransform>) => {
+  const { trackEvent } = useAnalytics();
   const { mutateAsync: requestAI, isPending } = useDocAITransform();
   const editor = useBlockNoteEditor();
 
   const requestAIAction = async (selectedBlocks: Block[]) => {
     const text = await editor.blocksToMarkdownLossy(selectedBlocks);
 
+    const requestStartTime = performance.now();
     const responseAI = await requestAI({
       text,
       action,
       docId,
     });
+    const requestDuration = performance.now() - requestStartTime;
+
+    const eventProperties = {
+      eventName: 'requestAIAction',
+      action: action,
+      docId: docId,
+      requestLength: text.length,
+      numberBlocks: selectedBlocks.length,
+      requestDuration: requestDuration,
+    };
 
     if (!responseAI?.answer) {
+      trackEvent({
+        ...eventProperties,
+        status: 'error',
+      });
       throw new Error('No response from AI');
     }
+
+    trackEvent({
+      ...eventProperties,
+      status: 'success',
+      responseLength: String(responseAI.answer),
+    });
 
     const markdown = await editor.tryParseMarkdownToBlocks(responseAI.answer);
     editor.replaceBlocks(selectedBlocks, markdown);
