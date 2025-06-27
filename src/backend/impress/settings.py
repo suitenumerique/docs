@@ -283,6 +283,7 @@ class Base(Configuration):
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "core.middleware.ForceSessionMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
     ]
@@ -470,6 +471,7 @@ class Base(Configuration):
     SESSION_COOKIE_AGE = values.PositiveIntegerValue(
         default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
     )
+    SESSION_COOKIE_NAME = "docs_sessionid"
 
     # OIDC - Authorization Code Flow
     OIDC_CREATE_USER = values.BooleanValue(
@@ -649,6 +651,12 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    NO_WEBSOCKET_CACHE_TIMEOUT = values.Value(
+        default=120,
+        environ_name="NO_WEBSOCKET_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # Logging
     # We want to make it easy to log to console but by default we log production
     # to Sentry and don't want to log to console.
@@ -811,15 +819,9 @@ class Development(Base):
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000"]
     DEBUG = True
 
-    SESSION_COOKIE_NAME = "impress_sessionid"
-
     USE_SWAGGER = True
-    SESSION_CACHE_ALIAS = "session"
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-        },
-        "session": {
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": values.Value(
                 "redis://redis:6379/2",

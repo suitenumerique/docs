@@ -9,6 +9,7 @@ import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
   convertMarkdownHandler,
+  getDocumentConnectionInfoHandler,
 } from '../handlers';
 import { corsMiddleware, httpSecurity, wsSecurity } from '../middlewares';
 import { routes } from '../routes';
@@ -44,6 +45,12 @@ export const initServer = () => {
     routes.COLLABORATION_RESET_CONNECTIONS,
     httpSecurity,
     collaborationResetConnectionsHandler,
+  );
+
+  app.get(
+    routes.COLLABORATION_GET_CONNECTIONS,
+    httpSecurity,
+    getDocumentConnectionInfoHandler,
   );
 
   /**

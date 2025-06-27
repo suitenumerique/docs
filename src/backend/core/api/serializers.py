@@ -239,6 +239,7 @@ class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
     content = serializers.CharField(required=False)
+    websocket = serializers.BooleanField(required=False, write_only=True)
 
     class Meta:
         model = models.Document
@@ -260,6 +261,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "title",
             "updated_at",
             "user_roles",
+            "websocket",
         ]
         read_only_fields = [
             "id",
