@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
 from configurations import Configuration, values
+from cryptography.fernet import Fernet
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
@@ -287,6 +288,7 @@ class Base(Configuration):
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "core.authentication.middleware.OIDCRefreshSessionMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
     ]
@@ -472,7 +474,9 @@ class Base(Configuration):
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default"
     SESSION_COOKIE_AGE = values.PositiveIntegerValue(
-        default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
+        default=60 * 60 * 24 * 5,  # 5 days
+        environ_name="SESSION_COOKIE_AGE",
+        environ_prefix=None,
     )
 
     # OIDC - Authorization Code Flow
@@ -550,14 +554,19 @@ class Base(Configuration):
         default=64, environ_name="OIDC_PKCE_CODE_VERIFIER_SIZE", environ_prefix=None
     )
     OIDC_STORE_ACCESS_TOKEN = values.BooleanValue(
-        default=False, environ_name="OIDC_STORE_ACCESS_TOKEN", environ_prefix=None
+        default=True, environ_name="OIDC_STORE_ACCESS_TOKEN", environ_prefix=None
     )
     OIDC_STORE_REFRESH_TOKEN = values.BooleanValue(
-        default=False, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
+        default=True, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
     )
     OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
-        default=None,
+        default=Fernet.generate_key(),
         environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
+    OIDC_TOKEN_EXPIRATION = values.PositiveIntegerValue(
+        default=60 * 15,  # 15 minutes
+        environ_name="OIDC_TOKEN_EXPIRATION",
         environ_prefix=None,
     )
 

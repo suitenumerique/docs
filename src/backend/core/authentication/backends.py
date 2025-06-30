@@ -2,6 +2,7 @@
 
 import logging
 import os
+import time
 
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
@@ -34,6 +35,18 @@ class OIDCAuthenticationBackend(LaSuiteOIDCAuthenticationBackend):
     This class overrides the default OIDC Authentication Backend to accommodate differences
     in the User and Identity models, and handles signed and/or encrypted UserInfo response.
     """
+
+    def store_tokens(self, access_token, id_token):
+        """
+        Extends base method to stores a oidc_token_expiration field in the session
+        which is used with OIDCRefreshSessionMiddleware, which performs a refresh
+        token request if oidc_token_expiration expires.
+        """
+        session = self.request.session
+        token_expiration_delay = self.get_settings("OIDC_TOKEN_EXPIRATION", 60 * 15)
+        session["oidc_token_expiration"] = time.time() + token_expiration_delay
+
+        super().store_tokens(access_token, id_token)
 
     def get_extra_claims(self, user_info):
         """
