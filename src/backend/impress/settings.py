@@ -730,7 +730,7 @@ class Base(Configuration):
     # See https://content-security-policy.com/ for more information.
     CONTENT_SECURITY_POLICY = {
         "EXCLUDE_URL_PREFIXES": values.ListValue(
-            [],
+            ["/admin"],
             environ_name="CONTENT_SECURITY_POLICY_EXCLUDE_URL_PREFIXES",
             environ_prefix=None,
         ),
