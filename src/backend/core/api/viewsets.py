@@ -1658,7 +1658,7 @@ class DocumentViewSet(
                 content_type="text/event-stream",
                 status=drf.status.HTTP_200_OK,
             )
-    
+
         ai_response = ai_service.proxy(request.data)
         return drf.response.Response(
             ai_response.model_dump(),
