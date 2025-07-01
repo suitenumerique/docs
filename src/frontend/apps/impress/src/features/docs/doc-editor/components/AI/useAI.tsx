@@ -1,8 +1,8 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { createAIExtension, llmFormats } from '@blocknote/xl-ai';
 import { useMemo } from 'react';
 
-import { fetchAPI } from '@/api';
+import { baseApiUrl, fetchAPI } from '@/api';
 import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
 
@@ -17,8 +17,9 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
       return;
     }
 
-    const openai = createOpenAI({
-      apiKey: '', // The API key will be set by the AI proxy
+    const openai = createOpenAICompatible({
+      name: 'AI Proxy',
+      baseURL: `${baseApiUrl('1.0')}documents/${docId}/ai-proxy/`, // Necessary for initialization..
       fetch: (input, init) => {
         // Create a new headers object without the Authorization header
         const headers = new Headers(init?.headers);
@@ -30,7 +31,8 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
         });
       },
     });
-    const model = openai.chat(conf.AI_MODEL);
+
+    const model = openai.chatModel(conf.AI_MODEL);
 
     const extension = createAIExtension({
       stream: conf.AI_STREAM,

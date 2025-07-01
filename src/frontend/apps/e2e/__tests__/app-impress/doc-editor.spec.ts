@@ -493,6 +493,10 @@ test.describe('Doc Editor', () => {
     // Check Suggestion menu
     await page.locator('.bn-block-outer').last().fill('/');
     await expect(page.getByText('Write with AI')).toBeVisible();
+
+    // Reload the page to check that the AI change is still there
+    await page.goto(page.url());
+    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
   });
 
   test(`it checks ai_proxy ability`, async ({ page, browserName }) => {
