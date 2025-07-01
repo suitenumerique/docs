@@ -1819,7 +1819,10 @@ class DocumentAskForAccessViewSet(
 
     lookup_field = "id"
     pagination_class = Pagination
-    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        permissions.ResourceWithAccessPermission,
+    ]
     queryset = models.DocumentAskForAccess.objects.all()
     serializer_class = serializers.DocumentAskForAccessSerializer
     _document = None
@@ -1842,8 +1845,9 @@ class DocumentAskForAccessViewSet(
         queryset = super().get_queryset()
         queryset = queryset.filter(document=document)
 
-        roles = set(document.get_roles(self.request.user))
-        is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        is_owner_or_admin = (
+            document.get_role(self.request.user) in models.PRIVILEGED_ROLES
+        )
         if not is_owner_or_admin:
             queryset = queryset.filter(user=self.request.user)
 
