@@ -6,12 +6,13 @@ import {
 } from '@blocknote/xl-ai';
 import '@blocknote/xl-ai/style.css';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import IconAI from '../../assets/IconAI.svg';
+import IconWandStar from '../../assets/wand_stars.svg';
 import {
   DocsBlockNoteEditor,
   DocsBlockSchema,
@@ -19,34 +20,80 @@ import {
   DocsStyleSchema,
 } from '../../types';
 
+const AIMenuStyle = createGlobalStyle`
+  #ai-suggestion-menu .bn-suggestion-menu-item-small .bn-mt-suggestion-menu-item-section[data-position=left] svg {
+    height: 18px;
+    width: 18px;
+  }
+`;
+
 export function AIMenu() {
   return (
-    <AIMenuDefault
-      items={(editor: DocsBlockNoteEditor, aiResponseStatus) => {
-        if (aiResponseStatus === 'user-input') {
-          if (editor.getSelection()) {
-            const aiMenuItems = getDefaultAIMenuItems(
-              editor,
-              aiResponseStatus,
-            ).filter((item) => ['simplify'].indexOf(item.key) === -1);
+    <>
+      <AIMenuStyle />
+      <AIMenuDefault
+        items={(editor: DocsBlockNoteEditor, aiResponseStatus) => {
+          if (aiResponseStatus === 'user-input') {
+            let aiMenuItems = getDefaultAIMenuItems(editor, aiResponseStatus);
+
+            if (editor.getSelection()) {
+              aiMenuItems = aiMenuItems.filter(
+                (item) => ['simplify'].indexOf(item.key) === -1,
+              );
+
+              aiMenuItems = aiMenuItems.map((item) => {
+                if (item.key === 'improve_writing') {
+                  return {
+                    ...item,
+                    icon: <IconWandStar />,
+                  };
+                } else if (item.key === 'translate') {
+                  return {
+                    ...item,
+                    icon: (
+                      <Icon
+                        iconName="translate"
+                        $color="inherit"
+                        $size="18px"
+                      />
+                    ),
+                  };
+                }
+
+                return item;
+              });
+            } else {
+              aiMenuItems = aiMenuItems.filter(
+                (item) =>
+                  ['action_items', 'write_anything'].indexOf(item.key) === -1,
+              );
+            }
 
             return aiMenuItems;
-          } else {
-            const aiMenuItems = getDefaultAIMenuItems(
-              editor,
-              aiResponseStatus,
-            ).filter(
-              (item) =>
-                ['action_items', 'write_anything'].indexOf(item.key) === -1,
+          } else if (aiResponseStatus === 'user-reviewing') {
+            return getDefaultAIMenuItems(editor, aiResponseStatus).map(
+              (item) => {
+                if (item.key === 'accept') {
+                  return {
+                    ...item,
+                    icon: (
+                      <Icon
+                        iconName="check_circle"
+                        $color="inherit"
+                        $size="18px"
+                      />
+                    ),
+                  };
+                }
+                return item;
+              },
             );
-
-            return aiMenuItems;
           }
-        }
 
-        return getDefaultAIMenuItems(editor, aiResponseStatus);
-      }}
-    />
+          return getDefaultAIMenuItems(editor, aiResponseStatus);
+        }}
+      />
+    </>
   );
 }
 
