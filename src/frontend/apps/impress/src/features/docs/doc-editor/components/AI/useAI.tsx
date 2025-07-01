@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { createAIExtension, llmFormats } from '@blocknote/xl-ai';
+import { createAIExtension } from '@blocknote/xl-ai';
 import { useMemo } from 'react';
 
 import { baseApiUrl, fetchAPI } from '@/api';
@@ -38,7 +38,7 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
       stream: conf.AI_STREAM,
       model,
       agentCursor: conf?.AI_BOT,
-      promptBuilder: promptBuilder(llmFormats.html.defaultPromptBuilder),
+      promptBuilder,
     });
 
     return extension;
