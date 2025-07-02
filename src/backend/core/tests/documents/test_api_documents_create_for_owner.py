@@ -23,10 +23,10 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture
 def mock_convert_md():
-    """Mock YdocConverter.convert_markdown to return a converted content."""
+    """Mock YdocConverter.convert to return a converted content."""
     with patch.object(
         YdocConverter,
-        "convert_markdown",
+        "convert",
         return_value="Converted document content",
     ) as mock:
         yield mock
