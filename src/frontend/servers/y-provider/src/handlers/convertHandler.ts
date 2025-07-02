@@ -16,6 +16,8 @@ interface ErrorResponse {
   error: string;
 }
 
+const editor = ServerBlockNoteEditor.create();
+
 export const convertHandler = async (
   req: Request<
     object,
@@ -33,8 +35,6 @@ export const convertHandler = async (
   }
 
   try {
-    const editor = ServerBlockNoteEditor.create();
-
     // Perform the conversion from markdown to Blocknote.js blocks
     const blocks = await editor.tryParseMarkdownToBlocks(content);
 

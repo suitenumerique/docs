@@ -1,56 +1,62 @@
+import { Server } from 'node:net';
+
 import {
   HocuspocusProvider,
   HocuspocusProviderWebsocket,
 } from '@hocuspocus/provider';
 import { v1 as uuidv1, v4 as uuidv4 } from 'uuid';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from 'vitest';
 import WebSocket from 'ws';
 
-const port = 5559;
 const portWS = 6666;
-const origin = 'http://localhost:3000';
 
-jest.mock('../src/env', () => {
+vi.mock('../src/env', async (importOriginal) => {
   return {
-    PORT: port,
-    COLLABORATION_SERVER_ORIGIN: origin,
+    ...(await importOriginal()),
+    PORT: 5559,
+    COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
     COLLABORATION_SERVER_SECRET: 'test-secret-api-key',
     COLLABORATION_BACKEND_BASE_URL: 'http://app-dev:8000',
     COLLABORATION_LOGGING: 'true',
   };
 });
 
-console.error = jest.fn();
-console.log = jest.fn();
-
-const mockDocFetch = jest.fn();
-jest.mock('@/api/getDoc', () => ({
-  fetchDocument: mockDocFetch,
+vi.mock('../src/api/collaborationBackend', () => ({
+  getCurrentUser: vi.fn(),
+  getDocument: vi.fn(),
 }));
 
-const mockGetMe = jest.fn();
-jest.mock('@/api/getMe', () => ({
-  getMe: mockGetMe,
-}));
+console.error = vi.fn();
+console.log = vi.fn();
 
-import { hocusPocusServer } from '@/servers/hocusPocusServer';
-
-import { promiseDone } from '../src/helpers';
-import { initServer } from '../src/servers/appServer';
-
-const { server } = initServer();
+import * as CollaborationBackend from '@/api/collaborationBackend';
+import { COLLABORATION_SERVER_ORIGIN as origin, PORT as port } from '@/env';
+import { promiseDone } from '@/helpers';
+import { hocuspocusServer, initApp } from '@/servers';
 
 describe('Server Tests', () => {
-  beforeAll(async () => {
-    await hocusPocusServer.configure({ port: portWS }).listen();
+  let server: Server;
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  beforeAll(async () => {
+    server = initApp().listen(port);
+    await hocuspocusServer.configure({ port: portWS }).listen();
   });
 
   afterAll(() => {
+    void hocuspocusServer.destroy();
     server.close();
-    void hocusPocusServer.destroy();
   });
 
   test('WebSocket connection with bad origin should be closed', () => {
@@ -209,7 +215,9 @@ describe('Server Tests', () => {
   test('WebSocket connection fails if user can not access document', () => {
     const { promise, done } = promiseDone();
 
-    mockDocFetch.mockRejectedValue('');
+    const getDocumentMock = vi
+      .spyOn(CollaborationBackend, 'getDocument')
+      .mockRejectedValue(new Error('some error'));
 
     const room = uuidv4();
     const wsHocus = new HocuspocusProviderWebsocket({
@@ -233,7 +241,10 @@ describe('Server Tests', () => {
 
         wsHocus.stopConnectionAttempt();
         expect(data.event.reason).toBe('Forbidden');
-        expect(mockDocFetch).toHaveBeenCalledTimes(1);
+        expect(getDocumentMock).toHaveBeenCalledExactlyOnceWith(
+          room,
+          expect.any(Object),
+        );
         wsHocus.webSocket?.close();
         wsHocus.disconnect();
         provider.destroy();
@@ -249,11 +260,10 @@ describe('Server Tests', () => {
     const { promise, done } = promiseDone();
 
     const room = uuidv4();
-    mockDocFetch.mockResolvedValue({
-      abilities: {
-        retrieve: false,
-      },
-    });
+
+    const getDocumentMock = vi
+      .spyOn(CollaborationBackend, 'getDocument')
+      .mockResolvedValue({ abilities: { retrieve: false } } as any);
 
     const wsHocus = new HocuspocusProviderWebsocket({
       url: `ws://localhost:${portWS}/?room=${room}`,
@@ -278,7 +288,10 @@ describe('Server Tests', () => {
 
         wsHocus.stopConnectionAttempt();
         expect(data.event.reason).toBe('Forbidden');
-        expect(mockDocFetch).toHaveBeenCalledTimes(1);
+        expect(getDocumentMock).toHaveBeenCalledExactlyOnceWith(
+          room,
+          expect.any(Object),
+        );
         wsHocus.webSocket?.close();
         wsHocus.disconnect();
         provider.destroy();
@@ -294,12 +307,11 @@ describe('Server Tests', () => {
     test(`WebSocket connection ${canEdit ? 'can' : 'can not'} edit document`, () => {
       const { promise, done } = promiseDone();
 
-      mockDocFetch.mockResolvedValue({
-        abilities: {
-          retrieve: true,
-          update: canEdit,
-        },
-      });
+      const getDocumentMock = vi
+        .spyOn(CollaborationBackend, 'getDocument')
+        .mockResolvedValue({
+          abilities: { retrieve: true, update: canEdit },
+        } as any);
 
       const room = uuidv4();
       const wsHocus = new HocuspocusProviderWebsocket({
@@ -313,7 +325,7 @@ describe('Server Tests', () => {
         broadcast: false,
         quiet: true,
         onConnect: () => {
-          void hocusPocusServer
+          void hocuspocusServer
             .openDirectConnection(room)
             .then((connection) => {
               connection.document?.getConnections().forEach((connection) => {
@@ -324,6 +336,12 @@ describe('Server Tests', () => {
 
               provider.destroy();
               wsHocus.destroy();
+
+              expect(getDocumentMock).toHaveBeenCalledWith(
+                room,
+                expect.any(Object),
+              );
+
               done();
             });
         },
@@ -336,16 +354,15 @@ describe('Server Tests', () => {
   test('Add request header x-user-id if found', () => {
     const { promise, done } = promiseDone();
 
-    mockDocFetch.mockResolvedValue({
-      abilities: {
-        retrieve: true,
-        update: true,
-      },
-    });
+    const getDocumentMock = vi
+      .spyOn(CollaborationBackend, 'getDocument')
+      .mockResolvedValue({
+        abilities: { retrieve: true, update: true },
+      } as any);
 
-    mockGetMe.mockResolvedValue({
-      id: 'test-user-id',
-    });
+    const getCurrentUserMock = vi
+      .spyOn(CollaborationBackend, 'getCurrentUser')
+      .mockResolvedValue({ id: 'test-user-id' } as any);
 
     const room = uuidv4();
     const wsHocus = new HocuspocusProviderWebsocket({
@@ -359,7 +376,7 @@ describe('Server Tests', () => {
       broadcast: false,
       quiet: true,
       onConnect: () => {
-        void hocusPocusServer.openDirectConnection(room).then((connection) => {
+        void hocuspocusServer.openDirectConnection(room).then((connection) => {
           connection.document?.getConnections().forEach((connection) => {
             expect(connection.context.userId).toBe('test-user-id');
           });
@@ -367,6 +384,14 @@ describe('Server Tests', () => {
           void connection.disconnect();
           provider.destroy();
           wsHocus.destroy();
+
+          expect(getDocumentMock).toHaveBeenCalledWith(
+            room,
+            expect.any(Object),
+          );
+
+          expect(getCurrentUserMock).toHaveBeenCalled();
+
           done();
         });
       },

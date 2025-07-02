@@ -1,66 +1,64 @@
 import request from 'supertest';
+import { describe, expect, test, vi } from 'vitest';
 
-const port = 5555;
-const origin = 'http://localhost:3000';
-
-jest.mock('../src/env', () => {
+vi.mock('../src/env', async (importOriginal) => {
   return {
-    PORT: port,
-    COLLABORATION_SERVER_ORIGIN: origin,
+    ...(await importOriginal()),
+    PORT: 5555,
+    COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
     COLLABORATION_SERVER_SECRET: 'test-secret-api-key',
   };
 });
 
-console.error = jest.fn();
+console.error = vi.fn();
 
-import { hocusPocusServer } from '@/servers/hocusPocusServer';
-
-import { initServer } from '../src/servers/appServer';
-
-const { app, server } = initServer();
+import { COLLABORATION_SERVER_ORIGIN as origin } from '@/env';
+import { hocuspocusServer, initApp } from '@/servers';
 
 describe('Server Tests', () => {
-  afterAll(() => {
-    server.close();
-  });
-
   test('POST /collaboration/api/reset-connections?room=[ROOM_ID] with incorrect API key should return 403', async () => {
-    const response = await request(app as any)
+    const app = initApp();
+
+    const response = await request(app)
       .post('/collaboration/api/reset-connections/?room=test-room')
       .set('Origin', origin)
       .set('Authorization', 'wrong-api-key');
 
     expect(response.status).toBe(403);
-    expect(response.body.error).toBe('Forbidden: Invalid API Key');
+    expect(response.body).toStrictEqual({
+      error: 'Forbidden: Invalid API Key',
+    });
   });
 
   test('POST /collaboration/api/reset-connections?room=[ROOM_ID] failed if room not indicated', async () => {
-    const response = await request(app as any)
+    const app = initApp();
+
+    const response = await request(app)
       .post('/collaboration/api/reset-connections/')
       .set('Origin', origin)
       .set('Authorization', 'test-secret-api-key')
       .send({ document_id: 'test-document' });
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Room name not provided');
+    expect(response.body).toStrictEqual({ error: 'Room name not provided' });
   });
 
   test('POST /collaboration/api/reset-connections?room=[ROOM_ID] with correct API key should reset connections', async () => {
-    // eslint-disable-next-line jest/unbound-method
-    const { closeConnections } = hocusPocusServer;
-    const mockHandleConnection = jest.fn();
-    (hocusPocusServer.closeConnections as jest.Mock) = mockHandleConnection;
+    const closeConnectionsMock = vi
+      .spyOn(hocuspocusServer, 'closeConnections')
+      .mockResolvedValue();
 
-    const response = await request(app as any)
+    const app = initApp();
+
+    const response = await request(app)
       .post('/collaboration/api/reset-connections?room=test-room')
       .set('Origin', origin)
       .set('Authorization', 'test-secret-api-key');
 
     expect(response.status).toBe(200);
-    expect(response.body.message).toBe('Connections reset');
+    expect(response.body).toStrictEqual({ message: 'Connections reset' });
 
-    expect(mockHandleConnection).toHaveBeenCalled();
-    mockHandleConnection.mockClear();
-    hocusPocusServer.closeConnections = closeConnections;
+    // eslint-disable-next-line jest/unbound-method
+    expect(closeConnectionsMock).toHaveBeenCalledOnce();
   });
 });

@@ -4,15 +4,12 @@ import axios from 'axios';
 
 import { COLLABORATION_BACKEND_BASE_URL } from '@/env';
 
-enum LinkReach {
-  RESTRICTED = 'restricted',
-  PUBLIC = 'public',
-  AUTHENTICATED = 'authenticated',
-}
-
-enum LinkRole {
-  READER = 'reader',
-  EDITOR = 'editor',
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  short_name: string;
+  language: string;
 }
 
 type Base64 = string;
@@ -23,8 +20,8 @@ interface Doc {
   content: Base64;
   creator: string;
   is_favorite: boolean;
-  link_reach: LinkReach;
-  link_role: LinkRole;
+  link_reach: 'restricted' | 'public' | 'authenticated';
+  link_role: 'reader' | 'editor';
   nb_accesses_ancestors: number;
   nb_accesses_direct: number;
   created_at: string;
@@ -54,23 +51,36 @@ interface Doc {
   };
 }
 
-export const fetchDocument = async (
-  documentName: string,
+async function get<T>(
+  path: string,
   requestHeaders: IncomingHttpHeaders,
-) => {
-  const response = await axios.get<Doc>(
-    `${COLLABORATION_BACKEND_BASE_URL}/api/v1.0/documents/${documentName}/`,
+): Promise<T> {
+  const response = await axios.get<T>(
+    `${COLLABORATION_BACKEND_BASE_URL}${path}`,
     {
       headers: {
-        Cookie: requestHeaders['cookie'],
-        Origin: requestHeaders['origin'],
+        cookie: requestHeaders['cookie'],
+        origin: requestHeaders['origin'],
       },
     },
   );
 
   if (response.status !== 200) {
-    throw new Error(`Failed to fetch document: ${response.statusText}`);
+    throw new Error(`Failed to fetch user: ${response.statusText}`);
   }
 
   return response.data;
-};
+}
+
+export function getDocument(
+  name: string,
+  requestHeaders: IncomingHttpHeaders,
+): Promise<Doc> {
+  return get<Doc>(`/api/v1.0/documents/${name}/`, requestHeaders);
+}
+
+export function getCurrentUser(
+  requestHeaders: IncomingHttpHeaders,
+): Promise<User> {
+  return get<User>('/api/v1.0/users/me/', requestHeaders);
+}

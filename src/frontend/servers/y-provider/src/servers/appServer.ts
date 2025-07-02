@@ -1,26 +1,27 @@
 // eslint-disable-next-line import/order
 import '../services/sentry';
+
 import * as Sentry from '@sentry/node';
 import express from 'express';
 import expressWebsockets from 'express-ws';
 
-import { PORT } from '../env';
 import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
   convertHandler,
-} from '../handlers';
-import { corsMiddleware, httpSecurity, wsSecurity } from '../middlewares';
-import { routes } from '../routes';
-import { logger } from '../utils';
+} from '@/handlers';
+import { corsMiddleware, httpSecurity, wsSecurity } from '@/middlewares';
+import { routes } from '@/routes';
+import { logger } from '@/utils';
 
 /**
  * init the collaboration server.
  *
  * @returns An object containing the Express app, Hocuspocus server, and HTTP server instance.
  */
-export const initServer = () => {
+export const initApp = () => {
   const { app } = expressWebsockets(express());
+
   app.use((req, res, next) => {
     if (req.path === routes.CONVERT) {
       // Large transcript files are bigger than the default '100kb' limit
@@ -62,9 +63,5 @@ export const initServer = () => {
     res.status(403).json({ error: 'Forbidden' });
   });
 
-  const server = app.listen(PORT, () =>
-    console.log('App listening on port :', PORT),
-  );
-
-  return { app, server };
+  return app;
 };

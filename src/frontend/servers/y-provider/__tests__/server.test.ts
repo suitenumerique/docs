@@ -1,45 +1,42 @@
 import request from 'supertest';
+import { describe, expect, it, test, vi } from 'vitest';
 
 import { routes } from '@/routes';
+import { initApp } from '@/servers';
 
-const port = 5557;
-const origin = 'http://localhost:3000';
-
-jest.mock('../src/env', () => {
+vi.mock('../src/env', async (importOriginal) => {
   return {
-    PORT: port,
-    COLLABORATION_SERVER_ORIGIN: origin,
+    ...(await importOriginal()),
+    COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
   };
 });
 
-console.error = jest.fn();
-
-import { initServer } from '../src/servers/appServer';
-
-const { app, server } = initServer();
+console.error = vi.fn();
 
 describe('Server Tests', () => {
-  afterAll(() => {
-    server.close();
-  });
-
   test('Ping Pong', async () => {
-    const response = await request(app as any).get('/ping');
+    const app = initApp();
+
+    const response = await request(app).get('/ping');
 
     expect(response.status).toBe(200);
-    expect(response.body.message).toBe('pong');
+    expect(response.body).toStrictEqual({ message: 'pong' });
   });
 
   ['/collaboration/api/anything/', '/', '/anything'].forEach((path) => {
     test(`"${path}" endpoint should be forbidden`, async () => {
-      const response = await request(app as any).post(path);
+      const app = initApp();
+
+      const response = await request(app).post(path);
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe('Forbidden');
     });
   });
 
-  it('should allow JSON payloads up to 500kb for the CONVERT route', async () => {
+  it('allows JSON payloads up to 500kb for the CONVERT route', async () => {
+    const app = initApp();
+
     const largePayload = 'a'.repeat(400 * 1024); // 400kb payload
     const response = await request(app)
       .post(routes.CONVERT)
@@ -49,7 +46,9 @@ describe('Server Tests', () => {
     expect(response.status).not.toBe(413);
   });
 
-  it('should reject JSON payloads larger than 500kb for the CONVERT route', async () => {
+  it('rejects JSON payloads larger than 500kb for the CONVERT route', async () => {
+    const app = initApp();
+
     const oversizedPayload = 'a'.repeat(501 * 1024); // 501kb payload
     const response = await request(app)
       .post(routes.CONVERT)
@@ -59,7 +58,9 @@ describe('Server Tests', () => {
     expect(response.status).toBe(413);
   });
 
-  it('should use the default JSON limit for other routes', async () => {
+  it('uses the default JSON limit for other routes', async () => {
+    const app = initApp();
+
     const largePayload = 'a'.repeat(150 * 1024);
     const response = await request(app)
       .post('/some-other-route')

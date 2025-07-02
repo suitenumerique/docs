@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import { hocusPocusServer } from '@/servers/hocusPocusServer';
+import { hocuspocusServer } from '@/servers';
 import { logger } from '@/utils';
 
 type ResetConnectionsRequestQuery = {
@@ -25,12 +25,12 @@ export const collaborationResetConnectionsHandler = (
    * If no user ID is provided, close all connections in the room
    */
   if (!userId) {
-    hocusPocusServer.closeConnections(room);
+    hocuspocusServer.closeConnections(room);
   } else {
     /**
      * Close connections for the user in the room
      */
-    hocusPocusServer.documents.forEach((doc) => {
+    hocuspocusServer.documents.forEach((doc) => {
       if (doc.name !== room) {
         return;
       }

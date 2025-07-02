@@ -10,7 +10,7 @@
     "dev": "cross-env COLLABORATION_LOGGING=true && nodemon --config nodemon.json",
     "start": "node ./dist/start-server.js",
     "lint": "eslint . --ext .ts",
-    "test": "jest"
+    "test": "vitest --run"
   },
   "engines": {
     "node": ">=22"
@@ -33,19 +33,19 @@
     "@types/cors": "2.8.19",
     "@types/express": "5.0.3",
     "@types/express-ws": "3.0.5",
-    "@types/jest": "30.0.0",
     "@types/node": "*",
     "@types/supertest": "6.0.3",
     "@types/ws": "8.18.1",
     "cross-env": "7.0.3",
     "eslint-config-impress": "*",
-    "jest": "30.0.3",
     "nodemon": "3.1.10",
     "supertest": "7.1.1",
     "ts-jest": "29.4.0",
     "ts-node": "10.9.2",
     "tsc-alias": "1.8.16",
     "typescript": "*",
+    "vitest": "3.2.4",
+    "vitest-mock-extended": "3.1.0",
     "ws": "8.18.2"
   }
 }
