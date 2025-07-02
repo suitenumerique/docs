@@ -64,6 +64,7 @@ and this project adheres to
 - ✅(frontend) Improve tests coverage #949
 - ⬆️(docker) upgrade backend image to python 3.13 #973
 - ⬆️(docker) upgrade node images to alpine 3.21 #973
+- ♻️(backend) Refactored permissions check from serializers to permission class #343
 
 ### Fixed
 - 🐛(y-provider) increase JSON size limits for transcription conversion #989

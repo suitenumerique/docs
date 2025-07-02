@@ -1500,7 +1500,11 @@ class DocumentAccessViewSet(
 
     lookup_field = "pk"
     pagination_class = Pagination
-    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        permissions.CanManageAccessPermission,
+        permissions.AccessPermission,
+    ]
     queryset = models.DocumentAccess.objects.select_related("user").all()
     resource_field_name = "document"
     serializer_class = serializers.DocumentAccessSerializer
@@ -1672,7 +1676,11 @@ class TemplateAccessViewSet(
 
     lookup_field = "pk"
     pagination_class = Pagination
-    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        permissions.CanManageAccessPermission,
+        permissions.AccessPermission,
+    ]
     queryset = models.TemplateAccess.objects.select_related("user").all()
     resource_field_name = "template"
     serializer_class = serializers.TemplateAccessSerializer
