@@ -226,6 +226,8 @@ test.describe('Documents filters', () => {
 
     await allDocs.click();
 
+    await page.waitForURL('**/?target=all_docs');
+
     let url = new URL(page.url());
     let target = url.searchParams.get('target');
     expect(target).toBe('all_docs');

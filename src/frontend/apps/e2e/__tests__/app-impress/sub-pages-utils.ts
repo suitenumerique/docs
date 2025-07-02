@@ -8,11 +8,10 @@ export const createRootSubPage = async (
   docName: string,
 ) => {
   // Get add button
-  const addButton = page.getByRole('button', { name: 'New page' });
 
   // Get response
   const responsePromise = getWaitForCreateDoc(page);
-  await addButton.click();
+  await clickOnAddRootSubPage(page);
   const response = await responsePromise;
   expect(response.ok()).toBeTruthy();
   const subPageJson = (await response.json()) as { id: string };
@@ -34,6 +33,13 @@ export const createRootSubPage = async (
 
   // Return sub page data
   return { name: randomDocs[0], docTreeItem: subPageItem, item: subPageJson };
+};
+
+export const clickOnAddRootSubPage = async (page: Page) => {
+  const rootItem = page.getByTestId('doc-tree-root-item');
+  await expect(rootItem).toBeVisible();
+  await rootItem.hover();
+  await rootItem.getByRole('button', { name: 'add_box' }).click();
 };
 
 export const createSubPageFromParent = async (

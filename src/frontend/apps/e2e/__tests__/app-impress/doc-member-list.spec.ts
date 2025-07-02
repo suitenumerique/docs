@@ -13,7 +13,7 @@ test.describe('Document list members', () => {
 
     // Get the current URL and extract the last part
     const currentUrl = page.url();
-    console.log('Current URL:', currentUrl);
+
     const currentDocId = (() => {
       // Remove trailing slash if present
       const cleanUrl = currentUrl.endsWith('/')
@@ -184,17 +184,14 @@ test.describe('Document list members', () => {
 
     const emailMyself = `user@${browserName}.test`;
     const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
-    const mySelfMoreActions = mySelf.getByRole('button', {
-      name: 'more_horiz',
+    const mySelfRole = mySelf.getByRole('button', {
+      name: 'doc-role-dropdown',
     });
 
     const userOwnerEmail = await addNewMember(page, 0, 'Owner');
     const userOwner = list.getByTestId(
       `doc-share-member-row-${userOwnerEmail}`,
     );
-    const userOwnerMoreActions = userOwner.getByRole('button', {
-      name: 'more_horiz',
-    });
 
     await page.getByRole('button', { name: 'close' }).first().click();
     await page.getByRole('button', { name: 'Share' }).first().click();
@@ -204,24 +201,20 @@ test.describe('Document list members', () => {
     const userReader = list.getByTestId(
       `doc-share-member-row-${userReaderEmail}`,
     );
-    const userReaderMoreActions = userReader.getByRole('button', {
-      name: 'more_horiz',
+    const userReaderRole = userReader.getByRole('button', {
+      name: 'doc-role-dropdown',
     });
 
     await expect(mySelf).toBeVisible();
     await expect(userOwner).toBeVisible();
     await expect(userReader).toBeVisible();
 
-    await expect(userOwnerMoreActions).toBeVisible();
-    await expect(userReaderMoreActions).toBeVisible();
-    await expect(mySelfMoreActions).toBeVisible();
-
-    await userReaderMoreActions.click();
-    await page.getByLabel('Delete').click();
+    await userReaderRole.click();
+    await page.getByRole('menuitem', { name: 'Remove access' }).click();
     await expect(userReader).toBeHidden();
 
-    await mySelfMoreActions.click();
-    await page.getByLabel('Delete').click();
+    await mySelfRole.click();
+    await page.getByRole('menuitem', { name: 'Remove access' }).click();
     await expect(
       page.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible();
