@@ -3,7 +3,7 @@ import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { JSX, PropsWithChildren, ReactNode, useEffect } from 'react';
 
-import { AbstractAnalytic, AnalyticEvent } from '@/libs/';
+import { AbstractAnalytic, AnalyticEvent, AnalyticEventGeneric } from '@/libs/';
 
 export class PostHogAnalytic extends AbstractAnalytic {
   private conf?: PostHogConf = undefined;
@@ -19,8 +19,14 @@ export class PostHogAnalytic extends AbstractAnalytic {
   }
 
   public trackEvent(evt: AnalyticEvent): void {
-    if (evt.eventName === 'user') {
-      posthog.identify(evt.id, { email: evt.email });
+    switch (evt.eventName) {
+      case 'user':
+        posthog.identify(evt.id as string, { email: evt.email });
+        break;
+      default:
+        const { eventName, ...properties } = evt as AnalyticEventGeneric;
+        posthog.capture(eventName, properties);
+        break;
     }
   }
 
