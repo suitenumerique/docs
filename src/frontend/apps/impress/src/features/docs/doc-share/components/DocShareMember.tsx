@@ -3,19 +3,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  Box,
-  DropdownMenu,
-  DropdownMenuOption,
-  IconOptions,
-} from '@/components';
-import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
+import { Box } from '@/components';
+import { QuickSearchData } from '@/components/quick-search';
+import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { useCunninghamTheme } from '@/cunningham';
 import { Access, Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management/';
-import { useResponsiveStore } from '@/stores';
 
-import { useDeleteDocAccess, useDocAccesses, useUpdateDocAccess } from '../api';
-import { useWhoAmI } from '../hooks';
+import { useDocAccesses, useUpdateDocAccess } from '../api';
+import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 import { SearchUserRow } from './SearchUserRow';
@@ -35,7 +30,6 @@ export const DocShareMemberItem = ({
   const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
 
-  const { isDesktop } = useResponsiveStore();
   const { spacingsTokens } = useCunninghamTheme();
 
   const message = isLastOwner
@@ -60,22 +54,6 @@ export const DocShareMemberItem = ({
     },
   });
 
-  const { mutate: removeDocAccess } = useDeleteDocAccess({
-    onSuccess: () => {
-      if (!doc) {
-        return;
-      }
-      void queryClient.invalidateQueries({
-        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
-      });
-    },
-    onError: () => {
-      toast(t('Error while deleting the member.'), VariantType.ERROR, {
-        duration: 4000,
-      });
-    },
-  });
-
   const onUpdate = (newRole: Role) => {
     if (!doc) {
       return;
@@ -86,22 +64,6 @@ export const DocShareMemberItem = ({
       accessId: access.id,
     });
   };
-
-  const onRemove = () => {
-    if (!doc) {
-      return;
-    }
-    removeDocAccess({ accessId: access.id, docId: doc.id });
-  };
-
-  const moreActions: DropdownMenuOption[] = [
-    {
-      label: t('Delete'),
-      icon: 'delete',
-      callback: onRemove,
-      disabled: !access.abilities.destroy,
-    },
-  ];
 
   const canUpdate = isInherited
     ? false
@@ -121,20 +83,13 @@ export const DocShareMemberItem = ({
             <DocRoleDropdown
               currentRole={isInherited ? access.max_role : access.role}
               onSelectRole={onUpdate}
+              isLastOwner={isLastOwner}
               canUpdate={canUpdate}
               message={message}
               rolesAllowed={access.abilities.set_role_to}
+              access={access}
+              doc={doc}
             />
-
-            {isDesktop && canUpdate && (
-              <DropdownMenu options={moreActions}>
-                <IconOptions
-                  isHorizontal
-                  data-testid="doc-share-member-more-actions"
-                  $variation="600"
-                />
-              </DropdownMenu>
-            )}
           </Box>
         }
       />
@@ -172,7 +127,10 @@ export const QuickSearchGroupMember = ({
   }, [membersQuery, t]);
 
   return (
-    <Box aria-label={t('List members card')}>
+    <Box
+      aria-label={t('List members card')}
+      $padding={{ horizontal: 'base', bottom: '3xs' }}
+    >
       <QuickSearchGroup
         group={membersData}
         renderElement={(access) => (

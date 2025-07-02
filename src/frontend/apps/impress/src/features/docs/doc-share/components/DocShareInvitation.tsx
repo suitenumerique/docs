@@ -122,6 +122,8 @@ export const DocShareInvitationItem = ({
               currentRole={invitation.role}
               onSelectRole={onUpdate}
               canUpdate={canUpdate}
+              doc={doc}
+              access={invitation}
             />
 
             {canUpdate && (

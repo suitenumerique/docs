@@ -1,7 +1,6 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-
 import { Access } from '@/docs/doc-management';
 
 export type DocAccessesParams = {
@@ -9,12 +8,10 @@ export type DocAccessesParams = {
   ordering?: string;
 };
 
-export type DocAccessesAPIParams = DocAccessesParams & {};
-
 export const getDocAccesses = async ({
   docId,
   ordering,
-}: DocAccessesAPIParams): Promise<Access[]> => {
+}: DocAccessesParams): Promise<Access[]> => {
   let url = `documents/${docId}/accesses/`;
 
   if (ordering) {
@@ -36,7 +33,7 @@ export const getDocAccesses = async ({
 export const KEY_LIST_DOC_ACCESSES = 'docs-accesses';
 
 export function useDocAccesses(
-  params: DocAccessesAPIParams,
+  params: DocAccessesParams,
   queryConfig?: UseQueryOptions<Access[], APIError, Access[]>,
 ) {
   return useQuery<Access[], APIError, Access[]>({

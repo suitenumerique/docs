@@ -74,7 +74,10 @@ export const DocSearchModal = ({
           loading={loading}
           onFilter={handleInputSearch}
         >
-          <Box $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}>
+          <Box
+            $padding={{ horizontal: '10px' }}
+            $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}
+          >
             {showFilters && (
               <DocSearchFilters
                 values={filters}

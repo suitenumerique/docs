@@ -5,7 +5,7 @@ import {
 } from '@gouvfr-lasuite/ui-kit';
 import { useModal } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -22,14 +22,17 @@ type DocTreeItemActionsProps = {
   doc: Doc;
   parentId?: string | null;
   onCreateSuccess?: (newDoc: Doc) => void;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 export const DocTreeItemActions = ({
   doc,
   parentId,
   onCreateSuccess,
+  isOpen,
+  onOpenChange,
 }: DocTreeItemActionsProps) => {
-  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
   const deleteModal = useModal();
@@ -68,7 +71,7 @@ export const DocTreeItemActions = ({
     ...(!isCurrentParent
       ? [
           {
-            label: t('Convert to doc'),
+            label: t('Move to my docs'),
             isDisabled: !canUpdate,
             icon: (
               <Box
@@ -94,6 +97,7 @@ export const DocTreeItemActions = ({
   const { mutate: createChildrenDoc } = useCreateChildrenDoc({
     onSuccess: (newDoc) => {
       onCreateSuccess?.(newDoc);
+      void router.push(`/docs/${newDoc.id}`);
     },
   });
 
@@ -120,13 +124,13 @@ export const DocTreeItemActions = ({
         <DropdownMenu
           options={options}
           isOpen={isOpen}
-          onOpenChange={setIsOpen}
+          onOpenChange={onOpenChange}
         >
           <Icon
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              setIsOpen(!isOpen);
+              onOpenChange?.(!isOpen);
             }}
             iconName="more_horiz"
             variant="filled"

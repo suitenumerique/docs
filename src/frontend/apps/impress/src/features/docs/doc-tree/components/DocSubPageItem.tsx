@@ -37,7 +37,7 @@ export const DocSubPageItem = (props: Props) => {
   const { untitledDocument } = useTrans(doc);
   const { node } = props;
   const { spacingsTokens } = useCunninghamTheme();
-  const [isHover, setIsHover] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
@@ -97,11 +97,22 @@ export const DocSubPageItem = (props: Props) => {
   return (
     <Box
       className="--docs-sub-page-item"
-      onMouseEnter={() => setIsHover(true)}
-      onMouseLeave={() => setIsHover(false)}
       $css={css`
-        &:not(:has(.isSelected)):has(.light-doc-item-actions) {
+        background-color: ${actionsOpen
+          ? 'var(--c--theme--colors--greyscale-100)'
+          : 'var(--c--theme--colors--greyscale-000)'};
+
+        .light-doc-item-actions {
+          display: ${actionsOpen ? 'flex' : 'none'};
+        }
+
+        &:hover {
           background-color: var(--c--theme--colors--greyscale-100);
+          border-radius: 4px;
+
+          .light-doc-item-actions {
+            display: flex;
+          }
         }
       `}
     >
@@ -150,19 +161,19 @@ export const DocSubPageItem = (props: Props) => {
             )}
           </Box>
 
-          {isHover && (
-            <Box
-              $direction="row"
-              $align="center"
-              className="light-doc-item-actions"
-            >
-              <DocTreeItemActions
-                doc={doc}
-                parentId={node.data.parentKey}
-                onCreateSuccess={afterCreate}
-              />
-            </Box>
-          )}
+          <Box
+            $direction="row"
+            $align="center"
+            className="light-doc-item-actions"
+          >
+            <DocTreeItemActions
+              doc={doc}
+              isOpen={actionsOpen}
+              onOpenChange={setActionsOpen}
+              parentId={node.data.parentKey}
+              onCreateSuccess={afterCreate}
+            />
+          </Box>
         </Box>
       </TreeViewItem>
     </Box>

@@ -11,13 +11,18 @@ import { useState } from 'react';
 
 import { Doc, Role } from '@/docs/doc-management';
 
+export type DocDragEndData = {
+  sourceDocumentId: string;
+  targetDocumentId: string;
+  source: Doc;
+  target: Doc;
+};
+
 const activationConstraint = {
   distance: 20,
 };
 
-export function useDragAndDrop(
-  onDrag: (sourceDocumentId: string, targetDocumentId: string) => void,
-) {
+export function useDragAndDrop(onDrag: (data: DocDragEndData) => void) {
   const [selectedDoc, setSelectedDoc] = useState<Doc>();
   const [canDrop, setCanDrop] = useState<boolean>();
 
@@ -49,7 +54,12 @@ export function useDragAndDrop(
       return;
     }
 
-    onDrag(active.id as string, over.id as string);
+    onDrag({
+      sourceDocumentId: active.id as string,
+      targetDocumentId: over.id as string,
+      source: active.data.current as Doc,
+      target: over.data.current as Doc,
+    });
   };
 
   const updateCanDrop = (docCanDrop: boolean, isOver: boolean) => {

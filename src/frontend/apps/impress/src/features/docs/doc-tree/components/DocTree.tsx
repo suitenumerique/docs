@@ -26,6 +26,7 @@ type DocTreeProps = {
 export const DocTree = ({ initialTargetId }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
 
+  const [rootActionsOpen, setRootActionsOpen] = useState(false);
   const treeContext = useTreeContext<Doc>();
   const { currentDoc } = useDocStore();
   const router = useRouter();
@@ -151,11 +152,12 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
         `}
       >
         <Box
+          data-testid="doc-tree-root-item"
           $css={css`
             padding: ${spacingsTokens['2xs']};
             border-radius: 4px;
             width: 100%;
-            background-color: ${rootIsSelected
+            background-color: ${rootIsSelected || rootActionsOpen
               ? 'var(--c--theme--colors--greyscale-100)'
               : 'transparent'};
 
@@ -165,7 +167,7 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
 
             .doc-tree-root-item-actions {
               display: 'flex';
-              opacity: 0;
+              opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {
                 opacity: 1;
@@ -207,6 +209,8 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
                       };
                       treeContext?.treeData.addChild(null, newDoc);
                     }}
+                    isOpen={rootActionsOpen}
+                    onOpenChange={setRootActionsOpen}
                   />
                 </div>
               </Box>
