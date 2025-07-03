@@ -1,7 +1,7 @@
-import { Hocuspocus } from '@hocuspocus/server';
+import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import request from 'supertest';
 import { describe, expect, test, vi } from 'vitest';
-import { mock } from 'vitest-mock-extended';
+import * as Y from 'yjs';
 
 vi.mock('../src/env', async (importOriginal) => {
   return {
@@ -20,16 +20,9 @@ import {
 
 console.error = vi.fn();
 
-const mockOpts = {
-  fallbackMockImplementation: () => {
-    throw new Error('Unexpected call.');
-  },
-};
-
 describe('Server Tests', () => {
   test('POST /api/convert with incorrect API key should responds with 403', async () => {
-    const hocuspocus = mock<Hocuspocus>({}, mockOpts);
-    const app = initApp(hocuspocus);
+    const app = initApp();
 
     const response = await request(app)
       .post('/api/convert')
@@ -43,8 +36,7 @@ describe('Server Tests', () => {
   });
 
   test('POST /api/convert with a Bearer token', async () => {
-    const hocuspocus = mock<Hocuspocus>({}, mockOpts);
-    const app = initApp(hocuspocus);
+    const app = initApp();
 
     const response = await request(app)
       .post('/api/convert')
@@ -59,8 +51,7 @@ describe('Server Tests', () => {
   });
 
   test('POST /api/convert with missing body param content', async () => {
-    const hocuspocus = mock<Hocuspocus>({}, mockOpts);
-    const app = initApp(hocuspocus);
+    const app = initApp();
 
     const response = await request(app)
       .post('/api/convert')
@@ -74,8 +65,7 @@ describe('Server Tests', () => {
   });
 
   test('POST /api/convert with body param content being an empty string', async () => {
-    const hocuspocus = mock<Hocuspocus>({}, mockOpts);
-    const app = initApp(hocuspocus);
+    const app = initApp();
 
     const response = await request(app)
       .post('/api/convert')
@@ -89,5 +79,73 @@ describe('Server Tests', () => {
     expect(response.body).toStrictEqual({
       error: 'Invalid request: missing content',
     });
+  });
+
+  test('POST /api/convert with correct content', async () => {
+    const app = initApp();
+
+    const document = [
+      '# Example document',
+      '',
+      'Lorem ipsum dolor sit amet.',
+      '',
+    ].join('\n');
+
+    const response = await request(app)
+      .post('/api/convert')
+      .set('Origin', origin)
+      .set('Authorization', apiKey)
+      .send({
+        content: document,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toStrictEqual({
+      content: expect.any(String),
+    });
+
+    const editor = ServerBlockNoteEditor.create();
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, Buffer.from(response.body.content, 'base64'));
+    const blocks = editor.yDocToBlocks(doc, 'document-store');
+
+    expect(blocks).toStrictEqual([
+      {
+        children: [],
+        content: [
+          {
+            styles: {},
+            text: 'Example document',
+            type: 'text',
+          },
+        ],
+        id: expect.any(String),
+        props: {
+          backgroundColor: 'default',
+          isToggleable: false,
+          level: 1,
+          textAlignment: 'left',
+          textColor: 'default',
+        },
+        type: 'heading',
+      },
+      {
+        children: [],
+        content: [
+          {
+            styles: {},
+            text: 'Lorem ipsum dolor sit amet.',
+            type: 'text',
+          },
+        ],
+        id: expect.any(String),
+        props: {
+          backgroundColor: 'default',
+          textAlignment: 'left',
+          textColor: 'default',
+        },
+        type: 'paragraph',
+      },
+    ]);
   });
 });
