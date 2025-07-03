@@ -28,6 +28,7 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_resource_server.authentication import ResourceServerAuthentication
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -435,6 +436,7 @@ class DocumentViewSet(
     pagination_class = Pagination
     permission_classes = [
         permissions.DocumentAccessPermission,
+        permissions.ResourceServerClientPermission,
     ]
     queryset = models.Document.objects.all()
     serializer_class = serializers.DocumentSerializer
@@ -444,6 +446,22 @@ class DocumentViewSet(
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
+    resource_server_actions = {
+        "list",
+        "retrieve",
+        "create_for_owner",
+    }
+
+    def get_authenticators(self):
+        """Allow resource server authentication for very specific actions."""
+        authenticators = super().get_authenticators()
+
+        # self.action does not exist yet
+        action = self.action_map[self.request.method.lower()]
+        if action in self.resource_server_actions:
+            authenticators.append(ResourceServerAuthentication())
+
+        return authenticators
 
     def annotate_is_favorite(self, queryset):
         """
@@ -675,7 +693,7 @@ class DocumentViewSet(
         authentication_classes=[authentication.ServerToServerAuthentication],
         detail=False,
         methods=["post"],
-        permission_classes=[],
+        permission_classes=[permissions.IsAuthenticated],
         url_path="create-for-owner",
     )
     @transaction.atomic
