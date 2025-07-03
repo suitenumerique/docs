@@ -50,9 +50,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { t } = useTranslation();
 
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const isConnectedToCollabServer = provider.isSynced;
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
 
-  useSaveDoc(doc.id, provider.document, !readOnly);
+  useSaveDoc(doc.id, provider.document, !readOnly, isConnectedToCollabServer);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage;
 
