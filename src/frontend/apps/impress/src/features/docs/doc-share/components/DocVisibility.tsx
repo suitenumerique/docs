@@ -18,7 +18,7 @@ import {
   LinkReach,
   LinkRole,
   useUpdateDocLink,
-} from '@/features/docs';
+} from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useTranslatedShareSettings } from '../hooks/';

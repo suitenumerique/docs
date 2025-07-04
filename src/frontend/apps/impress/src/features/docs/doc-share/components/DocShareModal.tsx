@@ -10,8 +10,8 @@ import {
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
+import { Doc } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { Doc } from '@/features/docs';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 

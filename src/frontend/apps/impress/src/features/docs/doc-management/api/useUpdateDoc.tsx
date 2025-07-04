@@ -5,7 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/features/docs';
+import { Doc } from '@/docs/doc-management';
 
 import { KEY_CAN_EDIT } from './useDocCanEdit';
 
