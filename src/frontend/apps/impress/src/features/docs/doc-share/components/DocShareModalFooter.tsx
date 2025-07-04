@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, HorizontalSeparator } from '@/components';
-import { Doc, useCopyDocLink } from '@/features/docs';
+import { Doc, useCopyDocLink } from '@/docs/doc-management';
 
 import { DocVisibility } from './DocVisibility';
 

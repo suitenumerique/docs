@@ -41,7 +41,7 @@ describe('useSaveDoc', () => {
 
     const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
 
-    renderHook(() => useSaveDoc(docId, yDoc, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true, true), {
       wrapper: AppWrapper,
     });
 
@@ -73,7 +73,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, false), {
+    renderHook(() => useSaveDoc(docId, yDoc, false, true), {
       wrapper: AppWrapper,
     });
 
@@ -107,7 +107,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true, true), {
       wrapper: AppWrapper,
     });
 
@@ -143,7 +143,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true, true), {
       wrapper: AppWrapper,
     });
 
@@ -164,7 +164,7 @@ describe('useSaveDoc', () => {
     const docId = 'test-doc-id';
     const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
 
-    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true), {
+    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true, true), {
       wrapper: AppWrapper,
     });
 

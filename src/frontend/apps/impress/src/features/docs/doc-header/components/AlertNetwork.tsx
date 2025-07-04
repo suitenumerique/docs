@@ -32,7 +32,7 @@ export const AlertNetwork = () => {
           <Box $direction="row" $gap={spacingsTokens['2xs']} $align="center">
             <Icon iconName="mobiledata_off" $theme="warning" $variation="600" />
             <Text $theme="warning" $variation="600" $weight={500}>
-              {t('Your network do not allow you to edit')}
+              {t('Others are editing. Your network prevent changes.')}
             </Text>
           </Box>
           <BoxButton
@@ -50,7 +50,7 @@ export const AlertNetwork = () => {
               $margin={{ top: 'auto' }}
             />
             <Text $theme="warning" $variation="600" $weight="500" $size="xs">
-              {t('Know more')}
+              {t('Learn more')}
             </Text>
           </BoxButton>
         </Box>
@@ -74,8 +74,8 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
       onClose={() => onClose()}
       rightActions={
         <>
-          <Button aria-label={t('OK')} onClick={onClose}>
-            {t('OK')}
+          <Button aria-label={t('OK')} onClick={onClose} color="danger">
+            {t('I understand')}
           </Button>
         </>
       }
@@ -88,24 +88,39 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
           $align="flex-start"
           $variation="1000"
         >
-          {t("Why can't I edit?")}
+          {t("Why you can't edit the document?")}
         </Text>
       }
     >
       <Box
         aria-label={t('Content modal to explain why the user cannot edit')}
         className="--docs--modal-alert-network"
-        $margin={{ top: 'xs' }}
+        $margin={{ top: 'md' }}
       >
         <Text $size="sm" $variation="600">
           {t(
-            'The network configuration of your workstation or internet connection does not allow editing shared documents.',
+            'Others are editing this document. Unfortunately your network blocks WebSockets, the technology enabling real-time co-editing.',
           )}
         </Text>
-        <Text $size="sm" $variation="600" $margin={{ top: 'xs' }}>
-          {t(
-            'Docs use WebSockets to enable real-time editing. These communication channels allow instant and bidirectional exchanges between your browser and our servers. To access collaborative editing, please contact your IT department to enable WebSockets.',
-          )}
+        <Text
+          $size="sm"
+          $variation="600"
+          $margin={{ top: 'xs' }}
+          $weight="bold"
+          $display="inline"
+        >
+          {t("This means you can't edit until others leave.")}{' '}
+          <Text
+            $size="sm"
+            $variation="600"
+            $margin={{ top: 'xs' }}
+            $weight="normal"
+            $display="inline"
+          >
+            {t(
+              'If you wish to be able to co-edit in real-time, contact your Information Systems Security Manager about allowing WebSockets.',
+            )}
+          </Text>
         </Text>
       </Box>
     </Modal>

@@ -1,14 +1,13 @@
 import path from 'path';
 
-import { expect, test } from '@playwright/test';
+import { chromium, expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
 import {
-  CONFIG,
-  addNewMember,
   createDoc,
   goToGridDoc,
   mockedDocument,
+  overrideConfig,
   verifyDocName,
 } from './common';
 
@@ -522,52 +521,141 @@ test.describe('Doc Editor', () => {
 
   test('it checks block editing when not connected to collab server', async ({
     page,
+    browserName,
   }) => {
-    await page.route('**/api/v1.0/config/', async (route) => {
-      const request = route.request();
-      if (request.method().includes('GET')) {
-        await route.fulfill({
-          json: {
-            ...CONFIG,
-            COLLABORATION_WS_URL: 'ws://localhost:5555/collaboration/ws/',
-            COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,
-          },
-        });
-      } else {
-        await route.continue();
-      }
+    /**
+     * The good port is 4444, but we want to simulate a not connected
+     * collaborative server.
+     * So we use a port that is not used by the collaborative server.
+     * The server will not be able to connect to the collaborative server.
+     */
+    await overrideConfig(page, {
+      COLLABORATION_WS_URL: 'ws://localhost:5555/collaboration/ws/',
     });
 
     await page.goto('/');
 
-    void page
-      .getByRole('button', {
-        name: 'New doc',
-      })
-      .click();
+    const [title] = await createDoc(page, 'editing-blocking', browserName, 1);
 
     const card = page.getByLabel('It is the card information');
     await expect(
-      card.getByText('Your network do not allow you to edit'),
+      card.getByText('Others are editing. Your network prevent changes.'),
     ).toBeHidden();
     const editor = page.locator('.ProseMirror');
 
     await expect(editor).toHaveAttribute('contenteditable', 'true');
 
+    let responseCanEditPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/can-edit/`) && response.status() === 200,
+    );
+
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await addNewMember(page, 0, 'Editor', 'impress');
+    await page.getByLabel('Visibility', { exact: true }).click();
+
+    await page
+      .getByRole('menuitem', {
+        name: 'Public',
+      })
+      .click();
+
+    await expect(
+      page.getByText('The document visibility has been updated.'),
+    ).toBeVisible();
+
+    await page.getByLabel('Visibility mode').click();
+    await page.getByRole('menuitem', { name: 'Editing' }).click();
 
     // Close the modal
     await page.getByRole('button', { name: 'close' }).first().click();
 
+    let responseCanEdit = await responseCanEditPromise;
+    expect(responseCanEdit.ok()).toBeTruthy();
+    let jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
+    expect(jsonCanEdit.can_edit).toBeTruthy();
+
+    const urlDoc = page.url();
+
+    /**
+     * We open another browser that will connect to the collaborative server
+     * and will block the current browser to edit the doc.
+     */
+    const otherBrowser = await chromium.launch({ headless: true });
+    const otherContext = await otherBrowser.newContext({
+      locale: 'en-US',
+      timezoneId: 'Europe/Paris',
+      permissions: [],
+      storageState: {
+        cookies: [],
+        origins: [],
+      },
+    });
+    const otherPage = await otherContext.newPage();
+
+    const webSocketPromise = otherPage.waitForEvent(
+      'websocket',
+      (webSocket) => {
+        return webSocket
+          .url()
+          .includes('ws://localhost:4444/collaboration/ws/?room=');
+      },
+    );
+
+    await otherPage.goto(urlDoc);
+
+    const webSocket = await webSocketPromise;
+    expect(webSocket.url()).toContain(
+      'ws://localhost:4444/collaboration/ws/?room=',
+    );
+
+    await verifyDocName(otherPage, title);
+
+    await page.reload();
+
+    responseCanEditPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/can-edit/`) && response.status() === 200,
+    );
+
+    responseCanEdit = await responseCanEditPromise;
+    expect(responseCanEdit.ok()).toBeTruthy();
+
+    jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
+    expect(jsonCanEdit.can_edit).toBeFalsy();
+
     await expect(
-      card.getByText('Your network do not allow you to edit'),
+      card.getByText('Others are editing. Your network prevent changes.'),
     ).toBeVisible({
       timeout: 10000,
     });
 
     await expect(editor).toHaveAttribute('contenteditable', 'false');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await page.getByLabel('Visibility mode').click();
+    await page.getByRole('menuitem', { name: 'Reading' }).click();
+
+    // Close the modal
+    await page.getByRole('button', { name: 'close' }).first().click();
+
+    await page.reload();
+
+    responseCanEditPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/can-edit/`) && response.status() === 200,
+    );
+
+    responseCanEdit = await responseCanEditPromise;
+    expect(responseCanEdit.ok()).toBeTruthy();
+
+    jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
+    expect(jsonCanEdit.can_edit).toBeTruthy();
+
+    await expect(
+      card.getByText('Others are editing. Your network prevent changes.'),
+    ).toBeHidden();
   });
 
   test('it checks if callout custom block', async ({ page, browserName }) => {

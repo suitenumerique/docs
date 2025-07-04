@@ -10,7 +10,12 @@ import { toBase64 } from '../utils';
 
 const SAVE_INTERVAL = 60000;
 
-const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
+const useSaveDoc = (
+  docId: string,
+  yDoc: Y.Doc,
+  canSave: boolean,
+  isConnectedToCollabServer: boolean,
+) => {
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
@@ -49,10 +54,18 @@ const useSaveDoc = (docId: string, yDoc: Y.Doc, canSave: boolean) => {
     updateDoc({
       id: docId,
       content: toBase64(Y.encodeStateAsUpdate(yDoc)),
+      websocket: isConnectedToCollabServer,
     });
 
     return true;
-  }, [canSave, yDoc, docId, isLocalChange, updateDoc]);
+  }, [
+    canSave,
+    isLocalChange,
+    updateDoc,
+    docId,
+    yDoc,
+    isConnectedToCollabServer,
+  ]);
 
   const router = useRouter();
 

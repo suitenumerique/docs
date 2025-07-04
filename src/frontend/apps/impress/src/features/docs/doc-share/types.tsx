@@ -1,5 +1,5 @@
+import { Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { Role } from '@/features/docs';
 
 export interface Invitation {
   id: string;

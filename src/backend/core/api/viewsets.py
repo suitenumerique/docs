@@ -634,6 +634,83 @@ class DocumentViewSet(
         """Override to implement a soft delete instead of dumping the record in database."""
         instance.soft_delete()
 
+    def _can_user_edit_document(self, document_id, set_cache=False):
+        """Check if the user can edit the document."""
+        try:
+            count, exists = CollaborationService().get_document_connection_info(
+                document_id,
+                self.request.session.session_key,
+            )
+        except requests.HTTPError as e:
+            logger.exception("Failed to call collaboration server: %s", e)
+            count = 0
+            exists = False
+
+        if count == 0:
+            # Nobody is connected to the websocket server
+            logger.debug("update without connection found in the websocket server")
+            cache_key = f"docs:no-websocket:{document_id}"
+            current_editor = cache.get(cache_key)
+
+            if not current_editor:
+                if set_cache:
+                    cache.set(
+                        cache_key,
+                        self.request.session.session_key,
+                        settings.NO_WEBSOCKET_CACHE_TIMEOUT,
+                    )
+                return True
+
+            if current_editor != self.request.session.session_key:
+                return False
+
+            if set_cache:
+                cache.touch(cache_key, settings.NO_WEBSOCKET_CACHE_TIMEOUT)
+            return True
+
+        if exists:
+            # Current user is connected to the websocket server
+            logger.debug("session key found in the websocket server")
+            return True
+
+        logger.debug(
+            "Users connected to the websocket but current editor not connected to it. Can not edit."
+        )
+
+        return False
+
+    def perform_update(self, serializer):
+        """Check rules about collaboration."""
+        if (
+            serializer.validated_data.get("websocket", False)
+            or not settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+        ):
+            return super().perform_update(serializer)
+
+        if self._can_user_edit_document(serializer.instance.id, set_cache=True):
+            return super().perform_update(serializer)
+
+        raise drf.exceptions.PermissionDenied(
+            "You are not allowed to edit this document."
+        )
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        url_path="can-edit",
+    )
+    def can_edit(self, request, *args, **kwargs):
+        """Check if the current user can edit the document."""
+        document = self.get_object()
+
+        can_edit = (
+            True
+            if not settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+            else self._can_user_edit_document(document.id)
+        )
+
+        return drf.response.Response({"can_edit": can_edit})
+
     @drf.decorators.action(
         detail=False,
         methods=["get"],

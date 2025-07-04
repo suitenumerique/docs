@@ -15,49 +15,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Header', () => {
-  test('it checks the element are correctly displayed', async ({ page }) => {
-    await mockedDocument(page, {
-      accesses: [
-        {
-          id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
-          role: 'owner',
-          user: {
-            email: 'super@owner.com',
-            full_name: 'Super Owner',
-          },
-        },
-        {
-          id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
-          role: 'admin',
-          user: {
-            email: 'super@admin.com',
-          },
-        },
-        {
-          id: 'b0df4343-c8bd-4c20-9ff6-fbf94fc94egg',
-          role: 'owner',
-          user: {
-            email: 'super2@owner.com',
-          },
-        },
-      ],
-      abilities: {
-        destroy: true, // Means owner
-        link_configuration: true,
-        versions_destroy: true,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: true,
-        accesses_view: true,
-        update: true,
-        partial_update: true,
-        retrieve: true,
-      },
-      link_reach: 'public',
-      created_at: '2021-09-01T09:00:00Z',
-    });
-
-    await goToGridDoc(page);
+  test('it checks the element are correctly displayed', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-update', browserName, 1);
 
     const card = page.getByLabel(
       'It is the card information about the document.',
@@ -65,6 +27,18 @@ test.describe('Doc Header', () => {
 
     const docTitle = card.getByRole('textbox', { name: 'doc title input' });
     await expect(docTitle).toBeVisible();
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await page.getByLabel('Visibility', { exact: true }).click();
+
+    await page
+      .getByRole('menuitem', {
+        name: 'Public',
+      })
+      .click();
+
+    await page.getByRole('button', { name: 'close' }).first().click();
 
     await expect(card.getByText('Public document')).toBeVisible();
 
