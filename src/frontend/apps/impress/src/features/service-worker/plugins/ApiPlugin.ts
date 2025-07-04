@@ -1,7 +1,6 @@
 import { WorkboxPlugin } from 'workbox-core';
 
-import { Doc, DocsResponse } from '@/docs/doc-management';
-import { LinkReach, LinkRole } from '@/docs/doc-management/types';
+import { Doc, DocsResponse, LinkReach, LinkRole } from '@/docs/doc-management';
 
 import { DBRequest, DocsDB } from '../DocsDB';
 import { RequestSerializer } from '../RequestSerializer';

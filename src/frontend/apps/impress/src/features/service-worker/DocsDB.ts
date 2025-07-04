@@ -1,6 +1,6 @@
 import { DBSchema, IDBPDatabase, deleteDB, openDB } from 'idb';
 
-import { Doc, DocsResponse } from '@/features/docs';
+import { Doc, DocsResponse } from '@/docs/doc-management';
 
 import { RequestData, RequestSerializer } from './RequestSerializer';
 

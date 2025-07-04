@@ -8,9 +8,9 @@ import styled from 'styled-components';
 import img403 from '@/assets/icons/icon-403.png';
 import { Box, Icon, Loading, StyledLink, Text } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
-import { KEY_DOC, useDoc } from '@/features/docs';
-import { ButtonAccessRequest } from '@/features/docs/doc-share';
-import { useDocAccessRequests } from '@/features/docs/doc-share/api/useDocAccessRequest';
+import { KEY_DOC, useDoc } from '@/docs/doc-management';
+import { ButtonAccessRequest } from '@/docs/doc-share';
+import { useDocAccessRequests } from '@/docs/doc-share/api/useDocAccessRequest';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 

@@ -10,8 +10,8 @@ import { css } from 'styled-components';
 import { APIError } from '@/api';
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { Doc, Role } from '@/features/docs';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
