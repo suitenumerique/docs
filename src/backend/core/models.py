@@ -842,7 +842,7 @@ class Document(MP_Node, BaseModel):
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": is_owner,
-            "duplicate": can_get,
+            "duplicate": can_get and user.is_authenticated,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner,
@@ -876,8 +876,8 @@ class Document(MP_Node, BaseModel):
         )
 
         with override(language):
-            msg_html = render_to_string("mail/html/invitation.html", context)
-            msg_plain = render_to_string("mail/text/invitation.txt", context)
+            msg_html = render_to_string("mail/html/template.html", context)
+            msg_plain = render_to_string("mail/text/template.txt", context)
             subject = str(subject)  # Force translation
 
             try:
@@ -1147,6 +1147,112 @@ class DocumentAccess(BaseAccess):
             "retrieve": self.user and self.user.id == user.id or is_owner_or_admin,
             "set_role_to": set_role_to,
         }
+
+
+class DocumentAskForAccess(BaseModel):
+    """Relation model to ask for access to a document."""
+
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name="ask_for_accesses"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="ask_for_accesses"
+    )
+
+    role = models.CharField(
+        max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
+    )
+
+    class Meta:
+        db_table = "impress_document_ask_for_access"
+        verbose_name = _("Document ask for access")
+        verbose_name_plural = _("Document ask for accesses")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "document"],
+                name="unique_document_ask_for_access_user",
+                violation_error_message=_(
+                    "This user has already asked for access to this document."
+                ),
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user!s} asked for access to document {self.document!s}"
+
+    def get_abilities(self, user):
+        """Compute and return abilities for a given user."""
+        roles = []
+
+        if user.is_authenticated:
+            teams = user.teams
+            try:
+                roles = self.user_roles or []
+            except AttributeError:
+                try:
+                    roles = self.document.accesses.filter(
+                        models.Q(user=user) | models.Q(team__in=teams),
+                    ).values_list("role", flat=True)
+                except (self._meta.model.DoesNotExist, IndexError):
+                    roles = []
+
+        is_admin_or_owner = bool(
+            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
+        )
+
+        return {
+            "destroy": is_admin_or_owner,
+            "update": is_admin_or_owner,
+            "partial_update": is_admin_or_owner,
+            "retrieve": is_admin_or_owner,
+            "accept": is_admin_or_owner,
+        }
+
+    def accept(self, role=None):
+        """Accept a document ask for access resource."""
+        if role is None:
+            role = self.role
+
+        DocumentAccess.objects.update_or_create(
+            document=self.document,
+            user=self.user,
+            defaults={"role": role},
+            create_defaults={"role": role},
+        )
+        self.delete()
+
+    def send_ask_for_access_email(self, email, language=None):
+        """
+        Method allowing a user to send an email notification when asking for access to a document.
+        """
+
+        language = language or get_language()
+        sender = self.user
+        sender_name = sender.full_name or sender.email
+        sender_name_email = (
+            f"{sender.full_name:s} ({sender.email})"
+            if sender.full_name
+            else sender.email
+        )
+
+        with override(language):
+            context = {
+                "title": _("{name} would like access to a document!").format(
+                    name=sender_name
+                ),
+                "message": _(
+                    "{name} would like access to the following document:"
+                ).format(name=sender_name_email),
+            }
+            subject = (
+                context["title"]
+                if not self.document.title
+                else _("{name} is asking for access to the document: {title}").format(
+                    name=sender_name, title=self.document.title
+                )
+            )
+
+        self.document.send_email(subject, [email], context, language)
 
 
 class Template(BaseModel):

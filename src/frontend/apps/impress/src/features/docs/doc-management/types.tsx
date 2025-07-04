@@ -56,6 +56,7 @@ export interface Doc {
     children_list: boolean;
     collaboration_auth: boolean;
     destroy: boolean;
+    duplicate: boolean;
     favorite: boolean;
     invite_owner: boolean;
     link_configuration: boolean;
@@ -75,4 +76,19 @@ export enum DocDefaultFilter {
   ALL_DOCS = 'all_docs',
   MY_DOCS = 'my_docs',
   SHARED_WITH_ME = 'shared_with_me',
+}
+
+export interface AccessRequest {
+  id: string;
+  document: string;
+  user: User;
+  role: Role;
+  created_at: string;
+  abilities: {
+    destroy: boolean;
+    update: boolean;
+    partial_update: boolean;
+    retrieve: boolean;
+    accept: boolean;
+  };
 }

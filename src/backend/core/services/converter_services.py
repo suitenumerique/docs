@@ -34,7 +34,7 @@ class YdocConverter:
         # Note: Yprovider microservice accepts only raw token, which is not recommended
         return settings.Y_PROVIDER_API_KEY
 
-    def convert_markdown(self, text):
+    def convert(self, text):
         """Convert a Markdown text into our internal format using an external microservice."""
 
         if not text:

@@ -18,8 +18,12 @@ from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
 from configurations import Configuration, values
+from csp.constants import NONE
+from lasuite.configuration.values import SecretFileValue
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
+
+# pylint: disable=too-many-lines
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -65,7 +69,7 @@ class Base(Configuration):
 
     # Security
     ALLOWED_HOSTS = values.ListValue([])
-    SECRET_KEY = values.Value(None)
+    SECRET_KEY = SecretFileValue(None)
     SERVER_TO_SERVER_API_TOKENS = values.ListValue([])
 
     # Application definition
@@ -76,7 +80,7 @@ class Base(Configuration):
     DATABASES = {
         "default": {
             "ENGINE": values.Value(
-                "django.db.backends.postgresql_psycopg2",
+                "django.db.backends.postgresql",
                 environ_name="DB_ENGINE",
                 environ_prefix=None,
             ),
@@ -84,7 +88,7 @@ class Base(Configuration):
                 "impress", environ_name="DB_NAME", environ_prefix=None
             ),
             "USER": values.Value("dinum", environ_name="DB_USER", environ_prefix=None),
-            "PASSWORD": values.Value(
+            "PASSWORD": SecretFileValue(
                 "pass", environ_name="DB_PASSWORD", environ_prefix=None
             ),
             "HOST": values.Value(
@@ -122,10 +126,10 @@ class Base(Configuration):
     AWS_S3_ENDPOINT_URL = values.Value(
         environ_name="AWS_S3_ENDPOINT_URL", environ_prefix=None
     )
-    AWS_S3_ACCESS_KEY_ID = values.Value(
+    AWS_S3_ACCESS_KEY_ID = SecretFileValue(
         environ_name="AWS_S3_ACCESS_KEY_ID", environ_prefix=None
     )
-    AWS_S3_SECRET_ACCESS_KEY = values.Value(
+    AWS_S3_SECRET_ACCESS_KEY = SecretFileValue(
         environ_name="AWS_S3_SECRET_ACCESS_KEY", environ_prefix=None
     )
     AWS_S3_REGION_NAME = values.Value(
@@ -212,7 +216,11 @@ class Base(Configuration):
         "application/x-msdownload",
         "application/xml",
     ]
-
+    DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED = values.BooleanValue(
+        True,
+        environ_name="DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED",
+        environ_prefix=None,
+    )
     # Document versions
     DOCUMENT_VERSIONS_PAGE_SIZE = 50
 
@@ -285,6 +293,7 @@ class Base(Configuration):
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
+        "csp.middleware.CSPMiddleware",
     ]
 
     AUTHENTICATION_BACKENDS = [
@@ -318,6 +327,7 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        "csp",
     ]
 
     # Cache
@@ -384,7 +394,7 @@ class Base(Configuration):
     EMAIL_BRAND_NAME = values.Value(None)
     EMAIL_HOST = values.Value(None)
     EMAIL_HOST_USER = values.Value(None)
-    EMAIL_HOST_PASSWORD = values.Value(None)
+    EMAIL_HOST_PASSWORD = SecretFileValue(None)
     EMAIL_LOGO_IMG = values.Value(None)
     EMAIL_PORT = values.PositiveIntegerValue(None)
     EMAIL_USE_TLS = values.BooleanValue(False)
@@ -407,7 +417,7 @@ class Base(Configuration):
     COLLABORATION_API_URL = values.Value(
         None, environ_name="COLLABORATION_API_URL", environ_prefix=None
     )
-    COLLABORATION_SERVER_SECRET = values.Value(
+    COLLABORATION_SERVER_SECRET = SecretFileValue(
         None, environ_name="COLLABORATION_SERVER_SECRET", environ_prefix=None
     )
     COLLABORATION_WS_URL = values.Value(
@@ -482,7 +492,7 @@ class Base(Configuration):
     OIDC_RP_CLIENT_ID = values.Value(
         "impress", environ_name="OIDC_RP_CLIENT_ID", environ_prefix=None
     )
-    OIDC_RP_CLIENT_SECRET = values.Value(
+    OIDC_RP_CLIENT_SECRET = SecretFileValue(
         None,
         environ_name="OIDC_RP_CLIENT_SECRET",
         environ_prefix=None,
@@ -597,7 +607,7 @@ class Base(Configuration):
     AI_FEATURE_ENABLED = values.BooleanValue(
         default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
     )
-    AI_API_KEY = values.Value(None, environ_name="AI_API_KEY", environ_prefix=None)
+    AI_API_KEY = SecretFileValue(None, environ_name="AI_API_KEY", environ_prefix=None)
     AI_BASE_URL = values.Value(None, environ_name="AI_BASE_URL", environ_prefix=None)
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
     AI_ALLOW_REACH_FROM = values.Value(
@@ -618,7 +628,7 @@ class Base(Configuration):
     }
 
     # Y provider microservice
-    Y_PROVIDER_API_KEY = values.Value(
+    Y_PROVIDER_API_KEY = SecretFileValue(
         environ_name="Y_PROVIDER_API_KEY",
         environ_prefix=None,
     )
@@ -629,7 +639,7 @@ class Base(Configuration):
 
     # Conversion endpoint
     CONVERSION_API_ENDPOINT = values.Value(
-        default="convert-markdown",
+        default="convert",
         environ_name="CONVERSION_API_ENDPOINT",
         environ_prefix=None,
     )
@@ -716,6 +726,38 @@ class Base(Configuration):
         environ_name="API_USERS_LIST_LIMIT",
         environ_prefix=None,
     )
+
+    # Content Security Policy
+    # See https://content-security-policy.com/ for more information.
+    CONTENT_SECURITY_POLICY = {
+        "EXCLUDE_URL_PREFIXES": values.ListValue(
+            ["/admin"],
+            environ_name="CONTENT_SECURITY_POLICY_EXCLUDE_URL_PREFIXES",
+            environ_prefix=None,
+        ),
+        "DIRECTIVES": values.DictValue(
+            default={
+                "default-src": [NONE],
+                "script-src": [NONE],
+                "style-src": [NONE],
+                "img-src": [NONE],
+                "connect-src": [NONE],
+                "font-src": [NONE],
+                "object-src": [NONE],
+                "media-src": [NONE],
+                "frame-src": [NONE],
+                "child-src": [NONE],
+                "form-action": [NONE],
+                "frame-ancestors": [NONE],
+                "base-uri": [NONE],
+                "worker-src": [NONE],
+                "manifest-src": [NONE],
+                "prefetch-src": [NONE],
+            },
+            environ_name="CONTENT_SECURITY_POLICY_DIRECTIVES",
+            environ_prefix=None,
+        ),
+    }
 
     # pylint: disable=invalid-name
     @property

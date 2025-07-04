@@ -1,4 +1,3 @@
-# ruff: noqa: S311
 """
 Core application factories
 """
@@ -180,6 +179,17 @@ class TeamDocumentAccessFactory(factory.django.DjangoModelFactory):
 
     document = factory.SubFactory(DocumentFactory)
     team = factory.Sequence(lambda n: f"team{n}")
+    role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
+
+
+class DocumentAskForAccessFactory(factory.django.DjangoModelFactory):
+    """Create fake document ask for access for testing."""
+
+    class Meta:
+        model = models.DocumentAskForAccess
+
+    document = factory.SubFactory(DocumentFactory)
+    user = factory.SubFactory(UserFactory)
     role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
 
 

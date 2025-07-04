@@ -108,7 +108,6 @@ test.describe('Footer', () => {
     await expect(footer.getByAltText('Gouvernement Logo')).toBeVisible();
 
     await expect(footer.getByRole('heading', { name: 'Docs' })).toBeHidden();
-    await expect(footer.getByText('BETA')).toBeHidden();
 
     await expect(
       footer.getByRole('link', { name: 'legifrance.gouv.fr' }),

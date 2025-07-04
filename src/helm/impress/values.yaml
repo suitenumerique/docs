@@ -285,6 +285,17 @@ backend:
     annotations: 
       argocd.argoproj.io/hook: PostSync
 
+  # List of cronjob to add
+  # cronjobs:
+  #   - name: reset-database
+  #     schedule: "0 */2 * * *"
+  #     command:
+  #       - "/bin/sh"
+  #       - "-c"
+  #       - python manage.py flush --no-input
+  ## @param backend.cronjobs Cronjob name, schedule, command
+  cronjobs: []
+
   ## @param backend.probes.liveness.path [nullable] Configure path for backend HTTP liveness probe
   ## @param backend.probes.liveness.targetPort [nullable] Configure port for backend HTTP liveness probe
   ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for backend liveness probe

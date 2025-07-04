@@ -21,9 +21,9 @@ describe('Server Tests', () => {
     server.close();
   });
 
-  test('POST /api/convert-markdown with incorrect API key should return 403', async () => {
+  test('POST /api/convert with incorrect API key should return 403', async () => {
     const response = await request(app as any)
-      .post('/api/convert-markdown')
+      .post('/api/convert')
       .set('Origin', origin)
       .set('Authorization', 'wrong-api-key');
 
@@ -31,9 +31,9 @@ describe('Server Tests', () => {
     expect(response.body.error).toBe('Forbidden: Invalid API Key');
   });
 
-  test('POST /api/convert-markdown with a Bearer token', async () => {
+  test('POST /api/convert with a Bearer token', async () => {
     const response = await request(app as any)
-      .post('/api/convert-markdown')
+      .post('/api/convert')
       .set('Origin', origin)
       .set('Authorization', 'Bearer test-secret-api-key');
 
@@ -41,9 +41,9 @@ describe('Server Tests', () => {
     expect(response.status).toBe(403);
   });
 
-  test('POST /api/convert-markdown with missing body param content', async () => {
+  test('POST /api/convert with missing body param content', async () => {
     const response = await request(app as any)
-      .post('/api/convert-markdown')
+      .post('/api/convert')
       .set('Origin', origin)
       .set('Authorization', 'yprovider-api-key');
 
@@ -51,9 +51,9 @@ describe('Server Tests', () => {
     expect(response.body.error).toBe('Invalid request: missing content');
   });
 
-  test('POST /api/convert-markdown with body param content being an empty string', async () => {
+  test('POST /api/convert with body param content being an empty string', async () => {
     const response = await request(app as any)
-      .post('/api/convert-markdown')
+      .post('/api/convert')
       .set('Origin', origin)
       .set('Authorization', 'yprovider-api-key')
       .send({

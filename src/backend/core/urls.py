@@ -27,6 +27,12 @@ document_related_router.register(
     basename="invitations",
 )
 
+document_related_router.register(
+    "ask-for-access",
+    viewsets.DocumentAskForAccessViewSet,
+    basename="ask_for_access",
+)
+
 
 # - Routes nested under a template
 template_related_router = DefaultRouter()

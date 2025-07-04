@@ -229,7 +229,8 @@ export const tokens = {
             'color-hover': '#fff',
             'color-active': '#fff',
             'color-focus-visible': '#fff',
-            disabled: '#7C7C7C',
+            disabled: 'var(--c--theme--colors--greyscale-400)',
+            'background--disabled': 'var(--c--theme--colors--greyscale-100)',
           },
           'primary-text': {
             'background--color': '#000091',
@@ -365,7 +366,6 @@ export const tokens = {
         },
         'la-gaufre': false,
         'home-proconnect': false,
-        beta: false,
         'image-system-filter': '',
         favicon: {
           ico: '/assets/favicon-light.ico',
@@ -439,7 +439,6 @@ export const tokens = {
       components: {
         'la-gaufre': true,
         'home-proconnect': true,
-        beta: true,
         favicon: {
           ico: '/assets/favicon-dsfr.ico',
           'png-light': '/assets/favicon-dsfr.png',

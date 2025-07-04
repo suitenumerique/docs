@@ -348,7 +348,7 @@ frontend-lint: ## run the frontend linter
 .PHONY: frontend-lint
 
 run-frontend-development: ## Run the frontend in development mode
-	@$(COMPOSE) stop frontend frontend-development
+	@$(COMPOSE) stop frontend-development
 	cd $(PATH_FRONT_IMPRESS) && yarn dev
 .PHONY: run-frontend-development
 

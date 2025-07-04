@@ -25,6 +25,8 @@ from django.utils.translation import gettext_lazy as _
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from csp.constants import NONE
+from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
@@ -34,6 +36,7 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -951,6 +954,8 @@ class DocumentViewSet(
         )
         serializer.is_valid(raise_exception=True)
         with_accesses = serializer.validated_data.get("with_accesses", False)
+        roles = set(document.get_roles(request.user))
+        is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
 
         base64_yjs_content = document.content
 
@@ -982,7 +987,7 @@ class DocumentViewSet(
         ]
 
         # If accesses should be duplicated, add other users' accesses as per original document
-        if with_accesses:
+        if with_accesses and is_owner_or_admin:
             original_accesses = models.DocumentAccess.objects.filter(
                 document=document
             ).exclude(user=request.user)
@@ -1412,6 +1417,7 @@ class DocumentViewSet(
         name="",
         url_path="cors-proxy",
     )
+    @csp_update({"img-src": [NONE, "data:"]})
     def cors_proxy(self, request, *args, **kwargs):
         """
         GET /api/v1.0/documents/<resource_id>/cors-proxy
@@ -1452,7 +1458,6 @@ class DocumentViewSet(
                 content_type=content_type,
                 headers={
                     "Content-Disposition": "attachment;",
-                    "Content-Security-Policy": "default-src 'none'; img-src 'none' data:;",
                 },
                 status=response.status_code,
             )
@@ -1770,6 +1775,83 @@ class InvitationViewset(
             self.request.user,
             self.request.user.language or settings.LANGUAGE_CODE,
         )
+
+
+class DocumentAskForAccessViewSet(
+    drf.mixins.ListModelMixin,
+    drf.mixins.RetrieveModelMixin,
+    drf.mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """API ViewSet for asking for access to a document."""
+
+    lookup_field = "id"
+    pagination_class = Pagination
+    permission_classes = [permissions.IsAuthenticated, permissions.AccessPermission]
+    queryset = models.DocumentAskForAccess.objects.all()
+    serializer_class = serializers.DocumentAskForAccessSerializer
+    _document = None
+
+    def get_document_or_404(self):
+        """Get the document related to the viewset or raise a 404 error."""
+        if self._document is None:
+            try:
+                self._document = models.Document.objects.get(
+                    pk=self.kwargs["resource_id"]
+                )
+            except models.Document.DoesNotExist as e:
+                raise drf.exceptions.NotFound("Document not found.") from e
+        return self._document
+
+    def get_queryset(self):
+        """Return the queryset according to the action."""
+        document = self.get_document_or_404()
+
+        queryset = super().get_queryset()
+        queryset = queryset.filter(document=document)
+
+        roles = set(document.get_roles(self.request.user))
+        is_owner_or_admin = bool(roles.intersection(set(models.PRIVILEGED_ROLES)))
+        if not is_owner_or_admin:
+            queryset = queryset.filter(user=self.request.user)
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Create a document ask for access resource."""
+        document = self.get_document_or_404()
+
+        serializer = serializers.DocumentAskForAccessCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        queryset = self.get_queryset()
+
+        if queryset.filter(user=request.user).exists():
+            return drf.response.Response(
+                {"detail": "You already ask to access to this document."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        ask_for_access = models.DocumentAskForAccess.objects.create(
+            document=document,
+            user=request.user,
+            role=serializer.validated_data["role"],
+        )
+
+        send_ask_for_access_mail.delay(ask_for_access.id)
+
+        return drf.response.Response(status=drf.status.HTTP_201_CREATED)
+
+    @drf.decorators.action(detail=True, methods=["post"])
+    def accept(self, request, *args, **kwargs):
+        """Accept a document ask for access resource."""
+        document_ask_for_access = self.get_object()
+
+        serializer = serializers.RoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        document_ask_for_access.accept(role=serializer.validated_data.get("role"))
+        return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
 
 class ConfigView(drf.views.APIView):

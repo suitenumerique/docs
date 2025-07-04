@@ -218,7 +218,10 @@
   --c--components--button--primary--color-active: #fff;
   --c--components--button--primary--color-focus-visible: #fff;
   --c--components--button--primary--disabled: var(
-    --c--theme--colors--greyscale-500
+    --c--theme--colors--greyscale-400
+  );
+  --c--components--button--primary--background--disabled: var(
+    --c--theme--colors--greyscale-100
   );
   --c--components--button--primary-text--background--color: var(
     --c--theme--colors--primary-text
@@ -489,7 +492,6 @@
   --c--components--badge--info--color: var(--c--theme--colors--info-600);
   --c--components--la-gaufre: false;
   --c--components--home-proconnect: false;
-  --c--components--beta: false;
   --c--components--image-system-filter: ;
   --c--components--favicon--ico: /assets/favicon-light.ico;
   --c--components--favicon--png-light: /assets/favicon-light.png;
@@ -553,7 +555,6 @@
   --c--theme--logo--alt: gouvernement logo;
   --c--components--la-gaufre: true;
   --c--components--home-proconnect: true;
-  --c--components--beta: true;
   --c--components--favicon--ico: /assets/favicon-dsfr.ico;
   --c--components--favicon--png-light: /assets/favicon-dsfr.png;
   --c--components--favicon--png-dark: /assets/favicon-dark-dsfr.png;

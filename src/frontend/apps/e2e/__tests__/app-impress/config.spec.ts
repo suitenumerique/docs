@@ -47,6 +47,10 @@ test.describe('Config', () => {
 
     await expect(image).toBeVisible();
 
+    // Wait for the media-check to be processed
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(1000);
+
     // Check src of image
     expect(await image.getAttribute('src')).toMatch(
       /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.png/,

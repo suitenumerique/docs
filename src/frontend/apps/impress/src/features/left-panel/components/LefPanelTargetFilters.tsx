@@ -4,7 +4,7 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocDefaultFilter } from '@/features/docs';
+import { DocDefaultFilter } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 
 export const LeftPanelTargetFilters = () => {

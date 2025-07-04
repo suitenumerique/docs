@@ -1,21 +1,20 @@
-import {
-  DefinedInitialDataInfiniteOptions,
-  InfiniteData,
-  QueryKey,
-  UseQueryOptions,
-  useInfiniteQuery,
-  useQuery,
-} from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
+import {
+  APIError,
+  APIList,
+  errorCauses,
+  fetchAPI,
+  useAPIInfiniteQuery,
+} from '@/api';
 import { Access } from '@/docs/doc-management';
 
-export type DocAccessesParam = {
+export type DocAccessesParams = {
   docId: string;
   ordering?: string;
 };
 
-export type DocAccessesAPIParams = DocAccessesParam & {
+export type DocAccessesAPIParams = DocAccessesParams & {
   page: number;
 };
 
@@ -62,33 +61,6 @@ export function useDocAccesses(
  * @param queryConfig
  * @returns
  */
-export function useDocAccessesInfinite(
-  param: DocAccessesParam,
-  queryConfig?: DefinedInitialDataInfiniteOptions<
-    AccessesResponse,
-    APIError,
-    InfiniteData<AccessesResponse>,
-    QueryKey,
-    number
-  >,
-) {
-  return useInfiniteQuery<
-    AccessesResponse,
-    APIError,
-    InfiniteData<AccessesResponse>,
-    QueryKey,
-    number
-  >({
-    initialPageParam: 1,
-    queryKey: [KEY_LIST_DOC_ACCESSES, param],
-    queryFn: ({ pageParam }) =>
-      getDocAccesses({
-        ...param,
-        page: pageParam,
-      }),
-    getNextPageParam(lastPage, allPages) {
-      return lastPage.next ? allPages.length + 1 : undefined;
-    },
-    ...queryConfig,
-  });
+export function useDocAccessesInfinite(params: DocAccessesParams) {
+  return useAPIInfiniteQuery(KEY_LIST_DOC_ACCESSES, getDocAccesses, params);
 }

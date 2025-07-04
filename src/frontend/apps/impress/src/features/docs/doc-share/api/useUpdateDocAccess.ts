@@ -68,10 +68,5 @@ export const useUpdateDocAccess = (options?: UseUpdateDocAccessOptions) => {
         void options.onSuccess(data, variables, context);
       }
     },
-    onError: (error, variables, context) => {
-      if (options?.onError) {
-        void options.onError(error, variables, context);
-      }
-    },
   });
 };

@@ -186,6 +186,7 @@ export class ApiPlugin implements WorkboxPlugin {
         children_list: true,
         collaboration_auth: true,
         destroy: true,
+        duplicate: true,
         favorite: true,
         invite_owner: true,
         link_configuration: true,

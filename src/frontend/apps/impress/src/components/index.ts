@@ -6,7 +6,7 @@ export * from './DropdownMenu';
 export * from './Icon';
 export * from './InfiniteScroll';
 export * from './Link';
-export * from './LoadMoreText';
+export * from './Loading';
 export * from './SideModal';
 export * from './separators';
 export * from './Text';

@@ -1,5 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
+export const BROWSERS = ['chromium', 'webkit', 'firefox'];
+
 export const CONFIG = {
   AI_FEATURE_ENABLED: true,
   CRISP_WEBSITE_ID: null,
@@ -328,4 +330,6 @@ export const mockedAccesses = async (page: Page, json?: object) => {
 export const expectLoginPage = async (page: Page) =>
   await expect(
     page.getByRole('heading', { name: 'Collaborative writing' }),
-  ).toBeVisible();
+  ).toBeVisible({
+    timeout: 10000,
+  });

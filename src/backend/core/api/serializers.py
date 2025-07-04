@@ -408,9 +408,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             language = user.language or language
 
         try:
-            document_content = YdocConverter().convert_markdown(
-                validated_data["content"]
-            )
+            document_content = YdocConverter().convert(validated_data["content"])
         except ConversionError as err:
             raise serializers.ValidationError(
                 {"content": ["Could not convert content"]}
@@ -517,16 +515,17 @@ class FileUploadSerializer(serializers.Serializer):
         mime = magic.Magic(mime=True)
         magic_mime_type = mime.from_buffer(file.read(1024))
         file.seek(0)  # Reset file pointer to the beginning after reading
+        self.context["is_unsafe"] = False
+        if settings.DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED:
+            self.context["is_unsafe"] = (
+                magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
+            )
 
-        self.context["is_unsafe"] = (
-            magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
-        )
+            extension_mime_type, _ = mimetypes.guess_type(file.name)
 
-        extension_mime_type, _ = mimetypes.guess_type(file.name)
-
-        # Try guessing a coherent extension from the mimetype
-        if extension_mime_type != magic_mime_type:
-            self.context["is_unsafe"] = True
+            # Try guessing a coherent extension from the mimetype
+            if extension_mime_type != magic_mime_type:
+                self.context["is_unsafe"] = True
 
         guessed_ext = mimetypes.guess_extension(magic_mime_type)
         # Missing extensions or extensions longer than 5 characters (it's as long as an extension
@@ -662,6 +661,50 @@ class InvitationSerializer(serializers.ModelSerializer):
                 )
 
         return role
+
+
+class RoleSerializer(serializers.Serializer):
+    """Serializer validating role choices."""
+
+    role = serializers.ChoiceField(
+        choices=models.RoleChoices.choices, required=False, allow_null=True
+    )
+
+
+class DocumentAskForAccessCreateSerializer(serializers.Serializer):
+    """Serializer for creating a document ask for access."""
+
+    role = serializers.ChoiceField(
+        choices=models.RoleChoices.choices,
+        required=False,
+        default=models.RoleChoices.READER,
+    )
+
+
+class DocumentAskForAccessSerializer(serializers.ModelSerializer):
+    """Serializer for document ask for access model"""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = models.DocumentAskForAccess
+        fields = [
+            "id",
+            "document",
+            "user",
+            "role",
+            "created_at",
+            "abilities",
+        ]
+        read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
+
+    def get_abilities(self, invitation) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return invitation.get_abilities(request.user)
+        return {}
 
 
 class VersionFilterSerializer(serializers.Serializer):

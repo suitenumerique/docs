@@ -21,15 +21,15 @@ def test_auth_header(settings):
     assert converter.auth_header == "test-key"
 
 
-def test_convert_markdown_empty_text():
+def test_convert_empty_text():
     """Should raise ValidationError when text is empty."""
     converter = YdocConverter()
     with pytest.raises(ValidationError, match="Input text cannot be empty"):
-        converter.convert_markdown("")
+        converter.convert("")
 
 
 @patch("requests.post")
-def test_convert_markdown_service_unavailable(mock_post):
+def test_convert_service_unavailable(mock_post):
     """Should raise ServiceUnavailableError when service is unavailable."""
     converter = YdocConverter()
 
@@ -39,11 +39,11 @@ def test_convert_markdown_service_unavailable(mock_post):
         ServiceUnavailableError,
         match="Failed to connect to conversion service",
     ):
-        converter.convert_markdown("test text")
+        converter.convert("test text")
 
 
 @patch("requests.post")
-def test_convert_markdown_http_error(mock_post):
+def test_convert_http_error(mock_post):
     """Should raise ServiceUnavailableError when HTTP error occurs."""
     converter = YdocConverter()
 
@@ -55,11 +55,11 @@ def test_convert_markdown_http_error(mock_post):
         ServiceUnavailableError,
         match="Failed to connect to conversion service",
     ):
-        converter.convert_markdown("test text")
+        converter.convert("test text")
 
 
 @patch("requests.post")
-def test_convert_markdown_invalid_json_response(mock_post):
+def test_convert_invalid_json_response(mock_post):
     """Should raise InvalidResponseError when response is not valid JSON."""
     converter = YdocConverter()
 
@@ -71,11 +71,11 @@ def test_convert_markdown_invalid_json_response(mock_post):
         InvalidResponseError,
         match="Could not parse conversion service response",
     ):
-        converter.convert_markdown("test text")
+        converter.convert("test text")
 
 
 @patch("requests.post")
-def test_convert_markdown_missing_content_field(mock_post, settings):
+def test_convert_missing_content_field(mock_post, settings):
     """Should raise MissingContentError when response is missing required field."""
 
     settings.CONVERSION_API_CONTENT_FIELD = "expected_field"
@@ -90,11 +90,11 @@ def test_convert_markdown_missing_content_field(mock_post, settings):
         MissingContentError,
         match="Response missing required field: expected_field",
     ):
-        converter.convert_markdown("test text")
+        converter.convert("test text")
 
 
 @patch("requests.post")
-def test_convert_markdown_full_integration(mock_post, settings):
+def test_convert_full_integration(mock_post, settings):
     """Test full integration with all settings."""
 
     settings.Y_PROVIDER_API_BASE_URL = "http://test.com/"
@@ -110,7 +110,7 @@ def test_convert_markdown_full_integration(mock_post, settings):
     mock_response.json.return_value = {"content": expected_content}
     mock_post.return_value = mock_response
 
-    result = converter.convert_markdown("test markdown")
+    result = converter.convert("test markdown")
 
     assert result == expected_content
     mock_post.assert_called_once_with(
@@ -126,7 +126,7 @@ def test_convert_markdown_full_integration(mock_post, settings):
 
 
 @patch("requests.post")
-def test_convert_markdown_timeout(mock_post):
+def test_convert_timeout(mock_post):
     """Should raise ServiceUnavailableError when request times out."""
     converter = YdocConverter()
 
@@ -136,12 +136,12 @@ def test_convert_markdown_timeout(mock_post):
         ServiceUnavailableError,
         match="Failed to connect to conversion service",
     ):
-        converter.convert_markdown("test text")
+        converter.convert("test text")
 
 
-def test_convert_markdown_none_input():
+def test_convert_none_input():
     """Should raise ValidationError when input is None."""
     converter = YdocConverter()
 
     with pytest.raises(ValidationError, match="Input text cannot be empty"):
-        converter.convert_markdown(None)
+        converter.convert(None)

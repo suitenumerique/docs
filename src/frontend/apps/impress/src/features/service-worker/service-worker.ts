@@ -110,7 +110,6 @@ const precacheResources = [
   '/index.html',
   '/401/',
   '/404/',
-  '/403/',
   FALLBACK.offline,
   FALLBACK.images,
   FALLBACK.docs,

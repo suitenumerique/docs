@@ -60,7 +60,7 @@ def test_api_documents_duplicate_forbidden():
 def test_api_documents_duplicate_anonymous():
     """Anonymous users should not be able to duplicate documents even with read access."""
 
-    document = factories.DocumentFactory(link_reach="public")
+    document = factories.DocumentFactory(link_reach="public", link_role="reader")
 
     response = APIClient().post(f"/api/v1.0/documents/{document.id!s}/duplicate/")
 
@@ -168,14 +168,17 @@ def test_api_documents_duplicate_success(index):
         assert response.status_code == 403
 
 
-def test_api_documents_duplicate_with_accesses():
-    """Accesses should be duplicated if the user requests it specifically."""
+@pytest.mark.parametrize("role", ["owner", "administrator"])
+def test_api_documents_duplicate_with_accesses_admin(role):
+    """
+    Accesses should be duplicated if the user requests it specifically and is owner or admin.
+    """
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
 
     document = factories.DocumentFactory(
-        users=[user],
+        users=[(user, role)],
         title="document with accesses",
     )
     user_access = factories.UserDocumentAccessFactory(document=document)
@@ -205,3 +208,44 @@ def test_api_documents_duplicate_with_accesses():
     assert duplicated_accesses.get(user=user).role == "owner"
     assert duplicated_accesses.get(user=user_access.user).role == user_access.role
     assert duplicated_accesses.get(team=team_access.team).role == team_access.role
+
+
+@pytest.mark.parametrize("role", ["editor", "reader"])
+def test_api_documents_duplicate_with_accesses_non_admin(role):
+    """
+    Accesses should not be duplicated if the user requests it specifically and is not owner
+    or admin.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(
+        users=[(user, role)],
+        title="document with accesses",
+    )
+    factories.UserDocumentAccessFactory(document=document)
+    factories.TeamDocumentAccessFactory(document=document)
+
+    # Duplicate the document via the API endpoint requesting to duplicate accesses
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/duplicate/",
+        {"with_accesses": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_document.title == "Copy of document with accesses"
+    assert duplicated_document.content == document.content
+    assert duplicated_document.link_reach == document.link_reach
+    assert duplicated_document.link_role == document.link_role
+    assert duplicated_document.creator == user
+    assert duplicated_document.duplicated_from == document
+    assert duplicated_document.attachments == []
+
+    # Check that accesses were duplicated and the user who did the duplicate is forced as owner
+    duplicated_accesses = duplicated_document.accesses
+    assert duplicated_accesses.count() == 1
+    assert duplicated_accesses.get(user=user).role == "owner"

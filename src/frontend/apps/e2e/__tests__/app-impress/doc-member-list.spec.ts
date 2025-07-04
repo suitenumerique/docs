@@ -216,7 +216,7 @@ test.describe('Document list members', () => {
     await mySelfMoreActions.click();
     await page.getByLabel('Delete').click();
     await expect(
-      page.getByText('You do not have permission to view this document.'),
+      page.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible();
   });
 });

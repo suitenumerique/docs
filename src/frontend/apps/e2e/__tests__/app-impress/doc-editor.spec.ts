@@ -275,6 +275,10 @@ test.describe('Doc Editor', () => {
 
     await expect(image).toBeVisible();
 
+    // Wait for the media-check to be processed
+    // eslint-disable-next-line playwright/no-wait-for-timeout
+    await page.waitForTimeout(1000);
+
     // Check src of image
     expect(await image.getAttribute('src')).toMatch(
       /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.png/,
@@ -452,7 +456,17 @@ test.describe('Doc Editor', () => {
       page.getByText('This file is flagged as unsafe.'),
     ).toBeVisible();
 
-    await page.getByRole('button', { name: 'Download' }).click();
+    await expect(
+      page.getByRole('button', {
+        name: 'Download',
+      }),
+    ).toBeVisible();
+
+    void page
+      .getByRole('button', {
+        name: 'Download',
+      })
+      .click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toContain(`-unsafe.html`);

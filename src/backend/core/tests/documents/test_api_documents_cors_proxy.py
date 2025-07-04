@@ -23,10 +23,25 @@ def test_api_docs_cors_proxy_valid_url():
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "image/png"
     assert response.headers["Content-Disposition"] == "attachment;"
-    assert (
-        response.headers["Content-Security-Policy"]
-        == "default-src 'none'; img-src 'none' data:;"
-    )
+    policy_list = sorted(response.headers["Content-Security-Policy"].split("; "))
+    assert policy_list == [
+        "base-uri 'none'",
+        "child-src 'none'",
+        "connect-src 'none'",
+        "default-src 'none'",
+        "font-src 'none'",
+        "form-action 'none'",
+        "frame-ancestors 'none'",
+        "frame-src 'none'",
+        "img-src 'none' data:",
+        "manifest-src 'none'",
+        "media-src 'none'",
+        "object-src 'none'",
+        "prefetch-src 'none'",
+        "script-src 'none'",
+        "style-src 'none'",
+        "worker-src 'none'",
+    ]
     assert response.streaming_content
 
 
@@ -77,10 +92,25 @@ def test_api_docs_cors_proxy_authenticated_user_accessing_protected_doc():
     assert response.status_code == 200
     assert response.headers["Content-Type"] == "image/png"
     assert response.headers["Content-Disposition"] == "attachment;"
-    assert (
-        response.headers["Content-Security-Policy"]
-        == "default-src 'none'; img-src 'none' data:;"
-    )
+    policy_list = sorted(response.headers["Content-Security-Policy"].split("; "))
+    assert policy_list == [
+        "base-uri 'none'",
+        "child-src 'none'",
+        "connect-src 'none'",
+        "default-src 'none'",
+        "font-src 'none'",
+        "form-action 'none'",
+        "frame-ancestors 'none'",
+        "frame-src 'none'",
+        "img-src 'none' data:",
+        "manifest-src 'none'",
+        "media-src 'none'",
+        "object-src 'none'",
+        "prefetch-src 'none'",
+        "script-src 'none'",
+        "style-src 'none'",
+        "worker-src 'none'",
+    ]
     assert response.streaming_content
 
 

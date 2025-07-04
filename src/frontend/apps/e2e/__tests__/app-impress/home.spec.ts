@@ -80,7 +80,6 @@ test.describe('Home page', () => {
     ).toBeVisible();
     await expect(header.getByRole('img', { name: 'Docs logo' })).toBeVisible();
     await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
-    await expect(header.getByText('BETA')).toBeVisible();
 
     // Check the titles
     const h2 = page.locator('h2');

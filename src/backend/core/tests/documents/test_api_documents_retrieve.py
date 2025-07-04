@@ -37,7 +37,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "cors_proxy": True,
             "descendants": True,
             "destroy": False,
-            "duplicate": True,
+            "duplicate": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
             "invite_owner": False,
@@ -105,7 +105,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "descendants": True,
             "cors_proxy": True,
             "destroy": False,
-            "duplicate": True,
+            "duplicate": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
             "invite_owner": False,

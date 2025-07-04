@@ -4,32 +4,35 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, HorizontalSeparator, LoadMoreText, Text } from '@/components';
+import { Box, HorizontalSeparator, Text } from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
 import { User } from '@/features/auth';
-import { Access, Doc } from '@/features/docs';
+import { Doc } from '@/features/docs';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
-import {
-  KEY_LIST_USER,
-  useDocAccessesInfinite,
-  useDocInvitationsInfinite,
-  useUsers,
-} from '../api';
-import { Invitation } from '../types';
+import { KEY_LIST_USER, useUsers } from '../api';
 
+import {
+  ButtonAccessRequest,
+  QuickSearchGroupAccessRequest,
+} from './DocShareAccessRequest';
 import { DocShareAddMemberList } from './DocShareAddMemberList';
-import { DocShareInvitationItem } from './DocShareInvitationItem';
-import { DocShareMemberItem } from './DocShareMemberItem';
+import {
+  DocShareModalInviteUserRow,
+  QuickSearchGroupInvitation,
+} from './DocShareInvitation';
+import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
-import { DocShareModalInviteUserRow } from './DocShareModalInviteUserByEmail';
 
 const ShareModalStyle = createGlobalStyle`
+  .--docs--doc-share-modal [cmdk-item] {
+    cursor: auto;
+  }
   .c__modal__title {
     padding-bottom: 0 !important;
   }
@@ -66,10 +69,6 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     setInputValue('');
   };
 
-  const membersQuery = useDocAccessesInfinite({
-    docId: doc.id,
-  });
-
   const searchUsersQuery = useUsers(
     { query: userQuery, docId: doc.id },
     {
@@ -77,31 +76,6 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
       queryKey: [KEY_LIST_USER, { query: userQuery }],
     },
   );
-
-  const membersData: QuickSearchData<Access> = useMemo(() => {
-    const members =
-      membersQuery.data?.pages.flatMap((page) => page.results) || [];
-
-    const count = membersQuery.data?.pages[0]?.count ?? 1;
-
-    return {
-      groupName:
-        count === 1
-          ? t('Document owner')
-          : t('Share with {{count}} users', {
-              count: count,
-            }),
-      elements: members,
-      endActions: membersQuery.hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-members" />,
-              onSelect: () => void membersQuery.fetchNextPage(),
-            },
-          ]
-        : undefined,
-    };
-  }, [membersQuery, t]);
 
   const onFilter = useDebouncedCallback((str: string) => {
     setUserQuery(str);
@@ -180,7 +154,12 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
 
             <Box data-testid="doc-share-quick-search">
               {!canViewAccesses && (
-                <Box $height={listHeight} $align="center" $justify="center">
+                <Box
+                  $height={listHeight}
+                  $align="center"
+                  $justify="center"
+                  $gap="1rem"
+                >
                   <Text
                     $maxWidth="320px"
                     $textAlign="center"
@@ -191,6 +170,11 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                       'You do not have permission to view users sharing this document or modify link settings.',
                     )}
                   </Text>
+                  <ButtonAccessRequest
+                    docId={doc.id}
+                    color="tertiary"
+                    size="small"
+                  />
                 </Box>
               )}
               {canViewAccesses && (
@@ -205,10 +189,11 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                   placeholder={t('Type a name or email')}
                 >
                   {showMemberSection ? (
-                    <QuickSearchMemberSection
-                      doc={doc}
-                      membersData={membersData}
-                    />
+                    <>
+                      <QuickSearchGroupAccessRequest doc={doc} />
+                      <QuickSearchGroupInvitation doc={doc} />
+                      <QuickSearchGroupMember doc={doc} />
+                    </>
                   ) : (
                     <QuickSearchInviteInputSection
                       searchUsersRawData={searchUsersQuery.data}
@@ -277,61 +262,5 @@ const QuickSearchInviteInputSection = ({
       onSelect={onSelect}
       renderElement={(user) => <DocShareModalInviteUserRow user={user} />}
     />
-  );
-};
-
-interface QuickSearchMemberSectionProps {
-  doc: Doc;
-  membersData: QuickSearchData<Access>;
-}
-
-const QuickSearchMemberSection = ({
-  doc,
-  membersData,
-}: QuickSearchMemberSectionProps) => {
-  const { t } = useTranslation();
-  const { data, hasNextPage, fetchNextPage } = useDocInvitationsInfinite({
-    docId: doc.id,
-  });
-
-  const invitationsData: QuickSearchData<Invitation> = useMemo(() => {
-    const invitations = data?.pages.flatMap((page) => page.results) || [];
-
-    return {
-      groupName: t('Pending invitations'),
-      elements: invitations,
-      endActions: hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-invitations" />,
-              onSelect: () => void fetchNextPage(),
-            },
-          ]
-        : undefined,
-    };
-  }, [data?.pages, fetchNextPage, hasNextPage, t]);
-
-  return (
-    <>
-      {invitationsData.elements.length > 0 && (
-        <Box aria-label={t('List invitation card')}>
-          <QuickSearchGroup
-            group={invitationsData}
-            renderElement={(invitation) => (
-              <DocShareInvitationItem doc={doc} invitation={invitation} />
-            )}
-          />
-        </Box>
-      )}
-
-      <Box aria-label={t('List members card')}>
-        <QuickSearchGroup
-          group={membersData}
-          renderElement={(access) => (
-            <DocShareMemberItem doc={doc} access={access} />
-          )}
-        />
-      </Box>
-    </>
   );
 };

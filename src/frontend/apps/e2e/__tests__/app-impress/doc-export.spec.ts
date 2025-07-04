@@ -52,10 +52,6 @@ test.describe('Doc Export', () => {
       1,
     );
 
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
-    });
-
     await verifyDocName(page, randomDoc);
 
     const editor = page.locator('.ProseMirror.bn-editor');
@@ -79,6 +75,10 @@ test.describe('Doc Export', () => {
       })
       .click();
 
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
     void page
       .getByRole('button', {
         name: 'Download',
@@ -98,11 +98,6 @@ test.describe('Doc Export', () => {
   test('it exports the doc to docx', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
 
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`${randomDoc}.docx`);
-    });
-
     await verifyDocName(page, randomDoc);
 
     await page.locator('.ProseMirror.bn-editor').click();
@@ -111,6 +106,8 @@ test.describe('Doc Export', () => {
     await page.keyboard.press('Enter');
     await page.locator('.bn-block-outer').last().fill('/');
     await page.getByText('Resizable image with caption').click();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;
@@ -128,6 +125,16 @@ test.describe('Doc Export', () => {
 
     await page.getByRole('combobox', { name: 'Format' }).click();
     await page.getByRole('option', { name: 'Docx' }).click();
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Download',
+      }),
+    ).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.docx`);
+    });
 
     void page
       .getByRole('button', {
@@ -149,16 +156,6 @@ test.describe('Doc Export', () => {
   test('it exports the docs with images', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
 
-    const responseCorsPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/cors-proxy/') && response.status() === 200,
-    );
-
-    const fileChooserPromise = page.waitForEvent('filechooser');
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
-    });
-
     await verifyDocName(page, randomDoc);
 
     await page.locator('.ProseMirror.bn-editor').click();
@@ -167,8 +164,9 @@ test.describe('Doc Export', () => {
     await page.keyboard.press('Enter');
     await page.locator('.bn-block-outer').last().fill('/');
     await page.getByText('Resizable image with caption').click();
-    await page.getByText('Upload image').click();
 
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
@@ -206,6 +204,21 @@ test.describe('Doc Export', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    await expect(
+      page.getByRole('button', {
+        name: 'Download',
+      }),
+    ).toBeVisible();
+
+    const responseCorsPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/cors-proxy/') && response.status() === 200,
+    );
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
     void page
       .getByRole('button', {
         name: 'Download',
@@ -227,11 +240,7 @@ test.describe('Doc Export', () => {
   test('it exports the doc with quotes', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'export-quotes', browserName, 1);
 
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
-    });
-
-    const editor = page.locator('.ProseMirror');
+    const editor = page.locator('.ProseMirror.bn-editor');
     // Trigger slash menu to show menu
     await editor.click();
     await editor.fill('/');
@@ -241,7 +250,9 @@ test.describe('Doc Export', () => {
       editor.locator('.bn-block-content[data-content-type="quote"]'),
     ).toBeVisible();
 
-    await editor.fill('Hello World');
+    await editor
+      .locator('.bn-block-content[data-content-type="quote"]')
+      .fill('Hello World');
 
     await expect(editor.getByText('Hello World')).toHaveCSS(
       'font-style',
@@ -253,6 +264,16 @@ test.describe('Doc Export', () => {
         name: 'download',
       })
       .click();
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Download',
+      }),
+    ).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
 
     void page
       .getByRole('button', {
@@ -276,10 +297,6 @@ test.describe('Doc Export', () => {
   test('it exports the doc with divider', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'export-divider', browserName, 1);
 
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
-    });
-
     const editor = page.locator('.ProseMirror');
     await editor.click();
     await editor.fill('Hello World');
@@ -297,6 +314,16 @@ test.describe('Doc Export', () => {
         name: 'download',
       })
       .click();
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Download',
+      }),
+    ).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
 
     void page
       .getByRole('button', {
