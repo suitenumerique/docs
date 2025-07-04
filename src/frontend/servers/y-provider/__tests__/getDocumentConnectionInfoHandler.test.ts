@@ -79,7 +79,7 @@ describe('Server Tests', () => {
 
     document.addConnection({
       webSocket: 1,
-      context: { sessionKey: 'test-session-key' },
+      context: { sessionKey: 'test-session-key', readOnly: false },
       document: document,
       pongReceived: false,
       request: null,
@@ -89,7 +89,7 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 2,
-      context: { sessionKey: 'other-session-key' },
+      context: { sessionKey: 'other-session-key', readOnly: false },
       document: document,
       pongReceived: false,
       request: null,
@@ -99,7 +99,17 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 3,
-      context: { sessionKey: 'last-session-key' },
+      context: { sessionKey: 'last-session-key', readOnly: false },
+      document: document,
+      pongReceived: false,
+      request: null,
+      timeout: 0,
+      socketId: uuid(),
+      lock: null,
+    } as any);
+    document.addConnection({
+      webSocket: 4,
+      context: { sessionKey: 'session-read-only', readOnly: true },
       document: document,
       pongReceived: false,
       request: null,
@@ -131,7 +141,7 @@ describe('Server Tests', () => {
 
     document.addConnection({
       webSocket: 1,
-      context: { sessionKey: 'test-session-key' },
+      context: { sessionKey: 'test-session-key', readOnly: false },
       document: document,
       pongReceived: false,
       request: null,
@@ -141,7 +151,7 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 2,
-      context: { sessionKey: 'other-session-key' },
+      context: { sessionKey: 'other-session-key', readOnly: false },
       document: document,
       pongReceived: false,
       request: null,
@@ -151,7 +161,17 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 3,
-      context: { sessionKey: 'last-session-key' },
+      context: { sessionKey: 'last-session-key', readOnly: false },
+      document: document,
+      pongReceived: false,
+      request: null,
+      timeout: 0,
+      socketId: uuid(),
+      lock: null,
+    } as any);
+    document.addConnection({
+      webSocket: 4,
+      context: { sessionKey: 'session-read-only', readOnly: true },
       document: document,
       pongReceived: false,
       request: null,
@@ -162,6 +182,67 @@ describe('Server Tests', () => {
 
     const response = await request(app as any)
       .get(`${apiEndpoint}?room=test-room&sessionKey=non-existing-session-key`)
+      .set('Origin', origin)
+      .set('Authorization', 'test-secret-api-key');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      count: 3,
+      exists: false,
+    });
+  });
+  test('POST /collaboration/api/get-connections?room=[ROOM_ID] returns connection info, session key not existing, read only connection', async () => {
+    const document = await hocusPocusServer.createDocument(
+      'test-room',
+      {},
+      uuid(),
+      { isAuthenticated: true, readOnly: false, requiresAuthentication: true },
+      {},
+    );
+
+    document.addConnection({
+      webSocket: 1,
+      context: { sessionKey: 'test-session-key', readOnly: false },
+      document: document,
+      pongReceived: false,
+      request: null,
+      timeout: 0,
+      socketId: uuid(),
+      lock: null,
+    } as any);
+    document.addConnection({
+      webSocket: 2,
+      context: { sessionKey: 'other-session-key', readOnly: false },
+      document: document,
+      pongReceived: false,
+      request: null,
+      timeout: 0,
+      socketId: uuid(),
+      lock: null,
+    } as any);
+    document.addConnection({
+      webSocket: 3,
+      context: { sessionKey: 'last-session-key', readOnly: false },
+      document: document,
+      pongReceived: false,
+      request: null,
+      timeout: 0,
+      socketId: uuid(),
+      lock: null,
+    } as any);
+    document.addConnection({
+      webSocket: 4,
+      context: { sessionKey: 'session-read-only', readOnly: true },
+      document: document,
+      pongReceived: false,
+      request: null,
+      timeout: 0,
+      socketId: uuid(),
+      lock: null,
+    } as any);
+
+    const response = await request(app as any)
+      .get(`${apiEndpoint}?room=test-room&sessionKey=session-read-only`)
       .set('Origin', origin)
       .set('Authorization', 'test-secret-api-key');
 
