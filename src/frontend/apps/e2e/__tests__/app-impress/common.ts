@@ -3,7 +3,13 @@ import { Page, expect } from '@playwright/test';
 export const BROWSERS = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
+  AI_BOT: {
+    name: 'Docs AI',
+    color: '#8bc6ff',
+  },
   AI_FEATURE_ENABLED: true,
+  AI_MODEL: 'llama',
+  AI_STREAM: false,
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: false,

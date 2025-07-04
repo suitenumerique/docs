@@ -18,6 +18,7 @@ and this project adheres to
 -  (doc) add documentation to install with compose #855
 - ✨(backend) allow to disable checking unsafe mimetype on attachment upload
 - ✨Ask for access #1081
+- ✨(frontend) integrate new Blocknote AI feature #1016
 
 ### Changed
 
