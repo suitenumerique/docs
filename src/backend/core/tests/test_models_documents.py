@@ -171,7 +171,7 @@ def test_models_documents_get_abilities_forbidden(
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "partial_update": False,
         "restore": False,
@@ -229,7 +229,7 @@ def test_models_documents_get_abilities_reader(
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -252,7 +252,7 @@ def test_models_documents_get_abilities_reader(
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definition"]
     )
 
 
@@ -292,7 +292,7 @@ def test_models_documents_get_abilities_editor(
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -314,7 +314,7 @@ def test_models_documents_get_abilities_editor(
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definition"]
     )
 
 
@@ -344,7 +344,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -393,7 +393,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -415,7 +415,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definition"]
     )
 
 
@@ -445,7 +445,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -467,7 +467,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     assert all(
         value is False
         for key, value in document.get_abilities(user).items()
-        if key != "link_select_options"
+        if key not in ["link_select_options", "ancestors_links_definition"]
     )
 
 
@@ -504,7 +504,7 @@ def test_models_documents_get_abilities_reader_user(
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -528,7 +528,7 @@ def test_models_documents_get_abilities_reader_user(
         assert all(
             value is False
             for key, value in document.get_abilities(user).items()
-            if key != "link_select_options"
+            if key not in ["link_select_options", "ancestors_links_definition"]
         )
 
 
@@ -561,7 +561,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "link_select_options": {
             "authenticated": ["reader", "editor"],
             "public": ["reader", "editor"],
-            "restricted": ["reader", "editor"],
+            "restricted": None,
         },
         "media_auth": True,
         "media_check": True,
@@ -1176,184 +1176,134 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
 
 
 @pytest.mark.parametrize(
-    "ancestors_links, select_options",
+    "reach, role, select_options",
     [
-        # One ancestor
         (
-            [{"link_reach": "public", "link_role": "reader"}],
+            "public",
+            "reader",
             {
-                "restricted": ["editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        ("public", "editor", {"public": ["editor"]}),
+        (
+            "authenticated",
+            "reader",
+            {
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            "authenticated",
+            "editor",
+            {"authenticated": ["editor"], "public": ["editor"]},
+        ),
+        (
+            "restricted",
+            "reader",
+            {
+                "restricted": None,
+                "authenticated": ["reader", "editor"],
+                "public": ["reader", "editor"],
+            },
+        ),
+        (
+            "restricted",
+            "editor",
+            {
+                "restricted": None,
                 "authenticated": ["editor"],
-                "public": ["reader", "editor"],
+                "public": ["editor"],
             },
         ),
-        ([{"link_reach": "public", "link_role": "editor"}], {"public": ["editor"]}),
+        # Edge cases
         (
-            [{"link_reach": "authenticated", "link_role": "reader"}],
+            "public",
+            None,
             {
-                "restricted": ["editor"],
-                "authenticated": ["reader", "editor"],
                 "public": ["reader", "editor"],
             },
         ),
         (
-            [{"link_reach": "authenticated", "link_role": "editor"}],
-            {"authenticated": ["editor"], "public": ["reader", "editor"]},
-        ),
-        (
-            [{"link_reach": "restricted", "link_role": "reader"}],
-            {
-                "restricted": ["reader", "editor"],
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
-            },
-        ),
-        (
-            [{"link_reach": "restricted", "link_role": "editor"}],
-            {
-                "restricted": ["editor"],
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
-            },
-        ),
-        # Multiple ancestors with different roles
-        (
-            [
-                {"link_reach": "public", "link_role": "reader"},
-                {"link_reach": "public", "link_role": "editor"},
-            ],
-            {"public": ["editor"]},
-        ),
-        (
-            [
-                {"link_reach": "authenticated", "link_role": "reader"},
-                {"link_reach": "authenticated", "link_role": "editor"},
-            ],
-            {"authenticated": ["editor"], "public": ["reader", "editor"]},
-        ),
-        (
-            [
-                {"link_reach": "restricted", "link_role": "reader"},
-                {"link_reach": "restricted", "link_role": "editor"},
-            ],
-            {
-                "restricted": ["editor"],
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
-            },
-        ),
-        # Multiple ancestors with different reaches
-        (
-            [
-                {"link_reach": "authenticated", "link_role": "reader"},
-                {"link_reach": "public", "link_role": "reader"},
-            ],
-            {
-                "restricted": ["editor"],
-                "authenticated": ["editor"],
-                "public": ["reader", "editor"],
-            },
-        ),
-        (
-            [
-                {"link_reach": "restricted", "link_role": "reader"},
-                {"link_reach": "authenticated", "link_role": "reader"},
-                {"link_reach": "public", "link_role": "reader"},
-            ],
-            {
-                "restricted": ["editor"],
-                "authenticated": ["editor"],
-                "public": ["reader", "editor"],
-            },
-        ),
-        # Multiple ancestors with mixed reaches and roles
-        (
-            [
-                {"link_reach": "authenticated", "link_role": "editor"},
-                {"link_reach": "public", "link_role": "reader"},
-            ],
-            {"authenticated": ["editor"], "public": ["reader", "editor"]},
-        ),
-        (
-            [
-                {"link_reach": "authenticated", "link_role": "reader"},
-                {"link_reach": "public", "link_role": "editor"},
-            ],
-            {"public": ["editor"]},
-        ),
-        (
-            [
-                {"link_reach": "restricted", "link_role": "editor"},
-                {"link_reach": "authenticated", "link_role": "reader"},
-            ],
-            {
-                "restricted": ["editor"],
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
-            },
-        ),
-        (
-            [
-                {"link_reach": "restricted", "link_role": "reader"},
-                {"link_reach": "authenticated", "link_role": "editor"},
-            ],
-            {"authenticated": ["editor"], "public": ["reader", "editor"]},
-        ),
-        # No ancestors (edge case)
-        (
-            [],
+            None,
+            "reader",
             {
                 "public": ["reader", "editor"],
                 "authenticated": ["reader", "editor"],
-                "restricted": ["reader", "editor"],
+                "restricted": None,
+            },
+        ),
+        (
+            None,
+            None,
+            {
+                "public": ["reader", "editor"],
+                "authenticated": ["reader", "editor"],
+                "restricted": None,
             },
         ),
     ],
 )
-def test_models_documents_get_select_options(ancestors_links, select_options):
+def test_models_documents_get_select_options(reach, role, select_options):
     """Validate that the "get_select_options" method operates as expected."""
-    assert models.LinkReachChoices.get_select_options(ancestors_links) == select_options
+    assert models.LinkReachChoices.get_select_options(reach, role) == select_options
 
 
-def test_models_documents_compute_ancestors_links_no_highest_readable():
-    """Test the compute_ancestors_links method."""
-    document = factories.DocumentFactory(link_reach="public")
-    assert document.compute_ancestors_links(user=AnonymousUser()) == []
-
-
-def test_models_documents_compute_ancestors_links_highest_readable(
+def test_models_documents_compute_ancestors_links_paths_mapping_single(
     django_assert_num_queries,
 ):
-    """Test the compute_ancestors_links method."""
+    """Test the compute_ancestors_links_paths_mapping method on a single document."""
+    document = factories.DocumentFactory(link_reach="public")
+    with django_assert_num_queries(1):
+        assert document.compute_ancestors_links_paths_mapping() == {
+            document.path: [{"link_reach": "public", "link_role": document.link_role}]
+        }
+
+
+def test_models_documents_compute_ancestors_links_paths_mapping_structure(
+    django_assert_num_queries,
+):
+    """Test the compute_ancestors_links_paths_mapping method on a tree of documents."""
     user = factories.UserFactory()
     other_user = factories.UserFactory()
-    root = factories.DocumentFactory(
-        link_reach="restricted", link_role="reader", users=[user]
-    )
 
-    factories.DocumentFactory(
-        parent=root, link_reach="public", link_role="reader", users=[user]
-    )
-    child2 = factories.DocumentFactory(
+    root = factories.DocumentFactory(link_reach="restricted", users=[user])
+    document = factories.DocumentFactory(
         parent=root,
         link_reach="authenticated",
         link_role="editor",
         users=[user, other_user],
     )
-    child3 = factories.DocumentFactory(
-        parent=child2,
+    sibling = factories.DocumentFactory(parent=root, link_reach="public", users=[user])
+    child = factories.DocumentFactory(
+        parent=document,
         link_reach="authenticated",
         link_role="reader",
         users=[user, other_user],
     )
 
-    with django_assert_num_queries(2):
-        assert child3.compute_ancestors_links(user=user) == [
-            {"link_reach": root.link_reach, "link_role": root.link_role},
-            {"link_reach": child2.link_reach, "link_role": child2.link_role},
-        ]
+    # Child
+    with django_assert_num_queries(1):
+        assert child.compute_ancestors_links_paths_mapping() == {
+            root.path: [{"link_reach": "restricted", "link_role": root.link_role}],
+            document.path: [
+                {"link_reach": "restricted", "link_role": root.link_role},
+                {"link_reach": document.link_reach, "link_role": document.link_role},
+            ],
+            child.path: [
+                {"link_reach": "restricted", "link_role": root.link_role},
+                {"link_reach": document.link_reach, "link_role": document.link_role},
+                {"link_reach": child.link_reach, "link_role": child.link_role},
+            ],
+        }
 
-    with django_assert_num_queries(2):
-        assert child3.compute_ancestors_links(user=other_user) == [
-            {"link_reach": child2.link_reach, "link_role": child2.link_role},
-        ]
+    # Sibling
+    with django_assert_num_queries(1):
+        assert sibling.compute_ancestors_links_paths_mapping() == {
+            root.path: [{"link_reach": "restricted", "link_role": root.link_role}],
+            sibling.path: [
+                {"link_reach": "restricted", "link_role": root.link_role},
+                {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
+            ],
+        }

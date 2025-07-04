@@ -86,6 +86,8 @@ and this project adheres to
 
 ## Added
 
+- ✨(backend) include ancestors accesses on document accesses list view #846
+- ✨(backend) add ancestors links reach and role to document API #846
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 - 📝(doc) update contributing policy (commit signatures are now mandatory) #895
@@ -97,12 +99,15 @@ and this project adheres to
 
 ## Changed
 
+- ♻️(backend) stop requiring owner for non-root documents #846
+- ♻️(backend) simplify roles by ranking them and return only the max role #846
 - ⚡️(frontend) reduce unblocking time for config #867
 - ♻️(frontend) bind UI with ability access #900
 - ♻️(frontend) use built-in Quote block #908
 
 ## Fixed
 
+- 🐛(backend) fix link definition select options linked to ancestors #846
 - 🐛(nginx) fix 404 when accessing a doc #866
 - 🔒️(drf) disable browsable HTML API renderer #919
 - 🔒(frontend) enhance file download security #889

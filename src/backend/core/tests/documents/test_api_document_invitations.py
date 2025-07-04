@@ -2,9 +2,11 @@
 Unit tests for the Invitation model
 """
 
+# pylint: disable=too-many-positional-arguments, too-many-arguments
 import random
 from datetime import timedelta
 from unittest import mock
+from uuid import uuid4
 
 from django.core import mail
 from django.test import override_settings
@@ -341,6 +343,7 @@ def test_api_document_invitations_create_authenticated_outsider():
 
 
 @override_settings(EMAIL_BRAND_NAME="My brand name", EMAIL_LOGO_IMG="my-img.jpg")
+@pytest.mark.parametrize("depth", [1, 2, 3])
 @pytest.mark.parametrize(
     "inviting,invited,response_code",
     (
@@ -363,22 +366,31 @@ def test_api_document_invitations_create_authenticated_outsider():
     ),
 )
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_invitations_create_privileged_members(
-    via, inviting, invited, response_code, mock_user_teams
+def test_api_document_invitations_create_privileged_members(  # noqa: PLR0913
+    via, inviting, invited, response_code, depth, mock_user_teams
 ):
     """
     Only owners and administrators should be able to invite new users.
     Only owners can invite owners.
     """
     user = factories.UserFactory(language="en-us")
+
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
     document = factories.DocumentFactory()
     if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user, role=inviting)
+        factories.UserDocumentAccessFactory(
+            document=documents[0], user=user, role=inviting
+        )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role=inviting
+            document=documents[0], team="lasuite", role=inviting
         )
+    document = documents[-1]
 
     invitation_values = {
         "email": "guest@example.com",
@@ -420,6 +432,30 @@ def test_api_document_invitations_create_privileged_members(
                 "Only owners of a document can invite other users as owners.",
             ],
         }
+
+
+def test_api_document_invitations_create_unknown_document():
+    """Trying to create an invitation for an unknown document should return a 404."""
+    user = factories.UserFactory(language="en-us")
+
+    invitation_values = {
+        "email": "guest@example.com",
+        "role": "reader",
+    }
+
+    assert len(mail.outbox) == 0
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{uuid4()!s}/invitations/",
+        invitation_values,
+        format="json",
+    )
+
+    assert response.status_code == 404
+    assert models.Invitation.objects.exists() is False
+    assert response.json() == {"detail": "Not found."}
 
 
 def test_api_document_invitations_create_email_from_senders_language():

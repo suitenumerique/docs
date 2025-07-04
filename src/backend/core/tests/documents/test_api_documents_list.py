@@ -63,6 +63,10 @@ def test_api_documents_list_format():
     assert results[0] == {
         "id": str(document.id),
         "abilities": document.get_abilities(user),
+        "ancestors_link_reach": None,
+        "ancestors_link_role": None,
+        "computed_link_reach": document.computed_link_reach,
+        "computed_link_role": document.computed_link_role,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
         "depth": 1,
@@ -76,7 +80,7 @@ def test_api_documents_list_format():
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "user_roles": [access.role],
+        "user_role": access.role,
     }
 
 
@@ -148,11 +152,11 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
         str(child4_with_access.id),
     }
 
-    with django_assert_num_queries(12):
+    with django_assert_num_queries(14):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(6):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
@@ -268,11 +272,11 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
 
     expected_ids = {str(document1.id), str(document2.id), str(visible_child.id)}
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(11):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get("/api/v1.0/documents/")
 
     assert response.status_code == 200
