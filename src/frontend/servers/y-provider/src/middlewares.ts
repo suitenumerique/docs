@@ -24,12 +24,19 @@ export const httpSecurity = (
   res: Response,
   next: NextFunction,
 ): void => {
-  // Secret API Key check
-  // Note: Changing this header to Bearer token format will break backend compatibility with this microservice.
-  const apiKey = req.headers['authorization'];
+  let apiKey = req.headers['authorization'];
 
-  if (!apiKey || !VALID_API_KEYS.includes(apiKey)) {
-    res.status(401).json({ error: 'Forbidden: Invalid API Key' });
+  if (!apiKey) {
+    res.status(401).json({ error: 'Unauthorized: No credentials given' });
+    return;
+  }
+
+  if (apiKey?.startsWith('Bearer ')) {
+    apiKey = apiKey.slice('Bearer '.length);
+  }
+
+  if (!VALID_API_KEYS.includes(apiKey)) {
+    res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
     return;
   }
 
