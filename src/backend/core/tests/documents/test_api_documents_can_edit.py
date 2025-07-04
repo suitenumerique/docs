@@ -11,16 +11,38 @@ from core import factories
 pytestmark = pytest.mark.django_db
 
 
-def test_api_documents_can_edit_anonymous():
+@responses.activate
+@pytest.mark.parametrize("ws_not_connected_ready_only", [True, False])
+@pytest.mark.parametrize("role", ["editor", "reader"])
+def test_api_documents_can_edit_anonymous(settings, ws_not_connected_ready_only, role):
     """Anonymous users can not edit documents."""
-    document = factories.DocumentFactory()
+    document = factories.DocumentFactory(link_reach="public", link_role=role)
     client = APIClient()
+    session_key = client.session.session_key
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = ws_not_connected_ready_only
+    endpoint_url = (
+        f"{settings.COLLABORATION_API_URL}get-connections/"
+        f"?room={document.id}&sessionKey={session_key}"
+    )
+    ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
+
     response = client.get(f"/api/v1.0/documents/{document.id!s}/can-edit/")
-    assert response.status_code == 401
+
+    if role == "reader":
+        assert response.status_code == 401
+    else:
+        assert response.status_code == 200
+        assert response.json() == {"can_edit": True}
+        assert ws_resp.call_count == (1 if ws_not_connected_ready_only else 0)
 
 
 @responses.activate
-def test_api_documents_can_edit_authenticated_no_websocket(settings):
+@pytest.mark.parametrize("ws_not_connected_ready_only", [True, False])
+def test_api_documents_can_edit_authenticated_no_websocket(
+    settings, ws_not_connected_ready_only
+):
     """
     A user not connected to the websocket and no other user have already updated the document,
     the document can be updated.
@@ -34,6 +56,7 @@ def test_api_documents_can_edit_authenticated_no_websocket(settings):
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = ws_not_connected_ready_only
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -49,7 +72,7 @@ def test_api_documents_can_edit_authenticated_no_websocket(settings):
     assert response.status_code == 200
 
     assert response.json() == {"can_edit": True}
-    assert ws_resp.call_count == 1
+    assert ws_resp.call_count == (1 if ws_not_connected_ready_only else 0)
 
 
 @responses.activate
@@ -69,6 +92,7 @@ def test_api_documents_can_edit_authenticated_no_websocket_user_already_editing(
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -103,6 +127,7 @@ def test_api_documents_can_edit_no_websocket_other_user_connected_to_websocket(
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -134,6 +159,7 @@ def test_api_documents_can_edit_user_connected_to_websocket(settings):
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -168,6 +194,7 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -202,6 +229,7 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
 
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
