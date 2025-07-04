@@ -313,6 +313,7 @@ def test_api_documents_update_authenticated_no_websocket(settings):
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -352,6 +353,7 @@ def test_api_documents_update_authenticated_no_websocket_user_already_editing(se
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -390,6 +392,7 @@ def test_api_documents_update_no_websocket_other_user_connected_to_websocket(set
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -427,6 +430,7 @@ def test_api_documents_update_user_connected_to_websocket(settings):
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -466,6 +470,7 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -506,6 +511,7 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
     new_document_values["websocket"] = False
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"
@@ -543,6 +549,44 @@ def test_api_documents_update_force_websocket_param_to_true(settings):
     new_document_values["websocket"] = True
     settings.COLLABORATION_API_URL = "http://example.com/"
     settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    endpoint_url = (
+        f"{settings.COLLABORATION_API_URL}get-connections/"
+        f"?room={document.id}&sessionKey={session_key}"
+    )
+    ws_resp = responses.get(endpoint_url, status=500)
+
+    assert cache.get(f"docs:no-websocket:{document.id}") is None
+
+    response = client.put(
+        f"/api/v1.0/documents/{document.id!s}/",
+        new_document_values,
+        format="json",
+    )
+    assert response.status_code == 200
+
+    assert cache.get(f"docs:no-websocket:{document.id}") is None
+    assert ws_resp.call_count == 0
+
+
+@responses.activate
+def test_api_documents_update_feature_flag_disabled(settings):
+    """
+    When the feature flag is disabled, the document should be updated without any check.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+    session_key = client.session.session_key
+
+    document = factories.DocumentFactory(users=[(user, "editor")])
+
+    new_document_values = serializers.DocumentSerializer(
+        instance=factories.DocumentFactory()
+    ).data
+    new_document_values["websocket"] = False
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = False
     endpoint_url = (
         f"{settings.COLLABORATION_API_URL}get-connections/"
         f"?room={document.id}&sessionKey={session_key}"

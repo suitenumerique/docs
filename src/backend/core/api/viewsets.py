@@ -32,7 +32,6 @@ from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import UserRateThrottle
-from sentry_sdk import capture_exception
 
 from core import authentication, enums, models
 from core.services.ai_services import AIService
@@ -682,7 +681,10 @@ class DocumentViewSet(
 
     def perform_update(self, serializer):
         """Check rules about collaboration."""
-        if serializer.validated_data.get("websocket", False):
+        if (
+            serializer.validated_data.get("websocket", False)
+            or not settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+        ):
             return super().perform_update(serializer)
 
         if self._can_user_edit_document(serializer.instance.id, set_cache=True):
@@ -701,9 +703,13 @@ class DocumentViewSet(
         """Check if the current user can edit the document."""
         document = self.get_object()
 
-        return drf.response.Response(
-            {"can_edit": self._can_user_edit_document(document.id)}
+        can_edit = (
+            True
+            if not settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY
+            else self._can_user_edit_document(document.id)
         )
+
+        return drf.response.Response({"can_edit": can_edit})
 
     @drf.decorators.action(
         detail=False,
