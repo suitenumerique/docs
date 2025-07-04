@@ -26,8 +26,9 @@ describe('Server Tests', () => {
 
     const response = await request(app)
       .post('/api/convert')
-      .set('Origin', origin)
-      .set('Authorization', 'wrong-api-key');
+      .set('origin', origin)
+      .set('authorization', 'wrong-api-key')
+      .set('content-type', 'application/json');
 
     expect(response.status).toBe(401);
     expect(response.body).toStrictEqual({
@@ -40,8 +41,9 @@ describe('Server Tests', () => {
 
     const response = await request(app)
       .post('/api/convert')
-      .set('Origin', origin)
-      .set('Authorization', 'Bearer test-secret-api-key');
+      .set('origin', origin)
+      .set('authorization', 'Bearer test-secret-api-key')
+      .set('content-type', 'application/json');
 
     // Warning: Changing the authorization header to Bearer token format will break backend compatibility with this microservice.
     expect(response.status).toBe(401);
@@ -55,8 +57,9 @@ describe('Server Tests', () => {
 
     const response = await request(app)
       .post('/api/convert')
-      .set('Origin', origin)
-      .set('Authorization', apiKey);
+      .set('origin', origin)
+      .set('authorization', apiKey)
+      .set('content-type', 'application/json');
 
     expect(response.status).toBe(400);
     expect(response.body).toStrictEqual({
@@ -69,11 +72,10 @@ describe('Server Tests', () => {
 
     const response = await request(app)
       .post('/api/convert')
-      .set('Origin', origin)
-      .set('Authorization', apiKey)
-      .send({
-        content: '',
-      });
+      .set('origin', origin)
+      .set('authorization', apiKey)
+      .set('content-type', 'application/json')
+      .send('');
 
     expect(response.status).toBe(400);
     expect(response.body).toStrictEqual({
@@ -93,20 +95,17 @@ describe('Server Tests', () => {
 
     const response = await request(app)
       .post('/api/convert')
-      .set('Origin', origin)
-      .set('Authorization', apiKey)
-      .send({
-        content: document,
-      });
+      .set('origin', origin)
+      .set('authorization', apiKey)
+      .set('content-type', 'application/json')
+      .send(document);
 
     expect(response.status).toBe(200);
-    expect(response.body).toStrictEqual({
-      content: expect.any(String),
-    });
+    expect(response.body).toBeInstanceOf(Buffer);
 
     const editor = ServerBlockNoteEditor.create();
     const doc = new Y.Doc();
-    Y.applyUpdate(doc, Buffer.from(response.body.content, 'base64'));
+    Y.applyUpdate(doc, response.body);
     const blocks = editor.yDocToBlocks(doc, 'document-store');
 
     expect(blocks).toStrictEqual([

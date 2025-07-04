@@ -40,30 +40,30 @@ describe('Server Tests', () => {
     });
   });
 
-  it('allows JSON payloads up to 500kb for the CONVERT route', async () => {
+  it('allows payloads up to 500kb for the CONVERT route', async () => {
     const app = initApp();
 
     const largePayload = 'a'.repeat(400 * 1024); // 400kb payload
     const response = await request(app)
       .post(routes.CONVERT)
-      .set('Origin', origin)
-      .set('Authorization', apiKey)
-      .set('Content-Type', 'application/json')
-      .send({ data: largePayload });
+      .set('origin', origin)
+      .set('authorization', apiKey)
+      .set('content-type', 'text/markdown')
+      .send(largePayload);
 
     expect(response.status).not.toBe(413);
   });
 
-  it('rejects JSON payloads larger than 500kb for the CONVERT route', async () => {
+  it('rejects payloads larger than 500kb for the CONVERT route', async () => {
     const app = initApp();
 
     const oversizedPayload = 'a'.repeat(501 * 1024); // 501kb payload
     const response = await request(app)
       .post(routes.CONVERT)
-      .set('Origin', origin)
-      .set('Authorization', apiKey)
-      .set('Content-Type', 'application/json')
-      .send({ data: oversizedPayload });
+      .set('origin', origin)
+      .set('authorization', apiKey)
+      .set('content-type', 'text/markdown')
+      .send(oversizedPayload);
 
     expect(response.status).toBe(413);
   });

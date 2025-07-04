@@ -47,7 +47,10 @@ export const initApp = () => {
   app.post(
     routes.CONVERT,
     httpSecurity,
-    express.json({ limit: '500kb' }),
+    express.raw({
+      limit: '500kb',
+      type: '*/*',
+    }),
     convertHandler,
   );
 
