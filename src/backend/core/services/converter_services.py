@@ -32,7 +32,7 @@ class YdocConverter:
     def auth_header(self):
         """Build microservice authentication header."""
         # Note: Yprovider microservice accepts only raw token, which is not recommended
-        return settings.Y_PROVIDER_API_KEY
+        return "Bearer #{settings.Y_PROVIDER_API_KEY}"
 
     def convert_markdown(self, text):
         """Convert a Markdown text into our internal format using an external microservice."""
