@@ -6,8 +6,6 @@ import pytest
 import requests
 
 from core.services.converter_services import (
-    InvalidResponseError,
-    MissingContentError,
     ServiceUnavailableError,
     ValidationError,
     YdocConverter,
@@ -59,41 +57,6 @@ def test_convert_markdown_http_error(mock_post):
 
 
 @patch("requests.post")
-def test_convert_markdown_invalid_json_response(mock_post):
-    """Should raise InvalidResponseError when response is not valid JSON."""
-    converter = YdocConverter()
-
-    mock_response = MagicMock()
-    mock_response.json.side_effect = ValueError("Invalid JSON")
-    mock_post.return_value = mock_response
-
-    with pytest.raises(
-        InvalidResponseError,
-        match="Could not parse conversion service response",
-    ):
-        converter.convert_markdown("test text")
-
-
-@patch("requests.post")
-def test_convert_markdown_missing_content_field(mock_post, settings):
-    """Should raise MissingContentError when response is missing required field."""
-
-    settings.CONVERSION_API_CONTENT_FIELD = "expected_field"
-
-    converter = YdocConverter()
-
-    mock_response = MagicMock()
-    mock_response.json.return_value = {"wrong_field": "content"}
-    mock_post.return_value = mock_response
-
-    with pytest.raises(
-        MissingContentError,
-        match="Response missing required field: expected_field",
-    ):
-        converter.convert_markdown("test text")
-
-
-@patch("requests.post")
 def test_convert_markdown_full_integration(mock_post, settings):
     """Test full integration with all settings."""
 
@@ -105,9 +68,9 @@ def test_convert_markdown_full_integration(mock_post, settings):
 
     converter = YdocConverter()
 
-    expected_content = {"converted": "content"}
+    expected_content = b"converted content"
     mock_response = MagicMock()
-    mock_response.json.return_value = {"content": expected_content}
+    mock_response.content = expected_content
     mock_post.return_value = mock_response
 
     result = converter.convert_markdown("test markdown")
@@ -115,10 +78,10 @@ def test_convert_markdown_full_integration(mock_post, settings):
     assert result == expected_content
     mock_post.assert_called_once_with(
         "http://test.com/conversion-endpoint/",
-        json={"content": "test markdown"},
+        data="test markdown",
         headers={
             "Authorization": "test-key",
-            "Content-Type": "application/json",
+            "Content-Type": "text/markdown",
         },
         timeout=5,
         verify=False,

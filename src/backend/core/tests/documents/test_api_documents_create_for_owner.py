@@ -4,6 +4,7 @@ Tests for Documents API endpoint in impress's core app: create
 
 # pylint: disable=W0621
 
+from base64 import b64encode
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
@@ -27,7 +28,7 @@ def mock_convert_md():
     with patch.object(
         YdocConverter,
         "convert_markdown",
-        return_value="Converted document content",
+        return_value=b"Converted document content",
     ) as mock:
         yield mock
 
@@ -200,7 +201,7 @@ def test_api_documents_create_for_owner_existing(mock_convert_md):
     assert response.json() == {"id": str(document.id)}
 
     assert document.title == "My Document"
-    assert document.content == "Converted document content"
+    assert document.content == b64encode(b"Converted document content").decode("utf8")
     assert document.creator == user
     assert document.accesses.filter(user=user, role="owner").exists()
 
@@ -245,7 +246,7 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md):
     assert response.json() == {"id": str(document.id)}
 
     assert document.title == "My Document"
-    assert document.content == "Converted document content"
+    assert document.content == b64encode(b"Converted document content").decode("utf8")
     assert document.creator is None
     assert document.accesses.exists() is False
 
@@ -306,7 +307,7 @@ def test_api_documents_create_for_owner_existing_user_email_no_sub_with_fallback
     assert response.json() == {"id": str(document.id)}
 
     assert document.title == "My Document"
-    assert document.content == "Converted document content"
+    assert document.content == b64encode(b"Converted document content").decode("utf8")
     assert document.creator == user
     assert document.accesses.filter(user=user, role="owner").exists()
 
@@ -402,7 +403,7 @@ def test_api_documents_create_for_owner_new_user_no_sub_no_fallback_allow_duplic
     assert response.json() == {"id": str(document.id)}
 
     assert document.title == "My Document"
-    assert document.content == "Converted document content"
+    assert document.content == b64encode(b"Converted document content").decode("utf8")
     assert document.creator is None
     assert document.accesses.exists() is False
 

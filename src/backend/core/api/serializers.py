@@ -2,7 +2,7 @@
 
 import binascii
 import mimetypes
-from base64 import b64decode
+from base64 import b64decode, b64encode
 
 from django.conf import settings
 from django.db.models import Q
@@ -408,9 +408,9 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             language = user.language or language
 
         try:
-            document_content = YdocConverter().convert_markdown(
-                validated_data["content"]
-            )
+            document_content = b64encode(
+                YdocConverter().convert_markdown(validated_data["content"])
+            ).decode("utf-8")
         except ConversionError as err:
             raise serializers.ValidationError(
                 {"content": ["Could not convert content"]}

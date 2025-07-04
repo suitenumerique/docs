@@ -17,14 +17,6 @@ class ServiceUnavailableError(ConversionError):
     """Raised when the conversion service is unavailable."""
 
 
-class InvalidResponseError(ConversionError):
-    """Raised when the conversion service returns an invalid response."""
-
-
-class MissingContentError(ConversionError):
-    """Raised when the response is missing required content."""
-
-
 class YdocConverter:
     """Service class for conversion-related operations."""
 
@@ -43,36 +35,17 @@ class YdocConverter:
         try:
             response = requests.post(
                 f"{settings.Y_PROVIDER_API_BASE_URL}{settings.CONVERSION_API_ENDPOINT}/",
-                json={
-                    "content": text,
-                },
+                data=text,
                 headers={
                     "Authorization": self.auth_header,
-                    "Content-Type": "application/json",
+                    "Content-Type": "text/markdown",
                 },
                 timeout=settings.CONVERSION_API_TIMEOUT,
                 verify=settings.CONVERSION_API_SECURE,
             )
             response.raise_for_status()
-            conversion_response = response.json()
-
+            return response.content
         except requests.RequestException as err:
             raise ServiceUnavailableError(
                 "Failed to connect to conversion service",
             ) from err
-
-        except ValueError as err:
-            raise InvalidResponseError(
-                "Could not parse conversion service response"
-            ) from err
-
-        try:
-            document_content = conversion_response[
-                settings.CONVERSION_API_CONTENT_FIELD
-            ]
-        except KeyError as err:
-            raise MissingContentError(
-                f"Response missing required field: {settings.CONVERSION_API_CONTENT_FIELD}"
-            ) from err
-
-        return document_content
