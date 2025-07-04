@@ -12,7 +12,7 @@ import { APIError } from '@/api';
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { User } from '@/features/auth';
-import { Doc, KEY_SUB_PAGE, Role } from '@/features/docs';
+import { Doc, KEY_SUB_PAGE, Role } from '@/features/docs/doc-management';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';

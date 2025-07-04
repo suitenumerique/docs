@@ -11,7 +11,7 @@ import {
   QuickSearchGroup,
 } from '@/components/quick-search/';
 import { User } from '@/features/auth';
-import { Doc } from '@/features/docs';
+import { Doc } from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 

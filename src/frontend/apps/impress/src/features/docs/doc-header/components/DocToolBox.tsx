@@ -277,7 +277,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       </Box>
 
       {modalShare.isOpen && (
-        <DocShareModal onClose={() => modalShare.close()} doc={doc} />
+        <DocShareModal
+          onClose={() => modalShare.close()}
+          doc={doc}
+          isRootDoc={treeContext?.root?.id === doc.id}
+        />
       )}
       {isModalExportOpen && ModalExport && (
         <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />

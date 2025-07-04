@@ -24,7 +24,7 @@ import {
   docLinkIsDesync,
   getDocLinkReach,
   useUpdateDocLink,
-} from '@/features/docs';
+} from '@/features/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useTranslatedShareSettings } from '../hooks/';

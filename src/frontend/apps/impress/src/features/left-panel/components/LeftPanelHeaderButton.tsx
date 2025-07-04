@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
 import { Icon } from '@/components';
-import { useCreateDoc } from '@/features/docs';
+import { useCreateDoc } from '@/features/docs/doc-management';
 
 import { useLeftPanelStore } from '../stores';
 
