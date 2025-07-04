@@ -24,7 +24,7 @@ describe('Server Tests', () => {
       .set('Origin', origin)
       .set('Authorization', 'wrong-api-key');
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
     expect(response.body).toStrictEqual({
       error: 'Forbidden: Invalid API Key',
     });

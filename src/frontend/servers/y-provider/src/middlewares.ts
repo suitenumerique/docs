@@ -27,8 +27,9 @@ export const httpSecurity = (
   // Secret API Key check
   // Note: Changing this header to Bearer token format will break backend compatibility with this microservice.
   const apiKey = req.headers['authorization'];
+
   if (!apiKey || !VALID_API_KEYS.includes(apiKey)) {
-    res.status(403).json({ error: 'Forbidden: Invalid API Key' });
+    res.status(401).json({ error: 'Forbidden: Invalid API Key' });
     return;
   }
 

@@ -21,7 +21,7 @@ import {
 console.error = vi.fn();
 
 describe('Server Tests', () => {
-  test('POST /api/convert with incorrect API key should responds with 403', async () => {
+  test('POST /api/convert with incorrect API key should responds with 401', async () => {
     const app = initApp();
 
     const response = await request(app)
@@ -29,7 +29,7 @@ describe('Server Tests', () => {
       .set('Origin', origin)
       .set('Authorization', 'wrong-api-key');
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
     expect(response.body).toStrictEqual({
       error: 'Forbidden: Invalid API Key',
     });
@@ -44,7 +44,7 @@ describe('Server Tests', () => {
       .set('Authorization', 'Bearer test-secret-api-key');
 
     // Warning: Changing the authorization header to Bearer token format will break backend compatibility with this microservice.
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
     expect(response.body).toStrictEqual({
       error: 'Forbidden: Invalid API Key',
     });
