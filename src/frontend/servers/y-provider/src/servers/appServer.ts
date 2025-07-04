@@ -22,13 +22,6 @@ import { logger } from '@/utils';
 export const initApp = () => {
   const { app } = expressWebsockets(express());
 
-  app.use((req, res, next) => {
-    if (req.path === routes.CONVERT) {
-      // Large transcript files are bigger than the default '100kb' limit
-      return express.json({ limit: '500kb' })(req, res, next);
-    }
-    express.json()(req, res, next);
-  });
   app.use(corsMiddleware);
 
   /**
@@ -44,13 +37,19 @@ export const initApp = () => {
   app.post(
     routes.COLLABORATION_RESET_CONNECTIONS,
     httpSecurity,
+    express.json(),
     collaborationResetConnectionsHandler,
   );
 
   /**
    * Route to convert Markdown or BlockNote blocks
    */
-  app.post(routes.CONVERT, httpSecurity, convertHandler);
+  app.post(
+    routes.CONVERT,
+    httpSecurity,
+    express.json({ limit: '500kb' }),
+    convertHandler,
+  );
 
   Sentry.setupExpressErrorHandler(app);
 

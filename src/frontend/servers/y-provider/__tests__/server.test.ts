@@ -8,8 +8,14 @@ vi.mock('../src/env', async (importOriginal) => {
   return {
     ...(await importOriginal()),
     COLLABORATION_SERVER_ORIGIN: 'http://localhost:3000',
+    Y_PROVIDER_API_KEY: 'yprovider-api-key',
   };
 });
+
+import {
+  Y_PROVIDER_API_KEY as apiKey,
+  COLLABORATION_SERVER_ORIGIN as origin,
+} from '../src/env';
 
 console.error = vi.fn();
 
@@ -40,8 +46,10 @@ describe('Server Tests', () => {
     const largePayload = 'a'.repeat(400 * 1024); // 400kb payload
     const response = await request(app)
       .post(routes.CONVERT)
-      .send({ data: largePayload })
-      .set('Content-Type', 'application/json');
+      .set('Origin', origin)
+      .set('Authorization', apiKey)
+      .set('Content-Type', 'application/json')
+      .send({ data: largePayload });
 
     expect(response.status).not.toBe(413);
   });
@@ -52,20 +60,10 @@ describe('Server Tests', () => {
     const oversizedPayload = 'a'.repeat(501 * 1024); // 501kb payload
     const response = await request(app)
       .post(routes.CONVERT)
-      .send({ data: oversizedPayload })
-      .set('Content-Type', 'application/json');
-
-    expect(response.status).toBe(413);
-  });
-
-  it('uses the default JSON limit for other routes', async () => {
-    const app = initApp();
-
-    const largePayload = 'a'.repeat(150 * 1024);
-    const response = await request(app)
-      .post('/some-other-route')
-      .send({ data: largePayload })
-      .set('Content-Type', 'application/json');
+      .set('Origin', origin)
+      .set('Authorization', apiKey)
+      .set('Content-Type', 'application/json')
+      .send({ data: oversizedPayload });
 
     expect(response.status).toBe(413);
   });
