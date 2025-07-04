@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 
-const port = 5556;
+const port = 5566;
 const origin = 'http://localhost:3000';
 
 jest.mock('../src/env', () => {
@@ -79,9 +79,10 @@ describe('Server Tests', () => {
 
     document.addConnection({
       webSocket: 1,
-      context: { sessionKey: 'test-session-key', readOnly: false },
+      context: { sessionKey: 'test-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -89,9 +90,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 2,
-      context: { sessionKey: 'other-session-key', readOnly: false },
+      context: { sessionKey: 'other-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -99,9 +101,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 3,
-      context: { sessionKey: 'last-session-key', readOnly: false },
+      context: { sessionKey: 'last-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -109,9 +112,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 4,
-      context: { sessionKey: 'session-read-only', readOnly: true },
+      context: { sessionKey: 'session-read-only' },
       document: document,
       pongReceived: false,
+      readOnly: true,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -141,9 +145,10 @@ describe('Server Tests', () => {
 
     document.addConnection({
       webSocket: 1,
-      context: { sessionKey: 'test-session-key', readOnly: false },
+      context: { sessionKey: 'test-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -151,9 +156,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 2,
-      context: { sessionKey: 'other-session-key', readOnly: false },
+      context: { sessionKey: 'other-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -161,9 +167,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 3,
-      context: { sessionKey: 'last-session-key', readOnly: false },
+      context: { sessionKey: 'last-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -171,9 +178,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 4,
-      context: { sessionKey: 'session-read-only', readOnly: true },
+      context: { sessionKey: 'session-read-only' },
       document: document,
       pongReceived: false,
+      readOnly: true,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -202,9 +210,10 @@ describe('Server Tests', () => {
 
     document.addConnection({
       webSocket: 1,
-      context: { sessionKey: 'test-session-key', readOnly: false },
+      context: { sessionKey: 'test-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -212,9 +221,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 2,
-      context: { sessionKey: 'other-session-key', readOnly: false },
+      context: { sessionKey: 'other-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -222,9 +232,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 3,
-      context: { sessionKey: 'last-session-key', readOnly: false },
+      context: { sessionKey: 'last-session-key' },
       document: document,
       pongReceived: false,
+      readOnly: false,
       request: null,
       timeout: 0,
       socketId: uuid(),
@@ -232,9 +243,10 @@ describe('Server Tests', () => {
     } as any);
     document.addConnection({
       webSocket: 4,
-      context: { sessionKey: 'session-read-only', readOnly: true },
+      context: { sessionKey: 'session-read-only' },
       document: document,
       pongReceived: false,
+      readOnly: true,
       request: null,
       timeout: 0,
       socketId: uuid(),

@@ -36,8 +36,7 @@ export const getDocumentConnectionInfoHandler = (
   }
   const connections = roomInfo
     .getConnections()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    .filter((connection) => connection.context.readOnly === false);
+    .filter((connection) => connection.readOnly === false);
 
   res.status(200).json({
     count: connections.length,
