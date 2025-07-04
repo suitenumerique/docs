@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/features/docs';
+import { Doc } from '@/features/docs/doc-management';
 
 export type UpdateDocParams = Pick<Doc, 'id'> &
   Partial<Pick<Doc, 'content' | 'title'>>;

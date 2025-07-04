@@ -8,22 +8,7 @@ import {
   useAPIInfiniteQuery,
 } from '@/api';
 
-import { Doc } from '../types';
-
-export const isDocsOrdering = (data: string): data is DocsOrdering => {
-  return !!docsOrdering.find((validKey) => validKey === data);
-};
-
-const docsOrdering = [
-  'created_at',
-  '-created_at',
-  'updated_at',
-  '-updated_at',
-  'title',
-  '-title',
-] as const;
-
-export type DocsOrdering = (typeof docsOrdering)[number];
+import { Doc, DocsOrdering } from '../types';
 
 export type DocsParams = {
   page: number;
@@ -33,20 +18,18 @@ export type DocsParams = {
   is_favorite?: boolean;
 };
 
-export type DocsResponse = APIList<Doc>;
-export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
+export const constructParams = (params: DocsParams): URLSearchParams => {
   const searchParams = new URLSearchParams();
+
   if (params.page) {
     searchParams.set('page', params.page.toString());
   }
-
   if (params.ordering) {
     searchParams.set('ordering', params.ordering);
   }
   if (params.is_creator_me !== undefined) {
     searchParams.set('is_creator_me', params.is_creator_me.toString());
   }
-
   if (params.title && params.title.length > 0) {
     searchParams.set('title', params.title);
   }
@@ -54,6 +37,12 @@ export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
     searchParams.set('is_favorite', params.is_favorite.toString());
   }
 
+  return searchParams;
+};
+
+export type DocsResponse = APIList<Doc>;
+export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
+  const searchParams = constructParams(params);
   const response = await fetchAPI(`documents/?${searchParams.toString()}`);
 
   if (!response.ok) {

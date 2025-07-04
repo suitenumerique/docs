@@ -1,4 +1,5 @@
-import { PropsWithChildren, useRef, useState } from 'react';
+import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
+import { Fragment, PropsWithChildren, useRef, useState } from 'react';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
@@ -8,11 +9,13 @@ export type DropdownMenuOption = {
   icon?: string;
   label: string;
   testId?: string;
+  value?: string;
   callback?: () => void | Promise<unknown>;
   danger?: boolean;
   isSelected?: boolean;
   disabled?: boolean;
   show?: boolean;
+  showSeparator?: boolean;
 };
 
 export type DropdownMenuProps = {
@@ -23,6 +26,8 @@ export type DropdownMenuProps = {
   buttonCss?: BoxProps['$css'];
   disabled?: boolean;
   topMessage?: string;
+  selectedValues?: string[];
+  afterOpenChange?: (isOpen: boolean) => void;
 };
 
 export const DropdownMenu = ({
@@ -34,6 +39,8 @@ export const DropdownMenu = ({
   buttonCss,
   label,
   topMessage,
+  afterOpenChange,
+  selectedValues,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +48,7 @@ export const DropdownMenu = ({
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
+    afterOpenChange?.(isOpen);
   };
 
   if (disabled) {
@@ -93,6 +101,9 @@ export const DropdownMenu = ({
             $size="xs"
             $weight="bold"
             $padding={{ vertical: 'xs', horizontal: 'base' }}
+            $css={css`
+              white-space: pre-line;
+            `}
           >
             {topMessage}
           </Text>
@@ -103,70 +114,76 @@ export const DropdownMenu = ({
           }
           const isDisabled = option.disabled !== undefined && option.disabled;
           return (
-            <BoxButton
-              role="menuitem"
-              aria-label={option.label}
-              data-testid={option.testId}
-              $direction="row"
-              disabled={isDisabled}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onOpenChange?.(false);
-                void option.callback?.();
-              }}
-              key={option.label}
-              $align="center"
-              $justify="space-between"
-              $background={colorsTokens['greyscale-000']}
-              $color={colorsTokens['primary-600']}
-              $padding={{ vertical: 'xs', horizontal: 'base' }}
-              $width="100%"
-              $gap={spacingsTokens['base']}
-              $css={css`
-                border: none;
-                ${index === 0 &&
-                css`
-                  border-top-left-radius: 4px;
-                  border-top-right-radius: 4px;
-                `}
-                ${index === options.length - 1 &&
-                css`
-                  border-bottom-left-radius: 4px;
-                  border-bottom-right-radius: 4px;
-                `}
-                font-size: var(--c--theme--font--sizes--sm);
-                color: var(--c--theme--colors--greyscale-1000);
-                font-weight: 500;
-                cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
-                user-select: none;
-
-                &:hover {
-                  background-color: var(--c--theme--colors--greyscale-050);
-                }
-              `}
-            >
-              <Box
+            <Fragment key={option.label}>
+              <BoxButton
+                role="menuitem"
+                aria-label={option.label}
+                data-testid={option.testId}
                 $direction="row"
+                disabled={isDisabled}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onOpenChange?.(false);
+                  void option.callback?.();
+                }}
+                key={option.label}
                 $align="center"
+                $justify="space-between"
+                $background={colorsTokens['greyscale-000']}
+                $color={colorsTokens['primary-600']}
+                $padding={{ vertical: 'xs', horizontal: 'base' }}
+                $width="100%"
                 $gap={spacingsTokens['base']}
+                $css={css`
+                  border: none;
+                  ${index === 0 &&
+                  css`
+                    border-top-left-radius: 4px;
+                    border-top-right-radius: 4px;
+                  `}
+                  ${index === options.length - 1 &&
+                  css`
+                    border-bottom-left-radius: 4px;
+                    border-bottom-right-radius: 4px;
+                  `}
+                font-size: var(--c--theme--font--sizes--sm);
+                  color: var(--c--theme--colors--greyscale-1000);
+                  font-weight: 500;
+                  cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
+                  user-select: none;
+
+                  &:hover {
+                    background-color: var(--c--theme--colors--greyscale-050);
+                  }
+                `}
               >
-                {option.icon && (
-                  <Icon
-                    $size="20px"
-                    $theme="greyscale"
-                    $variation={isDisabled ? '400' : '1000'}
-                    iconName={option.icon}
-                  />
+                <Box
+                  $direction="row"
+                  $align="center"
+                  $gap={spacingsTokens['base']}
+                >
+                  {option.icon && (
+                    <Icon
+                      $size="20px"
+                      $theme="greyscale"
+                      $variation={isDisabled ? '400' : '1000'}
+                      iconName={option.icon}
+                    />
+                  )}
+                  <Text $variation={isDisabled ? '400' : '1000'}>
+                    {option.label}
+                  </Text>
+                </Box>
+                {(option.isSelected ||
+                  selectedValues?.includes(option.value ?? '')) && (
+                  <Icon iconName="check" $size="20px" $theme="greyscale" />
                 )}
-                <Text $variation={isDisabled ? '400' : '1000'}>
-                  {option.label}
-                </Text>
-              </Box>
-              {option.isSelected && (
-                <Icon iconName="check" $size="20px" $theme="greyscale" />
+              </BoxButton>
+              {option.showSeparator && (
+                <HorizontalSeparator withPadding={false} />
               )}
-            </BoxButton>
+            </Fragment>
           );
         })}
       </Box>

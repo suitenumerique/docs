@@ -4,6 +4,7 @@ export * from './useDeleteFavoriteDoc';
 export * from './useDoc';
 export * from './useDocOptions';
 export * from './useDocs';
+export * from './useSubDocs';
 export * from './useDuplicateDoc';
 export * from './useUpdateDoc';
 export * from './useUpdateDocLink';

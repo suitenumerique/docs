@@ -103,32 +103,37 @@ def test_api_document_accesses_create_authenticated_reader_or_editor(
     assert not models.DocumentAccess.objects.filter(user=other_user).exists()
 
 
+@pytest.mark.parametrize("depth", [1, 2, 3])
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_create_authenticated_administrator(via, mock_user_teams):
+def test_api_document_accesses_create_authenticated_administrator_share_to_user(
+    via, depth, mock_user_teams
+):
     """
-    Administrators of a document should be able to create document accesses
-    except for the "owner" role.
+    Administrators of a document (direct or by heritage) should be able to create
+    document accesses except for the "owner" role.
     An email should be sent to the accesses to notify them of the adding.
     """
     user = factories.UserFactory(with_owned_document=True)
-
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
     if via == USER:
         factories.UserDocumentAccessFactory(
-            document=document, user=user, role="administrator"
+            document=documents[0], user=user, role="administrator"
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role="administrator"
+            document=documents[0], team="lasuite", role="administrator"
         )
 
     other_user = factories.UserFactory(language="en-us")
-
-    # It should not be allowed to create an owner access
+    document = documents[-1]
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/accesses/",
         {
@@ -140,7 +145,7 @@ def test_api_document_accesses_create_authenticated_administrator(via, mock_user
 
     assert response.status_code == 403
     assert response.json() == {
-        "detail": "Only owners of a resource can assign other users as owners."
+        "detail": "Only owners of a document can assign other users as owners."
     }
 
     # It should be allowed to create a lower access
@@ -165,9 +170,16 @@ def test_api_document_accesses_create_authenticated_administrator(via, mock_user
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
         "abilities": new_document_access.get_abilities(user),
+        "document": {
+            "id": str(new_document_access.document_id),
+            "depth": new_document_access.document.depth,
+            "path": new_document_access.document.path,
+        },
         "id": str(new_document_access.id),
-        "team": "",
+        "max_ancestors_role": None,
+        "max_role": role,
         "role": role,
+        "team": "",
         "user": other_user,
     }
     assert len(mail.outbox) == 1
@@ -182,28 +194,119 @@ def test_api_document_accesses_create_authenticated_administrator(via, mock_user
     assert "docs/" + str(document.id) + "/" in email_content
 
 
+@pytest.mark.parametrize("depth", [1, 2, 3])
 @pytest.mark.parametrize("via", VIA)
-def test_api_document_accesses_create_authenticated_owner(via, mock_user_teams):
+def test_api_document_accesses_create_authenticated_administrator_share_to_team(
+    via, depth, mock_user_teams
+):
     """
-    Owners of a document should be able to create document accesses whatever the role.
+    Administrators of a document (direct or by heritage) should be able to create
+    document accesses except for the "owner" role.
     An email should be sent to the accesses to notify them of the adding.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=documents[0], user=user, role="administrator"
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=documents[0], team="lasuite", role="administrator"
+        )
+
+    other_user = factories.UserFactory(language="en-us")
+    document = documents[-1]
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+        {
+            "team": "new-team",
+            "role": "owner",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Only owners of a document can assign other users as owners."
+    }
+
+    # It should be allowed to create a lower access
+    role = random.choice(
+        [role[0] for role in models.RoleChoices.choices if role[0] != "owner"]
+    )
+
+    assert len(mail.outbox) == 0
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+        {
+            "team": "new-team",
+            "role": role,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert models.DocumentAccess.objects.filter(team="new-team").count() == 1
+    new_document_access = models.DocumentAccess.objects.filter(team="new-team").get()
+    other_user = serializers.UserSerializer(instance=other_user).data
+    assert response.json() == {
+        "abilities": new_document_access.get_abilities(user),
+        "document": {
+            "id": str(new_document_access.document_id),
+            "depth": new_document_access.document.depth,
+            "path": new_document_access.document.path,
+        },
+        "id": str(new_document_access.id),
+        "max_ancestors_role": None,
+        "max_role": role,
+        "role": role,
+        "team": "new-team",
+        "user": None,
+    }
+    assert len(mail.outbox) == 0
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+@pytest.mark.parametrize("via", VIA)
+def test_api_document_accesses_create_authenticated_owner_share_to_user(
+    via, depth, mock_user_teams
+):
+    """
+    Owners of a document (direct or by heritage) should be able to create document accesses
+    whatever the role. An email should be sent to the accesses to notify them of the adding.
     """
     user = factories.UserFactory()
 
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
     if via == USER:
-        factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+        factories.UserDocumentAccessFactory(
+            document=documents[0], user=user, role="owner"
+        )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         factories.TeamDocumentAccessFactory(
-            document=document, team="lasuite", role="owner"
+            document=documents[0], team="lasuite", role="owner"
         )
 
     other_user = factories.UserFactory(language="en-us")
-
+    document = documents[-1]
     role = random.choice([role[0] for role in models.RoleChoices.choices])
 
     assert len(mail.outbox) == 0
@@ -222,11 +325,18 @@ def test_api_document_accesses_create_authenticated_owner(via, mock_user_teams):
     new_document_access = models.DocumentAccess.objects.filter(user=other_user).get()
     other_user = serializers.UserSerializer(instance=other_user).data
     assert response.json() == {
-        "id": str(new_document_access.id),
-        "user": other_user,
-        "team": "",
-        "role": role,
         "abilities": new_document_access.get_abilities(user),
+        "document": {
+            "id": str(new_document_access.document_id),
+            "depth": new_document_access.document.depth,
+            "path": new_document_access.document.path,
+        },
+        "id": str(new_document_access.id),
+        "max_ancestors_role": None,
+        "max_role": role,
+        "role": role,
+        "team": "",
+        "user": other_user,
     }
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -238,6 +348,71 @@ def test_api_document_accesses_create_authenticated_owner(via, mock_user_teams):
         f"on the following document: {document.title}"
     ) in email_content
     assert "docs/" + str(document.id) + "/" in email_content
+
+
+@pytest.mark.parametrize("depth", [1, 2, 3])
+@pytest.mark.parametrize("via", VIA)
+def test_api_document_accesses_create_authenticated_owner_share_to_team(
+    via, depth, mock_user_teams
+):
+    """
+    Owners of a document (direct or by heritage) should be able to create document accesses
+    whatever the role. An email should be sent to the accesses to notify them of the adding.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    documents = []
+    for i in range(depth):
+        parent = documents[i - 1] if i > 0 else None
+        documents.append(factories.DocumentFactory(parent=parent))
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=documents[0], user=user, role="owner"
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=documents[0], team="lasuite", role="owner"
+        )
+
+    other_user = factories.UserFactory(language="en-us")
+    document = documents[-1]
+    role = random.choice([role[0] for role in models.RoleChoices.choices])
+
+    assert len(mail.outbox) == 0
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/accesses/",
+        {
+            "team": "new-team",
+            "role": role,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert models.DocumentAccess.objects.filter(team="new-team").count() == 1
+    new_document_access = models.DocumentAccess.objects.filter(team="new-team").get()
+    other_user = serializers.UserSerializer(instance=other_user).data
+    assert response.json() == {
+        "abilities": new_document_access.get_abilities(user),
+        "document": {
+            "id": str(new_document_access.document_id),
+            "path": new_document_access.document.path,
+            "depth": new_document_access.document.depth,
+        },
+        "id": str(new_document_access.id),
+        "max_ancestors_role": None,
+        "max_role": role,
+        "role": role,
+        "team": "new-team",
+        "user": None,
+    }
+    assert len(mail.outbox) == 0
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -286,11 +461,18 @@ def test_api_document_accesses_create_email_in_receivers_language(via, mock_user
         ).get()
         other_user_data = serializers.UserSerializer(instance=other_user).data
         assert response.json() == {
-            "id": str(new_document_access.id),
-            "user": other_user_data,
-            "team": "",
-            "role": role,
             "abilities": new_document_access.get_abilities(user),
+            "document": {
+                "id": str(new_document_access.document_id),
+                "path": new_document_access.document.path,
+                "depth": new_document_access.document.depth,
+            },
+            "id": str(new_document_access.id),
+            "max_ancestors_role": None,
+            "max_role": role,
+            "role": role,
+            "team": "",
+            "user": other_user_data,
         }
         assert len(mail.outbox) == index + 1
         email = mail.outbox[index]

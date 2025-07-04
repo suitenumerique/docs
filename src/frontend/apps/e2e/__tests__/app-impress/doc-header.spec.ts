@@ -54,6 +54,7 @@ test.describe('Doc Header', () => {
         retrieve: true,
       },
       link_reach: 'public',
+      computed_link_reach: 'public',
       created_at: '2021-09-01T09:00:00Z',
     });
 
@@ -96,7 +97,9 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
 
     await expect(
-      page.getByText(`Are you sure you want to delete this document ?`),
+      page.getByText(
+        `This document will be permanently deleted. This action is irreversible.`,
+      ),
     ).toBeVisible();
 
     await page
@@ -158,32 +161,31 @@ test.describe('Doc Header', () => {
     await expect(shareModal).toBeVisible();
     await expect(page.getByText('Share the document')).toBeVisible();
 
-    await expect(page.getByPlaceholder('Type a name or email')).toBeVisible();
-
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
       invitationCard.getByText('test@invitation.test').first(),
     ).toBeVisible();
-    await expect(invitationCard.getByLabel('doc-role-dropdown')).toBeVisible();
+    const invitationRole = invitationCard.getByLabel('doc-role-dropdown');
+    await expect(invitationRole).toBeVisible();
 
-    await invitationCard.getByRole('button', { name: 'more_horiz' }).click();
+    await invitationRole.click();
 
-    await expect(page.getByLabel('Delete')).toBeEnabled();
-    await invitationCard.click();
+    await page.getByRole('menuitem', { name: 'Remove access' }).click();
+    await expect(invitationCard).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
+    const roles = memberCard.getByLabel('doc-role-dropdown');
     await expect(memberCard).toBeVisible();
     await expect(
       memberCard.getByText('test@accesses.test').first(),
     ).toBeVisible();
-    await expect(memberCard.getByLabel('doc-role-dropdown')).toBeVisible();
-    await expect(
-      memberCard.getByRole('button', { name: 'more_horiz' }),
-    ).toBeVisible();
-    await memberCard.getByRole('button', { name: 'more_horiz' }).click();
+    await expect(roles).toBeVisible();
 
-    await expect(page.getByLabel('Delete')).toBeEnabled();
+    await roles.click();
+    await expect(
+      page.getByRole('menuitem', { name: 'Remove access' }),
+    ).toBeEnabled();
   });
 
   test('it checks the options available if editor', async ({ page }) => {

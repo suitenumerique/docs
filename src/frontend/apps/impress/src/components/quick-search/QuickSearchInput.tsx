@@ -44,7 +44,7 @@ export const QuickSearchInput = ({
         $align="center"
         className="quick-search-input"
         $gap={spacingsTokens['2xs']}
-        $padding={{ all: 'base' }}
+        $padding={{ horizontal: 'base', vertical: 'sm' }}
       >
         {!loading && <Icon iconName="search" $variation="600" />}
         {loading && (
@@ -56,6 +56,9 @@ export const QuickSearchInput = ({
           /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus={true}
           aria-label={t('Quick search input')}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
           value={inputValue}
           role="combobox"
           placeholder={placeholder ?? t('Search')}

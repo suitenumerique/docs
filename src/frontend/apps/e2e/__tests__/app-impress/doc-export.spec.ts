@@ -72,6 +72,7 @@ test.describe('Doc Export', () => {
     await page
       .getByRole('button', {
         name: 'download',
+        exact: true,
       })
       .click();
 
@@ -82,6 +83,7 @@ test.describe('Doc Export', () => {
     void page
       .getByRole('button', {
         name: 'Download',
+        exact: true,
       })
       .click();
 
@@ -120,6 +122,7 @@ test.describe('Doc Export', () => {
     await page
       .getByRole('button', {
         name: 'download',
+        exact: true,
       })
       .click();
 
@@ -129,6 +132,7 @@ test.describe('Doc Export', () => {
     await expect(
       page.getByRole('button', {
         name: 'Download',
+        exact: true,
       }),
     ).toBeVisible();
 
@@ -139,6 +143,7 @@ test.describe('Doc Export', () => {
     void page
       .getByRole('button', {
         name: 'Download',
+        exact: true,
       })
       .click();
 
@@ -312,12 +317,14 @@ test.describe('Doc Export', () => {
     await page
       .getByRole('button', {
         name: 'download',
+        exact: true,
       })
       .click();
 
     await expect(
       page.getByRole('button', {
         name: 'Download',
+        exact: true,
       }),
     ).toBeVisible();
 
@@ -328,6 +335,7 @@ test.describe('Doc Export', () => {
     void page
       .getByRole('button', {
         name: 'Download',
+        exact: true,
       })
       .click();
 

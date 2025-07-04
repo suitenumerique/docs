@@ -59,6 +59,10 @@ def test_api_document_favorite_list_authenticated_with_favorite():
         "results": [
             {
                 "abilities": document.get_abilities(user),
+                "ancestors_link_reach": None,
+                "ancestors_link_role": None,
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "content": document.content,
@@ -74,7 +78,7 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "path": document.path,
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-                "user_roles": ["reader"],
+                "user_role": "reader",
             }
         ],
     }

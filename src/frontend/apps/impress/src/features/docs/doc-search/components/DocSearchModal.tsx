@@ -1,65 +1,61 @@
 import { Modal, ModalSize } from '@openfun/cunningham-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InView } from 'react-intersection-observer';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { Box } from '@/components';
-import {
-  QuickSearch,
-  QuickSearchData,
-  QuickSearchGroup,
-} from '@/components/quick-search';
-import { Doc, useInfiniteDocs } from '@/docs/doc-management';
+import { QuickSearch } from '@/components/quick-search';
 import { useResponsiveStore } from '@/stores';
 
+import { Doc } from '../../doc-management';
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
-import { DocSearchItem } from './DocSearchItem';
+import { DocSearchContent } from './DocSearchContent';
+import {
+  DocSearchFilters,
+  DocSearchFiltersValues,
+  DocSearchTarget,
+} from './DocSearchFilters';
+import { DocSearchSubPageContent } from './DocSearchSubPageContent';
 
 type DocSearchModalProps = {
   onClose: () => void;
   isOpen: boolean;
+  showFilters?: boolean;
+  defaultFilters?: DocSearchFiltersValues;
 };
 
-export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
+export const DocSearchModal = ({
+  showFilters = false,
+  defaultFilters,
+  ...modalProps
+}: DocSearchModalProps) => {
   const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
+  const isDocPage = router.pathname === '/docs/[id]';
+
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<DocSearchFiltersValues>(
+    defaultFilters ?? {},
+  );
+
+  const target = filters.target ?? DocSearchTarget.ALL;
   const { isDesktop } = useResponsiveStore();
-  const {
-    data,
-    isFetching,
-    isRefetching,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteDocs({
-    page: 1,
-    title: search,
-  });
-  const loading = isFetching || isRefetching || isLoading;
+
   const handleInputSearch = useDebouncedCallback(setSearch, 300);
 
   const handleSelect = (doc: Doc) => {
-    router.push(`/docs/${doc.id}`);
+    void router.push(`/docs/${doc.id}`);
     modalProps.onClose?.();
   };
 
-  const docsData: QuickSearchData<Doc> = useMemo(() => {
-    const docs = data?.pages.flatMap((page) => page.results) || [];
-
-    return {
-      groupName: docs.length > 0 ? t('Select a document') : '',
-      elements: search ? docs : [],
-      emptyString: t('No document found'),
-      endActions: hasNextPage
-        ? [{ content: <InView onChange={() => void fetchNextPage()} /> }]
-        : [],
-    };
-  }, [data, hasNextPage, fetchNextPage, t, search]);
+  const handleResetFilters = () => {
+    setFilters({});
+  };
 
   return (
     <Modal
@@ -78,7 +74,17 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
           loading={loading}
           onFilter={handleInputSearch}
         >
-          <Box $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}>
+          <Box
+            $padding={{ horizontal: '10px' }}
+            $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}
+          >
+            {showFilters && (
+              <DocSearchFilters
+                values={filters}
+                onValuesChange={setFilters}
+                onReset={handleResetFilters}
+              />
+            )}
             {search.length === 0 && (
               <Box
                 $direction="column"
@@ -95,11 +101,24 @@ export const DocSearchModal = ({ ...modalProps }: DocSearchModalProps) => {
               </Box>
             )}
             {search && (
-              <QuickSearchGroup
-                onSelect={handleSelect}
-                group={docsData}
-                renderElement={(doc) => <DocSearchItem doc={doc} />}
-              />
+              <>
+                {target === DocSearchTarget.ALL && (
+                  <DocSearchContent
+                    search={search}
+                    filters={filters}
+                    onSelect={handleSelect}
+                    onLoadingChange={setLoading}
+                  />
+                )}
+                {isDocPage && target === DocSearchTarget.CURRENT && (
+                  <DocSearchSubPageContent
+                    search={search}
+                    filters={filters}
+                    onSelect={handleSelect}
+                    onLoadingChange={setLoading}
+                  />
+                )}
+              </>
             )}
           </Box>
         </QuickSearch>

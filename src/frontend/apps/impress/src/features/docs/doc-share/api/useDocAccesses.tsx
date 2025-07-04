@@ -1,12 +1,6 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import {
-  APIError,
-  APIList,
-  errorCauses,
-  fetchAPI,
-  useAPIInfiniteQuery,
-} from '@/api';
+import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Access } from '@/docs/doc-management';
 
 export type DocAccessesParams = {
@@ -14,18 +8,11 @@ export type DocAccessesParams = {
   ordering?: string;
 };
 
-export type DocAccessesAPIParams = DocAccessesParams & {
-  page: number;
-};
-
-type AccessesResponse = APIList<Access>;
-
 export const getDocAccesses = async ({
-  page,
   docId,
   ordering,
-}: DocAccessesAPIParams): Promise<AccessesResponse> => {
-  let url = `documents/${docId}/accesses/?page=${page}`;
+}: DocAccessesParams): Promise<Access[]> => {
+  let url = `documents/${docId}/accesses/`;
 
   if (ordering) {
     url += '&ordering=' + ordering;
@@ -40,27 +27,18 @@ export const getDocAccesses = async ({
     );
   }
 
-  return response.json() as Promise<AccessesResponse>;
+  return (await response.json()) as Access[];
 };
 
 export const KEY_LIST_DOC_ACCESSES = 'docs-accesses';
 
 export function useDocAccesses(
-  params: DocAccessesAPIParams,
-  queryConfig?: UseQueryOptions<AccessesResponse, APIError, AccessesResponse>,
+  params: DocAccessesParams,
+  queryConfig?: UseQueryOptions<Access[], APIError, Access[]>,
 ) {
-  return useQuery<AccessesResponse, APIError, AccessesResponse>({
+  return useQuery<Access[], APIError, Access[]>({
     queryKey: [KEY_LIST_DOC_ACCESSES, params],
     queryFn: () => getDocAccesses(params),
     ...queryConfig,
   });
-}
-
-/**
- * @param param Used for infinite scroll pagination
- * @param queryConfig
- * @returns
- */
-export function useDocAccessesInfinite(params: DocAccessesParams) {
-  return useAPIInfiniteQuery(KEY_LIST_DOC_ACCESSES, getDocAccesses, params);
 }

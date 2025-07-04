@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './common';
+import { createDoc, randomName, verifyDocName } from './common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -25,7 +25,10 @@ test.describe('Document search', () => {
     );
     await verifyDocName(page, doc2Title);
     await page.goto('/');
-    await page.getByRole('button', { name: 'search' }).click();
+    await page
+      .getByTestId('left-panel-desktop')
+      .getByRole('button', { name: 'search' })
+      .click();
 
     await expect(
       page.getByRole('img', { name: 'No active search' }),
@@ -93,5 +96,86 @@ test.describe('Document search', () => {
     await expect(
       page.getByLabel('Search modal').getByText('search'),
     ).toBeHidden();
+  });
+
+  test("it checks we don't see filters in search modal", async ({ page }) => {
+    const searchButton = page
+      .getByTestId('left-panel-desktop')
+      .getByRole('button', { name: 'search' });
+
+    await expect(searchButton).toBeVisible();
+    await page.getByRole('button', { name: 'search', exact: true }).click();
+    await expect(
+      page.getByRole('combobox', { name: 'Quick search input' }),
+    ).toBeVisible();
+    await expect(page.getByTestId('doc-search-filters')).toBeHidden();
+  });
+});
+
+test.describe('Sub page search', () => {
+  test('it check the presence of filters in search modal', async ({
+    page,
+    browserName,
+  }) => {
+    await page.goto('/');
+    const [doc1Title] = await createDoc(
+      page,
+      'My sub page search',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, doc1Title);
+    const searchButton = page
+      .getByTestId('left-panel-desktop')
+      .getByRole('button', { name: 'search' });
+    await searchButton.click();
+    const filters = page.getByTestId('doc-search-filters');
+    await expect(filters).toBeVisible();
+    await filters.click();
+    await filters.getByRole('button', { name: 'Current doc' }).click();
+    await expect(
+      page.getByRole('menuitem', { name: 'All docs' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Current doc' }),
+    ).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Current doc' }).click();
+
+    await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
+  });
+
+  test('it searches sub pages', async ({ page, browserName }) => {
+    await page.goto('/');
+
+    const [doc1Title] = await createDoc(
+      page,
+      'My sub page search',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, doc1Title);
+    await page.getByRole('button', { name: 'New doc' }).click();
+    await verifyDocName(page, '');
+    await page.getByRole('textbox', { name: 'doc title input' }).click();
+    await page
+      .getByRole('textbox', { name: 'doc title input' })
+      .press('ControlOrMeta+a');
+    const [randomDocName] = randomName('doc-sub-page', browserName, 1);
+    await page
+      .getByRole('textbox', { name: 'doc title input' })
+      .fill(randomDocName);
+    const searchButton = page
+      .getByTestId('left-panel-desktop')
+      .getByRole('button', { name: 'search' });
+
+    await searchButton.click();
+    await expect(
+      page.getByRole('button', { name: 'Current doc' }),
+    ).toBeVisible();
+    await page.getByRole('combobox', { name: 'Quick search input' }).click();
+    await page
+      .getByRole('combobox', { name: 'Quick search input' })
+      .fill('sub');
+    await expect(page.getByLabel(randomDocName)).toBeVisible();
   });
 });

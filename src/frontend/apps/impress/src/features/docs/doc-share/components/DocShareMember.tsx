@@ -1,39 +1,35 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  Box,
-  DropdownMenu,
-  DropdownMenuOption,
-  IconOptions,
-  LoadMoreText,
-} from '@/components';
-import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
+import { Box } from '@/components';
+import { QuickSearchData } from '@/components/quick-search';
+import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { useCunninghamTheme } from '@/cunningham';
-import { Access, Doc, Role } from '@/docs/doc-management/';
-import { useResponsiveStore } from '@/stores';
+import { Access, Doc, KEY_SUB_PAGE, Role } from '@/docs/doc-management/';
 
-import {
-  useDeleteDocAccess,
-  useDocAccessesInfinite,
-  useUpdateDocAccess,
-} from '../api';
-import { useWhoAmI } from '../hooks';
+import { useDocAccesses, useUpdateDocAccess } from '../api';
+import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
 import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
-  doc: Doc;
+  doc?: Doc;
   access: Access;
+  isInherited?: boolean;
 };
-
-const DocShareMemberItem = ({ doc, access }: Props) => {
+export const DocShareMemberItem = ({
+  doc,
+  access,
+  isInherited = false,
+}: Props) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { isLastOwner } = useWhoAmI(access);
   const { toast } = useToastProvider();
-  const { isDesktop } = useResponsiveStore();
+
   const { spacingsTokens } = useCunninghamTheme();
 
   const message = isLastOwner
@@ -43,6 +39,14 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
     : undefined;
 
   const { mutate: updateDocAccess } = useUpdateDocAccess({
+    onSuccess: () => {
+      if (!doc) {
+        return;
+      }
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_SUB_PAGE, { id: doc.id }],
+      });
+    },
     onError: () => {
       toast(t('Error while updating the member role.'), VariantType.ERROR, {
         duration: 4000,
@@ -50,15 +54,10 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
     },
   });
 
-  const { mutate: removeDocAccess } = useDeleteDocAccess({
-    onError: () => {
-      toast(t('Error while deleting the member.'), VariantType.ERROR, {
-        duration: 4000,
-      });
-    },
-  });
-
   const onUpdate = (newRole: Role) => {
+    if (!doc) {
+      return;
+    }
     updateDocAccess({
       docId: doc.id,
       role: newRole,
@@ -66,18 +65,9 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
     });
   };
 
-  const onRemove = () => {
-    removeDocAccess({ accessId: access.id, docId: doc.id });
-  };
-
-  const moreActions: DropdownMenuOption[] = [
-    {
-      label: t('Delete'),
-      icon: 'delete',
-      callback: onRemove,
-      disabled: !access.abilities.destroy,
-    },
-  ];
+  const canUpdate = isInherited
+    ? false
+    : (doc?.abilities.accesses_manage ?? false);
 
   return (
     <Box
@@ -91,22 +81,15 @@ const DocShareMemberItem = ({ doc, access }: Props) => {
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
-              currentRole={access.role}
+              currentRole={isInherited ? access.max_role : access.role}
               onSelectRole={onUpdate}
-              canUpdate={doc.abilities.accesses_manage}
+              isLastOwner={isLastOwner}
+              canUpdate={canUpdate}
               message={message}
               rolesAllowed={access.abilities.set_role_to}
+              access={access}
+              doc={doc}
             />
-
-            {isDesktop && doc.abilities.accesses_manage && (
-              <DropdownMenu options={moreActions}>
-                <IconOptions
-                  isHorizontal
-                  data-testid="doc-share-member-more-actions"
-                  $variation="600"
-                />
-              </DropdownMenu>
-            )}
           </Box>
         }
       />
@@ -122,15 +105,14 @@ export const QuickSearchGroupMember = ({
   doc,
 }: QuickSearchGroupMemberProps) => {
   const { t } = useTranslation();
-  const membersQuery = useDocAccessesInfinite({
+  const membersQuery = useDocAccesses({
     docId: doc.id,
   });
 
   const membersData: QuickSearchData<Access> = useMemo(() => {
-    const members =
-      membersQuery.data?.pages.flatMap((page) => page.results) || [];
+    const members = membersQuery.data || [];
 
-    const count = membersQuery.data?.pages[0]?.count ?? 1;
+    const count = members.length;
 
     return {
       groupName:
@@ -140,19 +122,15 @@ export const QuickSearchGroupMember = ({
               count: count,
             }),
       elements: members,
-      endActions: membersQuery.hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-members" />,
-              onSelect: () => void membersQuery.fetchNextPage(),
-            },
-          ]
-        : undefined,
+      endActions: undefined,
     };
   }, [membersQuery, t]);
 
   return (
-    <Box aria-label={t('List members card')}>
+    <Box
+      aria-label={t('List members card')}
+      $padding={{ horizontal: 'base', bottom: '3xs' }}
+    >
       <QuickSearchGroup
         group={membersData}
         renderElement={(access) => (

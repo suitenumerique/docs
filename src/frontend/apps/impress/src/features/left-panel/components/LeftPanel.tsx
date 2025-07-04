@@ -70,6 +70,8 @@ export const LeftPanel = () => {
               position: fixed;
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
               background-color: var(--c--theme--colors--greyscale-000);
+              overflow-y: auto;
+              overflow-x: hidden;
             `}
             className="--docs--left-panel-mobile"
           >

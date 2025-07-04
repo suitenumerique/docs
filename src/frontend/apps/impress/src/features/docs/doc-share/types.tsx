@@ -1,5 +1,5 @@
 import { User } from '@/features/auth';
-import { Role } from '@/features/docs';
+import { Role } from '@/features/docs/doc-management';
 
 export interface Invitation {
   id: string;
@@ -16,6 +16,14 @@ export interface Invitation {
     update: boolean;
   };
 }
+
+/**
+ * Type guard to check if an object is an Invitation
+ * Invitation has unique properties: email, issuer, is_expired, and document as a string
+ */
+export const isInvitation = (obj: unknown): obj is Invitation => {
+  return obj !== null && typeof obj === 'object' && 'issuer' in obj;
+};
 
 export enum OptionType {
   INVITATION = 'invitation',
