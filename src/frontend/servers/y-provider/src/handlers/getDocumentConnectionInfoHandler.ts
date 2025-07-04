@@ -34,7 +34,9 @@ export const getDocumentConnectionInfoHandler = (
     res.status(404).json({ error: 'Room not found' });
     return;
   }
-  const connections = roomInfo.getConnections();
+  const connections = roomInfo.getConnections().filter(
+    (connection) => connection.context.readOnly === false,
+  );
 
   res.status(200).json({
     count: connections.length,
