@@ -34,9 +34,10 @@ export const getDocumentConnectionInfoHandler = (
     res.status(404).json({ error: 'Room not found' });
     return;
   }
-  const connections = roomInfo.getConnections().filter(
-    (connection) => connection.context.readOnly === false,
-  );
+  const connections = roomInfo
+    .getConnections()
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    .filter((connection) => connection.context.readOnly === false);
 
   res.status(200).json({
     count: connections.length,
