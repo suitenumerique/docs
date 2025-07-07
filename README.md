@@ -34,8 +34,6 @@ Docs, where your notes can become knowledge through live collaboration.
 ## Why use Docs ❓
 Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
-It offers a scalable and secure alternative to tools such as Google Docs, Notion (without the dbs), Outline, or Confluence.
-
 ### Write
 * 😌 Get simple, accessible online editing for your team.
 * 💅 Create clean documents with beautiful formatting options.
