@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-22 12:09+0000\n"
-"PO-Revision-Date: 2025-05-22 14:16\n"
+"POT-Creation-Date: 2025-07-08 15:21+0000\n"
+"PO-Revision-Date: 2025-07-09 07:45\n"
 "Last-Translator: \n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -46,29 +46,59 @@ msgstr ""
 msgid "Favorite"
 msgstr ""
 
-#: build/lib/core/api/serializers.py:446 core/api/serializers.py:446
+#: build/lib/core/api/serializers.py:467 core/api/serializers.py:467
 msgid "A new document was created on your behalf!"
 msgstr ""
 
-#: build/lib/core/api/serializers.py:450 core/api/serializers.py:450
+#: build/lib/core/api/serializers.py:471 core/api/serializers.py:471
 msgid "You have been granted ownership of a new document:"
 msgstr ""
 
-#: build/lib/core/api/serializers.py:586 core/api/serializers.py:586
+#: build/lib/core/api/serializers.py:608 core/api/serializers.py:608
 msgid "Body"
 msgstr ""
 
-#: build/lib/core/api/serializers.py:589 core/api/serializers.py:589
+#: build/lib/core/api/serializers.py:611 core/api/serializers.py:611
 msgid "Body type"
 msgstr ""
 
-#: build/lib/core/api/serializers.py:595 core/api/serializers.py:595
+#: build/lib/core/api/serializers.py:617 core/api/serializers.py:617
 msgid "Format"
 msgstr ""
 
-#: build/lib/core/api/viewsets.py:967 core/api/viewsets.py:967
+#: build/lib/core/api/viewsets.py:943 core/api/viewsets.py:943
 #, python-brace-format
 msgid "copy of {title}"
+msgstr ""
+
+#: build/lib/core/choices.py:35 build/lib/core/choices.py:42 core/choices.py:35
+#: core/choices.py:42
+msgid "Reader"
+msgstr ""
+
+#: build/lib/core/choices.py:36 build/lib/core/choices.py:43 core/choices.py:36
+#: core/choices.py:43
+msgid "Editor"
+msgstr ""
+
+#: build/lib/core/choices.py:44 core/choices.py:44
+msgid "Administrator"
+msgstr ""
+
+#: build/lib/core/choices.py:45 core/choices.py:45
+msgid "Owner"
+msgstr ""
+
+#: build/lib/core/choices.py:56 core/choices.py:56
+msgid "Restricted"
+msgstr ""
+
+#: build/lib/core/choices.py:60 core/choices.py:60
+msgid "Authenticated"
+msgstr ""
+
+#: build/lib/core/choices.py:62 core/choices.py:62
+msgid "Public"
 msgstr ""
 
 #: build/lib/core/enums.py:36 core/enums.py:36
@@ -95,295 +125,292 @@ msgstr ""
 msgid "Right"
 msgstr ""
 
-#: build/lib/core/models.py:56 build/lib/core/models.py:63 core/models.py:56
-#: core/models.py:63
-msgid "Reader"
-msgstr ""
-
-#: build/lib/core/models.py:57 build/lib/core/models.py:64 core/models.py:57
-#: core/models.py:64
-msgid "Editor"
-msgstr ""
-
-#: build/lib/core/models.py:65 core/models.py:65
-msgid "Administrator"
-msgstr ""
-
-#: build/lib/core/models.py:66 core/models.py:66
-msgid "Owner"
-msgstr ""
-
-#: build/lib/core/models.py:77 core/models.py:77
-msgid "Restricted"
-msgstr ""
-
-#: build/lib/core/models.py:81 core/models.py:81
-msgid "Authenticated"
-msgstr ""
-
-#: build/lib/core/models.py:83 core/models.py:83
-msgid "Public"
-msgstr ""
-
-#: build/lib/core/models.py:154 core/models.py:154
+#: build/lib/core/models.py:79 core/models.py:79
 msgid "id"
 msgstr ""
 
-#: build/lib/core/models.py:155 core/models.py:155
+#: build/lib/core/models.py:80 core/models.py:80
 msgid "primary key for the record as UUID"
 msgstr ""
 
-#: build/lib/core/models.py:161 core/models.py:161
+#: build/lib/core/models.py:86 core/models.py:86
 msgid "created on"
 msgstr ""
 
-#: build/lib/core/models.py:162 core/models.py:162
+#: build/lib/core/models.py:87 core/models.py:87
 msgid "date and time at which a record was created"
 msgstr ""
 
-#: build/lib/core/models.py:167 core/models.py:167
+#: build/lib/core/models.py:92 core/models.py:92
 msgid "updated on"
 msgstr ""
 
-#: build/lib/core/models.py:168 core/models.py:168
+#: build/lib/core/models.py:93 core/models.py:93
 msgid "date and time at which a record was last updated"
 msgstr ""
 
-#: build/lib/core/models.py:204 core/models.py:204
+#: build/lib/core/models.py:129 core/models.py:129
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
 msgstr ""
 
-#: build/lib/core/models.py:217 core/models.py:217
+#: build/lib/core/models.py:142 core/models.py:142
 msgid "Enter a valid sub. This value may contain only letters, numbers, and @/./+/-/_/: characters."
 msgstr ""
 
-#: build/lib/core/models.py:223 core/models.py:223
+#: build/lib/core/models.py:148 core/models.py:148
 msgid "sub"
 msgstr ""
 
-#: build/lib/core/models.py:225 core/models.py:225
+#: build/lib/core/models.py:150 core/models.py:150
 msgid "Required. 255 characters or fewer. Letters, numbers, and @/./+/-/_/: characters only."
 msgstr ""
 
-#: build/lib/core/models.py:234 core/models.py:234
+#: build/lib/core/models.py:159 core/models.py:159
 msgid "full name"
 msgstr ""
 
-#: build/lib/core/models.py:235 core/models.py:235
+#: build/lib/core/models.py:160 core/models.py:160
 msgid "short name"
 msgstr ""
 
-#: build/lib/core/models.py:237 core/models.py:237
+#: build/lib/core/models.py:162 core/models.py:162
 msgid "identity email address"
 msgstr ""
 
-#: build/lib/core/models.py:242 core/models.py:242
+#: build/lib/core/models.py:167 core/models.py:167
 msgid "admin email address"
 msgstr ""
 
-#: build/lib/core/models.py:249 core/models.py:249
+#: build/lib/core/models.py:174 core/models.py:174
 msgid "language"
 msgstr ""
 
-#: build/lib/core/models.py:250 core/models.py:250
+#: build/lib/core/models.py:175 core/models.py:175
 msgid "The language in which the user wants to see the interface."
 msgstr ""
 
-#: build/lib/core/models.py:258 core/models.py:258
+#: build/lib/core/models.py:183 core/models.py:183
 msgid "The timezone in which the user wants to see times."
 msgstr ""
 
-#: build/lib/core/models.py:261 core/models.py:261
+#: build/lib/core/models.py:186 core/models.py:186
 msgid "device"
 msgstr ""
 
-#: build/lib/core/models.py:263 core/models.py:263
+#: build/lib/core/models.py:188 core/models.py:188
 msgid "Whether the user is a device or a real user."
 msgstr ""
 
-#: build/lib/core/models.py:266 core/models.py:266
+#: build/lib/core/models.py:191 core/models.py:191
 msgid "staff status"
 msgstr ""
 
-#: build/lib/core/models.py:268 core/models.py:268
+#: build/lib/core/models.py:193 core/models.py:193
 msgid "Whether the user can log into this admin site."
 msgstr ""
 
-#: build/lib/core/models.py:271 core/models.py:271
+#: build/lib/core/models.py:196 core/models.py:196
 msgid "active"
 msgstr ""
 
-#: build/lib/core/models.py:274 core/models.py:274
+#: build/lib/core/models.py:199 core/models.py:199
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
 msgstr ""
 
-#: build/lib/core/models.py:286 core/models.py:286
+#: build/lib/core/models.py:211 core/models.py:211
 msgid "user"
 msgstr ""
 
-#: build/lib/core/models.py:287 core/models.py:287
+#: build/lib/core/models.py:212 core/models.py:212
 msgid "users"
 msgstr ""
 
-#: build/lib/core/models.py:470 build/lib/core/models.py:1155
-#: core/models.py:470 core/models.py:1155
+#: build/lib/core/models.py:368 build/lib/core/models.py:1281
+#: core/models.py:368 core/models.py:1281
 msgid "title"
 msgstr ""
 
-#: build/lib/core/models.py:471 core/models.py:471
+#: build/lib/core/models.py:369 core/models.py:369
 msgid "excerpt"
 msgstr ""
 
-#: build/lib/core/models.py:519 core/models.py:519
+#: build/lib/core/models.py:418 core/models.py:418
 msgid "Document"
 msgstr ""
 
-#: build/lib/core/models.py:520 core/models.py:520
+#: build/lib/core/models.py:419 core/models.py:419
 msgid "Documents"
 msgstr ""
 
-#: build/lib/core/models.py:532 build/lib/core/models.py:873 core/models.py:532
-#: core/models.py:873
+#: build/lib/core/models.py:431 build/lib/core/models.py:820 core/models.py:431
+#: core/models.py:820
 msgid "Untitled Document"
 msgstr ""
 
-#: build/lib/core/models.py:908 core/models.py:908
+#: build/lib/core/models.py:855 core/models.py:855
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr ""
 
-#: build/lib/core/models.py:912 core/models.py:912
+#: build/lib/core/models.py:859 core/models.py:859
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr ""
 
-#: build/lib/core/models.py:918 core/models.py:918
+#: build/lib/core/models.py:865 core/models.py:865
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr ""
 
-#: build/lib/core/models.py:1016 core/models.py:1016
+#: build/lib/core/models.py:964 core/models.py:964
 msgid "Document/user link trace"
 msgstr ""
 
-#: build/lib/core/models.py:1017 core/models.py:1017
+#: build/lib/core/models.py:965 core/models.py:965
 msgid "Document/user link traces"
 msgstr ""
 
-#: build/lib/core/models.py:1023 core/models.py:1023
+#: build/lib/core/models.py:971 core/models.py:971
 msgid "A link trace already exists for this document/user."
 msgstr ""
 
-#: build/lib/core/models.py:1046 core/models.py:1046
+#: build/lib/core/models.py:994 core/models.py:994
 msgid "Document favorite"
 msgstr ""
 
-#: build/lib/core/models.py:1047 core/models.py:1047
+#: build/lib/core/models.py:995 core/models.py:995
 msgid "Document favorites"
 msgstr ""
 
-#: build/lib/core/models.py:1053 core/models.py:1053
+#: build/lib/core/models.py:1001 core/models.py:1001
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr ""
 
-#: build/lib/core/models.py:1075 core/models.py:1075
+#: build/lib/core/models.py:1023 core/models.py:1023
 msgid "Document/user relation"
 msgstr ""
 
-#: build/lib/core/models.py:1076 core/models.py:1076
+#: build/lib/core/models.py:1024 core/models.py:1024
 msgid "Document/user relations"
 msgstr ""
 
-#: build/lib/core/models.py:1082 core/models.py:1082
+#: build/lib/core/models.py:1030 core/models.py:1030
 msgid "This user is already in this document."
 msgstr ""
 
-#: build/lib/core/models.py:1088 core/models.py:1088
+#: build/lib/core/models.py:1036 core/models.py:1036
 msgid "This team is already in this document."
 msgstr ""
 
-#: build/lib/core/models.py:1094 build/lib/core/models.py:1242
-#: core/models.py:1094 core/models.py:1242
+#: build/lib/core/models.py:1042 build/lib/core/models.py:1367
+#: core/models.py:1042 core/models.py:1367
 msgid "Either user or team must be set, not both."
 msgstr ""
 
-#: build/lib/core/models.py:1156 core/models.py:1156
+#: build/lib/core/models.py:1188 core/models.py:1188
+msgid "Document ask for access"
+msgstr ""
+
+#: build/lib/core/models.py:1189 core/models.py:1189
+msgid "Document ask for accesses"
+msgstr ""
+
+#: build/lib/core/models.py:1195 core/models.py:1195
+msgid "This user has already asked for access to this document."
+msgstr ""
+
+#: build/lib/core/models.py:1260 core/models.py:1260
+#, python-brace-format
+msgid "{name} would like access to a document!"
+msgstr ""
+
+#: build/lib/core/models.py:1264 core/models.py:1264
+#, python-brace-format
+msgid "{name} would like access to the following document:"
+msgstr ""
+
+#: build/lib/core/models.py:1270 core/models.py:1270
+#, python-brace-format
+msgid "{name} is asking for access to the document: {title}"
+msgstr ""
+
+#: build/lib/core/models.py:1282 core/models.py:1282
 msgid "description"
 msgstr ""
 
-#: build/lib/core/models.py:1157 core/models.py:1157
+#: build/lib/core/models.py:1283 core/models.py:1283
 msgid "code"
 msgstr ""
 
-#: build/lib/core/models.py:1158 core/models.py:1158
+#: build/lib/core/models.py:1284 core/models.py:1284
 msgid "css"
 msgstr ""
 
-#: build/lib/core/models.py:1160 core/models.py:1160
+#: build/lib/core/models.py:1286 core/models.py:1286
 msgid "public"
 msgstr ""
 
-#: build/lib/core/models.py:1162 core/models.py:1162
+#: build/lib/core/models.py:1288 core/models.py:1288
 msgid "Whether this template is public for anyone to use."
 msgstr ""
 
-#: build/lib/core/models.py:1168 core/models.py:1168
+#: build/lib/core/models.py:1294 core/models.py:1294
 msgid "Template"
 msgstr ""
 
-#: build/lib/core/models.py:1169 core/models.py:1169
+#: build/lib/core/models.py:1295 core/models.py:1295
 msgid "Templates"
 msgstr ""
 
-#: build/lib/core/models.py:1223 core/models.py:1223
+#: build/lib/core/models.py:1348 core/models.py:1348
 msgid "Template/user relation"
 msgstr ""
 
-#: build/lib/core/models.py:1224 core/models.py:1224
+#: build/lib/core/models.py:1349 core/models.py:1349
 msgid "Template/user relations"
 msgstr ""
 
-#: build/lib/core/models.py:1230 core/models.py:1230
+#: build/lib/core/models.py:1355 core/models.py:1355
 msgid "This user is already in this template."
 msgstr ""
 
-#: build/lib/core/models.py:1236 core/models.py:1236
+#: build/lib/core/models.py:1361 core/models.py:1361
 msgid "This team is already in this template."
 msgstr ""
 
-#: build/lib/core/models.py:1259 core/models.py:1259
+#: build/lib/core/models.py:1438 core/models.py:1438
 msgid "email address"
 msgstr ""
 
-#: build/lib/core/models.py:1278 core/models.py:1278
+#: build/lib/core/models.py:1457 core/models.py:1457
 msgid "Document invitation"
 msgstr ""
 
-#: build/lib/core/models.py:1279 core/models.py:1279
+#: build/lib/core/models.py:1458 core/models.py:1458
 msgid "Document invitations"
 msgstr ""
 
-#: build/lib/core/models.py:1299 core/models.py:1299
+#: build/lib/core/models.py:1478 core/models.py:1478
 msgid "This email is already associated to a registered user."
 msgstr ""
 
-#: core/templates/mail/html/invitation.html:162
-#: core/templates/mail/text/invitation.txt:3
+#: core/templates/mail/html/template.html:162
+#: core/templates/mail/text/template.txt:3
 msgid "Logo email"
 msgstr ""
 
-#: core/templates/mail/html/invitation.html:209
-#: core/templates/mail/text/invitation.txt:10
+#: core/templates/mail/html/template.html:209
+#: core/templates/mail/text/template.txt:10
 msgid "Open"
 msgstr ""
 
-#: core/templates/mail/html/invitation.html:226
-#: core/templates/mail/text/invitation.txt:14
+#: core/templates/mail/html/template.html:226
+#: core/templates/mail/text/template.txt:14
 msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
 msgstr ""
 
-#: core/templates/mail/html/invitation.html:233
-#: core/templates/mail/text/invitation.txt:16
+#: core/templates/mail/html/template.html:233
+#: core/templates/mail/text/template.txt:16
 #, python-format
 msgid " Brought to you by %(brandname)s "
 msgstr ""
