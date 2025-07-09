@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-07-08 15:21+0000\n"
-"PO-Revision-Date: 2025-07-09 07:45\n"
+"PO-Revision-Date: 2025-07-09 11:52\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr_FR\n"
@@ -309,30 +309,30 @@ msgstr "L'utilisateur ou l'équipe doivent être définis, pas les deux."
 
 #: build/lib/core/models.py:1188 core/models.py:1188
 msgid "Document ask for access"
-msgstr ""
+msgstr "Demande d'accès au document"
 
 #: build/lib/core/models.py:1189 core/models.py:1189
 msgid "Document ask for accesses"
-msgstr ""
+msgstr "Demande d'accès au document"
 
 #: build/lib/core/models.py:1195 core/models.py:1195
 msgid "This user has already asked for access to this document."
-msgstr ""
+msgstr "Cet utilisateur a déjà demandé l'accès à ce document."
 
 #: build/lib/core/models.py:1260 core/models.py:1260
 #, python-brace-format
 msgid "{name} would like access to a document!"
-msgstr ""
+msgstr "{name} souhaiterait accéder au document suivant !"
 
 #: build/lib/core/models.py:1264 core/models.py:1264
 #, python-brace-format
 msgid "{name} would like access to the following document:"
-msgstr ""
+msgstr "{name} souhaiterait accéder au document suivant :"
 
 #: build/lib/core/models.py:1270 core/models.py:1270
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
-msgstr ""
+msgstr "{name} demande l'accès au document : {title}"
 
 #: build/lib/core/models.py:1282 core/models.py:1282
 msgid "description"
