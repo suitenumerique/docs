@@ -73,7 +73,7 @@
     "cross-env": "7.0.3",
     "dotenv": "16.5.0",
     "eslint-config-impress": "*",
-    "fetch-mock": "9.11.0",
+    "fetch-mock": "^12.5.3",
     "jest": "30.0.3",
     "jest-environment-jsdom": "30.0.2",
     "node-fetch": "2.7.0",

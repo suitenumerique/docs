@@ -38,5 +38,8 @@
     "react-dom": "19.1.0",
     "typescript": "5.8.3",
     "yjs": "13.6.27"
+  },
+  "dependencies": {
+    "govuk-frontend": "^5.11.0"
   }
 }
