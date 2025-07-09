@@ -10,6 +10,7 @@ import {
   overrideConfig,
   verifyDocName,
 } from './common';
+import { createRootSubPage } from './sub-pages-utils';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -524,6 +525,8 @@ test.describe('Doc Editor', () => {
     page,
     browserName,
   }) => {
+    test.slow();
+
     /**
      * The good port is 4444, but we want to simulate a not connected
      * collaborative server.
@@ -536,7 +539,12 @@ test.describe('Doc Editor', () => {
 
     await page.goto('/');
 
-    const [title] = await createDoc(page, 'editing-blocking', browserName, 1);
+    const [parentTitle] = await createDoc(
+      page,
+      'editing-blocking',
+      browserName,
+      1,
+    );
 
     const card = page.getByLabel('It is the card information');
     await expect(
@@ -571,12 +579,20 @@ test.describe('Doc Editor', () => {
     // Close the modal
     await page.getByRole('button', { name: 'close' }).first().click();
 
+    const urlParentDoc = page.url();
+
+    const { name: childTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'editing-blocking - child',
+    );
+
     let responseCanEdit = await responseCanEditPromise;
     expect(responseCanEdit.ok()).toBeTruthy();
     let jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
     expect(jsonCanEdit.can_edit).toBeTruthy();
 
-    const urlDoc = page.url();
+    const urlChildDoc = page.url();
 
     /**
      * We open another browser that will connect to the collaborative server
@@ -603,14 +619,14 @@ test.describe('Doc Editor', () => {
       },
     );
 
-    await otherPage.goto(urlDoc);
+    await otherPage.goto(urlChildDoc);
 
     const webSocket = await webSocketPromise;
     expect(webSocket.url()).toContain(
       'ws://localhost:4444/collaboration/ws/?room=',
     );
 
-    await verifyDocName(otherPage, title);
+    await verifyDocName(otherPage, childTitle);
 
     await page.reload();
 
@@ -633,6 +649,10 @@ test.describe('Doc Editor', () => {
 
     await expect(editor).toHaveAttribute('contenteditable', 'false');
 
+    await page.goto(urlParentDoc);
+
+    await verifyDocName(page, parentTitle);
+
     await page.getByRole('button', { name: 'Share' }).click();
 
     await page.getByLabel('Visibility mode').click();
@@ -641,18 +661,9 @@ test.describe('Doc Editor', () => {
     // Close the modal
     await page.getByRole('button', { name: 'close' }).first().click();
 
-    await page.reload();
+    await page.goto(urlChildDoc);
 
-    responseCanEditPromise = page.waitForResponse(
-      (response) =>
-        response.url().includes(`/can-edit/`) && response.status() === 200,
-    );
-
-    responseCanEdit = await responseCanEditPromise;
-    expect(responseCanEdit.ok()).toBeTruthy();
-
-    jsonCanEdit = (await responseCanEdit.json()) as { can_edit: boolean };
-    expect(jsonCanEdit.can_edit).toBeTruthy();
+    await expect(editor).toHaveAttribute('contenteditable', 'true');
 
     await expect(
       card.getByText('Others are editing. Your network prevent changes.'),

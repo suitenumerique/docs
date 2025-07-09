@@ -441,7 +441,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     const { name: childTitle } = await createRootSubPage(
       page,
       browserName,
-      'Authenticated read onlyc - child',
+      'Authenticated read only - child',
     );
 
     const urlChildDoc = page.url();
