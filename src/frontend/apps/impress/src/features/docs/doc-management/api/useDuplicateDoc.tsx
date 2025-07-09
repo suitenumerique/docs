@@ -7,6 +7,7 @@ import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { toBase64 } from '@/docs/doc-editor';
+import { KEY_DOC_TREE } from '@/docs/doc-tree';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 
 import { useProviderStore } from '../stores';
@@ -84,6 +85,9 @@ export function useDuplicateDoc(options: DuplicateDocOptions) {
     onSuccess: (data, variables, context) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.resetQueries({
+        queryKey: [KEY_DOC_TREE],
       });
       void options.onSuccess?.(data, variables, context);
     },

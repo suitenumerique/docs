@@ -25,7 +25,7 @@ export const getDocTree = async ({ docId }: DocsTreeParams): Promise<Doc> => {
   return response.json() as Promise<Doc>;
 };
 
-export const KEY_LIST_DOC_CHILDREN = 'doc-tree';
+export const KEY_DOC_TREE = 'doc-tree';
 
 export function useDocTree(
   params: DocsTreeParams,
@@ -35,7 +35,7 @@ export function useDocTree(
   >,
 ) {
   return useQuery<Doc, APIError, Doc>({
-    queryKey: [KEY_LIST_DOC_CHILDREN, params],
+    queryKey: [KEY_DOC_TREE, params],
     queryFn: () => getDocTree(params),
     staleTime: 0,
     refetchOnWindowFocus: false,

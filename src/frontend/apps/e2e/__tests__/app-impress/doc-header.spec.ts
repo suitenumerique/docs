@@ -9,6 +9,7 @@ import {
   mockedInvitations,
   verifyDocName,
 } from './common';
+import { createRootSubPage } from './sub-pages-utils';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -455,6 +456,32 @@ test.describe('Doc Header', () => {
     const duplicateDuplicateTitle = 'Copy of ' + duplicateTitle;
     await page.getByText(duplicateDuplicateTitle).click();
     await expect(page.getByText('Hello Duplicated World')).toBeVisible();
+  });
+
+  test('it duplicates a child document', async ({ page, browserName }) => {
+    await createDoc(page, `Duplicate doc`, browserName);
+
+    const { name: childTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'Duplicate doc - child',
+    );
+
+    const editor = page.locator('.ProseMirror');
+    await editor.click();
+    await editor.fill('Hello Duplicated World');
+
+    await page.getByLabel('Open the document options').click();
+
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await expect(
+      page.getByText('Document duplicated successfully!'),
+    ).toBeVisible();
+
+    const duplicateDuplicateTitle = 'Copy of ' + childTitle;
+    await expect(
+      page.getByTestId('doc-tree').getByText(duplicateDuplicateTitle),
+    ).toBeVisible();
   });
 });
 
