@@ -98,14 +98,12 @@ export const ModalRemoveDoc = ({
         className="--docs--modal-remove-doc"
       >
         {!isError && (
-          <>
-            <Text $size="sm" $variation="600" $display="inline-block">
-              <Trans t={t} i18nKey="modal-remove-doc">
-                This document and <strong>any sub-documents</strong> will be
-                permanently deleted. This action is irreversible.
-              </Trans>
-            </Text>
-          </>
+          <Text $size="sm" $variation="600" $display="inline-block">
+            <Trans t={t}>
+              This document and <strong>any sub-documents</strong> will be
+              permanently deleted. This action is irreversible.
+            </Trans>
+          </Text>
         )}
 
         {isError && <TextErrors causes={error.cause} />}
