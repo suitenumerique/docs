@@ -136,7 +136,7 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
 
   const overlayText = useMemo(() => {
     if (!canDrag) {
-      return t('You must have admin rights to move the document');
+      return t('You must be the owner to move the document');
     }
     if (!canDrop) {
       return t('You must be at least the editor of the target document');
