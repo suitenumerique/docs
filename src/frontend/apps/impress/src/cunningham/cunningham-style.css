@@ -1,5 +1,6 @@
 @import url('@gouvfr-lasuite/ui-kit/style');
 @import url('./cunningham-tokens.css');
+@import url('govuk-frontend/dist/govuk/govuk-frontend.min.css');
 
 :root {
   /**

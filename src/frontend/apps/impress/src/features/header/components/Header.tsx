@@ -36,10 +36,10 @@ export const Header = () => {
         background-color: ${colorsTokens['greyscale-000']};
         border-bottom: 1px solid ${colorsTokens['greyscale-200']};
       `}
-      className="--docs--header"
+      className="govuk-header"
     >
       {!isDesktop && <ButtonTogglePanel />}
-      <StyledLink href="/">
+      <StyledLink href="/" className="govuk-header__link govuk-header__link--homepage">
         <Box
           $align="center"
           $gap={spacingsTokens['3xs']}
