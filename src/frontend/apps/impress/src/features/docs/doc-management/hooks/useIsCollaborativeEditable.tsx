@@ -5,15 +5,20 @@ import { useIsOffline } from '@/features/service-worker';
 
 import { KEY_CAN_EDIT, useDocCanEdit } from '../api/useDocCanEdit';
 import { useProviderStore } from '../stores';
-import { Doc, LinkReach } from '../types';
+import { Doc, LinkReach, LinkRole } from '../types';
 
 export const useIsCollaborativeEditable = (doc: Doc) => {
   const { isConnected } = useProviderStore();
   const { data: conf } = useConfig();
 
-  const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
-  const docIsAuth = doc.link_reach === LinkReach.AUTHENTICATED;
-  const docHasMember = doc.nb_accesses_direct > 1;
+  const docIsPublic =
+    doc.computed_link_reach === LinkReach.PUBLIC &&
+    doc.computed_link_role === LinkRole.EDITOR;
+  const docIsAuth =
+    doc.computed_link_reach === LinkReach.AUTHENTICATED &&
+    doc.computed_link_role === LinkRole.EDITOR;
+  const docHasMember =
+    doc.nb_accesses_direct > 1 || doc.nb_accesses_ancestors > 1;
   const isUserReader = !doc.abilities.partial_update;
   const isShared = docIsPublic || docIsAuth || docHasMember;
   const { isOffline } = useIsOffline();
