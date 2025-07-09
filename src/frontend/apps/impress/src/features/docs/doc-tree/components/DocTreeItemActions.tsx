@@ -11,7 +11,12 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
 
-import { Doc, ModalRemoveDoc, useCopyDocLink } from '../../doc-management';
+import {
+  Doc,
+  ModalRemoveDoc,
+  Role,
+  useCopyDocLink,
+} from '../../doc-management';
 import { useCreateChildrenDoc } from '../api/useCreateChildren';
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -70,7 +75,7 @@ export const DocTreeItemActions = ({
       ? [
           {
             label: t('Move to my docs'),
-            isDisabled: !doc.abilities.move,
+            isDisabled: doc.user_role !== Role.OWNER,
             icon: (
               <Box
                 $css={css`

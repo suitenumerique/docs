@@ -209,7 +209,6 @@ export class ApiPlugin implements WorkboxPlugin {
       },
       link_reach: LinkReach.RESTRICTED,
       link_role: LinkRole.READER,
-      user_roles: [Role.OWNER],
       user_role: Role.OWNER,
       path: '',
       computed_link_reach: LinkReach.RESTRICTED,

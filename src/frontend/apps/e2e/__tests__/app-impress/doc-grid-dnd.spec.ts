@@ -158,7 +158,7 @@ test.describe('Doc grid dnd', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must have admin rights to move the document',
+      'You must be the owner to move the document',
     );
 
     await page.mouse.up();

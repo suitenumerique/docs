@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core';
 import { useState } from 'react';
 
-import { Doc } from '@/docs/doc-management';
+import { Doc, Role } from '@/docs/doc-management';
 
 export type DocDragEndData = {
   sourceDocumentId: string;
@@ -26,7 +26,7 @@ export function useDragAndDrop(onDrag: (data: DocDragEndData) => void) {
   const [selectedDoc, setSelectedDoc] = useState<Doc>();
   const [canDrop, setCanDrop] = useState<boolean>();
 
-  const canDrag = !!selectedDoc?.abilities.move;
+  const canDrag = selectedDoc?.user_role === Role.OWNER;
 
   const mouseSensor = useSensor(MouseSensor, { activationConstraint });
   const touchSensor = useSensor(TouchSensor, { activationConstraint });

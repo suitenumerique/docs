@@ -70,7 +70,6 @@ export interface Doc {
   numchild: number;
   updated_at: string;
   user_role: Role;
-  user_roles: Role[];
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
