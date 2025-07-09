@@ -948,33 +948,34 @@ class DocumentViewSet(
             **link_kwargs,
         )
 
-        # Always add the logged-in user as OWNER
-        accesses_to_create = [
-            models.DocumentAccess(
-                document=duplicated_document,
-                user=request.user,
-                role=models.RoleChoices.OWNER,
-            )
-        ]
-
-        # If accesses should be duplicated, add other users' accesses as per original document
-        if with_accesses and is_owner_or_admin:
-            original_accesses = models.DocumentAccess.objects.filter(
-                document=document
-            ).exclude(user=request.user)
-
-            accesses_to_create.extend(
+        # Always add the logged-in user as OWNER for root documents
+        if document.is_root():
+            accesses_to_create = [
                 models.DocumentAccess(
                     document=duplicated_document,
-                    user_id=access.user_id,
-                    team=access.team,
-                    role=access.role,
+                    user=request.user,
+                    role=models.RoleChoices.OWNER,
                 )
-                for access in original_accesses
-            )
+            ]
 
-        # Bulk create all the duplicated accesses
-        models.DocumentAccess.objects.bulk_create(accesses_to_create)
+            # If accesses should be duplicated, add other users' accesses as per original document
+            if with_accesses and is_owner_or_admin:
+                original_accesses = models.DocumentAccess.objects.filter(
+                    document=document
+                ).exclude(user=request.user)
+
+                accesses_to_create.extend(
+                    models.DocumentAccess(
+                        document=duplicated_document,
+                        user_id=access.user_id,
+                        team=access.team,
+                        role=access.role,
+                    )
+                    for access in original_accesses
+                )
+
+            # Bulk create all the duplicated accesses
+            models.DocumentAccess.objects.bulk_create(accesses_to_create)
 
         return drf_response.Response(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
