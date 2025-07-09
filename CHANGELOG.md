@@ -8,19 +8,22 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.4.0] - 2025-07-09
+
 ### Added
 
 - ✨(frontend) multi-pages #701
+- ✨(frontend) Duplicate a doc #1078
+- ✨Ask for access #1081
+- ✨(frontend) add customization for translations #857
 - ✨(backend) add ancestors links definitions to document abilities #846
 - ✨(backend) include ancestors accesses on document accesses list view # 846
 - ✨(backend) add ancestors links reach and role to document API #846
-- ✨(frontend) add customization for translations #857
-- ✨(frontend) Duplicate a doc #1078
 - 📝(project) add troubleshoot doc #1066
 - 📝(project) add system-requirement doc #1066
 - 🔧(front) configure x-frame-options to DENY in nginx conf #1084
-- ✨(backend) allow to disable checking unsafe mimetype on attachment upload
-- ✨Ask for access #1081
+- ✨(backend) allow to disable checking unsafe mimetype on 
+  attachment upload #1099
 - ✨(doc) add documentation to install with compose #855
 - ✨ Give priority to users connected to collaboration server 
   (aka no websocket feature) #1093 
@@ -43,8 +46,7 @@ and this project adheres to
 - 🐛(frontend) fix meta title #1017
 - 🔧(git) set LF line endings for all text files #1032
 - 📝(docs) minor fixes to docs/env.md
-- ✨(backend) support `_FILE` environment variables for secrets #912
-- ✨(frontend) support `_FILE` environment variables for secrets #912
+- ✨support `_FILE` environment variables for secrets #912
 
 ### Removed
 
@@ -634,7 +636,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.3.0...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.4.0...main
+[v3.4.0]: https://github.com/numerique-gouv/impress/releases/v3.4.0
 [v3.3.0]: https://github.com/numerique-gouv/impress/releases/v3.3.0
 [v3.2.1]: https://github.com/numerique-gouv/impress/releases/v3.2.1
 [v3.2.0]: https://github.com/numerique-gouv/impress/releases/v3.2.0
