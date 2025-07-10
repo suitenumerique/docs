@@ -18,7 +18,7 @@ import {
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
-import Logo from './../assets/sub-page-logo.svg';
+import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
 
 const ItemTextCss = css`
@@ -99,6 +99,7 @@ export const DocSubPageItem = (props: Props) => {
   return (
     <Box
       className="--docs-sub-page-item"
+      $position="relative"
       $css={css`
         background-color: ${actionsOpen
           ? 'var(--c--theme--colors--greyscale-100)'
@@ -106,6 +107,17 @@ export const DocSubPageItem = (props: Props) => {
 
         .light-doc-item-actions {
           display: ${actionsOpen || !isDesktop ? 'flex' : 'none'};
+          position: absolute;
+          right: 0;
+          background: ${isDesktop
+            ? 'var(--c--theme--colors--greyscale-100)'
+            : 'var(--c--theme--colors--greyscale-000)'};
+        }
+
+        .c__tree-view--node.isSelected {
+          .light-doc-item-actions {
+            background: var(--c--theme--colors--greyscale-100);
+          }
         }
 
         &:hover {
@@ -114,6 +126,7 @@ export const DocSubPageItem = (props: Props) => {
 
           .light-doc-item-actions {
             display: flex;
+            background: var(--c--theme--colors--greyscale-100);
           }
         }
       `}
@@ -136,7 +149,7 @@ export const DocSubPageItem = (props: Props) => {
           $minHeight="24px"
         >
           <Box $width="16px" $height="16px">
-            <Logo />
+            <SubPageIcon />
           </Box>
 
           <Box

@@ -136,6 +136,10 @@ export const DocTree = ({ initialTargetId }: DocTreeProps) => {
         .c__tree-view--container {
           z-index: 1;
           margin-top: -10px;
+
+          .c__tree-view {
+            overflow: hidden !important;
+          }
         }
       `}
     >

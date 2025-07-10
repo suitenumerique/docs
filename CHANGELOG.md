@@ -12,6 +12,7 @@ and this project adheres to
 
 - 🌐(frontend) keep simple tag during export #1154
 - 🐛(back) manage can-edit endpoint without created room in the ws
+- 🐛(frontend) fix action buttons not clickable #1162
 
 ## [3.4.0] - 2025-07-09
 
