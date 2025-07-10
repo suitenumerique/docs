@@ -591,7 +591,7 @@
       "The document has been deleted.": "Le document a bien été supprimé.",
       "The document visibility has been updated.": "La visibilité du document a été mise à jour.",
       "The export failed": "L’exportation a échoué",
-      "This document and <1>any sub-documents</1> will be permanently deleted. This action is irreversible.": "Ce document et <1>tous les sous-documents</1> seront définitivement supprimés. Cette action est irréversible.",
+      "This document and <strong>any sub-documents</strong> will be permanently deleted. This action is irreversible.": "Ce document et <strong>tous les sous-documents</strong> seront définitivement supprimés. Cette action est irréversible.",
       "This file is flagged as unsafe.": "Ce fichier est marqué comme non sûr.",
       "This means you can't edit until others leave.": "Cela signifie que vous ne pouvez pas éditer tant que d'autres éditeurs sont présents sur le document.",
       "This user has access inherited from a parent page.": "Cet utilisateur a un accès hérité d'une page parente.",
