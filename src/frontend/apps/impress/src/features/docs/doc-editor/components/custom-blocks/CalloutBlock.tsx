@@ -87,12 +87,15 @@ export const CalloutBlock = createReactBlockSpec(
               onEmojiSelect={onEmojiSelect}
             />
           )}
-          <Box as="p" className="inline-content" ref={contentRef}
+          <Box
+            as="p"
+            className="inline-content"
+            ref={contentRef}
             $css={css`
               & > div {
                 padding-top: 2px;
               }
-              `}
+            `}
           />
         </Box>
       );
@@ -105,19 +108,19 @@ export const getCalloutReactSlashMenuItems = (
   t: TFunction<'translation', undefined>,
   group: string,
 ) => [
-    {
-      title: t('Callout'),
-      onItemClick: () => {
-        insertOrUpdateBlock(editor, {
-          type: 'callout',
-        });
-      },
-      aliases: ['callout', 'encadré', 'hervorhebung', 'benadrukken'],
-      group,
-      icon: <Icon iconName="lightbulb" $size="18px" />,
-      subtext: t('Add a callout block'),
+  {
+    title: t('Callout'),
+    onItemClick: () => {
+      insertOrUpdateBlock(editor, {
+        type: 'callout',
+      });
     },
-  ];
+    aliases: ['callout', 'encadré', 'hervorhebung', 'benadrukken'],
+    group,
+    icon: <Icon iconName="lightbulb" $size="18px" />,
+    subtext: t('Add a callout block'),
+  },
+];
 
 export const getCalloutFormattingToolbarItems = (
   t: TFunction<'translation', undefined>,
