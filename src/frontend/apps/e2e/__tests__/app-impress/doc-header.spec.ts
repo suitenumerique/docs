@@ -482,6 +482,22 @@ test.describe('Doc Header', () => {
     await expect(
       page.getByTestId('doc-tree').getByText(duplicateDuplicateTitle),
     ).toBeVisible();
+
+    const docTree = page.getByTestId('doc-tree');
+
+    await docTree.getByText(duplicateDuplicateTitle).hover();
+    await docTree
+      .getByText(duplicateDuplicateTitle)
+      .getByRole('button', { name: 'add_box' })
+      .click();
+
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+
+    const duplicateDuplicateDuplicateTitle =
+      'Copy of ' + duplicateDuplicateTitle;
+    await expect(
+      page.getByTestId('doc-tree').getByText(duplicateDuplicateDuplicateTitle),
+    ).toBeVisible();
   });
 });
 

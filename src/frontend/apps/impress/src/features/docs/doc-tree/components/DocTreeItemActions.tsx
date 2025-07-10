@@ -3,7 +3,11 @@ import {
   DropdownMenuOption,
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
-import { useModal } from '@openfun/cunningham-react';
+import {
+  VariantType,
+  useModal,
+  useToastProvider,
+} from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +20,7 @@ import {
   ModalRemoveDoc,
   Role,
   useCopyDocLink,
+  useDuplicateDoc,
 } from '../../doc-management';
 import { useCreateChildrenDoc } from '../api/useCreateChildren';
 import { useDetachDoc } from '../api/useDetach';
@@ -45,6 +50,19 @@ export const DocTreeItemActions = ({
   const { isCurrentParent } = useTreeUtils(doc);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc>();
+  const { toast } = useToastProvider();
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: () => {
+      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
+        duration: 3000,
+      });
+    },
+  });
 
   const handleDetachDoc = () => {
     if (!treeContext?.root) {
@@ -89,6 +107,18 @@ export const DocTreeItemActions = ({
           },
         ]
       : []),
+    {
+      label: t('Duplicate'),
+      icon: <Icon $variation="600" iconName="content_copy" />,
+      isDisabled: !doc.abilities.duplicate,
+      callback: () => {
+        duplicateDoc({
+          docId: doc.id,
+          with_accesses: false,
+          canSave: doc.abilities.partial_update,
+        });
+      },
+    },
     {
       label: t('Delete'),
       isDisabled: !doc.abilities.destroy,
