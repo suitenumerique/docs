@@ -62,10 +62,14 @@ class CollaborationService:
         except requests.RequestException as e:
             raise requests.HTTPError("Failed to get document connection info.") from e
 
-        if response.status_code != 200:
-            raise requests.HTTPError(
-                f"Failed to get document connection info. Status code: {response.status_code}, "
-                f"Response: {response.text}"
-            )
-        result = response.json()
-        return result.get("count", 0), result.get("exists", False)
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("count", 0), result.get("exists", False)
+
+        if response.status_code == 404:
+            return 0, False
+
+        raise requests.HTTPError(
+            f"Failed to get document connection info. Status code: {response.status_code}, "
+            f"Response: {response.text}"
+        )

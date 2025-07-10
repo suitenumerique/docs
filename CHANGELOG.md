@@ -11,6 +11,7 @@ and this project adheres to
 ### Fixed
 
 - 🌐(frontend) keep simple tag during export #1154
+- 🐛(back) manage can-edit endpoint without created room in the ws
 
 ## [3.4.0] - 2025-07-09
 

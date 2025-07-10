@@ -246,3 +246,73 @@ def test_api_documents_can_edit_websocket_server_unreachable_fallback_to_no_webs
 
     assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
     assert ws_resp.call_count == 1
+
+
+@responses.activate
+def test_api_documents_can_edit_websocket_server_room_not_found(
+    settings,
+):
+    """
+    When the websocket server returns a 404, the document can be updated like if the user was
+    not connected to the websocket.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+    session_key = client.session.session_key
+
+    document = factories.DocumentFactory(users=[(user, "editor")])
+
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    endpoint_url = (
+        f"{settings.COLLABORATION_API_URL}get-connections/"
+        f"?room={document.id}&sessionKey={session_key}"
+    )
+    ws_resp = responses.get(endpoint_url, status=404)
+
+    assert cache.get(f"docs:no-websocket:{document.id}") is None
+
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/can-edit/",
+    )
+    assert response.status_code == 200
+    assert response.json() == {"can_edit": True}
+
+    assert ws_resp.call_count == 1
+
+
+@responses.activate
+def test_api_documents_can_edit_websocket_server_room_not_found_other_already_editing(
+    settings,
+):
+    """
+    When the websocket server returns a 404 and another user is editing the document,
+    the response should be can-edit=False.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+    session_key = client.session.session_key
+
+    document = factories.DocumentFactory(users=[(user, "editor")])
+
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    endpoint_url = (
+        f"{settings.COLLABORATION_API_URL}get-connections/"
+        f"?room={document.id}&sessionKey={session_key}"
+    )
+    ws_resp = responses.get(endpoint_url, status=404)
+
+    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
+
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/can-edit/",
+    )
+    assert response.status_code == 200
+    assert response.json() == {"can_edit": False}
+
+    assert ws_resp.call_count == 1

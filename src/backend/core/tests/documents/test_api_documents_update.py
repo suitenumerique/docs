@@ -540,6 +540,47 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
 
 
 @responses.activate
+def test_api_documents_update_websocket_server_room_not_found_fallback_to_no_websocket_other_users(
+    settings,
+):
+    """
+    When the WebSocket server does not have the room created, the logic should fallback to
+    no-WebSocket. If another user is already editing, the update must be denied.
+    """
+    user = factories.UserFactory(with_owned_document=True)
+    client = APIClient()
+    client.force_login(user)
+    session_key = client.session.session_key
+
+    document = factories.DocumentFactory(users=[(user, "editor")])
+
+    new_document_values = serializers.DocumentSerializer(
+        instance=factories.DocumentFactory()
+    ).data
+    new_document_values["websocket"] = False
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    endpoint_url = (
+        f"{settings.COLLABORATION_API_URL}get-connections/"
+        f"?room={document.id}&sessionKey={session_key}"
+    )
+    ws_resp = responses.get(endpoint_url, status=404)
+
+    cache.set(f"docs:no-websocket:{document.id}", "other_session_key")
+
+    response = client.put(
+        f"/api/v1.0/documents/{document.id!s}/",
+        new_document_values,
+        format="json",
+    )
+    assert response.status_code == 403
+
+    assert cache.get(f"docs:no-websocket:{document.id}") == "other_session_key"
+    assert ws_resp.call_count == 1
+
+
+@responses.activate
 def test_api_documents_update_force_websocket_param_to_true(settings):
     """
     When the websocket parameter is set to true, the document should be updated without any check.
