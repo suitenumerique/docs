@@ -70,8 +70,10 @@ export const CalloutBlock = createReactBlockSpec(
               }
             `}
             $align="center"
+            $justify="center"
             $height="28px"
             $width="28px"
+            $minWidth="28px"
             $radius="4px"
           >
             {block.props.emoji}
@@ -85,7 +87,16 @@ export const CalloutBlock = createReactBlockSpec(
               onEmojiSelect={onEmojiSelect}
             />
           )}
-          <Box as="p" className="inline-content" ref={contentRef} />
+          <Box
+            as="p"
+            className="inline-content"
+            ref={contentRef}
+            $css={css`
+              & > div {
+                padding-top: 2px;
+              }
+            `}
+          />
         </Box>
       );
     },
