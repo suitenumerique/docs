@@ -7,47 +7,61 @@ from openai import OpenAI
 
 from core import enums
 
+
+PRESERVE_LANGUAGE_PROMPT = (
+    "Do not translate. Strictly keep the original language of the input text. " +
+    "For example, if it's French, keep French. If it's English, keep English. "
+)
+PRESERVE_MARKDOWN_FORMAT = "Preserve markdown formatting. "
+DO_NOT_ADD_INFO_PROMPT = (
+    "Do not add any extra information or interpret anything beyond the explicit task. "
+)
+
 AI_ACTIONS = {
     "prompt": (
-        "Answer the prompt in markdown format. "
-        "Preserve the language and markdown formatting. "
-        "Do not provide any other information. "
-        "Preserve the language."
+        "Answer the given prompt in markdown format. "
+        f"{PRESERVE_LANGUAGE_PROMPT} "
+        f"{DO_NOT_ADD_INFO_PROMPT}"
     ),
     "correct": (
-        "Correct grammar and spelling of the markdown text, "
-        "preserving language and markdown formatting. "
-        "Do not provide any other information. "
-        "Preserve the language."
+        "Perform only the following task: correct grammar and spelling. "
+        f"{PRESERVE_LANGUAGE_PROMPT} "
+        f"{PRESERVE_MARKDOWN_FORMAT} "
+        f"{DO_NOT_ADD_INFO_PROMPT}"
     ),
     "rephrase": (
-        "Rephrase the given markdown text, "
-        "preserving language and markdown formatting. "
-        "Do not provide any other information. "
-        "Preserve the language."
+        "Perform only the following task: rephrase the text in the original language. "
+        "Do not rephrase in English if it's not in English. "
+        f"{PRESERVE_LANGUAGE_PROMPT} "
+        f"{PRESERVE_MARKDOWN_FORMAT} "
+        f"{DO_NOT_ADD_INFO_PROMPT}"
     ),
     "summarize": (
-        "Summarize the markdown text, preserving language and markdown formatting. "
-        "Do not provide any other information. "
-        "Preserve the language."
+        "Perform only the following task: summarize. "
+        f"{PRESERVE_LANGUAGE_PROMPT} "
+        f"{PRESERVE_MARKDOWN_FORMAT} "
+        f"{DO_NOT_ADD_INFO_PROMPT}"
     ),
     "beautify": (
-        "Add formatting to the text to make it more readable. "
-        "Do not provide any other information. "
-        "Preserve the language."
+        "Perform only the following task: add formatting to the text to make it more readable. "
+        f"{PRESERVE_LANGUAGE_PROMPT} "
+        f"{DO_NOT_ADD_INFO_PROMPT}"
     ),
     "emojify": (
-        "Add emojis to the important parts of the text. "
-        "Do not provide any other information. "
-        "Preserve the language."
+        "Perform only the following task: add emojis to the important parts of the text. "
+        "Do not try to rephrase or replace text. "
+        f"{PRESERVE_MARKDOWN_FORMAT} "
+        f"{PRESERVE_LANGUAGE_PROMPT} "
+        f"{DO_NOT_ADD_INFO_PROMPT}"
     ),
 }
 
 AI_TRANSLATE = (
-    "Keep the same html structure and formatting. "
-    "Translate the content in the html to the specified language {language:s}. "
+    "Perform only the following task: translate. "
+    "Translate the content in the html to the specified language: {language:s}. "
     "Check the translation for accuracy and make any necessary corrections. "
-    "Do not provide any other information."
+    f"{PRESERVE_LANGUAGE_PROMPT} "
+    f"{DO_NOT_ADD_INFO_PROMPT}"
 )
 
 
