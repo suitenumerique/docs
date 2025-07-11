@@ -18,8 +18,8 @@
   "dependencies": {
     "@blocknote/server-util": "0.33.0",
     "@hocuspocus/server": "2.15.2",
-    "@sentry/node": "9.35.0",
-    "@sentry/profiling-node": "9.35.0",
+    "@sentry/node": "9.38.0",
+    "@sentry/profiling-node": "9.38.0",
     "axios": "1.10.0",
     "cors": "2.8.5",
     "express": "5.1.0",
