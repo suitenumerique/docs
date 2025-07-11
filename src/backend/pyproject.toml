@@ -52,7 +52,7 @@ dependencies = [
     "markdown==3.8.2",
     "mozilla-django-oidc==4.0.1",
     "nested-multipart-parser==1.5.0",
-    "openai==1.95.0",
+    "openai==1.95.1",
     "psycopg[binary]==3.2.9",
     "pycrdt==0.12.25", 
     "PyJWT==2.10.1",
@@ -86,7 +86,7 @@ dev = [
     "pytest-icdiff==0.9",
     "pytest-xdist==3.8.0",
     "responses==0.25.7",
-    "ruff==0.12.2",
+    "ruff==0.12.3",
     "types-requests==2.32.4.20250611",
 ]
 
