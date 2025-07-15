@@ -1,11 +1,7 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
-import {
-  Button,
-  VariantType,
-  useModal,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { Button, useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -62,7 +58,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   }, [doc, treeContext?.root]);
 
   const queryClient = useQueryClient();
-  const { toast } = useToastProvider();
+  const router = useRouter();
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
@@ -74,15 +70,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { isSmallMobile, isDesktop } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
   const { mutate: duplicateDoc } = useDuplicateDoc({
-    onSuccess: () => {
-      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
-        duration: 3000,
-      });
+    onSuccess: (data) => {
+      void router.push(`/docs/${data.id}`);
     },
   });
   const { isFeatureFlagActivated } = useAnalytics();

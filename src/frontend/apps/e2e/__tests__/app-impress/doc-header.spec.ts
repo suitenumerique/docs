@@ -443,9 +443,10 @@ test.describe('Doc Header', () => {
       page.getByText('Document duplicated successfully!'),
     ).toBeVisible();
 
-    await page.goto('/');
-
     const duplicateTitle = 'Copy of ' + docTitle;
+    await verifyDocName(page, duplicateTitle);
+
+    await page.goto('/');
 
     const row = await getGridRow(page, duplicateTitle);
 
@@ -471,16 +472,24 @@ test.describe('Doc Header', () => {
     await editor.click();
     await editor.fill('Hello Duplicated World');
 
-    await page.getByLabel('Open the document options').click();
+    const duplicateTitle = 'Copy of ' + childTitle;
+    const docTree = page.getByTestId('doc-tree');
+
+    const child = docTree
+      .getByRole('treeitem')
+      .locator('.--docs-sub-page-item')
+      .filter({
+        hasText: childTitle,
+      });
+    await child.hover();
+    await child.getByText(`more_horiz`).click();
 
     await page.getByRole('menuitem', { name: 'Duplicate' }).click();
-    await expect(
-      page.getByText('Document duplicated successfully!'),
-    ).toBeVisible();
 
-    const duplicateDuplicateTitle = 'Copy of ' + childTitle;
+    await verifyDocName(page, duplicateTitle);
+
     await expect(
-      page.getByTestId('doc-tree').getByText(duplicateDuplicateTitle),
+      page.getByTestId('doc-tree').getByText(duplicateTitle),
     ).toBeVisible();
   });
 });

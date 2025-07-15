@@ -1,13 +1,14 @@
+import { VariantType, useToastProvider } from '@openfun/cunningham-react';
 import {
   UseMutationOptions,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { toBase64 } from '@/docs/doc-editor';
-import { KEY_DOC_TREE } from '@/docs/doc-tree';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 
 import { useProviderStore } from '../stores';
@@ -52,9 +53,10 @@ type DuplicateDocOptions = UseMutationOptions<
   DuplicateDocParams
 >;
 
-export function useDuplicateDoc(options: DuplicateDocOptions) {
+export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const queryClient = useQueryClient();
-
+  const { toast } = useToastProvider();
+  const { t } = useTranslation();
   const { provider } = useProviderStore();
 
   const { mutateAsync: updateDoc } = useUpdateDoc({
@@ -86,10 +88,19 @@ export function useDuplicateDoc(options: DuplicateDocOptions) {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
       });
-      void queryClient.resetQueries({
-        queryKey: [KEY_DOC_TREE],
+
+      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
+        duration: 3000,
       });
-      void options.onSuccess?.(data, variables, context);
+
+      void options?.onSuccess?.(data, variables, context);
+    },
+    onError: (error, variables, context) => {
+      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
+        duration: 3000,
+      });
+
+      void options?.onError?.(error, variables, context);
     },
   });
 }

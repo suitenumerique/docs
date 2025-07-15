@@ -10,13 +10,14 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
-
 import {
   Doc,
   ModalRemoveDoc,
   Role,
   useCopyDocLink,
-} from '../../doc-management';
+  useDuplicateDoc,
+} from '@/docs/doc-management';
+
 import { useCreateChildrenDoc } from '../api/useCreateChildren';
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -45,6 +46,11 @@ export const DocTreeItemActions = ({
   const { isCurrentParent } = useTreeUtils(doc);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc>();
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: (data) => {
+      void router.push(`/docs/${data.id}`);
+    },
+  });
 
   const handleDetachDoc = () => {
     if (!treeContext?.root) {
@@ -89,6 +95,18 @@ export const DocTreeItemActions = ({
           },
         ]
       : []),
+    {
+      label: t('Duplicate'),
+      icon: <Icon $variation="600" iconName="content_copy" />,
+      isDisabled: !doc.abilities.duplicate,
+      callback: () => {
+        duplicateDoc({
+          docId: doc.id,
+          with_accesses: false,
+          canSave: doc.abilities.partial_update,
+        });
+      },
+    },
     {
       label: t('Delete'),
       isDisabled: !doc.abilities.destroy,

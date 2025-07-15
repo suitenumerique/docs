@@ -1,8 +1,4 @@
-import {
-  VariantType,
-  useModal,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { useModal } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
@@ -25,21 +21,9 @@ export const DocsGridActions = ({
   openShareModal,
 }: DocsGridActionsProps) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
 
   const deleteModal = useModal();
-  const { mutate: duplicateDoc } = useDuplicateDoc({
-    onSuccess: () => {
-      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
-        duration: 3000,
-      });
-    },
-  });
+  const { mutate: duplicateDoc } = useDuplicateDoc();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalideQueries: [KEY_LIST_DOC],

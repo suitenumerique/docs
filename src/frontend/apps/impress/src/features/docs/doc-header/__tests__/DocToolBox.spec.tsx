@@ -32,6 +32,13 @@ jest.mock('@/features/docs/doc-export/', () => ({
   ModalExport: () => <span>ModalExport</span>,
 }));
 
+jest.mock('next/router', () => ({
+  ...jest.requireActual('next/router'),
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
 const doc = {
   nb_accesses: 1,
   abilities: {
