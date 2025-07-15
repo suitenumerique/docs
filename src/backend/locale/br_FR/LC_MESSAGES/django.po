@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-07-08 15:21+0000\n"
-"PO-Revision-Date: 2025-07-09 10:42\n"
+"PO-Revision-Date: 2025-07-15 14:12\n"
 "Last-Translator: \n"
 "Language-Team: Breton\n"
 "Language: br_FR\n"
@@ -79,7 +79,7 @@ msgstr "Lenner"
 #: build/lib/core/choices.py:36 build/lib/core/choices.py:43 core/choices.py:36
 #: core/choices.py:43
 msgid "Editor"
-msgstr ""
+msgstr "Embanner"
 
 #: build/lib/core/choices.py:44 core/choices.py:44
 msgid "Administrator"
@@ -91,11 +91,11 @@ msgstr "Perc'henn"
 
 #: build/lib/core/choices.py:56 core/choices.py:56
 msgid "Restricted"
-msgstr ""
+msgstr "Strishaet"
 
 #: build/lib/core/choices.py:60 core/choices.py:60
 msgid "Authenticated"
-msgstr ""
+msgstr "Anavezet"
 
 #: build/lib/core/choices.py:62 core/choices.py:62
 msgid "Public"
@@ -111,11 +111,11 @@ msgstr "Bugel diwezhañ"
 
 #: build/lib/core/enums.py:38 core/enums.py:38
 msgid "First sibling"
-msgstr ""
+msgstr "Breur pe c'hoar kentañ"
 
 #: build/lib/core/enums.py:39 core/enums.py:39
 msgid "Last sibling"
-msgstr ""
+msgstr "Liamm diwezhañ"
 
 #: build/lib/core/enums.py:40 core/enums.py:40
 msgid "Left"
@@ -131,7 +131,7 @@ msgstr "id"
 
 #: build/lib/core/models.py:80 core/models.py:80
 msgid "primary key for the record as UUID"
-msgstr ""
+msgstr "alc'hwez kentañ evit an enrollañ evel UIID"
 
 #: build/lib/core/models.py:86 core/models.py:86
 msgid "created on"
