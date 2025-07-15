@@ -150,7 +150,7 @@ class DocumentFactory(factory.django.DjangoModelFactory):
         """Add link traces to document from a given list of users."""
         if create and extracted:
             for item in extracted:
-                models.LinkTrace.objects.create(document=self, user=item)
+                models.LinkTrace.objects.update_or_create(document=self, user=item)
 
     @factory.post_generation
     def favorited_by(self, create, extracted, **kwargs):
@@ -158,6 +158,15 @@ class DocumentFactory(factory.django.DjangoModelFactory):
         if create and extracted:
             for item in extracted:
                 models.DocumentFavorite.objects.create(document=self, user=item)
+
+    @factory.post_generation
+    def masked_by(self, create, extracted, **kwargs):
+        """Mark document as masked by a list of users."""
+        if create and extracted:
+            for item in extracted:
+                models.LinkTrace.objects.update_or_create(
+                    document=self, user=item, defaults={"is_masked": True}
+                )
 
 
 class UserDocumentAccessFactory(factory.django.DjangoModelFactory):

@@ -41,8 +41,8 @@ def test_api_document_favorite_list_authenticated_with_favorite():
     client = APIClient()
     client.force_login(user)
 
-    # User don't have access to this document, let say it had access and this access has been
-    # removed. It should not be in the favorite list anymore.
+    # User don't have access to this document (e.g the user had access and this
+    # access was removed. It should not be in the favorite list anymore.
     factories.DocumentFactory(favorited_by=[user])
 
     document = factories.UserDocumentAccessFactory(

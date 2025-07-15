@@ -60,6 +60,9 @@ class ListDocumentFilter(DocumentFilter):
     is_creator_me = django_filters.BooleanFilter(
         method="filter_is_creator_me", label=_("Creator is me")
     )
+    is_masked = django_filters.BooleanFilter(
+        method="filter_is_masked", label=_("Masked")
+    )
     is_favorite = django_filters.BooleanFilter(
         method="filter_is_favorite", label=_("Favorite")
     )
@@ -106,3 +109,22 @@ class ListDocumentFilter(DocumentFilter):
             return queryset
 
         return queryset.filter(is_favorite=bool(value))
+
+    # pylint: disable=unused-argument
+    def filter_is_masked(self, queryset, name, value):
+        """
+        Filter documents based on whether they are masked by the current user.
+
+        Example:
+            - /api/v1.0/documents/?is_masked=true
+                → Filters documents marked as masked by the logged-in user
+            - /api/v1.0/documents/?is_masked=false
+                → Filters documents not marked as masked by the logged-in user
+        """
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return queryset
+
+        queryset_method = queryset.filter if bool(value) else queryset.exclude
+        return queryset_method(link_traces__user=user, link_traces__is_masked=True)

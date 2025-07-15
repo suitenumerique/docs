@@ -49,6 +49,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
                 "public": ["reader", "editor"],
                 "restricted": None,
             },
+            "mask": False,
             "media_auth": True,
             "media_check": True,
             "move": False,
@@ -121,6 +122,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "link_select_options": models.LinkReachChoices.get_select_options(
                 **links_definition
             ),
+            "mask": False,
             "media_auth": True,
             "media_check": True,
             "move": False,
@@ -226,6 +228,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
                 "public": ["reader", "editor"],
                 "restricted": None,
             },
+            "mask": True,
             "media_auth": True,
             "media_check": True,
             "move": False,
@@ -305,6 +308,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "link_select_options": models.LinkReachChoices.get_select_options(
                 **links_definition
             ),
+            "mask": True,
             "move": False,
             "media_auth": True,
             "media_check": True,
@@ -498,6 +502,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "link_select_options": models.LinkReachChoices.get_select_options(
                 **link_definition
             ),
+            "mask": True,
             "media_auth": True,
             "media_check": True,
             "move": access.role in ["administrator", "owner"],
