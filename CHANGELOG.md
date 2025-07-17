@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♻️(frontend) search on all docs if no children #1184
+
 ## [3.4.1] - 2025-07-15
 
 ### Fixed

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { PropsWithChildren, useCallback, useState } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
+import { Doc, useDocStore, useDocUtils } from '@/docs/doc-management';
 import { DocSearchModal, DocSearchTarget } from '@/docs/doc-search/';
 import { useAuth } from '@/features/auth';
 import { useCmdK } from '@/hook/useCmdK';
@@ -12,10 +13,10 @@ import { useLeftPanelStore } from '../stores';
 import { LeftPanelHeaderButton } from './LeftPanelHeaderButton';
 
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
+  const { currentDoc } = useDocStore();
+  const isDoc = !!currentDoc;
   const router = useRouter();
   const { authenticated } = useAuth();
-  const isDoc = router.pathname === '/docs/[id]';
-
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const openSearchModal = useCallback(() => {
@@ -77,16 +78,45 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
         </SeparatedSection>
         {children}
       </Box>
-      {isSearchModalOpen && (
-        <DocSearchModal
+      {isSearchModalOpen && isDoc && (
+        <LeftPanelSearchModalFilter
           onClose={closeSearchModal}
           isOpen={isSearchModalOpen}
-          showFilters={isDoc}
-          defaultFilters={{
-            target: isDoc ? DocSearchTarget.CURRENT : undefined,
-          }}
+          doc={currentDoc}
         />
       )}
+      {isSearchModalOpen && !isDoc && (
+        <DocSearchModal onClose={closeSearchModal} isOpen={isSearchModalOpen} />
+      )}
     </>
+  );
+};
+
+interface LeftPanelSearchModalProps {
+  doc: Doc;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const LeftPanelSearchModalFilter = ({
+  doc,
+  isOpen,
+  onClose,
+}: LeftPanelSearchModalProps) => {
+  const { hasChildren, isChild } = useDocUtils(doc);
+  const isWithChildren = isChild || hasChildren;
+
+  let defaultFilters = DocSearchTarget.ALL;
+  if (isWithChildren) {
+    defaultFilters = DocSearchTarget.CURRENT;
+  }
+
+  return (
+    <DocSearchModal
+      onClose={onClose}
+      isOpen={isOpen}
+      showFilters={true}
+      defaultFilters={{ target: defaultFilters }}
+    />
   );
 };

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { createDoc, randomName, verifyDocName } from './common';
+import { createRootSubPage } from './sub-pages-utils';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -127,12 +128,12 @@ test.describe('Sub page search', () => {
     await verifyDocName(page, doc1Title);
     const searchButton = page
       .getByTestId('left-panel-desktop')
-      .getByRole('button', { name: 'search' });
+      .getByRole('button', { name: 'search', exact: true });
     await searchButton.click();
     const filters = page.getByTestId('doc-search-filters');
     await expect(filters).toBeVisible();
     await filters.click();
-    await filters.getByRole('button', { name: 'Current doc' }).click();
+    await filters.getByRole('button', { name: 'All docs' }).click();
     await expect(
       page.getByRole('menuitem', { name: 'All docs' }),
     ).toBeVisible();
@@ -142,40 +143,79 @@ test.describe('Sub page search', () => {
     await page.getByRole('menuitem', { name: 'Current doc' }).click();
 
     await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'close' }).click();
+
+    await createRootSubPage(page, browserName, 'My sub page search');
+
+    await searchButton.click();
+    await expect(
+      filters.getByRole('button', { name: 'Current doc' }),
+    ).toBeVisible();
   });
 
   test('it searches sub pages', async ({ page, browserName }) => {
     await page.goto('/');
 
-    const [doc1Title] = await createDoc(
+    // First doc
+    const [firstDocTitle] = await createDoc(
       page,
-      'My sub page search',
+      'My first sub page search',
       browserName,
       1,
     );
-    await verifyDocName(page, doc1Title);
+    await verifyDocName(page, firstDocTitle);
+
+    // Create a new doc - for the moment without children
     await page.getByRole('button', { name: 'New doc' }).click();
     await verifyDocName(page, '');
     await page.getByRole('textbox', { name: 'doc title input' }).click();
     await page
       .getByRole('textbox', { name: 'doc title input' })
       .press('ControlOrMeta+a');
-    const [randomDocName] = randomName('doc-sub-page', browserName, 1);
+    const [secondDocTitle] = randomName(
+      'My second sub page search',
+      browserName,
+      1,
+    );
     await page
       .getByRole('textbox', { name: 'doc title input' })
-      .fill(randomDocName);
+      .fill(secondDocTitle);
+
     const searchButton = page
       .getByTestId('left-panel-desktop')
       .getByRole('button', { name: 'search' });
 
     await searchButton.click();
-    await expect(
-      page.getByRole('button', { name: 'Current doc' }),
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'All docs' })).toBeVisible();
     await page.getByRole('combobox', { name: 'Quick search input' }).click();
     await page
       .getByRole('combobox', { name: 'Quick search input' })
-      .fill('sub');
-    await expect(page.getByLabel(randomDocName)).toBeVisible();
+      .fill('sub page search');
+
+    // Expect to find the first doc
+    await expect(
+      page.getByRole('presentation').getByLabel(firstDocTitle),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('presentation').getByLabel(secondDocTitle),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'close' }).click();
+
+    // Create a sub page
+    await createRootSubPage(page, browserName, secondDocTitle);
+    await searchButton.click();
+    await page
+      .getByRole('combobox', { name: 'Quick search input' })
+      .fill('sub page search');
+
+    // Now there is a sub page - expect to have the focus on the current doc
+    await expect(
+      page.getByRole('presentation').getByLabel(secondDocTitle),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('presentation').getByLabel(firstDocTitle),
+    ).toBeHidden();
   });
 });

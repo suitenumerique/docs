@@ -10,17 +10,17 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
-
 import {
   Doc,
   ModalRemoveDoc,
   Role,
   useCopyDocLink,
-} from '../../doc-management';
+  useDocUtils,
+} from '@/docs/doc-management';
+
 import { useCreateChildrenDoc } from '../api/useCreateChildren';
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
-import { useTreeUtils } from '../hooks';
 
 type DocTreeItemActionsProps = {
   doc: Doc;
@@ -42,7 +42,7 @@ export const DocTreeItemActions = ({
   const deleteModal = useModal();
 
   const copyLink = useCopyDocLink(doc.id);
-  const { isCurrentParent } = useTreeUtils(doc);
+  const { isParent } = useDocUtils(doc);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc>();
 
@@ -71,7 +71,7 @@ export const DocTreeItemActions = ({
       icon: <Icon iconName="link" $size="24px" />,
       callback: copyLink,
     },
-    ...(!isCurrentParent
+    ...(!isParent
       ? [
           {
             label: t('Move to my docs'),
