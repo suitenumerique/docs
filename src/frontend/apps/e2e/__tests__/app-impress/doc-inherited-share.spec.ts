@@ -31,9 +31,7 @@ test.describe('Inherited share accesses', () => {
 
     await verifyDocName(page, parentTitle);
   });
-});
 
-test.describe('Inherited share link', () => {
   test('it checks if the link is inherited', async ({ page, browserName }) => {
     await page.goto('/');
     // Create root doc
@@ -47,12 +45,50 @@ test.describe('Inherited share link', () => {
     // Create sub page
     await createRootSubPage(page, browserName, 'sub-page');
 
-    // // verify share link is restricted and reader
+    // Verify share link is like the parent document
     await page.getByRole('button', { name: 'Share' }).click();
-    // await expect(page.getByText('Inherited share')).toBeVisible();
     const docVisibilityCard = page.getByLabel('Doc visibility card');
-    await expect(docVisibilityCard).toBeVisible();
+
     await expect(docVisibilityCard.getByText('Connected')).toBeVisible();
     await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
+
+    // Verify inherited link
+    await docVisibilityCard.getByText('Connected').click();
+    await expect(
+      page.getByRole('menuitem', { name: 'Private' }),
+    ).toBeDisabled();
+
+    // Update child link
+    await page.getByRole('menuitem', { name: 'Public' }).click();
+
+    await docVisibilityCard.getByText('Reading').click();
+    await page.getByRole('menuitem', { name: 'Editing' }).click();
+
+    await expect(docVisibilityCard.getByText('Connected')).toBeHidden();
+    await expect(docVisibilityCard.getByText('Reading')).toBeHidden();
+    await expect(
+      docVisibilityCard.getByText('Public', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(docVisibilityCard.getByText('Editing')).toBeVisible();
+    await expect(
+      docVisibilityCard.getByText(
+        'The link sharing rules differ from the parent document',
+      ),
+    ).toBeVisible();
+
+    // Restore inherited link
+    await page.getByRole('button', { name: 'Restore' }).click();
+
+    await expect(docVisibilityCard.getByText('Connected')).toBeVisible();
+    await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
+    await expect(docVisibilityCard.getByText('Public')).toBeHidden();
+    await expect(docVisibilityCard.getByText('Editing')).toBeHidden();
+    await expect(
+      docVisibilityCard.getByText(
+        'The link sharing rules differ from the parent document',
+      ),
+    ).toBeHidden();
   });
 });

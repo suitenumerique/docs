@@ -51,8 +51,18 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
   const { isDesktop } = useResponsiveStore();
 
+  /**
+   * The modal content height is calculated based on the viewport height.
+   * The formula is:
+   * 100dvh - 2em - 12px - 34px
+   * - 34px is the height of the modal title in mobile
+   * - 2em is the padding of the modal content
+   * - 12px is the padding of the modal footer
+   * - 690px is the height of the content in desktop
+   * This ensures that the modal content is always visible and does not overflow.
+   */
   const modalContentHeight = isDesktop
-    ? 'min(690px, calc(100dvh - 2em - 12px - 34px))' // 100dvh - 2em - 12px  is the max cunningham modal height.  690px is the height of the content in desktop ad 34px is the height of the modal title in mobile
+    ? 'min(690px, calc(100dvh - 2em - 12px - 34px))'
     : `calc(100dvh - 34px)`;
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [userQuery, setUserQuery] = useState('');
@@ -230,13 +240,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
           </Box>
 
           <Box ref={handleRef}>
-            {showFooter && (
-              <DocShareModalFooter
-                doc={doc}
-                onClose={onClose}
-                canEditVisibility={canShare}
-              />
-            )}
+            {showFooter && <DocShareModalFooter doc={doc} onClose={onClose} />}
           </Box>
         </Box>
       </Modal>

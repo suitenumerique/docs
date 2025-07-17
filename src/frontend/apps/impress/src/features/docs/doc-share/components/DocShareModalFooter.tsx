@@ -7,17 +7,15 @@ import { Doc, useCopyDocLink } from '@/docs/doc-management';
 
 import { DocVisibility } from './DocVisibility';
 
-type Props = {
+type DocShareModalFooterProps = {
   doc: Doc;
   onClose: () => void;
-  canEditVisibility?: boolean;
 };
 
 export const DocShareModalFooter = ({
   doc,
   onClose,
-  canEditVisibility = true,
-}: Props) => {
+}: DocShareModalFooterProps) => {
   const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
   return (
@@ -29,7 +27,7 @@ export const DocShareModalFooter = ({
     >
       <HorizontalSeparator $withPadding={true} customPadding="12px" />
 
-      <DocVisibility doc={doc} canEdit={canEditVisibility} />
+      <DocVisibility doc={doc} />
       <HorizontalSeparator customPadding="12px" />
 
       <Box

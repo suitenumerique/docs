@@ -1,9 +1,4 @@
-import {
-  Button,
-  VariantType,
-  useToastProvider,
-} from '@openfun/cunningham-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -29,89 +24,54 @@ import { useResponsiveStore } from '@/stores';
 
 import { useTranslatedShareSettings } from '../hooks/';
 
-import Desync from './../assets/desynchro.svg';
-import Undo from './../assets/undo.svg';
+import { DocDesynchronized } from './DocDesynchronized';
 
 interface DocVisibilityProps {
   doc: Doc;
-  canEdit?: boolean;
 }
 
-export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
+export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const canManage = doc.abilities.accesses_manage && canEdit;
-  const [linkReach, setLinkReach] = useState<LinkReach>(getDocLinkReach(doc));
-  const [docLinkRole, setDocLinkRole] = useState<LinkRole>(
-    doc.computed_link_role ?? LinkRole.READER,
-  );
-  const { isDesyncronized } = useTreeUtils(doc);
-
+  const canManage = doc.abilities.accesses_manage;
+  const docLinkReach = getDocLinkReach(doc);
+  const docLinkRole = doc.computed_link_role ?? LinkRole.READER;
+  const { isDesynchronized } = useTreeUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
 
   const description =
     docLinkRole === LinkRole.READER
-      ? linkReachChoices[linkReach].descriptionReadOnly
-      : linkReachChoices[linkReach].descriptionEdit;
+      ? linkReachChoices[docLinkReach].descriptionReadOnly
+      : linkReachChoices[docLinkReach].descriptionEdit;
 
-  const api = useUpdateDocLink({
-    onSuccess: () => {
-      toast(
-        t('The document visibility has been updated.'),
-        VariantType.SUCCESS,
-        {
-          duration: 4000,
-        },
-      );
-    },
+  const { mutate: updateDocLink } = useUpdateDocLink({
     listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
   });
 
-  const updateReach = useCallback(
-    (link_reach: LinkReach, link_role?: LinkRole) => {
-      const params: {
-        id: string;
-        link_reach: LinkReach;
-        link_role?: LinkRole;
-      } = {
-        id: doc.id,
-        link_reach,
-      };
-
-      api.mutate(params);
-      setLinkReach(link_reach);
-      if (link_role) {
-        params.link_role = link_role;
-        setDocLinkRole(link_role);
-      }
-    },
-    [api, doc.id],
-  );
-
-  const updateLinkRole = useCallback(
-    (link_role: LinkRole) => {
-      api.mutate({ id: doc.id, link_role });
-      setDocLinkRole(link_role);
-    },
-    [api, doc.id],
-  );
-
   const linkReachOptions: DropdownMenuOption[] = useMemo(() => {
     return Object.values(LinkReach).map((key) => {
-      const isDisabled =
-        doc.abilities.link_select_options[key as LinkReach] === undefined;
+      const isDisabled = doc.abilities.link_select_options[key] === undefined;
 
       return {
-        label: linkReachTranslations[key as LinkReach],
-        callback: () => updateReach(key as LinkReach),
-        isSelected: linkReach === (key as LinkReach),
+        label: linkReachTranslations[key],
+        callback: () =>
+          updateDocLink({
+            id: doc.id,
+            link_reach: key,
+          }),
+        isSelected: docLinkReach === key,
         disabled: isDisabled,
       };
     });
-  }, [doc, linkReach, linkReachTranslations, updateReach]);
+  }, [
+    doc.abilities.link_select_options,
+    doc.id,
+    docLinkReach,
+    linkReachTranslations,
+    updateDocLink,
+  ]);
 
   const haveDisabledOptions = linkReachOptions.some(
     (option) => option.disabled,
@@ -120,40 +80,28 @@ export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
   const showLinkRoleOptions = doc.computed_link_reach !== LinkReach.RESTRICTED;
 
   const linkRoleOptions: DropdownMenuOption[] = useMemo(() => {
-    const options = doc.abilities.link_select_options[linkReach] ?? [];
+    const options = doc.abilities.link_select_options[docLinkReach] ?? [];
     return Object.values(LinkRole).map((key) => {
       const isDisabled = !options.includes(key);
       return {
         label: linkModeTranslations[key],
-        callback: () => updateLinkRole(key),
+        callback: () => updateDocLink({ id: doc.id, link_role: key }),
         isSelected: docLinkRole === key,
         disabled: isDisabled,
       };
     });
-  }, [doc, docLinkRole, linkModeTranslations, updateLinkRole, linkReach]);
+  }, [
+    doc.abilities.link_select_options,
+    doc.id,
+    docLinkReach,
+    docLinkRole,
+    linkModeTranslations,
+    updateDocLink,
+  ]);
 
   const haveDisabledLinkRoleOptions = linkRoleOptions.some(
     (option) => option.disabled,
   );
-
-  const undoDesync = () => {
-    const params: {
-      id: string;
-      link_reach: LinkReach;
-      link_role?: LinkRole;
-    } = {
-      id: doc.id,
-      link_reach: doc.ancestors_link_reach,
-    };
-    if (doc.ancestors_link_role) {
-      params.link_role = doc.ancestors_link_role;
-    }
-    api.mutate(params);
-    setLinkReach(doc.ancestors_link_reach);
-    if (doc.ancestors_link_role) {
-      setDocLinkRole(doc.ancestors_link_role);
-    }
-  };
 
   return (
     <Box
@@ -163,40 +111,9 @@ export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
       className="--docs--doc-visibility"
     >
       <Text $weight="700" $size="sm" $variation="700">
-        {t('Link parameters')}
+        {t('Link settings')}
       </Text>
-      {isDesyncronized && (
-        <Box
-          $background={colorsTokens['primary-100']}
-          $padding="3xs"
-          $direction="row"
-          $align="center"
-          $justify="space-between"
-          $gap={spacingsTokens['4xs']}
-          $color={colorsTokens['primary-800']}
-          $css={css`
-            border: 1px solid ${colorsTokens['primary-300']};
-            border-radius: ${spacingsTokens['2xs']};
-          `}
-        >
-          <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
-            <Desync />
-            <Text $size="xs" $theme="primary" $variation="800" $weight="400">
-              {t('Sharing rules differ from the parent page')}
-            </Text>
-          </Box>
-          {doc.abilities.accesses_manage && (
-            <Button
-              onClick={undoDesync}
-              size="small"
-              color="primary-text"
-              icon={<Undo />}
-            >
-              {t('Restore')}
-            </Button>
-          )}
-        </Box>
-      )}
+      {isDesynchronized && <DocDesynchronized doc={doc} />}
       <Box
         $direction="row"
         $align="center"
@@ -231,7 +148,7 @@ export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
               <Icon
                 $theme={canManage ? 'primary' : 'greyscale'}
                 $variation={canManage ? '800' : '600'}
-                iconName={linkReachChoices[linkReach].icon}
+                iconName={linkReachChoices[docLinkReach].icon}
               />
               <Text
                 $theme={canManage ? 'primary' : 'greyscale'}
@@ -239,7 +156,7 @@ export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
                 $weight="500"
                 $size="md"
               >
-                {linkReachChoices[linkReach].label}
+                {linkReachChoices[docLinkReach].label}
               </Text>
             </Box>
           </DropdownMenu>
@@ -251,7 +168,7 @@ export const DocVisibility = ({ doc, canEdit = true }: DocVisibilityProps) => {
         </Box>
         {showLinkRoleOptions && (
           <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
-            {linkReach !== LinkReach.RESTRICTED && (
+            {docLinkReach !== LinkReach.RESTRICTED && (
               <DropdownMenu
                 disabled={!canManage}
                 showArrow={true}

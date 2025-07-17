@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) subdocs can manage link reach #1190
+
+
 ## [3.4.1] - 2025-07-15
 
 ### Fixed
