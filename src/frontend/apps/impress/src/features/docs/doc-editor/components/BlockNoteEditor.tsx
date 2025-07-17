@@ -18,7 +18,12 @@ import { Box, TextErrors } from '@/components';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
-import { useHeadings, useUploadFile, useUploadStatus } from '../hook/';
+import {
+  useCalloutBlock,
+  useHeadings,
+  useUploadFile,
+  useUploadStatus,
+} from '../hook/';
 import useSaveDoc from '../hook/useSaveDoc';
 import { useEditorStore } from '../stores';
 import { cssEditor } from '../styles';
@@ -131,6 +136,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   useHeadings(editor);
   useUploadStatus(editor);
+  useCalloutBlock(editor);
 
   useEffect(() => {
     setEditor(editor);
