@@ -11,6 +11,7 @@ import { Trans, useTranslation } from 'react-i18next';
 
 import { Box, Text, TextErrors } from '@/components';
 
+import { useTreeUtils } from '../../doc-tree';
 import { useRemoveDoc } from '../api/useRemoveDoc';
 import { Doc } from '../types';
 
@@ -29,25 +30,26 @@ export const ModalRemoveDoc = ({
   const { t } = useTranslation();
   const { push } = useRouter();
   const pathname = usePathname();
+  const { isParent } = useTreeUtils(doc);
   const {
     mutate: removeDoc,
     isError,
     error,
   } = useRemoveDoc({
     onSuccess: () => {
-      toast(t('The document has been deleted.'), VariantType.SUCCESS, {
-        duration: 4000,
-      });
-      if (afterDelete) {
+      if (isParent) {
+        void push('/');
+      } else if (afterDelete) {
         afterDelete(doc);
-        return;
-      }
-
-      if (pathname === '/') {
+      } else if (pathname === '/') {
         onClose();
       } else {
         void push('/');
       }
+
+      toast(t('The document has been deleted.'), VariantType.SUCCESS, {
+        duration: 4000,
+      });
     },
   });
 

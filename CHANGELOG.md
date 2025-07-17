@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) fix empty left panel after deleting doc #1197
+
 ## [3.4.1] - 2025-07-15
 
 ### Fixed
