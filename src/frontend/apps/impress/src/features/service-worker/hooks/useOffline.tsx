@@ -14,13 +14,17 @@ interface IsOfflineState {
   setIsOffline: (value: boolean) => void;
 }
 
-export const useIsOffline = create<IsOfflineState>((set) => ({
+export const useIsOffline = create<IsOfflineState>((set, get) => ({
   isOffline: typeof navigator !== 'undefined' && !navigator.onLine,
-  setIsOffline: (value: boolean) => set({ isOffline: value }),
+  setIsOffline: (value: boolean) => {
+    if (get().isOffline !== value) {
+      set({ isOffline: value });
+    }
+  },
 }));
 
 export const useOffline = () => {
-  const { setIsOffline } = useIsOffline();
+  const setIsOffline = useIsOffline((state) => state.setIsOffline);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<OfflineMessageData>) => {

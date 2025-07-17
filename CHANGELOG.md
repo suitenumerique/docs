@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+🐛(service-worker) Fix useOffline Maximum update depth exceeded #1196
+
 ## [3.4.1] - 2025-07-15
 
 ### Fixed
