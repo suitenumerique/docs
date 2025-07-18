@@ -51,6 +51,17 @@
   filter: var(--c--components--image-system-filter);
 }
 
+/**
+* Toast
+*/
+.c__toast__container {
+  z-index: -1;
+}
+
+.c__toast__container:has(.c__toast) {
+  z-index: 10000;
+}
+
 @font-face {
   font-family: Inter;
   font-style: italic;
