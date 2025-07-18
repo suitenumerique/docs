@@ -67,18 +67,18 @@ data/static:
 
 # -- Project
 
-create-env-files: ## Copy the dist env files to env files
-create-env-files: \
-	env.d/development/common \
-	env.d/development/crowdin \
-	env.d/development/postgresql \
-	env.d/development/kc_postgresql
-.PHONY: create-env-files
+create-env-local-files: ## create env.local files in env.d/development
+create-env-local-files: 
+	@touch env.d/development/crowdin.local
+	@touch env.d/development/common.local
+	@touch env.d/development/postgresql.local
+	@touch env.d/development/kc_postgresql.local
+.PHONY: create-env-local-files
 
 pre-bootstrap: \
 	data/media \
 	data/static \
-	create-env-files
+	create-env-local-files
 .PHONY: pre-bootstrap
 
 post-bootstrap: \
@@ -257,20 +257,6 @@ resetdb: ## flush database and create a superuser "admin"
 	@$(MANAGE) flush $(FLUSH_ARGS)
 	@${MAKE} superuser
 .PHONY: resetdb
-
-env.d/development/common:
-	cp -n env.d/development/common.dist env.d/development/common
-
-env.d/development/postgresql:
-	cp -n env.d/development/postgresql.dist env.d/development/postgresql
-
-env.d/development/kc_postgresql:
-	cp -n env.d/development/kc_postgresql.dist env.d/development/kc_postgresql
-
-# -- Internationalization
-
-env.d/development/crowdin:
-	cp -n env.d/development/crowdin.dist env.d/development/crowdin
 
 crowdin-download: ## Download translated message from crowdin
 	@$(COMPOSE_RUN_CROWDIN) download -c crowdin/config.yml

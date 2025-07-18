@@ -17,6 +17,7 @@ and this project adheres to
 ### Changed
 
 - ⚡️(docker) Optimize Dockerfile to use apk with --no-cache #743
+- 🔧(project) change env.d system by using local files #1200
 
 ### Fixed
 

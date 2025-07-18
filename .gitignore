@@ -40,8 +40,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-env.d/development/*
-!env.d/development/*.dist
+env.d/development/*.local
 env.d/terraform
 
 # npm

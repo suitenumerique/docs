@@ -24,5 +24,6 @@ services:
     restart: unless-stopped
     env_file:
       - env.d/development/common
+      - env.d/development/common.local
     ports:
       - "4444:4444"

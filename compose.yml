@@ -10,6 +10,7 @@ services:
       retries: 300
     env_file:
       - env.d/development/postgresql
+      - env.d/development/postgresql.local
     ports:
       - "15432:5432"
 
@@ -66,7 +67,9 @@ services:
       - DJANGO_CONFIGURATION=Development
     env_file:
       - env.d/development/common
+      - env.d/development/common.local
       - env.d/development/postgresql
+      - env.d/development/postgresql.local
     ports:
       - "8071:8000"
     volumes:
@@ -91,7 +94,9 @@ services:
       - DJANGO_CONFIGURATION=Development
     env_file:
       - env.d/development/common
+      - env.d/development/common.local
       - env.d/development/postgresql
+      - env.d/development/postgresql.local
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
@@ -135,6 +140,7 @@ services:
       - ".:/app"
     env_file:
       - env.d/development/crowdin
+      - env.d/development/crowdin.local
     user: "${DOCKER_USER:-1000}"
     working_dir: /app
 
@@ -156,6 +162,7 @@ services:
     restart: unless-stopped
     env_file:
       - env.d/development/common
+      - env.d/development/common.local
     ports:
       - "4444:4444"
     volumes:
@@ -174,6 +181,7 @@ services:
       - "5433:5432"
     env_file:
       - env.d/development/kc_postgresql
+      - env.d/development/kc_postgresql.local
 
   keycloak:
     image: quay.io/keycloak/keycloak:20.0.1

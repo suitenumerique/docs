@@ -80,7 +80,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Set e2e env variables
-        run: cat env.d/development/common.e2e.dist >> env.d/development/common.dist
+        run: cat env.d/development/common.e2e >> env.d/development/common.local
 
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright chromium
@@ -119,7 +119,7 @@ jobs:
           fail-on-cache-miss: true
 
       - name: Set e2e env variables
-        run: cat env.d/development/common.e2e.dist >> env.d/development/common.dist
+        run: cat env.d/development/common.e2e >> env.d/development/common.local
 
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright firefox webkit chromium
