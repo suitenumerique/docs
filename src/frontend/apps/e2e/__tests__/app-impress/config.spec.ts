@@ -2,7 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 
-import { CONFIG, createDoc, overrideConfig } from './common';
+import { CONFIG, createDoc, overrideConfig } from './utils-common';
 
 test.describe('Config', () => {
   test('it checks that sentry is trying to init from config endpoint', async ({

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { overrideConfig } from './common';
+import { overrideConfig } from './utils-common';
 
 test.describe('Footer', () => {
   test.use({ storageState: { cookies: [], origins: [] } });

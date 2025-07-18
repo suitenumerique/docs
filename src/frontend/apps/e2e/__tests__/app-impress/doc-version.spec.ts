@@ -5,7 +5,7 @@ import {
   goToGridDoc,
   mockedDocument,
   verifyDocName,
-} from './common';
+} from './utils-common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

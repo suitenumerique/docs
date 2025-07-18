@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, mockedListDocs } from './common';
+import { createDoc, mockedListDocs } from './utils-common';
 
 test.describe('Doc grid dnd', () => {
   test('it creates a doc', async ({ page, browserName }) => {

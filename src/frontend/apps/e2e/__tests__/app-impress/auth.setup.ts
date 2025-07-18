@@ -1,6 +1,6 @@
 import { FullConfig, FullProject, chromium, expect } from '@playwright/test';
 
-import { keyCloakSignIn } from './common';
+import { keyCloakSignIn } from './utils-common';
 
 const saveStorageState = async (
   browserConfig: FullProject<unknown, unknown>,

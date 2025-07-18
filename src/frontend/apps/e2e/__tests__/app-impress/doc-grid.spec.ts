@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getGridRow } from './common';
+import { createDoc, getGridRow } from './utils-common';
 
 type SmallDoc = {
   id: string;

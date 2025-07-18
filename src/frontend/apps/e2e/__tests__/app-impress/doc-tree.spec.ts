@@ -2,15 +2,15 @@
 import { expect, test } from '@playwright/test';
 
 import {
-  addNewMember,
   createDoc,
   expectLoginPage,
   keyCloakSignIn,
   randomName,
   updateDocTitle,
   verifyDocName,
-} from './common';
-import { clickOnAddRootSubPage, createRootSubPage } from './sub-pages-utils';
+} from './utils-common';
+import { addNewMember } from './utils-share';
+import { clickOnAddRootSubPage, createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {

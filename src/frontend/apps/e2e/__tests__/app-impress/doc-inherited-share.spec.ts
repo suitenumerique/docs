@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './common';
-import { updateShareLink } from './share-utils';
-import { createRootSubPage } from './sub-pages-utils';
+import { createDoc, verifyDocName } from './utils-common';
+import { updateShareLink } from './utils-share';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Inherited share accesses', () => {
   test('it checks inherited accesses', async ({ page, browserName }) => {

@@ -6,7 +6,7 @@ import {
   keyCloakSignIn,
   randomName,
   verifyDocName,
-} from './common';
+} from './utils-common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

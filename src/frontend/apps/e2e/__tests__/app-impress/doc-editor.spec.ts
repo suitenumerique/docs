@@ -9,8 +9,8 @@ import {
   mockedDocument,
   overrideConfig,
   verifyDocName,
-} from './common';
-import { createRootSubPage } from './sub-pages-utils';
+} from './utils-common';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

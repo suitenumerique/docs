@@ -8,7 +8,7 @@ import {
   keyCloakSignIn,
   mockedDocument,
   verifyDocName,
-} from './common';
+} from './utils-common';
 
 test.describe('Doc Routing', () => {
   test.beforeEach(async ({ page }) => {

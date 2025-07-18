@@ -4,12 +4,11 @@ import {
   createDoc,
   getGridRow,
   goToGridDoc,
-  mockedAccesses,
   mockedDocument,
-  mockedInvitations,
   verifyDocName,
-} from './common';
-import { createRootSubPage } from './sub-pages-utils';
+} from './utils-common';
+import { mockedAccesses, mockedInvitations } from './utils-share';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

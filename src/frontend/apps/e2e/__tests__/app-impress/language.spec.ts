@@ -1,6 +1,6 @@
 import { Page, expect, test } from '@playwright/test';
 
-import { createDoc } from './common';
+import { createDoc } from './utils-common';
 
 test.describe.serial('Language', () => {
   let page: Page;

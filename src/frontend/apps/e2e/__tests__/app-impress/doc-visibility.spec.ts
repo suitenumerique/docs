@@ -6,8 +6,8 @@ import {
   expectLoginPage,
   keyCloakSignIn,
   verifyDocName,
-} from './common';
-import { createRootSubPage } from './sub-pages-utils';
+} from './utils-common';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Visibility', () => {
   test.beforeEach(async ({ page }) => {

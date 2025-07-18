@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import { expectLoginPage, keyCloakSignIn, overrideConfig } from './common';
+import {
+  expectLoginPage,
+  keyCloakSignIn,
+  overrideConfig,
+} from './utils-common';
 
 test.describe('Header', () => {
   test('checks all the elements are visible', async ({ page }) => {

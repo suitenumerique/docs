@@ -6,8 +6,8 @@ import {
   keyCloakSignIn,
   randomName,
   verifyDocName,
-} from './common';
-import { createRootSubPage } from './sub-pages-utils';
+} from './utils-common';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Document create member', () => {
   test.beforeEach(async ({ page }) => {

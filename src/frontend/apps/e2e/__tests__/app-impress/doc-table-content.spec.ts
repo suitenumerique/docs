@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './common';
+import { createDoc, verifyDocName } from './utils-common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

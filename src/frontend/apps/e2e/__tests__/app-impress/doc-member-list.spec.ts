@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-import { addNewMember, createDoc, goToGridDoc, verifyDocName } from './common';
+import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import { addNewMember } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
