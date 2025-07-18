@@ -252,9 +252,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
+            aria-label={t('Export the document')}
           />
         )}
-        <DropdownMenu options={options}>
+        <DropdownMenu options={options} label={t('Open the document options')}>
           <IconOptions
             isHorizontal
             $theme="primary"
