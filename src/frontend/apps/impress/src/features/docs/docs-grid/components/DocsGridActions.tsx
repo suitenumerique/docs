@@ -5,7 +5,7 @@ import {
 } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
-import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
+import { DropdownMenu, DropdownMenuOption, IconOptions } from '@/components';
 import {
   Doc,
   KEY_LIST_DOC,
@@ -93,10 +93,10 @@ export const DocsGridActions = ({
 
   return (
     <>
-      <DropdownMenu options={options}>
-        <Icon
+      <DropdownMenu options={options} label={t('Open the document options')}>
+        <IconOptions
+          isHorizontal
           data-testid={`docs-grid-actions-button-${doc.id}`}
-          iconName="more_horiz"
           $theme="primary"
           $variation="600"
         />

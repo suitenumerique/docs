@@ -184,9 +184,6 @@ test.describe('Document list members', () => {
 
     const emailMyself = `user@${browserName}.test`;
     const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
-    const mySelfRole = mySelf.getByRole('button', {
-      name: 'doc-role-dropdown',
-    });
 
     const userOwnerEmail = await addNewMember(page, 0, 'Owner');
     const userOwner = list.getByTestId(
@@ -201,20 +198,31 @@ test.describe('Document list members', () => {
     const userReader = list.getByTestId(
       `doc-share-member-row-${userReaderEmail}`,
     );
-    const userReaderRole = userReader.getByRole('button', {
-      name: 'doc-role-dropdown',
-    });
 
     await expect(mySelf).toBeVisible();
     await expect(userOwner).toBeVisible();
     await expect(userReader).toBeVisible();
 
-    await userReaderRole.click();
-    await page.getByRole('menuitem', { name: 'Remove access' }).click();
+    await expect(
+      userOwner.getByRole('button', {
+        name: 'Open the member options',
+      }),
+    ).toBeVisible();
+
+    await userReader
+      .getByRole('button', {
+        name: 'Open the member options',
+      })
+      .click();
+    await page.getByLabel('Delete').click();
     await expect(userReader).toBeHidden();
 
-    await mySelfRole.click();
-    await page.getByRole('menuitem', { name: 'Remove access' }).click();
+    await mySelf
+      .getByRole('button', {
+        name: 'Open the member options',
+      })
+      .click();
+    await page.getByLabel('Delete').click();
     await expect(
       page.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible();

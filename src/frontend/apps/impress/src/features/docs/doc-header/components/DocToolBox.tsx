@@ -255,7 +255,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             aria-label={t('Export the document')}
           />
         )}
-        <DropdownMenu options={options}>
+        <DropdownMenu options={options} label={t('Open the document options')}>
           <IconOptions
             isHorizontal
             $theme="primary"
