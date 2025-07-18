@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.4.2] - 2025-07-18
+
 ### Changed
 
 - ⚡️(docker) Optimize Dockerfile to use apk with --no-cache #743
@@ -655,7 +657,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.4.1...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.4.2...main
+[v3.4.2]: https://github.com/numerique-gouv/impress/releases/v3.4.2
 [v3.4.1]: https://github.com/numerique-gouv/impress/releases/v3.4.1
 [v3.4.0]: https://github.com/numerique-gouv/impress/releases/v3.4.0
 [v3.3.0]: https://github.com/numerique-gouv/impress/releases/v3.3.0
