@@ -30,6 +30,9 @@ spec:
       imagePullSecrets:
         - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
       {{- end}}
+      {{- if .Values.frontend.serviceAccountName }}
+      serviceAccountName: {{ .Values.frontend.serviceAccountName }}
+      {{- end }}
       shareProcessNamespace: {{ .Values.frontend.shareProcessNamespace }}
       containers:
         {{- with .Values.frontend.sidecars }}
