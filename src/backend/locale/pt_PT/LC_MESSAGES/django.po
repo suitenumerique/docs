@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-07-08 15:21+0000\n"
-"PO-Revision-Date: 2025-07-09 10:42\n"
+"PO-Revision-Date: 2025-07-18 10:25\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "Language: pt_PT\n"
@@ -19,87 +19,87 @@ msgstr ""
 
 #: build/lib/core/admin.py:37 core/admin.py:37
 msgid "Personal info"
-msgstr ""
+msgstr "Informações Pessoais"
 
 #: build/lib/core/admin.py:50 build/lib/core/admin.py:138 core/admin.py:50
 #: core/admin.py:138
 msgid "Permissions"
-msgstr ""
+msgstr "Permissões"
 
 #: build/lib/core/admin.py:62 core/admin.py:62
 msgid "Important dates"
-msgstr ""
+msgstr "Datas importantes"
 
 #: build/lib/core/admin.py:148 core/admin.py:148
 msgid "Tree structure"
-msgstr ""
+msgstr "Estrutura de árvore"
 
 #: build/lib/core/api/filters.py:47 core/api/filters.py:47
 msgid "Title"
-msgstr ""
+msgstr "Título"
 
 #: build/lib/core/api/filters.py:61 core/api/filters.py:61
 msgid "Creator is me"
-msgstr ""
+msgstr "Eu sou o criador"
 
 #: build/lib/core/api/filters.py:64 core/api/filters.py:64
 msgid "Favorite"
-msgstr ""
+msgstr "Favorito"
 
 #: build/lib/core/api/serializers.py:467 core/api/serializers.py:467
 msgid "A new document was created on your behalf!"
-msgstr ""
+msgstr "Um novo documento foi criado em seu nome!"
 
 #: build/lib/core/api/serializers.py:471 core/api/serializers.py:471
 msgid "You have been granted ownership of a new document:"
-msgstr ""
+msgstr "A propriedade de um novo documento foi concedida a você:"
 
 #: build/lib/core/api/serializers.py:608 core/api/serializers.py:608
 msgid "Body"
-msgstr ""
+msgstr "Corpo"
 
 #: build/lib/core/api/serializers.py:611 core/api/serializers.py:611
 msgid "Body type"
-msgstr ""
+msgstr "Tipo de corpo"
 
 #: build/lib/core/api/serializers.py:617 core/api/serializers.py:617
 msgid "Format"
-msgstr ""
+msgstr "Formato"
 
 #: build/lib/core/api/viewsets.py:943 core/api/viewsets.py:943
 #, python-brace-format
 msgid "copy of {title}"
-msgstr ""
+msgstr "cópia de {title}"
 
 #: build/lib/core/choices.py:35 build/lib/core/choices.py:42 core/choices.py:35
 #: core/choices.py:42
 msgid "Reader"
-msgstr ""
+msgstr "Leitor"
 
 #: build/lib/core/choices.py:36 build/lib/core/choices.py:43 core/choices.py:36
 #: core/choices.py:43
 msgid "Editor"
-msgstr ""
+msgstr "Editor"
 
 #: build/lib/core/choices.py:44 core/choices.py:44
 msgid "Administrator"
-msgstr ""
+msgstr "Administrador"
 
 #: build/lib/core/choices.py:45 core/choices.py:45
 msgid "Owner"
-msgstr ""
+msgstr "Dono"
 
 #: build/lib/core/choices.py:56 core/choices.py:56
 msgid "Restricted"
-msgstr ""
+msgstr "Restrito"
 
 #: build/lib/core/choices.py:60 core/choices.py:60
 msgid "Authenticated"
-msgstr ""
+msgstr "Autenticado"
 
 #: build/lib/core/choices.py:62 core/choices.py:62
 msgid "Public"
-msgstr ""
+msgstr "Público"
 
 #: build/lib/core/enums.py:36 core/enums.py:36
 msgid "First child"
