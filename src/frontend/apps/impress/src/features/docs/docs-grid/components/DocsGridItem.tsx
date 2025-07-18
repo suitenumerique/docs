@@ -27,8 +27,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const shareModal = useModal();
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
-
-  const showAccesses = isPublic || isAuthenticated;
+  const isShared = isPublic || isAuthenticated;
 
   const handleShareClick = () => {
     shareModal.open();
@@ -67,12 +66,11 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             $direction="row"
             $align="center"
             $gap={spacingsTokens.xs}
-            $flex={flexLeft}
             $padding={{ right: isDesktop ? 'md' : '3xs' }}
             $maxWidth="100%"
           >
             <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
-            {showAccesses && (
+            {isShared && (
               <Box
                 $padding={{ top: !isDesktop ? '4xs' : undefined }}
                 $css={
