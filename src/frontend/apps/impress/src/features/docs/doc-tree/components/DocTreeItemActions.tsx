@@ -10,14 +10,14 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
-
 import {
   Doc,
   ModalRemoveDoc,
   Role,
   useCopyDocLink,
-} from '../../doc-management';
-import { useCreateChildrenDoc } from '../api/useCreateChildren';
+  useCreateChildDoc,
+} from '@/docs/doc-management';
+
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
 import { useTreeUtils } from '../hooks';
@@ -97,7 +97,7 @@ export const DocTreeItemActions = ({
     },
   ];
 
-  const { mutate: createChildrenDoc } = useCreateChildrenDoc({
+  const { mutate: createChildDoc } = useCreateChildDoc({
     onSuccess: (newDoc) => {
       onCreateSuccess?.(newDoc);
       void router.push(`/docs/${newDoc.id}`);
@@ -147,7 +147,7 @@ export const DocTreeItemActions = ({
               e.stopPropagation();
               e.preventDefault();
 
-              createChildrenDoc({
+              createChildDoc({
                 parentId: doc.id,
               });
             }}

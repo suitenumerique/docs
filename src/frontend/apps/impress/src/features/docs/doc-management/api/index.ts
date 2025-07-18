@@ -1,3 +1,4 @@
+export * from './useCreateChildDoc';
 export * from './useCreateDoc';
 export * from './useCreateFavoriteDoc';
 export * from './useDeleteFavoriteDoc';

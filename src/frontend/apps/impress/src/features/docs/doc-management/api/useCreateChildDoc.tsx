@@ -2,16 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
-import { Doc, KEY_LIST_DOC } from '../../doc-management';
+import { Doc, KEY_LIST_DOC } from '..';
 
-export type CreateDocParam = Pick<Doc, 'title'> & {
+export type CreateChildDocParam = Pick<Doc, 'title'> & {
   parentId: string;
 };
 
-export const createDocChildren = async ({
+export const createChildDoc = async ({
   title,
   parentId,
-}: CreateDocParam): Promise<Doc> => {
+}: CreateChildDocParam): Promise<Doc> => {
   const response = await fetchAPI(`documents/${parentId}/children/`, {
     method: 'POST',
     body: JSON.stringify({
@@ -26,19 +26,19 @@ export const createDocChildren = async ({
   return response.json() as Promise<Doc>;
 };
 
-interface CreateDocProps {
-  onSuccess: (data: Doc) => void;
+interface UseCreateChildDocProps {
+  onSuccess: (doc: Doc) => void;
 }
 
-export function useCreateChildrenDoc({ onSuccess }: CreateDocProps) {
+export function useCreateChildDoc({ onSuccess }: UseCreateChildDocProps) {
   const queryClient = useQueryClient();
-  return useMutation<Doc, APIError, CreateDocParam>({
-    mutationFn: createDocChildren,
-    onSuccess: (data) => {
+  return useMutation<Doc, APIError, CreateChildDocParam>({
+    mutationFn: createChildDoc,
+    onSuccess: (doc) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
       });
-      onSuccess(data);
+      onSuccess(doc);
     },
   });
 }

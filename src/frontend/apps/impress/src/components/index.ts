@@ -4,6 +4,7 @@ export * from './BoxButton';
 export * from './Card';
 export * from './DropButton';
 export * from './DropdownMenu';
+export * from './quick-search';
 export * from './Icon';
 export * from './InfiniteScroll';
 export * from './Link';

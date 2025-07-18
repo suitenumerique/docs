@@ -10,7 +10,7 @@ import { toBase64 } from '../utils';
 
 const SAVE_INTERVAL = 60000;
 
-const useSaveDoc = (
+export const useSaveDoc = (
   docId: string,
   yDoc: Y.Doc,
   canSave: boolean,
@@ -105,5 +105,3 @@ const useSaveDoc = (
     };
   }, [router.events, saveDoc]);
 };
-
-export default useSaveDoc;

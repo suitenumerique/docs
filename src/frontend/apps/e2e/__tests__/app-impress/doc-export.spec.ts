@@ -346,4 +346,72 @@ test.describe('Doc Export', () => {
     const pdfData = await pdf(pdfBuffer);
     expect(pdfData.text).toContain('Hello World');
   });
+
+  test('it exports the doc with interlinking', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'export-interlinking',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    const [docChild] = await createDoc(
+      page,
+      'export-interlink-child',
+      browserName,
+      1,
+      true,
+    );
+
+    await verifyDocName(page, docChild);
+
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Link to a page').first().click();
+
+    await page
+      .locator(
+        "span[data-inline-content-type='interlinkingSearchInline'] input",
+      )
+      .fill('interlink-child');
+
+    await page
+      .locator('.quick-search-container')
+      .getByText('interlink-child')
+      .click();
+
+    const interlink = page.getByRole('link', {
+      name: 'interlink-child',
+    });
+
+    await expect(interlink).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${docChild}.pdf`);
+    });
+
+    await page
+      .getByRole('button', {
+        name: 'download',
+      })
+      .click();
+
+    void page
+      .getByRole('button', {
+        name: 'Download',
+      })
+      .click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${docChild}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfData = await pdf(pdfBuffer);
+
+    expect(pdfData.text).toContain('interlink-child'); // This is the pdf text
+  });
 });

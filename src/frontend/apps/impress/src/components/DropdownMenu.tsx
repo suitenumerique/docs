@@ -25,6 +25,7 @@ export type DropdownMenuProps = {
   arrowCss?: BoxProps['$css'];
   buttonCss?: BoxProps['$css'];
   disabled?: boolean;
+  opened?: boolean;
   topMessage?: string;
   selectedValues?: string[];
   afterOpenChange?: (isOpen: boolean) => void;
@@ -38,12 +39,13 @@ export const DropdownMenu = ({
   arrowCss,
   buttonCss,
   label,
+  opened,
   topMessage,
   afterOpenChange,
   selectedValues,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(opened ?? false);
   const blockButtonRef = useRef<HTMLDivElement>(null);
 
   const onOpenChange = (isOpen: boolean) => {

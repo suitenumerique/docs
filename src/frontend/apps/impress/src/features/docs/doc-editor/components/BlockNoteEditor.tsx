@@ -2,6 +2,7 @@ import { codeBlock } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
   defaultBlockSpecs,
+  defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
@@ -18,8 +19,13 @@ import { Box, TextErrors } from '@/components';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
-import { useHeadings, useUploadFile, useUploadStatus } from '../hook/';
-import useSaveDoc from '../hook/useSaveDoc';
+import {
+  useHeadings,
+  useSaveDoc,
+  useShortcuts,
+  useUploadFile,
+  useUploadStatus,
+} from '../hook';
 import { useEditorStore } from '../stores';
 import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
@@ -28,6 +34,10 @@ import { randomColor } from '../utils';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { CalloutBlock, DividerBlock } from './custom-blocks';
+import {
+  InterlinkingLinkInlineContent,
+  InterlinkingSearchInlineContent,
+} from './custom-inline-content';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -35,6 +45,11 @@ export const blockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       callout: CalloutBlock,
       divider: DividerBlock,
+    },
+    inlineContentSpecs: {
+      ...defaultInlineContentSpecs,
+      interlinkingSearchInline: InterlinkingSearchInlineContent,
+      interlinkingLinkInline: InterlinkingLinkInlineContent,
     },
   }),
 );
@@ -130,6 +145,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   );
 
   useHeadings(editor);
+  useShortcuts(editor);
   useUploadStatus(editor);
 
   useEffect(() => {

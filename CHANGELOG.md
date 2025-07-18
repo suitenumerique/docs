@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Added
+
+- ✨(frontend) Interlinking doc #904
+
 ## Fixed
 
 - 🐛(helm) charts generate invalid YAML for collaboration API / WS #890

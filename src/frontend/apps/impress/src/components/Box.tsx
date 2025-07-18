@@ -44,13 +44,12 @@ export interface BoxProps {
 export type BoxType = ComponentPropsWithRef<typeof Box>;
 
 export const Box = styled('div')<BoxProps>`
-  display: flex;
-  flex-direction: column;
   ${({ $align }) => $align && `align-items: ${$align};`}
   ${({ $background }) => $background && `background: ${$background};`}
   ${({ $color }) => $color && `color: ${$color};`}
-  ${({ $direction }) => $direction && `flex-direction: ${$direction};`}
-  ${({ $display }) => $display && `display: ${$display};`}
+  ${({ $direction }) => `flex-direction: ${$direction || 'column'};`}
+  ${({ $display, as }) =>
+    `display: ${$display || as?.match('span|input') ? 'inline-flex' : 'flex'};`}
   ${({ $flex }) => $flex && `flex: ${$flex};`}
   ${({ $gap }) => $gap && `gap: ${$gap};`}
   ${({ $height }) => $height && `height: ${$height};`}

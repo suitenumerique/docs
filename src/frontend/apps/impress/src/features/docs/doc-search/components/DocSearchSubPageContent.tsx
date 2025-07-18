@@ -1,6 +1,6 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { t } from 'i18next';
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
@@ -9,13 +9,13 @@ import { Doc } from '../../doc-management';
 import { useInfiniteSubDocs } from '../../doc-management/api/useSubDocs';
 
 import { DocSearchFiltersValues } from './DocSearchFilters';
-import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchSubPageContentProps = {
   search: string;
   filters: DocSearchFiltersValues;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
+  renderElement: (doc: Doc) => React.ReactNode;
 };
 
 export const DocSearchSubPageContent = ({
@@ -23,6 +23,7 @@ export const DocSearchSubPageContent = ({
   filters,
   onSelect,
   onLoadingChange,
+  renderElement,
 }: DocSearchSubPageContentProps) => {
   const treeContext = useTreeContext<Doc>();
 
@@ -67,7 +68,7 @@ export const DocSearchSubPageContent = ({
     <QuickSearchGroup
       onSelect={onSelect}
       group={docsData}
-      renderElement={(doc) => <DocSearchItem doc={doc} />}
+      renderElement={renderElement}
     />
   );
 };

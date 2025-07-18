@@ -10,7 +10,7 @@ export const blockMappingParagraphPDF: DocsExporterPDF['mappings']['blockMapping
      */
     if (Array.isArray(block.content)) {
       block.content.forEach((content) => {
-        if (content.type === 'text' && !content.text) {
+        if (content.type === 'text' && 'text' in content && !content.text) {
           content.text = ' ';
         }
       });

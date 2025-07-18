@@ -18,6 +18,7 @@ import {
   DocSearchFiltersValues,
   DocSearchTarget,
 } from './DocSearchFilters';
+import { DocSearchItem } from './DocSearchItem';
 import { DocSearchSubPageContent } from './DocSearchSubPageContent';
 
 type DocSearchModalProps = {
@@ -116,6 +117,7 @@ export const DocSearchModal = ({
                     filters={filters}
                     onSelect={handleSelect}
                     onLoadingChange={setLoading}
+                    renderElement={(doc) => <DocSearchItem doc={doc} />}
                   />
                 )}
               </>
