@@ -9,9 +9,9 @@
 
 ```bash
 mkdir keycloak
-curl -o compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/keycloak/compose.yaml
-curl -o env.d/kc_postgresql https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/kc_postgresql
-curl -o env.d/keycloak https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/keycloak
+curl -o keycloak/compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/keycloak/compose.yaml
+curl -o keycloak/env.d/kc_postgresql https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/kc_postgresql
+curl -o keycloak/env.d/keycloak https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/keycloak
 ```
 
 ### Step 2:. Update `env.d/` files
