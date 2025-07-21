@@ -66,3 +66,6 @@ COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
 DJANGO_SERVER_TO_SERVER_API_TOKENS=server-api-token
 Y_PROVIDER_API_BASE_URL=http://y-provider-development:4444/api/
 Y_PROVIDER_API_KEY=yprovider-api-key
+
+# Frontend
+FRONTEND_URL=http://localhost:3000

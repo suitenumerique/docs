@@ -8,6 +8,7 @@ import expressWebsockets from 'express-ws';
 import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
+  convertBlocksHandler,
   convertHandler,
   getDocumentConnectionInfoHandler,
 } from '@/handlers';
@@ -60,6 +61,8 @@ export const initApp = () => {
     }),
     convertHandler,
   );
+
+  app.post(routes.CONVERT_BLOCKS, httpSecurity, convertBlocksHandler);
 
   Sentry.setupExpressErrorHandler(app);
 
