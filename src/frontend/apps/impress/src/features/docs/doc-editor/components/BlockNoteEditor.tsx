@@ -125,6 +125,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       uploadFile,
       schema: blockNoteSchema,
+      disableExtensions: ['gapCursor'],
     },
     [collabName, lang, provider, uploadFile],
   );
