@@ -247,6 +247,10 @@ demo: ## flush db then create a demo for load testing purpose
 	@$(MANAGE) create_demo
 .PHONY: demo
 
+index: ## index all documents to remote search
+	@$(MANAGE) index
+.PHONY: index
+
 # Nota bene: Black should come after isort just in case they don't agree...
 lint: ## lint back-end python sources
 lint: \

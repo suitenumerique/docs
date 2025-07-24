@@ -1,12 +1,34 @@
 """Utils for the core app."""
 
 import base64
+from collections import defaultdict
 import re
 
 import pycrdt
 from bs4 import BeautifulSoup
 
 from core import enums
+
+
+def get_ancestor_to_descendants_map(paths, steplen):
+    """
+    Given a list of document paths, return a mapping of ancestor_path -> set of descendant_paths.
+
+    Each path is assumed to use materialized path format with fixed-length segments.
+
+    Args:
+        paths (list of str): List of full document paths.
+        steplen (int): Length of each path segment.
+
+    Returns:
+        dict[str, set[str]]: Mapping from ancestor path to its descendant paths (including itself).
+    """
+    ancestor_map = defaultdict(set)
+    for path in paths:
+        for i in range(steplen, len(path) + 1, steplen):
+            ancestor = path[:i]
+            ancestor_map[ancestor].add(path)
+    return ancestor_map
 
 
 def filter_descendants(paths, root_paths, skip_sorting=False):
