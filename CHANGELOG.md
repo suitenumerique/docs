@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added 
+
+- ✨(api) add API route to fetch document content #1206
+
 ### Changed
 
 - 🔒️(backend) configure throttle on every viewsets #1343
