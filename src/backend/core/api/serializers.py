@@ -14,9 +14,9 @@ from rest_framework import serializers
 
 from core import choices, enums, models, utils
 from core.services.ai_services import AI_ACTIONS
-from core.services.converter_services import (
+from core.services.yprovider_services import (
     ConversionError,
-    YdocConverter,
+    YProviderAPI,
 )
 
 
@@ -431,7 +431,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             language = user.language or language
 
         try:
-            document_content = YdocConverter().convert(validated_data["content"])
+            document_content = YProviderAPI().convert(validated_data["content"])
         except ConversionError as err:
             raise serializers.ValidationError(
                 {"content": ["Could not convert content"]}

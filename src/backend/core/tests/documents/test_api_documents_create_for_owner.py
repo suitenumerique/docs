@@ -16,16 +16,16 @@ from rest_framework.test import APIClient
 from core import factories
 from core.api.serializers import ServerCreateDocumentSerializer
 from core.models import Document, Invitation, User
-from core.services.converter_services import ConversionError, YdocConverter
+from core.services.yprovider_services import ConversionError, YProviderAPI
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
 def mock_convert_md():
-    """Mock YdocConverter.convert to return a converted content."""
+    """Mock YProviderAPI.convert to return a converted content."""
     with patch.object(
-        YdocConverter,
+        YProviderAPI,
         "convert",
         return_value="Converted document content",
     ) as mock:

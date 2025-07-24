@@ -8,6 +8,7 @@ import expressWebsockets from 'express-ws';
 import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
+  contentHandler,
   convertHandler,
   getDocumentConnectionInfoHandler,
 } from '@/handlers';
@@ -60,6 +61,11 @@ export const initApp = () => {
     }),
     convertHandler,
   );
+
+  /**
+   * Route to convert base64 Yjs content to different formats
+   */
+  app.post(routes.CONTENT, httpSecurity, express.json(), contentHandler);
 
   Sentry.setupExpressErrorHandler(app);
 
