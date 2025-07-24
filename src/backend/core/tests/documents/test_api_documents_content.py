@@ -9,7 +9,7 @@ import requests
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core import choices, factories
+from core import factories
 
 pytestmark = pytest.mark.django_db
 

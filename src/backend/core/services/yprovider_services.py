@@ -1,14 +1,11 @@
 """Y-Provider API services."""
 
 import json
-import logging
 from base64 import b64encode
 
 from django.conf import settings
 
 import requests
-
-logger = logging.getLogger(__name__)
 
 
 class ConversionError(Exception):
@@ -72,7 +69,6 @@ class YProviderAPI:
             raise ValidationError("Input content cannot be empty")
 
         data = json.dumps({"content": base64_content, "format": format_type})
-        logger.warning(f"{settings.Y_PROVIDER_API_BASE_URL}api/content/")
         try:
             response = self._request(
                 f"{settings.Y_PROVIDER_API_BASE_URL}content/", data, "application/json"
