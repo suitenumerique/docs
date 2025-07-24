@@ -29,7 +29,6 @@ export const convertHandler = async (
 
   let blocks: PartialBlock[] | null = null;
   try {
-
     // First, convert from the input format to blocks
     // application/x-www-form-urlencoded is interpreted as Markdown for backward compatibility
     if (
