@@ -1,6 +1,7 @@
 """API endpoints"""
 # pylint: disable=too-many-lines
 
+import base64
 import json
 import logging
 import uuid
@@ -37,14 +38,14 @@ from rest_framework.permissions import AllowAny
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
-from core.services.yprovider_services import (
+from core.services.converter_services import (
     ServiceUnavailableError as YProviderServiceUnavailableError,
 )
-from core.services.yprovider_services import (
+from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
-from core.services.yprovider_services import (
-    YProviderAPI,
+from core.services.converter_services import (
+    YdocConverter,
 )
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
@@ -1534,9 +1535,17 @@ class DocumentViewSet(
         if base64_content is not None:
             # Convert using the y-provider service
             try:
-                yprovider = YProviderAPI()
-                result = yprovider.content(base64_content, content_format)
-                content = result["content"]
+                yprovider = YdocConverter()
+                result = yprovider.convert(
+                    base64.b64decode(base64_content),
+                    "application/vnd.yjs.doc",
+                    {
+                        "markdown": "text/markdown",
+                        "html": "text/html",
+                        "json": "application/json",
+                    }[content_format],
+                )
+                content = result
             except YProviderValidationError as e:
                 return drf_response.Response(
                     {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST

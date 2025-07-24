@@ -1,5 +1,4 @@
 export * from './collaborationResetConnectionsHandler';
 export * from './collaborationWSHandler';
 export * from './convertHandler';
-export * from './contentHandler';
 export * from './getDocumentConnectionInfoHandler';
