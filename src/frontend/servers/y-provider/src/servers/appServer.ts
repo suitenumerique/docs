@@ -49,7 +49,7 @@ export const initApp = () => {
   );
 
   /**
-   * Route to convert Markdown or BlockNote blocks
+   * Route to convert Markdown or BlockNote blocks and Yjs content
    */
   app.post(
     routes.CONVERT,

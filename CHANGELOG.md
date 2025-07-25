@@ -13,6 +13,7 @@ and this project adheres to
 - ✨(backend) allow masking documents from the list view #1171
 - ✨(frontend) subdocs can manage link reach #1190
 - ✨(frontend) add duplicate action to doc tree #1175
+- ✨(api) add API route to fetch document content #1206
 
 ### Changed
 

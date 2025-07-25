@@ -81,6 +81,7 @@ def test_api_documents_trashbin_format():
             "collaboration_auth": True,
             "descendants": True,
             "cors_proxy": True,
+            "content": True,
             "destroy": True,
             "duplicate": True,
             "favorite": True,
