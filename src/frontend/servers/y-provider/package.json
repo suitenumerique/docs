@@ -2,7 +2,7 @@
   "name": "server-y-provider",
   "version": "3.4.2",
   "description": "Y.js provider for docs",
-  "repository": "https://github.com/numerique-gouv/impress",
+  "repository": "https://github.com/suitenumerique/docs",
   "license": "MIT",
   "type": "module",
   "scripts": {

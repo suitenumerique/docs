@@ -16,7 +16,7 @@
   "volta": {
     "node": "22"
   },
-  "repository": "https://github.com/numerique-gouv/impress",
+  "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
   "license": "MIT"
 }

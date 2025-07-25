@@ -64,10 +64,10 @@ dependencies = [
 ]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/numerique-gouv/impress/issues/new"
-"Changelog" = "https://github.com/numerique-gouv/impress/blob/main/CHANGELOG.md"
-"Homepage" = "https://github.com/numerique-gouv/impress"
-"Repository" = "https://github.com/numerique-gouv/impress"
+"Bug Tracker" = "https://github.com/suitenumerique/docs/issues/new"
+"Changelog" = "https://github.com/suitenumerique/docs/blob/main/CHANGELOG.md"
+"Homepage" = "https://github.com/suitenumerique/docs"
+"Repository" = "https://github.com/suitenumerique/docs"
 
 [project.optional-dependencies]
 dev = [
