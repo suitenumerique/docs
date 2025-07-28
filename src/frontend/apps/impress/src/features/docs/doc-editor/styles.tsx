@@ -88,7 +88,7 @@ export const cssEditor = (readonly: boolean) => css`
       font-size: 1.25rem;
     }
     a {
-      color: var(--c--theme--colors--greyscale-600);
+      color: var(--c--theme--colors--greyscale-700);
       cursor: pointer;
     }
     .bn-block-group
@@ -107,6 +107,50 @@ export const cssEditor = (readonly: boolean) => css`
     blockquote {
       border-left: 4px solid var(--c--theme--colors--greyscale-300);
       font-style: italic;
+    }
+
+    /**
+    * Lists - Fix contrast issues for BlockNote bullet points
+    * Only target cases where text color matches background color (problematic contrast)
+    */
+
+    /* Red background with red text - fix contrast */
+    .bn-block[data-background-color='red'][data-text-color='red']
+      .bn-block-content[data-content-type='bulletListItem'],
+    .bn-block.bg-red-500[data-text-color='red']
+      .bn-block-content[data-content-type='bulletListItem'] {
+      color: #990000 !important;
+    }
+
+    /* Yellow background with yellow text - fix contrast */
+    .bn-block[data-background-color='yellow'][data-text-color='yellow']
+      .bn-block-content[data-content-type='bulletListItem'],
+    .bn-block.bg-yellow-500[data-text-color='yellow']
+      .bn-block-content[data-content-type='bulletListItem'] {
+      color: #8b6914 !important;
+    }
+
+    /* Orange background with orange text - fix contrast */
+    .bn-block[data-background-color='orange'][data-text-color='orange']
+      .bn-block-content[data-content-type='bulletListItem'],
+    .bn-block.bg-orange-500[data-text-color='orange']
+      .bn-block-content[data-content-type='bulletListItem'] {
+      color: #a0522d !important;
+    }
+
+    /* Ensure text inside list items inherits the corrected color */
+    .bn-block-content[data-content-type='bulletListItem'] .bn-inline-content {
+      color: inherit !important;
+    }
+
+    /* Override any inline styles that might be applied */
+    .bn-block-content[data-content-type='bulletListItem'] .bn-inline-content * {
+      color: inherit !important;
+    }
+
+    /* Keep links readable but ensure they don't inherit problematic colors */
+    .bn-block-content[data-content-type='bulletListItem'] .bn-inline-content a {
+      color: var(--c--theme--colors--greyscale-700) !important;
     }
   }
 
