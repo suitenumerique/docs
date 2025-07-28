@@ -88,7 +88,7 @@ export const cssEditor = (readonly: boolean) => css`
       font-size: 1.25rem;
     }
     a {
-      color: var(--c--theme--colors--greyscale-500);
+      color: var(--c--theme--colors--greyscale-600);
       cursor: pointer;
     }
     .bn-block-group
