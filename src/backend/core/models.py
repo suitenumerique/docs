@@ -326,6 +326,18 @@ class DocumentQuerySet(MP_NodeQuerySet):
 
         return self.annotate(is_favorite=models.Value(False))
 
+    def annotate_is_masked(self, user):
+        """
+        Annotate document queryset with the masked status for the current user.
+        """
+        if user.is_authenticated:
+            masked_exists_subquery = LinkTrace.objects.filter(
+                document_id=models.OuterRef("pk"), user=user, is_masked=True
+            )
+            return self.annotate(is_masked=models.Exists(masked_exists_subquery))
+
+        return self.annotate(is_masked=models.Value(False))
+
     def annotate_user_roles(self, user):
         """
         Annotate document queryset with the roles of the current user
