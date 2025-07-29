@@ -23,6 +23,7 @@ and this project adheres to
 - 🔧(project) change env.d system by using local files #1200
 - ⚡️(frontend) improve tree stability #1207
 - ⚡️(frontend) improve accessibility #1232
+- ⚡(backend) move email sending to celery
 
 ### Fixed
 
