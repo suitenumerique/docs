@@ -52,6 +52,7 @@ and this project adheres to
 - ⚡️(frontend) improve tree stability #1207
 - ⚡️(frontend) improve accessibility #1232
 - 🛂(frontend) block drag n drop when not desktop #1239
+- ⚡(backend) move email sending to celery
 
 ### Fixed
 
