@@ -1,4 +1,5 @@
 import { useModal } from '@openfun/cunningham-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
@@ -21,6 +22,7 @@ export const DocsGridActions = ({
   openShareModal,
 }: DocsGridActionsProps) => {
   const { t } = useTranslation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const deleteModal = useModal();
   const { mutate: duplicateDoc } = useDuplicateDoc();
@@ -75,14 +77,43 @@ export const DocsGridActions = ({
     },
   ];
 
+  const documentTitle = doc.title || t('Untitled document');
+  const menuLabel = t(
+    'Ouvrir le menu des actions pour le document: {{title}}',
+    {
+      title: documentTitle,
+    },
+  );
+
+  const handleMenuOpenChange = (isOpen: boolean) => {
+    setIsMenuOpen(isOpen);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.currentTarget.click();
+    }
+  };
+
   return (
     <>
-      <DropdownMenu options={options}>
+      <DropdownMenu
+        options={options}
+        label={menuLabel}
+        afterOpenChange={handleMenuOpenChange}
+      >
         <Icon
           data-testid={`docs-grid-actions-button-${doc.id}`}
           iconName="more_horiz"
           $theme="primary"
           $variation="600"
+          aria-label={menuLabel}
+          role="button"
+          tabIndex={0}
+          aria-haspopup="true"
+          aria-expanded={isMenuOpen}
+          onKeyDown={handleKeyDown}
         />
       </DropdownMenu>
 

@@ -1,5 +1,11 @@
 import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
-import { Fragment, PropsWithChildren, useRef, useState } from 'react';
+import {
+  Fragment,
+  PropsWithChildren,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
@@ -44,12 +50,30 @@ export const DropdownMenu = ({
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const blockButtonRef = useRef<HTMLDivElement>(null);
+  const menuItemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const onOpenChange = (isOpen: boolean) => {
     setIsOpen(isOpen);
+    setFocusedIndex(-1);
     afterOpenChange?.(isOpen);
   };
+
+  // Focus first menu item when menu opens
+  useEffect(() => {
+    if (isOpen && menuItemRefs.current.length > 0) {
+      const firstEnabledIndex = options.findIndex(
+        (option) => option.show !== false && !option.disabled,
+      );
+      if (firstEnabledIndex !== -1) {
+        setFocusedIndex(firstEnabledIndex);
+        setTimeout(() => {
+          menuItemRefs.current[firstEnabledIndex]?.focus();
+        }, 0);
+      }
+    }
+  }, [isOpen, options]);
 
   if (disabled) {
     return children;
@@ -93,6 +117,7 @@ export const DropdownMenu = ({
         $maxWidth="320px"
         $minWidth={`${blockButtonRef.current?.clientWidth}px`}
         role="menu"
+        aria-label={label}
       >
         {topMessage && (
           <Text
@@ -113,9 +138,14 @@ export const DropdownMenu = ({
             return;
           }
           const isDisabled = option.disabled !== undefined && option.disabled;
+          const isFocused = index === focusedIndex;
+
           return (
             <Fragment key={option.label}>
               <BoxButton
+                ref={(el) => {
+                  menuItemRefs.current[index] = el;
+                }}
                 role="menuitem"
                 aria-label={option.label}
                 data-testid={option.testId}
@@ -156,6 +186,19 @@ export const DropdownMenu = ({
                   &:hover {
                     background-color: var(--c--theme--colors--greyscale-050);
                   }
+
+                  &:focus-visible {
+                    outline: 2px solid var(--c--theme--colors--primary-500);
+                    outline-offset: -2px;
+                    background-color: var(--c--theme--colors--greyscale-050);
+                  }
+
+                  ${isFocused &&
+                  css`
+                    outline: 2px solid var(--c--theme--colors--primary-500);
+                    outline-offset: -2px;
+                    background-color: var(--c--theme--colors--greyscale-050);
+                  `}
                 `}
               >
                 <Box
