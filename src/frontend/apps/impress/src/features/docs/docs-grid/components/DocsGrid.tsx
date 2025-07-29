@@ -32,10 +32,14 @@ export const DocsGrid = ({
     hasNextPage,
   } = useInfiniteDocs({
     page: 1,
-    ...(target &&
-      target !== DocDefaultFilter.ALL_DOCS && {
-        is_creator_me: target === DocDefaultFilter.MY_DOCS,
-      }),
+    is_masked:
+      !target || target === DocDefaultFilter.ALL_DOCS ? false : undefined,
+    is_creator_me:
+      target === DocDefaultFilter.MY_DOCS
+        ? true
+        : target === DocDefaultFilter.SHARED_WITH_ME
+          ? false
+          : undefined,
   });
 
   const docs = data?.pages.flatMap((page) => page.results) ?? [];

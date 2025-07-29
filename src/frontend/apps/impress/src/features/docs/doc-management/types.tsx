@@ -59,6 +59,7 @@ export interface Doc {
   depth: number;
   path: string;
   is_favorite: boolean;
+  is_masked: boolean;
   link_reach: LinkReach;
   link_role: LinkRole;
   nb_accesses_direct: number;
@@ -84,6 +85,7 @@ export interface Doc {
     favorite: boolean;
     invite_owner: boolean;
     link_configuration: boolean;
+    mask: boolean;
     media_auth: boolean;
     move: boolean;
     partial_update: boolean;
