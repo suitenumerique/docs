@@ -97,7 +97,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
 
-      // Inject language="fr-FR" for screen reader support
+      // Inject language for screen reader support
       const pdfDocument = isValidElement(rawPdfDocument)
         ? cloneElement(rawPdfDocument, { language: i18next.language })
         : rawPdfDocument;

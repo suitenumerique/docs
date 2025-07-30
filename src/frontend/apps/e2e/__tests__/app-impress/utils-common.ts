@@ -279,3 +279,49 @@ export const expectLoginPage = async (page: Page) =>
   ).toBeVisible({
     timeout: 10000,
   });
+// language helper
+export const TestLanguage = {
+  English: {
+    label: 'English',
+    expectedLocale: ['en-us'],
+  },
+  French: {
+    label: 'Français',
+    expectedLocale: ['fr-fr'],
+  },
+  German: {
+    label: 'Deutsch',
+    expectedLocale: ['de-de'],
+  },
+} as const;
+
+type TestLanguageKey = keyof typeof TestLanguage;
+type TestLanguageValue = (typeof TestLanguage)[TestLanguageKey];
+
+export async function waitForLanguageSwitch(
+  page: Page,
+  lang: TestLanguageValue,
+) {
+  const header = page.locator('header').first();
+  const languagePicker = header.locator('.--docs--language-picker-text');
+  const isAlreadyTargetLanguage = await languagePicker
+    .innerText()
+    .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
+
+  if (isAlreadyTargetLanguage) {
+    return;
+  }
+
+  await languagePicker.click();
+  const responsePromise = page.waitForResponse(
+    (resp) =>
+      resp.url().includes('/user') && resp.request().method() === 'PATCH',
+  );
+  await page.getByLabel(lang.label).click();
+  const resolvedResponsePromise = await responsePromise;
+  const responseData = (await resolvedResponsePromise.json()) as {
+    language: string;
+  };
+
+  expect(lang.expectedLocale).toContain(responseData.language);
+}
