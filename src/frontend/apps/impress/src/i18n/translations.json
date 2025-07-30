@@ -337,6 +337,7 @@
   },
   "en": {
     "translation": {
+      "Open actions menu for document: {{title}}": "Open actions menu for document: {{title}}",
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
@@ -452,6 +453,7 @@
       "Offline ?!": "¿¡Sin conexión!?",
       "Only invited people can access": "Solo las personas invitadas pueden acceder",
       "Open Source": "Código abierto",
+      "Open actions menu for document: {{title}}": "Abrir menú de acciones para el documento: {{title}}",
       "Open the document options": "Abrir las opciones del documento",
       "Open the header menu": "Abrir el menú de encabezado",
       "Organize": "Organiza",
@@ -623,6 +625,7 @@
       "Image 403": "Image 403",
       "Insufficient access rights to view the document.": "Droits d'accès insuffisants pour voir le document.",
       "Invite": "Inviter",
+      "Open actions menu for document: {{title}}": "Ouvrir le menu d'actions pour le document : {{title}}",
       "It is the card information about the document.": "Il s'agit de la carte d'information du document.",
       "It is the document title": "Il s'agit du titre du document",
       "It seems that the page you are looking for does not exist or cannot be displayed correctly.": "Il semble que la page que vous cherchez n'existe pas ou ne puisse pas être affichée correctement.",
@@ -1002,6 +1005,7 @@
       "Offline ?!": "Offline ?!",
       "Only invited people can access": "Alleen uitgenodigde gebruikers hebben toegang",
       "Open Source": "Open Source",
+      "Open actions menu for document: {{title}}": "Open actiemenu voor document: {{title}}",
       "Open the document options": "Open document opties",
       "Open the header menu": "Open het hoofdmenu",
       "Organize": "Organiseer",

@@ -39,11 +39,16 @@ export const LanguagePicker = () => {
     <DropdownMenu
       options={optionsPicker}
       showArrow
+      label={t('Select language')}
       buttonCss={css`
         &:hover {
           background-color: var(
             --c--components--button--primary-text--background--color-hover
           );
+        }
+        &:focus-visible {
+          outline: 2px solid var(--c--theme--colors--primary-500);
+          outline-offset: 2px;
         }
         border-radius: 4px;
         padding: 0.5rem 0.6rem;
