@@ -1,6 +1,6 @@
 import { Page, expect, test } from '@playwright/test';
 
-import { createDoc } from './utils-common';
+import { TestLanguage, createDoc, waitForLanguageSwitch } from './utils-common';
 
 test.describe.serial('Language', () => {
   let page: Page;
@@ -94,48 +94,3 @@ test.describe.serial('Language', () => {
     await expect(page.getByText('Titres', { exact: true })).toBeVisible();
   });
 });
-
-// language helper
-export const TestLanguage = {
-  English: {
-    label: 'English',
-    expectedLocale: ['en-us'],
-  },
-  French: {
-    label: 'Français',
-    expectedLocale: ['fr-fr'],
-  },
-  German: {
-    label: 'Deutsch',
-    expectedLocale: ['de-de'],
-  },
-} as const;
-
-type TestLanguageKey = keyof typeof TestLanguage;
-type TestLanguageValue = (typeof TestLanguage)[TestLanguageKey];
-
-export async function waitForLanguageSwitch(
-  page: Page,
-  lang: TestLanguageValue,
-) {
-  const header = page.locator('header').first();
-  const languagePicker = header.locator('.--docs--language-picker-text');
-  const isAlreadyTargetLanguage = await languagePicker
-    .innerText()
-    .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
-
-  if (isAlreadyTargetLanguage) {
-    return;
-  }
-
-  await languagePicker.click();
-  const responsePromise = page.waitForResponse(
-    (resp) =>
-      resp.url().includes('/user') && resp.request().method() === 'PATCH',
-  );
-  await page.getByLabel(lang.label).click();
-  const resolvedResponsePromise = await responsePromise;
-  const responseData = await resolvedResponsePromise.json();
-
-  expect(lang.expectedLocale).toContain(responseData.language);
-}

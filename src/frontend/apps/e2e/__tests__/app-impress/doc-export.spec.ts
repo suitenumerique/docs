@@ -4,7 +4,13 @@ import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 import pdf from 'pdf-parse';
 
-import { createDoc, verifyDocName } from './utils-common';
+import {
+  TestLanguage,
+  createDoc,
+  randomName,
+  verifyDocName,
+  waitForLanguageSwitch,
+} from './utils-common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -410,5 +416,72 @@ test.describe('Doc Export', () => {
     expect(pdfData.text).toContain('Column 1');
     expect(pdfData.text).toContain('Column 2');
     expect(pdfData.text).toContain('Column 3');
+  });
+
+  test('it injects the correct language attribute into PDF export', async ({
+    page,
+    browserName,
+  }) => {
+    await waitForLanguageSwitch(page, TestLanguage.French);
+
+    // Wait for the page to be ready after language switch
+    await page.waitForLoadState('domcontentloaded');
+
+    const header = page.locator('header').first();
+    await header.locator('h2').getByText('Docs').click();
+
+    const randomDocFrench = randomName(
+      'doc-language-export-french',
+      browserName,
+      1,
+    )[0];
+
+    await page
+      .getByRole('button', {
+        name: 'Nouveau doc',
+      })
+      .click();
+
+    await page.waitForURL('**/docs/**', {
+      timeout: 10000,
+      waitUntil: 'domcontentloaded',
+    });
+
+    const input = page.getByLabel('doc title input');
+    await expect(input).toBeVisible();
+    await expect(input).toHaveText('');
+    await input.click();
+    await input.fill(randomDocFrench);
+    await input.blur();
+
+    const editor = page.locator('.ProseMirror.bn-editor');
+    await editor.click();
+    await editor.fill('Contenu de test pour export en français');
+
+    await page
+      .getByRole('button', {
+        name: 'download',
+        exact: true,
+      })
+      .click();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);
+    });
+
+    void page
+      .getByRole('button', {
+        name: 'Télécharger',
+        exact: true,
+      })
+      .click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDocFrench}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfString = pdfBuffer.toString('latin1');
+
+    expect(pdfString).toContain('/Lang (fr)');
   });
 });
