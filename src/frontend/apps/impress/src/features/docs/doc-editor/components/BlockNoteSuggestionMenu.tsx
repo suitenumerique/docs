@@ -9,6 +9,7 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useHeadingAccessibilityFilter } from '../hook';
 import {
   DocsBlockSchema,
   DocsInlineContentSchema,
@@ -34,6 +35,7 @@ export const BlockNoteSuggestionMenu = () => {
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
   const getInterlinkingMenuItems = useGetInterlinkingMenuItems();
+  const { filterHeadingItemsByAccessibility } = useHeadingAccessibilityFilter();
 
   const getSlashMenuItems = useMemo(() => {
     // We insert it after the "Code Block" item to have the interlinking block displayed after the basic blocks
@@ -47,11 +49,16 @@ export const BlockNoteSuggestionMenu = () => {
       ...defaultMenu.slice(index + 1),
     ];
 
+    const filteredMenuItems = filterHeadingItemsByAccessibility(
+      newSlashMenuItems,
+      editor,
+    );
+
     return async (query: string) =>
       Promise.resolve(
         filterSuggestionItems(
           combineByGroup(
-            newSlashMenuItems,
+            filteredMenuItems,
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getMultiColumnSlashMenuItems?.(editor) || [],
             getPageBreakReactSlashMenuItems(editor),
@@ -60,7 +67,13 @@ export const BlockNoteSuggestionMenu = () => {
           query,
         ),
       );
-  }, [basicBlocksName, editor, getInterlinkingMenuItems, t]);
+  }, [
+    basicBlocksName,
+    editor,
+    getInterlinkingMenuItems,
+    t,
+    filterHeadingItemsByAccessibility,
+  ]);
 
   return (
     <SuggestionMenuController
