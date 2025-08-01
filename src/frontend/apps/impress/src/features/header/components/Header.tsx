@@ -49,11 +49,11 @@ export const Header = () => {
           $margin={{ top: 'auto' }}
         >
           <IconDocs
-            aria-label={t('Docs Logo')}
+            aria-label={t('Back to homepage')}
             width={32}
             color={colorsTokens['primary-text']}
           />
-          <Title />
+          <Title headingLevel="h1" />
         </Box>
       </StyledLink>
       {!isDesktop ? (
