@@ -150,6 +150,25 @@ export const DocTreeItemActions = ({
         $align="center"
         className="--docs--doc-tree-item-actions"
         $gap="4px"
+        $css={css`
+          &:focus-within {
+            opacity: 1;
+            visibility: visible;
+          }
+          button:focus-visible,
+          [role='button']:focus-visible {
+            outline: 2px solid var(--c--theme--colors--primary-500);
+            outline-offset: 2px;
+            background-color: var(--c--theme--colors--greyscale-050);
+            border-radius: 4px;
+          }
+          .icon-button:focus-visible {
+            outline: 2px solid var(--c--theme--colors--primary-500);
+            outline-offset: 2px;
+            background-color: var(--c--theme--colors--greyscale-050);
+            border-radius: 4px;
+          }
+        `}
       >
         <DropdownMenu
           options={options}
@@ -166,10 +185,22 @@ export const DocTreeItemActions = ({
             variant="filled"
             $theme="primary"
             $variation="600"
+            className="icon-button"
+            tabIndex={0}
+            role="button"
+            aria-label={t('More options')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenChange?.(!isOpen);
+              }
+            }}
           />
         </DropdownMenu>
         {doc.abilities.children_create && (
           <BoxButton
+            data-testid="add-child-doc"
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -179,6 +210,7 @@ export const DocTreeItemActions = ({
               });
             }}
             color="primary"
+            aria-label={t('Add child document')}
           >
             <Icon
               variant="filled"

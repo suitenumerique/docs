@@ -191,7 +191,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 opacity: 1;
               }
             }
-            &:hover {
+            &:hover,
+            &:focus-within {
               .doc-tree-root-item-actions {
                 opacity: 1;
               }

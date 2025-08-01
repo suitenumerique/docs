@@ -63,5 +63,6 @@ export const clickOnAddRootSubPage = async (page: Page) => {
   const rootItem = page.getByTestId('doc-tree-root-item');
   await expect(rootItem).toBeVisible();
   await rootItem.hover();
-  await rootItem.getByRole('button', { name: 'add_box' }).click();
+
+  await rootItem.getByTestId('add-child-doc').click();
 };

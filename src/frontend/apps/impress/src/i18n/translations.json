@@ -274,6 +274,8 @@
       "Move": "Verschieben",
       "Move document": "Dokument verschieben",
       "Move to my docs": "In \"Meine Dokumente\" verschieben",
+      "More options": "Weitere Optionen",
+      "Add child document": "Unterdokument hinzufügen",
       "My docs": "Meine Dokumente",
       "Name": "Name",
       "New doc": "Neues Dokument",
@@ -387,7 +389,8 @@
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
       "Shared with {{count}} users_other": "Shared with {{count}} users",
-      "Updated": "Updated"
+      "Updated": "Updated",
+      "Add child document": "Add child document"
     }
   },
   "es": {
@@ -575,6 +578,8 @@
       "You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.": "Eres el único propietario de este grupo, haz que otro miembro sea el propietario del grupo para poder cambiar tu propio rol o ser eliminado del documento.",
       "Your current document will revert to this version.": "Tu documento actual se revertirá a esta versión.",
       "Your {{format}} was downloaded succesfully": "Su {{format}} se ha descargado correctamente",
+      "More options": "Más opciones",
+      "Add child document": "Añadir documento hijo",
       "home-content-open-source-part1": "Docs está construido sobre <2>Django Rest Framework</2> y <6>Next.js</6>. También utilizamos <9>Yjs</9> y <13>BlockNote.js</13>, dos proyectos que estamos orgullosos de patrocinar.",
       "home-content-open-source-part2": "Puede autoalojar fácilmente Docs (consulte nuestra <2>documentación</2> de instalación).<br/>Docs utiliza una <7>licencia</7> (MIT) adecuada para la innovación y las empresas.<br/>Se aceptan contribuciones (consulte nuestra hoja de ruta <13>aquí</13>).",
       "home-content-open-source-part3": "Docs es el resultado de un esfuerzo conjunto llevado a cabo por los gobiernos francés 🇫🇷🥖 <1>(DINUM)</1> y alemán 🇩🇪🥨 <5>(ZenDiS)</5>."
@@ -712,6 +717,8 @@
       "Move": "Déplacer",
       "Move document": "Déplacer le document",
       "Move to my docs": "Déplacer vers mes docs",
+      "More options": "Plus d'options",
+      "Add child document": "Ajouter un document enfant",
       "My docs": "Mes documents",
       "Name": "Nom",
       "New doc": "Nouveau doc",
@@ -1151,6 +1158,8 @@
       "You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.": "U bent de enige eigenaar van deze groep, maak een ander lid de groepseigenaar voordat u uw eigen rol kunt wijzigen of kan worden verwijderd van het document.",
       "Your current document will revert to this version.": "Uw huidige document wordt teruggezet naar deze versie.",
       "Your {{format}} was downloaded succesfully": "Jouw {{format}} is succesvol gedownload",
+      "More options": "Meer opties",
+      "Add child document": "Onderliggend document toevoegen",
       "home-content-open-source-part1": "Docs is gebouwd op <2>Django Rest Framework</2> en <6>Next.js</6>. We gebruiken ook <9>Yjs</9> en <13>BlockNote.js</13>, twee projecten die we met trots sponsoren.",
       "home-content-open-source-part2": "U kunt Docs eenvoudig zelf hosten (zie onze <2>installatiedocumentatie</2>).<br/>Docs gebruikt een <7>licentie</7> (MIT) die is afgestemd op innovatie en ondernemingen.<br/>Bijdragen zijn welkom (zie onze routekaart <13>hier</13>).",
       "home-content-open-source-part3": "Docs is het resultaat van een gezamenlijke inspanning geleid door de Franse 🇫🇷🥖 <1>(DINUM)</1> en Duitse 🇩🇪🥨 <5>(ZenDiS)</5> overheden."

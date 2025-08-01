@@ -95,13 +95,19 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             : 'var(--c--theme--colors--greyscale-000)'};
         }
 
+        &:focus-within .light-doc-item-actions {
+          display: flex;
+          background: var(--c--theme--colors--greyscale-100);
+        }
+
         .c__tree-view--node.isSelected {
           .light-doc-item-actions {
             background: var(--c--theme--colors--greyscale-100);
           }
         }
 
-        &:hover {
+        &:hover,
+        &:focus-within {
           background-color: var(--c--theme--colors--greyscale-100);
           border-radius: 4px;
 

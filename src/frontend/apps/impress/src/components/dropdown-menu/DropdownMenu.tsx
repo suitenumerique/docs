@@ -2,6 +2,7 @@ import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
 import {
   Fragment,
   PropsWithChildren,
+  ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -15,7 +16,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { useDropdownKeyboardNav } from './hook/useDropdownKeyboardNav';
 
 export type DropdownMenuOption = {
-  icon?: string;
+  icon?: string | ReactNode;
   label: string;
   testId?: string;
   value?: string;
@@ -81,14 +82,28 @@ export const DropdownMenu = ({
 
   // Focus selected menu item when menu opens
   useEffect(() => {
-    if (isOpen && menuItemRefs.current.length > 0) {
-      const selectedIndex = options.findIndex((option) => option.isSelected);
-      if (selectedIndex !== -1) {
-        setFocusedIndex(selectedIndex);
-        setTimeout(() => {
-          menuItemRefs.current[selectedIndex]?.focus();
-        }, 0);
-      }
+    if (!isOpen || menuItemRefs.current.length === 0) {
+      return;
+    }
+
+    const selectedIndex = options.findIndex((option) => option.isSelected);
+    if (selectedIndex !== -1) {
+      setFocusedIndex(selectedIndex);
+      setTimeout(() => {
+        menuItemRefs.current[selectedIndex]?.focus();
+      }, 0);
+      return;
+    }
+
+    // Fallback: focus first enabled/visible option
+    const firstEnabledIndex = options.findIndex(
+      (opt) => opt.show !== false && !opt.disabled,
+    );
+    if (firstEnabledIndex !== -1) {
+      setFocusedIndex(firstEnabledIndex);
+      setTimeout(() => {
+        menuItemRefs.current[firstEnabledIndex]?.focus();
+      }, 0);
     }
   }, [isOpen, options]);
 
@@ -156,7 +171,6 @@ export const DropdownMenu = ({
             return;
           }
           const isDisabled = option.disabled !== undefined && option.disabled;
-          const isFocused = index === focusedIndex;
 
           return (
             <Fragment key={option.label}>
@@ -207,17 +221,8 @@ export const DropdownMenu = ({
                   }
 
                   &:focus-visible {
-                    outline: 2px solid var(--c--theme--colors--primary-500);
-                    outline-offset: -2px;
                     background-color: var(--c--theme--colors--greyscale-050);
                   }
-
-                  ${isFocused &&
-                  css`
-                    outline: 2px solid var(--c--theme--colors--primary-500);
-                    outline-offset: -2px;
-                    background-color: var(--c--theme--colors--greyscale-050);
-                  `}
                 `}
               >
                 <Box
@@ -225,14 +230,17 @@ export const DropdownMenu = ({
                   $align="center"
                   $gap={spacingsTokens['base']}
                 >
-                  {option.icon && (
-                    <Icon
-                      $size="20px"
-                      $theme="greyscale"
-                      $variation={isDisabled ? '400' : '1000'}
-                      iconName={option.icon}
-                    />
-                  )}
+                  {option.icon &&
+                    (typeof option.icon === 'string' ? (
+                      <Icon
+                        $size="20px"
+                        $theme="greyscale"
+                        $variation={isDisabled ? '400' : '1000'}
+                        iconName={option.icon}
+                      />
+                    ) : (
+                      option.icon
+                    ))}
                   <Text $variation={isDisabled ? '400' : '1000'}>
                     {option.label}
                   </Text>
