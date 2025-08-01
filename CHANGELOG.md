@@ -18,6 +18,7 @@ and this project adheres to
 - ✨(frontend) add duplicate action to doc tree #1175
 - ✨(frontend) Interlinking doc #904
 - ✨(frontend) add multi columns support for editor #1219
+- ✨(frontend) Can mask a document from the list view #1233
 
 ### Changed
 

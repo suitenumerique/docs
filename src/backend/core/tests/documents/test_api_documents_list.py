@@ -72,6 +72,7 @@ def test_api_documents_list_format():
         "depth": 1,
         "excerpt": document.excerpt,
         "is_favorite": True,
+        "is_masked": False,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 3,
@@ -408,6 +409,7 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
     assert len(results) == 5
 
     assert all(result["is_favorite"] is False for result in results)
+    assert all(result["is_masked"] is False for result in results)
 
     # Mark documents as favorite and check results again
     for document in special_documents:
@@ -427,3 +429,5 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
             assert result["is_favorite"] is True
         else:
             assert result["is_favorite"] is False
+        # All documents should be unmasked in this test
+        assert result["is_masked"] is False

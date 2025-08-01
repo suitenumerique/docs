@@ -3,4 +3,5 @@ export * from './useCopyDocLink';
 export * from './useCreateChildDocTree';
 export * from './useDocUtils';
 export * from './useIsCollaborativeEditable';
+export * from './useMaskDocOption';
 export * from './useTrans';

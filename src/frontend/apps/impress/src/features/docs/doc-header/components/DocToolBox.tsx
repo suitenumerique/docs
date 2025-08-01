@@ -24,6 +24,7 @@ import {
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
   useDuplicateDoc,
+  useMaskDocOption,
 } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
 import {
@@ -81,6 +82,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const makeFavoriteDoc = useCreateFavoriteDoc({
     listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
   });
+  const maskDocOption = useMaskDocOption(doc);
 
   useEffect(() => {
     if (selectHistoryModal.isOpen) {
@@ -126,6 +128,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         }
       },
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      showSeparator: true,
     },
     {
       label: t('Version history'),
@@ -162,16 +165,22 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           canSave: doc.abilities.partial_update,
         });
       },
-    },
-    {
-      label: t('Delete document'),
-      icon: 'delete',
-      disabled: !doc.abilities.destroy,
-      callback: () => {
-        setIsModalRemoveOpen(true);
-      },
+      showSeparator: true,
     },
   ];
+
+  const leaveDocOption: DropdownMenuOption = doc.abilities.destroy
+    ? {
+        label: t('Delete document'),
+        icon: 'delete',
+        disabled: !doc.abilities.destroy,
+        callback: () => {
+          setIsModalRemoveOpen(true);
+        },
+      }
+    : maskDocOption;
+
+  options.push(leaveDocOption);
 
   const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
 

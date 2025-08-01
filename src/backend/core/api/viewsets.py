@@ -405,6 +405,7 @@ class DocumentViewSet(
         queryset = super().filter_queryset(queryset)
         user = self.request.user
         queryset = queryset.annotate_is_favorite(user)
+        queryset = queryset.annotate_is_masked(user)
         queryset = queryset.annotate_user_roles(user)
         return queryset
 
@@ -453,8 +454,9 @@ class DocumentViewSet(
         )
         queryset = queryset.filter(path__in=root_paths)
 
-        # Annotate favorite status and filter if applicable as late as possible
+        # Annotate favorite and masked status and filter if applicable as late as possible
         queryset = queryset.annotate_is_favorite(user)
+        queryset = queryset.annotate_is_masked(user)
         for field in ["is_favorite", "is_masked"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
