@@ -59,12 +59,14 @@ export const SimpleDocItem = ({
             aria-hidden="true"
             aria-label={t('Pin document icon')}
             color={colorsTokens['primary-500']}
+            aria-hidden="true"
           />
         ) : (
           <SimpleFileIcon
             aria-hidden="true"
             aria-label={t('Simple document icon')}
             color={colorsTokens['primary-500']}
+            aria-hidden="true"
           />
         )}
       </Box>
