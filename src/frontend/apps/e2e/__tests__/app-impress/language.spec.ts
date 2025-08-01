@@ -26,6 +26,8 @@ test.describe.serial('Language', () => {
   test('checks language switching', async ({ page }) => {
     const header = page.locator('header').first();
 
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-us');
+
     // initial language should be english
     await expect(
       page.getByRole('button', {
@@ -35,6 +37,8 @@ test.describe.serial('Language', () => {
 
     // switch to french
     await waitForLanguageSwitch(page, TestLanguage.French);
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
 
     await expect(
       header.getByRole('button').getByText('Français'),
@@ -47,6 +51,8 @@ test.describe.serial('Language', () => {
     await expect(header.getByRole('button').getByText('Deutsch')).toBeVisible();
 
     await expect(page.getByLabel('Abmelden')).toBeVisible();
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   });
 
   test('checks that backend uses the same language as the frontend', async ({

@@ -25,7 +25,9 @@ and this project adheres to
 - ♻️(frontend) redirect to doc after duplicate #1175
 - 🔧(project) change env.d system by using local files #1200
 - ⚡️(frontend) improve tree stability #1207
-- ⚡️(frontend) improve accessibility #1232
+- ⚡️(frontend) improve accessibility
+  - #1232
+  - #1248
 - 🛂(frontend) block drag n drop when not desktop #1239
 
 ### Fixed
