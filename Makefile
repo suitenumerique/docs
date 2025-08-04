@@ -93,13 +93,77 @@ post-bootstrap: \
 	mails-build
 .PHONY: post-bootstrap
 
+pre-beautiful-bootstrap: ## Display a welcome message before bootstrap
+ifeq ($(OS),Windows_NT)
+	@echo ""
+	@echo "================================================================================"
+	@echo ""
+	@echo "  Welcome to Docs - Collaborative Text Editing from La Suite!"
+	@echo ""
+	@echo "  This will set up your development environment with:"
+	@echo "  - Docker containers for all services"
+	@echo "  - Database migrations and static files"
+	@echo "  - Frontend dependencies and build"
+	@echo "  - Environment configuration files"
+	@echo ""
+	@echo "  Services will be available at:"
+	@echo "  - Frontend: http://localhost:3000"
+	@echo "  - API:      http://localhost:8071"
+	@echo "  - Admin:    http://localhost:8071/admin"
+	@echo ""
+	@echo "================================================================================"
+	@echo ""
+	@echo "Starting bootstrap process..."
+else
+	@echo "$(BOLD)"
+	@echo "╔══════════════════════════════════════════════════════════════════════════════╗"
+	@echo "║                                                                              ║"
+	@echo "║  🚀 Welcome to Docs - Collaborative Text Editing from La Suite ! 🚀          ║"
+	@echo "║                                                                              ║"
+	@echo "║  This will set up your development environment with :                        ║"
+	@echo "║  • Docker containers for all services                                        ║"
+	@echo "║  • Database migrations and static files                                      ║"
+	@echo "║  • Frontend dependencies and build                                           ║"
+	@echo "║  • Environment configuration files                                           ║"
+	@echo "║                                                                              ║"
+	@echo "║  Services will be available at:                                              ║"
+	@echo "║  • Frontend: http://localhost:3000                                           ║"
+	@echo "║  • API:      http://localhost:8071                                           ║"
+	@echo "║  • Admin:    http://localhost:8071/admin                                     ║"
+	@echo "║                                                                              ║"
+	@echo "╚══════════════════════════════════════════════════════════════════════════════╝"
+	@echo "$(RESET)"
+	@echo "$(GREEN)Starting bootstrap process...$(RESET)"
+endif
+	@echo "" 
+.PHONY: pre-beautiful-bootstrap
 
-bootstrap: ## Prepare Docker developmentimages for the project
+post-beautiful-bootstrap: ## Display a success message after bootstrap
+	@echo ""
+ifeq ($(OS),Windows_NT)
+	@echo "Bootstrap completed successfully!"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  - Visit http://localhost:3000 to access the application"
+	@echo "  - Run 'make help' to see all available commands"
+else
+	@echo "$(GREEN)🎉 Bootstrap completed successfully!$(RESET)"
+	@echo ""
+	@echo "$(BOLD)Next steps:$(RESET)"
+	@echo "  • Visit http://localhost:3000 to access the application"
+	@echo "  • Run 'make help' to see all available commands"
+endif
+	@echo ""
+.PHONY: post-beautiful-bootstrap
+
+bootstrap: ## Prepare the project for local development
 bootstrap: \
+	pre-beautiful-bootstrap \
 	pre-bootstrap \
 	build \
 	post-bootstrap \
-	run
+	run \
+	post-beautiful-bootstrap
 .PHONY: bootstrap
 
 bootstrap-e2e: ## Prepare Docker production images to be used for e2e tests
