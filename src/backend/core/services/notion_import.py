@@ -66,9 +66,6 @@ def search_notion(session: Session, start_cursor: str) -> dict[str, Any]:
         json=req_data,
     )
 
-    if response.status_code != 200:
-        print(response.json())
-
     response.raise_for_status()
     return response.json()
 
