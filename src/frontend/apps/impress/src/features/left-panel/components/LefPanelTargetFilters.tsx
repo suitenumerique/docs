@@ -48,6 +48,8 @@ export const LeftPanelTargetFilters = () => {
 
   return (
     <Box
+      as="nav"
+      aria-label={t('Document sections')}
       $justify="center"
       $padding={{ horizontal: 'sm' }}
       $gap={spacingsTokens['2xs']}
@@ -76,6 +78,11 @@ export const LeftPanelTargetFilters = () => {
               font-weight: ${isActive ? 700 : undefined};
               &:hover {
                 background-color: ${colorsTokens['greyscale-100']};
+              }
+              &:focus-visible {
+                outline: 2px solid ${colorsTokens['primary-500']};
+                outline-offset: 2px;
+                border-radius: ${spacingsTokens['3xs']};
               }
             `}
           >
