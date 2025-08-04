@@ -369,6 +369,7 @@
   "en": {
     "translation": {
       "Search docs": "Search docs",
+      "Pinned documents": "Pinned documents",
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",

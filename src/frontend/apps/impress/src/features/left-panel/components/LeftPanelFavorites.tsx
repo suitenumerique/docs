@@ -23,7 +23,11 @@ export const LeftPanelFavorites = () => {
   }
 
   return (
-    <Box className="--docs--left-panel-favorites">
+    <Box
+      as="nav"
+      aria-label={t('Pinned documents')}
+      className="--docs--left-panel-favorites"
+    >
       <HorizontalSeparator $withPadding={false} />
       <Box
         $justify="center"

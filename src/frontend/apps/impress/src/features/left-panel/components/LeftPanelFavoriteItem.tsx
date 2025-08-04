@@ -14,7 +14,7 @@ type LeftPanelFavoriteItemProps = {
 
 export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
   return (
@@ -35,6 +35,11 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
           .pinned-actions {
             opacity: 1;
           }
+        }
+        &:focus-visible {
+          outline: 2px solid ${colorsTokens['primary-500']};
+          outline-offset: 2px;
+          border-radius: ${spacingsTokens['3xs']};
         }
       `}
       key={doc.id}
