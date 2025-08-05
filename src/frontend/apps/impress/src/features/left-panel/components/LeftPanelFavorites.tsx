@@ -45,6 +45,7 @@ export const LeftPanelFavorites = () => {
           {t('Pinned documents')}
         </Text>
         <InfiniteScroll
+          as="ul"
           hasMore={docs.hasNextPage}
           isLoading={docs.isFetchingNextPage}
           next={() => void docs.fetchNextPage()}

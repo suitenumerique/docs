@@ -1,4 +1,6 @@
 import { useModal } from '@openfun/cunningham-react';
+import { t } from 'i18next';
+import { DateTime } from 'luxon';
 import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
@@ -19,6 +21,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
 
   return (
     <Box
+      as="li"
       $direction="row"
       $align="center"
       $justify="space-between"
@@ -28,7 +31,8 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         .pinned-actions {
           opacity: ${isDesktop ? 0 : 1};
         }
-        &:hover {
+        &:hover,
+        &:focus-within {
           cursor: pointer;
 
           background-color: var(--c--theme--colors--greyscale-100);
@@ -45,7 +49,11 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
       key={doc.id}
       className="--docs--left-panel-favorite-item"
     >
-      <StyledLink href={`/docs/${doc.id}`} $css="overflow: auto;">
+      <StyledLink
+        href={`/docs/${doc.id}`}
+        $css="overflow: auto;"
+        aria-label={`${doc.title}, ${t('Updated')} ${DateTime.fromISO(doc.updated_at).toRelative()}`}
+      >
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
       <div className="pinned-actions">
