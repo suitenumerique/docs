@@ -227,18 +227,18 @@ test.describe('Documents filters', () => {
 
     // Initial state
     await expect(allDocs).toBeVisible();
-    await expect(allDocs).toHaveAttribute('aria-selected', 'true');
+    await expect(allDocs).toHaveAttribute('aria-current', 'page');
 
     await expect(myDocs).toBeVisible();
     await expect(myDocs).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(myDocs).toHaveAttribute('aria-selected', 'false');
+    await expect(myDocs).not.toHaveAttribute('aria-current');
 
     await expect(sharedWithMe).toBeVisible();
     await expect(sharedWithMe).toHaveCSS(
       'background-color',
       'rgba(0, 0, 0, 0)',
     );
-    await expect(sharedWithMe).toHaveAttribute('aria-selected', 'false');
+    await expect(sharedWithMe).not.toHaveAttribute('aria-current');
 
     await allDocs.click();
 
