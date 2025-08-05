@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, BoxButton, Icon, Text } from '@/components';
+import { useActionableMode } from '@/components/dropdown-menu/hook/useActionableMode';
+import { useTreeItemKeyboardActivate } from '@/components/dropdown-menu/hook/useTreeItemKeyboardActivate';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useTrans } from '@/features/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
@@ -33,11 +35,19 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const { node } = props;
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const [actionsOpen, setActionsOpen] = useState(false);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isActive = node.isFocused || menuOpen;
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
 
+  const handleActivate = () => {
+    treeContext?.treeData.setSelectedNode(doc);
+    router.push(`/docs/${doc.id}`);
+  };
+  const { actionsRef, onKeyDownCapture } = useActionableMode(node, menuOpen);
   const afterCreate = (createdDoc: Doc) => {
     const actualChildren = node.data.children ?? [];
 
@@ -68,23 +78,30 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
+  useTreeItemKeyboardActivate(isActive, handleActivate);
+
   return (
     <Box
       className="--docs-sub-page-item"
       draggable={doc.abilities.move && isDesktop}
       $position="relative"
       $css={css`
-        background-color: ${actionsOpen
+        background-color: ${isActive
           ? 'var(--c--theme--colors--greyscale-100)'
           : 'var(--c--theme--colors--greyscale-000)'};
 
         .light-doc-item-actions {
-          display: ${actionsOpen || !isDesktop ? 'flex' : 'none'};
+          display: flex;
+          opacity: ${isActive || !isDesktop ? 1 : 0};
+          visibility: ${isActive || !isDesktop ? 'visible' : 'hidden'};
           position: absolute;
           right: 0;
+          top: 0;
+          height: 100%;
           background: ${isDesktop
             ? 'var(--c--theme--colors--greyscale-100)'
             : 'var(--c--theme--colors--greyscale-000)'};
+          z-index: 10;
         }
 
         &:focus-within .light-doc-item-actions {
@@ -110,22 +127,19 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         }
       `}
     >
-      <TreeViewItem
-        {...props}
-        onClick={() => {
-          treeContext?.treeData.setSelectedNode(props.node.data.value as Doc);
-          router.push(`/docs/${props.node.data.value.id}`);
-        }}
-      >
-        <Box
-          data-testid={`doc-sub-page-item-${props.node.data.value.id}`}
+      <TreeViewItem {...props} onClick={handleActivate}>
+        <BoxButton
+          as="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleActivate();
+          }}
           $width="100%"
           $direction="row"
           $gap={spacingsTokens['xs']}
-          role="button"
-          tabIndex={0}
           $align="center"
           $minHeight="24px"
+          data-testid={`doc-sub-page-item-${doc.id}`}
         >
           <Box $width="16px" $height="16px">
             <SubPageIcon />
@@ -151,25 +165,28 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
                 iconName="group"
                 $size="16px"
                 $variation="400"
+                aria-hidden="true"
               />
             )}
           </Box>
-
-          <Box
-            $direction="row"
-            $align="center"
-            className="light-doc-item-actions"
-          >
-            <DocTreeItemActions
-              doc={doc}
-              isOpen={actionsOpen}
-              onOpenChange={setActionsOpen}
-              parentId={node.data.parentKey}
-              onCreateSuccess={afterCreate}
-            />
-          </Box>
-        </Box>
+        </BoxButton>
       </TreeViewItem>
+
+      <Box
+        ref={actionsRef}
+        onKeyDownCapture={onKeyDownCapture}
+        $direction="row"
+        $align="center"
+        className="light-doc-item-actions"
+      >
+        <DocTreeItemActions
+          doc={doc}
+          isOpen={menuOpen}
+          onOpenChange={setMenuOpen}
+          parentId={node.data.parentKey}
+          onCreateSuccess={afterCreate}
+        />
+      </Box>
     </Box>
   );
 };
