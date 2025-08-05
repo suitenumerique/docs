@@ -33,6 +33,13 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   font-size: 0.938rem;
   padding: 0;
   ${({ $css }) => $css};
+
+  &:focus-visible {
+    outline: 2px solid var(--c--theme--colors--primary-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+    transition: none;
+  }
 `;
 
 export interface DropButtonProps {

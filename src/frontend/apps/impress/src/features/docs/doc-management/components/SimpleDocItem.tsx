@@ -52,14 +52,17 @@ export const SimpleDocItem = ({
           filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
         `}
         $padding={`${spacingsTokens['3xs']} 0`}
+        data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
       >
         {isPinned ? (
           <PinnedDocumentIcon
+            aria-hidden="true"
             aria-label={t('Pin document icon')}
             color={colorsTokens['primary-500']}
           />
         ) : (
           <SimpleFileIcon
+            aria-hidden="true"
             aria-label={t('Simple document icon')}
             color={colorsTokens['primary-500']}
           />

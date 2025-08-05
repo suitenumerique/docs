@@ -409,7 +409,7 @@ test.describe('Doc Header', () => {
     const row = await getGridRow(page, docTitle);
 
     // Check is pinned
-    await expect(row.getByLabel('Pin document icon')).toBeVisible();
+    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeVisible();
     const leftPanelFavorites = page.getByTestId('left-panel-favorites');
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
@@ -424,7 +424,7 @@ test.describe('Doc Header', () => {
     await page.goto('/');
 
     // Check is unpinned
-    await expect(row.getByLabel('Pin document icon')).toBeHidden();
+    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 

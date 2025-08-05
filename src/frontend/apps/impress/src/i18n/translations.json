@@ -266,6 +266,7 @@
       "Modal confirmation to download the attachment": "Modale Bestätigung zum Herunterladen des Anhangs",
       "Modal confirmation to restore the version": "Modale Bestätigung um die Version wiederherzustellen",
       "More docs": "Weitere Dokumente",
+      "More options": "Weitere Optionen",
       "Move": "Verschieben",
       "Move document": "Dokument verschieben",
       "Move to my docs": "In \"Meine Dokumente\" verschieben",
@@ -346,6 +347,7 @@
       "Unnamed document": "Unbenanntes Dokument",
       "Unpin": "Lösen",
       "Untitled document": "Unbenanntes Dokument",
+      "Updated": "Aktualisiert",
       "Updated at": "Aktualisiert am",
       "Use as prompt": "Als Prompt verwenden",
       "Version history": "Versionsverlauf",
@@ -369,11 +371,13 @@
   "en": {
     "translation": {
       "Search docs": "Search docs",
+      "More options": "More options",
       "Pinned documents": "Pinned documents",
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
-      "Shared with {{count}} users_other": "Shared with {{count}} users"
+      "Shared with {{count}} users_other": "Shared with {{count}} users",
+      "Updated": "Updated"
     }
   },
   "es": {
@@ -474,6 +478,7 @@
       "Modal confirmation to download the attachment": "Modal de confirmación para descargar el archivo adjunto",
       "Modal confirmation to restore the version": "Modal de confirmación para restaurar la versión",
       "More docs": "Más documentos",
+      "More options": "Más opciones",
       "My docs": "Mis documentos",
       "Name": "Nombre",
       "New doc": "Nuevo documento",
@@ -543,6 +548,7 @@
       "Type the name of a document": "Escribe el nombre de un documento",
       "Unpin": "Desanclar",
       "Untitled document": "Documento sin título",
+      "Updated": "Actualizado",
       "Updated at": "Actualizado a las",
       "Use as prompt": "Usar como prompt",
       "Version history": "Historial de versiones",
@@ -684,6 +690,7 @@
       "Modal confirmation to download the attachment": "Modale de confirmation pour télécharger la pièce jointe",
       "Modal confirmation to restore the version": "Modale de confirmation pour restaurer la version",
       "More docs": "Plus de documents",
+      "More options": "Plus d'options",
       "Move": "Déplacer",
       "Move document": "Déplacer le document",
       "Move to my docs": "Déplacer vers mes docs",
@@ -768,6 +775,7 @@
       "Type a name or email": "Tapez un nom ou un email",
       "Type the name of a document": "Tapez le nom d'un document",
       "Unnamed document": "Document sans titre",
+      "Updated": "Mise à jour",
       "Unpin": "Désépingler",
       "Untitled document": "Document sans titre",
       "Updated at": "Mise à jour le",
@@ -1034,6 +1042,7 @@
       "Modal confirmation to download the attachment": "Venster bevestiging om bijlage te downloaden",
       "Modal confirmation to restore the version": "Bevestiging modal om de versie te herstellen",
       "More docs": "Meer documenten",
+      "More options": "Meer opties",
       "My docs": "Mijn documenten",
       "Name": "Naam",
       "New doc": "Nieuw document",
@@ -1101,6 +1110,7 @@
       "Type the name of a document": "Vul de naam van een document in",
       "Unpin": "Losmaken",
       "Untitled document": "Naamloos document",
+      "Updated": "Bijgewerkt",
       "Updated at": "Geüpdate op",
       "Use as prompt": "Gebruik als prompt",
       "Version history": "Versie historie",
