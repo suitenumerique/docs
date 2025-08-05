@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 👷(CI) add bundle size check job #1268
+
 ### Changed
 
 - ⚡️(frontend) improve accessibility:

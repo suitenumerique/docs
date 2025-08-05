@@ -136,3 +136,41 @@ jobs:
           name: playwright-other-report
           path: src/frontend/apps/e2e/report/
           retention-days: 7
+
+  bundle-size-check:
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Restore the frontend cache
+        uses: actions/cache@v4
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
+
+      - name: Check bundle size changes
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          build-script: "build"
+          pattern: "./out/**/*.{css,js,html}"
+          exclude: "{**/*.map,**/node_modules/**}"
+          minimum-change-threshold: 500
+          compression: "gzip"
+          cwd: "./src/frontend/apps/impress"
+          show-total: true
+          strip-hash: "\\b\\w+\\."
+          omit-unchanged: true
