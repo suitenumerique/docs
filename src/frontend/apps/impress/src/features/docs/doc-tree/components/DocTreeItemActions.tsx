@@ -211,7 +211,11 @@ export const DocTreeItemActions = ({
             className="icon-button"
             tabIndex={0}
             role="button"
-            aria-label={t('More options')}
+            aria-label={
+              t('More options for') + ` ${doc.title || t('Untitled document')}`
+            }
+            aria-haspopup="true"
+            aria-expanded={isOpen}
             onKeyDown={handleMoreOptionsKeyDown}
           />
         </DropdownMenu>
@@ -223,7 +227,10 @@ export const DocTreeItemActions = ({
             onClick={handleAddChildClick}
             onKeyDown={handleAddChildKeyDown}
             color="primary"
-            aria-label={t('Add child document')}
+            aria-label={
+              t('Add child document to') +
+              ` ${doc.title || t('Untitled document')}`
+            }
             $hasTransition={false}
           >
             <Icon
@@ -231,6 +238,7 @@ export const DocTreeItemActions = ({
               $variation="800"
               $theme="primary"
               iconName="add_box"
+              aria-hidden="true"
             />
           </BoxButton>
         )}

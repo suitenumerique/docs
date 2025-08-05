@@ -175,10 +175,10 @@ test.describe('Document search', () => {
 
     // Expect to find the first doc
     await expect(
-      page.getByRole('presentation').getByLabel(firstDocTitle),
+      page.getByRole('presentation').getByText(firstDocTitle),
     ).toBeVisible();
     await expect(
-      page.getByRole('presentation').getByLabel(secondDocTitle),
+      page.getByRole('presentation').getByText(secondDocTitle),
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'close' }).click();
@@ -196,13 +196,13 @@ test.describe('Document search', () => {
 
     // Now there is a sub page - expect to have the focus on the current doc
     await expect(
-      page.getByRole('presentation').getByLabel(secondDocTitle),
+      page.getByRole('presentation').getByText(secondDocTitle),
     ).toBeVisible();
     await expect(
-      page.getByRole('presentation').getByLabel(secondChildDocTitle),
+      page.getByRole('presentation').getByText(secondChildDocTitle),
     ).toBeVisible();
     await expect(
-      page.getByRole('presentation').getByLabel(firstDocTitle),
+      page.getByRole('presentation').getByText(firstDocTitle),
     ).toBeHidden();
   });
 });

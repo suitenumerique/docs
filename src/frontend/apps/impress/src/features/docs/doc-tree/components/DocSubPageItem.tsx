@@ -5,6 +5,7 @@ import {
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
@@ -40,6 +41,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const { node } = props;
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
+  const { t } = useTranslation();
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -88,11 +90,23 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
   useTreeItemKeyboardActivate(isActive, handleActivate);
 
+  // prepare the text for the screen reader
+  const docTitle = doc.title || untitledDocument;
+  const hasChildren = (doc.children?.length || 0) > 0;
+  const isExpanded = node.isOpen;
+  const isSelected = treeContext?.treeData.selectedNode?.id === doc.id;
+
+  const ariaLabel = `${docTitle}${hasChildren ? `, ${isExpanded ? t('expanded') : t('collapsed')}` : ''}${isSelected ? `, ${t('selected')}` : ''}`;
+
   return (
     <Box
       className="--docs-sub-page-item"
       draggable={doc.abilities.move && isDesktop}
       $position="relative"
+      role="treeitem"
+      aria-label={ariaLabel}
+      aria-selected={isSelected}
+      aria-expanded={hasChildren ? isExpanded : undefined}
       $css={css`
         background-color: ${isActive
           ? 'var(--c--theme--colors--greyscale-100)'
@@ -114,6 +128,8 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
         &:focus-within .light-doc-item-actions {
           display: flex;
+          opacity: 1;
+          visibility: visible;
           background: var(--c--theme--colors--greyscale-100);
         }
 
@@ -130,6 +146,8 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
           .light-doc-item-actions {
             display: flex;
+            opacity: 1;
+            visibility: visible;
             background: var(--c--theme--colors--greyscale-100);
           }
         }
@@ -141,7 +159,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     >
       <TreeViewItem {...props} onClick={handleActivate}>
         <BoxButton
-          as="button"
           onClick={(e) => {
             e.stopPropagation();
             handleActivate();
@@ -152,6 +169,8 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $align="center"
           $minHeight="24px"
           data-testid={`doc-sub-page-item-${doc.id}`}
+          aria-label={`${t('Open document')} ${docTitle}`}
+          role="button"
         >
           <Box $width="16px" $height="16px">
             <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
@@ -190,6 +209,8 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         $direction="row"
         $align="center"
         className="light-doc-item-actions"
+        role="group"
+        aria-label={`${t('Actions for')} ${docTitle}`}
       >
         <DocTreeItemActions
           doc={doc}

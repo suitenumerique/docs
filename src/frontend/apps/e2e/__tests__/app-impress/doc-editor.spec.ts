@@ -307,6 +307,11 @@ test.describe('Doc Editor', () => {
       }
     });
 
+    // Ensure AI feature is enabled
+    await overrideConfig(page, {
+      AI_FEATURE_ENABLED: true,
+    });
+
     await createDoc(page, 'doc-ai', browserName, 1);
 
     await page.locator('.bn-block-outer').last().fill('Hello World');
@@ -314,7 +319,7 @@ test.describe('Doc Editor', () => {
     const editor = page.locator('.ProseMirror');
     await editor.getByText('Hello').selectText();
 
-    await page.getByRole('button', { name: 'AI' }).click();
+    await page.locator('[data-test="ai-actions"]').click();
 
     await expect(
       page.getByRole('menuitem', { name: 'Use as prompt' }),
@@ -400,11 +405,11 @@ test.describe('Doc Editor', () => {
       /* eslint-disable playwright/no-conditional-expect */
       /* eslint-disable playwright/no-conditional-in-test */
       if (!ai_transform && !ai_translate) {
-        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
+        await expect(page.locator('[data-test="ai-actions"]')).toBeHidden();
         return;
       }
 
-      await page.getByRole('button', { name: 'AI' }).click();
+      await page.locator('[data-test="ai-actions"]').click();
 
       if (ai_transform) {
         await expect(

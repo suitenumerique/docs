@@ -7,6 +7,7 @@ import {
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
@@ -31,6 +32,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
+  const { t } = useTranslation();
 
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
@@ -152,6 +154,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       ref={setTreeRoot}
       data-testid="doc-tree"
       $height="100%"
+      role="tree"
+      aria-label={t('Document tree')}
       $css={css`
         .c__tree-view--container {
           z-index: 1;
@@ -171,6 +175,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       >
         <Box
           data-testid="doc-tree-root-item"
+          role="treeitem"
+          aria-label={`${t('Root document')}: ${treeContext.root?.title || t('Untitled document')}`}
+          aria-selected={rootIsSelected}
           $css={css`
             padding: ${spacingsTokens['2xs']};
             border-radius: 4px;
@@ -212,6 +219,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               );
               router.push(`/docs/${treeContext?.root?.id}`);
             }}
+            aria-label={`${t('Open root document')}: ${treeContext.root?.title || t('Untitled document')}`}
           >
             <Box $direction="row" $align="center" $width="100%">
               <SimpleDocItem doc={treeContext.root} showAccesses={true} />
