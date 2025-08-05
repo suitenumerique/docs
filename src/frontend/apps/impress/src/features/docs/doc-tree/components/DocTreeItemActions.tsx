@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
+import { useDocTreeItemHandlers } from '@/components/dropdown-menu/hook/useDocTreeItemHandlers';
+import { useDropdownFocusManagement } from '@/components/dropdown-menu/hook/useDropdownFocusManagement';
 import {
   Doc,
   ModalRemoveDoc,
@@ -28,6 +30,8 @@ type DocTreeItemActionsProps = {
   onCreateSuccess?: (newDoc: Doc) => void;
   onOpenChange?: (isOpen: boolean) => void;
   parentId?: string | null;
+  actionsRef?: React.RefObject<HTMLDivElement>;
+  onKeyDownCapture?: (e: React.KeyboardEvent) => void;
 };
 
 export const DocTreeItemActions = ({
@@ -37,6 +41,8 @@ export const DocTreeItemActions = ({
   onCreateSuccess,
   onOpenChange,
   parentId,
+  actionsRef,
+  onKeyDownCapture,
 }: DocTreeItemActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -143,9 +149,30 @@ export const DocTreeItemActions = ({
     }
   };
 
+  const {
+    handleMoreOptionsClick,
+    handleMoreOptionsKeyDown,
+    handleAddChildClick,
+    handleAddChildKeyDown,
+  } = useDocTreeItemHandlers({
+    isOpen,
+    onOpenChange,
+    createChildDoc,
+    docId: doc.id,
+  });
+
+  useDropdownFocusManagement({
+    isOpen: isOpen || false,
+    docId: doc.id,
+    actionsRef,
+  });
+
   return (
     <Box className="doc-tree-root-item-actions">
       <Box
+        ref={actionsRef}
+        tabIndex={-1}
+        onKeyDownCapture={onKeyDownCapture}
         $direction="row"
         $align="center"
         className="--docs--doc-tree-item-actions"
@@ -176,11 +203,7 @@ export const DocTreeItemActions = ({
           onOpenChange={onOpenChange}
         >
           <Icon
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onOpenChange?.(!isOpen);
-            }}
+            onClick={handleMoreOptionsClick}
             iconName="more_horiz"
             variant="filled"
             $theme="primary"
@@ -189,28 +212,19 @@ export const DocTreeItemActions = ({
             tabIndex={0}
             role="button"
             aria-label={t('More options')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onOpenChange?.(!isOpen);
-              }
-            }}
+            onKeyDown={handleMoreOptionsKeyDown}
           />
         </DropdownMenu>
         {doc.abilities.children_create && (
           <BoxButton
+            as="button"
+            tabIndex={0}
             data-testid="add-child-doc"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-
-              createChildDoc({
-                parentId: doc.id,
-              });
-            }}
+            onClick={handleAddChildClick}
+            onKeyDown={handleAddChildKeyDown}
             color="primary"
             aria-label={t('Add child document')}
+            $hasTransition={false}
           >
             <Icon
               variant="filled"
