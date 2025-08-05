@@ -110,6 +110,7 @@ const precacheResources = [
   '/index.html',
   '/401/',
   '/404/',
+  '/import-notion',
   FALLBACK.offline,
   FALLBACK.images,
   FALLBACK.docs,
