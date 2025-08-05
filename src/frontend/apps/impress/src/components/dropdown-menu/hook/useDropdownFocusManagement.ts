@@ -56,7 +56,14 @@ export const useDropdownFocusManagement = ({
     }
 
     const timer = setTimeout(() => {
-      // Try to find sub-document by closest ancestor
+      const modal = document.querySelector(
+        '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
+      );
+      if (modal) {
+        return;
+      }
+
+      // Only handle focus return if no modal is open
       let subPageItem = actionsRef?.current?.closest('.--docs-sub-page-item');
 
       // If not found, try to find by data-testid

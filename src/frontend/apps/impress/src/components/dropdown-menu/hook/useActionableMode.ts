@@ -10,10 +10,6 @@ type FocusableNode<T> = NodeRendererProps<TreeDataItem<T>>['node'] & {
 /**
  * Hook to manage keyboard navigation for actionable items in a tree view.
  *
- * Provides two modes:
- * 1. Activation: F2/Enter moves focus to first actionable element
- * 2. Navigation: Arrow keys navigate between actions, Escape returns to tree node
- *
  * Disables navigation when dropdown menu is open to prevent conflicts.
  */
 export const useActionableMode = <T>(
@@ -23,11 +19,21 @@ export const useActionableMode = <T>(
   const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!node?.isFocused) {
+    const modalOpen = document.querySelector(
+      '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
+    );
+    if (!node?.isFocused || modalOpen) {
       return;
     }
 
     const toActions = (e: KeyboardEvent) => {
+      const modalOpen = document.querySelector(
+        '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
+      );
+      if (modalOpen) {
+        return;
+      }
+
       if (e.key === 'F2' || e.key === 'Enter') {
         const isAlreadyInActions = actionsRef.current?.contains(
           document.activeElement,
@@ -58,6 +64,13 @@ export const useActionableMode = <T>(
 
   const onKeyDownCapture = (e: React.KeyboardEvent) => {
     if (isMenuOpen) {
+      return;
+    }
+
+    const modal = document.querySelector(
+      '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
+    );
+    if (modal) {
       return;
     }
 
