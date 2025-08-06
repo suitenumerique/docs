@@ -20,7 +20,9 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
+from django.db.models import signals
 from django.db.models.functions import Left, Length
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -40,6 +42,7 @@ from .choices import (
     get_equivalent_link_definition,
 )
 from .validators import sub_validator
+from .tasks.find import trigger_document_indexer
 
 logger = getLogger(__name__)
 
@@ -950,6 +953,16 @@ class Document(MP_Node, BaseModel):
             )
 
 
+@receiver(signals.post_save, sender=Document)
+def document_post_save(sender, instance, **kwargs):
+    """
+    Asynchronous call to the document indexer at the end of the transaction.
+    Note : Within the transaction we can have an empty content and a serialization
+    error.
+    """
+    trigger_document_indexer(instance, on_commit=True)
+
+
 class LinkTrace(BaseModel):
     """
     Relation model to trace accesses to a document via a link by a logged-in user.
@@ -1173,6 +1186,15 @@ class DocumentAccess(BaseAccess):
             "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
         }
+
+
+@receiver(signals.post_save, sender=DocumentAccess)
+def document_access_post_save(sender, instance, created, **kwargs):
+    """
+    Asynchronous call to the document indexer at the end of the transaction.
+    """
+    if not created:
+        trigger_document_indexer(instance.document, on_commit=True)
 
 
 class DocumentAskForAccess(BaseModel):
