@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { errorCauses, getCSRFToken } from '@/api';
 
 describe('utils', () => {

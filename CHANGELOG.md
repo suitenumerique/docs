@@ -14,6 +14,7 @@ and this project adheres to
 
 ### Changed
 
+- ♻️(docs-app) Switch from Jest tests to Vitest #1269
 - ⚡️(frontend) improve accessibility:
   - #1248
   - #1235

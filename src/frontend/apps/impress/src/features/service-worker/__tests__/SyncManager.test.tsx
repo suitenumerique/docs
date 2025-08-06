@@ -1,24 +1,23 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
 /**
  * @jest-environment node
  */
 
-import '@testing-library/jest-dom';
-
 import { SyncManager } from '../SyncManager';
 
-const mockedSleep = jest.fn();
-jest.mock('@/utils/system', () => ({
-  sleep: jest.fn().mockImplementation((ms) => mockedSleep(ms)),
+const mockedSleep = vi.fn();
+vi.mock('@/utils/system', () => ({
+  sleep: vi.fn().mockImplementation((ms) => mockedSleep(ms)),
 }));
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('SyncManager', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   it('checks SyncManager no sync to do', async () => {
-    const toSync = jest.fn();
-    const hasSyncToDo = jest.fn().mockResolvedValue(false);
+    const toSync = vi.fn();
+    const hasSyncToDo = vi.fn().mockResolvedValue(false);
     new SyncManager(toSync, hasSyncToDo);
 
     await delay(100);
@@ -28,8 +27,8 @@ describe('SyncManager', () => {
   });
 
   it('checks SyncManager sync to do', async () => {
-    const toSync = jest.fn();
-    const hasSyncToDo = jest.fn().mockResolvedValue(true);
+    const toSync = vi.fn();
+    const hasSyncToDo = vi.fn().mockResolvedValue(true);
     new SyncManager(toSync, hasSyncToDo);
 
     await delay(100);
@@ -39,10 +38,10 @@ describe('SyncManager', () => {
   });
 
   it('checks SyncManager sync to do trigger error', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const toSync = jest.fn().mockRejectedValue(new Error('error'));
-    const hasSyncToDo = jest.fn().mockResolvedValue(true);
+    const toSync = vi.fn().mockRejectedValue(new Error('error'));
+    const hasSyncToDo = vi.fn().mockResolvedValue(true);
     new SyncManager(toSync, hasSyncToDo);
 
     await delay(100);
@@ -56,8 +55,8 @@ describe('SyncManager', () => {
   });
 
   it('checks SyncManager multiple sync to do', async () => {
-    const toSync = jest.fn().mockReturnValue(delay(200));
-    const hasSyncToDo = jest.fn().mockResolvedValue(true);
+    const toSync = vi.fn().mockReturnValue(delay(200));
+    const hasSyncToDo = vi.fn().mockResolvedValue(true);
     const syncManager = new SyncManager(toSync, hasSyncToDo);
 
     await syncManager.sync();

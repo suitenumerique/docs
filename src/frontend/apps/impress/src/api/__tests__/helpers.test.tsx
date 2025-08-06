@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { useAPIInfiniteQuery } from '@/api';
 
@@ -21,8 +22,8 @@ const createWrapper = () => {
 
 describe('helpers', () => {
   it('fetches and paginates correctly', async () => {
-    const mockAPI = jest
-      .fn<Promise<DummyResponse>, [{ page: number; query: string }]>()
+    const mockAPI = vi
+      .fn<(params: { page: number; query: string }) => Promise<DummyResponse>>()
       .mockResolvedValueOnce({
         results: [{ id: 1 }],
         next: 'url?page=2',

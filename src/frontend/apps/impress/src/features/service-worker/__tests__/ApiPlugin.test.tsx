@@ -1,34 +1,30 @@
-/**
- * @jest-environment node
- */
-
-import '@testing-library/jest-dom';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RequestSerializer } from '../RequestSerializer';
 import { ApiPlugin } from '../plugins/ApiPlugin';
 
-const mockedGet = jest.fn().mockResolvedValue({});
-const mockedGetAllKeys = jest.fn().mockResolvedValue([]);
-const mockedPut = jest.fn().mockResolvedValue({});
-const mockedDelete = jest.fn().mockResolvedValue({});
-const mockedClose = jest.fn().mockResolvedValue({});
-const mockedOpendDB = jest.fn().mockResolvedValue({
+const mockedGet = vi.fn().mockResolvedValue({});
+const mockedGetAllKeys = vi.fn().mockResolvedValue([]);
+const mockedPut = vi.fn().mockResolvedValue({});
+const mockedDelete = vi.fn().mockResolvedValue({});
+const mockedClose = vi.fn().mockResolvedValue({});
+const mockedOpendDB = vi.fn().mockResolvedValue({
   get: mockedGet,
   getAllKeys: mockedGetAllKeys,
-  getAll: jest.fn().mockResolvedValue([]),
+  getAll: vi.fn().mockResolvedValue([]),
   put: mockedPut,
   delete: mockedDelete,
-  clear: jest.fn().mockResolvedValue({}),
+  clear: vi.fn().mockResolvedValue({}),
   close: mockedClose,
 });
 
-jest.mock('idb', () => ({
-  ...jest.requireActual('idb'),
+vi.mock('idb', async () => ({
+  ...(await vi.importActual('idb')),
   openDB: () => mockedOpendDB(),
 }));
 
 describe('ApiPlugin', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   [
     { type: 'item', table: 'doc-item' },
@@ -36,7 +32,7 @@ describe('ApiPlugin', () => {
     { type: 'update', table: 'doc-item' },
   ].forEach(({ type, table }) => {
     it(`calls fetchDidSucceed with type ${type} and status 200`, async () => {
-      const mockedSync = jest.fn().mockResolvedValue({});
+      const mockedSync = vi.fn().mockResolvedValue({});
       const apiPlugin = new ApiPlugin({
         tableName: table as any,
         type: type as any,
@@ -55,7 +51,7 @@ describe('ApiPlugin', () => {
           json: () => body,
         } as unknown as Request,
       } as any;
-      const mockedClone = jest.fn().mockReturnValue(requestInit.request);
+      const mockedClone = vi.fn().mockReturnValue(requestInit.request);
       await apiPlugin.requestWillFetch?.(requestInit);
 
       const response = await apiPlugin.fetchDidSucceed?.({
@@ -81,7 +77,7 @@ describe('ApiPlugin', () => {
       const apiPlugin = new ApiPlugin({
         tableName: table as any,
         type: type as any,
-        syncManager: jest.fn() as any,
+        syncManager: vi.fn() as any,
       });
 
       const body = { lastName: 'Doe' };
@@ -114,7 +110,7 @@ describe('ApiPlugin', () => {
     { type: 'item', withClone: false },
   ].forEach(({ type, withClone }) => {
     it(`calls requestWillFetch with type ${type}`, async () => {
-      const mockedSync = jest.fn().mockResolvedValue({});
+      const mockedSync = vi.fn().mockResolvedValue({});
 
       const apiPlugin = new ApiPlugin({
         type: 'update',
@@ -123,7 +119,7 @@ describe('ApiPlugin', () => {
         } as any,
       });
 
-      const mockedClone = jest.fn().mockResolvedValue({});
+      const mockedClone = vi.fn().mockResolvedValue({});
       const requestInit = {
         request: {
           url: 'test-url',
@@ -189,9 +185,9 @@ describe('ApiPlugin', () => {
       } as unknown as Request,
     } as any;
 
-    const mockedClone = jest.fn().mockReturnValue(requestInit.request);
+    const mockedClone = vi.fn().mockReturnValue(requestInit.request);
 
-    const mockedSync = jest.fn().mockResolvedValue({});
+    const mockedSync = vi.fn().mockResolvedValue({});
     const apiPlugin = new ApiPlugin({
       type: 'update',
       syncManager: {
@@ -265,9 +261,9 @@ describe('ApiPlugin', () => {
       } as unknown as Request,
     } as any;
 
-    const mockedClone = jest.fn().mockReturnValue(requestInit.request);
+    const mockedClone = vi.fn().mockReturnValue(requestInit.request);
 
-    const mockedSync = jest.fn().mockResolvedValue({});
+    const mockedSync = vi.fn().mockResolvedValue({});
     const apiPlugin = new ApiPlugin({
       type: 'delete',
       syncManager: {
@@ -334,7 +330,7 @@ describe('ApiPlugin', () => {
     Object.defineProperty(global, 'self', {
       value: {
         crypto: {
-          randomUUID: jest.fn().mockReturnValue('444555'),
+          randomUUID: vi.fn().mockReturnValue('444555'),
         },
       },
     });
@@ -351,9 +347,9 @@ describe('ApiPlugin', () => {
       } as unknown as Request,
     } as any;
 
-    const mockedClone = jest.fn().mockReturnValue(requestInit.request);
+    const mockedClone = vi.fn().mockReturnValue(requestInit.request);
 
-    const mockedSync = jest.fn().mockResolvedValue({});
+    const mockedSync = vi.fn().mockResolvedValue({});
     const apiPlugin = new ApiPlugin({
       type: 'create',
       syncManager: {

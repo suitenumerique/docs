@@ -1,15 +1,14 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
-
-import '@testing-library/jest-dom';
 
 import { MESSAGE_TYPE } from '../conf';
 import { OfflinePlugin } from '../plugins/OfflinePlugin';
 
 const mockServiceWorkerScope = {
   clients: {
-    matchAll: jest.fn().mockResolvedValue([]),
+    matchAll: vi.fn().mockResolvedValue([]),
   },
 } as unknown as ServiceWorkerGlobalScope;
 
@@ -19,11 +18,11 @@ const mockServiceWorkerScope = {
 } as unknown as ServiceWorkerGlobalScope;
 
 describe('OfflinePlugin', () => {
-  afterEach(() => jest.clearAllMocks());
+  afterEach(() => vi.clearAllMocks());
 
   it(`calls fetchDidSucceed`, async () => {
     const apiPlugin = new OfflinePlugin();
-    const postMessageSpy = jest.spyOn(apiPlugin, 'postMessage');
+    const postMessageSpy = vi.spyOn(apiPlugin, 'postMessage');
 
     await apiPlugin.fetchDidSucceed?.({
       response: new Response(),
@@ -34,7 +33,7 @@ describe('OfflinePlugin', () => {
 
   it(`calls fetchDidFail`, async () => {
     const apiPlugin = new OfflinePlugin();
-    const postMessageSpy = jest.spyOn(apiPlugin, 'postMessage');
+    const postMessageSpy = vi.spyOn(apiPlugin, 'postMessage');
 
     await apiPlugin.fetchDidFail?.({} as any);
 
@@ -43,12 +42,9 @@ describe('OfflinePlugin', () => {
 
   it(`calls postMessage`, async () => {
     const apiPlugin = new OfflinePlugin();
-    const mockClients = [
-      { postMessage: jest.fn() },
-      { postMessage: jest.fn() },
-    ];
+    const mockClients = [{ postMessage: vi.fn() }, { postMessage: vi.fn() }];
 
-    mockServiceWorkerScope.clients.matchAll = jest
+    mockServiceWorkerScope.clients.matchAll = vi
       .fn()
       .mockResolvedValue(mockClients);
 

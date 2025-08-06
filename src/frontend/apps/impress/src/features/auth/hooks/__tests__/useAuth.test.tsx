@@ -1,13 +1,14 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { Fragment } from 'react';
+import { beforeEach, describe, expect, vi } from 'vitest';
 
 import { AbstractAnalytic } from '@/libs';
 import { AppWrapper } from '@/tests/utils';
 
 import { useAuth } from '../useAuth';
 
-const trackEventMock = jest.fn();
+const trackEventMock = vi.fn();
 const flag = true;
 class TestAnalytic extends AbstractAnalytic {
   public constructor() {
@@ -31,11 +32,11 @@ class TestAnalytic extends AbstractAnalytic {
   }
 }
 
-jest.mock('next/router', () => ({
-  ...jest.requireActual('next/router'),
+vi.mock('next/router', async () => ({
+  ...(await vi.importActual('next/router')),
   useRouter: () => ({
     pathname: '/dashboard',
-    replace: jest.fn(),
+    replace: vi.fn(),
   }),
 }));
 
@@ -43,7 +44,7 @@ const dummyUser = { id: '123', email: 'test@example.com' };
 
 describe('useAuth hook - trackEvent effect', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     fetchMock.restore();
   });
 

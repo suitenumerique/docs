@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { Fragment } from 'react';
+import { beforeEach, describe, expect, vi } from 'vitest';
 
 import { AbstractAnalytic, Analytics } from '@/libs';
 import { AppWrapper } from '@/tests/utils';
@@ -28,14 +29,10 @@ class TestAnalytic extends AbstractAnalytic {
   }
 }
 
-jest.mock('@/features/docs/doc-export/', () => ({
-  ModalExport: () => <span>ModalExport</span>,
-}));
-
-jest.mock('next/router', () => ({
-  ...jest.requireActual('next/router'),
+vi.mock('next/router', async () => ({
+  ...(await vi.importActual('next/router')),
   useRouter: () => ({
-    push: jest.fn(),
+    push: vi.fn(),
   }),
 }));
 
