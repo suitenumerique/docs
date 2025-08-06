@@ -1,8 +1,8 @@
 """Utils for the core app."""
 
 import base64
-from collections import defaultdict
 import re
+from collections import defaultdict
 
 import pycrdt
 from bs4 import BeautifulSoup
