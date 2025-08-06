@@ -1,16 +1,19 @@
 # ruff: noqa: S311, S106
 """create_demo management command"""
 
+import base64
 import logging
 import math
 import random
 import time
 from collections import defaultdict
+from uuid import uuid4
 
 from django import db
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+import pycrdt
 from faker import Faker
 
 from core import models
@@ -26,6 +29,16 @@ logger = logging.getLogger("impress.commands.demo.create_demo")
 def random_true_with_probability(probability):
     """return True with the requested probability, False otherwise."""
     return random.random() < probability
+
+
+def get_ydoc_for_text(text):
+    """Return a ydoc from plain text for demo purposes."""
+    ydoc = pycrdt.Doc()
+    paragraph = pycrdt.XmlElement("p", {}, [pycrdt.XmlText(text)])
+    fragment = pycrdt.XmlFragment([paragraph])
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
+    return base64.b64encode(update).decode("utf-8")
 
 
 class BulkQueue:
@@ -49,7 +62,7 @@ class BulkQueue:
         self.queue[objects[0]._meta.model.__name__] = []  # noqa: SLF001
 
     def push(self, obj):
-        """Add a model instance to queue to that it gets created in bulk."""
+        """Add a model instance to queue so that it gets created in bulk."""
         objects = self.queue[obj._meta.model.__name__]  # noqa: SLF001
         objects.append(obj)
         if len(objects) > self.BATCH_SIZE:
@@ -140,17 +153,19 @@ def create_demo(stdout):
             # pylint: disable=protected-access
             key = models.Document._int2str(i)  # noqa: SLF001
             padding = models.Document.alphabet[0] * (models.Document.steplen - len(key))
-            queue.push(
-                models.Document(
-                    depth=1,
-                    path=f"{padding}{key}",
-                    creator_id=random.choice(users_ids),
-                    title=fake.sentence(nb_words=4),
-                    link_reach=models.LinkReachChoices.AUTHENTICATED
-                    if random_true_with_probability(0.5)
-                    else random.choice(models.LinkReachChoices.values),
-                )
+            title = fake.sentence(nb_words=4)
+            document = models.Document(
+                id=uuid4(),
+                depth=1,
+                path=f"{padding}{key}",
+                creator_id=random.choice(users_ids),
+                title=title,
+                link_reach=models.LinkReachChoices.AUTHENTICATED
+                if random_true_with_probability(0.5)
+                else random.choice(models.LinkReachChoices.values),
             )
+            document.save_content(get_ydoc_for_text(f"Content for {title:s}"))
+            queue.push(document)
 
         queue.flush()
 
