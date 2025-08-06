@@ -25,4 +25,4 @@ class Command(BaseCommand):
         FindDocumentIndexer().index()
 
         duration = time.perf_counter() - start
-        logger.info(f"Search index regenerated in {duration:.2f} seconds.")
+        logger.info("Search index regenerated in %.2f seconds.", duration)
