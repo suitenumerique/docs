@@ -1065,6 +1065,11 @@ class DocumentViewSet(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
 
+    # TODO
+    # @drf.decorators.action(detail=False, methods=["get"])
+    # def search(self, request, *args, **kwargs):
+    #    index.search()
+
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
         """
