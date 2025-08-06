@@ -107,7 +107,7 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
         "created_at": document.created_at.isoformat(),
         "updated_at": document.updated_at.isoformat(),
         "reach": document.link_reach,
-        'size': 13,
+        "size": 13,
         "is_active": True,
     }
 
@@ -124,6 +124,17 @@ def test_services_search_indexers_serialize_document_deleted():
     result = indexer.serialize_document(document, {})
 
     assert result["is_active"] is False
+
+
+def test_services_search_indexers_serialize_document_empty():
+    """Empty documents returns empty content in the serialized json."""
+    document = factories.DocumentFactory(content="", title=None)
+
+    indexer = FindDocumentIndexer()
+    result = indexer.serialize_document(document, {})
+
+    assert result["content"] == ""
+    assert result["title"] == ""
 
 
 @patch.object(FindDocumentIndexer, "push")
@@ -168,7 +179,9 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(mock_push, se
 def test_services_search_indexers_ancestors_link_reach(mock_push):
     """Document accesses and reach should take into account ancestors link reaches."""
     great_grand_parent = factories.DocumentFactory(link_reach="restricted")
-    grand_parent = factories.DocumentFactory(parent=great_grand_parent, link_reach="authenticated")
+    grand_parent = factories.DocumentFactory(
+        parent=great_grand_parent, link_reach="authenticated"
+    )
     parent = factories.DocumentFactory(parent=grand_parent, link_reach="public")
     document = factories.DocumentFactory(parent=parent, link_reach="restricted")
 
@@ -199,7 +212,11 @@ def test_services_search_indexers_ancestors_users(mock_push):
     assert len(results) == 3
     assert results[str(grand_parent.id)]["users"] == [str(user_gp.sub)]
     assert set(results[str(parent.id)]["users"]) == {str(user_gp.sub), str(user_p.sub)}
-    assert set(results[str(document.id)]["users"]) == {str(user_gp.sub), str(user_p.sub), str(user_d.sub)}
+    assert set(results[str(document.id)]["users"]) == {
+        str(user_gp.sub),
+        str(user_p.sub),
+        str(user_d.sub),
+    }
 
 
 @patch.object(FindDocumentIndexer, "push")

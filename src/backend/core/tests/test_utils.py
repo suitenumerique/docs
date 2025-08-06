@@ -79,24 +79,24 @@ def test_utils_extract_attachments():
 
 def test_utils_get_ancestor_to_descendants_map_single_path():
     """Test ancestor mapping of a single path."""
-    paths = ['000100020005']
+    paths = ["000100020005"]
     result = utils.get_ancestor_to_descendants_map(paths, steplen=4)
 
     assert result == {
-        '0001': {'000100020005'},
-        '00010002': {'000100020005'},
-        '000100020005': {'000100020005'},
+        "0001": {"000100020005"},
+        "00010002": {"000100020005"},
+        "000100020005": {"000100020005"},
     }
 
 
 def test_utils_get_ancestor_to_descendants_map_multiple_paths():
     """Test ancestor mapping of multiple paths with shared prefixes."""
-    paths = ['000100020005', '00010003']
+    paths = ["000100020005", "00010003"]
     result = utils.get_ancestor_to_descendants_map(paths, steplen=4)
 
     assert result == {
-        '0001': {'000100020005', '00010003'},
-        '00010002': {'000100020005'},
-        '000100020005': {'000100020005'},
-        '00010003': {'00010003'},
+        "0001": {"000100020005", "00010003"},
+        "00010002": {"000100020005"},
+        "000100020005": {"000100020005"},
+        "00010003": {"00010003"},
     }
