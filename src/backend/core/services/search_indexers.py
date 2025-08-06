@@ -138,6 +138,13 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             "is_active": not bool(document.ancestors_deleted_at),
         }
 
+    # TODO:
+    # def search(self, ):
+    #     # Include access token (resource server)
+    #     find.post(find_url, ...HTTP_AUTHORIZATION=access_token...)
+
+    # def format_response():
+
     def push(self, data):
         """
         Push a batch of documents to the Find backend.
