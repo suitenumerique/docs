@@ -184,22 +184,21 @@ services:
       - env.d/development/kc_postgresql.local
 
   keycloak:
-    image: quay.io/keycloak/keycloak:20.0.1
+    image: quay.io/keycloak/keycloak:26.3
     volumes:
       - ./docker/auth/realm.json:/opt/keycloak/data/import/realm.json
     command:
       - start-dev
       - --features=preview
       - --import-realm
-      - --proxy=edge
-      - --hostname-url=http://localhost:8083
-      - --hostname-admin-url=http://localhost:8083/
+      # - --proxy=edge
+      - --hostname=http://localhost:8083
       - --hostname-strict=false
-      - --hostname-strict-https=false
       - --health-enabled=true
       - --metrics-enabled=true
     healthcheck:
-      test: ["CMD", "curl", "--head", "-fsS", "http://localhost:8080/health/ready"]
+      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { java.net.URI uri = java.net.URI.create(args[0]); System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)uri.toURL().openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:9000/health/live']
+      start_period: 5s
       interval: 1s
       timeout: 2s
       retries: 300
