@@ -35,6 +35,7 @@ and this project adheres to
 - 🐛(frontend) fix export when quote block and inline code #1319
 - 🐛(frontend) fix base64 font #1324
 - 🐛(backend) allow editor to delete subpages #1296
+- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.5.0] - 2025-07-31
 
