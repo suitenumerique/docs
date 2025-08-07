@@ -167,7 +167,7 @@ export function HomeContent() {
                         href="https://github.com/suitenumerique/docs"
                         target="_blank"
                       >
-                        Github
+                        GitHub
                       </Button>
                     </Box>
                   </Box>
