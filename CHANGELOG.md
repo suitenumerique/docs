@@ -71,6 +71,7 @@ and this project adheres to
 - 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
 - 🐛(frontend) fix display bug on homepage #1332
 - 🐛link role update #1287
+- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.5.0] - 2025-07-31
 

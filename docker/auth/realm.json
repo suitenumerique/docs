@@ -26,7 +26,7 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": true,
   "registrationEmailAsUsername": false,
   "rememberMe": true,
@@ -2270,7 +2270,7 @@
     "cibaInterval": "5",
     "realmReusableOtpCode": "false"
   },
-  "keycloakVersion": "20.0.1",
+  "keycloakVersion": "26.3.2",
   "userManagedAccessAllowed": false,
   "clientProfiles": {
     "profiles": []
