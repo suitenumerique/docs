@@ -32,7 +32,7 @@ export const useDropdownKeyboardNav = ({
         .filter((index) => index !== -1);
 
       switch (event.key) {
-        case 'ArrowDown':
+        case 'ArrowDown': {
           event.preventDefault();
           const nextIndex =
             focusedIndex < enabledIndices.length - 1 ? focusedIndex + 1 : 0;
@@ -40,8 +40,9 @@ export const useDropdownKeyboardNav = ({
           setFocusedIndex(nextIndex);
           menuItemRefs.current[nextEnabledIndex]?.focus();
           break;
+        }
 
-        case 'ArrowUp':
+        case 'ArrowUp': {
           event.preventDefault();
           const prevIndex =
             focusedIndex > 0 ? focusedIndex - 1 : enabledIndices.length - 1;
@@ -49,9 +50,10 @@ export const useDropdownKeyboardNav = ({
           setFocusedIndex(prevIndex);
           menuItemRefs.current[prevEnabledIndex]?.focus();
           break;
+        }
 
         case 'Enter':
-        case ' ':
+        case ' ': {
           event.preventDefault();
           if (focusedIndex >= 0 && focusedIndex < enabledIndices.length) {
             const selectedOptionIndex = enabledIndices[focusedIndex];
@@ -62,6 +64,7 @@ export const useDropdownKeyboardNav = ({
             }
           }
           break;
+        }
 
         case 'Escape':
           event.preventDefault();

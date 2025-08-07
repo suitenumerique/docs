@@ -205,7 +205,7 @@ type ItemProps = Omit<ItemDefault, 'onClick'> & {
   onClick: (e: React.MouseEvent) => void;
 };
 
-interface AIMenuItemTransform {
+interface AIMenuItemTransformProps {
   action: AITransformActions;
   docId: string;
   icon?: ReactNode;
@@ -216,7 +216,7 @@ const AIMenuItemTransform = ({
   action,
   children,
   icon,
-}: PropsWithChildren<AIMenuItemTransform>) => {
+}: PropsWithChildren<AIMenuItemTransformProps>) => {
   const { mutateAsync: requestAI, isPending } = useDocAITransform();
   const editor = useBlockNoteEditor();
 
@@ -244,7 +244,7 @@ const AIMenuItemTransform = ({
   );
 };
 
-interface AIMenuItemTranslate {
+interface AIMenuItemTranslateProps {
   language: string;
   docId: string;
   icon?: ReactNode;
@@ -255,7 +255,7 @@ const AIMenuItemTranslate = ({
   docId,
   icon,
   language,
-}: PropsWithChildren<AIMenuItemTranslate>) => {
+}: PropsWithChildren<AIMenuItemTranslateProps>) => {
   const { mutateAsync: requestAI, isPending } = useDocAITranslate();
   const editor = useBlockNoteEditor();
 

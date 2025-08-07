@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { createReactInlineContentSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 

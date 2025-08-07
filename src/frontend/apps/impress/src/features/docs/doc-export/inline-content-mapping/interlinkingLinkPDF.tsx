@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/alt-text */
 import { Image, Link, Text } from '@react-pdf/renderer';
 
 import DocSelectedIcon from '../assets/doc-selected.png';
