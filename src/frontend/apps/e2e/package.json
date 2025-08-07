@@ -3,7 +3,7 @@
   "version": "3.6.0",
   "private": true,
   "scripts": {
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint",
     "install-playwright": "playwright install --with-deps",
     "test": "playwright test",
     "test:ui": "yarn test --ui",

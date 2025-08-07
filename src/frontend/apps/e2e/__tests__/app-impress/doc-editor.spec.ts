@@ -1,3 +1,4 @@
+/* eslint-disable playwright/no-conditional-expect */
 import path from 'path';
 
 import { chromium, expect, test } from '@playwright/test';
@@ -214,7 +215,6 @@ test.describe('Doc Editor', () => {
   });
 
   test('it saves the doc when we quit pages', async ({ page, browserName }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
     test.skip(browserName === 'webkit', 'This test is very flaky with webkit');
 
     // Check the first doc
@@ -279,7 +279,7 @@ test.describe('Doc Editor', () => {
     await expect(image).toBeVisible();
 
     // Wait for the media-check to be processed
-    // eslint-disable-next-line playwright/no-wait-for-timeout
+
     await page.waitForTimeout(1000);
 
     // Check src of image
@@ -397,8 +397,6 @@ test.describe('Doc Editor', () => {
       const editor = page.locator('.ProseMirror');
       await editor.getByText('Hello').selectText();
 
-      /* eslint-disable playwright/no-conditional-expect */
-      /* eslint-disable playwright/no-conditional-in-test */
       if (!ai_transform && !ai_translate) {
         await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
         return;
@@ -425,8 +423,6 @@ test.describe('Doc Editor', () => {
           page.getByRole('menuitem', { name: 'Language' }),
         ).toBeHidden();
       }
-      /* eslint-enable playwright/no-conditional-expect */
-      /* eslint-enable playwright/no-conditional-in-test */
     });
   });
 

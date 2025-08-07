@@ -27,7 +27,7 @@ export const CONFIG = {
 
 export const overrideConfig = async (
   page: Page,
-  newConfig: { [K in keyof typeof CONFIG]?: unknown },
+  newConfig: { [_K in keyof typeof CONFIG]?: unknown },
 ) =>
   await page.route('**/api/v1.0/config/', async (route) => {
     const request = route.request();

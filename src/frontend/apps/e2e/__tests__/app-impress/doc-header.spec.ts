@@ -316,7 +316,6 @@ test.describe('Doc Header', () => {
     page,
     browserName,
   }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
     test.skip(
       browserName === 'webkit',
       'navigator.clipboard is not working with webkit and playwright',
@@ -351,7 +350,6 @@ test.describe('Doc Header', () => {
   });
 
   test('It checks the copy as HTML button', async ({ page, browserName }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
     test.skip(
       browserName === 'webkit',
       'navigator.clipboard is not working with webkit and playwright',
@@ -386,7 +384,6 @@ test.describe('Doc Header', () => {
   });
 
   test('it checks the copy link button', async ({ page, browserName }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
     test.skip(
       browserName === 'webkit',
       'navigator.clipboard is not working with webkit and playwright',
