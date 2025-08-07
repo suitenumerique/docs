@@ -40,7 +40,7 @@ test.describe('Doc Export', () => {
     await expect(
       page.getByRole('button', { name: 'Close the modal' }),
     ).toBeVisible();
-    await expect(page.getByTestId('modal-download-button')).toBeVisible();
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
   });
 
   test('it exports the doc with pdf line break', async ({
@@ -81,12 +81,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-        exact: true,
-      })
-      .click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -131,13 +126,13 @@ test.describe('Doc Export', () => {
     await page.getByRole('combobox', { name: 'Format' }).click();
     await page.getByRole('option', { name: 'Docx' }).click();
 
-    await expect(page.getByTestId('modal-download-button')).toBeVisible();
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.docx`);
     });
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.docx`);
@@ -203,7 +198,7 @@ test.describe('Doc Export', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    await expect(page.getByTestId('modal-download-button')).toBeVisible();
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
 
     const responseCorsPromise = page.waitForResponse(
       (response) =>
@@ -214,7 +209,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const responseCors = await responseCorsPromise;
     expect(responseCors.ok()).toBe(true);
@@ -256,13 +251,13 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(page.getByTestId('modal-download-button')).toBeVisible();
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -298,13 +293,15 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(page.getByTestId('modal-download-button')).toBeVisible();
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -350,13 +347,15 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(page.getByTestId('modal-download-button')).toBeVisible();
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -392,14 +391,9 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page.waitForURL('**/docs/**', {
-      timeout: 10000,
-      waitUntil: 'domcontentloaded',
-    });
-
-    const input = page.getByLabel('doc title input');
+    const input = page.locator('.--docs--doc-title-input[role="textbox"]');
     await expect(input).toBeVisible();
-    await expect(input).toHaveText('');
+    await expect(input).toHaveText('', { timeout: 10000 });
     await input.click();
     await input.fill(randomDocFrench);
     await input.blur();
@@ -418,7 +412,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);
     });
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDocFrench}.pdf`);
@@ -453,19 +447,23 @@ test.describe('Doc Export', () => {
     await page.locator('.bn-block-outer').last().fill('/');
     await page.getByText('Link a doc').first().click();
 
-    await page
-      .locator(
-        "span[data-inline-content-type='interlinkingSearchInline'] input",
-      )
-      .fill('interlink-child');
+    const input = page.locator(
+      "span[data-inline-content-type='interlinkingSearchInline'] input",
+    );
+    const searchContainer = page.locator('.quick-search-container');
 
-    await page
-      .locator('.quick-search-container')
-      .getByText('interlink-child')
-      .click();
+    await input.fill('export-interlink');
 
-    const interlink = page.getByRole('link', {
-      name: 'interlink-child',
+    await expect(searchContainer).toBeVisible();
+    await expect(searchContainer.getByText(randomDoc)).toBeVisible();
+
+    // We are in docChild, we want to create a link to randomDoc (parent)
+    await searchContainer.getByText(randomDoc).click();
+
+    // Search the interlinking link in the editor (not in the document tree)
+    const editor = page.locator('.ProseMirror.bn-editor');
+    const interlink = editor.getByRole('link', {
+      name: randomDoc,
     });
 
     await expect(interlink).toBeVisible();
@@ -480,7 +478,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    void page.getByTestId('modal-download-button').click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${docChild}.pdf`);
@@ -488,6 +486,6 @@ test.describe('Doc Export', () => {
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
     const pdfData = await pdf(pdfBuffer);
 
-    expect(pdfData.text).toContain('interlink-child'); // This is the pdf text
+    expect(pdfData.text).toContain(randomDoc);
   });
 });

@@ -145,12 +145,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             {t('Cancel')}
           </Button>
           <Button
+            data-testid="doc-export-download-button"
             aria-label={t('Download')}
             color="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
-            data-testid="modal-download-button"
           >
             {t('Download')}
           </Button>
