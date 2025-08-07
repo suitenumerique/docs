@@ -16,6 +16,7 @@ export type DocsParams = {
   is_creator_me?: boolean;
   title?: string;
   is_favorite?: boolean;
+  is_masked?: boolean;
 };
 
 export const constructParams = (params: DocsParams): URLSearchParams => {
@@ -35,6 +36,9 @@ export const constructParams = (params: DocsParams): URLSearchParams => {
   }
   if (params.is_favorite !== undefined) {
     searchParams.set('is_favorite', params.is_favorite.toString());
+  }
+  if (params.is_masked !== undefined) {
+    searchParams.set('is_masked', params.is_masked.toString());
   }
 
   return searchParams;

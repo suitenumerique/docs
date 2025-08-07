@@ -10,6 +10,7 @@ import {
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
   useDuplicateDoc,
+  useMaskDocOption,
 } from '@/docs/doc-management';
 
 interface DocsGridActionsProps {
@@ -32,6 +33,7 @@ export const DocsGridActions = ({
   const makeFavoriteDoc = useCreateFavoriteDoc({
     listInvalideQueries: [KEY_LIST_DOC],
   });
+  const maskDocOption = useMaskDocOption(doc);
 
   const options: DropdownMenuOption[] = [
     {
@@ -45,6 +47,7 @@ export const DocsGridActions = ({
         }
       },
       testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      showSeparator: true,
     },
     {
       label: t('Share'),
@@ -66,15 +69,21 @@ export const DocsGridActions = ({
           canSave: false,
         });
       },
-    },
-    {
-      label: t('Remove'),
-      icon: 'delete',
-      callback: () => deleteModal.open(),
-      disabled: !doc.abilities.destroy,
-      testId: `docs-grid-actions-remove-${doc.id}`,
+      showSeparator: true,
     },
   ];
+
+  const leaveDocOption: DropdownMenuOption = doc.abilities.destroy
+    ? {
+        label: t('Delete document'),
+        icon: 'delete',
+        callback: () => deleteModal.open(),
+        disabled: !doc.abilities.destroy,
+        testId: `docs-grid-actions-remove-${doc.id}`,
+      }
+    : maskDocOption;
+
+  options.push(leaveDocOption);
 
   return (
     <>

@@ -66,6 +66,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
+    is_masked = serializers.BooleanField(read_only=True)
     nb_accesses_ancestors = serializers.IntegerField(read_only=True)
     nb_accesses_direct = serializers.IntegerField(read_only=True)
     user_role = serializers.SerializerMethodField(read_only=True)
@@ -85,6 +86,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "depth",
             "excerpt",
             "is_favorite",
+            "is_masked",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -107,6 +109,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "depth",
             "excerpt",
             "is_favorite",
+            "is_masked",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -176,6 +179,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "depth",
             "excerpt",
             "is_favorite",
+            "is_masked",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
