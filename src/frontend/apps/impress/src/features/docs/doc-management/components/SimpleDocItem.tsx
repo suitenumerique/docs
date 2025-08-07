@@ -83,7 +83,7 @@ export const SimpleDocItem = ({
       <Box $justify="center" $overflow="auto">
         <Text
           aria-describedby="doc-title"
-          aria-label={displayTitle}
+          aria-label={doc.title || untitledDocument}
           $size="sm"
           $variation="1000"
           $weight="500"

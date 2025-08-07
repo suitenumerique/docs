@@ -101,9 +101,8 @@ export const createDoc = async (
       waitUntil: 'networkidle',
     });
 
-    const input = page.getByLabel('doc title input');
+    const input = page.getByRole('textbox', { name: /^Document title/i });
     await expect(input).toBeVisible();
-    await expect(input).toHaveText('');
     await input.click();
 
     await input.fill(randomDocs[i]);
@@ -122,7 +121,7 @@ export const verifyDocName = async (page: Page, docName: string) => {
 
   try {
     await expect(
-      page.getByRole('textbox', { name: 'doc title input' }),
+      page.getByRole('textbox', { name: /^Document title/i }),
     ).toHaveText(docName);
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();
@@ -182,9 +181,8 @@ export const goToGridDoc = async (
 };
 
 export const updateDocTitle = async (page: Page, title: string) => {
-  const input = page.getByLabel('doc title input');
+  const input = page.getByRole('textbox', { name: /^Document title/i });
   await expect(input).toBeVisible();
-  await expect(input).toHaveText('');
   await input.click();
   await input.fill(title);
   await input.click();

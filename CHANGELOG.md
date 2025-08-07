@@ -24,6 +24,7 @@ and this project adheres to
   - #1262
   - #1244
   - #1270
+  - #1271
   - #1282
 - ♻️(backend) fallback to email identifier when no name #1298
 - 🐛(backend) allow ASCII characters in user sub field #1295 
