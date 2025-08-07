@@ -1,42 +1,28 @@
-import { Crisp } from 'crisp-sdk-web';
 import fetchMock from 'fetch-mock';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { gotoLogout } from '../utils';
 
-jest.mock('crisp-sdk-web', () => ({
-  ...jest.requireActual('crisp-sdk-web'),
-  Crisp: {
-    isCrispInjected: jest.fn().mockReturnValue(true),
-    setTokenId: jest.fn(),
-    user: {
-      setEmail: jest.fn(),
-    },
-    session: {
-      reset: jest.fn(),
-    },
-  },
+// Mock the Crisp service
+vi.mock('@/services/Crisp', () => ({
+  terminateCrispSession: vi.fn(),
 }));
 
 describe('utils', () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     fetchMock.restore();
   });
 
-  it('checks support session is terminated when logout', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('checks support session is terminated when logout', async () => {
+    const { terminateCrispSession } = await import('@/services/Crisp');
 
-    window.$crisp = true;
-    const propertyDescriptors = Object.getOwnPropertyDescriptors(window);
-    for (const key in propertyDescriptors) {
-      propertyDescriptors[key].configurable = true;
-    }
-    const clonedWindow = Object.defineProperties({}, propertyDescriptors);
-
-    Object.defineProperty(clonedWindow, 'location', {
+    // Mock window.location.replace
+    const mockReplace = vi.fn();
+    Object.defineProperty(window, 'location', {
       value: {
         ...window.location,
-        replace: jest.fn(),
+        replace: mockReplace,
       },
       writable: true,
       configurable: true,
@@ -44,6 +30,9 @@ describe('utils', () => {
 
     gotoLogout();
 
-    expect(Crisp.session.reset).toHaveBeenCalled();
+    expect(terminateCrispSession).toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith(
+      'http://test.jest/api/v1.0/logout/',
+    );
   });
 });

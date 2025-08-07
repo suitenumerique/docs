@@ -1,4 +1,5 @@
 import fetchMock from 'fetch-mock';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { fetchAPI } from '@/api';
 
