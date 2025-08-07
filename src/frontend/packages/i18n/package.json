@@ -18,7 +18,7 @@
     "eslint-plugin-import": "2.32.0",
     "i18next-parser": "9.3.0",
     "jest": "30.0.5",
-    "ts-jest": "29.4.0",
+    "ts-jest": "29.4.1",
     "typescript": "*",
     "yargs": "18.0.0"
   }
