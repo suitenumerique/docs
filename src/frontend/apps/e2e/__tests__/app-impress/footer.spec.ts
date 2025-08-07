@@ -21,7 +21,7 @@ test.describe('Footer', () => {
     await expect(footer.getByAltText('Docs Logo')).toBeVisible();
     await expect(footer.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
-    await expect(footer.getByRole('link', { name: 'Github' })).toBeVisible();
+    await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'DINUM' })).toBeVisible();
     await expect(footer.getByRole('link', { name: 'ZenDiS' })).toBeVisible();
 
