@@ -13,6 +13,7 @@ and this project adheres to
 - ⚡️(frontend) improve accessibility:
   - #1248
   - #1235
+  - #1275
   - #1255
   - #1262
   - #1244

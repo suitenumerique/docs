@@ -45,7 +45,7 @@ export const updateShareLink = async (
   linkReach: LinkReach,
   linkRole?: LinkRole | null,
 ) => {
-  await page.getByRole('button', { name: 'Visibility', exact: true }).click();
+  await page.getByTestId('doc-visibility').click();
   await page.getByRole('menuitem', { name: linkReach }).click();
 
   const visibilityUpdatedText = page
@@ -55,9 +55,7 @@ export const updateShareLink = async (
   await expect(visibilityUpdatedText).toBeVisible();
 
   if (linkRole) {
-    await page
-      .getByRole('button', { name: 'Visibility mode', exact: true })
-      .click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByRole('menuitem', { name: linkRole }).click();
     await expect(visibilityUpdatedText).toBeVisible();
   }

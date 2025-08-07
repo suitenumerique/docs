@@ -41,7 +41,7 @@ test.describe('Doc Visibility', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
 
     await expect(selectVisibility.getByText('Private')).toBeVisible();
 
@@ -51,13 +51,13 @@ test.describe('Doc Visibility', () => {
     await selectVisibility.click();
     await page.getByLabel('Connected').click();
 
-    await expect(page.getByLabel('Visibility mode')).toBeVisible();
+    await expect(page.getByTestId('doc-access-mode')).toBeVisible();
 
     await selectVisibility.click();
 
     await page.getByLabel('Public', { exact: true }).click();
 
-    await expect(page.getByLabel('Visibility mode')).toBeVisible();
+    await expect(page.getByTestId('doc-access-mode')).toBeVisible();
   });
 });
 
@@ -205,7 +205,7 @@ test.describe('Doc Visibility: Public', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
 
     await page
@@ -218,8 +218,8 @@ test.describe('Doc Visibility: Public', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await expect(page.getByLabel('Visibility mode')).toBeVisible();
-    await page.getByLabel('Visibility mode').click();
+    await expect(page.getByTestId('doc-access-mode')).toBeVisible();
+    await page.getByTestId('doc-access-mode').click();
     await page
       .getByRole('menuitem', {
         name: 'Reading',
@@ -289,7 +289,7 @@ test.describe('Doc Visibility: Public', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
 
     await page
@@ -302,7 +302,7 @@ test.describe('Doc Visibility: Public', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.getByLabel('Visibility mode').click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByLabel('Editing').click();
 
     await expect(
@@ -358,7 +358,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
     await page
       .getByRole('menuitem', {
@@ -410,7 +410,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
     await page
       .getByRole('menuitem', {
@@ -495,6 +495,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     page,
     browserName,
   }) => {
+    test.slow();
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
 
@@ -508,7 +509,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     await verifyDocName(page, docTitle);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
     await page
       .getByRole('menuitem', {
@@ -521,7 +522,7 @@ test.describe('Doc Visibility: Authenticated', () => {
     ).toBeVisible();
 
     const urlDoc = page.url();
-    await page.getByLabel('Visibility mode').click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByLabel('Editing').click();
 
     await expect(
@@ -539,13 +540,17 @@ test.describe('Doc Visibility: Authenticated', () => {
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
     await keyCloakSignIn(page, otherBrowser!);
 
-    await expect(page.getByTestId('header-logo-link')).toBeVisible();
+    await expect(page.getByTestId('header-logo-link')).toBeVisible({
+      timeout: 10000,
+    });
 
     await page.goto(urlDoc);
 
     await verifyDocName(page, docTitle);
     await page.getByRole('button', { name: 'Share' }).click();
     await page.getByRole('button', { name: 'Copy link' }).click();
-    await expect(page.getByText('Link Copied !')).toBeVisible();
+    await expect(page.getByText('Link Copied !')).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

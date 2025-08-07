@@ -129,7 +129,8 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           $gap={canManage ? spacingsTokens['3xs'] : spacingsTokens['base']}
         >
           <DropdownMenu
-            label={t('Visibility')}
+            testId="doc-visibility"
+            label={t('Document visibility')}
             arrowCss={css`
               color: ${colorsTokens['primary-800']} !important;
             `}
@@ -170,6 +171,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
             {docLinkReach !== LinkReach.RESTRICTED && (
               <DropdownMenu
+                testId="doc-access-mode"
                 disabled={!canManage}
                 showArrow={true}
                 options={linkRoleOptions}
@@ -180,7 +182,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
                       )
                     : undefined
                 }
-                label={t('Visibility mode')}
+                label={t('Document access mode')}
               >
                 <Text $weight="initial" $variation="600">
                   {linkModeTranslations[docLinkRole]}

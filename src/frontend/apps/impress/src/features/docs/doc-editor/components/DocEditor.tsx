@@ -119,7 +119,11 @@ export const DocVersionEditor = ({
           causes={error.cause}
           icon={
             error.status === 502 ? (
-              <Text className="material-icons" $theme="danger">
+              <Text
+                className="material-icons"
+                $theme="danger"
+                aria-hidden={true}
+              >
                 wifi_off
               </Text>
             ) : undefined

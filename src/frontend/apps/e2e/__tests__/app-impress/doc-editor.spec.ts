@@ -93,7 +93,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
 
     // When the visibility is changed, the ws should close the connection (backend signal)
     const wsClosePromise = webSocket.waitForEvent('close');
@@ -561,7 +561,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByLabel('Visibility', { exact: true }).click();
+    await page.getByTestId('doc-visibility').click();
 
     await page
       .getByRole('menuitem', {
@@ -573,7 +573,7 @@ test.describe('Doc Editor', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.getByLabel('Visibility mode').click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByRole('menuitem', { name: 'Editing' }).click();
 
     // Close the modal
@@ -655,7 +655,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByLabel('Visibility mode').click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByRole('menuitem', { name: 'Reading' }).click();
 
     // Close the modal

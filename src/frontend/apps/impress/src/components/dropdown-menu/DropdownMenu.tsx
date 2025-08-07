@@ -38,6 +38,7 @@ export type DropdownMenuProps = {
   topMessage?: string;
   selectedValues?: string[];
   afterOpenChange?: (isOpen: boolean) => void;
+  testId?: string;
 };
 
 export const DropdownMenu = ({
@@ -52,6 +53,7 @@ export const DropdownMenu = ({
   topMessage,
   afterOpenChange,
   selectedValues,
+  testId,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [isOpen, setIsOpen] = useState(opened ?? false);
@@ -100,6 +102,7 @@ export const DropdownMenu = ({
       onOpenChange={onOpenChange}
       label={label}
       buttonCss={buttonCss}
+      testId={testId}
       button={
         showArrow ? (
           <Box
