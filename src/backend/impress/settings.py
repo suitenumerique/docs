@@ -16,6 +16,7 @@ from socket import gethostbyname, gethostname
 
 from django.utils.translation import gettext_lazy as _
 
+import dj_database_url
 import sentry_sdk
 from configurations import Configuration, values
 from csp.constants import NONE
@@ -78,7 +79,9 @@ class Base(Configuration):
 
     # Database
     DATABASES = {
-        "default": {
+        "default": dj_database_url.config()
+        if os.environ.get("DATABASE_URL")
+        else {
             "ENGINE": values.Value(
                 "django.db.backends.postgresql",
                 environ_name="DB_ENGINE",

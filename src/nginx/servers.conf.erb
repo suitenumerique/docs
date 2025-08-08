@@ -1,0 +1,114 @@
+# ERB templated nginx configuration
+# see https://doc.scalingo.com/platform/deployment/buildpacks/nginx
+
+upstream backend_server {
+	server localhost:8000 fail_timeout=0;
+}
+
+upstream collaboration_server {
+	server localhost:4444 fail_timeout=0;
+}
+
+server {
+	
+	listen <%= ENV["PORT"] %>;
+	server_name _;
+
+    root /app/build/frontend-out;
+    
+    error_page 404 /404.html;
+
+    location /collaboration/api/ {
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_redirect off;
+		proxy_pass http://collaboration_server;
+    }
+
+    location /collaboration/ws/ {
+    
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        
+        # Set appropriate timeout for WebSocketAdd commentMore actions
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+        
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_redirect off;
+		proxy_pass http://collaboration_server;
+    }
+
+    # Django rest framework
+    location ^~ /api/ {
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_redirect off;
+		proxy_pass http://backend_server;
+	}
+    
+    # Django admin
+    location ^~ /admin/ {
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_redirect off;
+		proxy_pass http://backend_server;
+	}
+
+    # Proxy auth for media
+    location /media/ {
+        # Auth request configuration
+        auth_request /media-auth;
+        auth_request_set $authHeader $upstream_http_authorization;
+        auth_request_set $authDate $upstream_http_x_amz_date;
+        auth_request_set $authContentSha256 $upstream_http_x_amz_content_sha256;
+
+        # Pass specific headers from the auth response
+        proxy_set_header Authorization $authHeader;
+        proxy_set_header X-Amz-Date $authDate;
+        proxy_set_header X-Amz-Content-SHA256 $authContentSha256;
+
+        # Get resource from Object Storage
+        proxy_pass <%= ENV["AWS_S3_ENDPOINT_URL"] %>/<%= ENV["AWS_STORAGE_BUCKET_NAME"] %>/;
+        proxy_set_header Host <%= ENV["AWS_S3_ENDPOINT_URL"].split("://")[1] %>;
+
+        add_header Content-Security-Policy "default-src 'none'" always;
+    }
+
+    location /media-auth {
+        proxy_pass http://backend_server/api/v1.0/documents/media-auth/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Original-URL $request_uri;
+        
+        # Prevent the body from being passed
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-Method $request_method;
+    }
+
+
+    location / {
+        try_files $uri index.html $uri/ =404;
+    }
+  
+    location ~ "^/docs/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/?$" {
+        try_files $uri /docs/[id]/index.html;
+    }
+  
+    location = /404.html {
+        internal;
+    }
+
+}
