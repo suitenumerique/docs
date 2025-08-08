@@ -8,7 +8,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon } from '@/components';
+import { Box, Icon } from '@/components';
 import {
   Doc,
   ModalRemoveDoc,
@@ -17,6 +17,9 @@ import {
   useCreateChildDoc,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { ButtonAddChildDoc } from '@/features/docs/doc-tree/components/ButtonAddChildDoc';
+import { ButtonMoreOptions } from '@/features/docs/doc-tree/components/ButtonMoreOptions';
+import { useDropdownFocusManagement } from '@/features/docs/doc-tree/hooks/useDropdownFocusManagement';
 
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -28,6 +31,8 @@ type DocTreeItemActionsProps = {
   onCreateSuccess?: (newDoc: Doc) => void;
   onOpenChange?: (isOpen: boolean) => void;
   parentId?: string | null;
+  actionsRef?: React.RefObject<HTMLDivElement>;
+  onKeyDownCapture?: (e: React.KeyboardEvent) => void;
 };
 
 export const DocTreeItemActions = ({
@@ -37,6 +42,8 @@ export const DocTreeItemActions = ({
   onCreateSuccess,
   onOpenChange,
   parentId,
+  actionsRef,
+  onKeyDownCapture,
 }: DocTreeItemActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -143,50 +150,61 @@ export const DocTreeItemActions = ({
     }
   };
 
+  // Handlers are now encapsulated in dedicated components
+
+  useDropdownFocusManagement({
+    isOpen: isOpen || false,
+    docId: doc.id,
+    actionsRef,
+  });
+
   return (
     <Box className="doc-tree-root-item-actions">
       <Box
+        ref={actionsRef}
+        tabIndex={-1}
+        onKeyDownCapture={onKeyDownCapture}
         $direction="row"
         $align="center"
         className="--docs--doc-tree-item-actions"
         $gap="4px"
+        $css={css`
+          &:focus-within {
+            opacity: 1;
+            visibility: visible;
+          }
+          button:focus-visible,
+          [role='button']:focus-visible {
+            outline: 2px solid var(--c--theme--colors--primary-500);
+            outline-offset: 2px;
+            background-color: var(--c--theme--colors--greyscale-050);
+            border-radius: 4px;
+          }
+          .icon-button:focus-visible {
+            outline: 2px solid var(--c--theme--colors--primary-500);
+            outline-offset: 2px;
+            background-color: var(--c--theme--colors--greyscale-050);
+            border-radius: 4px;
+          }
+        `}
       >
         <DropdownMenu
           options={options}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
         >
-          <Icon
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onOpenChange?.(!isOpen);
-            }}
-            iconName="more_horiz"
-            variant="filled"
-            $theme="primary"
-            $variation="600"
+          <ButtonMoreOptions
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            title={doc.title}
           />
         </DropdownMenu>
         {doc.abilities.children_create && (
-          <BoxButton
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-
-              createChildDoc({
-                parentId: doc.id,
-              });
-            }}
-            color="primary"
-          >
-            <Icon
-              variant="filled"
-              $variation="800"
-              $theme="primary"
-              iconName="add_box"
-            />
-          </BoxButton>
+          <ButtonAddChildDoc
+            onCreateChild={createChildDoc}
+            parentId={doc.id}
+            title={doc.title}
+          />
         )}
       </Box>
       {deleteModal.isOpen && (

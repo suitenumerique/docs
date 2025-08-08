@@ -1,12 +1,9 @@
 import { css } from 'styled-components';
 
 import { Box } from '../Box';
+import { DropdownMenu, DropdownMenuOption } from '../DropdownMenu';
 import { Icon } from '../Icon';
 import { Text } from '../Text';
-import {
-  DropdownMenu,
-  DropdownMenuOption,
-} from '../dropdown-menu/DropdownMenu';
 
 export type FilterDropdownProps = {
   options: DropdownMenuOption[];
