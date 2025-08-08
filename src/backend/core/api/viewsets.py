@@ -1,6 +1,7 @@
 """API endpoints"""
 # pylint: disable=too-many-lines
 
+import base64
 import json
 import logging
 import uuid
@@ -37,6 +38,15 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.converter_services import (
+    ServiceUnavailableError as YProviderServiceUnavailableError,
+)
+from core.services.converter_services import (
+    ValidationError as YProviderValidationError,
+)
+from core.services.converter_services import (
+    YdocConverter,
+)
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
@@ -1476,6 +1486,69 @@ class DocumentViewSet(
                 {"error": f"Failed to fetch resource: {e!s}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        url_path="content",
+        name="Get document content in different formats",
+    )
+    def content(self, request, pk=None):
+        """
+        Retrieve document content in different formats (JSON, Markdown, HTML).
+
+        Query parameters:
+        - content_format: The desired output format (json, markdown, html)
+
+        Returns:
+            JSON response with content in the specified format.
+        """
+
+        document = self.get_object()
+
+        content_format = request.query_params.get("content_format", "json").lower()
+        if content_format not in {"json", "markdown", "html"}:
+            raise drf.exceptions.ValidationError(
+                "Invalid format. Must be one of: json, markdown, html"
+            )
+
+        # Get the base64 content from the document
+        content = None
+        base64_content = document.content
+        if base64_content is not None:
+            # Convert using the y-provider service
+            try:
+                yprovider = YdocConverter()
+                result = yprovider.convert(
+                    base64.b64decode(base64_content),
+                    "application/vnd.yjs.doc",
+                    {
+                        "markdown": "text/markdown",
+                        "html": "text/html",
+                        "json": "application/json",
+                    }[content_format],
+                )
+                content = result
+            except YProviderValidationError as e:
+                return drf_response.Response(
+                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
+            except YProviderServiceUnavailableError as e:
+                logger.error("Error getting content for document %s: %s", pk, e)
+                return drf_response.Response(
+                    {"error": "Failed to get document content"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        return drf_response.Response(
+            {
+                "id": str(document.id),
+                "title": document.title,
+                "content": content,
+                "created_at": document.created_at,
+                "updated_at": document.updated_at,
+            }
+        )
 
 
 class DocumentAccessViewSet(

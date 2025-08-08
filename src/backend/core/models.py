@@ -786,6 +786,7 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_update and user.is_authenticated,
             "collaboration_auth": can_get,
+            "content": can_get,
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": is_owner,

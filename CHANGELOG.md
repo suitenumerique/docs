@@ -34,6 +34,7 @@ and this project adheres to
 - ✨(frontend) add duplicate action to doc tree #1175
 - ✨(frontend) Interlinking doc #904
 - ✨(frontend) add multi columns support for editor #1219
+- ✨(api) add API route to fetch document content #1206
 
 ### Changed
 
