@@ -12,8 +12,7 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-
-import { useDropdownKeyboardNav } from './hook/useDropdownKeyboardNav';
+import { useDropdownKeyboardNav } from '@/features/docs/doc-tree/hooks/useDropdownKeyboardNav';
 
 export type DropdownMenuOption = {
   icon?: string | ReactNode;

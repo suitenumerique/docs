@@ -9,8 +9,6 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
-import { useActionableMode } from '@/features/docs/doc-tree/hooks/useActionableMode';
-import { useTreeItemKeyboardActivate } from '@/features/docs/doc-tree/hooks/useTreeItemKeyboardActivate';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
@@ -18,6 +16,8 @@ import {
   useTrans,
 } from '@/features/docs/doc-management';
 import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
+import { useActionableMode } from '@/features/docs/doc-tree/hooks/useActionableMode';
+import { useTreeItemKeyboardActivate } from '@/features/docs/doc-tree/hooks/useTreeItemKeyboardActivate';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 

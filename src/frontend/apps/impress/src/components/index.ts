@@ -3,7 +3,7 @@ export * from './Box';
 export * from './BoxButton';
 export * from './Card';
 export * from './DropButton';
-export * from './dropdown-menu/DropdownMenu';
+export * from './DropdownMenu';
 export * from './quick-search';
 export * from './Icon';
 export * from './InfiniteScroll';
