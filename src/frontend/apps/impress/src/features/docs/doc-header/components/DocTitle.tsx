@@ -116,7 +116,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         defaultValue={titleDisplay || undefined}
         onKeyDownCapture={handleKeyDown}
         suppressContentEditableWarning={true}
-        aria-label={`${t('Document title')} ${doc.title || untitledDocument}`}
+        aria-label={`${t('Document title')}`}
         aria-multiline={false}
         onBlurCapture={(event) =>
           handleTitleSubmit(event.target.textContent || '')
@@ -138,7 +138,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           outline: none;
         `}
       >
-        {titleDisplay || untitledDocument}
+        {titleDisplay}
       </Box>
     </Tooltip>
   );

@@ -50,8 +50,8 @@ test.describe('Doc Create', () => {
       waitUntil: 'domcontentloaded',
     });
 
-    const input = page.getByRole('textbox', { name: /^Document title/i });
-    await expect(input).toHaveText(/^(?:Untitled document)?$/);
+    const input = page.getByRole('textbox', { name: 'Document title' });
+    await expect(input).toHaveText('');
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();
@@ -77,8 +77,8 @@ test.describe('Doc Create', () => {
       waitUntil: 'domcontentloaded',
     });
 
-    const input = page.getByRole('textbox', { name: /^Document title/i });
-    await expect(input).toHaveText(/^(?:Untitled document)?$/);
+    const input = page.getByRole('textbox', { name: 'Document title' });
+    await expect(input).toHaveText('');
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();

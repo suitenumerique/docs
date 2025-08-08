@@ -25,7 +25,7 @@ test.describe('Doc Header', () => {
       'It is the card information about the document.',
     );
 
-    const docTitle = card.getByRole('textbox', { name: /^Document title/i });
+    const docTitle = card.getByRole('textbox', { name: 'Document title' });
     await expect(docTitle).toBeVisible();
 
     await page.getByRole('button', { name: 'Share' }).click();
@@ -54,7 +54,7 @@ test.describe('Doc Header', () => {
 
   test('it updates the title doc', async ({ page, browserName }) => {
     await createDoc(page, 'doc-update', browserName, 1);
-    const docTitle = page.getByRole('textbox', { name: /^Document title/i });
+    const docTitle = page.getByRole('textbox', { name: 'Document title' });
     await expect(docTitle).toBeVisible();
     await docTitle.fill('Hello World');
     await docTitle.blur();

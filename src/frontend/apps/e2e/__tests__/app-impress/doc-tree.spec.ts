@@ -51,7 +51,7 @@ test.describe('Doc Tree', () => {
     await expect(subPageItem).toBeVisible();
     await subPageItem.click();
     await verifyDocName(page, '');
-    const input = page.getByRole('textbox', { name: /^Document title/i });
+    const input = page.getByRole('textbox', { name: 'Document title' });
     await input.click();
     const [randomDocName] = randomName('doc-tree-test', browserName, 1);
     await input.fill(randomDocName);
@@ -197,7 +197,7 @@ test.describe('Doc Tree', () => {
     await page.getByText('Move to my docs').click();
 
     await expect(
-      page.getByRole('textbox', { name: /^Document title/i }),
+      page.getByRole('textbox', { name: 'Document title' }),
     ).not.toHaveText(docChild);
 
     const header = page.locator('header').first();
