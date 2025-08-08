@@ -259,6 +259,10 @@ test.describe('Doc Tree: Inheritance', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('A child inherit from the parent', async ({ page, browserName }) => {
+    // test.slow() to extend timeout since this scenario chains Keycloak login + redirects,
+    // doc creation/navigation and async doc-tree loading (/documents/:id/tree), which can exceed 30s (especially in CI).
+    test.slow();
+
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
 
@@ -271,7 +275,7 @@ test.describe('Doc Tree: Inheritance', () => {
     await verifyDocName(page, docParent);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
 
     await page
@@ -307,6 +311,7 @@ test.describe('Doc Tree: Inheritance', () => {
     await expect(page.locator('h2').getByText(docChild)).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible({ timeout: 10000 });
     await expect(docTree.getByText(docParent)).toBeVisible();
   });
 });

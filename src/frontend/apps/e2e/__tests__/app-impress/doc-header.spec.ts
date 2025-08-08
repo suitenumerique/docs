@@ -30,7 +30,7 @@ test.describe('Doc Header', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByLabel('Visibility', { exact: true }).click();
+    await page.getByTestId('doc-visibility').click();
 
     await page
       .getByRole('menuitem', {

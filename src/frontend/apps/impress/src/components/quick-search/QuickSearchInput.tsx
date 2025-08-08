@@ -46,7 +46,9 @@ export const QuickSearchInput = ({
         $gap={spacingsTokens['2xs']}
         $padding={{ horizontal: 'base', vertical: 'sm' }}
       >
-        {!loading && <Icon iconName="search" $variation="600" />}
+        {!loading && (
+          <Icon iconName="search" $variation="600" aria-hidden="true" />
+        )}
         {loading && (
           <div>
             <Loader size="small" />
