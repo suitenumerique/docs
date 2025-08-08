@@ -8,9 +8,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon } from '@/components';
-import { useDocTreeItemHandlers } from '@/features/docs/doc-tree/hooks/useDocTreeItemHandlers';
-import { useDropdownFocusManagement } from '@/features/docs/doc-tree/hooks/useDropdownFocusManagement';
+import { Box, Icon } from '@/components';
 import {
   Doc,
   ModalRemoveDoc,
@@ -19,6 +17,9 @@ import {
   useCreateChildDoc,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { ButtonAddChildDoc } from '@/features/docs/doc-tree/components/ButtonAddChildDoc';
+import { ButtonMoreOptions } from '@/features/docs/doc-tree/components/ButtonMoreOptions';
+import { useDropdownFocusManagement } from '@/features/docs/doc-tree/hooks/useDropdownFocusManagement';
 
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -149,18 +150,6 @@ export const DocTreeItemActions = ({
     }
   };
 
-  const {
-    handleMoreOptionsClick,
-    handleMoreOptionsKeyDown,
-    handleAddChildClick,
-    handleAddChildKeyDown,
-  } = useDocTreeItemHandlers({
-    isOpen,
-    onOpenChange,
-    createChildDoc,
-    docId: doc.id,
-  });
-
   useDropdownFocusManagement({
     isOpen: isOpen || false,
     docId: doc.id,
@@ -202,45 +191,18 @@ export const DocTreeItemActions = ({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
         >
-          <Icon
-            onClick={handleMoreOptionsClick}
-            iconName="more_horiz"
-            variant="filled"
-            $theme="primary"
-            $variation="600"
-            className="icon-button"
-            tabIndex={0}
-            role="button"
-            aria-label={
-              t('More options for') + ` ${doc.title || t('Untitled document')}`
-            }
-            aria-haspopup="true"
-            aria-expanded={isOpen}
-            onKeyDown={handleMoreOptionsKeyDown}
+          <ButtonMoreOptions
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            title={doc.title}
           />
         </DropdownMenu>
         {doc.abilities.children_create && (
-          <BoxButton
-            as="button"
-            tabIndex={0}
-            data-testid="add-child-doc"
-            onClick={handleAddChildClick}
-            onKeyDown={handleAddChildKeyDown}
-            color="primary"
-            aria-label={
-              t('Add child document to') +
-              ` ${doc.title || t('Untitled document')}`
-            }
-            $hasTransition={false}
-          >
-            <Icon
-              variant="filled"
-              $variation="800"
-              $theme="primary"
-              iconName="add_box"
-              aria-hidden="true"
-            />
-          </BoxButton>
+          <ButtonAddChildDoc
+            onCreateChild={createChildDoc}
+            parentId={doc.id}
+            title={doc.title}
+          />
         )}
       </Box>
       {deleteModal.isOpen && (
