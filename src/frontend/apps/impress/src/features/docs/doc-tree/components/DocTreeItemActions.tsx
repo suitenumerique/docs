@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon } from '@/components';
-import { useDocTreeItemHandlers } from '@/components/dropdown-menu/hook/useDocTreeItemHandlers';
-import { useDropdownFocusManagement } from '@/components/dropdown-menu/hook/useDropdownFocusManagement';
+import { useDocTreeItemHandlers } from '@/features/docs/doc-tree/hooks/useDocTreeItemHandlers';
+import { useDropdownFocusManagement } from '@/features/docs/doc-tree/hooks/useDropdownFocusManagement';
 import {
   Doc,
   ModalRemoveDoc,
