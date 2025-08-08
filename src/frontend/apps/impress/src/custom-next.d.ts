@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 declare module '*.svg' {
   import * as React from 'react';
 

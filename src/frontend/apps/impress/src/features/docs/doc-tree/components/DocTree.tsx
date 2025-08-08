@@ -42,7 +42,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       docId: currentDoc.id,
     },
     {
-      enabled: !!!treeContext?.root?.id,
+      enabled: !treeContext?.root?.id,
       queryKey: [KEY_DOC_TREE, { id: currentDoc.id }],
     },
   );

@@ -74,9 +74,12 @@ export const hocuspocusServer = Server.configure({
      */
     try {
       const user = await fetchCurrentUser(requestHeaders);
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       context.userId = user.id;
-    } catch {}
+    } catch {
+      /* empty */
+    }
 
     logger(
       'Connection established on room:',

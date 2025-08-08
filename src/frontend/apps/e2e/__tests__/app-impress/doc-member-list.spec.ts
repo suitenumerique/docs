@@ -151,7 +151,6 @@ test.describe('Document list members', () => {
     await expect(soloOwner).toBeVisible();
 
     await list.click({
-      // eslint-disable-next-line playwright/no-force-option
       force: true, // Force click to close the dropdown
     });
     const newUserEmail = await addNewMember(page, 0, 'Owner');
@@ -163,13 +162,11 @@ test.describe('Document list members', () => {
     await currentUserRole.click();
     await expect(soloOwner).toBeHidden();
     await list.click({
-      // eslint-disable-next-line playwright/no-force-option
       force: true, // Force click to close the dropdown
     });
 
     await newUserRoles.click();
     await list.click({
-      // eslint-disable-next-line playwright/no-force-option
       force: true, // Force click to close the dropdown
     });
 

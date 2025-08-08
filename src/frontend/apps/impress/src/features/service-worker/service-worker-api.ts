@@ -46,7 +46,7 @@ registerRoute(
 
 registerRoute(
   ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9-]+)\/$/g),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
@@ -62,7 +62,7 @@ registerRoute(
 
 registerRoute(
   ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9-]+)\/$/g),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
@@ -91,7 +91,7 @@ registerRoute(
 
 registerRoute(
   ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9-]+)\/$/g),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({

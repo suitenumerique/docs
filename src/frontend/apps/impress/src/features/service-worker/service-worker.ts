@@ -18,13 +18,11 @@ import {
   StrategyOptions,
 } from 'workbox-strategies';
 
-// eslint-disable-next-line import/order
 import { DAYS_EXP, SW_DEV_URL, SW_VERSION, getCacheNameVersion } from './conf';
 import { ApiPlugin } from './plugins/ApiPlugin';
 import { OfflinePlugin } from './plugins/OfflinePlugin';
 import { isApiUrl } from './service-worker-api';
 
-// eslint-disable-next-line import/order
 import pkg from '@/../package.json';
 
 declare const self: ServiceWorkerGlobalScope & {
@@ -131,7 +129,7 @@ setCatchHandler(async ({ request, url, event }) => {
       return ApiPlugin.getApiCatchHandler();
 
     case request.destination === 'document':
-      if (url.pathname.match(/^\/docs\/([a-z0-9\-]+)\/$/g)) {
+      if (url.pathname.match(/^\/docs\/([a-z0-9-]+)\/$/g)) {
         return precacheStrategy.handle({ event, request: FALLBACK.docs });
       }
 

@@ -12,11 +12,11 @@ WORKDIR /home/frontend/
 COPY ./src/frontend/package.json ./package.json
 COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/servers/y-provider/package.json ./servers/y-provider/package.json
-COPY ./src/frontend/packages/eslint-config-impress/package.json ./packages/eslint-config-impress/package.json
+COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
 
 RUN yarn install
 
-COPY ./src/frontend/packages/eslint-config-impress ./packages/eslint-config-impress
+COPY ./src/frontend/packages/eslint-plugin-docs ./packages/eslint-plugin-docs
 COPY ./src/frontend/servers/y-provider ./servers/y-provider
 
 FROM y-provider-deps AS y-provider-development

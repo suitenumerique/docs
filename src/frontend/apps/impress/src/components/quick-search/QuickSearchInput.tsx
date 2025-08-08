@@ -53,7 +53,6 @@ export const QuickSearchInput = ({
           </div>
         )}
         <Command.Input
-          /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus={true}
           aria-label={t('Quick search input')}
           onClick={(e) => {
