@@ -307,11 +307,6 @@ test.describe('Doc Editor', () => {
       }
     });
 
-    // Ensure AI feature is enabled
-    await overrideConfig(page, {
-      AI_FEATURE_ENABLED: true,
-    });
-
     await createDoc(page, 'doc-ai', browserName, 1);
 
     await page.locator('.bn-block-outer').last().fill('Hello World');
