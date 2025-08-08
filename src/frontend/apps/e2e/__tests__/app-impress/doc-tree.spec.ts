@@ -9,6 +9,7 @@ import {
   updateDocTitle,
   verifyDocName,
 } from './utils-common';
+import { addNewMember } from './utils-share';
 import { clickOnAddRootSubPage, createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Tree', () => {
@@ -184,13 +185,14 @@ test.describe('Doc Tree', () => {
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docChild)).toBeVisible();
     await docTree.click();
-    const child = docTree.locator('.--docs-sub-page-item').filter({
-      hasText: docChild,
-    });
+    const child = docTree
+      .getByRole('treeitem')
+      .locator('.--docs-sub-page-item')
+      .filter({
+        hasText: docChild,
+      });
     await child.hover();
-    // Wait a bit for the hover effect to take place
     const menu = child.getByText(`more_horiz`);
-    await expect(menu).toBeVisible();
     await menu.click();
     await page.getByText('Move to my docs').click();
 
@@ -213,38 +215,43 @@ test.describe('Doc Tree', () => {
 
     await verifyDocName(page, docParent);
 
-    // Create a child document first
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await addNewMember(page, 0, 'Owner', 'impress');
+
+    const list = page.getByTestId('doc-share-quick-search');
+    const currentUser = list.getByTestId(
+      `doc-share-member-row-user@${browserName}.test`,
+    );
+    const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+    await currentUserRole.click();
+    await page.getByLabel('Administrator').click();
+    await list.click();
+
+    await page.getByRole('button', { name: 'Ok' }).click();
+
     const { name: docChild } = await createRootSubPage(
       page,
       browserName,
       'doc-tree-detach-child',
     );
 
-    // Now try to detach the child document - this should work for the owner
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docChild)).toBeVisible();
     await docTree.click();
-    const child = docTree.locator('.--docs-sub-page-item').filter({
-      hasText: docChild,
-    });
+    const child = docTree
+      .getByRole('treeitem')
+      .locator('.--docs-sub-page-item')
+      .filter({
+        hasText: docChild,
+      });
     await child.hover();
-    // Wait a bit for the hover effect to take place
     const menu = child.getByText(`more_horiz`);
-    await expect(menu).toBeVisible();
     await menu.click();
 
-    // The owner should be able to detach the document
-    await page.getByRole('menuitem', { name: 'Move to my docs' }).click();
-
-    // Verify the document was detached - it should no longer be in the current tree
     await expect(
-      page.getByRole('textbox', { name: 'doc title input' }),
-    ).not.toHaveText(docChild);
-
-    // Verify the document is now on the home page
-    const header = page.locator('header').first();
-    await header.locator('h1').getByText('Docs').click();
-    await expect(page.getByText(docChild)).toBeVisible();
+      page.getByRole('menuitem', { name: 'Move to my docs' }),
+    ).toHaveAttribute('aria-disabled', 'true');
   });
 });
 
