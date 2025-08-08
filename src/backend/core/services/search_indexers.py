@@ -19,7 +19,9 @@ def get_batch_accesses_by_users_and_teams(paths):
     grouped by users and teams, including all ancestor paths.
     """
     print("paths: ", paths)
-    ancestor_map = utils.get_ancestor_to_descendants_map(paths, steplen=models.Document.steplen)
+    ancestor_map = utils.get_ancestor_to_descendants_map(
+        paths, steplen=models.Document.steplen
+    )
     ancestor_paths = list(ancestor_map.keys())
     print("ancestor map: ", ancestor_map)
     print("ancestor paths: ", ancestor_paths)

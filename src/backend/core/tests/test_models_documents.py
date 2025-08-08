@@ -5,6 +5,7 @@ Unit tests for the Document model
 
 import random
 import smtplib
+import time
 from logging import Logger
 from unittest import mock
 
@@ -13,12 +14,15 @@ from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.test.utils import override_settings
 from django.utils import timezone
 
 import pytest
 
 from core import factories, models
+from core.services.search_indexers import FindDocumentIndexer
+from core.tasks.find import document_indexer_debounce_key
 
 pytestmark = pytest.mark.django_db
 
@@ -1323,3 +1327,99 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
                 {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
             ],
         }
+
+
+@mock.patch.object(FindDocumentIndexer, "push")
+@pytest.mark.django_db(transaction=True)
+def test_models_documents_post_save_indexer(mock_push, settings):
+    settings.SEARCH_INDEXER_COUNTDOWN = 0
+
+    user = factories.UserFactory()
+
+    with transaction.atomic():
+        doc1, doc2, doc3 = factories.DocumentFactory.create_batch(3)
+
+        factories.UserDocumentAccessFactory(document=doc1, user=user)
+        factories.UserDocumentAccessFactory(document=doc2, user=user)
+        factories.UserDocumentAccessFactory(document=doc3, user=user)
+
+    time.sleep(0.1)  # waits for the end of the tasks
+
+    accesses = {
+        str(doc1.path): {"users": [user.sub]},
+        str(doc2.path): {"users": [user.sub]},
+        str(doc3.path): {"users": [user.sub]},
+    }
+
+    data = [call.args[0] for call in mock_push.call_args_list]
+
+    indexer = FindDocumentIndexer()
+
+    def sortkey(d):
+        return d["id"]
+
+    assert sorted(data, key=sortkey) == sorted(
+        [
+            indexer.serialize_document(doc1, accesses),
+            indexer.serialize_document(doc2, accesses),
+            indexer.serialize_document(doc3, accesses),
+        ],
+        key=sortkey,
+    )
+
+
+@mock.patch.object(FindDocumentIndexer, "push")
+@pytest.mark.django_db(transaction=True)
+def test_models_documents_post_save_indexer_debounce(mock_push, settings):
+    settings.SEARCH_INDEXER_COUNTDOWN = 0
+
+    indexer = FindDocumentIndexer()
+    user = factories.UserFactory()
+
+    with transaction.atomic():
+        doc = factories.DocumentFactory()
+        factories.UserDocumentAccessFactory(document=doc, user=user)
+
+    accesses = {
+        str(doc.path): {"users": [user.sub]},
+    }
+
+    time.sleep(0.1)  # waits for the end of the tasks
+
+    # One save from the factory
+    assert [call.args[0] for call in mock_push.call_args_list] == [
+        indexer.serialize_document(doc, accesses),
+    ]
+
+    # The debounce counter should be reset
+    assert cache.get(document_indexer_debounce_key(doc.pk)) == 0
+
+    # Now simulate 1 waiting task
+    cache.set(document_indexer_debounce_key(doc.pk), 1)
+
+    # save it again to trigger the indexer, but nothing should be done since
+    # the counter is over 0
+    with transaction.atomic():
+        updated_doc = models.Document.objects.get(pk=doc.pk)
+        updated_doc.save()
+
+    time.sleep(0.1)  # waits for the end of the tasks
+
+    # Still on the first indexation.
+    assert [call.args[0] for call in mock_push.call_args_list] == [
+        indexer.serialize_document(doc, accesses),
+    ]
+
+    # Reset the counter
+    cache.set(document_indexer_debounce_key(doc.pk), 0)
+
+    with transaction.atomic():
+        updated_doc = models.Document.objects.get(pk=doc.pk)
+        updated_doc.save()
+
+    time.sleep(0.1)  # waits for the end of the tasks
+
+    assert [call.args[0] for call in mock_push.call_args_list] == [
+        indexer.serialize_document(doc, accesses),
+        indexer.serialize_document(updated_doc, accesses),
+    ]
