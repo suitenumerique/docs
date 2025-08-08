@@ -76,7 +76,7 @@
     "@vitejs/plugin-react": "5.0.2",
     "cross-env": "10.0.0",
     "dotenv": "17.2.1",
-    "eslint-config-impress": "*",
+    "eslint-plugin-docs": "*",
     "fetch-mock": "9.11.0",
     "jsdom": "26.1.0",
     "node-fetch": "2.7.0",

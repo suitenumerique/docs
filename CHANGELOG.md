@@ -15,6 +15,7 @@ and this project adheres to
 ### Changed
 
 - 🔒️(backend) configure throttle on every viewsets #1343
+- ⬆️ Bump eslint to V9 #1071
 
 ## [3.6.0] - 2025-09-04
 

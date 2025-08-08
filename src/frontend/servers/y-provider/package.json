@@ -37,7 +37,7 @@
     "@types/supertest": "6.0.3",
     "@types/ws": "8.18.1",
     "cross-env": "10.0.0",
-    "eslint-config-impress": "*",
+    "eslint-plugin-docs": "*",
     "nodemon": "3.1.10",
     "supertest": "7.1.4",
     "ts-node": "10.9.2",

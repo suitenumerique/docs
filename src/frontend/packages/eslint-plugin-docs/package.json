@@ -1,16 +1,24 @@
 {
-  "name": "eslint-config-impress",
+  "name": "eslint-plugin-docs",
   "version": "3.6.0",
   "license": "MIT",
+  "main": "index.js",
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin"
+  ],
   "scripts": {
-    "lint": "eslint --ext .js ."
+    "lint": "eslint"
+  },
+  "peerDependencies": {
+    "eslint": ">=9.0.0"
   },
   "dependencies": {
     "@next/eslint-plugin-next": "15.5.2",
     "@tanstack/eslint-plugin-query": "5.83.1",
     "@typescript-eslint/eslint-plugin": "*",
     "@typescript-eslint/parser": "*",
-    "eslint": "*",
     "eslint-config-next": "15.5.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
@@ -18,7 +26,9 @@
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-playwright": "2.2.2",
     "eslint-plugin-prettier": "5.5.4",
+    "eslint-plugin-react": "7.37.5",
     "eslint-plugin-testing-library": "7.6.6",
+    "eslint-plugin-vitest": "0.5.4",
     "prettier": "3.6.2"
   }
 }

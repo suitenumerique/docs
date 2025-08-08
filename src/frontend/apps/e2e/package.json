@@ -15,7 +15,7 @@
     "@playwright/test": "1.55.0",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.5",
-    "eslint-config-impress": "*",
+    "eslint-plugin-docs": "*",
     "typescript": "*"
   },
   "dependencies": {
