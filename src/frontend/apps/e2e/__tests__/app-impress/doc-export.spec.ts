@@ -122,7 +122,9 @@ test.describe('Doc Export', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'test.svg' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -182,7 +184,9 @@ test.describe('Doc Export', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'test.svg' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 

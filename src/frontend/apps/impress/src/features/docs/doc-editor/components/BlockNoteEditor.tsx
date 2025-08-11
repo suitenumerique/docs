@@ -33,7 +33,11 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { CalloutBlock, DividerBlock } from './custom-blocks';
+import {
+  AccessibleImageBlock,
+  CalloutBlock,
+  DividerBlock,
+} from './custom-blocks';
 import {
   InterlinkingLinkInlineContent,
   InterlinkingSearchInlineContent,
@@ -50,6 +54,7 @@ const baseBlockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       callout: CalloutBlock,
       divider: DividerBlock,
+      image: AccessibleImageBlock,
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,

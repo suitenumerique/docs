@@ -272,7 +272,9 @@ test.describe('Doc Editor', () => {
       path.join(__dirname, 'assets/logo-suite-numerique.png'),
     );
 
-    const image = page.getByRole('img', { name: 'logo-suite-numerique.png' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -284,6 +286,11 @@ test.describe('Doc Editor', () => {
     expect(await image.getAttribute('src')).toMatch(
       /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.png/,
     );
+
+    await expect(image).toHaveAttribute('role', 'presentation');
+    await expect(image).toHaveAttribute('alt', '');
+    await expect(image).toHaveAttribute('tabindex', '-1');
+    await expect(image).toHaveAttribute('aria-hidden', 'true');
   });
 
   test('it checks the AI buttons', async ({ page, browserName }) => {
