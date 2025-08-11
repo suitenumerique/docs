@@ -100,6 +100,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                     docId: doc.id,
                   })
                 }
+                aria-label={t('Close the access request modal')}
               >
                 <Icon iconName="close" $variation="600" $size="16px" />
               </BoxButton>

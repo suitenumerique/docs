@@ -118,6 +118,7 @@ export const ModalSelectVersion = ({
                   onClick={onClose}
                   size="nano"
                   color="primary-text"
+                  aria-label={t('Close the version history modal')}
                   icon={<Icon iconName="close" />}
                 />
               </Box>

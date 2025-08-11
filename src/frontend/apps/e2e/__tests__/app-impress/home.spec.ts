@@ -72,6 +72,7 @@ test.describe('Home page', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Wait a bit more for the responsive store to be initialized
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
 
     // Check header content

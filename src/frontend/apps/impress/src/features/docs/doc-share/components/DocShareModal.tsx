@@ -1,4 +1,4 @@
-import { Modal, ModalSize } from '@openfun/cunningham-react';
+import { Button, Modal, ModalSize } from '@openfun/cunningham-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
@@ -137,12 +137,29 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         aria-label={t('Share modal')}
         size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
         onClose={onClose}
-        title={<Box $align="flex-start">{t('Share the document')}</Box>}
+        title={
+          <Box $direction="row" $justify="space-between" $align="center">
+            <Box $align="flex-start">{t('Share the document')}</Box>
+            <Button
+              aria-label={t('Close the modal')}
+              size="small"
+              color="primary-text"
+              onClick={onClose}
+              icon={
+                <Box aria-hidden="true" className="material-icons-filled">
+                  close
+                </Box>
+              }
+            />
+          </Box>
+        }
+        hideCloseButton
       >
         <ShareModalStyle />
         <Box
           aria-label={t('Share modal')}
-          $height={canViewAccesses ? modalContentHeight : 'auto'}
+          $height="auto"
+          $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
           $overflow="hidden"
           className="--docs--doc-share-modal noPadding "
           $justify="space-between"

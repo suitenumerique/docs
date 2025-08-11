@@ -17,6 +17,7 @@ and this project adheres to
   - #1262
   - #1244
   - #1270
+  - #1281
 
 ### Fixed
 

@@ -131,6 +131,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      hideCloseButton
       rightActions={
         <>
           <Button
@@ -148,6 +149,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
+            data-testid="modal-download-button"
           >
             {t('Download')}
           </Button>
@@ -155,9 +157,37 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text $size="h6" $variation="1000" $align="flex-start">
-          {t('Download')}
-        </Text>
+        <Box
+          $direction="row"
+          $justify="space-between"
+          $align="center"
+          $width="100%"
+        >
+          <Text
+            $size="h6"
+            $variation="1000"
+            $align="flex-start"
+            data-testid="modal-export-title"
+          >
+            {t('Download')}
+          </Text>
+          <Button
+            aria-label={t('Close the download modal')}
+            size="small"
+            color="primary-text"
+            onClick={() => onClose()}
+            disabled={isExporting}
+            icon={
+              <Box
+                as="span"
+                aria-hidden="true"
+                className="material-icons-filled"
+              >
+                close
+              </Box>
+            }
+          />
+        </Box>
       }
     >
       <Box

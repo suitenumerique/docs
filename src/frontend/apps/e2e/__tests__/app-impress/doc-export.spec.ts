@@ -29,12 +29,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(
-      page
-        .locator('div')
-        .filter({ hasText: /^Download$/ })
-        .first(),
-    ).toBeVisible();
+    await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
       page.getByText('Download your document in a .docx or .pdf format.'),
     ).toBeVisible();
@@ -45,7 +40,7 @@ test.describe('Doc Export', () => {
     await expect(
       page.getByRole('button', { name: 'Close the modal' }),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+    await expect(page.getByTestId('modal-download-button')).toBeVisible();
   });
 
   test('it exports the doc with pdf line break', async ({
@@ -122,7 +117,9 @@ test.describe('Doc Export', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'test.svg' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -136,23 +133,13 @@ test.describe('Doc Export', () => {
     await page.getByRole('combobox', { name: 'Format' }).click();
     await page.getByRole('option', { name: 'Docx' }).click();
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Download',
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(page.getByTestId('modal-download-button')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.docx`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-        exact: true,
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.docx`);
@@ -182,7 +169,9 @@ test.describe('Doc Export', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'test.svg' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -216,11 +205,7 @@ test.describe('Doc Export', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Download',
-      }),
-    ).toBeVisible();
+    await expect(page.getByTestId('modal-download-button')).toBeVisible();
 
     const responseCorsPromise = page.waitForResponse(
       (response) =>
@@ -231,11 +216,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const responseCors = await responseCorsPromise;
     expect(responseCors.ok()).toBe(true);
@@ -277,21 +258,13 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Download',
-      }),
-    ).toBeVisible();
+    await expect(page.getByTestId('modal-download-button')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -328,23 +301,13 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Download',
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(page.getByTestId('modal-download-button')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-        exact: true,
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -391,23 +354,13 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(
-      page.getByRole('button', {
-        name: 'Download',
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(page.getByTestId('modal-download-button')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-        exact: true,
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
@@ -470,12 +423,7 @@ test.describe('Doc Export', () => {
       return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);
     });
 
-    void page
-      .getByRole('button', {
-        name: 'Télécharger',
-        exact: true,
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDocFrench}.pdf`);
@@ -538,12 +486,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    void page
-      .getByRole('button', {
-        name: 'Download',
-        exact: true,
-      })
-      .click();
+    void page.getByTestId('modal-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${docChild}.pdf`);
