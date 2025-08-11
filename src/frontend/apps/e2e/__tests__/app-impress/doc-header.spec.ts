@@ -155,7 +155,9 @@ test.describe('Doc Header', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const shareModal = page.getByLabel('Share modal');
+    const shareModal = page.getByRole('dialog', {
+      name: 'Share modal content',
+    });
     await expect(shareModal).toBeVisible();
     await expect(page.getByText('Share the document')).toBeVisible();
 
@@ -581,7 +583,10 @@ test.describe('Documents Header mobile', () => {
     await page.getByLabel('Open the document options').click();
     await page.getByLabel('Share').click();
 
-    await expect(page.getByLabel('Share modal')).toBeVisible();
+    const shareModal = page.getByRole('dialog', {
+      name: 'Share modal content',
+    });
+    await expect(shareModal).toBeVisible();
     await page.getByRole('button', { name: 'close' }).click();
     await expect(page.getByLabel('Share modal')).toBeHidden();
   });

@@ -2,8 +2,8 @@ import { Button, Modal, ModalSize } from '@openfun/cunningham-react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box } from './Box';
-import { Text } from './Text';
+import { Box } from '../Box';
+import { Text } from '../Text';
 
 export type AlertModalProps = {
   description: ReactNode;

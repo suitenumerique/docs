@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
+import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
 
@@ -131,6 +132,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      hideCloseButton
       rightActions={
         <>
           <Button
@@ -148,6 +150,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
+            data-testid="modal-download-button"
           >
             {t('Download')}
           </Button>
@@ -155,9 +158,26 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text $size="h6" $variation="1000" $align="flex-start">
-          {t('Download')}
-        </Text>
+        <Box
+          $direction="row"
+          $justify="space-between"
+          $align="center"
+          $width="100%"
+        >
+          <Text
+            $size="h6"
+            $variation="1000"
+            $align="flex-start"
+            data-testid="modal-export-title"
+          >
+            {t('Download')}
+          </Text>
+          <ButtonCloseModal
+            aria-label={t('Close the download modal')}
+            onClick={() => onClose()}
+            disabled={isExporting}
+          />
+        </Box>
       }
     >
       <Box

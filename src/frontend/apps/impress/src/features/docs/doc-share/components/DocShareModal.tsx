@@ -5,6 +5,7 @@ import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { Box, HorizontalSeparator, Text } from '@/components';
+import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 import {
   QuickSearch,
   QuickSearchData,
@@ -137,12 +138,23 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         aria-label={t('Share modal')}
         size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
         onClose={onClose}
-        title={<Box $align="flex-start">{t('Share the document')}</Box>}
+        title={
+          <Box $direction="row" $justify="space-between" $align="center">
+            <Box $align="flex-start">{t('Share the document')}</Box>
+            <ButtonCloseModal
+              aria-label={t('Close the share modal')}
+              onClick={onClose}
+            />
+          </Box>
+        }
+        hideCloseButton
       >
         <ShareModalStyle />
         <Box
-          aria-label={t('Share modal')}
-          $height={canViewAccesses ? modalContentHeight : 'auto'}
+          role="dialog"
+          aria-label={t('Share modal content')}
+          $height="auto"
+          $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
           $overflow="hidden"
           className="--docs--doc-share-modal noPadding "
           $justify="space-between"

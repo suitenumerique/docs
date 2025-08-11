@@ -10,6 +10,7 @@ import { useRouter } from 'next/router';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Box, Text, TextErrors } from '@/components';
+import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 
 import { useRemoveDoc } from '../api/useRemoveDoc';
 import { Doc } from '../types';
@@ -53,11 +54,12 @@ export const ModalRemoveDoc = ({
     <Modal
       isOpen
       closeOnClickOutside
+      hideCloseButton
       onClose={() => onClose()}
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={t('Close the delete modal')}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -80,15 +82,26 @@ export const ModalRemoveDoc = ({
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text
-          $size="h6"
-          as="h6"
-          $margin={{ all: '0' }}
-          $align="flex-start"
-          $variation="1000"
+        <Box
+          $direction="row"
+          $justify="space-between"
+          $align="center"
+          $width="100%"
         >
-          {t('Delete a doc')}
-        </Text>
+          <Text
+            $size="h6"
+            as="h6"
+            $margin={{ all: '0' }}
+            $align="flex-start"
+            $variation="1000"
+          >
+            {t('Delete a doc')}
+          </Text>
+          <ButtonCloseModal
+            aria-label={t('Close the delete modal')}
+            onClick={() => onClose()}
+          />
+        </Box>
       }
     >
       <Box

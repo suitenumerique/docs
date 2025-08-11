@@ -1,4 +1,4 @@
-export * from './AlertModal';
+export * from './modal/AlertModal';
 export * from './Box';
 export * from './BoxButton';
 export * from './Card';
@@ -9,7 +9,7 @@ export * from './Icon';
 export * from './InfiniteScroll';
 export * from './Link';
 export * from './Loading';
-export * from './SideModal';
+export * from './modal/SideModal';
 export * from './separators';
 export * from './Text';
 export * from './TextErrors';
