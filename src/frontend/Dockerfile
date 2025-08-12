@@ -11,12 +11,14 @@ COPY ./src/frontend/package.json ./package.json
 COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/apps/impress/package.json ./apps/impress/package.json
 COPY ./src/frontend/packages/eslint-config-impress/package.json ./packages/eslint-config-impress/package.json
+COPY ./src/frontend/packages/common/package.json ./packages/common/package.json
 
 RUN yarn install --frozen-lockfile
 
 COPY .dockerignore ./.dockerignore
 COPY ./src/frontend/.prettierrc.js ./.prettierrc.js
 COPY ./src/frontend/packages/eslint-config-impress ./packages/eslint-config-impress
+COPY ./src/frontend/packages/common ./packages/common
 COPY ./src/frontend/apps/impress ./apps/impress
 
 ### ---- Front-end builder image ----

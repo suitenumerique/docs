@@ -8,6 +8,7 @@ const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 const nextConfig = {
   output: 'export',
   trailingSlash: true,
+  transpilePackages: ['package-docs'],
   images: {
     unoptimized: true,
   },
