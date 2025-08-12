@@ -17,9 +17,10 @@ import {
 } from '@/features/docs/doc-management';
 import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
 import { useActionableMode } from '@/features/docs/doc-tree/hooks/useActionableMode';
-import { useTreeItemKeyboardActivate } from '@/features/docs/doc-tree/hooks/useTreeItemKeyboardActivate';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
+
+import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -88,7 +89,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
-  useTreeItemKeyboardActivate(isActive, handleActivate);
+  useKeyboardActivation(['Enter', ' '], isActive, handleActivate, true);
 
   // prepare the text for the screen reader
   const docTitle = doc.title || untitledDocument;
@@ -163,6 +164,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             e.stopPropagation();
             handleActivate();
           }}
+          tabIndex={-1}
           $width="100%"
           $direction="row"
           $gap={spacingsTokens['xs']}
@@ -170,7 +172,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $minHeight="24px"
           data-testid={`doc-sub-page-item-${doc.id}`}
           aria-label={`${t('Open document')} ${docTitle}`}
-          role="button"
         >
           <Box $width="16px" $height="16px">
             <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
