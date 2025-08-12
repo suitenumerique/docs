@@ -151,7 +151,7 @@ export const DocTreeItemActions = ({
   };
 
   useDropdownFocusManagement({
-    isOpen: isOpen || false,
+    isOpen: !!isOpen,
     docId: doc.id,
     actionsRef,
   });
