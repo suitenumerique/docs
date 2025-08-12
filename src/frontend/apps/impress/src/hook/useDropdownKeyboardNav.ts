@@ -1,9 +1,8 @@
-// src/features/docs/doc-tree/hooks/useDropdownKeyboardNav.ts
 import { RefObject, useEffect } from 'react';
 
 import { DropdownMenuOption } from '@/components/DropdownMenu';
 
-import { useKeyboardActivation } from './useKeyboardActivation';
+import { useKeyboardActivation } from '../features/docs/doc-tree/hooks/useKeyboardActivation';
 
 type UseDropdownKeyboardNavProps = {
   isOpen: boolean;
