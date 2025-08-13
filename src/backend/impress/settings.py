@@ -109,6 +109,9 @@ class Base(Configuration):
     SEARCH_INDEXER_SECRET = values.Value(
         default=None, environ_name="SEARCH_INDEXER_SECRET", environ_prefix=None
     )
+    SEARCH_INDEXER_QUERY_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_QUERY_URL", environ_prefix=None
+    )
 
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
