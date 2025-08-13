@@ -48,19 +48,19 @@ def get_batch_accesses_by_users_and_teams(paths):
 
 
 def get_visited_document_ids_of(user):
+    """
+    Returns the ids of the documents that have a linktrace to the user and NOT owned.
+    It will be use to limit the opensearch responses to the public documents already
+    "visited" by the user.
+    """
     if isinstance(user, AnonymousUser):
         return []
 
-    # TODO : exclude links when user already have a specific access to the doc
-    qs = models.LinkTrace.objects.filter(
-        user=user
-    ).exclude(
+    qs = models.LinkTrace.objects.filter(user=user).exclude(
         document__accesses__user=user,
     )
 
-    return list({
-        str(id) for id in qs.values_list("document_id", flat=True)
-    })
+    return list({str(id) for id in qs.values_list("document_id", flat=True)})
 
 
 class BaseDocumentIndexer(ABC):
@@ -129,13 +129,14 @@ class BaseDocumentIndexer(ABC):
         """
         visited_ids = get_visited_document_ids_of(user)
 
-        response = self.search_query(data={
-            "q": text,
-            "visited": visited_ids,
-            "services": ["docs"],
-        }, token=token)
-
-        print(response)
+        response = self.search_query(
+            data={
+                "q": text,
+                "visited": visited_ids,
+                "services": ["docs"],
+            },
+            token=token,
+        )
 
         return self.format_response(response)
 
@@ -207,7 +208,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
 
         if not url:
             raise RuntimeError(
-                "SEARCH_INDEXER_QUERY_URL must be set in Django settings before indexing."
+                "SEARCH_INDEXER_QUERY_URL must be set in Django settings before search."
             )
 
         try:
@@ -228,9 +229,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         """
         Retrieve documents ids from Find app response and return a queryset.
         """
-        return models.Document.objects.filter(pk__in=[
-            d['_id'] for d in data
-        ])
+        return models.Document.objects.filter(pk__in=[d["_id"] for d in data])
 
     def push(self, data):
         """
