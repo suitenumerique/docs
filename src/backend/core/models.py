@@ -41,8 +41,8 @@ from .choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
-from .validators import sub_validator
 from .tasks.find import trigger_document_indexer
+from .validators import sub_validator
 
 logger = getLogger(__name__)
 
