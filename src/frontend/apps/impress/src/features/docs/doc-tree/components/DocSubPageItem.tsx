@@ -122,9 +122,11 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
       $css={css`
-        background-color: ${isActive
-          ? 'var(--c--theme--colors--greyscale-100)'
-          : 'var(--c--theme--colors--greyscale-000)'};
+        /* Ensure the outline (handled by TreeView) matches the visual area */
+        .c__tree-view--node {
+          padding: ${spacingsTokens['3xs']};
+          border-radius: 4px;
+        }
 
         .light-doc-item-actions {
           display: flex;
@@ -133,35 +135,18 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           right: 0;
           top: 0;
           height: 100%;
-          background: ${isDesktop
-            ? 'var(--c--theme--colors--greyscale-100)'
-            : 'var(--c--theme--colors--greyscale-000)'};
           z-index: 10;
         }
 
-        &:focus-within .light-doc-item-actions {
-          display: flex;
-          opacity: 1;
-          visibility: visible;
-          background: var(--c--theme--colors--greyscale-100);
-        }
-
-        .c__tree-view--node.isSelected {
-          .light-doc-item-actions {
-            background: var(--c--theme--colors--greyscale-100);
-          }
-        }
-
-        &:hover,
-        &:focus-within {
+        .c__tree-view--node:hover,
+        .c__tree-view--node.isFocused {
           background-color: var(--c--theme--colors--greyscale-100);
-          border-radius: 4px;
 
           .light-doc-item-actions {
             display: flex;
             opacity: 1;
             visibility: visible;
-            background: var(--c--theme--colors--greyscale-100);
+            /* background: var(--c--theme--colors--greyscale-100); */
           }
         }
 
