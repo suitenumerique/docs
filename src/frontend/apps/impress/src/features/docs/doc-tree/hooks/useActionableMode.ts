@@ -2,6 +2,8 @@ import { TreeDataItem } from '@gouvfr-lasuite/ui-kit';
 import { useEffect, useRef } from 'react';
 import type { NodeRendererProps } from 'react-arborist';
 
+import { SELECTORS } from '../dom-selectors';
+
 type FocusableNode<T> = NodeRendererProps<TreeDataItem<T>>['node'] & {
   isFocused?: boolean;
   focus?: () => void;
@@ -19,17 +21,13 @@ export const useActionableMode = <T>(
   const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const modalOpen = document.querySelector(
-      '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
-    );
+    const modalOpen = document.querySelector(SELECTORS.MODAL);
     if (!node?.isFocused || modalOpen) {
       return;
     }
 
     const toActions = (e: KeyboardEvent) => {
-      const modalOpen = document.querySelector(
-        '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
-      );
+      const modalOpen = document.querySelector(SELECTORS.MODAL);
       if (modalOpen) {
         return;
       }
@@ -46,7 +44,7 @@ export const useActionableMode = <T>(
         e.preventDefault();
 
         const focusables = actionsRef.current?.querySelectorAll<HTMLElement>(
-          'button, [role="button"], a[href], input, [tabindex]:not([tabindex="-1"])',
+          SELECTORS.FOCUSABLE,
         );
 
         const first = focusables?.[0];
@@ -67,9 +65,7 @@ export const useActionableMode = <T>(
       return;
     }
 
-    const modal = document.querySelector(
-      '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
-    );
+    const modal = document.querySelector(SELECTORS.MODAL);
     if (modal) {
       return;
     }
@@ -84,7 +80,7 @@ export const useActionableMode = <T>(
       e.stopPropagation();
 
       const focusables = actionsRef.current?.querySelectorAll<HTMLElement>(
-        'button, [role="button"], a[href], input, [tabindex]:not([tabindex="-1"])',
+        SELECTORS.FOCUSABLE,
       );
 
       if (!focusables || focusables.length === 0) {

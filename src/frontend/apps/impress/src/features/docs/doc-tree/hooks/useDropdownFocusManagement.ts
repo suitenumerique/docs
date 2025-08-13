@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 
+import { SELECTORS } from '../dom-selectors';
+
 interface UseDropdownFocusManagementProps {
   isOpen: boolean;
   docId: string;
@@ -20,12 +22,12 @@ export const useDropdownFocusManagement = ({
     const timer = setTimeout(() => {
       // Try to find menu in actions container first
       const menuElement = actionsRef?.current
-        ?.closest('.--docs--doc-tree-item-actions')
-        ?.querySelector('[role="menu"]');
+        ?.closest(SELECTORS.ACTIONS_CONTAINER)
+        ?.querySelector(SELECTORS.ROLE_MENU);
 
       if (menuElement) {
         const firstMenuItem = menuElement.querySelector<HTMLElement>(
-          '[role="menuitem"], button, [tabindex]:not([tabindex="-1"])',
+          SELECTORS.ROLE_MENUITEM_OR_BUTTON,
         );
         if (firstMenuItem) {
           firstMenuItem.focus();
@@ -34,11 +36,11 @@ export const useDropdownFocusManagement = ({
       }
 
       // Fallback: find any menu in document
-      const allMenus = document.querySelectorAll('[role="menu"]');
+      const allMenus = document.querySelectorAll(SELECTORS.ROLE_MENU);
       const lastMenu = allMenus[allMenus.length - 1];
       if (lastMenu) {
         const firstMenuItem = lastMenu.querySelector<HTMLElement>(
-          '[role="menuitem"], button, [tabindex]:not([tabindex="-1"])',
+          SELECTORS.ROLE_MENUITEM_OR_BUTTON,
         );
         if (firstMenuItem) {
           firstMenuItem.focus();
@@ -56,30 +58,30 @@ export const useDropdownFocusManagement = ({
     }
 
     const timer = setTimeout(() => {
-      const modal = document.querySelector(
-        '[role="dialog"], .c__modal, [data-modal], .c__modal__overlay, .ReactModal_Content',
-      );
+      const modal = document.querySelector(SELECTORS.MODAL);
       if (modal) {
         return;
       }
 
       // Only handle focus return if no modal is open
-      let subPageItem = actionsRef?.current?.closest('.--docs-sub-page-item');
+      let subPageItem = actionsRef?.current?.closest(
+        SELECTORS.DOC_SUB_PAGE_ITEM,
+      );
 
       // If not found, try to find by data-testid
       if (!subPageItem) {
         const testIdElement = document.querySelector(
-          `[data-testid="doc-sub-page-item-${docId}"]`,
+          `[data-testid="${SELECTORS.DATA_TESTID_DOC_SUB_PAGE_ITEM}${docId}"]`,
         );
         subPageItem =
-          testIdElement?.closest('.--docs-sub-page-item') ||
-          testIdElement?.parentElement?.closest('.--docs-sub-page-item');
+          testIdElement?.closest(SELECTORS.DOC_SUB_PAGE_ITEM) ||
+          testIdElement?.parentElement?.closest(SELECTORS.DOC_SUB_PAGE_ITEM);
       }
 
       // Focus the sub-document if found
       if (subPageItem) {
         const focusableElement = subPageItem.querySelector<HTMLElement>(
-          '[data-testid^="doc-sub-page-item-"]',
+          SELECTORS.DATA_TESTID_DOC_SUB_PAGE_ITEM_PREFIX,
         );
 
         if (focusableElement) {

@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 
+import { SELECTORS } from '../dom-selectors';
+
 export const useKeyboardActivation = (
   keys: string[],
   enabled: boolean,
@@ -12,7 +14,7 @@ export const useKeyboardActivation = (
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-      const modal = document.querySelector('.c__modal__scroller');
+      const modal = document.querySelector(SELECTORS.MODAL_SCROLLER);
 
       if (modal) {
         e.stopPropagation();
