@@ -21,7 +21,7 @@ def test_index():
 
     with transaction.atomic():
         doc = factories.DocumentFactory()
-        empty_doc = factories.DocumentFactory(title=None, content='')
+        empty_doc = factories.DocumentFactory(title=None, content="")
         no_title_doc = factories.DocumentFactory(title=None)
 
         factories.UserDocumentAccessFactory(document=doc, user=user)
@@ -43,7 +43,10 @@ def test_index():
         push_call_args = [call.args[0] for call in mock_push.call_args_list]
 
         assert len(push_call_args) == 1  # called once but with a batch of docs
-        assert sorted(push_call_args[0], key=sortkey) == sorted([
-            indexer.serialize_document(doc, accesses),
-            indexer.serialize_document(no_title_doc, accesses),
-        ], key=sortkey)
+        assert sorted(push_call_args[0], key=sortkey) == sorted(
+            [
+                indexer.serialize_document(doc, accesses),
+                indexer.serialize_document(no_title_doc, accesses),
+            ],
+            key=sortkey,
+        )
