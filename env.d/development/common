@@ -49,6 +49,11 @@ LOGOUT_REDIRECT_URL=http://localhost:3000
 OIDC_REDIRECT_ALLOWED_HOSTS=["http://localhost:8083", "http://localhost:3000"]
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
+# Store OIDC tokens in the session
+OIDC_STORE_ACCESS_TOKEN = True  # Store the access token in the session
+OIDC_STORE_REFRESH_TOKEN = True  # Store the encrypted refresh token in the session
+OIDC_STORE_REFRESH_TOKEN_KEY = AnExampleKeyForDevPurposeOnly
+
 # AI
 AI_FEATURE_ENABLED=true
 AI_BASE_URL=https://openaiendpoint.com

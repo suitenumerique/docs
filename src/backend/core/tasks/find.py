@@ -86,7 +86,8 @@ def trigger_document_indexer(document, on_commit=False):
 
         logger.info(
             "Add task for document %s indexation in %.2f seconds",
-            document.pk, countdown
+            document.pk,
+            countdown,
         )
 
         # Each time this method is called during the countdown, we increment the
