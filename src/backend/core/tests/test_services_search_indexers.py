@@ -1,11 +1,17 @@
 """Tests for Documents search indexers"""
 
+from functools import partial
 from unittest.mock import patch
+
+from django.contrib.auth.models import AnonymousUser
 
 import pytest
 
-from core import factories, utils
-from core.services.search_indexers import FindDocumentIndexer
+from core import factories, models, utils
+from core.services.search_indexers import (
+    FindDocumentIndexer,
+    get_visited_document_ids_of,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -187,7 +193,6 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
 
     FindDocumentIndexer().index()
 
-    seen_doc_ids = set()
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 4
     assert results[str(great_grand_parent.id)]["reach"] == "restricted"
@@ -207,7 +212,6 @@ def test_services_search_indexers_ancestors_users(mock_push):
 
     FindDocumentIndexer().index()
 
-    seen_doc_ids = set()
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
     assert results[str(grand_parent.id)]["users"] == [str(user_gp.sub)]
@@ -228,7 +232,6 @@ def test_services_search_indexers_ancestors_teams(mock_push):
 
     FindDocumentIndexer().index()
 
-    seen_doc_ids = set()
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
     assert results[str(grand_parent.id)]["groups"] == ["team_gp"]
@@ -258,3 +261,85 @@ def test_push_uses_correct_url_and_data(mock_post, settings):
     assert args[0] == settings.SEARCH_INDEXER_URL
     assert kwargs.get("json") == sample_data
     assert kwargs.get("timeout") == 10
+
+
+def test_get_visited_document_ids_of():
+    """
+    get_visited_document_ids_of() returns the ids of the documents viewed
+    by the user BUT without specific access configuration (like public ones)
+    """
+    user = factories.UserFactory()
+    other = factories.UserFactory()
+    anonymous = AnonymousUser()
+
+    assert not get_visited_document_ids_of(anonymous)
+    assert not get_visited_document_ids_of(user)
+
+    doc1, doc2, _ = factories.DocumentFactory.create_batch(3)
+
+    create_link = partial(models.LinkTrace.objects.create, user=user, is_masked=False)
+
+    create_link(document=doc1)
+    create_link(document=doc2)
+
+    # The third document is not visited
+    assert sorted(get_visited_document_ids_of(user)) == sorted(
+        [str(doc1.pk), str(doc2.pk)]
+    )
+
+    factories.UserDocumentAccessFactory(user=other, document=doc1)
+    factories.UserDocumentAccessFactory(user=user, document=doc2)
+
+    # The second document have an access for the user
+    assert get_visited_document_ids_of(user) == [str(doc1.pk)]
+
+
+@patch("requests.post")
+def test_services_search_indexers_search(mock_post, settings):
+    """
+    search() should call requests.post to SEARCH_INDEXER_QUERY_URL with the
+    document ids from linktraces.
+    """
+    user = factories.UserFactory()
+    indexer = FindDocumentIndexer()
+
+    mock_response = mock_post.return_value
+    mock_response.raise_for_status.return_value = None  # No error
+
+    doc1, doc2, _ = factories.DocumentFactory.create_batch(3)
+
+    create_link = partial(models.LinkTrace.objects.create, user=user, is_masked=False)
+
+    create_link(document=doc1)
+    create_link(document=doc2)
+
+    indexer.search("alpha", user=user, token="mytoken")
+
+    args, kwargs = mock_post.call_args
+
+    assert args[0] == settings.SEARCH_INDEXER_QUERY_URL
+
+    query_data = kwargs.get("json")
+    assert query_data["q"] == "alpha"
+    assert sorted(query_data["visited"]) == sorted([str(doc1.pk), str(doc2.pk)])
+    assert query_data["services"] == ["docs"]
+
+    assert kwargs.get("headers") == {"Authorization": "Bearer mytoken"}
+    assert kwargs.get("timeout") == 10
+
+
+def test_search_query_raises_error_if_search_endpoint_is_none(settings):
+    """
+    Indexer should raise RuntimeError if SEARCH_INDEXER_QUERY_URL is None or empty.
+    """
+    settings.SEARCH_INDEXER_QUERY_URL = None
+    indexer = FindDocumentIndexer()
+    user = factories.UserFactory()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        indexer.search("alpha", user=user, token="mytoken")
+
+    assert (
+        "SEARCH_INDEXER_QUERY_URL must be set in Django settings before search."
+        in str(exc_info.value)
+    )
