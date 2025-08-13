@@ -19,6 +19,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -29,6 +30,7 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -37,6 +39,7 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.search_indexers import FindDocumentIndexer
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
@@ -46,6 +49,12 @@ from .filters import DocumentFilter, ListDocumentFilter
 logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-ancestors
+
+
+class ServiceUnavailable(drf.exceptions.APIException):
+    status_code = 503
+    default_detail = 'Service unavailable.'
+    default_code = 'service_unavailable'
 
 
 class NestedGenericViewSet(viewsets.GenericViewSet):
@@ -367,6 +376,7 @@ class DocumentViewSet(
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
+    search_serializer_class = serializers.ListDocumentSerializer
 
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
@@ -980,10 +990,32 @@ class DocumentViewSet(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
 
-    # TODO
-    # @drf.decorators.action(detail=False, methods=["get"])
-    # def search(self, request, *args, **kwargs):
-    #    index.search()
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    # TODO : Enable auto refresh @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
+        access_token = request.session.get("oidc_access_token")
+
+        serializer = serializers.FindDocumentSerializer(
+            data=request.query_params
+        )
+        serializer.is_valid(raise_exception=True)
+
+        indexer = FindDocumentIndexer()
+        try:
+            queryset = indexer.search(
+                text=serializer.validated_data.get("q", ""),
+                user=request.user,
+                token=access_token
+            )
+        except RuntimeError as err:
+            raise ServiceUnavailable()
+
+        return self.get_response_for_queryset(
+            queryset,
+            context={
+                "request": request,
+            },
+        )
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):

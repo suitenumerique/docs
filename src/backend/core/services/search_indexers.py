@@ -135,8 +135,6 @@ class BaseDocumentIndexer(ABC):
             "services": ["docs"],
         }, token=token)
 
-        print(response)
-
         return self.format_response(response)
 
     @abstractmethod
@@ -207,7 +205,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
 
         if not url:
             raise RuntimeError(
-                "SEARCH_INDEXER_QUERY_URL must be set in Django settings before indexing."
+                "SEARCH_INDEXER_QUERY_URL must be set in Django settings before search."
             )
 
         try:
