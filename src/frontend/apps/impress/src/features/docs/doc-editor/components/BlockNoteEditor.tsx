@@ -11,6 +11,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { createDividerBlock } from 'package-docs';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
@@ -33,7 +34,7 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { CalloutBlock, DividerBlock } from './custom-blocks';
+import { CalloutBlock } from './custom-blocks';
 import {
   InterlinkingLinkInlineContent,
   InterlinkingSearchInlineContent,
@@ -49,7 +50,9 @@ const baseBlockNoteSchema = withPageBreak(
     blockSpecs: {
       ...defaultBlockSpecs,
       callout: CalloutBlock,
-      divider: DividerBlock,
+      divider: createDividerBlock({
+        color: 'var(--c--theme--colors--greyscale-300)',
+      }),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,

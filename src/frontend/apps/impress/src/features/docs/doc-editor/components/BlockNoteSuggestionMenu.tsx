@@ -6,8 +6,11 @@ import {
   useBlockNoteEditor,
   useDictionary,
 } from '@blocknote/react';
+import { getDividerReactSlashMenuItems } from 'package-docs';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Icon } from '@/components';
 
 import {
   DocsBlockSchema,
@@ -15,10 +18,7 @@ import {
   DocsStyleSchema,
 } from '../types';
 
-import {
-  getCalloutReactSlashMenuItems,
-  getDividerReactSlashMenuItems,
-} from './custom-blocks';
+import { getCalloutReactSlashMenuItems } from './custom-blocks';
 import { useGetInterlinkingMenuItems } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
@@ -55,7 +55,12 @@ export const BlockNoteSuggestionMenu = () => {
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getMultiColumnSlashMenuItems?.(editor) || [],
             getPageBreakReactSlashMenuItems(editor),
-            getDividerReactSlashMenuItems(editor, t, basicBlocksName),
+            getDividerReactSlashMenuItems(
+              editor,
+              t,
+              basicBlocksName,
+              <Icon iconName="remove" $size="18px" />,
+            ),
           ),
           query,
         ),

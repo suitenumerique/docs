@@ -47,6 +47,7 @@
     "lodash": "4.17.21",
     "luxon": "3.7.1",
     "next": "15.4.6",
+    "package-docs": "*",
     "posthog-js": "1.258.6",
     "react": "*",
     "react-aria-components": "1.11.0",
