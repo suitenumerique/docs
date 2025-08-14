@@ -20,7 +20,9 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.db import models, transaction
+from django.db.models import signals
 from django.db.models.functions import Left, Length
+from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -39,6 +41,7 @@ from .choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
+from .tasks.find import trigger_document_indexer
 
 logger = getLogger(__name__)
 
@@ -439,32 +442,35 @@ class Document(MP_Node, BaseModel):
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
         super().save(*args, **kwargs)
-
         if self._content:
-            file_key = self.file_key
-            bytes_content = self._content.encode("utf-8")
+            self.save_content(self._content)
 
-            # Attempt to directly check if the object exists using the storage client.
-            try:
-                response = default_storage.connection.meta.client.head_object(
-                    Bucket=default_storage.bucket_name, Key=file_key
-                )
-            except ClientError as excpt:
-                # If the error is a 404, the object doesn't exist, so we should create it.
-                if excpt.response["Error"]["Code"] == "404":
-                    has_changed = True
-                else:
-                    raise
+    def save_content(self, content):
+        """Save content to object storage."""
+
+        file_key = self.file_key
+        bytes_content = content.encode("utf-8")
+
+        # Attempt to directly check if the object exists using the storage client.
+        try:
+            response = default_storage.connection.meta.client.head_object(
+                Bucket=default_storage.bucket_name, Key=file_key
+            )
+        except ClientError as excpt:
+            # If the error is a 404, the object doesn't exist, so we should create it.
+            if excpt.response["Error"]["Code"] == "404":
+                has_changed = True
             else:
-                # Compare the existing ETag with the MD5 hash of the new content.
-                has_changed = (
-                    response["ETag"].strip('"')
-                    != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
-                )
+                raise
+        else:
+            # Compare the existing ETag with the MD5 hash of the new content.
+            has_changed = (
+                response["ETag"].strip('"') != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
+            )
 
-            if has_changed:
-                content_file = ContentFile(bytes_content)
-                default_storage.save(file_key, content_file)
+        if has_changed:
+            content_file = ContentFile(bytes_content)
+            default_storage.save(file_key, content_file)
 
     def is_leaf(self):
         """
@@ -946,6 +952,16 @@ class Document(MP_Node, BaseModel):
             )
 
 
+@receiver(signals.post_save, sender=Document)
+def document_post_save(sender, instance, **kwargs):
+    """
+    Asynchronous call to the document indexer at the end of the transaction.
+    Note : Within the transaction we can have an empty content and a serialization
+    error.
+    """
+    trigger_document_indexer(instance, on_commit=True)
+
+
 class LinkTrace(BaseModel):
     """
     Relation model to trace accesses to a document via a link by a logged-in user.
@@ -1169,6 +1185,15 @@ class DocumentAccess(BaseAccess):
             "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
         }
+
+
+@receiver(signals.post_save, sender=DocumentAccess)
+def document_access_post_save(sender, instance, created, **kwargs):
+    """
+    Asynchronous call to the document indexer at the end of the transaction.
+    """
+    if not created:
+        trigger_document_indexer(instance.document, on_commit=True)
 
 
 class DocumentAskForAccess(BaseModel):
