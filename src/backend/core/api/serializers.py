@@ -486,12 +486,76 @@ class LinkDocumentSerializer(serializers.ModelSerializer):
     We expose it separately from document in order to simplify and secure access control.
     """
 
+    link_reach = serializers.ChoiceField(
+        choices=models.LinkReachChoices.choices, required=True
+    )
+
     class Meta:
         model = models.Document
         fields = [
             "link_role",
             "link_reach",
         ]
+
+    def validate(self, attrs):
+        """Validate that link_role and link_reach are compatible using get_select_options."""
+        link_reach = attrs.get("link_reach")
+        link_role = attrs.get("link_role")
+
+        if not link_reach:
+            raise serializers.ValidationError(
+                {"link_reach": _("This field is required.")}
+            )
+
+        # Get available options based on ancestors' link definition
+        available_options = models.LinkReachChoices.get_select_options(
+            **self.instance.ancestors_link_definition
+        )
+
+        # Validate link_reach is allowed
+        if link_reach not in available_options:
+            msg = _(
+                "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
+            )
+            raise serializers.ValidationError(
+                {"link_reach": msg % {"link_reach": link_reach}}
+            )
+
+        # Validate link_role is compatible with link_reach
+        allowed_roles = available_options[link_reach]
+
+        if link_reach == models.LinkReachChoices.RESTRICTED:
+            # For restricted reach, link_role is ignored but
+            # we shouldn't allow meaningful roles to be set
+            if link_role is not None and link_role in [
+                models.LinkRoleChoices.READER,
+                models.LinkRoleChoices.EDITOR,
+            ]:
+                msg = _(
+                    "Cannot set link_role when link_reach is 'restricted'. "
+                    "Link role must be null for restricted reach."
+                )
+                raise serializers.ValidationError({"link_role": msg})
+        # For non-restricted reach, validate link_role is in allowed roles
+        elif link_role is not None and link_role not in allowed_roles:
+            msg = _(
+                "Link role '%(link_role)s' is not allowed for link reach '%(link_reach)s'. "
+                "Allowed roles: %(allowed_roles)s"
+            )
+            raise serializers.ValidationError(
+                {
+                    "link_role": msg
+                    % {
+                        "link_role": link_role,
+                        "link_reach": link_reach,
+                        "allowed_roles": ", ".join(allowed_roles)
+                        if allowed_roles
+                        else "none",
+                    }
+                }
+            )
+
+        return attrs
 
 
 class DocumentDuplicationSerializer(serializers.Serializer):
