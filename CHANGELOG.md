@@ -38,6 +38,7 @@ and this project adheres to
 - 🐛(backend) allow editor to delete subpages #1296
 - 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
 - 🐛(frontend) fix display bug on homepage #1332
+- 🐛link role update #1287
 
 ## [3.5.0] - 2025-07-31
 

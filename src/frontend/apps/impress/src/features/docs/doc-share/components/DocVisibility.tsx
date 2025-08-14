@@ -17,6 +17,7 @@ import {
   LinkReach,
   LinkRole,
   getDocLinkReach,
+  getDocLinkRole,
   useDocUtils,
   useUpdateDocLink,
 } from '@/docs/doc-management';
@@ -36,7 +37,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const canManage = doc.abilities.accesses_manage;
   const docLinkReach = getDocLinkReach(doc);
-  const docLinkRole = doc.computed_link_role ?? LinkRole.READER;
+  const docLinkRole = getDocLinkRole(doc);
   const { isDesynchronized } = useDocUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
@@ -85,7 +86,12 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       const isDisabled = !options.includes(key);
       return {
         label: linkModeTranslations[key],
-        callback: () => updateDocLink({ id: doc.id, link_role: key }),
+        callback: () =>
+          updateDocLink({
+            id: doc.id,
+            link_role: key,
+            link_reach: docLinkReach,
+          }),
         isSelected: docLinkRole === key,
         disabled: isDisabled,
       };
