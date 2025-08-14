@@ -23,7 +23,6 @@
         "@hocuspocus/provider",
         "@hocuspocus/server",
         "docx",
-        "eslint",
         "fetch-mock",
         "node",
         "node-fetch",
