@@ -18,7 +18,7 @@
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-playwright": "2.2.2",
     "eslint-plugin-prettier": "5.5.4",
-    "eslint-plugin-testing-library": "7.6.3",
+    "eslint-plugin-testing-library": "7.6.6",
     "prettier": "3.6.2"
   }
 }
