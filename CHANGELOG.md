@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) use title first emoji as doc icon in tree
+
 ### Changed
 
 - ⚡️(frontend) improve accessibility:
