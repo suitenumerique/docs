@@ -7,6 +7,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) add pdf block to the editor #1293
+
 ### Changed
 
 - ♻️(frontend) replace Arial font-family with token font #1411

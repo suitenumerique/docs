@@ -840,4 +840,38 @@ test.describe('Doc Editor', () => {
     ).toBeInViewport();
     await expect(editor.getByText('Hello Child 14')).not.toBeInViewport();
   });
+
+  test('it embeds PDF', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-toolbar', browserName, 1);
+
+    await openSuggestionMenu({ page });
+    await page.getByText('Embed a PDF file').click();
+
+    const pdfBlock = page.locator('div[data-content-type="pdf"]').first();
+
+    await expect(pdfBlock).toBeVisible();
+
+    await page.getByText('Add PDF').click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload file').click();
+    const fileChooser = await fileChooserPromise;
+
+    console.log(path.join(__dirname, 'assets/test-pdf.pdf'));
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test-pdf.pdf'));
+
+    // Wait for the media-check to be processed
+    await page.waitForTimeout(1000);
+
+    const pdfEmbed = page
+      .locator('.--docs--editor-container embed.bn-visual-media')
+      .first();
+
+    // Check src of pdf
+    expect(await pdfEmbed.getAttribute('src')).toMatch(
+      /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.pdf/,
+    );
+
+    await expect(pdfEmbed).toHaveAttribute('type', 'application/pdf');
+    await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
+  });
 });
