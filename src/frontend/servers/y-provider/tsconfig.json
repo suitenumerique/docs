@@ -21,6 +21,6 @@
     "resolveFullPaths": true,
     "verbose": false
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "**/*.mjs"],
   "exclude": ["node_modules"]
 }

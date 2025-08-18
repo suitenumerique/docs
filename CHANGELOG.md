@@ -10,6 +10,7 @@ and this project adheres to
 
 ### Changed
 
+- ⬆️ Bump eslint to V9 #1071
 - ⚡️(frontend) improve accessibility:
   - #1248
   - #1235
