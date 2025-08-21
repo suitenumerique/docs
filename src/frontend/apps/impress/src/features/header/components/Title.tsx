@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Box, Text } from '@/components/';
 import { useCunninghamTheme } from '@/cunningham';
 
-export const Title = () => {
+type TitleSemanticsProps = {
+  headingLevel?: 'h1' | 'h2' | 'h3';
+};
+
+export const Title = ({ headingLevel = 'h2' }: TitleSemanticsProps) => {
   const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
@@ -16,7 +20,7 @@ export const Title = () => {
     >
       <Text
         $margin="none"
-        as="h2"
+        as={headingLevel}
         $color={colorsTokens['primary-text']}
         $zIndex={1}
         $size="1.375rem"

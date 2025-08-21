@@ -1,7 +1,6 @@
 import { Box, Icon } from '@/components';
 import { QuickSearchItemContent } from '@/components/quick-search/';
-import { Doc } from '@/docs/doc-management';
-import { SimpleDocItem } from '@/docs/docs-grid/';
+import { Doc, SimpleDocItem } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 type DocSearchItemProps = {

@@ -5,7 +5,7 @@ import * as Y from 'yjs';
 
 import { AppWrapper } from '@/tests/utils';
 
-import useSaveDoc from '../useSaveDoc';
+import { useSaveDoc } from '../useSaveDoc';
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),

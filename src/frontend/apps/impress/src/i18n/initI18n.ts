@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
+import { fallbackLng } from './config';
 import resources from './translations.json';
 
 // Add an initialization guard
@@ -16,7 +17,7 @@ if (!isInitialized && !i18next.isInitialized) {
     .use(initReactI18next)
     .init({
       resources,
-      fallbackLng: 'en',
+      fallbackLng,
       debug: false,
       detection: {
         order: ['cookie', 'navigator'],
@@ -34,6 +35,17 @@ if (!isInitialized && !i18next.isInitialized) {
       lowerCaseLng: true,
       nsSeparator: false,
       keySeparator: false,
+    })
+    .then(() => {
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute(
+          'lang',
+          i18next.language || fallbackLng,
+        );
+        i18next.on('languageChanged', (lang) => {
+          document.documentElement.setAttribute('lang', lang);
+        });
+      }
     })
     .catch((e) => console.error('i18n initialization failed:', e));
 }

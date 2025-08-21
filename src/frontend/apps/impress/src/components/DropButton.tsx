@@ -33,6 +33,13 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   font-size: 0.938rem;
   padding: 0;
   ${({ $css }) => $css};
+
+  &:focus-visible {
+    outline: 2px solid var(--c--theme--colors--primary-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+    transition: none;
+  }
 `;
 
 export interface DropButtonProps {
@@ -41,6 +48,7 @@ export interface DropButtonProps {
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   label?: string;
+  testId?: string;
 }
 
 export const DropButton = ({
@@ -50,6 +58,7 @@ export const DropButton = ({
   onOpenChange,
   children,
   label,
+  testId,
 }: PropsWithChildren<DropButtonProps>) => {
   const { themeTokens } = useCunninghamTheme();
   const font = themeTokens['font']?.['families']['base'];
@@ -72,6 +81,7 @@ export const DropButton = ({
         ref={triggerRef}
         onPress={() => onOpenChangeHandler(true)}
         aria-label={label}
+        data-testid={testId}
         $css={css`
           font-family: ${font};
           ${buttonCss};

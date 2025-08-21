@@ -43,7 +43,9 @@ test.describe('Config', () => {
       path.join(__dirname, 'assets/logo-suite-numerique.png'),
     );
 
-    const image = page.getByRole('img', { name: 'logo-suite-numerique.png' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 

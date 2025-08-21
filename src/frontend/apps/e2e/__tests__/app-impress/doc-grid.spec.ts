@@ -119,7 +119,7 @@ test.describe('Document grid item options', () => {
     await page.getByText('push_pin').click();
 
     // Check is pinned
-    await expect(row.getByLabel('Pin document icon')).toBeVisible();
+    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeVisible();
     const leftPanelFavorites = page.getByTestId('left-panel-favorites');
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
@@ -128,7 +128,7 @@ test.describe('Document grid item options', () => {
     await page.getByText('Unpin').click();
 
     // Check is unpinned
-    await expect(row.getByLabel('Pin document icon')).toBeHidden();
+    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
@@ -227,18 +227,18 @@ test.describe('Documents filters', () => {
 
     // Initial state
     await expect(allDocs).toBeVisible();
-    await expect(allDocs).toHaveAttribute('aria-selected', 'true');
+    await expect(allDocs).toHaveAttribute('aria-current', 'page');
 
     await expect(myDocs).toBeVisible();
     await expect(myDocs).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(myDocs).toHaveAttribute('aria-selected', 'false');
+    await expect(myDocs).not.toHaveAttribute('aria-current');
 
     await expect(sharedWithMe).toBeVisible();
     await expect(sharedWithMe).toHaveCSS(
       'background-color',
       'rgba(0, 0, 0, 0)',
     );
-    await expect(sharedWithMe).toHaveAttribute('aria-selected', 'false');
+    await expect(sharedWithMe).not.toHaveAttribute('aria-current');
 
     await allDocs.click();
 

@@ -9,7 +9,10 @@ import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
-import { DocGridContentList } from './DocGridContentList';
+import {
+  DocGridContentList,
+  DraggableDocGridContentList,
+} from './DocGridContentList';
 import { DocsGridLoader } from './DocsGridLoader';
 
 type DocsGridProps = {
@@ -118,7 +121,11 @@ export const DocsGrid = ({
               )}
             </Box>
 
-            <DocGridContentList docs={docs} />
+            {isDesktop ? (
+              <DraggableDocGridContentList docs={docs} />
+            ) : (
+              <DocGridContentList docs={docs} />
+            )}
 
             {hasNextPage && !loading && (
               <InView

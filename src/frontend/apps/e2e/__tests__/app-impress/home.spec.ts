@@ -15,10 +15,13 @@ test.describe('Home page', () => {
     const header = page.locator('header').first();
     const footer = page.locator('footer').first();
     await expect(header).toBeVisible();
-    await expect(
-      header.getByRole('button', { name: /Language/ }),
-    ).toBeVisible();
-    await expect(header.getByRole('img', { name: 'Docs logo' })).toBeVisible();
+
+    const languageButton = page.getByRole('button', {
+      name: /Language|Select language/,
+    });
+    await expect(languageButton).toBeVisible();
+
+    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
     await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
     // Check the titles
@@ -65,20 +68,31 @@ test.describe('Home page', () => {
 
     await page.goto('/docs/');
 
+    // Wait for the page to be fully loaded and responsive store to be initialized
+    await page.waitForLoadState('domcontentloaded');
+
+    // Wait a bit more for the responsive store to be initialized
+    await page.waitForTimeout(500);
+
     // Check header content
     const header = page.locator('header').first();
     const footer = page.locator('footer').first();
     await expect(header).toBeVisible();
-    await expect(
-      header.getByRole('button', { name: /Language/ }),
-    ).toBeVisible();
+
+    // Check for language picker - it should be visible on desktop
+    // Use a more flexible selector that works with both Header and HomeHeader
+    const languageButton = page.getByRole('button', {
+      name: /Language|Select language/,
+    });
+    await expect(languageButton).toBeVisible();
+
     await expect(
       header.getByRole('button', { name: 'Les services de La Suite numé' }),
     ).toBeVisible();
     await expect(
       header.getByRole('img', { name: 'Gouvernement Logo' }),
     ).toBeVisible();
-    await expect(header.getByRole('img', { name: 'Docs logo' })).toBeVisible();
+    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
     await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
     // Check the titles

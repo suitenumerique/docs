@@ -1,21 +1,19 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { t } from 'i18next';
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
-
-import { Doc } from '../../doc-management';
-import { useInfiniteSubDocs } from '../../doc-management/api/useSubDocs';
+import { Doc, useInfiniteSubDocs } from '@/docs/doc-management';
 
 import { DocSearchFiltersValues } from './DocSearchFilters';
-import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchSubPageContentProps = {
   search: string;
   filters: DocSearchFiltersValues;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
+  renderElement: (doc: Doc) => React.ReactNode;
 };
 
 export const DocSearchSubPageContent = ({
@@ -23,6 +21,7 @@ export const DocSearchSubPageContent = ({
   filters,
   onSelect,
   onLoadingChange,
+  renderElement,
 }: DocSearchSubPageContentProps) => {
   const treeContext = useTreeContext<Doc>();
 
@@ -33,22 +32,46 @@ export const DocSearchSubPageContent = ({
     isLoading,
     fetchNextPage: subDocsFetchNextPage,
     hasNextPage: subDocsHasNextPage,
-  } = useInfiniteSubDocs({
-    page: 1,
-    title: search,
-    ...filters,
-    parent_id: treeContext?.root?.id ?? '',
+  } = useInfiniteSubDocs(
+    {
+      page: 1,
+      title: search,
+      ...filters,
+      parent_id: treeContext?.root?.id ?? '',
+    },
+    {
+      enabled: !!treeContext?.root?.id,
+    },
+  );
+  const [docsData, setDocsData] = useState<QuickSearchData<Doc>>({
+    groupName: '',
+    elements: [],
+    emptyString: '',
   });
 
   const loading = isFetching || isRefetching || isLoading;
 
-  const docsData: QuickSearchData<Doc> = useMemo(() => {
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     const subDocs = subDocsData?.pages.flatMap((page) => page.results) || [];
 
-    return {
-      groupName: subDocs.length > 0 ? t('Select a page') : '',
+    if (treeContext?.root) {
+      const isRootTitleIncludeSearch = treeContext.root?.title
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
+
+      if (isRootTitleIncludeSearch) {
+        subDocs.unshift(treeContext.root);
+      }
+    }
+
+    setDocsData({
+      groupName: subDocs.length > 0 ? t('Select a doc') : '',
       elements: search ? subDocs : [],
-      emptyString: t('No document found'),
+      emptyString: search ? t('No document found') : t('Search by title'),
       endActions: subDocsHasNextPage
         ? [
             {
@@ -56,8 +79,15 @@ export const DocSearchSubPageContent = ({
             },
           ]
         : [],
-    };
-  }, [search, subDocsData, subDocsFetchNextPage, subDocsHasNextPage]);
+    });
+  }, [
+    loading,
+    search,
+    subDocsData?.pages,
+    subDocsFetchNextPage,
+    subDocsHasNextPage,
+    treeContext?.root,
+  ]);
 
   useEffect(() => {
     onLoadingChange?.(loading);
@@ -67,7 +97,7 @@ export const DocSearchSubPageContent = ({
     <QuickSearchGroup
       onSelect={onSelect}
       group={docsData}
-      renderElement={(doc) => <DocSearchItem doc={doc} />}
+      renderElement={renderElement}
     />
   );
 };

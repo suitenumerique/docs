@@ -4,7 +4,14 @@ import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 import pdf from 'pdf-parse';
 
-import { createDoc, verifyDocName } from './utils-common';
+import {
+  TestLanguage,
+  createDoc,
+  randomName,
+  verifyDocName,
+  waitForLanguageSwitch,
+} from './utils-common';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -115,7 +122,9 @@ test.describe('Doc Export', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'test.svg' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -175,7 +184,9 @@ test.describe('Doc Export', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    const image = page.getByRole('img', { name: 'test.svg' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -410,5 +421,140 @@ test.describe('Doc Export', () => {
     expect(pdfData.text).toContain('Column 1');
     expect(pdfData.text).toContain('Column 2');
     expect(pdfData.text).toContain('Column 3');
+  });
+
+  test('it injects the correct language attribute into PDF export', async ({
+    page,
+    browserName,
+  }) => {
+    await waitForLanguageSwitch(page, TestLanguage.French);
+
+    // Wait for the page to be ready after language switch
+    await page.waitForLoadState('domcontentloaded');
+
+    const header = page.locator('header').first();
+    await header.locator('h1').getByText('Docs').click();
+
+    const randomDocFrench = randomName(
+      'doc-language-export-french',
+      browserName,
+      1,
+    )[0];
+
+    await page
+      .getByRole('button', {
+        name: 'Nouveau doc',
+      })
+      .click();
+
+    await page.waitForURL('**/docs/**', {
+      timeout: 10000,
+      waitUntil: 'domcontentloaded',
+    });
+
+    const input = page.getByLabel('doc title input');
+    await expect(input).toBeVisible();
+    await expect(input).toHaveText('');
+    await input.click();
+    await input.fill(randomDocFrench);
+    await input.blur();
+
+    const editor = page.locator('.ProseMirror.bn-editor');
+    await editor.click();
+    await editor.fill('Contenu de test pour export en français');
+
+    await page
+      .getByRole('button', {
+        name: 'download',
+        exact: true,
+      })
+      .click();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);
+    });
+
+    void page
+      .getByRole('button', {
+        name: 'Télécharger',
+        exact: true,
+      })
+      .click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDocFrench}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfString = pdfBuffer.toString('latin1');
+
+    expect(pdfString).toContain('/Lang (fr)');
+  });
+
+  test('it exports the doc with interlinking', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'export-interlinking',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'export-interlink-child',
+    );
+
+    await verifyDocName(page, docChild);
+
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Link a doc').first().click();
+
+    await page
+      .locator(
+        "span[data-inline-content-type='interlinkingSearchInline'] input",
+      )
+      .fill('interlink-child');
+
+    await page
+      .locator('.quick-search-container')
+      .getByText('interlink-child')
+      .click();
+
+    const interlink = page.getByRole('link', {
+      name: 'interlink-child',
+    });
+
+    await expect(interlink).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${docChild}.pdf`);
+    });
+
+    await page
+      .getByRole('button', {
+        name: 'download',
+        exact: true,
+      })
+      .click();
+
+    void page
+      .getByRole('button', {
+        name: 'Download',
+        exact: true,
+      })
+      .click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${docChild}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfData = await pdf(pdfBuffer);
+
+    expect(pdfData.text).toContain('interlink-child'); // This is the pdf text
   });
 });

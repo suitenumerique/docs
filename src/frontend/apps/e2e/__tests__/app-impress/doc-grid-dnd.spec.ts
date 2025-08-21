@@ -1,15 +1,16 @@
 import { expect, test } from '@playwright/test';
 
 import { createDoc, mockedListDocs } from './utils-common';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc grid dnd', () => {
   test('it creates a doc', async ({ page, browserName }) => {
     await page.goto('/');
     const header = page.locator('header').first();
     await createDoc(page, 'Draggable doc', browserName, 1);
-    await header.locator('h2').getByText('Docs').click();
+    await header.locator('h1').getByText('Docs').click();
     await createDoc(page, 'Droppable doc', browserName, 1);
-    await header.locator('h2').getByText('Docs').click();
+    await header.locator('h1').getByText('Docs').click();
 
     const response = await page.waitForResponse(
       (response) =>
@@ -162,6 +163,40 @@ test.describe('Doc grid dnd', () => {
     );
 
     await page.mouse.up();
+  });
+});
+
+test.describe('Doc grid dnd mobile', () => {
+  test.use({ viewport: { width: 500, height: 1200 } });
+
+  test('DND is deactivated on mobile', async ({ page, browserName }) => {
+    await page.goto('/');
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(page.getByTestId('docs-grid')).toBeVisible();
+    await expect(page.getByTestId('grid-loader')).toBeHidden();
+
+    await expect(docsGrid.getByRole('row').first()).toBeVisible();
+    await expect(docsGrid.locator('.--docs--grid-droppable')).toHaveCount(0);
+
+    await createDoc(page, 'Draggable doc mobile', browserName, 1, true);
+
+    await createRootSubPage(
+      page,
+      browserName,
+      'Draggable doc mobile child',
+      true,
+    );
+
+    await page
+      .getByRole('button', { name: 'Open the header menu' })
+      .getByText('menu')
+      .click();
+
+    await expect(page.locator('.--docs-sub-page-item').first()).toHaveAttribute(
+      'draggable',
+      'false',
+    );
   });
 });
 

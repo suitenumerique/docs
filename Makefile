@@ -35,9 +35,13 @@ DB_PORT            = 5432
 
 # -- Docker
 # Get the current user ID to use for docker run and docker exec commands
-DOCKER_UID          = $(shell id -u)
-DOCKER_GID          = $(shell id -g)
-DOCKER_USER         = $(DOCKER_UID):$(DOCKER_GID)
+ifeq ($(OS),Windows_NT)
+DOCKER_USER         := 0:0     # run containers as root on Windows
+else
+DOCKER_UID          := $(shell id -u)
+DOCKER_GID          := $(shell id -g)
+DOCKER_USER         := $(DOCKER_UID):$(DOCKER_GID)
+endif
 COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose
 COMPOSE_E2E         = DOCKER_USER=$(DOCKER_USER) docker compose -f compose.yml -f compose-e2e.yml
 COMPOSE_EXEC        = $(COMPOSE) exec
@@ -48,7 +52,7 @@ COMPOSE_RUN_CROWDIN = $(COMPOSE_RUN) crowdin crowdin
 
 # -- Backend
 MANAGE              = $(COMPOSE_RUN_APP) python manage.py
-MAIL_YARN           = $(COMPOSE_RUN) -w /app/src/mail node yarn
+MAIL_YARN           = $(COMPOSE_RUN) -w //app/src/mail node yarn
 
 # -- Frontend
 PATH_FRONT          = ./src/frontend

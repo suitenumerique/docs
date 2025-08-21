@@ -25,7 +25,7 @@ test.describe('Doc Tree', () => {
       1,
     );
     await verifyDocName(page, titleParent);
-    const addButton = page.getByRole('button', { name: 'New doc' });
+    const addButton = page.getByTestId('new-doc-button');
     const docTree = page.getByTestId('doc-tree');
 
     await expect(addButton).toBeVisible();
@@ -63,7 +63,7 @@ test.describe('Doc Tree', () => {
 
   test('check the reorder of sub pages', async ({ page, browserName }) => {
     await createDoc(page, 'doc-tree-content', browserName, 1);
-    const addButton = page.getByRole('button', { name: 'New doc' });
+    const addButton = page.getByTestId('new-doc-button');
     await expect(addButton).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
@@ -201,7 +201,7 @@ test.describe('Doc Tree', () => {
     ).not.toHaveText(docChild);
 
     const header = page.locator('header').first();
-    await header.locator('h2').getByText('Docs').click();
+    await header.locator('h1').getByText('Docs').click();
     await expect(page.getByText(docChild)).toBeVisible();
   });
 
@@ -259,6 +259,10 @@ test.describe('Doc Tree: Inheritance', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('A child inherit from the parent', async ({ page, browserName }) => {
+    // test.slow() to extend timeout since this scenario chains Keycloak login + redirects,
+    // doc creation/navigation and async doc-tree loading (/documents/:id/tree), which can exceed 30s (especially in CI).
+    test.slow();
+
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
 
@@ -271,7 +275,7 @@ test.describe('Doc Tree: Inheritance', () => {
     await verifyDocName(page, docParent);
 
     await page.getByRole('button', { name: 'Share' }).click();
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
 
     await page
@@ -307,6 +311,7 @@ test.describe('Doc Tree: Inheritance', () => {
     await expect(page.locator('h2').getByText(docChild)).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible({ timeout: 10000 });
     await expect(docTree.getByText(docParent)).toBeVisible();
   });
 });

@@ -244,9 +244,7 @@ test.describe('Document create member: Multiple login', () => {
 
     await keyCloakSignIn(page, otherBrowser!);
 
-    await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs' }),
-    ).toBeVisible();
+    await expect(page.getByTestId('header-logo-link')).toBeVisible();
 
     await page.goto(urlDoc);
 
@@ -271,9 +269,7 @@ test.describe('Document create member: Multiple login', () => {
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
 
-    await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs' }),
-    ).toBeVisible({
+    await expect(page.getByTestId('header-logo-link')).toBeVisible({
       timeout: 10000,
     });
 
@@ -334,9 +330,7 @@ test.describe('Document create member: Multiple login', () => {
 
     await keyCloakSignIn(page, otherBrowser!);
 
-    await expect(
-      page.getByRole('link', { name: 'Docs Logo Docs' }),
-    ).toBeVisible({
+    await expect(page.getByTestId('header-logo-link')).toBeVisible({
       timeout: 10000,
     });
 

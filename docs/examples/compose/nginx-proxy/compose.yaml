@@ -3,28 +3,28 @@ services:
     image: nginxproxy/nginx-proxy
     container_name: nginx-proxy
     ports:
-    - "80:80"
-    - "443:443"
+      - "80:80"
+      - "443:443"
     volumes:
-    - html:/usr/share/nginx/html
-    - certs:/etc/nginx/certs:ro
-    - /var/run/docker.sock:/tmp/docker.sock:ro
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
-    - proxy-tier
+      - proxy-tier
 
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
     environment:
-    - DEFAULT_EMAIL=mail@yourdomain.tld
+      - DEFAULT_EMAIL=mail@yourdomain.tld
     volumes_from:
-    - nginx-proxy
+      - nginx-proxy
     volumes:
-    - certs:/etc/nginx/certs:rw
-    - acme:/etc/acme.sh
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-    - proxy-tier
+      - proxy-tier
 
 networks:
   proxy-tier:

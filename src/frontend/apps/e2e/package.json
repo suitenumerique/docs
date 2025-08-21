@@ -1,6 +1,6 @@
 {
   "name": "app-e2e",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "private": true,
   "scripts": {
     "lint": "eslint . --ext .ts",
@@ -12,7 +12,7 @@
     "test:ui::chromium": "yarn test:ui --project=chromium"
   },
   "devDependencies": {
-    "@playwright/test": "1.54.1",
+    "@playwright/test": "1.54.2",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.5",
     "eslint-config-impress": "*",

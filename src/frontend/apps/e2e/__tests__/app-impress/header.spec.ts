@@ -12,8 +12,8 @@ test.describe('Header', () => {
 
     const header = page.locator('header').first();
 
-    await expect(header.getByLabel('Docs Logo')).toBeVisible();
-    await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
+    await expect(header.getByTestId('header-logo-link')).toBeVisible();
+    await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
       'font-family',
       /Roboto/i,
     );
@@ -37,8 +37,8 @@ test.describe('Header', () => {
 
     const header = page.locator('header').first();
 
-    await expect(header.getByLabel('Docs Logo')).toBeVisible();
-    await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
+    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
+    await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
       'font-family',
       /Marianne/i,
     );
@@ -106,7 +106,7 @@ test.describe('Header mobile', () => {
     const header = page.locator('header').first();
 
     await expect(header.getByLabel('Open the header menu')).toBeVisible();
-    await expect(header.getByRole('link', { name: 'Docs Logo' })).toBeVisible();
+    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
     await expect(
       header.getByRole('button', {
         name: 'Les services de La Suite numérique',

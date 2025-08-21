@@ -168,9 +168,6 @@ DB_NAME: impress
 DB_USER: dinum
 DB_PASSWORD: pass
 DB_PORT: 5432
-POSTGRES_DB: impress
-POSTGRES_USER: dinum
-POSTGRES_PASSWORD: pass
 ```
 
 ### Find s3 bucket connection values

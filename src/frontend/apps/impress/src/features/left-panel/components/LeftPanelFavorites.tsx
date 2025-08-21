@@ -23,7 +23,11 @@ export const LeftPanelFavorites = () => {
   }
 
   return (
-    <Box className="--docs--left-panel-favorites">
+    <Box
+      as="nav"
+      aria-label={t('Pinned documents')}
+      className="--docs--left-panel-favorites"
+    >
       <HorizontalSeparator $withPadding={false} />
       <Box
         $justify="center"
@@ -41,6 +45,7 @@ export const LeftPanelFavorites = () => {
           {t('Pinned documents')}
         </Text>
         <InfiniteScroll
+          as="ul"
           hasMore={docs.hasNextPage}
           isLoading={docs.isFetchingNextPage}
           next={() => void docs.fetchNextPage()}

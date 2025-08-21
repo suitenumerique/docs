@@ -62,6 +62,7 @@ export const HomeHeader = () => {
           $height="fit-content"
         >
           <IconDocs
+            data-testid="header-icon-docs"
             aria-label={t('Docs Logo')}
             width={32}
             color={colorsTokens['primary-text']}
