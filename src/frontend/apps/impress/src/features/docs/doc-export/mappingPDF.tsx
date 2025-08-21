@@ -6,6 +6,7 @@ import {
   blockMappingHeadingPDF,
   blockMappingImagePDF,
   blockMappingParagraphPDF,
+  blockMappingPdfPDF,
   blockMappingQuotePDF,
   blockMappingTablePDF,
 } from './blocks-mapping';
@@ -23,6 +24,7 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
+    pdf: blockMappingPdfPDF,
   },
   inlineContentMapping: {
     ...pdfDefaultSchemaMappings.inlineContentMapping,

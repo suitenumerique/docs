@@ -37,7 +37,7 @@ import {
   AccessibleImageBlock,
   CalloutBlock,
   DividerBlock,
-  PDFBlock,
+  PdfBlock,
 } from './custom-blocks';
 import {
   InterlinkingLinkInlineContent,
@@ -55,7 +55,7 @@ const baseBlockNoteSchema = withPageBreak(
       callout: CalloutBlock,
       divider: DividerBlock,
       image: AccessibleImageBlock,
-      pdf: PDFBlock,
+      pdf: PdfBlock,
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
