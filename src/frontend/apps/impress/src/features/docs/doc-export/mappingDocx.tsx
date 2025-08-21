@@ -5,6 +5,7 @@ import {
   blockMappingCalloutDocx,
   blockMappingDividerDocx,
   blockMappingImageDocx,
+  blockMappingPdfDocx,
   blockMappingQuoteDocx,
 } from './blocks-mapping';
 import { inlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
@@ -16,6 +17,7 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     ...docxDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutDocx,
     divider: blockMappingDividerDocx,
+    pdf: blockMappingPdfDocx,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
   },
