@@ -62,12 +62,10 @@ We hope to see many more, here is an incomplete list of public Docs instances (u
 | docs.numerique.gouv.fr    | DINUM    | French public agents working for the central administration and the extended public sphere. ProConnect is required to login in or sign up|
 | docs.suite.anct.gouv.fr    | ANCT    | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
 | notes.demo.opendesk.eu    | ZenDiS    | Demo instance of OpenDesk. Request access to get credentials |
-| notes.liiib.re    | lasuite.coop    | Free and open demo to all. Content and acocunts are reset after one month |
-
-
+| notes.liiib.re    | lasuite.coop    | Free and open demo to all. Content and accounts are reset after one month |
 
 #### ⚠️ Advanced features
-For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under AGPL-3.0 and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
+For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under GPL and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
 
 ## Getting started 🔧
 
