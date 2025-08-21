@@ -96,6 +96,9 @@ server {
 
         proxy_ssl_name ${S3_HOST};
 
+        proxy_hide_header Content-Disposition;
+        add_header Content-Disposition "inline";
+
         add_header Content-Security-Policy "default-src 'none'" always;
     }
 

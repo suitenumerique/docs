@@ -19,6 +19,7 @@ and this project adheres to
   - #1244
   - #1270
   - #1282
+- ✨(frontend) add pdf block to the editor #1293
 
 ### Fixed
 
