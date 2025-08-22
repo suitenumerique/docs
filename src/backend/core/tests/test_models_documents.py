@@ -593,6 +593,58 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
     }
 
 
+@pytest.mark.parametrize(
+    "is_authenticated,role,link_reach,link_role,can_destroy",
+    [
+        (True, "owner", "restricted", "editor", True),
+        (True, "owner", "restricted", "reader", True),
+        (True, "owner", "authenticated", "editor", True),
+        (True, "owner", "authenticated", "reader", True),
+        (True, "owner", "public", "editor", True),
+        (True, "owner", "public", "reader", True),
+        (True, "administrator", "restricted", "editor", True),
+        (True, "administrator", "restricted", "reader", True),
+        (True, "administrator", "authenticated", "editor", True),
+        (True, "administrator", "authenticated", "reader", True),
+        (True, "administrator", "public", "editor", True),
+        (True, "administrator", "public", "reader", True),
+        (True, "editor", "restricted", "editor", True),
+        (True, "editor", "restricted", "reader", True),
+        (True, "editor", "authenticated", "editor", True),
+        (True, "editor", "authenticated", "reader", True),
+        (True, "editor", "public", "editor", True),
+        (True, "editor", "public", "reader", True),
+        (True, "reader", "restricted", "editor", False),
+        (True, "reader", "restricted", "reader", False),
+        (True, "reader", "authenticated", "editor", True),
+        (True, "reader", "authenticated", "reader", False),
+        (True, "reader", "public", "editor", True),
+        (True, "reader", "public", "reader", False),
+        (False, None, "restricted", "editor", False),
+        (False, None, "restricted", "reader", False),
+        (False, None, "authenticated", "editor", False),
+        (False, None, "authenticated", "reader", False),
+        (False, None, "public", "editor", False),
+        (False, None, "public", "reader", False),
+    ],
+)
+def test_models_documents_get_abilities_children_destroy(
+    is_authenticated, role, link_reach, link_role, can_destroy
+):
+    """For a sub document, if a user can create children, he can destroy it."""
+    user = factories.UserFactory() if is_authenticated else AnonymousUser()
+    parent = factories.DocumentFactory(link_reach=link_reach, link_role=link_role)
+    document = factories.DocumentFactory(
+        link_reach=link_reach, link_role=link_role, parent=parent
+    )
+    if is_authenticated:
+        factories.UserDocumentAccessFactory(document=parent, user=user, role=role)
+
+    abilities = document.get_abilities(user)
+    assert abilities["children_create"] is can_destroy
+    assert abilities["destroy"] is can_destroy
+
+
 @override_settings(AI_ALLOW_REACH_FROM="public")
 @pytest.mark.parametrize(
     "is_authenticated,reach",

@@ -762,6 +762,8 @@ class Document(MP_Node, BaseModel):
         can_update = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
+        can_create_children = can_update and user.is_authenticated
+        can_destroy = is_owner if self.is_root() else can_create_children
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
         ai_access = any(
@@ -784,11 +786,11 @@ class Document(MP_Node, BaseModel):
             "media_check": can_get,
             "can_edit": can_update,
             "children_list": can_get,
-            "children_create": can_update and user.is_authenticated,
+            "children_create": can_create_children,
             "collaboration_auth": can_get,
             "cors_proxy": can_get,
             "descendants": can_get,
-            "destroy": is_owner,
+            "destroy": can_destroy,
             "duplicate": can_get and user.is_authenticated,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,

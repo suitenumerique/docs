@@ -24,6 +24,7 @@ and this project adheres to
 
 - 🐛(makefile) Windows compatibility fix for Docker volume mounting #1264
 - 🐛(minio) fix user permission error with Minio and Windows #1264
+- 🐛(backend) allow editor to delete subpages #1296
 
 ## [3.5.0] - 2025-07-31
 
