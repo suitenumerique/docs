@@ -34,6 +34,7 @@ and this project adheres to
 - 🐛(minio) fix user permission error with Minio and Windows #1264
 - 🐛(frontend) fix export when quote block and inline code #1319
 - 🐛(frontend) fix base64 font #1324
+- 🐛(backend) allow editor to delete subpages #1296
 
 ## [3.5.0] - 2025-07-31
 

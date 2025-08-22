@@ -494,7 +494,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "collaboration_auth": True,
             "descendants": True,
             "cors_proxy": True,
-            "destroy": access.role == "owner",
+            "destroy": access.role in ["administrator", "owner"],
             "duplicate": True,
             "favorite": True,
             "invite_owner": access.role == "owner",
