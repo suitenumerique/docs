@@ -44,3 +44,27 @@ def test_models_users_send_mail_main_missing():
         user.email_user("my subject", "my message")
 
     assert str(excinfo.value) == "User has no email address."
+
+
+@pytest.mark.parametrize(
+    "sub,is_valid",
+    [
+        ("valid_sub.@+-:=/", True),
+        ("invalid sub", False),
+    ],
+)
+def test_models_users_sub_validator(sub, is_valid):
+    """The "sub" field should be validated."""
+    user = factories.UserFactory()
+    user.sub = sub
+    if is_valid:
+        user.full_clean()
+    else:
+        with pytest.raises(
+            ValidationError,
+            match=(
+                "Enter a valid sub. This value may contain only letters,"
+                " numbers, and @.+-_:=/ characters."
+            ),
+        ):
+            user.full_clean()
