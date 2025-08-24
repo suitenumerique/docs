@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Run mjml command to convert all mjml templates to html files
-DIR_MAILS="../backend/core/templates/mail/html/"
+DIR_MAILS="${DIR_MAILS:-../backend/core/templates/mail}/html/"
 
 if [ ! -d "${DIR_MAILS}" ]; then
   mkdir -p "${DIR_MAILS}";
