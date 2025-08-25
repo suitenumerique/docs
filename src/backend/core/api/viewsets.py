@@ -13,6 +13,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.validators import URLValidator
 from django.db import connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
@@ -1441,6 +1442,15 @@ class DocumentViewSet(
 
         url = unquote(url)
 
+        url_validator = URLValidator(schemes=["http", "https"])
+        try:
+            url_validator(url)
+        except drf.exceptions.ValidationError as e:
+            return drf.response.Response(
+                {"detail": str(e)},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             response = requests.get(
                 url,
@@ -1471,10 +1481,10 @@ class DocumentViewSet(
             return proxy_response
 
         except requests.RequestException as e:
-            logger.error("Proxy request failed: %s", str(e))
-            return drf_response.Response(
-                {"error": f"Failed to fetch resource: {e!s}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            logger.exception(e)
+            return drf.response.Response(
+                {"error": f"Failed to fetch resource from {url}"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
