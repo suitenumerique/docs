@@ -149,3 +149,24 @@ def test_api_docs_cors_proxy_unsupported_media_type():
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 415
+
+
+@pytest.mark.parametrize(
+    "url_to_fetch",
+    [
+        "ftp://external-url.com/assets/index.html",
+        "ftps://external-url.com/assets/index.html",
+        "invalid-url.com",
+        "ssh://external-url.com/assets/index.html",
+    ],
+)
+def test_api_docs_cors_proxy_invalid_url(url_to_fetch):
+    """Test the CORS proxy API for documents with an invalid URL."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == ["Enter a valid URL."]

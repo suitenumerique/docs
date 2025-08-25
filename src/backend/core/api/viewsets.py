@@ -13,6 +13,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
+from django.core.validators import URLValidator
 from django.db import connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
@@ -1440,6 +1441,15 @@ class DocumentViewSet(
         self.get_object()
 
         url = unquote(url)
+
+        url_validator = URLValidator(schemes=["http", "https"])
+        try:
+            url_validator(url)
+        except drf.exceptions.ValidationError as e:
+            return drf.response.Response(
+                {"detail": str(e)},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             response = requests.get(
