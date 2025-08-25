@@ -1481,10 +1481,10 @@ class DocumentViewSet(
             return proxy_response
 
         except requests.RequestException as e:
-            logger.error("Proxy request failed: %s", str(e))
-            return drf_response.Response(
-                {"error": f"Failed to fetch resource: {e!s}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            logger.exception(e)
+            return drf.response.Response(
+                {"error": f"Failed to fetch resource from {url}"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
