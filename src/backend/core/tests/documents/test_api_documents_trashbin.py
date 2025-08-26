@@ -81,6 +81,7 @@ def test_api_documents_trashbin_format():
             "collaboration_auth": False,
             "descendants": False,
             "cors_proxy": False,
+            "comment": False,
             "content": False,
             "destroy": False,
             "duplicate": False,
@@ -88,8 +89,8 @@ def test_api_documents_trashbin_format():
             "invite_owner": False,
             "link_configuration": False,
             "link_select_options": {
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
+                "authenticated": ["reader", "commentator", "editor"],
+                "public": ["reader", "commentator", "editor"],
                 "restricted": None,
             },
             "mask": False,

@@ -756,6 +756,7 @@ class Document(MP_Node, BaseModel):
         can_update = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
+        can_comment = (can_update or role == RoleChoices.COMMENTATOR) and not is_deleted
         can_create_children = can_update and user.is_authenticated
         can_destroy = (
             is_owner
@@ -786,6 +787,7 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
+            "comment": can_comment,
             "content": can_get,
             "cors_proxy": can_get,
             "descendants": can_get,
@@ -1146,7 +1148,12 @@ class DocumentAccess(BaseAccess):
             set_role_to = []
             if is_owner_or_admin:
                 set_role_to.extend(
-                    [RoleChoices.READER, RoleChoices.EDITOR, RoleChoices.ADMIN]
+                    [
+                        RoleChoices.READER,
+                        RoleChoices.COMMENTATOR,
+                        RoleChoices.EDITOR,
+                        RoleChoices.ADMIN,
+                    ]
                 )
             if role == RoleChoices.OWNER:
                 set_role_to.append(RoleChoices.OWNER)
