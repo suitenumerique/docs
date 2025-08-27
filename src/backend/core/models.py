@@ -1284,6 +1284,48 @@ class DocumentAskForAccess(BaseModel):
         self.document.send_email(subject, [email], context, language)
 
 
+class Comment(BaseModel):
+    """User comment on a document."""
+
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="comments",
+        null=True,
+        blank=True,
+    )
+    content = models.TextField()
+
+    class Meta:
+        db_table = "impress_comment"
+        ordering = ("-created_at",)
+        verbose_name = _("Comment")
+        verbose_name_plural = _("Comments")
+
+    def __str__(self):
+        author = self.user or _("Anonymous")
+        return f"{author!s} on {self.document!s}"
+
+    def get_abilities(self, user):
+        """Compute and return abilities for a given user."""
+        role = self.document.get_role(user)
+        can_comment = self.document.get_abilities(user)["comment"]
+        return {
+            "destroy": self.user == user
+            or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "update": self.user == user
+            or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "partial_update": self.user == user
+            or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "retrieve": can_comment,
+        }
+
+
 class Template(BaseModel):
     """HTML and CSS code used for formatting the print around the MarkDown body."""
 
