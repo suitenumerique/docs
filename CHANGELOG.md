@@ -155,6 +155,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) Comments on text editor #1309
 - 👷(CI) add bundle size check job #1268
 - ✨(frontend) use title first emoji as doc icon in tree #1289
 
