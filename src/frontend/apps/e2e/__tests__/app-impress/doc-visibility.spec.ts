@@ -15,7 +15,6 @@ test.describe('Doc Visibility', () => {
   });
 
   test('It checks the copy link button', async ({ page, browserName }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
     test.skip(
       browserName === 'webkit',
       'navigator.clipboard is not working with webkit and playwright',
@@ -119,8 +118,11 @@ test.describe('Doc Visibility: Restricted', () => {
       .click();
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
+    if (!otherBrowser) {
+      throw new Error('No alternative browser found');
+    }
 
-    await keyCloakSignIn(page, otherBrowser!);
+    await keyCloakSignIn(page, otherBrowser);
 
     await expect(page.getByTestId('header-logo-link')).toBeVisible({
       timeout: 10000,
@@ -151,6 +153,9 @@ test.describe('Doc Visibility: Restricted', () => {
     });
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
+    if (!otherBrowser) {
+      throw new Error('No alternative browser found');
+    }
     const username = `user@${otherBrowser}.test`;
     await inputSearch.fill(username);
     await page.getByRole('option', { name: username }).click();
@@ -174,7 +179,7 @@ test.describe('Doc Visibility: Restricted', () => {
       })
       .click();
 
-    await keyCloakSignIn(page, otherBrowser!);
+    await keyCloakSignIn(page, otherBrowser);
 
     await expect(page.getByTestId('header-logo-link')).toBeVisible();
 
@@ -449,7 +454,10 @@ test.describe('Doc Visibility: Authenticated', () => {
       .click();
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
-    await keyCloakSignIn(page, otherBrowser!);
+    if (!otherBrowser) {
+      throw new Error('No alternative browser found');
+    }
+    await keyCloakSignIn(page, otherBrowser);
 
     await expect(page.getByTestId('header-logo-link')).toBeVisible({
       timeout: 10000,
@@ -538,7 +546,10 @@ test.describe('Doc Visibility: Authenticated', () => {
       .click();
 
     const otherBrowser = BROWSERS.find((b) => b !== browserName);
-    await keyCloakSignIn(page, otherBrowser!);
+    if (!otherBrowser) {
+      throw new Error('No alternative browser found');
+    }
+    await keyCloakSignIn(page, otherBrowser);
 
     await expect(page.getByTestId('header-logo-link')).toBeVisible({
       timeout: 10000,

@@ -65,24 +65,19 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
 
   return useMutation<DuplicateDocResponse, APIError, DuplicateDocParams>({
     mutationFn: async (variables) => {
-      try {
-        // Save the document if we can first, to ensure the latest state is duplicated
-        if (
-          variables.canSave &&
-          provider &&
-          provider.document.guid === variables.docId
-        ) {
-          await updateDoc({
-            id: variables.docId,
-            content: toBase64(Y.encodeStateAsUpdate(provider.document)),
-          });
-        }
-
-        return await duplicateDoc(variables);
-      } catch (error) {
-        // If save fails, throw the error to prevent duplication
-        throw error;
+      // Save the document if we can first, to ensure the latest state is duplicated
+      if (
+        variables.canSave &&
+        provider &&
+        provider.document.guid === variables.docId
+      ) {
+        await updateDoc({
+          id: variables.docId,
+          content: toBase64(Y.encodeStateAsUpdate(provider.document)),
+        });
       }
+
+      return await duplicateDoc(variables);
     },
     onSuccess: (data, variables, context) => {
       void queryClient.resetQueries({
