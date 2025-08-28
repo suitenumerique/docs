@@ -891,3 +891,47 @@ class MoveDocumentSerializer(serializers.Serializer):
         choices=enums.MoveNodePositionChoices.choices,
         default=enums.MoveNodePositionChoices.LAST_CHILD,
     )
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serialize comments."""
+
+    user = UserLightSerializer(read_only=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.Comment
+        fields = [
+            "id",
+            "content",
+            "created_at",
+            "updated_at",
+            "user",
+            "document",
+            "abilities",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "user",
+            "document",
+            "abilities",
+        ]
+
+    def get_abilities(self, comment) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return comment.get_abilities(request.user)
+        return {}
+
+    def validate(self, attrs):
+        """Validate invitation data."""
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        attrs["document_id"] = self.context["resource_id"]
+        attrs["user_id"] = user.id if user else None
+
+        return attrs
