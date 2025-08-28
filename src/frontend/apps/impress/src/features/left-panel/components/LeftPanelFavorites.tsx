@@ -49,6 +49,7 @@ export const LeftPanelFavorites = () => {
           hasMore={docs.hasNextPage}
           isLoading={docs.isFetchingNextPage}
           next={() => void docs.fetchNextPage()}
+          $padding="none"
         >
           {favoriteDocs.map((doc) => (
             <LeftPanelFavoriteItem key={doc.id} doc={doc} />
