@@ -18,6 +18,7 @@ import {
 import {
   getCalloutReactSlashMenuItems,
   getDividerReactSlashMenuItems,
+  getPdfReactSlashMenuItems,
 } from './custom-blocks';
 import { useGetInterlinkingMenuItems } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
@@ -32,7 +33,10 @@ export const BlockNoteSuggestionMenu = () => {
     DocsStyleSchema
   >();
   const { t } = useTranslation();
-  const basicBlocksName = useDictionary().slash_menu.page_break.group;
+  const dictionaryDate = useDictionary();
+  const basicBlocksName = dictionaryDate.slash_menu.page_break.group;
+  const fileBlocksName = dictionaryDate.slash_menu.file.group;
+
   const getInterlinkingMenuItems = useGetInterlinkingMenuItems();
 
   const getSlashMenuItems = useMemo(() => {
@@ -56,11 +60,12 @@ export const BlockNoteSuggestionMenu = () => {
             getMultiColumnSlashMenuItems?.(editor) || [],
             getPageBreakReactSlashMenuItems(editor),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
+            getPdfReactSlashMenuItems(editor, t, fileBlocksName),
           ),
           query,
         ),
       );
-  }, [basicBlocksName, editor, getInterlinkingMenuItems, t]);
+  }, [basicBlocksName, editor, getInterlinkingMenuItems, t, fileBlocksName]);
 
   return (
     <SuggestionMenuController
