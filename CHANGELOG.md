@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) Comments on text editor #1309
+
 ### Changed
 
 - ⚡️(frontend) improve accessibility:

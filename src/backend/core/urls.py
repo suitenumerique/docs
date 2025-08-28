@@ -26,7 +26,11 @@ document_related_router.register(
     viewsets.InvitationViewset,
     basename="invitations",
 )
-
+document_related_router.register(
+    "comments",
+    viewsets.CommentViewSet,
+    basename="comments",
+)
 document_related_router.register(
     "ask-for-access",
     viewsets.DocumentAskForAccessViewSet,
