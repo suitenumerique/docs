@@ -171,3 +171,19 @@ class ResourceAccessPermission(IsAuthenticated):
 
         action = view.action
         return abilities.get(action, False)
+
+
+class CommentPermission(permissions.BasePermission):
+    """Permission class for comments."""
+
+    def has_permission(self, request, view):
+        """Check permission for a given object."""
+        if view.action in ["create", "list"]:
+            document_abilities = view.get_document_or_404().get_abilities(request.user)
+            return document_abilities["comment"]
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        """Check permission for a given object."""
+        return obj.get_abilities(request.user).get(view.action, False)

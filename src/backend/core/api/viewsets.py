@@ -2072,3 +2072,36 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+
+class CommentViewSet(
+    viewsets.ModelViewSet,
+):
+    """API ViewSet for comments."""
+
+    permission_classes = [permissions.CommentPermission]
+    queryset = models.Comment.objects.select_related("user", "document").all()
+    serializer_class = serializers.CommentSerializer
+    pagination_class = Pagination
+    _document = None
+
+    def get_document_or_404(self):
+        """Get the document related to the viewset or raise a 404 error."""
+        if self._document is None:
+            try:
+                self._document = models.Document.objects.get(
+                    pk=self.kwargs["resource_id"],
+                )
+            except models.Document.DoesNotExist as e:
+                raise drf.exceptions.NotFound("Document not found.") from e
+        return self._document
+
+    def get_serializer_context(self):
+        """Extra context provided to the serializer class."""
+        context = super().get_serializer_context()
+        context["resource_id"] = self.kwargs["resource_id"]
+        return context
+
+    def get_queryset(self):
+        """Return the queryset according to the action."""
+        return super().get_queryset().filter(document=self.kwargs["resource_id"])

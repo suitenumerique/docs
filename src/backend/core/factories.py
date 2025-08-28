@@ -256,3 +256,14 @@ class InvitationFactory(factory.django.DjangoModelFactory):
     document = factory.SubFactory(DocumentFactory)
     role = factory.fuzzy.FuzzyChoice([role[0] for role in models.RoleChoices.choices])
     issuer = factory.SubFactory(UserFactory)
+
+
+class CommentFactory(factory.django.DjangoModelFactory):
+    """A factory to create comments for a document"""
+
+    class Meta:
+        model = models.Comment
+
+    document = factory.SubFactory(DocumentFactory)
+    user = factory.SubFactory(UserFactory)
+    content = factory.Faker("text")
