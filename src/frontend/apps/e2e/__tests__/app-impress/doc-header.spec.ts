@@ -44,7 +44,9 @@ test.describe('Doc Header', () => {
 
     await expect(card.getByText('Owner ·')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'download' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Export the document' }),
+    ).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Open the document options' }),
     ).toBeVisible();
@@ -115,7 +117,9 @@ test.describe('Doc Header', () => {
 
     await goToGridDoc(page);
 
-    await expect(page.getByRole('button', { name: 'download' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Export the document' }),
+    ).toBeVisible();
 
     await page.getByLabel('Open the document options').click();
 
@@ -185,7 +189,9 @@ test.describe('Doc Header', () => {
 
     await goToGridDoc(page);
 
-    await expect(page.getByRole('button', { name: 'download' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Export the document' }),
+    ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
     await expect(page.getByLabel('Delete document')).toBeDisabled();
@@ -245,7 +251,9 @@ test.describe('Doc Header', () => {
 
     await goToGridDoc(page);
 
-    await expect(page.getByRole('button', { name: 'download' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Export the document' }),
+    ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
     await expect(page.getByLabel('Delete document')).toBeDisabled();
