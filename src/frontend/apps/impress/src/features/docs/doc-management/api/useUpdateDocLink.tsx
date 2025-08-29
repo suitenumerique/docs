@@ -6,8 +6,8 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc, KEY_DOC } from '@/docs/doc-management';
 import { useBroadcastStore } from '@/stores';
 
-export type UpdateDocLinkParams = Pick<Doc, 'id'> &
-  Partial<Pick<Doc, 'link_role' | 'link_reach'>>;
+export type UpdateDocLinkParams = Pick<Doc, 'id' | 'link_reach'> &
+  Partial<Pick<Doc, 'link_role'>>;
 
 export const updateDocLink = async ({
   id,
