@@ -233,12 +233,16 @@ run-e2e:
 .PHONY: run-e2e
 
 status: ## an alias for "docker compose ps"
-	@$(COMPOSE_E2E) ps
+	@$(COMPOSE) ps
 .PHONY: status
 
 stop: ## stop the development server using Docker
-	@$(COMPOSE_E2E) stop
+	@$(COMPOSE) stop
 .PHONY: stop
+
+stop-e2e: ## stop the e2e server using Docker
+	@$(COMPOSE_E2E) stop
+.PHONY: stop-e2e
 
 # -- Backend
 
@@ -405,6 +409,14 @@ run-frontend-development: ## Run the frontend in development mode
 	@$(COMPOSE) stop frontend-development
 	cd $(PATH_FRONT_IMPRESS) && yarn dev
 .PHONY: run-frontend-development
+
+frontend-test: ## Run the frontend tests
+	cd $(PATH_FRONT) && yarn test
+.PHONY: frontend-test
+
+frontend-test-e2e: ## Run the e2e tests
+	cd $(PATH_FRONT) && yarn playwright install && yarn e2e:test --project='chromium'
+.PHONY: frontend-test-e2e
 
 frontend-i18n-extract: ## Extract the frontend translation inside a json to be used for crowdin
 	cd $(PATH_FRONT) && yarn i18n:extract

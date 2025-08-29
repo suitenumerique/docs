@@ -122,22 +122,16 @@ $ make run
 
 ⚠️ For the frontend developer, it is often better to run the frontend in development mode locally.
 
-To do so, install the frontend dependencies with the following command:
+This is the commands you will need in that order to develop and make your code ready for PR submission :
 
 ```shellscript
-$ make frontend-development-install
-```
-
-And run the frontend locally in development mode with the following command:
-
-```shellscript
-$ make run-frontend-development
-```
-
-To start all the services, except the frontend container, you can use the following command:
-
-```shellscript
-$ make run-backend
+make frontend-development-install # install the frontend dependencies
+make run-backend # start all the services, except the frontend container
+make run-frontend-development # run the frontend locally on your host in development mode
+make frontend-test # execute frontend unit tests
+make frontend-lint # execute frontend linting
+make run-e2e # start another docker stack for e2e tests
+make frontend-e2e # execute frontend e2e tests
 ```
 
 **Adding content**
