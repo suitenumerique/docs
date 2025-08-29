@@ -140,6 +140,12 @@ To start all the services, except the frontend container, you can use the follow
 $ make run-backend
 ```
 
+To execute frontend tests & linting only
+```shellscript
+$ make frontend-test
+$ make frontend-lint
+```
+
 **Adding content**
 
 You can create a basic demo site by running this command:

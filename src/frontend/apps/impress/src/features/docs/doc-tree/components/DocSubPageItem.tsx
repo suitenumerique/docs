@@ -9,7 +9,12 @@ import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, useTrans } from '@/features/docs/doc-management';
+import {
+  Doc,
+  getEmojiAndTitle,
+  useTrans,
+} from '@/features/docs/doc-management';
+import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
@@ -37,6 +42,9 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
+
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
+  const displayTitle = titleWithoutEmoji || untitledDocument;
 
   const afterCreate = (createdDoc: Doc) => {
     const actualChildren = node.data.children ?? [];
@@ -122,7 +130,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $minHeight="24px"
         >
           <Box $width="16px" $height="16px">
-            <SubPageIcon />
+            <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
           </Box>
 
           <Box
@@ -137,7 +145,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             `}
           >
             <Text $css={ItemTextCss} $size="sm" $variation="1000">
-              {doc.title || untitledDocument}
+              {displayTitle}
             </Text>
             {doc.nb_accesses_direct >= 1 && (
               <Icon

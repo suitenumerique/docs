@@ -61,6 +61,18 @@ test.describe('Doc Header', () => {
     await verifyDocName(page, 'Hello World');
   });
 
+  test('it updates the title doc adding a leading emoji', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-update', browserName, 1);
+    const docTitle = page.getByRole('textbox', { name: 'doc title input' });
+    await expect(docTitle).toBeVisible();
+    await docTitle.fill('👍 Hello World');
+    await docTitle.blur();
+    await verifyDocName(page, '👍 Hello World');
+  });
+
   test('it deletes the doc', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-delete', browserName, 1);
 
