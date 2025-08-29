@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 import magic
 from rest_framework import serializers
 
-from core import choices, enums, models, utils
+from core import choices, enums, models, utils, validators
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
@@ -422,7 +422,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     content = serializers.CharField(required=True)
     # User
     sub = serializers.CharField(
-        required=True, validators=[models.User.sub_validator], max_length=255
+        required=True, validators=[validators.sub_validator], max_length=255
     )
     email = serializers.EmailField(required=True)
     language = serializers.ChoiceField(
