@@ -24,6 +24,7 @@ and this project adheres to
   - #1244
   - #1270
   - #1282
+- ♻️(backend) fallback to email identifier when no name #1298
 
 ### Fixed
 
