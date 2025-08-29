@@ -149,10 +149,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Detect relevant changes
+        id: changes
+        uses: dorny/paths-filter@v2
         with:
-          node-version: "22.x"
+          filters: |
+            lock:
+              - 'src/frontend/**/yarn.lock'
+            app:
+              - 'src/frontend/apps/impress/**'
 
       - name: Restore the frontend cache
         uses: actions/cache@v4
@@ -161,7 +166,14 @@ jobs:
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
           fail-on-cache-miss: true
 
+      - name: Setup Node.js
+        if: steps.changes.outputs.lock == 'true' || steps.changes.outputs.app == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
       - name: Check bundle size changes
+        if: steps.changes.outputs.lock == 'true' || steps.changes.outputs.app == 'true'
         uses: preactjs/compressed-size-action@v2
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
