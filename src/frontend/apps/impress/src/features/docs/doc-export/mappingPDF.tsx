@@ -29,4 +29,11 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     interlinkingSearchInline: () => <></>,
     interlinkingLinkInline: inlineContentMappingInterlinkingLinkPDF,
   },
+  styleMapping: {
+    ...pdfDefaultSchemaMappings.styleMapping,
+    // Switch to core PDF "Courier" font to avoid relying on GeistMono
+    // that is not available in italics
+    code: (enabled?: boolean) =>
+      enabled ? { fontFamily: 'Courier', backgroundColor: '#dcdcdc' } : {},
+  },
 };
