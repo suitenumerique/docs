@@ -24,4 +24,16 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     interlinkingSearchInline: () => new Paragraph(''),
     interlinkingLinkInline: inlineContentMappingInterlinkingLinkDocx,
   },
+  styleMapping: {
+    ...docxDefaultSchemaMappings.styleMapping,
+    // Switch to core PDF "Courier" font to avoid relying on GeistMono
+    // that is not available in italics
+    code: (enabled?: boolean) =>
+      enabled
+        ? {
+            font: 'Courier New',
+            shading: { fill: 'DCDCDC' },
+          }
+        : {},
+  },
 };
