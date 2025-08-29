@@ -1,3 +1,4 @@
+import emojiRegex from 'emoji-regex';
 import * as Y from 'yjs';
 
 import { Doc, LinkReach, LinkRole, Role } from './types';
@@ -29,4 +30,20 @@ export const getDocLinkReach = (doc: Doc): LinkReach => {
 
 export const getDocLinkRole = (doc: Doc): LinkRole => {
   return doc.computed_link_role ?? doc.link_role;
+};
+
+export const getEmojiAndTitle = (title: string) => {
+  // Use emoji-regex library for comprehensive emoji detection compatible with ES5
+  const regex = emojiRegex();
+
+  // Check if the title starts with an emoji
+  const match = title.match(regex);
+
+  if (match && title.startsWith(match[0])) {
+    const emoji = match[0];
+    const titleWithoutEmoji = title.substring(emoji.length).trim();
+    return { emoji, titleWithoutEmoji };
+  }
+
+  return { emoji: null, titleWithoutEmoji: title };
 };

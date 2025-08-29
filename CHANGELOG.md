@@ -11,6 +11,7 @@ and this project adheres to
 ### Added
 
 - 👷(CI) add bundle size check job #1268
+- ✨(frontend) use title first emoji as doc icon in tree
 
 ### Changed
 

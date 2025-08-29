@@ -136,9 +136,11 @@ export const getGridRow = async (page: Page, title: string) => {
 
   const rows = docsGrid.getByRole('row');
 
-  const row = rows.filter({
-    hasText: title,
-  });
+  const row = rows
+    .filter({
+      hasText: title,
+    })
+    .first();
 
   await expect(row).toBeVisible();
 

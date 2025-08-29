@@ -406,6 +406,10 @@ run-frontend-development: ## Run the frontend in development mode
 	cd $(PATH_FRONT_IMPRESS) && yarn dev
 .PHONY: run-frontend-development
 
+frontend-test: ## Run the frontend tests
+	cd $(PATH_FRONT_IMPRESS) && yarn test
+.PHONY: frontend-test
+
 frontend-i18n-extract: ## Extract the frontend translation inside a json to be used for crowdin
 	cd $(PATH_FRONT) && yarn i18n:extract
 .PHONY: frontend-i18n-extract

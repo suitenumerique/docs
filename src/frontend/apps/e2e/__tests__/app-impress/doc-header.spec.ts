@@ -61,6 +61,31 @@ test.describe('Doc Header', () => {
     await verifyDocName(page, 'Hello World');
   });
 
+  test('it updates the title doc adding a leading emoji', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-update', browserName, 1);
+    const docTitle = page.getByRole('textbox', { name: 'doc title input' });
+    await expect(docTitle).toBeVisible();
+    await docTitle.fill('👍 Hello Emoji World');
+    await docTitle.blur();
+    await verifyDocName(page, '👍 Hello Emoji World');
+
+    // Check the tree
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText('Hello Emoji World')).toBeVisible();
+    await expect(docTree.getByLabel('Document emoji icon')).toBeVisible();
+    await expect(docTree.getByLabel('Simple document icon')).toBeHidden();
+
+    await page.getByTestId('home-button').click();
+
+    // Check the documents grid
+    const gridRow = await getGridRow(page, 'Hello Emoji World');
+    await expect(gridRow.getByLabel('Document emoji icon')).toBeVisible();
+    await expect(gridRow.getByLabel('Simple document icon')).toBeHidden();
+  });
+
   test('it deletes the doc', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-delete', browserName, 1);
 

@@ -4,11 +4,13 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, useTrans } from '@/docs/doc-management';
+import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
+
+import { DocIcon } from './DocIcon';
 
 const ItemTextCss = css`
   overflow: hidden;
@@ -36,6 +38,10 @@ export const SimpleDocItem = ({
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
 
+  const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
+    doc.title || untitledDocument,
+  );
+
   return (
     <Box
       $direction="row"
@@ -61,23 +67,29 @@ export const SimpleDocItem = ({
             color={colorsTokens['primary-500']}
           />
         ) : (
-          <SimpleFileIcon
-            aria-hidden="true"
-            aria-label={t('Simple document icon')}
-            color={colorsTokens['primary-500']}
+          <DocIcon
+            emoji={emoji}
+            defaultIcon={
+              <SimpleFileIcon
+                aria-hidden="true"
+                aria-label={t('Simple document icon')}
+                color={colorsTokens['primary-500']}
+              />
+            }
+            $size="25px"
           />
         )}
       </Box>
       <Box $justify="center" $overflow="auto">
         <Text
           aria-describedby="doc-title"
-          aria-label={doc.title}
+          aria-label={displayTitle}
           $size="sm"
           $variation="1000"
           $weight="500"
           $css={ItemTextCss}
         >
-          {doc.title || untitledDocument}
+          {displayTitle}
         </Text>
         {(!isDesktop || showAccesses) && (
           <Box
