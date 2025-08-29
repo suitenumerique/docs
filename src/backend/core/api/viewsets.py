@@ -360,7 +360,7 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
-    queryset = models.Document.objects.all()
+    queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
     children_serializer_class = serializers.ListDocumentSerializer
@@ -787,7 +787,11 @@ class DocumentViewSet(
             )
 
         # GET: List children
-        queryset = document.get_children().filter(ancestors_deleted_at__isnull=True)
+        queryset = (
+            document.get_children()
+            .select_related("creator")
+            .filter(ancestors_deleted_at__isnull=True)
+        )
         queryset = self.filter_queryset(queryset)
 
         filterset = DocumentFilter(request.GET, queryset=queryset)
@@ -841,7 +845,9 @@ class DocumentViewSet(
         user = self.request.user
 
         try:
-            current_document = self.queryset.only("depth", "path").get(pk=pk)
+            current_document = (
+                self.queryset.select_related(None).only("depth", "path").get(pk=pk)
+            )
         except models.Document.DoesNotExist as excpt:
             raise drf.exceptions.NotFound() from excpt
 
@@ -881,7 +887,12 @@ class DocumentViewSet(
 
         children = self.queryset.filter(children_clause, deleted_at__isnull=True)
 
-        queryset = ancestors.filter(depth__gte=highest_readable.depth) | children
+        queryset = (
+            ancestors.select_related("creator").filter(
+                depth__gte=highest_readable.depth
+            )
+            | children
+        )
         queryset = queryset.order_by("path")
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_is_favorite(user)
@@ -1283,7 +1294,8 @@ class DocumentViewSet(
         )
 
         attachments_documents = (
-            self.queryset.filter(attachments__contains=[key])
+            self.queryset.select_related(None)
+            .filter(attachments__contains=[key])
             .only("path")
             .order_by("path")
         )
