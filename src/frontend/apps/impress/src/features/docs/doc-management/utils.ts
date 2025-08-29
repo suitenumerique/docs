@@ -38,7 +38,7 @@ export const getEmojiAndTitle = (title: string) => {
 
   // Check if the title starts with an emoji
   const match = title.match(regex);
-  console.log(match);
+
   if (match && title.startsWith(match[0])) {
     const emoji = match[0];
     const titleWithoutEmoji = title.substring(emoji.length).trim();

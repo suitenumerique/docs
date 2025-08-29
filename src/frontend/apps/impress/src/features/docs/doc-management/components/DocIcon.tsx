@@ -1,45 +1,36 @@
-import { Text } from '@/components';
+import { useTranslation } from 'react-i18next';
 
-type DocIconProps = {
+import { Text, TextType } from '@/components';
+
+type DocIconProps = TextType & {
   emoji?: string | null;
   defaultIcon: React.ReactNode;
-  iconSize?: 'sm' | 'lg';
-  iconVariation?:
-    | '500'
-    | '400'
-    | 'text'
-    | '1000'
-    | '000'
-    | '100'
-    | '200'
-    | '300'
-    | '600'
-    | '700'
-    | '800'
-    | '900';
-  iconWeight?: '400' | '500' | '600' | '700' | '800' | '900';
 };
 
 export const DocIcon = ({
   emoji,
   defaultIcon,
-  iconSize = 'sm',
-  iconVariation = '1000',
-  iconWeight = '400',
+  $size = 'sm',
+  $variation = '1000',
+  $weight = '400',
+  ...textProps
 }: DocIconProps) => {
-  if (emoji) {
-    return (
-      <Text
-        $size={iconSize}
-        $variation={iconVariation}
-        $weight={iconWeight}
-        aria-hidden="true"
-        aria-label="Document emoji icon"
-      >
-        {emoji}
-      </Text>
-    );
+  const { t } = useTranslation();
+
+  if (!emoji) {
+    return <>{defaultIcon}</>;
   }
 
-  return <>{defaultIcon}</>;
+  return (
+    <Text
+      {...textProps}
+      $size={$size}
+      $variation={$variation}
+      $weight={$weight}
+      aria-hidden="true"
+      aria-label={t('Document emoji icon')}
+    >
+      {emoji}
+    </Text>
+  );
 };

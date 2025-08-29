@@ -130,11 +130,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $minHeight="24px"
         >
           <Box $width="16px" $height="16px">
-            <DocIcon
-              emoji={emoji}
-              defaultIcon={<SubPageIcon />}
-              iconSize="sm"
-            />
+            <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
           </Box>
 
           <Box

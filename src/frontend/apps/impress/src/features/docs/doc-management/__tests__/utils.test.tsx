@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
 import { LinkReach, LinkRole, Role } from '../types';
@@ -11,16 +12,16 @@ import {
 } from '../utils';
 
 // Mock Y.js
-jest.mock('yjs', () => ({
-  Doc: jest.fn().mockImplementation(() => ({
-    getXmlFragment: jest.fn().mockReturnValue('mocked-xml-fragment'),
+vi.mock('yjs', () => ({
+  Doc: vi.fn().mockImplementation(() => ({
+    getXmlFragment: vi.fn().mockReturnValue('mocked-xml-fragment'),
   })),
-  applyUpdate: jest.fn(),
+  applyUpdate: vi.fn(),
 }));
 
 describe('doc-management utils', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('currentDocRole', () => {
@@ -76,9 +77,9 @@ describe('doc-management utils', () => {
   describe('base64ToYDoc', () => {
     it('should convert base64 string to Y.Doc', () => {
       const base64String = 'dGVzdA=='; // "test" in base64
-      const mockYDoc = { getXmlFragment: jest.fn() };
+      const mockYDoc = { getXmlFragment: vi.fn() };
 
-      (Y.Doc as jest.Mock).mockReturnValue(mockYDoc);
+      (Y.Doc as any).mockReturnValue(mockYDoc);
 
       const result = base64ToYDoc(base64String);
 
@@ -89,9 +90,9 @@ describe('doc-management utils', () => {
 
     it('should handle empty base64 string', () => {
       const base64String = '';
-      const mockYDoc = { getXmlFragment: jest.fn() };
+      const mockYDoc = { getXmlFragment: vi.fn() };
 
-      (Y.Doc as jest.Mock).mockReturnValue(mockYDoc);
+      (Y.Doc as any).mockReturnValue(mockYDoc);
 
       const result = base64ToYDoc(base64String);
 
@@ -105,10 +106,10 @@ describe('doc-management utils', () => {
     it('should convert base64 to Blocknote XML fragment', () => {
       const base64String = 'dGVzdA==';
       const mockYDoc = {
-        getXmlFragment: jest.fn().mockReturnValue('mocked-xml-fragment'),
+        getXmlFragment: vi.fn().mockReturnValue('mocked-xml-fragment'),
       };
 
-      (Y.Doc as jest.Mock).mockReturnValue(mockYDoc);
+      (Y.Doc as any).mockReturnValue(mockYDoc);
 
       const result = base64ToBlocknoteXmlFragment(base64String);
 

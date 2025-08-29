@@ -38,8 +38,9 @@ export const SimpleDocItem = ({
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
 
-  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
-  const displayTitle = titleWithoutEmoji || untitledDocument;
+  const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
+    doc.title || untitledDocument,
+  );
 
   return (
     <Box
@@ -75,7 +76,7 @@ export const SimpleDocItem = ({
                 color={colorsTokens['primary-500']}
               />
             }
-            iconSize="lg"
+            $size="25px"
           />
         )}
       </Box>
