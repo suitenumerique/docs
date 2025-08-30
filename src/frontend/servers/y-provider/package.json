@@ -16,10 +16,10 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.35.0",
+    "@blocknote/server-util": "0.37.0",
     "@hocuspocus/server": "2.15.2",
-    "@sentry/node": "10.2.0",
-    "@sentry/profiling-node": "10.2.0",
+    "@sentry/node": "10.8.0",
+    "@sentry/profiling-node": "10.8.0",
     "axios": "1.11.0",
     "cors": "2.8.5",
     "express": "5.1.0",
