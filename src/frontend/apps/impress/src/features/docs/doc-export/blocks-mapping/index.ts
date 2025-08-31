@@ -7,7 +7,7 @@ export * from './imageDocx';
 export * from './imagePDF';
 export * from './paragraphPDF';
 export * from './pdfDocx';
-export * from './pdfPdf';
+export * from './pdfPDF';
 export * from './quoteDocx';
 export * from './quotePDF';
 export * from './tablePDF';
