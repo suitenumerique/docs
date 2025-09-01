@@ -50,6 +50,13 @@ tokens.themes.default.theme = {
       ...tokens.themes.default.theme.colors,
       ...customColors,
     },
+    font: {
+      ...tokens.themes.default.theme.font,
+      families: {
+        base: 'sans-serif',
+        accent: 'sans-serif',
+      },
+    },
   },
 };
 
@@ -88,6 +95,12 @@ const dsfrTheme = {
         widthHeader: '110px',
         widthFooter: '220px',
         alt: 'Gouvernement Logo',
+      },
+      font: {
+        families: {
+          base: 'Marianne',
+          accent: 'Marianne',
+        },
       },
     },
     components: {
