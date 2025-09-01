@@ -93,7 +93,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const selectVisibility = page.getByLabel('Visibility', { exact: true });
+    const selectVisibility = page.getByTestId('doc-visibility');
 
     // When the visibility is changed, the ws should close the connection (backend signal)
     const wsClosePromise = webSocket.waitForEvent('close');
@@ -272,7 +272,9 @@ test.describe('Doc Editor', () => {
       path.join(__dirname, 'assets/logo-suite-numerique.png'),
     );
 
-    const image = page.getByRole('img', { name: 'logo-suite-numerique.png' });
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
     await expect(image).toBeVisible();
 
@@ -284,6 +286,11 @@ test.describe('Doc Editor', () => {
     expect(await image.getAttribute('src')).toMatch(
       /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.png/,
     );
+
+    await expect(image).toHaveAttribute('role', 'presentation');
+    await expect(image).toHaveAttribute('alt', '');
+    await expect(image).toHaveAttribute('tabindex', '-1');
+    await expect(image).toHaveAttribute('aria-hidden', 'true');
   });
 
   test('it checks the AI buttons', async ({ page, browserName }) => {
@@ -561,7 +568,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByLabel('Visibility', { exact: true }).click();
+    await page.getByTestId('doc-visibility').click();
 
     await page
       .getByRole('menuitem', {
@@ -573,7 +580,7 @@ test.describe('Doc Editor', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
-    await page.getByLabel('Visibility mode').click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByRole('menuitem', { name: 'Editing' }).click();
 
     // Close the modal
@@ -655,7 +662,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByLabel('Visibility mode').click();
+    await page.getByTestId('doc-access-mode').click();
     await page.getByRole('menuitem', { name: 'Reading' }).click();
 
     // Close the modal
@@ -705,5 +712,76 @@ test.describe('Doc Editor', () => {
       'data-background-color',
       'pink',
     );
+  });
+
+  test('it checks interlink feature', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'doc-interlink', browserName, 1);
+
+    await verifyDocName(page, randomDoc);
+
+    const { name: docChild1 } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-interlink-child-1',
+    );
+
+    await verifyDocName(page, docChild1);
+
+    const { name: docChild2 } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-interlink-child-2',
+    );
+
+    await verifyDocName(page, docChild2);
+
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Link a doc').first().click();
+
+    const input = page.locator(
+      "span[data-inline-content-type='interlinkingSearchInline'] input",
+    );
+    const searchContainer = page.locator('.quick-search-container');
+
+    await input.fill('doc-interlink');
+
+    await expect(searchContainer.getByText(randomDoc)).toBeVisible();
+    await expect(searchContainer.getByText(docChild1)).toBeVisible();
+    await expect(searchContainer.getByText(docChild2)).toBeVisible();
+
+    await input.pressSequentially('-child');
+
+    await expect(searchContainer.getByText(docChild1)).toBeVisible();
+    await expect(searchContainer.getByText(docChild2)).toBeVisible();
+    await expect(searchContainer.getByText(randomDoc)).toBeHidden();
+
+    // use keydown to select the second result
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+
+    const interlink = page.getByRole('link', {
+      name: 'child-2',
+    });
+
+    await expect(interlink).toBeVisible();
+    await interlink.click();
+
+    await verifyDocName(page, docChild2);
+  });
+
+  test('it checks interlink shortcut @', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'doc-interlink', browserName, 1);
+
+    await verifyDocName(page, randomDoc);
+
+    const editor = page.locator('.bn-block-outer').last();
+    await editor.click();
+    await page.keyboard.press('@');
+
+    await expect(
+      page.locator(
+        "span[data-inline-content-type='interlinkingSearchInline'] input",
+      ),
+    ).toBeVisible();
   });
 });

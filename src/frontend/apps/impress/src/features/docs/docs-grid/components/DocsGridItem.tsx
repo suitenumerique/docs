@@ -5,7 +5,7 @@ import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach } from '@/docs/doc-management';
+import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
@@ -13,11 +13,12 @@ import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocsGridActions } from './DocsGridActions';
 import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
-import { SimpleDocItem } from './SimpleDocItem';
+
 type DocsGridItemProps = {
   doc: Doc;
   dragMode?: boolean;
 };
+
 export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();

@@ -14,10 +14,10 @@ import {
   ModalRemoveDoc,
   Role,
   useCopyDocLink,
+  useCreateChildDoc,
   useDuplicateDoc,
 } from '@/docs/doc-management';
 
-import { useCreateChildrenDoc } from '../api/useCreateChildren';
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
 
@@ -118,7 +118,7 @@ export const DocTreeItemActions = ({
     },
   ];
 
-  const { mutate: createChildrenDoc } = useCreateChildrenDoc({
+  const { mutate: createChildDoc } = useCreateChildDoc({
     onSuccess: (newDoc) => {
       onCreateSuccess?.(newDoc);
       void router.push(`/docs/${newDoc.id}`);
@@ -174,7 +174,7 @@ export const DocTreeItemActions = ({
               e.stopPropagation();
               e.preventDefault();
 
-              createChildrenDoc({
+              createChildDoc({
                 parentId: doc.id,
               });
             }}

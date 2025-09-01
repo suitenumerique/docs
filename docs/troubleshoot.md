@@ -83,55 +83,6 @@ If you already have CRLF line endings in your local repository, the **best appro
    git commit -m "✏️(project) Fix line endings to LF"
    ```
 
-## Minio Permission Issues on Windows
-
-### Problem Description
-
-On Windows, you may encounter permission-related errors when running Minio in development mode with Docker Compose. This typically happens because:
-
-- **Windows file permissions** don't map well to Unix-style user IDs used in Docker containers
-- **Docker Desktop** may have issues with user mapping when using the `DOCKER_USER` environment variable
-- **Minio container** fails to start or access volumes due to permission conflicts
-
-### Common Symptoms
-
-- Minio container fails to start with permission denied errors
-- Error messages related to file system permissions in Minio logs
-- Unable to create or access buckets in the development environment
-- Docker Compose showing Minio service as unhealthy or exited
-
-### Solution for Windows Users
-
-If you encounter Minio permission issues on Windows, you can temporarily disable user mapping for the Minio service:
-
-1. **Open the `compose.yml` file**
-
-2. **Comment out the user directive** in the `minio` service section:
-   ```yaml
-   minio:
-     # user: ${DOCKER_USER:-1000}  # Comment this line on Windows if permission issues occur
-     image: minio/minio
-     environment:
-       - MINIO_ROOT_USER=impress
-       - MINIO_ROOT_PASSWORD=password
-     # ... rest of the configuration
-   ```
-
-3. **Restart the services**:
-   ```bash
-   make run
-   ```
-
-### Why This Works
-
-- Commenting out the `user` directive allows the Minio container to run with its default user
-- This bypasses Windows-specific permission mapping issues
-- The container will have the necessary permissions to access and manage the mounted volumes
-
-### Note
-
-This is a **development-only workaround**. In production environments, proper user mapping and security considerations should be maintained according to your deployment requirements.
-
 ## Frontend File Watching Issues on Windows
 
 ### Problem Description

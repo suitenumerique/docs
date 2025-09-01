@@ -1,5 +1,11 @@
 import { Command } from 'cmdk';
-import { ReactNode, useRef } from 'react';
+import {
+  PropsWithChildren,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { hasChildrens } from '@/utils/children';
 
@@ -30,7 +36,6 @@ export type QuickSearchProps = {
   loading?: boolean;
   label?: string;
   placeholder?: string;
-  children?: ReactNode;
 };
 
 export const QuickSearch = ({
@@ -42,14 +47,47 @@ export const QuickSearch = ({
   label,
   placeholder,
   children,
-}: QuickSearchProps) => {
+}: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
+  const [selectedValue, setSelectedValue] = useState<string>('');
+
+  // Auto-select first item when children change
+  useEffect(() => {
+    if (!children) {
+      setSelectedValue('');
+      return;
+    }
+
+    // Small delay for DOM to update
+    const timeoutId = setTimeout(() => {
+      const firstItem = ref.current?.querySelector('[cmdk-item]');
+      if (firstItem) {
+        const value =
+          firstItem.getAttribute('data-value') ||
+          firstItem.getAttribute('value') ||
+          firstItem.textContent?.trim() ||
+          '';
+        if (value) {
+          setSelectedValue(value);
+        }
+      }
+    }, 50);
+
+    return () => clearTimeout(timeoutId);
+  }, [children]);
 
   return (
     <>
       <QuickSearchStyle />
       <div className="quick-search-container">
-        <Command label={label} shouldFilter={false} ref={ref}>
+        <Command
+          label={label}
+          shouldFilter={false}
+          ref={ref}
+          value={selectedValue}
+          onValueChange={setSelectedValue}
+          tabIndex={0}
+        >
           {showInput && (
             <QuickSearchInput
               loading={loading}

@@ -48,7 +48,7 @@ export default function HomeBanner() {
           $gap={spacingsTokens['sm']}
         >
           <IconDocs
-            aria-label={t('Docs Logo')}
+            aria-label={t('Back to homepage')}
             width={64}
             color={colorsTokens['primary-text']}
           />

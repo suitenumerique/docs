@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { APIError, isAPIError } from '@/api';
 
 describe('APIError', () => {

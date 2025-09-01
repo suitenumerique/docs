@@ -9,7 +9,7 @@
 
 ```bash
 mkdir minio
-curl -o compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/minio/compose.yaml 
+curl -o minio/compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/minio/compose.yaml 
 ```
 
 ### Step 2:. Update compose file with your own values

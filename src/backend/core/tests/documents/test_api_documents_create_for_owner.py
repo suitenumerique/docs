@@ -148,7 +148,7 @@ def test_api_documents_create_for_owner_invalid_sub():
     data = {
         "title": "My Document",
         "content": "Document content",
-        "sub": "123!!",
+        "sub": "invalid süb",
         "email": "john.doe@example.com",
     }
 
@@ -163,10 +163,7 @@ def test_api_documents_create_for_owner_invalid_sub():
     assert not Document.objects.exists()
 
     assert response.json() == {
-        "sub": [
-            "Enter a valid sub. This value may contain only letters, "
-            "numbers, and @/./+/-/_/: characters."
-        ]
+        "sub": ["Enter a valid sub. This value should be ASCII only."]
     }
 
 

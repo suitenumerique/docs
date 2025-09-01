@@ -19,9 +19,10 @@ export const LeftPanelHeaderButton = () => {
   });
   return (
     <Button
+      data-testid="new-doc-button"
       color="primary"
       onClick={() => createDoc()}
-      icon={<Icon $variation="000" iconName="add" />}
+      icon={<Icon $variation="000" iconName="add" aria-hidden="true" />}
       disabled={isDocCreating}
     >
       {t('New doc')}

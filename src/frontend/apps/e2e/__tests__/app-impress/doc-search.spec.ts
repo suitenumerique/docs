@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, randomName, verifyDocName } from './utils-common';
+import { createDoc, verifyDocName } from './utils-common';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
@@ -26,10 +26,7 @@ test.describe('Document search', () => {
     );
     await verifyDocName(page, doc2Title);
     await page.goto('/');
-    await page
-      .getByTestId('left-panel-desktop')
-      .getByRole('button', { name: 'search' })
-      .click();
+    await page.getByTestId('search-docs-button').click();
 
     await expect(
       page.getByRole('img', { name: 'No active search' }),
@@ -104,9 +101,7 @@ test.describe('Document search', () => {
     browserName,
   }) => {
     // Doc grid filters are not visible
-    const searchButton = page
-      .getByTestId('left-panel-desktop')
-      .getByRole('button', { name: 'search', exact: true });
+    const searchButton = page.getByTestId('search-docs-button');
 
     const filters = page.getByTestId('doc-search-filters');
 
@@ -163,24 +158,14 @@ test.describe('Document search', () => {
     await verifyDocName(page, firstDocTitle);
 
     // Create a new doc - for the moment without children
-    await page.getByRole('button', { name: 'New doc' }).click();
-    await verifyDocName(page, '');
-    await page.getByRole('textbox', { name: 'doc title input' }).click();
-    await page
-      .getByRole('textbox', { name: 'doc title input' })
-      .press('ControlOrMeta+a');
-    const [secondDocTitle] = randomName(
+    const [secondDocTitle] = await createDoc(
+      page,
       'My second sub page search',
       browserName,
       1,
     );
-    await page
-      .getByRole('textbox', { name: 'doc title input' })
-      .fill(secondDocTitle);
 
-    const searchButton = page
-      .getByTestId('left-panel-desktop')
-      .getByRole('button', { name: 'search' });
+    const searchButton = page.getByTestId('search-docs-button');
 
     await searchButton.click();
     await page.getByRole('combobox', { name: 'Quick search input' }).click();
@@ -199,15 +184,22 @@ test.describe('Document search', () => {
     await page.getByRole('button', { name: 'close' }).click();
 
     // Create a sub page
-    await createRootSubPage(page, browserName, secondDocTitle);
+    const { name: secondChildDocTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'second - Child doc',
+    );
     await searchButton.click();
     await page
       .getByRole('combobox', { name: 'Quick search input' })
-      .fill('sub page search');
+      .fill('second');
 
     // Now there is a sub page - expect to have the focus on the current doc
     await expect(
       page.getByRole('presentation').getByLabel(secondDocTitle),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('presentation').getByLabel(secondChildDocTitle),
     ).toBeVisible();
     await expect(
       page.getByRole('presentation').getByLabel(firstDocTitle),

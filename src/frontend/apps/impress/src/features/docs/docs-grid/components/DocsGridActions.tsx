@@ -1,5 +1,6 @@
 import { useModal } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
 import {
@@ -75,14 +76,26 @@ export const DocsGridActions = ({
     },
   ];
 
+  const documentTitle = doc.title || t('Untitled document');
+  const menuLabel = t('Open the menu of actions for the document: {{title}}', {
+    title: documentTitle,
+  });
+
   return (
     <>
-      <DropdownMenu options={options}>
+      <DropdownMenu options={options} label={menuLabel}>
         <Icon
           data-testid={`docs-grid-actions-button-${doc.id}`}
           iconName="more_horiz"
           $theme="primary"
           $variation="600"
+          aria-label={t('More options')}
+          $css={css`
+            cursor: pointer;
+            &:hover {
+              opacity: 0.8;
+            }
+          `}
         />
       </DropdownMenu>
 

@@ -23,7 +23,7 @@ const saveStorageState = async (
       page.locator('header').first().getByRole('button', {
         name: 'Logout',
       }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     await page.context().storageState({
       path: storageState as string,

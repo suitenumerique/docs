@@ -2,6 +2,8 @@
 
 from django.db import migrations, models
 
+import core.validators
+
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -31,6 +33,19 @@ class Migration(migrations.Migration):
                 max_length=10,
                 null=True,
                 verbose_name="language",
+            ),
+        ),
+        migrations.AlterField(
+            model_name="user",
+            name="sub",
+            field=models.CharField(
+                blank=True,
+                help_text="Required. 255 characters or fewer. ASCII characters only.",
+                max_length=255,
+                null=True,
+                unique=True,
+                validators=[core.validators.sub_validator],
+                verbose_name="sub",
             ),
         ),
     ]

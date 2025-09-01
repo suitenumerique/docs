@@ -10,7 +10,8 @@ import {
   useToastProvider,
 } from '@openfun/cunningham-react';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
-import { useMemo, useState } from 'react';
+import i18next from 'i18next';
+import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -92,9 +93,14 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
-      const pdfDocument = (await exporter.toReactPDFDocument(
+      const rawPdfDocument = (await exporter.toReactPDFDocument(
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
+
+      // Inject language for screen reader support
+      const pdfDocument = isValidElement(rawPdfDocument)
+        ? cloneElement(rawPdfDocument, { language: i18next.language })
+        : rawPdfDocument;
 
       blobExport = await pdf(pdfDocument).toBlob();
     } else {

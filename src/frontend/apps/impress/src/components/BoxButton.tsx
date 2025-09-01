@@ -31,11 +31,11 @@ const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
         $background="none"
         $margin="none"
         $padding="none"
+        $hasTransition
         $css={css`
           cursor: ${props.disabled ? 'not-allowed' : 'pointer'};
           border: none;
           outline: none;
-          transition: all 0.2s ease-in-out;
           font-family: inherit;
 
           color: ${props.disabled

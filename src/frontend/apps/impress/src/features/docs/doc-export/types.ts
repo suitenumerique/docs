@@ -43,9 +43,9 @@ export type DocsExporterPDF = Exporter<
 >;
 
 export type DocsExporterDocx = Exporter<
-  NoInfer<DocsBlockSchema>,
-  NoInfer<DocsInlineContentSchema>,
-  NoInfer<DocsStyleSchema>,
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
   Promise<Paragraph[] | Paragraph | Table> | Paragraph[] | Paragraph | Table,
   ParagraphChild,
   IRunPropertiesOptions,

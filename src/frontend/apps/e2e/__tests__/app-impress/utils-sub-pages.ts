@@ -10,13 +10,28 @@ export const createRootSubPage = async (
   page: Page,
   browserName: string,
   docName: string,
+  isMobile: boolean = false,
 ) => {
+  if (isMobile) {
+    await page
+      .getByRole('button', { name: 'Open the header menu' })
+      .getByText('menu')
+      .click();
+  }
+
   // Get response
   const responsePromise = waitForResponseCreateDoc(page);
   await clickOnAddRootSubPage(page);
   const response = await responsePromise;
   expect(response.ok()).toBeTruthy();
   const subPageJson = (await response.json()) as { id: string };
+
+  if (isMobile) {
+    await page
+      .getByRole('button', { name: 'Open the header menu' })
+      .getByText('menu')
+      .click();
+  }
 
   // Get doc tree
   const docTree = page.getByTestId('doc-tree');
@@ -28,6 +43,13 @@ export const createRootSubPage = async (
     .first();
   await expect(subPageItem).toBeVisible();
   await subPageItem.click();
+
+  if (isMobile) {
+    await page
+      .getByRole('button', { name: 'Open the header menu' })
+      .getByText('close')
+      .click();
+  }
 
   // Update sub page name
   const randomDocs = randomName(docName, browserName, 1);

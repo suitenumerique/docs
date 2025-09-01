@@ -1,11 +1,11 @@
-import '@testing-library/jest-dom';
 import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MESSAGE_TYPE } from '../conf';
 import { useIsOffline, useOffline } from '../hooks/useOffline';
 
-const mockAddEventListener = jest.fn();
-const mockRemoveEventListener = jest.fn();
+const mockAddEventListener = vi.fn();
+const mockRemoveEventListener = vi.fn();
 Object.defineProperty(navigator, 'serviceWorker', {
   value: {
     addEventListener: mockAddEventListener,
@@ -16,7 +16,7 @@ Object.defineProperty(navigator, 'serviceWorker', {
 
 describe('useOffline', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should set isOffline to true when receiving an offline message', () => {

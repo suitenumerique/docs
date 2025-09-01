@@ -71,6 +71,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   return (
     <Box
       className="--docs-sub-page-item"
+      draggable={doc.abilities.move && isDesktop}
       $position="relative"
       $css={css`
         background-color: ${actionsOpen

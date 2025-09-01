@@ -64,9 +64,7 @@ export class RequestSerializer {
   }
 
   public static objectToArrayBuffer(ob: Record<string, unknown>) {
-    return RequestSerializer.stringToArrayBuffer(
-      JSON.stringify(ob),
-    ) as ArrayBuffer;
+    return RequestSerializer.stringToArrayBuffer(JSON.stringify(ob));
   }
 
   constructor(requestData: RequestData) {

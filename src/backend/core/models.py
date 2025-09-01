@@ -14,7 +14,7 @@ from django.contrib.auth import models as auth_models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
-from django.core import mail, validators
+from django.core import mail
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -39,6 +39,7 @@ from .choices import (
     RoleChoices,
     get_equivalent_link_definition,
 )
+from .validators import sub_validator
 
 logger = getLogger(__name__)
 
@@ -136,22 +137,12 @@ class UserManager(auth_models.UserManager):
 class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
     """User model to work with OIDC only authentication."""
 
-    sub_validator = validators.RegexValidator(
-        regex=r"^[\w.@+-:]+\Z",
-        message=_(
-            "Enter a valid sub. This value may contain only letters, "
-            "numbers, and @/./+/-/_/: characters."
-        ),
-    )
-
     sub = models.CharField(
         _("sub"),
-        help_text=_(
-            "Required. 255 characters or fewer. Letters, numbers, and @/./+/-/_/: characters only."
-        ),
+        help_text=_("Required. 255 characters or fewer. ASCII characters only."),
         max_length=255,
-        unique=True,
         validators=[sub_validator],
+        unique=True,
         blank=True,
         null=True,
     )

@@ -78,14 +78,16 @@ export const createDoc = async (
   docName: string,
   browserName: string,
   length: number = 1,
-  isChild: boolean = false,
+  isMobile: boolean = false,
 ) => {
   const randomDocs = randomName(docName, browserName, length);
 
   for (let i = 0; i < randomDocs.length; i++) {
-    if (!isChild) {
-      const header = page.locator('header').first();
-      await header.locator('h2').getByText('Docs').click();
+    if (isMobile) {
+      await page
+        .getByRole('button', { name: 'Open the header menu' })
+        .getByText('menu')
+        .click();
     }
 
     await page
@@ -152,7 +154,7 @@ export const goToGridDoc = async (
   { nthRow = 1, title }: GoToGridDocOptions = {},
 ) => {
   const header = page.locator('header').first();
-  await header.locator('h2').getByText('Docs').click();
+  await header.locator('h1').getByText('Docs').click();
 
   const docsGrid = page.getByTestId('docs-grid');
   await expect(docsGrid).toBeVisible();
@@ -271,3 +273,52 @@ export const expectLoginPage = async (page: Page) =>
   ).toBeVisible({
     timeout: 10000,
   });
+// language helper
+export const TestLanguage = {
+  English: {
+    label: 'English',
+    expectedLocale: ['en-us'],
+  },
+  French: {
+    label: 'Français',
+    expectedLocale: ['fr-fr'],
+  },
+  German: {
+    label: 'Deutsch',
+    expectedLocale: ['de-de'],
+  },
+} as const;
+
+type TestLanguageKey = keyof typeof TestLanguage;
+type TestLanguageValue = (typeof TestLanguage)[TestLanguageKey];
+
+export async function waitForLanguageSwitch(
+  page: Page,
+  lang: TestLanguageValue,
+) {
+  await page.route('**/api/v1.0/users/**', async (route, request) => {
+    if (request.method().includes('PATCH')) {
+      await route.fulfill({
+        json: {
+          language: lang.expectedLocale[0],
+        },
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  const header = page.locator('header').first();
+  const languagePicker = header.locator('.--docs--language-picker-text');
+  const isAlreadyTargetLanguage = await languagePicker
+    .innerText()
+    .then((text) => text.toLowerCase().includes(lang.label.toLowerCase()));
+
+  if (isAlreadyTargetLanguage) {
+    return;
+  }
+
+  await languagePicker.click();
+
+  await page.getByLabel(lang.label).click();
+}

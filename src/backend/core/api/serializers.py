@@ -7,12 +7,13 @@ from base64 import b64decode
 from django.conf import settings
 from django.db.models import Q
 from django.utils.functional import lazy
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 import magic
 from rest_framework import serializers
 
-from core import choices, enums, models, utils
+from core import choices, enums, models, utils, validators
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
@@ -32,10 +33,29 @@ class UserSerializer(serializers.ModelSerializer):
 class UserLightSerializer(UserSerializer):
     """Serialize users with limited fields."""
 
+    full_name = serializers.SerializerMethodField(read_only=True)
+    short_name = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = models.User
         fields = ["full_name", "short_name"]
         read_only_fields = ["full_name", "short_name"]
+
+    def get_full_name(self, instance):
+        """Return the full name of the user."""
+        if not instance.full_name:
+            email = instance.email.split("@")[0]
+            return slugify(email)
+
+        return instance.full_name
+
+    def get_short_name(self, instance):
+        """Return the short name of the user."""
+        if not instance.short_name:
+            email = instance.email.split("@")[0]
+            return slugify(email)
+
+        return instance.short_name
 
 
 class TemplateAccessSerializer(serializers.ModelSerializer):
@@ -402,7 +422,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     content = serializers.CharField(required=True)
     # User
     sub = serializers.CharField(
-        required=True, validators=[models.User.sub_validator], max_length=255
+        required=True, validators=[validators.sub_validator], max_length=255
     )
     email = serializers.EmailField(required=True)
     language = serializers.ChoiceField(

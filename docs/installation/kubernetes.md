@@ -124,7 +124,7 @@ OIDC_OP_JWKS_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol
 OIDC_OP_AUTHORIZATION_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
 OIDC_OP_TOKEN_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
 OIDC_OP_USER_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
-OIDC_OP_LOGOUT_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/session/end
+OIDC_OP_LOGOUT_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
 OIDC_RP_CLIENT_ID: impress
 OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
 OIDC_RP_SIGN_ALGO: RS256
@@ -168,9 +168,6 @@ DB_NAME: impress
 DB_USER: dinum
 DB_PASSWORD: pass
 DB_PORT: 5432
-POSTGRES_DB: impress
-POSTGRES_USER: dinum
-POSTGRES_PASSWORD: pass
 ```
 
 ### Find s3 bucket connection values

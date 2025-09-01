@@ -8,8 +8,8 @@ test.describe('Left panel desktop', () => {
   test('checks all the elements are visible', async ({ page }) => {
     await expect(page.getByTestId('left-panel-desktop')).toBeVisible();
     await expect(page.getByTestId('left-panel-mobile')).toBeHidden();
-    await expect(page.getByRole('button', { name: 'house' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'New doc' })).toBeVisible();
+    await expect(page.getByTestId('home-button')).toBeVisible();
+    await expect(page.getByTestId('new-doc-button')).toBeVisible();
   });
 });
 
@@ -27,9 +27,11 @@ test.describe('Left panel mobile', () => {
     await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
 
     const header = page.locator('header').first();
-    const homeButton = page.getByRole('button', { name: 'house' });
-    const newDocButton = page.getByRole('button', { name: 'New doc' });
-    const languageButton = page.getByRole('button', { name: /Language/ });
+    const homeButton = page.getByTestId('home-button');
+    const newDocButton = page.getByTestId('new-doc-button');
+    const languageButton = page.getByRole('button', {
+      name: 'Select language',
+    });
     const logoutButton = page.getByRole('button', { name: 'Logout' });
 
     await expect(homeButton).not.toBeInViewport();

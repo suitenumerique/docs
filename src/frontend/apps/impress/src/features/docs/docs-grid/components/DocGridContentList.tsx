@@ -51,7 +51,9 @@ type DocGridContentListProps = {
   docs: Doc[];
 };
 
-export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
+export const DraggableDocGridContentList = ({
+  docs,
+}: DocGridContentListProps) => {
   const { mutateAsync: handleMove, isError } = useMoveDoc();
   const queryClient = useQueryClient();
   const modalConfirmation = useModal();
@@ -223,7 +225,7 @@ export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
   );
 };
 
-interface DocGridItemProps {
+interface DraggableDocGridItemProps {
   doc: Doc;
   dragMode: boolean;
   canDrag: boolean;
@@ -235,7 +237,7 @@ export const DraggableDocGridItem = ({
   dragMode,
   canDrag,
   updateCanDrop,
-}: DocGridItemProps) => {
+}: DraggableDocGridItemProps) => {
   const canDrop = doc.abilities.move;
 
   return (
@@ -251,4 +253,14 @@ export const DraggableDocGridItem = ({
       </Draggable>
     </Droppable>
   );
+};
+
+export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
+  if (docs.length === 0) {
+    return null;
+  }
+
+  return docs.map((doc) => (
+    <DocsGridItem dragMode={false} doc={doc} key={doc.id} />
+  ));
 };

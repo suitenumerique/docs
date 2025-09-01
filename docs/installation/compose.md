@@ -31,11 +31,17 @@ For older versions of Docker Engine that do not include Docker Compose:
 
 ```bash
 mkdir -p docs/env.d
+cd docs
 curl -o compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/compose.yaml
 curl -o env.d/common https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/common
 curl -o env.d/backend https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/backend
 curl -o env.d/yprovider https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/yprovider
-curl -o env.d/common https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/postgresql
+curl -o env.d/postgresql https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/postgresql
+```
+
+If you are using the sample nginx-proxy configuration:
+```bash
+curl -o default.conf.template https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docker/files/production/etc/nginx/conf.d/default.conf.template
 ```
 
 ## Step 2: Configuration

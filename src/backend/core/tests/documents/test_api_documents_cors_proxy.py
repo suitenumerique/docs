@@ -2,6 +2,7 @@
 
 import pytest
 import responses
+from requests.exceptions import RequestException
 from rest_framework.test import APIClient
 
 from core import factories
@@ -149,3 +150,41 @@ def test_api_docs_cors_proxy_unsupported_media_type():
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 415
+
+
+@pytest.mark.parametrize(
+    "url_to_fetch",
+    [
+        "ftp://external-url.com/assets/index.html",
+        "ftps://external-url.com/assets/index.html",
+        "invalid-url.com",
+        "ssh://external-url.com/assets/index.html",
+    ],
+)
+def test_api_docs_cors_proxy_invalid_url(url_to_fetch):
+    """Test the CORS proxy API for documents with an invalid URL."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == ["Enter a valid URL."]
+
+
+@responses.activate
+def test_api_docs_cors_proxy_request_failed():
+    """Test the CORS proxy API for documents with a request failed."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/index.html"
+    responses.get(url_to_fetch, body=RequestException("Connection refused"))
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "error": "Failed to fetch resource from https://external-url.com/assets/index.html"
+    }

@@ -1,4 +1,5 @@
 import { Button } from '@openfun/cunningham-react';
+import { t } from 'i18next';
 import { useRouter } from 'next/router';
 import { PropsWithChildren, useCallback, useState } from 'react';
 
@@ -53,20 +54,34 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
           >
             <Box $direction="row" $gap="2px">
               <Button
+                data-testid="home-button"
                 onClick={goToHome}
+                aria-label={t('Back to homepage')}
                 size="medium"
                 color="tertiary-text"
                 icon={
-                  <Icon $variation="800" $theme="primary" iconName="house" />
+                  <Icon
+                    $variation="800"
+                    $theme="primary"
+                    iconName="house"
+                    aria-hidden="true"
+                  />
                 }
               />
               {authenticated && (
                 <Button
+                  data-testid="search-docs-button"
                   onClick={openSearchModal}
                   size="medium"
                   color="tertiary-text"
+                  aria-label={t('Search docs')}
                   icon={
-                    <Icon $variation="800" $theme="primary" iconName="search" />
+                    <Icon
+                      $variation="800"
+                      $theme="primary"
+                      iconName="search"
+                      aria-hidden="true"
+                    />
                   }
                 />
               )}

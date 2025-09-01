@@ -10,10 +10,38 @@ and this project adheres to
 
 ### Added
 
-- ✨(helm) Service Account support for K8s Resources in Helm Charts #778
-- ✨(backend) allow masking documents from the list view #1171
+- 👷(CI) add bundle size check job #1268
+
+### Changed
+
+- ♻️(docs-app) Switch from Jest tests to Vitest #1269
+- ⚡️(frontend) improve accessibility:
+  - #1248
+  - #1235
+  - #1275
+  - #1255
+  - #1262
+  - #1244
+  - #1270
+  - #1282
+- ♻️(backend) fallback to email identifier when no name #1298
+- 🐛(backend) allow ASCII characters in user sub field #1295 
+
+### Fixed
+
+- 🐛(makefile) Windows compatibility fix for Docker volume mounting #1264
+- 🐛(minio) fix user permission error with Minio and Windows #1264
+- 🐛(frontend) fix export when quote block and inline code #1319
+
+## [3.5.0] - 2025-07-31
+
+### Added
+
+- ✨(helm) Service Account support for K8s Resources in Helm Charts #780
+- ✨(backend) allow masking documents from the list view #1172
 - ✨(frontend) subdocs can manage link reach #1190
 - ✨(frontend) add duplicate action to doc tree #1175
+- ✨(frontend) Interlinking doc #904
 - ✨(frontend) add multi columns support for editor #1219
 
 ### Changed
@@ -23,6 +51,7 @@ and this project adheres to
 - 🔧(project) change env.d system by using local files #1200
 - ⚡️(frontend) improve tree stability #1207
 - ⚡️(frontend) improve accessibility #1232
+- 🛂(frontend) block drag n drop when not desktop #1239
 - ⚡(backend) move email sending to celery
 
 ### Fixed
@@ -31,6 +60,7 @@ and this project adheres to
 - 🐛(frontend) fix empty left panel after deleting root doc #1197
 - 🐛(helm) charts generate invalid YAML for collaboration API / WS #890
 - 🐛(frontend) 401 redirection overridden #1214
+- 🐛(frontend) include root parent in search #1243
 
 ## [3.4.2] - 2025-07-18
 
@@ -674,7 +704,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.4.2...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.5.0...main
+[v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0
 [v3.4.2]: https://github.com/suitenumerique/docs/releases/v3.4.2
 [v3.4.1]: https://github.com/suitenumerique/docs/releases/v3.4.1
 [v3.4.0]: https://github.com/suitenumerique/docs/releases/v3.4.0

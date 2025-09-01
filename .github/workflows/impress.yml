@@ -89,9 +89,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13.3"
+          cache: "pip"
       - name: Upgrade pip and setuptools
         run: pip install --upgrade pip setuptools
       - name: Install development dependencies
@@ -184,9 +185,10 @@ jobs:
             mc version enable impress/impress-media-storage"
 
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13.3"
+          cache: "pip"
 
       - name: Install development dependencies
         run: pip install --user .[dev]

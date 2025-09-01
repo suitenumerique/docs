@@ -9,6 +9,7 @@ import {
   blockMappingQuotePDF,
   blockMappingTablePDF,
 } from './blocks-mapping';
+import { inlineContentMappingInterlinkingLinkPDF } from './inline-content-mapping';
 import { DocsExporterPDF } from './types';
 
 export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
@@ -22,5 +23,17 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
+  },
+  inlineContentMapping: {
+    ...pdfDefaultSchemaMappings.inlineContentMapping,
+    interlinkingSearchInline: () => <></>,
+    interlinkingLinkInline: inlineContentMappingInterlinkingLinkPDF,
+  },
+  styleMapping: {
+    ...pdfDefaultSchemaMappings.styleMapping,
+    // Switch to core PDF "Courier" font to avoid relying on GeistMono
+    // that is not available in italics
+    code: (enabled?: boolean) =>
+      enabled ? { fontFamily: 'Courier', backgroundColor: '#dcdcdc' } : {},
   },
 };

@@ -13,7 +13,7 @@ Acme-companion is a lightweight companion container for nginx-proxy. It handles 
 
 ```bash
 mkdir nginx-proxy
-curl -o compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/nginx-proxy/compose.yaml
+curl -o nginx-proxy/compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/nginx-proxy/compose.yaml
 ```
 
 ### Step 2: Edit `DEFAULT_EMAIL` in the compose file.

@@ -38,6 +38,10 @@ function _set_user() {
 # options: docker compose command options
 # ARGS   : docker compose command arguments
 function _docker_compose() {
+    # Set DOCKER_USER for Windows compatibility with MinIO
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || -n "${WSL_DISTRO_NAME:-}" ]]; then
+        export DOCKER_USER="0:0"
+    fi
 
     echo "🐳(compose) file: '${COMPOSE_FILE}'"
     docker compose \
