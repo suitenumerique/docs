@@ -25,14 +25,18 @@ jobs:
       - name: show
         run: git log
       - name: Enforce absence of print statements in code
+        if: always()
         run: |
           ! git diff origin/${{ github.event.pull_request.base.ref }}..HEAD -- . ':(exclude)**/impress.yml' | grep "print("
       - name: Check absence of fixup commits
+        if: always()
         run: |
           ! git log | grep 'fixup!'
       - name: Install gitlint
+        if: always()
         run: pip install --user requests gitlint
       - name: Lint commit messages added to main
+        if: always()
         run: ~/.local/bin/gitlint --commits origin/${{ github.event.pull_request.base.ref }}..HEAD
 
   check-changelog:
