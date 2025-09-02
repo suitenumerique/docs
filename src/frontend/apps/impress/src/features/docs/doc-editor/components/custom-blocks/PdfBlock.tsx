@@ -7,6 +7,7 @@ import {
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box, Icon } from '@/components';
 import { useResponsiveStore } from '@/stores';
@@ -28,10 +29,13 @@ export const PdfBlock = createReactBlockSpec(
       previewWidth: { default: undefined, type: 'number' },
     },
     isFileBlock: true,
+    fileBlockAccept: ['application/pdf'],
   },
   {
     render: ({ editor, block, contentRef }) => {
       const pdfUrl = block.props.url;
+
+      const { t } = useTranslation();
 
       const { isMobile } = useResponsiveStore();
 
@@ -54,12 +58,15 @@ export const PdfBlock = createReactBlockSpec(
           {pdfUrl === '' ? (
             <AddFileButton
               block={block}
-              editor={editor as FileBlockEditor}
-              buttonText="Add PDF"
-              buttonIcon={<Icon iconName="upload" $size="18px" />}
+              editor={editor as unknown as FileBlockEditor}
+              buttonText={t('Add PDF')}
+              buttonIcon={<Icon iconName="upload" />}
             />
           ) : (
-            <FileBlockWrapper block={block} editor={editor as FileBlockEditor}>
+            <FileBlockWrapper
+              block={block}
+              editor={editor as unknown as FileBlockEditor}
+            >
               {isMobile ? (
                 <Box
                   $display="flex"
@@ -145,7 +152,7 @@ export const getPdfReactSlashMenuItems = (
     },
     aliases: ['pdf', 'document', 'embed', 'file'],
     group,
-    icon: <Icon iconName="upload" $size="18px" />,
+    icon: <Icon iconName="picture_as_pdf" $size="18px" />,
     subtext: t('Embed a PDF file'),
   },
 ];
