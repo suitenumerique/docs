@@ -110,6 +110,10 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             background: var(--c--theme--colors--greyscale-100);
           }
         }
+
+        .row.preview & {
+          background-color: inherit;
+        }
       `}
     >
       <TreeViewItem
