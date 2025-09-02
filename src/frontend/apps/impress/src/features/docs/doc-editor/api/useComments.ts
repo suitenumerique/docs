@@ -1,13 +1,14 @@
 import {
+  CommentBody,
+  CommentData,
   DefaultThreadStoreAuth,
-  RESTYjsThreadStore,
+  ThreadData,
   ThreadStoreAuth,
   YjsThreadStoreBase,
 } from '@blocknote/core/comments';
 import * as Y from 'yjs';
 
-import { fetchAPI, getCSRFToken } from '@/api';
-import { baseApiUrl } from '@/api/config';
+import { APIError, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
@@ -16,51 +17,8 @@ export function useComments(
   doc: Doc,
   user: User | null | undefined,
 ) {
-  const apiUrl = `${baseApiUrl('1.0')}documents/${doc.id}/comments/`;
-  const csrfToken = getCSRFToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(csrfToken && { 'X-CSRFToken': csrfToken }),
-  };
-
-  // --- Ensure credentials (cookies) are sent for the comments REST calls -----------------
-  // RESTYjsThreadStore internally uses the global fetch API and doesn't expose a way to
-  // force credentials: 'include'. Since our backend auth relies on cookies, we wrap
-  // globalThis.fetch ONCE to inject credentials only for this specific comments endpoint.
-  // The wrapper is idempotent and narrowly scoped to URLs starting with apiUrl.
-  // If later the upstream library adds a credentials option, this can be removed.
-  type PatchedFetch = typeof fetch & { __impressCommentsPatched?: boolean };
-  const g = globalThis as { fetch: PatchedFetch };
-  if (typeof g.fetch === 'function' && !g.fetch.__impressCommentsPatched) {
-    const originalFetch = g.fetch.bind(globalThis);
-    const prefix = apiUrl; // already absolute from baseApiUrl
-    const patchedFetch: PatchedFetch = (
-      input: RequestInfo | URL,
-      init?: RequestInit,
-    ) => {
-      try {
-        const urlStr =
-          typeof input === 'string'
-            ? input
-            : input instanceof URL
-              ? input.href
-              : input.url;
-        if (urlStr.startsWith(prefix)) {
-          return originalFetch(input, { ...init, credentials: 'include' });
-        }
-      } catch {
-        // ignore and fallback
-      }
-      return originalFetch(input, init);
-    };
-    patchedFetch.__impressCommentsPatched = true;
-    g.fetch = patchedFetch;
-  }
-  // ---------------------------------------------------------------------------------------
-
-  const threadStore = new RESTYjsThreadStore(
-    apiUrl,
-    headers,
+  const threadStore = new CommentThreadStore(
+    doc,
     yDoc.getMap('threads'),
     new DefaultThreadStoreAuth(user?.id || '', 'editor'),
   );
@@ -68,14 +26,12 @@ export function useComments(
   return threadStore;
 }
 
-export class RESTYjsThreadStore2 extends YjsThreadStoreBase {
-  constructor(
-    private readonly BASE_URL: string,
-    private readonly headers: Record<string, string>,
-    threadsYMap: Y.Map<unknown>,
-    auth: ThreadStoreAuth,
-  ) {
+export class CommentThreadStore extends YjsThreadStoreBase {
+  protected doc: Doc;
+  constructor(doc: Doc, threadsYMap: Y.Map<unknown>, auth: ThreadStoreAuth) {
     super(threadsYMap, auth);
+
+    this.doc = doc;
   }
 
   // private doRequest = async (path: string, method: string, body?: any) => {
@@ -103,101 +59,249 @@ export class RESTYjsThreadStore2 extends YjsThreadStoreBase {
         anchor: number;
       };
       yjs: {
-        head: any;
-        anchor: any;
+        head: unknown;
+        anchor: unknown;
       };
     };
   }) => {
-    const { threadId, ...rest } = options;
+    const { threadId, ...body } = options;
 
-    const response = await fetchAPI(`documents/${docId}/ai-transform/`, {
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
       method: 'POST',
       body: JSON.stringify({
-        ...params,
+        ...body,
       }),
     });
 
-    return this.doRequest(`/${threadId}/addToDocument`, 'POST', rest);
+    console.log('threadId', threadId);
+    console.log('body', body);
+    console.log('response', response);
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to add thread to document',
+        await errorCauses(response),
+      );
+    }
+
+    //return response.json() as Promise<void>;
+
+    // const { threadId, ...rest } = options;
+    // return this.doRequest(`/${threadId}/addToDocument`, "POST", rest);
   };
 
   public createThread = async (options: {
     initialComment: {
       body: CommentBody;
-      metadata?: any;
+      metadata?: unknown;
     };
-    metadata?: any;
+    metadata?: unknown;
   }) => {
-    return this.doRequest('', 'POST', options);
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        ...options,
+      }),
+    });
+
+    console.log('response', response);
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to create thread in document',
+        await errorCauses(response),
+      );
+    }
+
+    return response.json() as Promise<ThreadData>;
   };
 
-  public addComment = (options: {
+  public addComment = async (options: {
     comment: {
       body: CommentBody;
-      metadata?: any;
+      metadata?: unknown;
     };
     threadId: string;
   }) => {
-    const { threadId, ...rest } = options;
-    return this.doRequest(`/${threadId}/comments`, 'POST', rest);
+    // const { threadId, ...rest } = options;
+    // return this.doRequest(`/${threadId}/comments`, 'POST', rest);
+
+    const { threadId, ...body } = options;
+
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'POST',
+      body: JSON.stringify({
+        ...body,
+      }),
+    });
+
+    console.log('threadId', threadId);
+    console.log('body', body);
+    console.log('response', response);
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to add thread to document',
+        await errorCauses(response),
+      );
+    }
+
+    return response.json() as Promise<CommentData>;
   };
 
-  public updateComment = (options: {
+  public updateComment = async (options: {
     comment: {
       body: CommentBody;
-      metadata?: any;
+      metadata?: unknown;
     };
     threadId: string;
     commentId: string;
   }) => {
-    const { threadId, commentId, ...rest } = options;
-    return this.doRequest(`/${threadId}/comments/${commentId}`, 'PUT', rest);
+    const { threadId, commentId, ...body } = options;
+    // return this.doRequest(`/${threadId}/comments/${commentId}`, 'PUT', rest);
+
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        ...body,
+      }),
+    });
+
+    console.log('threadId', threadId);
+    console.log('commentId', commentId);
+    console.log('body', body);
+    console.log('response', response);
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to add thread to document',
+        await errorCauses(response),
+      );
+    }
+
+    return response.json() as Promise<void>;
   };
 
-  public deleteComment = (options: {
+  public deleteComment = async (options: {
     threadId: string;
     commentId: string;
     softDelete?: boolean;
   }) => {
-    const { threadId, commentId, ...rest } = options;
-    return this.doRequest(
-      `/${threadId}/comments/${commentId}?soft=${!!rest.softDelete}`,
-      'DELETE',
-    );
+    const { threadId, commentId, ...body } = options;
+    // return this.doRequest(
+    //   `/${threadId}/comments/${commentId}?soft=${!!rest.softDelete}`,
+    //   'DELETE',
+    // );
+
+    console.log('threadId', threadId);
+    console.log('commentId', commentId);
+    console.log('softDelete', body);
+
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to delete comment',
+        await errorCauses(response),
+      );
+    }
   };
 
-  public deleteThread = (options: { threadId: string }) => {
-    return this.doRequest(`/${options.threadId}`, 'DELETE');
+  public deleteThread = async (_options: { threadId: string }) => {
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to delete thread',
+        await errorCauses(response),
+      );
+    }
   };
 
-  public resolveThread = (options: { threadId: string }) => {
-    return this.doRequest(`/${options.threadId}/resolve`, 'POST');
+  public resolveThread = async (_options: { threadId: string }) => {
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to resolve thread',
+        await errorCauses(response),
+      );
+    }
   };
 
-  public unresolveThread = (options: { threadId: string }) => {
-    return this.doRequest(`/${options.threadId}/unresolve`, 'POST');
+  public unresolveThread = async (_options: { threadId: string }) => {
+    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to unresolve thread',
+        await errorCauses(response),
+      );
+    }
   };
 
-  public addReaction = (options: {
+  public addReaction = async (options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }) => {
-    const { threadId, commentId, ...rest } = options;
-    return this.doRequest(
-      `/${threadId}/comments/${commentId}/reactions`,
-      'POST',
-      rest,
+    const { threadId, commentId, ...body } = options;
+    const response = await fetchAPI(
+      `documents/${this.doc.id}/comments/reactions`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          ...body,
+        }),
+      },
     );
+
+    // return this.doRequest(
+    //   `/${threadId}/comments/${commentId}/reactions`,
+    //   'POST',
+    //   rest,
+    // );
+
+    console.log('threadId', threadId);
+    console.log('commentId', commentId);
+    console.log('body', body);
+    console.log('response', response);
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to add reaction to comment',
+        await errorCauses(response),
+      );
+    }
+
+    return response.json() as Promise<void>;
   };
 
-  public deleteReaction = (options: {
+  public deleteReaction = async (options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }) => {
-    return this.doRequest(
-      `/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
-      'DELETE',
+    const response = await fetchAPI(
+      `documents/${this.doc.id}/comments/reactions/${options.emoji}`,
+      {
+        method: 'DELETE',
+      },
     );
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to delete reaction from comment',
+        await errorCauses(response),
+      );
+    }
   };
 }
