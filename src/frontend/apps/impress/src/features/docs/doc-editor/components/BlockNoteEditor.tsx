@@ -5,13 +5,18 @@ import {
   defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
+import {
+  DefaultThreadStoreAuth,
+  RESTYjsThreadStore,
+  YjsThreadStore,
+} from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
@@ -19,6 +24,7 @@ import { Box, TextErrors } from '@/components';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
+import { useComments } from '../api/useComments';
 import {
   useHeadings,
   useSaveDoc,
@@ -29,6 +35,7 @@ import {
 import { useEditorStore } from '../stores';
 import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
+import { HARDCODED_USERS, MyUserType, getRandomColor } from '../userdata';
 import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
@@ -64,6 +71,12 @@ const baseBlockNoteSchema = withPageBreak(
   }),
 );
 
+async function resolveUsers(userIds: string[]) {
+  // fake a (slow) network request
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  return HARDCODED_USERS.filter((user) => userIds.includes(user.id));
+}
+
 export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
   baseBlockNoteSchema) as typeof baseBlockNoteSchema;
 
@@ -91,6 +104,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     ? 'Reader'
     : user?.full_name || user?.email || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
+
+  const threadStore = useComments(provider.document, doc, user);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
@@ -144,11 +159,15 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
+      comments: {
+        threadStore,
+      },
       dictionary: {
         ...locales[lang as keyof typeof locales],
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
       },
+      resolveUsers,
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
