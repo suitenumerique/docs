@@ -63,7 +63,7 @@ We hope to see many more, here is an incomplete list of public Docs instances (u
 | docs.suite.anct.gouv.fr    | ANCT    | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
 | notes.demo.opendesk.eu    | ZenDiS    | Demo instance of OpenDesk. Request access to get credentials |
 | notes.liiib.re    | lasuite.coop    | Free and open demo to all. Content and accounts are reset after one month |
-| docs.demo.mosacloud.eu    | mosa.cloud    | Full implementation of La Suite, including Docs. Request demo access |  
+| docs.demo.mosacloud.eu    | mosa.cloud    | Demo instance of mosa.cloud, a dutch company providing services around La Suite apps. |  
 
 
 #### ⚠️ Advanced features
