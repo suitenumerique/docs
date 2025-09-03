@@ -10,21 +10,19 @@ import {
   ThreadStoreAuth,
   YjsThreadStoreBase,
 } from '@blocknote/core/comments';
-import { ServerBlockNoteEditor } from '@blocknote/server-util';
-import { EditorState, TextSelection } from 'prosemirror-state';
+// (EditorState no longer needed after refactor)
 import { useMemo } from 'react';
 import {
-  initProseMirrorDoc,
-  relativePositionToAbsolutePosition,
-  updateYFragment,
+  relativePositionToAbsolutePosition as relPosToAbs,
+  ySyncPluginKey,
 } from 'y-prosemirror';
+// (Previously used low-level helpers removed in favor of ySync plugin state)
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
-import { blockNoteSchema } from '../components/BlockNoteEditor';
 import { useEditorStore } from '../stores';
 
 interface CommentThreadAbilities {
@@ -108,21 +106,85 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       };
     };
   }) => {
-    console.log('addThreadToDocument');
-
     const { threadId, selection } = options;
+    try {
+      const { editor } = useEditorStore.getState();
+      if (!editor) {
+        console.warn('addThreadToDocument: editor not ready');
+        return Promise.resolve();
+      }
+      interface TiptapLikeView {
+        state: {
+          schema: { marks: Record<string, any> };
+          tr: { addMark: (from: number, to: number, mark: any) => any };
+        };
+        dispatch: (tr: any) => void;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const view: TiptapLikeView | undefined = editor.prosemirrorView;
+      if (!view) {
+        console.warn('addThreadToDocument: view not ready');
+        return Promise.resolve();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const yState = ySyncPluginKey.getState(view.state) as {
+        mapping: any;
+        type: any;
+      } | null;
+      if (!yState) {
+        console.warn('addThreadToDocument: ySync plugin state missing');
+        return Promise.resolve();
+      }
+      const { mapping, type: yFragment } = yState;
 
-    setMark(
-      this.yDoc,
-      this.yDoc.getXmlFragment('document-store'),
-      selection.yjs,
-      'comment',
-      {
-        orphan: false,
-        threadId: threadId,
-      },
-    );
+      // Attempt relative -> absolute conversion with fallback.
+      const tryRel = (label: string, relPos: unknown): number | null => {
+        try {
+          const v = relPosToAbs(this.yDoc, yFragment, relPos as any, mapping);
+          if (typeof v === 'number') {
+            return v;
+          }
+        } catch (err) {
+          console.warn(
+            `addThreadToDocument: relative->abs failed for ${label}`,
+            err,
+          );
+        }
+        return null;
+      };
 
+      let anchorAbs = tryRel('anchor', selection.yjs.anchor);
+      let headAbs = tryRel('head', selection.yjs.head);
+
+      if (anchorAbs == null || headAbs == null) {
+        anchorAbs = selection.prosemirror.anchor;
+        headAbs = selection.prosemirror.head;
+      }
+
+      if (anchorAbs == null || headAbs == null) {
+        console.warn('addThreadToDocument: could not resolve any positions');
+        return Promise.resolve();
+      }
+
+      const from = Math.min(anchorAbs, headAbs);
+      const to = Math.max(anchorAbs, headAbs);
+      const markType = view.state.schema.marks['comment'];
+      if (!markType) {
+        console.warn('addThreadToDocument: comment mark type missing');
+        return Promise.resolve();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const tr = view.state.tr.addMark(
+        from,
+        to,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+        markType.create({ orphan: false, threadId }),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+      view.dispatch(tr);
+    } catch (e) {
+      console.error('addThreadToDocument failed', e);
+    }
     return Promise.resolve();
   };
 
@@ -392,98 +454,6 @@ export class CommentThreadStore extends YjsThreadStoreBase {
   };
 }
 
-function setMark(
-  doc: Y.Doc,
-  fragment: Y.XmlFragment,
-  yjsSelection: {
-    anchor: any;
-    head: any;
-  },
-  markName: string,
-  markAttributes: any,
-) {
-  // needed to get the pmSchema
-  // if you use a BlockNote custom schema, make sure to pass it to the create options
-  //const editor = ServerBlockNoteEditor.create();
-  const { editor } = useEditorStore.getState();
+// Legacy helper removed: direct mark application now uses existing editor view & ySync mapping.
 
-  console.log('editor', editor);
-
-  const pmSchema = editor!.pmSchema;
-
-  // get the prosemirror document
-  const { doc: pNode, mapping } = initProseMirrorDoc(fragment, pmSchema as any);
-
-  // get the prosemirror positions based on the yjs positions
-  // we need to get this from yjs because other users might have made changes in between
-  const anchor = relativePositionToAbsolutePosition(
-    doc,
-    fragment,
-    yjsSelection.anchor,
-    mapping,
-  );
-  const head = relativePositionToAbsolutePosition(
-    doc,
-    fragment,
-    yjsSelection.head,
-    mapping,
-  );
-
-  // now, let's create the mark in the prosemirror document
-  const state = EditorState.create({
-    doc: pNode,
-    schema: pmSchema as any,
-    selection: TextSelection.create(pNode, anchor!, head!),
-  });
-
-  const tr = setMarkInProsemirror(
-    pmSchema.marks[markName],
-    markAttributes,
-    state,
-  );
-
-  // finally, update the yjs document with the new prosemirror document
-  updateYFragment(doc, fragment, tr.doc, mapping);
-}
-
-export const setMarkInProsemirror = (
-  type: any,
-  attributes = {},
-  state: EditorState,
-) => {
-  let tr = state.tr;
-  const { selection } = state;
-  const { ranges } = selection;
-
-  ranges.forEach((range) => {
-    const from = range.$from.pos;
-    const to = range.$to.pos;
-
-    state.doc.nodesBetween(from, to, (node, pos) => {
-      const trimmedFrom = Math.max(pos, from);
-      const trimmedTo = Math.min(pos + node.nodeSize, to);
-      const someHasMark = node.marks.find((mark) => mark.type === type);
-
-      // if there is already a mark of this type
-      // we know that we have to merge its attributes
-      // otherwise we add a fresh new mark
-      if (someHasMark) {
-        node.marks.forEach((mark) => {
-          if (type === mark.type) {
-            tr = tr.addMark(
-              trimmedFrom,
-              trimmedTo,
-              type.create({
-                ...mark.attrs,
-                ...attributes,
-              }),
-            );
-          }
-        });
-      } else {
-        tr = tr.addMark(trimmedFrom, trimmedTo, type.create(attributes));
-      }
-    });
-  });
-  return tr;
-};
+// Removed unused setMarkInProsemirror helper (handled directly via editor.view.tr.addMark)
