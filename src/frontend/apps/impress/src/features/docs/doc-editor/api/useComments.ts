@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CommentBody,
   CommentData,
@@ -6,13 +10,22 @@ import {
   ThreadStoreAuth,
   YjsThreadStoreBase,
 } from '@blocknote/core/comments';
-import { useEffect, useMemo, useState } from 'react';
-import { a } from 'vitest/dist/chunks/suite.d.FvehnV49.js';
+import { ServerBlockNoteEditor } from '@blocknote/server-util';
+import { EditorState, TextSelection } from 'prosemirror-state';
+import { useMemo } from 'react';
+import {
+  initProseMirrorDoc,
+  relativePositionToAbsolutePosition,
+  updateYFragment,
+} from 'y-prosemirror';
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
+
+import { blockNoteSchema } from '../components/BlockNoteEditor';
+import { useEditorStore } from '../stores';
 
 interface CommentThreadAbilities {
   destroy: boolean;
@@ -48,7 +61,7 @@ export function useComments(
   const threadStore = useMemo(() => {
     return new CommentThreadStore(
       doc.id,
-      yDoc.getMap('threads'),
+      yDoc,
       new DefaultThreadStoreAuth(user?.id || '', 'editor'),
     );
   }, [doc.id, yDoc, user?.id]);
@@ -59,11 +72,10 @@ export function useComments(
 export class CommentThreadStore extends YjsThreadStoreBase {
   constructor(
     protected docId: Doc['id'],
-    threadsYMap: Y.Map<unknown>,
+    protected yDoc: Y.Doc,
     auth: ThreadStoreAuth,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    super(threadsYMap as Y.Map<any>, auth);
+    super(yDoc.getMap('threads'), auth);
   }
 
   // private doRequest = async (path: string, method: string, body?: any) => {
@@ -100,28 +112,17 @@ export class CommentThreadStore extends YjsThreadStoreBase {
 
     const { threadId, selection } = options;
 
-    // Basic implementation inspired by BlockNote demo server logic:
-    // create (or update) a Y.Map entry for this thread with its selection
-    // so collaborative clients can render the comment annotation.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let threadYMap = this.threadsYMap.get(threadId) as Y.Map<any> | undefined;
-    if (!threadYMap) {
-      threadYMap = new Y.Map();
-      // Store minimal metadata. Additional fields (comments, resolved, etc.)
-      // are managed separately by the thread/comment creation endpoints.
-      threadYMap.set('id', threadId);
-      this.threadsYMap.set(threadId, threadYMap);
-    }
+    setMark(
+      this.yDoc,
+      this.yDoc.getXmlFragment('document-store'),
+      selection.yjs,
+      'comment',
+      {
+        orphan: false,
+        threadId: threadId,
+      },
+    );
 
-    // Persist the latest selection info (both ProseMirror positional data
-    // and the Yjs relative positions) so other clients can anchor it.
-    threadYMap.set('selection', {
-      prosemirror: selection.prosemirror,
-      yjs: selection.yjs,
-    });
-
-    // No server call yet; this is purely a local collaborative state update.
-    // Return void for now to match expected async signature.
     return Promise.resolve();
   };
 
@@ -390,3 +391,99 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     }
   };
 }
+
+function setMark(
+  doc: Y.Doc,
+  fragment: Y.XmlFragment,
+  yjsSelection: {
+    anchor: any;
+    head: any;
+  },
+  markName: string,
+  markAttributes: any,
+) {
+  // needed to get the pmSchema
+  // if you use a BlockNote custom schema, make sure to pass it to the create options
+  //const editor = ServerBlockNoteEditor.create();
+  const { editor } = useEditorStore.getState();
+
+  console.log('editor', editor);
+
+  const pmSchema = editor!.pmSchema;
+
+  // get the prosemirror document
+  const { doc: pNode, mapping } = initProseMirrorDoc(fragment, pmSchema as any);
+
+  // get the prosemirror positions based on the yjs positions
+  // we need to get this from yjs because other users might have made changes in between
+  const anchor = relativePositionToAbsolutePosition(
+    doc,
+    fragment,
+    yjsSelection.anchor,
+    mapping,
+  );
+  const head = relativePositionToAbsolutePosition(
+    doc,
+    fragment,
+    yjsSelection.head,
+    mapping,
+  );
+
+  // now, let's create the mark in the prosemirror document
+  const state = EditorState.create({
+    doc: pNode,
+    schema: pmSchema as any,
+    selection: TextSelection.create(pNode, anchor!, head!),
+  });
+
+  const tr = setMarkInProsemirror(
+    pmSchema.marks[markName],
+    markAttributes,
+    state,
+  );
+
+  // finally, update the yjs document with the new prosemirror document
+  updateYFragment(doc, fragment, tr.doc, mapping);
+}
+
+export const setMarkInProsemirror = (
+  type: any,
+  attributes = {},
+  state: EditorState,
+) => {
+  let tr = state.tr;
+  const { selection } = state;
+  const { ranges } = selection;
+
+  ranges.forEach((range) => {
+    const from = range.$from.pos;
+    const to = range.$to.pos;
+
+    state.doc.nodesBetween(from, to, (node, pos) => {
+      const trimmedFrom = Math.max(pos, from);
+      const trimmedTo = Math.min(pos + node.nodeSize, to);
+      const someHasMark = node.marks.find((mark) => mark.type === type);
+
+      // if there is already a mark of this type
+      // we know that we have to merge its attributes
+      // otherwise we add a fresh new mark
+      if (someHasMark) {
+        node.marks.forEach((mark) => {
+          if (type === mark.type) {
+            tr = tr.addMark(
+              trimmedFrom,
+              trimmedTo,
+              type.create({
+                ...mark.attrs,
+                ...attributes,
+              }),
+            );
+          }
+        });
+      } else {
+        tr = tr.addMark(trimmedFrom, trimmedTo, type.create(attributes));
+      }
+    });
+  });
+  return tr;
+};
