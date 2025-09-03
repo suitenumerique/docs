@@ -1296,7 +1296,7 @@ class Comment(BaseModel):
         null=True,
         blank=True,
     )
-    content = models.TextField()
+    content = models.JSONField()
 
     class Meta:
         db_table = "impress_comment"

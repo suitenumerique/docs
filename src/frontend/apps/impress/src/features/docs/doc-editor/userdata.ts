@@ -18,7 +18,7 @@ export type MyUserType = User & {
 };
 export const HARDCODED_USERS: MyUserType[] = [
   {
-    id: '1',
+    id: 'fe07a07c-6247-47cc-a836-4c29de25d5c0',
     username: 'John Doe',
     avatarUrl: 'https://placehold.co/100x100?text=John',
     role: 'editor',

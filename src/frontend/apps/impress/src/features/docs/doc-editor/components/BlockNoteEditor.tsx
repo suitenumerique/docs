@@ -167,7 +167,16 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
       },
-      resolveUsers,
+      resolveUsers: async (userIds) => {
+        // sample implementation, replace this with a call to your own user database for example
+        return Promise.resolve(
+          userIds.map((userId) => ({
+            id: userId,
+            username: 'John Doe',
+            avatarUrl: 'https://placehold.co/100x100',
+          })),
+        );
+      },
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -178,7 +187,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       schema: blockNoteSchema,
       dropCursor: multiColumnDropCursor,
     },
-    [collabName, lang, provider, uploadFile],
+    [collabName, lang, provider, uploadFile, threadStore],
   );
 
   useHeadings(editor);

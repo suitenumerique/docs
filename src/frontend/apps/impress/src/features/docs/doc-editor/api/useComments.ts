@@ -6,32 +6,54 @@ import {
   ThreadStoreAuth,
   YjsThreadStoreBase,
 } from '@blocknote/core/comments';
+import { useEffect, useMemo, useState } from 'react';
+import { a } from 'vitest/dist/chunks/suite.d.FvehnV49.js';
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
+interface CommentThreadAbilities {
+  destroy: boolean;
+  update: boolean;
+  partial_update: boolean;
+  retrieve: boolean;
+}
+
+interface CommentThreadApiResponse {
+  id: string;
+  content: JSON;
+  created_at: string; // ISO timestamp
+  updated_at: string; // ISO timestamp
+  user: User;
+  document: string; // Document UUID
+  abilities: CommentThreadAbilities;
+}
+
 export function useComments(
   yDoc: Y.Doc,
   doc: Doc,
   user: User | null | undefined,
 ) {
-  const threadStore = new CommentThreadStore(
-    doc,
-    yDoc.getMap('threads'),
-    new DefaultThreadStoreAuth(user?.id || '', 'editor'),
-  );
+  const threadStore = useMemo(() => {
+    return new CommentThreadStore(
+      doc.id,
+      yDoc.getMap('threads'),
+      new DefaultThreadStoreAuth(user?.id || '', 'editor'),
+    );
+  }, [doc.id, yDoc, user?.id]);
 
   return threadStore;
 }
 
 export class CommentThreadStore extends YjsThreadStoreBase {
-  protected doc: Doc;
-  constructor(doc: Doc, threadsYMap: Y.Map<unknown>, auth: ThreadStoreAuth) {
+  constructor(
+    protected docId: Doc['id'],
+    threadsYMap: Y.Map<unknown>,
+    auth: ThreadStoreAuth,
+  ) {
     super(threadsYMap, auth);
-
-    this.doc = doc;
   }
 
   // private doRequest = async (path: string, method: string, body?: any) => {
@@ -66,29 +88,31 @@ export class CommentThreadStore extends YjsThreadStoreBase {
   }) => {
     const { threadId, ...body } = options;
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...body,
-      }),
-    });
+    // const response = await fetchAPI(`documents/${this.docId}/comments/`, {
+    //   method: 'POST',
+    //   body: JSON.stringify({
+    //     ...body,
+    //   }),
+    // });
 
     console.log('addThreadToDocument');
     console.log('threadId', threadId);
     console.log('body', body);
-    console.log('response', response);
+    // console.log('response', response);
 
-    if (!response.ok) {
-      throw new APIError(
-        'Failed to add thread to document',
-        await errorCauses(response),
-      );
-    }
+    // if (!response.ok) {
+    //   throw new APIError(
+    //     'Failed to add thread to document',
+    //     await errorCauses(response),
+    //   );
+    // }
 
     //return response.json() as Promise<void>;
 
     // const { threadId, ...rest } = options;
     // return this.doRequest(`/${threadId}/addToDocument`, "POST", rest);
+
+    return Promise.resolve();
   };
 
   public createThread = async (options: {
@@ -98,15 +122,14 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     };
     metadata?: unknown;
   }) => {
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'POST',
       body: JSON.stringify({
-        ...options,
+        content: options,
       }),
     });
 
     console.log('createThread');
-    console.log('response', response);
 
     if (!response.ok) {
       throw new APIError(
@@ -115,7 +138,39 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       );
     }
 
-    return response.json() as Promise<ThreadData>;
+    const json = (await response.json()) as CommentThreadApiResponse;
+
+    console.log('response', json);
+
+    return {
+      type: 'thread',
+      id: '12456',
+      /**
+       * The date when the thread was created.
+       */
+      createdAt: new Date(json.created_at),
+      /**
+       * The date when the thread was last updated.
+       */
+      updatedAt: new Date(json.updated_at),
+      /**
+       * The comments in the thread.
+       */
+      comments: [
+        {
+          id: json.id,
+          body: json.content.initialComment.body,
+          createdAt: new Date(json.created_at),
+          updatedAt: new Date(json.updated_at),
+          metadata: null,
+        },
+      ],
+      /**
+       * Whether the thread has been marked as resolved.
+       */
+      resolved: false,
+      metadata: null,
+    } as ThreadData;
   };
 
   public addComment = async (options: {
@@ -130,7 +185,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
 
     const { threadId, ...body } = options;
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'POST',
       body: JSON.stringify({
         ...body,
@@ -163,7 +218,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     const { threadId, commentId, ...body } = options;
     // return this.doRequest(`/${threadId}/comments/${commentId}`, 'PUT', rest);
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'PUT',
       body: JSON.stringify({
         ...body,
@@ -202,7 +257,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     console.log('commentId', commentId);
     console.log('softDelete', body);
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'DELETE',
     });
 
@@ -218,7 +273,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     console.log('deleteThread');
     console.log('threadId', _options.threadId);
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'DELETE',
     });
 
@@ -234,7 +289,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     console.log('resolveThread');
     console.log('threadId', _options.threadId);
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'POST',
     });
 
@@ -250,7 +305,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     console.log('unresolveThread');
     console.log('threadId', _options.threadId);
 
-    const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
       method: 'POST',
     });
 
@@ -274,7 +329,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
 
     const { ...body } = options;
     const response = await fetchAPI(
-      `documents/${this.doc.id}/comments/reactions`,
+      `documents/${this.docId}/comments/reactions`,
       {
         method: 'POST',
         body: JSON.stringify({
@@ -310,7 +365,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     console.log('emoji', options.emoji);
 
     const response = await fetchAPI(
-      `documents/${this.doc.id}/comments/reactions/${options.emoji}`,
+      `documents/${this.docId}/comments/reactions/${options.emoji}`,
       {
         method: 'DELETE',
       },
