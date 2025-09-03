@@ -11,7 +11,7 @@ import {
   YjsThreadStoreBase,
 } from '@blocknote/core/comments';
 // (EditorState no longer needed after refactor)
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   relativePositionToAbsolutePosition as relPosToAbs,
   ySyncPluginKey,
@@ -19,7 +19,7 @@ import {
 // (Previously used low-level helpers removed in favor of ySync plugin state)
 import * as Y from 'yjs';
 
-import { APIError, errorCauses, fetchAPI } from '@/api';
+import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
@@ -36,13 +36,15 @@ interface CommentThreadAbilities {
 
 interface CommentThreadApiResponse {
   id: string;
-  content: JSON;
+  content: any;
   created_at: string; // ISO timestamp
   updated_at: string; // ISO timestamp
   user: User;
   document: string; // Document UUID
   abilities: CommentThreadAbilities;
 }
+
+type CommentThreadApiListResponse = APIList<CommentThreadApiResponse>;
 
 // Shape we expect to have sent when creating a thread.
 interface ThreadCreationContent {
@@ -70,30 +72,17 @@ export function useComments(
 }
 
 export class CommentThreadStore extends YjsThreadStoreBase {
+  protected threads: Map<string, ThreadData> = new Map();
+
   constructor(
     protected docId: Doc['id'],
     protected yDoc: Y.Doc,
     auth: ThreadStoreAuth,
   ) {
     super(yDoc.getMap('threads'), auth);
+
+    void this.refreshThreadsFromServer();
   }
-
-  // private doRequest = async (path: string, method: string, body?: any) => {
-  //   const response = await fetch(`${this.BASE_URL}${path}`, {
-  //     method,
-  //     body: JSON.stringify(body),
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       ...this.headers,
-  //     },
-  //   });
-
-  //   if (!response.ok) {
-  //     throw new Error(`Failed to ${method} ${path}: ${response.statusText}`);
-  //   }
-
-  //   return response.json();
-  // };
 
   public addThreadToDocument = (options: {
     threadId: string;
@@ -217,7 +206,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     }
 
     const thread = (await response.json()) as CommentThreadApiResponse;
-    const content = thread.content as unknown as ThreadCreationContent;
+    //const content = thread.content as unknown as ThreadCreationContent;
 
     console.log('response', thread);
 
@@ -229,37 +218,49 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     //   metadata: content.metadata,
     // });
 
-    const threadData: ThreadData = {
-      type: 'thread',
-      id: thread.id,
-      /**
-       * The date when the thread was created.
-       */
-      createdAt: new Date(thread.created_at),
-      /**
-       * The date when the thread was last updated.
-       */
-      updatedAt: new Date(thread.updated_at),
-      comments: [
-        {
-          type: 'comment',
-          id: thread.id + '-c1',
-          userId: String(thread.user.id),
-          body: content.initialComment.body,
-          createdAt: new Date(thread.created_at),
-          updatedAt: new Date(thread.updated_at),
-          reactions: [],
-          metadata: null,
-        },
-      ],
-      resolved: false,
-      metadata: null,
-    };
+    const threadData: ThreadData = threadApiToThreadData(thread);
 
     this.threadsYMap.set(thread.id, threadToYMap(threadData));
+    void this.refreshThreadsFromServer();
 
     return threadData;
   };
+
+  public getThread(threadId: string) {
+    console.log('getThread', threadId);
+
+    const yThread = this.threadsYMap.get(threadId);
+    if (!yThread) {
+      throw new Error('Thread not found');
+    }
+    const thread = yMapToThread(yThread);
+    return thread;
+  }
+
+  public getThreads(): Map<string, ThreadData> {
+    return this.threads;
+  }
+
+  // Optional helper to refresh threads from the server and populate the Yjs map.
+  public async refreshThreadsFromServer(): Promise<void> {
+    const response = await fetchAPI(`documents/${this.docId}/comments/`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      throw new APIError(
+        'Failed to get threads in document',
+        await errorCauses(response),
+      );
+    }
+
+    const threads = (await response.json()) as CommentThreadApiListResponse;
+    threads.results.forEach((thread) => {
+      const threadData: ThreadData = threadApiToThreadData(thread);
+      //this.threadsYMap.set(thread.id, threadToYMap(threadData));
+      this.threads.set(thread.id, threadData);
+    });
+  }
 
   public addComment = async (options: {
     comment: {
@@ -467,3 +468,35 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     }
   };
 }
+
+const threadApiToThreadData = (
+  threadApi: CommentThreadApiResponse,
+): ThreadData => {
+  return {
+    type: 'thread',
+    id: threadApi.id,
+    /**
+     * The date when the thread was created.
+     */
+    createdAt: new Date(threadApi.created_at),
+    /**
+     * The date when the thread was last updated.
+     */
+    updatedAt: new Date(threadApi.updated_at),
+    comments: [
+      {
+        type: 'comment',
+        id: threadApi.id + '-c1',
+        userId: String(threadApi.user.id),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        body: threadApi.content.initialComment.body,
+        createdAt: new Date(threadApi.created_at),
+        updatedAt: new Date(threadApi.updated_at),
+        reactions: [],
+        metadata: null,
+      },
+    ],
+    resolved: false,
+    metadata: null,
+  };
+};
