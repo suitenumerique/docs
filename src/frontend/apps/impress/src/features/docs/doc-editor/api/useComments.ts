@@ -73,6 +73,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       }),
     });
 
+    console.log('addThreadToDocument');
     console.log('threadId', threadId);
     console.log('body', body);
     console.log('response', response);
@@ -104,6 +105,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       }),
     });
 
+    console.log('createThread');
     console.log('response', response);
 
     if (!response.ok) {
@@ -135,6 +137,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       }),
     });
 
+    console.log('addComment');
     console.log('threadId', threadId);
     console.log('body', body);
     console.log('response', response);
@@ -167,6 +170,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       }),
     });
 
+    console.log('updateComment');
     console.log('threadId', threadId);
     console.log('commentId', commentId);
     console.log('body', body);
@@ -193,6 +197,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     //   'DELETE',
     // );
 
+    console.log('deleteComment');
     console.log('threadId', threadId);
     console.log('commentId', commentId);
     console.log('softDelete', body);
@@ -210,6 +215,9 @@ export class CommentThreadStore extends YjsThreadStoreBase {
   };
 
   public deleteThread = async (_options: { threadId: string }) => {
+    console.log('deleteThread');
+    console.log('threadId', _options.threadId);
+
     const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
       method: 'DELETE',
     });
@@ -223,6 +231,9 @@ export class CommentThreadStore extends YjsThreadStoreBase {
   };
 
   public resolveThread = async (_options: { threadId: string }) => {
+    console.log('resolveThread');
+    console.log('threadId', _options.threadId);
+
     const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
       method: 'POST',
     });
@@ -236,6 +247,9 @@ export class CommentThreadStore extends YjsThreadStoreBase {
   };
 
   public unresolveThread = async (_options: { threadId: string }) => {
+    console.log('unresolveThread');
+    console.log('threadId', _options.threadId);
+
     const response = await fetchAPI(`documents/${this.doc.id}/comments/`, {
       method: 'POST',
     });
@@ -253,7 +267,12 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     commentId: string;
     emoji: string;
   }) => {
-    const { threadId, commentId, ...body } = options;
+    console.log('addReaction');
+    console.log('threadId', options.threadId);
+    console.log('commentId', options.commentId);
+    console.log('emoji', options.emoji);
+
+    const { ...body } = options;
     const response = await fetchAPI(
       `documents/${this.doc.id}/comments/reactions`,
       {
@@ -270,11 +289,6 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     //   rest,
     // );
 
-    console.log('threadId', threadId);
-    console.log('commentId', commentId);
-    console.log('body', body);
-    console.log('response', response);
-
     if (!response.ok) {
       throw new APIError(
         'Failed to add reaction to comment',
@@ -290,6 +304,11 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     commentId: string;
     emoji: string;
   }) => {
+    console.log('deleteReaction');
+    console.log('threadId', options.threadId);
+    console.log('commentId', options.commentId);
+    console.log('emoji', options.emoji);
+
     const response = await fetchAPI(
       `documents/${this.doc.id}/comments/reactions/${options.emoji}`,
       {
