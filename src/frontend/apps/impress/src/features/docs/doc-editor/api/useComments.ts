@@ -31,6 +31,15 @@ interface CommentThreadApiResponse {
   abilities: CommentThreadAbilities;
 }
 
+// Shape we expect to have sent when creating a thread.
+interface ThreadCreationContent {
+  initialComment: {
+    body: CommentBody;
+    metadata?: unknown;
+  };
+  metadata?: unknown;
+}
+
 export function useComments(
   yDoc: Y.Doc,
   doc: Doc,
@@ -53,7 +62,8 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     threadsYMap: Y.Map<unknown>,
     auth: ThreadStoreAuth,
   ) {
-    super(threadsYMap, auth);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super(threadsYMap as Y.Map<any>, auth);
   }
 
   // private doRequest = async (path: string, method: string, body?: any) => {
@@ -73,7 +83,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
   //   return response.json();
   // };
 
-  public addThreadToDocument = async (options: {
+  public addThreadToDocument = (options: {
     threadId: string;
     selection: {
       prosemirror: {
@@ -86,32 +96,32 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       };
     };
   }) => {
-    const { threadId, ...body } = options;
-
-    // const response = await fetchAPI(`documents/${this.docId}/comments/`, {
-    //   method: 'POST',
-    //   body: JSON.stringify({
-    //     ...body,
-    //   }),
-    // });
-
     console.log('addThreadToDocument');
-    console.log('threadId', threadId);
-    console.log('body', body);
-    // console.log('response', response);
 
-    // if (!response.ok) {
-    //   throw new APIError(
-    //     'Failed to add thread to document',
-    //     await errorCauses(response),
-    //   );
-    // }
+    const { threadId, selection } = options;
 
-    //return response.json() as Promise<void>;
+    // Basic implementation inspired by BlockNote demo server logic:
+    // create (or update) a Y.Map entry for this thread with its selection
+    // so collaborative clients can render the comment annotation.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let threadYMap = this.threadsYMap.get(threadId) as Y.Map<any> | undefined;
+    if (!threadYMap) {
+      threadYMap = new Y.Map();
+      // Store minimal metadata. Additional fields (comments, resolved, etc.)
+      // are managed separately by the thread/comment creation endpoints.
+      threadYMap.set('id', threadId);
+      this.threadsYMap.set(threadId, threadYMap);
+    }
 
-    // const { threadId, ...rest } = options;
-    // return this.doRequest(`/${threadId}/addToDocument`, "POST", rest);
+    // Persist the latest selection info (both ProseMirror positional data
+    // and the Yjs relative positions) so other clients can anchor it.
+    threadYMap.set('selection', {
+      prosemirror: selection.prosemirror,
+      yjs: selection.yjs,
+    });
 
+    // No server call yet; this is purely a local collaborative state update.
+    // Return void for now to match expected async signature.
     return Promise.resolve();
   };
 
@@ -139,6 +149,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     }
 
     const json = (await response.json()) as CommentThreadApiResponse;
+    const content = json.content as unknown as ThreadCreationContent;
 
     console.log('response', json);
 
@@ -159,7 +170,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       comments: [
         {
           id: json.id,
-          body: json.content.initialComment.body,
+          body: content.initialComment.body,
           createdAt: new Date(json.created_at),
           updatedAt: new Date(json.updated_at),
           metadata: null,
