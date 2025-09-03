@@ -107,6 +107,8 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     };
   }) => {
     const { threadId, selection } = options;
+
+    console.log('addThreadToptions', options);
     try {
       const { editor } = useEditorStore.getState();
       if (!editor) {
@@ -114,11 +116,11 @@ export class CommentThreadStore extends YjsThreadStoreBase {
         return Promise.resolve();
       }
       interface TiptapLikeView {
-        state: {
-          schema: { marks: Record<string, any> };
-          tr: { addMark: (from: number, to: number, mark: any) => any };
-        };
-        dispatch: (tr: any) => void;
+        // We intentionally relax typing here because BlockNote's internal
+        // ProseMirror EditorView state shape isn't exported with full types.
+        // Using any prevents TS structural mismatch errors with ySyncPluginKey.getState.
+        state: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        dispatch: (tr: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const view: TiptapLikeView | undefined = editor.prosemirrorView;
@@ -168,12 +170,13 @@ export class CommentThreadStore extends YjsThreadStoreBase {
 
       const from = Math.min(anchorAbs, headAbs);
       const to = Math.max(anchorAbs, headAbs);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const markType = view.state.schema.marks['comment'];
       if (!markType) {
         console.warn('addThreadToDocument: comment mark type missing');
         return Promise.resolve();
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
       const tr = view.state.tr.addMark(
         from,
         to,
@@ -218,7 +221,7 @@ export class CommentThreadStore extends YjsThreadStoreBase {
 
     return {
       type: 'thread',
-      id: '12456',
+      id: json.id,
       /**
        * The date when the thread was created.
        */
@@ -227,21 +230,15 @@ export class CommentThreadStore extends YjsThreadStoreBase {
        * The date when the thread was last updated.
        */
       updatedAt: new Date(json.updated_at),
-      /**
-       * The comments in the thread.
-       */
       comments: [
         {
-          id: json.id,
+          id: json.id + '-c1',
           body: content.initialComment.body,
           createdAt: new Date(json.created_at),
           updatedAt: new Date(json.updated_at),
           metadata: null,
         },
       ],
-      /**
-       * Whether the thread has been marked as resolved.
-       */
       resolved: false,
       metadata: null,
     } as ThreadData;
