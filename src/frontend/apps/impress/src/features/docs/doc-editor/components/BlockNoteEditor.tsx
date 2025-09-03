@@ -24,7 +24,6 @@ import { Box, TextErrors } from '@/components';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
-import { useComments } from '../api/useComments';
 import {
   useHeadings,
   useSaveDoc,
@@ -40,6 +39,7 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import { useComments } from './comments/useComments';
 import {
   AccessibleImageBlock,
   CalloutBlock,

@@ -23,7 +23,9 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import { User } from '@/features/auth';
 import { Doc } from '@/features/docs/doc-management';
 
-import { useEditorStore } from '../stores';
+import { useEditorStore } from '../../stores';
+
+import { threadToYMap, yMapToThread } from './yjsHelpers';
 
 interface CommentThreadAbilities {
   destroy: boolean;
@@ -214,34 +216,49 @@ export class CommentThreadStore extends YjsThreadStoreBase {
       );
     }
 
-    const json = (await response.json()) as CommentThreadApiResponse;
-    const content = json.content as unknown as ThreadCreationContent;
+    const thread = (await response.json()) as CommentThreadApiResponse;
+    const content = thread.content as unknown as ThreadCreationContent;
 
-    console.log('response', json);
+    console.log('response', thread);
 
-    return {
+    // await super.createThread({
+    //   initialComment: {
+    //     body: content.initialComment.body,
+    //     metadata: content.initialComment.metadata,
+    //   },
+    //   metadata: content.metadata,
+    // });
+
+    const threadData: ThreadData = {
       type: 'thread',
-      id: json.id,
+      id: thread.id,
       /**
        * The date when the thread was created.
        */
-      createdAt: new Date(json.created_at),
+      createdAt: new Date(thread.created_at),
       /**
        * The date when the thread was last updated.
        */
-      updatedAt: new Date(json.updated_at),
+      updatedAt: new Date(thread.updated_at),
       comments: [
         {
-          id: json.id + '-c1',
+          type: 'comment',
+          id: thread.id + '-c1',
+          userId: String(thread.user.id),
           body: content.initialComment.body,
-          createdAt: new Date(json.created_at),
-          updatedAt: new Date(json.updated_at),
+          createdAt: new Date(thread.created_at),
+          updatedAt: new Date(thread.updated_at),
+          reactions: [],
           metadata: null,
         },
       ],
       resolved: false,
       metadata: null,
-    } as ThreadData;
+    };
+
+    this.threadsYMap.set(thread.id, threadToYMap(threadData));
+
+    return threadData;
   };
 
   public addComment = async (options: {
@@ -450,7 +467,3 @@ export class CommentThreadStore extends YjsThreadStoreBase {
     }
   };
 }
-
-// Legacy helper removed: direct mark application now uses existing editor view & ySync mapping.
-
-// Removed unused setMarkInProsemirror helper (handled directly via editor.view.tr.addMark)
