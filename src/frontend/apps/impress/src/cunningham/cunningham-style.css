@@ -39,6 +39,13 @@
 }
 
 /**
+ * Modal
+*/
+.c__modal__backdrop {
+  z-index: 1000;
+}
+
+/**
  * Tooltip
 */
 .c__tooltip {

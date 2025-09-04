@@ -30,6 +30,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
 
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
@@ -148,6 +149,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
 
   return (
     <Box
+      ref={setTreeRoot}
       data-testid="doc-tree"
       $height="100%"
       $css={css`
@@ -232,30 +234,33 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         </Box>
       </Box>
 
-      {initialOpenState && treeContext.treeData.nodes.length > 0 && (
-        <TreeView
-          initialOpenState={initialOpenState}
-          afterMove={handleMove}
-          selectedNodeId={
-            treeContext.treeData.selectedNode?.id ??
-            treeContext.initialTargetId ??
-            undefined
-          }
-          canDrop={({ parentNode }) => {
-            const parentDoc = parentNode?.data.value as Doc;
-            if (!parentDoc) {
-              return currentDoc.abilities.move && isDesktop;
+      {initialOpenState &&
+        treeContext.treeData.nodes.length > 0 &&
+        treeRoot && (
+          <TreeView
+            dndRootElement={treeRoot}
+            initialOpenState={initialOpenState}
+            afterMove={handleMove}
+            selectedNodeId={
+              treeContext.treeData.selectedNode?.id ??
+              treeContext.initialTargetId ??
+              undefined
             }
-            return parentDoc.abilities.move && isDesktop;
-          }}
-          canDrag={(node) => {
-            const doc = node.value as Doc;
-            return doc.abilities.move && isDesktop;
-          }}
-          rootNodeId={treeContext.root.id}
-          renderNode={DocSubPageItem}
-        />
-      )}
+            canDrop={({ parentNode }) => {
+              const parentDoc = parentNode?.data.value as Doc;
+              if (!parentDoc) {
+                return currentDoc.abilities.move && isDesktop;
+              }
+              return parentDoc.abilities.move && isDesktop;
+            }}
+            canDrag={(node) => {
+              const doc = node.value as Doc;
+              return doc.abilities.move && isDesktop;
+            }}
+            rootNodeId={treeContext.root.id}
+            renderNode={DocSubPageItem}
+          />
+        )}
     </Box>
   );
 };

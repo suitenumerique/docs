@@ -29,7 +29,7 @@
     "@emoji-mart/react": "1.1.1",
     "@fontsource/material-icons": "5.2.5",
     "@gouvfr-lasuite/integration": "1.0.3",
-    "@gouvfr-lasuite/ui-kit": "0.16.0",
+    "@gouvfr-lasuite/ui-kit": "0.16.1",
     "@hocuspocus/provider": "2.15.2",
     "@openfun/cunningham-react": "3.2.3",
     "@react-pdf/renderer": "4.3.0",

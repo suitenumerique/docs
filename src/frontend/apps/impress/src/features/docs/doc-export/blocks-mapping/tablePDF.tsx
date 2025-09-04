@@ -13,6 +13,7 @@ import { StyleSheet, Text } from '@react-pdf/renderer';
 
 import { DocsExporterPDF } from '../types';
 const PIXELS_PER_POINT = 0.75;
+const FULL_WIDTH = 730;
 const styles = StyleSheet.create({
   tableContainer: {
     border: '1px solid #ddd',
@@ -47,16 +48,10 @@ export const blockMappingTablePDF: DocsExporterPDF['mappings']['blockMapping']['
       true,
     ) as boolean[];
 
-    /**
-     * Calculate the table scale based on the column widths.
-     */
-    const columnWidths = blockContent.columnWidths.map((w) => w || 120);
-    const fullWidth = 730;
-    const totalWidth = Math.min(
-      columnWidths.reduce((sum, w) => sum + w, 0),
-      fullWidth,
+    const { columnWidths, tableScale } = utilTable(
+      FULL_WIDTH,
+      blockContent.columnWidths,
     );
-    const tableScale = (totalWidth * 100) / fullWidth;
 
     return (
       <Table style={[styles.tableContainer, { width: `${tableScale}%` }]}>
@@ -124,3 +119,34 @@ export const blockMappingTablePDF: DocsExporterPDF['mappings']['blockMapping']['
       </Table>
     );
   };
+
+/**
+ * Utility function to calculate the table column widths and scale.
+ * @param columnWidths - Array of column widths.
+ * @returns An object containing the resized column widths and the table scale.
+ */
+export const utilTable = (
+  fullWidth: number,
+  columnWidths: (number | undefined)[],
+) => {
+  const totalColumnWidthKnown = columnWidths.reduce(
+    (sum: number, w) => sum + (w ?? 0),
+    0,
+  );
+  const nbColumnWidthUnknown = columnWidths.filter((w) => !w).length;
+
+  const fallbackWidth =
+    (fullWidth - totalColumnWidthKnown) / nbColumnWidthUnknown;
+
+  const columnWidthsResized = columnWidths.map((w) => w || fallbackWidth);
+  const totalWidth = Math.min(
+    columnWidthsResized.reduce((sum: number, w) => sum + w, 0),
+    fullWidth,
+  );
+  const tableScale = Math.round(((totalWidth * 100) / fullWidth) * 1000) / 1000;
+
+  return {
+    columnWidths: columnWidthsResized,
+    tableScale,
+  };
+};
