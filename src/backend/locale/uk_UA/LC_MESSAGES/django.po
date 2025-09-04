@@ -5,129 +5,129 @@ msgstr ""
 "POT-Creation-Date: 2025-09-01 21:01+0000\n"
 "PO-Revision-Date: 2025-09-04 10:03\n"
 "Last-Translator: \n"
-"Language-Team: Spanish\n"
-"Language: es_ES\n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
 "X-Crowdin-Project: lasuite-docs\n"
 "X-Crowdin-Project-ID: 754523\n"
-"X-Crowdin-Language: es-ES\n"
+"X-Crowdin-Language: uk\n"
 "X-Crowdin-File: backend-impress.pot\n"
 "X-Crowdin-File-ID: 18\n"
 
 #: build/lib/core/admin.py:37 core/admin.py:37
 msgid "Personal info"
-msgstr "Información Personal"
+msgstr "Особисті дані"
 
 #: build/lib/core/admin.py:50 build/lib/core/admin.py:138 core/admin.py:50
 #: core/admin.py:138
 msgid "Permissions"
-msgstr "Permisos"
+msgstr "Дозволи"
 
 #: build/lib/core/admin.py:62 core/admin.py:62
 msgid "Important dates"
-msgstr "Fechas importantes"
+msgstr "Важливі дати"
 
 #: build/lib/core/admin.py:148 core/admin.py:148
 msgid "Tree structure"
-msgstr "Estructura en árbol"
+msgstr "Ієрархічна структура"
 
 #: build/lib/core/api/filters.py:47 core/api/filters.py:47
 msgid "Title"
-msgstr "Título"
+msgstr "Заголовок"
 
 #: build/lib/core/api/filters.py:61 core/api/filters.py:61
 msgid "Creator is me"
-msgstr "Yo soy el creador"
+msgstr "Творець — я"
 
 #: build/lib/core/api/filters.py:64 core/api/filters.py:64
 msgid "Masked"
-msgstr ""
+msgstr "Приховано"
 
 #: build/lib/core/api/filters.py:67 core/api/filters.py:67
 msgid "Favorite"
-msgstr "Favorito"
+msgstr "Обране"
 
 #: build/lib/core/api/serializers.py:487 core/api/serializers.py:487
 msgid "A new document was created on your behalf!"
-msgstr "¡Un nuevo documento se ha creado por ti!"
+msgstr "Новий документ був створений від вашого імені!"
 
 #: build/lib/core/api/serializers.py:491 core/api/serializers.py:491
 msgid "You have been granted ownership of a new document:"
-msgstr "Se le ha concedido la propiedad de un nuevo documento :"
+msgstr "Ви тепер є власником нового документа:"
 
 #: build/lib/core/api/serializers.py:628 core/api/serializers.py:628
 msgid "Body"
-msgstr "Cuerpo"
+msgstr "Вміст"
 
 #: build/lib/core/api/serializers.py:631 core/api/serializers.py:631
 msgid "Body type"
-msgstr "Tipo de Cuerpo"
+msgstr "Тип вмісту"
 
 #: build/lib/core/api/serializers.py:637 core/api/serializers.py:637
 msgid "Format"
-msgstr "Formato"
+msgstr "Формат"
 
 #: build/lib/core/api/viewsets.py:960 core/api/viewsets.py:960
 #, python-brace-format
 msgid "copy of {title}"
-msgstr "copia de {title}"
+msgstr "копія {title}"
 
 #: build/lib/core/choices.py:35 build/lib/core/choices.py:42 core/choices.py:35
 #: core/choices.py:42
 msgid "Reader"
-msgstr "Lector"
+msgstr "Читач"
 
 #: build/lib/core/choices.py:36 build/lib/core/choices.py:43 core/choices.py:36
 #: core/choices.py:43
 msgid "Editor"
-msgstr "Editor"
+msgstr "Редактор"
 
 #: build/lib/core/choices.py:44 core/choices.py:44
 msgid "Administrator"
-msgstr "Administrador"
+msgstr "Адміністратор"
 
 #: build/lib/core/choices.py:45 core/choices.py:45
 msgid "Owner"
-msgstr "Propietario"
+msgstr "Власник"
 
 #: build/lib/core/choices.py:56 core/choices.py:56
 msgid "Restricted"
-msgstr "Restringido"
+msgstr "Обмежено"
 
 #: build/lib/core/choices.py:60 core/choices.py:60
 msgid "Authenticated"
-msgstr "Autentificado"
+msgstr "Підтверджено"
 
 #: build/lib/core/choices.py:62 core/choices.py:62
 msgid "Public"
-msgstr "Público"
+msgstr "Публічне"
 
 #: build/lib/core/enums.py:36 core/enums.py:36
 msgid "First child"
-msgstr "Primer nodo"
+msgstr "Перший нащадок"
 
 #: build/lib/core/enums.py:37 core/enums.py:37
 msgid "Last child"
-msgstr "Último nodo"
+msgstr "Останній нащадок"
 
 #: build/lib/core/enums.py:38 core/enums.py:38
 msgid "First sibling"
-msgstr "Primera relación"
+msgstr "Перший пращур"
 
 #: build/lib/core/enums.py:39 core/enums.py:39
 msgid "Last sibling"
-msgstr "Última relación"
+msgstr "Останній пращур"
 
 #: build/lib/core/enums.py:40 core/enums.py:40
 msgid "Left"
-msgstr "Izquierda"
+msgstr "Ліворуч"
 
 #: build/lib/core/enums.py:41 core/enums.py:41
 msgid "Right"
-msgstr "Derecha"
+msgstr "Праворуч"
 
 #: build/lib/core/models.py:80 core/models.py:80
 msgid "id"
@@ -135,212 +135,212 @@ msgstr "id"
 
 #: build/lib/core/models.py:81 core/models.py:81
 msgid "primary key for the record as UUID"
-msgstr "clave primaria para el registro como UUID"
+msgstr "первинний ключ для запису як UUID"
 
 #: build/lib/core/models.py:87 core/models.py:87
 msgid "created on"
-msgstr "creado el"
+msgstr "створено"
 
 #: build/lib/core/models.py:88 core/models.py:88
 msgid "date and time at which a record was created"
-msgstr "fecha y hora en la que se creó un registro"
+msgstr "дата і час, коли запис було створено"
 
 #: build/lib/core/models.py:93 core/models.py:93
 msgid "updated on"
-msgstr "actualizado el"
+msgstr "оновлено"
 
 #: build/lib/core/models.py:94 core/models.py:94
 msgid "date and time at which a record was last updated"
-msgstr "fecha y hora en la que un registro fue actualizado por última vez"
+msgstr "дата і час, коли запис був востаннє оновлений"
 
 #: build/lib/core/models.py:130 core/models.py:130
 msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
-msgstr "No se ha podido encontrar un usuario con este sub (UUID), pero el correo electrónico ya está asociado con un usuario."
+msgstr "Ми не змогли знайти користувача з цими даними, але адреса вже пов'язана з зареєстрованим користувачем."
 
 #: build/lib/core/models.py:141 core/models.py:141
 msgid "sub"
-msgstr "sub (UUID)"
+msgstr "вкладений документ"
 
 #: build/lib/core/models.py:142 core/models.py:142
 msgid "Required. 255 characters or fewer. ASCII characters only."
-msgstr ""
+msgstr "Обов'язкове. 255 символів або менше. Тільки символи ASCII."
 
 #: build/lib/core/models.py:150 core/models.py:150
 msgid "full name"
-msgstr "nombre completo"
+msgstr "повне ім'я"
 
 #: build/lib/core/models.py:151 core/models.py:151
 msgid "short name"
-msgstr "nombre abreviado"
+msgstr "коротке ім'я"
 
 #: build/lib/core/models.py:153 core/models.py:153
 msgid "identity email address"
-msgstr "correo electrónico de identidad"
+msgstr "адреса електронної пошти особи"
 
 #: build/lib/core/models.py:158 core/models.py:158
 msgid "admin email address"
-msgstr "correo electrónico del administrador"
+msgstr "електронна адреса адміністратора"
 
 #: build/lib/core/models.py:165 core/models.py:165
 msgid "language"
-msgstr "idioma"
+msgstr "мова"
 
 #: build/lib/core/models.py:166 core/models.py:166
 msgid "The language in which the user wants to see the interface."
-msgstr "El idioma en el que el usuario desea ver la interfaz."
+msgstr "Мова, якою користувач хоче бачити інтерфейс."
 
 #: build/lib/core/models.py:174 core/models.py:174
 msgid "The timezone in which the user wants to see times."
-msgstr "La zona horaria en la que el usuario quiere ver los tiempos."
+msgstr "Часовий пояс, в якому користувач хоче бачити час."
 
 #: build/lib/core/models.py:177 core/models.py:177
 msgid "device"
-msgstr "dispositivo"
+msgstr "пристрій"
 
 #: build/lib/core/models.py:179 core/models.py:179
 msgid "Whether the user is a device or a real user."
-msgstr "Si el usuario es un dispositivo o un usuario real."
+msgstr "Чи є користувач пристроєм чи реальним користувачем."
 
 #: build/lib/core/models.py:182 core/models.py:182
 msgid "staff status"
-msgstr "rol en el equipo"
+msgstr "статус співробітника"
 
 #: build/lib/core/models.py:184 core/models.py:184
 msgid "Whether the user can log into this admin site."
-msgstr "Si el usuario puede iniciar sesión en esta página web de administración."
+msgstr "Чи може користувач увійти на цей сайт адміністратора."
 
 #: build/lib/core/models.py:187 core/models.py:187
 msgid "active"
-msgstr "activo"
+msgstr "активний"
 
 #: build/lib/core/models.py:190 core/models.py:190
 msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
-msgstr "Si este usuario debe ser considerado como activo. Deseleccionar en lugar de eliminar cuentas."
+msgstr "Чи слід ставитися до цього користувача як до активного. Зніміть вибір замість видалення облікового запису."
 
 #: build/lib/core/models.py:202 core/models.py:202
 msgid "user"
-msgstr "usuario"
+msgstr "користувач"
 
 #: build/lib/core/models.py:203 core/models.py:203
 msgid "users"
-msgstr "usuarios"
+msgstr "користувачі"
 
 #: build/lib/core/models.py:359 build/lib/core/models.py:1280
 #: core/models.py:359 core/models.py:1280
 msgid "title"
-msgstr "título"
+msgstr "заголовок"
 
 #: build/lib/core/models.py:360 core/models.py:360
 msgid "excerpt"
-msgstr "resumen"
+msgstr "уривок"
 
 #: build/lib/core/models.py:409 core/models.py:409
 msgid "Document"
-msgstr "Documento"
+msgstr "Документ"
 
 #: build/lib/core/models.py:410 core/models.py:410
 msgid "Documents"
-msgstr "Documentos"
+msgstr "Документи"
 
 #: build/lib/core/models.py:422 build/lib/core/models.py:818 core/models.py:422
 #: core/models.py:818
 msgid "Untitled Document"
-msgstr "Documento sin título"
+msgstr "Документ без назви"
 
 #: build/lib/core/models.py:853 core/models.py:853
 #, python-brace-format
 msgid "{name} shared a document with you!"
-msgstr "¡{name} ha compartido un documento contigo!"
+msgstr "{name} ділиться з вами документом!"
 
 #: build/lib/core/models.py:857 core/models.py:857
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
-msgstr "Te ha invitado {name} al siguiente documento con el rol \"{role}\" :"
+msgstr "{name} запрошує вас для роботи з документом із роллю \"{role}\":"
 
 #: build/lib/core/models.py:863 core/models.py:863
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
-msgstr "{name} ha compartido un documento contigo: {title}"
+msgstr "{name} ділиться з вами документом: {title}"
 
 #: build/lib/core/models.py:963 core/models.py:963
 msgid "Document/user link trace"
-msgstr "Traza del enlace de documento/usuario"
+msgstr "Трасування посилання Документ/користувач"
 
 #: build/lib/core/models.py:964 core/models.py:964
 msgid "Document/user link traces"
-msgstr "Trazas del enlace de documento/usuario"
+msgstr "Трасування посилань Документ/користувач"
 
 #: build/lib/core/models.py:970 core/models.py:970
 msgid "A link trace already exists for this document/user."
-msgstr "Ya existe una traza de enlace para este documento/usuario."
+msgstr "Відстеження вже існуючих посилань для цього документа/користувача."
 
 #: build/lib/core/models.py:993 core/models.py:993
 msgid "Document favorite"
-msgstr "Documento favorito"
+msgstr "Обраний документ"
 
 #: build/lib/core/models.py:994 core/models.py:994
 msgid "Document favorites"
-msgstr "Documentos favoritos"
+msgstr "Обрані документи"
 
 #: build/lib/core/models.py:1000 core/models.py:1000
 msgid "This document is already targeted by a favorite relation instance for the same user."
-msgstr "Este documento ya ha sido marcado como favorito por el usuario."
+msgstr "Цей документ вже вказаний як обраний для одного користувача."
 
 #: build/lib/core/models.py:1022 core/models.py:1022
 msgid "Document/user relation"
-msgstr "Relación documento/usuario"
+msgstr "Відносини документ/користувач"
 
 #: build/lib/core/models.py:1023 core/models.py:1023
 msgid "Document/user relations"
-msgstr "Relaciones documento/usuario"
+msgstr "Відносини документ/користувач"
 
 #: build/lib/core/models.py:1029 core/models.py:1029
 msgid "This user is already in this document."
-msgstr "Este usuario ya forma parte del documento."
+msgstr "Цей користувач вже має доступ до цього документу."
 
 #: build/lib/core/models.py:1035 core/models.py:1035
 msgid "This team is already in this document."
-msgstr "Este equipo ya forma parte del documento."
+msgstr "Ця команда вже має доступ до цього документа."
 
 #: build/lib/core/models.py:1041 build/lib/core/models.py:1366
 #: core/models.py:1041 core/models.py:1366
 msgid "Either user or team must be set, not both."
-msgstr "Debe establecerse un usuario o un equipo, no ambos."
+msgstr "Вкажіть користувача або команду, а не обох."
 
 #: build/lib/core/models.py:1187 core/models.py:1187
 msgid "Document ask for access"
-msgstr ""
+msgstr "Запит доступу до документа"
 
 #: build/lib/core/models.py:1188 core/models.py:1188
 msgid "Document ask for accesses"
-msgstr ""
+msgstr "Запит доступу для документа"
 
 #: build/lib/core/models.py:1194 core/models.py:1194
 msgid "This user has already asked for access to this document."
-msgstr "Este usuario ya ha solicitado acceso a este documento."
+msgstr "Цей користувач вже попросив доступ до цього документа."
 
 #: build/lib/core/models.py:1259 core/models.py:1259
 #, python-brace-format
 msgid "{name} would like access to a document!"
-msgstr "¡{name} desea acceder a un documento!"
+msgstr "{name} хоче отримати доступ до документа!"
 
 #: build/lib/core/models.py:1263 core/models.py:1263
 #, python-brace-format
 msgid "{name} would like access to the following document:"
-msgstr ""
+msgstr "{name} бажає отримати доступ до наступного документа:"
 
 #: build/lib/core/models.py:1269 core/models.py:1269
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
-msgstr ""
+msgstr "{name} запитує доступ до документа: {title}"
 
 #: build/lib/core/models.py:1281 core/models.py:1281
 msgid "description"
-msgstr "descripción"
+msgstr "опис"
 
 #: build/lib/core/models.py:1282 core/models.py:1282
 msgid "code"
-msgstr "código"
+msgstr "код"
 
 #: build/lib/core/models.py:1283 core/models.py:1283
 msgid "css"
@@ -348,70 +348,70 @@ msgstr "css"
 
 #: build/lib/core/models.py:1285 core/models.py:1285
 msgid "public"
-msgstr "público"
+msgstr "публічне"
 
 #: build/lib/core/models.py:1287 core/models.py:1287
 msgid "Whether this template is public for anyone to use."
-msgstr "Si esta plantilla es pública para que cualquiera la utilice."
+msgstr "Чи є цей шаблон публічним для будь-кого користувача."
 
 #: build/lib/core/models.py:1293 core/models.py:1293
 msgid "Template"
-msgstr "Plantilla"
+msgstr "Шаблон"
 
 #: build/lib/core/models.py:1294 core/models.py:1294
 msgid "Templates"
-msgstr "Plantillas"
+msgstr "Шаблони"
 
 #: build/lib/core/models.py:1347 core/models.py:1347
 msgid "Template/user relation"
-msgstr "Relación plantilla/usuario"
+msgstr "Відношення шаблон/користувач"
 
 #: build/lib/core/models.py:1348 core/models.py:1348
 msgid "Template/user relations"
-msgstr "Relaciones plantilla/usuario"
+msgstr "Відношення шаблон/користувач"
 
 #: build/lib/core/models.py:1354 core/models.py:1354
 msgid "This user is already in this template."
-msgstr "Este usuario ya forma parte de la plantilla."
+msgstr "Цей користувач вже має доступ до цього шаблону."
 
 #: build/lib/core/models.py:1360 core/models.py:1360
 msgid "This team is already in this template."
-msgstr "Este equipo ya se encuentra en esta plantilla."
+msgstr "Ця команда вже має доступ до цього шаблону."
 
 #: build/lib/core/models.py:1437 core/models.py:1437
 msgid "email address"
-msgstr "dirección de correo electrónico"
+msgstr "електронна адреса"
 
 #: build/lib/core/models.py:1456 core/models.py:1456
 msgid "Document invitation"
-msgstr "Invitación al documento"
+msgstr "Запрошення до редагування документа"
 
 #: build/lib/core/models.py:1457 core/models.py:1457
 msgid "Document invitations"
-msgstr "Invitaciones a documentos"
+msgstr "Запрошення до редагування документів"
 
 #: build/lib/core/models.py:1477 core/models.py:1477
 msgid "This email is already associated to a registered user."
-msgstr "Este correo electrónico está asociado a un usuario registrado."
+msgstr "Ця електронна пошта вже пов'язана з зареєстрованим користувачем."
 
 #: core/templates/mail/html/template.html:162
 #: core/templates/mail/text/template.txt:3
 msgid "Logo email"
-msgstr "Logo de correo electrónico"
+msgstr "Логотип пошти"
 
 #: core/templates/mail/html/template.html:209
 #: core/templates/mail/text/template.txt:10
 msgid "Open"
-msgstr "Abrir"
+msgstr "Відкрити"
 
 #: core/templates/mail/html/template.html:226
 #: core/templates/mail/text/template.txt:14
 msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
-msgstr "Docs, su nueva herramienta esencial para organizar, compartir y colaborar en sus documentos como equipo."
+msgstr " Docs, ваш новий важливий інструмент для організації, обміну та командної співпраці над вашими документами. "
 
 #: core/templates/mail/html/template.html:233
 #: core/templates/mail/text/template.txt:16
 #, python-format
 msgid " Brought to you by %(brandname)s "
-msgstr " Presentado por %(brandname)s "
+msgstr " Запрошення отримане від %(brandname)s "
 
