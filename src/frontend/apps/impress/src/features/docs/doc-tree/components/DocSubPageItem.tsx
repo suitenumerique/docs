@@ -110,7 +110,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isExpanded = node.isOpen;
   const isSelected = isSelectedNow;
 
-  const ariaLabel = `${docTitle}${hasChildren ? `, ${isExpanded ? t('expanded') : t('collapsed')}` : ''}${isSelected ? `, ${t('selected')}` : ''}`;
+  const ariaLabel = docTitle;
 
   return (
     <Box
@@ -216,7 +216,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         $direction="row"
         $align="center"
         className="light-doc-item-actions"
-        role="group"
+        role="toolbar"
         aria-label={`${t('Actions for')} ${docTitle}`}
       >
         <DocTreeItemActions

@@ -5,7 +5,6 @@ import {
   useResponsive,
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -16,6 +15,7 @@ import { Doc, SimpleDocItem } from '@/docs/doc-management';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
 import { useMoveDoc } from '../api/useMove';
+import { useRootTreeItem } from '../hooks/useRootTreeItem';
 import { findIndexInTree } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
@@ -27,9 +27,7 @@ type DocTreeProps = {
 
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
-  const [rootActionsOpen, setRootActionsOpen] = useState(false);
   const treeContext = useTreeContext<Doc | null>();
-  const router = useRouter();
   const { isDesktop } = useResponsive();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const { t } = useTranslation();
@@ -39,11 +37,20 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   );
 
   const { mutate: moveDoc } = useMoveDoc();
-
+  const {
+    rootIsSelected,
+    rootActionsOpen,
+    setRootActionsOpen,
+    rootActionsRef,
+    onRootToolbarKeys,
+    handleRootFocus,
+    handleRootKeyDown,
+    handleRootClick,
+    handleRootActivate,
+    handleCreateSuccess,
+  } = useRootTreeItem();
   const { data: tree, isFetching } = useDocTree(
-    {
-      docId: currentDoc.id,
-    },
+    { docId: currentDoc.id },
     {
       enabled: !!!treeContext?.root?.id,
       queryKey: [KEY_DOC_TREE, { id: currentDoc.id }],
@@ -58,7 +65,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     });
     treeContext?.treeData.handleMove(result);
   };
-
   /**
    * This function resets the tree states.
    */
@@ -66,7 +72,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     if (!treeContext?.root?.id) {
       return;
     }
-
     treeContext?.setRoot(null);
     setInitialOpenState(undefined);
   }, [treeContext]);
@@ -79,7 +84,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     if (!treeContext?.root?.id) {
       return;
     }
-
     const index = findIndexInTree(treeContext.treeData.nodes, currentDoc.id);
     if (index === -1 && currentDoc.id !== treeContext.root?.id) {
       resetStateTree();
@@ -94,7 +98,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     return () => {
       resetStateTree();
     };
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -142,12 +145,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     }
   }, [currentDoc, treeContext]);
 
+  /**
+   * This is the main return of the component.
+   */
   if (!treeContext || !treeContext.root) {
     return null;
   }
-
-  const rootIsSelected =
-    treeContext.treeData.selectedNode?.id === treeContext.root.id;
 
   return (
     <Box
@@ -178,6 +181,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           role="treeitem"
           aria-label={`${t('Root document')}: ${treeContext.root?.title || t('Untitled document')}`}
           aria-selected={rootIsSelected}
+          tabIndex={0}
+          onFocus={handleRootFocus}
+          onKeyDown={handleRootKeyDown}
           $css={css`
             padding: ${spacingsTokens['2xs']};
             border-radius: 4px;
@@ -211,32 +217,24 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               width: 100%;
             `}
             href={`/docs/${treeContext.root.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              treeContext.treeData.setSelectedNode(
-                treeContext.root ?? undefined,
-              );
-              router.push(`/docs/${treeContext?.root?.id}`);
-            }}
+            onClick={handleRootClick}
             aria-label={`${t('Open root document')}: ${treeContext.root?.title || t('Untitled document')}`}
+            tabIndex={-1} // évite le double tabstop
           >
             <Box $direction="row" $align="center" $width="100%">
-              <SimpleDocItem doc={treeContext.root} showAccesses={true} />
+              <SimpleDocItem
+                doc={treeContext.root}
+                showAccesses={true}
+                onActivate={handleRootActivate}
+              />
               <DocTreeItemActions
                 doc={treeContext.root}
-                onCreateSuccess={(createdDoc) => {
-                  const newDoc = {
-                    ...createdDoc,
-                    children: [],
-                    childrenCount: 0,
-                    parentId: treeContext.root?.id ?? undefined,
-                  };
-                  treeContext?.treeData.addChild(null, newDoc);
-                }}
+                onCreateSuccess={handleCreateSuccess}
                 isOpen={rootActionsOpen}
                 isRoot={true}
                 onOpenChange={setRootActionsOpen}
+                actionsRef={rootActionsRef}
+                onKeyDownCapture={onRootToolbarKeys}
               />
             </Box>
           </StyledLink>

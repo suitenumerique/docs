@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -26,17 +27,28 @@ type SimpleDocItemProps = {
   doc: Doc;
   isPinned?: boolean;
   showAccesses?: boolean;
+  onActivate?: () => void;
 };
 
 export const SimpleDocItem = ({
   doc,
   isPinned = false,
   showAccesses = false,
+  onActivate,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
+  const router = useRouter();
+
+  const handleActivate = () => {
+    if (onActivate) {
+      onActivate();
+    } else {
+      router.push(`/docs/${doc.id}`);
+    }
+  };
 
   const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
     doc.title || untitledDocument,
@@ -50,6 +62,8 @@ export const SimpleDocItem = ({
       $width="100%"
       className="--docs--simple-doc-item"
       role="presentation"
+      onClick={handleActivate}
+      aria-label={`${t('Open document')} ${doc.title || untitledDocument}`}
     >
       <Box
         $direction="row"
@@ -90,7 +104,6 @@ export const SimpleDocItem = ({
           $variation="1000"
           $weight="500"
           $css={ItemTextCss}
-          aria-describedby="doc-title"
         >
           {displayTitle}
         </Text>

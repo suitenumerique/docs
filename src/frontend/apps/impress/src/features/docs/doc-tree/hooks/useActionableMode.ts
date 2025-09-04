@@ -1,10 +1,8 @@
-import { TreeDataItem } from '@gouvfr-lasuite/ui-kit';
 import { useEffect, useRef } from 'react';
-import type { NodeRendererProps } from 'react-arborist';
 
 import { SELECTORS } from '../dom-selectors';
 
-type FocusableNode<T> = NodeRendererProps<TreeDataItem<T>>['node'] & {
+export type ActionableNodeLike = {
   isFocused?: boolean;
   focus?: () => void;
 };
@@ -14,8 +12,8 @@ type FocusableNode<T> = NodeRendererProps<TreeDataItem<T>>['node'] & {
  *
  * Disables navigation when dropdown menu is open to prevent conflicts.
  */
-export const useActionableMode = <T>(
-  node: FocusableNode<T>,
+export const useActionableMode = (
+  node: ActionableNodeLike,
   isMenuOpen?: boolean,
 ) => {
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -32,7 +30,7 @@ export const useActionableMode = <T>(
         return;
       }
 
-      if (e.key === 'F2' || e.key === 'Enter') {
+      if (e.key === 'F2') {
         const isAlreadyInActions = actionsRef.current?.contains(
           document.activeElement,
         );
