@@ -315,3 +315,81 @@ test.describe('Doc Tree: Inheritance', () => {
     await expect(docTree.getByText(docParent)).toBeVisible();
   });
 });
+
+test.describe('Doc tree keyboard interactions (subdocs)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+  test('navigates in the tree and actions with keyboard and toggles menu (options and create childDoc)', async ({
+    page,
+    browserName,
+  }) => {
+    const [rootDocTitle] = await createDoc(
+      page,
+      'doc-tree-keyboard',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, rootDocTitle);
+
+    const { name: childTitle } = await createRootSubPage(
+      page,
+      browserName,
+      'subdoc-tree-actions',
+    );
+
+    await verifyDocName(page, childTitle);
+
+    const docTree = page.getByTestId('doc-tree');
+
+    const actionsGroup = page.getByRole('toolbar', {
+      name: `Actions for ${childTitle}`,
+    });
+    await expect(actionsGroup).toBeVisible();
+
+    const moreOptions = actionsGroup.getByRole('button', {
+      name: `More options for ${childTitle}`,
+    });
+    await expect(moreOptions).toBeVisible();
+
+    await moreOptions.focus();
+    await expect(moreOptions).toBeFocused();
+
+    await page.keyboard.press('ArrowRight');
+    const addChild = actionsGroup.getByTestId('add-child-doc');
+    await expect(addChild).toBeFocused();
+
+    await page.keyboard.press('ArrowLeft');
+    await expect(moreOptions).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await expect(page.getByText('Copy link')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByText('Copy link')).toBeHidden();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(addChild).toBeFocused();
+
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/documents/') &&
+        response.url().includes('/children/') &&
+        response.request().method() === 'POST',
+    );
+
+    await page.keyboard.press('Enter');
+
+    const response = await responsePromise;
+    expect(response.ok()).toBeTruthy();
+    const newChildDoc = (await response.json()) as { id: string };
+
+    const childButton = page.getByTestId(`doc-sub-page-item-${newChildDoc.id}`);
+    const childTreeItem = docTree
+      .locator('.c__tree-view--row')
+      .filter({ has: childButton })
+      .first();
+
+    await childTreeItem.focus();
+  });
+});
