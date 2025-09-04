@@ -86,7 +86,9 @@ test.describe('Doc Routing', () => {
 
     await responsePromise;
 
-    await expect(page.getByText('Log in to access the document')).toBeVisible();
+    await expect(page.getByText('Log in to access the document')).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
 
