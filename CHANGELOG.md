@@ -8,34 +8,36 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.6.0] - 2025-09-04
+
 ### Added
 
 - 👷(CI) add bundle size check job #1268
-- ✨(frontend) use title first emoji as doc icon in tree
+- ✨(frontend) use title first emoji as doc icon in tree #1289
 
 ### Changed
 
 - ♻️(docs-app) Switch from Jest tests to Vitest #1269
-- ⚡️(frontend) improve accessibility:
-  - #1248
-  - #1235
-  - #1275
-  - #1255
-  - #1262
-  - #1244
-  - #1270
-  - #1282
+- ♿(frontend) improve accessibility:
+  - 🌐(frontend) set html lang attribute dynamically #1248
+  - ♿(frontend) inject language attribute to pdf export #1235
+  - ♿(frontend) improve accessibility of search modal #1275
+  - ♿(frontend) add correct attributes to icons #1255
+  - 🎨(frontend) improve nav structure #1262
+  - ♿️(frontend) keyboard interaction with menu #1244
+  - ♿(frontend) improve header accessibility #1270
+  - ♿(frontend) improve accessibility for decorative images in editor #1282
 - ♻️(backend) fallback to email identifier when no name #1298
 - 🐛(backend) allow ASCII characters in user sub field #1295 
 - ⚡️(frontend) improve fallback width calculation #1333
 
 ### Fixed
 
-- 🐛(makefile) Windows compatibility fix for Docker volume mounting #1264
-- 🐛(minio) fix user permission error with Minio and Windows #1264
+- 🐛(makefile) Windows compatibility fix for Docker volume mounting #1263
+- 🐛(minio) fix user permission error with Minio and Windows #1263
 - 🐛(frontend) fix export when quote block and inline code #1319
 - 🐛(frontend) fix base64 font #1324
-- 🐛(backend) allow editor to delete subpages #1296
+- 🐛(backend) allow creator to delete subpages #1297
 - 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
 - 🐛(frontend) fix display bug on homepage #1332
 
@@ -709,7 +711,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.5.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.6.0...main
+[v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
 [v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0
 [v3.4.2]: https://github.com/suitenumerique/docs/releases/v3.4.2
 [v3.4.1]: https://github.com/suitenumerique/docs/releases/v3.4.1
