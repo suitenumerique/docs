@@ -43,6 +43,13 @@ export const Header = () => {
         href="/"
         data-testid="header-logo-link"
         aria-label={t('Back to homepage')}
+        $css={css`
+          outline: none;
+          &:focus-visible {
+            box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400) !important;
+            border-radius: 4px;
+          }
+        `}
       >
         <Box
           $align="center"

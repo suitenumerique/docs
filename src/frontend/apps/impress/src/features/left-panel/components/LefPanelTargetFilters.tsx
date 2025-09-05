@@ -85,8 +85,9 @@ export const LeftPanelTargetFilters = () => {
                 background-color: ${colorsTokens['greyscale-100']};
               }
               &:focus-visible {
-                outline: 2px solid ${colorsTokens['primary-500']};
-                outline-offset: 2px;
+                outline: none !important;
+                box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+                border-radius: 4px;
               }
             `}
           >

@@ -28,17 +28,18 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   border: none;
   background: none;
   outline: none;
-  transition: all 0.2s ease-in-out;
   font-weight: 500;
   font-size: 0.938rem;
   padding: 0;
   ${({ $css }) => $css};
-
+  &:hover {
+    background-color: var(
+      --c--components--button--primary-text--background--color-hover
+    );
+  }
   &:focus-visible {
-    outline: 2px solid var(--c--theme--colors--primary-500);
-    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400);
     border-radius: 4px;
-    transition: none;
   }
 `;
 

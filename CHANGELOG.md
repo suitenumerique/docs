@@ -8,7 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Added 
+- ⚡️(frontend) improve accessibility:
+  - #1341
+
+### Added
 
 - ✨(api) add API route to fetch document content #1206
 
