@@ -356,6 +356,9 @@ class Base(Configuration):
         "PAGE_SIZE": 20,
         "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
         "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+        "DEFAULT_THROTTLE_CLASSES": [
+            "lasuite.drf.throttling.MonitoredScopedRateThrottle",
+        ],
         "DEFAULT_THROTTLE_RATES": {
             "user_list_sustained": values.Value(
                 default="180/hour",
@@ -367,8 +370,46 @@ class Base(Configuration):
                 environ_name="API_USERS_LIST_THROTTLE_RATE_BURST",
                 environ_prefix=None,
             ),
+            "document": values.Value(
+                default="80/minute",
+                environ_name="API_DOCUMENT_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "document_access": values.Value(
+                default="50/minute",
+                environ_name="API_DOCUMENT_ACCESS_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "template": values.Value(
+                default="30/minute",
+                environ_name="API_TEMPLATE_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "template_access": values.Value(
+                default="30/minute",
+                environ_name="API_TEMPLATE_ACCESS_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "invitation": values.Value(
+                default="60/minute",
+                environ_name="API_INVITATION_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "document_ask_for_access": values.Value(
+                default="30/minute",
+                environ_name="API_DOCUMENT_ASK_FOR_ACCESS_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "config": values.Value(
+                default="30/minute",
+                environ_name="API_CONFIG_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
         },
     }
+    MONITORED_THROTTLE_FAILURE_CALLBACK = (
+        "core.api.throttling.sentry_monitoring_throttle_failure"
+    )
 
     SPECTACULAR_SETTINGS = {
         "TITLE": "Impress API",

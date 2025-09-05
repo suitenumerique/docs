@@ -3,6 +3,7 @@ Test template accesses API endpoints for users in impress's core app.
 """
 
 import random
+from unittest import mock
 from uuid import uuid4
 
 import pytest
@@ -773,3 +774,26 @@ def test_api_template_accesses_delete_owners_last_owner(via, mock_user_teams):
 
     assert response.status_code == 403
     assert models.TemplateAccess.objects.count() == 2
+
+
+def test_api_template_accesses_throttling(settings):
+    """Test api template accesses throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template_access"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template_access"] = "2/minute"
+    template = factories.TemplateFactory()
+    user = factories.UserFactory()
+    factories.UserTemplateAccessFactory(
+        template=template, user=user, role="administrator"
+    )
+    client = APIClient()
+    client.force_login(user)
+    for _i in range(2):
+        response = client.get(f"/api/v1.0/templates/{template.id!s}/accesses/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get(f"/api/v1.0/templates/{template.id!s}/accesses/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope template_access", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template_access"] = current_rate
