@@ -32,7 +32,10 @@ jobs:
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
@@ -65,7 +68,10 @@ jobs:
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
