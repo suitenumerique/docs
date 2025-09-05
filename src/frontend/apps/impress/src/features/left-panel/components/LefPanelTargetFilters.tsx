@@ -81,12 +81,15 @@ export const LeftPanelTargetFilters = () => {
               color: inherit;
               text-decoration: none;
               cursor: pointer;
+              transition: all 0.15s ease-in-out;
               &:hover {
                 background-color: ${colorsTokens['greyscale-100']};
+                opacity: 0.8;
               }
               &:focus-visible {
-                outline: 2px solid ${colorsTokens['primary-500']};
-                outline-offset: 2px;
+                outline: none !important;
+                box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+                border-radius: 4px;
               }
             `}
           >
