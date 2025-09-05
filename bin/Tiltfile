@@ -39,9 +39,10 @@ docker_build(
     ]
 )
 
-k8s_resource('impress-docs-backend-migrate', resource_deps=['postgres-postgresql'])
+k8s_resource('impress-docs-backend-migrate', resource_deps=['dev-backend-postgres'])
 k8s_resource('impress-docs-backend-createsuperuser', resource_deps=['impress-docs-backend-migrate'])
-k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate'])
+k8s_resource('dev-backend-keycloak', resource_deps=['dev-backend-keycloak-pg'])
+k8s_resource('impress-docs-backend', resource_deps=['impress-docs-backend-migrate', 'dev-backend-redis', 'dev-backend-keycloak', 'dev-backend-postgres', 'dev-backend-minio:statefulset'])
 k8s_yaml(local('cd ../src/helm && helmfile -n impress -e dev template .'))
 
 migration = '''
