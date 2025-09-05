@@ -396,13 +396,9 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page.waitForURL('**/docs/**', {
-      timeout: 10000,
-      waitUntil: 'domcontentloaded',
-    });
-
     const input = page.locator('.--docs--doc-title-input[role="textbox"]');
-    await expect(input).toBeVisible({ timeout: 20000 });
+    await expect(input).toBeVisible();
+    await expect(input).toHaveText('', { timeout: 10000 });
     await input.click();
     await input.fill(randomDocFrench);
     await input.blur();
@@ -472,12 +468,6 @@ test.describe('Doc Export', () => {
     });
 
     await expect(interlink).toBeVisible();
-
-    // Open export modal before triggering the download
-    await page.getByTestId('doc-open-modal-download-button').click();
-    await expect(
-      page.getByTestId('doc-open-modal-download-button'),
-    ).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${docChild}.pdf`);

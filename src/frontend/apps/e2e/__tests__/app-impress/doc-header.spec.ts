@@ -66,7 +66,7 @@ test.describe('Doc Header', () => {
     browserName,
   }) => {
     await createDoc(page, 'doc-update', browserName, 1);
-    const docTitle = page.getByRole('textbox', { name: 'doc title input' });
+    const docTitle = page.getByRole('textbox', { name: 'Document title' });
     await expect(docTitle).toBeVisible();
     await docTitle.fill('👍 Hello Emoji World');
     await docTitle.blur();

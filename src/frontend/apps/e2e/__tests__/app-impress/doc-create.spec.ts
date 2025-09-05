@@ -45,13 +45,8 @@ test.describe('Doc Create', () => {
       })
       .click();
 
-    await page.waitForURL('**/docs/**', {
-      timeout: 10000,
-      waitUntil: 'domcontentloaded',
-    });
-
     const input = page.getByRole('textbox', { name: 'Document title' });
-    await expect(input).toHaveText('');
+    await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();
@@ -72,13 +67,8 @@ test.describe('Doc Create', () => {
       .getByText('New sub-doc')
       .click();
 
-    await page.waitForURL('**/docs/**', {
-      timeout: 10000,
-      waitUntil: 'domcontentloaded',
-    });
-
     const input = page.getByRole('textbox', { name: 'Document title' });
-    await expect(input).toHaveText('');
+    await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();
