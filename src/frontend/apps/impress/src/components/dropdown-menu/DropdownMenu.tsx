@@ -207,14 +207,13 @@ export const DropdownMenu = ({
                   }
 
                   &:focus-visible {
-                    outline: 2px solid var(--c--theme--colors--primary-500);
+                    outline: 2px solid var(--c--theme--colors--primary-400);
                     outline-offset: -2px;
                     background-color: var(--c--theme--colors--greyscale-050);
                   }
 
                   ${isFocused &&
                   css`
-                    outline: 2px solid var(--c--theme--colors--primary-500);
                     outline-offset: -2px;
                     background-color: var(--c--theme--colors--greyscale-050);
                   `}

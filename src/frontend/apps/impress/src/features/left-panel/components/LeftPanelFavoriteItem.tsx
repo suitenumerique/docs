@@ -41,9 +41,9 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
           }
         }
         &:focus-visible {
-          outline: 2px solid ${colorsTokens['primary-500']};
-          outline-offset: 2px;
-          border-radius: ${spacingsTokens['3xs']};
+          outline: none !important;
+          box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+          border-radius: 4px;
         }
       `}
       key={doc.id}
