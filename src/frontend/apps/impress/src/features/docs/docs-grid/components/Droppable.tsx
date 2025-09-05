@@ -35,6 +35,7 @@ export const Droppable = ({
     <Box
       ref={setNodeRef}
       data-testid={`droppable-doc-${id}`}
+      role="presentation"
       $css={css`
         border-radius: 4px;
         background-color: ${enableHover

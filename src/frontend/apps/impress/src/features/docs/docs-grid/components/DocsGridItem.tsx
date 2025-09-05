@@ -53,67 +53,76 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
         `}
         className="--docs--doc-grid-item"
       >
-        <StyledLink
+        <Box
+          $flex={flexLeft}
+          role="gridcell"
           $css={css`
-            flex: ${flexLeft};
             align-items: center;
             min-width: 0;
           `}
-          href={`/docs/${doc.id}`}
         >
-          <Box
-            data-testid={`docs-grid-name-${doc.id}`}
-            $direction="row"
-            $align="center"
-            $gap={spacingsTokens.xs}
-            $padding={{ right: isDesktop ? 'md' : '3xs' }}
-            $maxWidth="100%"
+          <StyledLink
+            $css={css`
+              width: 100%;
+              align-items: center;
+              min-width: 0;
+            `}
+            href={`/docs/${doc.id}`}
           >
-            <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
-            {isShared && (
-              <Box
-                $padding={{ top: !isDesktop ? '4xs' : undefined }}
-                $css={
-                  !isDesktop
-                    ? css`
-                        align-self: flex-start;
-                      `
-                    : undefined
-                }
-              >
-                {dragMode && (
-                  <Icon
-                    $theme="greyscale"
-                    $variation="600"
-                    $size="14px"
-                    iconName={isPublic ? 'public' : 'vpn_lock'}
-                  />
-                )}
-                {!dragMode && (
-                  <Tooltip
-                    content={
-                      <Text $textAlign="center" $variation="000">
-                        {isPublic
-                          ? t('Accessible to anyone')
-                          : t('Accessible to authenticated users')}
-                      </Text>
-                    }
-                    placement="top"
-                  >
-                    <div>
-                      <Icon
-                        $theme="greyscale"
-                        $variation="600"
-                        $size="14px"
-                        iconName={isPublic ? 'public' : 'vpn_lock'}
-                      />
-                    </div>
-                  </Tooltip>
-                )}
-              </Box>
-            )}
-          </Box>
-        </StyledLink>
+            <Box
+              data-testid={`docs-grid-name-${doc.id}`}
+              $direction="row"
+              $align="center"
+              $gap={spacingsTokens.xs}
+              $padding={{ right: isDesktop ? 'md' : '3xs' }}
+              $maxWidth="100%"
+            >
+              <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
+              {isShared && (
+                <Box
+                  $padding={{ top: !isDesktop ? '4xs' : undefined }}
+                  $css={
+                    !isDesktop
+                      ? css`
+                          align-self: flex-start;
+                        `
+                      : undefined
+                  }
+                >
+                  {dragMode && (
+                    <Icon
+                      $theme="greyscale"
+                      $variation="600"
+                      $size="14px"
+                      iconName={isPublic ? 'public' : 'vpn_lock'}
+                    />
+                  )}
+                  {!dragMode && (
+                    <Tooltip
+                      content={
+                        <Text $textAlign="center" $variation="000">
+                          {isPublic
+                            ? t('Accessible to anyone')
+                            : t('Accessible to authenticated users')}
+                        </Text>
+                      }
+                      placement="top"
+                    >
+                      <div>
+                        <Icon
+                          $theme="greyscale"
+                          $variation="600"
+                          $size="14px"
+                          iconName={isPublic ? 'public' : 'vpn_lock'}
+                        />
+                      </div>
+                    </Tooltip>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </StyledLink>
+        </Box>
 
         <Box
           $flex={flexRight}
@@ -121,6 +130,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           $align="center"
           $justify={isDesktop ? 'space-between' : 'flex-end'}
           $gap="32px"
+          role="gridcell"
         >
           {isDesktop && (
             <StyledLink href={`/docs/${doc.id}`}>

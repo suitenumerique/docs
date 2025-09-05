@@ -81,14 +81,7 @@ export const SimpleDocItem = ({
         )}
       </Box>
       <Box $justify="center" $overflow="auto">
-        <Text
-          aria-describedby="doc-title"
-          aria-label={displayTitle}
-          $size="sm"
-          $variation="1000"
-          $weight="500"
-          $css={ItemTextCss}
-        >
+        <Text $size="sm" $variation="1000" $weight="500" $css={ItemTextCss}>
           {displayTitle}
         </Text>
         {(!isDesktop || showAccesses) && (
