@@ -215,7 +215,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               >
                 <Button
                   color="tertiary"
-                  aria-label="Share button"
+                  aria-label={t('Share button')}
                   icon={
                     <Icon iconName="group" $theme="primary" $variation="800" />
                   }
@@ -233,9 +233,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
         {!isSmallMobile && ModalExport && (
           <Button
+            data-testid="doc-open-modal-download-button"
             color="tertiary-text"
             icon={
-              <Icon iconName="download" $theme="primary" $variation="800" />
+              <Icon
+                iconName="download"
+                $theme="primary"
+                $variation="800"
+                aria-hidden={true}
+              />
             }
             onClick={() => {
               setIsModalExportOpen(true);

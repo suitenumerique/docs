@@ -143,6 +143,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             {t('Cancel')}
           </Button>
           <Button
+            data-testid="doc-export-download-button"
             aria-label={t('Download')}
             color="primary"
             fullWidth
