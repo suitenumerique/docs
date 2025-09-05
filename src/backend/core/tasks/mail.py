@@ -22,3 +22,16 @@ def send_ask_for_access_mail(ask_for_access_id):
                 access.user.email,
                 access.user.language or settings.LANGUAGE_CODE,
             )
+
+@app.task
+def send_mail(document_id, subject, emails, context=None, language=None):
+    """Send email from a document template."""
+    document = models.Document.objects.get(id=document_id)
+    document.send_email(subject, emails, context, language)
+
+@app.task
+def send_invitation_mail(document_id, email, role, sender_id, language=None):
+    """Send invitation email for a document."""
+    document = models.Document.objects.get(id=document_id)
+    sender = models.User.objects.get(id=sender_id)
+    document.send_invitation_email(email, role, sender, language)
