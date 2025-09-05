@@ -19,6 +19,7 @@ export const Draggable = <T,>(props: DraggableProps<T>) => {
       {...attributes}
       data-testid={`draggable-doc-${props.id}`}
       className="--docs--grid-draggable"
+      role="presentation"
     >
       {props.children}
     </div>

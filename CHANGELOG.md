@@ -8,6 +8,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
+
+### Changed
+
+### Fixed
+
 ## [3.6.0] - 2025-09-04
 
 ### Added
@@ -28,7 +37,7 @@ and this project adheres to
   - ♿(frontend) improve header accessibility #1270
   - ♿(frontend) improve accessibility for decorative images in editor #1282
 - ♻️(backend) fallback to email identifier when no name #1298
-- 🐛(backend) allow ASCII characters in user sub field #1295 
+- 🐛(backend) allow ASCII characters in user sub field #1295
 - ⚡️(frontend) improve fallback width calculation #1333
 
 ### Fixed
