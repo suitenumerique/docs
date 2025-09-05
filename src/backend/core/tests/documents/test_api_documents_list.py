@@ -427,3 +427,20 @@ def test_api_documents_list_favorites_no_extra_queries(django_assert_num_queries
             assert result["is_favorite"] is True
         else:
             assert result["is_favorite"] is False
+
+
+def test_api_documents_list_throttling(settings):
+    """Test api documents throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document"] = "2/minute"
+    client = APIClient()
+    for _i in range(2):
+        response = client.get("/api/v1.0/documents/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get("/api/v1.0/documents/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope document", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document"] = current_rate

@@ -824,3 +824,29 @@ def test_api_document_invitations_delete_readers_or_editors(via, role, mock_user
         response.json()["detail"]
         == "You do not have permission to perform this action."
     )
+
+
+def test_api_document_invitations_throttling(settings):
+    """Test api document ask for access throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["invitation"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["invitation"] = "2/minute"
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+
+    factories.InvitationFactory(document=document, issuer=user)
+
+    client = APIClient()
+    client.force_login(user)
+
+    for _i in range(2):
+        response = client.get(f"/api/v1.0/documents/{document.id}/invitations/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get(f"/api/v1.0/documents/{document.id}/invitations/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope invitation", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["invitation"] = current_rate
