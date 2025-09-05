@@ -3,6 +3,7 @@ Test config API endpoints in the Impress core app.
 """
 
 import json
+from unittest.mock import patch
 
 from django.test import override_settings
 
@@ -174,3 +175,20 @@ def test_api_config_with_original_theme_customization(is_authenticated, settings
         theme_customization = json.load(f)
 
     assert content["theme_customization"] == theme_customization
+
+
+def test_api_config_throttling(settings):
+    """Test api config throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["config"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["config"] = "2/minute"
+    client = APIClient()
+    for _i in range(2):
+        response = client.get("/api/v1.0/config/")
+        assert response.status_code == 200
+    with patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get("/api/v1.0/config/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope config", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["config"] = current_rate

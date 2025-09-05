@@ -33,7 +33,6 @@ from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
-from rest_framework.throttling import UserRateThrottle
 
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
@@ -43,6 +42,7 @@ from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter
+from .throttling import UserListThrottleBurst, UserListThrottleSustained
 
 logger = logging.getLogger(__name__)
 
@@ -134,18 +134,6 @@ class Pagination(drf.pagination.PageNumberPagination):
     ordering = "-created_on"
     max_page_size = 200
     page_size_query_param = "page_size"
-
-
-class UserListThrottleBurst(UserRateThrottle):
-    """Throttle for the user list endpoint."""
-
-    scope = "user_list_burst"
-
-
-class UserListThrottleSustained(UserRateThrottle):
-    """Throttle for the user list endpoint."""
-
-    scope = "user_list_sustained"
 
 
 class UserViewSet(
@@ -360,6 +348,7 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
+    throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
@@ -1555,6 +1544,7 @@ class DocumentAccessViewSet(
         "document__depth",
     )
     resource_field_name = "document"
+    throttle_scope = "document_access"
 
     @cached_property
     def document(self):
@@ -1714,6 +1704,7 @@ class TemplateViewSet(
         permissions.IsAuthenticatedOrSafe,
         permissions.ResourceWithAccessPermission,
     ]
+    throttle_scope = "template"
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "title"]
     serializer_class = serializers.TemplateSerializer
@@ -1804,6 +1795,7 @@ class TemplateAccessViewSet(
 
     lookup_field = "pk"
     permission_classes = [permissions.ResourceAccessPermission]
+    throttle_scope = "template_access"
     queryset = models.TemplateAccess.objects.select_related("user").all()
     resource_field_name = "template"
     serializer_class = serializers.TemplateAccessSerializer
@@ -1886,6 +1878,7 @@ class InvitationViewset(
         permissions.CanCreateInvitationPermission,
         permissions.ResourceWithAccessPermission,
     ]
+    throttle_scope = "invitation"
     queryset = (
         models.Invitation.objects.all()
         .select_related("document")
@@ -1964,6 +1957,7 @@ class DocumentAskForAccessViewSet(
         permissions.IsAuthenticated,
         permissions.ResourceWithAccessPermission,
     ]
+    throttle_scope = "document_ask_for_access"
     queryset = models.DocumentAskForAccess.objects.all()
     serializer_class = serializers.DocumentAskForAccessSerializer
     _document = None
@@ -2036,6 +2030,7 @@ class ConfigView(drf.views.APIView):
     """API ViewSet for sharing some public settings."""
 
     permission_classes = [AllowAny]
+    throttle_scope = "config"
 
     def get(self, request):
         """

@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 🔒️(backend) configure throttle on every viewsets #1343
+
 ## [3.6.0] - 2025-09-04
 
 ### Added
