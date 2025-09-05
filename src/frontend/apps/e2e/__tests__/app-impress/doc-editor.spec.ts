@@ -226,9 +226,13 @@ test.describe('Doc Editor', () => {
     await editor.fill('Hello World Doc persisted 2');
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
 
+    await page.waitForTimeout(1000);
+
     const urlDoc = page.url();
     await page.goto(urlDoc);
 
+    // Wait for editor to load
+    await expect(editor).toBeVisible();
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
   });
 

@@ -110,7 +110,6 @@ export const DropdownMenu = ({
             $direction="row"
             $align="center"
             $position="relative"
-            aria-controls="menu"
           >
             <Box>{children}</Box>
             <Icon
@@ -125,9 +124,7 @@ export const DropdownMenu = ({
             />
           </Box>
         ) : (
-          <Box ref={blockButtonRef} aria-controls="menu">
-            {children}
-          </Box>
+          <Box ref={blockButtonRef}>{children}</Box>
         )
       }
     >

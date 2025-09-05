@@ -173,12 +173,13 @@ test.describe('Document search', () => {
       .getByRole('combobox', { name: 'Quick search input' })
       .fill('sub page search');
 
-    // Expect to find the first doc
+    // Expect to find the first and second docs in the results list
+    const resultsList = page.getByRole('listbox');
     await expect(
-      page.getByRole('presentation').getByLabel(firstDocTitle),
+      resultsList.getByRole('option', { name: firstDocTitle }),
     ).toBeVisible();
     await expect(
-      page.getByRole('presentation').getByLabel(secondDocTitle),
+      resultsList.getByRole('option', { name: secondDocTitle }),
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'close' }).click();
@@ -195,14 +196,15 @@ test.describe('Document search', () => {
       .fill('second');
 
     // Now there is a sub page - expect to have the focus on the current doc
+    const updatedResultsList = page.getByRole('listbox');
     await expect(
-      page.getByRole('presentation').getByLabel(secondDocTitle),
+      updatedResultsList.getByRole('option', { name: secondDocTitle }),
     ).toBeVisible();
     await expect(
-      page.getByRole('presentation').getByLabel(secondChildDocTitle),
+      updatedResultsList.getByRole('option', { name: secondChildDocTitle }),
     ).toBeVisible();
     await expect(
-      page.getByRole('presentation').getByLabel(firstDocTitle),
+      updatedResultsList.getByRole('option', { name: firstDocTitle }),
     ).toBeHidden();
   });
 });

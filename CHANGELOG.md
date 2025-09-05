@@ -20,6 +20,9 @@ and this project adheres to
 
 - 🔒️(backend) configure throttle on every viewsets #1343
 - ⬆️ Bump eslint to V9 #1071
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
+  - #1341
 
 ## [3.6.0] - 2025-09-04
 

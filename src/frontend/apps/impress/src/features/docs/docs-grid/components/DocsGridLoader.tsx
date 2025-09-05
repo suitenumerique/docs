@@ -1,5 +1,5 @@
 import { Loader } from '@openfun/cunningham-react';
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
 import { Box } from '@/components';
 
@@ -32,6 +32,9 @@ export const DocsGridLoader = ({ isLoading }: DocsGridLoaderProps) => {
         $zIndex={998}
         $position="absolute"
         className="--docs--doc-grid-loader"
+        $css={css`
+          pointer-events: none;
+        `}
       >
         <Loader />
       </Box>

@@ -172,7 +172,7 @@ export const goToGridDoc = async (
 
   await expect(row).toBeVisible();
 
-  const docTitleContent = row.locator('[aria-describedby="doc-title"]').first();
+  const docTitleContent = row.getByTestId('doc-title').first();
   const docTitle = await docTitleContent.textContent();
   expect(docTitle).toBeDefined();
 

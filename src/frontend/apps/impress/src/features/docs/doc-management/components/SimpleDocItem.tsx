@@ -82,12 +82,11 @@ export const SimpleDocItem = ({
       </Box>
       <Box $justify="center" $overflow="auto">
         <Text
-          aria-describedby="doc-title"
-          aria-label={doc.title || untitledDocument}
           $size="sm"
           $variation="1000"
           $weight="500"
           $css={ItemTextCss}
+          data-testid="doc-title"
         >
           {displayTitle}
         </Text>

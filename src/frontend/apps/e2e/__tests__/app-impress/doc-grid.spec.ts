@@ -80,9 +80,7 @@ test.describe('Documents Grid mobile', () => {
       hasText: 'My mocked document',
     });
 
-    await expect(
-      row.locator('[aria-describedby="doc-title"]').nth(0),
-    ).toHaveText('My mocked document');
+    await expect(row.getByTestId('doc-title')).toHaveText('My mocked document');
   });
 });
 
@@ -295,7 +293,7 @@ test.describe('Documents Grid', () => {
     docs = result.results as SmallDoc[];
 
     await expect(page.getByTestId('grid-loader')).toBeHidden();
-    await expect(page.locator('h4').getByText('All docs')).toBeVisible();
+    await expect(page.locator('h2').getByText('All docs')).toBeVisible();
 
     const thead = page.getByTestId('docs-grid-header');
     await expect(thead.getByText(/Name/i)).toBeVisible();
