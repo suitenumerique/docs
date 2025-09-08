@@ -22,6 +22,7 @@ and this project adheres to
 - ⬆️ Bump eslint to V9 #1071
 - ♿(frontend) improve accessibility:
   - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
+  - #1354
   - #1341
 
 ## [3.6.0] - 2025-09-04
