@@ -51,7 +51,7 @@ from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
-from .filters import DocumentFilter, ListDocumentFilter
+from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
 from .throttling import UserListThrottleBurst, UserListThrottleSustained
 
 logger = logging.getLogger(__name__)
@@ -176,12 +176,18 @@ class UserViewSet(
         if self.action != "list":
             return queryset
 
+        filterset = UserSearchFilter(
+            self.request.GET, queryset=queryset, request=self.request
+        )
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
         # Exclude all users already in the given document
         if document_id := self.request.query_params.get("document_id", ""):
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
-        if not (query := self.request.query_params.get("q", "")) or len(query) < 5:
-            return queryset.none()
+        filter_data = filterset.form.cleaned_data
+        query = filter_data["q"]
 
         # For emails, match emails by Levenstein distance to prevent typing errors
         if "@" in query:
