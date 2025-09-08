@@ -64,6 +64,7 @@ export const QuickSearchInput = ({
           role="combobox"
           placeholder={placeholder ?? t('Search')}
           onValueChange={onFilter}
+          maxLength={254}
         />
       </Box>
       {separator && <HorizontalSeparator $withPadding={false} />}
