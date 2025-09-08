@@ -15,7 +15,7 @@ test.describe('Document create member', () => {
   });
 
   test('it selects 2 users and 1 invitation', async ({ page, browserName }) => {
-    const inputFill = 'user ';
+    const inputFill = 'user.test';
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().includes(`/users/?q=${encodeURIComponent(inputFill)}`) &&

@@ -8,7 +8,7 @@ export const addNewMember = async (
   page: Page,
   index: number,
   role: 'Administrator' | 'Owner' | 'Editor' | 'Reader',
-  fillText: string = 'user ',
+  fillText: string = 'user.test',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(
     (response) =>
