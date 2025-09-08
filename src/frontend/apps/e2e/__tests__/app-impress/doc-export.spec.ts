@@ -38,7 +38,9 @@ test.describe('Doc Export', () => {
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Close the modal' }),
+      page.getByRole('button', {
+        name: 'Close the download modal',
+      }),
     ).toBeVisible();
     await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
   });

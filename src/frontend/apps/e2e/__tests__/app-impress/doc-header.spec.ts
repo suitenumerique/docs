@@ -100,7 +100,7 @@ test.describe('Doc Header', () => {
 
     await page
       .getByRole('button', {
-        name: 'Confirm deletion',
+        name: 'Delete document',
       })
       .click();
 

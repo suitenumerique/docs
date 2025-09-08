@@ -56,10 +56,11 @@ export const ModalRemoveDoc = ({
       closeOnClickOutside
       hideCloseButton
       onClose={() => onClose()}
+      aria-describedby="modal-remove-doc-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the delete modal')}
+            aria-label={t('Cancel the deletion')}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -67,7 +68,7 @@ export const ModalRemoveDoc = ({
             {t('Cancel')}
           </Button>
           <Button
-            aria-label={t('Confirm deletion')}
+            aria-label={t('Delete document')}
             color="danger"
             fullWidth
             onClick={() =>
@@ -90,8 +91,9 @@ export const ModalRemoveDoc = ({
         >
           <Text
             $size="h6"
-            as="h6"
-            $margin={{ all: '0' }}
+            as="h1"
+            id="modal-remove-doc-title"
+            $margin="0"
             $align="flex-start"
             $variation="1000"
           >
@@ -104,12 +106,9 @@ export const ModalRemoveDoc = ({
         </Box>
       }
     >
-      <Box
-        aria-label={t('Content modal to delete document')}
-        className="--docs--modal-remove-doc"
-      >
+      <Box className="--docs--modal-remove-doc">
         {!isError && (
-          <Text $size="sm" $variation="600" $display="inline-block">
+          <Text $size="sm" $variation="600" $display="inline-block" as="p">
             <Trans t={t}>
               This document and <strong>any sub-documents</strong> will be
               permanently deleted. This action is irreversible.

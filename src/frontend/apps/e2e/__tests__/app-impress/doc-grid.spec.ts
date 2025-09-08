@@ -149,7 +149,7 @@ test.describe('Document grid item options', () => {
 
     await page
       .getByRole('button', {
-        name: 'Confirm deletion',
+        name: 'Delete document',
       })
       .click();
 

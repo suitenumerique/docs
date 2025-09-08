@@ -33,7 +33,7 @@ test.describe('Document search', () => {
     ).toBeVisible();
 
     await expect(
-      page.getByLabel('Search modal').getByText('search'),
+      page.getByRole('heading', { name: 'Search docs' }),
     ).toBeVisible();
 
     const inputSearch = page.getByPlaceholder('Type the name of a document');
@@ -79,7 +79,7 @@ test.describe('Document search', () => {
 
     await page.keyboard.press('Control+k');
     await expect(
-      page.getByLabel('Search modal').getByText('search'),
+      page.getByRole('heading', { name: 'Search docs' }),
     ).toBeVisible();
 
     await page.keyboard.press('Escape');

@@ -19,10 +19,11 @@ export const ModalConfirmDownloadUnsafe = ({
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      aria-describedby="modal-confirm-download-unsafe-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={t('Cancel the download')}
             color="secondary"
             onClick={() => onClose()}
           >
@@ -31,6 +32,7 @@ export const ModalConfirmDownloadUnsafe = ({
           <Button
             aria-label={t('Download')}
             color="danger"
+            data-testid="modal-download-unsafe-button"
             onClick={() => {
               if (onConfirm) {
                 void onConfirm();
@@ -45,6 +47,8 @@ export const ModalConfirmDownloadUnsafe = ({
       size={ModalSize.SMALL}
       title={
         <Text
+          as="h1"
+          id="modal-confirm-download-unsafe-title"
           $gap="0.7rem"
           $size="h6"
           $align="flex-start"

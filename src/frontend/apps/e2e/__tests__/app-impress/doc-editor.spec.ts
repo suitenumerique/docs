@@ -463,12 +463,14 @@ test.describe('Doc Editor', () => {
     await expect(
       page.getByRole('button', {
         name: 'Download',
+        exact: true,
       }),
     ).toBeVisible();
 
     void page
       .getByRole('button', {
         name: 'Download',
+        exact: true,
       })
       .click();
 

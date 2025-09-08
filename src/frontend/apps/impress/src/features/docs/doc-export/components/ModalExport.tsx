@@ -133,10 +133,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       closeOnClickOutside
       onClose={() => onClose()}
       hideCloseButton
+      aria-describedby="modal-export-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={t('Cancel the download')}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -165,6 +166,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           $width="100%"
         >
           <Text
+            as="h1"
+            $margin="0"
+            id="modal-export-title"
             $size="h6"
             $variation="1000"
             $align="flex-start"
@@ -186,7 +190,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $gap="1rem"
         className="--docs--modal-export-content"
       >
-        <Text $variation="600" $size="sm">
+        <Text $variation="600" $size="sm" as="p">
           {t('Download your document in a .docx or .pdf format.')}
         </Text>
         <Select

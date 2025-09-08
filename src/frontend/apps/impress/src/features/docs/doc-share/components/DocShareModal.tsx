@@ -135,12 +135,20 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         isOpen
         closeOnClickOutside
         data-testid="doc-share-modal"
-        aria-label={t('Share modal')}
+        aria-describedby="doc-share-modal-title"
         size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
         onClose={onClose}
         title={
           <Box $direction="row" $justify="space-between" $align="center">
-            <Box $align="flex-start">{t('Share the document')}</Box>
+            <Text
+              as="h1"
+              id="doc-share-modal-title"
+              $align="flex-start"
+              $size="small"
+              $weight="600"
+            >
+              {t('Share the document')}
+            </Text>
             <ButtonCloseModal
               aria-label={t('Close the share modal')}
               onClick={onClose}
@@ -199,6 +207,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                     $textAlign="center"
                     $variation="600"
                     $size="sm"
+                    as="p"
                   >
                     {t(
                       'You can view this document but need additional access to see its members or modify settings.',

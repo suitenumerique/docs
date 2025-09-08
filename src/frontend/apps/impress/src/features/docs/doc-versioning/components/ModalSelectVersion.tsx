@@ -48,6 +48,7 @@ export const ModalSelectVersion = ({
         closeOnClickOutside={true}
         size={ModalSize.EXTRA_LARGE}
         onClose={onClose}
+        aria-describedby="modal-select-version-title"
       >
         <NoPaddingStyle />
         <Box
@@ -58,6 +59,14 @@ export const ModalSelectVersion = ({
           $maxHeight="calc(100vh - 2em - 12px)"
           $overflow="hidden"
         >
+          <Text
+            as="h1"
+            $margin="0"
+            id="modal-select-version-title"
+            className="sr-only"
+          >
+            {t('Version history')}
+          </Text>
           <Box
             $css={css`
               display: flex;

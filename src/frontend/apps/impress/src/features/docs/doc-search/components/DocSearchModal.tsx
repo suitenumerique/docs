@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box } from '@/components';
+import { Box, Text } from '@/components';
 import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useDocUtils } from '@/docs/doc-management';
@@ -65,6 +65,7 @@ const DocSearchModalGlobal = ({
       closeOnClickOutside
       size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
       hideCloseButton
+      aria-describedby="doc-search-modal-title"
     >
       <Box
         aria-label={t('Search modal')}
@@ -72,6 +73,14 @@ const DocSearchModalGlobal = ({
         $justify="space-between"
         className="--docs--doc-search-modal"
       >
+        <Text
+          as="h1"
+          $margin="0"
+          id="doc-search-modal-title"
+          className="sr-only"
+        >
+          {t('Search docs')}
+        </Text>
         <Box $position="absolute" $css="top: 12px; right: 12px;">
           <ButtonCloseModal
             aria-label={t('Close the search modal')}
