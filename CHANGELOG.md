@@ -8,9 +8,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - #1354
+
 ### Fixed
 
-- 🐛(backend) duplicate sub docs as root for reader user
+- 🐛(backend) duplicate sub docs as root for reader users
 
 ## [3.7.0] - 2025-09-12
 

@@ -49,6 +49,8 @@ export const SimpleDocItem = ({
       $overflow="auto"
       $width="100%"
       className="--docs--simple-doc-item"
+      role="presentation"
+      aria-label={`${t('Open document {{title}}', { title: doc.title || untitledDocument })}`}
     >
       <Box
         $direction="row"
@@ -59,6 +61,7 @@ export const SimpleDocItem = ({
         `}
         $padding={`${spacingsTokens['3xs']} 0`}
         data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
+        aria-hidden="true"
       >
         {isPinned ? (
           <PinnedDocumentIcon
@@ -96,6 +99,7 @@ export const SimpleDocItem = ({
             $align="center"
             $gap={spacingsTokens['3xs']}
             $margin={{ top: '-2px' }}
+            aria-hidden="true"
           >
             <Text $variation="600" $size="xs">
               {DateTime.fromISO(doc.updated_at).toRelative()}

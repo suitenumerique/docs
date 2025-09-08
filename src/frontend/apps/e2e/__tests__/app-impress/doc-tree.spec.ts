@@ -252,6 +252,46 @@ test.describe('Doc Tree', () => {
       page.getByRole('menuitem', { name: 'Move to my docs' }),
     ).toHaveAttribute('aria-disabled', 'true');
   });
+
+  test('keyboard navigation with Enter key opens documents', async ({
+    page,
+    browserName,
+  }) => {
+    // Create a parent document
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-keyboard-nav',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    // Create a sub-document
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-keyboard-child',
+    );
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible();
+
+    // Test keyboard navigation on root document
+    const rootItem = page.getByTestId('doc-tree-root-item');
+    await expect(rootItem).toBeVisible();
+
+    // Focus on the root item and press Enter
+    await rootItem.focus();
+    await expect(rootItem).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    // Verify we navigated to the root document
+    await verifyDocName(page, docParent);
+    await expect(page).toHaveURL(/\/docs\/[^/]+\/?$/);
+
+    // Now test keyboard navigation on sub-document
+    await expect(docTree.getByText(docChild)).toBeVisible();
+  });
 });
 
 test.describe('Doc Tree: Inheritance', () => {
