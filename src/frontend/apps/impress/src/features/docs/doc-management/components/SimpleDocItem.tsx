@@ -7,7 +7,6 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
-import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
 
 import { DocIcon } from './DocIcon';
@@ -60,25 +59,18 @@ export const SimpleDocItem = ({
         $padding={`${spacingsTokens['3xs']} 0`}
         data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
       >
-        {isPinned ? (
-          <PinnedDocumentIcon
-            aria-hidden="true"
-            aria-label={t('Pin document icon')}
-            color={colorsTokens['primary-500']}
-          />
-        ) : (
-          <DocIcon
-            emoji={emoji}
-            defaultIcon={
-              <SimpleFileIcon
-                aria-hidden="true"
-                aria-label={t('Simple document icon')}
-                color={colorsTokens['primary-500']}
-              />
-            }
-            $size="25px"
-          />
-        )}
+        <DocIcon
+          emoji={emoji}
+          isPinned={isPinned}
+          defaultIcon={
+            <SimpleFileIcon
+              aria-hidden="true"
+              aria-label={t('Simple document icon')}
+              color={colorsTokens['primary-500']}
+            />
+          }
+          $size="25px"
+        />
       </Box>
       <Box $justify="center" $overflow="auto">
         <Text
