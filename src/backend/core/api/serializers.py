@@ -544,37 +544,29 @@ class LinkDocumentSerializer(serializers.ModelSerializer):
         # Validate link_role is compatible with link_reach
         allowed_roles = available_options[link_reach]
 
+        # Restricted reach: link_role must be None
         if link_reach == models.LinkReachChoices.RESTRICTED:
-            # For restricted reach, link_role is ignored but
-            # we shouldn't allow meaningful roles to be set
-            if link_role is not None and link_role in [
-                models.LinkRoleChoices.READER,
-                models.LinkRoleChoices.EDITOR,
-            ]:
-                msg = _(
-                    "Cannot set link_role when link_reach is 'restricted'. "
-                    "Link role must be null for restricted reach."
+            if link_role is not None:
+                raise serializers.ValidationError(
+                    {
+                        "link_role": (
+                            "Cannot set link_role when link_reach is 'restricted'. "
+                            "Link role must be null for restricted reach."
+                        )
+                    }
                 )
-                raise serializers.ValidationError({"link_role": msg})
-        # For non-restricted reach, validate link_role is in allowed roles
-        elif link_role is not None and link_role not in allowed_roles:
-            msg = _(
-                "Link role '%(link_role)s' is not allowed for link reach '%(link_reach)s'. "
-                "Allowed roles: %(allowed_roles)s"
-            )
+            return attrs
+        # Non-restricted: link_role must be in allowed roles
+        if link_role not in allowed_roles:
+            allowed_roles_str = ", ".join(allowed_roles) if allowed_roles else "none"
             raise serializers.ValidationError(
                 {
-                    "link_role": msg
-                    % {
-                        "link_role": link_role,
-                        "link_reach": link_reach,
-                        "allowed_roles": ", ".join(allowed_roles)
-                        if allowed_roles
-                        else "none",
-                    }
+                    "link_role": (
+                        f"Link role '{link_role}' is not allowed for link reach '{link_reach}'. "
+                        f"Allowed roles: {allowed_roles_str}"
+                    )
                 }
             )
-
         return attrs
 
 
