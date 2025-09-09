@@ -11,6 +11,7 @@ and this project adheres to
 ### Added 
 
 - ✨(api) add API route to fetch document content #1206
+- ✨(frontend) display pin on top of doc emoji or default icon #1358
 
 ### Changed
 
