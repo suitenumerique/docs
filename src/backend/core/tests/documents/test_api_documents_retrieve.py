@@ -305,7 +305,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "cors_proxy": True,
             "content": True,
             "destroy": False,
-            "duplicate": True,
+            "duplicate": grand_parent.link_role == "editor",
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
@@ -500,7 +500,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "cors_proxy": True,
             "content": True,
             "destroy": access.role in ["administrator", "owner"],
-            "duplicate": True,
+            "duplicate": access.role != "reader",
             "favorite": True,
             "invite_owner": access.role == "owner",
             "link_configuration": access.role in ["administrator", "owner"],
@@ -855,7 +855,7 @@ def test_api_documents_retrieve_user_role(django_assert_max_num_queries):
     )
     expected_role = choices.RoleChoices.max(*[access.role for access in accesses])
 
-    with django_assert_max_num_queries(14):
+    with django_assert_max_num_queries(16):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/")
 
     assert response.status_code == 200
