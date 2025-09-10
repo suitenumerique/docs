@@ -95,6 +95,11 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                       $variation="600"
                       $size="14px"
                       iconName={isPublic ? 'public' : 'vpn_lock'}
+                      aria-label={
+                        isPublic
+                          ? t('Accessible to anyone')
+                          : t('Accessible to authenticated users')
+                      }
                     />
                   )}
                   {!dragMode && (
@@ -114,6 +119,11 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                           $variation="600"
                           $size="14px"
                           iconName={isPublic ? 'public' : 'vpn_lock'}
+                          aria-label={
+                            isPublic
+                              ? t('Accessible to anyone')
+                              : t('Accessible to authenticated users')
+                          }
                         />
                       </div>
                     </Tooltip>

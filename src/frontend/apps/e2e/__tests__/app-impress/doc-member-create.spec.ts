@@ -201,7 +201,7 @@ test.describe('Document create member', () => {
     await page.getByLabel('Reader').click();
 
     const moreActions = userInvitation.getByRole('button', {
-      name: 'more_horiz',
+      name: 'Open invitation actions menu',
     });
     await moreActions.click();
 

@@ -227,6 +227,7 @@ export const DropdownMenu = ({
                       $theme="greyscale"
                       $variation={isDisabled ? '400' : '1000'}
                       iconName={option.icon}
+                      aria-hidden="true"
                     />
                   )}
                   <Text $variation={isDisabled ? '400' : '1000'}>
@@ -235,7 +236,12 @@ export const DropdownMenu = ({
                 </Box>
                 {(option.isSelected ||
                   selectedValues?.includes(option.value ?? '')) && (
-                  <Icon iconName="check" $size="20px" $theme="greyscale" />
+                  <Icon
+                    iconName="check"
+                    $size="20px"
+                    $theme="greyscale"
+                    aria-hidden="true"
+                  />
                 )}
               </BoxButton>
               {option.showSeparator && (

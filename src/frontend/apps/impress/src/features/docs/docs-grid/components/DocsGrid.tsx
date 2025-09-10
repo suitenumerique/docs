@@ -100,7 +100,7 @@ export const DocsGrid = ({
         )}
         {hasDocs && (
           <Box $gap="6px" $overflow="auto">
-            <Box role="grid">
+            <Box role="grid" aria-label={t('Documents grid')}>
               <Box role="rowgroup">
                 <Box
                   $direction="row"

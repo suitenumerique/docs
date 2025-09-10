@@ -118,8 +118,9 @@ export const DocShareInvitationItem = ({
               <DropdownMenu
                 data-testid="doc-share-invitation-more-actions"
                 options={moreActions}
+                label={t('Open invitation actions menu')}
               >
-                <IconOptions isHorizontal $variation="600" />
+                <IconOptions isHorizontal $variation="600" aria-hidden="true" />
               </DropdownMenu>
             )}
           </Box>
@@ -158,7 +159,12 @@ export const DocShareModalInviteUserRow = ({
             <Text $theme="primary" $variation="800">
               {t('Add')}
             </Text>
-            <Icon $theme="primary" $variation="800" iconName="add" />
+            <Icon
+              $theme="primary"
+              $variation="800"
+              iconName="add"
+              aria-hidden="true"
+            />
           </Box>
         }
       />

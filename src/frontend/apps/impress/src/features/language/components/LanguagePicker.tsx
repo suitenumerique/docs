@@ -55,12 +55,16 @@ export const LanguagePicker = () => {
     >
       <Text
         $theme="primary"
-        aria-label={t('Language')}
         $direction="row"
         $gap="0.5rem"
         className="--docs--language-picker-text"
       >
-        <Icon iconName="translate" $color="inherit" $size="xl" />
+        <Icon
+          iconName="translate"
+          $color="inherit"
+          $size="xl"
+          aria-hidden="true"
+        />
         {currentLanguageLabel}
       </Text>
     </DropdownMenu>

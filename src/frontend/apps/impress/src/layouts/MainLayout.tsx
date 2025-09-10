@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
@@ -20,6 +21,7 @@ export function MainLayout({
   const { isDesktop } = useResponsiveStore();
   const { colorsTokens } = useCunninghamTheme();
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
+  const { t } = useTranslation();
 
   return (
     <Box className="--docs--main-layout">
@@ -32,6 +34,7 @@ export function MainLayout({
         <LeftPanel />
         <Box
           as="main"
+          aria-label={t('Main content')}
           id={MAIN_LAYOUT_ID}
           $align="center"
           $flex={1}

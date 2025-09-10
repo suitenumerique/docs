@@ -83,19 +83,23 @@ export const DocsGridActions = ({
 
   return (
     <>
-      <DropdownMenu options={options} label={menuLabel}>
+      <DropdownMenu
+        options={options}
+        label={menuLabel}
+        aria-label={t('More options')}
+      >
         <Icon
           data-testid={`docs-grid-actions-button-${doc.id}`}
           iconName="more_horiz"
           $theme="primary"
           $variation="600"
-          aria-label={t('More options')}
           $css={css`
             cursor: pointer;
             &:hover {
               opacity: 0.8;
             }
           `}
+          aria-hidden="true"
         />
       </DropdownMenu>
 

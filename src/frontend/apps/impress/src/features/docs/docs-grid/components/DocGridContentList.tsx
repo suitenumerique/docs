@@ -191,6 +191,7 @@ export const DraggableDocGridContentList = ({
             data-testid="drag-doc-overlay"
             $height="auto"
             role="alert"
+            aria-label={t('Drag  and drop status')}
           >
             <Text $size="xs" $variation="000" $weight="500">
               {overlayText}

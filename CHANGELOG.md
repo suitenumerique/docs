@@ -15,6 +15,7 @@ and this project adheres to
   - #1349
   - #1271
   - #1341
+  - #1362
 
 ### Changed
 

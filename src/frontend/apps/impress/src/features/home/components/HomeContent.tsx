@@ -33,7 +33,11 @@ export function HomeContent() {
   const isFrLanguage = i18n.resolvedLanguage === 'fr';
 
   return (
-    <Box as="main" className="--docs--home-content">
+    <Box
+      as="main"
+      className="--docs--home-content"
+      aria-label={t('Main content')}
+    >
       <HomeHeader />
       {isSmallMobile && (
         <Box $css="& .--docs--left-panel-header{display: none;}">
