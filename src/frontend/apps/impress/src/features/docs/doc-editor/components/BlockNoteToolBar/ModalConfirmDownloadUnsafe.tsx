@@ -54,6 +54,7 @@ export const ModalConfirmDownloadUnsafe = ({
           $align="flex-start"
           $variation="1000"
           $direction="row"
+          $margin="0"
         >
           <Icon iconName="warning" $theme="warning" />
           {t('Warning')}

@@ -146,6 +146,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
               $align="flex-start"
               $size="small"
               $weight="600"
+              $margin="0"
             >
               {t('Share the document')}
             </Text>
