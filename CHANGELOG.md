@@ -23,6 +23,7 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
   - #1341
+- ♻️(tilt) use helm dev-backend chart
 
 ## [3.6.0] - 2025-09-04
 
