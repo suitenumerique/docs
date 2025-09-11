@@ -1,5 +1,6 @@
 import { Tooltip, useModal } from '@openfun/cunningham-react';
 import { DateTime } from 'luxon';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -21,6 +22,7 @@ type DocsGridItemProps = {
 
 export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
@@ -31,6 +33,13 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
 
   const handleShareClick = () => {
     shareModal.open();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      void router.push(`/docs/${doc.id}`);
+    }
   };
 
   return (
@@ -52,6 +61,10 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           }
         `}
         className="--docs--doc-grid-item"
+        onKeyDown={handleKeyDown}
+        aria-label={t('Open document: {{title}}', {
+          title: doc.title || t('Untitled document'),
+        })}
       >
         <Box
           $flex={flexLeft}
