@@ -52,7 +52,7 @@ OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 # Store OIDC tokens in the session
 OIDC_STORE_ACCESS_TOKEN = True  # Store the access token in the session
 OIDC_STORE_REFRESH_TOKEN = True  # Store the encrypted refresh token in the session
-OIDC_STORE_REFRESH_TOKEN_KEY = AnExampleKeyForDevPurposeOnly
+OIDC_STORE_REFRESH_TOKEN_KEY = ThisIsAnExampleKeyForDevPurposeOnly
 
 # AI
 AI_FEATURE_ENABLED=true
