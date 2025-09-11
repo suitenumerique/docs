@@ -4,77 +4,154 @@ from functools import partial
 from unittest.mock import patch
 
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
 
 import pytest
 
 from core import factories, models, utils
 from core.services.search_indexers import (
+    BaseDocumentIndexer,
     FindDocumentIndexer,
+    get_document_indexer_class,
     get_visited_document_ids_of,
 )
 
 pytestmark = pytest.mark.django_db
 
 
-def test_push_raises_error_if_search_indexer_url_is_none(settings):
+class FakeDocumentIndexer(BaseDocumentIndexer):
+    """Fake indexer for test purpose"""
+
+    def serialize_document(self, document, accesses):
+        return {}
+
+    def push(self, data):
+        pass
+
+    def search_query(self, data, token):
+        return {}
+
+    def format_response(self, data: dict):
+        return {}
+
+
+
+@pytest.fixture(name="fake_indexer_settings")
+def fake_indexer_settings_fixture(settings):
+    """Fixture to switch the indexer to the FakeDocumentIndexer."""
+    _original_backend = str(settings.SEARCH_INDEXER_CLASS)
+
+    settings.SEARCH_INDEXER_CLASS = (
+        "core.tests.test_services_search_indexers.FakeDocumentIndexer"
+    )
+    get_document_indexer_class.cache_clear()
+
+    yield settings
+
+    settings.SEARCH_INDEXER_CLASS = _original_backend
+    # clear cache to prevent issues with other tests
+    get_document_indexer_class.cache_clear()
+
+
+def test_services_search_indexer_class_is_empty(fake_indexer_settings):
+    """
+    Should raise ImproperlyConfigured if SEARCH_INDEXER_CLASS is None or empty.
+    """
+    fake_indexer_settings.SEARCH_INDEXER_CLASS = None
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        get_document_indexer_class()
+
+    assert "SEARCH_INDEXER_CLASS must be set in Django settings." in str(exc_info.value)
+
+    fake_indexer_settings.SEARCH_INDEXER_CLASS = ""
+
+    # clear cache again
+    get_document_indexer_class.cache_clear()
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        get_document_indexer_class()
+
+    assert "SEARCH_INDEXER_CLASS must be set in Django settings." in str(exc_info.value)
+
+
+def test_services_search_indexer_class_invalid(fake_indexer_settings):
+    """
+    Should raise RuntimeError if SEARCH_INDEXER_CLASS cannot be imported.
+    """
+    fake_indexer_settings.SEARCH_INDEXER_CLASS = "unknown.Unknown"
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        get_document_indexer_class()
+
+    assert (
+        "SEARCH_INDEXER_CLASS setting is not valid : No module named 'unknown'"
+        in str(exc_info.value)
+    )
+
+
+def test_services_search_indexer_class(fake_indexer_settings):
+    """
+    Import indexer class defined in setting SEARCH_INDEXER_CLASS.
+    """
+    fake_indexer_settings.SEARCH_INDEXER_CLASS = (
+        "core.tests.test_services_search_indexers.FakeDocumentIndexer"
+    )
+
+    assert get_document_indexer_class() == import_string(
+        "core.tests.test_services_search_indexers.FakeDocumentIndexer"
+    )
+
+def test_services_search_indexer_url_is_none(settings):
     """
     Indexer should raise RuntimeError if SEARCH_INDEXER_URL is None or empty.
     """
     settings.SEARCH_INDEXER_URL = None
-    indexer = FindDocumentIndexer()
 
-    with pytest.raises(RuntimeError) as exc_info:
-        indexer.push([])
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        FindDocumentIndexer()
 
-    assert "SEARCH_INDEXER_URL must be set in Django settings before indexing." in str(
-        exc_info.value
-    )
+    assert "SEARCH_INDEXER_URL must be set in Django settings." in str(exc_info.value)
 
 
-def test_push_raises_error_if_search_indexer_url_is_empty(settings):
+def test_services_search_indexer_url_is_empty(settings):
     """
     Indexer should raise RuntimeError if SEARCH_INDEXER_URL is empty string.
     """
     settings.SEARCH_INDEXER_URL = ""
-    indexer = FindDocumentIndexer()
 
-    with pytest.raises(RuntimeError) as exc_info:
-        indexer.push([])
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        FindDocumentIndexer()
 
-    assert "SEARCH_INDEXER_URL must be set in Django settings before indexing." in str(
-        exc_info.value
-    )
+    assert "SEARCH_INDEXER_URL must be set in Django settings." in str(exc_info.value)
 
 
-def test_push_raises_error_if_search_indexer_secret_is_none(settings):
+def test_services_search_indexer_secret_is_none(settings):
     """
     Indexer should raise RuntimeError if SEARCH_INDEXER_SECRET is None or empty.
     """
     settings.SEARCH_INDEXER_SECRET = None
-    indexer = FindDocumentIndexer()
 
-    with pytest.raises(RuntimeError) as exc_info:
-        indexer.push([])
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        FindDocumentIndexer()
 
-    assert (
-        "SEARCH_INDEXER_SECRET must be set in Django settings before indexing."
-        in str(exc_info.value)
+    assert "SEARCH_INDEXER_SECRET must be set in Django settings." in str(
+        exc_info.value
     )
 
 
-def test_push_raises_error_if_search_indexer_secret_is_empty(settings):
+def test_services_search_indexer_secret_is_empty(settings):
     """
     Indexer should raise RuntimeError if SEARCH_INDEXER_SECRET is empty string.
     """
     settings.SEARCH_INDEXER_SECRET = ""
-    indexer = FindDocumentIndexer()
 
-    with pytest.raises(RuntimeError) as exc_info:
-        indexer.push([])
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        FindDocumentIndexer()
 
-    assert (
-        "SEARCH_INDEXER_SECRET must be set in Django settings before indexing."
-        in str(exc_info.value)
+    assert "SEARCH_INDEXER_SECRET must be set in Django settings." in str(
+        exc_info.value
     )
 
 
@@ -333,13 +410,10 @@ def test_search_query_raises_error_if_search_endpoint_is_none(settings):
     Indexer should raise RuntimeError if SEARCH_INDEXER_QUERY_URL is None or empty.
     """
     settings.SEARCH_INDEXER_QUERY_URL = None
-    indexer = FindDocumentIndexer()
-    user = factories.UserFactory()
 
-    with pytest.raises(RuntimeError) as exc_info:
-        indexer.search("alpha", user=user, token="mytoken")
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        FindDocumentIndexer()
 
-    assert (
-        "SEARCH_INDEXER_QUERY_URL must be set in Django settings before search."
-        in str(exc_info.value)
+    assert "SEARCH_INDEXER_QUERY_URL must be set in Django settings." in str(
+        exc_info.value
     )

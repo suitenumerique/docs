@@ -3,6 +3,7 @@ Unit tests for the Document model
 """
 # pylint: disable=too-many-lines
 
+from operator import itemgetter
 import random
 import smtplib
 import time
@@ -1466,7 +1467,7 @@ def test_models_documents_post_save_indexer(mock_push, settings):
         factories.UserDocumentAccessFactory(document=doc2, user=user)
         factories.UserDocumentAccessFactory(document=doc3, user=user)
 
-    time.sleep(0.1)  # waits for the end of the tasks
+    time.sleep(0.2)  # waits for the end of the tasks
 
     accesses = {
         str(doc1.path): {"users": [user.sub]},
@@ -1478,16 +1479,13 @@ def test_models_documents_post_save_indexer(mock_push, settings):
 
     indexer = FindDocumentIndexer()
 
-    def sortkey(d):
-        return d["id"]
-
-    assert sorted(data, key=sortkey) == sorted(
+    assert sorted(data, key=itemgetter('id')) == sorted(
         [
             indexer.serialize_document(doc1, accesses),
             indexer.serialize_document(doc2, accesses),
             indexer.serialize_document(doc3, accesses),
         ],
-        key=sortkey,
+        key=itemgetter('id'),
     )
 
     # The debounce counters should be reset

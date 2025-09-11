@@ -2,6 +2,7 @@
 Unit test for `index` command.
 """
 
+from operator import itemgetter
 from unittest import mock
 
 from django.core.management import call_command
@@ -34,19 +35,18 @@ def test_index():
         str(no_title_doc.path): {"users": [user.sub]},
     }
 
-    def sortkey(d):
-        return d["id"]
-
     with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         call_command("index")
 
         push_call_args = [call.args[0] for call in mock_push.call_args_list]
 
-        assert len(push_call_args) == 1  # called once but with a batch of docs
-        assert sorted(push_call_args[0], key=sortkey) == sorted(
+        # called once but with a batch of docs
+        mock_push.assert_called_once()
+
+        assert sorted(push_call_args[0], key=itemgetter("id")) == sorted(
             [
                 indexer.serialize_document(doc, accesses),
                 indexer.serialize_document(no_title_doc, accesses),
             ],
-            key=sortkey,
+            key=itemgetter("id"),
         )

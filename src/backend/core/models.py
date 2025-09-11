@@ -954,7 +954,7 @@ class Document(MP_Node, BaseModel):
 
 
 @receiver(signals.post_save, sender=Document)
-def document_post_save(sender, instance, **kwargs):
+def document_post_save(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     Asynchronous call to the document indexer at the end of the transaction.
     Note : Within the transaction we can have an empty content and a serialization
@@ -1189,7 +1189,7 @@ class DocumentAccess(BaseAccess):
 
 
 @receiver(signals.post_save, sender=DocumentAccess)
-def document_access_post_save(sender, instance, created, **kwargs):
+def document_access_post_save(sender, instance, created, **kwargs):  # pylint: disable=unused-argument
     """
     Asynchronous call to the document indexer at the end of the transaction.
     """
