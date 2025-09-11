@@ -17,6 +17,11 @@ and this project adheres to
 
 - 🐛(backend) duplicate sub docs as root for reader users
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ✨ add document visible in list and openable via enter key #1365
+
 ## [3.7.0] - 2025-09-12
 
 ### Added

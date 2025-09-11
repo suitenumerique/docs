@@ -1,5 +1,6 @@
 import { Tooltip, useModal } from '@openfun/cunningham-react';
 import { DateTime } from 'luxon';
+import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -33,6 +34,13 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
     shareModal.open();
   };
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      (e.target as HTMLAnchorElement).click();
+    }
+  };
+
   return (
     <>
       <Box
@@ -52,6 +60,9 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           }
         `}
         className="--docs--doc-grid-item"
+        aria-label={t('Open document: {{title}}', {
+          title: doc.title || t('Untitled document'),
+        })}
       >
         <Box
           $flex={flexLeft}
@@ -68,6 +79,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
               min-width: 0;
             `}
             href={`/docs/${doc.id}`}
+            onKeyDown={handleKeyDown}
           >
             <Box
               data-testid={`docs-grid-name-${doc.id}`}
