@@ -11,10 +11,6 @@ and this project adheres to
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
-- ♿(frontend) improve accessibility:
-  - #1349
-  - #1271
-  - #1341
 
 ### Changed
 
@@ -23,6 +19,10 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
   - #1341
+  - #1349
+  - #1271
+  - #1341
+  - #1365
 - ♻️(tilt) use helm dev-backend chart
 
 ### Fixed
