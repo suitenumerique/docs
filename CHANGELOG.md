@@ -26,6 +26,10 @@ and this project adheres to
   - #1341
 - ♻️(tilt) use helm dev-backend chart
 
+### Removed
+
+- 🔥(frontend) remove multi column drop cursor #1370
+
 ### Fixed
 
 - 🐛(frontend) fix callout emoji list #1366
