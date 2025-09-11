@@ -3,9 +3,12 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from functools import cache
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
 
 import requests
 
@@ -14,18 +17,33 @@ from core import models, utils
 logger = logging.getLogger(__name__)
 
 
+@cache
+def get_document_indexer_class() -> "BaseDocumentIndexer":
+    """Return the indexer backend class based on the settings."""
+    classpath = settings.SEARCH_INDEXER_CLASS
+
+    if not classpath:
+        raise ImproperlyConfigured(
+            "SEARCH_INDEXER_CLASS must be set in Django settings."
+        )
+
+    try:
+        return import_string(settings.SEARCH_INDEXER_CLASS)
+    except ImportError as err:
+        raise ImproperlyConfigured(
+            f"SEARCH_INDEXER_CLASS setting is not valid : {err}"
+        ) from err
+
+
 def get_batch_accesses_by_users_and_teams(paths):
     """
     Get accesses related to a list of document paths,
     grouped by users and teams, including all ancestor paths.
     """
-    # print("paths: ", paths)
     ancestor_map = utils.get_ancestor_to_descendants_map(
         paths, steplen=models.Document.steplen
     )
     ancestor_paths = list(ancestor_map.keys())
-    # print("ancestor map: ", ancestor_map)
-    # print("ancestor paths: ", ancestor_paths)
 
     access_qs = models.DocumentAccess.objects.filter(
         document__path__in=ancestor_paths
@@ -80,6 +98,24 @@ class BaseDocumentIndexer(ABC):
                 Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
         """
         self.batch_size = batch_size or settings.SEARCH_INDEXER_BATCH_SIZE
+        self.indexer_url = settings.SEARCH_INDEXER_URL
+        self.indexer_secret = settings.SEARCH_INDEXER_SECRET
+        self.search_url = settings.SEARCH_INDEXER_QUERY_URL
+
+        if not self.indexer_url:
+            raise ImproperlyConfigured(
+                "SEARCH_INDEXER_URL must be set in Django settings."
+            )
+
+        if not self.indexer_secret:
+            raise ImproperlyConfigured(
+                "SEARCH_INDEXER_SECRET must be set in Django settings."
+            )
+
+        if not self.search_url:
+            raise ImproperlyConfigured(
+                "SEARCH_INDEXER_QUERY_URL must be set in Django settings."
+            )
 
     def index(self):
         """
@@ -143,7 +179,7 @@ class BaseDocumentIndexer(ABC):
     @abstractmethod
     def search_query(self, data, token) -> dict:
         """
-        Retreive documents from the Find app API.
+        Retrieve documents from the Find app API.
 
         Must be implemented by subclasses.
         """
@@ -204,16 +240,9 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Returns:
             dict: A JSON-serializable dictionary.
         """
-        url = getattr(settings, "SEARCH_INDEXER_QUERY_URL", None)
-
-        if not url:
-            raise RuntimeError(
-                "SEARCH_INDEXER_QUERY_URL must be set in Django settings before search."
-            )
-
         try:
             response = requests.post(
-                url,
+                self.search_url,
                 json=data,
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=10,
@@ -222,7 +251,6 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             return response.json()
         except requests.exceptions.HTTPError as e:
             logger.error("HTTPError: %s", e)
-            logger.error("Response content: %s", response.text)  # type: ignore
             raise
 
     def format_response(self, data: dict):
@@ -238,27 +266,15 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Args:
             data (list): List of document dictionaries.
         """
-        url = getattr(settings, "SEARCH_INDEXER_URL", None)
-        if not url:
-            raise RuntimeError(
-                "SEARCH_INDEXER_URL must be set in Django settings before indexing."
-            )
-
-        secret = getattr(settings, "SEARCH_INDEXER_SECRET", None)
-        if not secret:
-            raise RuntimeError(
-                "SEARCH_INDEXER_SECRET must be set in Django settings before indexing."
-            )
 
         try:
             response = requests.post(
-                url,
+                self.indexer_url,
                 json=data,
-                headers={"Authorization": f"Bearer {secret}"},
+                headers={"Authorization": f"Bearer {self.indexer_secret}"},
                 timeout=10,
             )
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             logger.error("HTTPError: %s", e)
-            logger.error("Response content: %s", response.text)
             raise

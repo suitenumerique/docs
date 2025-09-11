@@ -57,7 +57,7 @@ def test_api_documents_search_endpoint_is_none(settings):
     response = APIClient().get("/api/v1.0/documents/search/", data={"q": "alpha"})
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "The service is not configured properly."}
+    assert response.json() == {"detail": "The service is not properly configured."}
 
 
 @responses.activate
@@ -74,6 +74,11 @@ def test_api_documents_search_invalid_params(settings):
 
     assert response.status_code == 400
     assert response.json() == {"q": ["This field is required."]}
+
+    response = APIClient().get("/api/v1.0/documents/search/", data={"q": "    "})
+
+    assert response.status_code == 400
+    assert response.json() == {"q": ["This field may not be blank."]}
 
 
 @responses.activate
