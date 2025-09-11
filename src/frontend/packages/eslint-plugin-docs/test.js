@@ -1,8 +1,8 @@
 const typescriptEslint = require('@typescript-eslint/eslint-plugin');
 const typescriptParser = require('@typescript-eslint/parser');
+const vitest = require('@vitest/eslint-plugin');
 const jest = require('eslint-plugin-jest');
 const testingLibrary = require('eslint-plugin-testing-library');
-const vitest = require('eslint-plugin-vitest');
 
 const testConfig = {
   files: [
