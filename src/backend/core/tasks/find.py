@@ -1,5 +1,6 @@
 """Trigger document indexation using celery task."""
 
+from functools import partial
 from logging import getLogger
 
 from django.conf import settings
@@ -8,8 +9,8 @@ from django.db import transaction
 
 from core import models
 from core.services.search_indexers import (
-    FindDocumentIndexer,
     get_batch_accesses_by_users_and_teams,
+    get_document_indexer_class,
 )
 
 from impress.celery_app import app
@@ -52,7 +53,7 @@ def document_indexer_task(document_id):
         return
 
     doc = models.Document.objects.get(pk=document_id)
-    indexer = FindDocumentIndexer()
+    indexer = get_document_indexer_class()()
     accesses = get_batch_accesses_by_users_and_teams((doc.path,))
 
     data = indexer.serialize_document(document=doc, accesses=accesses)
@@ -75,11 +76,9 @@ def trigger_document_indexer(document, on_commit=False):
         pass
 
     if on_commit:
-
-        def _aux():
-            trigger_document_indexer(document, on_commit=False)
-
-        transaction.on_commit(_aux)
+        transaction.on_commit(
+            partial(trigger_document_indexer, document, on_commit=False)
+        )
     else:
         key = document_indexer_debounce_key(document.pk)
         countdown = getattr(settings, "SEARCH_INDEXER_COUNTDOWN", 1)
