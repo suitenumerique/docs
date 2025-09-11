@@ -100,6 +100,11 @@ class Base(Configuration):
     DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
     # Search
+    SEARCH_INDEXER_CLASS = values.Value(
+        default="core.services.search_indexers.FindDocumentIndexer",
+        environ_name="SEARCH_INDEXER_CLASS",
+        environ_prefix=None,
+    )
     SEARCH_INDEXER_BATCH_SIZE = values.IntegerValue(
         default=100_000, environ_name="SEARCH_INDEXER_BATCH_SIZE", environ_prefix=None
     )
@@ -951,6 +956,11 @@ class Test(Base):
     # Static files are not used in the test environment
     # Tests are raising warnings because the /data/static directory does not exist
     STATIC_ROOT = None
+
+    # Setup indexer configuration to make test working on the CI.
+    SEARCH_INDEXER_SECRET = "ThisIsAKeyForTest"  # noqa
+    SEARCH_INDEXER_URL = "http://localhost:8081/api/v1.0/documents/index/"
+    SEARCH_INDEXER_QUERY_URL = "http://localhost:8081/api/v1.0/documents/search/"
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 
