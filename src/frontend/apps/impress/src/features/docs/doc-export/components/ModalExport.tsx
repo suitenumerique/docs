@@ -98,9 +98,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
 
-      // Inject language for screen reader support
+      // Inject language for screen reader support and enable outlines (bookmarks)
       const pdfDocument = isValidElement(rawPdfDocument)
-        ? cloneElement(rawPdfDocument, { language: i18next.language })
+        ? cloneElement(rawPdfDocument, {
+            language: i18next.language,
+            pageMode: 'useOutlines',
+          })
         : rawPdfDocument;
 
       blobExport = await pdf(pdfDocument).toBlob();

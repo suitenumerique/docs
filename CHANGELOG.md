@@ -22,6 +22,11 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ✨ add document visible in list and openable via enter key #1365
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿ add pdf outline property to enable bookmarks display #1368
+
 ## [3.7.0] - 2025-09-12
 
 ### Added
