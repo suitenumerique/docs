@@ -1018,12 +1018,4 @@ class ThreadSerializer(serializers.ModelSerializer):
 class FindDocumentSerializer(serializers.Serializer):
     """Serializer for Find search requests"""
 
-    q = serializers.CharField(required=True)
-
-    def validate_q(self, value):
-        """Ensure the text field is not empty."""
-
-        if len(value.strip()) == 0:
-            raise serializers.ValidationError("Text field cannot be empty.")
-
-        return value
+    q = serializers.CharField(required=True, allow_blank=False, trim_whitespace=True)
