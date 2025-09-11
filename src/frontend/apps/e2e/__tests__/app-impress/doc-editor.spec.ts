@@ -703,8 +703,20 @@ test.describe('Doc Editor', () => {
     const emojiButton = calloutBlock.getByRole('button');
     await expect(emojiButton).toHaveText('💡');
     await emojiButton.click();
-    await page.locator('button[aria-label="⚠️"]').click();
-    await expect(emojiButton).toHaveText('⚠️');
+    // Group smiley
+    await expect(page.getByRole('button', { name: '🤠' })).toBeVisible();
+    // Group animals
+    await page.getByText('Animals & Nature').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: '🦆' })).toBeVisible();
+    // Group travel
+    await page.getByText('Travel & Places').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: '🚝' })).toBeVisible();
+    // Group objects
+    await page.getByText('Objects').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: '🪇' })).toBeVisible();
+    // Group symbol
+    await page.getByText('Symbols').scrollIntoViewIfNeeded();
+    await expect(page.getByRole('button', { name: '🛃' })).toBeVisible();
 
     await page.locator('.bn-side-menu > button').last().click();
     await page.locator('.mantine-Menu-dropdown > button').last().click();

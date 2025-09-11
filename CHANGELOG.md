@@ -25,6 +25,10 @@ and this project adheres to
   - #1341
 - ♻️(tilt) use helm dev-backend chart
 
+### Fixed
+
+- 🐛(frontend) fix callout emoji list #1366
+
 ## [3.6.0] - 2025-09-04
 
 ### Added
