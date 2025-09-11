@@ -114,23 +114,29 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           padding: ${spacingsTokens['3xs']};
           border-radius: 4px;
         }
-
-        .c__tree-view--node:hover {
-          background-color: var(--c--theme--colors--greyscale-100);
-        }
-
+        background-color: ${menuOpen
+          ? 'var(--c--theme--colors--greyscale-100)'
+          : 'var(--c--theme--colors--greyscale-000)'};
         .light-doc-item-actions {
-          display: flex;
-          opacity: ${isActive || !isDesktop ? 1 : 0};
+          display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           position: absolute;
           right: 0;
-          top: 0;
-          height: 100%;
-          z-index: 10;
+          background: ${isDesktop
+            ? 'var(--c--theme--colors--greyscale-100)'
+            : 'var(--c--theme--colors--greyscale-000)'};
         }
-
-        .row.preview & {
-          background-color: inherit;
+        .c__tree-view--node.isSelected {
+          .light-doc-item-actions {
+            background: var(--c--theme--colors--greyscale-100);
+          }
+        }
+        &:hover {
+          background-color: var(--c--theme--colors--greyscale-100);
+          border-radius: 4px;
+          .light-doc-item-actions {
+            display: flex;
+            background: var(--c--theme--colors--greyscale-100);
+          }
         }
       `}
     >

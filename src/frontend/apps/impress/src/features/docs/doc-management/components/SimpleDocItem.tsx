@@ -26,7 +26,6 @@ type SimpleDocItemProps = {
   doc: Doc;
   isPinned?: boolean;
   showAccesses?: boolean;
-  onActivate?: () => void;
 };
 
 export const SimpleDocItem = ({
