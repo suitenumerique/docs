@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
 from django.db import connection, transaction
@@ -52,7 +52,7 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     YdocConverter,
 )
-from core.services.search_indexers import FindDocumentIndexer
+from core.services.search_indexers import get_document_indexer_class
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
@@ -1095,15 +1095,15 @@ class DocumentViewSet(
         serializer.is_valid(raise_exception=True)
 
         try:
-            indexer = FindDocumentIndexer()
+            indexer = get_document_indexer_class()()
             queryset = indexer.search(
                 text=serializer.validated_data.get("q", ""),
                 user=request.user,
                 token=access_token,
             )
-        except RuntimeError:
+        except ImproperlyConfigured:
             return drf.response.Response(
-                {"detail": "The service is not configured properly."},
+                {"detail": "The service is not properly configured."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
