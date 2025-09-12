@@ -56,7 +56,7 @@ export const keyCloakSignIn = async (
   const password = `password-e2e-${browserName}`;
 
   await expect(
-    page.locator('.login-pf-page-header').getByText('impress'),
+    page.locator('.login-pf #kc-header-wrapper').getByText('impress'),
   ).toBeVisible();
 
   if (await page.getByLabel('Restart login').isVisible()) {
@@ -65,7 +65,7 @@ export const keyCloakSignIn = async (
 
   await page.getByRole('textbox', { name: 'username' }).fill(login);
   await page.getByRole('textbox', { name: 'password' }).fill(password);
-  await page.click('input[type="submit"]', { force: true });
+  await page.click('button[type="submit"]', { force: true });
 };
 
 export const randomName = (name: string, browserName: string, length: number) =>
