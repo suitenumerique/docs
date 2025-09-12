@@ -164,7 +164,7 @@ test.describe('Doc Header', () => {
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test').first(),
+      invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
     const invitationRole = invitationCard.getByLabel('doc-role-dropdown');
     await expect(invitationRole).toBeVisible();
@@ -178,7 +178,7 @@ test.describe('Doc Header', () => {
     const roles = memberCard.getByLabel('doc-role-dropdown');
     await expect(memberCard).toBeVisible();
     await expect(
-      memberCard.getByText('test@accesses.test').first(),
+      memberCard.getByText('test.test@accesses.test').first(),
     ).toBeVisible();
     await expect(roles).toBeVisible();
 
@@ -239,7 +239,7 @@ test.describe('Doc Header', () => {
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test').first(),
+      invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
     await expect(invitationCard.getByLabel('Document role text')).toBeVisible();
     await expect(
@@ -247,7 +247,7 @@ test.describe('Doc Header', () => {
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
-    await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard.getByText('test.test@accesses.test')).toBeVisible();
     await expect(memberCard.getByLabel('Document role text')).toBeVisible();
     await expect(
       memberCard.getByRole('button', { name: 'more_horiz' }),
@@ -302,7 +302,7 @@ test.describe('Doc Header', () => {
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test').first(),
+      invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
     await expect(invitationCard.getByLabel('Document role text')).toBeVisible();
     await expect(
@@ -310,7 +310,7 @@ test.describe('Doc Header', () => {
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
-    await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard.getByText('test.test@accesses.test')).toBeVisible();
     await expect(memberCard.getByLabel('Document role text')).toBeVisible();
     await expect(
       memberCard.getByRole('button', { name: 'more_horiz' }),

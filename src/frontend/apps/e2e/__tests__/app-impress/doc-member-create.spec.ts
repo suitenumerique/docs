@@ -280,7 +280,7 @@ test.describe('Document create member: Multiple login', () => {
     await expect(page.getByText('Access Requests')).toBeVisible();
     await expect(page.getByText(`E2E ${otherBrowser}`)).toBeVisible();
 
-    const emailRequest = `user@${otherBrowser}.test`;
+    const emailRequest = `user.test@${otherBrowser}.test`;
     await expect(page.getByText(emailRequest)).toBeVisible();
     const container = page.getByTestId(
       `doc-share-access-request-row-${emailRequest}`,

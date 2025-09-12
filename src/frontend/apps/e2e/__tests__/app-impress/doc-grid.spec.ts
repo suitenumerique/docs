@@ -28,7 +28,7 @@ test.describe('Documents Grid mobile', () => {
                     id: '8c1e047a-24e7-4a80-942b-8e9c7ab43e1f',
                     user: {
                       id: '7380f42f-02eb-4ad5-b8f0-037a0e66066d',
-                      email: 'test@test.test',
+                      email: 'test.test@test.test',
                       full_name: 'John Doe',
                       short_name: 'John',
                     },

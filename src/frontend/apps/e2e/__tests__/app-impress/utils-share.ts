@@ -72,7 +72,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
         retrieve: true,
       },
       created_at: '2024-10-03T12:19:26.107687Z',
-      email: 'test@invitation.test',
+      email: 'test.test@invitation.test',
       document: '4888c328-8406-4412-9b0b-c0ba5b9e5fb6',
       role: 'editor',
       issuer: '7380f42f-02eb-4ad5-b8f0-037a0e66066d',
@@ -129,7 +129,7 @@ export const mockedAccesses = async (page: Page, json?: object) => {
             id: 'bc8bbbc5-a635-4f65-9817-fd1e9ec8ef87',
             user: {
               id: 'b4a21bb3-722e-426c-9f78-9d190eda641c',
-              email: 'test@accesses.test',
+              email: 'test.test@accesses.test',
             },
             team: '',
             max_ancestors_role: null,

@@ -89,8 +89,8 @@ test.describe('Doc Create: Not logged', () => {
     const data = {
       title,
       content: markdown,
-      sub: `user@${browserName}.test`,
-      email: `user@${browserName}.test`,
+      sub: `user.test@${browserName}.test`,
+      email: `user.test@${browserName}.test`,
     };
 
     const newDoc = await request.post(

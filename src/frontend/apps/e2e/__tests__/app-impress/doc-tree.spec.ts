@@ -220,7 +220,7 @@ test.describe('Doc Tree', () => {
 
     const list = page.getByTestId('doc-share-quick-search');
     const currentUser = list.getByTestId(
-      `doc-share-member-row-user@${browserName}.test`,
+      `doc-share-member-row-user.test@${browserName}.test`,
     );
     const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
     await currentUserRole.click();
