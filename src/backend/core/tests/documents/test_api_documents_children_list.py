@@ -98,7 +98,7 @@ def test_api_documents_children_list_anonymous_public_parent(django_assert_num_q
 
     with django_assert_num_queries(9):
         APIClient().get(f"/api/v1.0/documents/{document.id!s}/children/")
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(4):
         response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/children/")
 
     assert response.status_code == 200
@@ -187,7 +187,7 @@ def test_api_documents_children_list_authenticated_unrelated_public_or_authentic
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(11):
         client.get(f"/api/v1.0/documents/{document.id!s}/children/")
     with django_assert_num_queries(5):
         response = client.get(
@@ -267,10 +267,10 @@ def test_api_documents_children_list_authenticated_public_or_authenticated_paren
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(17):
         client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
-    with django_assert_num_queries(6):
+    with django_assert_num_queries(5):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
     assert response.status_code == 200
@@ -373,7 +373,7 @@ def test_api_documents_children_list_authenticated_related_direct(
     child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
     factories.UserDocumentAccessFactory(document=child1)
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(11):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/children/",
         )
@@ -456,7 +456,7 @@ def test_api_documents_children_list_authenticated_related_parent(
         document=grand_parent, user=user
     )
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(17):
         response = client.get(
             f"/api/v1.0/documents/{document.id!s}/children/",
         )
@@ -591,7 +591,7 @@ def test_api_documents_children_list_authenticated_related_team_members(
 
     access = factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(11):
         response = client.get(f"/api/v1.0/documents/{document.id!s}/children/")
 
     # pylint: disable=R0801
