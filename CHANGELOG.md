@@ -9,6 +9,9 @@ and this project adheres to
 ### Added
 
 - ✨(backend) allow to create a new user in a marketing system
+- ✨(backend) add async indexation of documents on save (or access save) #1276
+- ✨(backend) add debounce mechanism to limit indexation jobs #1276
+- ✨(api) add API route to search for indexed documents in Find #1276
 
 ### Changed
 
