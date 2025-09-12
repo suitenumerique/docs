@@ -18,7 +18,7 @@ import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
-import { useAuth } from '@/features/auth';
+import { avatarUrlFromName, useAuth } from '@/features/auth';
 
 import {
   useHeadings,
@@ -162,7 +162,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
             return {
               id: encodedURIUserId,
               username: fullName,
-              avatarUrl: 'https://i.pravatar.cc/300',
+              avatarUrl: avatarUrlFromName(fullName),
             };
           }),
         );
