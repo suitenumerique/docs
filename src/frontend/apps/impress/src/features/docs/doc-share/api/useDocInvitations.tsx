@@ -7,7 +7,8 @@ import {
   fetchAPI,
   useAPIInfiniteQuery,
 } from '@/api';
-import { Invitation } from '@/docs/doc-share/types';
+
+import { Invitation } from '../types';
 
 export type DocInvitationsParams = {
   docId: string;
