@@ -1,6 +1,9 @@
 {
   "name": "packages-i18n",
   "version": "3.6.0",
+  "repository": "https://github.com/suitenumerique/docs",
+  "author": "DINUM",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "extract-translation": "yarn extract-translation:impress",
@@ -21,5 +24,6 @@
     "ts-jest": "29.4.1",
     "typescript": "*",
     "yargs": "18.0.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

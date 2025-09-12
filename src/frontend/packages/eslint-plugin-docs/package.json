@@ -1,6 +1,8 @@
 {
   "name": "eslint-plugin-docs",
   "version": "3.6.0",
+  "repository": "https://github.com/suitenumerique/docs",
+  "author": "DINUM",
   "license": "MIT",
   "main": "index.js",
   "keywords": [
@@ -30,5 +32,6 @@
     "eslint-plugin-testing-library": "7.6.6",
     "eslint-plugin-vitest": "0.5.4",
     "prettier": "3.6.2"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

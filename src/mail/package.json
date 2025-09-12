@@ -16,6 +16,7 @@
   "volta": {
     "node": "22"
   },
+  "packageManager": "yarn@1.22.22",
   "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
   "license": "MIT"

@@ -1,6 +1,9 @@
 {
   "name": "app-impress",
   "version": "3.6.0",
+  "repository": "https://github.com/suitenumerique/docs",
+  "author": "DINUM",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -89,5 +92,6 @@
     "vitest": "3.2.4",
     "webpack": "5.101.3",
     "workbox-webpack-plugin": "7.1.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

@@ -2,6 +2,9 @@
   "name": "impress",
   "version": "3.6.0",
   "private": true,
+  "repository": "https://github.com/suitenumerique/docs",
+  "author": "DINUM",
+  "license": "MIT",
   "workspaces": {
     "packages": [
       "apps/*",
@@ -38,5 +41,6 @@
     "react-dom": "19.1.1",
     "typescript": "5.9.2",
     "yjs": "13.6.27"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }
