@@ -21,6 +21,8 @@ and this project adheres to
   - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
+- ✨(backend) add async indexation of documents with Find API #1276
+- ✨(api) add API route to search indexed documents in Find #1276
 
 ### Fixed
 
