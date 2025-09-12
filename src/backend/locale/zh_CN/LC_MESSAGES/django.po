@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-01 21:01+0000\n"
-"PO-Revision-Date: 2025-09-04 10:03\n"
+"POT-Creation-Date: 2025-09-10 14:29+0000\n"
+"PO-Revision-Date: 2025-09-12 09:50\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Simplified\n"
 "Language: zh_CN\n"
@@ -70,7 +70,7 @@ msgstr "正文类型"
 msgid "Format"
 msgstr "格式"
 
-#: build/lib/core/api/viewsets.py:960 core/api/viewsets.py:960
+#: build/lib/core/api/viewsets.py:965 core/api/viewsets.py:965
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "{title} 的副本"
@@ -225,8 +225,8 @@ msgstr "用户"
 msgid "users"
 msgstr "个用户"
 
-#: build/lib/core/models.py:359 build/lib/core/models.py:1280
-#: core/models.py:359 core/models.py:1280
+#: build/lib/core/models.py:359 build/lib/core/models.py:1281
+#: core/models.py:359 core/models.py:1281
 msgid "title"
 msgstr "标题"
 
@@ -242,155 +242,155 @@ msgstr "文档"
 msgid "Documents"
 msgstr "个文档"
 
-#: build/lib/core/models.py:422 build/lib/core/models.py:818 core/models.py:422
-#: core/models.py:818
+#: build/lib/core/models.py:422 build/lib/core/models.py:819 core/models.py:422
+#: core/models.py:819
 msgid "Untitled Document"
 msgstr "未命名文档"
 
-#: build/lib/core/models.py:853 core/models.py:853
+#: build/lib/core/models.py:854 core/models.py:854
 #, python-brace-format
 msgid "{name} shared a document with you!"
 msgstr "{name} 与您共享了一个文档！"
 
-#: build/lib/core/models.py:857 core/models.py:857
+#: build/lib/core/models.py:858 core/models.py:858
 #, python-brace-format
 msgid "{name} invited you with the role \"{role}\" on the following document:"
 msgstr "{name} 邀请您以“{role}”角色访问以下文档："
 
-#: build/lib/core/models.py:863 core/models.py:863
+#: build/lib/core/models.py:864 core/models.py:864
 #, python-brace-format
 msgid "{name} shared a document with you: {title}"
 msgstr "{name} 与您共享了一个文档：{title}"
 
-#: build/lib/core/models.py:963 core/models.py:963
+#: build/lib/core/models.py:964 core/models.py:964
 msgid "Document/user link trace"
 msgstr "文档/用户链接跟踪"
 
-#: build/lib/core/models.py:964 core/models.py:964
+#: build/lib/core/models.py:965 core/models.py:965
 msgid "Document/user link traces"
 msgstr "个文档/用户链接跟踪"
 
-#: build/lib/core/models.py:970 core/models.py:970
+#: build/lib/core/models.py:971 core/models.py:971
 msgid "A link trace already exists for this document/user."
 msgstr "此文档/用户的链接跟踪已存在。"
 
-#: build/lib/core/models.py:993 core/models.py:993
+#: build/lib/core/models.py:994 core/models.py:994
 msgid "Document favorite"
 msgstr "文档收藏"
 
-#: build/lib/core/models.py:994 core/models.py:994
+#: build/lib/core/models.py:995 core/models.py:995
 msgid "Document favorites"
 msgstr "文档收藏夹"
 
-#: build/lib/core/models.py:1000 core/models.py:1000
+#: build/lib/core/models.py:1001 core/models.py:1001
 msgid "This document is already targeted by a favorite relation instance for the same user."
 msgstr "该文档已被同一用户的收藏关系实例关联。"
 
-#: build/lib/core/models.py:1022 core/models.py:1022
+#: build/lib/core/models.py:1023 core/models.py:1023
 msgid "Document/user relation"
 msgstr "文档/用户关系"
 
-#: build/lib/core/models.py:1023 core/models.py:1023
+#: build/lib/core/models.py:1024 core/models.py:1024
 msgid "Document/user relations"
 msgstr "文档/用户关系集"
 
-#: build/lib/core/models.py:1029 core/models.py:1029
+#: build/lib/core/models.py:1030 core/models.py:1030
 msgid "This user is already in this document."
 msgstr "该用户已在此文档中。"
 
-#: build/lib/core/models.py:1035 core/models.py:1035
+#: build/lib/core/models.py:1036 core/models.py:1036
 msgid "This team is already in this document."
 msgstr "该团队已在此文档中。"
 
-#: build/lib/core/models.py:1041 build/lib/core/models.py:1366
-#: core/models.py:1041 core/models.py:1366
+#: build/lib/core/models.py:1042 build/lib/core/models.py:1367
+#: core/models.py:1042 core/models.py:1367
 msgid "Either user or team must be set, not both."
 msgstr "必须设置用户或团队之一，不能同时设置两者。"
 
-#: build/lib/core/models.py:1187 core/models.py:1187
+#: build/lib/core/models.py:1188 core/models.py:1188
 msgid "Document ask for access"
 msgstr ""
 
-#: build/lib/core/models.py:1188 core/models.py:1188
+#: build/lib/core/models.py:1189 core/models.py:1189
 msgid "Document ask for accesses"
 msgstr ""
 
-#: build/lib/core/models.py:1194 core/models.py:1194
+#: build/lib/core/models.py:1195 core/models.py:1195
 msgid "This user has already asked for access to this document."
 msgstr ""
 
-#: build/lib/core/models.py:1259 core/models.py:1259
+#: build/lib/core/models.py:1260 core/models.py:1260
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr ""
 
-#: build/lib/core/models.py:1263 core/models.py:1263
+#: build/lib/core/models.py:1264 core/models.py:1264
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr ""
 
-#: build/lib/core/models.py:1269 core/models.py:1269
+#: build/lib/core/models.py:1270 core/models.py:1270
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr ""
 
-#: build/lib/core/models.py:1281 core/models.py:1281
+#: build/lib/core/models.py:1282 core/models.py:1282
 msgid "description"
 msgstr "说明"
 
-#: build/lib/core/models.py:1282 core/models.py:1282
+#: build/lib/core/models.py:1283 core/models.py:1283
 msgid "code"
 msgstr "代码"
 
-#: build/lib/core/models.py:1283 core/models.py:1283
+#: build/lib/core/models.py:1284 core/models.py:1284
 msgid "css"
 msgstr "css"
 
-#: build/lib/core/models.py:1285 core/models.py:1285
+#: build/lib/core/models.py:1286 core/models.py:1286
 msgid "public"
 msgstr "公开"
 
-#: build/lib/core/models.py:1287 core/models.py:1287
+#: build/lib/core/models.py:1288 core/models.py:1288
 msgid "Whether this template is public for anyone to use."
 msgstr "该模板是否公开供任何人使用。"
 
-#: build/lib/core/models.py:1293 core/models.py:1293
+#: build/lib/core/models.py:1294 core/models.py:1294
 msgid "Template"
 msgstr "模板"
 
-#: build/lib/core/models.py:1294 core/models.py:1294
+#: build/lib/core/models.py:1295 core/models.py:1295
 msgid "Templates"
 msgstr "模板"
 
-#: build/lib/core/models.py:1347 core/models.py:1347
+#: build/lib/core/models.py:1348 core/models.py:1348
 msgid "Template/user relation"
 msgstr "模板/用户关系"
 
-#: build/lib/core/models.py:1348 core/models.py:1348
+#: build/lib/core/models.py:1349 core/models.py:1349
 msgid "Template/user relations"
 msgstr "模板/用户关系集"
 
-#: build/lib/core/models.py:1354 core/models.py:1354
+#: build/lib/core/models.py:1355 core/models.py:1355
 msgid "This user is already in this template."
 msgstr "该用户已在此模板中。"
 
-#: build/lib/core/models.py:1360 core/models.py:1360
+#: build/lib/core/models.py:1361 core/models.py:1361
 msgid "This team is already in this template."
 msgstr "该团队已在此模板中。"
 
-#: build/lib/core/models.py:1437 core/models.py:1437
+#: build/lib/core/models.py:1438 core/models.py:1438
 msgid "email address"
 msgstr "电子邮件地址"
 
-#: build/lib/core/models.py:1456 core/models.py:1456
+#: build/lib/core/models.py:1457 core/models.py:1457
 msgid "Document invitation"
 msgstr "文档邀请"
 
-#: build/lib/core/models.py:1457 core/models.py:1457
+#: build/lib/core/models.py:1458 core/models.py:1458
 msgid "Document invitations"
 msgstr "文档邀请"
 
-#: build/lib/core/models.py:1477 core/models.py:1477
+#: build/lib/core/models.py:1478 core/models.py:1478
 msgid "This email is already associated to a registered user."
 msgstr "此电子邮件已经与现有注册用户关联。"
 
