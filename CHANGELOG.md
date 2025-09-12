@@ -8,22 +8,24 @@ and this project adheres to
 
 ## [Unreleased]
 
+
+## [3.7.0] - 2025-09-12
+
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
-- ♿(frontend) improve accessibility:
-  - #1349
-  - #1271
-  - #1341
-  - #1362
 
 ### Changed
 
 - 🔒️(backend) configure throttle on every viewsets #1343
 - ⬆️ Bump eslint to V9 #1071
 - ♿(frontend) improve accessibility:
-  - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
-  - #1341
+  - ♿fix major accessibility issues reported by wave and axe #1344
+  - ✨unify tab focus style for better visual consistency #1341
+  - ✨improve modal a11y: structure, labels, and title #1349
+  - ✨improve accessibility of cdoc content with correct aria tags #1271
+  - ✨unify tab focus style for better visual consistency #1341
+  - ♿hide decorative icons, label menus, avoid accessible name… #1362
 - ♻️(tilt) use helm dev-backend chart
 
 ### Removed
@@ -740,7 +742,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.6.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.7.0...main
+[v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
 [v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
 [v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0
 [v3.4.2]: https://github.com/suitenumerique/docs/releases/v3.4.2
