@@ -3,11 +3,11 @@ Unit tests for the Document model
 """
 # pylint: disable=too-many-lines
 
-from operator import itemgetter
 import random
 import smtplib
 import time
 from logging import Logger
+from operator import itemgetter
 from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser
@@ -1651,13 +1651,13 @@ def test_models_documents_post_save_indexer(mock_push, settings):
 
     indexer = FindDocumentIndexer()
 
-    assert sorted(data, key=itemgetter('id')) == sorted(
+    assert sorted(data, key=itemgetter("id")) == sorted(
         [
             indexer.serialize_document(doc1, accesses),
             indexer.serialize_document(doc2, accesses),
             indexer.serialize_document(doc3, accesses),
         ],
-        key=itemgetter('id'),
+        key=itemgetter("id"),
     )
 
     # The debounce counters should be reset
