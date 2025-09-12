@@ -17,8 +17,9 @@ import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
-import { useAuth } from '@/features/auth';
+import { avatarUrlFromName, useAuth } from '@/features/auth';
 
 import {
   useHeadings,
@@ -77,6 +78,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
+  const { themeTokens } = useCunninghamTheme();
 
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isConnectedToCollabServer = provider.isSynced;
@@ -162,7 +164,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
             return {
               id: encodedURIUserId,
               username: fullName,
-              avatarUrl: 'https://i.pravatar.cc/300',
+              avatarUrl: avatarUrlFromName(
+                fullName,
+                themeTokens?.font?.families?.base,
+              ),
             };
           }),
         );
