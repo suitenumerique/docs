@@ -293,7 +293,7 @@ def test_api_document_accesses_retrieve_set_role_to_child():
     }
     assert result_dict[str(document_access_other_user.id)] == [
         "reader",
-        "commentator",
+        "commenter",
         "editor",
         "administrator",
         "owner",
@@ -302,7 +302,7 @@ def test_api_document_accesses_retrieve_set_role_to_child():
 
     # Add an access for the other user on the parent
     parent_access_other_user = factories.UserDocumentAccessFactory(
-        document=parent, user=other_user, role="commentator"
+        document=parent, user=other_user, role="commenter"
     )
 
     response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
@@ -315,7 +315,7 @@ def test_api_document_accesses_retrieve_set_role_to_child():
         result["id"]: result["abilities"]["set_role_to"] for result in content
     }
     assert result_dict[str(document_access_other_user.id)] == [
-        "commentator",
+        "commenter",
         "editor",
         "administrator",
         "owner",
@@ -323,7 +323,7 @@ def test_api_document_accesses_retrieve_set_role_to_child():
     assert result_dict[str(parent_access.id)] == []
     assert result_dict[str(parent_access_other_user.id)] == [
         "reader",
-        "commentator",
+        "commenter",
         "editor",
         "administrator",
         "owner",
@@ -336,28 +336,28 @@ def test_api_document_accesses_retrieve_set_role_to_child():
         [
             ["administrator", "reader", "reader", "reader"],
             [
-                ["reader", "commentator", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
             ],
         ],
         [
             ["owner", "reader", "reader", "reader"],
             [
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
             ],
         ],
         [
             ["owner", "reader", "reader", "owner"],
             [
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
             ],
         ],
     ],
@@ -418,44 +418,44 @@ def test_api_document_accesses_list_authenticated_related_same_user(roles, resul
         [
             ["administrator", "reader", "reader", "reader"],
             [
-                ["reader", "commentator", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
             ],
         ],
         [
             ["owner", "reader", "reader", "reader"],
             [
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
             ],
         ],
         [
             ["owner", "reader", "reader", "owner"],
             [
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
             ],
         ],
         [
             ["reader", "reader", "reader", "owner"],
             [
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
                 [],
                 [],
-                ["reader", "commentator", "editor", "administrator", "owner"],
+                ["reader", "commenter", "editor", "administrator", "owner"],
             ],
         ],
         [
             ["reader", "administrator", "reader", "editor"],
             [
-                ["reader", "commentator", "editor", "administrator"],
-                ["reader", "commentator", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
                 [],
                 [],
             ],
@@ -463,7 +463,7 @@ def test_api_document_accesses_list_authenticated_related_same_user(roles, resul
         [
             ["editor", "editor", "administrator", "editor"],
             [
-                ["reader", "commentator", "editor", "administrator"],
+                ["reader", "commenter", "editor", "administrator"],
                 [],
                 ["editor", "administrator"],
                 [],

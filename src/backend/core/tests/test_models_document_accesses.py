@@ -123,7 +123,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_allowed():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator", "owner"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator", "owner"],
     }
 
 
@@ -166,7 +166,7 @@ def test_models_document_access_get_abilities_for_owner_of_self_last_on_child(
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator", "owner"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator", "owner"],
     }
 
 
@@ -183,7 +183,7 @@ def test_models_document_access_get_abilities_for_owner_of_owner():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator", "owner"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator", "owner"],
     }
 
 
@@ -200,7 +200,7 @@ def test_models_document_access_get_abilities_for_owner_of_administrator():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator", "owner"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator", "owner"],
     }
 
 
@@ -217,7 +217,7 @@ def test_models_document_access_get_abilities_for_owner_of_editor():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator", "owner"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator", "owner"],
     }
 
 
@@ -234,7 +234,7 @@ def test_models_document_access_get_abilities_for_owner_of_reader():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator", "owner"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator", "owner"],
     }
 
 
@@ -271,7 +271,7 @@ def test_models_document_access_get_abilities_for_administrator_of_administrator
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator"],
     }
 
 
@@ -288,7 +288,7 @@ def test_models_document_access_get_abilities_for_administrator_of_editor():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator"],
     }
 
 
@@ -305,7 +305,7 @@ def test_models_document_access_get_abilities_for_administrator_of_reader():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["reader", "commentator", "editor", "administrator"],
+        "set_role_to": ["reader", "commenter", "editor", "administrator"],
     }
 
 

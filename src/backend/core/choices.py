@@ -33,7 +33,7 @@ class LinkRoleChoices(PriorityTextChoices):
     """Defines the possible roles a link can offer on a document."""
 
     READER = "reader", _("Reader")  # Can read
-    COMMENTATOR = "commentator", _("Commentator")  # Can read and comment
+    COMMENTER = "commenter", _("Commenter")  # Can read and comment
     EDITOR = "editor", _("Editor")  # Can read and edit
 
 
@@ -41,7 +41,7 @@ class RoleChoices(PriorityTextChoices):
     """Defines the possible roles a user can have in a resource."""
 
     READER = "reader", _("Reader")  # Can read
-    COMMENTATOR = "commentator", _("Commentator")  # Can read and comment
+    COMMENTER = "commenter", _("Commenter")  # Can read and comment
     EDITOR = "editor", _("Editor")  # Can read and edit
     ADMIN = "administrator", _("Administrator")  # Can read, edit, delete and share
     OWNER = "owner", _("Owner")
