@@ -98,8 +98,8 @@ const dsfrTheme = {
       },
       font: {
         families: {
-          base: 'Marianne',
-          accent: 'Marianne',
+          base: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
+          accent: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
         },
       },
     },

@@ -436,7 +436,12 @@ export const tokens = {
           widthFooter: '220px',
           alt: 'Gouvernement Logo',
         },
-        font: { families: { base: 'Marianne', accent: 'Marianne' } },
+        font: {
+          families: {
+            base: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
+            accent: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
+          },
+        },
       },
       components: {
         'la-gaufre': true,

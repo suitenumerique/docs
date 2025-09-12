@@ -1,6 +1,9 @@
 import { css } from 'styled-components';
 
-export const cssComments = (canSeeComment: boolean) => css`
+export const cssComments = (
+  canSeeComment: boolean,
+  currentUserAvatarUrl?: string,
+) => css`
   & .--docs--main-editor,
   & .--docs--main-editor .ProseMirror {
     // Comments marks in the editor
@@ -150,6 +153,19 @@ export const cssComments = (canSeeComment: boolean) => css`
 
         .bn-container.bn-comment-editor {
           min-width: 0;
+        }
+
+        &::before {
+          content: '';
+          width: 26px;
+          height: 26px;
+          flex: 0 0 26px;
+          background-image: ${currentUserAvatarUrl
+            ? `url("${currentUserAvatarUrl}")`
+            : 'none'};
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: cover;
         }
       }
 

@@ -51,6 +51,9 @@ test.describe('Doc Comments', () => {
     await thread.locator('[data-test="addreaction"]').first().click();
     await page.getByRole('button', { name: '👍' }).click();
 
+    await expect(
+      thread.getByRole('img', { name: 'E2E Chromium' }).first(),
+    ).toBeVisible();
     await expect(thread.getByText('This is a comment').first()).toBeVisible();
     await expect(thread.getByText(`E2E ${browserName}`).first()).toBeVisible();
     await expect(thread.locator('.bn-comment-reaction')).toHaveText('👍1');
@@ -88,6 +91,9 @@ test.describe('Doc Comments', () => {
     await otherThread.locator('[data-test="save"]').click();
 
     // We check that the second user can see the comment he just made
+    await expect(
+      otherThread.getByRole('img', { name: `E2E ${otherBrowserName}` }).first(),
+    ).toBeVisible();
     await expect(
       otherThread.getByText('This is a comment from the other user').first(),
     ).toBeVisible();
