@@ -39,7 +39,7 @@ test.describe('Doc Comments', () => {
     const editor = page.locator('.ProseMirror');
     await editor.locator('.bn-block-outer').last().fill('Hello World');
     await editor.getByText('Hello').selectText();
-    await page.getByRole('button', { name: 'Add comment' }).click();
+    await page.getByRole('button', { name: 'Comment' }).click();
 
     const thread = page.locator('.bn-thread');
     await thread.getByRole('paragraph').first().fill('This is a comment');
@@ -134,7 +134,7 @@ test.describe('Doc Comments', () => {
     const editor = page.locator('.ProseMirror');
     await editor.locator('.bn-block-outer').last().fill('Hello World');
     await editor.getByText('Hello').selectText();
-    await page.getByRole('button', { name: 'Add comment' }).click();
+    await page.getByRole('button', { name: 'Comment' }).click();
 
     const thread = page.locator('.bn-thread');
     await thread.getByRole('paragraph').first().fill('This is a comment');
