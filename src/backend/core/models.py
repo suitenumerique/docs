@@ -404,6 +404,8 @@ class Document(DirtyFieldsMixin, MP_Node, BaseModel):
 
     objects = DocumentManager()
 
+    FIELDS_TO_CHECK = ["link_reach", "link_role"]
+
     class Meta:
         db_table = "impress_document"
         ordering = ("path",)
@@ -434,7 +436,7 @@ class Document(DirtyFieldsMixin, MP_Node, BaseModel):
         invalidate_abilities_cache = False
         if not self._state.adding:
             changed_fields = self.get_dirty_fields()
-            if "link_reach" in changed_fields or "link_role" in changed_fields:
+            if any(field in changed_fields for field in self.FIELDS_TO_CHECK):
                 invalidate_abilities_cache = True
 
         super().save(*args, **kwargs)
@@ -482,7 +484,7 @@ class Document(DirtyFieldsMixin, MP_Node, BaseModel):
         if self.is_root():
             return Document.objects.none()
 
-        paths = [self.path[0:pos] for pos in range(0, len(self.path), self.steplen)[1:]]
+        paths = [self.path[0:pos] for pos in range(self.steplen, len(self.path), self.steplen)]
         return (
             Document.objects.select_related("creator")
             .filter(path__in=paths)
@@ -759,13 +761,13 @@ class Document(DirtyFieldsMixin, MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
-    def _compute_abilities_cache_key(self):
+    def _get_abilities_cache_key(self):
         """Generate a unique cache key for each document."""
         return f"document:abilities:{self.path!s}"
 
     def _get_abilities_cache_for_user(self, user):
         """Return the abilities cache for the document and user."""
-        key = self._compute_abilities_cache_key()
+        key = self._get_abilities_cache_key()
         document_abilities = cache.get(key, {})
 
         user_id = user.id if user.is_authenticated else "anonymous"
@@ -774,7 +776,7 @@ class Document(DirtyFieldsMixin, MP_Node, BaseModel):
 
     def _set_abilities_cache_for_user(self, user, abilities):
         """Set the abilities cache for the document and user."""
-        key = self._compute_abilities_cache_key()
+        key = self._get_abilities_cache_key()
         document_abilities = cache.get(key, {})
         user_id = user.id if user.is_authenticated else "anonymous"
         document_abilities[user_id] = abilities
@@ -782,7 +784,7 @@ class Document(DirtyFieldsMixin, MP_Node, BaseModel):
 
     def invalidate_abilities_cache(self):
         """Invalidate the abilities cache for the document."""
-        key = self._compute_abilities_cache_key()
+        key = self._get_abilities_cache_key()
         cache.delete(key)
 
         # Invalidate in cascade the abilities for all children
