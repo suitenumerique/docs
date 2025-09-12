@@ -121,6 +121,9 @@ and this project adheres to
   - ♿ update labels and shared document icon accessibility #1442
 - 🍱(frontend) Fonts GDPR compliants #1453
 - ♻️(service-worker) improve SW registration and update handling #1473
+- ✨(backend) add async indexation of documents on save (or access save) #1276
+- ✨(backend) add debounce mechanism to limit indexation jobs #1276
+- ✨(api) add API route to search for indexed documents in Find #1276
 
 ### Fixed
 
