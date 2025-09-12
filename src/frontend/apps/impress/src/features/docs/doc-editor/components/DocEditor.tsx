@@ -116,6 +116,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
               initialContent={provider.document.getXmlFragment(
                 'document-store',
               )}
+              docId={doc.id}
             />
           ) : (
             <BlockNoteEditor doc={doc} provider={provider} />
