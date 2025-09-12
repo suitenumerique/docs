@@ -821,3 +821,9 @@ class MoveDocumentSerializer(serializers.Serializer):
         choices=enums.MoveNodePositionChoices.choices,
         default=enums.MoveNodePositionChoices.LAST_CHILD,
     )
+
+
+class FindDocumentSerializer(serializers.Serializer):
+    """Serializer for Find search requests"""
+
+    q = serializers.CharField(required=True, allow_blank=False, trim_whitespace=True)
