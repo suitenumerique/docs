@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
     "role,can_comment",
     [
         (LinkRoleChoices.READER, False),
-        (LinkRoleChoices.COMMENTATOR, True),
+        (LinkRoleChoices.COMMENTER, True),
         (LinkRoleChoices.EDITOR, True),
     ],
 )
@@ -57,13 +57,13 @@ def test_comment_get_abilities_anonymous_user_restricted_document(link_reach):
     "link_role,link_reach,can_comment",
     [
         (LinkRoleChoices.READER, LinkReachChoices.PUBLIC, False),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.PUBLIC, True),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.PUBLIC, True),
         (LinkRoleChoices.EDITOR, LinkReachChoices.PUBLIC, True),
         (LinkRoleChoices.READER, LinkReachChoices.RESTRICTED, False),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.RESTRICTED, False),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.RESTRICTED, False),
         (LinkRoleChoices.EDITOR, LinkReachChoices.RESTRICTED, False),
         (LinkRoleChoices.READER, LinkReachChoices.AUTHENTICATED, False),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.AUTHENTICATED, True),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.AUTHENTICATED, True),
         (LinkRoleChoices.EDITOR, LinkReachChoices.AUTHENTICATED, True),
     ],
 )
@@ -87,13 +87,13 @@ def test_comment_get_abilities_user_reader(link_role, link_reach, can_comment):
     "link_role,link_reach,can_comment",
     [
         (LinkRoleChoices.READER, LinkReachChoices.PUBLIC, False),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.PUBLIC, True),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.PUBLIC, True),
         (LinkRoleChoices.EDITOR, LinkReachChoices.PUBLIC, True),
         (LinkRoleChoices.READER, LinkReachChoices.RESTRICTED, False),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.RESTRICTED, False),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.RESTRICTED, False),
         (LinkRoleChoices.EDITOR, LinkReachChoices.RESTRICTED, False),
         (LinkRoleChoices.READER, LinkReachChoices.AUTHENTICATED, False),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.AUTHENTICATED, True),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.AUTHENTICATED, True),
         (LinkRoleChoices.EDITOR, LinkReachChoices.AUTHENTICATED, True),
     ],
 )
@@ -121,23 +121,23 @@ def test_comment_get_abilities_user_reader_own_comment(
     "link_role,link_reach",
     [
         (LinkRoleChoices.READER, LinkReachChoices.PUBLIC),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.PUBLIC),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.EDITOR, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.READER, LinkReachChoices.RESTRICTED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.RESTRICTED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.READER, LinkReachChoices.AUTHENTICATED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.AUTHENTICATED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.AUTHENTICATED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.AUTHENTICATED),
     ],
 )
-def test_comment_get_abilities_user_commentator(link_role, link_reach):
-    """Commentators can comment on a document."""
+def test_comment_get_abilities_user_commenter(link_role, link_reach):
+    """Commenters can comment on a document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
         link_role=link_role,
         link_reach=link_reach,
-        users=[(user, RoleChoices.COMMENTATOR)],
+        users=[(user, RoleChoices.COMMENTER)],
     )
     comment = factories.CommentFactory(document=document)
 
@@ -153,23 +153,23 @@ def test_comment_get_abilities_user_commentator(link_role, link_reach):
     "link_role,link_reach",
     [
         (LinkRoleChoices.READER, LinkReachChoices.PUBLIC),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.PUBLIC),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.EDITOR, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.READER, LinkReachChoices.RESTRICTED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.RESTRICTED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.READER, LinkReachChoices.AUTHENTICATED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.AUTHENTICATED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.AUTHENTICATED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.AUTHENTICATED),
     ],
 )
-def test_comment_get_abilities_user_commentator_own_comment(link_role, link_reach):
-    """Commentators have all accesses to its own comment."""
+def test_comment_get_abilities_user_commenter_own_comment(link_role, link_reach):
+    """Commenters have all accesses to its own comment."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
         link_role=link_role,
         link_reach=link_reach,
-        users=[(user, RoleChoices.COMMENTATOR)],
+        users=[(user, RoleChoices.COMMENTER)],
     )
     comment = factories.CommentFactory(document=document, user=user)
 
@@ -185,13 +185,13 @@ def test_comment_get_abilities_user_commentator_own_comment(link_role, link_reac
     "link_role,link_reach",
     [
         (LinkRoleChoices.READER, LinkReachChoices.PUBLIC),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.PUBLIC),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.EDITOR, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.READER, LinkReachChoices.RESTRICTED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.RESTRICTED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.READER, LinkReachChoices.AUTHENTICATED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.AUTHENTICATED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.AUTHENTICATED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.AUTHENTICATED),
     ],
 )
@@ -215,13 +215,13 @@ def test_comment_get_abilities_user_editor(link_role, link_reach):
     "link_role,link_reach",
     [
         (LinkRoleChoices.READER, LinkReachChoices.PUBLIC),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.PUBLIC),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.EDITOR, LinkReachChoices.PUBLIC),
         (LinkRoleChoices.READER, LinkReachChoices.RESTRICTED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.RESTRICTED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.RESTRICTED),
         (LinkRoleChoices.READER, LinkReachChoices.AUTHENTICATED),
-        (LinkRoleChoices.COMMENTATOR, LinkReachChoices.AUTHENTICATED),
+        (LinkRoleChoices.COMMENTER, LinkReachChoices.AUTHENTICATED),
         (LinkRoleChoices.EDITOR, LinkReachChoices.AUTHENTICATED),
     ],
 )

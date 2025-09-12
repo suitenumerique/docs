@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("reader", "Reader"),
-                    ("commentator", "Commentator"),
+                    ("commenter", "Commenter"),
                     ("editor", "Editor"),
                 ],
                 default="reader",
@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("reader", "Reader"),
-                    ("commentator", "Commentator"),
+                    ("commenter", "Commenter"),
                     ("editor", "Editor"),
                     ("administrator", "Administrator"),
                     ("owner", "Owner"),
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("reader", "Reader"),
-                    ("commentator", "Commentator"),
+                    ("commenter", "Commenter"),
                     ("editor", "Editor"),
                     ("administrator", "Administrator"),
                     ("owner", "Owner"),
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("reader", "Reader"),
-                    ("commentator", "Commentator"),
+                    ("commenter", "Commenter"),
                     ("editor", "Editor"),
                     ("administrator", "Administrator"),
                     ("owner", "Owner"),
@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("reader", "Reader"),
-                    ("commentator", "Commentator"),
+                    ("commenter", "Commenter"),
                     ("editor", "Editor"),
                     ("administrator", "Administrator"),
                     ("owner", "Owner"),

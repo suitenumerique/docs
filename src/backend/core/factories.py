@@ -258,12 +258,22 @@ class InvitationFactory(factory.django.DjangoModelFactory):
     issuer = factory.SubFactory(UserFactory)
 
 
+class ThreadFactory(factory.django.DjangoModelFactory):
+    """A factory to create threads for a document"""
+
+    class Meta:
+        model = models.Thread
+
+    document = factory.SubFactory(DocumentFactory)
+    user = factory.SubFactory(UserFactory)
+
+
 class CommentFactory(factory.django.DjangoModelFactory):
-    """A factory to create comments for a document"""
+    """A factory to create comments for a thread"""
 
     class Meta:
         model = models.Comment
 
-    document = factory.SubFactory(DocumentFactory)
+    thread = factory.SubFactory(ThreadFactory)
     user = factory.SubFactory(UserFactory)
-    content = factory.Faker("text")
+    body = factory.Faker("text")

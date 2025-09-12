@@ -21,6 +21,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -2176,34 +2177,185 @@ class ConfigView(drf.views.APIView):
         return theme_customization
 
 
-class CommentViewSet(
-    viewsets.ModelViewSet,
-):
-    """API ViewSet for comments."""
+class ThreadViewSet(viewsets.GenericViewSet):
+    """Thread API: list/create threads and nested comment operations."""
 
     permission_classes = [permissions.CommentPermission]
-    queryset = models.Comment.objects.select_related("user", "document").all()
-    serializer_class = serializers.CommentSerializer
     pagination_class = Pagination
-    _document = None
+    serializer_class = serializers.ThreadFullSerializer
+    queryset = models.Thread.objects.select_related("user", "document").all()
 
-    def get_document_or_404(self):
-        """Get the document related to the viewset or raise a 404 error."""
-        if self._document is None:
+    def get_document(self):
+        if not hasattr(self, "_document"):
             try:
-                self._document = models.Document.objects.get(
-                    pk=self.kwargs["resource_id"],
-                )
-            except models.Document.DoesNotExist as e:
-                raise drf.exceptions.NotFound("Document not found.") from e
-        return self._document
+                self._document = models.Document.objects.get(pk=self.kwargs["resource_id"])  # type: ignore[attr-defined]
+            except models.Document.DoesNotExist as exc:  # pragma: no cover
+                raise drf.exceptions.NotFound("Document not found") from exc
+        return self._document  # type: ignore[attr-defined]
 
-    def get_serializer_context(self):
-        """Extra context provided to the serializer class."""
-        context = super().get_serializer_context()
-        context["resource_id"] = self.kwargs["resource_id"]
-        return context
+    # Internal helper to enforce the can_comment ability
+    def _ensure_can_comment(self, resource):  # resource: Thread or Document
+        try:
+            abilities = resource.get_abilities(self.request.user)
+        except AttributeError:  # pragma: no cover - defensive
+            raise drf.exceptions.PermissionDenied()
+        if not abilities.get("comment"):
+            raise drf.exceptions.PermissionDenied()
+        return abilities
+
+    # Backward compatibility for permission classes referencing previous method name
+    def get_document_or_404(self):  # pragma: no cover - simple proxy
+        return self.get_document()
 
     def get_queryset(self):
-        """Return the queryset according to the action."""
         return super().get_queryset().filter(document=self.kwargs["resource_id"])
+
+    def list(self, request, *args, **kwargs):  # GET threads
+        """List threads for a document (requires can_comment)."""
+        # Ability check based on the parent document
+        self._ensure_can_comment(self.get_document())
+        qs = self.get_queryset().prefetch_related("comments__reactions")
+        page = self.paginate_queryset(qs)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    def create(self, request, *args, **kwargs):  # POST thread
+        doc = self.get_document()
+        self._ensure_can_comment(doc)
+        ser = serializers.CreateThreadSerializer(data=request.data, context={"request": request, "document": doc})
+        ser.is_valid(raise_exception=True)
+        thread = ser.save()
+        return drf.response.Response(
+            serializers.ThreadFullSerializer(thread, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def retrieve(self, request, pk=None, *args, **kwargs):  # GET thread
+        """Retrieve a single thread (requires can_comment)."""
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        return drf.response.Response(self.get_serializer(thread).data)
+
+    def destroy(self, request, pk=None, *args, **kwargs):  # DELETE thread
+        """Delete a thread (requires can_comment)."""
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        thread.delete()
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+
+    def update(self, request, pk=None, *args, **kwargs):  # Simple metadata update
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        resolved = request.data.get("resolved")
+        if resolved is not None:
+            thread.resolved = bool(resolved)
+            thread.resolved_updated_at = timezone.now()
+            thread.resolved_by = request.user if request.user.is_authenticated else None
+            thread.save(update_fields=["resolved", "resolved_updated_at", "resolved_by", "updated_at"])
+        return drf.response.Response(self.get_serializer(thread).data)
+
+    @drf.decorators.action(detail=True, methods=["post"], url_path="resolve")
+    def resolve(self, request, pk=None, *args, **kwargs):  # POST resolve
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        if not thread.resolved:
+            thread.resolved = True
+            thread.resolved_updated_at = timezone.now()
+            thread.resolved_by = request.user if request.user.is_authenticated else None
+            thread.save(update_fields=["resolved", "resolved_updated_at", "resolved_by", "updated_at"])
+        return drf.response.Response(self.get_serializer(thread).data)
+
+    @drf.decorators.action(detail=True, methods=["post"], url_path="unresolve")
+    def unresolve(self, request, pk=None, *args, **kwargs):  # POST unresolve
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        if thread.resolved:
+            thread.resolved = False
+            thread.resolved_updated_at = timezone.now()
+            thread.resolved_by = request.user if request.user.is_authenticated else None
+            thread.save(update_fields=["resolved", "resolved_updated_at", "resolved_by", "updated_at"])
+        return drf.response.Response(self.get_serializer(thread).data)
+
+    # --- Comment endpoints ---
+    @drf.decorators.action(detail=True, methods=["get", "post"], url_path="comments")
+    def comments(self, request, pk=None, *args, **kwargs):
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        if request.method.lower() == "get":
+            ser = serializers.CommentInThreadSerializer(
+                thread.comments.select_related("user").prefetch_related("reactions"),
+                many=True,
+                context={"request": request},
+            )
+            return drf.response.Response(ser.data)
+        # POST create comment
+        ser = serializers.CreateCommentSerializer(
+            data=request.data, context={"request": request, "thread": thread}
+        )
+        ser.is_valid(raise_exception=True)
+        comment = ser.save()
+        return drf.response.Response(
+            serializers.CommentInThreadSerializer(comment, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @drf.decorators.action(detail=True, methods=["put", "patch", "delete"], url_path=r"comments/(?P<comment_id>[0-9a-f-]+)")
+    def comment_detail(self, request, pk=None, comment_id=None, *args, **kwargs):
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        try:
+            comment = thread.comments.get(pk=comment_id)
+        except models.Comment.DoesNotExist as exc:
+            raise drf.exceptions.NotFound("Comment not found") from exc
+        if request.method.lower() in ("put", "patch"):
+            ser = serializers.UpdateCommentSerializer(comment, data=request.data, partial=(request.method.lower()=="patch"))
+            ser.is_valid(raise_exception=True)
+            ser.save()
+            return drf.response.Response(
+                serializers.CommentInThreadSerializer(comment, context={"request": request}).data
+            )
+        # DELETE
+        comment.delete()
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+
+    # --- Reactions ---
+    @drf.decorators.action(
+        detail=True,
+        methods=["post", "delete"],
+        url_path=r"comments/(?P<comment_id>[0-9a-f-]+)/reactions",
+    )
+    def reactions(self, request, pk=None, comment_id=None, *args, **kwargs):
+        """POST: add reaction; DELETE: remove reaction.
+
+        Emoji is expected in request.data['emoji'] for both operations.
+        """
+        thread = self.get_queryset().get(pk=pk)
+        self._ensure_can_comment(self.get_document())
+        try:
+            comment = thread.comments.get(pk=comment_id)
+        except models.Comment.DoesNotExist as exc:  # pragma: no cover
+            raise drf.exceptions.NotFound("Comment not found") from exc
+
+        if request.method.lower() == "post":
+            ser = serializers.ReactionCreateSerializer(
+                data=request.data, context={"request": request, "comment": comment}
+            )
+            ser.is_valid(raise_exception=True)
+            ser.save()
+            return drf.response.Response(status=status.HTTP_201_CREATED)
+
+        # DELETE
+        emoji = request.data.get("emoji")
+        if not emoji:
+            raise drf.exceptions.ValidationError({"emoji": "This field is required."})
+        try:
+            reaction = comment.reactions.get(emoji=emoji)
+        except models.Reaction.DoesNotExist:
+            return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+        if request.user and request.user.is_authenticated:
+            reaction.remove_user(request.user)
+            if not reaction.user_ids:
+                reaction.delete()
+            else:
+                reaction.save(update_fields=["user_ids", "updated_at"])
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)

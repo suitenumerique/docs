@@ -27,9 +27,9 @@ document_related_router.register(
     basename="invitations",
 )
 document_related_router.register(
-    "comments",
-    viewsets.CommentViewSet,
-    basename="comments",
+    "threads",
+    viewsets.ThreadViewSet,
+    basename="threads",
 )
 document_related_router.register(
     "ask-for-access",

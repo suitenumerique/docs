@@ -823,17 +823,24 @@ class MoveDocumentSerializer(serializers.Serializer):
     )
 
 
-class CommentSerializer(serializers.ModelSerializer):
-    """Serialize comments."""
+class ThreadSerializer(serializers.ModelSerializer):
+    """Serialize threads in a backward compatible shape for current frontend.
+
+    We expose a flatten representation where ``content`` maps to the first
+    comment's body. Creating a thread requires a ``content`` field which is
+    stored as the first comment.
+    """
 
     user = UserLightSerializer(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
+    content = serializers.JSONField(write_only=True, required=True)
+    document = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
-        model = models.Comment
+        model = models.Thread
         fields = [
             "id",
-            "content",
+            "content",  # write: body of initial comment; read: not returned (we override to_representation)
             "created_at",
             "updated_at",
             "user",
@@ -849,19 +856,182 @@ class CommentSerializer(serializers.ModelSerializer):
             "abilities",
         ]
 
-    def get_abilities(self, comment) -> dict:
-        """Return abilities of the logged-in user on the instance."""
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        # Provide first comment body as ``content`` to match previous API.
+        first_comment = instance.first_comment
+        rep["content"] = first_comment.body if first_comment else None
+        return rep
+
+    def get_abilities(self, thread) -> dict:  # type: ignore[override]
         request = self.context.get("request")
         if request:
-            return comment.get_abilities(request.user)
+            return thread.get_abilities(request.user)
         return {}
 
-    def validate(self, attrs):
-        """Validate invitation data."""
+    def create(self, validated_data):
         request = self.context.get("request")
-        user = getattr(request, "user", None)
+        document_id = self.context.get("resource_id")
+        content = validated_data.pop("content")
+        document = models.Document.objects.get(pk=document_id)
+        user = request.user if request else None
+        thread = models.Thread.objects.create(document=document, user=user)
+        models.Comment.objects.create(thread=thread, user=user, body=content)
+        return thread
 
-        attrs["document_id"] = self.context["resource_id"]
-        attrs["user_id"] = user.id if user else None
+    def update(self, instance, validated_data):  # pragma: no cover - not used yet
+        # Allow updating first comment body for backward compatibility.
+        content = validated_data.get("content")
+        if content is not None:
+            first = instance.first_comment
+            if first:
+                first.body = content
+                first.save(update_fields=["body", "updated_at"])
+        return instance
 
-        return attrs
+
+class CommentInThreadSerializer(serializers.ModelSerializer):
+    """Serialize comments (nested under a thread) with reactions and abilities."""
+
+    user = UserLightSerializer(read_only=True)
+    reactions = serializers.SerializerMethodField()
+    abilities = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Comment
+        fields = [
+            "id",
+            "user",
+            "body",
+            "created_at",
+            "updated_at",
+            "reactions",
+            "abilities",
+        ]
+        read_only_fields = fields
+
+    def get_reactions(self, obj):
+        # Collect all users for reactions in a single query
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        reactions = list(obj.reactions.all())
+        user_ids = set()
+        for r in reactions:
+            user_ids.update(r.user_ids or [])
+        users_by_id = {
+            u.id: u
+            for u in User.objects.filter(id__in=user_ids).only(
+                "id", "email", "full_name", "short_name", "language"
+            )
+        }
+        # Serialize users with UserLightSerializer semantics (full_name/short_name logic)
+        user_serializer = UserLightSerializer
+        return [
+            {
+                "emoji": r.emoji,
+                "created_at": r.created_at,
+                "users": [
+                    user_serializer(users_by_id[uid]).data
+                    for uid in r.user_ids
+                    if uid in users_by_id
+                ],
+            }
+            for r in reactions
+        ]
+
+    def get_abilities(self, obj):
+        request = self.context.get("request")
+        if request:
+            return obj.get_abilities(request.user)
+        return {}
+
+
+class ThreadFullSerializer(serializers.ModelSerializer):
+    """Full thread representation with nested comments."""
+
+    user = UserLightSerializer(read_only=True)
+    comments = serializers.SerializerMethodField()
+    abilities = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Thread
+        fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "user",
+            "resolved",
+            "resolved_updated_at",
+            "resolved_by",
+            "metadata",
+            "comments",
+            "abilities",
+        ]
+        read_only_fields = fields
+
+    def get_comments(self, instance):
+        qs = instance.comments.select_related("user").prefetch_related("reactions")
+        return CommentInThreadSerializer(qs, many=True, context=self.context).data
+
+    def get_abilities(self, instance):
+        request = self.context.get("request")
+        if request:
+            return instance.get_abilities(request.user)
+        return {}
+
+
+class CreateThreadSerializer(serializers.Serializer):
+    body = serializers.JSONField(required=True)
+    metadata = serializers.JSONField(required=False)
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        document = self.context.get("document")
+        thread = models.Thread.objects.create(
+            document=document,
+            user=request.user if request else None,
+            metadata=validated_data.get("metadata", {}),
+        )
+        models.Comment.objects.create(
+            thread=thread,
+            user=request.user if request else None,
+            body=validated_data["body"],
+            metadata=validated_data.get("metadata", {}),
+        )
+        return thread
+
+
+class CreateCommentSerializer(serializers.Serializer):
+    body = serializers.JSONField(required=True)
+    metadata = serializers.JSONField(required=False)
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        thread = self.context.get("thread")
+        return models.Comment.objects.create(
+            thread=thread,
+            user=request.user if request else None,
+            body=validated_data["body"],
+            metadata=validated_data.get("metadata", {}),
+        )
+
+
+class UpdateCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Comment
+        fields = ["body"]
+
+
+class ReactionCreateSerializer(serializers.Serializer):
+    emoji = serializers.CharField(max_length=32)
+
+    def save(self, **kwargs):  # pylint: disable=unused-argument
+        request = self.context.get("request")
+        comment = self.context.get("comment")
+        emoji = self.validated_data["emoji"]
+        reaction, _created = models.Reaction.objects.get_or_create(
+            comment=comment, emoji=emoji
+        )
+        if request and request.user:
+            reaction.add_user(request.user)
+        return reaction

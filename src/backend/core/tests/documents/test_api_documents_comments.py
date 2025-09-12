@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
 def test_list_comments_anonymous_user_public_document():
     """Anonymous users should be allowed to list comments on a public document."""
     document = factories.DocumentFactory(
-        link_reach="public", link_role=models.LinkRoleChoices.COMMENTATOR
+        link_reach="public", link_role=models.LinkRoleChoices.COMMENTER
     )
     comment1, comment2 = factories.CommentFactory.create_batch(2, document=document)
     # other comments not linked to the document
@@ -62,7 +62,7 @@ def test_list_comments_anonymous_user_public_document():
 def test_list_comments_anonymous_user_non_public_document(link_reach):
     """Anonymous users should not be allowed to list comments on a non-public document."""
     document = factories.DocumentFactory(
-        link_reach=link_reach, link_role=models.LinkRoleChoices.COMMENTATOR
+        link_reach=link_reach, link_role=models.LinkRoleChoices.COMMENTER
     )
     factories.CommentFactory(document=document)
     # other comments not linked to the document
@@ -76,7 +76,7 @@ def test_list_comments_authenticated_user_accessible_document():
     """Authenticated users should be allowed to list comments on an accessible document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
-        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTATOR)]
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
     )
     comment1 = factories.CommentFactory(document=document)
     comment2 = factories.CommentFactory(document=document, user=user)
@@ -162,7 +162,7 @@ def test_list_comments_authenticated_user_not_enough_access():
 def test_create_comment_anonymous_user_public_document():
     """Anonymous users should not be allowed to create comments on a public document."""
     document = factories.DocumentFactory(
-        link_reach="public", link_role=models.LinkRoleChoices.COMMENTATOR
+        link_reach="public", link_role=models.LinkRoleChoices.COMMENTER
     )
     client = APIClient()
     response = client.post(
@@ -204,7 +204,7 @@ def test_create_comment_authenticated_user_accessible_document():
     """Authenticated users should be allowed to create comments on an accessible document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
-        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTATOR)]
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
     )
     client = APIClient()
     client.force_login(user)
@@ -255,7 +255,7 @@ def test_create_comment_authenticated_user_not_enough_access():
 def test_retrieve_comment_anonymous_user_public_document():
     """Anonymous users should be allowed to retrieve comments on a public document."""
     document = factories.DocumentFactory(
-        link_reach="public", link_role=models.LinkRoleChoices.COMMENTATOR
+        link_reach="public", link_role=models.LinkRoleChoices.COMMENTER
     )
     comment = factories.CommentFactory(document=document)
     client = APIClient()
@@ -294,7 +294,7 @@ def test_retrieve_comment_authenticated_user_accessible_document():
     """Authenticated users should be allowed to retrieve comments on an accessible document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
-        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTATOR)]
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
     )
     comment = factories.CommentFactory(document=document)
     client = APIClient()
@@ -329,7 +329,7 @@ def test_retrieve_comment_authenticated_user_not_enough_access():
 def test_update_comment_anonymous_user_public_document():
     """Anonymous users should not be allowed to update comments on a public document."""
     document = factories.DocumentFactory(
-        link_reach="public", link_role=models.LinkRoleChoices.COMMENTATOR
+        link_reach="public", link_role=models.LinkRoleChoices.COMMENTER
     )
     comment = factories.CommentFactory(document=document, content="test")
     client = APIClient()
@@ -363,7 +363,7 @@ def test_update_comment_authenticated_user_accessible_document():
             (
                 user,
                 random.choice(
-                    [models.LinkRoleChoices.COMMENTATOR, models.LinkRoleChoices.EDITOR]
+                    [models.LinkRoleChoices.COMMENTER, models.LinkRoleChoices.EDITOR]
                 ),
             )
         ],
@@ -387,7 +387,7 @@ def test_update_comment_authenticated_user_own_comment():
             (
                 user,
                 random.choice(
-                    [models.LinkRoleChoices.COMMENTATOR, models.LinkRoleChoices.EDITOR]
+                    [models.LinkRoleChoices.COMMENTER, models.LinkRoleChoices.EDITOR]
                 ),
             )
         ],
@@ -489,7 +489,7 @@ def test_update_comment_authenticated_admin_or_owner_can_update_own_comment(role
 def test_delete_comment_anonymous_user_public_document():
     """Anonymous users should not be allowed to delete comments on a public document."""
     document = factories.DocumentFactory(
-        link_reach="public", link_role=models.LinkRoleChoices.COMMENTATOR
+        link_reach="public", link_role=models.LinkRoleChoices.COMMENTER
     )
     comment = factories.CommentFactory(document=document)
     client = APIClient()
@@ -516,7 +516,7 @@ def test_delete_comment_authenticated_user_accessible_document_own_comment():
     """Authenticated users should be able to delete comments on an accessible document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
-        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTATOR)]
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
     )
     comment = factories.CommentFactory(document=document, user=user)
     client = APIClient()
@@ -531,7 +531,7 @@ def test_delete_comment_authenticated_user_accessible_document_not_own_comment()
     """Authenticated users should not be able to delete comments on an accessible document."""
     user = factories.UserFactory()
     document = factories.DocumentFactory(
-        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTATOR)]
+        link_reach="restricted", users=[(user, models.LinkRoleChoices.COMMENTER)]
     )
     comment = factories.CommentFactory(document=document)
     client = APIClient()
