@@ -756,7 +756,7 @@ class Document(MP_Node, BaseModel):
         can_update = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
-        can_comment = (can_update or role == RoleChoices.COMMENTATOR) and not is_deleted
+        can_comment = (can_update or role == RoleChoices.COMMENTER) and not is_deleted
         can_create_children = can_update and user.is_authenticated
         can_destroy = (
             is_owner
@@ -1150,7 +1150,7 @@ class DocumentAccess(BaseAccess):
                 set_role_to.extend(
                     [
                         RoleChoices.READER,
-                        RoleChoices.COMMENTATOR,
+                        RoleChoices.COMMENTER,
                         RoleChoices.EDITOR,
                         RoleChoices.ADMIN,
                     ]
@@ -1277,46 +1277,151 @@ class DocumentAskForAccess(BaseModel):
         self.document.send_email(subject, [email], context, language)
 
 
-class Comment(BaseModel):
-    """User comment on a document."""
+class Thread(BaseModel):
+    """Discussion thread attached to a document.
+
+    A thread groups one or many comments. For backward compatibility with the
+    existing frontend (useComments hook) we still expose a flattened serializer
+    that returns a "content" field representing the first comment's body.
+    """
 
     document = models.ForeignKey(
         Document,
+        on_delete=models.CASCADE,
+        related_name="threads",
+    )
+    creator = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="threads",
+        null=True,
+        blank=True,
+    )
+    resolved = models.BooleanField(default=False)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="resolved_threads",
+        null=True,
+        blank=True,
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "impress_thread"
+        ordering = ("-created_at",)
+        verbose_name = _("Thread")
+        verbose_name_plural = _("Threads")
+
+    def __str__(self):
+        author = self.creator or _("Anonymous")
+        return f"Thread by {author!s} on {self.document!s}"
+
+    def get_abilities(self, user):
+        """Compute and return abilities for a given user (mirrors comment logic)."""
+        role = self.document.get_role(user)
+        doc_abilities = self.document.get_abilities(user)
+        read_access = doc_abilities.get("comment", False)
+        write_access = self.creator == user or role in [
+            RoleChoices.OWNER,
+            RoleChoices.ADMIN,
+        ]
+        return {
+            "destroy": write_access,
+            "update": write_access,
+            "partial_update": write_access,
+            "resolve": write_access,
+            "retrieve": read_access,
+        }
+
+    @property
+    def first_comment(self):
+        """Return the first createdcomment of the thread."""
+        return self.comments.order_by("created_at").first()
+
+
+class Comment(BaseModel):
+    """A comment belonging to a thread."""
+
+    thread = models.ForeignKey(
+        Thread,
         on_delete=models.CASCADE,
         related_name="comments",
     )
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        related_name="comments",
+        related_name="thread_comment",
         null=True,
         blank=True,
     )
-    content = models.TextField()
+    body = models.JSONField()
+    metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
         db_table = "impress_comment"
-        ordering = ("-created_at",)
+        ordering = ("created_at",)
         verbose_name = _("Comment")
         verbose_name_plural = _("Comments")
 
     def __str__(self):
+        """Return the string representation of the comment."""
         author = self.user or _("Anonymous")
-        return f"{author!s} on {self.document!s}"
+        return f"Comment by {author!s} on thread {self.thread_id}"
 
     def get_abilities(self, user):
-        """Compute and return abilities for a given user."""
-        role = self.document.get_role(user)
-        can_comment = self.document.get_abilities(user)["comment"]
+        """Return the abilities of the comment."""
+        role = self.thread.document.get_role(user)
+        doc_abilities = self.thread.document.get_abilities(user)
+        read_access = doc_abilities.get("comment", False)
+        can_react = read_access and user.is_authenticated
+        write_access = self.user == user or role in [
+            RoleChoices.OWNER,
+            RoleChoices.ADMIN,
+        ]
         return {
-            "destroy": self.user == user
-            or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
-            "update": self.user == user
-            or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
-            "partial_update": self.user == user
-            or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
-            "retrieve": can_comment,
+            "destroy": write_access,
+            "update": write_access,
+            "partial_update": write_access,
+            "reactions": can_react,
+            "retrieve": read_access,
         }
+
+
+class Reaction(BaseModel):
+    """Aggregated reactions for a given emoji on a comment.
+
+    We store one row per (comment, emoji) and maintain the list of user IDs who
+    reacted with that emoji. This matches the frontend interface where a
+    reaction exposes: emoji, createdAt (first reaction date) and userIds.
+    """
+
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name="reactions",
+    )
+    emoji = models.CharField(max_length=32)
+    users = models.ManyToManyField(User, related_name="reactions")
+
+    class Meta:
+        db_table = "impress_comment_reaction"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["comment", "emoji"],
+                name="unique_comment_emoji",
+                violation_error_message=_(
+                    "This emoji has already been reacted to this comment."
+                ),
+            ),
+        ]
+        verbose_name = _("Reaction")
+        verbose_name_plural = _("Reactions")
+
+    def __str__(self):
+        """Return the string representation of the reaction."""
+        return f"Reaction {self.emoji} on comment {self.comment.id}"
 
 
 class Template(BaseModel):

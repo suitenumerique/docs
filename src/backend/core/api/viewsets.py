@@ -21,6 +21,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -2152,15 +2153,9 @@ class ConfigView(drf.views.APIView):
         return theme_customization
 
 
-class CommentViewSet(
-    viewsets.ModelViewSet,
-):
-    """API ViewSet for comments."""
+class CommentViewSetMixin:
+    """Comment ViewSet Mixin."""
 
-    permission_classes = [permissions.CommentPermission]
-    queryset = models.Comment.objects.select_related("user", "document").all()
-    serializer_class = serializers.CommentSerializer
-    pagination_class = Pagination
     _document = None
 
     def get_document_or_404(self):
@@ -2174,12 +2169,114 @@ class CommentViewSet(
                 raise drf.exceptions.NotFound("Document not found.") from e
         return self._document
 
+
+class ThreadViewSet(
+    ResourceAccessViewsetMixin,
+    CommentViewSetMixin,
+    drf.mixins.CreateModelMixin,
+    drf.mixins.ListModelMixin,
+    drf.mixins.RetrieveModelMixin,
+    drf.mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Thread API: list/create threads and nested comment operations."""
+
+    permission_classes = [permissions.CommentPermission]
+    pagination_class = Pagination
+    serializer_class = serializers.ThreadSerializer
+    queryset = models.Thread.objects.select_related("creator", "document").filter(
+        resolved=False
+    )
+    resource_field_name = "document"
+
+    def perform_create(self, serializer):
+        """Create the first comment of the thread."""
+        body = serializer.validated_data["body"]
+        del serializer.validated_data["body"]
+        thread = serializer.save()
+
+        models.Comment.objects.create(
+            thread=thread,
+            user=self.request.user if self.request.user.is_authenticated else None,
+            body=body,
+        )
+
+    @drf.decorators.action(detail=True, methods=["post"], url_path="resolve")
+    def resolve(self, request, *args, **kwargs):
+        """Resolve a thread."""
+        thread = self.get_object()
+        if not thread.resolved:
+            thread.resolved = True
+            thread.resolved_at = timezone.now()
+            thread.resolved_by = request.user
+            thread.save(update_fields=["resolved", "resolved_at", "resolved_by"])
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentViewSet(
+    CommentViewSetMixin,
+    viewsets.ModelViewSet,
+):
+    """Comment API: list/create comments and nested reaction operations."""
+
+    permission_classes = [permissions.CommentPermission]
+    pagination_class = Pagination
+    serializer_class = serializers.CommentSerializer
+    queryset = models.Comment.objects.select_related("user").all()
+
+    def get_queryset(self):
+        """Override to filter on related resource."""
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                thread=self.kwargs["thread_id"],
+                thread__document=self.kwargs["resource_id"],
+            )
+        )
+
     def get_serializer_context(self):
         """Extra context provided to the serializer class."""
         context = super().get_serializer_context()
-        context["resource_id"] = self.kwargs["resource_id"]
+        context["document_id"] = self.kwargs["resource_id"]
+        context["thread_id"] = self.kwargs["thread_id"]
         return context
 
-    def get_queryset(self):
-        """Return the queryset according to the action."""
-        return super().get_queryset().filter(document=self.kwargs["resource_id"])
+    @drf.decorators.action(
+        detail=True,
+        methods=["post", "delete"],
+    )
+    def reactions(self, request, *args, **kwargs):
+        """POST: add reaction; DELETE: remove reaction.
+
+        Emoji is expected in request.data['emoji'] for both operations.
+        """
+        comment = self.get_object()
+        serializer = serializers.ReactionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if request.method == "POST":
+            reaction, created = models.Reaction.objects.get_or_create(
+                comment=comment,
+                emoji=serializer.validated_data["emoji"],
+            )
+            if not created and reaction.users.filter(id=request.user.id).exists():
+                return drf.response.Response(
+                    {"user_already_reacted": True}, status=status.HTTP_400_BAD_REQUEST
+                )
+            reaction.users.add(request.user)
+            return drf.response.Response(status=status.HTTP_201_CREATED)
+
+        # DELETE
+        try:
+            reaction = models.Reaction.objects.get(
+                comment=comment,
+                emoji=serializer.validated_data["emoji"],
+                users__in=[request.user],
+            )
+        except models.Reaction.DoesNotExist as e:
+            raise drf.exceptions.NotFound("Reaction not found.") from e
+        reaction.users.remove(request.user)
+        if not reaction.users.exists():
+            reaction.delete()
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)

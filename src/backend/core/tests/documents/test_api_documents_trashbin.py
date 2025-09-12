@@ -89,8 +89,8 @@ def test_api_documents_trashbin_format():
             "invite_owner": False,
             "link_configuration": False,
             "link_select_options": {
-                "authenticated": ["reader", "commentator", "editor"],
-                "public": ["reader", "commentator", "editor"],
+                "authenticated": ["reader", "commenter", "editor"],
+                "public": ["reader", "commenter", "editor"],
                 "restricted": None,
             },
             "mask": False,

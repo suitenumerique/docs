@@ -360,6 +360,7 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
 
     expected_set_role_to = [
         RoleChoices.READER,
+        RoleChoices.COMMENTER,
         RoleChoices.EDITOR,
         RoleChoices.ADMIN,
     ]
@@ -480,6 +481,7 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
     assert response.status_code == 200
     expected_set_role_to = [
         RoleChoices.READER,
+        RoleChoices.COMMENTER,
         RoleChoices.EDITOR,
         RoleChoices.ADMIN,
     ]
