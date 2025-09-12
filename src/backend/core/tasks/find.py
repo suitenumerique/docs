@@ -7,12 +7,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 
-from core import models
-from core.services.search_indexers import (
-    get_batch_accesses_by_users_and_teams,
-    get_document_indexer_class,
-)
-
 from impress.celery_app import app
 
 logger = getLogger(__file__)
@@ -51,6 +45,13 @@ def document_indexer_task(document_id):
     if decr_counter(key) > 0:
         logger.info("Skip document %s indexation", document_id)
         return
+
+    # pylint: disable=import-outside-toplevel
+    from core import models  # noqa: PLC0415
+    from core.services.search_indexers import (  # noqa: PLC0415
+        get_batch_accesses_by_users_and_teams,
+        get_document_indexer_class,
+    )
 
     doc = models.Document.objects.get(pk=document_id)
     indexer = get_document_indexer_class()()

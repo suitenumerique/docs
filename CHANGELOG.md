@@ -28,7 +28,9 @@ and this project adheres to
   - ♿ restyle checked checkboxes: removing strikethrough #1439  
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
   - ♿ update labels and shared document icon accessibility #1442
-
+- ✨(backend) add async indexation of documents on save (or access save) #1276
+- ✨(backend) add debounce mechanism to limit indexation jobs #1276
+- ✨(api) add API route to search for indexed documents in Find #1276
 
 ### Fixed
 
