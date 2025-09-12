@@ -7,7 +7,6 @@ import {
   Doc,
   LinkReach,
   Role,
-  currentDocRole,
   getDocLinkReach,
   useIsCollaborativeEditable,
   useTrans,
@@ -71,11 +70,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                       $weight="bold"
                       $theme={isEditable ? 'greyscale' : 'warning'}
                     >
-                      {transRole(
-                        isEditable
-                          ? currentDocRole(doc.abilities)
-                          : Role.READER,
-                      )}
+                      {transRole(isEditable ? doc.user_role : Role.READER)}
                       &nbsp;·&nbsp;
                     </Text>
                     <Text $variation="600" $size="s">
