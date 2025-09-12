@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
-import { LinkReach, LinkRole, Role } from '../types';
+import { LinkReach, LinkRole } from '../types';
 import {
   base64ToBlocknoteXmlFragment,
   base64ToYDoc,
-  currentDocRole,
   getDocLinkReach,
   getDocLinkRole,
   getEmojiAndTitle,
@@ -22,56 +21,6 @@ vi.mock('yjs', () => ({
 describe('doc-management utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe('currentDocRole', () => {
-    it('should return OWNER when destroy ability is true', () => {
-      const abilities = {
-        destroy: true,
-        accesses_manage: false,
-        partial_update: false,
-      } as any;
-
-      const result = currentDocRole(abilities);
-
-      expect(result).toBe(Role.OWNER);
-    });
-
-    it('should return ADMIN when accesses_manage ability is true and destroy is false', () => {
-      const abilities = {
-        destroy: false,
-        accesses_manage: true,
-        partial_update: false,
-      } as any;
-
-      const result = currentDocRole(abilities);
-
-      expect(result).toBe(Role.ADMIN);
-    });
-
-    it('should return EDITOR when partial_update ability is true and higher abilities are false', () => {
-      const abilities = {
-        destroy: false,
-        accesses_manage: false,
-        partial_update: true,
-      } as any;
-
-      const result = currentDocRole(abilities);
-
-      expect(result).toBe(Role.EDITOR);
-    });
-
-    it('should return READER when no higher abilities are true', () => {
-      const abilities = {
-        destroy: false,
-        accesses_manage: false,
-        partial_update: false,
-      } as any;
-
-      const result = currentDocRole(abilities);
-
-      expect(result).toBe(Role.READER);
-    });
   });
 
   describe('base64ToYDoc', () => {

@@ -1,17 +1,7 @@
 import emojiRegex from 'emoji-regex';
 import * as Y from 'yjs';
 
-import { Doc, LinkReach, LinkRole, Role } from './types';
-
-export const currentDocRole = (abilities: Doc['abilities']): Role => {
-  return abilities.destroy
-    ? Role.OWNER
-    : abilities.accesses_manage
-      ? Role.ADMIN
-      : abilities.partial_update
-        ? Role.EDITOR
-        : Role.READER;
-};
+import { Doc, LinkReach, LinkRole } from './types';
 
 export const base64ToYDoc = (base64: string) => {
   const uint8Array = Buffer.from(base64, 'base64');
