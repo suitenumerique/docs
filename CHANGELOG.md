@@ -26,6 +26,9 @@ and this project adheres to
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
+- ✨(backend) add async indexation of documents with Find API #1276
+- ✨(api) add API route to search indexed documents in Find #1276
+
 ### Fixed
 
 - 🐛(backend) duplicate sub docs as root for reader users
