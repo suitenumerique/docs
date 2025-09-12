@@ -134,13 +134,13 @@ def test_models_documents_soft_delete(depth):
     [
         (True, "restricted", "reader"),
         (True, "restricted", "editor"),
-        (True, "restricted", "commentator"),
+        (True, "restricted", "commenter"),
         (False, "restricted", "reader"),
         (False, "restricted", "editor"),
-        (False, "restricted", "commentator"),
+        (False, "restricted", "commenter"),
         (False, "authenticated", "reader"),
         (False, "authenticated", "editor"),
-        (False, "authenticated", "commentator"),
+        (False, "authenticated", "commenter"),
     ],
 )
 def test_models_documents_get_abilities_forbidden(
@@ -176,8 +176,8 @@ def test_models_documents_get_abilities_forbidden(
         "move": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "partial_update": False,
@@ -237,8 +237,8 @@ def test_models_documents_get_abilities_reader(
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": is_authenticated,
@@ -278,14 +278,14 @@ def test_models_documents_get_abilities_reader(
         (True, "authenticated"),
     ],
 )
-def test_models_documents_get_abilities_commentator(
+def test_models_documents_get_abilities_commenter(
     is_authenticated, reach, django_assert_num_queries
 ):
     """
-    Check abilities returned for a document giving commentator role to link holders
+    Check abilities returned for a document giving commenter role to link holders
     i.e anonymous users or authenticated users who have no specific role on the document.
     """
-    document = factories.DocumentFactory(link_reach=reach, link_role="commentator")
+    document = factories.DocumentFactory(link_reach=reach, link_role="commenter")
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
     expected_abilities = {
         "accesses_manage": False,
@@ -298,6 +298,7 @@ def test_models_documents_get_abilities_commentator(
         "children_list": True,
         "collaboration_auth": True,
         "comment": True,
+        "content": True,
         "descendants": True,
         "cors_proxy": True,
         "destroy": False,
@@ -306,8 +307,8 @@ def test_models_documents_get_abilities_commentator(
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": is_authenticated,
@@ -373,8 +374,8 @@ def test_models_documents_get_abilities_editor(
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": is_authenticated,
@@ -429,8 +430,8 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "invite_owner": True,
         "link_configuration": True,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": True,
@@ -461,6 +462,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "children_create": False,
         "children_list": False,
         "collaboration_auth": False,
+        "comment": False,
         "descendants": False,
         "cors_proxy": False,
         "content": False,
@@ -470,8 +472,8 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "editor"],
-            "public": ["reader", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": False,
@@ -516,8 +518,8 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "invite_owner": False,
         "link_configuration": True,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": True,
@@ -572,8 +574,8 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": True,
@@ -626,7 +628,7 @@ def test_models_documents_get_abilities_reader_user(
         "children_list": True,
         "collaboration_auth": True,
         "comment": document.link_reach != "restricted"
-        and document.link_role in ["commentator", "editor"],
+        and document.link_role in ["commenter", "editor"],
         "descendants": True,
         "cors_proxy": True,
         "content": True,
@@ -636,8 +638,8 @@ def test_models_documents_get_abilities_reader_user(
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": True,
@@ -668,12 +670,12 @@ def test_models_documents_get_abilities_reader_user(
 
 
 @pytest.mark.parametrize("ai_access_setting", ["public", "authenticated", "restricted"])
-def test_models_documents_get_abilities_commentator_user(
+def test_models_documents_get_abilities_commenter_user(
     ai_access_setting, django_assert_num_queries
 ):
-    """Check abilities returned for the commentator of a document."""
+    """Check abilities returned for the commenter of a document."""
     user = factories.UserFactory()
-    document = factories.DocumentFactory(users=[(user, "commentator")])
+    document = factories.DocumentFactory(users=[(user, "commenter")])
 
     access_from_link = (
         document.link_reach != "restricted" and document.link_role == "editor"
@@ -692,6 +694,7 @@ def test_models_documents_get_abilities_commentator_user(
         "children_list": True,
         "collaboration_auth": True,
         "comment": True,
+        "content": True,
         "descendants": True,
         "cors_proxy": True,
         "destroy": False,
@@ -700,8 +703,8 @@ def test_models_documents_get_abilities_commentator_user(
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": True,
@@ -761,8 +764,8 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "invite_owner": False,
         "link_configuration": False,
         "link_select_options": {
-            "authenticated": ["reader", "commentator", "editor"],
-            "public": ["reader", "commentator", "editor"],
+            "authenticated": ["reader", "commenter", "editor"],
+            "public": ["reader", "commenter", "editor"],
             "restricted": None,
         },
         "mask": True,
@@ -1465,14 +1468,14 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
             "public",
             "reader",
             {
-                "public": ["reader", "commentator", "editor"],
+                "public": ["reader", "commenter", "editor"],
             },
         ),
         (
             "public",
-            "commentator",
+            "commenter",
             {
-                "public": ["commentator", "editor"],
+                "public": ["commenter", "editor"],
             },
         ),
         ("public", "editor", {"public": ["editor"]}),
@@ -1480,16 +1483,16 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
             "authenticated",
             "reader",
             {
-                "authenticated": ["reader", "commentator", "editor"],
-                "public": ["reader", "commentator", "editor"],
+                "authenticated": ["reader", "commenter", "editor"],
+                "public": ["reader", "commenter", "editor"],
             },
         ),
         (
             "authenticated",
-            "commentator",
+            "commenter",
             {
-                "authenticated": ["commentator", "editor"],
-                "public": ["commentator", "editor"],
+                "authenticated": ["commenter", "editor"],
+                "public": ["commenter", "editor"],
             },
         ),
         (
@@ -1502,17 +1505,17 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
             "reader",
             {
                 "restricted": None,
-                "authenticated": ["reader", "commentator", "editor"],
-                "public": ["reader", "commentator", "editor"],
+                "authenticated": ["reader", "commenter", "editor"],
+                "public": ["reader", "commenter", "editor"],
             },
         ),
         (
             "restricted",
-            "commentator",
+            "commenter",
             {
                 "restricted": None,
-                "authenticated": ["commentator", "editor"],
-                "public": ["commentator", "editor"],
+                "authenticated": ["commenter", "editor"],
+                "public": ["commenter", "editor"],
             },
         ),
         (
@@ -1529,15 +1532,15 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
             "public",
             None,
             {
-                "public": ["reader", "commentator", "editor"],
+                "public": ["reader", "commenter", "editor"],
             },
         ),
         (
             None,
             "reader",
             {
-                "public": ["reader", "commentator", "editor"],
-                "authenticated": ["reader", "commentator", "editor"],
+                "public": ["reader", "commenter", "editor"],
+                "authenticated": ["reader", "commenter", "editor"],
                 "restricted": None,
             },
         ),
@@ -1545,8 +1548,8 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
             None,
             None,
             {
-                "public": ["reader", "commentator", "editor"],
-                "authenticated": ["reader", "commentator", "editor"],
+                "public": ["reader", "commenter", "editor"],
+                "authenticated": ["reader", "commenter", "editor"],
                 "restricted": None,
             },
         ),
