@@ -36,7 +36,6 @@ class FakeDocumentIndexer(BaseDocumentIndexer):
         return {}
 
 
-
 @pytest.fixture(name="fake_indexer_settings")
 def fake_indexer_settings_fixture(settings):
     """Fixture to switch the indexer to the FakeDocumentIndexer."""
@@ -102,6 +101,7 @@ def test_services_search_indexer_class(fake_indexer_settings):
     assert get_document_indexer_class() == import_string(
         "core.tests.test_services_search_indexers.FakeDocumentIndexer"
     )
+
 
 def test_services_search_indexer_url_is_none(settings):
     """
