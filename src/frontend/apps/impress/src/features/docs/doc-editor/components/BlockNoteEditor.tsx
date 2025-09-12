@@ -14,11 +14,13 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
 import { Doc, useProviderStore } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
+import { useResponsiveStore } from '@/stores';
 
 import {
   useHeadings,
@@ -34,6 +36,7 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import { cssComments, useComments } from './comments/';
 import {
   AccessibleImageBlock,
   CalloutBlock,
@@ -79,8 +82,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
+  const { isDesktop } = useResponsiveStore();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
+  const canSeeComment = doc.abilities.comment && isDesktop;
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
@@ -90,6 +95,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const collabName = user?.full_name || user?.email || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
+
+  const threadStore = useComments(doc.id, canSeeComment, user);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
@@ -138,10 +145,24 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
+      comments: { threadStore },
       dictionary: {
         ...locales[lang as keyof typeof locales],
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
+      },
+      resolveUsers: async (userIds) => {
+        return Promise.resolve(
+          userIds.map((encodedURIUserId) => {
+            const fullName = decodeURIComponent(encodedURIUserId);
+
+            return {
+              id: encodedURIUserId,
+              username: fullName || t('Anonymous'),
+              avatarUrl: 'https://i.pravatar.cc/300',
+            };
+          }),
+        );
       },
       tables: {
         splitCells: true,
@@ -152,7 +173,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [collabName, lang, provider, uploadFile],
+    [collabName, lang, provider, uploadFile, threadStore],
   );
 
   useHeadings(editor);
@@ -170,7 +191,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box ref={refEditorContainer} $css={cssEditor}>
+    <Box
+      ref={refEditorContainer}
+      $css={css`
+        ${cssEditor};
+        ${cssComments(canSeeComment)}
+      `}
+    >
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
@@ -180,12 +207,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           />
         </Box>
       )}
-
       <BlockNoteView
+        className="--docs--main-editor"
         editor={editor}
         formattingToolbar={false}
         slashMenu={false}
         theme="light"
+        comments={canSeeComment}
         aria-label={t('Document editor')}
       >
         <BlockNoteSuggestionMenu />
@@ -196,11 +224,17 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 };
 
 interface BlockNoteReaderProps {
+  docId: Doc['id'];
   initialContent: Y.XmlFragment;
 }
 
-export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
+export const BlockNoteReader = ({
+  docId,
+  initialContent,
+}: BlockNoteReaderProps) => {
+  const { user } = useAuth();
   const { setEditor } = useEditorStore();
+  const threadStore = useComments(docId, false, user);
   const { t } = useTranslation();
   const editor = useCreateBlockNote(
     {
@@ -213,6 +247,10 @@ export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
         provider: undefined,
       },
       schema: blockNoteSchema,
+      comments: { threadStore },
+      resolveUsers: async () => {
+        return Promise.resolve([]);
+      },
     },
     [initialContent],
   );
@@ -228,14 +266,21 @@ export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
   useHeadings(editor);
 
   return (
-    <Box $css={cssEditor}>
+    <Box
+      $css={css`
+        ${cssEditor};
+        ${cssComments(false)}
+      `}
+    >
       <BlockNoteView
+        className="--docs--main-editor"
         editor={editor}
         editable={false}
         theme="light"
         aria-label={t('Document version viewer')}
         formattingToolbar={false}
         slashMenu={false}
+        comments={false}
       />
     </Box>
   );

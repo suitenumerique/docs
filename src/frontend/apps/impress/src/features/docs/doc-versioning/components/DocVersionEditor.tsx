@@ -77,7 +77,9 @@ export const DocVersionEditor = ({
   return (
     <DocEditorContainer
       docHeader={<DocVersionHeader />}
-      docEditor={<BlockNoteReader initialContent={initialContent} />}
+      docEditor={
+        <BlockNoteReader initialContent={initialContent} docId={version.id} />
+      }
       isDeletedDoc={false}
       readOnly={true}
     />
