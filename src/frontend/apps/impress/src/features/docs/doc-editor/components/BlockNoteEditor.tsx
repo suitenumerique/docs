@@ -18,8 +18,9 @@ import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useProviderStore } from '@/docs/doc-management';
-import { useAuth } from '@/features/auth';
+import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
 
 import {
@@ -82,6 +83,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
+  const { themeTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
@@ -93,7 +95,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
 
-  const collabName = user?.full_name || user?.email || t('Anonymous');
+  const collabName = user?.full_name || user?.email;
+  const cursorName = collabName || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
   const threadStore = useComments(doc.id, canSeeComment, user);
@@ -104,7 +107,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         provider: provider,
         fragment: provider.document.getXmlFragment('document-store'),
         user: {
-          name: collabName,
+          name: cursorName,
           color: randomColor(),
         },
         /**
@@ -159,7 +162,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
             return {
               id: encodedURIUserId,
               username: fullName || t('Anonymous'),
-              avatarUrl: 'https://i.pravatar.cc/300',
+              avatarUrl: avatarUrlFromName(
+                fullName,
+                themeTokens?.font?.families?.base,
+              ),
             };
           }),
         );
@@ -173,7 +179,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [collabName, lang, provider, uploadFile, threadStore],
+    [cursorName, lang, provider, uploadFile, threadStore],
   );
 
   useHeadings(editor);
