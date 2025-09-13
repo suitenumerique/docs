@@ -4,7 +4,7 @@ import { ReactElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Text } from '@/components';
-import { baseApiUrl } from '@/features/docs/doc-management';
+import { baseApiUrl } from '@/api';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -81,4 +81,3 @@ Page.getLayout = function getLayout(page: ReactElement) {
 };
 
 export default Page;
-
