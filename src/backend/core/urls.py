@@ -59,7 +59,7 @@ urlpatterns = [
                     include(template_related_router.urls),
                 ),
                 path(
-                    "outline_import/upload",
+                    "imports/outline/upload",
                     viewsets.OutlineImportUploadView.as_view(),
                 ),
             ]

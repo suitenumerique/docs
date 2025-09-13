@@ -26,7 +26,7 @@ const Page: NextPageWithLayout = () => {
     try {
       const form = new FormData();
       form.append('file', file);
-      const resp = await fetch(`${baseApiUrl('1.0')}outline_import/upload`, {
+      const resp = await fetch(`${baseApiUrl('1.0')}imports/outline/upload`, {
         method: 'POST',
         body: form,
         credentials: 'include',

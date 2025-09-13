@@ -50,6 +50,7 @@ from core.services.converter_services import (
     YdocConverter,
 )
 from core.tasks.mail import send_ask_for_access_mail
+from core.services.outline_import import OutlineImportError, process_outline_zip
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -2203,8 +2204,9 @@ class OutlineImportUploadView(drf.views.APIView):
             content = uploaded.read()
             # Validate the archive format to fail fast on invalid uploads
             zipfile.ZipFile(io.BytesIO(content))
+            created_ids = process_outline_zip(request.user, content)
         except zipfile.BadZipFile as exc:
             raise drf.exceptions.ValidationError({"file": "Invalid zip archive"}) from exc
-
-        created_ids = process_outline_zip(request.user, content)
+        except OutlineImportError as exc:
+            raise drf.exceptions.ValidationError({"file": str(exc)}) from exc
         return drf.response.Response({"created_document_ids": created_ids}, status=drf.status.HTTP_201_CREATED)

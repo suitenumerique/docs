@@ -34,7 +34,7 @@ def test_outline_import_upload_anonymous_forbidden():
         pass
     upload = SimpleUploadedFile(name="export.zip", content=buf.getvalue(), content_type="application/zip")
 
-    response = client.post("/api/v1.0/outline_import/upload", {"file": upload}, format="multipart")
+    response = client.post("/api/v1.0/imports/outline/upload", {"file": upload}, format="multipart")
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication credentials were not provided."
@@ -64,7 +64,7 @@ def test_outline_import_upload_authenticated_success(mock_convert):
     upload = SimpleUploadedFile(name="export.zip", content=zip_bytes, content_type="application/zip")
 
     with patch.object(malware_detection, "analyse_file") as mock_analyse_file:
-        response = client.post("/api/v1.0/outline_import/upload", {"file": upload}, format="multipart")
+        response = client.post("/api/v1.0/imports/outline/upload", {"file": upload}, format="multipart")
 
     assert response.status_code == 201
     data = response.json()
@@ -76,4 +76,3 @@ def test_outline_import_upload_authenticated_success(mock_convert):
     mock_convert.assert_called_once()
     # An antivirus scan is run for the uploaded image
     assert mock_analyse_file.called
-

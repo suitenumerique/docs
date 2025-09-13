@@ -8,6 +8,7 @@ import re
 import uuid
 import zipfile
 from typing import Iterable
+import posixpath
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -16,6 +17,10 @@ from lasuite.malware_detection import malware_detection
 
 from core import enums, models
 from core.services.converter_services import YdocConverter
+
+
+class OutlineImportError(Exception):
+    """Raised when the Outline archive is invalid or unsafe."""
 
 
 def _ensure_dir_documents(user, dir_path: str, dir_docs: dict[str, models.Document]) -> models.Document | None:
@@ -88,10 +93,25 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
     """
     archive = zipfile.ZipFile(io.BytesIO(zip_bytes))
 
+    # Basic Zip Slip protection: refuse absolute or parent-traversal entries
+    for name in archive.namelist():
+        # Normalize to posix separators and check traversal
+        if name.startswith("/") or "\\" in name:
+            raise OutlineImportError("Unsafe path in archive")
+        parts = [p for p in name.split("/") if p]
+        if any(part == ".." for part in parts):
+            raise OutlineImportError("Unsafe path in archive")
+
     created_ids: list[str] = []
     dir_docs: dict[str, models.Document] = {}
     md_files: Iterable[str] = sorted(
-        [n for n in archive.namelist() if n.lower().endswith(".md")]
+        [
+            n
+            for n in archive.namelist()
+            if n.lower().endswith(".md")
+            and not n.startswith("__MACOSX/")
+            and not any(part.startswith(".") for part in n.split("/"))
+        ]
     )
 
     img_pattern = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
@@ -141,6 +161,9 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
                 return match.group(0)
             asset_rel = f"{dir_path}/{url}" if dir_path else url
             asset_rel = re.sub(r"/+", "/", asset_rel)
+            # sanitize computed asset path
+            if asset_rel.startswith("/") or any(part == ".." for part in asset_rel.split("/")):
+                return match.group(0)
             data = read_bytes(asset_rel)
             if data is None:
                 return match.group(0)
@@ -164,4 +187,3 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
         created_ids.append(str(doc.id))
 
     return created_ids
-
