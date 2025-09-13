@@ -2261,6 +2261,7 @@ class OutlineImportUploadView(drf.views.APIView):
             )
             doc.attachments.append(key)
             doc.save(update_fields=["attachments", "updated_at"])
+            malware_detection.analyse_file(key, document_id=doc.id)
             return f"{settings.MEDIA_BASE_URL}{settings.MEDIA_URL}{key}"
 
         def read_bytes(path_in_zip: str) -> bytes | None:
