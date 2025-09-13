@@ -482,7 +482,11 @@
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
-      "Shared with {{count}} users_other": "Shared with {{count}} users"
+      "Shared with {{count}} users_other": "Shared with {{count}} users",
+      "Import from Outline": "Import from Outline",
+      "Import Outline archive": "Import Outline archive",
+      "Select a .zip file": "Select a .zip file",
+      "Import": "Import"
     }
   },
   "es": {
@@ -838,6 +842,10 @@
       "Open Source": "Open Source",
       "Open the document options": "Ouvrir les options du document",
       "Open the header menu": "Ouvrir le menu d'en-tête",
+      "Import from Outline": "Importer depuis Outline",
+      "Import Outline archive": "Importer une archive Outline",
+      "Select a .zip file": "Sélectionnez un fichier .zip",
+      "Import": "Importer",
       "Open document actions menu": "Ouvrir le menu d'actions du document",
       "Open the menu of actions for the document: {{title}}": "Ouvrir le menu des actions du document : {{title}}",
       "Main content": "Contenu principal",

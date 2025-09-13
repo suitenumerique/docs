@@ -3,6 +3,10 @@
 
 import base64
 import json
+import io
+import mimetypes
+import re
+import zipfile
 import logging
 import uuid
 from collections import defaultdict
@@ -2174,3 +2178,157 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+
+class OutlineImportUploadView(drf.views.APIView):
+    """Upload an Outline export (.zip) and import it as Docs documents.
+
+    Expects a multipart/form-data with field name 'file' containing a .zip archive
+    produced by Outline export.
+
+    Returns a JSON payload with a list of created document ids.
+    """
+
+    parser_classes = [drf.parsers.MultiPartParser]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        uploaded = request.FILES.get("file")
+        if not uploaded:
+            raise drf.exceptions.ValidationError({"file": "File is required"})
+
+        name = getattr(uploaded, "name", "")
+        if not name.endswith(".zip"):
+            raise drf.exceptions.ValidationError({"file": "Must be a .zip file"})
+
+        try:
+            content = uploaded.read()
+            archive = zipfile.ZipFile(io.BytesIO(content))
+        except zipfile.BadZipFile as exc:
+            raise drf.exceptions.ValidationError({"file": "Invalid zip archive"}) from exc
+
+        created_ids: list[str] = []
+        dir_docs: dict[str, models.Document] = {}
+        md_files = sorted([n for n in archive.namelist() if n.lower().endswith(".md")])
+
+        def ensure_dir_docs(dir_path: str) -> models.Document | None:
+            if not dir_path:
+                return None
+            parts = [p for p in dir_path.split("/") if p]
+            parent: models.Document | None = None
+            current = ""
+            for part in parts:
+                current = f"{current}/{part}" if current else part
+                if current in dir_docs:
+                    parent = dir_docs[current]
+                    continue
+                # create a container doc with the folder name
+                if parent is None:
+                    doc = models.Document.add_root(
+                        depth=1,
+                        creator=request.user,
+                        title=part,
+                        link_reach=models.LinkReachChoices.RESTRICTED,
+                    )
+                else:
+                    doc = parent.add_child(creator=request.user, title=part)
+                models.DocumentAccess.objects.update_or_create(
+                    document=doc,
+                    user=request.user,
+                    defaults={"role": models.RoleChoices.OWNER},
+                )
+                dir_docs[current] = doc
+                parent = doc
+            return parent
+
+        img_pattern = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
+
+        def upload_attachment(doc: models.Document, arcname: str, data: bytes) -> str:
+            content_type, _ = mimetypes.guess_type(arcname)
+            ext = (arcname.split(".")[-1] or "bin").lower()
+            file_id = uuid.uuid4()
+            key = f"{doc.key_base}/{enums.ATTACHMENTS_FOLDER:s}/{file_id!s}.{ext}"
+            extra_args = {
+                "Metadata": {
+                    "owner": str(request.user.id),
+                    "status": enums.DocumentAttachmentStatus.READY,
+                },
+            }
+            if content_type:
+                extra_args["ContentType"] = content_type
+            default_storage.connection.meta.client.upload_fileobj(
+                io.BytesIO(data), default_storage.bucket_name, key, ExtraArgs=extra_args
+            )
+            doc.attachments.append(key)
+            doc.save(update_fields=["attachments", "updated_at"])
+            return f"{settings.MEDIA_BASE_URL}{settings.MEDIA_URL}{key}"
+
+        def read_bytes(path_in_zip: str) -> bytes | None:
+            try:
+                with archive.open(path_in_zip, "r") as f:
+                    return f.read()
+            except KeyError:
+                return None
+
+        converter = YdocConverter()
+
+        for md_path in md_files:
+            dir_path, file_name = (
+                (md_path.rsplit("/", 1) + [""])[:2] if "/" in md_path else ("", md_path)
+            )
+            parent_doc = ensure_dir_docs(dir_path)
+
+            try:
+                raw_md = archive.read(md_path).decode("utf-8", errors="ignore")
+            except Exception:  # noqa: BLE001
+                raw_md = ""
+
+            title_match = re.search(r"^#\s+(.+)$", raw_md, flags=re.MULTILINE)
+            title = title_match.group(1).strip() if title_match else file_name.rsplit(".", 1)[0]
+
+            if parent_doc is None:
+                doc = models.Document.add_root(
+                    depth=1,
+                    creator=request.user,
+                    title=title,
+                    link_reach=models.LinkReachChoices.RESTRICTED,
+                )
+            else:
+                doc = parent_doc.add_child(creator=request.user, title=title)
+
+            models.DocumentAccess.objects.update_or_create(
+                document=doc,
+                user=request.user,
+                defaults={"role": models.RoleChoices.OWNER},
+            )
+
+            def replace_img_link(match: re.Match[str]) -> str:
+                url = match.group(1)
+                if url.startswith("http://") or url.startswith("https://"):
+                    return match.group(0)
+                asset_rel = f"{dir_path}/{url}" if dir_path else url
+                asset_rel = re.sub(r"/+", "/", asset_rel)
+                data = read_bytes(asset_rel)
+                if data is None:
+                    return match.group(0)
+                media_url = upload_attachment(doc, arcname=url, data=data)
+                return match.group(0).replace(url, media_url)
+
+            rewritten_md = img_pattern.sub(replace_img_link, raw_md)
+
+            try:
+                ydoc_b64 = converter.convert(
+                    rewritten_md.encode("utf-8"),
+                    content_type="text/markdown",
+                    accept="application/vnd.yjs.doc",
+                )
+                doc.content = ydoc_b64
+                doc.save(update_fields=["content", "updated_at"])
+            except Exception as e:  # noqa: BLE001
+                logger.exception("Outline import failed for %s: %s", md_path, e)
+
+            created_ids.append(str(doc.id))
+
+        return drf.response.Response(
+            {"created_document_ids": created_ids}, status=drf.status.HTTP_201_CREATED
+        )

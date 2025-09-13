@@ -2,7 +2,7 @@ import { Button } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 
-import { Icon } from '@/components';
+import { DropdownMenu, Icon } from '@/components';
 import { useCreateDoc } from '@/features/docs/doc-management';
 
 import { useLeftPanelStore } from '../stores';
@@ -18,14 +18,25 @@ export const LeftPanelHeaderButton = () => {
     },
   });
   return (
-    <Button
-      data-testid="new-doc-button"
-      color="primary"
-      onClick={() => createDoc()}
-      icon={<Icon $variation="000" iconName="add" aria-hidden="true" />}
-      disabled={isDocCreating}
+    <DropdownMenu
+      label={t('Open the header menu')}
+      options={[
+        {
+          label: t('Import from Outline'),
+          callback: () => void router.push('/import/outline'),
+          showSeparator: false,
+        },
+      ]}
     >
-      {t('New doc')}
-    </Button>
+      <Button
+        data-testid="new-doc-button"
+        color="primary"
+        onClick={() => createDoc()}
+        icon={<Icon $variation="000" iconName="add" aria-hidden="true" />}
+        disabled={isDocCreating}
+      >
+        {t('New doc')}
+      </Button>
+    </DropdownMenu>
   );
 };

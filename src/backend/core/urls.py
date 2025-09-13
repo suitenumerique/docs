@@ -58,6 +58,10 @@ urlpatterns = [
                     r"^templates/(?P<resource_id>[0-9a-z-]*)/",
                     include(template_related_router.urls),
                 ),
+                path(
+                    "outline_import/upload",
+                    viewsets.OutlineImportUploadView.as_view(),
+                ),
             ]
         ),
     ),
