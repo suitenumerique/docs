@@ -90,6 +90,7 @@ export const CalloutBlock = createReactBlockSpec(
               emojiData={emojidata}
               onClickOutside={onClickOutside}
               onEmojiSelect={onEmojiSelect}
+              withOverlay={true}
             />
           )}
           <Box as="p" className="inline-content" ref={contentRef} />
