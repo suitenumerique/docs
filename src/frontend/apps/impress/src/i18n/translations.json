@@ -70,6 +70,7 @@
       "Document access mode": "Doare moned ar restr",
       "Document accessible to any connected person": "Restr a c'hall bezañ tizhet gant ne vern piv a vefe kevreet",
       "Document duplicated successfully!": "Restr eilet gant berzh!",
+      "Document emoji": "Emoju ar restr",
       "Document owner": "Perc'henn ar restr",
       "Document role text": "Testenn rol ar restr",
       "Document sections": "Kevrennoù ar restr",
@@ -175,6 +176,7 @@
       "Reader": "Lenner",
       "Reading": "Lenn hepken",
       "Remove access": "Dilemel ar moned",
+      "Remove emoji": "Dilemel ar emoju",
       "Rename": "Adenvel",
       "Rephrase": "Adformulenniñ",
       "Request access": "Goulenn mont e-barzh",
@@ -296,6 +298,7 @@
       "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": "Pages: Ihr neuer Begleiter für eine effiziente, intuitive und sichere Zusammenarbeit bei Dokumenten.",
       "Document accessible to any connected person": "Dokument für jeden angemeldeten Benutzer zugänglich",
       "Document duplicated successfully!": "Dokument erfolgreich dupliziert!",
+      "Document emoji": "Dokument-Emoji",
       "Document owner": "Besitzer des Dokuments",
       "Docx": "Docx",
       "Download": "Herunterladen",
@@ -378,6 +381,7 @@
       "Reader": "Leser",
       "Reading": "Lesen",
       "Remove access": "Zugriff entziehen",
+      "Remove emoji": "Emoji entfernen",
       "Rename": "Umbenennen",
       "Rephrase": "Umformulieren",
       "Request access": "Zugriff anfragen",
@@ -496,6 +500,7 @@
       "Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.": "Docs transforma sus documentos en bases de conocimiento gracias a las subpáginas, una potente herramienta de  búsqueda y la capacidad de marcar como favorito sus documentos más importantes.",
       "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": "Docs: su nuevo compañero para colaborar en documentos de forma eficiente, intuitiva y segura.",
       "Document accessible to any connected person": "Documento accesible a cualquier persona conectada",
+      "Document emoji": "Emoji del documento",
       "Document owner": "Propietario del documento",
       "Docx": "Docx",
       "Download": "Descargar",
@@ -565,6 +570,7 @@
       "Quick search input": "Entrada de búsqueda rápida",
       "Reader": "Lector",
       "Reading": "Lectura",
+      "Remove emoji": "Eliminar emoji",
       "Rename": "Cambiar el nombre",
       "Rephrase": "Reformular",
       "Request access": "Solicitar acceso",
@@ -694,6 +700,7 @@
       "Document accessible to any connected person": "Document accessible à toute personne connectée",
       "Document deleted": "Document supprimé",
       "Document duplicated successfully!": "Document dupliqué avec succès !",
+      "Document emoji": "Emoji du document",
       "Document owner": "Propriétaire du document",
       "Document role text": "Texte du rôle du document",
       "Document sections": "Sections du document",
@@ -806,6 +813,7 @@
       "Reader": "Lecteur",
       "Reading": "Lecture seule",
       "Remove access": "Supprimer l'accès",
+      "Remove emoji": "Supprimer l'emoji",
       "Rename": "Renommer",
       "Rephrase": "Reformuler",
       "Request access": "Demander l'accès",
@@ -930,6 +938,7 @@
       "Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.": "Docs trasforma i tuoi documenti in piattaforme di conoscenza grazie alle sotto-pagine, alla ricerca potente e alla capacità di fissare i tuoi documenti importanti.",
       "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": "Docs: Il tuo nuovo compagno di collaborare sui documenti in modo efficiente, intuitivo e sicuro.",
       "Document accessible to any connected person": "Documento accessibile a qualsiasi persona collegata",
+      "Document emoji": "Emoji del documento",
       "Document owner": "Proprietario del documento",
       "Docx": "Docx",
       "Download": "Scarica",
@@ -990,6 +999,7 @@
       "Public document": "Documento pubblico",
       "Reader": "Lettore",
       "Reading": "Leggendo",
+      "Remove emoji": "Rimuovi emoji",
       "Rename": "Rinomina",
       "Rephrase": "Riformula",
       "Restore": "Ripristina",
@@ -1103,6 +1113,7 @@
       "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": "Docs: Je nieuwe metgezel om efficiënt, intuïtief en veilig samen te werken aan documenten.",
       "Document access mode": "Document toegangsmodus",
       "Document accessible to any connected person": "Document is toegankelijk voor ieder verbonden persoon",
+      "Document emoji": "Document emoji",
       "Document duplicated successfully!": "Document met succes gedupliceerd!",
       "Document owner": "Document eigenaar",
       "Document role text": "Document roltekst",
@@ -1214,6 +1225,7 @@
       "Reader": "Lezer",
       "Reading": "Lezen",
       "Remove access": "Toegang verwijderen",
+      "Remove emoji": "Emoji verwijderen",
       "Rename": "Hernoemen",
       "Rephrase": "Herschrijf",
       "Request access": "Toegang aanvragen",
@@ -1287,7 +1299,11 @@
       "pdf": "PDF"
     }
   },
-  "pt": { "translation": {} },
+  "pt": {
+    "translation": {
+      "Remove emoji": "Remover emoji"
+    }
+  },
   "ru": {
     "translation": {
       "\"{{email}}\" is already invited to the document.": "\"{{email}}\" уже имеет приглашение для этого документа.",
@@ -1368,6 +1384,7 @@
       "Document accessible to any connected person": "Документ доступен всем, кто присоединится",
       "Document deleted": "Документ удалён",
       "Document duplicated successfully!": "Документ успешно дублирован!",
+      "Document emoji": "Эмодзи документа",
       "Document owner": "Владелец документа",
       "Document role text": "Текст роли документа",
       "Document sections": "Разделы документа",
@@ -1480,6 +1497,7 @@
       "Reader": "Читатель",
       "Reading": "Чтение",
       "Remove access": "Отменить доступ",
+      "Remove emoji": "Убрать эмодзи",
       "Rename": "Переименовать",
       "Rephrase": "Переформулировать",
       "Request access": "Запрос доступа",
@@ -1565,6 +1583,7 @@
   "sl": {
     "translation": {
       "Load more": "Naloži več",
+      "Remove emoji": "Odstrani emoji",
       "Untitled document": "Dokument brez naslova"
     }
   },
@@ -1598,7 +1617,8 @@
       "This file is flagged as unsafe.": "Denna fil är flaggad som osäker.",
       "Too many requests. Please wait 60 seconds.": "För många förfrågningar. Vänligen vänta 60 sekunder.",
       "Use as prompt": "Använd som prompt",
-      "Warning": "Varning"
+      "Warning": "Varning",
+      "Remove emoji": "Ta bort emoji"
     }
   },
   "tr": {
@@ -1625,6 +1645,7 @@
       "Docs": "Docs",
       "Docs Logo": "Docs logosu",
       "Document accessible to any connected person": "Bağlanan herhangi bir kişi tarafından erişilebilen belge",
+      "Document emoji": "Belge emojisi",
       "Docx": "Docx",
       "Download": "İndir",
       "Download anyway": "Yine de indir",
@@ -1668,7 +1689,8 @@
       "Version history": "Sürüm geçmişi",
       "Warning": "Uyarı",
       "Write": "Yaz",
-      "Your {{format}} was downloaded succesfully": "{{format}} indirildi"
+      "Your {{format}} was downloaded succesfully": "{{format}} indirildi",
+      "Remove emoji": "Emoji kaldır"
     }
   },
   "uk": {
@@ -1751,6 +1773,7 @@
       "Document accessible to any connected person": "Документ, доступний для будь-якої особи, що приєдналася",
       "Document deleted": "Документ видалено",
       "Document duplicated successfully!": "Документ успішно продубльовано!",
+      "Document emoji": "Емодзі документа",
       "Document owner": "Власник документа",
       "Document role text": "Текст ролі документа",
       "Document sections": "Розділи документу",
@@ -1863,6 +1886,7 @@
       "Reader": "Читач",
       "Reading": "Читання",
       "Remove access": "Вилучити доступ",
+      "Remove emoji": "Видалити емодзі",
       "Rename": "Перейменувати",
       "Rephrase": "Перефразувати",
       "Request access": "Запит доступу",
@@ -2000,6 +2024,7 @@
       "Docs transforms your documents into knowledge bases thanks to subpages, powerful search and the ability to pin your important documents.": "Docs 通过子页面、强大的搜索功能以及固定重要文档的能力，将您的文档转化为知识库。",
       "Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.": "Docs 为您提供高效、直观且安全的文档协作解决方案。",
       "Document accessible to any connected person": "任何来访的人都可以访问文档",
+      "Document emoji": "文档表情符号",
       "Document owner": "文档所有者",
       "Document title": "文档标题",
       "Docx": "Doc",
@@ -2076,6 +2101,7 @@
       "Quick search input": "快速搜索",
       "Reader": "阅读者",
       "Reading": "阅读中",
+      "Remove emoji": "移除表情符号",
       "Rename": "重命名",
       "Rephrase": "改写",
       "Reset": "重置",

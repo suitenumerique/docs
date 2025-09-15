@@ -340,9 +340,11 @@ test.describe('Doc Tree', () => {
 
     // Verify the emoji is updated in the tree and in the document title
     await expect(row.getByText('😀')).toBeVisible();
-    await expect(
-      page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText('😀');
+
+    const titleEmojiPicker = page
+      .locator('.--docs--doc-title')
+      .getByRole('button');
+    await expect(titleEmojiPicker).toHaveText('😀');
 
     // Now remove the emoji using the new action
     await row.hover();
@@ -350,9 +352,7 @@ test.describe('Doc Tree', () => {
     await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
 
     await expect(row.getByText('😀')).toBeHidden();
-    await expect(
-      page.getByRole('textbox', { name: 'Document title' }),
-    ).not.toContainText('😀');
+    await expect(titleEmojiPicker).not.toHaveText('😀');
   });
 });
 

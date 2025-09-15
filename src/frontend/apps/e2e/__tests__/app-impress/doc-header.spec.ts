@@ -65,16 +65,36 @@ test.describe('Doc Header', () => {
     page,
     browserName,
   }) => {
-    await createDoc(page, 'doc-update', browserName, 1);
+    await createDoc(page, 'doc-update-emoji', browserName, 1);
+
+    const emojiPicker = page.locator('.--docs--doc-title').getByRole('button');
+
+    // Top parent should not have emoji picker
+    await expect(emojiPicker).toBeHidden();
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-update-emoji-child',
+    );
+
+    await verifyDocName(page, docChild);
+
+    await expect(emojiPicker).toBeVisible();
+    await emojiPicker.click({
+      delay: 100,
+    });
+    await page.getByRole('button', { name: '😀' }).first().click();
+    await expect(emojiPicker).toHaveText('😀');
+
     const docTitle = page.getByRole('textbox', { name: 'Document title' });
-    await expect(docTitle).toBeVisible();
-    await docTitle.fill('👍 Hello Emoji World');
+    await docTitle.fill('Hello Emoji World');
     await docTitle.blur();
-    await verifyDocName(page, '👍 Hello Emoji World');
+    await verifyDocName(page, 'Hello Emoji World');
 
     // Check the tree
     const row = await getTreeRow(page, 'Hello Emoji World');
-    await expect(row.getByText('👍')).toBeVisible();
+    await expect(row.getByText('😀')).toBeVisible();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {

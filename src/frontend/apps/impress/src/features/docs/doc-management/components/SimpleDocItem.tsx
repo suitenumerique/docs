@@ -73,6 +73,8 @@ export const SimpleDocItem = ({
           />
         ) : (
           <SimpleFileIcon
+            width="32px"
+            height="32px"
             aria-hidden="true"
             data-testid="doc-simple-icon"
             color={colorsTokens['primary-500']}

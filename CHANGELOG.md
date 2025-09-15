@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) create skeleton component for DocEditor #1491
+- ✨(frontend) add an EmojiPicker in the document tree and title #1381
 
 ### Changed
 
@@ -99,6 +100,9 @@ and this project adheres to
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
+- ✨(frontend) doc emojis improvements #1381
+  - add an EmojiPicker in the document tree and document title
+  - remove emoji buttons in menus
 
 ### Changed
 
@@ -112,6 +116,8 @@ and this project adheres to
   - ✨unify tab focus style for better visual consistency #1341
   - ♿hide decorative icons, label menus, avoid accessible name… #1362
 - ♻️(tilt) use helm dev-backend chart
+- 🩹(frontend) on main pages do not display leading emoji as page icon #1381
+- 🩹(frontend) handle properly emojis in interlinking #1381
 
 ### Removed
 
