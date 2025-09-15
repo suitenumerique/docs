@@ -20,6 +20,7 @@ import {
   KEY_DOC,
   KEY_LIST_DOC,
   ModalRemoveDoc,
+  getEmojiAndTitle,
   useCopyDocLink,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
@@ -33,6 +34,7 @@ import {
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
+import { useDocTitleUpdate } from '../../doc-management/hooks/useDocTitleUpdate';
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
 
 const ModalExport = Export?.ModalExport;
@@ -92,6 +94,13 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     });
   }, [selectHistoryModal.isOpen, queryClient]);
 
+  // Emoji Management
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+  const { updateDocEmoji } = useDocTitleUpdate();
+  const removeEmoji = () => {
+    updateDocEmoji(doc.id, doc.title ?? '', '');
+  };
+
   const options: DropdownMenuOption[] = [
     ...(isSmallMobile
       ? [
@@ -127,6 +136,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
     },
+    ...(emoji
+      ? [
+          {
+            label: t('Remove emoji'),
+            icon: 'emoji_emotions',
+            callback: removeEmoji,
+          },
+        ]
+      : []),
     {
       label: t('Version history'),
       icon: 'history',
