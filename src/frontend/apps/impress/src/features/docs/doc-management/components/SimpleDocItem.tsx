@@ -72,6 +72,7 @@ export const SimpleDocItem = ({
               />
             }
             $size="25px"
+            docId={doc.id}
           />
         )}
       </Box>
