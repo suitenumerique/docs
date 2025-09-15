@@ -9,7 +9,11 @@ import {
   verifyDocName,
 } from './utils-common';
 import { addNewMember } from './utils-share';
-import { clickOnAddRootSubPage, createRootSubPage } from './utils-sub-pages';
+import {
+  clickOnAddRootSubPage,
+  createRootSubPage,
+  getTreeRow,
+} from './utils-sub-pages';
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -297,6 +301,36 @@ test.describe('Doc Tree', () => {
 
     // Now test keyboard navigation on sub-document
     await expect(docTree.getByText(docChild)).toBeVisible();
+  });
+
+  test('it updates the child icon from the tree', async ({
+    page,
+    browserName,
+  }) => {
+    const [docParent] = await createDoc(
+      page,
+      'doc-child-emoji',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-child-emoji-child',
+    );
+
+    // Update the emoji from the tree
+    const row = await getTreeRow(page, docChild);
+    await row.locator('.--docs--doc-icon').click();
+    await page.getByRole('button', { name: '😀' }).first().click();
+
+    // Verify the emoji is updated in the tree and in the document title
+    await expect(row.getByText('😀')).toBeVisible();
+    await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText('😀');
   });
 });
 

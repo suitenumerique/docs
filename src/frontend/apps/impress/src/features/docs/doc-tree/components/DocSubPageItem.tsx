@@ -12,10 +12,10 @@ import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
+  DocIcon,
   getEmojiAndTitle,
   useTrans,
 } from '@/features/docs/doc-management';
-import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
@@ -166,11 +166,14 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             min-width: 0;
           `}
         >
-          <Box $width="16px" $height="16px">
+          <Box>
             <DocIcon
               emoji={emoji}
+              withEmojiPicker={doc.abilities.partial_update}
               defaultIcon={<SubPageIcon color={colorsTokens['primary-400']} />}
               $size="sm"
+              docId={doc.id}
+              title={doc.title}
             />
           </Box>
 
