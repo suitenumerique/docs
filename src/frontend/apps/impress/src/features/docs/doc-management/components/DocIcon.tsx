@@ -77,10 +77,10 @@ export const DocIcon = ({
   return (
     <>
       <BoxButton
+        className="--docs--doc-icon"
         ref={iconRef}
         onClick={toggleEmojiPicker}
-        $position="relative"
-        className="--docs--doc-icon"
+        color="tertiary-text"
       >
         {!emoji ? (
           defaultIcon
@@ -112,6 +112,7 @@ export const DocIcon = ({
               emojiData={emojidata}
               onEmojiSelect={handleEmojiSelect}
               onClickOutside={handleClickOutside}
+              withOverlay={true}
             />
           </div>,
           document.body,
