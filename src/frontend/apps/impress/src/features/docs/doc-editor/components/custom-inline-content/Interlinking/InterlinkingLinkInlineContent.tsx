@@ -3,10 +3,10 @@ import { createReactInlineContentSpec } from '@blocknote/react';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
-import { StyledLink, Text } from '@/components';
+import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
-import { useDoc } from '@/docs/doc-management';
+import { getEmojiAndTitle, useDoc } from '@/docs/doc-management';
 
 export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
   {
@@ -52,6 +52,8 @@ interface LinkSelectedProps {
 const LinkSelected = ({ url, title }: LinkSelectedProps) => {
   const { colorsTokens } = useCunninghamTheme();
 
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
+
   return (
     <StyledLink
       href={url}
@@ -71,9 +73,11 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
         transition: background-color 0.2s ease-in-out;
       `}
     >
-      <SelectedPageIcon width={11.5} />
+      <Box $display="inline-block" $css={css`margin-right: 0.3rem; `}>
+        {emoji ? <Icon iconName={emoji} $size="16px" /> : <SelectedPageIcon width={11.5}/>}
+      </Box>
       <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
-        {title}
+        {titleWithoutEmoji}
       </Text>
     </StyledLink>
   );
