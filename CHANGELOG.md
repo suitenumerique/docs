@@ -8,6 +8,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(backend) duplicate sub docs as root for reader user
 
 ## [3.7.0] - 2025-09-12
 
