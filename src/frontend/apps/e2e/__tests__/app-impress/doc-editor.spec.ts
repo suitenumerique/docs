@@ -238,17 +238,7 @@ test.describe('Doc Editor', () => {
 
   test('it cannot edit if viewer', async ({ page }) => {
     await mockedDocument(page, {
-      abilities: {
-        destroy: false, // Means not owner
-        link_configuration: false,
-        versions_destroy: false,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: false, // Means not admin
-        update: false,
-        partial_update: false, // Means not editor
-        retrieve: true,
-      },
+      user_role: 'reader',
     });
 
     await goToGridDoc(page);
@@ -257,6 +247,9 @@ test.describe('Doc Editor', () => {
     await expect(card).toBeVisible();
 
     await expect(card.getByText('Reader')).toBeVisible();
+
+    const editor = page.locator('.ProseMirror');
+    await expect(editor).toHaveAttribute('contenteditable', 'false');
   });
 
   test('it adds an image to the doc editor', async ({ page, browserName }) => {

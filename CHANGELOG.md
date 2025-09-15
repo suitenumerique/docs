@@ -53,6 +53,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix callout emoji list #1366
+- 🐛(frontend) fix legacy role computation #1376
 
 ## [3.6.0] - 2025-09-04
 

@@ -235,6 +235,12 @@ test.describe('Doc Tree', () => {
       'doc-tree-detach-child',
     );
 
+    await expect(
+      page
+        .getByLabel('It is the card information about the document.')
+        .getByText('Administrator ·'),
+    ).toBeVisible();
+
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docChild)).toBeVisible();
     await docTree.click();

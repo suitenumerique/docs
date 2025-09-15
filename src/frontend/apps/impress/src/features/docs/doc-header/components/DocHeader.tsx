@@ -7,7 +7,6 @@ import {
   Doc,
   LinkReach,
   Role,
-  currentDocRole,
   getDocLinkReach,
   useIsCollaborativeEditable,
   useTrans,
@@ -73,7 +72,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                     >
                       {transRole(
                         isEditable
-                          ? currentDocRole(doc.abilities)
+                          ? doc.user_role || doc.link_role
                           : Role.READER,
                       )}
                       &nbsp;·&nbsp;
