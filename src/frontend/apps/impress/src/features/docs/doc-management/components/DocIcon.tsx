@@ -29,6 +29,10 @@ export const DocIcon = ({
   onEmojiUpdate,
   ...textProps
 }: DocIconProps) => {
+  if (!emojiPicker && !emoji) {
+    return defaultIcon;
+  }
+
   const { t } = useTranslation();
   const { updateDocEmoji } = useDocTitleUpdate();
 
