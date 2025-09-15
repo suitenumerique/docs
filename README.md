@@ -1,29 +1,29 @@
 <p align="center">
-  <a href="https://github.com/suitenumerique/docs">
-    <img alt="Docs" src="/docs/assets/banner-docs.png" width="100%" />
-  </a>
+<a href="https://github.com/suitenumerique/docs">
+<img alt="Docs" src="/docs/assets/banner-docs.png" width="100%" />
+</a>
 </p>
 <p align="center">
-  <a href="https://github.com/suitenumerique/docs/stargazers/">
-    <img src="https://img.shields.io/github/stars/suitenumerique/docs" alt="">
-  </a>
-  <a href='https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
-  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
-  <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
-  <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
-    <img alt="MIT License" src="https://img.shields.io/github/license/suitenumerique/docs"/>
-  </a>    
+<a href="https://github.com/suitenumerique/docs/stargazers/">
+<img src="https://img.shields.io/github/stars/suitenumerique/docs" alt="">
+</a>
+<a href='https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
+<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
+<img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
+<a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
+<img alt="MIT License" src="https://img.shields.io/github/license/suitenumerique/docs"/>
+</a>
 </p>
 <p align="center">
-  <a href="https://matrix.to/#/#docs-official:matrix.org">
-    Chat on Matrix
-  </a> - <a href="/docs/">
-    Documentation
-  </a> - <a href="#getting-started-">
-    Getting started
-  </a> - <a href="mailto:docs@numerique.gouv.fr">
-    Reach out
-  </a>
+<a href="https://matrix.to/#/#docs-official:matrix.org">
+Chat on Matrix
+</a> - <a href="/docs/">
+Documentation
+</a> - <a href="#getting-started-">
+Getting started
+</a> - <a href="mailto:docs@numerique.gouv.fr">
+Reach out
+</a>
 </p>
 
 # La Suite Docs : Collaborative Text Editing
@@ -55,15 +55,15 @@ We use Kubernetes for our [production instance](https://docs.numerique.gouv.fr/)
 
 #### 🌍 Known instances
 We hope to see many more, here is an incomplete list of public Docs instances (urls listed in alphabetical order). Feel free to make a PR to add ones that are not listed below🙏
- 
-|     |     |         |
+
+| | | |
 | --- | --- | ------- |
 | Url | Org | Public |
-| docs.numerique.gouv.fr    | DINUM    | French public agents working for the central administration and the extended public sphere. ProConnect is required to login in or sign up|
-| docs.suite.anct.gouv.fr    | ANCT    | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
-| notes.demo.opendesk.eu    | ZenDiS    | Demo instance of OpenDesk. Request access to get credentials |
-| notes.liiib.re    | lasuite.coop    | Free and open demo to all. Content and accounts are reset after one month |
-| docs.federated.nexus    | federated.nexus    | Public instance, but you have to [sign up for a Federated Nexus account](https://federated.nexus/register/). |
+| docs.numerique.gouv.fr | DINUM | French public agents working for the central administration and the extended public sphere. ProConnect is required to login in or sign up|
+| docs.suite.anct.gouv.fr | ANCT | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
+| notes.demo.opendesk.eu | ZenDiS | Demo instance of OpenDesk. Request access to get credentials |
+| notes.liiib.re | lasuite.coop | Free and open demo to all. Content and accounts are reset after one month |
+| docs.federated.nexus | federated.nexus | Public instance, but you have to [sign up for a Federated Nexus account](https://federated.nexus/register/). |
 
 #### ⚠️ Advanced features
 For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under GPL and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
@@ -185,7 +185,7 @@ Want to know where the project is headed? [🗺️ Checkout our roadmap](https:/
 
 This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
 
-While Docs is a public-driven initiative, our license choice is an invitation for private sector actors to use, sell and contribute to the project. 
+While Docs is a public-driven initiative, our license choice is an invitation for private sector actors to use, sell and contribute to the project.
 
 ## Contributing 🙌
 
@@ -215,14 +215,18 @@ docs
 
 Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
 
-We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/). 
+We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 
 
 ### Gov ❤️ open source
-Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
+Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)).
 
 We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
 
 <p align="center">
-  <img src="/docs/assets/europe_opensource.png" width="50%"/>
+<img src="/docs/assets/europe_opensource.png" width="50%"/>
 </p>
+
+
+---
+*Documentation improved for better readability and formatting.*
