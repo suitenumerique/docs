@@ -181,6 +181,15 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       role="tree"
       aria-label={t('Document tree')}
       $css={css`
+        /* Remove outline from TreeViewItem wrapper elements */
+        .c__tree-view--row {
+          outline: none !important;
+
+          &:focus-visible {
+            outline: none !important;
+          }
+        }
+
         .c__tree-view--container {
           z-index: 1;
           margin-top: -10px;
@@ -200,7 +209,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         <Box
           data-testid="doc-tree-root-item"
           role="treeitem"
-          aria-label={`${t('Root document')}: ${treeContext.root?.title || t('Untitled document')}`}
+          aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || t('Untitled document') })}`}
           aria-selected={rootIsSelected}
           tabIndex={0}
           onFocus={handleRootFocus}
@@ -215,6 +224,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
 
             &:hover {
               background-color: var(--c--theme--colors--greyscale-100);
+            }
+
+            &:focus-visible {
+              outline: none !important;
+              box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
+              border-radius: 4px;
             }
 
             .doc-tree-root-item-actions {

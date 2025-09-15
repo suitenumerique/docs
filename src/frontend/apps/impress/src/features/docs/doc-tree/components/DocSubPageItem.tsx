@@ -19,9 +19,10 @@ import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
+import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
+
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
-import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
 
 const ItemTextCss = css`
   overflow: hidden;
@@ -126,6 +127,11 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           .light-doc-item-actions {
             background: var(--c--theme--colors--greyscale-100);
           }
+        }
+        .c__tree-view--node.isFocused {
+          outline: none !important;
+          box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
+          border-radius: 4px;
         }
         &:hover {
           background-color: var(--c--theme--colors--greyscale-100);
