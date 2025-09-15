@@ -4,7 +4,7 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
+import { Doc, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
@@ -38,10 +38,6 @@ export const SimpleDocItem = ({
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
 
-  const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
-    doc.title || untitledDocument,
-  );
-
   return (
     <Box
       $direction="row"
@@ -68,7 +64,6 @@ export const SimpleDocItem = ({
           />
         ) : (
           <DocIcon
-            emoji={emoji}
             defaultIcon={
               <SimpleFileIcon
                 aria-hidden="true"
@@ -88,7 +83,7 @@ export const SimpleDocItem = ({
           $css={ItemTextCss}
           data-testid="doc-title"
         >
-          {displayTitle}
+          {doc.title || untitledDocument}
         </Text>
         {(!isDesktop || showAccesses) && (
           <Box
