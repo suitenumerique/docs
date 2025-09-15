@@ -37,6 +37,10 @@ export const DocIcon = ({
     left: number;
   }>({ top: 0, left: 0 });
 
+  if (!emojiPicker && !emoji) {
+    return defaultIcon;
+  }
+
   const toggleEmojiPicker = (e: React.MouseEvent) => {
     if (emojiPicker) {
       e.stopPropagation();
