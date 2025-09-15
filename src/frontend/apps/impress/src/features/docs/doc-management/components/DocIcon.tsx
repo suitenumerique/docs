@@ -29,10 +29,6 @@ export const DocIcon = ({
   onEmojiUpdate,
   ...textProps
 }: DocIconProps) => {
-  if (!emojiPicker && !emoji) {
-    return defaultIcon;
-  }
-
   const { t } = useTranslation();
   const { updateDocEmoji } = useDocTitleUpdate();
 
@@ -43,6 +39,10 @@ export const DocIcon = ({
     top: number;
     left: number;
   }>({ top: 0, left: 0 });
+
+  if (!emojiPicker && !emoji) {
+    return defaultIcon;
+  }
 
   const toggleEmojiPicker = (e: React.MouseEvent) => {
     if (emojiPicker) {

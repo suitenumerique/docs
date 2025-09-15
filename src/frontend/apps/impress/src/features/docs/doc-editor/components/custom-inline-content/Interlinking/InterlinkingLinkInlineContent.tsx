@@ -73,8 +73,17 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
         transition: background-color 0.2s ease-in-out;
       `}
     >
-      <Box $display="inline-block" $css={css`margin-right: 0.3rem; `}>
-        {emoji ? <Icon iconName={emoji} $size="16px" /> : <SelectedPageIcon width={11.5}/>}
+      <Box
+        $display="inline-block"
+        $css={css`
+          margin-right: 0.3rem;
+        `}
+      >
+        {emoji ? (
+          <Icon iconName={emoji} $size="16px" />
+        ) : (
+          <SelectedPageIcon width={11.5} />
+        )}
       </Box>
       <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
         {titleWithoutEmoji}

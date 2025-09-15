@@ -10,8 +10,6 @@ import { useResponsiveStore } from '@/stores';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
 
-import { DocIcon } from './DocIcon';
-
 const ItemTextCss = css`
   overflow: hidden;
   text-overflow: ellipsis;
@@ -63,16 +61,12 @@ export const SimpleDocItem = ({
             color={colorsTokens['primary-500']}
           />
         ) : (
-          <DocIcon
-            defaultIcon={
-              <SimpleFileIcon
-                aria-hidden="true"
-                aria-label={t('Simple document icon')}
-                color={colorsTokens['primary-500']}
-              />
-            }
-            $size="25px"
-            docId={doc.id}
+          <SimpleFileIcon
+            width="32px"
+            height="32px"
+            aria-hidden="true"
+            aria-label={t('Simple document icon')}
+            color={colorsTokens['primary-500']}
           />
         )}
       </Box>
