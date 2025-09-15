@@ -13,8 +13,10 @@ import {
   Doc,
   ModalRemoveDoc,
   Role,
+  getEmojiAndTitle,
   useCopyDocLink,
   useCreateChildDoc,
+  useDocTitleUpdate,
   useDuplicateDoc,
 } from '@/docs/doc-management';
 
@@ -44,6 +46,7 @@ export const DocTreeItemActions = ({
   const copyLink = useCopyDocLink(doc.id);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc | null>();
+
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (duplicatedDoc) => {
       // Reset the tree context root will reset the full tree view.
@@ -51,6 +54,13 @@ export const DocTreeItemActions = ({
       void router.push(`/docs/${duplicatedDoc.id}`);
     },
   });
+
+  // Emoji Management
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+  const { updateDocEmoji } = useDocTitleUpdate();
+  const removeEmoji = () => {
+    updateDocEmoji(doc.id, doc.title ?? '', '');
+  };
 
   const handleDetachDoc = () => {
     if (!treeContext?.root) {
@@ -82,6 +92,15 @@ export const DocTreeItemActions = ({
     },
     ...(!isRoot
       ? [
+          ...(emoji && doc.abilities.partial_update
+            ? [
+                {
+                  label: t('Remove emoji'),
+                  icon: <Icon iconName="emoji_emotions" $size="24px" />,
+                  callback: removeEmoji,
+                },
+              ]
+            : []),
           {
             label: t('Move to my docs'),
             isDisabled: doc.user_role !== Role.OWNER,

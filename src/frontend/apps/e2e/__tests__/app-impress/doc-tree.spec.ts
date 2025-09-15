@@ -321,8 +321,20 @@ test.describe('Doc Tree', () => {
       'doc-child-emoji-child',
     );
 
-    // Update the emoji from the tree
     const row = await getTreeRow(page, docChild);
+
+    // Check Remove emoji is not present initially
+    await row.hover();
+    const menu = row.getByText(`more_horiz`);
+    await menu.click();
+    await expect(
+      page.getByRole('menuitem', { name: 'Remove emoji' }),
+    ).toBeHidden();
+
+    // Close the menu
+    await page.keyboard.press('Escape');
+
+    // Update the emoji from the tree
     await row.locator('.--docs--doc-icon').click();
     await page.getByRole('button', { name: '😀' }).first().click();
 
@@ -331,6 +343,16 @@ test.describe('Doc Tree', () => {
     await expect(
       page.getByRole('textbox', { name: 'Document title' }),
     ).toContainText('😀');
+
+    // Now remove the emoji using the new action
+    await row.hover();
+    await menu.click();
+    await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
+
+    await expect(row.getByText('😀')).toBeHidden();
+    await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).not.toContainText('😀');
   });
 });
 
