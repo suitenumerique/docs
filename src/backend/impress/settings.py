@@ -142,7 +142,7 @@ class Base(Configuration):
     )
 
     # Document images
-    DOCUMENT_IMAGE_MAX_SIZE = values.Value(
+    DOCUMENT_IMAGE_MAX_SIZE = values.IntegerValue(
         10 * (2**20),  # 10MB
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
