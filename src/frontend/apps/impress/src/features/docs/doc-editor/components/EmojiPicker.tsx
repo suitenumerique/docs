@@ -19,7 +19,7 @@ export const EmojiPicker = ({
   const { i18n } = useTranslation();
 
   return (
-    <Box $position="absolute" $zIndex={1000} $margin="2rem 0 0 0">
+    <Box>
       <Picker
         data={emojiData}
         locale={i18n.resolvedLanguage}

@@ -1,4 +1,3 @@
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { Tooltip } from '@openfun/cunningham-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,14 +7,12 @@ import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
   useDocStore,
+  useDocTitleUpdate,
   useIsCollaborativeEditable,
   useTrans,
-  useUpdateDoc,
 } from '@/docs/doc-management';
-import { useBroadcastStore, useResponsiveStore } from '@/stores';
+import { useResponsiveStore } from '@/stores';
 
 interface DocTitleProps {
   doc: Doc;
@@ -54,47 +51,17 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
   const [titleDisplay, setTitleDisplay] = useState(doc.title);
-  const treeContext = useTreeContext<Doc>();
 
   const { untitledDocument } = useTrans();
 
-  const { broadcast } = useBroadcastStore();
-
-  const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
-    onSuccess(updatedDoc) {
-      // Broadcast to every user connected to the document
-      broadcast(`${KEY_DOC}-${updatedDoc.id}`);
-
-      if (!treeContext) {
-        return;
-      }
-
-      if (treeContext.root?.id === updatedDoc.id) {
-        treeContext?.setRoot(updatedDoc);
-      } else {
-        treeContext?.treeData.updateNode(updatedDoc.id, updatedDoc);
-      }
-    },
-  });
+  const { updateDocTitle } = useDocTitleUpdate();
 
   const handleTitleSubmit = useCallback(
     (inputText: string) => {
-      let sanitizedTitle = inputText.trim();
-      sanitizedTitle = sanitizedTitle.replace(/(\r\n|\n|\r)/gm, '');
-
-      // When blank we set to untitled
-      if (!sanitizedTitle) {
-        setTitleDisplay('');
-      }
-
-      // If mutation we update
-      if (sanitizedTitle !== doc.title) {
-        setTitleDisplay(sanitizedTitle);
-        updateDoc({ id: doc.id, title: sanitizedTitle });
-      }
+      const sanitizedTitle = updateDocTitle(doc, inputText.trim());
+      setTitleDisplay(sanitizedTitle);
     },
-    [doc.id, doc.title, updateDoc],
+    [doc, updateDocTitle],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
