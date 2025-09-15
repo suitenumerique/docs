@@ -107,6 +107,20 @@ export const addChild = async ({
   return name;
 };
 
+export const getTreeRow = async (page: Page, title: string) => {
+  const docTree = page.getByTestId('doc-tree');
+  const row = docTree
+    .getByRole('treeitem')
+    .filter({
+      hasText: title,
+    })
+    .first();
+
+  await expect(row).toBeVisible();
+
+  return row;
+};
+
 export const navigateToTopParentFromTree = async ({ page }: { page: Page }) => {
   await page.getByRole('link', { name: /Open root document/ }).click();
 };

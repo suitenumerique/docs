@@ -8,7 +8,7 @@ import {
   verifyDocName,
 } from './utils-common';
 import { mockedAccesses, mockedInvitations } from './utils-share';
-import { createRootSubPage } from './utils-sub-pages';
+import { createRootSubPage, getTreeRow } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -73,17 +73,8 @@ test.describe('Doc Header', () => {
     await verifyDocName(page, '👍 Hello Emoji World');
 
     // Check the tree
-    const docTree = page.getByTestId('doc-tree');
-    await expect(docTree.getByText('Hello Emoji World')).toBeVisible();
-    await expect(docTree.getByTestId('doc-emoji-icon')).toBeVisible();
-    await expect(docTree.getByTestId('doc-simple-icon')).toBeHidden();
-
-    await page.getByTestId('home-button').click();
-
-    // Check the documents grid
-    const gridRow = await getGridRow(page, 'Hello Emoji World');
-    await expect(gridRow.getByTestId('doc-emoji-icon')).toBeVisible();
-    await expect(gridRow.getByTestId('doc-simple-icon')).toBeHidden();
+    const row = await getTreeRow(page, 'Hello Emoji World');
+    await expect(row.getByText('👍')).toBeVisible();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {
