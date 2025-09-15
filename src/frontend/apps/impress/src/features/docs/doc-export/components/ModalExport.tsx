@@ -76,11 +76,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     setIsExporting(true);
 
-    const title = (doc.title || untitledDocument)
+    const filename = (doc.title || untitledDocument)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s/g, '-');
+
+    const documentTitle = doc.title || untitledDocument;
 
     const html = templateSelected;
     let exportDocument = editor.document;
@@ -98,10 +100,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
 
-      // Inject language for screen reader support and enable outlines (bookmarks)
+      // Add language, title and outline properties to improve PDF accessibility and navigation
       const pdfDocument = isValidElement(rawPdfDocument)
         ? cloneElement(rawPdfDocument, {
             language: i18next.language,
+            title: documentTitle,
             pageMode: 'useOutlines',
           })
         : rawPdfDocument;
@@ -112,10 +115,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
 
-      blobExport = await exporter.toBlob(exportDocument);
+      blobExport = await exporter.toBlob(exportDocument, {
+        documentOptions: { title: documentTitle },
+        sectionOptions: {},
+      });
     }
 
-    downloadFile(blobExport, `${title}.${format}`);
+    downloadFile(blobExport, `${filename}.${format}`);
 
     toast(
       t('Your {{format}} was downloaded succesfully', {

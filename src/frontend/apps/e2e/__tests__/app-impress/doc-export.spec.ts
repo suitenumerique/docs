@@ -93,6 +93,7 @@ test.describe('Doc Export', () => {
 
     expect(pdfData.numpages).toBe(2);
     expect(pdfData.text).toContain('\n\nHello\n\nWorld'); // This is the doc text
+    expect(pdfData.info.Title).toBe(randomDoc);
   });
 
   test('it exports the doc to docx', async ({ page, browserName }) => {
