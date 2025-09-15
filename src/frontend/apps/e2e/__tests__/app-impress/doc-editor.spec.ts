@@ -13,7 +13,11 @@ import {
 } from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateShareLink } from './utils-share';
-import { createRootSubPage, navigateToPageFromTree } from './utils-sub-pages';
+import {
+  createRootSubPage,
+  getTreeRow,
+  navigateToPageFromTree,
+} from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -728,7 +732,13 @@ test.describe('Doc Editor', () => {
 
     await verifyDocName(page, docChild2);
 
-    await page.locator('.bn-block-outer').last().fill('/');
+    const treeRow = await getTreeRow(page, docChild2);
+    await treeRow.locator('.--docs--doc-icon').click();
+    await page.getByRole('button', { name: '😀' }).first().click();
+
+    await navigateToPageFromTree({ page, title: docChild1 });
+
+    await openSuggestionMenu({ page });
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
@@ -741,6 +751,16 @@ test.describe('Doc Editor', () => {
     await expect(searchContainer.getByText(randomDoc)).toBeVisible();
     await expect(searchContainer.getByText(docChild1)).toBeVisible();
     await expect(searchContainer.getByText(docChild2)).toBeVisible();
+
+    const searchContainerRow = searchContainer
+      .getByRole('option')
+      .filter({
+        hasText: docChild2,
+      })
+      .first();
+
+    await expect(searchContainerRow).toContainText('😀');
+    await expect(searchContainerRow.locator('svg').first()).toBeHidden();
 
     await input.pressSequentially('-child');
 
@@ -756,32 +776,30 @@ test.describe('Doc Editor', () => {
     await expect(searchContainer).toBeHidden();
 
     // Wait for the interlink to be created and rendered
-    const editor = page.locator('.ProseMirror.bn-editor');
+    const editor = await getEditor({ page });
 
-    const interlink = editor.getByRole('button', {
+    const interlinkChild2 = editor.getByRole('button', {
       name: docChild2,
     });
 
-    await expect(interlink).toBeVisible({ timeout: 10000 });
-    await interlink.click();
+    await expect(interlinkChild2).toBeVisible({ timeout: 10000 });
+    await expect(interlinkChild2).toContainText('😀');
+    await expect(interlinkChild2.locator('svg').first()).toBeHidden();
+    await interlinkChild2.click();
 
     await verifyDocName(page, docChild2);
-  });
 
-  test('it checks interlink shortcut @', async ({ page, browserName }) => {
-    const [randomDoc] = await createDoc(page, 'doc-interlink', browserName, 1);
-
-    await verifyDocName(page, randomDoc);
-
-    const editor = page.locator('.bn-block-outer').last();
     await editor.click();
-    await page.keyboard.press('@');
 
-    await expect(
-      page.locator(
-        "span[data-inline-content-type='interlinkingSearchInline'] input",
-      ),
-    ).toBeVisible();
+    await page.keyboard.press('@');
+    await input.fill(docChild1);
+    await searchContainer.getByText(docChild1).click();
+
+    const interlinkChild1 = editor.getByRole('button', {
+      name: docChild1,
+    });
+    await expect(interlinkChild1).toBeVisible({ timeout: 10000 });
+    await expect(interlinkChild1.locator('svg').first()).toBeVisible();
   });
 
   test('it checks multiple big doc scroll to the top', async ({

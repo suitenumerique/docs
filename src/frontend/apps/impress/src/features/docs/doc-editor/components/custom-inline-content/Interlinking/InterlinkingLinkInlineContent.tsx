@@ -7,7 +7,7 @@ import { css } from 'styled-components';
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
-import { useDoc } from '@/docs/doc-management';
+import { getEmojiAndTitle, useDoc } from '@/docs/doc-management';
 
 export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
   {
@@ -52,6 +52,8 @@ interface LinkSelectedProps {
 }
 const LinkSelected = ({ url, title }: LinkSelectedProps) => {
   const { colorsTokens } = useCunninghamTheme();
+
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -78,9 +80,21 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
         transition: background-color 0.2s ease-in-out;
       `}
     >
-      <SelectedPageIcon width={11.5} color={colorsTokens['primary-400']} />
-      <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
-        {title}
+      {emoji ? (
+        <Text $size="16px">{emoji}</Text>
+      ) : (
+        <SelectedPageIcon width={11.5} color={colorsTokens['primary-400']} />
+      )}
+      <Text
+        $weight="500"
+        spellCheck="false"
+        $size="16px"
+        $display="inline"
+        $css={css`
+          margin-left: 2px;
+        `}
+      >
+        {titleWithoutEmoji}
       </Text>
     </BoxButton>
   );

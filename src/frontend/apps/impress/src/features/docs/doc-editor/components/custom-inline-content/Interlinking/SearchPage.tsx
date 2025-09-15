@@ -25,6 +25,7 @@ import {
 import FoundPageIcon from '@/docs/doc-editor/assets/doc-found.svg';
 import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
 import {
+  getEmojiAndTitle,
   useCreateChildDocTree,
   useDocStore,
   useTrans,
@@ -236,35 +237,56 @@ export const SearchPage = ({
 
                 editor.focus();
               }}
-              renderElement={(doc) => (
-                <QuickSearchItemContent
-                  left={
-                    <Box
-                      $direction="row"
-                      $gap="0.6rem"
-                      $align="center"
-                      $padding={{ vertical: '0.5rem', horizontal: '0.2rem' }}
-                      $width="100%"
-                    >
-                      <FoundPageIcon style={{ flexShrink: 0 }} />
-                      <Text
-                        $size="14px"
-                        $color="var(--c--theme--colors--greyscale-1000)"
-                        spellCheck="false"
+              renderElement={(doc) => {
+                const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
+                  doc.title || untitledDocument,
+                );
+
+                return (
+                  <QuickSearchItemContent
+                    left={
+                      <Box
+                        $direction="row"
+                        $gap="0.2rem"
+                        $align="center"
+                        $padding={{ vertical: '0.5rem', horizontal: '0.2rem' }}
+                        $width="100%"
                       >
-                        {doc.title}
-                      </Text>
-                    </Box>
-                  }
-                  right={
-                    <Icon
-                      iconName="keyboard_return"
-                      $variation="600"
-                      spellCheck="false"
-                    />
-                  }
-                />
-              )}
+                        <Box
+                          $css={css`
+                            width: 24px;
+                            flex-shrink: 0;
+                          `}
+                        >
+                          {emoji ? (
+                            <Text $size="18px">{emoji}</Text>
+                          ) : (
+                            <FoundPageIcon
+                              width="100%"
+                              style={{ maxHeight: '24px' }}
+                            />
+                          )}
+                        </Box>
+
+                        <Text
+                          $size="14px"
+                          $color="var(--c--theme--colors--greyscale-1000)"
+                          spellCheck="false"
+                        >
+                          {titleWithoutEmoji}
+                        </Text>
+                      </Box>
+                    }
+                    right={
+                      <Icon
+                        iconName="keyboard_return"
+                        $variation="600"
+                        spellCheck="false"
+                      />
+                    }
+                  />
+                );
+              }}
             />
             <QuickSearchGroup
               group={{
