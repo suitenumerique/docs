@@ -20,6 +20,7 @@ import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
 import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
+import { useLoadChildrenOnOpen } from '../hooks/useLoadChildrenOnOpen';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -94,6 +95,14 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     handleActivate,
     true,
     '.c__tree-view',
+  );
+
+  useLoadChildrenOnOpen(
+    node.data.value.id,
+    node.isOpen,
+    treeContext?.treeData.handleLoadChildren,
+    treeContext?.treeData.setChildren,
+    (doc.children?.length ?? 0) > 0 || doc.childrenCount === 0,
   );
 
   const docTitle = doc.title || untitledDocument;
