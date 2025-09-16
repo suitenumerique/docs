@@ -23,9 +23,7 @@ export const addNewMember = async (
       response.status() === 200,
   );
 
-  const inputSearch = page.getByRole('combobox', {
-    name: 'Quick search input',
-  });
+  const inputSearch = page.getByTestId('quick-search-input');
 
   // Select a new user
   await inputSearch.fill(fillText);

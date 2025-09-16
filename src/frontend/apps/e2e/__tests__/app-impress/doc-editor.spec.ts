@@ -757,15 +757,21 @@ test.describe('Doc Editor', () => {
     await expect(searchContainer.getByText(docChild2)).toBeVisible();
     await expect(searchContainer.getByText(randomDoc)).toBeHidden();
 
-    // use keydown to select the second result
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
-    const interlink = page.getByRole('link', {
-      name: 'child-2',
+    // Wait for the search container to disappear, indicating selection was made
+    await expect(searchContainer).toBeHidden();
+
+    // Wait for the interlink to be created and rendered
+    const editor = page.locator('.ProseMirror.bn-editor');
+
+    const interlink = editor.getByRole('link', {
+      name: docChild2,
     });
 
-    await expect(interlink).toBeVisible();
+    await expect(interlink).toBeVisible({ timeout: 10000 });
     await interlink.click();
 
     await verifyDocName(page, docChild2);

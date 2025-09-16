@@ -1,11 +1,5 @@
 import { Command } from 'cmdk';
-import {
-  PropsWithChildren,
-  ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { PropsWithChildren, ReactNode, useId, useRef, useState } from 'react';
 
 import { hasChildrens } from '@/utils/children';
 
@@ -49,32 +43,23 @@ export const QuickSearch = ({
   children,
 }: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [selectedValue, setSelectedValue] = useState<string>('');
+  const listId = useId();
+  const NO_SELECTION_VALUE = '__none__';
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [selectedValue, setSelectedValue] = useState(NO_SELECTION_VALUE);
+  const isExpanded = userInteracted;
 
-  // Auto-select first item when children change
-  useEffect(() => {
-    if (!children) {
-      setSelectedValue('');
-      return;
+  const handleValueChange = (val: string) => {
+    if (userInteracted) {
+      setSelectedValue(val);
     }
+  };
 
-    // Small delay for DOM to update
-    const timeoutId = setTimeout(() => {
-      const firstItem = ref.current?.querySelector('[cmdk-item]');
-      if (firstItem) {
-        const value =
-          firstItem.getAttribute('data-value') ||
-          firstItem.getAttribute('value') ||
-          firstItem.textContent?.trim() ||
-          '';
-        if (value) {
-          setSelectedValue(value);
-        }
-      }
-    }, 50);
-
-    return () => clearTimeout(timeoutId);
-  }, [children]);
+  const handleUserInteract = () => {
+    if (!userInteracted) {
+      setUserInteracted(true);
+    }
+  };
 
   return (
     <>
@@ -84,9 +69,9 @@ export const QuickSearch = ({
           label={label}
           shouldFilter={false}
           ref={ref}
-          value={selectedValue}
-          onValueChange={setSelectedValue}
           tabIndex={0}
+          value={selectedValue}
+          onValueChange={handleValueChange}
         >
           {showInput && (
             <QuickSearchInput
@@ -95,11 +80,14 @@ export const QuickSearch = ({
               inputValue={inputValue}
               onFilter={onFilter}
               placeholder={placeholder}
+              listId={listId}
+              isExpanded={isExpanded}
+              onUserInteract={handleUserInteract}
             >
               {inputContent}
             </QuickSearchInput>
           )}
-          <Command.List>
+          <Command.List id={listId} aria-label={label} role="listbox">
             <Box>{children}</Box>
           </Command.List>
         </Command>

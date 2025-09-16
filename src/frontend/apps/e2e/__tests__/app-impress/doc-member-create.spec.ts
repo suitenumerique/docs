@@ -26,9 +26,8 @@ test.describe('Document create member', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
+    const inputSearch = page.getByTestId('quick-search-input');
+
     await expect(inputSearch).toBeVisible();
 
     // Select user 1 and verify tag
@@ -118,9 +117,7 @@ test.describe('Document create member', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
+    const inputSearch = page.getByTestId('quick-search-input');
 
     const [email] = randomName('test@test.fr', browserName, 1);
     await inputSearch.fill(email);
@@ -168,9 +165,7 @@ test.describe('Document create member', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
+    const inputSearch = page.getByTestId('quick-search-input');
 
     const email = randomName('test@test.fr', browserName, 1)[0];
     await inputSearch.fill(email);
