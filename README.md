@@ -54,16 +54,16 @@ Docs is a collaborative text editor designed to address common challenges in kno
 We use Kubernetes for our [production instance](https://docs.numerique.gouv.fr/) but also support Docker Compose. The community contributed a couple other methods (Nix, YunoHost etc.) check out the [docs](/docs/installation/README.md) to get detailed instructions and examples.
 
 #### 🌍 Known instances
-We hope to see many more, here is an incomplete list of public Docs instances (urls listed in alphabetical order). Feel free to make a PR to add ones that are not listed below🙏
- 
-|     |     |         |
-| --- | --- | ------- |
+We hope to see many more, here is an incomplete list of public Docs instances. Feel free to make a PR to add ones that are not listed below🙏
+
 | Url | Org | Public |
-| docs.numerique.gouv.fr    | DINUM    | French public agents working for the central administration and the extended public sphere. ProConnect is required to login in or sign up|
-| docs.suite.anct.gouv.fr    | ANCT    | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
-| notes.demo.opendesk.eu    | ZenDiS    | Demo instance of OpenDesk. Request access to get credentials |
-| notes.liiib.re    | lasuite.coop    | Free and open demo to all. Content and accounts are reset after one month |
-| docs.federated.nexus    | federated.nexus    | Public instance, but you have to [sign up for a Federated Nexus account](https://federated.nexus/register/). |
+| --- | --- | ------- |
+| [docs.numerique.gouv.fr](https://docs.numerique.gouv.fr/)    | DINUM    | French public agents working for the central administration and the extended public sphere. ProConnect is required to login in or sign up|
+| [docs.suite.anct.gouv.fr](https://docs.suite.anct.gouv.fr/)    | ANCT    | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
+| [notes.demo.opendesk.eu](https://notes.demo.opendesk.eu)    | ZenDiS    | Demo instance of OpenDesk. Request access to get credentials |
+| [notes.liiib.re](https://notes.liiib.re/)    | lasuite.coop    | Free and open demo to all. Content and accounts are reset after one month |
+| [docs.federated.nexus](https://docs.federated.nexus/)    | federated.nexus    | Public instance, but you have to [sign up for a Federated Nexus account](https://federated.nexus/register/). |
+| [docs.demo.mosacloud.eu](https://docs.demo.mosacloud.eu/)    | mosa.cloud    | Demo instance of mosa.cloud, a dutch company providing services around La Suite apps. |
 
 #### ⚠️ Advanced features
 For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under GPL and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
