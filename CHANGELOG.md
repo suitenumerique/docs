@@ -1,4 +1,3 @@
-# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -22,6 +21,12 @@ and this project adheres to
 - ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿improve NVDA navigation in DocShareModal #1396
+
 
 ## [3.7.0] - 2025-09-12
 
