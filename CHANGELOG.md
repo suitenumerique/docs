@@ -12,6 +12,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - #1354
+  - ✨fix tree keyboard toggle when children not yet loaded #1388
 
 ### Fixed
 
