@@ -6,7 +6,7 @@ import {
   keyCloakSignIn,
   verifyDocName,
 } from './utils-common';
-import { addNewMember } from './utils-share';
+import { addNewMember, updateRoleUser, updateShareLink } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -125,6 +125,10 @@ test.describe('Doc Comments', () => {
     await expect(
       thread.getByText(`E2E ${otherBrowserName}`).first(),
     ).toBeVisible();
+
+    await otherPage.close();
+    await otherContext.close();
+    await otherBrowser.close();
   });
 
   test('it checks the comments interactions', async ({ page, browserName }) => {
@@ -194,5 +198,131 @@ test.describe('Doc Comments', () => {
       'background-color',
       'rgba(0, 0, 0, 0)',
     );
+  });
+
+  test('it checks the comments abilities', async ({ page, browserName }) => {
+    test.slow();
+
+    const [docTitle] = await createDoc(page, 'comment-doc', browserName, 1);
+
+    // We share the doc with another user
+    const otherBrowserName = BROWSERS.find((b) => b !== browserName);
+    if (!otherBrowserName) {
+      throw new Error('No alternative browser found');
+    }
+
+    // Add a new member with editor role
+    await page.getByRole('button', { name: 'Share' }).click();
+    await addNewMember(page, 0, 'Editor', otherBrowserName);
+
+    await expect(
+      page
+        .getByRole('listbox', { name: 'Suggestions' })
+        .getByText(new RegExp(otherBrowserName)),
+    ).toBeVisible();
+
+    const urlCommentDoc = page.url();
+
+    // We open another browser with another user
+    const otherBrowser = await chromium.launch({ headless: true });
+    const otherContext = await otherBrowser.newContext({
+      locale: 'en-US',
+      timezoneId: 'Europe/Paris',
+      permissions: [],
+      storageState: {
+        cookies: [],
+        origins: [],
+      },
+    });
+    const otherPage = await otherContext.newPage();
+    await otherPage.goto(urlCommentDoc);
+
+    await otherPage.getByRole('button', { name: 'Login' }).click({
+      timeout: 15000,
+    });
+
+    await keyCloakSignIn(otherPage, otherBrowserName, false);
+
+    await verifyDocName(otherPage, docTitle);
+
+    const otherEditor = otherPage.locator('.ProseMirror');
+    await otherEditor.fill('Hello, I can edit the document');
+    await expect(
+      otherEditor.getByText('Hello, I can edit the document'),
+    ).toBeVisible();
+    await otherEditor.getByText('Hello').selectText();
+    await otherPage.getByRole('button', { name: 'Comment' }).click();
+    const otherThread = otherPage.locator('.bn-thread');
+    await otherThread
+      .getByRole('paragraph')
+      .first()
+      .fill('I can add a comment');
+    await otherThread.locator('[data-test="save"]').click();
+
+    await expect(otherEditor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgb(244, 210, 97)',
+    );
+
+    // We change the role of the second user to commenter
+    updateRoleUser(page, 'Commenter', `user.test@${otherBrowserName}.test`);
+
+    // With the commenter role, the second user cannot edit the document
+    await otherPage.reload();
+    await verifyDocName(otherPage, docTitle);
+
+    const otherEditor2 = otherPage.locator('.ProseMirror');
+    await expect(otherEditor2).toHaveAttribute('contenteditable', 'false');
+
+    // With the commenter role, the second user can still add comments
+    await otherEditor.getByText('Hello').click();
+    await otherThread
+      .getByRole('paragraph')
+      .last()
+      .fill('This is a comment from the other user');
+    await otherThread.locator('[data-test="save"]').click();
+    await expect(
+      otherThread.getByText('This is a comment from the other user').first(),
+    ).toBeVisible();
+
+    // We change the role of the second user to reader
+    updateRoleUser(page, 'Reader', `user.test@${otherBrowserName}.test`);
+
+    // With the reader role, the second user cannot see comments
+    await otherPage.reload();
+    await verifyDocName(otherPage, docTitle);
+
+    await expect(otherEditor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
+    await otherEditor.getByText('Hello').click();
+    await expect(otherThread).toBeHidden();
+    await otherEditor.getByText('Hello').selectText();
+    await expect(
+      otherPage.getByRole('button', { name: 'Comment' }),
+    ).toBeHidden();
+
+    await otherPage.reload();
+
+    // Change the link role of the doc to set it in commenting mode
+    updateShareLink(page, 'Connected', 'Commenting');
+
+    // The second user with reader role can now see and add comments
+    await otherPage.reload();
+    await verifyDocName(otherPage, docTitle);
+
+    await expect(otherEditor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgb(244, 210, 97)',
+    );
+    await otherEditor.getByText('Hello').click();
+    await expect(
+      otherThread.getByText('This is a comment from the other user').first(),
+    ).toBeVisible();
+
+    await otherPage.close();
+    await otherContext.close();
+    await otherBrowser.close();
   });
 });

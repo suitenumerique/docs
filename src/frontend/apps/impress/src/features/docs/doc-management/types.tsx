@@ -23,6 +23,7 @@ export interface Access {
 
 export enum Role {
   READER = 'reader',
+  COMMENTER = 'commenter',
   EDITOR = 'editor',
   ADMIN = 'administrator',
   OWNER = 'owner',
@@ -43,6 +44,7 @@ export enum LinkReach {
 
 export enum LinkRole {
   READER = 'reader',
+  COMMENTER = 'commenter',
   EDITOR = 'editor',
 }
 
@@ -79,6 +81,7 @@ export interface Doc {
     children_create: boolean;
     children_list: boolean;
     collaboration_auth: boolean;
+    comment: true;
     destroy: boolean;
     duplicate: boolean;
     favorite: boolean;
