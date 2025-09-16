@@ -2177,36 +2177,3 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
-
-
-class OutlineImportUploadView(drf.views.APIView):
-    """Upload an Outline export (.zip) and import it as Docs documents.
-
-    Expects a multipart/form-data with field name 'file' containing a .zip archive
-    produced by Outline export.
-
-    Returns a JSON payload with a list of created document ids.
-    """
-
-    parser_classes = [drf.parsers.MultiPartParser]
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        uploaded = request.FILES.get("file")
-        if not uploaded:
-            raise drf.exceptions.ValidationError({"file": "File is required"})
-
-        name = getattr(uploaded, "name", "")
-        if not name.endswith(".zip"):
-            raise drf.exceptions.ValidationError({"file": "Must be a .zip file"})
-
-        try:
-            content = uploaded.read()
-            # Validate the archive format to fail fast on invalid uploads
-            zipfile.ZipFile(io.BytesIO(content))
-            created_ids = process_outline_zip(request.user, content)
-        except zipfile.BadZipFile as exc:
-            raise drf.exceptions.ValidationError({"file": "Invalid zip archive"}) from exc
-        except OutlineImportError as exc:
-            raise drf.exceptions.ValidationError({"file": str(exc)}) from exc
-        return drf.response.Response({"created_document_ids": created_ids}, status=drf.status.HTTP_201_CREATED)
