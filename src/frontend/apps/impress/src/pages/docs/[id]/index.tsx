@@ -15,6 +15,7 @@ import {
   useCollaboration,
   useDoc,
   useDocStore,
+  useProviderStore,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
@@ -57,6 +58,7 @@ interface DocProps {
 }
 
 const DocPage = ({ id }: DocProps) => {
+  const { hasLostConnection, resetLostConnection } = useProviderStore();
   const {
     data: docQuery,
     isError,
@@ -86,6 +88,14 @@ const DocPage = ({ id }: DocProps) => {
   useCollaboration(doc?.id, doc?.content);
   const { t } = useTranslation();
   const { authenticated } = useAuth();
+
+  // Invalidate when provider store reports a lost connection
+  useEffect(() => {
+    if (hasLostConnection && doc?.id) {
+      queryClient.invalidateQueries({ queryKey: [KEY_DOC, { id: doc.id }] });
+      resetLostConnection();
+    }
+  }, [hasLostConnection, doc?.id, queryClient, resetLostConnection]);
 
   useEffect(() => {
     if (!docQuery || isFetching) {

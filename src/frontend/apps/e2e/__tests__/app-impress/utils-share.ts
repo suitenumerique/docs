@@ -68,6 +68,20 @@ export const updateShareLink = async (
   }
 };
 
+export const updateRoleUser = async (
+  page: Page,
+  role: Role | 'Remove access',
+  email: string,
+) => {
+  const list = page.getByTestId('doc-share-quick-search');
+
+  const currentUser = list.getByTestId(`doc-share-member-row-${email}`);
+  const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+  await currentUserRole.click();
+  await page.getByLabel(role).click();
+  await list.click();
+};
+
 /**
  * Connects another user to a document.
  * Useful to test real-time collaboration features.

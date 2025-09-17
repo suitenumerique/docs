@@ -7,7 +7,7 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
-import { connectOtherUserToDoc } from './utils-share';
+import { connectOtherUserToDoc, updateRoleUser } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Document create member', () => {
@@ -273,6 +273,12 @@ test.describe('Document create member', () => {
     await otherPage.reload();
     await verifyDocName(otherPage, docTitle);
     await expect(otherPage.getByText('Hello World')).toBeVisible();
+
+    // Revoke access
+    await updateRoleUser(page, 'Remove access', emailRequest);
+    await expect(
+      otherPage.getByText('Insufficient access rights to view the document.'),
+    ).toBeVisible();
 
     // Cleanup: other user logout
     await cleanup();
