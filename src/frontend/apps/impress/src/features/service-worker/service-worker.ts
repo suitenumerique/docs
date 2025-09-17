@@ -15,6 +15,7 @@ import {
   NetworkFirst,
   NetworkFirstOptions,
   NetworkOnly,
+  StaleWhileRevalidate,
   StrategyOptions,
 } from 'workbox-strategies';
 
@@ -104,8 +105,6 @@ const FALLBACK = {
   images: '/assets/img-not-found.svg',
 };
 const precacheResources = [
-  '/',
-  '/index.html',
   '/401/',
   '/404/',
   FALLBACK.offline,
@@ -255,7 +254,7 @@ registerRoute(
  * Cache all other files
  */
 setDefaultHandler(
-  getStrategy({
+  new StaleWhileRevalidate({
     cacheName: getCacheNameVersion('default'),
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),

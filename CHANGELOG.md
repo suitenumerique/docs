@@ -19,7 +19,9 @@ and this project adheres to
 ### Fixed
 
 - 🐛(backend) duplicate sub docs as root for reader users
+- ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
+- 🐛(frontend) fix legacy role computation #1376
 
 ## [3.7.0] - 2025-09-12
 
@@ -47,7 +49,6 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix callout emoji list #1366
-- 🐛(frontend) fix legacy role computation #1376
 
 ## [3.6.0] - 2025-09-04
 
