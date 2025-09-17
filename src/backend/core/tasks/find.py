@@ -1,11 +1,9 @@
 """Trigger document indexation using celery task."""
 
-from functools import partial
 from logging import getLogger
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import transaction
 
 from impress.celery_app import app
 
@@ -37,7 +35,7 @@ def decr_counter(key):
 
 @app.task
 def document_indexer_task(document_id):
-    """Send indexation query for a document using celery task."""
+    """Celery Task : Sends indexation query for a document."""
     key = document_indexer_debounce_key(document_id)
 
     # check if the counter : if still up, skip the task. only the last one
@@ -46,6 +44,7 @@ def document_indexer_task(document_id):
         logger.info("Skip document %s indexation", document_id)
         return
 
+    # Prevents some circular imports
     # pylint: disable=import-outside-toplevel
     from core import models  # noqa: PLC0415
     from core.services.search_indexers import (  # noqa: PLC0415
@@ -63,35 +62,27 @@ def document_indexer_task(document_id):
     indexer.push(data)
 
 
-def trigger_document_indexer(document, on_commit=False):
+def trigger_document_indexer(document):
     """
     Trigger indexation task with debounce a delay set by the SEARCH_INDEXER_COUNTDOWN setting.
 
     Args:
         document (Document): The document instance.
-        on_commit (bool): Wait for the end of the transaction before starting the task
-            (some fields may be in wrong state within the transaction)
     """
-
     if document.deleted_at or document.ancestors_deleted_at:
-        pass
+        return
 
-    if on_commit:
-        transaction.on_commit(
-            partial(trigger_document_indexer, document, on_commit=False)
-        )
-    else:
-        key = document_indexer_debounce_key(document.pk)
-        countdown = getattr(settings, "SEARCH_INDEXER_COUNTDOWN", 1)
+    key = document_indexer_debounce_key(document.pk)
+    countdown = getattr(settings, "SEARCH_INDEXER_COUNTDOWN", 1)
 
-        logger.info(
-            "Add task for document %s indexation in %.2f seconds",
-            document.pk,
-            countdown,
-        )
+    logger.info(
+        "Add task for document %s indexation in %.2f seconds",
+        document.pk,
+        countdown,
+    )
 
-        # Each time this method is called during the countdown, we increment the
-        # counter and each task decrease it, so the index be run only once.
-        incr_counter(key)
+    # Each time this method is called during the countdown, we increment the
+    # counter and each task decrease it, so the index be run only once.
+    incr_counter(key)
 
-        document_indexer_task.apply_async(args=[document.pk], countdown=countdown)
+    document_indexer_task.apply_async(args=[document.pk], countdown=countdown)
