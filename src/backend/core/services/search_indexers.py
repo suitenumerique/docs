@@ -8,6 +8,7 @@ from functools import cache
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Subquery
 from django.utils.module_loading import import_string
 
 import requests
@@ -18,7 +19,23 @@ logger = logging.getLogger(__name__)
 
 
 @cache
-def get_document_indexer_class() -> "BaseDocumentIndexer":
+def default_document_indexer():
+    """Returns default indexer service is enabled and properly configured."""
+
+    # For this usecase an empty indexer class is not an issue but a feature.
+    if not getattr(settings, "SEARCH_INDEXER_CLASS", None):
+        logger.info("Document indexer is not configured (see SEARCH_INDEXER_CLASS)")
+        return None
+
+    try:
+        return get_document_indexer_class()()
+    except ImproperlyConfigured as err:
+        logger.error("Document indexer is not properly configured : %s", err)
+        return None
+
+
+@cache
+def get_document_indexer_class():
     """Return the indexer backend class based on the settings."""
     classpath = settings.SEARCH_INDEXER_CLASS
 
@@ -65,7 +82,7 @@ def get_batch_accesses_by_users_and_teams(paths):
     return dict(access_by_document_path)
 
 
-def get_visited_document_ids_of(user):
+def get_visited_document_ids_of(queryset, user):
     """
     Returns the ids of the documents that have a linktrace to the user and NOT owned.
     It will be use to limit the opensearch responses to the public documents already
@@ -74,11 +91,18 @@ def get_visited_document_ids_of(user):
     if isinstance(user, AnonymousUser):
         return []
 
-    qs = models.LinkTrace.objects.filter(user=user).exclude(
-        document__accesses__user=user,
+    qs = models.LinkTrace.objects.filter(user=user)
+
+    docs = (
+        queryset.exclude(accesses__user=user)
+        .filter(
+            deleted_at__isnull=True,
+            ancestors_deleted_at__isnull=True,
+        )
+        .filter(pk__in=Subquery(qs.values("document_id")))
     )
 
-    return list({str(id) for id in qs.values_list("document_id", flat=True)})
+    return list({str(id) for id in docs.values_list("pk", flat=True)})
 
 
 class BaseDocumentIndexer(ABC):
@@ -159,35 +183,46 @@ class BaseDocumentIndexer(ABC):
         Must be implemented by subclasses.
         """
 
-    def search(self, text, user, token):
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
+    def search(self, text, token, visited=(), page=1, page_size=50):
         """
         Search for documents in Find app.
-        """
-        visited_ids = get_visited_document_ids_of(user)
+        Ensure the same default ordering as "Docs" list : -updated_at
 
+        Returns ids of the documents
+
+        Args:
+            text (str): Text search content.
+            token (str): OIDC Authentication token.
+            visited (list, optional):
+                List of ids of active public documents with LinkTrace
+                Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
+            page (int, optional):
+                The page number to retrieve.
+                Defaults to 1 if not specified.
+            page_size (int, optional):
+                The number of results to return per page.
+                Defaults to 50 if not specified.
+        """
         response = self.search_query(
             data={
                 "q": text,
-                "visited": visited_ids,
+                "visited": visited,
                 "services": ["docs"],
+                "page_number": page,
+                "page_size": page_size,
+                "order_by": "updated_at",
+                "order_direction": "desc",
             },
             token=token,
         )
 
-        return self.format_response(response)
+        return [d["_id"] for d in response]
 
     @abstractmethod
     def search_query(self, data, token) -> dict:
         """
         Retrieve documents from the Find app API.
-
-        Must be implemented by subclasses.
-        """
-
-    @abstractmethod
-    def format_response(self, data: dict):
-        """
-        Convert the JSON response from Find app as document queryset.
 
         Must be implemented by subclasses.
         """
@@ -253,12 +288,6 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             logger.error("HTTPError: %s", e)
             raise
 
-    def format_response(self, data: dict):
-        """
-        Retrieve documents ids from Find app response and return a queryset.
-        """
-        return models.Document.objects.filter(pk__in=[d["_id"] for d in data])
-
     def push(self, data):
         """
         Push a batch of documents to the Find backend.
@@ -266,7 +295,6 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Args:
             data (list): List of document dictionaries.
         """
-
         try:
             response = requests.post(
                 self.indexer_url,
