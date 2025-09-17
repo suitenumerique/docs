@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
 from django.db import connection, transaction
@@ -49,7 +49,10 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     YdocConverter,
 )
-from core.services.search_indexers import get_document_indexer_class
+from core.services.search_indexers import (
+    default_document_indexer,
+    get_visited_document_ids_of,
+)
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
@@ -1076,22 +1079,41 @@ class DocumentViewSet(
         The filtering allows full text search through the opensearch indexation app "find".
         """
         access_token = request.session.get("oidc_access_token")
+        user = request.user
 
         serializer = serializers.FindDocumentSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            indexer = get_document_indexer_class()()
-            queryset = indexer.search(
-                text=serializer.validated_data.get("q", ""),
-                user=request.user,
-                token=access_token,
+        indexer = default_document_indexer()
+
+        if not indexer:
+            queryset = self.get_queryset()
+            filterset = DocumentFilter(
+                {"title": serializer.validated_data.get("q", "")}, queryset=queryset
             )
-        except ImproperlyConfigured:
-            return drf.response.Response(
-                {"detail": "The service is not properly configured."},
-                status=status.HTTP_401_UNAUTHORIZED,
+
+            if not filterset.is_valid():
+                raise drf.exceptions.ValidationError(filterset.errors)
+
+            queryset = filterset.filter_queryset(queryset).order_by("-updated_at")
+
+            return self.get_response_for_queryset(
+                queryset,
+                context={
+                    "request": request,
+                },
             )
+
+        queryset = models.Document.objects.all()
+        results = indexer.search(
+            text=serializer.validated_data.get("q", ""),
+            token=access_token,
+            visited=get_visited_document_ids_of(queryset, user),
+            page=serializer.validated_data.get("page", 1),
+            page_size=serializer.validated_data.get("page_size", 20),
+        )
+
+        queryset = queryset.filter(pk__in=results)
 
         return self.get_response_for_queryset(
             queryset,
