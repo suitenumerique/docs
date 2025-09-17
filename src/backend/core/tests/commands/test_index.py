@@ -15,6 +15,7 @@ from core.services.search_indexers import FindDocumentIndexer
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("indexer_settings")
 def test_index():
     """Test the command `index` that run the Find app indexer for all the available documents."""
     user = factories.UserFactory()
