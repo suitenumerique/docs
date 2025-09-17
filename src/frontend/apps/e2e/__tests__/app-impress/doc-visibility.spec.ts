@@ -7,6 +7,7 @@ import {
   keyCloakSignIn,
   verifyDocName,
 } from './utils-common';
+import { addNewMember, connectOtherUserToDoc } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Visibility', () => {
@@ -146,47 +147,31 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await verifyDocName(page, docTitle);
 
-    await page.getByRole('button', { name: 'Share' }).click();
-
-    const inputSearch = page.getByRole('combobox', {
-      name: 'Quick search input',
-    });
-
-    const otherBrowser = BROWSERS.find((b) => b !== browserName);
-    if (!otherBrowser) {
-      throw new Error('No alternative browser found');
-    }
-    const username = `user.test@${otherBrowser}.test`;
-    await inputSearch.fill(username);
-    await page.getByRole('option', { name: username }).click();
-
-    // Choose a role
-    const container = page.getByTestId('doc-share-add-member-list');
-    await container.getByLabel('doc-role-dropdown').click();
-    await page.getByLabel('Reader').click();
-
-    await page.getByRole('button', { name: 'Invite' }).click();
-
-    await page.locator('.c__modal__backdrop').click({
-      position: { x: 0, y: 0 },
-    });
+    await page
+      .locator('.ProseMirror')
+      .locator('.bn-block-outer')
+      .last()
+      .fill('Hello World');
 
     const urlDoc = page.url();
 
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
+    const { otherBrowserName, otherPage } = await connectOtherUserToDoc(
+      browserName,
+      urlDoc,
+    );
 
-    await keyCloakSignIn(page, otherBrowser);
+    await expect(
+      otherPage.getByText('Insufficient access rights to view the document.'),
+    ).toBeVisible({
+      timeout: 10000,
+    });
 
-    await expect(page.getByTestId('header-logo-link')).toBeVisible();
+    await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.goto(urlDoc);
+    await addNewMember(page, 0, 'Reader', otherBrowserName);
 
-    await verifyDocName(page, docTitle);
-    await expect(page.getByLabel('Share button')).toBeVisible();
+    await otherPage.reload();
+    await expect(otherPage.getByText('Hello World')).toBeVisible();
   });
 });
 

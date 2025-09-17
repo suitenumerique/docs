@@ -10,6 +10,7 @@ import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
 import {
   Doc,
+  DocPage403,
   KEY_DOC,
   useCollaboration,
   useDoc,
@@ -118,7 +119,7 @@ const DocPage = ({ id }: DocProps) => {
   }, [addTask, doc?.id, queryClient]);
 
   if (isError && error) {
-    if ([403, 404, 401].includes(error.status)) {
+    if ([404, 401].includes(error.status)) {
       let replacePath = `/${error.status}`;
 
       if (error.status === 401) {
@@ -129,13 +130,15 @@ const DocPage = ({ id }: DocProps) => {
           });
         }
         setAuthUrl();
-      } else if (error.status === 403) {
-        replacePath = `/docs/${id}/403`;
       }
 
       void replace(replacePath);
 
       return <Loading />;
+    }
+
+    if (error.status === 403) {
+      return <DocPage403 id={id} />;
     }
 
     return (

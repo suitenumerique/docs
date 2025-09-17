@@ -1,4 +1,11 @@
-import { Page, expect } from '@playwright/test';
+import { Page, chromium, expect } from '@playwright/test';
+
+import {
+  BROWSERS,
+  BrowserName,
+  keyCloakSignIn,
+  verifyDocName,
+} from './utils-common';
 
 export type Role = 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
@@ -59,6 +66,56 @@ export const updateShareLink = async (
     await page.getByRole('menuitem', { name: linkRole }).click();
     await expect(visibilityUpdatedText).toBeVisible();
   }
+};
+
+/**
+ * Connects another user to a document.
+ * Useful to test real-time collaboration features.
+ * @param browserName The name of the browser to use.
+ * @param docUrl The URL of the document to connect to.
+ * @param docTitle The title of the document (optional).
+ * @returns An object containing the other browser, context, and page.
+ */
+export const connectOtherUserToDoc = async (
+  browserName: BrowserName,
+  docUrl: string,
+  docTitle?: string,
+) => {
+  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
+  if (!otherBrowserName) {
+    throw new Error('No alternative browser found');
+  }
+
+  const otherBrowser = await chromium.launch({ headless: true });
+  const otherContext = await otherBrowser.newContext({
+    locale: 'en-US',
+    timezoneId: 'Europe/Paris',
+    permissions: [],
+    storageState: {
+      cookies: [],
+      origins: [],
+    },
+  });
+  const otherPage = await otherContext.newPage();
+  await otherPage.goto(docUrl);
+
+  await otherPage.getByRole('button', { name: 'Login' }).click({
+    timeout: 15000,
+  });
+
+  await keyCloakSignIn(otherPage, otherBrowserName, false);
+
+  if (docTitle) {
+    await verifyDocName(otherPage, docTitle);
+  }
+
+  const cleanup = async () => {
+    await otherPage.close();
+    await otherContext.close();
+    await otherBrowser.close();
+  };
+
+  return { otherBrowser, otherContext, otherPage, otherBrowserName, cleanup };
 };
 
 export const mockedInvitations = async (page: Page, json?: object) => {

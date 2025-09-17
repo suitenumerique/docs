@@ -7,6 +7,7 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
+import { connectOtherUserToDoc } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Document create member', () => {
@@ -209,19 +210,12 @@ test.describe('Document create member', () => {
 
     await expect(userInvitation).toBeHidden();
   });
-});
-
-test.describe('Document create member: Multiple login', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('It creates a member from a request coming from a 403 page', async ({
     page,
     browserName,
   }) => {
     test.slow();
-
-    await page.goto('/');
-    await keyCloakSignIn(page, browserName);
 
     const [docTitle] = await createDoc(
       page,
@@ -232,55 +226,37 @@ test.describe('Document create member: Multiple login', () => {
 
     await verifyDocName(page, docTitle);
 
+    await page
+      .locator('.ProseMirror')
+      .locator('.bn-block-outer')
+      .last()
+      .fill('Hello World');
+
     const urlDoc = page.url();
 
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
-
-    const otherBrowser = BROWSERS.find((b) => b !== browserName);
-
-    await keyCloakSignIn(page, otherBrowser!);
-
-    await expect(page.getByTestId('header-logo-link')).toBeVisible();
-
-    await page.goto(urlDoc);
+    // Other user will request access
+    const { otherPage, otherBrowserName, cleanup } =
+      await connectOtherUserToDoc(browserName, urlDoc);
 
     await expect(
-      page.getByText('Insufficient access rights to view the document.'),
+      otherPage.getByText('Insufficient access rights to view the document.'),
     ).toBeVisible({
       timeout: 10000,
     });
 
-    await page.getByRole('button', { name: 'Request access' }).click();
+    await otherPage.getByRole('button', { name: 'Request access' }).click();
 
     await expect(
-      page.getByText('Your access request for this document is pending.'),
+      otherPage.getByText('Your access request for this document is pending.'),
     ).toBeVisible();
 
-    await page
-      .getByRole('button', {
-        name: 'Logout',
-      })
-      .click();
-
-    await page.goto('/');
-    await keyCloakSignIn(page, browserName);
-
-    await expect(page.getByTestId('header-logo-link')).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.goto(urlDoc);
-
+    // First user approves the request
     await page.getByRole('button', { name: 'Share' }).click();
 
     await expect(page.getByText('Access Requests')).toBeVisible();
-    await expect(page.getByText(`E2E ${otherBrowser}`)).toBeVisible();
+    await expect(page.getByText(`E2E ${otherBrowserName}`)).toBeVisible();
 
-    const emailRequest = `user.test@${otherBrowser}.test`;
+    const emailRequest = `user.test@${otherBrowserName}.test`;
     await expect(page.getByText(emailRequest)).toBeVisible();
     const container = page.getByTestId(
       `doc-share-access-request-row-${emailRequest}`,
@@ -291,8 +267,20 @@ test.describe('Document create member: Multiple login', () => {
 
     await expect(page.getByText('Access Requests')).toBeHidden();
     await expect(page.getByText('Share with 2 users')).toBeVisible();
-    await expect(page.getByText(`E2E ${otherBrowser}`)).toBeVisible();
+    await expect(page.getByText(`E2E ${otherBrowserName}`)).toBeVisible();
+
+    // Other user verifies he has access
+    await otherPage.reload();
+    await verifyDocName(otherPage, docTitle);
+    await expect(otherPage.getByText('Hello World')).toBeVisible();
+
+    // Cleanup: other user logout
+    await cleanup();
   });
+});
+
+test.describe('Document create member: Multiple login', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('It cannot request member access on child doc on a 403 page', async ({
     page,

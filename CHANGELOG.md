@@ -13,20 +13,13 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - #1354
   - ♿ improve accessibility by adding landmark roles to layout #1394
+  - ✨ add document visible in list and openable via enter key #1365
+  - ♿ add pdf outline property to enable bookmarks display #1368
 
 ### Fixed
 
 - 🐛(backend) duplicate sub docs as root for reader users
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ✨ add document visible in list and openable via enter key #1365
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿ add pdf outline property to enable bookmarks display #1368
+- 🐛(frontend) fix 404 page when reload 403 page #1402
 
 ## [3.7.0] - 2025-09-12
 

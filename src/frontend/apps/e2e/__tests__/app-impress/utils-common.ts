@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
-export const BROWSERS = ['chromium', 'webkit', 'firefox'];
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
   AI_FEATURE_ENABLED: true,
