@@ -11,6 +11,7 @@ from rest_framework.test import APIClient
 
 from core import factories
 from core.api.viewsets import malware_detection
+from core.services.outline_import import OutlineImportError
 
 
 pytestmark = pytest.mark.django_db
@@ -76,3 +77,51 @@ def test_outline_import_upload_authenticated_success(mock_convert):
     mock_convert.assert_called_once()
     # An antivirus scan is run for the uploaded image
     assert mock_analyse_file.called
+
+
+def test_outline_import_upload_invalid_zip_returns_validation_error():
+    """Invalid archives are rejected with a validation error instead of crashing."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    upload = SimpleUploadedFile(
+        name="export.zip",
+        content=b"not-a-zip",
+        content_type="application/zip",
+    )
+
+    response = client.post(
+        "/api/v1.0/imports/outline/upload",
+        {"file": upload},
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"file": ["Invalid zip archive"]}
+
+
+@patch("core.api.imports.process_outline_zip", side_effect=OutlineImportError("boom"))
+def test_outline_import_upload_outline_error_returns_validation_error(mock_process_outline):
+    """Service-level Outline import errors are surfaced as validation errors."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    zip_bytes = make_zip_with_markdown_and_image(
+        md_path="doc.md",
+        md_content="# Title",
+        img_path="",
+        img_bytes=b"",
+    )
+    upload = SimpleUploadedFile(name="export.zip", content=zip_bytes, content_type="application/zip")
+
+    response = client.post(
+        "/api/v1.0/imports/outline/upload",
+        {"file": upload},
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"file": ["boom"]}
+    mock_process_outline.assert_called_once()
