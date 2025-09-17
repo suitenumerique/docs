@@ -1019,3 +1019,7 @@ class FindDocumentSerializer(serializers.Serializer):
     """Serializer for Find search requests"""
 
     q = serializers.CharField(required=True, allow_blank=False, trim_whitespace=True)
+    page_size = serializers.IntegerField(
+        required=False, min_value=1, max_value=50, default=20
+    )
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
