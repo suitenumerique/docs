@@ -56,7 +56,12 @@ export const Footer = () => {
   }
 
   return (
-    <Box $position="relative" as="footer" className="--docs--footer">
+    <Box
+      $position="relative"
+      as="footer"
+      role="contentinfo"
+      className="--docs--footer"
+    >
       <BlueStripe />
       <Box $padding={{ top: 'large', horizontal: 'big', bottom: 'small' }}>
         <Box

@@ -26,6 +26,7 @@ export function PageLayout({
       <Header />
       <Box
         as="main"
+        role="main"
         $width="100%"
         $css="flex-grow:1;"
         aria-label={t('Main content')}

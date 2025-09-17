@@ -12,6 +12,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - #1354
+  - ♿ improve accessibility by adding landmark roles to layout #1394
 
 ### Fixed
 
