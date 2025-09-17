@@ -101,7 +101,7 @@ class Base(Configuration):
 
     # Search
     SEARCH_INDEXER_CLASS = values.Value(
-        default="core.services.search_indexers.FindDocumentIndexer",
+        default=None,
         environ_name="SEARCH_INDEXER_CLASS",
         environ_prefix=None,
     )
@@ -981,11 +981,6 @@ class Test(Base):
     # Static files are not used in the test environment
     # Tests are raising warnings because the /data/static directory does not exist
     STATIC_ROOT = None
-
-    # Setup indexer configuration to make test working on the CI.
-    SEARCH_INDEXER_SECRET = "ThisIsAKeyForTest"  # noqa
-    SEARCH_INDEXER_URL = "http://localhost:8081/api/v1.0/documents/index/"
-    SEARCH_INDEXER_QUERY_URL = "http://localhost:8081/api/v1.0/documents/search/"
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 

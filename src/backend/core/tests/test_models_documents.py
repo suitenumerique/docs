@@ -1626,9 +1626,9 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
 
 @mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.django_db(transaction=True)
-def test_models_documents_post_save_indexer(mock_push, settings):
+def test_models_documents_post_save_indexer(mock_push, indexer_settings):
     """Test indexation task on document creation"""
-    settings.SEARCH_INDEXER_COUNTDOWN = 0
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
     user = factories.UserFactory()
 
@@ -1666,10 +1666,127 @@ def test_models_documents_post_save_indexer(mock_push, settings):
     assert cache.get(document_indexer_debounce_key(doc3.pk)) == 0
 
 
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.django_db(transaction=True)
-def test_models_documents_post_save_indexer_debounce(settings):
+def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings):
+    """Skip indexation task on deleted or ancestor_deleted documents"""
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
+
+    user = factories.UserFactory()
+
+    with transaction.atomic():
+        doc = factories.DocumentFactory()
+        doc_deleted = factories.DocumentFactory()
+        doc_ancestor_deleted = factories.DocumentFactory(parent=doc_deleted)
+        doc_deleted.soft_delete()
+        doc_ancestor_deleted.ancestors_deleted_at = doc_deleted.deleted_at
+
+        factories.UserDocumentAccessFactory(document=doc, user=user)
+        factories.UserDocumentAccessFactory(document=doc_deleted, user=user)
+        factories.UserDocumentAccessFactory(document=doc_ancestor_deleted, user=user)
+
+    doc_deleted.refresh_from_db()
+    doc_ancestor_deleted.refresh_from_db()
+
+    assert doc_deleted.deleted_at is not None
+    assert doc_deleted.ancestors_deleted_at is not None
+
+    assert doc_ancestor_deleted.deleted_at is None
+    assert doc_ancestor_deleted.ancestors_deleted_at is not None
+
+    time.sleep(0.2)  # waits for the end of the tasks
+
+    accesses = {
+        str(doc.path): {"users": [user.sub]},
+        str(doc_deleted.path): {"users": [user.sub]},
+        str(doc_ancestor_deleted.path): {"users": [user.sub]},
+    }
+
+    data = [call.args[0] for call in mock_push.call_args_list]
+
+    indexer = FindDocumentIndexer()
+
+    # Only the not deleted document is indexed
+    assert data == [
+        indexer.serialize_document(doc, accesses),
+    ]
+
+    # The debounce counters should be reset
+    assert cache.get(document_indexer_debounce_key(doc.pk)) == 0
+
+    # These caches are not filled
+    assert cache.get(document_indexer_debounce_key(doc_deleted.pk)) is None
+    assert cache.get(document_indexer_debounce_key(doc_ancestor_deleted.pk)) is None
+
+
+@mock.patch.object(FindDocumentIndexer, "push")
+@pytest.mark.django_db(transaction=True)
+def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings):
+    """Restart indexation task on restored documents"""
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
+
+    user = factories.UserFactory()
+
+    with transaction.atomic():
+        doc = factories.DocumentFactory()
+        doc_deleted = factories.DocumentFactory()
+        doc_ancestor_deleted = factories.DocumentFactory(parent=doc_deleted)
+        doc_deleted.soft_delete()
+        doc_ancestor_deleted.ancestors_deleted_at = doc_deleted.deleted_at
+
+        factories.UserDocumentAccessFactory(document=doc, user=user)
+        factories.UserDocumentAccessFactory(document=doc_deleted, user=user)
+        factories.UserDocumentAccessFactory(document=doc_ancestor_deleted, user=user)
+
+    doc_deleted.refresh_from_db()
+    doc_ancestor_deleted.refresh_from_db()
+
+    assert doc_deleted.deleted_at is not None
+    assert doc_deleted.ancestors_deleted_at is not None
+
+    assert doc_ancestor_deleted.deleted_at is None
+    assert doc_ancestor_deleted.ancestors_deleted_at is not None
+
+    time.sleep(0.2)  # waits for the end of the tasks
+
+    doc_deleted.restore()
+
+    doc_deleted.refresh_from_db()
+    doc_ancestor_deleted.refresh_from_db()
+
+    assert doc_deleted.deleted_at is None
+    assert doc_deleted.ancestors_deleted_at is None
+
+    assert doc_ancestor_deleted.deleted_at is None
+    assert doc_ancestor_deleted.ancestors_deleted_at is None
+
+    time.sleep(0.2)
+
+    accesses = {
+        str(doc.path): {"users": [user.sub]},
+        str(doc_deleted.path): {"users": [user.sub]},
+        str(doc_ancestor_deleted.path): {"users": [user.sub]},
+    }
+
+    data = [call.args[0] for call in mock_push.call_args_list]
+
+    indexer = FindDocumentIndexer()
+
+    # All docs are re-indexed
+    assert sorted(data, key=itemgetter("id")) == sorted(
+        [
+            indexer.serialize_document(doc, accesses),
+            indexer.serialize_document(doc_deleted, accesses),
+            # The restored document child is not saved so no indexation.
+        ],
+        key=itemgetter("id"),
+    )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_models_documents_post_save_indexer_debounce(indexer_settings):
     """Test indexation task skipping on document update"""
-    settings.SEARCH_INDEXER_COUNTDOWN = 0
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
     indexer = FindDocumentIndexer()
     user = factories.UserFactory()
@@ -1714,9 +1831,9 @@ def test_models_documents_post_save_indexer_debounce(settings):
 
 
 @pytest.mark.django_db(transaction=True)
-def test_models_documents_access_post_save_indexer(settings):
+def test_models_documents_access_post_save_indexer(indexer_settings):
     """Test indexation task on DocumentAccess update"""
-    settings.SEARCH_INDEXER_COUNTDOWN = 0
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
     indexer = FindDocumentIndexer()
     user = factories.UserFactory()
