@@ -113,9 +113,12 @@ export const connectOtherUserToDoc = async (
   const otherPage = await otherContext.newPage();
   await otherPage.goto(docUrl);
 
-  await otherPage.getByRole('button', { name: 'Login' }).click({
-    timeout: 15000,
-  });
+  await otherPage
+    .getByRole('main', { name: 'Main content' })
+    .getByLabel('Login')
+    .click({
+      timeout: 15000,
+    });
 
   await keyCloakSignIn(otherPage, otherBrowserName, false);
 

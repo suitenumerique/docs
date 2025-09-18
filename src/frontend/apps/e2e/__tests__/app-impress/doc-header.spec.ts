@@ -438,7 +438,9 @@ test.describe('Doc Header', () => {
 
     // Pin
     await page.getByText('push_pin').click();
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
     await expect(page.getByText('Unpin')).toBeVisible();
 
     await page.goto('/');
