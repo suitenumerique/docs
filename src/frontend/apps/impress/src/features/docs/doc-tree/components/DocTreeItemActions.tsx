@@ -181,6 +181,7 @@ export const DocTreeItemActions = ({
               });
             }}
             color="primary"
+            aria-label={t('Add subpage')}
           >
             <Icon
               variant="filled"
