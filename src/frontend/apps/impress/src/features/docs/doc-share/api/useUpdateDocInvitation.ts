@@ -6,7 +6,8 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Role } from '@/docs/doc-management';
-import { Invitation } from '@/docs/doc-share/types';
+
+import { Invitation } from '../types';
 
 import { KEY_LIST_DOC_INVITATIONS } from './useDocInvitations';
 

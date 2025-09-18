@@ -26,7 +26,11 @@ document_related_router.register(
     viewsets.InvitationViewset,
     basename="invitations",
 )
-
+document_related_router.register(
+    "threads",
+    viewsets.ThreadViewSet,
+    basename="threads",
+)
 document_related_router.register(
     "ask-for-access",
     viewsets.DocumentAskForAccessViewSet,

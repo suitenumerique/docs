@@ -753,6 +753,7 @@ class Document(MP_Node, BaseModel):
         can_update = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
+        can_comment = (can_update or role == RoleChoices.COMMENTER) and not is_deleted and user.is_authenticated
         can_create_children = can_update and user.is_authenticated
         can_destroy = (
             is_owner
@@ -783,6 +784,7 @@ class Document(MP_Node, BaseModel):
             "children_list": can_get,
             "children_create": can_create_children,
             "collaboration_auth": can_get,
+            "comment": can_comment,
             "content": can_get,
             "cors_proxy": can_get,
             "descendants": can_get,
@@ -1143,7 +1145,12 @@ class DocumentAccess(BaseAccess):
             set_role_to = []
             if is_owner_or_admin:
                 set_role_to.extend(
-                    [RoleChoices.READER, RoleChoices.EDITOR, RoleChoices.ADMIN]
+                    [
+                        RoleChoices.READER,
+                        RoleChoices.COMMENTER,
+                        RoleChoices.EDITOR,
+                        RoleChoices.ADMIN,
+                    ]
                 )
             if role == RoleChoices.OWNER:
                 set_role_to.append(RoleChoices.OWNER)
@@ -1273,6 +1280,145 @@ class DocumentAskForAccess(BaseModel):
             )
 
         self.document.send_email(subject, [email], context, language)
+
+
+class Thread(BaseModel):
+    """Discussion thread attached to a document.
+
+    A thread groups one or many comments. For backward compatibility with the
+    existing frontend (useComments hook) we still expose a flattened serializer
+    that returns a "content" field representing the first comment's body.
+    """
+
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="threads",
+    )
+    # User having created the thread (author of the first comment)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="threads",
+        null=True,
+        blank=True,
+    )
+    resolved = models.BooleanField(default=False)
+    resolved_updated_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="resolved_threads",
+        null=True,
+        blank=True,
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "impress_thread"
+        ordering = ("-created_at",)
+        verbose_name = _("Thread")
+        verbose_name_plural = _("Threads")
+
+    def __str__(self):
+        author = self.user or _("Anonymous")
+        return f"Thread by {author!s} on {self.document!s}"
+
+    def get_abilities(self, user):
+        """Compute and return abilities for a given user (mirrors comment logic)."""
+        role = self.document.get_role(user)
+        doc_abilities = self.document.get_abilities(user)
+        can_comment = doc_abilities.get("comment", False)
+        return {
+            "destroy": self.user == user or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "update": self.user == user or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "partial_update": self.user == user or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "retrieve": can_comment,
+        }
+
+    @property
+    def first_comment(self):
+        return self.comments.order_by("created_at").first()
+
+
+class Comment(BaseModel):
+    """A comment belonging to a thread."""
+
+    thread = models.ForeignKey(
+        Thread,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    null=True,  # Temporarily nullable to allow migrating legacy comments; should be set not null after data migration
+    blank=True,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="thread_comments",
+        null=True,
+        blank=True,
+    )
+    body = models.JSONField()
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "impress_comment"
+        ordering = ("created_at",)
+        verbose_name = _("Comment")
+        verbose_name_plural = _("Comments")
+
+    def __str__(self):
+        author = self.user or _("Anonymous")
+        return f"Comment by {author!s} on thread {self.thread_id}"
+
+    def get_abilities(self, user):
+        role = self.thread.document.get_role(user)
+        doc_abilities = self.thread.document.get_abilities(user)
+        can_comment = doc_abilities.get("comment", False)
+        return {
+            "destroy": self.user == user or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "update": self.user == user or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "partial_update": self.user == user or role in [RoleChoices.OWNER, RoleChoices.ADMIN],
+            "retrieve": can_comment,
+        }
+
+
+class Reaction(BaseModel):
+    """Aggregated reactions for a given emoji on a comment.
+
+    We store one row per (comment, emoji) and maintain the list of user IDs who
+    reacted with that emoji. This matches the frontend interface where a
+    reaction exposes: emoji, createdAt (first reaction date) and userIds.
+    """
+
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name="reactions",
+    )
+    emoji = models.CharField(max_length=32)
+    user_ids = ArrayField(models.UUIDField(), default=list, blank=True)
+
+    class Meta:
+        db_table = "impress_comment_reaction"
+        unique_together = ("comment", "emoji")
+        verbose_name = _("Reaction")
+        verbose_name_plural = _("Reactions")
+
+    def __str__(self):
+        return f"Reaction {self.emoji} on comment {self.comment_id}"
+
+    def add_user(self, user):
+        if user.id not in self.user_ids:
+            self.user_ids.append(user.id)
+            self.save(update_fields=["user_ids", "updated_at"])
+
+    def remove_user(self, user):
+        if user.id in self.user_ids:
+            self.user_ids.remove(user.id)
+            self.save(update_fields=["user_ids", "updated_at"])
 
 
 class Template(BaseModel):

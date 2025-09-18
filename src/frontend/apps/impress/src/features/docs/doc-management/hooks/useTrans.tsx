@@ -7,6 +7,7 @@ export const useTrans = () => {
 
   const translatedRoles = {
     [Role.READER]: t('Reader'),
+    [Role.COMMENTER]: t('Commenter'),
     [Role.EDITOR]: t('Editor'),
     [Role.ADMIN]: t('Administrator'),
     [Role.OWNER]: t('Owner'),
