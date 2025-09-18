@@ -54,6 +54,10 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const linkReachOptions: DropdownMenuOption[] = useMemo(() => {
     return Object.values(LinkReach).map((key) => {
       const isDisabled = doc.abilities.link_select_options[key] === undefined;
+      let linkRole = undefined;
+      if (key !== LinkReach.RESTRICTED) {
+        linkRole = docLinkRole;
+      }
 
       return {
         label: linkReachTranslations[key],
@@ -61,6 +65,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           updateDocLink({
             id: doc.id,
             link_reach: key,
+            link_role: linkRole,
           }),
         isSelected: docLinkReach === key,
         disabled: isDisabled,
@@ -70,6 +75,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     doc.abilities.link_select_options,
     doc.id,
     docLinkReach,
+    docLinkRole,
     linkReachTranslations,
     updateDocLink,
   ]);
@@ -78,7 +84,8 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     (option) => option.disabled,
   );
 
-  const showLinkRoleOptions = doc.computed_link_reach !== LinkReach.RESTRICTED;
+  const showLinkRoleOptions =
+    docLinkReach !== LinkReach.RESTRICTED && docLinkRole;
 
   const linkRoleOptions: DropdownMenuOption[] = useMemo(() => {
     const options = doc.abilities.link_select_options[docLinkReach] ?? [];
@@ -175,26 +182,24 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         </Box>
         {showLinkRoleOptions && (
           <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
-            {docLinkReach !== LinkReach.RESTRICTED && (
-              <DropdownMenu
-                testId="doc-access-mode"
-                disabled={!canManage}
-                showArrow={true}
-                options={linkRoleOptions}
-                topMessage={
-                  haveDisabledLinkRoleOptions
-                    ? t(
-                        'You cannot restrict access to a subpage relative to its parent page.',
-                      )
-                    : undefined
-                }
-                label={t('Document access mode')}
-              >
-                <Text $weight="initial" $variation="600">
-                  {linkModeTranslations[docLinkRole]}
-                </Text>
-              </DropdownMenu>
-            )}
+            <DropdownMenu
+              testId="doc-access-mode"
+              disabled={!canManage}
+              showArrow={true}
+              options={linkRoleOptions}
+              topMessage={
+                haveDisabledLinkRoleOptions
+                  ? t(
+                      'You cannot restrict access to a subpage relative to its parent page.',
+                    )
+                  : undefined
+              }
+              label={t('Document access mode')}
+            >
+              <Text $weight="initial" $variation="600">
+                {linkModeTranslations[docLinkRole]}
+              </Text>
+            </DropdownMenu>
           </Box>
         )}
       </Box>

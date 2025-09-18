@@ -434,7 +434,9 @@ test.describe('Doc Header', () => {
   test('it pins a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Pin doc`, browserName);
 
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
 
     // Pin
     await page.getByText('push_pin').click();
@@ -453,11 +455,15 @@ test.describe('Doc Header', () => {
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
     await row.getByText(docTitle).click();
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
 
     // Unpin
     await page.getByText('Unpin').click();
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
     await expect(page.getByText('push_pin')).toBeVisible();
 
     await page.goto('/');
