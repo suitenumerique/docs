@@ -1,0 +1,41 @@
+<svg
+  width="33"
+  height="33"
+  viewBox="0 0 33 33"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g clip-path="url(#clip0_pin)">
+    <rect
+      x="10.0132"
+      y="10.0132"
+      width="12.9736"
+      height="12.9736"
+      rx="6.48682"
+      fill="currentColor"
+    />
+    <rect
+      x="10.0132"
+      y="10.0132"
+      width="12.9736"
+      height="12.9736"
+      rx="6.48682"
+      stroke="white"
+      stroke-width="1.21628"
+    />
+    <path
+      d="M17.9595 16.5L18.9325 17.473V18.2028H16.8648V20.5137L16.4999 20.8786L16.1351 20.5137V18.2028H14.0674V17.473L15.0404 16.5V13.8242H14.5539V13.0944H18.446V13.8242H17.9595V16.5Z"
+      fill="white"
+    />
+  </g>
+  <defs>
+    <clipPath id="clip0_pin">
+      <rect
+        width="32"
+        height="32"
+        fill="white"
+        transform="translate(0.5 0.5)"
+      />
+    </clipPath>
+  </defs>
+</svg>
