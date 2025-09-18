@@ -44,11 +44,10 @@ export const QuickSearch = ({
 }: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const listId = useId();
-  const hasResults = Boolean(children);
   const NO_SELECTION_VALUE = '__none__';
   const [userInteracted, setUserInteracted] = useState(false);
   const [selectedValue, setSelectedValue] = useState(NO_SELECTION_VALUE);
-  const isExpanded = userInteracted && hasResults;
+  const isExpanded = userInteracted;
 
   const handleValueChange = (val: string) => {
     if (userInteracted) {
@@ -82,7 +81,6 @@ export const QuickSearch = ({
               onFilter={onFilter}
               placeholder={placeholder}
               listId={listId}
-              hasResults={hasResults}
               isExpanded={isExpanded}
               onUserInteract={handleUserInteract}
             >

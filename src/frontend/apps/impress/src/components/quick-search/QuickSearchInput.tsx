@@ -17,7 +17,6 @@ type Props = {
   children?: ReactNode;
   withSeparator?: boolean;
   listId?: string;
-  hasResults?: boolean;
   onUserInteract?: () => void;
   isExpanded?: boolean;
 };
@@ -29,7 +28,6 @@ export const QuickSearchInput = ({
   children,
   withSeparator: separator = true,
   listId,
-  hasResults,
   onUserInteract,
   isExpanded,
 }: Props) => {
@@ -65,7 +63,7 @@ export const QuickSearchInput = ({
         <Command.Input
           autoFocus={true}
           aria-label={t('Quick search input')}
-          aria-expanded={isExpanded ?? hasResults}
+          aria-expanded={isExpanded}
           aria-controls={listId}
           onClick={(e) => {
             e.stopPropagation();

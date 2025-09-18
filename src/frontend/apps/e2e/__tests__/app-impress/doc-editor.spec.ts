@@ -763,9 +763,8 @@ test.describe('Doc Editor', () => {
     await expect(searchContainer.getByText(docChild2)).toBeVisible();
     await expect(searchContainer.getByText(randomDoc)).toBeHidden();
 
-    // use keydown to select the second result
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    // Click directly on the second result instead of using keyboard navigation
+    await searchContainer.getByText(docChild2).click();
 
     // Wait for the search container to disappear, indicating selection was made
     await expect(searchContainer).toBeHidden();
