@@ -12,9 +12,14 @@ export const Icon = ({
   variant = 'outlined',
   ...textProps
 }: IconProps) => {
+  const hasLabel = 'aria-label' in textProps || 'aria-labelledby' in textProps;
+  const ariaHidden =
+    'aria-hidden' in textProps ? textProps['aria-hidden'] : !hasLabel;
+
   return (
     <Text
       {...textProps}
+      aria-hidden={ariaHidden}
       className={clsx('--docs--icon-bg', textProps.className, {
         'material-icons-filled': variant === 'filled',
         'material-icons': variant === 'outlined',
