@@ -28,6 +28,8 @@ and this project adheres to
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
+- ✨(backend) add async indexation of documents with Find API #1276
+- ✨(api) add API route to search indexed documents in Find #1276
 
 ### Changed
 
