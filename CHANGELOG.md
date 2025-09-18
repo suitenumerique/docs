@@ -22,6 +22,7 @@ and this project adheres to
 - ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
+- 🐛(frontend) scroll back to top when navigate to a document #1406
 
 ## [3.7.0] - 2025-09-12
 

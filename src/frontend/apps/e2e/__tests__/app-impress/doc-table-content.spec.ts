@@ -8,8 +8,6 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('Doc Table Content', () => {
   test('it checks the doc table content', async ({ page, browserName }) => {
-    test.setTimeout(60000);
-
     const [randomDoc] = await createDoc(
       page,
       'doc-table-content',
