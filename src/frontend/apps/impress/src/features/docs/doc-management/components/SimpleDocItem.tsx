@@ -4,13 +4,11 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
+import { Doc, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
-
-import { DocIcon } from './DocIcon';
 
 const ItemTextCss = css`
   overflow: hidden;
@@ -37,10 +35,6 @@ export const SimpleDocItem = ({
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
-
-  const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
-    doc.title || untitledDocument,
-  );
 
   return (
     <Box
@@ -70,16 +64,12 @@ export const SimpleDocItem = ({
             color={colorsTokens['primary-500']}
           />
         ) : (
-          <DocIcon
-            emoji={emoji}
-            defaultIcon={
-              <SimpleFileIcon
-                aria-hidden="true"
-                aria-label={t('Simple document icon')}
-                color={colorsTokens['primary-500']}
-              />
-            }
-            $size="25px"
+          <SimpleFileIcon
+            width="32px"
+            height="32px"
+            aria-hidden="true"
+            aria-label={t('Simple document icon')}
+            color={colorsTokens['primary-500']}
           />
         )}
       </Box>
@@ -91,7 +81,7 @@ export const SimpleDocItem = ({
           $css={ItemTextCss}
           data-testid="doc-title"
         >
-          {displayTitle}
+          {doc.title || untitledDocument}
         </Text>
         {(!isDesktop || showAccesses) && (
           <Box
