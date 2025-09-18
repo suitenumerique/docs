@@ -20,6 +20,7 @@ import {
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { MainLayout } from '@/layouts';
+import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -88,6 +89,26 @@ const DocPage = ({ id }: DocProps) => {
   useCollaboration(doc?.id, doc?.content);
   const { t } = useTranslation();
   const { authenticated } = useAuth();
+
+  /**
+   * Scroll to top when navigating to a new document
+   * We use a timeout to ensure the scroll happens after the layout has updated.
+   */
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined;
+    const mainElement = document.getElementById(MAIN_LAYOUT_ID);
+    if (mainElement) {
+      timeoutId = setTimeout(() => {
+        mainElement.scrollTop = 0;
+      }, 150);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [id]);
 
   // Invalidate when provider store reports a lost connection
   useEffect(() => {

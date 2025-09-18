@@ -11,7 +11,8 @@ import {
   overrideConfig,
   verifyDocName,
 } from './utils-common';
-import { createRootSubPage } from './utils-sub-pages';
+import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
+import { createRootSubPage, navigateToPageFromTree } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -86,8 +87,7 @@ test.describe('Doc Editor', () => {
     // Is connected
     let framesentPromise = webSocket.waitForEvent('framesent');
 
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+    await writeInEditor({ page, text: 'Hello World' });
 
     let framesent = await framesentPromise;
     expect(framesent.payload).not.toBeNull();
@@ -505,10 +505,7 @@ test.describe('Doc Editor', () => {
 
     await verifyDocName(page, randomDoc);
 
-    const editor = page.locator('.ProseMirror.bn-editor');
-
-    await editor.click();
-    await editor.locator('.bn-block-outer').last().fill('/');
+    const editor = await openSuggestionMenu({ page });
     await page.getByText('Embedded file').click();
     await page.getByText('Upload file').click();
 
@@ -675,9 +672,7 @@ test.describe('Doc Editor', () => {
   test('it checks if callout custom block', async ({ page, browserName }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await page.locator('.bn-block-outer').last().fill('/');
+    await openSuggestionMenu({ page });
     await page.getByText('Add a callout block').click();
 
     const calloutBlock = page
@@ -790,5 +785,53 @@ test.describe('Doc Editor', () => {
         "span[data-inline-content-type='interlinkingSearchInline'] input",
       ),
     ).toBeVisible();
+  });
+
+  test('it checks multiple big doc scroll to the top', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(page, 'doc-scroll', browserName, 1);
+
+    for (let i = 0; i < 15; i++) {
+      await page.keyboard.press('Enter');
+      await writeInEditor({ page, text: 'Hello Parent ' + i });
+    }
+
+    const editor = await getEditor({ page });
+    await expect(
+      editor.getByText('Hello Parent 1', { exact: true }),
+    ).not.toBeInViewport();
+    await expect(editor.getByText('Hello Parent 14')).toBeInViewport();
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-scroll-child',
+    );
+
+    for (let i = 0; i < 15; i++) {
+      await page.keyboard.press('Enter');
+      await writeInEditor({ page, text: 'Hello Child ' + i });
+    }
+
+    await expect(
+      editor.getByText('Hello Child 1', { exact: true }),
+    ).not.toBeInViewport();
+    await expect(editor.getByText('Hello Child 14')).toBeInViewport();
+
+    await navigateToPageFromTree({ page, title: randomDoc });
+
+    await expect(
+      editor.getByText('Hello Parent 1', { exact: true }),
+    ).toBeInViewport();
+    await expect(editor.getByText('Hello Parent 14')).not.toBeInViewport();
+
+    await navigateToPageFromTree({ page, title: docChild });
+
+    await expect(
+      editor.getByText('Hello Child 1', { exact: true }),
+    ).toBeInViewport();
+    await expect(editor.getByText('Hello Child 14')).not.toBeInViewport();
   });
 });
