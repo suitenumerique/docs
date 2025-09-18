@@ -15,6 +15,7 @@ and this project adheres to
   - ♿ improve accessibility by adding landmark roles to layout #1394
   - ♿ add document visible in list and openable via enter key #1365
   - ♿ add pdf outline property to enable bookmarks display #1368
+  - ♿ hide decorative icons from assistive tech with aria-hidden #1404
 
 ### Fixed
 
