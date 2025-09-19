@@ -151,12 +151,12 @@ export const DocShareModalInviteUserRow = ({
             $direction="row"
             $align="center"
             $css={css`
-              font-family: Arial, Helvetica, sans-serif;
-              font-size: var(--c--theme--font--sizes--sm);
-              color: var(--c--theme--colors--greyscale-400);
+              contain: content;
             `}
+            $color="var(--c--theme--colors--greyscale-400)"
+            $cursor="pointer"
           >
-            <Text $theme="primary" $variation="800">
+            <Text $theme="primary" $variation="800" $size="sm">
               {t('Add')}
             </Text>
             <Icon

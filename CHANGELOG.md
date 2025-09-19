@@ -10,8 +10,10 @@ and this project adheres to
 
 ### Changed
 
+- ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
   - #1354
+  - #1349
   - ♿ improve accessibility by adding landmark roles to layout #1394
   - ♿ add document visible in list and openable via enter key #1365
   - ♿ add pdf outline property to enable bookmarks display #1368
@@ -29,8 +31,6 @@ and this project adheres to
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
-- ♿(frontend) improve accessibility:
-  - #1349
 
 ### Changed
 

@@ -39,6 +39,13 @@
 }
 
 /**
+ * Button
+*/
+.c__button {
+  contain: content;
+}
+
+/**
  * Modal
 */
 .c__modal__backdrop {
