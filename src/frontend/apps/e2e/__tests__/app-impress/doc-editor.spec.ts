@@ -1,7 +1,7 @@
 /* eslint-disable playwright/no-conditional-expect */
 import path from 'path';
 
-import { chromium, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
 import {
@@ -12,6 +12,7 @@ import {
   verifyDocName,
 } from './utils-common';
 import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
+import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import { createRootSubPage, navigateToPageFromTree } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
@@ -560,20 +561,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByTestId('doc-visibility').click();
-
-    await page
-      .getByRole('menuitem', {
-        name: 'Public',
-      })
-      .click();
-
-    await expect(
-      page.getByText('The document visibility has been updated.'),
-    ).toBeVisible();
-
-    await page.getByTestId('doc-access-mode').click();
-    await page.getByRole('menuitem', { name: 'Editing' }).click();
+    await updateShareLink(page, 'Public', 'Editing');
 
     // Close the modal
     await page.getByRole('button', { name: 'close' }).first().click();
@@ -597,17 +585,12 @@ test.describe('Doc Editor', () => {
      * We open another browser that will connect to the collaborative server
      * and will block the current browser to edit the doc.
      */
-    const otherBrowser = await chromium.launch({ headless: true });
-    const otherContext = await otherBrowser.newContext({
-      locale: 'en-US',
-      timezoneId: 'Europe/Paris',
-      permissions: [],
-      storageState: {
-        cookies: [],
-        origins: [],
-      },
+    const { otherPage } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: urlChildDoc,
+      docTitle: childTitle,
+      withoutSignIn: true,
     });
-    const otherPage = await otherContext.newPage();
 
     const webSocketPromise = otherPage.waitForEvent(
       'websocket',
@@ -648,6 +631,11 @@ test.describe('Doc Editor', () => {
 
     await expect(editor).toHaveAttribute('contenteditable', 'false');
 
+    await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toBeHidden();
+    await expect(page.getByRole('heading', { name: childTitle })).toBeVisible();
+
     await page.goto(urlParentDoc);
 
     await verifyDocName(page, parentTitle);
@@ -663,6 +651,11 @@ test.describe('Doc Editor', () => {
     await page.goto(urlChildDoc);
 
     await expect(editor).toHaveAttribute('contenteditable', 'true');
+
+    await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText(childTitle);
+    await expect(page.getByRole('heading', { name: childTitle })).toBeHidden();
 
     await expect(
       card.getByText('Others are editing. Your network prevent changes.'),

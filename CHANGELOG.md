@@ -14,8 +14,9 @@ and this project adheres to
 
 - ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
-  - #1354
-  - #1349
+  - ♿(frontend) enable enter key to open documentss #1354
+  - ♿(frontend) improve modal a11y: structure, labels, title #1349
+  - ♿improve NVDA navigation in DocShareModal #1396
   - ♿ improve accessibility by adding landmark roles to layout #1394
   - ♿ add document visible in list and openable via enter key #1365
   - ♿ add pdf outline property to enable bookmarks display #1368
@@ -29,19 +30,14 @@ and this project adheres to
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
   - ♿ update labels and shared document icon accessibility #1442
 
-
 ### Fixed
 
 - 🐛(backend) duplicate sub docs as root for reader users
 - ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
+- 🛂(frontend) block editing title when not allowed #1412
 - 🐛(frontend) scroll back to top when navigate to a document #1406
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿improve NVDA navigation in DocShareModal #1396
 
 ## [3.7.0] - 2025-09-12
 

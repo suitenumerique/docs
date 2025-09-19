@@ -9,7 +9,7 @@ import {
 
 export type Role = 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
-export type LinkRole = 'Reading' | 'Edition';
+export type LinkRole = 'Reading' | 'Editing';
 
 export const addNewMember = async (
   page: Page,
@@ -88,11 +88,17 @@ export const updateRoleUser = async (
  * @param docTitle The title of the document (optional).
  * @returns An object containing the other browser, context, and page.
  */
-export const connectOtherUserToDoc = async (
-  browserName: BrowserName,
-  docUrl: string,
-  docTitle?: string,
-) => {
+export const connectOtherUserToDoc = async ({
+  browserName,
+  docUrl,
+  docTitle,
+  withoutSignIn,
+}: {
+  browserName: BrowserName;
+  docUrl: string;
+  docTitle?: string;
+  withoutSignIn?: boolean;
+}) => {
   const otherBrowserName = BROWSERS.find((b) => b !== browserName);
   if (!otherBrowserName) {
     throw new Error('No alternative browser found');
@@ -111,15 +117,16 @@ export const connectOtherUserToDoc = async (
   const otherPage = await otherContext.newPage();
   await otherPage.goto(docUrl);
 
-  await otherPage
-    .getByRole('main', { name: 'Main content' })
-    .getByLabel('Login')
-    .click({
-      timeout: 15000,
-    });
+  if (!withoutSignIn) {
+    await otherPage
+      .getByRole('main', { name: 'Main content' })
+      .getByLabel('Login')
+      .click({
+        timeout: 15000,
+      });
 
-  await keyCloakSignIn(otherPage, otherBrowserName, false);
-
+    await keyCloakSignIn(otherPage, otherBrowserName, false);
+  }
   if (docTitle) {
     await verifyDocName(otherPage, docTitle);
   }
