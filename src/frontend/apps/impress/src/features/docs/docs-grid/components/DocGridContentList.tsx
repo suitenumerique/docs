@@ -141,7 +141,7 @@ export const DraggableDocGridContentList = ({
       return t('You must be the owner to move the document');
     }
     if (!canDrop) {
-      return t('You must be at least the editor of the target document');
+      return t('You must be at least the administrator of the target document');
     }
 
     return selectedDoc?.title || t('Unnamed document');
