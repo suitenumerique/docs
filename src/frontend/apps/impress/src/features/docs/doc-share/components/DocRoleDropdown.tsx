@@ -125,13 +125,7 @@ export const DocRoleDropdown = ({
         },
       ]}
     >
-      <Text
-        $theme="primary"
-        $variation="800"
-        $css={css`
-          font-family: Arial, Helvetica, sans-serif;
-        `}
-      >
+      <Text $theme="primary" $variation="800">
         {transRole(currentRole)}
       </Text>
     </DropdownMenu>
