@@ -11,6 +11,7 @@ import {
   KEY_DOC,
   KEY_LIST_DOC,
   useDocStore,
+  useIsCollaborativeEditable,
   useTrans,
   useUpdateDoc,
 } from '@/docs/doc-management';
@@ -21,7 +22,10 @@ interface DocTitleProps {
 }
 
 export const DocTitle = ({ doc }: DocTitleProps) => {
-  if (!doc.abilities.partial_update) {
+  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+
+  if (readOnly) {
     return <DocTitleText />;
   }
 
