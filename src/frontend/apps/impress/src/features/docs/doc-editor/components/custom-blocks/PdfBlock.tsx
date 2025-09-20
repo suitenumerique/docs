@@ -55,14 +55,15 @@ export const PdfBlock = createReactBlockSpec(
                 <Box
                   $display="flex"
                   $align="center"
-                  $justify="center"
+                  className="bn-file-name-with-icon"
                   $direction="row"
                   $gap="1rem"
                 >
-                  <Icon iconName="picture_as_pdf" $size="18px" />
+                  <Icon iconName="picture_as_pdf" className="btn-file-icon" />
                   <Box
                     as="p"
                     $display="inline-block"
+                    className="bn-file-name"
                     style={{
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
