@@ -6,13 +6,11 @@ import {
   createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon } from '@/components';
 import { useResponsiveStore } from '@/stores';
 
-import { usePdfResizer } from '../../hook/usePdfResizer';
 import { DocsBlockNoteEditor } from '../../types';
 
 type FileBlockEditor = Parameters<typeof AddFileButton>[0]['editor'];
@@ -38,20 +36,6 @@ export const PdfBlock = createReactBlockSpec(
       const { t } = useTranslation();
 
       const { isMobile } = useResponsiveStore();
-
-      const handleResizeEnd = useCallback(
-        (width: number) => {
-          editor.updateBlock(block, {
-            props: { previewWidth: width },
-          });
-        },
-        [editor, block],
-      );
-
-      const { wrapperRef, pdfWidth, handlePointerDown } = usePdfResizer(
-        block.props.previewWidth ?? 100,
-        handleResizeEnd,
-      );
 
       return (
         <div ref={contentRef} className="bn-file-block-content-wrapper">
@@ -90,9 +74,9 @@ export const PdfBlock = createReactBlockSpec(
                   </Box>
                 </Box>
               ) : (
-                <Box ref={wrapperRef} $width="100%" $position="relative">
+                <Box $width="100%" $position="relative">
                   <Box
-                    $width={`${pdfWidth}%`}
+                    $width={`${block.props.previewWidth ?? 100}%`}
                     $height="500px"
                     $position="relative"
                     $css={`
@@ -108,26 +92,6 @@ export const PdfBlock = createReactBlockSpec(
                       contentEditable={false}
                       draggable={false}
                       onClick={() => editor.setTextCursorPosition(block)}
-                    />
-                    {/* Right-edge drag handle */}
-                    <div
-                      role="separator"
-                      aria-orientation="vertical"
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        right: -4,
-                        width: 4,
-                        height: '7.5rem',
-                        borderRadius: '2px',
-                        background: 'gray',
-                        cursor: 'ew-resize',
-                        zIndex: 1,
-                        touchAction: 'none',
-                        transform: 'translateY(-50%)',
-                      }}
-                      onPointerDown={handlePointerDown}
-                      onDragStart={(e) => e.preventDefault()}
                     />
                   </Box>
                 </Box>
