@@ -15,6 +15,7 @@ and this project adheres to
   - ♿ improve accessibility by adding landmark roles to layout #1394
   - ♿ add document visible in list and openable via enter key #1365
   - ♿ add pdf outline property to enable bookmarks display #1368
+- ✨(frontend) add pdf block to the editor #1293
 
 ### Fixed
 
