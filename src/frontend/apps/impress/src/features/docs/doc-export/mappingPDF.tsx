@@ -6,7 +6,6 @@ import {
   blockMappingHeadingPDF,
   blockMappingImagePDF,
   blockMappingParagraphPDF,
-  blockMappingPdfPDF,
   blockMappingQuotePDF,
   blockMappingTablePDF,
 } from './blocks-mapping';
@@ -24,7 +23,10 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
-    pdf: blockMappingPdfPDF,
+    // We're using the file block mapping for PDF blocks
+    // The types don't match exactly but the implementation is compatible
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    pdf: pdfDefaultSchemaMappings.blockMapping.file as any,
   },
   inlineContentMapping: {
     ...pdfDefaultSchemaMappings.inlineContentMapping,

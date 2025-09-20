@@ -5,7 +5,6 @@ import {
   blockMappingCalloutDocx,
   blockMappingDividerDocx,
   blockMappingImageDocx,
-  blockMappingPdfDocx,
   blockMappingQuoteDocx,
 } from './blocks-mapping';
 import { inlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
@@ -17,7 +16,10 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     ...docxDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutDocx,
     divider: blockMappingDividerDocx,
-    pdf: blockMappingPdfDocx,
+    // We're using the file block mapping for PDF blocks
+    // The types don't match exactly but the implementation is compatible
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+    pdf: docxDefaultSchemaMappings.blockMapping.file as any,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
   },
