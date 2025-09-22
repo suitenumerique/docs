@@ -21,8 +21,11 @@ class Command(BaseCommand):
         """Launch and log search index generation."""
         logger.info("Starting to regenerate Find index...")
         start = time.perf_counter()
-
-        FindDocumentIndexer().index()
+        count = FindDocumentIndexer().index()
 
         duration = time.perf_counter() - start
-        logger.info("Search index regenerated in %.2f seconds.", duration)
+        logger.info(
+            "Search index regenerated from %d document(s) in %.2f seconds.",
+            count,
+            duration,
+        )
