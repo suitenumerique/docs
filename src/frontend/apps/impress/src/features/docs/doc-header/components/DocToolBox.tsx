@@ -136,7 +136,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
     },
-    ...(emoji
+    ...(emoji && doc.abilities.partial_update
       ? [
           {
             label: t('Remove emoji'),

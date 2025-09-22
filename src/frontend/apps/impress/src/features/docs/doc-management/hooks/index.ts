@@ -5,3 +5,4 @@ export * from './useDocTitleUpdate';
 export * from './useDocUtils';
 export * from './useIsCollaborativeEditable';
 export * from './useTrans';
+export * from './useDocTitleUpdate';

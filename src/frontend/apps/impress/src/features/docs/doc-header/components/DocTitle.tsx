@@ -65,7 +65,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
     (inputText: string) => {
       const sanitizedTitle = updateDocTitle(
         doc,
-        emoji ? `${emoji} ${inputText.trim()}` : inputText.trim(),
+        emoji ? `${emoji} ${inputText}` : inputText,
       );
       const { titleWithoutEmoji: sanitizedTitleWithoutEmoji } =
         getEmojiAndTitle(sanitizedTitle);
@@ -90,26 +90,33 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
     <Box
       $direction="row"
       $align="flex-end"
-      $gap={spacingsTokens['s']}
+      $gap={spacingsTokens['xs']}
       $minHeight="40px"
     >
       <Tooltip content={t('Document emoji')} aria-hidden={true} placement="top">
         <Box
           $css={css`
-            height: 58px;
+            height: 36px;
+            padding: 4px;
+            padding-top: 3px;
             cursor: pointer;
+            &:hover {
+              background-color: ${colorsTokens['greyscale-100']};
+              border-radius: 4px;
+            }
+            transition: background-color 0.2s ease-in-out;
           `}
         >
           <DocIcon
-            emojiPicker
+            withEmojiPicker={doc.abilities.partial_update}
             docId={doc.id}
             title={doc.title}
             emoji={emoji}
-            $size="50px"
+            $size="25px"
             defaultIcon={
               <SimpleFileIcon
-                width="50px"
-                height="50px"
+                width="25px"
+                height="25px"
                 aria-hidden="true"
                 aria-label={t('Simple document icon')}
                 color={colorsTokens['primary-500']}

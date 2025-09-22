@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add pdf block to the editor #1293
+- ✨(frontend) add an EmojiPicker in the document tree and title #1381
 
 ### Changed
 
@@ -44,14 +45,15 @@ and this project adheres to
 - 🐛(frontend) exclude h4-h6 headings from table of contents #1441
 - 🔒(frontend) prevent readers from changing callout emoji #1449
 
+## Removed
+
+- 🔥(frontend) remove emoji buttons in doc grid #1419
+
 ## [3.7.0] - 2025-09-12
 
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
-- ✨(frontend) doc emojis improvements #1381
-  - add an EmojiPicker in the document tree and document title
-  - remove emoji buttons in menus
 
 ### Changed
 

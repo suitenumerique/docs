@@ -3,7 +3,7 @@ import { createReactInlineContentSpec } from '@blocknote/react';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink, Text } from '@/components';
+import { Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
 import { getEmojiAndTitle, useDoc } from '@/docs/doc-management';
@@ -73,19 +73,20 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
         transition: background-color 0.2s ease-in-out;
       `}
     >
-      <Box
-        $display="inline-block"
+      {emoji ? (
+        <Icon iconName={emoji} $size="16px" />
+      ) : (
+        <SelectedPageIcon width={11.5} />
+      )}
+      <Text
+        $weight="500"
+        spellCheck="false"
+        $size="16px"
+        $display="inline"
         $css={css`
-          margin-right: 0.3rem;
+          margin-left: 0.3rem;
         `}
       >
-        {emoji ? (
-          <Icon iconName={emoji} $size="16px" />
-        ) : (
-          <SelectedPageIcon width={11.5} />
-        )}
-      </Box>
-      <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
         {titleWithoutEmoji}
       </Text>
     </StyledLink>
