@@ -143,6 +143,10 @@ test.describe('Doc Header', () => {
     await goToGridDoc(page);
 
     await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText('Mocked document');
+
+    await expect(
       page.getByRole('button', { name: 'Export the document' }),
     ).toBeVisible();
 
@@ -217,6 +221,10 @@ test.describe('Doc Header', () => {
     await goToGridDoc(page);
 
     await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText('Mocked document');
+
+    await expect(
       page.getByRole('button', { name: 'Export the document' }),
     ).toBeVisible();
     await page.getByLabel('Open the document options').click();
@@ -281,6 +289,10 @@ test.describe('Doc Header', () => {
     await mockedAccesses(page);
 
     await goToGridDoc(page);
+
+    await expect(
+      page.getByRole('heading', { name: 'Mocked document' }),
+    ).toBeVisible();
 
     await expect(
       page.getByRole('button', { name: 'Export the document' }),

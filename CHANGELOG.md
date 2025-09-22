@@ -12,6 +12,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - #1354
+  - #1349
   - ♿ improve accessibility by adding landmark roles to layout #1394
   - ♿ add document visible in list and openable via enter key #1365
   - ♿ add pdf outline property to enable bookmarks display #1368
@@ -23,14 +24,13 @@ and this project adheres to
 - ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
+- 🛂(frontend) block editing title when not allowed #1412
 
 ## [3.7.0] - 2025-09-12
 
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
-- ♿(frontend) improve accessibility:
-  - #1349
 
 ### Changed
 
