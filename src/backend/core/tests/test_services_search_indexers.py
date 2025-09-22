@@ -304,7 +304,7 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
         access = factories.UserDocumentAccessFactory(document=document)
         expected_user_subs[str(document.id)] = str(access.user.sub)
 
-    FindDocumentIndexer().index()
+    assert FindDocumentIndexer().index() == 5
 
     # Should be 3 batches: 2 + 2 + 1
     assert mock_push.call_count == 3
@@ -329,6 +329,34 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
 
 @patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_ignore_empty_documents(mock_push):
+    """
+    Documents indexing should be processed in batches,
+    and only the access data relevant to each batch should be used.
+    """
+    document = factories.DocumentFactory()
+    factories.DocumentFactory(content="", title="")
+    empty_title = factories.DocumentFactory(title="")
+    empty_content = factories.DocumentFactory(content="")
+
+    assert FindDocumentIndexer().index() == 3
+
+    assert mock_push.call_count == 1
+
+    # Make sure only not eempty documents are indexed
+    results = {doc["id"] for doc in mock_push.call_args[0][0]}
+    assert results == {
+        str(d.id)
+        for d in (
+            document,
+            empty_content,
+            empty_title,
+        )
+    }
+
+
+@patch.object(FindDocumentIndexer, "push")
+@pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_link_reach(mock_push):
     """Document accesses and reach should take into account ancestors link reaches."""
     great_grand_parent = factories.DocumentFactory(link_reach="restricted")
@@ -338,7 +366,7 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, link_reach="public")
     document = factories.DocumentFactory(parent=parent, link_reach="restricted")
 
-    FindDocumentIndexer().index()
+    assert FindDocumentIndexer().index() == 4
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 4
@@ -358,7 +386,7 @@ def test_services_search_indexers_ancestors_users(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, users=[user_p])
     document = factories.DocumentFactory(parent=parent, users=[user_d])
 
-    FindDocumentIndexer().index()
+    assert FindDocumentIndexer().index() == 3
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
@@ -379,7 +407,7 @@ def test_services_search_indexers_ancestors_teams(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, teams=["team_p"])
     document = factories.DocumentFactory(parent=parent, teams=["team_d"])
 
-    FindDocumentIndexer().index()
+    assert FindDocumentIndexer().index() == 3
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
