@@ -146,6 +146,8 @@ class BaseDocumentIndexer(ABC):
         Fetch documents in batches, serialize them, and push to the search backend.
         """
         last_id = 0
+        count = 0
+
         while True:
             documents_batch = list(
                 models.Document.objects.filter(
@@ -163,9 +165,13 @@ class BaseDocumentIndexer(ABC):
             serialized_batch = [
                 self.serialize_document(document, accesses_by_document_path)
                 for document in documents_batch
-                if document.content
+                if document.content or document.title
             ]
+
             self.push(serialized_batch)
+            count += len(serialized_batch)
+
+        return count
 
     @abstractmethod
     def serialize_document(self, document, accesses):
