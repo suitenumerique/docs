@@ -171,12 +171,12 @@ test.describe('Document list members', () => {
     });
 
     await currentUserRole.click();
-    await page.getByLabel('Administrator').click();
+    await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
     await currentUserRole.click();
-    await page.getByLabel('Reader').click();
+    await page.getByRole('menuitem', { name: 'Reader' }).click();
     await list.click();
     await expect(currentUserRole).toBeHidden();
   });

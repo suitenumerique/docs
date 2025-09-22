@@ -90,7 +90,7 @@ test.describe('Doc Header', () => {
     const [randomDoc] = await createDoc(page, 'doc-delete', browserName, 1);
 
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Delete document').click();
+    await page.getByRole('menuitem', { name: 'Delete document' }).click();
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
@@ -148,7 +148,9 @@ test.describe('Doc Header', () => {
 
     await page.getByLabel('Open the document options').click();
 
-    await expect(page.getByLabel('Delete document')).toBeDisabled();
+    await expect(
+      page.getByRole('menuitem', { name: 'Delete document' }),
+    ).toBeDisabled();
 
     // Click somewhere else to close the options
     await page.click('body', { position: { x: 0, y: 0 } });
@@ -221,7 +223,9 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
-    await expect(page.getByLabel('Delete document')).toBeDisabled();
+    await expect(
+      page.getByRole('menuitem', { name: 'Delete document' }),
+    ).toBeDisabled();
 
     // Click somewhere else to close the options
     await page.click('body', { position: { x: 0, y: 0 } });
@@ -287,7 +291,9 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
-    await expect(page.getByLabel('Delete document')).toBeDisabled();
+    await expect(
+      page.getByRole('menuitem', { name: 'Delete document' }),
+    ).toBeDisabled();
 
     // Click somewhere else to close the options
     await page.click('body', { position: { x: 0, y: 0 } });
@@ -343,7 +349,7 @@ test.describe('Doc Header', () => {
 
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Copy as Markdown').click();
+    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
     await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
     // Test that clipboard is in Markdown format
@@ -377,7 +383,7 @@ test.describe('Doc Header', () => {
 
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Copy as HTML').click();
+    await page.getByRole('menuitem', { name: 'Copy as HTML' }).click();
     await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
     // Test that clipboard is in HTML format
@@ -568,7 +574,7 @@ test.describe('Documents Header mobile', () => {
     await expect(
       page.getByRole('menuitem', { name: 'Copy link' }),
     ).toBeVisible();
-    await page.getByLabel('Share').click();
+    await page.getByRole('menuitem', { name: 'Share' }).click();
     await expect(page.getByRole('button', { name: 'Copy link' })).toBeVisible();
   });
 
@@ -591,7 +597,7 @@ test.describe('Documents Header mobile', () => {
     await goToGridDoc(page);
 
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Share').click();
+    await page.getByRole('menuitem', { name: 'Share' }).click();
 
     const shareModal = page.getByRole('dialog', {
       name: 'Share modal content',

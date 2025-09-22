@@ -394,7 +394,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    const input = page.locator('.--docs--doc-title-input[role="textbox"]');
+    const input = page.getByRole('textbox', { name: 'Titre du document' });
     await expect(input).toBeVisible();
     await expect(input).toHaveText('', { timeout: 10000 });
     await input.click();
@@ -410,6 +410,10 @@ test.describe('Doc Export', () => {
         name: 'Exporter le document',
       })
       .click();
+
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);

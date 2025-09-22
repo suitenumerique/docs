@@ -224,7 +224,7 @@ test.describe('Doc Tree', () => {
     );
     const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
     await currentUserRole.click();
-    await page.getByLabel('Administrator').click();
+    await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();
 
     await page.getByRole('button', { name: 'Ok' }).click();

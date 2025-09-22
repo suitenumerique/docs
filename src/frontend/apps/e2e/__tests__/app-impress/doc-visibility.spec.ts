@@ -45,17 +45,21 @@ test.describe('Doc Visibility', () => {
 
     await expect(selectVisibility.getByText('Private')).toBeVisible();
 
-    await expect(page.getByLabel('Read only')).toBeHidden();
-    await expect(page.getByLabel('Can read and edit')).toBeHidden();
+    await expect(
+      page.getByRole('menuitem', { name: 'Read only' }),
+    ).toBeHidden();
+    await expect(
+      page.getByRole('menuitem', { name: 'Can read and edit' }),
+    ).toBeHidden();
 
     await selectVisibility.click();
-    await page.getByLabel('Connected').click();
+    await page.getByRole('menuitem', { name: 'Connected' }).click();
 
     await expect(page.getByTestId('doc-access-mode')).toBeVisible();
 
     await selectVisibility.click();
 
-    await page.getByLabel('Public', { exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Public' }).click();
 
     await expect(page.getByTestId('doc-access-mode')).toBeVisible();
   });
@@ -293,7 +297,7 @@ test.describe('Doc Visibility: Public', () => {
     ).toBeVisible();
 
     await page.getByTestId('doc-access-mode').click();
-    await page.getByLabel('Editing').click();
+    await page.getByRole('menuitem', { name: 'Editing' }).click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),
@@ -516,7 +520,7 @@ test.describe('Doc Visibility: Authenticated', () => {
 
     const urlDoc = page.url();
     await page.getByTestId('doc-access-mode').click();
-    await page.getByLabel('Editing').click();
+    await page.getByRole('menuitem', { name: 'Editing' }).click();
 
     await expect(
       page.getByText('The document visibility has been updated.').first(),

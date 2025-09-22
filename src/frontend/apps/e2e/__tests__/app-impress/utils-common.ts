@@ -323,5 +323,5 @@ export async function waitForLanguageSwitch(
 
   await languagePicker.click();
 
-  await page.getByLabel(lang.label).click();
+  await page.getByRole('menuitem', { name: lang.label }).click();
 }

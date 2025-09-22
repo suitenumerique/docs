@@ -100,7 +100,7 @@ test.describe('Doc Editor', () => {
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
-    await page.getByLabel('Connected').click();
+    await page.getByRole('menuitem', { name: 'Connected' }).click();
 
     // Assert that the doc reconnects to the ws
     const wsClose = await wsClosePromise;
