@@ -43,6 +43,7 @@ export const LeftPanel = () => {
             min-width: 300px;
             overflow: hidden;
             border-right: 1px solid ${colorsTokens['greyscale-200']};
+            background-color: ${colorsTokens['greyscale-000']};
           `}
           className="--docs--left-panel-desktop"
         >
