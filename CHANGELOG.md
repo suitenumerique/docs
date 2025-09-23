@@ -1,4 +1,3 @@
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
@@ -21,6 +20,7 @@ and this project adheres to
   - ♿ add document visible in list and openable via enter key #1365
   - ♿ add pdf outline property to enable bookmarks display #1368
   - ♿ hide decorative icons from assistive tech with aria-hidden #1404
+  - ♿ fix rgaa 1.9.1: convert to figure/figcaption structure #1426
   - ♿ remove redundant aria-label to avoid over-accessibility #1420
   - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
@@ -38,7 +38,6 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿improve NVDA navigation in DocShareModal #1396
-
 
 ## [3.7.0] - 2025-09-12
 
