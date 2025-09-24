@@ -19,37 +19,24 @@ logger = logging.getLogger(__name__)
 
 
 @cache
-def default_document_indexer():
-    """Returns default indexer service is enabled and properly configured."""
+def get_document_indexer():
+    """Returns an instance of indexer service if enabled and properly configured."""
+    classpath = settings.SEARCH_INDEXER_CLASS
 
     # For this usecase an empty indexer class is not an issue but a feature.
-    if not getattr(settings, "SEARCH_INDEXER_CLASS", None):
+    if not classpath:
         logger.info("Document indexer is not configured (see SEARCH_INDEXER_CLASS)")
         return None
 
     try:
-        return get_document_indexer_class()()
+        indexer_class = import_string(settings.SEARCH_INDEXER_CLASS)
+        return indexer_class()
+    except ImportError as err:
+        logger.error("SEARCH_INDEXER_CLASS setting is not valid : %s", err)
     except ImproperlyConfigured as err:
         logger.error("Document indexer is not properly configured : %s", err)
-        return None
 
-
-@cache
-def get_document_indexer_class():
-    """Return the indexer backend class based on the settings."""
-    classpath = settings.SEARCH_INDEXER_CLASS
-
-    if not classpath:
-        raise ImproperlyConfigured(
-            "SEARCH_INDEXER_CLASS must be set in Django settings."
-        )
-
-    try:
-        return import_string(settings.SEARCH_INDEXER_CLASS)
-    except ImportError as err:
-        raise ImproperlyConfigured(
-            f"SEARCH_INDEXER_CLASS setting is not valid : {err}"
-        ) from err
+    return None
 
 
 def get_batch_accesses_by_users_and_teams(paths):
@@ -100,9 +87,11 @@ def get_visited_document_ids_of(queryset, user):
             ancestors_deleted_at__isnull=True,
         )
         .filter(pk__in=Subquery(qs.values("document_id")))
+        .order_by("pk")
+        .distinct("pk")
     )
 
-    return list({str(id) for id in docs.values_list("pk", flat=True)})
+    return [str(id) for id in docs.values_list("pk", flat=True)]
 
 
 class BaseDocumentIndexer(ABC):
