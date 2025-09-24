@@ -5,7 +5,7 @@ Unit test for `index` command.
 from operator import itemgetter
 from unittest import mock
 
-from django.core.management import call_command
+from django.core.management import CommandError, call_command
 from django.db import transaction
 
 import pytest
@@ -51,3 +51,15 @@ def test_index():
             ],
             key=itemgetter("id"),
         )
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("indexer_settings")
+def test_index_improperly_configured(indexer_settings):
+    """The command should raise an exception if the indexer is not configured"""
+    indexer_settings.SEARCH_INDEXER_CLASS = None
+
+    with pytest.raises(CommandError) as err:
+        call_command("index")
+
+    assert str(err.value) == "The indexer is not enabled or properly configured."
