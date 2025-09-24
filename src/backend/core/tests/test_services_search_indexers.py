@@ -16,8 +16,7 @@ from core import factories, models, utils
 from core.services.search_indexers import (
     BaseDocumentIndexer,
     FindDocumentIndexer,
-    default_document_indexer,
-    get_document_indexer_class,
+    get_document_indexer,
     get_visited_document_ids_of,
 )
 
@@ -37,41 +36,13 @@ class FakeDocumentIndexer(BaseDocumentIndexer):
         return {}
 
 
-def test_services_search_indexer_class_is_empty(indexer_settings):
-    """
-    Should raise ImproperlyConfigured if SEARCH_INDEXER_CLASS is None or empty.
-    """
-    indexer_settings.SEARCH_INDEXER_CLASS = None
-
-    with pytest.raises(ImproperlyConfigured) as exc_info:
-        get_document_indexer_class()
-
-    assert "SEARCH_INDEXER_CLASS must be set in Django settings." in str(exc_info.value)
-
-    indexer_settings.SEARCH_INDEXER_CLASS = ""
-
-    # clear cache again
-    get_document_indexer_class.cache_clear()
-
-    with pytest.raises(ImproperlyConfigured) as exc_info:
-        get_document_indexer_class()
-
-    assert "SEARCH_INDEXER_CLASS must be set in Django settings." in str(exc_info.value)
-
-
 def test_services_search_indexer_class_invalid(indexer_settings):
     """
     Should raise RuntimeError if SEARCH_INDEXER_CLASS cannot be imported.
     """
     indexer_settings.SEARCH_INDEXER_CLASS = "unknown.Unknown"
 
-    with pytest.raises(ImproperlyConfigured) as exc_info:
-        get_document_indexer_class()
-
-    assert (
-        "SEARCH_INDEXER_CLASS setting is not valid : No module named 'unknown'"
-        in str(exc_info.value)
-    )
+    assert get_document_indexer() is None
 
 
 def test_services_search_indexer_class(indexer_settings):
@@ -82,8 +53,9 @@ def test_services_search_indexer_class(indexer_settings):
         "core.tests.test_services_search_indexers.FakeDocumentIndexer"
     )
 
-    assert get_document_indexer_class() == import_string(
-        "core.tests.test_services_search_indexers.FakeDocumentIndexer"
+    assert isinstance(
+        get_document_indexer(),
+        import_string("core.tests.test_services_search_indexers.FakeDocumentIndexer"),
     )
 
 
@@ -95,28 +67,28 @@ def test_services_search_indexer_is_configured(indexer_settings):
     indexer_settings.SEARCH_INDEXER_CLASS = None
 
     # None
-    default_document_indexer.cache_clear()
-    assert not default_document_indexer()
+    get_document_indexer.cache_clear()
+    assert not get_document_indexer()
 
     # Empty
     indexer_settings.SEARCH_INDEXER_CLASS = ""
 
-    default_document_indexer.cache_clear()
-    assert not default_document_indexer()
+    get_document_indexer.cache_clear()
+    assert not get_document_indexer()
 
     # Valid class
     indexer_settings.SEARCH_INDEXER_CLASS = (
         "core.services.search_indexers.FindDocumentIndexer"
     )
 
-    default_document_indexer.cache_clear()
-    assert default_document_indexer() is not None
+    get_document_indexer.cache_clear()
+    assert get_document_indexer() is not None
 
     indexer_settings.SEARCH_INDEXER_URL = ""
 
     # Invalid url
-    default_document_indexer.cache_clear()
-    assert not default_document_indexer()
+    get_document_indexer.cache_clear()
+    assert not get_document_indexer()
 
 
 def test_services_search_indexer_url_is_none(indexer_settings):

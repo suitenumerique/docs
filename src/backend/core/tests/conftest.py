@@ -34,12 +34,10 @@ def indexer_settings_fixture(settings):
 
     # pylint: disable-next=import-outside-toplevel
     from core.services.search_indexers import (  # noqa: PLC0415
-        default_document_indexer,
-        get_document_indexer_class,
+        get_document_indexer,
     )
 
-    default_document_indexer.cache_clear()
-    get_document_indexer_class.cache_clear()
+    get_document_indexer.cache_clear()
 
     settings.SEARCH_INDEXER_CLASS = "core.services.search_indexers.FindDocumentIndexer"
     settings.SEARCH_INDEXER_SECRET = "ThisIsAKeyForTest"
@@ -51,5 +49,4 @@ def indexer_settings_fixture(settings):
     yield settings
 
     # clear cache to prevent issues with other tests
-    default_document_indexer.cache_clear()
-    get_document_indexer_class.cache_clear()
+    get_document_indexer.cache_clear()
