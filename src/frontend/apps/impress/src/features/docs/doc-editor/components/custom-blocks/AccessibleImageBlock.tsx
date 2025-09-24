@@ -10,6 +10,7 @@ import {
   imageRender,
   imageToExternalHTML,
 } from '@blocknote/core';
+import { t } from 'i18next';
 
 type ImageBlockConfig = typeof imageBlockConfig;
 
@@ -77,7 +78,7 @@ export const accessibleImageRender = (
         figureElement.setAttribute('role', 'img');
         figureElement.setAttribute(
           'aria-label',
-          `Image: ${figcaptionElement.textContent}`,
+          t(`Image: {{title}}`, { title: figcaptionElement.textContent }),
         );
       }
 
