@@ -10,13 +10,10 @@ from impress.celery_app import app
 logger = getLogger(__file__)
 
 
-def document_indexer_debounce_key(document_id):
-    """Returns debounce cache key"""
-    return f"doc-indexer-debounce-{document_id}"
-
-
-def incr_counter(key):
+def indexer_debounce_lock(document_id):
     """Increase or reset counter"""
+    key = f"doc-indexer-debounce-{document_id}"
+
     try:
         return cache.incr(key)
     except ValueError:
@@ -24,8 +21,10 @@ def incr_counter(key):
         return 1
 
 
-def decr_counter(key):
+def indexer_debounce_release(document_id):
     """Decrease or reset counter"""
+    key = f"doc-indexer-debounce-{document_id}"
+
     try:
         return cache.decr(key)
     except ValueError:
@@ -36,24 +35,26 @@ def decr_counter(key):
 @app.task
 def document_indexer_task(document_id):
     """Celery Task : Sends indexation query for a document."""
-    key = document_indexer_debounce_key(document_id)
+    # Prevents some circular imports
+    # pylint: disable=import-outside-toplevel
+    from core import models  # noqa : PLC0415
+    from core.services.search_indexers import (  # noqa : PLC0415
+        get_batch_accesses_by_users_and_teams,
+        get_document_indexer,
+    )
 
     # check if the counter : if still up, skip the task. only the last one
     # within the countdown delay will do the query.
-    if decr_counter(key) > 0:
+    if indexer_debounce_release(document_id) > 0:
         logger.info("Skip document %s indexation", document_id)
         return
 
-    # Prevents some circular imports
-    # pylint: disable=import-outside-toplevel
-    from core import models  # noqa: PLC0415
-    from core.services.search_indexers import (  # noqa: PLC0415
-        get_batch_accesses_by_users_and_teams,
-        get_document_indexer_class,
-    )
+    indexer = get_document_indexer()
+
+    if indexer is None:
+        return
 
     doc = models.Document.objects.get(pk=document_id)
-    indexer = get_document_indexer_class()()
     accesses = get_batch_accesses_by_users_and_teams((doc.path,))
 
     data = indexer.serialize_document(document=doc, accesses=accesses)
@@ -69,11 +70,11 @@ def trigger_document_indexer(document):
     Args:
         document (Document): The document instance.
     """
-    if document.deleted_at or document.ancestors_deleted_at:
-        return
+    countdown = settings.SEARCH_INDEXER_COUNTDOWN
 
-    key = document_indexer_debounce_key(document.pk)
-    countdown = getattr(settings, "SEARCH_INDEXER_COUNTDOWN", 1)
+    # DO NOT create a task if indexation if disabled
+    if not settings.SEARCH_INDEXER_CLASS:
+        return
 
     logger.info(
         "Add task for document %s indexation in %.2f seconds",
@@ -83,6 +84,6 @@ def trigger_document_indexer(document):
 
     # Each time this method is called during the countdown, we increment the
     # counter and each task decrease it, so the index be run only once.
-    incr_counter(key)
+    indexer_debounce_lock(document.pk)
 
     document_indexer_task.apply_async(args=[document.pk], countdown=countdown)
