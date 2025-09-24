@@ -49,8 +49,6 @@ export const LeftPanelTargetFilters = () => {
 
   return (
     <Box
-      as="nav"
-      aria-label={t('Document sections')}
       $justify="center"
       $padding={{ horizontal: 'sm' }}
       $gap={spacingsTokens['2xs']}
