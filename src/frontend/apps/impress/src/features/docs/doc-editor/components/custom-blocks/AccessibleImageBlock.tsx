@@ -58,6 +58,7 @@ export const accessibleImageRender = (
       if (styleAttr) {
         figureElement.setAttribute('style', styleAttr);
       }
+      figureElement.style.setProperty('margin', '0');
 
       Array.from(dom.children).forEach((child) => {
         figureElement.appendChild(child.cloneNode(true));
