@@ -66,7 +66,7 @@ export const SimpleDocItem = ({
         {isPinned ? (
           <PinnedDocumentIcon
             aria-hidden="true"
-            aria-label={t('Pin document icon')}
+            data-testid="doc-pinned-icon"
             color={colorsTokens['primary-500']}
           />
         ) : (
@@ -75,7 +75,7 @@ export const SimpleDocItem = ({
             defaultIcon={
               <SimpleFileIcon
                 aria-hidden="true"
-                aria-label={t('Simple document icon')}
+                data-testid="doc-simple-icon"
                 color={colorsTokens['primary-500']}
               />
             }

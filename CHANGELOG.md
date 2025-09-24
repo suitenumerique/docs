@@ -18,6 +18,7 @@ and this project adheres to
   - ♿ add pdf outline property to enable bookmarks display #1368
   - ♿ hide decorative icons from assistive tech with aria-hidden #1404
   - ♿ remove redundant aria-label to avoid over-accessibility #1420
+  - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
 

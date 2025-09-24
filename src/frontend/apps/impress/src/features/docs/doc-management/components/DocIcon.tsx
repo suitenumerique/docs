@@ -1,5 +1,3 @@
-import { useTranslation } from 'react-i18next';
-
 import { Text, TextType } from '@/components';
 
 type DocIconProps = TextType & {
@@ -15,8 +13,6 @@ export const DocIcon = ({
   $weight = '400',
   ...textProps
 }: DocIconProps) => {
-  const { t } = useTranslation();
-
   if (!emoji) {
     return <>{defaultIcon}</>;
   }
@@ -28,7 +24,7 @@ export const DocIcon = ({
       $variation={$variation}
       $weight={$weight}
       aria-hidden="true"
-      aria-label={t('Document emoji icon')}
+      data-testid="doc-emoji-icon"
     >
       {emoji}
     </Text>

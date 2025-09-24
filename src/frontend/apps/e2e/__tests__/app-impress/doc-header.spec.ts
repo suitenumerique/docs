@@ -75,15 +75,15 @@ test.describe('Doc Header', () => {
     // Check the tree
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText('Hello Emoji World')).toBeVisible();
-    await expect(docTree.getByLabel('Document emoji icon')).toBeVisible();
-    await expect(docTree.getByLabel('Simple document icon')).toBeHidden();
+    await expect(docTree.getByTestId('doc-emoji-icon')).toBeVisible();
+    await expect(docTree.getByTestId('doc-simple-icon')).toBeHidden();
 
     await page.getByTestId('home-button').click();
 
     // Check the documents grid
     const gridRow = await getGridRow(page, 'Hello Emoji World');
-    await expect(gridRow.getByLabel('Document emoji icon')).toBeVisible();
-    await expect(gridRow.getByLabel('Simple document icon')).toBeHidden();
+    await expect(gridRow.getByTestId('doc-emoji-icon')).toBeVisible();
+    await expect(gridRow.getByTestId('doc-simple-icon')).toBeHidden();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {
@@ -456,7 +456,7 @@ test.describe('Doc Header', () => {
     const row = await getGridRow(page, docTitle);
 
     // Check is pinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeVisible();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
     const leftPanelFavorites = page.getByTestId('left-panel-favorites');
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
@@ -475,7 +475,7 @@ test.describe('Doc Header', () => {
     await page.goto('/');
 
     // Check is unpinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeHidden();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 

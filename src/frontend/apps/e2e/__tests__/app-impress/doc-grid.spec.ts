@@ -117,7 +117,7 @@ test.describe('Document grid item options', () => {
     await page.getByText('push_pin').click();
 
     // Check is pinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeVisible();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
     const leftPanelFavorites = page.getByTestId('left-panel-favorites');
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
@@ -126,7 +126,7 @@ test.describe('Document grid item options', () => {
     await page.getByText('Unpin').click();
 
     // Check is unpinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeHidden();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
