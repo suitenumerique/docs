@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import io
 import mimetypes
+import posixpath
 import re
 import uuid
 import zipfile
 from typing import Iterable
-import posixpath
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -17,6 +17,47 @@ from lasuite.malware_detection import malware_detection
 
 from core import enums, models
 from core.services.converter_services import YdocConverter
+
+
+def _preprocess_outline_markdown(markdown: str) -> str:
+    """Pre-process Outline markdown to handle unsupported BlockNote.js elements.
+
+    Conversions:
+    - H4 (####) → H3 with marker
+    - H5 (#####) → Bold paragraph with ▸ prefix
+    - H6 (######) → Paragraph with ▪ prefix
+    - Horizontal rules (---) → [DIVIDER] marker for post-processing
+    - Task lists (- [ ], - [x]) → Standard checkbox format
+    """
+    lines = markdown.split('\n')
+    processed_lines = []
+
+    for line in lines:
+        # Convert H6 (######) to paragraph with prefix
+        if line.startswith('###### '):
+            processed_lines.append('▪ ' + line[7:].strip())
+        # Convert H5 (#####) to bold paragraph with prefix
+        elif line.startswith('##### '):
+            processed_lines.append('**▸ ' + line[6:].strip() + '**')
+        # Convert H4 (####) to H3 with marker
+        elif line.startswith('#### '):
+            # Add a subtle marker to indicate this was H4
+            processed_lines.append('### ' + line[5:].strip() + ' [H4]')
+        # Convert horizontal rules to divider marker
+        elif line.strip() in ['---', '***', '___'] and len(line.strip()) >= 3:
+            # Use a special marker that won't conflict with content
+            processed_lines.append('[DIVIDER_BLOCK]')
+        # Convert task lists to checkbox format
+        elif re.match(r'^\s*- \[ \]', line):
+            # Unchecked task
+            processed_lines.append(re.sub(r'^(\s*)- \[ \]', r'\1- [ ]', line))
+        elif re.match(r'^\s*- \[x\]', line):
+            # Checked task
+            processed_lines.append(re.sub(r'^(\s*)- \[x\]', r'\1- [x]', line))
+        else:
+            processed_lines.append(line)
+
+    return '\n'.join(processed_lines)
 
 
 class OutlineImportError(Exception):
@@ -171,6 +212,9 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
             return match.group(0).replace(url, media_url)
 
         rewritten_md = img_pattern.sub(replace_img_link, raw_md)
+
+        # Pre-process markdown to handle Outline-specific content
+        rewritten_md = _preprocess_outline_markdown(rewritten_md)
 
         try:
             ydoc_b64 = converter.convert(
