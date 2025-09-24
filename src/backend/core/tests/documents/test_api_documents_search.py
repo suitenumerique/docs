@@ -10,7 +10,7 @@ from faker import Faker
 from rest_framework.test import APIClient
 
 from core import factories, models
-from core.services.search_indexers import default_document_indexer
+from core.services.search_indexers import get_document_indexer
 
 fake = Faker()
 pytestmark = pytest.mark.django_db
@@ -54,7 +54,7 @@ def test_api_documents_search_endpoint_is_none(indexer_settings):
     """
     indexer_settings.SEARCH_INDEXER_QUERY_URL = None
 
-    assert default_document_indexer() is None
+    assert get_document_indexer() is None
 
     user = factories.UserFactory()
     document = factories.DocumentFactory(title="alpha")
@@ -130,7 +130,7 @@ def test_api_documents_search_format(indexer_settings):
     """Validate the format of documents as returned by the search view."""
     indexer_settings.SEARCH_INDEXER_QUERY_URL = "http://find/api/v1.0/search"
 
-    assert default_document_indexer() is not None
+    assert get_document_indexer() is not None
 
     user = factories.UserFactory()
 
@@ -193,7 +193,7 @@ def test_api_documents_search_pagination(indexer_settings):
     """Documents should be ordered by descending "updated_at" by default"""
     indexer_settings.SEARCH_INDEXER_QUERY_URL = "http://find/api/v1.0/search"
 
-    assert default_document_indexer() is not None
+    assert get_document_indexer() is not None
 
     user = factories.UserFactory()
 

@@ -50,7 +50,7 @@ from core.services.converter_services import (
     YdocConverter,
 )
 from core.services.search_indexers import (
-    default_document_indexer,
+    get_document_indexer,
     get_visited_document_ids_of,
 )
 from core.tasks.mail import send_ask_for_access_mail
@@ -1076,7 +1076,14 @@ class DocumentViewSet(
     def search(self, request, *args, **kwargs):
         """
         Returns a DRF response containing the filtered, annotated and ordered document list.
-        The filtering allows full text search through the opensearch indexation app "find".
+
+        Applies filtering based on request parameter 'q' from `FindDocumentSerializer`.
+        Depending of the configuration it can be:
+         - A fulltext search through the opensearch indexation app "find" if the backend is
+           enabled (see SEARCH_BACKEND_CLASS)
+         - A filtering by the model field 'title'.
+
+        The ordering is always by the most recent first.
         """
         access_token = request.session.get("oidc_access_token")
         user = request.user
@@ -1084,13 +1091,15 @@ class DocumentViewSet(
         serializer = serializers.FindDocumentSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        indexer = default_document_indexer()
+        indexer = get_document_indexer()
+        text = serializer.validated_data["q"]
 
+        # The indexer is not configured, so we fallback on a simple filter on the
+        # model field 'title'.
         if not indexer:
+            # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
             queryset = self.get_queryset()
-            filterset = DocumentFilter(
-                {"title": serializer.validated_data.get("q", "")}, queryset=queryset
-            )
+            filterset = DocumentFilter({"title": text}, queryset=queryset)
 
             if not filterset.is_valid():
                 raise drf.exceptions.ValidationError(filterset.errors)
@@ -1105,15 +1114,17 @@ class DocumentViewSet(
             )
 
         queryset = models.Document.objects.all()
+
+        # Retrieve the documents ids from Find.
         results = indexer.search(
-            text=serializer.validated_data.get("q", ""),
+            text=text,
             token=access_token,
             visited=get_visited_document_ids_of(queryset, user),
             page=serializer.validated_data.get("page", 1),
             page_size=serializer.validated_data.get("page_size", 20),
         )
 
-        queryset = queryset.filter(pk__in=results)
+        queryset = queryset.filter(pk__in=results).order_by("-updated_at")
 
         return self.get_response_for_queryset(
             queryset,
