@@ -25,19 +25,24 @@ export const accessibleImageRender = (
   const dom = imageRenderComputed.dom;
   const imgSelector = dom.querySelector('img');
 
-  // Set accessibility attributes for the image
-  if (block.props.caption) {
-    // If there's a caption, make the image accessible with the caption as alt text
+  const withCaption =
+    block.props.caption && dom.querySelector('.bn-file-caption');
+
+  const accessibleImageWithCaption = () => {
     imgSelector?.setAttribute('alt', block.props.caption);
     imgSelector?.removeAttribute('aria-hidden');
     imgSelector?.setAttribute('tabindex', '0');
-  } else {
-    // If no caption, keep image decorative
+  };
+
+  const accessibleImage = () => {
     imgSelector?.setAttribute('alt', '');
     imgSelector?.setAttribute('role', 'presentation');
     imgSelector?.setAttribute('aria-hidden', 'true');
     imgSelector?.setAttribute('tabindex', '-1');
-  }
+  };
+
+  // Set accessibility attributes for the image
+  withCaption ? accessibleImageWithCaption() : accessibleImage();
 
   // Fix RGAA 1.9.1: Convert to figure/figcaption structure if caption exists
   if (block.props.caption) {
