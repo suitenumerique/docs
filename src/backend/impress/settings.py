@@ -111,6 +111,9 @@ class Base(Configuration):
     SEARCH_INDEXER_URL = values.Value(
         default=None, environ_name="SEARCH_INDEXER_URL", environ_prefix=None
     )
+    SEARCH_INDEXER_COUNTDOWN = values.IntegerValue(
+        default=1, environ_name="SEARCH_INDEXER_COUNTDOWN", environ_prefix=None
+    )
     SEARCH_INDEXER_SECRET = values.Value(
         default=None, environ_name="SEARCH_INDEXER_SECRET", environ_prefix=None
     )
