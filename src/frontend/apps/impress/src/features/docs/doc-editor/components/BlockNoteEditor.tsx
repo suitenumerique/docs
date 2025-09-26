@@ -13,11 +13,13 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
-import { useAuth } from '@/features/auth';
+import { avatarUrlFromName, useAuth } from '@/features/auth';
 
 import {
   useHeadings,
@@ -33,6 +35,7 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import { cssComments, useComments } from './comments/';
 import {
   AccessibleImageBlock,
   CalloutBlock,
@@ -79,10 +82,12 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
+  const { themeTokens } = useCunninghamTheme();
 
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isConnectedToCollabServer = provider.isSynced;
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+  const canSeeComment = doc.abilities.comment;
 
   useSaveDoc(doc.id, provider.document, !readOnly, isConnectedToCollabServer);
   const { i18n } = useTranslation();
@@ -94,6 +99,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     ? 'Reader'
     : user?.full_name || user?.email || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
+
+  const threadStore = useComments(provider.document, doc, user);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
@@ -147,10 +154,27 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
+      comments: { threadStore },
       dictionary: {
         ...locales[lang as keyof typeof locales],
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
+      },
+      resolveUsers: async (userIds) => {
+        return Promise.resolve(
+          userIds.map((encodedURIUserId) => {
+            const fullName = decodeURIComponent(encodedURIUserId);
+
+            return {
+              id: encodedURIUserId,
+              username: fullName,
+              avatarUrl: avatarUrlFromName(
+                fullName,
+                themeTokens?.font?.families?.base,
+              ),
+            };
+          }),
+        );
       },
       tables: {
         splitCells: true,
@@ -161,7 +185,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [collabName, lang, provider, uploadFile],
+    [collabName, lang, provider, uploadFile, threadStore],
   );
 
   useHeadings(editor);
@@ -180,7 +204,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     <Box
       $padding={{ top: 'md' }}
       $background="white"
-      $css={cssEditor(readOnly)}
+      $css={css`
+        ${cssEditor(readOnly)};
+        ${cssComments(canSeeComment)}
+      `}
       className="--docs--editor-container"
     >
       {errorAttachment && (
@@ -194,11 +221,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       )}
 
       <BlockNoteView
+        className="--docs--main-editor"
         editor={editor}
         formattingToolbar={false}
         slashMenu={false}
         editable={!readOnly}
         theme="light"
+        comments={canSeeComment}
       >
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
@@ -232,7 +261,12 @@ export const BlockNoteEditorVersion = ({
 
   return (
     <Box $css={cssEditor(readOnly)} className="--docs--editor-container">
-      <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
+      <BlockNoteView
+        className="--docs--main-editor"
+        editor={editor}
+        editable={!readOnly}
+        theme="light"
+      />
     </Box>
   );
 };

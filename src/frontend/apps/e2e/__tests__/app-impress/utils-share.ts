@@ -7,14 +7,20 @@ import {
   verifyDocName,
 } from './utils-common';
 
-export type Role = 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader';
+export type Role =
+  | 'Administrator'
+  | 'Owner'
+  | 'Member'
+  | 'Editor'
+  | 'Reader'
+  | 'Commenter';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
-export type LinkRole = 'Reading' | 'Edition';
+export type LinkRole = 'Reading' | 'Edition' | 'Commenting';
 
 export const addNewMember = async (
   page: Page,
   index: number,
-  role: 'Administrator' | 'Owner' | 'Editor' | 'Reader',
+  role: Role,
   fillText: string = 'user.test',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(
