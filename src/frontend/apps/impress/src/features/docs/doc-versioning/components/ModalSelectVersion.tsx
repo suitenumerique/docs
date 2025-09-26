@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Text } from '@/components';
+import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 import { DocEditor } from '@/docs/doc-editor';
 import { Doc } from '@/docs/doc-management';
 
@@ -47,6 +48,7 @@ export const ModalSelectVersion = ({
         closeOnClickOutside={true}
         size={ModalSize.EXTRA_LARGE}
         onClose={onClose}
+        aria-describedby="modal-select-version-title"
       >
         <NoPaddingStyle />
         <Box
@@ -57,6 +59,14 @@ export const ModalSelectVersion = ({
           $maxHeight="calc(100vh - 2em - 12px)"
           $overflow="hidden"
         >
+          <Text
+            as="h1"
+            $margin="0"
+            id="modal-select-version-title"
+            className="sr-only"
+          >
+            {t('Version history')}
+          </Text>
           <Box
             $css={css`
               display: flex;
@@ -114,11 +124,10 @@ export const ModalSelectVersion = ({
                 <Text $size="h6" $variation="1000" $weight="bold">
                   {t('History')}
                 </Text>
-                <Button
+                <ButtonCloseModal
+                  aria-label={t('Close the version history modal')}
                   onClick={onClose}
                   size="nano"
-                  color="primary-text"
-                  icon={<Icon iconName="close" />}
                 />
               </Box>
 

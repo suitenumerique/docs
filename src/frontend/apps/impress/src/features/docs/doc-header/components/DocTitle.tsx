@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { Tooltip } from '@openfun/cunningham-react';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -107,7 +105,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   }, [doc]);
 
   return (
-    <Tooltip content={t('Rename')} placement="top">
+    <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
       <Box
         as="span"
         role="textbox"
@@ -116,7 +114,8 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
         defaultValue={titleDisplay || undefined}
         onKeyDownCapture={handleKeyDown}
         suppressContentEditableWarning={true}
-        aria-label="doc title input"
+        aria-label={`${t('Document title')}`}
+        aria-multiline={false}
         onBlurCapture={(event) =>
           handleTitleSubmit(event.target.textContent || '')
         }

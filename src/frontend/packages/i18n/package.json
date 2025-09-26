@@ -1,6 +1,9 @@
 {
   "name": "packages-i18n",
-  "version": "3.5.0",
+  "version": "3.7.0",
+  "repository": "https://github.com/suitenumerique/docs",
+  "author": "DINUM",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "extract-translation": "yarn extract-translation:impress",
@@ -8,18 +11,19 @@
     "format-deploy": "yarn format-deploy:impress",
     "format-deploy:impress": "node ./format-deploy.mjs --app=impress --output=../../apps/impress/src/i18n/translations.json",
     "format-rebuild-fr:impress": "node ./rebuild-translations.mjs --language=fr --app=impress --output=../../apps/impress/src/i18n/translations.json",
-    "lint": "eslint --ext .js,.ts,.mjs .",
+    "lint": "eslint",
     "test": "jest"
   },
   "dependencies": {
     "@types/jest": "30.0.0",
     "@types/node": "*",
-    "eslint-config-impress": "*",
+    "eslint-plugin-docs": "*",
     "eslint-plugin-import": "2.32.0",
     "i18next-parser": "9.3.0",
-    "jest": "30.0.5",
+    "jest": "30.1.3",
     "ts-jest": "29.4.1",
     "typescript": "*",
     "yargs": "18.0.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

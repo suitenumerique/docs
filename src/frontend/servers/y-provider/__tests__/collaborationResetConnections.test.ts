@@ -58,7 +58,6 @@ describe('Server Tests', () => {
     expect(response.status).toBe(200);
     expect(response.body).toStrictEqual({ message: 'Connections reset' });
 
-    // eslint-disable-next-line jest/unbound-method
     expect(closeConnectionsMock).toHaveBeenCalledOnce();
   });
 });

@@ -143,8 +143,8 @@
   --c--theme--font--weights--bold: 600;
   --c--theme--font--weights--extrabold: 800;
   --c--theme--font--weights--black: 900;
-  --c--theme--font--families--base: marianne;
-  --c--theme--font--families--accent: marianne;
+  --c--theme--font--families--base: sans-serif;
+  --c--theme--font--families--accent: sans-serif;
   --c--theme--font--letterspacings--h1: normal;
   --c--theme--font--letterspacings--h2: normal;
   --c--theme--font--letterspacings--h3: normal;
@@ -297,6 +297,9 @@
   );
   --c--components--button--tertiary-text--color: var(
     --c--theme--colors--primary-600
+  );
+  --c--components--button--tertiary-text--disabled: var(
+    --c--theme--colors--primary-300
   );
   --c--components--button--danger--color-hover: white;
   --c--components--button--danger--background--color: var(
@@ -553,6 +556,8 @@
   --c--theme--logo--widthHeader: 110px;
   --c--theme--logo--widthFooter: 220px;
   --c--theme--logo--alt: gouvernement logo;
+  --c--theme--font--families--base: marianne;
+  --c--theme--font--families--accent: marianne;
   --c--components--la-gaufre: true;
   --c--components--home-proconnect: true;
   --c--components--favicon--ico: /assets/favicon-dsfr.ico;

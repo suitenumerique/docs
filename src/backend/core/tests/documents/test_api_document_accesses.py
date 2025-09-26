@@ -4,6 +4,7 @@ Test document accesses API endpoints for users in impress's core app.
 # pylint: disable=too-many-lines
 
 import random
+from unittest import mock
 from uuid import uuid4
 
 import pytest
@@ -1344,3 +1345,24 @@ def test_api_document_accesses_delete_owners_last_owner_child_team(
 
     assert response.status_code == 204
     assert models.DocumentAccess.objects.count() == 1
+
+
+def test_api_document_accesses_throttling(settings):
+    """Test api document accesses throttling."""
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document_access"] = "2/minute"
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+    factories.UserDocumentAccessFactory(
+        document=document, user=user, role="administrator"
+    )
+    client = APIClient()
+    client.force_login(user)
+    for _i in range(2):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/accesses/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope document_access", "warning"
+        )

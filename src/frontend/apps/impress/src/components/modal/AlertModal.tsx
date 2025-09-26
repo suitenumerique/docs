@@ -2,8 +2,8 @@ import { Button, Modal, ModalSize } from '@openfun/cunningham-react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box } from './Box';
-import { Text } from './Text';
+import { Box } from '../Box';
+import { Text } from '../Text';
 
 export type AlertModalProps = {
   description: ReactNode;
@@ -30,15 +30,23 @@ export const AlertModal = ({
       isOpen={isOpen}
       size={ModalSize.MEDIUM}
       onClose={onClose}
+      aria-describedby="alert-modal-title"
       title={
-        <Text $size="h6" $align="flex-start" $variation="1000">
+        <Text
+          $size="h6"
+          as="h1"
+          $margin="0"
+          id="alert-modal-title"
+          $align="flex-start"
+          $variation="1000"
+        >
           {title}
         </Text>
       }
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={`${t('Cancel')} - ${title}`}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -55,12 +63,11 @@ export const AlertModal = ({
         </>
       }
     >
-      <Box
-        aria-label={t('Confirmation button')}
-        className="--docs--alert-modal"
-      >
+      <Box className="--docs--alert-modal">
         <Box>
-          <Text $variation="600">{description}</Text>
+          <Text $variation="600" as="p">
+            {description}
+          </Text>
         </Box>
       </Box>
     </Modal>

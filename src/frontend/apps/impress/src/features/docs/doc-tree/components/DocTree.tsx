@@ -7,6 +7,7 @@ import {
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
@@ -26,10 +27,16 @@ type DocTreeProps = {
 
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
-  const [rootActionsOpen, setRootActionsOpen] = useState(false);
+  const { isDesktop } = useResponsive();
+  const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const [rootActionsOpen, setRootActionsOpen] = useState(false);
+  const rootIsSelected =
+    !!treeContext?.root?.id &&
+    treeContext?.treeData.selectedNode?.id === treeContext.root.id;
+
+  const { t } = useTranslation();
 
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
@@ -38,11 +45,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const { mutate: moveDoc } = useMoveDoc();
 
   const { data: tree, isFetching } = useDocTree(
+    { docId: currentDoc.id },
     {
-      docId: currentDoc.id,
-    },
-    {
-      enabled: !!!treeContext?.root?.id,
+      enabled: !treeContext?.root?.id,
       queryKey: [KEY_DOC_TREE, { id: currentDoc.id }],
     },
   );
@@ -55,7 +60,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     });
     treeContext?.treeData.handleMove(result);
   };
-
   /**
    * This function resets the tree states.
    */
@@ -63,10 +67,38 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     if (!treeContext?.root?.id) {
       return;
     }
-
     treeContext?.setRoot(null);
     setInitialOpenState(undefined);
   }, [treeContext]);
+
+  const selectRoot = useCallback(() => {
+    if (treeContext?.root) {
+      treeContext.treeData.setSelectedNode(treeContext.root);
+    }
+  }, [treeContext]);
+
+  const navigateToRoot = useCallback(() => {
+    const id = treeContext?.root?.id;
+    if (id) {
+      router.push(`/docs/${id}`);
+    }
+  }, [router, treeContext?.root?.id]);
+
+  const handleRootFocus = useCallback(() => {
+    selectRoot();
+  }, [selectRoot]);
+
+  // activate root document with enter or space
+  const handleRootKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectRoot();
+        navigateToRoot();
+      }
+    },
+    [selectRoot, navigateToRoot],
+  );
 
   /**
    * This effect is used to reset the tree when a new document
@@ -76,7 +108,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     if (!treeContext?.root?.id) {
       return;
     }
-
     const index = findIndexInTree(treeContext.treeData.nodes, currentDoc.id);
     if (index === -1 && currentDoc.id !== treeContext.root?.id) {
       resetStateTree();
@@ -91,7 +122,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     return () => {
       resetStateTree();
     };
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -143,14 +173,23 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     return null;
   }
 
-  const rootIsSelected =
-    treeContext.treeData.selectedNode?.id === treeContext.root.id;
-
   return (
     <Box
+      ref={setTreeRoot}
       data-testid="doc-tree"
       $height="100%"
+      role="tree"
+      aria-label={t('Document tree')}
       $css={css`
+        /* Remove outline from TreeViewItem wrapper elements */
+        .c__tree-view--row {
+          outline: none !important;
+
+          &:focus-visible {
+            outline: none !important;
+          }
+        }
+
         .c__tree-view--container {
           z-index: 1;
           margin-top: -10px;
@@ -169,6 +208,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       >
         <Box
           data-testid="doc-tree-root-item"
+          role="treeitem"
+          aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || t('Untitled document') })}`}
+          aria-selected={rootIsSelected}
+          tabIndex={0}
+          onFocus={handleRootFocus}
+          onKeyDown={handleRootKeyDown}
           $css={css`
             padding: ${spacingsTokens['2xs']};
             border-radius: 4px;
@@ -181,6 +226,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               background-color: var(--c--theme--colors--greyscale-100);
             }
 
+            &:focus-visible {
+              outline: none !important;
+              box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
+              border-radius: 4px;
+            }
+
             .doc-tree-root-item-actions {
               display: 'flex';
               opacity: ${rootActionsOpen ? '1' : '0'};
@@ -189,7 +240,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 opacity: 1;
               }
             }
-            &:hover {
+            &:hover,
+            &:focus-within {
               .doc-tree-root-item-actions {
                 opacity: 1;
               }
@@ -209,6 +261,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               );
               router.push(`/docs/${treeContext?.root?.id}`);
             }}
+            aria-label={`${t('Open root document')}: ${treeContext.root?.title || t('Untitled document')}`}
+            tabIndex={-1} // avoid double tabstop
           >
             <Box $direction="row" $align="center" $width="100%">
               <SimpleDocItem doc={treeContext.root} showAccesses={true} />
@@ -232,30 +286,33 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         </Box>
       </Box>
 
-      {initialOpenState && treeContext.treeData.nodes.length > 0 && (
-        <TreeView
-          initialOpenState={initialOpenState}
-          afterMove={handleMove}
-          selectedNodeId={
-            treeContext.treeData.selectedNode?.id ??
-            treeContext.initialTargetId ??
-            undefined
-          }
-          canDrop={({ parentNode }) => {
-            const parentDoc = parentNode?.data.value as Doc;
-            if (!parentDoc) {
-              return currentDoc.abilities.move && isDesktop;
+      {initialOpenState &&
+        treeContext.treeData.nodes.length > 0 &&
+        treeRoot && (
+          <TreeView
+            dndRootElement={treeRoot}
+            initialOpenState={initialOpenState}
+            afterMove={handleMove}
+            selectedNodeId={
+              treeContext.treeData.selectedNode?.id ??
+              treeContext.initialTargetId ??
+              undefined
             }
-            return parentDoc.abilities.move && isDesktop;
-          }}
-          canDrag={(node) => {
-            const doc = node.value as Doc;
-            return doc.abilities.move && isDesktop;
-          }}
-          rootNodeId={treeContext.root.id}
-          renderNode={DocSubPageItem}
-        />
-      )}
+            canDrop={({ parentNode }) => {
+              const parentDoc = parentNode?.data.value as Doc;
+              if (!parentDoc) {
+                return currentDoc.abilities.move && isDesktop;
+              }
+              return parentDoc.abilities.move && isDesktop;
+            }}
+            canDrag={(node) => {
+              const doc = node.value as Doc;
+              return doc.abilities.move && isDesktop;
+            }}
+            rootNodeId={treeContext.root.id}
+            renderNode={DocSubPageItem}
+          />
+        )}
     </Box>
   );
 };

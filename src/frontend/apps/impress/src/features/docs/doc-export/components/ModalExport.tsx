@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
+import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
 
@@ -75,11 +76,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     setIsExporting(true);
 
-    const title = (doc.title || untitledDocument)
+    const filename = (doc.title || untitledDocument)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s/g, '-');
+
+    const documentTitle = doc.title || untitledDocument;
 
     const html = templateSelected;
     let exportDocument = editor.document;
@@ -97,9 +100,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
 
-      // Inject language for screen reader support
+      // Add language, title and outline properties to improve PDF accessibility and navigation
       const pdfDocument = isValidElement(rawPdfDocument)
-        ? cloneElement(rawPdfDocument, { language: i18next.language })
+        ? cloneElement(rawPdfDocument, {
+            language: i18next.language,
+            title: documentTitle,
+            pageMode: 'useOutlines',
+          })
         : rawPdfDocument;
 
       blobExport = await pdf(pdfDocument).toBlob();
@@ -108,10 +115,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
 
-      blobExport = await exporter.toBlob(exportDocument);
+      blobExport = await exporter.toBlob(exportDocument, {
+        documentOptions: { title: documentTitle },
+        sectionOptions: {},
+      });
     }
 
-    downloadFile(blobExport, `${title}.${format}`);
+    downloadFile(blobExport, `${filename}.${format}`);
 
     toast(
       t('Your {{format}} was downloaded succesfully', {
@@ -131,10 +141,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      hideCloseButton
+      aria-describedby="modal-export-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={t('Cancel the download')}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -143,6 +155,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             {t('Cancel')}
           </Button>
           <Button
+            data-testid="doc-export-download-button"
             aria-label={t('Download')}
             color="primary"
             fullWidth
@@ -155,9 +168,29 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text $size="h6" $variation="1000" $align="flex-start">
-          {t('Download')}
-        </Text>
+        <Box
+          $direction="row"
+          $justify="space-between"
+          $align="center"
+          $width="100%"
+        >
+          <Text
+            as="h1"
+            $margin="0"
+            id="modal-export-title"
+            $size="h6"
+            $variation="1000"
+            $align="flex-start"
+            data-testid="modal-export-title"
+          >
+            {t('Download')}
+          </Text>
+          <ButtonCloseModal
+            aria-label={t('Close the download modal')}
+            onClick={() => onClose()}
+            disabled={isExporting}
+          />
+        </Box>
       }
     >
       <Box
@@ -166,7 +199,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $gap="1rem"
         className="--docs--modal-export-content"
       >
-        <Text $variation="600" $size="sm">
+        <Text $variation="600" $size="sm" as="p">
           {t('Download your document in a .docx or .pdf format.')}
         </Text>
         <Select

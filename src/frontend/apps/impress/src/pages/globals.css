@@ -1,5 +1,6 @@
 @import url('../cunningham/cunningham-style.css');
 @import url('@fontsource/material-icons');
+@import url('@fontsource/material-icons-outlined');
 
 body {
   margin: 0;
@@ -43,8 +44,9 @@ main ::-webkit-scrollbar-thumb:hover,
   outline: inherit;
 }
 
+.material-icons,
 .material-icons-filled {
-  font-family: 'Material Icons', sans-serif;
+  font-family: 'Material Icons Outlined', 'Material Icons', sans-serif;
   font-weight: normal;
   font-style: normal;
   font-size: 24px; /* Preferred icon size */
@@ -69,10 +71,27 @@ main ::-webkit-scrollbar-thumb:hover,
   font-feature-settings: 'liga';
 }
 
+.material-icons-filled {
+  font-family: 'Material Icons', sans-serif;
+}
+
 [data-nextjs-dialog-overlay] {
   display: none !important;
 }
 
 nextjs-portal {
   display: none;
+}
+
+/* Screen reader only - visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }

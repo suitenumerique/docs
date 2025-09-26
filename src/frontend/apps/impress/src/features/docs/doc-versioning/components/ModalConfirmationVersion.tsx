@@ -69,10 +69,11 @@ export const ModalConfirmationVersion = ({
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      aria-describedby="modal-confirmation-version-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={`${t('Cancel')} - ${t('Warning')}`}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -102,20 +103,24 @@ export const ModalConfirmationVersion = ({
       }
       size={ModalSize.SMALL}
       title={
-        <Text $size="h6" $align="flex-start" $variation="1000">
+        <Text
+          as="h1"
+          $margin="0"
+          id="modal-confirmation-version-title"
+          $size="h6"
+          $align="flex-start"
+          $variation="1000"
+        >
           {t('Warning')}
         </Text>
       }
     >
-      <Box
-        aria-label={t('Modal confirmation to restore the version')}
-        className="--docs--modal-confirmation-version"
-      >
+      <Box className="--docs--modal-confirmation-version">
         <Box>
-          <Text $variation="600">
+          <Text $variation="600" as="p">
             {t('Your current document will revert to this version.')}
           </Text>
-          <Text $variation="600">
+          <Text $variation="600" as="p">
             {t('If a member is editing, his works can be lost.')}
           </Text>
         </Box>

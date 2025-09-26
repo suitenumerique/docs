@@ -40,7 +40,6 @@ test.describe('Doc Routing', () => {
   });
 
   test('checks 404 on docs/[id] page', async ({ page }) => {
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(300);
 
     await page.goto('/docs/some-unknown-doc');
@@ -61,32 +60,45 @@ test.describe('Doc Routing', () => {
 
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
 
-    const responsePromise = page.route(
-      /.*\/documents\/.*\/$|users\/me\/$/,
-      async (route) => {
-        const request = route.request();
+    // Wait for the doc link (via its dynamic title) to be visible
+    const docLink = page.getByRole('link', { name: docTitle });
+    await expect(docLink).toBeVisible();
 
-        if (
-          request.method().includes('PATCH') ||
-          request.method().includes('GET')
-        ) {
-          await route.fulfill({
-            status: 401,
-            json: {
-              detail: 'Log in to access the document',
-            },
-          });
-        } else {
-          await route.continue();
-        }
-      },
+    // Intercept GET/PATCH requests to return 401
+    await page.route(/.*\/documents\/.*\/$|users\/me\/$/, async (route) => {
+      const request = route.request();
+      if (
+        request.method().includes('PATCH') ||
+        request.method().includes('GET')
+      ) {
+        await route.fulfill({
+          status: 401,
+          json: { detail: 'Log in to access the document' },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Explicitly wait for a 401 response after clicking
+    const wait401 = page.waitForResponse(
+      (resp) =>
+        resp.status() === 401 &&
+        /\/(documents\/[^/]+\/|users\/me\/)$/.test(resp.url()),
     );
 
-    await page.getByRole('link', { name: '401-doc-parent' }).click();
+    await docLink.click();
+    await wait401;
 
-    await responsePromise;
+    await expect(page.getByText('Log in to access the document.')).toBeVisible({
+      timeout: 10000,
+    });
 
-    await expect(page.getByText('Log in to access the document')).toBeVisible();
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'noindex',
+    );
+    await expect(page).toHaveTitle(/401 Unauthorized - Docs/);
   });
 });
 

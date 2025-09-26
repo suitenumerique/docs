@@ -1,6 +1,7 @@
 """Test API for document ask for access."""
 
 import uuid
+from unittest import mock
 
 from django.core import mail
 
@@ -768,3 +769,35 @@ def test_api_documents_ask_for_access_accept_authenticated_non_root_document(rol
         f"/api/v1.0/documents/{child.id}/ask-for-access/{document_ask_for_access.id}/accept/"
     )
     assert response.status_code == 404
+
+
+def test_api_document_ask_for_access_throttling(settings):
+    """Test api document ask for access throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"][
+        "document_ask_for_access"
+    ]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document_ask_for_access"] = (
+        "2/minute"
+    )
+    document = DocumentFactory()
+    DocumentAskForAccessFactory.create_batch(
+        3, document=document, role=RoleChoices.READER
+    )
+
+    user = UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    for _i in range(2):
+        response = client.get(f"/api/v1.0/documents/{document.id}/ask-for-access/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get(f"/api/v1.0/documents/{document.id}/ask-for-access/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope document_ask_for_access", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["document_ask_for_access"] = (
+        current_rate
+    )

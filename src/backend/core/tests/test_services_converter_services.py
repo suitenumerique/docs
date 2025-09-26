@@ -1,4 +1,4 @@
-"""Test converter services."""
+"""Test y-provider services."""
 
 from base64 import b64decode
 from unittest.mock import MagicMock, patch
@@ -84,6 +84,42 @@ def test_convert_full_integration(mock_post, settings):
         headers={
             "Authorization": "Bearer test-key",
             "Content-Type": "text/markdown",
+            "Accept": "application/vnd.yjs.doc",
+        },
+        timeout=5,
+        verify=False,
+    )
+
+
+@patch("requests.post")
+def test_convert_full_integration_with_specific_headers(mock_post, settings):
+    """Test successful conversion with specific content type and accept headers."""
+    settings.Y_PROVIDER_API_BASE_URL = "http://test.com/"
+    settings.Y_PROVIDER_API_KEY = "test-key"
+    settings.CONVERSION_API_ENDPOINT = "conversion-endpoint"
+    settings.CONVERSION_API_TIMEOUT = 5
+    settings.CONVERSION_API_SECURE = False
+
+    converter = YdocConverter()
+
+    expected_response = "# Test Document\n\nThis is test content."
+    mock_response = MagicMock()
+    mock_response.text = expected_response
+    mock_response.raise_for_status.return_value = None
+    mock_post.return_value = mock_response
+
+    result = converter.convert(
+        b"test_content", "application/vnd.yjs.doc", "text/markdown"
+    )
+
+    assert result == expected_response
+    mock_post.assert_called_once_with(
+        "http://test.com/conversion-endpoint/",
+        data=b"test_content",
+        headers={
+            "Authorization": "Bearer test-key",
+            "Content-Type": "application/vnd.yjs.doc",
+            "Accept": "text/markdown",
         },
         timeout=5,
         verify=False,

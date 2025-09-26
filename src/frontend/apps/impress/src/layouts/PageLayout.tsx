@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
 import { Footer } from '@/features/footer';
@@ -15,7 +16,7 @@ export function PageLayout({
   withFooter = true,
 }: PropsWithChildren<PageLayoutProps>) {
   const { isDesktop } = useResponsiveStore();
-
+  const { t } = useTranslation();
   return (
     <Box
       $minHeight={`calc(100vh - ${HEADER_HEIGHT}px)`}
@@ -23,7 +24,13 @@ export function PageLayout({
       className="--docs--page-layout"
     >
       <Header />
-      <Box as="main" $width="100%" $css="flex-grow:1;">
+      <Box
+        as="main"
+        role="main"
+        $width="100%"
+        $css="flex-grow:1;"
+        aria-label={t('Main content')}
+      >
         {!isDesktop && <LeftPanel />}
         {children}
       </Box>

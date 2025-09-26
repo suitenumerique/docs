@@ -10,7 +10,7 @@ import { Box, BoxButton, Icon } from '@/components';
 import { DocsBlockNoteEditor } from '../../types';
 import { EmojiPicker } from '../EmojiPicker';
 
-import InitEmojiCallout from './initEmojiCallout';
+import emojidata from './initEmojiCallout';
 
 export const CalloutBlock = createReactBlockSpec(
   {
@@ -79,8 +79,7 @@ export const CalloutBlock = createReactBlockSpec(
 
           {openEmojiPicker && (
             <EmojiPicker
-              emojiData={InitEmojiCallout.emojidata}
-              categories={InitEmojiCallout.calloutCategories}
+              emojiData={emojidata}
               onClickOutside={onClickOutside}
               onEmojiSelect={onEmojiSelect}
             />

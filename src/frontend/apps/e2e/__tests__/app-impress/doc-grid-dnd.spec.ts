@@ -36,9 +36,8 @@ test.describe('Doc grid dnd', () => {
     expect(draggableBoundingBox).toBeDefined();
     expect(dropZoneBoundingBox).toBeDefined();
 
-    // eslint-disable-next-line playwright/no-conditional-in-test
     if (!draggableBoundingBox || !dropZoneBoundingBox) {
-      throw new Error('Impossible de déterminer la position des éléments');
+      throw new Error('Unable to determine the position of the elements');
     }
 
     await page.mouse.move(
@@ -86,9 +85,8 @@ test.describe('Doc grid dnd', () => {
 
     const noDropAndNoDragBoundigBox = await noDropAndNoDrag.boundingBox();
 
-    // eslint-disable-next-line playwright/no-conditional-in-test
     if (!canDropAndDragBoundigBox || !noDropAndNoDragBoundigBox) {
-      throw new Error('Impossible de déterminer la position des éléments');
+      throw new Error('Unable to determine the position of the elements');
     }
 
     await page.mouse.move(
@@ -137,9 +135,8 @@ test.describe('Doc grid dnd', () => {
 
     const noDropAndNoDragBoundigBox = await noDropAndNoDrag.boundingBox();
 
-    // eslint-disable-next-line playwright/no-conditional-in-test
     if (!canDropAndDragBoundigBox || !noDropAndNoDragBoundigBox) {
-      throw new Error('Impossible de déterminer la position des éléments');
+      throw new Error('Unable to determine the position of the elements');
     }
 
     await page.mouse.move(

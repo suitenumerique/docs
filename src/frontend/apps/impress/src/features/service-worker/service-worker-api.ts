@@ -24,6 +24,9 @@ export const isApiUrl = (href: string) => {
   );
 };
 
+const isDocumentApiUrl = (url: URL) =>
+  isApiUrl(url.href) && /.*\/documents\/([a-z0-9-]+)\/$/g.test(url.href);
+
 /**
  * API routes
  */
@@ -45,8 +48,7 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+  ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
@@ -61,8 +63,7 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+  ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
@@ -90,8 +91,7 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+  ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({

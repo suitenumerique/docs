@@ -128,3 +128,11 @@ class ListDocumentFilter(DocumentFilter):
 
         queryset_method = queryset.filter if bool(value) else queryset.exclude
         return queryset_method(link_traces__user=user, link_traces__is_masked=True)
+
+
+class UserSearchFilter(django_filters.FilterSet):
+    """
+    Custom filter for searching users.
+    """
+
+    q = django_filters.CharFilter(min_length=5, max_length=254)

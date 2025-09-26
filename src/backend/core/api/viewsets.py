@@ -1,6 +1,7 @@
 """API endpoints"""
 # pylint: disable=too-many-lines
 
+import base64
 import json
 import logging
 import uuid
@@ -33,16 +34,25 @@ from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
-from rest_framework.throttling import UserRateThrottle
 
 from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.converter_services import (
+    ServiceUnavailableError as YProviderServiceUnavailableError,
+)
+from core.services.converter_services import (
+    ValidationError as YProviderValidationError,
+)
+from core.services.converter_services import (
+    YdocConverter,
+)
 from core.tasks.mail import send_ask_for_access_mail, send_invitation_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
-from .filters import DocumentFilter, ListDocumentFilter
+from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
+from .throttling import UserListThrottleBurst, UserListThrottleSustained
 
 logger = logging.getLogger(__name__)
 
@@ -136,18 +146,6 @@ class Pagination(drf.pagination.PageNumberPagination):
     page_size_query_param = "page_size"
 
 
-class UserListThrottleBurst(UserRateThrottle):
-    """Throttle for the user list endpoint."""
-
-    scope = "user_list_burst"
-
-
-class UserListThrottleSustained(UserRateThrottle):
-    """Throttle for the user list endpoint."""
-
-    scope = "user_list_sustained"
-
-
 class UserViewSet(
     drf.mixins.UpdateModelMixin, viewsets.GenericViewSet, drf.mixins.ListModelMixin
 ):
@@ -178,12 +176,18 @@ class UserViewSet(
         if self.action != "list":
             return queryset
 
+        filterset = UserSearchFilter(
+            self.request.GET, queryset=queryset, request=self.request
+        )
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
         # Exclude all users already in the given document
         if document_id := self.request.query_params.get("document_id", ""):
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
-        if not (query := self.request.query_params.get("q", "")) or len(query) < 5:
-            return queryset.none()
+        filter_data = filterset.form.cleaned_data
+        query = filter_data["q"]
 
         # For emails, match emails by Levenstein distance to prevent typing errors
         if "@" in query:
@@ -360,7 +364,8 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
-    queryset = models.Document.objects.all()
+    throttle_scope = "document"
+    queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
     children_serializer_class = serializers.ListDocumentSerializer
@@ -787,7 +792,11 @@ class DocumentViewSet(
             )
 
         # GET: List children
-        queryset = document.get_children().filter(ancestors_deleted_at__isnull=True)
+        queryset = (
+            document.get_children()
+            .select_related("creator")
+            .filter(ancestors_deleted_at__isnull=True)
+        )
         queryset = self.filter_queryset(queryset)
 
         filterset = DocumentFilter(request.GET, queryset=queryset)
@@ -841,19 +850,27 @@ class DocumentViewSet(
         user = self.request.user
 
         try:
-            current_document = self.queryset.only("depth", "path").get(pk=pk)
+            current_document = (
+                self.queryset.select_related(None).only("depth", "path").get(pk=pk)
+            )
         except models.Document.DoesNotExist as excpt:
             raise drf.exceptions.NotFound() from excpt
 
         ancestors = (
-            (current_document.get_ancestors() | self.queryset.filter(pk=pk))
+            (
+                current_document.get_ancestors()
+                | self.queryset.select_related(None).filter(pk=pk)
+            )
             .filter(ancestors_deleted_at__isnull=True)
             .order_by("path")
         )
 
         # Get the highest readable ancestor
         highest_readable = (
-            ancestors.readable_per_se(request.user).only("depth", "path").first()
+            ancestors.select_related(None)
+            .readable_per_se(request.user)
+            .only("depth", "path")
+            .first()
         )
         if highest_readable is None:
             raise (
@@ -881,7 +898,12 @@ class DocumentViewSet(
 
         children = self.queryset.filter(children_clause, deleted_at__isnull=True)
 
-        queryset = ancestors.filter(depth__gte=highest_readable.depth) | children
+        queryset = (
+            ancestors.select_related("creator").filter(
+                depth__gte=highest_readable.depth
+            )
+            | children
+        )
         queryset = queryset.order_by("path")
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate_is_favorite(user)
@@ -919,37 +941,64 @@ class DocumentViewSet(
         in the payload.
         """
         # Get document while checking permissions
-        document = self.get_object()
+        document_to_duplicate = self.get_object()
 
         serializer = serializers.DocumentDuplicationSerializer(
             data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         with_accesses = serializer.validated_data.get("with_accesses", False)
-        is_owner_or_admin = document.get_role(request.user) in models.PRIVILEGED_ROLES
+        user_role = document_to_duplicate.get_role(request.user)
+        is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
-        base64_yjs_content = document.content
+        base64_yjs_content = document_to_duplicate.content
 
         # Duplicate the document instance
         link_kwargs = (
-            {"link_reach": document.link_reach, "link_role": document.link_role}
+            {
+                "link_reach": document_to_duplicate.link_reach,
+                "link_role": document_to_duplicate.link_role,
+            }
             if with_accesses
             else {}
         )
-        extracted_attachments = set(extract_attachments(document.content))
-        attachments = list(extracted_attachments & set(document.attachments))
-        duplicated_document = document.add_sibling(
+        extracted_attachments = set(extract_attachments(document_to_duplicate.content))
+        attachments = list(
+            extracted_attachments & set(document_to_duplicate.attachments)
+        )
+        title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
+        if not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
+            user_role
+        ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
+            duplicated_document = models.Document.add_root(
+                creator=self.request.user,
+                title=title,
+                content=base64_yjs_content,
+                attachments=attachments,
+                duplicated_from=document_to_duplicate,
+                **link_kwargs,
+            )
+            models.DocumentAccess.objects.create(
+                document=duplicated_document,
+                user=self.request.user,
+                role=models.RoleChoices.OWNER,
+            )
+            return drf_response.Response(
+                {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+            )
+
+        duplicated_document = document_to_duplicate.add_sibling(
             "right",
-            title=capfirst(_("copy of {title}").format(title=document.title)),
+            title=title,
             content=base64_yjs_content,
             attachments=attachments,
-            duplicated_from=document,
+            duplicated_from=document_to_duplicate,
             creator=request.user,
             **link_kwargs,
         )
 
         # Always add the logged-in user as OWNER for root documents
-        if document.is_root():
+        if document_to_duplicate.is_root():
             accesses_to_create = [
                 models.DocumentAccess(
                     document=duplicated_document,
@@ -961,7 +1010,7 @@ class DocumentViewSet(
             # If accesses should be duplicated, add other users' accesses as per original document
             if with_accesses and is_owner_or_admin:
                 original_accesses = models.DocumentAccess.objects.filter(
-                    document=document
+                    document=document_to_duplicate
                 ).exclude(user=request.user)
 
                 accesses_to_create.extend(
@@ -1283,7 +1332,8 @@ class DocumentViewSet(
         )
 
         attachments_documents = (
-            self.queryset.filter(attachments__contains=[key])
+            self.queryset.select_related(None)
+            .filter(attachments__contains=[key])
             .only("path")
             .order_by("path")
         )
@@ -1487,6 +1537,69 @@ class DocumentViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        url_path="content",
+        name="Get document content in different formats",
+    )
+    def content(self, request, pk=None):
+        """
+        Retrieve document content in different formats (JSON, Markdown, HTML).
+
+        Query parameters:
+        - content_format: The desired output format (json, markdown, html)
+
+        Returns:
+            JSON response with content in the specified format.
+        """
+
+        document = self.get_object()
+
+        content_format = request.query_params.get("content_format", "json").lower()
+        if content_format not in {"json", "markdown", "html"}:
+            raise drf.exceptions.ValidationError(
+                "Invalid format. Must be one of: json, markdown, html"
+            )
+
+        # Get the base64 content from the document
+        content = None
+        base64_content = document.content
+        if base64_content is not None:
+            # Convert using the y-provider service
+            try:
+                yprovider = YdocConverter()
+                result = yprovider.convert(
+                    base64.b64decode(base64_content),
+                    "application/vnd.yjs.doc",
+                    {
+                        "markdown": "text/markdown",
+                        "html": "text/html",
+                        "json": "application/json",
+                    }[content_format],
+                )
+                content = result
+            except YProviderValidationError as e:
+                return drf_response.Response(
+                    {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
+                )
+            except YProviderServiceUnavailableError as e:
+                logger.error("Error getting content for document %s: %s", pk, e)
+                return drf_response.Response(
+                    {"error": "Failed to get document content"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        return drf_response.Response(
+            {
+                "id": str(document.id),
+                "title": document.title,
+                "content": content,
+                "created_at": document.created_at,
+                "updated_at": document.updated_at,
+            }
+        )
+
 
 class DocumentAccessViewSet(
     ResourceAccessViewsetMixin,
@@ -1537,6 +1650,7 @@ class DocumentAccessViewSet(
         "document__depth",
     )
     resource_field_name = "document"
+    throttle_scope = "document_access"
 
     @cached_property
     def document(self):
@@ -1697,6 +1811,7 @@ class TemplateViewSet(
         permissions.IsAuthenticatedOrSafe,
         permissions.ResourceWithAccessPermission,
     ]
+    throttle_scope = "template"
     ordering = ["-created_at"]
     ordering_fields = ["created_at", "updated_at", "title"]
     serializer_class = serializers.TemplateSerializer
@@ -1787,6 +1902,7 @@ class TemplateAccessViewSet(
 
     lookup_field = "pk"
     permission_classes = [permissions.ResourceAccessPermission]
+    throttle_scope = "template_access"
     queryset = models.TemplateAccess.objects.select_related("user").all()
     resource_field_name = "template"
     serializer_class = serializers.TemplateAccessSerializer
@@ -1869,6 +1985,7 @@ class InvitationViewset(
         permissions.CanCreateInvitationPermission,
         permissions.ResourceWithAccessPermission,
     ]
+    throttle_scope = "invitation"
     queryset = (
         models.Invitation.objects.all()
         .select_related("document")
@@ -1948,6 +2065,7 @@ class DocumentAskForAccessViewSet(
         permissions.IsAuthenticated,
         permissions.ResourceWithAccessPermission,
     ]
+    throttle_scope = "document_ask_for_access"
     queryset = models.DocumentAskForAccess.objects.all()
     serializer_class = serializers.DocumentAskForAccessSerializer
     _document = None
@@ -2020,6 +2138,7 @@ class ConfigView(drf.views.APIView):
     """API ViewSet for sharing some public settings."""
 
     permission_classes = [AllowAny]
+    throttle_scope = "config"
 
     def get(self, request):
         """

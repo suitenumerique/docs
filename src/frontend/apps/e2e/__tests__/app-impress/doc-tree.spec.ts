@@ -1,4 +1,3 @@
-/* eslint-disable playwright/no-conditional-in-test */
 import { expect, test } from '@playwright/test';
 
 import {
@@ -51,7 +50,7 @@ test.describe('Doc Tree', () => {
     await expect(subPageItem).toBeVisible();
     await subPageItem.click();
     await verifyDocName(page, '');
-    const input = page.getByRole('textbox', { name: 'doc title input' });
+    const input = page.getByRole('textbox', { name: 'Document title' });
     await input.click();
     const [randomDocName] = randomName('doc-tree-test', browserName, 1);
     await input.fill(randomDocName);
@@ -197,7 +196,7 @@ test.describe('Doc Tree', () => {
     await page.getByText('Move to my docs').click();
 
     await expect(
-      page.getByRole('textbox', { name: 'doc title input' }),
+      page.getByRole('textbox', { name: 'Document title' }),
     ).not.toHaveText(docChild);
 
     const header = page.locator('header').first();
@@ -221,11 +220,11 @@ test.describe('Doc Tree', () => {
 
     const list = page.getByTestId('doc-share-quick-search');
     const currentUser = list.getByTestId(
-      `doc-share-member-row-user@${browserName}.test`,
+      `doc-share-member-row-user.test@${browserName}.test`,
     );
     const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
     await currentUserRole.click();
-    await page.getByLabel('Administrator').click();
+    await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();
 
     await page.getByRole('button', { name: 'Ok' }).click();
@@ -235,6 +234,12 @@ test.describe('Doc Tree', () => {
       browserName,
       'doc-tree-detach-child',
     );
+
+    await expect(
+      page
+        .getByLabel('It is the card information about the document.')
+        .getByText('Administrator ·'),
+    ).toBeVisible();
 
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(docChild)).toBeVisible();
@@ -252,6 +257,46 @@ test.describe('Doc Tree', () => {
     await expect(
       page.getByRole('menuitem', { name: 'Move to my docs' }),
     ).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('keyboard navigation with Enter key opens documents', async ({
+    page,
+    browserName,
+  }) => {
+    // Create a parent document
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-keyboard-nav',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    // Create a sub-document
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-keyboard-child',
+    );
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible();
+
+    // Test keyboard navigation on root document
+    const rootItem = page.getByTestId('doc-tree-root-item');
+    await expect(rootItem).toBeVisible();
+
+    // Focus on the root item and press Enter
+    await rootItem.focus();
+    await expect(rootItem).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    // Verify we navigated to the root document
+    await verifyDocName(page, docParent);
+    await expect(page).toHaveURL(/\/docs\/[^/]+\/?$/);
+
+    // Now test keyboard navigation on sub-document
+    await expect(docTree.getByText(docChild)).toBeVisible();
   });
 });
 

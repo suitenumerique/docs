@@ -45,8 +45,8 @@ test.describe('Doc Create', () => {
       })
       .click();
 
-    const input = page.getByRole('textbox', { name: 'doc title input' });
-    await expect(input).toHaveText('');
+    const input = page.getByRole('textbox', { name: 'Document title' });
+    await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();
@@ -67,8 +67,8 @@ test.describe('Doc Create', () => {
       .getByText('New sub-doc')
       .click();
 
-    const input = page.getByRole('textbox', { name: 'doc title input' });
-    await expect(input).toHaveText('');
+    const input = page.getByRole('textbox', { name: 'Document title' });
+    await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();
@@ -89,8 +89,8 @@ test.describe('Doc Create: Not logged', () => {
     const data = {
       title,
       content: markdown,
-      sub: `user@${browserName}.test`,
-      email: `user@${browserName}.test`,
+      sub: `user.test@${browserName}.test`,
+      email: `user.test@${browserName}.test`,
     };
 
     const newDoc = await request.post(

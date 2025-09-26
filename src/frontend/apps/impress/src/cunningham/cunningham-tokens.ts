@@ -153,7 +153,7 @@ export const tokens = {
             extrabold: 800,
             black: 900,
           },
-          families: { base: 'Marianne', accent: 'Marianne' },
+          families: { base: 'sans-serif', accent: 'sans-serif' },
           letterSpacings: {
             h1: 'normal',
             h2: 'normal',
@@ -266,6 +266,7 @@ export const tokens = {
             'background--color-hover': '#eee',
             'color-hover': '#000091',
             color: '#313178',
+            disabled: '#CACAFB',
           },
           danger: {
             'color-hover': 'white',
@@ -435,6 +436,7 @@ export const tokens = {
           widthFooter: '220px',
           alt: 'Gouvernement Logo',
         },
+        font: { families: { base: 'Marianne', accent: 'Marianne' } },
       },
       components: {
         'la-gaufre': true,

@@ -194,16 +194,39 @@ def test_api_users_list_query_short_queries():
     factories.UserFactory(email="john.lennon@example.com")
 
     response = client.get("/api/v1.0/users/?q=jo")
-    assert response.status_code == 200
-    assert response.json() == []
+    assert response.status_code == 400
+    assert response.json() == {
+        "q": ["Ensure this value has at least 5 characters (it has 2)."]
+    }
 
     response = client.get("/api/v1.0/users/?q=john")
-    assert response.status_code == 200
-    assert response.json() == []
+    assert response.status_code == 400
+    assert response.json() == {
+        "q": ["Ensure this value has at least 5 characters (it has 4)."]
+    }
 
     response = client.get("/api/v1.0/users/?q=john.")
     assert response.status_code == 200
     assert len(response.json()) == 2
+
+
+def test_api_users_list_query_long_queries():
+    """
+    Queries longer than 255 characters should return an empty result set.
+    """
+    user = factories.UserFactory(email="paul@example.com")
+    client = APIClient()
+    client.force_login(user)
+
+    factories.UserFactory(email="john.doe@example.com")
+    factories.UserFactory(email="john.lennon@example.com")
+
+    query = "a" * 244
+    response = client.get(f"/api/v1.0/users/?q={query}@example.com")
+    assert response.status_code == 400
+    assert response.json() == {
+        "q": ["Ensure this value has at most 254 characters (it has 256)."]
+    }
 
 
 def test_api_users_list_query_inactive():

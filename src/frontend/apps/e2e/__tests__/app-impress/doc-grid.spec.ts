@@ -28,7 +28,7 @@ test.describe('Documents Grid mobile', () => {
                     id: '8c1e047a-24e7-4a80-942b-8e9c7ab43e1f',
                     user: {
                       id: '7380f42f-02eb-4ad5-b8f0-037a0e66066d',
-                      email: 'test@test.test',
+                      email: 'test.test@test.test',
                       full_name: 'John Doe',
                       short_name: 'John',
                     },
@@ -80,9 +80,7 @@ test.describe('Documents Grid mobile', () => {
       hasText: 'My mocked document',
     });
 
-    await expect(
-      row.locator('[aria-describedby="doc-title"]').nth(0),
-    ).toHaveText('My mocked document');
+    await expect(row.getByTestId('doc-title')).toHaveText('My mocked document');
   });
 });
 
@@ -119,7 +117,7 @@ test.describe('Document grid item options', () => {
     await page.getByText('push_pin').click();
 
     // Check is pinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeVisible();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
     const leftPanelFavorites = page.getByTestId('left-panel-favorites');
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
@@ -128,7 +126,7 @@ test.describe('Document grid item options', () => {
     await page.getByText('Unpin').click();
 
     // Check is unpinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeHidden();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
@@ -149,7 +147,7 @@ test.describe('Document grid item options', () => {
 
     await page
       .getByRole('button', {
-        name: 'Confirm deletion',
+        name: 'Delete document',
       })
       .click();
 
@@ -295,7 +293,7 @@ test.describe('Documents Grid', () => {
     docs = result.results as SmallDoc[];
 
     await expect(page.getByTestId('grid-loader')).toBeHidden();
-    await expect(page.locator('h4').getByText('All docs')).toBeVisible();
+    await expect(page.locator('h2').getByText('All docs')).toBeVisible();
 
     const thead = page.getByTestId('docs-grid-header');
     await expect(thead.getByText(/Name/i)).toBeVisible();

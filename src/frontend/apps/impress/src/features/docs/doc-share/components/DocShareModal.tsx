@@ -5,6 +5,7 @@ import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { Box, HorizontalSeparator, Text } from '@/components';
+import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
 import {
   QuickSearch,
   QuickSearchData,
@@ -134,18 +135,39 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         isOpen
         closeOnClickOutside
         data-testid="doc-share-modal"
-        aria-label={t('Share modal')}
+        aria-labelledby="doc-share-modal-title"
         size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
+        aria-modal="true"
         onClose={onClose}
-        title={<Box $align="flex-start">{t('Share the document')}</Box>}
+        title={
+          <Box $direction="row" $justify="space-between" $align="center">
+            <Text
+              as="h1"
+              id="doc-share-modal-title"
+              $align="flex-start"
+              $size="small"
+              $weight="600"
+              $margin="0"
+            >
+              {t('Share the document')}
+            </Text>
+            <ButtonCloseModal
+              aria-label={t('Close the share modal')}
+              onClick={onClose}
+            />
+          </Box>
+        }
+        hideCloseButton
       >
         <ShareModalStyle />
         <Box
-          aria-label={t('Share modal')}
-          $height={canViewAccesses ? modalContentHeight : 'auto'}
+          $height="auto"
+          $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
           $overflow="hidden"
           className="--docs--doc-share-modal noPadding "
           $justify="space-between"
+          role="dialog"
+          aria-label={t('Share modal content')}
         >
           <Box
             $flex={1}
@@ -187,6 +209,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                     $textAlign="center"
                     $variation="600"
                     $size="sm"
+                    as="p"
                   >
                     {t(
                       'You can view this document but need additional access to see its members or modify settings.',
@@ -201,6 +224,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
               )}
               {canViewAccesses && (
                 <QuickSearch
+                  label={t('Search results')}
                   onFilter={(str) => {
                     setInputValue(str);
                     onFilter(str);

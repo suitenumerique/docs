@@ -51,7 +51,7 @@ export const Box = styled('div')<BoxProps>`
   ${({ $cursor }) => $cursor && `cursor: ${$cursor};`}
   ${({ $direction }) => `flex-direction: ${$direction || 'column'};`}
   ${({ $display, as }) =>
-    `display: ${$display || as?.match('span|input') ? 'inline-flex' : 'flex'};`}
+    `display: ${$display || (as?.match('span|input') ? 'inline-flex' : 'flex')};`}
   ${({ $flex }) => $flex && `flex: ${$flex};`}
   ${({ $gap }) => $gap && `gap: ${$gap};`}
   ${({ $height }) => $height && `height: ${$height};`}

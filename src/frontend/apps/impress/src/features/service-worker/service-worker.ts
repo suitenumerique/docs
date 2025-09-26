@@ -15,16 +15,15 @@ import {
   NetworkFirst,
   NetworkFirstOptions,
   NetworkOnly,
+  StaleWhileRevalidate,
   StrategyOptions,
 } from 'workbox-strategies';
 
-// eslint-disable-next-line import/order
 import { DAYS_EXP, SW_DEV_URL, SW_VERSION, getCacheNameVersion } from './conf';
 import { ApiPlugin } from './plugins/ApiPlugin';
 import { OfflinePlugin } from './plugins/OfflinePlugin';
 import { isApiUrl } from './service-worker-api';
 
-// eslint-disable-next-line import/order
 import pkg from '@/../package.json';
 
 declare const self: ServiceWorkerGlobalScope & {
@@ -106,8 +105,6 @@ const FALLBACK = {
   images: '/assets/img-not-found.svg',
 };
 const precacheResources = [
-  '/',
-  '/index.html',
   '/401/',
   '/404/',
   FALLBACK.offline,
@@ -130,12 +127,14 @@ setCatchHandler(async ({ request, url, event }) => {
     case isApiUrl(url.href):
       return ApiPlugin.getApiCatchHandler();
 
-    case request.destination === 'document':
-      if (url.pathname.match(/^\/docs\/([a-z0-9\-]+)\/$/g)) {
+    case request.destination === 'document': {
+      const isDocPath = /^\/docs\/([a-z0-9-]+)\/$/g.test(url.pathname);
+      if (isDocPath) {
         return precacheStrategy.handle({ event, request: FALLBACK.docs });
       }
 
       return precacheStrategy.handle({ event, request: FALLBACK.offline });
+    }
 
     case request.destination === 'image':
       return precacheStrategy.handle({ event, request: FALLBACK.images });
@@ -255,7 +254,7 @@ registerRoute(
  * Cache all other files
  */
 setDefaultHandler(
-  getStrategy({
+  new StaleWhileRevalidate({
     cacheName: getCacheNameVersion('default'),
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),

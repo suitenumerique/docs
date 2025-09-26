@@ -16,6 +16,9 @@ type Props = {
   placeholder?: string;
   children?: ReactNode;
   withSeparator?: boolean;
+  listId?: string;
+  onUserInteract?: () => void;
+  isExpanded?: boolean;
 };
 export const QuickSearchInput = ({
   loading,
@@ -24,6 +27,9 @@ export const QuickSearchInput = ({
   placeholder,
   children,
   withSeparator: separator = true,
+  listId,
+  onUserInteract,
+  isExpanded,
 }: Props) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
@@ -55,16 +61,21 @@ export const QuickSearchInput = ({
           </div>
         )}
         <Command.Input
-          /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus={true}
           aria-label={t('Quick search input')}
+          aria-expanded={isExpanded}
+          aria-controls={listId}
           onClick={(e) => {
             e.stopPropagation();
+            onUserInteract?.();
           }}
+          onKeyDown={() => onUserInteract?.()}
           value={inputValue}
           role="combobox"
           placeholder={placeholder ?? t('Search')}
           onValueChange={onFilter}
+          maxLength={254}
+          data-testid="quick-search-input"
         />
       </Box>
       {separator && <HorizontalSeparator $withPadding={false} />}

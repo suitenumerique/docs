@@ -56,21 +56,4 @@ if (!emojidata.categories.some((c) => c.id === CALLOUT_ID)) {
 
 void init({ data: emojidata });
 
-const calloutCategories = [
-  'callout',
-  'people',
-  'nature',
-  'foods',
-  'activity',
-  'places',
-  'flags',
-  'objects',
-  'symbols',
-];
-
-const calloutEmojiData = {
-  emojidata,
-  calloutCategories,
-};
-
-export default calloutEmojiData;
+export default emojidata;

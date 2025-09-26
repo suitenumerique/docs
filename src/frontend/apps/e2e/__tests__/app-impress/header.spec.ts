@@ -76,7 +76,6 @@ test.describe('Header', () => {
      * La gaufre load a js file from a remote server,
      * it takes some time to load the file and have the interaction available
      */
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(1500);
 
     await header

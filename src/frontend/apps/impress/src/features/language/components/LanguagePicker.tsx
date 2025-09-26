@@ -41,15 +41,7 @@ export const LanguagePicker = () => {
       showArrow
       label={t('Select language')}
       buttonCss={css`
-        &:hover {
-          background-color: var(
-            --c--components--button--primary-text--background--color-hover
-          );
-        }
-        &:focus-visible {
-          outline: 2px solid var(--c--theme--colors--primary-500);
-          outline-offset: 2px;
-        }
+        transition: all 0.15s ease-in-out !important;
         border-radius: 4px;
         padding: 0.5rem 0.6rem;
         & > div {
@@ -63,12 +55,16 @@ export const LanguagePicker = () => {
     >
       <Text
         $theme="primary"
-        aria-label={t('Language')}
         $direction="row"
         $gap="0.5rem"
         className="--docs--language-picker-text"
       >
-        <Icon iconName="translate" $color="inherit" $size="xl" />
+        <Icon
+          iconName="translate"
+          $color="inherit"
+          $size="xl"
+          aria-hidden="true"
+        />
         {currentLanguageLabel}
       </Text>
     </DropdownMenu>

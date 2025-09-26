@@ -1,5 +1,6 @@
 @import url('@gouvfr-lasuite/ui-kit/style');
 @import url('./cunningham-tokens.css');
+@import url('/assets/fonts/Marianne/Marianne-font.css');
 
 :root {
   /**
@@ -35,6 +36,20 @@
   --c--components--button--border-radius--active: var(
     --c--components--button--border-radius
   );
+}
+
+/**
+ * Button
+*/
+.c__button {
+  contain: content;
+}
+
+/**
+ * Modal
+*/
+.c__modal__backdrop {
+  z-index: 1000;
 }
 
 /**

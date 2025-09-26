@@ -2,7 +2,8 @@ import { Button } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { BoxButton } from '@/components';
+import { Box, BoxButton } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 
 import ProConnectImg from '../assets/button-proconnect.svg';
 import { useAuth } from '../hooks';
@@ -11,6 +12,7 @@ import { gotoLogin, gotoLogout } from '../utils';
 export const ButtonLogin = () => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
+  const { colorsTokens } = useCunninghamTheme();
 
   if (!authenticated) {
     return (
@@ -26,14 +28,23 @@ export const ButtonLogin = () => {
   }
 
   return (
-    <Button
-      onClick={gotoLogout}
-      color="primary-text"
-      aria-label={t('Logout')}
-      className="--docs--button-logout"
+    <Box
+      $css={css`
+        .--docs--button-logout:focus-visible {
+          box-shadow: 0 0 0 2px ${colorsTokens['primary-400']} !important;
+          border-radius: 4px;
+        }
+      `}
     >
-      {t('Logout')}
-    </Button>
+      <Button
+        onClick={gotoLogout}
+        color="primary-text"
+        aria-label={t('Logout')}
+        className="--docs--button-logout"
+      >
+        {t('Logout')}
+      </Button>
+    </Box>
   );
 };
 

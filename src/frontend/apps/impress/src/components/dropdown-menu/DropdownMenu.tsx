@@ -110,7 +110,6 @@ export const DropdownMenu = ({
             $direction="row"
             $align="center"
             $position="relative"
-            aria-controls="menu"
           >
             <Box>{children}</Box>
             <Icon
@@ -125,9 +124,7 @@ export const DropdownMenu = ({
             />
           </Box>
         ) : (
-          <Box ref={blockButtonRef} aria-controls="menu">
-            {children}
-          </Box>
+          <Box ref={blockButtonRef}>{children}</Box>
         )
       }
     >
@@ -165,7 +162,6 @@ export const DropdownMenu = ({
                   menuItemRefs.current[index] = el;
                 }}
                 role="menuitem"
-                aria-label={option.label}
                 data-testid={option.testId}
                 $direction="row"
                 disabled={isDisabled}
@@ -207,14 +203,13 @@ export const DropdownMenu = ({
                   }
 
                   &:focus-visible {
-                    outline: 2px solid var(--c--theme--colors--primary-500);
+                    outline: 2px solid var(--c--theme--colors--primary-400);
                     outline-offset: -2px;
                     background-color: var(--c--theme--colors--greyscale-050);
                   }
 
                   ${isFocused &&
                   css`
-                    outline: 2px solid var(--c--theme--colors--primary-500);
                     outline-offset: -2px;
                     background-color: var(--c--theme--colors--greyscale-050);
                   `}
@@ -231,6 +226,7 @@ export const DropdownMenu = ({
                       $theme="greyscale"
                       $variation={isDisabled ? '400' : '1000'}
                       iconName={option.icon}
+                      aria-hidden="true"
                     />
                   )}
                   <Text $variation={isDisabled ? '400' : '1000'}>
@@ -239,7 +235,12 @@ export const DropdownMenu = ({
                 </Box>
                 {(option.isSelected ||
                   selectedValues?.includes(option.value ?? '')) && (
-                  <Icon iconName="check" $size="20px" $theme="greyscale" />
+                  <Icon
+                    iconName="check"
+                    $size="20px"
+                    $theme="greyscale"
+                    aria-hidden="true"
+                  />
                 )}
               </BoxButton>
               {option.showSeparator && (

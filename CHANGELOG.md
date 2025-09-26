@@ -1,4 +1,3 @@
-# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -8,30 +7,98 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♻️(frontend) replace Arial font-family with token font #1411
+- ♿(frontend) improve accessibility:
+  - #1354
+  - #1349
+  - ♿ improve accessibility by adding landmark roles to layout #1394
+  - ♿ add document visible in list and openable via enter key #1365
+  - ♿ add pdf outline property to enable bookmarks display #1368
+  - ♿ hide decorative icons from assistive tech with aria-hidden #1404
+  - ♿ remove redundant aria-label to avoid over-accessibility #1420
+  - ♿ remove redundant aria-label on hidden icons and update tests #1432
+  - ♿ improve semantic structure and aria roles of leftpanel #1431
+  - ♿ add default background to left panel for better accessibility #1423
+
+### Fixed
+
+- 🐛(backend) duplicate sub docs as root for reader users
+- ⚗️(service-worker) remove index from cache first strategy #1395
+- 🐛(frontend) fix 404 page when reload 403 page #1402
+- 🐛(frontend) fix legacy role computation #1376
+- 🐛(frontend) scroll back to top when navigate to a document #1406
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿improve NVDA navigation in DocShareModal #1396
+
+
+## [3.7.0] - 2025-09-12
+
+### Added
+
+- ✨(api) add API route to fetch document content #1206
+
+### Changed
+
+- 🔒️(backend) configure throttle on every viewsets #1343
+- ⬆️ Bump eslint to V9 #1071
+- ♿(frontend) improve accessibility:
+  - ♿fix major accessibility issues reported by wave and axe #1344
+  - ✨unify tab focus style for better visual consistency #1341
+  - ✨improve modal a11y: structure, labels, and title #1349
+  - ✨improve accessibility of cdoc content with correct aria tags #1271
+  - ✨unify tab focus style for better visual consistency #1341
+  - ♿hide decorative icons, label menus, avoid accessible name… #1362
+- ♻️(tilt) use helm dev-backend chart
+
+### Removed
+
+- 🔥(frontend) remove multi column drop cursor #1370
+
+### Fixed
+
+- 🐛(frontend) fix callout emoji list #1366
+
+## [3.6.0] - 2025-09-04
+
 ### Added
 
 - 👷(CI) add bundle size check job #1268
+- ✨(frontend) use title first emoji as doc icon in tree #1289
 
 ### Changed
 
 - ♻️(docs-app) Switch from Jest tests to Vitest #1269
-- ⚡️(frontend) improve accessibility:
-  - #1248
-  - #1235
-  - #1275
-  - #1255
-  - #1262
-  - #1244
-  - #1270
-  - #1282
+- ♿(frontend) improve accessibility:
+  - 🌐(frontend) set html lang attribute dynamically #1248
+  - ♿(frontend) inject language attribute to pdf export #1235
+  - ♿(frontend) improve accessibility of search modal #1275
+  - ♿(frontend) add correct attributes to icons #1255
+  - 🎨(frontend) improve nav structure #1262
+  - ♿️(frontend) keyboard interaction with menu #1244
+  - ♿(frontend) improve header accessibility #1270
+  - ♿(frontend) improve accessibility for decorative images in editor #1282
+  - #1338
+  - #1281
 - ♻️(backend) fallback to email identifier when no name #1298
-- 🐛(backend) allow ASCII characters in user sub field #1295 
+- 🐛(backend) allow ASCII characters in user sub field #1295
+- ⚡️(frontend) improve fallback width calculation #1333
 
 ### Fixed
 
-- 🐛(makefile) Windows compatibility fix for Docker volume mounting #1264
-- 🐛(minio) fix user permission error with Minio and Windows #1264
+- 🐛(makefile) Windows compatibility fix for Docker volume mounting #1263
+- 🐛(minio) fix user permission error with Minio and Windows #1263
 - 🐛(frontend) fix export when quote block and inline code #1319
+- 🐛(frontend) fix base64 font #1324
+- 🐛(backend) allow creator to delete subpages #1297
+- 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
+- 🐛(frontend) fix display bug on homepage #1332
+- 🐛link role update #1287
+- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.5.0] - 2025-07-31
 
@@ -704,7 +771,9 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.5.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.7.0...main
+[v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
+[v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
 [v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0
 [v3.4.2]: https://github.com/suitenumerique/docs/releases/v3.4.2
 [v3.4.1]: https://github.com/suitenumerique/docs/releases/v3.4.1

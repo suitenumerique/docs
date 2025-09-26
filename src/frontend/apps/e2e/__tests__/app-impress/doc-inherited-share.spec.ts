@@ -18,7 +18,7 @@ test.describe('Inherited share accesses', () => {
     ).toBeVisible();
 
     const user = page.getByTestId(
-      `doc-share-member-row-user@${browserName}.test`,
+      `doc-share-member-row-user.test@${browserName}.test`,
     );
     await expect(user).toBeVisible();
     await expect(user.getByText('E2E Chromium')).toBeVisible();
@@ -52,6 +52,12 @@ test.describe('Inherited share accesses', () => {
     await expect(docVisibilityCard.getByText('Connected')).toBeVisible();
     await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
 
+    await docVisibilityCard.getByText('Reading').click();
+    await page.getByRole('menuitem', { name: 'Editing' }).click();
+
+    await expect(docVisibilityCard.getByText('Reading')).toBeHidden();
+    await expect(docVisibilityCard.getByText('Editing')).toBeVisible();
+
     // Verify inherited link
     await docVisibilityCard.getByText('Connected').click();
     await expect(
@@ -61,17 +67,13 @@ test.describe('Inherited share accesses', () => {
     // Update child link
     await page.getByRole('menuitem', { name: 'Public' }).click();
 
-    await docVisibilityCard.getByText('Reading').click();
-    await page.getByRole('menuitem', { name: 'Editing' }).click();
-
     await expect(docVisibilityCard.getByText('Connected')).toBeHidden();
-    await expect(docVisibilityCard.getByText('Reading')).toBeHidden();
     await expect(
       docVisibilityCard.getByText('Public', {
         exact: true,
       }),
     ).toBeVisible();
-    await expect(docVisibilityCard.getByText('Editing')).toBeVisible();
+
     await expect(
       docVisibilityCard.getByText(
         'The link sharing rules differ from the parent document',

@@ -126,6 +126,7 @@ export const HomeSection = ({
             {title}
           </Text>
           <Text
+            as="div"
             $variation="700"
             $weight="400"
             $size={isSmallMobile ? 'ml' : 'md'}

@@ -60,7 +60,7 @@ export interface Doc {
   path: string;
   is_favorite: boolean;
   link_reach: LinkReach;
-  link_role: LinkRole;
+  link_role?: LinkRole;
   nb_accesses_direct: number;
   nb_accesses_ancestors: number;
   computed_link_reach: LinkReach;

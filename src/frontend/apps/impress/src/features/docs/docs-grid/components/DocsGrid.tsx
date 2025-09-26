@@ -70,7 +70,6 @@ export const DocsGrid = ({
     >
       <DocsGridLoader isLoading={isRefetching || loading} />
       <Card
-        role="grid"
         data-testid="docs-grid"
         $height="100%"
         $width="100%"
@@ -84,7 +83,7 @@ export const DocsGrid = ({
         }}
       >
         <Text
-          as="h4"
+          as="h2"
           $size="h4"
           $variation="1000"
           $margin={{ top: '0px', bottom: '10px' }}
@@ -101,48 +100,57 @@ export const DocsGrid = ({
         )}
         {hasDocs && (
           <Box $gap="6px" $overflow="auto">
-            <Box
-              $direction="row"
-              $padding={{ horizontal: 'xs' }}
-              $gap="10px"
-              data-testid="docs-grid-header"
-            >
-              <Box $flex={flexLeft} $padding="3xs">
-                <Text $size="xs" $variation="600" $weight="500">
-                  {t('Name')}
-                </Text>
-              </Box>
-              {isDesktop && (
-                <Box $flex={flexRight} $padding={{ vertical: '3xs' }}>
-                  <Text $size="xs" $weight="500" $variation="600">
-                    {t('Updated at')}
-                  </Text>
+            <Box role="grid" aria-label={t('Documents grid')}>
+              <Box role="rowgroup">
+                <Box
+                  $direction="row"
+                  $padding={{ horizontal: 'xs' }}
+                  $gap="10px"
+                  data-testid="docs-grid-header"
+                  role="row"
+                >
+                  <Box $flex={flexLeft} $padding="3xs" role="columnheader">
+                    <Text $size="xs" $variation="600" $weight="500">
+                      {t('Name')}
+                    </Text>
+                  </Box>
+                  {isDesktop && (
+                    <Box
+                      $flex={flexRight}
+                      $padding={{ vertical: '3xs' }}
+                      role="columnheader"
+                    >
+                      <Text $size="xs" $weight="500" $variation="600">
+                        {t('Updated at')}
+                      </Text>
+                    </Box>
+                  )}
                 </Box>
+              </Box>
+              <Box role="rowgroup">
+                {isDesktop ? (
+                  <DraggableDocGridContentList docs={docs} />
+                ) : (
+                  <DocGridContentList docs={docs} />
+                )}
+              </Box>
+              {hasNextPage && !loading && (
+                <InView
+                  data-testid="infinite-scroll-trigger"
+                  as="div"
+                  onChange={loadMore}
+                >
+                  {!isFetching && hasNextPage && (
+                    <Button
+                      onClick={() => void fetchNextPage()}
+                      color="primary-text"
+                    >
+                      {t('More docs')}
+                    </Button>
+                  )}
+                </InView>
               )}
             </Box>
-
-            {isDesktop ? (
-              <DraggableDocGridContentList docs={docs} />
-            ) : (
-              <DocGridContentList docs={docs} />
-            )}
-
-            {hasNextPage && !loading && (
-              <InView
-                data-testid="infinite-scroll-trigger"
-                as="div"
-                onChange={loadMore}
-              >
-                {!isFetching && hasNextPage && (
-                  <Button
-                    onClick={() => void fetchNextPage()}
-                    color="primary-text"
-                  >
-                    {t('More docs')}
-                  </Button>
-                )}
-              </InView>
-            )}
           </Box>
         )}
       </Card>

@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
-export const BROWSERS = ['chromium', 'webkit', 'firefox'];
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
   AI_FEATURE_ENABLED: true,
@@ -27,7 +28,7 @@ export const CONFIG = {
 
 export const overrideConfig = async (
   page: Page,
-  newConfig: { [K in keyof typeof CONFIG]?: unknown },
+  newConfig: { [_K in keyof typeof CONFIG]?: unknown },
 ) =>
   await page.route('**/api/v1.0/config/', async (route) => {
     const request = route.request();
@@ -56,7 +57,7 @@ export const keyCloakSignIn = async (
   const password = `password-e2e-${browserName}`;
 
   await expect(
-    page.locator('.login-pf-page-header').getByText('impress'),
+    page.locator('.login-pf #kc-header-wrapper').getByText('impress'),
   ).toBeVisible();
 
   if (await page.getByLabel('Restart login').isVisible()) {
@@ -65,7 +66,7 @@ export const keyCloakSignIn = async (
 
   await page.getByRole('textbox', { name: 'username' }).fill(login);
   await page.getByRole('textbox', { name: 'password' }).fill(password);
-  await page.click('input[type="submit"]', { force: true });
+  await page.click('button[type="submit"]', { force: true });
 };
 
 export const randomName = (name: string, browserName: string, length: number) =>
@@ -101,10 +102,9 @@ export const createDoc = async (
       waitUntil: 'networkidle',
     });
 
-    const input = page.getByLabel('doc title input');
+    const input = page.getByLabel('Document title');
     await expect(input).toBeVisible();
     await expect(input).toHaveText('');
-    await input.click();
 
     await input.fill(randomDocs[i]);
     await input.blur();
@@ -120,10 +120,11 @@ export const verifyDocName = async (page: Page, docName: string) => {
     timeout: 10000,
   });
 
+  /*replace toHaveText with toContainText to handle cases where emojis or other characters might be added*/
   try {
     await expect(
-      page.getByRole('textbox', { name: 'doc title input' }),
-    ).toHaveText(docName);
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText(docName);
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();
   }
@@ -136,9 +137,11 @@ export const getGridRow = async (page: Page, title: string) => {
 
   const rows = docsGrid.getByRole('row');
 
-  const row = rows.filter({
-    hasText: title,
-  });
+  const row = rows
+    .filter({
+      hasText: title,
+    })
+    .first();
 
   await expect(row).toBeVisible();
 
@@ -170,7 +173,7 @@ export const goToGridDoc = async (
 
   await expect(row).toBeVisible();
 
-  const docTitleContent = row.locator('[aria-describedby="doc-title"]').first();
+  const docTitleContent = row.getByTestId('doc-title').first();
   const docTitle = await docTitleContent.textContent();
   expect(docTitle).toBeDefined();
 
@@ -180,9 +183,9 @@ export const goToGridDoc = async (
 };
 
 export const updateDocTitle = async (page: Page, title: string) => {
-  const input = page.getByLabel('doc title input');
-  await expect(input).toBeVisible();
+  const input = page.getByRole('textbox', { name: 'Document title' });
   await expect(input).toHaveText('');
+  await expect(input).toBeVisible();
   await input.click();
   await input.fill(title);
   await input.click();
@@ -320,5 +323,5 @@ export async function waitForLanguageSwitch(
 
   await languagePicker.click();
 
-  await page.getByLabel(lang.label).click();
+  await page.getByRole('menuitem', { name: lang.label }).click();
 }

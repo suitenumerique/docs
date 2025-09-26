@@ -24,8 +24,8 @@ export const LeftPanelFavorites = () => {
 
   return (
     <Box
-      as="nav"
-      aria-label={t('Pinned documents')}
+      as="section"
+      aria-labelledby="pinned-docs-title"
       className="--docs--left-panel-favorites"
     >
       <HorizontalSeparator $withPadding={false} />
@@ -41,19 +41,25 @@ export const LeftPanelFavorites = () => {
           $variation="700"
           $padding={{ horizontal: '3xs' }}
           $weight="700"
+          id="pinned-docs-title"
         >
           {t('Pinned documents')}
         </Text>
-        <InfiniteScroll
-          as="ul"
-          hasMore={docs.hasNextPage}
-          isLoading={docs.isFetchingNextPage}
-          next={() => void docs.fetchNextPage()}
-        >
-          {favoriteDocs.map((doc) => (
-            <LeftPanelFavoriteItem key={doc.id} doc={doc} />
-          ))}
-        </InfiniteScroll>
+        <Box>
+          <Box as="ul" $padding="none">
+            {favoriteDocs.map((doc) => (
+              <LeftPanelFavoriteItem key={doc.id} doc={doc} />
+            ))}
+          </Box>
+          {docs.hasNextPage && (
+            <InfiniteScroll
+              hasMore={docs.hasNextPage}
+              isLoading={docs.isFetchingNextPage}
+              next={() => void docs.fetchNextPage()}
+              $padding="none"
+            />
+          )}
+        </Box>
       </Box>
     </Box>
   );

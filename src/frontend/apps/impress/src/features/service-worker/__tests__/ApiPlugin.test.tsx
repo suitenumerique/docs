@@ -129,7 +129,6 @@ describe('ApiPlugin', () => {
       const request = await apiPlugin.requestWillFetch?.(requestInit);
 
       if (withClone) {
-        // eslint-disable-next-line jest/no-conditional-expect
         expect(mockedClone).toHaveBeenCalled();
       }
 

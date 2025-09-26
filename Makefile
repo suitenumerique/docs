@@ -406,6 +406,10 @@ run-frontend-development: ## Run the frontend in development mode
 	cd $(PATH_FRONT_IMPRESS) && yarn dev
 .PHONY: run-frontend-development
 
+frontend-test: ## Run the frontend tests
+	cd $(PATH_FRONT_IMPRESS) && yarn test
+.PHONY: frontend-test
+
 frontend-i18n-extract: ## Extract the frontend translation inside a json to be used for crowdin
 	cd $(PATH_FRONT) && yarn i18n:extract
 .PHONY: frontend-i18n-extract
@@ -436,6 +440,6 @@ bump-packages-version: ## bump the version of the project - VERSION_TYPE can be 
 	cd ./src/frontend/apps/e2e/ && yarn version --no-git-tag-version --$(VERSION_TYPE)
 	cd ./src/frontend/apps/impress/ && yarn version --no-git-tag-version --$(VERSION_TYPE)
 	cd ./src/frontend/servers/y-provider/ && yarn version --no-git-tag-version --$(VERSION_TYPE)
-	cd ./src/frontend/packages/eslint-config-impress/ && yarn version --no-git-tag-version --$(VERSION_TYPE)
+	cd ./src/frontend/packages/eslint-plugin-docs/ && yarn version --no-git-tag-version --$(VERSION_TYPE)
 	cd ./src/frontend/packages/i18n/ && yarn version --no-git-tag-version --$(VERSION_TYPE)
 .PHONY: bump-packages-version

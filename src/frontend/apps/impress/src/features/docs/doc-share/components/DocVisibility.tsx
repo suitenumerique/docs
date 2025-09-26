@@ -17,6 +17,7 @@ import {
   LinkReach,
   LinkRole,
   getDocLinkReach,
+  getDocLinkRole,
   useDocUtils,
   useUpdateDocLink,
 } from '@/docs/doc-management';
@@ -36,7 +37,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const canManage = doc.abilities.accesses_manage;
   const docLinkReach = getDocLinkReach(doc);
-  const docLinkRole = doc.computed_link_role ?? LinkRole.READER;
+  const docLinkRole = getDocLinkRole(doc);
   const { isDesynchronized } = useDocUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
@@ -53,6 +54,10 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const linkReachOptions: DropdownMenuOption[] = useMemo(() => {
     return Object.values(LinkReach).map((key) => {
       const isDisabled = doc.abilities.link_select_options[key] === undefined;
+      let linkRole = undefined;
+      if (key !== LinkReach.RESTRICTED) {
+        linkRole = docLinkRole;
+      }
 
       return {
         label: linkReachTranslations[key],
@@ -60,6 +65,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           updateDocLink({
             id: doc.id,
             link_reach: key,
+            link_role: linkRole,
           }),
         isSelected: docLinkReach === key,
         disabled: isDisabled,
@@ -69,6 +75,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     doc.abilities.link_select_options,
     doc.id,
     docLinkReach,
+    docLinkRole,
     linkReachTranslations,
     updateDocLink,
   ]);
@@ -77,7 +84,8 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     (option) => option.disabled,
   );
 
-  const showLinkRoleOptions = doc.computed_link_reach !== LinkReach.RESTRICTED;
+  const showLinkRoleOptions =
+    docLinkReach !== LinkReach.RESTRICTED && docLinkRole;
 
   const linkRoleOptions: DropdownMenuOption[] = useMemo(() => {
     const options = doc.abilities.link_select_options[docLinkReach] ?? [];
@@ -85,7 +93,12 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       const isDisabled = !options.includes(key);
       return {
         label: linkModeTranslations[key],
-        callback: () => updateDocLink({ id: doc.id, link_role: key }),
+        callback: () =>
+          updateDocLink({
+            id: doc.id,
+            link_role: key,
+            link_reach: docLinkReach,
+          }),
         isSelected: docLinkRole === key,
         disabled: isDisabled,
       };
@@ -169,26 +182,24 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         </Box>
         {showLinkRoleOptions && (
           <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
-            {docLinkReach !== LinkReach.RESTRICTED && (
-              <DropdownMenu
-                testId="doc-access-mode"
-                disabled={!canManage}
-                showArrow={true}
-                options={linkRoleOptions}
-                topMessage={
-                  haveDisabledLinkRoleOptions
-                    ? t(
-                        'You cannot restrict access to a subpage relative to its parent page.',
-                      )
-                    : undefined
-                }
-                label={t('Document access mode')}
-              >
-                <Text $weight="initial" $variation="600">
-                  {linkModeTranslations[docLinkRole]}
-                </Text>
-              </DropdownMenu>
-            )}
+            <DropdownMenu
+              testId="doc-access-mode"
+              disabled={!canManage}
+              showArrow={true}
+              options={linkRoleOptions}
+              topMessage={
+                haveDisabledLinkRoleOptions
+                  ? t(
+                      'You cannot restrict access to a subpage relative to its parent page.',
+                    )
+                  : undefined
+              }
+              label={t('Document access mode')}
+            >
+              <Text $weight="initial" $variation="600">
+                {linkModeTranslations[docLinkRole]}
+              </Text>
+            </DropdownMenu>
           </Box>
         )}
       </Box>

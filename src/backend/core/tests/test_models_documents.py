@@ -161,6 +161,7 @@ def test_models_documents_get_abilities_forbidden(
         "collaboration_auth": False,
         "descendants": False,
         "cors_proxy": False,
+        "content": False,
         "destroy": False,
         "duplicate": False,
         "favorite": False,
@@ -224,6 +225,7 @@ def test_models_documents_get_abilities_reader(
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
@@ -289,6 +291,7 @@ def test_models_documents_get_abilities_editor(
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
@@ -343,6 +346,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": True,
         "duplicate": True,
         "favorite": True,
@@ -394,6 +398,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -448,6 +453,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -509,6 +515,7 @@ def test_models_documents_get_abilities_reader_user(
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -568,6 +575,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "collaboration_auth": True,
         "descendants": True,
         "cors_proxy": True,
+        "content": True,
         "destroy": False,
         "duplicate": True,
         "favorite": True,
@@ -591,6 +599,86 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "versions_list": True,
         "versions_retrieve": True,
     }
+
+
+@pytest.mark.parametrize(
+    "is_authenticated, is_creator,role,link_reach,link_role,can_destroy",
+    [
+        (True, False, "owner", "restricted", "editor", True),
+        (True, True, "owner", "restricted", "editor", True),
+        (True, False, "owner", "restricted", "reader", True),
+        (True, True, "owner", "restricted", "reader", True),
+        (True, False, "owner", "authenticated", "editor", True),
+        (True, True, "owner", "authenticated", "editor", True),
+        (True, False, "owner", "authenticated", "reader", True),
+        (True, True, "owner", "authenticated", "reader", True),
+        (True, False, "owner", "public", "editor", True),
+        (True, True, "owner", "public", "editor", True),
+        (True, False, "owner", "public", "reader", True),
+        (True, True, "owner", "public", "reader", True),
+        (True, False, "administrator", "restricted", "editor", True),
+        (True, True, "administrator", "restricted", "editor", True),
+        (True, False, "administrator", "restricted", "reader", True),
+        (True, True, "administrator", "restricted", "reader", True),
+        (True, False, "administrator", "authenticated", "editor", True),
+        (True, True, "administrator", "authenticated", "editor", True),
+        (True, False, "administrator", "authenticated", "reader", True),
+        (True, True, "administrator", "authenticated", "reader", True),
+        (True, False, "administrator", "public", "editor", True),
+        (True, True, "administrator", "public", "editor", True),
+        (True, False, "administrator", "public", "reader", True),
+        (True, True, "administrator", "public", "reader", True),
+        (True, False, "editor", "restricted", "editor", False),
+        (True, True, "editor", "restricted", "editor", True),
+        (True, False, "editor", "restricted", "reader", False),
+        (True, True, "editor", "restricted", "reader", True),
+        (True, False, "editor", "authenticated", "editor", False),
+        (True, True, "editor", "authenticated", "editor", True),
+        (True, False, "editor", "authenticated", "reader", False),
+        (True, True, "editor", "authenticated", "reader", True),
+        (True, False, "editor", "public", "editor", False),
+        (True, True, "editor", "public", "editor", True),
+        (True, False, "editor", "public", "reader", False),
+        (True, True, "editor", "public", "reader", True),
+        (True, False, "reader", "restricted", "editor", False),
+        (True, False, "reader", "restricted", "reader", False),
+        (True, False, "reader", "authenticated", "editor", False),
+        (True, True, "reader", "authenticated", "editor", True),
+        (True, False, "reader", "authenticated", "reader", False),
+        (True, False, "reader", "public", "editor", False),
+        (True, True, "reader", "public", "editor", True),
+        (True, False, "reader", "public", "reader", False),
+        (False, False, None, "restricted", "editor", False),
+        (False, False, None, "restricted", "reader", False),
+        (False, False, None, "authenticated", "editor", False),
+        (False, False, None, "authenticated", "reader", False),
+        (False, False, None, "public", "editor", False),
+        (False, False, None, "public", "reader", False),
+    ],
+)
+# pylint: disable=too-many-arguments, too-many-positional-arguments
+def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913
+    is_authenticated,
+    is_creator,
+    role,
+    link_reach,
+    link_role,
+    can_destroy,
+):
+    """For a sub document, if a user can create children, he can destroy it."""
+    user = factories.UserFactory() if is_authenticated else AnonymousUser()
+    parent = factories.DocumentFactory(link_reach=link_reach, link_role=link_role)
+    document = factories.DocumentFactory(
+        link_reach=link_reach,
+        link_role=link_role,
+        parent=parent,
+        creator=user if is_creator else None,
+    )
+    if is_authenticated:
+        factories.UserDocumentAccessFactory(document=parent, user=user, role=role)
+
+    abilities = document.get_abilities(user)
+    assert abilities["destroy"] is can_destroy
 
 
 @override_settings(AI_ALLOW_REACH_FROM="public")

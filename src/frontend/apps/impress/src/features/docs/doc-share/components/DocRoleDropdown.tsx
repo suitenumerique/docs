@@ -102,7 +102,7 @@ export const DocRoleDropdown = ({
 
   if (!canUpdate) {
     return (
-      <Text aria-label="doc-role-text" $variation="600">
+      <Text aria-label={t('Document role text')} $variation="600">
         {transRole(currentRole)}
       </Text>
     );
@@ -125,13 +125,7 @@ export const DocRoleDropdown = ({
         },
       ]}
     >
-      <Text
-        $theme="primary"
-        $variation="800"
-        $css={css`
-          font-family: Arial, Helvetica, sans-serif;
-        `}
-      >
+      <Text $theme="primary" $variation="800">
         {transRole(currentRole)}
       </Text>
     </DropdownMenu>

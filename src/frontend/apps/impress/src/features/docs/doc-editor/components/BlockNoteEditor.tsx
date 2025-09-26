@@ -44,7 +44,6 @@ import {
 } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
-const multiColumnDropCursor = XLMultiColumn?.multiColumnDropCursor;
 const multiColumnLocales = XLMultiColumn?.locales;
 const withMultiColumn = XLMultiColumn?.withMultiColumn;
 
@@ -157,7 +156,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       uploadFile,
       schema: blockNoteSchema,
-      dropCursor: multiColumnDropCursor,
     },
     [collabName, lang, provider, uploadFile],
   );

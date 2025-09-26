@@ -7,6 +7,19 @@ export const cssEditor = (readonly: boolean) => css`
     height: 100%;
     padding-bottom: 2rem;
 
+    /**
+     * WCAG Accessibility contrast fixes for BlockNote editor
+     */
+    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
+      .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+      color: #767676 !important;
+      font-weight: 400;
+    }
+
+    .bn-side-menu .mantine-UnstyledButton-root svg {
+      color: #767676 !important;
+    }
+
     img.bn-visual-media[src*='-unsafe'] {
       pointer-events: none;
     }

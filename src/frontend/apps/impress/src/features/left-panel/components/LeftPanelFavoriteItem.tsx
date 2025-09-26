@@ -31,19 +31,15 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         .pinned-actions {
           opacity: ${isDesktop ? 0 : 1};
         }
-        &:hover,
+        &:hover {
+          background-color: ${colorsTokens['greyscale-100']};
+        }
         &:focus-within {
           cursor: pointer;
-
-          background-color: var(--c--theme--colors--greyscale-100);
+          box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
           .pinned-actions {
             opacity: 1;
           }
-        }
-        &:focus-visible {
-          outline: 2px solid ${colorsTokens['primary-500']};
-          outline-offset: 2px;
-          border-radius: ${spacingsTokens['3xs']};
         }
       `}
       key={doc.id}
@@ -51,7 +47,10 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
     >
       <StyledLink
         href={`/docs/${doc.id}`}
-        $css="overflow: auto;"
+        $css={css`
+          overflow: auto;
+          outline: none !important;
+        `}
         aria-label={`${doc.title}, ${t('Updated')} ${DateTime.fromISO(doc.updated_at).toRelative()}`}
       >
         <SimpleDocItem showAccesses doc={doc} />
