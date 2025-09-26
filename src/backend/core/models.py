@@ -7,6 +7,7 @@ import hashlib
 import smtplib
 import uuid
 from datetime import timedelta
+from functools import partial
 from logging import getLogger
 
 from django.conf import settings
@@ -433,6 +434,8 @@ class Document(MP_Node, BaseModel):
         if self._content:
             self.save_content(self._content)
 
+        self.trigger_indexer()
+
     def save_content(self, content):
         """Save content to object storage."""
 
@@ -459,6 +462,18 @@ class Document(MP_Node, BaseModel):
         if has_changed:
             content_file = ContentFile(bytes_content)
             default_storage.save(file_key, content_file)
+
+    def trigger_indexer(self):
+        """
+        Asynchronously call to the document indexer at the end of the transaction.
+        Note : Within the transaction we can have an empty content and a serialization
+        error.
+        """
+        # Prevents some circular imports
+        # pylint: disable=import-outside-toplevel
+        from core.tasks.find import trigger_document_indexer  # noqa: PLC0415
+
+        transaction.on_commit(partial(trigger_document_indexer, self))
 
     def is_leaf(self):
         """
@@ -1051,8 +1066,13 @@ class DocumentAccess(BaseAccess):
 
     def save(self, *args, **kwargs):
         """Override save to clear the document's cache for number of accesses."""
+        created = self.pk is None
+
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+
+        if not created:
+            self.document.trigger_indexer()
 
     @property
     def target_key(self):

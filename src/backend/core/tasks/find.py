@@ -3,7 +3,7 @@
 from logging import getLogger
 
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import cache as django_cache
 
 from impress.celery_app import app
 
@@ -15,9 +15,9 @@ def indexer_debounce_lock(document_id):
     key = f"doc-indexer-debounce-{document_id}"
 
     try:
-        return cache.incr(key)
+        return django_cache.incr(key)
     except ValueError:
-        cache.set(key, 1)
+        django_cache.set(key, 1)
         return 1
 
 
@@ -26,9 +26,9 @@ def indexer_debounce_release(document_id):
     key = f"doc-indexer-debounce-{document_id}"
 
     try:
-        return cache.decr(key)
+        return django_cache.decr(key)
     except ValueError:
-        cache.set(key, 0)
+        django_cache.set(key, 0)
         return 0
 
 
@@ -37,7 +37,7 @@ def document_indexer_task(document_id):
     """Celery Task : Sends indexation query for a document."""
     # Prevents some circular imports
     # pylint: disable=import-outside-toplevel
-    from core import models  # noqa : PLC0415
+    from core import models
     from core.services.search_indexers import (  # noqa : PLC0415
         get_batch_accesses_by_users_and_teams,
         get_document_indexer,

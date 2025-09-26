@@ -1488,6 +1488,10 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push, indexer_set
             indexer.serialize_document(doc1, accesses),
             indexer.serialize_document(doc2, accesses),
             indexer.serialize_document(doc3, accesses),
+            # Called twice : one for the document.save(), one for the documentaccess.save()
+            indexer.serialize_document(doc1, accesses),
+            indexer.serialize_document(doc2, accesses),
+            indexer.serialize_document(doc3, accesses),
         ],
         key=itemgetter("id"),
     )
@@ -1504,8 +1508,6 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
     """Indexation task on deleted or ancestor_deleted documents"""
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
-    user = factories.UserFactory()
-
     with transaction.atomic():
         doc = factories.DocumentFactory(
             link_reach=models.LinkReachChoices.AUTHENTICATED
@@ -1520,10 +1522,6 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
         doc_deleted.soft_delete()
         doc_ancestor_deleted.ancestors_deleted_at = doc_deleted.deleted_at
 
-        factories.UserDocumentAccessFactory(document=doc, user=user)
-        factories.UserDocumentAccessFactory(document=doc_deleted, user=user)
-        factories.UserDocumentAccessFactory(document=doc_ancestor_deleted, user=user)
-
     doc_deleted.refresh_from_db()
     doc_ancestor_deleted.refresh_from_db()
 
@@ -1534,9 +1532,9 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
     assert doc_ancestor_deleted.ancestors_deleted_at is not None
 
     accesses = {
-        str(doc.path): {"users": [user.sub]},
-        str(doc_deleted.path): {"users": [user.sub]},
-        str(doc_ancestor_deleted.path): {"users": [user.sub]},
+        str(doc.path): {"users": []},
+        str(doc_deleted.path): {"users": []},
+        str(doc_ancestor_deleted.path): {"users": []},
     }
 
     data = [call.args[0] for call in mock_push.call_args_list]
@@ -1566,8 +1564,6 @@ def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings
     """Restart indexation task on restored documents"""
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
-    user = factories.UserFactory()
-
     with transaction.atomic():
         doc = factories.DocumentFactory(
             link_reach=models.LinkReachChoices.AUTHENTICATED
@@ -1581,10 +1577,6 @@ def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings
         )
         doc_deleted.soft_delete()
         doc_ancestor_deleted.ancestors_deleted_at = doc_deleted.deleted_at
-
-        factories.UserDocumentAccessFactory(document=doc, user=user)
-        factories.UserDocumentAccessFactory(document=doc_deleted, user=user)
-        factories.UserDocumentAccessFactory(document=doc_ancestor_deleted, user=user)
 
     doc_deleted.refresh_from_db()
     doc_ancestor_deleted.refresh_from_db()
@@ -1607,9 +1599,9 @@ def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings
     assert doc_ancestor_restored.ancestors_deleted_at is None
 
     accesses = {
-        str(doc.path): {"users": [user.sub]},
-        str(doc_deleted.path): {"users": [user.sub]},
-        str(doc_ancestor_deleted.path): {"users": [user.sub]},
+        str(doc.path): {"users": []},
+        str(doc_deleted.path): {"users": []},
+        str(doc_ancestor_deleted.path): {"users": []},
     }
 
     data = [call.args[0] for call in mock_push.call_args_list]
