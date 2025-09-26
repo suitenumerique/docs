@@ -8,6 +8,7 @@ import {
   blockMappingParagraphPDF,
   blockMappingQuotePDF,
   blockMappingTablePDF,
+  blockMappingUploadLoaderPDF,
 } from './blocks-mapping';
 import { inlineContentMappingInterlinkingLinkPDF } from './inline-content-mapping';
 import { DocsExporterPDF } from './types';
@@ -27,6 +28,7 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: pdfDefaultSchemaMappings.blockMapping.file as any,
+    uploadLoader: blockMappingUploadLoaderPDF,
   },
   inlineContentMapping: {
     ...pdfDefaultSchemaMappings.inlineContentMapping,

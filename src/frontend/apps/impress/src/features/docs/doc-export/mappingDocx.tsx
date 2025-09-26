@@ -6,6 +6,7 @@ import {
   blockMappingDividerDocx,
   blockMappingImageDocx,
   blockMappingQuoteDocx,
+  blockMappingUploadLoaderDocx,
 } from './blocks-mapping';
 import { inlineContentMappingInterlinkingLinkDocx } from './inline-content-mapping';
 import { DocsExporterDocx } from './types';
@@ -22,6 +23,7 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     pdf: docxDefaultSchemaMappings.blockMapping.file as any,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
+    uploadLoader: blockMappingUploadLoaderDocx,
   },
   inlineContentMapping: {
     ...docxDefaultSchemaMappings.inlineContentMapping,
