@@ -64,7 +64,6 @@ export const SimpleDocItem = ({
             color={colorsTokens['primary-500']}
           />
         ) : (
-
           <SimpleFileIcon
             width="32px"
             height="32px"

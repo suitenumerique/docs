@@ -94,7 +94,7 @@ describe('useDocTitleUpdate', () => {
       });
     });
 
-    it('should handle empty title and not call updateDoc', () => {
+    it('should handle empty title and call updateDoc', () => {
       const { result } = renderHook(() => useDocTitleUpdate(), {
         wrapper: TestWrapper,
       });
@@ -106,7 +106,7 @@ describe('useDocTitleUpdate', () => {
         );
       });
 
-      expect(mockMutate).not.toHaveBeenCalledWith({
+      expect(mockMutate).toHaveBeenCalledWith({
         id: 'test-doc-id',
         title: '',
       });

@@ -47,6 +47,7 @@ export const useDocTitleUpdate = (options?: UseDocUpdateOptions) => {
 
       // When blank we set to untitled
       if (!sanitizedTitle) {
+        updateDoc({ id: doc.id, title: '' });
         return '';
       }
 
@@ -63,9 +64,7 @@ export const useDocTitleUpdate = (options?: UseDocUpdateOptions) => {
   const updateDocEmoji = useCallback(
     (docId: string, title: string, emoji: string) => {
       const { titleWithoutEmoji } = getEmojiAndTitle(title);
-      console.log('updateDocEmoji', `${emoji} ${titleWithoutEmoji}`);
       updateDoc({ id: docId, title: `${emoji} ${titleWithoutEmoji}` });
-      console.log('updateDocEmoji done');
     },
     [updateDoc],
   );

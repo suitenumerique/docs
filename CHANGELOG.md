@@ -21,6 +21,12 @@ and this project adheres to
   - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
+  - ♿ improve NVDA navigation in DocShareModal #1396
+- ✨(frontend) doc emojis improvements #1381
+  - add an EmojiPicker in the document tree and document title
+  - remove emoji buttons in menus
+- 🩹(frontend) on main pages do not display leading emoji as page icon #1381
+- 🩹(frontend) handle properly emojis in interlinking #1381
 
 ### Fixed
 
@@ -30,20 +36,11 @@ and this project adheres to
 - 🐛(frontend) fix legacy role computation #1376
 - 🐛(frontend) scroll back to top when navigate to a document #1406
 
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿improve NVDA navigation in DocShareModal #1396
-
-
 ## [3.7.0] - 2025-09-12
 
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
-- ✨(frontend) doc emojis improvements #1381
-  - add an EmojiPicker in the document tree and document title
-  - remove emoji buttons in menus
 
 ### Changed
 
@@ -57,8 +54,6 @@ and this project adheres to
   - ✨unify tab focus style for better visual consistency #1341
   - ♿hide decorative icons, label menus, avoid accessible name… #1362
 - ♻️(tilt) use helm dev-backend chart
-- 🩹(frontend) on main pages do not display leading emoji as page icon #1381
-- 🩹(frontend) handle properly emojis in interlinking #1381
 
 ### Removed
 

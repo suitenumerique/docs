@@ -36,7 +36,7 @@ export const EmojiPicker = ({
   if (withOverlay) {
     return (
       <>
-        {/* Overlay transparent pour fermer en cliquant à l'extérieur */}
+        {/* Transparent overlay to close by clicking outside */}
         <div
           style={{
             position: 'fixed',

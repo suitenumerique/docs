@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, TextType } from '@/components';
+import { Box, Text, TextType } from '@/components';
 
 import { EmojiPicker } from '../../doc-editor/components/EmojiPicker';
 import emojidata from '../../doc-editor/components/custom-blocks/initEmojiCallout';
@@ -10,7 +10,7 @@ import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
 
 type DocIconProps = TextType & {
   emoji?: string | null;
-  emojiPicker?: boolean;
+  withEmojiPicker?: boolean;
   defaultIcon: React.ReactNode;
   docId?: string;
   title?: string;
@@ -19,17 +19,16 @@ type DocIconProps = TextType & {
 
 export const DocIcon = ({
   emoji,
+  withEmojiPicker = false,
   defaultIcon,
   $size = 'sm',
   $variation = '1000',
   $weight = '400',
-  emojiPicker = false,
   docId,
   title,
   onEmojiUpdate,
   ...textProps
 }: DocIconProps) => {
-
   const { t } = useTranslation();
   const { updateDocEmoji } = useDocTitleUpdate();
 
@@ -41,12 +40,12 @@ export const DocIcon = ({
     left: number;
   }>({ top: 0, left: 0 });
 
-  if (!emojiPicker && !emoji) {
+  if (!withEmojiPicker && !emoji) {
     return defaultIcon;
   }
 
   const toggleEmojiPicker = (e: React.MouseEvent) => {
-    if (emojiPicker) {
+    if (withEmojiPicker) {
       e.stopPropagation();
       e.preventDefault();
 
@@ -84,9 +83,8 @@ export const DocIcon = ({
         {!emoji ? (
           defaultIcon
         ) : (
-          <Icon
+          <Text
             {...textProps}
-            iconName={emoji}
             $size={$size}
             $variation={$variation}
             $weight={$weight}
@@ -95,7 +93,7 @@ export const DocIcon = ({
             data-testid="doc-emoji-icon"
           >
             {emoji}
-          </Icon>
+          </Text>
         )}
       </Box>
       {openEmojiPicker &&

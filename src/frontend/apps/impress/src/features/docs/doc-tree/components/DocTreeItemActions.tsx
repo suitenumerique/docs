@@ -92,7 +92,7 @@ export const DocTreeItemActions = ({
     },
     ...(!isRoot
       ? [
-          ...(emoji
+          ...(emoji && doc.abilities.partial_update
             ? [
                 {
                   label: t('Remove emoji'),
