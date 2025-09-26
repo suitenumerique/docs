@@ -25,6 +25,12 @@ and this project adheres to
   - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
+  - ♿ improve NVDA navigation in DocShareModal #1396
+- ✨(frontend) doc emojis improvements #1381
+  - add an EmojiPicker in the document tree and document title
+  - remove emoji buttons in menus
+- 🩹(frontend) on main pages do not display leading emoji as page icon #1381
+- 🩹(frontend) handle properly emojis in interlinking #1381
 
 ### Fixed
 
@@ -33,12 +39,6 @@ and this project adheres to
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
 - 🐛(frontend) scroll back to top when navigate to a document #1406
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿improve NVDA navigation in DocShareModal #1396
-
 
 ## [3.7.0] - 2025-09-12
 
