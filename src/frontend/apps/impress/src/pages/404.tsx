@@ -35,10 +35,13 @@ const Page: NextPageWithLayout = () => {
         $gap="1rem"
         $padding={{ bottom: '2rem' }}
       >
+        <Text as="h1" $textAlign="center" className="sr-only">
+          {t('Page Not Found - Error 404')} - {t('Docs')}
+        </Text>
         <Image
           className="c__image-system-filter"
           src={img403}
-          alt={t('Image 403')}
+          alt=""
           style={{
             maxWidth: '100%',
             height: 'auto',

@@ -39,10 +39,13 @@ const Page: NextPageWithLayout = () => {
         $gap="1rem"
         $padding={{ bottom: '2rem' }}
       >
+        <Text as="h1" $textAlign="center" className="sr-only">
+          {t('401 Unauthorized')} - {t('Docs')}
+        </Text>
         <Image
           className="c__image-system-filter"
           src={img401}
-          alt={t('Image 401')}
+          alt=""
           style={{
             maxWidth: '100%',
             height: 'auto',
