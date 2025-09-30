@@ -91,6 +91,11 @@ export const cssEditor = (readonly: boolean) => css`
       border-radius: var(--c--theme--spacings--3xs);
     }
 
+    .bn-block-content[data-content-type='checkListItem'][data-checked='true']
+      .bn-inline-content {
+      text-decoration: none;
+    }
+
     h1 {
       font-size: 1.875rem;
     }

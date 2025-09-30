@@ -25,6 +25,7 @@ and this project adheres to
   - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
+  - ♿ restyle checked checkboxes: removing strikethrough #1439  
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
 ### Fixed
 
