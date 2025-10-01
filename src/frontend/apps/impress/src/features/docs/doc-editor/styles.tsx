@@ -136,6 +136,10 @@ export const cssEditor = css`
     border-left: none;
   }
 
+  .bn-toolbar {
+    max-width: 95vw;
+  }
+
   /**
   * Quotes
   */
