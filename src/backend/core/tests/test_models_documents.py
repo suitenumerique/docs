@@ -1541,9 +1541,16 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
     user = factories.UserFactory()
 
     with transaction.atomic():
-        doc = factories.DocumentFactory()
-        doc_deleted = factories.DocumentFactory()
-        doc_ancestor_deleted = factories.DocumentFactory(parent=doc_deleted)
+        doc = factories.DocumentFactory(
+            link_reach=models.LinkReachChoices.AUTHENTICATED
+        )
+        doc_deleted = factories.DocumentFactory(
+            link_reach=models.LinkReachChoices.AUTHENTICATED
+        )
+        doc_ancestor_deleted = factories.DocumentFactory(
+            parent=doc_deleted,
+            link_reach=models.LinkReachChoices.AUTHENTICATED,
+        )
         doc_deleted.soft_delete()
         doc_ancestor_deleted.ancestors_deleted_at = doc_deleted.deleted_at
 
@@ -1596,9 +1603,16 @@ def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings
     user = factories.UserFactory()
 
     with transaction.atomic():
-        doc = factories.DocumentFactory()
-        doc_deleted = factories.DocumentFactory()
-        doc_ancestor_deleted = factories.DocumentFactory(parent=doc_deleted)
+        doc = factories.DocumentFactory(
+            link_reach=models.LinkReachChoices.AUTHENTICATED
+        )
+        doc_deleted = factories.DocumentFactory(
+            link_reach=models.LinkReachChoices.AUTHENTICATED
+        )
+        doc_ancestor_deleted = factories.DocumentFactory(
+            parent=doc_deleted,
+            link_reach=models.LinkReachChoices.AUTHENTICATED,
+        )
         doc_deleted.soft_delete()
         doc_ancestor_deleted.ancestors_deleted_at = doc_deleted.deleted_at
 
