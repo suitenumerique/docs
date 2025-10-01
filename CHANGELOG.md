@@ -27,6 +27,9 @@ and this project adheres to
   - ♿ add default background to left panel for better accessibility #1423
   - ♿ restyle checked checkboxes: removing strikethrough #1439  
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
+  - ♿ update labels and shared document icon accessibility #1442
+
+
 ### Fixed
 
 - 🐛(backend) duplicate sub docs as root for reader users

@@ -102,17 +102,19 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                   }
                 >
                   {dragMode && (
-                    <Icon
-                      $theme="greyscale"
-                      $variation="600"
-                      $size="14px"
-                      iconName={isPublic ? 'public' : 'vpn_lock'}
-                      aria-label={
-                        isPublic
+                    <>
+                      <Icon
+                        $theme="greyscale"
+                        $variation="600"
+                        $size="14px"
+                        iconName={isPublic ? 'public' : 'vpn_lock'}
+                      />
+                      <span className="sr-only">
+                        {isPublic
                           ? t('Accessible to anyone')
-                          : t('Accessible to authenticated users')
-                      }
-                    />
+                          : t('Accessible to authenticated users')}
+                      </span>
+                    </>
                   )}
                   {!dragMode && (
                     <Tooltip
@@ -131,12 +133,12 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                           $variation="600"
                           $size="14px"
                           iconName={isPublic ? 'public' : 'vpn_lock'}
-                          aria-label={
-                            isPublic
-                              ? t('Accessible to anyone')
-                              : t('Accessible to authenticated users')
-                          }
                         />
+                        <span className="sr-only">
+                          {isPublic
+                            ? t('Accessible to anyone')
+                            : t('Accessible to authenticated users')}
+                        </span>
                       </div>
                     </Tooltip>
                   )}
