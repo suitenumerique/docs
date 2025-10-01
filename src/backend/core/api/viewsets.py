@@ -21,6 +21,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -31,6 +32,7 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -46,6 +48,10 @@ from core.services.converter_services import (
 )
 from core.services.converter_services import (
     YdocConverter,
+)
+from core.services.search_indexers import (
+    get_document_indexer,
+    get_visited_document_ids_of,
 )
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
@@ -373,6 +379,7 @@ class DocumentViewSet(
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
+    search_serializer_class = serializers.ListDocumentSerializer
 
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
@@ -1028,6 +1035,68 @@ class DocumentViewSet(
 
         return drf_response.Response(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        )
+
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list.
+
+        Applies filtering based on request parameter 'q' from `FindDocumentSerializer`.
+        Depending of the configuration it can be:
+         - A fulltext search through the opensearch indexation app "find" if the backend is
+           enabled (see SEARCH_BACKEND_CLASS)
+         - A filtering by the model field 'title'.
+
+        The ordering is always by the most recent first.
+        """
+        access_token = request.session.get("oidc_access_token")
+        user = request.user
+
+        serializer = serializers.FindDocumentSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+
+        indexer = get_document_indexer()
+        text = serializer.validated_data["q"]
+
+        # The indexer is not configured, so we fallback on a simple filter on the
+        # model field 'title'.
+        if not indexer:
+            # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
+            queryset = self.get_queryset()
+            filterset = DocumentFilter({"title": text}, queryset=queryset)
+
+            if not filterset.is_valid():
+                raise drf.exceptions.ValidationError(filterset.errors)
+
+            queryset = filterset.filter_queryset(queryset).order_by("-updated_at")
+
+            return self.get_response_for_queryset(
+                queryset,
+                context={
+                    "request": request,
+                },
+            )
+
+        queryset = models.Document.objects.all()
+
+        # Retrieve the documents ids from Find.
+        results = indexer.search(
+            text=text,
+            token=access_token,
+            visited=get_visited_document_ids_of(queryset, user),
+            page=serializer.validated_data.get("page", 1),
+            page_size=serializer.validated_data.get("page_size", 20),
+        )
+
+        queryset = queryset.filter(pk__in=results).order_by("-updated_at")
+
+        return self.get_response_for_queryset(
+            queryset,
+            context={
+                "request": request,
+            },
         )
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")

@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
 from configurations import Configuration, values
+from cryptography.fernet import Fernet
 from csp.constants import NONE
 from lasuite.configuration.values import SecretFileValue
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -98,6 +99,28 @@ class Base(Configuration):
         }
     }
     DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+    # Search
+    SEARCH_INDEXER_CLASS = values.Value(
+        default=None,
+        environ_name="SEARCH_INDEXER_CLASS",
+        environ_prefix=None,
+    )
+    SEARCH_INDEXER_BATCH_SIZE = values.IntegerValue(
+        default=100_000, environ_name="SEARCH_INDEXER_BATCH_SIZE", environ_prefix=None
+    )
+    SEARCH_INDEXER_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_URL", environ_prefix=None
+    )
+    SEARCH_INDEXER_COUNTDOWN = values.IntegerValue(
+        default=1, environ_name="SEARCH_INDEXER_COUNTDOWN", environ_prefix=None
+    )
+    SEARCH_INDEXER_SECRET = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_SECRET", environ_prefix=None
+    )
+    SEARCH_INDEXER_QUERY_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_QUERY_URL", environ_prefix=None
+    )
 
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
@@ -921,6 +944,14 @@ class Development(Base):
             },
         },
     }
+
+    # There is no key for token storage in default configuration.
+    # In development environment we can create one if needed.
+    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+        default=Fernet.generate_key().decode(),
+        environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
 
     def __init__(self):
         # pylint: disable=invalid-name
