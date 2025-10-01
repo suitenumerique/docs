@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
 from configurations import Configuration, values
+from cryptography.fernet import Fernet
 from csp.constants import NONE
 from lasuite.configuration.values import SecretFileValue
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -943,6 +944,14 @@ class Development(Base):
             },
         },
     }
+
+    # There is no key for token storage in default configuration.
+    # In development environment we can create one if needed.
+    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+        default=Fernet.generate_key().decode(),
+        environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
 
     def __init__(self):
         # pylint: disable=invalid-name
