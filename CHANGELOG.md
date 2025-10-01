@@ -33,6 +33,8 @@ and this project adheres to
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
 - 🐛(frontend) scroll back to top when navigate to a document #1406
+- 🐛(frontend) exclude h4-h6 headings from table of contents #1441
+
 
 ### Changed
 
