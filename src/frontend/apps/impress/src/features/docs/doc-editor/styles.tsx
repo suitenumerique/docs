@@ -1,11 +1,14 @@
 import { css } from 'styled-components';
 
 export const cssEditor = (readonly: boolean) => css`
-  &,
-  & > .bn-container,
-  & .ProseMirror {
+  & {
     height: 100%;
     padding-bottom: 2rem;
+  }
+
+  & .--docs--main-editor,
+  & .--docs--main-editor .ProseMirror {
+    height: 100%;
 
     /**
      * WCAG Accessibility contrast fixes for BlockNote editor
@@ -113,6 +116,10 @@ export const cssEditor = (readonly: boolean) => css`
       .bn-block-group
       .bn-block-outer:not([data-prev-depth-changed]):before {
       border-left: none;
+    }
+
+    .bn-toolbar {
+      max-width: 95vw;
     }
   }
 

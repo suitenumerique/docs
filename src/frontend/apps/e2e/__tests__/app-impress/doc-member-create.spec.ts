@@ -229,11 +229,11 @@ test.describe('Document create member', () => {
       .last()
       .fill('Hello World');
 
-    const urlDoc = page.url();
+    const docUrl = page.url();
 
     // Other user will request access
     const { otherPage, otherBrowserName, cleanup } =
-      await connectOtherUserToDoc(browserName, urlDoc);
+      await connectOtherUserToDoc({ browserName, docUrl });
 
     await expect(
       otherPage.getByText('Insufficient access rights to view the document.'),

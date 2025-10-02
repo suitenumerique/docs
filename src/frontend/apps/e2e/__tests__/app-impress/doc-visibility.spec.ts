@@ -157,12 +157,12 @@ test.describe('Doc Visibility: Restricted', () => {
       .last()
       .fill('Hello World');
 
-    const urlDoc = page.url();
+    const docUrl = page.url();
 
-    const { otherBrowserName, otherPage } = await connectOtherUserToDoc(
+    const { otherBrowserName, otherPage } = await connectOtherUserToDoc({
       browserName,
-      urlDoc,
-    );
+      docUrl,
+    });
 
     await expect(
       otherPage.getByText('Insufficient access rights to view the document.'),

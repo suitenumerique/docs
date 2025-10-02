@@ -6,6 +6,9 @@ import {
 import { forEach, isArray } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
+
+import { Text } from '@/components';
 
 type Block = {
   type: string;
@@ -83,8 +86,18 @@ export function MarkdownButton() {
       mainTooltip={t('Convert Markdown')}
       onClick={handleConvertMarkdown}
       className="--docs--editor-markdown-button"
-    >
-      M
-    </Components.FormattingToolbar.Button>
+      label="M"
+      icon={
+        <Text
+          aria-hidden={true}
+          $css={css`
+            font-family: var(--c--theme--font--families--base);
+          `}
+          $weight="bold"
+        >
+          M
+        </Text>
+      }
+    />
   );
 }

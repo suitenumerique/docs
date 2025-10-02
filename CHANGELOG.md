@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add pdf block to the editor #1293
+- ✨ Add comments feature to the editor #1330
 
 ### Changed
 
@@ -25,8 +26,10 @@ and this project adheres to
   - ♿ remove redundant aria-label on hidden icons and update tests #1432
   - ♿ improve semantic structure and aria roles of leftpanel #1431
   - ♿ add default background to left panel for better accessibility #1423
+  - ♿improve NVDA navigation in DocShareModal #1396
   - ♿ restyle checked checkboxes: removing strikethrough #1439  
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
+
 ### Fixed
 
 - 🐛(backend) duplicate sub docs as root for reader users
@@ -34,11 +37,6 @@ and this project adheres to
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
 - 🐛(frontend) scroll back to top when navigate to a document #1406
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿improve NVDA navigation in DocShareModal #1396
 
 ## [3.7.0] - 2025-09-12
 
@@ -71,6 +69,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) Comments on text editor #1309
 - 👷(CI) add bundle size check job #1268
 - ✨(frontend) use title first emoji as doc icon in tree #1289
 

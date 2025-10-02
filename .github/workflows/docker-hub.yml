@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'feat/comments-frontend'
     tags:
       - 'v*'
   pull_request:

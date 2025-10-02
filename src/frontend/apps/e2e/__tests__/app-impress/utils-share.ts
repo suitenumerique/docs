@@ -1,20 +1,20 @@
 import { Page, chromium, expect } from '@playwright/test';
 
 import {
-  BROWSERS,
   BrowserName,
+  getOtherBrowserName,
   keyCloakSignIn,
   verifyDocName,
 } from './utils-common';
 
 export type Role = 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
-export type LinkRole = 'Reading' | 'Edition';
+export type LinkRole = 'Reading' | 'Editing';
 
 export const addNewMember = async (
   page: Page,
   index: number,
-  role: 'Administrator' | 'Owner' | 'Editor' | 'Reader',
+  role: Role,
   fillText: string = 'user.test',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(
@@ -88,15 +88,28 @@ export const updateRoleUser = async (
  * @param docTitle The title of the document (optional).
  * @returns An object containing the other browser, context, and page.
  */
-export const connectOtherUserToDoc = async (
-  browserName: BrowserName,
-  docUrl: string,
-  docTitle?: string,
-) => {
-  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
-  if (!otherBrowserName) {
-    throw new Error('No alternative browser found');
-  }
+type ConnectOtherUserToDocParams = {
+  docUrl: string;
+  docTitle?: string;
+} & (
+  | {
+      otherBrowserName: BrowserName;
+      browserName?: never;
+    }
+  | {
+      browserName: BrowserName;
+      otherBrowserName?: never;
+    }
+);
+
+export const connectOtherUserToDoc = async ({
+  browserName,
+  docUrl,
+  docTitle,
+  otherBrowserName: _otherBrowserName,
+}: ConnectOtherUserToDocParams) => {
+  const otherBrowserName =
+    _otherBrowserName || getOtherBrowserName(browserName);
 
   const otherBrowser = await chromium.launch({ headless: true });
   const otherContext = await otherBrowser.newContext({
