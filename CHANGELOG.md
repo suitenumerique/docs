@@ -38,6 +38,7 @@ and this project adheres to
 - 🐛(frontend) fix legacy role computation #1376
 - 🛂(frontend) block editing title when not allowed #1412
 - 🐛(frontend) scroll back to top when navigate to a document #1406
+- 🔒(frontend) prevent readers from changing callout emoji #1449
 
 ## [3.7.0] - 2025-09-12
 
