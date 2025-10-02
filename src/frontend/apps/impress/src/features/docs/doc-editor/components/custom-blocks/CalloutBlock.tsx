@@ -25,8 +25,12 @@ export const CalloutBlock = createReactBlockSpec(
   {
     render: ({ block, editor, contentRef }) => {
       const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
+      const isEditable = editor.isEditable;
 
       const toggleEmojiPicker = (e: React.MouseEvent) => {
+        if (!isEditable) {
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         setOpenEmojiPicker(!openEmojiPicker);
@@ -65,9 +69,13 @@ export const CalloutBlock = createReactBlockSpec(
             onClick={toggleEmojiPicker}
             $css={css`
               font-size: 1.125rem;
-              &:hover {
-                background-color: rgba(0, 0, 0, 0.1);
-              }
+              cursor: ${isEditable ? 'pointer' : 'default'};
+              ${isEditable &&
+              `
+                &:hover {
+                  background-color: rgba(0, 0, 0, 0.1);
+                }
+              `}
             `}
             $align="center"
             $height="28px"
