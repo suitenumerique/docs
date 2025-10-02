@@ -846,6 +846,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByText('Add PDF').click();
     const fileChooserPromise = page.waitForEvent('filechooser');
+    const downloadPromise = page.waitForEvent('download');
     await page.getByText('Upload file').click();
     const fileChooser = await fileChooserPromise;
 
@@ -866,5 +867,12 @@ test.describe('Doc Editor', () => {
 
     await expect(pdfEmbed).toHaveAttribute('type', 'application/pdf');
     await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
+
+    // Check download with original filename
+    await page.locator('.bn-block-content[data-content-type="pdf"]').click();
+    await page.locator('[data-test="downloadfile"]').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('test-pdf.pdf');
   });
 });
