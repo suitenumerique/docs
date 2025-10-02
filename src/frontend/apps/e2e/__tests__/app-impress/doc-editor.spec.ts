@@ -874,4 +874,38 @@ test.describe('Doc Editor', () => {
     await expect(pdfEmbed).toHaveAttribute('type', 'application/pdf');
     await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
   });
+
+  test('it downloads PDF with original filename', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    const downloadPromise = page.waitForEvent('download');
+    const responseCheckPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('media-check') && response.status() === 200,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    await openSuggestionMenu({ page });
+    await page.getByText('Embed a PDF file').click();
+
+    await page.getByText('Add PDF').click();
+    await page.getByText('Upload file').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test-pdf.pdf'));
+
+    await responseCheckPromise;
+
+    await page.locator('.bn-block-content[data-content-type="pdf"]').click();
+
+    await page.locator('[data-test="downloadfile"]').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('test-pdf.pdf');
+  });
 });
