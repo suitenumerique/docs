@@ -19,18 +19,13 @@ export const TableContent = () => {
   const { t } = useTranslation();
   const [isHover, setIsHover] = useState(false);
 
-  // Filter headings to only show h1, h2, h3 (levels 1-3)
-  const filteredHeadings = headings?.filter(
-    (heading) => heading.props.level >= 1 && heading.props.level <= 3,
-  );
-
   useEffect(() => {
     const handleScroll = () => {
-      if (!filteredHeadings) {
+      if (!headings) {
         return;
       }
 
-      for (const heading of filteredHeadings) {
+      for (const heading of headings) {
         const elHeading = document.body.querySelector(
           `.bn-block-outer[data-id="${heading.id}"] [data-content-type="heading"]:first-child`,
         );
@@ -74,7 +69,7 @@ export const TableContent = () => {
         .getElementById(MAIN_LAYOUT_ID)
         ?.removeEventListener('scroll', scrollFn);
     };
-  }, [filteredHeadings, setHeadingIdHighlight]);
+  }, [headings, setHeadingIdHighlight]);
 
   const onOpen = () => {
     setIsHover(true);
@@ -93,13 +88,12 @@ export const TableContent = () => {
     setIsHover(false);
   };
 
-  const shouldHideTableContent =
+  if (
     !editor ||
-    !filteredHeadings ||
-    filteredHeadings.length === 0 ||
-    (filteredHeadings.length === 1 && !filteredHeadings[0].contentText);
-
-  if (shouldHideTableContent) {
+    !headings ||
+    headings.length === 0 ||
+    (headings.length === 1 && !headings[0].contentText)
+  ) {
     return null;
   }
 
@@ -168,7 +162,7 @@ export const TableContent = () => {
               overflow-y: auto;
             `}
           >
-            {filteredHeadings?.map(
+            {headings?.map(
               (heading) =>
                 heading.contentText && (
                   <Heading
