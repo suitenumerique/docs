@@ -318,6 +318,10 @@ def test_models_documents_get_abilities_editor(
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
         assert document.get_abilities(user) == expected_abilities
+
+    with django_assert_num_queries(0):
+        assert document.get_abilities(user) == expected_abilities
+
     document.soft_delete()
     document.refresh_from_db()
     assert all(
@@ -679,6 +683,98 @@ def test_models_documents_get_abilities_children_destroy(  # noqa: PLR0913
 
     abilities = document.get_abilities(user)
     assert abilities["destroy"] is can_destroy
+
+
+def test_models_documents_get_abilities_cache(django_assert_num_queries):
+    """Abilities should be computed once and cached."""
+
+    user = factories.UserFactory()
+    parent = factories.DocumentFactory(link_reach="restricted", link_role="editor")
+    document = factories.DocumentFactory(
+        link_reach="restricted",
+        link_role="editor",
+        parent=parent,
+    )
+
+    access = factories.UserDocumentAccessFactory(
+        document=parent, user=user, role="editor"
+    )
+
+    # 1 for fetching the parent, 2 for computed the roles (parent and document)
+    with django_assert_num_queries(
+        3
+    ):  # 1 for fetching the parent, 2 for computed the roles (parent and document)
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    # modifying the access should invalidate the cache
+    access.role = "reader"
+    access.save()
+    # 2 for computed the roles (parent and document), the parent is still in document's cache
+    with django_assert_num_queries(2):
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    # because the parent abilities have alreadby been comptued when
+    # document abilities were computed, no query is done
+    with django_assert_num_queries(0):
+        parent.get_abilities(user)
+
+    # deleting the access should invalidate the cache
+    access.delete()
+    with django_assert_num_queries(2):
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    # Modifying the document link_reach should invalidate the cache
+    document.link_reach = "public"
+    document.save()
+    # 1 for computed the roles (document), parent abilities are still in cache
+    with django_assert_num_queries(1):
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    parent.link_reach = "public"
+    parent.save()
+    # 2 for computed the roles (parent and document)
+    with django_assert_num_queries(2):
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    # Modifying the parent link_role should invalidate the cache
+    document.link_role = "reader"
+    document.save()
+    # 1 for computed the roles (document), parent abilities are still in cache
+    with django_assert_num_queries(1):
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    parent.link_role = "reader"
+    parent.save()
+    # 2 for computed the roles (parent and document)
+    with django_assert_num_queries(2):
+        document.get_abilities(user)
+
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
+
+    # Modifying any other property should not invalidate the cache
+    document.title = "new title"
+    document.save()
+    with django_assert_num_queries(0):
+        document.get_abilities(user)
 
 
 @override_settings(AI_ALLOW_REACH_FROM="public")

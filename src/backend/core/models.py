@@ -28,6 +28,7 @@ from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
 from botocore.exceptions import ClientError
+from dirtyfields import DirtyFieldsMixin
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
@@ -353,7 +354,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
 
 
 # pylint: disable=too-many-public-methods
-class Document(MP_Node, BaseModel):
+class Document(DirtyFieldsMixin, MP_Node, BaseModel):
     """Pad document carrying the content."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
@@ -403,6 +404,8 @@ class Document(MP_Node, BaseModel):
 
     objects = DocumentManager()
 
+    FIELDS_TO_CHECK = ["link_reach", "link_role"]
+
     class Meta:
         db_table = "impress_document"
         ordering = ("path",)
@@ -426,10 +429,20 @@ class Document(MP_Node, BaseModel):
         super().__init__(*args, **kwargs)
         self._ancestors_link_definition = None
         self._computed_link_definition = None
+        self._cached_parent_obj = None
 
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
+        invalidate_abilities_cache = False
+        if not self._state.adding:
+            changed_fields = self.get_dirty_fields()
+            if any(field in changed_fields for field in self.FIELDS_TO_CHECK):
+                invalidate_abilities_cache = True
+
         super().save(*args, **kwargs)
+
+        if invalidate_abilities_cache:
+            self.invalidate_abilities_cache()
 
         if self._content:
             file_key = self.file_key
@@ -462,6 +475,42 @@ class Document(MP_Node, BaseModel):
         :returns: True if the node is has no children
         """
         return not self.has_deleted_children and self.numchild == 0
+
+    def get_ancestors(self):
+        """
+        :returns: A queryset containing the current node object's ancestors,
+            starting by the root node and descending to the parent.
+        """
+        if self.is_root():
+            return Document.objects.none()
+
+        paths = [self.path[0:pos] for pos in range(self.steplen, len(self.path), self.steplen)]
+        return (
+            Document.objects.select_related("creator")
+            .filter(path__in=paths)
+            .order_by("depth")
+        )
+
+    def get_parent(self, update=False):
+        """
+        :returns: the parent node of the current node object.
+            Caches the result in the object itself to help in loops.
+        """
+        depth = int(len(self.path) / self.steplen)
+        if depth <= 1:
+            return None
+
+        if update:
+            self._cached_parent_obj = None
+
+        if self._cached_parent_obj is not None:
+            return self._cached_parent_obj
+
+        parentpath = self._get_basepath(self.path, depth - 1)
+        self._cached_parent_obj = Document.objects.select_related("creator").get(
+            path=parentpath
+        )
+        return self._cached_parent_obj
 
     @property
     def key_base(self):
@@ -712,10 +761,44 @@ class Document(MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
+    def _get_abilities_cache_key(self):
+        """Generate a unique cache key for each document."""
+        return f"document:abilities:{self.path!s}"
+
+    def _get_abilities_cache_for_user(self, user):
+        """Return the abilities cache for the document and user."""
+        key = self._get_abilities_cache_key()
+        document_abilities = cache.get(key, {})
+
+        user_id = user.id if user.is_authenticated else "anonymous"
+
+        return document_abilities.get(user_id)
+
+    def _set_abilities_cache_for_user(self, user, abilities):
+        """Set the abilities cache for the document and user."""
+        key = self._get_abilities_cache_key()
+        document_abilities = cache.get(key, {})
+        user_id = user.id if user.is_authenticated else "anonymous"
+        document_abilities[user_id] = abilities
+        cache.set(key, document_abilities, settings.DOCUMENT_ABILITIES_CACHE_TIMEOUT)
+
+    def invalidate_abilities_cache(self):
+        """Invalidate the abilities cache for the document."""
+        key = self._get_abilities_cache_key()
+        cache.delete(key)
+
+        # Invalidate in cascade the abilities for all children
+        for child in self.get_children():
+            child.invalidate_abilities_cache()
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document.
         """
+        abilities = self._get_abilities_cache_for_user(user)
+        if abilities is not None:
+            return abilities
+
         # First get the role based on specific access
         role = self.get_role(user)
 
@@ -759,6 +842,10 @@ class Document(MP_Node, BaseModel):
             if self.is_root()
             else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
         )
+        can_duplicate = can_get and user.is_authenticated
+        if not self.is_root() and user.is_authenticated:
+            parent_ability = self.get_parent().get_abilities(user)
+            can_duplicate = parent_ability["children_create"]
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
         ai_access = any(
@@ -772,7 +859,7 @@ class Document(MP_Node, BaseModel):
             ]
         )
 
-        return {
+        abilities = {
             "accesses_manage": is_owner_or_admin,
             "accesses_view": has_access_role,
             "ai_transform": ai_access,
@@ -787,7 +874,7 @@ class Document(MP_Node, BaseModel):
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
-            "duplicate": can_get and user.is_authenticated,
+            "duplicate": can_duplicate,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner,
@@ -804,6 +891,8 @@ class Document(MP_Node, BaseModel):
             "versions_list": has_access_role,
             "versions_retrieve": has_access_role,
         }
+        self._set_abilities_cache_for_user(user, abilities)
+        return abilities
 
     def send_email(self, subject, emails, context=None, language=None):
         """Generate and send email from a template."""
@@ -889,6 +978,7 @@ class Document(MP_Node, BaseModel):
         self.ancestors_deleted_at = self.deleted_at = timezone.now()
         self.save()
         self.invalidate_nb_accesses_cache()
+        self.invalidate_abilities_cache()
 
         if self.depth > 1:
             self._meta.model.objects.filter(pk=self.get_parent().pk).update(
@@ -1050,6 +1140,7 @@ class DocumentAccess(BaseAccess):
         """Override save to clear the document's cache for number of accesses."""
         super().save(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+        self.document.invalidate_abilities_cache()
 
     @property
     def target_key(self):
@@ -1060,6 +1151,7 @@ class DocumentAccess(BaseAccess):
         """Override delete to clear the document's cache for number of accesses."""
         super().delete(*args, **kwargs)
         self.document.invalidate_nb_accesses_cache()
+        self.document.invalidate_abilities_cache()
 
     def set_user_roles_tuple(self, ancestors_role, current_role):
         """

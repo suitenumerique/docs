@@ -808,6 +808,12 @@ class Base(Configuration):
         ),
     }
 
+    DOCUMENT_ABILITIES_CACHE_TIMEOUT = values.IntegerValue(
+        default=60 * 60,  # 1 hour
+        environ_name="ABILITIES_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
