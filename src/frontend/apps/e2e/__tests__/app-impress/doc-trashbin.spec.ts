@@ -29,10 +29,12 @@ test.describe('Doc Trashbin', () => {
     const row1 = await getGridRow(page, title1);
     await clickInGridMenu(page, row1, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
+    await expect(row1.getByText(title1)).toBeHidden();
 
     const row2 = await getGridRow(page, title2);
     await clickInGridMenu(page, row2, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
+    await expect(row2.getByText(title2)).toBeHidden();
 
     await page.getByRole('link', { name: 'Trashbin' }).click();
 
@@ -51,5 +53,18 @@ test.describe('Doc Trashbin', () => {
         name: 'Open the sharing settings for the document',
       }),
     ).toBeDisabled();
+
+    await clickInGridMenu(page, row2, 'Restore');
+    await verifyDocName(page, title2);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await expect(row2.getByText(title2)).toBeVisible();
+    await expect(
+      row2.getByRole('button', {
+        name: 'Open the sharing settings for the document',
+      }),
+    ).toBeEnabled();
+
+    await page.getByRole('link', { name: 'Trashbin' }).click();
+    await expect(row2.getByText(title2)).toBeHidden();
   });
 });

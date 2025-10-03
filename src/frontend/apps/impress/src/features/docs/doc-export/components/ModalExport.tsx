@@ -16,8 +16,7 @@ import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
+import { Box, ButtonCloseModal, Text } from '@/components';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
 
