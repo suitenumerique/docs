@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Box } from '@/components';
 
-const ButtonCloseModal = (props: ButtonProps) => {
+export const ButtonCloseModal = (props: ButtonProps) => {
   return (
     <Button
       type="button"
@@ -18,5 +18,3 @@ const ButtonCloseModal = (props: ButtonProps) => {
     />
   );
 };
-
-export default ButtonCloseModal;

@@ -2,6 +2,7 @@ import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
 import {
   Fragment,
   PropsWithChildren,
+  ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -15,7 +16,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { useDropdownKeyboardNav } from './hook/useDropdownKeyboardNav';
 
 export type DropdownMenuOption = {
-  icon?: string;
+  icon?: ReactNode;
   label: string;
   testId?: string;
   value?: string;
@@ -220,7 +221,7 @@ export const DropdownMenu = ({
                   $align="center"
                   $gap={spacingsTokens['base']}
                 >
-                  {option.icon && (
+                  {option.icon && typeof option.icon === 'string' && (
                     <Icon
                       $size="20px"
                       $theme="greyscale"
@@ -229,6 +230,9 @@ export const DropdownMenu = ({
                       aria-hidden="true"
                     />
                   )}
+                  {option.icon &&
+                    typeof option.icon !== 'string' &&
+                    option.icon}
                   <Text $variation={isDisabled ? '400' : '1000'}>
                     {option.label}
                   </Text>

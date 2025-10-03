@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, HorizontalSeparator, Text } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
+import { Box, ButtonCloseModal, HorizontalSeparator, Text } from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
