@@ -38,6 +38,8 @@ and this project adheres to
 - 🐛(frontend) fix legacy role computation #1376
 - 🛂(frontend) block editing title when not allowed #1412
 - 🐛(frontend) scroll back to top when navigate to a document #1406
+- 🐛(frontend) exclude h4-h6 headings from table of contents #1441
+
 
 ## [3.7.0] - 2025-09-12
 

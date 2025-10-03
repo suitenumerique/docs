@@ -29,7 +29,12 @@ export const useHeadingStore = create<UseHeadingStore>((set, get) => ({
   headings: [],
   setHeadings: (editor) => {
     const headingBlocks = editor?.document
-      .filter((block) => block.type === 'heading')
+      .filter(
+        (block) =>
+          block.type === 'heading' &&
+          block.props.level >= 1 &&
+          block.props.level <= 3,
+      )
       .map((block) => ({
         ...block,
         contentText: recursiveTextContent(
