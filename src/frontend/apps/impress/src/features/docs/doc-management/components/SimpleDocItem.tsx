@@ -4,9 +4,15 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
+import {
+  Doc,
+  getEmojiAndTitle,
+  useDocUtils,
+  useTrans,
+} from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import ChildDocument from '../assets/child-document.svg';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
 
@@ -37,6 +43,7 @@ export const SimpleDocItem = ({
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
+  const { isChild } = useDocUtils(doc);
 
   const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
     doc.title || untitledDocument,
@@ -73,11 +80,19 @@ export const SimpleDocItem = ({
           <DocIcon
             emoji={emoji}
             defaultIcon={
-              <SimpleFileIcon
-                aria-hidden="true"
-                data-testid="doc-simple-icon"
-                color={colorsTokens['primary-500']}
-              />
+              isChild ? (
+                <ChildDocument
+                  aria-hidden="true"
+                  data-testid="doc-child-icon"
+                  color={colorsTokens['primary-500']}
+                />
+              ) : (
+                <SimpleFileIcon
+                  aria-hidden="true"
+                  data-testid="doc-simple-icon"
+                  color={colorsTokens['primary-500']}
+                />
+              )
             }
             $size="25px"
           />

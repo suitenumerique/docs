@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add pdf block to the editor #1293
+- ✨List and restore deleted docs #1450
 
 ### Changed
 

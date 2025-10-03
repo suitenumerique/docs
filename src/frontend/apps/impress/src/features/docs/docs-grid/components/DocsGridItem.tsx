@@ -1,19 +1,22 @@
 import { Tooltip, useModal } from '@openfun/cunningham-react';
-import { DateTime } from 'luxon';
+import { useSearchParams } from 'next/navigation';
 import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon, StyledLink, Text } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
+import { useDate } from '@/hook';
 import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocsGridActions } from './DocsGridActions';
 import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
+import { DocsGridTrashbinActions } from './DocsGridTrashbinActions';
 
 type DocsGridItemProps = {
   doc: Doc;
@@ -21,6 +24,10 @@ type DocsGridItemProps = {
 };
 
 export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
+  const searchParams = useSearchParams();
+  const target = searchParams.get('target');
+  const isInTrashbin = target === 'trashbin';
+
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
@@ -156,22 +163,25 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           $gap="32px"
           role="gridcell"
         >
-          {isDesktop && (
-            <StyledLink href={`/docs/${doc.id}`}>
-              <Text $variation="600" $size="xs">
-                {DateTime.fromISO(doc.updated_at).toRelative()}
-              </Text>
-            </StyledLink>
-          )}
+          <DocsGridItemDate
+            doc={doc}
+            isDesktop={isDesktop}
+            isInTrashbin={isInTrashbin}
+          />
 
           <Box $direction="row" $align="center" $gap={spacingsTokens.lg}>
             {isDesktop && (
               <DocsGridItemSharedButton
                 doc={doc}
                 handleClick={handleShareClick}
+                disabled={isInTrashbin}
               />
             )}
-            <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+            {isInTrashbin ? (
+              <DocsGridTrashbinActions doc={doc} />
+            ) : (
+              <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+            )}
           </Box>
         </Box>
       </Box>
@@ -179,5 +189,42 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
         <DocShareModal doc={doc} onClose={shareModal.close} />
       )}
     </>
+  );
+};
+
+export const DocsGridItemDate = ({
+  doc,
+  isDesktop,
+  isInTrashbin,
+}: {
+  doc: Doc;
+  isDesktop: boolean;
+  isInTrashbin: boolean;
+}) => {
+  const { data: config } = useConfig();
+  const { t } = useTranslation();
+  const { relativeDate, calculateDaysLeft } = useDate();
+
+  if (!isDesktop) {
+    return null;
+  }
+
+  let dateToDisplay = relativeDate(doc.updated_at);
+
+  if (isInTrashbin && config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
+    const daysLeft = calculateDaysLeft(
+      doc.deleted_at,
+      config.TRASHBIN_CUTOFF_DAYS,
+    );
+
+    dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
+  }
+
+  return (
+    <StyledLink href={`/docs/${doc.id}`}>
+      <Text $variation="600" $size="xs">
+        {dateToDisplay}
+      </Text>
+    </StyledLink>
   );
 };

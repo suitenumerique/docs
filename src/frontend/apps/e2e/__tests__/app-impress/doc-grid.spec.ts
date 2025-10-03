@@ -139,7 +139,7 @@ test.describe('Document grid item options', () => {
     const row = await getGridRow(page, docTitle);
     await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Remove' }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
