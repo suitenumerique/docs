@@ -434,7 +434,9 @@
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
-      "Shared with {{count}} users_other": "Shared with {{count}} users"
+      "Shared with {{count}} users_other": "Shared with {{count}} users",
+      "days_one": "day",
+      "days_other": "days"
     }
   },
   "es": {

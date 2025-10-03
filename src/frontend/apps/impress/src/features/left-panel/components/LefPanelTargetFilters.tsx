@@ -35,6 +35,11 @@ export const LeftPanelTargetFilters = () => {
       label: t('Shared with me'),
       targetQuery: DocDefaultFilter.SHARED_WITH_ME,
     },
+    {
+      icon: 'delete',
+      label: t('Trashbin'),
+      targetQuery: DocDefaultFilter.TRASHBIN,
+    },
   ];
 
   const buildHref = (query: DocDefaultFilter) => {

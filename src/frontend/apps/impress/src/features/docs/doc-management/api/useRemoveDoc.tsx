@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
 
 import { KEY_LIST_DOC } from './useDocs';
 
@@ -32,6 +33,9 @@ export const useRemoveDoc = (options?: UseRemoveDocOptions) => {
     onSuccess: (data, variables, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_LIST_DOC_TRASHBIN],
       });
       if (options?.onSuccess) {
         void options.onSuccess(data, variables, context);

@@ -25,8 +25,6 @@ export const TextErrors = ({
   canClose = false,
   ...textProps
 }: TextErrorsProps) => {
-  const { t } = useTranslation();
-
   return (
     <AlertStyled
       canClose={canClose}
@@ -34,31 +32,47 @@ export const TextErrors = ({
       icon={icon}
       className="--docs--text-errors"
     >
-      <Box $direction="column" $gap="0.2rem">
-        {causes &&
-          causes.map((cause, i) => (
-            <Text
-              key={`causes-${i}`}
-              $theme="danger"
-              $variation="600"
-              $textAlign="center"
-              {...textProps}
-            >
-              {cause}
-            </Text>
-          ))}
+      <TextOnlyErrors
+        causes={causes}
+        defaultMessage={defaultMessage}
+        {...textProps}
+      />
+    </AlertStyled>
+  );
+};
 
-        {!causes && (
+export const TextOnlyErrors = ({
+  causes,
+  defaultMessage,
+  ...textProps
+}: TextErrorsProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <Box $direction="column" $gap="0.2rem">
+      {causes &&
+        causes.map((cause, i) => (
           <Text
+            key={`causes-${i}`}
             $theme="danger"
             $variation="600"
             $textAlign="center"
             {...textProps}
           >
-            {defaultMessage || t('Something bad happens, please retry.')}
+            {cause}
           </Text>
-        )}
-      </Box>
-    </AlertStyled>
+        ))}
+
+      {!causes && (
+        <Text
+          $theme="danger"
+          $variation="600"
+          $textAlign="center"
+          {...textProps}
+        >
+          {defaultMessage || t('Something bad happens, please retry.')}
+        </Text>
+      )}
+    </Box>
   );
 };

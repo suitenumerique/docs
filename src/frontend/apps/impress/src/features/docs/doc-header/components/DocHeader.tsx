@@ -1,4 +1,3 @@
-import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator, Text } from '@/components';
@@ -11,6 +10,7 @@ import {
   useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
+import { useDate } from '@/hook';
 import { useResponsiveStore } from '@/stores';
 
 import { AlertNetwork } from './AlertNetwork';
@@ -30,6 +30,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { isEditable } = useIsCollaborativeEditable(doc);
   const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
   const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
+  const { relativeDate } = useDate();
 
   return (
     <>
@@ -79,14 +80,14 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                     </Text>
                     <Text $variation="600" $size="s">
                       {t('Last update: {{update}}', {
-                        update: DateTime.fromISO(doc.updated_at).toRelative(),
+                        update: relativeDate(doc.updated_at),
                       })}
                     </Text>
                   </>
                 )}
                 {!isDesktop && (
                   <Text $variation="400" $size="s">
-                    {DateTime.fromISO(doc.updated_at).toRelative()}
+                    {relativeDate(doc.updated_at)}
                   </Text>
                 )}
               </Box>
