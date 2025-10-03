@@ -12,6 +12,7 @@ flowchart TD
     Back --> DB("Database (PostgreSQL)")
     Back <--> Celery --> DB
     Back ----> S3("Minio (S3)")
+    Back -- REST API --> Find
 ```
 
 ### Architecture decision records
