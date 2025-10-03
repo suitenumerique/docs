@@ -27,6 +27,7 @@ export interface ConfigResponse {
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
+  TRASHBIN_CUTOFF_DAYS?: number;
   theme_customization?: ThemeCustomization;
 }
 

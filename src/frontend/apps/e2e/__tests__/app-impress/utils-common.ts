@@ -23,6 +23,7 @@ export const CONFIG = {
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
   SENTRY_DSN: null,
+  TRASHBIN_CUTOFF_DAYS: 30,
   theme_customization: {},
 } as const;
 

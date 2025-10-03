@@ -2157,6 +2157,7 @@ class ConfigView(drf.views.APIView):
             "LANGUAGES",
             "LANGUAGE_CODE",
             "SENTRY_DSN",
+            "TRASHBIN_CUTOFF_DAYS"
         ]
         dict_settings = {}
         for setting in array_settings:
