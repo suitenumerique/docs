@@ -76,11 +76,22 @@ export const FileDownloadButton = ({
 
       if (!url.includes('-unsafe')) {
         const blob = (await exportResolveFileUrl(url)) as Blob;
-        downloadFile(blob, url.split('/').pop() || 'file');
+        downloadFile(
+          blob,
+          (fileBlock.props.name as string) || url.split('/').pop() || 'file',
+        );
       } else {
         const onConfirm = async () => {
           const blob = (await exportResolveFileUrl(url)) as Blob;
-          downloadFile(blob, url.split('/').pop() || 'file (unsafe)');
+
+          const baseName =
+            (fileBlock.props.name as string) || url.split('/').pop() || 'file';
+
+          const unsafeName = baseName.includes('.')
+            ? baseName.replace(/(\.[^/.]+)$/, '-unsafe$1')
+            : baseName + '-unsafe';
+
+          downloadFile(blob, unsafeName);
         };
 
         open(onConfirm);
@@ -100,6 +111,7 @@ export const FileDownloadButton = ({
     <>
       <Components.FormattingToolbar.Button
         className="bn-button --docs--editor-file-download-button"
+        data-test="downloadfile"
         label={
           dict.formatting_toolbar.file_download.tooltip[fileBlock.type] ||
           dict.formatting_toolbar.file_download.tooltip['file']
