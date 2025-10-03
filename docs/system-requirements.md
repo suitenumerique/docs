@@ -97,6 +97,17 @@ Production deployments differ significantly from development environments. The t
 | 5433      | PostgreSQL (Keycloak) |
 | 1081      | MailCatcher           |
 
+**With fulltext search service**
+
+| Port      | Service               |
+| --------- | --------------------- |
+| 8081      | Find (Django)         |
+| 9200      | Opensearch            |
+| 9600      | Opensearch admin      |
+| 5601      | Opensearch dashboard  |
+| 25432     | PostgreSQL (Find)     |
+
+
 ## 6. Sizing Guidelines
 
 **RAM** – start at 8 GB dev / 16 GB staging / 32 GB prod. Postgres and Keycloak are the first to OOM; scale them first.
