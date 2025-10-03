@@ -45,6 +45,7 @@ export const DocsGridActions = ({
         }
       },
       testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      showSeparator: true,
     },
     {
       label: t('Share'),
@@ -66,9 +67,10 @@ export const DocsGridActions = ({
           canSave: false,
         });
       },
+      showSeparator: true,
     },
     {
-      label: t('Remove'),
+      label: t('Delete'),
       icon: 'delete',
       callback: () => deleteModal.open(),
       disabled: !doc.abilities.destroy,

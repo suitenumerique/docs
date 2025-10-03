@@ -107,6 +107,7 @@ export enum DocDefaultFilter {
   ALL_DOCS = 'all_docs',
   MY_DOCS = 'my_docs',
   SHARED_WITH_ME = 'shared_with_me',
+  TRASHBIN = 'trashbin',
 }
 
 export type DocsOrdering =
