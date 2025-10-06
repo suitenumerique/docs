@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@html-to/text-cli": "0.5.4",
-    "mjml": "4.15.3"
+    "mjml": "4.16.1"
   },
   "private": true,
   "scripts": {
