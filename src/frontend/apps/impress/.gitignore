@@ -35,3 +35,6 @@ yarn-error.log*
 *.tsbuildinfo
 
 service-worker.js
+
+# Font embedding
+public/assets/fonts/Marianne/*

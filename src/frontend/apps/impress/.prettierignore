@@ -1,2 +1,3 @@
 next-env.d.ts
 service-worker.js
+public/assets/fonts/*
