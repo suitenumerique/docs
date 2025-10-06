@@ -37,4 +37,6 @@ yarn-error.log*
 service-worker.js
 
 # Font embedding
+public/assets/fonts/emoji/*
+!public/assets/fonts/emoji/fallback.png
 public/assets/fonts/Marianne/*

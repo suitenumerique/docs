@@ -10,6 +10,7 @@ import {
   useToastProvider,
 } from '@openfun/cunningham-react';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
+import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -95,6 +96,20 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     if (format === DocDownloadFormat.PDF) {
       const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+        emojiSource: {
+          format: 'png',
+          builder(code) {
+            const emoji = jsonemoji.find((e) =>
+              e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
+            );
+
+            if (emoji) {
+              return `/assets/fonts/emoji/${emoji.image}`;
+            }
+
+            return '/assets/fonts/emoji/fallback.png';
+          },
+        },
       });
       const rawPdfDocument = (await exporter.toReactPDFDocument(
         exportDocument,
@@ -150,7 +165,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             color="secondary"
             fullWidth
             onClick={() => onClose()}
-            disabled={isExporting}
           >
             {t('Cancel')}
           </Button>

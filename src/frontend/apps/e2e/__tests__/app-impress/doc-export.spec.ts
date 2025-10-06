@@ -11,6 +11,7 @@ import {
   verifyDocName,
   waitForLanguageSwitch,
 } from './utils-common';
+import { openSuggestionMenu, writeInEditor } from './utils-editor';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
@@ -153,11 +154,13 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, randomDoc);
 
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+    await writeInEditor({
+      page,
+      text: 'Hello World 😃🎉🚀🙋‍♀️🧑🏿‍❤️‍💋‍🧑🏾',
+    });
 
     await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
+    await openSuggestionMenu({ page });
     await page.getByText('Resizable image with caption').click();
 
     const fileChooserPromise = page.waitForEvent('filechooser');

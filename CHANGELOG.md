@@ -29,6 +29,7 @@ and this project adheres to
   - ♿ restyle checked checkboxes: removing strikethrough #1439
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
   - ♿ update labels and shared document icon accessibility #1442
+- 🍱(frontend) Fonts GDPR compliants #1453
 
 ### Fixed
 
@@ -38,6 +39,7 @@ and this project adheres to
 - 🐛(frontend) fix legacy role computation #1376
 - 🛂(frontend) block editing title when not allowed #1412
 - 🐛(frontend) scroll back to top when navigate to a document #1406
+- 🐛(frontend) fix export pdf emoji problem #1453
 - 🐛(frontend) fix attachment download filename #1447
 - 🐛(frontend) exclude h4-h6 headings from table of contents #1441
 - 🔒(frontend) prevent readers from changing callout emoji #1449

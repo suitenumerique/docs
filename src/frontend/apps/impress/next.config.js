@@ -50,9 +50,18 @@ const nextConfig = {
           {
             from: path.resolve(
               __dirname,
+              '../../node_modules/emoji-datasource-apple/img/apple/64',
+            ),
+            to: path.resolve(__dirname, 'public/assets/fonts/emoji'),
+            force: true,
+          },
+          {
+            from: path.resolve(
+              __dirname,
               '../../node_modules/@gouvfr-lasuite/ui-kit/dist/assets/fonts/Marianne',
             ),
             to: path.resolve(__dirname, 'public/assets/fonts/Marianne'),
+            force: true,
           },
         ],
       }),
