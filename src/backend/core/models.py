@@ -721,7 +721,7 @@ class Document(MP_Node, BaseModel):
 
         # Characteristics that are based only on specific access
         is_owner = role == RoleChoices.OWNER
-        is_deleted = self.ancestors_deleted_at and not is_owner
+        is_deleted = self.ancestors_deleted_at
         is_owner_or_admin = (is_owner or role == RoleChoices.ADMIN) and not is_deleted
 
         # Compute access roles before adding link roles because we don't
@@ -750,6 +750,7 @@ class Document(MP_Node, BaseModel):
             role = RoleChoices.max(role, link_definition["link_role"])
 
         can_get = bool(role) and not is_deleted
+        retrieve = can_get or is_owner
         can_update = (
             is_owner_or_admin or role == RoleChoices.EDITOR
         ) and not is_deleted
@@ -758,7 +759,7 @@ class Document(MP_Node, BaseModel):
             is_owner
             if self.is_root()
             else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
-        )
+        ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
         ai_access = any(
@@ -790,15 +791,15 @@ class Document(MP_Node, BaseModel):
             "duplicate": can_get and user.is_authenticated,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
-            "invite_owner": is_owner,
+            "invite_owner": is_owner and not is_deleted,
             "mask": can_get and user.is_authenticated,
-            "move": is_owner_or_admin and not self.ancestors_deleted_at,
+            "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner,
-            "retrieve": can_get,
+            "retrieve": retrieve,
             "media_auth": can_get,
             "link_select_options": link_select_options,
-            "tree": can_get,
+            "tree": retrieve,
             "update": can_update,
             "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,

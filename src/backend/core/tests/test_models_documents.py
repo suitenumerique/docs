@@ -375,8 +375,42 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
 
     document.soft_delete()
     document.refresh_from_db()
-    expected_abilities["move"] = False
-    assert document.get_abilities(user) == expected_abilities
+    assert document.get_abilities(user) == {
+        "accesses_manage": False,
+        "accesses_view": False,
+        "ai_transform": False,
+        "ai_translate": False,
+        "attachment_upload": False,
+        "can_edit": False,
+        "children_create": False,
+        "children_list": False,
+        "collaboration_auth": False,
+        "descendants": False,
+        "cors_proxy": False,
+        "content": False,
+        "destroy": False,
+        "duplicate": False,
+        "favorite": False,
+        "invite_owner": False,
+        "link_configuration": False,
+        "link_select_options": {
+            "authenticated": ["reader", "editor"],
+            "public": ["reader", "editor"],
+            "restricted": None,
+        },
+        "mask": False,
+        "media_auth": False,
+        "media_check": False,
+        "move": False,
+        "partial_update": False,
+        "restore": True,
+        "retrieve": True,
+        "tree": True,
+        "update": False,
+        "versions_destroy": False,
+        "versions_list": False,
+        "versions_retrieve": False,
+    }
 
 
 @override_settings(
