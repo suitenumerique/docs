@@ -851,33 +851,47 @@ class DocumentViewSet(
 
         try:
             current_document = (
-                self.queryset.select_related(None).only("depth", "path").get(pk=pk)
+                self.queryset.select_related(None)
+                .only("depth", "path", "ancestors_deleted_at")
+                .get(pk=pk)
             )
         except models.Document.DoesNotExist as excpt:
             raise drf.exceptions.NotFound() from excpt
 
-        ancestors = (
-            (
-                current_document.get_ancestors()
-                | self.queryset.select_related(None).filter(pk=pk)
-            )
-            .filter(ancestors_deleted_at__isnull=True)
-            .order_by("path")
-        )
+        is_deleted = current_document.ancestors_deleted_at is not None
 
-        # Get the highest readable ancestor
-        highest_readable = (
-            ancestors.select_related(None)
-            .readable_per_se(request.user)
-            .only("depth", "path")
-            .first()
-        )
-        if highest_readable is None:
-            raise (
-                drf.exceptions.PermissionDenied()
-                if request.user.is_authenticated
-                else drf.exceptions.NotAuthenticated()
+        if is_deleted:
+            if current_document.get_role(user) != models.RoleChoices.OWNER:
+                raise (
+                    drf.exceptions.PermissionDenied()
+                    if request.user.is_authenticated
+                    else drf.exceptions.NotAuthenticated()
+                )
+            highest_readable = current_document
+            ancestors = self.queryset.select_related(None).filter(pk=pk)
+        else:
+            ancestors = (
+                (
+                    current_document.get_ancestors()
+                    | self.queryset.select_related(None).filter(pk=pk)
+                )
+                .filter(ancestors_deleted_at__isnull=True)
+                .order_by("path")
             )
+            # Get the highest readable ancestor
+            highest_readable = (
+                ancestors.select_related(None)
+                .readable_per_se(request.user)
+                .only("depth", "path")
+                .first()
+            )
+
+            if highest_readable is None:
+                raise (
+                    drf.exceptions.PermissionDenied()
+                    if request.user.is_authenticated
+                    else drf.exceptions.NotAuthenticated()
+                )
         paths_links_mapping = {}
         ancestors_links = []
         children_clause = db.Q()
