@@ -16,6 +16,19 @@ export const cssEditor = (readonly: boolean) => css`
       font-weight: 400;
     }
 
+    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
+      .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      width: inherit;
+      height: inherit;
+    }
+    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
+      .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child) {
+      position: relative;
+    }
+
     .bn-side-menu .mantine-UnstyledButton-root svg {
       color: #767676 !important;
     }

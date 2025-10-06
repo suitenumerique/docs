@@ -43,6 +43,7 @@ and this project adheres to
 - 🐛(frontend) fix attachment download filename #1447
 - 🐛(frontend) exclude h4-h6 headings from table of contents #1441
 - 🔒(frontend) prevent readers from changing callout emoji #1449
+- 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
 - 🐛(backend) filter invitation with case insensitive email
 
 ## [3.7.0] - 2025-09-12
