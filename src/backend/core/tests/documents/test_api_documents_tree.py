@@ -1205,3 +1205,56 @@ def test_api_documents_tree_list_authenticated_related_team_members(
         "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
     }
+
+
+def test_api_documents_tree_list_deleted_document():
+    """
+    Tree of a deleted document should only be accessible to the owner.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(link_reach="public")
+    document, _ = factories.DocumentFactory.create_batch(2, parent=parent)
+    factories.DocumentFactory(link_reach="public", parent=document)
+
+    document.soft_delete()
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
+    assert response.status_code == 403
+
+
+def test_api_documents_tree_list_deleted_document_owner(django_assert_num_queries):
+    """
+    Tree of a deleted document should only be accessible to the owner.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(link_reach="public", users=[(user, "owner")])
+    document, _ = factories.DocumentFactory.create_batch(2, parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
+    document.soft_delete()
+    document.refresh_from_db()
+    child.refresh_from_db()
+
+    with django_assert_num_queries(9):
+        client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
+
+    with django_assert_num_queries(5):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert content["id"] == str(document.id)
+    assert content["deleted_at"] == document.deleted_at.isoformat().replace(
+        "+00:00", "Z"
+    )
+    assert len(content["children"]) == 1
+    assert content["children"][0]["id"] == str(child.id)
+    assert content["children"][0][
+        "deleted_at"
+    ] == child.ancestors_deleted_at.isoformat().replace("+00:00", "Z")
