@@ -65,6 +65,7 @@ def test_api_document_favorite_list_authenticated_with_favorite():
                 "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
+                "deleted_at": None,
                 "content": document.content,
                 "depth": document.depth,
                 "excerpt": document.excerpt,

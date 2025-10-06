@@ -90,6 +90,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     nb_accesses_direct = serializers.IntegerField(read_only=True)
     user_role = serializers.SerializerMethodField(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
+    deleted_at = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
@@ -102,6 +103,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "computed_link_role",
             "created_at",
             "creator",
+            "deleted_at",
             "depth",
             "excerpt",
             "is_favorite",
@@ -124,6 +126,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "computed_link_role",
             "created_at",
             "creator",
+            "deleted_at",
             "depth",
             "excerpt",
             "is_favorite",
@@ -165,6 +168,10 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return instance.get_role(request.user) if request else None
 
+    def get_deleted_at(self, instance):
+        """Return the deleted_at of the current document."""
+        return instance.ancestors_deleted_at
+
 
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
@@ -193,6 +200,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "content",
             "created_at",
             "creator",
+            "deleted_at",
             "depth",
             "excerpt",
             "is_favorite",
@@ -216,6 +224,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "computed_link_role",
             "created_at",
             "creator",
+            "deleted_at",
             "depth",
             "is_favorite",
             "link_role",

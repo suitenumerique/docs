@@ -48,11 +48,11 @@ def test_api_documents_trashbin_format():
 
     other_users = factories.UserFactory.create_batch(3)
     document = factories.DocumentFactory(
-        deleted_at=timezone.now(),
         users=factories.UserFactory.create_batch(2),
         favorited_by=[user, *other_users],
         link_traces=other_users,
     )
+    document.soft_delete()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
     response = client.get("/api/v1.0/documents/trashbin/")
@@ -113,6 +113,7 @@ def test_api_documents_trashbin_format():
         "creator": str(document.creator.id),
         "depth": 1,
         "excerpt": document.excerpt,
+        "deleted_at": document.ancestors_deleted_at.isoformat().replace("+00:00", "Z"),
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 0,
