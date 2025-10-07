@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 
 import pytest
 
-from core import factories
+from core import factories, models
 
 pytestmark = pytest.mark.django_db
 
@@ -66,3 +66,33 @@ def test_models_users_sub_validator(sub, is_valid):
             match=("Enter a valid sub. This value should be ASCII only."),
         ):
             user.full_clean()
+
+
+def test_modes_users_convert_valid_invitations():
+    """
+    The "convert_valid_invitations" method should convert valid invitations to document accesses.
+    """
+    email = "test@example.com"
+    document = factories.DocumentFactory()
+    other_document = factories.DocumentFactory()
+    invitation_document = factories.InvitationFactory(email=email, document=document)
+    invitation_other_document = factories.InvitationFactory(
+        email="Test@example.coM", document=other_document
+    )
+    other_email_invitation = factories.InvitationFactory(
+        email="pre_test@example.com", document=document
+    )
+
+    assert document.accesses.count() == 0
+    assert other_document.accesses.count() == 0
+
+    user = factories.UserFactory(email=email)
+
+    assert document.accesses.filter(user=user).count() == 1
+    assert other_document.accesses.filter(user=user).count() == 1
+
+    assert not models.Invitation.objects.filter(id=invitation_document.id).exists()
+    assert not models.Invitation.objects.filter(
+        id=invitation_other_document.id
+    ).exists()
+    assert models.Invitation.objects.filter(id=other_email_invitation.id).exists()
