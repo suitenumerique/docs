@@ -184,6 +184,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
           outline: none !important;
+          min-width: max-content;
 
           &:focus-visible {
             outline: none !important;
@@ -195,7 +196,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           margin-top: -10px;
 
           .c__tree-view {
-            overflow: hidden !important;
+            overflow: visible !important;
           }
         }
       `}
