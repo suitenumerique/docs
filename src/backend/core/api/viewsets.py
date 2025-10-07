@@ -1071,16 +1071,49 @@ class DocumentViewSet(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
 
+    def _simple_search_queryset(self, params):
+        """
+        Returns a queryset filtered by the content of the document title
+        """
+        text = params.validated_data["q"]
+
+        # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
+        queryset = self.get_queryset()
+        filterset = DocumentFilter({"title": text}, queryset=queryset)
+
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        return filterset.filter_queryset(queryset)
+
+    def _fulltext_search_queryset(self, indexer, token, user, params):
+        """
+        Returns a queryset from the results the fulltext search of Find
+        """
+        text = params.validated_data["q"]
+        queryset = models.Document.objects.all()
+
+        # Retrieve the documents ids from Find.
+        results = indexer.search(
+            text=text,
+            token=token,
+            visited=get_visited_document_ids_of(queryset, user),
+            page=params.validated_data.get("page", 1),
+            page_size=params.validated_data.get("page_size", 20),
+        )
+
+        return queryset.filter(pk__in=results)
+
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
     def search(self, request, *args, **kwargs):
         """
         Returns a DRF response containing the filtered, annotated and ordered document list.
 
-        Applies filtering based on request parameter 'q' from `FindDocumentSerializer`.
+        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
         Depending of the configuration it can be:
          - A fulltext search through the opensearch indexation app "find" if the backend is
-           enabled (see SEARCH_BACKEND_CLASS)
+           enabled (see SEARCH_INDEXER_CLASS)
          - A filtering by the model field 'title'.
 
         The ordering is always by the most recent first.
@@ -1088,46 +1121,22 @@ class DocumentViewSet(
         access_token = request.session.get("oidc_access_token")
         user = request.user
 
-        serializer = serializers.FindDocumentSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
 
         indexer = get_document_indexer()
-        text = serializer.validated_data["q"]
 
-        # The indexer is not configured, so we fallback on a simple filter on the
-        # model field 'title'.
-        if not indexer:
-            # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
-            queryset = self.get_queryset()
-            filterset = DocumentFilter({"title": text}, queryset=queryset)
-
-            if not filterset.is_valid():
-                raise drf.exceptions.ValidationError(filterset.errors)
-
-            queryset = filterset.filter_queryset(queryset).order_by("-updated_at")
-
-            return self.get_response_for_queryset(
-                queryset,
-                context={
-                    "request": request,
-                },
+        if indexer:
+            queryset = self._fulltext_search_queryset(
+                indexer, token=access_token, user=user, params=params
             )
-
-        queryset = models.Document.objects.all()
-
-        # Retrieve the documents ids from Find.
-        results = indexer.search(
-            text=text,
-            token=access_token,
-            visited=get_visited_document_ids_of(queryset, user),
-            page=serializer.validated_data.get("page", 1),
-            page_size=serializer.validated_data.get("page_size", 20),
-        )
-
-        queryset = queryset.filter(pk__in=results).order_by("-updated_at")
+        else:
+            # The indexer is not configured, we fallback on a simple icontains filter by the
+            # model field 'title'.
+            queryset = self._simple_search_queryset(params)
 
         return self.get_response_for_queryset(
-            queryset,
+            queryset.order_by("-updated_at"),
             context={
                 "request": request,
             },
