@@ -169,8 +169,15 @@ test.describe('Document create member', () => {
 
     const inputSearch = page.getByTestId('quick-search-input');
 
-    const email = randomName('test@test.fr', browserName, 1)[0];
+    let email = 'user.test21@example.COM';
     await inputSearch.fill(email);
+
+    // Check email is found in search (case insensitive)
+    await expect(page.getByRole('option').getByText(email)).toHaveCount(1);
+
+    email = email + 'M';
+    await inputSearch.fill(email);
+
     await page.getByTestId(`search-user-row-${email}`).click();
 
     // Choose a role
@@ -191,7 +198,7 @@ test.describe('Document create member', () => {
 
     const listInvitation = page.getByTestId('doc-share-quick-search');
     const userInvitation = listInvitation.getByTestId(
-      `doc-share-invitation-row-${email}`,
+      `doc-share-invitation-row-${email.toLowerCase()}`,
     );
     await expect(userInvitation).toBeVisible();
 

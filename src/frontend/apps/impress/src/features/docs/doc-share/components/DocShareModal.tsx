@@ -296,7 +296,9 @@ const QuickSearchInviteInputSection = ({
       language: '',
     };
 
-    const hasEmailInUsers = users.some((user) => user.email === userQuery);
+    const hasEmailInUsers = users.some(
+      (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
+    );
 
     return {
       groupName: t('Search user result'),

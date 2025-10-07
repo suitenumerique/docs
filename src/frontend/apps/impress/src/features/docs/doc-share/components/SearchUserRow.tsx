@@ -21,7 +21,7 @@ export const SearchUserRow = ({
   alwaysShowRight = false,
   isInvitation = false,
 }: Props) => {
-  const hasFullName = user.full_name != null && user.full_name !== '';
+  const hasFullName = !!user.full_name;
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
   return (
