@@ -9,7 +9,7 @@ from django.db.models import signals
 from django.dispatch import receiver
 
 from . import models
-from .tasks.find import trigger_document_indexer
+from .tasks.search import trigger_document_indexer
 
 
 @receiver(signals.post_save, sender=models.Document)

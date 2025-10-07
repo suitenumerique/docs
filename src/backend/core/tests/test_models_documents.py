@@ -21,7 +21,7 @@ from django.utils import timezone
 import pytest
 
 from core import factories, models
-from core.services.search_indexers import FindDocumentIndexer
+from core.services.search_indexers import SearchIndexer
 
 pytestmark = pytest.mark.django_db
 
@@ -1450,7 +1450,7 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
         }
 
 
-@mock.patch.object(FindDocumentIndexer, "push")
+@mock.patch.object(SearchIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer(mock_push, indexer_settings):
     """Test indexation task on document creation"""
@@ -1462,7 +1462,7 @@ def test_models_documents_post_save_indexer(mock_push, indexer_settings):
     accesses = {}
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
 
     assert sorted(data, key=itemgetter("id")) == sorted(
         [
@@ -1479,7 +1479,7 @@ def test_models_documents_post_save_indexer(mock_push, indexer_settings):
     assert cache.get(f"doc-indexer-debounce-{doc3.pk}") == 0
 
 
-@mock.patch.object(FindDocumentIndexer, "push")
+@mock.patch.object(SearchIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_not_configured(mock_push, indexer_settings):
     """Task should not start an indexation when disabled"""
@@ -1492,7 +1492,7 @@ def test_models_documents_post_save_indexer_not_configured(mock_push, indexer_se
     assert mock_push.call_args_list == []
 
 
-@mock.patch.object(FindDocumentIndexer, "push")
+@mock.patch.object(SearchIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_with_accesses(mock_push, indexer_settings):
     """Test indexation task on document creation"""
@@ -1515,7 +1515,7 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push, indexer_set
 
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
 
     assert sorted(data, key=itemgetter("id")) == sorted(
         [
@@ -1532,7 +1532,7 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push, indexer_set
     assert cache.get(f"doc-indexer-debounce-{doc3.pk}") == 0
 
 
-@mock.patch.object(FindDocumentIndexer, "push")
+@mock.patch.object(SearchIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings):
     """Indexation task on deleted or ancestor_deleted documents"""
@@ -1575,7 +1575,7 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
 
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
 
     # Even deleted document are re-indexed : only update their status in the future ?
     assert sorted(data, key=itemgetter("id")) == sorted(
@@ -1594,7 +1594,7 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
     assert cache.get(f"doc-indexer-debounce-{doc_ancestor_deleted.pk}") == 0
 
 
-@mock.patch.object(FindDocumentIndexer, "push")
+@mock.patch.object(SearchIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings):
     """Restart indexation task on restored documents"""
@@ -1648,7 +1648,7 @@ def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings
 
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
 
     # All docs are re-indexed
     assert sorted(data, key=itemgetter("id")) == sorted(
@@ -1668,10 +1668,10 @@ def test_models_documents_post_save_indexer_debounce(indexer_settings):
     """Test indexation task skipping on document update"""
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
     user = factories.UserFactory()
 
-    with mock.patch.object(FindDocumentIndexer, "push"):
+    with mock.patch.object(SearchIndexer, "push"):
         with transaction.atomic():
             doc = factories.DocumentFactory()
             factories.UserDocumentAccessFactory(document=doc, user=user)
@@ -1680,7 +1680,7 @@ def test_models_documents_post_save_indexer_debounce(indexer_settings):
         str(doc.path): {"users": [user.sub]},
     }
 
-    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
+    with mock.patch.object(SearchIndexer, "push") as mock_push:
         # Simulate 1 waiting task
         cache.set(f"doc-indexer-debounce-{doc.pk}", 1)
 
@@ -1691,7 +1691,7 @@ def test_models_documents_post_save_indexer_debounce(indexer_settings):
 
         assert [call.args[0] for call in mock_push.call_args_list] == []
 
-    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
+    with mock.patch.object(SearchIndexer, "push") as mock_push:
         # No waiting task
         cache.set(f"doc-indexer-debounce-{doc.pk}", 0)
 
@@ -1709,10 +1709,10 @@ def test_models_documents_access_post_save_indexer(indexer_settings):
     """Test indexation task on DocumentAccess update"""
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
     user = factories.UserFactory()
 
-    with mock.patch.object(FindDocumentIndexer, "push"):
+    with mock.patch.object(SearchIndexer, "push"):
         with transaction.atomic():
             doc = factories.DocumentFactory()
             doc_access = factories.UserDocumentAccessFactory(document=doc, user=user)
@@ -1721,9 +1721,9 @@ def test_models_documents_access_post_save_indexer(indexer_settings):
         str(doc.path): {"users": [user.sub]},
     }
 
-    indexer = FindDocumentIndexer()
+    indexer = SearchIndexer()
 
-    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
+    with mock.patch.object(SearchIndexer, "push") as mock_push:
         with transaction.atomic():
             doc_access.save()
 
