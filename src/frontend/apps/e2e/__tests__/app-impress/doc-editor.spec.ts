@@ -760,7 +760,7 @@ test.describe('Doc Editor', () => {
     // Wait for the interlink to be created and rendered
     const editor = page.locator('.ProseMirror.bn-editor');
 
-    const interlink = editor.getByRole('link', {
+    const interlink = editor.getByRole('button', {
       name: docChild2,
     });
 

@@ -472,7 +472,7 @@ test.describe('Doc Export', () => {
 
     // Search the interlinking link in the editor (not in the document tree)
     const editor = page.locator('.ProseMirror.bn-editor');
-    const interlink = editor.getByRole('link', {
+    const interlink = editor.getByRole('button', {
       name: randomDoc,
     });
 

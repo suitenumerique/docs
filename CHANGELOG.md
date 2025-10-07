@@ -46,6 +46,7 @@ and this project adheres to
 - 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
 - 🐛(backend) filter invitation with case insensitive email
 - 🐛(frontend) reduce no access image size from 450 to 300 #1463
+- 🐛(frontend) preserve interlink style on drag-and-drop in editor #1460
 
 ## [3.7.0] - 2025-09-12
 

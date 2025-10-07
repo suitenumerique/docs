@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { createReactInlineContentSpec } from '@blocknote/react';
+import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
-import { StyledLink, Text } from '@/components';
+import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
 import { useDoc } from '@/docs/doc-management';
@@ -51,10 +52,16 @@ interface LinkSelectedProps {
 }
 const LinkSelected = ({ url, title }: LinkSelectedProps) => {
   const { colorsTokens } = useCunninghamTheme();
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    router.push(url);
+  };
 
   return (
-    <StyledLink
-      href={url}
+    <BoxButton
+      onClick={handleClick}
       draggable="false"
       $css={css`
         display: inline;
@@ -75,6 +82,6 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
       <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
         {title}
       </Text>
-    </StyledLink>
+    </BoxButton>
   );
 };
