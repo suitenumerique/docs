@@ -223,7 +223,7 @@ class BaseDocumentIndexer(ABC):
         """
 
 
-class FindDocumentIndexer(BaseDocumentIndexer):
+class SearchIndexer(BaseDocumentIndexer):
     """
     Document indexer that pushes documents to La Suite Find app.
     """
@@ -270,18 +270,14 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Returns:
             dict: A JSON-serializable dictionary.
         """
-        try:
-            response = requests.post(
-                self.search_url,
-                json=data,
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=10,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            logger.error("HTTPError: %s", e)
-            raise
+        response = requests.post(
+            self.search_url,
+            json=data,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
 
     def push(self, data):
         """
@@ -290,14 +286,10 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         Args:
             data (list): List of document dictionaries.
         """
-        try:
-            response = requests.post(
-                self.indexer_url,
-                json=data,
-                headers={"Authorization": f"Bearer {self.indexer_secret}"},
-                timeout=10,
-            )
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            logger.error("HTTPError: %s", e)
-            raise
+        response = requests.post(
+            self.indexer_url,
+            json=data,
+            headers={"Authorization": f"Bearer {self.indexer_secret}"},
+            timeout=10,
+        )
+        response.raise_for_status()
