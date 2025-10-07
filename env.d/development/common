@@ -55,7 +55,7 @@ OIDC_STORE_REFRESH_TOKEN = True # Store the encrypted refresh token in the sessi
 
 # Must be a valid Fernet key (32 url-safe base64-encoded bytes)
 # To create one, use the bin/fernetkey command.
-# OIDC_STORE_REFRESH_TOKEN_KEY="your-32-byte-encryption-key=="
+OIDC_STORE_REFRESH_TOKEN_KEY = "na1hhus-OLhq9mb9SO3R-8E4dONuMnqpZSY_SX8xcFk="
 
 # AI
 AI_FEATURE_ENABLED=true
