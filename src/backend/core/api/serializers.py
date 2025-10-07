@@ -740,6 +740,8 @@ class InvitationSerializer(serializers.ModelSerializer):
         if self.instance is None:
             attrs["issuer"] = user
 
+        attrs["email"] = attrs["email"].lower()
+
         return attrs
 
     def validate_role(self, role):
