@@ -1,0 +1,182 @@
+djangoSecretKey: &djangoSecretKey "lkjsdlfkjsldkfjslkdfjslkdjfslkdjf"
+tag: &tag "{{ .Values.imageTag }}"
+djangoSuperUserEmail: admin@example.com
+djangoSuperUserPass: admin
+aiApiKey: changeme
+aiBaseUrl: changeme
+oidc:
+    clientId: impress
+    clientSecret: ThisIsAnExampleKeyForDevPurposeOnly
+
+image:
+  repository: lasuite/impress-backend
+  pullPolicy: Always
+  tag: *tag
+
+backend:
+  replicas: 1
+  envVars:
+    COLLABORATION_SERVER_SECRET: my-secret
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    DJANGO_CONFIGURATION: Feature
+    DJANGO_ALLOWED_HOSTS: {{ .Values.feature }}-docs.{{ .Values.domain }}
+    DJANGO_SERVER_TO_SERVER_API_TOKENS: secret-api-key
+    DJANGO_SECRET_KEY: *djangoSecretKey
+    DJANGO_SETTINGS_MODULE: impress.settings
+    DJANGO_SUPERUSER_PASSWORD: admin
+    DJANGO_EMAIL_BRAND_NAME: "La Suite Numérique"
+    DJANGO_EMAIL_HOST: "mailcatcher"
+    DJANGO_EMAIL_LOGO_IMG: https://{{ .Values.feature }}-docs.{{ .Values.domain }}/assets/logo-suite-numerique.png
+    DJANGO_EMAIL_PORT: 1025
+    DJANGO_EMAIL_USE_SSL: False
+    LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
+    LOGGING_LEVEL_LOGGERS_ROOT: INFO
+    LOGGING_LEVEL_LOGGERS_APP: INFO
+    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_OP_JWKS_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/certs
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/auth
+    OIDC_OP_TOKEN_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/token
+    OIDC_OP_USER_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/logout
+    OIDC_RP_CLIENT_ID: docs
+    OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
+    OIDC_RP_SIGN_ALGO: RS256
+    OIDC_RP_SCOPES: "openid email"
+    LOGIN_REDIRECT_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    LOGIN_REDIRECT_URL_FAILURE: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    LOGOUT_REDIRECT_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    DB_HOST: dev-backend-postgres
+    DB_NAME:
+      secretKeyRef:
+        name: dev-backend-postgres
+        key: database
+    DB_USER:
+      secretKeyRef:
+        name: dev-backend-postgres
+        key: username
+    DB_PASSWORD:
+      secretKeyRef:
+        name: dev-backend-postgres
+        key: password
+    DB_PORT: 5432
+    REDIS_URL: redis://user:pass@dev-backend-redis:6379/1
+    DJANGO_CELERY_BROKER_URL: redis://user:pass@dev-backend-redis:6379/1
+    AWS_S3_ENDPOINT_URL: http://dev-backend-minio.{{ .Namespace }}.svc.cluster.local:9000
+    AWS_S3_ACCESS_KEY_ID: dinum
+    AWS_S3_SECRET_ACCESS_KEY: password
+    AWS_STORAGE_BUCKET_NAME: docs-media-storage
+    STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
+    Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
+    Y_PROVIDER_API_KEY: my-secret
+    CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
+  migrate:
+    command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
+
+        python manage.py migrate --no-input
+    restartPolicy: Never
+
+  command:
+    - "gunicorn"
+    - "-c"
+    - "/usr/local/etc/gunicorn/impress.py"
+    - "impress.wsgi:application"
+    - "--reload"
+
+  createsuperuser:
+    command:
+      - "/bin/sh"
+      - "-c"
+      - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
+        python manage.py createsuperuser --email admin@example.com --password admin
+    restartPolicy: Never
+
+  # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
+  extraVolumeMounts: {}
+
+  # Extra volumes to manage our local custom CA and avoid to set ssl_verify: false
+  extraVolumes: {}
+
+frontend:
+  envVars:
+    PORT: 8080
+    NEXT_PUBLIC_API_ORIGIN: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+
+  replicas: 1
+
+  image:
+    repository: lasuite/impress-frontend
+    pullPolicy: Always
+    tag: *tag
+
+yProvider:
+  replicas: 1
+
+  image:
+    repository: lasuite/impress-y-provider
+    pullPolicy: Always
+    tag: *tag
+
+  envVars:
+    COLLABORATION_BACKEND_BASE_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    COLLABORATION_LOGGING: true
+    COLLABORATION_SERVER_ORIGIN: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
+    COLLABORATION_SERVER_SECRET: my-secret
+    Y_PROVIDER_API_KEY: my-secret
+
+ingress:
+  enabled: true
+  host: {{ .Values.feature }}-docs.{{ .Values.domain }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    cert-manager.io/cluster-issuer: letsencrypt
+
+ingressCollaborationWS:
+  enabled: true
+  host: {{ .Values.feature }}-docs.{{ .Values.domain }}
+
+ingressCollaborationApi:
+  enabled: true
+  host: {{ .Values.feature }}-docs.{{ .Values.domain }}
+
+ingressAdmin:
+  enabled: true
+  host: {{ .Values.feature }}-docs.{{ .Values.domain }}
+
+posthog:
+  ingress:
+    enabled: false
+
+  ingressAssets:
+    enabled: false
+
+ingressMedia:
+  enabled: true
+  host: {{ .Values.feature }}-docs.{{ .Values.domain }}
+
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: https://{{ .Values.feature }}-docs.{{ .Values.domain }}/api/v1.0/documents/media-auth/
+    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
+    nginx.ingress.kubernetes.io/upstream-vhost: dev-backend-minio.{{ .Namespace }}.svc.cluster.local:9000
+    nginx.ingress.kubernetes.io/rewrite-target: /docs-media-storage/$1
+
+serviceMedia:
+  host: dev-backend-minio.{{ .Namespace }}.svc.cluster.local
+  port: 9000
