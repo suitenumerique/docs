@@ -891,8 +891,8 @@ class MoveDocumentSerializer(serializers.Serializer):
     )
 
 
-class FindDocumentSerializer(serializers.Serializer):
-    """Serializer for Find search requests"""
+class SearchDocumentSerializer(serializers.Serializer):
+    """Serializer for fulltext search requests through Find application"""
 
     q = serializers.CharField(required=True, allow_blank=False, trim_whitespace=True)
     page_size = serializers.IntegerField(
