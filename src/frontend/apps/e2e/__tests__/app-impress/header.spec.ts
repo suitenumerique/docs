@@ -131,3 +131,27 @@ test.describe('Header: Log out', () => {
     await expectLoginPage(page);
   });
 });
+
+test.describe('Header: Override configuration', () => {
+  test('checks the header is correctly overrided', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            alt: 'Gouvernement Logo',
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+    const header = page.locator('header').first();
+
+    await expect(header.getByAltText('Gouvernement Logo')).toBeVisible();
+
+    await expect(header.getByAltText('Docs')).toBeHidden();
+  });
+});
