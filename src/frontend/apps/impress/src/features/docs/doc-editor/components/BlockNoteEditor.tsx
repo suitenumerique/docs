@@ -13,6 +13,7 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { createGlobalStyle } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
@@ -48,6 +49,16 @@ import XLMultiColumn from './xl-multi-column';
 
 const multiColumnLocales = XLMultiColumn?.locales;
 const withMultiColumn = XLMultiColumn?.withMultiColumn;
+
+/*
+ * Force position:fixed on emoji picker to prevent it from being hidden under the left sidebar
+ * when zooming in/out. Without this, the picker's position could end up under the left sidebar.
+ */
+const BlockNoteEmojiPickerStyle = createGlobalStyle`
+  div[data-floating-ui-focusable]:has(.bn-grid-suggestion-menu) {
+    position: fixed !important;
+  }
+`;
 
 const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -177,33 +188,36 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box
-      $padding={{ top: 'md' }}
-      $background="white"
-      $css={cssEditor(readOnly)}
-      className="--docs--editor-container"
-    >
-      {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
-          <TextErrors
-            causes={errorAttachment.cause}
-            canClose
-            $textAlign="left"
-          />
-        </Box>
-      )}
-
-      <BlockNoteView
-        editor={editor}
-        formattingToolbar={false}
-        slashMenu={false}
-        editable={!readOnly}
-        theme="light"
+    <>
+      <BlockNoteEmojiPickerStyle />
+      <Box
+        $padding={{ top: 'md' }}
+        $background="white"
+        $css={cssEditor(readOnly)}
+        className="--docs--editor-container"
       >
-        <BlockNoteSuggestionMenu />
-        <BlockNoteToolbar />
-      </BlockNoteView>
-    </Box>
+        {errorAttachment && (
+          <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
+            <TextErrors
+              causes={errorAttachment.cause}
+              canClose
+              $textAlign="left"
+            />
+          </Box>
+        )}
+
+        <BlockNoteView
+          editor={editor}
+          formattingToolbar={false}
+          slashMenu={false}
+          editable={!readOnly}
+          theme="light"
+        >
+          <BlockNoteSuggestionMenu />
+          <BlockNoteToolbar />
+        </BlockNoteView>
+      </Box>
+    </>
   );
 };
 

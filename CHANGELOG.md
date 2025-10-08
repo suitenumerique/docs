@@ -46,6 +46,8 @@ and this project adheres to
 - 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
 - 🐛(backend) filter invitation with case insensitive email
 - 🐛(frontend) reduce no access image size from 450 to 300 #1463
+- 🐛(frontend) force emoji picker to fixed position to stay visible on zoom #1466
+
 
 ## [3.7.0] - 2025-09-12
 
