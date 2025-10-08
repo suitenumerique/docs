@@ -83,6 +83,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isConnectedToCollabServer = provider.isSynced;
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+  const isDeletedDoc = !!doc.deleted_at;
 
   useSaveDoc(doc.id, provider.document, !readOnly, isConnectedToCollabServer);
   const { i18n } = useTranslation();
@@ -180,7 +181,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     <Box
       $padding={{ top: 'md' }}
       $background="white"
-      $css={cssEditor(readOnly)}
+      $css={cssEditor(readOnly, isDeletedDoc)}
       className="--docs--editor-container"
     >
       {errorAttachment && (
@@ -231,7 +232,7 @@ export const BlockNoteEditorVersion = ({
   );
 
   return (
-    <Box $css={cssEditor(readOnly)} className="--docs--editor-container">
+    <Box $css={cssEditor(readOnly, true)} className="--docs--editor-container">
       <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
     </Box>
   );

@@ -16,6 +16,7 @@ import {
   useDoc,
   useDocStore,
   useProviderStore,
+  useTrans,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
@@ -89,6 +90,7 @@ const DocPage = ({ id }: DocProps) => {
   useCollaboration(doc?.id, doc?.content);
   const { t } = useTranslation();
   const { authenticated } = useAuth();
+  const { untitledDocument } = useTrans();
 
   /**
    * Scroll to top when navigating to a new document
@@ -194,11 +196,11 @@ const DocPage = ({ id }: DocProps) => {
     <>
       <Head>
         <title>
-          {doc.title} - {t('Docs')}
+          {doc.title || untitledDocument} - {t('Docs')}
         </title>
         <meta
           property="og:title"
-          content={`${doc.title} - ${t('Docs')}`}
+          content={`${doc.title || untitledDocument} - ${t('Docs')}`}
           key="title"
         />
       </Head>

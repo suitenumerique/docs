@@ -96,7 +96,7 @@ test.describe('Doc Header', () => {
       page.getByRole('heading', { name: 'Delete a doc' }),
     ).toBeVisible();
 
-    await expect(page.getByText(`This document and any sub-`)).toBeVisible();
+    await expect(page.getByText(`This document will be`)).toBeVisible();
 
     await page
       .getByRole('button', {

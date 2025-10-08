@@ -1,12 +1,18 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInEditorMenu,
   clickInGridMenu,
   createDoc,
   getGridRow,
   verifyDocName,
 } from './utils-common';
 import { addNewMember } from './utils-share';
+import {
+  addChild,
+  createRootSubPage,
+  navigateToPageFromTree,
+} from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -73,5 +79,72 @@ test.describe('Doc Trashbin', () => {
 
     await page.getByRole('link', { name: 'Trashbin' }).click();
     await expect(row2.getByText(title2)).toBeHidden();
+  });
+
+  test('it controls UI and interaction from the doc page', async ({
+    page,
+    browserName,
+  }) => {
+    const [topParent] = await createDoc(
+      page,
+      'my-trash-editor-doc',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, topParent);
+    const { name: subDocName } = await createRootSubPage(
+      page,
+      browserName,
+      'my-trash-editor-subdoc',
+    );
+
+    const subsubDocName = await addChild({
+      page,
+      browserName,
+      docParent: subDocName,
+    });
+    await verifyDocName(page, subsubDocName);
+
+    await navigateToPageFromTree({ page, title: subDocName });
+    await verifyDocName(page, subDocName);
+
+    await clickInEditorMenu(page, 'Delete sub-document');
+    await page.getByRole('button', { name: 'Delete document' }).click();
+    await verifyDocName(page, topParent);
+
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+    await page.getByRole('link', { name: 'Trashbin' }).click();
+    const row = await getGridRow(page, subDocName);
+    await row.getByText(subDocName).click();
+    await verifyDocName(page, subDocName);
+
+    await expect(page.getByLabel('Alert deleted document')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Share' })).toBeDisabled();
+    await expect(page.locator('.bn-editor')).toHaveAttribute(
+      'contenteditable',
+      'false',
+    );
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText(topParent)).toBeHidden();
+    await expect(
+      docTree.getByText(subDocName, {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(docTree.getByText(subsubDocName)).toBeVisible();
+    await expect(
+      docTree
+        .locator(".--docs-sub-page-item[aria-disabled='true']")
+        .getByText(subsubDocName),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Restore' }).click();
+    await expect(page.getByLabel('Alert deleted document')).toBeHidden();
+    await expect(page.locator('.bn-editor')).toHaveAttribute(
+      'contenteditable',
+      'true',
+    );
+    await expect(page.getByRole('button', { name: 'Share' })).toBeEnabled();
+    await expect(docTree.getByText(topParent)).toBeVisible();
   });
 });

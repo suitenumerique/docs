@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
 import {
+  BrowserName,
   randomName,
   updateDocTitle,
   verifyDocName,
@@ -9,7 +10,7 @@ import {
 
 export const createRootSubPage = async (
   page: Page,
-  browserName: string,
+  browserName: BrowserName,
   docName: string,
   isMobile: boolean = false,
 ) => {
@@ -65,6 +66,47 @@ export const clickOnAddRootSubPage = async (page: Page) => {
   await expect(rootItem).toBeVisible();
   await rootItem.hover();
   await rootItem.getByTestId('doc-tree-item-actions-add-child').click();
+};
+
+export const addChild = async ({
+  page,
+  browserName,
+  docParent,
+}: {
+  page: Page;
+  browserName: BrowserName;
+  docParent: string;
+}) => {
+  let item = page.getByTestId('doc-tree-root-item');
+
+  const isParent = await item
+    .filter({
+      hasText: docParent,
+    })
+    .first()
+    .count();
+
+  if (!isParent) {
+    const items = page.getByRole('treeitem');
+
+    item = items
+      .filter({
+        hasText: docParent,
+      })
+      .first();
+  }
+
+  await item.hover();
+  await item.getByTestId('doc-tree-item-actions-add-child').click();
+
+  const [name] = randomName(docParent, browserName, 1);
+  await updateDocTitle(page, name);
+
+  return name;
+};
+
+export const navigateToTopParentFromTree = async ({ page }: { page: Page }) => {
+  await page.getByRole('link', { name: /Open root document/ }).click();
 };
 
 export const navigateToPageFromTree = async ({

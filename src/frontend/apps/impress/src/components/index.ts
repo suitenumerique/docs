@@ -9,6 +9,7 @@ export * from './InfiniteScroll';
 export * from './Link';
 export * from './Loading';
 export * from './modal';
+export * from './Overlayer';
 export * from './separators';
 export * from './Text';
 export * from './TextErrors';

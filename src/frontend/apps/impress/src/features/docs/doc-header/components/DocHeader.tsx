@@ -1,7 +1,7 @@
-import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator, Text } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
@@ -11,10 +11,13 @@ import {
   useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
+import { useDate } from '@/hook';
 import { useResponsiveStore } from '@/stores';
 
 import { AlertNetwork } from './AlertNetwork';
 import { AlertPublic } from './AlertPublic';
+import { AlertRestore } from './AlertRestore';
+import { BoutonShare } from './BoutonShare';
 import { DocTitle } from './DocTitle';
 import { DocToolBox } from './DocToolBox';
 
@@ -30,6 +33,22 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { isEditable } = useIsCollaborativeEditable(doc);
   const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
   const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
+  const { relativeDate, calculateDaysLeft } = useDate();
+  const { data: config } = useConfig();
+  const isDeletedDoc = !!doc.deleted_at;
+
+  let dateToDisplay = t('Last update: {{update}}', {
+    update: relativeDate(doc.updated_at),
+  });
+
+  if (config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
+    const daysLeft = calculateDaysLeft(
+      doc.deleted_at,
+      config.TRASHBIN_CUTOFF_DAYS,
+    );
+
+    dateToDisplay = `${t('Days remaining:')} ${daysLeft} ${t('days', { count: daysLeft })}`;
+  }
 
   return (
     <>
@@ -40,6 +59,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"
       >
+        {isDeletedDoc && <AlertRestore doc={doc} />}
         {!isEditable && <AlertNetwork />}
         {(docIsPublic || docIsAuth) && (
           <AlertPublic isPublicDoc={docIsPublic} />
@@ -78,20 +98,26 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                       &nbsp;·&nbsp;
                     </Text>
                     <Text $variation="600" $size="s">
-                      {t('Last update: {{update}}', {
-                        update: DateTime.fromISO(doc.updated_at).toRelative(),
-                      })}
+                      {dateToDisplay}
                     </Text>
                   </>
                 )}
                 {!isDesktop && (
                   <Text $variation="400" $size="s">
-                    {DateTime.fromISO(doc.updated_at).toRelative()}
+                    {dateToDisplay}
                   </Text>
                 )}
               </Box>
             </Box>
-            <DocToolBox doc={doc} />
+            {!isDeletedDoc && <DocToolBox doc={doc} />}
+            {isDeletedDoc && (
+              <BoutonShare
+                doc={doc}
+                open={() => {}}
+                displayNbAccess={true}
+                isDisabled
+              />
+            )}
           </Box>
         </Box>
         <HorizontalSeparator $withPadding={false} />
