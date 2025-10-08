@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) add pdf block to the editor #1293
+- ✨(frontend) add an EmojiPicker in the document tree and title #1381
 
 ### Changed
 
@@ -47,6 +48,10 @@ and this project adheres to
 - 🐛(backend) filter invitation with case insensitive email
 - 🐛(frontend) reduce no access image size from 450 to 300 #1463
 
+## Removed
+
+- 🔥(frontend) remove emoji buttons in doc grid #1419
+
 ## [3.7.0] - 2025-09-12
 
 ### Added
@@ -65,6 +70,8 @@ and this project adheres to
   - ✨unify tab focus style for better visual consistency #1341
   - ♿hide decorative icons, label menus, avoid accessible name… #1362
 - ♻️(tilt) use helm dev-backend chart
+- 🩹(frontend) on main pages do not display leading emoji as page icon #1381
+- 🩹(frontend) handle properly emojis in interlinking #1381
 
 ### Removed
 

@@ -78,11 +78,13 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
     }));
   },
   broadcast: (taskLabel) => {
-    const { task } = get().tasks[taskLabel];
-    if (!task) {
+    if (!get().tasks[taskLabel]) {
       console.warn(`Task ${taskLabel} is not defined`);
       return;
     }
+
+    const { task } = get().tasks[taskLabel];
+
     task.push([`broadcast: ${taskLabel}`]);
   },
 }));

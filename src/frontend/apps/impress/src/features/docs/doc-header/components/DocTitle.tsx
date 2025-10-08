@@ -1,4 +1,3 @@
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { Tooltip } from '@openfun/cunningham-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,14 +7,15 @@ import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
+  DocIcon,
+  getEmojiAndTitle,
   useDocStore,
+  useDocTitleUpdate,
   useIsCollaborativeEditable,
   useTrans,
-  useUpdateDoc,
 } from '@/docs/doc-management';
-import { useBroadcastStore, useResponsiveStore } from '@/stores';
+import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
+import { useResponsiveStore } from '@/stores';
 
 interface DocTitleProps {
   doc: Doc;
@@ -53,48 +53,26 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
-  const [titleDisplay, setTitleDisplay] = useState(doc.title);
-  const treeContext = useTreeContext<Doc>();
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
+  const { spacingsTokens } = useCunninghamTheme();
 
   const { untitledDocument } = useTrans();
+  const [titleDisplay, setTitleDisplay] = useState(titleWithoutEmoji);
 
-  const { broadcast } = useBroadcastStore();
-
-  const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
-    onSuccess(updatedDoc) {
-      // Broadcast to every user connected to the document
-      broadcast(`${KEY_DOC}-${updatedDoc.id}`);
-
-      if (!treeContext) {
-        return;
-      }
-
-      if (treeContext.root?.id === updatedDoc.id) {
-        treeContext?.setRoot(updatedDoc);
-      } else {
-        treeContext?.treeData.updateNode(updatedDoc.id, updatedDoc);
-      }
-    },
-  });
+  const { updateDocTitle } = useDocTitleUpdate();
 
   const handleTitleSubmit = useCallback(
     (inputText: string) => {
-      let sanitizedTitle = inputText.trim();
-      sanitizedTitle = sanitizedTitle.replace(/(\r\n|\n|\r)/gm, '');
+      const sanitizedTitle = updateDocTitle(
+        doc,
+        emoji ? `${emoji} ${inputText}` : inputText,
+      );
+      const { titleWithoutEmoji: sanitizedTitleWithoutEmoji } =
+        getEmojiAndTitle(sanitizedTitle);
 
-      // When blank we set to untitled
-      if (!sanitizedTitle) {
-        setTitleDisplay('');
-      }
-
-      // If mutation we update
-      if (sanitizedTitle !== doc.title) {
-        setTitleDisplay(sanitizedTitle);
-        updateDoc({ id: doc.id, title: sanitizedTitle });
-      }
+      setTitleDisplay(sanitizedTitleWithoutEmoji);
     },
-    [doc.id, doc.title, updateDoc],
+    [doc, updateDocTitle, emoji],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -105,43 +83,82 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   };
 
   useEffect(() => {
-    setTitleDisplay(doc.title);
-  }, [doc]);
+    setTitleDisplay(titleWithoutEmoji);
+  }, [doc, titleWithoutEmoji]);
 
   return (
-    <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
-      <Box
-        as="span"
-        role="textbox"
-        className="--docs--doc-title-input"
-        contentEditable
-        defaultValue={titleDisplay || undefined}
-        onKeyDownCapture={handleKeyDown}
-        suppressContentEditableWarning={true}
-        aria-label={`${t('Document title')}`}
-        aria-multiline={false}
-        onBlurCapture={(event) =>
-          handleTitleSubmit(event.target.textContent || '')
-        }
-        $color={colorsTokens['greyscale-1000']}
-        $minHeight="40px"
-        $padding={{ right: 'big' }}
-        $css={css`
-          &[contenteditable='true']:empty:not(:focus):before {
-            content: '${untitledDocument}';
-            color: grey;
-            pointer-events: none;
-            font-style: italic;
+    <Box
+      $direction="row"
+      $align="flex-end"
+      $gap={spacingsTokens['xs']}
+      $minHeight="40px"
+    >
+      <Tooltip content={t('Document emoji')} aria-hidden={true} placement="top">
+        <Box
+          $css={css`
+            height: 36px;
+            padding: 4px;
+            padding-top: 3px;
+            cursor: pointer;
+            &:hover {
+              background-color: ${colorsTokens['greyscale-100']};
+              border-radius: 4px;
+            }
+            transition: background-color 0.2s ease-in-out;
+          `}
+        >
+          <DocIcon
+            withEmojiPicker={doc.abilities.partial_update}
+            docId={doc.id}
+            title={doc.title}
+            emoji={emoji}
+            $size="25px"
+            defaultIcon={
+              <SimpleFileIcon
+                width="25px"
+                height="25px"
+                aria-hidden="true"
+                aria-label={t('Simple document icon')}
+                color={colorsTokens['primary-500']}
+              />
+            }
+          />
+        </Box>
+      </Tooltip>
+
+      <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
+        <Box
+          as="span"
+          role="textbox"
+          className="--docs--doc-title-input"
+          contentEditable
+          defaultValue={titleDisplay || undefined}
+          onKeyDownCapture={handleKeyDown}
+          suppressContentEditableWarning={true}
+          aria-label={`${t('Document title')}`}
+          aria-multiline={false}
+          onBlurCapture={(event) =>
+            handleTitleSubmit(event.target.textContent || '')
           }
-          font-size: ${isDesktop
-            ? css`var(--c--theme--font--sizes--h2)`
-            : css`var(--c--theme--font--sizes--sm)`};
-          font-weight: 700;
-          outline: none;
-        `}
-      >
-        {titleDisplay}
-      </Box>
-    </Tooltip>
+          $color={colorsTokens['greyscale-1000']}
+          $padding={{ right: 'big' }}
+          $css={css`
+            &[contenteditable='true']:empty:not(:focus):before {
+              content: '${untitledDocument}';
+              color: grey;
+              pointer-events: none;
+              font-style: italic;
+            }
+            font-size: ${isDesktop
+              ? css`var(--c--theme--font--sizes--h2)`
+              : css`var(--c--theme--font--sizes--sm)`};
+            font-weight: 700;
+            outline: none;
+          `}
+        >
+          {titleDisplay}
+        </Box>
+      </Tooltip>
+    </Box>
   );
 };
