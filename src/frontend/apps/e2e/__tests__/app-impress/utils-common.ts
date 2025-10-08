@@ -327,6 +327,11 @@ export async function waitForLanguageSwitch(
   await page.getByRole('menuitem', { name: lang.label }).click();
 }
 
+export const clickInEditorMenu = async (page: Page, textButton: string) => {
+  await page.getByRole('button', { name: 'Open the document options' }).click();
+  await page.getByRole('menuitem', { name: textButton }).click();
+};
+
 export const clickInGridMenu = async (
   page: Page,
   row: Locator,

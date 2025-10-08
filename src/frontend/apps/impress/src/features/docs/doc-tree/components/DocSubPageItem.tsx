@@ -101,6 +101,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isExpanded = node.isOpen;
   const isSelected = isSelectedNow;
   const ariaLabel = docTitle;
+  const isDisabled = !!doc.deleted_at;
 
   return (
     <Box
@@ -111,6 +112,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-label={ariaLabel}
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
+      aria-disabled={isDisabled}
       $css={css`
         background-color: ${menuOpen
           ? 'var(--c--theme--colors--greyscale-100)'

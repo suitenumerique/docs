@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
+import { Overlayer } from '@/components/Overlayer';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, SimpleDocItem } from '@/docs/doc-management';
 
@@ -289,29 +290,31 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       {initialOpenState &&
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
-          <TreeView
-            dndRootElement={treeRoot}
-            initialOpenState={initialOpenState}
-            afterMove={handleMove}
-            selectedNodeId={
-              treeContext.treeData.selectedNode?.id ??
-              treeContext.initialTargetId ??
-              undefined
-            }
-            canDrop={({ parentNode }) => {
-              const parentDoc = parentNode?.data.value as Doc;
-              if (!parentDoc) {
-                return currentDoc.abilities.move && isDesktop;
+          <Overlayer isOverlay={currentDoc.deleted_at != null}>
+            <TreeView
+              dndRootElement={treeRoot}
+              initialOpenState={initialOpenState}
+              afterMove={handleMove}
+              selectedNodeId={
+                treeContext.treeData.selectedNode?.id ??
+                treeContext.initialTargetId ??
+                undefined
               }
-              return parentDoc.abilities.move && isDesktop;
-            }}
-            canDrag={(node) => {
-              const doc = node.value as Doc;
-              return doc.abilities.move && isDesktop;
-            }}
-            rootNodeId={treeContext.root.id}
-            renderNode={DocSubPageItem}
-          />
+              canDrop={({ parentNode }) => {
+                const parentDoc = parentNode?.data.value as Doc;
+                if (!parentDoc) {
+                  return currentDoc.abilities.move && isDesktop;
+                }
+                return parentDoc.abilities.move && isDesktop;
+              }}
+              canDrag={(node) => {
+                const doc = node.value as Doc;
+                return doc.abilities.move && isDesktop;
+              }}
+              rootNodeId={treeContext.root.id}
+              renderNode={DocSubPageItem}
+            />
+          </Overlayer>
         )}
     </Box>
   );
