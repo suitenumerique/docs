@@ -31,6 +31,7 @@
     "@emoji-mart/data": "1.2.1",
     "@emoji-mart/react": "1.1.1",
     "@fontsource-variable/inter": "5.2.8",
+    "@fontsource-variable/material-symbols-outlined": "5.2.25",
     "@fontsource/material-icons": "5.2.5",
     "@gouvfr-lasuite/integration": "1.0.3",
     "@gouvfr-lasuite/ui-kit": "0.16.1",

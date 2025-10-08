@@ -1714,6 +1714,11 @@
   resolved "https://registry.yarnpkg.com/@fontsource-variable/inter/-/inter-5.2.8.tgz#29b11476f5149f6a443b4df6516e26002d87941a"
   integrity sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==
 
+"@fontsource-variable/material-symbols-outlined@5.2.25":
+  version "5.2.25"
+  resolved "https://registry.yarnpkg.com/@fontsource-variable/material-symbols-outlined/-/material-symbols-outlined-5.2.25.tgz#c2ec742ca9d890a408cb657c65ddc1a6da8f3085"
+  integrity sha512-SEUmtSiqxVpLcOd1S5tVCnTXy3I2PBm/dZH/rvpfEady6Ab+l+rwIqdbjEqb6NrggcX8usGJfGYpN9cY6QCuJg==
+
 "@fontsource-variable/roboto-flex@5.2.5":
   version "5.2.5"
   resolved "https://registry.yarnpkg.com/@fontsource-variable/roboto-flex/-/roboto-flex-5.2.5.tgz#38368ea754697c2fdf08df11b06e8b6d391ff4c1"

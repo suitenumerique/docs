@@ -4,12 +4,16 @@ import { css } from 'styled-components';
 import { Text, TextType } from '@/components';
 
 type IconProps = TextType & {
+  disabled?: boolean;
   iconName: string;
-  variant?: 'filled' | 'outlined';
+  variant?: 'filled' | 'outlined' | 'symbols-outlined';
 };
 export const Icon = ({
+  className,
   iconName,
+  disabled,
   variant = 'outlined',
+  $variation,
   ...textProps
 }: IconProps) => {
   const hasLabel = 'aria-label' in textProps || 'aria-labelledby' in textProps;
@@ -18,12 +22,15 @@ export const Icon = ({
 
   return (
     <Text
-      {...textProps}
       aria-hidden={ariaHidden}
-      className={clsx('--docs--icon-bg', textProps.className, {
+      className={clsx('--docs--icon-bg', className, {
         'material-icons-filled': variant === 'filled',
         'material-icons': variant === 'outlined',
+        'material-symbols-outlined': variant === 'symbols-outlined',
       })}
+      $variation={disabled ? '300' : $variation}
+      aria-disabled={disabled}
+      {...textProps}
     >
       {iconName}
     </Text>

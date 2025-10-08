@@ -1,6 +1,7 @@
 @import url('../cunningham/cunningham-style.css');
 @import url('@fontsource/material-icons');
 @import url('@fontsource/material-icons-outlined');
+@import url('@fontsource-variable/material-symbols-outlined');
 @import url('@fontsource-variable/inter');
 @import url('/assets/fonts/Marianne/Marianne-font.css');
 
@@ -47,13 +48,13 @@ main ::-webkit-scrollbar-thumb:hover,
 }
 
 .material-icons,
-.material-icons-filled {
+.material-icons-filled,
+.material-symbols-outlined {
   font-family: 'Material Icons Outlined', 'Material Icons', sans-serif;
   font-weight: normal;
   font-style: normal;
   font-size: 24px; /* Preferred icon size */
   display: inline-block;
-  line-height: 1;
   text-transform: none;
   letter-spacing: normal;
   overflow-wrap: normal;
@@ -75,6 +76,10 @@ main ::-webkit-scrollbar-thumb:hover,
 
 .material-icons-filled {
   font-family: 'Material Icons', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined Variable', sans-serif;
 }
 
 [data-nextjs-dialog-overlay] {
