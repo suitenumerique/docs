@@ -12,6 +12,7 @@ and this project adheres to
 
 ### Changed
 
+- ♻️(frontend) Refactor Auth component for improved redirection logic #1461
 - ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
   - ♿(frontend) enable enter key to open documentss #1354
