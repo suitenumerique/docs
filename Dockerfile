@@ -94,6 +94,14 @@ RUN chmod g=u /etc/passwd
 # Copy installed python dependencies
 COPY --from=back-builder /install /usr/local
 
+# Link certifi certificate from a static path /cert/cacert.pem to avoid issues
+# when python is upgraded and the path to the certificate changes.
+# The space between print and the ( is intended otherwise the git lint is failing
+RUN mkdir /cert && \
+    path=`python -c 'import certifi;print (certifi.where())'` && \
+    mv $path /cert/ && \
+    ln -s /cert/cacert.pem $path
+
 # Copy impress application (see .dockerignore)
 COPY ./src/backend /app/
 
