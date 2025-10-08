@@ -59,6 +59,8 @@ export const DocPage403 = ({ id }: DocProps) => {
           className="c__image-system-filter"
           src={img403}
           alt={t('Image 403')}
+          width={300}
+          height={300}
           style={{
             maxWidth: '100%',
             height: 'auto',

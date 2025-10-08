@@ -45,6 +45,7 @@ and this project adheres to
 - 🔒(frontend) prevent readers from changing callout emoji #1449
 - 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
 - 🐛(backend) filter invitation with case insensitive email
+- 🐛(frontend) reduce no access image size from 450 to 300 #1463
 
 ## [3.7.0] - 2025-09-12
 

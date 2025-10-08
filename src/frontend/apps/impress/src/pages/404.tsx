@@ -42,6 +42,8 @@ const Page: NextPageWithLayout = () => {
           className="c__image-system-filter"
           src={img403}
           alt=""
+          width={300}
+          height={300}
           style={{
             maxWidth: '100%',
             height: 'auto',
