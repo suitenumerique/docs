@@ -30,6 +30,7 @@ and this project adheres to
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
   - ♿ update labels and shared document icon accessibility #1442
 - 🍱(frontend) Fonts GDPR compliants #1453
+- ♻️(service-worker) improve SW registration and update handling #1473
 
 ### Fixed
 
