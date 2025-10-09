@@ -11,6 +11,7 @@ import {
   verifyDocName,
   waitForLanguageSwitch,
 } from './utils-common';
+import { openSuggestionMenu, writeInEditor } from './utils-editor';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
@@ -93,6 +94,7 @@ test.describe('Doc Export', () => {
 
     expect(pdfData.numpages).toBe(2);
     expect(pdfData.text).toContain('\n\nHello\n\nWorld'); // This is the doc text
+    expect(pdfData.info.Title).toBe(randomDoc);
   });
 
   test('it exports the doc to docx', async ({ page, browserName }) => {
@@ -152,11 +154,13 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, randomDoc);
 
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+    await writeInEditor({
+      page,
+      text: 'Hello World 😃🎉🚀🙋‍♀️🧑🏿‍❤️‍💋‍🧑🏾',
+    });
 
     await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
+    await openSuggestionMenu({ page });
     await page.getByText('Resizable image with caption').click();
 
     const fileChooserPromise = page.waitForEvent('filechooser');
@@ -393,7 +397,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    const input = page.locator('.--docs--doc-title-input[role="textbox"]');
+    const input = page.getByRole('textbox', { name: 'Titre du document' });
     await expect(input).toBeVisible();
     await expect(input).toHaveText('', { timeout: 10000 });
     await input.click();
@@ -409,6 +413,10 @@ test.describe('Doc Export', () => {
         name: 'Exporter le document',
       })
       .click();
+
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);

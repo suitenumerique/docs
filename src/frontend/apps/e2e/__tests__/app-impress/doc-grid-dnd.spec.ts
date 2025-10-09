@@ -106,7 +106,7 @@ test.describe('Doc grid dnd', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must be at least the editor of the target document',
+      'You must be at least the administrator of the target document',
     );
 
     await page.mouse.up();

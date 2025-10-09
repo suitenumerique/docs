@@ -35,6 +35,7 @@ export function HomeContent() {
   return (
     <Box
       as="main"
+      role="main"
       className="--docs--home-content"
       aria-label={t('Main content')}
     >

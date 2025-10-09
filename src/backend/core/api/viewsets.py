@@ -944,37 +944,64 @@ class DocumentViewSet(
         in the payload.
         """
         # Get document while checking permissions
-        document = self.get_object()
+        document_to_duplicate = self.get_object()
 
         serializer = serializers.DocumentDuplicationSerializer(
             data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         with_accesses = serializer.validated_data.get("with_accesses", False)
-        is_owner_or_admin = document.get_role(request.user) in models.PRIVILEGED_ROLES
+        user_role = document_to_duplicate.get_role(request.user)
+        is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
-        base64_yjs_content = document.content
+        base64_yjs_content = document_to_duplicate.content
 
         # Duplicate the document instance
         link_kwargs = (
-            {"link_reach": document.link_reach, "link_role": document.link_role}
+            {
+                "link_reach": document_to_duplicate.link_reach,
+                "link_role": document_to_duplicate.link_role,
+            }
             if with_accesses
             else {}
         )
-        extracted_attachments = set(extract_attachments(document.content))
-        attachments = list(extracted_attachments & set(document.attachments))
-        duplicated_document = document.add_sibling(
+        extracted_attachments = set(extract_attachments(document_to_duplicate.content))
+        attachments = list(
+            extracted_attachments & set(document_to_duplicate.attachments)
+        )
+        title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
+        if not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
+            user_role
+        ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
+            duplicated_document = models.Document.add_root(
+                creator=self.request.user,
+                title=title,
+                content=base64_yjs_content,
+                attachments=attachments,
+                duplicated_from=document_to_duplicate,
+                **link_kwargs,
+            )
+            models.DocumentAccess.objects.create(
+                document=duplicated_document,
+                user=self.request.user,
+                role=models.RoleChoices.OWNER,
+            )
+            return drf_response.Response(
+                {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+            )
+
+        duplicated_document = document_to_duplicate.add_sibling(
             "right",
-            title=capfirst(_("copy of {title}").format(title=document.title)),
+            title=title,
             content=base64_yjs_content,
             attachments=attachments,
-            duplicated_from=document,
+            duplicated_from=document_to_duplicate,
             creator=request.user,
             **link_kwargs,
         )
 
         # Always add the logged-in user as OWNER for root documents
-        if document.is_root():
+        if document_to_duplicate.is_root():
             accesses_to_create = [
                 models.DocumentAccess(
                     document=duplicated_document,
@@ -986,7 +1013,7 @@ class DocumentViewSet(
             # If accesses should be duplicated, add other users' accesses as per original document
             if with_accesses and is_owner_or_admin:
                 original_accesses = models.DocumentAccess.objects.filter(
-                    document=document
+                    document=document_to_duplicate
                 ).exclude(user=request.user)
 
                 accesses_to_create.extend(

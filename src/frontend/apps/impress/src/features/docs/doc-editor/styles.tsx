@@ -16,6 +16,19 @@ export const cssEditor = (readonly: boolean) => css`
       font-weight: 400;
     }
 
+    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
+      .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      width: inherit;
+      height: inherit;
+    }
+    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
+      .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child) {
+      position: relative;
+    }
+
     .bn-side-menu .mantine-UnstyledButton-root svg {
       color: #767676 !important;
     }
@@ -89,6 +102,11 @@ export const cssEditor = (readonly: boolean) => css`
     .bn-block[data-background-color] > .bn-block-content {
       padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
       border-radius: var(--c--theme--spacings--3xs);
+    }
+
+    .bn-block-content[data-content-type='checkListItem'][data-checked='true']
+      .bn-inline-content {
+      text-decoration: none;
     }
 
     h1 {

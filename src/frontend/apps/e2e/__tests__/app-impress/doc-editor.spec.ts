@@ -1,7 +1,7 @@
 /* eslint-disable playwright/no-conditional-expect */
 import path from 'path';
 
-import { chromium, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 
 import {
@@ -11,7 +11,9 @@ import {
   overrideConfig,
   verifyDocName,
 } from './utils-common';
-import { createRootSubPage } from './utils-sub-pages';
+import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
+import { connectOtherUserToDoc, updateShareLink } from './utils-share';
+import { createRootSubPage, navigateToPageFromTree } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -86,8 +88,7 @@ test.describe('Doc Editor', () => {
     // Is connected
     let framesentPromise = webSocket.waitForEvent('framesent');
 
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+    await writeInEditor({ page, text: 'Hello World' });
 
     let framesent = await framesentPromise;
     expect(framesent.payload).not.toBeNull();
@@ -100,7 +101,7 @@ test.describe('Doc Editor', () => {
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
-    await page.getByLabel('Connected').click();
+    await page.getByRole('menuitem', { name: 'Connected' }).click();
 
     // Assert that the doc reconnects to the ws
     const wsClose = await wsClosePromise;
@@ -238,17 +239,7 @@ test.describe('Doc Editor', () => {
 
   test('it cannot edit if viewer', async ({ page }) => {
     await mockedDocument(page, {
-      abilities: {
-        destroy: false, // Means not owner
-        link_configuration: false,
-        versions_destroy: false,
-        versions_list: true,
-        versions_retrieve: true,
-        accesses_manage: false, // Means not admin
-        update: false,
-        partial_update: false, // Means not editor
-        retrieve: true,
-      },
+      user_role: 'reader',
     });
 
     await goToGridDoc(page);
@@ -257,6 +248,9 @@ test.describe('Doc Editor', () => {
     await expect(card).toBeVisible();
 
     await expect(card.getByText('Reader')).toBeVisible();
+
+    const editor = page.locator('.ProseMirror');
+    await expect(editor).toHaveAttribute('contenteditable', 'false');
   });
 
   test('it adds an image to the doc editor', async ({ page, browserName }) => {
@@ -512,10 +506,7 @@ test.describe('Doc Editor', () => {
 
     await verifyDocName(page, randomDoc);
 
-    const editor = page.locator('.ProseMirror.bn-editor');
-
-    await editor.click();
-    await editor.locator('.bn-block-outer').last().fill('/');
+    const editor = await openSuggestionMenu({ page });
     await page.getByText('Embedded file').click();
     await page.getByText('Upload file').click();
 
@@ -570,20 +561,7 @@ test.describe('Doc Editor', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    await page.getByTestId('doc-visibility').click();
-
-    await page
-      .getByRole('menuitem', {
-        name: 'Public',
-      })
-      .click();
-
-    await expect(
-      page.getByText('The document visibility has been updated.'),
-    ).toBeVisible();
-
-    await page.getByTestId('doc-access-mode').click();
-    await page.getByRole('menuitem', { name: 'Editing' }).click();
+    await updateShareLink(page, 'Public', 'Editing');
 
     // Close the modal
     await page.getByRole('button', { name: 'close' }).first().click();
@@ -607,17 +585,12 @@ test.describe('Doc Editor', () => {
      * We open another browser that will connect to the collaborative server
      * and will block the current browser to edit the doc.
      */
-    const otherBrowser = await chromium.launch({ headless: true });
-    const otherContext = await otherBrowser.newContext({
-      locale: 'en-US',
-      timezoneId: 'Europe/Paris',
-      permissions: [],
-      storageState: {
-        cookies: [],
-        origins: [],
-      },
+    const { otherPage } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: urlChildDoc,
+      docTitle: childTitle,
+      withoutSignIn: true,
     });
-    const otherPage = await otherContext.newPage();
 
     const webSocketPromise = otherPage.waitForEvent(
       'websocket',
@@ -658,6 +631,11 @@ test.describe('Doc Editor', () => {
 
     await expect(editor).toHaveAttribute('contenteditable', 'false');
 
+    await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toBeHidden();
+    await expect(page.getByRole('heading', { name: childTitle })).toBeVisible();
+
     await page.goto(urlParentDoc);
 
     await verifyDocName(page, parentTitle);
@@ -675,6 +653,11 @@ test.describe('Doc Editor', () => {
     await expect(editor).toHaveAttribute('contenteditable', 'true');
 
     await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText(childTitle);
+    await expect(page.getByRole('heading', { name: childTitle })).toBeHidden();
+
+    await expect(
       card.getByText('Others are editing. Your network prevent changes.'),
     ).toBeHidden();
   });
@@ -682,9 +665,7 @@ test.describe('Doc Editor', () => {
   test('it checks if callout custom block', async ({ page, browserName }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await page.locator('.bn-block-outer').last().fill('/');
+    await openSuggestionMenu({ page });
     await page.getByText('Add a callout block').click();
 
     const calloutBlock = page
@@ -769,15 +750,21 @@ test.describe('Doc Editor', () => {
     await expect(searchContainer.getByText(docChild2)).toBeVisible();
     await expect(searchContainer.getByText(randomDoc)).toBeHidden();
 
-    // use keydown to select the second result
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
-    const interlink = page.getByRole('link', {
-      name: 'child-2',
+    // Wait for the search container to disappear, indicating selection was made
+    await expect(searchContainer).toBeHidden();
+
+    // Wait for the interlink to be created and rendered
+    const editor = page.locator('.ProseMirror.bn-editor');
+
+    const interlink = editor.getByRole('link', {
+      name: docChild2,
     });
 
-    await expect(interlink).toBeVisible();
+    await expect(interlink).toBeVisible({ timeout: 10000 });
     await interlink.click();
 
     await verifyDocName(page, docChild2);
@@ -797,5 +784,95 @@ test.describe('Doc Editor', () => {
         "span[data-inline-content-type='interlinkingSearchInline'] input",
       ),
     ).toBeVisible();
+  });
+
+  test('it checks multiple big doc scroll to the top', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(page, 'doc-scroll', browserName, 1);
+
+    for (let i = 0; i < 15; i++) {
+      await page.keyboard.press('Enter');
+      await writeInEditor({ page, text: 'Hello Parent ' + i });
+    }
+
+    const editor = await getEditor({ page });
+    await expect(
+      editor.getByText('Hello Parent 1', { exact: true }),
+    ).not.toBeInViewport();
+    await expect(editor.getByText('Hello Parent 14')).toBeInViewport();
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-scroll-child',
+    );
+
+    for (let i = 0; i < 15; i++) {
+      await page.keyboard.press('Enter');
+      await writeInEditor({ page, text: 'Hello Child ' + i });
+    }
+
+    await expect(
+      editor.getByText('Hello Child 1', { exact: true }),
+    ).not.toBeInViewport();
+    await expect(editor.getByText('Hello Child 14')).toBeInViewport();
+
+    await navigateToPageFromTree({ page, title: randomDoc });
+
+    await expect(
+      editor.getByText('Hello Parent 1', { exact: true }),
+    ).toBeInViewport();
+    await expect(editor.getByText('Hello Parent 14')).not.toBeInViewport();
+
+    await navigateToPageFromTree({ page, title: docChild });
+
+    await expect(
+      editor.getByText('Hello Child 1', { exact: true }),
+    ).toBeInViewport();
+    await expect(editor.getByText('Hello Child 14')).not.toBeInViewport();
+  });
+
+  test('it embeds PDF', async ({ page, browserName }) => {
+    await createDoc(page, 'doc-toolbar', browserName, 1);
+
+    await openSuggestionMenu({ page });
+    await page.getByText('Embed a PDF file').click();
+
+    const pdfBlock = page.locator('div[data-content-type="pdf"]').first();
+
+    await expect(pdfBlock).toBeVisible();
+
+    await page.getByText('Add PDF').click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByText('Upload file').click();
+    const fileChooser = await fileChooserPromise;
+
+    console.log(path.join(__dirname, 'assets/test-pdf.pdf'));
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test-pdf.pdf'));
+
+    // Wait for the media-check to be processed
+    await page.waitForTimeout(1000);
+
+    const pdfEmbed = page
+      .locator('.--docs--editor-container embed.bn-visual-media')
+      .first();
+
+    // Check src of pdf
+    expect(await pdfEmbed.getAttribute('src')).toMatch(
+      /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.pdf/,
+    );
+
+    await expect(pdfEmbed).toHaveAttribute('type', 'application/pdf');
+    await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
+
+    // Check download with original filename
+    await page.locator('.bn-block-content[data-content-type="pdf"]').click();
+    await page.locator('[data-test="downloadfile"]').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('test-pdf.pdf');
   });
 });

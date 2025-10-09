@@ -1,5 +1,3 @@
-# Changelog
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0),
@@ -10,20 +8,62 @@ and this project adheres to
 
 ### Added
 
-- ✨(api) add API route to fetch document content #1206
+- ✨(frontend) add pdf block to the editor #1293
+
+### Changed
+
+- ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
-  - #1349
-  - #1271
-  - #1341
-  - #1362
+  - ♿(frontend) enable enter key to open documentss #1354
+  - ♿(frontend) improve modal a11y: structure, labels, title #1349
+  - ♿improve NVDA navigation in DocShareModal #1396
+  - ♿ improve accessibility by adding landmark roles to layout #1394
+  - ♿ add document visible in list and openable via enter key #1365
+  - ♿ add pdf outline property to enable bookmarks display #1368
+  - ♿ hide decorative icons from assistive tech with aria-hidden #1404
+  - ♿ fix rgaa 1.9.1: convert to figure/figcaption structure #1426
+  - ♿ remove redundant aria-label to avoid over-accessibility #1420
+  - ♿ remove redundant aria-label on hidden icons and update tests #1432
+  - ♿ improve semantic structure and aria roles of leftpanel #1431
+  - ♿ add default background to left panel for better accessibility #1423
+  - ♿ restyle checked checkboxes: removing strikethrough #1439
+  - ♿ add h1 for SR on 40X pages and remove alt texts #1438
+  - ♿ update labels and shared document icon accessibility #1442
+- 🍱(frontend) Fonts GDPR compliants #1453
+
+### Fixed
+
+- 🐛(backend) duplicate sub docs as root for reader users
+- ⚗️(service-worker) remove index from cache first strategy #1395
+- 🐛(frontend) fix 404 page when reload 403 page #1402
+- 🐛(frontend) fix legacy role computation #1376
+- 🛂(frontend) block editing title when not allowed #1412
+- 🐛(frontend) scroll back to top when navigate to a document #1406
+- 🐛(frontend) fix export pdf emoji problem #1453
+- 🐛(frontend) fix attachment download filename #1447
+- 🐛(frontend) exclude h4-h6 headings from table of contents #1441
+- 🔒(frontend) prevent readers from changing callout emoji #1449
+- 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
+- 🐛(backend) filter invitation with case insensitive email
+- 🐛(frontend) reduce no access image size from 450 to 300 #1463
+
+## [3.7.0] - 2025-09-12
+
+### Added
+
+- ✨(api) add API route to fetch document content #1206
 
 ### Changed
 
 - 🔒️(backend) configure throttle on every viewsets #1343
 - ⬆️ Bump eslint to V9 #1071
 - ♿(frontend) improve accessibility:
-  - ♿(frontend) fix major accessibility issues reported by wave and axe #1344
-  - #1341
+  - ♿fix major accessibility issues reported by wave and axe #1344
+  - ✨unify tab focus style for better visual consistency #1341
+  - ✨improve modal a11y: structure, labels, and title #1349
+  - ✨improve accessibility of cdoc content with correct aria tags #1271
+  - ✨unify tab focus style for better visual consistency #1341
+  - ♿hide decorative icons, label menus, avoid accessible name… #1362
 - ♻️(tilt) use helm dev-backend chart
 
 ### Removed
@@ -69,6 +109,7 @@ and this project adheres to
 - 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
 - 🐛(frontend) fix display bug on homepage #1332
 - 🐛link role update #1287
+- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.5.0] - 2025-07-31
 
@@ -740,7 +781,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.6.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.7.0...main
+[v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
 [v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
 [v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0
 [v3.4.2]: https://github.com/suitenumerique/docs/releases/v3.4.2

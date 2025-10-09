@@ -5,9 +5,10 @@ import {
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
@@ -17,6 +18,8 @@ import {
 import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
+
+import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -38,13 +41,22 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const { node } = props;
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const [actionsOpen, setActionsOpen] = useState(false);
+  const { t } = useTranslation();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isSelectedNow = treeContext?.treeData.selectedNode?.id === doc.id;
+  const isActive = node.isFocused || menuOpen || isSelectedNow;
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
 
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title || '');
   const displayTitle = titleWithoutEmoji || untitledDocument;
+
+  const handleActivate = () => {
+    treeContext?.treeData.setSelectedNode(doc);
+    router.push(`/docs/${doc.id}`);
+  };
 
   const afterCreate = (createdDoc: Doc) => {
     const actualChildren = node.data.children ?? [];
@@ -76,62 +88,80 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
+  useKeyboardActivation(
+    ['Enter'],
+    isActive && !menuOpen,
+    handleActivate,
+    true,
+    '.c__tree-view',
+  );
+
+  const docTitle = doc.title || untitledDocument;
+  const hasChildren = (doc.children?.length || 0) > 0;
+  const isExpanded = node.isOpen;
+  const isSelected = isSelectedNow;
+  const ariaLabel = docTitle;
+
   return (
     <Box
       className="--docs-sub-page-item"
       draggable={doc.abilities.move && isDesktop}
       $position="relative"
+      role="treeitem"
+      aria-label={ariaLabel}
+      aria-selected={isSelected}
+      aria-expanded={hasChildren ? isExpanded : undefined}
       $css={css`
-        background-color: ${actionsOpen
+        background-color: ${menuOpen
           ? 'var(--c--theme--colors--greyscale-100)'
           : 'var(--c--theme--colors--greyscale-000)'};
-
         .light-doc-item-actions {
-          display: ${actionsOpen || !isDesktop ? 'flex' : 'none'};
+          display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           position: absolute;
           right: 0;
           background: ${isDesktop
             ? 'var(--c--theme--colors--greyscale-100)'
             : 'var(--c--theme--colors--greyscale-000)'};
         }
-
         .c__tree-view--node.isSelected {
           .light-doc-item-actions {
             background: var(--c--theme--colors--greyscale-100);
           }
         }
-
+        .c__tree-view--node.isFocused {
+          outline: none !important;
+          box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
+          border-radius: 4px;
+        }
         &:hover {
           background-color: var(--c--theme--colors--greyscale-100);
           border-radius: 4px;
-
           .light-doc-item-actions {
             display: flex;
             background: var(--c--theme--colors--greyscale-100);
           }
         }
-
         .row.preview & {
           background-color: inherit;
         }
       `}
     >
-      <TreeViewItem
-        {...props}
-        onClick={() => {
-          treeContext?.treeData.setSelectedNode(props.node.data.value as Doc);
-          router.push(`/docs/${props.node.data.value.id}`);
-        }}
-      >
-        <Box
-          data-testid={`doc-sub-page-item-${props.node.data.value.id}`}
+      <TreeViewItem {...props} onClick={handleActivate}>
+        <BoxButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleActivate();
+          }}
           $width="100%"
           $direction="row"
           $gap={spacingsTokens['xs']}
-          role="button"
-          tabIndex={0}
           $align="center"
           $minHeight="24px"
+          data-testid={`doc-sub-page-item-${doc.id}`}
+          aria-label={`${t('Open document {{title}}', { title: docTitle })}`}
+          $css={css`
+            text-align: left;
+          `}
         >
           <Box $width="16px" $height="16px">
             <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
@@ -157,23 +187,25 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
                 iconName="group"
                 $size="16px"
                 $variation="400"
+                aria-hidden="true"
               />
             )}
           </Box>
-
-          <Box
-            $direction="row"
-            $align="center"
-            className="light-doc-item-actions"
-          >
-            <DocTreeItemActions
-              doc={doc}
-              isOpen={actionsOpen}
-              onOpenChange={setActionsOpen}
-              parentId={node.data.parentKey}
-              onCreateSuccess={afterCreate}
-            />
-          </Box>
+        </BoxButton>
+        <Box
+          $direction="row"
+          $align="center"
+          className="light-doc-item-actions"
+          role="toolbar"
+          aria-label={`${t('Actions for {{title}}', { title: docTitle })}`}
+        >
+          <DocTreeItemActions
+            doc={doc}
+            isOpen={menuOpen}
+            onOpenChange={setMenuOpen}
+            parentId={node.data.parentKey}
+            onCreateSuccess={afterCreate}
+          />
         </Box>
       </TreeViewItem>
     </Box>

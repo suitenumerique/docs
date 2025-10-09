@@ -1,5 +1,6 @@
 import { Tooltip, useModal } from '@openfun/cunningham-react';
 import { DateTime } from 'luxon';
+import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -33,6 +34,13 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
     shareModal.open();
   };
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      (e.target as HTMLAnchorElement).click();
+    }
+  };
+
   return (
     <>
       <Box
@@ -52,6 +60,9 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           }
         `}
         className="--docs--doc-grid-item"
+        aria-label={t('Open document: {{title}}', {
+          title: doc.title || t('Untitled document'),
+        })}
       >
         <Box
           $flex={flexLeft}
@@ -68,6 +79,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
               min-width: 0;
             `}
             href={`/docs/${doc.id}`}
+            onKeyDown={handleKeyDown}
           >
             <Box
               data-testid={`docs-grid-name-${doc.id}`}
@@ -90,17 +102,19 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                   }
                 >
                   {dragMode && (
-                    <Icon
-                      $theme="greyscale"
-                      $variation="600"
-                      $size="14px"
-                      iconName={isPublic ? 'public' : 'vpn_lock'}
-                      aria-label={
-                        isPublic
+                    <>
+                      <Icon
+                        $theme="greyscale"
+                        $variation="600"
+                        $size="14px"
+                        iconName={isPublic ? 'public' : 'vpn_lock'}
+                      />
+                      <span className="sr-only">
+                        {isPublic
                           ? t('Accessible to anyone')
-                          : t('Accessible to authenticated users')
-                      }
-                    />
+                          : t('Accessible to authenticated users')}
+                      </span>
+                    </>
                   )}
                   {!dragMode && (
                     <Tooltip
@@ -119,12 +133,12 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                           $variation="600"
                           $size="14px"
                           iconName={isPublic ? 'public' : 'vpn_lock'}
-                          aria-label={
-                            isPublic
-                              ? t('Accessible to anyone')
-                              : t('Accessible to authenticated users')
-                          }
                         />
+                        <span className="sr-only">
+                          {isPublic
+                            ? t('Accessible to anyone')
+                            : t('Accessible to authenticated users')}
+                        </span>
                       </div>
                     </Tooltip>
                   )}

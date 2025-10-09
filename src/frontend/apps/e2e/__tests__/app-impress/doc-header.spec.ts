@@ -75,22 +75,22 @@ test.describe('Doc Header', () => {
     // Check the tree
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText('Hello Emoji World')).toBeVisible();
-    await expect(docTree.getByLabel('Document emoji icon')).toBeVisible();
-    await expect(docTree.getByLabel('Simple document icon')).toBeHidden();
+    await expect(docTree.getByTestId('doc-emoji-icon')).toBeVisible();
+    await expect(docTree.getByTestId('doc-simple-icon')).toBeHidden();
 
     await page.getByTestId('home-button').click();
 
     // Check the documents grid
     const gridRow = await getGridRow(page, 'Hello Emoji World');
-    await expect(gridRow.getByLabel('Document emoji icon')).toBeVisible();
-    await expect(gridRow.getByLabel('Simple document icon')).toBeHidden();
+    await expect(gridRow.getByTestId('doc-emoji-icon')).toBeVisible();
+    await expect(gridRow.getByTestId('doc-simple-icon')).toBeHidden();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-delete', browserName, 1);
 
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Delete document').click();
+    await page.getByRole('menuitem', { name: 'Delete document' }).click();
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
@@ -143,12 +143,18 @@ test.describe('Doc Header', () => {
     await goToGridDoc(page);
 
     await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText('Mocked document');
+
+    await expect(
       page.getByRole('button', { name: 'Export the document' }),
     ).toBeVisible();
 
     await page.getByLabel('Open the document options').click();
 
-    await expect(page.getByLabel('Delete document')).toBeDisabled();
+    await expect(
+      page.getByRole('menuitem', { name: 'Delete document' }),
+    ).toBeDisabled();
 
     // Click somewhere else to close the options
     await page.click('body', { position: { x: 0, y: 0 } });
@@ -164,7 +170,7 @@ test.describe('Doc Header', () => {
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test').first(),
+      invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
     const invitationRole = invitationCard.getByLabel('doc-role-dropdown');
     await expect(invitationRole).toBeVisible();
@@ -178,7 +184,7 @@ test.describe('Doc Header', () => {
     const roles = memberCard.getByLabel('doc-role-dropdown');
     await expect(memberCard).toBeVisible();
     await expect(
-      memberCard.getByText('test@accesses.test').first(),
+      memberCard.getByText('test.test@accesses.test').first(),
     ).toBeVisible();
     await expect(roles).toBeVisible();
 
@@ -217,11 +223,17 @@ test.describe('Doc Header', () => {
     await goToGridDoc(page);
 
     await expect(
+      page.getByRole('textbox', { name: 'Document title' }),
+    ).toContainText('Mocked document');
+
+    await expect(
       page.getByRole('button', { name: 'Export the document' }),
     ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
-    await expect(page.getByLabel('Delete document')).toBeDisabled();
+    await expect(
+      page.getByRole('menuitem', { name: 'Delete document' }),
+    ).toBeDisabled();
 
     // Click somewhere else to close the options
     await page.click('body', { position: { x: 0, y: 0 } });
@@ -239,7 +251,7 @@ test.describe('Doc Header', () => {
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test').first(),
+      invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
     await expect(invitationCard.getByLabel('Document role text')).toBeVisible();
     await expect(
@@ -247,7 +259,7 @@ test.describe('Doc Header', () => {
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
-    await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard.getByText('test.test@accesses.test')).toBeVisible();
     await expect(memberCard.getByLabel('Document role text')).toBeVisible();
     await expect(
       memberCard.getByRole('button', { name: 'more_horiz' }),
@@ -283,11 +295,17 @@ test.describe('Doc Header', () => {
     await goToGridDoc(page);
 
     await expect(
+      page.getByRole('heading', { name: 'Mocked document' }),
+    ).toBeVisible();
+
+    await expect(
       page.getByRole('button', { name: 'Export the document' }),
     ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
-    await expect(page.getByLabel('Delete document')).toBeDisabled();
+    await expect(
+      page.getByRole('menuitem', { name: 'Delete document' }),
+    ).toBeDisabled();
 
     // Click somewhere else to close the options
     await page.click('body', { position: { x: 0, y: 0 } });
@@ -302,7 +320,7 @@ test.describe('Doc Header', () => {
     const invitationCard = shareModal.getByLabel('List invitation card');
     await expect(invitationCard).toBeVisible();
     await expect(
-      invitationCard.getByText('test@invitation.test').first(),
+      invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
     await expect(invitationCard.getByLabel('Document role text')).toBeVisible();
     await expect(
@@ -310,7 +328,7 @@ test.describe('Doc Header', () => {
     ).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
-    await expect(memberCard.getByText('test@accesses.test')).toBeVisible();
+    await expect(memberCard.getByText('test.test@accesses.test')).toBeVisible();
     await expect(memberCard.getByLabel('Document role text')).toBeVisible();
     await expect(
       memberCard.getByRole('button', { name: 'more_horiz' }),
@@ -343,7 +361,7 @@ test.describe('Doc Header', () => {
 
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Copy as Markdown').click();
+    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
     await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
     // Test that clipboard is in Markdown format
@@ -377,7 +395,7 @@ test.describe('Doc Header', () => {
 
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Copy as HTML').click();
+    await page.getByRole('menuitem', { name: 'Copy as HTML' }).click();
     await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
     // Test that clipboard is in HTML format
@@ -434,11 +452,15 @@ test.describe('Doc Header', () => {
   test('it pins a document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `Pin doc`, browserName);
 
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
 
     // Pin
     await page.getByText('push_pin').click();
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
     await expect(page.getByText('Unpin')).toBeVisible();
 
     await page.goto('/');
@@ -446,22 +468,26 @@ test.describe('Doc Header', () => {
     const row = await getGridRow(page, docTitle);
 
     // Check is pinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeVisible();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
     const leftPanelFavorites = page.getByTestId('left-panel-favorites');
     await expect(leftPanelFavorites.getByText(docTitle)).toBeVisible();
 
     await row.getByText(docTitle).click();
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
 
     // Unpin
     await page.getByText('Unpin').click();
-    await page.getByLabel('Open the document options').click();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
     await expect(page.getByText('push_pin')).toBeVisible();
 
     await page.goto('/');
 
     // Check is unpinned
-    await expect(row.locator('[data-testid^="doc-pinned-"]')).toBeHidden();
+    await expect(row.getByTestId('doc-pinned-icon')).toBeHidden();
     await expect(leftPanelFavorites.getByText(docTitle)).toBeHidden();
   });
 
@@ -560,7 +586,7 @@ test.describe('Documents Header mobile', () => {
     await expect(
       page.getByRole('menuitem', { name: 'Copy link' }),
     ).toBeVisible();
-    await page.getByLabel('Share').click();
+    await page.getByRole('menuitem', { name: 'Share' }).click();
     await expect(page.getByRole('button', { name: 'Copy link' })).toBeVisible();
   });
 
@@ -583,7 +609,7 @@ test.describe('Documents Header mobile', () => {
     await goToGridDoc(page);
 
     await page.getByLabel('Open the document options').click();
-    await page.getByLabel('Share').click();
+    await page.getByRole('menuitem', { name: 'Share' }).click();
 
     const shareModal = page.getByRole('dialog', {
       name: 'Share modal content',

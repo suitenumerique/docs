@@ -82,7 +82,7 @@ backend:
   # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
-      mountPath: /usr/local/lib/python3.13/site-packages/certifi/cacert.pem
+      mountPath: /cert/cacert.pem
       subPath: cacert.pem
 
   # Extra volume to manage our local custom CA and avoid to set ssl_verify: false

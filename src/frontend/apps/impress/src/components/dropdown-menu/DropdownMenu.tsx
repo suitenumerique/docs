@@ -162,7 +162,6 @@ export const DropdownMenu = ({
                   menuItemRefs.current[index] = el;
                 }}
                 role="menuitem"
-                aria-label={option.label}
                 data-testid={option.testId}
                 $direction="row"
                 disabled={isDisabled}

@@ -131,7 +131,7 @@ test.describe('Home page', () => {
 
     // Keyclock login page
     await expect(
-      page.locator('.login-pf-page-header').getByText('impress'),
+      page.locator('.login-pf #kc-header-wrapper').getByText('impress'),
     ).toBeVisible();
   });
 });

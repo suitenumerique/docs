@@ -293,3 +293,28 @@ def test_api_documents_duplicate_non_root_document(role):
     assert duplicated_accesses.count() == 0
     assert duplicated_document.is_sibling_of(child)
     assert duplicated_document.is_child_of(document)
+
+
+def test_api_documents_duplicate_reader_non_root_document():
+    """
+    Reader users should be able to duplicate non-root documents but will be
+    created as a root document.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(users=[(user, "reader")])
+    child = factories.DocumentFactory(parent=document)
+
+    assert child.get_role(user) == "reader"
+
+    response = client.post(
+        f"/api/v1.0/documents/{child.id!s}/duplicate/", format="json"
+    )
+    assert response.status_code == 201
+
+    duplicated_document = models.Document.objects.get(id=response.json()["id"])
+    assert duplicated_document.is_root()
+    assert duplicated_document.accesses.count() == 1
+    assert duplicated_document.accesses.get(user=user).role == "owner"

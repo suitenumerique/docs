@@ -184,22 +184,20 @@ services:
       - env.d/development/kc_postgresql.local
 
   keycloak:
-    image: quay.io/keycloak/keycloak:20.0.1
+    image: quay.io/keycloak/keycloak:26.3
     volumes:
       - ./docker/auth/realm.json:/opt/keycloak/data/import/realm.json
     command:
       - start-dev
       - --features=preview
       - --import-realm
-      - --proxy=edge
-      - --hostname-url=http://localhost:8083
-      - --hostname-admin-url=http://localhost:8083/
+      - --hostname=http://localhost:8083
       - --hostname-strict=false
-      - --hostname-strict-https=false
       - --health-enabled=true
       - --metrics-enabled=true
     healthcheck:
-      test: ["CMD", "curl", "--head", "-fsS", "http://localhost:8080/health/ready"]
+      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/localhost/9000; echo -e "GET /health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep "HTTP/1.1 200 OK" <&3']
+      start_period: 5s
       interval: 1s
       timeout: 2s
       retries: 300

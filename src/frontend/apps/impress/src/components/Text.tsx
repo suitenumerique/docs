@@ -13,6 +13,7 @@ export interface TextProps extends BoxProps {
   $ellipsis?: boolean;
   $weight?: CSSProperties['fontWeight'];
   $textAlign?: CSSProperties['textAlign'];
+  $textTransform?: CSSProperties['textTransform'];
   $size?: TextSizes | (string & {});
   $theme?:
     | 'primary'
@@ -43,6 +44,8 @@ export type TextType = ComponentPropsWithRef<typeof Text>;
 
 export const TextStyled = styled(Box)<TextProps>`
   ${({ $textAlign }) => $textAlign && `text-align: ${$textAlign};`}
+  ${({ $textTransform }) =>
+    $textTransform && `text-transform: ${$textTransform};`}
   ${({ $weight }) => $weight && `font-weight: ${$weight};`}
   ${({ $size }) =>
     $size &&

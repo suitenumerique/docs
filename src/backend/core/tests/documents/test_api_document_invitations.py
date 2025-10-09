@@ -596,6 +596,32 @@ def test_api_document_invitations_create_cannot_invite_existing_users():
     }
 
 
+def test_api_document_invitations_create_lower_email():
+    """
+    No matter the case, the email should be converted to lowercase.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "owner")])
+
+    # Build an invitation to the email of an existing identity in the db
+    invitation_values = {
+        "email": "GuEst@example.com",
+        "role": random.choice(models.RoleChoices.values),
+    }
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/invitations/",
+        invitation_values,
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["email"] == "guest@example.com"
+
+
 # Update
 
 

@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
-export const BROWSERS = ['chromium', 'webkit', 'firefox'];
+export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
   AI_FEATURE_ENABLED: true,
@@ -56,7 +57,7 @@ export const keyCloakSignIn = async (
   const password = `password-e2e-${browserName}`;
 
   await expect(
-    page.locator('.login-pf-page-header').getByText('impress'),
+    page.locator('.login-pf #kc-header-wrapper').getByText('impress'),
   ).toBeVisible();
 
   if (await page.getByLabel('Restart login').isVisible()) {
@@ -65,7 +66,7 @@ export const keyCloakSignIn = async (
 
   await page.getByRole('textbox', { name: 'username' }).fill(login);
   await page.getByRole('textbox', { name: 'password' }).fill(password);
-  await page.click('input[type="submit"]', { force: true });
+  await page.click('button[type="submit"]', { force: true });
 };
 
 export const randomName = (name: string, browserName: string, length: number) =>
@@ -322,5 +323,5 @@ export async function waitForLanguageSwitch(
 
   await languagePicker.click();
 
-  await page.getByLabel(lang.label).click();
+  await page.getByRole('menuitem', { name: lang.label }).click();
 }

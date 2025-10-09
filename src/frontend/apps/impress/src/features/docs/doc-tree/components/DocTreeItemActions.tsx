@@ -181,6 +181,7 @@ export const DocTreeItemActions = ({
               });
             }}
             color="primary"
+            data-testid="doc-tree-item-actions-add-child"
           >
             <Icon
               variant="filled"

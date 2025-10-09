@@ -23,12 +23,10 @@ export const EmojiPicker = ({
       <Picker
         data={emojiData}
         locale={i18n.resolvedLanguage}
-        navPosition="none"
         onClickOutside={onClickOutside}
         onEmojiSelect={onEmojiSelect}
         previewPosition="none"
         skinTonePosition="none"
-        theme="light"
       />
     </Box>
   );

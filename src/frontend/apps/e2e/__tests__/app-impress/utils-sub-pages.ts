@@ -3,6 +3,7 @@ import { Page, expect } from '@playwright/test';
 import {
   randomName,
   updateDocTitle,
+  verifyDocName,
   waitForResponseCreateDoc,
 } from './utils-common';
 
@@ -63,5 +64,17 @@ export const clickOnAddRootSubPage = async (page: Page) => {
   const rootItem = page.getByTestId('doc-tree-root-item');
   await expect(rootItem).toBeVisible();
   await rootItem.hover();
-  await rootItem.getByRole('button', { name: 'add_box' }).click();
+  await rootItem.getByTestId('doc-tree-item-actions-add-child').click();
+};
+
+export const navigateToPageFromTree = async ({
+  page,
+  title,
+}: {
+  page: Page;
+  title: string;
+}) => {
+  const docTree = page.getByTestId('doc-tree');
+  await docTree.getByText(title).click();
+  await verifyDocName(page, title);
 };

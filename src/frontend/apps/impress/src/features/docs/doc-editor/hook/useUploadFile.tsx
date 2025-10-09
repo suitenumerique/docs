@@ -6,8 +6,6 @@ import { useMediaUrl } from '@/core/config';
 import { sleep } from '@/utils';
 
 import { checkDocMediaStatus, useCreateDocAttachment } from '../api';
-import Loader from '../assets/loader.svg?url';
-import Warning from '../assets/warning.svg?url';
 import { DocsBlockNoteEditor } from '../types';
 
 /**
@@ -31,52 +29,6 @@ const loopCheckDocMediaStatus = async (url: string) => {
     await sleep(SLEEP_TIME);
     return await loopCheckDocMediaStatus(url);
   }
-};
-
-const informationStatus = (src: string, text: string) => {
-  const loadingContainer = document.createElement('div');
-  loadingContainer.style.display = 'flex';
-  loadingContainer.style.alignItems = 'center';
-  loadingContainer.style.justifyContent = 'left';
-  loadingContainer.style.padding = '10px';
-  loadingContainer.style.color = '#666';
-  loadingContainer.className =
-    'bn-visual-media bn-audio bn-file-name-with-icon';
-
-  // Create an image element for the SVG
-  const imgElement = document.createElement('img');
-  imgElement.src = src;
-
-  // Create a text span
-  const textSpan = document.createElement('span');
-  textSpan.textContent = text;
-  textSpan.style.marginLeft = '8px';
-  textSpan.style.verticalAlign = 'middle';
-  imgElement.style.animation = 'spin 1.5s linear infinite';
-
-  // Add the spinner and text to the container
-  loadingContainer.appendChild(imgElement);
-  loadingContainer.appendChild(textSpan);
-
-  return loadingContainer;
-};
-
-const replaceUploadContent = (blockId: string, elementReplace: HTMLElement) => {
-  const blockEl = document.body.querySelector(
-    `.bn-block[data-id="${blockId}"]`,
-  );
-
-  blockEl
-    ?.querySelector('.bn-visual-media-wrapper .bn-visual-media')
-    ?.replaceWith(elementReplace);
-
-  blockEl
-    ?.querySelector('.bn-file-block-content-wrapper .bn-audio')
-    ?.replaceWith(elementReplace);
-
-  blockEl
-    ?.querySelector('.bn-file-block-content-wrapper .bn-file-name-with-icon')
-    ?.replaceWith(elementReplace);
 };
 
 export const useUploadFile = (docId: string) => {
@@ -122,35 +74,55 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
 
       // Delay to let the time to the dom to be rendered
       const timoutId = setTimeout(() => {
-        replaceUploadContent(
-          blockId,
-          informationStatus(Loader.src, t('Analyzing file...')),
+        // Replace the resource block by a loading block
+        const { insertedBlocks, removedBlocks } = editor.replaceBlocks(
+          [blockId],
+          [
+            {
+              type: 'uploadLoader',
+              props: {
+                information: t('Analyzing file...'),
+                type: 'loading',
+              },
+            },
+          ],
         );
 
         loopCheckDocMediaStatus(url)
           .then((response) => {
-            const block = editor.getBlock(blockId);
-            if (!block) {
+            if (insertedBlocks.length === 0 || removedBlocks.length === 0) {
               return;
             }
 
-            block.props = {
-              ...block.props,
+            const loadingBlockId = insertedBlocks[0].id;
+            const removedBlock = removedBlocks[0];
+
+            removedBlock.props = {
+              ...removedBlock.props,
               url: `${mediaUrl}${response.file}`,
             };
 
-            editor.updateBlock(blockId, block);
+            // Replace the loading block with the resource block (image, audio, video, pdf ...)
+            editor.replaceBlocks([loadingBlockId], [removedBlock]);
           })
           .catch((error) => {
             console.error('Error analyzing file:', error);
 
-            replaceUploadContent(
-              blockId,
-              informationStatus(
-                Warning.src,
-                t('The antivirus has detected an anomaly in your file.'),
+            const loadingBlock = insertedBlocks[0];
+
+            if (!loadingBlock) {
+              return;
+            }
+
+            loadingBlock.props = {
+              ...loadingBlock.props,
+              type: 'warning',
+              information: t(
+                'The antivirus has detected an anomaly in your file.',
               ),
-            );
+            };
+
+            editor.updateBlock(loadingBlock.id, loadingBlock);
           });
       }, 250);
 

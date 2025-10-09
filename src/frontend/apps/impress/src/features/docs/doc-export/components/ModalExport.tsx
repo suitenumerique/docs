@@ -10,6 +10,7 @@ import {
   useToastProvider,
 } from '@openfun/cunningham-react';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
+import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,11 +77,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     setIsExporting(true);
 
-    const title = (doc.title || untitledDocument)
+    const filename = (doc.title || untitledDocument)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s/g, '-');
+
+    const documentTitle = doc.title || untitledDocument;
 
     const html = templateSelected;
     let exportDocument = editor.document;
@@ -93,14 +96,32 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     if (format === DocDownloadFormat.PDF) {
       const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+        emojiSource: {
+          format: 'png',
+          builder(code) {
+            const emoji = jsonemoji.find((e) =>
+              e.unified.toLocaleLowerCase().includes(code.toLowerCase()),
+            );
+
+            if (emoji) {
+              return `/assets/fonts/emoji/${emoji.image}`;
+            }
+
+            return '/assets/fonts/emoji/fallback.png';
+          },
+        },
       });
       const rawPdfDocument = (await exporter.toReactPDFDocument(
         exportDocument,
       )) as React.ReactElement<DocumentProps>;
 
-      // Inject language for screen reader support
+      // Add language, title and outline properties to improve PDF accessibility and navigation
       const pdfDocument = isValidElement(rawPdfDocument)
-        ? cloneElement(rawPdfDocument, { language: i18next.language })
+        ? cloneElement(rawPdfDocument, {
+            language: i18next.language,
+            title: documentTitle,
+            pageMode: 'useOutlines',
+          })
         : rawPdfDocument;
 
       blobExport = await pdf(pdfDocument).toBlob();
@@ -109,10 +130,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
 
-      blobExport = await exporter.toBlob(exportDocument);
+      blobExport = await exporter.toBlob(exportDocument, {
+        documentOptions: { title: documentTitle },
+        sectionOptions: {},
+      });
     }
 
-    downloadFile(blobExport, `${title}.${format}`);
+    downloadFile(blobExport, `${filename}.${format}`);
 
     toast(
       t('Your {{format}} was downloaded succesfully', {
@@ -141,7 +165,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             color="secondary"
             fullWidth
             onClick={() => onClose()}
-            disabled={isExporting}
           >
             {t('Cancel')}
           </Button>

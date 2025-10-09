@@ -135,8 +135,9 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         isOpen
         closeOnClickOutside
         data-testid="doc-share-modal"
-        aria-describedby="doc-share-modal-title"
+        aria-labelledby="doc-share-modal-title"
         size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
+        aria-modal="true"
         onClose={onClose}
         title={
           <Box $direction="row" $justify="space-between" $align="center">
@@ -160,13 +161,13 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
       >
         <ShareModalStyle />
         <Box
-          role="dialog"
-          aria-label={t('Share modal content')}
           $height="auto"
           $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
           $overflow="hidden"
           className="--docs--doc-share-modal noPadding "
           $justify="space-between"
+          role="dialog"
+          aria-label={t('Share modal content')}
         >
           <Box
             $flex={1}
@@ -223,6 +224,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
               )}
               {canViewAccesses && (
                 <QuickSearch
+                  label={t('Search results')}
                   onFilter={(str) => {
                     setInputValue(str);
                     onFilter(str);
@@ -294,7 +296,9 @@ const QuickSearchInviteInputSection = ({
       language: '',
     };
 
-    const hasEmailInUsers = users.some((user) => user.email === userQuery);
+    const hasEmailInUsers = users.some(
+      (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
+    );
 
     return {
       groupName: t('Search user result'),

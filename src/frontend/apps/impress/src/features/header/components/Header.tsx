@@ -22,6 +22,7 @@ export const Header = () => {
   return (
     <Box
       as="header"
+      role="banner"
       $css={css`
         position: fixed;
         top: 0;

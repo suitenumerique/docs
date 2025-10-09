@@ -1,6 +1,8 @@
 @import url('../cunningham/cunningham-style.css');
 @import url('@fontsource/material-icons');
 @import url('@fontsource/material-icons-outlined');
+@import url('@fontsource-variable/inter');
+@import url('/assets/fonts/Marianne/Marianne-font.css');
 
 body {
   margin: 0;

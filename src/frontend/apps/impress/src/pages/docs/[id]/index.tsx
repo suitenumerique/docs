@@ -10,14 +10,17 @@ import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
 import {
   Doc,
+  DocPage403,
   KEY_DOC,
   useCollaboration,
   useDoc,
   useDocStore,
+  useProviderStore,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { MainLayout } from '@/layouts';
+import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useBroadcastStore } from '@/stores';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -56,6 +59,7 @@ interface DocProps {
 }
 
 const DocPage = ({ id }: DocProps) => {
+  const { hasLostConnection, resetLostConnection } = useProviderStore();
   const {
     data: docQuery,
     isError,
@@ -85,6 +89,34 @@ const DocPage = ({ id }: DocProps) => {
   useCollaboration(doc?.id, doc?.content);
   const { t } = useTranslation();
   const { authenticated } = useAuth();
+
+  /**
+   * Scroll to top when navigating to a new document
+   * We use a timeout to ensure the scroll happens after the layout has updated.
+   */
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | undefined;
+    const mainElement = document.getElementById(MAIN_LAYOUT_ID);
+    if (mainElement) {
+      timeoutId = setTimeout(() => {
+        mainElement.scrollTop = 0;
+      }, 150);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [id]);
+
+  // Invalidate when provider store reports a lost connection
+  useEffect(() => {
+    if (hasLostConnection && doc?.id) {
+      queryClient.invalidateQueries({ queryKey: [KEY_DOC, { id: doc.id }] });
+      resetLostConnection();
+    }
+  }, [hasLostConnection, doc?.id, queryClient, resetLostConnection]);
 
   useEffect(() => {
     if (!docQuery || isFetching) {
@@ -118,7 +150,7 @@ const DocPage = ({ id }: DocProps) => {
   }, [addTask, doc?.id, queryClient]);
 
   if (isError && error) {
-    if ([403, 404, 401].includes(error.status)) {
+    if ([404, 401].includes(error.status)) {
       let replacePath = `/${error.status}`;
 
       if (error.status === 401) {
@@ -129,13 +161,15 @@ const DocPage = ({ id }: DocProps) => {
           });
         }
         setAuthUrl();
-      } else if (error.status === 403) {
-        replacePath = `/docs/${id}/403`;
       }
 
       void replace(replacePath);
 
       return <Loading />;
+    }
+
+    if (error.status === 403) {
+      return <DocPage403 id={id} />;
     }
 
     return (

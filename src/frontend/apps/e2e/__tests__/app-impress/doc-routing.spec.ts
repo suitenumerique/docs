@@ -93,6 +93,12 @@ test.describe('Doc Routing', () => {
     await expect(page.getByText('Log in to access the document.')).toBeVisible({
       timeout: 10000,
     });
+
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'noindex',
+    );
+    await expect(page).toHaveTitle(/401 Unauthorized - Docs/);
   });
 });
 

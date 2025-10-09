@@ -79,6 +79,7 @@ jobs:
             --check-filenames \
             --ignore-words-list "Dokument,afterAll,excpt,statics" \
             --skip "./git/" \
+            --skip "**/*.pdf" \
             --skip "**/*.po" \
             --skip "**/*.pot" \
             --skip "**/*.json" \

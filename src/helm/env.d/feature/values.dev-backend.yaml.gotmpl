@@ -1,0 +1,61 @@
+postgres:
+  enabled: true
+  name: postgres
+  #serviceNameOverride: postgres
+  image: postgres:16-alpine
+  username: dinum
+  password: pass
+  database: docs
+  size: 5Gi
+redis:
+  enabled: true
+  name: redis
+  image: redis:8.2-alpine
+  username: user
+  password: pass
+minio:
+  enabled: true
+  image: minio/minio
+  name: minio
+  ingress:
+    enabled: true
+    hostname: {{ .Values.feature }}-minio.{{ .Values.domain }}
+    tls:
+      enabled: true
+      secretName: docs-tls
+  consoleIngress:
+    enabled: true
+    hostname: {{ .Values.feature }}-minio-console.{{ .Values.domain }}
+    tls:
+      enabled: true
+      secretName: docs-tls
+  username: dinum
+  password: password
+  bucket: docs-media-storage
+  versioning: true
+  size: 5Gi
+keycloak:
+  enabled: true
+  image: quay.io/keycloak/keycloak:20.0.1
+  name: keycloak
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  #serviceNameOverride: keycloak
+  hostname: {{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}
+  username: admin
+  password: pass
+  tls:
+    enabled: true
+    secretName: docs-tls
+  db:
+    username: dinum
+    password: pass
+    database: keycloak
+    size: 5Gi
+    image: postgres:16-alpine
+  realm: 
+    name: docs
+    username: docs
+    password: docs
+    email: docs@example.com
+

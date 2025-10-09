@@ -13,11 +13,14 @@ export interface UseCollaborationStore {
   destroyProvider: () => void;
   provider: HocuspocusProvider | undefined;
   isConnected: boolean;
+  hasLostConnection: boolean;
+  resetLostConnection: () => void;
 }
 
 const defaultValues = {
   provider: undefined,
   isConnected: false,
+  hasLostConnection: false,
 };
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
@@ -36,8 +39,15 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       name: storeId,
       document: doc,
       onStatus: ({ status }) => {
-        set({
-          isConnected: status === WebSocketStatus.Connected,
+        set((state) => {
+          const nextConnected = status === WebSocketStatus.Connected;
+          return {
+            isConnected: nextConnected,
+            hasLostConnection:
+              state.isConnected && !nextConnected
+                ? true
+                : state.hasLostConnection,
+          };
         });
       },
     });
@@ -56,4 +66,5 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
 
     set(defaultValues);
   },
+  resetLostConnection: () => set({ hasLostConnection: false }),
 }));

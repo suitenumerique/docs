@@ -139,7 +139,7 @@ test.describe('Document list members', () => {
     const list = page.getByTestId('doc-share-quick-search');
     await expect(list).toBeVisible();
     const currentUser = list.getByTestId(
-      `doc-share-member-row-user@${browserName}.test`,
+      `doc-share-member-row-user.test@${browserName}.test`,
     );
     const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
     await expect(currentUser).toBeVisible();
@@ -171,12 +171,12 @@ test.describe('Document list members', () => {
     });
 
     await currentUserRole.click();
-    await page.getByLabel('Administrator').click();
+    await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
     await currentUserRole.click();
-    await page.getByLabel('Reader').click();
+    await page.getByRole('menuitem', { name: 'Reader' }).click();
     await list.click();
     await expect(currentUserRole).toBeHidden();
   });
@@ -190,7 +190,7 @@ test.describe('Document list members', () => {
 
     const list = page.getByTestId('doc-share-quick-search');
 
-    const emailMyself = `user@${browserName}.test`;
+    const emailMyself = `user.test@${browserName}.test`;
     const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
     const mySelfRole = mySelf.getByRole('button', {
       name: 'doc-role-dropdown',

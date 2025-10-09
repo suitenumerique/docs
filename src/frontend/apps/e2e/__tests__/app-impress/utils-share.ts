@@ -1,8 +1,15 @@
-import { Page, expect } from '@playwright/test';
+import { Page, chromium, expect } from '@playwright/test';
+
+import {
+  BROWSERS,
+  BrowserName,
+  keyCloakSignIn,
+  verifyDocName,
+} from './utils-common';
 
 export type Role = 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
-export type LinkRole = 'Reading' | 'Edition';
+export type LinkRole = 'Reading' | 'Editing';
 
 export const addNewMember = async (
   page: Page,
@@ -16,9 +23,7 @@ export const addNewMember = async (
       response.status() === 200,
   );
 
-  const inputSearch = page.getByRole('combobox', {
-    name: 'Quick search input',
-  });
+  const inputSearch = page.getByTestId('quick-search-input');
 
   // Select a new user
   await inputSearch.fill(fillText);
@@ -34,7 +39,7 @@ export const addNewMember = async (
 
   // Choose a role
   await page.getByLabel('doc-role-dropdown').click();
-  await page.getByLabel(role).click();
+  await page.getByRole('menuitem', { name: role }).click();
   await page.getByRole('button', { name: 'Invite' }).click();
 
   return users[index].email;
@@ -61,6 +66,80 @@ export const updateShareLink = async (
   }
 };
 
+export const updateRoleUser = async (
+  page: Page,
+  role: Role | 'Remove access',
+  email: string,
+) => {
+  const list = page.getByTestId('doc-share-quick-search');
+
+  const currentUser = list.getByTestId(`doc-share-member-row-${email}`);
+  const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+  await currentUserRole.click();
+  await page.getByRole('menuitem', { name: role }).click();
+  await list.click();
+};
+
+/**
+ * Connects another user to a document.
+ * Useful to test real-time collaboration features.
+ * @param browserName The name of the browser to use.
+ * @param docUrl The URL of the document to connect to.
+ * @param docTitle The title of the document (optional).
+ * @returns An object containing the other browser, context, and page.
+ */
+export const connectOtherUserToDoc = async ({
+  browserName,
+  docUrl,
+  docTitle,
+  withoutSignIn,
+}: {
+  browserName: BrowserName;
+  docUrl: string;
+  docTitle?: string;
+  withoutSignIn?: boolean;
+}) => {
+  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
+  if (!otherBrowserName) {
+    throw new Error('No alternative browser found');
+  }
+
+  const otherBrowser = await chromium.launch({ headless: true });
+  const otherContext = await otherBrowser.newContext({
+    locale: 'en-US',
+    timezoneId: 'Europe/Paris',
+    permissions: [],
+    storageState: {
+      cookies: [],
+      origins: [],
+    },
+  });
+  const otherPage = await otherContext.newPage();
+  await otherPage.goto(docUrl);
+
+  if (!withoutSignIn) {
+    await otherPage
+      .getByRole('main', { name: 'Main content' })
+      .getByLabel('Login')
+      .click({
+        timeout: 15000,
+      });
+
+    await keyCloakSignIn(otherPage, otherBrowserName, false);
+  }
+  if (docTitle) {
+    await verifyDocName(otherPage, docTitle);
+  }
+
+  const cleanup = async () => {
+    await otherPage.close();
+    await otherContext.close();
+    await otherBrowser.close();
+  };
+
+  return { otherBrowser, otherContext, otherPage, otherBrowserName, cleanup };
+};
+
 export const mockedInvitations = async (page: Page, json?: object) => {
   let result = [
     {
@@ -72,7 +151,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
         retrieve: true,
       },
       created_at: '2024-10-03T12:19:26.107687Z',
-      email: 'test@invitation.test',
+      email: 'test.test@invitation.test',
       document: '4888c328-8406-4412-9b0b-c0ba5b9e5fb6',
       role: 'editor',
       issuer: '7380f42f-02eb-4ad5-b8f0-037a0e66066d',
@@ -129,7 +208,7 @@ export const mockedAccesses = async (page: Page, json?: object) => {
             id: 'bc8bbbc5-a635-4f65-9817-fd1e9ec8ef87',
             user: {
               id: 'b4a21bb3-722e-426c-9f78-9d190eda641c',
-              email: 'test@accesses.test',
+              email: 'test.test@accesses.test',
             },
             team: '',
             max_ancestors_role: null,

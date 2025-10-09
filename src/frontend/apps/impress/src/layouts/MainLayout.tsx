@@ -34,6 +34,7 @@ export function MainLayout({
         <LeftPanel />
         <Box
           as="main"
+          role="main"
           aria-label={t('Main content')}
           id={MAIN_LAYOUT_ID}
           $align="center"

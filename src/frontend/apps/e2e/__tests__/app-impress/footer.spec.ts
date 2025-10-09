@@ -47,7 +47,7 @@ test.describe('Footer', () => {
     // Check the translation
     const header = page.locator('header').first();
     await header.getByRole('button').getByText('English').click();
-    await page.getByLabel('Français').click();
+    await page.getByRole('menuitem', { name: 'Français' }).click();
 
     await expect(
       page.locator('footer').getByText('Mentions légales'),
@@ -132,7 +132,7 @@ test.describe('Footer', () => {
     // Check the translation
     const header = page.locator('header').first();
     await header.getByRole('button').getByText('English').click();
-    await page.getByLabel('Français').click();
+    await page.getByRole('menuitem', { name: 'Français' }).click();
 
     await expect(
       page

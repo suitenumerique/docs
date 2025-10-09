@@ -91,7 +91,7 @@ export const DocShareAddMemberList = ({
       return isInvitationMode
         ? createInvitation({
             ...payload,
-            email: user.email,
+            email: user.email.toLowerCase(),
           })
         : createDocAccess({
             ...payload,
