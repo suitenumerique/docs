@@ -82,12 +82,13 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
         $gap="0.2rem"
         $theme="danger"
         $variation="600"
+        $align="center"
       >
         <Icon
           iconName="undo"
           $theme="danger"
           $variation="600"
-          $css="font-size: 18px !important;"
+          $size="18px"
           variant="symbols-outlined"
         />
         <Text $theme="danger" $variation="600" $size="s">

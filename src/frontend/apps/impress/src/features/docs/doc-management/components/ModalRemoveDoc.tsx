@@ -5,7 +5,6 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/router';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -30,7 +29,6 @@ export const ModalRemoveDoc = ({
   const { toast } = useToastProvider();
   const { t } = useTranslation();
   const { push } = useRouter();
-  const pathname = usePathname();
   const {
     mutate: removeDoc,
     isError,
@@ -41,11 +39,11 @@ export const ModalRemoveDoc = ({
       onSuccess: () => {
         if (onSuccess) {
           onSuccess(doc);
-        } else if (pathname === '/') {
-          onClose();
         } else {
           void push('/');
         }
+
+        onClose();
 
         toast(t('The document has been deleted.'), VariantType.SUCCESS, {
           duration: 4000,

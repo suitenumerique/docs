@@ -130,7 +130,7 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
 
     ${isDeletedDoc &&
     `
-      a {
+      .node-interlinkingLinkInline button {
         pointer-events: none;
       }
     `}

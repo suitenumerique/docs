@@ -153,7 +153,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
     },
     {
-      label: t('Delete document'),
+      label: t('Delete'),
       icon: 'delete',
       disabled: !doc.abilities.destroy,
       callback: () => {
@@ -238,7 +238,26 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
       )}
       {isModalRemoveOpen && (
-        <ModalRemoveDoc onClose={() => setIsModalRemoveOpen(false)} doc={doc} />
+        <ModalRemoveDoc
+          onClose={() => setIsModalRemoveOpen(false)}
+          doc={doc}
+          onSuccess={() => {
+            const isTopParent = doc.id === treeContext?.root?.id;
+            const parentId =
+              treeContext?.treeData.getParentId(doc.id) ||
+              treeContext?.root?.id;
+
+            if (isTopParent) {
+              void router.push(`/`);
+            } else if (parentId) {
+              void router.push(`/docs/${parentId}`).then(() => {
+                setTimeout(() => {
+                  treeContext?.treeData.deleteNode(doc.id);
+                }, 100);
+              });
+            }
+          }}
+        />
       )}
       {selectHistoryModal.isOpen && (
         <ModalSelectVersion

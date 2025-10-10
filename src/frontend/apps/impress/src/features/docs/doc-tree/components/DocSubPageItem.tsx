@@ -39,7 +39,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
 
@@ -166,7 +166,11 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           `}
         >
           <Box $width="16px" $height="16px">
-            <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
+            <DocIcon
+              emoji={emoji}
+              defaultIcon={<SubPageIcon color={colorsTokens['primary-400']} />}
+              $size="sm"
+            />
           </Box>
 
           <Box
