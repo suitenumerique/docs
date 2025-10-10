@@ -10,8 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, StyledLink } from '@/components';
-import { Overlayer } from '@/components/Overlayer';
+import { Box, Overlayer, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, SimpleDocItem } from '@/docs/doc-management';
 
@@ -290,7 +289,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       {initialOpenState &&
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
-          <Overlayer isOverlay={currentDoc.deleted_at != null}>
+          <Overlayer isOverlay={currentDoc.deleted_at != null} inert>
             <TreeView
               dndRootElement={treeRoot}
               initialOpenState={initialOpenState}
