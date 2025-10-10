@@ -1,5 +1,4 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
-import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -17,13 +16,10 @@ export const DocsGridTrashbinActions = ({
 }: DocsGridTrashbinActionsProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
-  const { push } = useRouter();
   const { mutate: restoreDoc, error } = useRestoreDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
     options: {
-      onSuccess: (_data, variables) => {
-        void push('/docs/' + variables.docId);
-
+      onSuccess: (_data) => {
         toast(t('The document has been restored.'), VariantType.SUCCESS, {
           duration: 4000,
         });
@@ -45,7 +41,16 @@ export const DocsGridTrashbinActions = ({
   const options: DropdownMenuOption[] = [
     {
       label: t('Restore'),
-      icon: 'undo',
+      icon: (
+        <Icon
+          $size="20px"
+          $theme="greyscale"
+          $variation="1000"
+          iconName="undo"
+          aria-hidden="true"
+          variant="symbols-outlined"
+        />
+      ),
       callback: () => {
         restoreDoc({
           docId: doc.id,
