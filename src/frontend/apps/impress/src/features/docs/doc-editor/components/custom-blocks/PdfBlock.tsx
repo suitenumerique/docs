@@ -1,4 +1,5 @@
-/* eslint-disable react-hooks/rules-of-hooks */
+//import { text } from 'stream/consumers';
+
 import { insertOrUpdateBlock } from '@blocknote/core';
 import {
   AddFileButton,
@@ -6,7 +7,7 @@ import {
   createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import { useTranslation } from 'react-i18next';
+//import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Icon } from '@/components';
@@ -23,21 +24,24 @@ type FileBlockEditor = Parameters<typeof AddFileButton>[0]['editor'];
 
 export const PdfBlock = createReactBlockSpec(
   {
-    type: 'pdf',
+    type: 'file',
     content: 'none',
     propSchema: {
-      name: { default: '' as const },
-      url: { default: '' as const },
+      backgroundColor: { default: 'default' as const },
       caption: { default: '' as const },
-      showPreview: { default: true },
+      name: { default: '' as const },
       previewWidth: { default: undefined, type: 'number' },
+      showPreview: { default: true },
+      textAlignment: { default: 'left' as const },
+      url: { default: '' as const },
     },
-    isFileBlock: true,
-    fileBlockAccept: ['application/pdf'],
   },
   {
+    meta: {
+      fileBlockAccept: ['application/pdf'],
+    },
     render: ({ editor, block, contentRef }) => {
-      const { t } = useTranslation();
+      //const { t } = useTranslation();
       const pdfUrl = block.props.url;
 
       return (
@@ -47,7 +51,8 @@ export const PdfBlock = createReactBlockSpec(
             buttonIcon={<Icon iconName="upload" />}
             block={block}
             editor={editor as unknown as FileBlockEditor}
-            buttonText={t('Add PDF')}
+
+            //buttonText={t('Add PDF')}
           >
             <Box
               className="bn-visual-media"
@@ -76,7 +81,7 @@ export const getPdfReactSlashMenuItems = (
   {
     title: t('PDF'),
     onItemClick: () => {
-      insertOrUpdateBlock(editor, { type: 'pdf' });
+      insertOrUpdateBlock(editor, { type: 'file' });
     },
     aliases: [t('pdf'), t('document'), t('embed'), t('file')],
     group,

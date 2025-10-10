@@ -9,7 +9,7 @@ import { DocsBlockNoteEditor } from '../../types';
 
 export const DividerBlock = createReactBlockSpec(
   {
-    type: 'divider',
+    type: 'divider2',
     propSchema: {},
     content: 'none',
   },
@@ -40,7 +40,7 @@ export const getDividerReactSlashMenuItems = (
     title: t('Divider'),
     onItemClick: () => {
       insertOrUpdateBlock(editor, {
-        type: 'divider',
+        type: 'divider2',
       });
     },
     aliases: ['divider', 'hr', 'horizontal rule', 'line', 'separator'],

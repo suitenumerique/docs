@@ -4,7 +4,7 @@ import { useCunninghamTheme } from '@/cunningham';
 
 import { DocsExporterDocx } from '../types';
 
-export const blockMappingDividerDocx: DocsExporterDocx['mappings']['blockMapping']['divider'] =
+export const blockMappingDividerDocx: DocsExporterDocx['mappings']['blockMapping']['divider2'] =
   () => {
     const { colorsTokens } = useCunninghamTheme.getState();
 

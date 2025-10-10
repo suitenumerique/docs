@@ -43,20 +43,22 @@ const inputStyle = css`
 `;
 
 type SearchPageProps = {
-  trigger: string;
+  trigger: '/' | '@';
   updateInlineContent: (
     update: PartialCustomInlineContentFromConfig<
       {
-        type: string;
-        propSchema: {
-          disabled: {
-            default: boolean;
+        readonly type: 'interlinkingSearchInline';
+        readonly propSchema: {
+          readonly disabled: {
+            readonly default: false;
+            readonly values: readonly [true, false];
           };
-          trigger: {
-            default: string;
+          readonly trigger: {
+            readonly default: '/';
+            readonly values: readonly ['/', '@'];
           };
         };
-        content: 'styled';
+        readonly content: 'styled';
       },
       StyleSchema
     >,

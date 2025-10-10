@@ -1,107 +1,124 @@
 import {
   BlockFromConfig,
   BlockNoteEditor,
-  BlockSchemaWithBlock,
+  ImageOptions,
   InlineContentSchema,
+  InlineContentSchemaFromSpecs,
   StyleSchema,
   createBlockSpec,
-  imageBlockConfig,
+  createImageBlockConfig,
+  defaultInlineContentSpecs,
   imageParse,
   imageRender,
   imageToExternalHTML,
 } from '@blocknote/core';
 import { t } from 'i18next';
 
-type ImageBlockConfig = typeof imageBlockConfig;
+type CreateImageBlockConfig = ReturnType<typeof createImageBlockConfig>;
 
-export const accessibleImageRender = (
-  block: BlockFromConfig<ImageBlockConfig, InlineContentSchema, StyleSchema>,
-  editor: BlockNoteEditor<
-    BlockSchemaWithBlock<ImageBlockConfig['type'], ImageBlockConfig>,
-    InlineContentSchema,
-    StyleSchema
-  >,
-) => {
-  const imageRenderComputed = imageRender(block, editor);
-  const dom = imageRenderComputed.dom;
-  const imgSelector = dom.querySelector('img');
+export const accessibleImageRender =
+  (config: ImageOptions = {}) =>
+  (
+    block: BlockFromConfig<
+      CreateImageBlockConfig,
+      InlineContentSchema,
+      StyleSchema
+    >,
+    editor: BlockNoteEditor<
+      Record<'image', CreateImageBlockConfig>,
+      InlineContentSchemaFromSpecs<typeof defaultInlineContentSpecs>,
+      StyleSchema
+    >,
+  ) => {
+    const imageRenderComputed = imageRender(config);
+    const dom = imageRenderComputed(block, editor).dom;
+    const imgSelector = dom.querySelector('img');
 
-  const withCaption =
-    block.props.caption && dom.querySelector('.bn-file-caption');
+    const withCaption =
+      block.props.caption && dom.querySelector('.bn-file-caption');
 
-  const accessibleImageWithCaption = () => {
-    imgSelector?.setAttribute('alt', block.props.caption);
-    imgSelector?.removeAttribute('aria-hidden');
-    imgSelector?.setAttribute('tabindex', '0');
+    const accessibleImageWithCaption = () => {
+      imgSelector?.setAttribute('alt', block.props.caption);
+      imgSelector?.removeAttribute('aria-hidden');
+      imgSelector?.setAttribute('tabindex', '0');
 
-    // Fix RGAA 1.9.1: Convert to figure/figcaption structure if caption exists
-    const captionElement = dom.querySelector('.bn-file-caption');
+      // Fix RGAA 1.9.1: Convert to figure/figcaption structure if caption exists
+      const captionElement = dom.querySelector('.bn-file-caption');
 
-    if (captionElement) {
-      const figureElement = document.createElement('figure');
+      if (captionElement) {
+        const figureElement = document.createElement('figure');
 
-      // Copy all attributes from the original div
-      figureElement.className = dom.className;
-      const styleAttr = dom.getAttribute('style');
-      if (styleAttr) {
-        figureElement.setAttribute('style', styleAttr);
+        // Copy all attributes from the original div
+        figureElement.className = dom.className;
+        const styleAttr = dom.getAttribute('style');
+        if (styleAttr) {
+          figureElement.setAttribute('style', styleAttr);
+        }
+        figureElement.style.setProperty('margin', '0');
+
+        Array.from(dom.children).forEach((child) => {
+          figureElement.appendChild(child.cloneNode(true));
+        });
+
+        // Replace the <p> caption with <figcaption>
+        const figcaptionElement = document.createElement('figcaption');
+        const originalCaption = figureElement.querySelector('.bn-file-caption');
+        if (originalCaption) {
+          figcaptionElement.className = originalCaption.className;
+          figcaptionElement.textContent = originalCaption.textContent;
+          originalCaption.parentNode?.replaceChild(
+            figcaptionElement,
+            originalCaption,
+          );
+
+          // Add explicit role and aria-label for better screen reader support
+          figureElement.setAttribute('role', 'img');
+          figureElement.setAttribute(
+            'aria-label',
+            t(`Image: {{title}}`, { title: figcaptionElement.textContent }),
+          );
+        }
+
+        // Return the figure element as the new dom
+        return {
+          ...imageRenderComputed,
+          dom: figureElement,
+        };
       }
-      figureElement.style.setProperty('margin', '0');
+    };
 
-      Array.from(dom.children).forEach((child) => {
-        figureElement.appendChild(child.cloneNode(true));
-      });
+    const accessibleImage = () => {
+      imgSelector?.setAttribute('alt', '');
+      imgSelector?.setAttribute('role', 'presentation');
+      imgSelector?.setAttribute('aria-hidden', 'true');
+      imgSelector?.setAttribute('tabindex', '-1');
+    };
 
-      // Replace the <p> caption with <figcaption>
-      const figcaptionElement = document.createElement('figcaption');
-      const originalCaption = figureElement.querySelector('.bn-file-caption');
-      if (originalCaption) {
-        figcaptionElement.className = originalCaption.className;
-        figcaptionElement.textContent = originalCaption.textContent;
-        originalCaption.parentNode?.replaceChild(
-          figcaptionElement,
-          originalCaption,
-        );
+    // Set accessibility attributes for the image
+    const result = withCaption
+      ? accessibleImageWithCaption()
+      : accessibleImage();
 
-        // Add explicit role and aria-label for better screen reader support
-        figureElement.setAttribute('role', 'img');
-        figureElement.setAttribute(
-          'aria-label',
-          t(`Image: {{title}}`, { title: figcaptionElement.textContent }),
-        );
-      }
-
-      // Return the figure element as the new dom
-      return {
-        ...imageRenderComputed,
-        dom: figureElement,
-      };
+    // Return the result if accessibleImageWithCaption created a figure, otherwise return original
+    if (result) {
+      return result;
     }
+
+    return {
+      ...imageRenderComputed,
+      dom,
+    };
   };
 
-  const accessibleImage = () => {
-    imgSelector?.setAttribute('alt', '');
-    imgSelector?.setAttribute('role', 'presentation');
-    imgSelector?.setAttribute('aria-hidden', 'true');
-    imgSelector?.setAttribute('tabindex', '-1');
-  };
-
-  // Set accessibility attributes for the image
-  const result = withCaption ? accessibleImageWithCaption() : accessibleImage();
-
-  // Return the result if accessibleImageWithCaption created a figure, otherwise return original
-  if (result) {
-    return result;
-  }
-
-  return {
-    ...imageRenderComputed,
-    dom,
-  };
-};
-
-export const AccessibleImageBlock = createBlockSpec(imageBlockConfig, {
-  render: accessibleImageRender,
-  parse: imageParse,
-  toExternalHTML: imageToExternalHTML,
-});
+export const AccessibleImageBlock = createBlockSpec(
+  createImageBlockConfig,
+  (config) => ({
+    meta: {
+      fileBlockAccept: ['image/*'],
+    },
+    render: accessibleImageRender(config),
+    parse: imageParse(config),
+    toExternalHTML: imageToExternalHTML(config),
+    runsBefore: ['file'],
+  }),
+);
