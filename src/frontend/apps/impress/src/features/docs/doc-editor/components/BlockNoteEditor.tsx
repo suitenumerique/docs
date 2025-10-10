@@ -37,7 +37,7 @@ import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import {
   AccessibleImageBlock,
   CalloutBlock,
-  //DividerBlock,
+  DividerBlock,
   PdfBlock,
   UploadLoaderBlock,
 } from './custom-blocks';
@@ -56,7 +56,7 @@ const baseBlockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       callout: CalloutBlock(),
       codeBlock: createCodeBlockSpec(codeBlockOptions),
-      //divider: DividerBlock,
+      divider2: DividerBlock(),
       image: AccessibleImageBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),

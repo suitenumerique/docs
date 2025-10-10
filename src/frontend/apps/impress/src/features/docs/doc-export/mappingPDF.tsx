@@ -21,7 +21,7 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     heading: blockMappingHeadingPDF,
     image: blockMappingImagePDF,
     paragraph: blockMappingParagraphPDF,
-    divider: blockMappingDividerPDF,
+    divider2: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
     // We're using the file block mapping for PDF blocks

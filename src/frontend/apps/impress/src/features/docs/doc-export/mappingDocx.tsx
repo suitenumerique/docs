@@ -16,7 +16,7 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
   blockMapping: {
     ...docxDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutDocx,
-    divider: blockMappingDividerDocx,
+    divider2: blockMappingDividerDocx,
     // We're using the file block mapping for PDF blocks
     // The types don't match exactly but the implementation is compatible
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
