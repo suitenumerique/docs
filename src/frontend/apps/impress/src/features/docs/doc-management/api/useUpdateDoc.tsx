@@ -41,7 +41,7 @@ export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
   return useMutation<Doc, APIError, UpdateDocParams>({
     mutationFn: updateDoc,
     ...queryConfig,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       queryConfig?.listInvalideQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
@@ -49,10 +49,10 @@ export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
       });
 
       if (queryConfig?.onSuccess) {
-        void queryConfig.onSuccess(data, variables, context);
+        void queryConfig.onSuccess(data, variables, onMutateResult, context);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (error, variables, onMutateResult, context) => {
       // If error it means the user is probably not allowed to edit the doc
       // so we invalidate the canEdit query to update the UI accordingly
       void queryClient.invalidateQueries({
@@ -60,7 +60,7 @@ export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
       });
 
       if (queryConfig?.onError) {
-        queryConfig.onError(error, variables, context);
+        queryConfig.onError(error, variables, onMutateResult, context);
       }
     },
   });
