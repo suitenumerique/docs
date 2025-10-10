@@ -80,6 +80,8 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
         }
         $direction="row"
         $gap="0.2rem"
+        $theme="danger"
+        $variation="600"
         $align="center"
       >
         <Icon

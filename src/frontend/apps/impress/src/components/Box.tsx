@@ -36,7 +36,30 @@ export interface BoxProps {
   $position?: CSSProperties['position'];
   $radius?: CSSProperties['borderRadius'];
   $shrink?: CSSProperties['flexShrink'];
+  $theme?:
+    | 'primary'
+    | 'primary-text'
+    | 'secondary'
+    | 'secondary-text'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'greyscale';
   $transition?: CSSProperties['transition'];
+  $variation?:
+    | 'text'
+    | '000'
+    | '100'
+    | '200'
+    | '300'
+    | '400'
+    | '500'
+    | '600'
+    | '700'
+    | '800'
+    | '900'
+    | '1000';
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $zIndex?: CSSProperties['zIndex'];
@@ -73,6 +96,12 @@ export const Box = styled('div')<BoxProps>`
   ${({ $position }) => $position && `position: ${$position};`}
   ${({ $radius }) => $radius && `border-radius: ${$radius};`}
   ${({ $shrink }) => $shrink && `flex-shrink: ${$shrink};`}
+  ${({ $theme, $variation }) => {
+    if (!$theme || !$variation) {
+      return '';
+    }
+    return `color: var(--c--theme--colors--${$theme}-${$variation});`;
+  }}
   ${({ $transition }) => $transition && `transition: ${$transition};`}
   ${({ $width }) => $width && `width: ${$width};`}
   ${({ $wrap }) => $wrap && `flex-wrap: ${$wrap};`}
