@@ -18,5 +18,5 @@ export const backendUrl = () =>
  * @param apiVersion - The version of the API (defaults to '1.0').
  * @returns The full versioned API base URL as a string.
  */
-export const baseApiUrl = (apiVersion: string = '1.0') =>
+export const baseApiUrl = (apiVersion = '1.0') =>
   `${backendUrl()}/api/v${apiVersion}/`;

@@ -22,7 +22,7 @@ function isBlock(block: Block): block is Block {
   );
 }
 
-const recursiveContent = (content: Block[], base: string = '') => {
+const recursiveContent = (content: Block[], base = '') => {
   let fullContent = base;
   for (const innerContent of content) {
     if (innerContent.type === 'text') {
