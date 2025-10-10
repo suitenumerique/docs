@@ -15,29 +15,6 @@ export interface TextProps extends BoxProps {
   $textAlign?: CSSProperties['textAlign'];
   $textTransform?: CSSProperties['textTransform'];
   $size?: TextSizes | (string & {});
-  $theme?:
-    | 'primary'
-    | 'primary-text'
-    | 'secondary'
-    | 'secondary-text'
-    | 'info'
-    | 'success'
-    | 'warning'
-    | 'danger'
-    | 'greyscale';
-  $variation?:
-    | 'text'
-    | '000'
-    | '100'
-    | '200'
-    | '300'
-    | '400'
-    | '500'
-    | '600'
-    | '700'
-    | '800'
-    | '900'
-    | '1000';
 }
 
 export type TextType = ComponentPropsWithRef<typeof Text>;
@@ -50,8 +27,6 @@ export const TextStyled = styled(Box)<TextProps>`
   ${({ $size }) =>
     $size &&
     `font-size: ${$size in sizes ? sizes[$size as TextSizes] : $size};`}
-  ${({ $theme, $variation }) =>
-    `color: var(--c--theme--colors--${$theme}-${$variation});`}
   ${({ $color }) => $color && `color: ${$color};`}
   ${({ $ellipsis }) =>
     $ellipsis &&

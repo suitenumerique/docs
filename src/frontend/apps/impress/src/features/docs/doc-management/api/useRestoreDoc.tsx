@@ -6,32 +6,35 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
-interface RemoveDocProps {
+interface RestoreDocProps {
   docId: string;
 }
 
-export const removeDoc = async ({ docId }: RemoveDocProps): Promise<void> => {
-  const response = await fetchAPI(`documents/${docId}/`, {
-    method: 'DELETE',
+export const restoreDoc = async ({ docId }: RestoreDocProps): Promise<void> => {
+  const response = await fetchAPI(`documents/${docId}/restore/`, {
+    method: 'POST',
   });
 
   if (!response.ok) {
-    throw new APIError('Failed to delete the doc', await errorCauses(response));
+    throw new APIError(
+      'Failed to restore the doc',
+      await errorCauses(response),
+    );
   }
 };
 
-type UseRemoveDocOptions = UseMutationOptions<void, APIError, RemoveDocProps>;
+type UseRestoreDocOptions = UseMutationOptions<void, APIError, RestoreDocProps>;
 
-export const useRemoveDoc = ({
+export const useRestoreDoc = ({
   listInvalidQueries,
   options,
 }: {
   listInvalidQueries?: string[];
-  options?: UseRemoveDocOptions;
+  options?: UseRestoreDocOptions;
 }) => {
   const queryClient = useQueryClient();
-  return useMutation<void, APIError, RemoveDocProps>({
-    mutationFn: removeDoc,
+  return useMutation<void, APIError, RestoreDocProps>({
+    mutationFn: restoreDoc,
     ...options,
     onSuccess: (data, variables, context) => {
       listInvalidQueries?.forEach((queryKey) => {

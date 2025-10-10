@@ -69,6 +69,7 @@ def test_api_documents_list_format():
         "computed_link_role": document.computed_link_role,
         "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(document.creator.id),
+        "deleted_at": None,
         "depth": 1,
         "excerpt": document.excerpt,
         "is_favorite": True,

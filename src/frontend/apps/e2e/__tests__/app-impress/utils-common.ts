@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
@@ -23,6 +23,7 @@ export const CONFIG = {
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
   SENTRY_DSN: null,
+  TRASHBIN_CUTOFF_DAYS: 30,
   theme_customization: {},
 } as const;
 
@@ -325,3 +326,19 @@ export async function waitForLanguageSwitch(
 
   await page.getByRole('menuitem', { name: lang.label }).click();
 }
+
+export const clickInEditorMenu = async (page: Page, textButton: string) => {
+  await page.getByRole('button', { name: 'Open the document options' }).click();
+  await page.getByRole('menuitem', { name: textButton }).click();
+};
+
+export const clickInGridMenu = async (
+  page: Page,
+  row: Locator,
+  textButton: string,
+) => {
+  await row
+    .getByRole('button', { name: /Open the menu of actions for the document/ })
+    .click();
+  await page.getByRole('menuitem', { name: textButton }).click();
+};

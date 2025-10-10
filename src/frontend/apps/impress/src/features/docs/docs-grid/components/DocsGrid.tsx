@@ -7,6 +7,7 @@ import { Box, Card, Text } from '@/components';
 import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { useInfiniteDocsTrashbin } from '../api';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import {
@@ -33,13 +34,7 @@ export const DocsGrid = ({
     isLoading,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteDocs({
-    page: 1,
-    ...(target &&
-      target !== DocDefaultFilter.ALL_DOCS && {
-        is_creator_me: target === DocDefaultFilter.MY_DOCS,
-      }),
-  });
+  } = useDocsQuery(target);
 
   const docs = data?.pages.flatMap((page) => page.results) ?? [];
 
@@ -52,12 +47,20 @@ export const DocsGrid = ({
     void fetchNextPage();
   };
 
-  const title =
-    target === DocDefaultFilter.MY_DOCS
-      ? t('My docs')
-      : target === DocDefaultFilter.SHARED_WITH_ME
-        ? t('Shared with me')
-        : t('All docs');
+  let title = t('All docs');
+  switch (target) {
+    case DocDefaultFilter.MY_DOCS:
+      title = t('My docs');
+      break;
+    case DocDefaultFilter.SHARED_WITH_ME:
+      title = t('Shared with me');
+      break;
+    case DocDefaultFilter.TRASHBIN:
+      title = t('Trashbin');
+      break;
+    default:
+      title = t('All docs');
+  }
 
   return (
     <Box
@@ -121,7 +124,9 @@ export const DocsGrid = ({
                       role="columnheader"
                     >
                       <Text $size="xs" $weight="500" $variation="600">
-                        {t('Updated at')}
+                        {DocDefaultFilter.TRASHBIN === target
+                          ? t('Days remaining')
+                          : t('Updated at')}
                       </Text>
                     </Box>
                   )}
@@ -156,4 +161,30 @@ export const DocsGrid = ({
       </Card>
     </Box>
   );
+};
+
+const useDocsQuery = (target: DocDefaultFilter) => {
+  const trashbinQuery = useInfiniteDocsTrashbin(
+    {
+      page: 1,
+    },
+    {
+      enabled: target === DocDefaultFilter.TRASHBIN,
+    },
+  );
+
+  const docsQuery = useInfiniteDocs(
+    {
+      page: 1,
+      ...(target &&
+        target !== DocDefaultFilter.ALL_DOCS && {
+          is_creator_me: target === DocDefaultFilter.MY_DOCS,
+        }),
+    },
+    {
+      enabled: target !== DocDefaultFilter.TRASHBIN,
+    },
+  );
+
+  return target === DocDefaultFilter.TRASHBIN ? trashbinQuery : docsQuery;
 };

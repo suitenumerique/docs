@@ -39,7 +39,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
 
@@ -101,6 +101,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isExpanded = node.isOpen;
   const isSelected = isSelectedNow;
   const ariaLabel = docTitle;
+  const isDisabled = !!doc.deleted_at;
 
   return (
     <Box
@@ -111,6 +112,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-label={ariaLabel}
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
+      aria-disabled={isDisabled}
       $css={css`
         background-color: ${menuOpen
           ? 'var(--c--theme--colors--greyscale-100)'
@@ -164,7 +166,11 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           `}
         >
           <Box $width="16px" $height="16px">
-            <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
+            <DocIcon
+              emoji={emoji}
+              defaultIcon={<SubPageIcon color={colorsTokens['primary-400']} />}
+              $size="sm"
+            />
           </Box>
 
           <Box

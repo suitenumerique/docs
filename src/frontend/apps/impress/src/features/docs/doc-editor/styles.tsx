@@ -1,6 +1,6 @@
 import { css } from 'styled-components';
 
-export const cssEditor = (readonly: boolean) => css`
+export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
   &,
   & > .bn-container,
   & .ProseMirror {
@@ -127,6 +127,13 @@ export const cssEditor = (readonly: boolean) => css`
       .bn-block-outer:not([data-prev-depth-changed]):before {
       border-left: none;
     }
+
+    ${isDeletedDoc &&
+    `
+      .node-interlinkingLinkInline button {
+        pointer-events: none;
+      }
+    `}
   }
 
   & .bn-editor {

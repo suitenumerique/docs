@@ -50,6 +50,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                         ),
                         "creator": str(child.creator.id),
                         "depth": 3,
+                        "deleted_at": None,
                         "excerpt": child.excerpt,
                         "id": str(child.id),
                         "is_favorite": False,
@@ -73,6 +74,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": document.excerpt,
                 "id": str(document.id),
                 "is_favorite": False,
@@ -96,6 +98,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "created_at": sibling1.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling1.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": sibling1.excerpt,
                 "id": str(sibling1.id),
                 "is_favorite": False,
@@ -119,6 +122,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
                 "created_at": sibling2.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling2.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": sibling2.excerpt,
                 "id": str(sibling2.id),
                 "is_favorite": False,
@@ -138,6 +142,7 @@ def test_api_documents_tree_list_anonymous_public_standalone(django_assert_num_q
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
+        "deleted_at": None,
         "excerpt": parent.excerpt,
         "id": str(parent.id),
         "is_favorite": False,
@@ -210,6 +215,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                                 ),
                                 "creator": str(child.creator.id),
                                 "depth": 5,
+                                "deleted_at": None,
                                 "excerpt": child.excerpt,
                                 "id": str(child.id),
                                 "is_favorite": False,
@@ -233,6 +239,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                         ),
                         "creator": str(document.creator.id),
                         "depth": 4,
+                        "deleted_at": None,
                         "excerpt": document.excerpt,
                         "id": str(document.id),
                         "is_favorite": False,
@@ -260,6 +267,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                         ),
                         "creator": str(document_sibling.creator.id),
                         "depth": 4,
+                        "deleted_at": None,
                         "excerpt": document_sibling.excerpt,
                         "id": str(document_sibling.id),
                         "is_favorite": False,
@@ -281,6 +289,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(parent.creator.id),
                 "depth": 3,
+                "deleted_at": None,
                 "excerpt": parent.excerpt,
                 "id": str(parent.id),
                 "is_favorite": False,
@@ -306,6 +315,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
                 ),
                 "creator": str(parent_sibling.creator.id),
                 "depth": 3,
+                "deleted_at": None,
                 "excerpt": parent_sibling.excerpt,
                 "id": str(parent_sibling.id),
                 "is_favorite": False,
@@ -327,6 +337,7 @@ def test_api_documents_tree_list_anonymous_public_parent():
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(grand_parent.creator.id),
         "depth": 2,
+        "deleted_at": None,
         "excerpt": grand_parent.excerpt,
         "id": str(grand_parent.id),
         "is_favorite": False,
@@ -406,6 +417,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                         ),
                         "creator": str(child.creator.id),
                         "depth": 3,
+                        "deleted_at": None,
                         "excerpt": child.excerpt,
                         "id": str(child.id),
                         "is_favorite": False,
@@ -427,6 +439,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": document.excerpt,
                 "id": str(document.id),
                 "is_favorite": False,
@@ -450,6 +463,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": sibling.excerpt,
                 "id": str(sibling.id),
                 "is_favorite": False,
@@ -469,6 +483,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
+        "deleted_at": None,
         "excerpt": parent.excerpt,
         "id": str(parent.id),
         "is_favorite": False,
@@ -546,6 +561,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                                 ),
                                 "creator": str(child.creator.id),
                                 "depth": 5,
+                                "deleted_at": None,
                                 "excerpt": child.excerpt,
                                 "id": str(child.id),
                                 "is_favorite": False,
@@ -569,6 +585,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                         ),
                         "creator": str(document.creator.id),
                         "depth": 4,
+                        "deleted_at": None,
                         "excerpt": document.excerpt,
                         "id": str(document.id),
                         "is_favorite": False,
@@ -596,6 +613,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                         ),
                         "creator": str(document_sibling.creator.id),
                         "depth": 4,
+                        "deleted_at": None,
                         "excerpt": document_sibling.excerpt,
                         "id": str(document_sibling.id),
                         "is_favorite": False,
@@ -617,6 +635,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(parent.creator.id),
                 "depth": 3,
+                "deleted_at": None,
                 "excerpt": parent.excerpt,
                 "id": str(parent.id),
                 "is_favorite": False,
@@ -642,6 +661,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
                 ),
                 "creator": str(parent_sibling.creator.id),
                 "depth": 3,
+                "deleted_at": None,
                 "excerpt": parent_sibling.excerpt,
                 "id": str(parent_sibling.id),
                 "is_favorite": False,
@@ -663,6 +683,7 @@ def test_api_documents_tree_list_authenticated_public_or_authenticated_parent(
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(grand_parent.creator.id),
         "depth": 2,
+        "deleted_at": None,
         "excerpt": grand_parent.excerpt,
         "id": str(grand_parent.id),
         "is_favorite": False,
@@ -744,6 +765,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
                         ),
                         "creator": str(child.creator.id),
                         "depth": 3,
+                        "deleted_at": None,
                         "excerpt": child.excerpt,
                         "id": str(child.id),
                         "is_favorite": False,
@@ -765,6 +787,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": document.excerpt,
                 "id": str(document.id),
                 "is_favorite": False,
@@ -788,6 +811,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": sibling.excerpt,
                 "id": str(sibling.id),
                 "is_favorite": False,
@@ -807,6 +831,7 @@ def test_api_documents_tree_list_authenticated_related_direct():
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
+        "deleted_at": None,
         "excerpt": parent.excerpt,
         "id": str(parent.id),
         "is_favorite": False,
@@ -888,6 +913,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                                 ),
                                 "creator": str(child.creator.id),
                                 "depth": 5,
+                                "deleted_at": None,
                                 "excerpt": child.excerpt,
                                 "id": str(child.id),
                                 "is_favorite": False,
@@ -911,6 +937,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                         ),
                         "creator": str(document.creator.id),
                         "depth": 4,
+                        "deleted_at": None,
                         "excerpt": document.excerpt,
                         "id": str(document.id),
                         "is_favorite": False,
@@ -938,6 +965,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                         ),
                         "creator": str(document_sibling.creator.id),
                         "depth": 4,
+                        "deleted_at": None,
                         "excerpt": document_sibling.excerpt,
                         "id": str(document_sibling.id),
                         "is_favorite": False,
@@ -959,6 +987,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                 "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(parent.creator.id),
                 "depth": 3,
+                "deleted_at": None,
                 "excerpt": parent.excerpt,
                 "id": str(parent.id),
                 "is_favorite": False,
@@ -984,6 +1013,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
                 ),
                 "creator": str(parent_sibling.creator.id),
                 "depth": 3,
+                "deleted_at": None,
                 "excerpt": parent_sibling.excerpt,
                 "id": str(parent_sibling.id),
                 "is_favorite": False,
@@ -1005,6 +1035,7 @@ def test_api_documents_tree_list_authenticated_related_parent():
         "created_at": grand_parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(grand_parent.creator.id),
         "depth": 2,
+        "deleted_at": None,
         "excerpt": grand_parent.excerpt,
         "id": str(grand_parent.id),
         "is_favorite": False,
@@ -1094,6 +1125,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                         ),
                         "creator": str(child.creator.id),
                         "depth": 3,
+                        "deleted_at": None,
                         "excerpt": child.excerpt,
                         "id": str(child.id),
                         "is_favorite": False,
@@ -1115,6 +1147,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(document.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": document.excerpt,
                 "id": str(document.id),
                 "is_favorite": False,
@@ -1138,6 +1171,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
                 "created_at": sibling.created_at.isoformat().replace("+00:00", "Z"),
                 "creator": str(sibling.creator.id),
                 "depth": 2,
+                "deleted_at": None,
                 "excerpt": sibling.excerpt,
                 "id": str(sibling.id),
                 "is_favorite": False,
@@ -1157,6 +1191,7 @@ def test_api_documents_tree_list_authenticated_related_team_members(
         "created_at": parent.created_at.isoformat().replace("+00:00", "Z"),
         "creator": str(parent.creator.id),
         "depth": 1,
+        "deleted_at": None,
         "excerpt": parent.excerpt,
         "id": str(parent.id),
         "is_favorite": False,
@@ -1170,3 +1205,56 @@ def test_api_documents_tree_list_authenticated_related_team_members(
         "updated_at": parent.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
     }
+
+
+def test_api_documents_tree_list_deleted_document():
+    """
+    Tree of a deleted document should only be accessible to the owner.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(link_reach="public")
+    document, _ = factories.DocumentFactory.create_batch(2, parent=parent)
+    factories.DocumentFactory(link_reach="public", parent=document)
+
+    document.soft_delete()
+
+    response = client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
+    assert response.status_code == 403
+
+
+def test_api_documents_tree_list_deleted_document_owner(django_assert_num_queries):
+    """
+    Tree of a deleted document should only be accessible to the owner.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(link_reach="public", users=[(user, "owner")])
+    document, _ = factories.DocumentFactory.create_batch(2, parent=parent)
+    child = factories.DocumentFactory(parent=document)
+
+    document.soft_delete()
+    document.refresh_from_db()
+    child.refresh_from_db()
+
+    with django_assert_num_queries(9):
+        client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
+
+    with django_assert_num_queries(5):
+        response = client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert content["id"] == str(document.id)
+    assert content["deleted_at"] == document.deleted_at.isoformat().replace(
+        "+00:00", "Z"
+    )
+    assert len(content["children"]) == 1
+    assert content["children"][0]["id"] == str(child.id)
+    assert content["children"][0][
+        "deleted_at"
+    ] == child.ancestors_deleted_at.isoformat().replace("+00:00", "Z")
