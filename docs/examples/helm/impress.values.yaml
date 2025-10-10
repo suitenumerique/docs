@@ -1,3 +1,12 @@
+djangoSecretKey: &djangoSecretKey "lkjsdlfkjsldkfjslkdfjslkdjfslkdjf"
+djangoSuperUserEmail: admin@example.com
+djangoSuperUserPass: admin
+aiApiKey: changeme
+aiBaseUrl: changeme
+oidc:
+    clientId: impress
+    clientSecret: ThisIsAnExampleKeyForDevPurposeOnly
+
 image:
   repository: lasuite/impress-backend
   pullPolicy: Always
@@ -6,86 +15,98 @@ image:
 backend:
   replicas: 1
   envVars:
-    COLLABORATION_API_URL: https://impress.127.0.0.1.nip.io/collaboration/api/
     COLLABORATION_SERVER_SECRET: my-secret
-    DJANGO_CSRF_TRUSTED_ORIGINS: https://impress.127.0.0.1.nip.io
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://docs.127.0.0.1.nip.io
     DJANGO_CONFIGURATION: Feature
-    DJANGO_ALLOWED_HOSTS: impress.127.0.0.1.nip.io
+    DJANGO_ALLOWED_HOSTS: docs.127.0.0.1.nip.io
     DJANGO_SERVER_TO_SERVER_API_TOKENS: secret-api-key
-    DJANGO_SECRET_KEY: AgoodOrAbadKey
+    DJANGO_SECRET_KEY: *djangoSecretKey
     DJANGO_SETTINGS_MODULE: impress.settings
     DJANGO_SUPERUSER_PASSWORD: admin
     DJANGO_EMAIL_BRAND_NAME: "La Suite Numérique"
     DJANGO_EMAIL_HOST: "mailcatcher"
-    DJANGO_EMAIL_LOGO_IMG: https://impress.127.0.0.1.nip.io/assets/logo-suite-numerique.png
+    DJANGO_EMAIL_LOGO_IMG: https://docs.127.0.0.1.nip.io/assets/logo-suite-numerique.png
     DJANGO_EMAIL_PORT: 1025
     DJANGO_EMAIL_USE_SSL: False
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    OIDC_OP_JWKS_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/certs
-    OIDC_OP_AUTHORIZATION_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/auth
-    OIDC_OP_TOKEN_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/token
-    OIDC_OP_USER_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/userinfo
-    OIDC_OP_LOGOUT_ENDPOINT: https://keycloak.127.0.0.1.nip.io/realms/impress/protocol/openid-connect/logout
-    OIDC_RP_CLIENT_ID: impress
+    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/certs
+    OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/auth
+    OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/token
+    OIDC_OP_USER_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/userinfo
+    OIDC_OP_LOGOUT_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/logout
+    OIDC_RP_CLIENT_ID: docs
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
     OIDC_RP_SCOPES: "openid email"
-    OIDC_VERIFY_SSL: False
-    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
-    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
-    OIDC_REDIRECT_ALLOWED_HOSTS: https://impress.127.0.0.1.nip.io
-    OIDC_AUTH_REQUEST_EXTRA_PARAMS: "{'acr_values': 'eidas1'}"
-    LOGIN_REDIRECT_URL: https://impress.127.0.0.1.nip.io
-    LOGIN_REDIRECT_URL_FAILURE: https://impress.127.0.0.1.nip.io
-    LOGOUT_REDIRECT_URL: https://impress.127.0.0.1.nip.io
-    POSTHOG_KEY: "{'id': 'posthog_key', 'host': 'https://product.impress.127.0.0.1.nip.io'}"
-    DB_HOST: postgresql
-    DB_NAME: impress
-    DB_USER: dinum
-    DB_PASSWORD: pass
+    LOGIN_REDIRECT_URL: https://docs.127.0.0.1.nip.io
+    LOGIN_REDIRECT_URL_FAILURE: https://docs.127.0.0.1.nip.io
+    LOGOUT_REDIRECT_URL: https://docs.127.0.0.1.nip.io
+    DB_HOST: postgresql-dev-backend-postgres
+    DB_NAME:
+      secretKeyRef:
+        name: postgresql-dev-backend-postgres
+        key: database
+    DB_USER:
+      secretKeyRef:
+        name: postgresql-dev-backend-postgres
+        key: username
+    DB_PASSWORD:
+      secretKeyRef:
+        name: postgresql-dev-backend-postgres
+        key: password
     DB_PORT: 5432
-    REDIS_URL: redis://default:pass@redis-master:6379/1
-    AWS_S3_ENDPOINT_URL: http://minio.impress.svc.cluster.local:9000
-    AWS_S3_ACCESS_KEY_ID: root
+    REDIS_URL: redis://user:pass@redis-dev-backend-redis:6379/1
+    DJANGO_CELERY_BROKER_URL: redis://user:pass@redis-dev-backend-redis:6379/1
+    AWS_S3_ENDPOINT_URL: http://minio-dev-backend-minio.impress.svc.cluster.local:9000
+    AWS_S3_ACCESS_KEY_ID: dinum
     AWS_S3_SECRET_ACCESS_KEY: password
-    AWS_STORAGE_BUCKET_NAME: impress-media-storage
+    AWS_STORAGE_BUCKET_NAME: docs-media-storage
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
-
+    CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
     command:
       - "/bin/sh"
       - "-c"
       - |
-        python manage.py migrate --no-input &&
-        python manage.py create_demo --force
-    restartPolicy: Never
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
 
-  command:
-    - "gunicorn"
-    - "-c"
-    - "/usr/local/etc/gunicorn/impress.py"
-    - "impress.wsgi:application"
-    - "--reload"
+        echo "Database is ready"
+
+        python manage.py migrate --no-input
+    restartPolicy: Never
 
   createsuperuser:
     command:
       - "/bin/sh"
       - "-c"
       - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
         python manage.py createsuperuser --email admin@example.com --password admin
     restartPolicy: Never
 
-  # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
+  # Extra volume mounts to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumeMounts:
     - name: certs
       mountPath: /cert/cacert.pem
       subPath: cacert.pem
 
-  # Extra volume to manage our local custom CA and avoid to set ssl_verify: false
+  # Extra volumes to manage our local custom CA and avoid to set ssl_verify: false
   extraVolumes:
     - name: certs
       configMap:
@@ -94,12 +115,7 @@ backend:
         - key: cacert.pem
           path: cacert.pem
 frontend:
-  envVars:
-    PORT: 8080
-    NEXT_PUBLIC_API_ORIGIN: https://impress.127.0.0.1.nip.io
-
   replicas: 1
-
   image:
     repository: lasuite/impress-frontend
     pullPolicy: Always
@@ -114,60 +130,47 @@ yProvider:
     tag: "latest"
 
   envVars:
+    COLLABORATION_BACKEND_BASE_URL: https://docs.127.0.0.1.nip.io
     COLLABORATION_LOGGING: true
-    COLLABORATION_SERVER_ORIGIN: https://impress.127.0.0.1.nip.io
+    COLLABORATION_SERVER_ORIGIN: https://docs.127.0.0.1.nip.io
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
-    COLLABORATION_BACKEND_BASE_URL: https://impress.127.0.0.1.nip.io
-    NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/cacert.pem
 
-  # Mount the certificate so yProvider can establish tls with the backend
-  extraVolumeMounts:
-    - name: certs
-      mountPath: /usr/local/share/ca-certificates/cacert.pem
-      subPath: cacert.pem
+ingress:
+  enabled: true
+  host: docs.127.0.0.1.nip.io
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 100m
 
-  extraVolumes:
-    - name: certs
-      configMap:
-        name: certifi
-        items:
-        - key: cacert.pem
-          path: cacert.pem
+ingressCollaborationWS:
+  enabled: true
+  host: docs.127.0.0.1.nip.io
+
+ingressCollaborationApi:
+  enabled: true
+  host: docs.127.0.0.1.nip.io
+
+ingressAdmin:
+  enabled: true
+  host: docs.127.0.0.1.nip.io
 
 posthog:
   ingress:
     enabled: false
+
   ingressAssets:
     enabled: false
 
-ingress:
-  enabled: true
-  host: impress.127.0.0.1.nip.io
-
-ingressCollaborationWS:
-  enabled: true
-  host: impress.127.0.0.1.nip.io
-
-ingressCollaborationApi:
-  enabled: true
-  host: impress.127.0.0.1.nip.io
-
-ingressAdmin:
-  enabled: true
-  host: impress.127.0.0.1.nip.io
-
 ingressMedia:
   enabled: true
-  host: impress.127.0.0.1.nip.io
+  host: docs.127.0.0.1.nip.io
 
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://impress.127.0.0.1.nip.io/api/v1.0/documents/media-auth/
+    nginx.ingress.kubernetes.io/auth-url: https://docs.127.0.0.1.nip.io/api/v1.0/documents/media-auth/
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
-    nginx.ingress.kubernetes.io/upstream-vhost: minio.impress.svc.cluster.local:9000
-    nginx.ingress.kubernetes.io/rewrite-target: /impress-media-storage/$1
+    nginx.ingress.kubernetes.io/upstream-vhost: minio-dev-backend-minio.impress.svc.cluster.local:9000
+    nginx.ingress.kubernetes.io/rewrite-target: /docs-media-storage/$1
 
 serviceMedia:
-  host: minio.impress.svc.cluster.local
+  host: minio-dev-backend-minio.impress.svc.cluster.local
   port: 9000
-

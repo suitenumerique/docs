@@ -1,8 +1,24 @@
-auth:
-  rootUser: root
-  rootPassword: password
-provisioning:
+minio:
   enabled: true
-  buckets:
-    - name: impress-media-storage
-      versioning: true
+  image: minio/minio
+  name: minio
+  # serviceNameOverride: docs-minio
+  ingress:
+    enabled: true
+    hostname: docs-minio.127.0.0.1.nip.io
+    tls:
+      enabled: true
+      secretName: docs-tls
+  consoleIngress:
+    enabled: true
+    hostname: docs-minio-console.127.0.0.1.nip.io
+    tls:
+      enabled: true
+      secretName: docs-tls
+  api:
+    port: 80
+  username: dinum
+  password: password
+  bucket: docs-media-storage
+  versioning: true
+  size: 1Gi
