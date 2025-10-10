@@ -2642,30 +2642,6 @@
     react-modal "3.16.3"
     react-stately "3.37.0"
 
-"@openfun/cunningham-react@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@openfun/cunningham-react/-/cunningham-react-4.0.0.tgz#5d273c72a2ced76cf060931b546238b7ee75c6ec"
-  integrity sha512-2JgIRDl2UE/PMcOrjjfxbhFRwEwF7JFAaPoN/Xjq+sOYHP6WasRxFRrkwhnuZ5ZU7lOpzaAFyPtkawoBF6GsEQ==
-  dependencies:
-    "@fontsource-variable/roboto-flex" "5.2.5"
-    "@fontsource/material-icons-outlined" "5.2.5"
-    "@internationalized/date" "3.8.0"
-    "@openfun/cunningham-tokens" "*"
-    "@react-aria/calendar" "3.8.0"
-    "@react-aria/datepicker" "3.14.2"
-    "@react-aria/i18n" "3.12.8"
-    "@react-stately/calendar" "3.8.0"
-    "@react-stately/datepicker" "3.14.0"
-    "@tanstack/react-table" "8.21.3"
-    "@types/react-modal" "3.16.3"
-    chromatic "11.28.2"
-    classnames "2.5.1"
-    downshift "9.0.9"
-    react-aria "3.39.0"
-    react-aria-components "1.8.0"
-    react-modal "3.16.3"
-    react-stately "3.37.0"
-
 "@openfun/cunningham-tokens@*":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@openfun/cunningham-tokens/-/cunningham-tokens-2.2.0.tgz#9ebab9e86ccddd97888e3be1413e0ffd2f81dcce"
