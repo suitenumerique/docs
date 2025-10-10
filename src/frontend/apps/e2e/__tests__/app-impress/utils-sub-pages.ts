@@ -11,7 +11,7 @@ export const createRootSubPage = async (
   page: Page,
   browserName: string,
   docName: string,
-  isMobile: boolean = false,
+  isMobile = false,
 ) => {
   if (isMobile) {
     await page
