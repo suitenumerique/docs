@@ -4,11 +4,13 @@ import { Resource } from 'i18next';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
 import { FooterType } from '@/features/footer';
+import { HeaderType } from '@/features/header/types';
 import { PostHogConf } from '@/services';
 
 interface ThemeCustomization {
   footer?: FooterType;
   translations?: Resource;
+  header?: HeaderType;
 }
 
 export interface ConfigResponse {

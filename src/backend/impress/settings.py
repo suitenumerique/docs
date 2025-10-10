@@ -490,7 +490,7 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
-    THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.Value(
+    THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.IntegerValue(
         60 * 60 * 24,
         environ_name="THEME_CUSTOMIZATION_CACHE_TIMEOUT",
         environ_prefix=None,

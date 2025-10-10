@@ -1,8 +1,9 @@
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, StyledLink } from '@/components/';
+import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
 import { LanguagePicker } from '@/features/language';
@@ -16,8 +17,13 @@ import { Title } from './Title';
 
 export const Header = () => {
   const { t } = useTranslation();
+  const { data: config } = useConfig();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
+
+  const logo = config?.theme_customization?.header?.logo;
+
+  const styleWidth = logo?.width || '32px';
 
   return (
     <Box
@@ -60,12 +66,18 @@ export const Header = () => {
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <IconDocs
-            data-testid="header-icon-docs"
-            width={32}
-            color={colorsTokens['primary-text']}
-            aria-hidden="true"
-          />
+          {logo?.src && (
+            <Image
+              className="c__image-system-filter"
+              data-testid="header-icon-docs"
+              src={logo.src}
+              alt={logo?.alt || t('Logo')}
+              width={32}
+              height={32}
+              style={{ width: styleWidth, height: 'auto' }}
+              priority
+            />
+          )}
           <Title headingLevel="h1" aria-hidden="true" />
         </Box>
       </StyledLink>
