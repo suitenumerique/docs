@@ -2199,3 +2199,5 @@ class ConfigView(drf.views.APIView):
                 theme_customization,
                 settings.THEME_CUSTOMIZATION_CACHE_TIMEOUT,
             )
+
+        return theme_customization
