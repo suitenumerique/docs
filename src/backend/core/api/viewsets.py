@@ -3,8 +3,6 @@
 
 import base64
 import json
-import io
-import zipfile
 import logging
 import uuid
 from collections import defaultdict
@@ -50,7 +48,6 @@ from core.services.converter_services import (
     YdocConverter,
 )
 from core.tasks.mail import send_ask_for_access_mail
-from core.services.outline_import import OutlineImportError, process_outline_zip
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -2202,5 +2199,3 @@ class ConfigView(drf.views.APIView):
                 theme_customization,
                 settings.THEME_CUSTOMIZATION_CACHE_TIMEOUT,
             )
-
-        return theme_customization
