@@ -114,6 +114,16 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
         ]
     )
 
+    # Build a set of md files that have corresponding directories (Outline nested docs)
+    # e.g., "Doc.md" and "Doc/" both exist -> "Doc" is a parent with nested children
+    md_with_dirs: set[str] = set()
+    for md_path in md_files:
+        # Remove .md extension to get potential directory name
+        base_path = md_path.rsplit(".md", 1)[0]
+        # Check if there's a directory with the same name
+        if any(n.startswith(f"{base_path}/") for n in archive.namelist()):
+            md_with_dirs.add(base_path)
+
     img_pattern = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 
     def read_bytes(path_in_zip: str) -> bytes | None:
@@ -149,6 +159,12 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
         else:
             doc = parent_doc.add_child(creator=user, title=title)
 
+        # If this md file has a corresponding directory, register it as a container
+        # so nested children will use this doc as parent instead of creating a duplicate
+        base_path = md_path.rsplit(".md", 1)[0]
+        if base_path in md_with_dirs:
+            dir_docs[base_path] = doc
+
         models.DocumentAccess.objects.update_or_create(
             document=doc,
             user=user,
@@ -179,7 +195,7 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
                 accept="application/vnd.yjs.doc",
             )
             doc.content = ydoc_b64
-            doc.save(update_fields=["content", "updated_at"])
+            doc.save()
         except Exception:  # noqa: BLE001
             # Keep doc without content on conversion error but continue import
             pass

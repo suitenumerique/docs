@@ -4,7 +4,7 @@ import { ReactElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Text } from '@/components';
-import { baseApiUrl } from '@/api';
+import { baseApiUrl, getCSRFToken } from '@/api';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -26,10 +26,14 @@ const Page: NextPageWithLayout = () => {
     try {
       const form = new FormData();
       form.append('file', file);
+      const csrfToken = getCSRFToken();
       const resp = await fetch(`${baseApiUrl('1.0')}imports/outline/upload`, {
         method: 'POST',
         body: form,
         credentials: 'include',
+        headers: {
+          ...(csrfToken && { 'X-CSRFToken': csrfToken }),
+        },
       });
       if (!resp.ok) {
         throw new Error(await resp.text());
