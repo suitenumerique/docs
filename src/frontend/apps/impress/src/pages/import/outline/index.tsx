@@ -3,8 +3,8 @@ import { useRouter } from 'next/router';
 import { ReactElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Text } from '@/components';
 import { baseApiUrl, getCSRFToken } from '@/api';
+import { Box, Text } from '@/components';
 import { MainLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
 
@@ -45,7 +45,7 @@ const Page: NextPageWithLayout = () => {
       } else {
         void router.replace('/');
       }
-    } catch (e) {
+    } catch {
       setError(t('Something bad happens, please retry.'));
     } finally {
       setIsUploading(false);
@@ -53,7 +53,12 @@ const Page: NextPageWithLayout = () => {
   };
 
   return (
-    <Box $padding={{ top: 'large' }} $width="100%" $height="100%" $align="center">
+    <Box
+      $padding={{ top: 'large' }}
+      $width="100%"
+      $height="100%"
+      $align="center"
+    >
       <Text as="p" $margin={{ bottom: '12px' }}>
         {t('Import Outline archive')}
       </Text>
@@ -64,7 +69,12 @@ const Page: NextPageWithLayout = () => {
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           aria-label={t('Select a .zip file')}
         />
-        <Box $margin={{ top: '16px' }} $direction="row" $gap="8px" $align="center">
+        <Box
+          $margin={{ top: '16px' }}
+          $direction="row"
+          $gap="8px"
+          $align="center"
+        >
           <Button type="submit" disabled={!file || isUploading}>
             {t('Import')}
           </Button>
