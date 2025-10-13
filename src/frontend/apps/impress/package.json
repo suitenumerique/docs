@@ -60,6 +60,7 @@
     "react-dom": "*",
     "react-i18next": "15.7.3",
     "react-intersection-observer": "9.16.0",
+    "react-resizable-panels": "3.0.6",
     "react-select": "5.10.2",
     "styled-components": "6.1.19",
     "use-debounce": "10.0.6",

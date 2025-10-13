@@ -75,3 +75,6 @@ db.sqlite3
 .vscode/
 *.iml
 .devcontainer
+
+# Cursor rules
+.cursorrules

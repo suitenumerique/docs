@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { createDoc } from './utils-common';
+
 test.describe('Left panel desktop', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -10,6 +12,53 @@ test.describe('Left panel desktop', () => {
     await expect(page.getByTestId('left-panel-mobile')).toBeHidden();
     await expect(page.getByTestId('home-button')).toBeVisible();
     await expect(page.getByTestId('new-doc-button')).toBeVisible();
+  });
+
+  test('checks resize handle is present and functional on document page', async ({
+    page,
+    browserName,
+  }) => {
+    // On home page, resize handle should NOT be present
+    let resizeHandle = page.locator('[data-panel-resize-handle-id]');
+    await expect(resizeHandle).toBeHidden();
+
+    // Create and navigate to a document
+    await createDoc(page, 'doc-resize-test', browserName, 1);
+
+    // Now resize handle should be visible on document page
+    resizeHandle = page.locator('[data-panel-resize-handle-id]').first();
+    await expect(resizeHandle).toBeVisible();
+
+    const leftPanel = page.getByTestId('left-panel-desktop');
+    await expect(leftPanel).toBeVisible();
+
+    // Get initial panel width
+    const initialBox = await leftPanel.boundingBox();
+    expect(initialBox).not.toBeNull();
+
+    // Get handle position
+    const handleBox = await resizeHandle.boundingBox();
+    expect(handleBox).not.toBeNull();
+
+    // Test resize by dragging the handle
+    await page.mouse.move(
+      handleBox!.x + handleBox!.width / 2,
+      handleBox!.y + handleBox!.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      handleBox!.x + 100,
+      handleBox!.y + handleBox!.height / 2,
+    );
+    await page.mouse.up();
+
+    // Wait for resize to complete
+    await page.waitForTimeout(200);
+
+    // Verify the panel has been resized
+    const newBox = await leftPanel.boundingBox();
+    expect(newBox).not.toBeNull();
+    expect(newBox!.width).toBeGreaterThan(initialBox!.width);
   });
 });
 
@@ -46,5 +95,13 @@ test.describe('Left panel mobile', () => {
     await expect(newDocButton).toBeInViewport();
     await expect(languageButton).toBeInViewport();
     await expect(logoutButton).toBeInViewport();
+  });
+
+  test('checks resize handle is not present on mobile', async ({ page }) => {
+    await page.goto('/');
+
+    // Verify the resize handle is NOT present on mobile
+    const resizeHandle = page.locator('[data-panel-resize-handle-id]');
+    await expect(resizeHandle).toBeHidden();
   });
 });

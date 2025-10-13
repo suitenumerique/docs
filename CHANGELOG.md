@@ -9,6 +9,7 @@ and this project adheres to
 ## Fixed
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
+- 🐛(frontend) show full nested doc names with ajustable bar #1456
 
 ## [3.8.2] - 2025-10-17
 
@@ -30,13 +31,16 @@ and this project adheres to
 
 - 🔥(backend) remove treebeard form for the document admin #1470
 
-
 ## [3.8.0] - 2025-10-14
 
 ### Added
 
 - ✨(frontend) add pdf block to the editor #1293
 - ✨List and restore deleted docs #1450
+
+### Fixed
+
+- 🐛(frontend) show full nested doc names with ajustable bar #1456
 
 ### Changed
 

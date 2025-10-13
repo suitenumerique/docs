@@ -39,12 +39,10 @@ export const LeftPanel = () => {
       {isDesktop && (
         <Box
           data-testid="left-panel-desktop"
-          $css={`
+          $css={css`
             height: calc(100vh - ${HEADER_HEIGHT}px);
-            width: 300px;
-            min-width: 300px;
+            width: 100%;
             overflow: hidden;
-            border-right: 1px solid ${colorsTokens['greyscale-200']};
             background-color: ${colorsTokens['greyscale-000']};
           `}
           className="--docs--left-panel-desktop"
