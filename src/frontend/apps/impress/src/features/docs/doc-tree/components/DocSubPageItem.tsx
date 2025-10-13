@@ -118,9 +118,11 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           ? 'var(--c--theme--colors--greyscale-100)'
           : 'var(--c--theme--colors--greyscale-000)'};
         .light-doc-item-actions {
-          display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
-          position: absolute;
+          display: flex;
+          position: sticky;
           right: 0;
+
+          opacity: ${menuOpen || !isDesktop ? '1' : '0'};
           background: ${isDesktop
             ? 'var(--c--theme--colors--greyscale-100)'
             : 'var(--c--theme--colors--greyscale-000)'};
@@ -139,7 +141,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           background-color: var(--c--theme--colors--greyscale-100);
           border-radius: 4px;
           .light-doc-item-actions {
-            display: flex;
+            opacity: 1;
             background: var(--c--theme--colors--greyscale-100);
           }
         }

@@ -184,7 +184,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
           outline: none !important;
-
           &:focus-visible {
             outline: none !important;
           }
