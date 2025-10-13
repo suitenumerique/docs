@@ -434,7 +434,11 @@
       "Share with {{count}} users_one": "Share with {{count}} user",
       "Shared with {{count}} users_many": "Shared with {{count}} users",
       "Shared with {{count}} users_one": "Shared with {{count}} user",
-      "Shared with {{count}} users_other": "Shared with {{count}} users"
+      "Shared with {{count}} users_other": "Shared with {{count}} users",
+      "Import from Outline": "Import from Outline",
+      "Import Outline archive": "Import Outline archive",
+      "Select a .zip file": "Select a .zip file",
+      "Import": "Import"
     }
   },
   "es": {
@@ -768,6 +772,10 @@
       "Open invitation actions menu": "Menu des actions d'ouverture d'une invitation",
       "Open the document options": "Ouvrir les options du document",
       "Open the header menu": "Ouvrir le menu d'en-tête",
+      "Import from Outline": "Importer depuis Outline",
+      "Import Outline archive": "Importer une archive Outline",
+      "Select a .zip file": "Sélectionnez un fichier .zip",
+      "Import": "Importer",
       "Open the menu of actions for the document: {{title}}": "Ouvrir le menu des actions du document : {{title}}",
       "Organize": "Organiser",
       "Others are editing this document. Unfortunately your network blocks WebSockets, the technology enabling real-time co-editing.": "D'autres sont en train de modifier ce document. Malheureusement, votre réseau bloque les web sockets, la technologie permettant la coédition en temps réel.",

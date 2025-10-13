@@ -7,6 +7,7 @@ from lasuite.oidc_login.urls import urlpatterns as oidc_urls
 from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
+from core.api import imports as import_views
 
 # - Main endpoints
 router = DefaultRouter()
@@ -57,6 +58,10 @@ urlpatterns = [
                 re_path(
                     r"^templates/(?P<resource_id>[0-9a-z-]*)/",
                     include(template_related_router.urls),
+                ),
+                path(
+                    "imports/outline/upload",
+                    import_views.OutlineImportUploadView.as_view(),
                 ),
             ]
         ),
