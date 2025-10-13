@@ -6,10 +6,10 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
-import { KEY_LIST_USER } from '@/docs/doc-share';
 import { useBroadcastStore } from '@/stores';
 
 import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';
+import { KEY_LIST_USER } from './useUsers';
 
 interface DeleteDocAccessProps {
   docId: string;

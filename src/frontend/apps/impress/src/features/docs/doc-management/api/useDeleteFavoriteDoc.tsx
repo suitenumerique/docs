@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/docs/doc-management';
+
+import { Doc } from '../types';
 
 export type DeleteFavoriteDocParams = Pick<Doc, 'id'>;
 

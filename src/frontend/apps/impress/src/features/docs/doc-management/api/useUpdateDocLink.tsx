@@ -3,8 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc, KEY_DOC } from '@/docs/doc-management';
 import { useBroadcastStore } from '@/stores';
+
+import { Doc } from '../types';
+
+import { KEY_DOC } from './useDoc';
 
 export type UpdateDocLinkParams = Pick<Doc, 'id' | 'link_reach'> &
   Partial<Pick<Doc, 'link_role'>>;
