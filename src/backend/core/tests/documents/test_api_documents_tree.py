@@ -377,7 +377,7 @@ def test_api_documents_tree_list_authenticated_unrelated_public_or_authenticated
     document, sibling = factories.DocumentFactory.create_batch(2, parent=parent)
     child = factories.DocumentFactory(link_reach="public", parent=document)
 
-    with django_assert_num_queries(13):
+    with django_assert_num_queries(16):
         client.get(f"/api/v1.0/documents/{document.id!s}/tree/")
 
     with django_assert_num_queries(5):

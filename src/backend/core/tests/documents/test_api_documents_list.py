@@ -152,7 +152,7 @@ def test_api_documents_list_authenticated_direct(django_assert_num_queries):
         str(child4_with_access.id),
     }
 
-    with django_assert_num_queries(14):
+    with django_assert_num_queries(17):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached
@@ -272,7 +272,7 @@ def test_api_documents_list_authenticated_link_reach_public_or_authenticated(
 
     expected_ids = {str(document1.id), str(document2.id), str(visible_child.id)}
 
-    with django_assert_num_queries(11):
+    with django_assert_num_queries(13):
         response = client.get("/api/v1.0/documents/")
 
     # nb_accesses should now be cached

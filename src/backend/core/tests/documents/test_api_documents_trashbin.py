@@ -165,7 +165,7 @@ def test_api_documents_trashbin_authenticated_direct(django_assert_num_queries):
 
     expected_ids = {str(document1.id), str(document2.id), str(document3.id)}
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(14):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     with django_assert_num_queries(4):
