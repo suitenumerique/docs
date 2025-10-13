@@ -6,11 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Fixed
+
+- 🐛(frontend) fix duplicate document entries in grid #1479
+
 ## [3.8.2] - 2025-10-17
 
 ### Fixed
 
-🐛(service-worker) fix sw registration and page reload logic #1500
+- 🐛(service-worker) fix sw registration and page reload logic #1500
 
 ## [3.8.1] - 2025-10-17
 
