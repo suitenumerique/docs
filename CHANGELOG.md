@@ -10,7 +10,8 @@ and this project adheres to
 
 ### Fixed
 
-🐛(service-worker) fix sw registration and page reload logic #1500
+- 🐛(service-worker) fix sw registration and page reload logic #1500
+- 🐛(frontend) fix duplicate document entries in grid #1479
 
 ## [3.8.1] - 2025-10-17
 

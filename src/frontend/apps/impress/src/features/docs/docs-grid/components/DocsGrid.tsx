@@ -1,4 +1,5 @@
 import { Button } from '@openfun/cunningham-react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
@@ -36,7 +37,19 @@ export const DocsGrid = ({
     hasNextPage,
   } = useDocsQuery(target);
 
-  const docs = data?.pages.flatMap((page) => page.results) ?? [];
+  const docs = useMemo(() => {
+    const allDocs = data?.pages.flatMap((page) => page.results) ?? [];
+    // Deduplicate documents by ID to prevent the same doc appearing multiple times
+    // This can happen when a multiple users are impacting the docs list (creation, update, ...)
+    const seenIds = new Set<string>();
+    return allDocs.filter((doc) => {
+      if (seenIds.has(doc.id)) {
+        return false;
+      }
+      seenIds.add(doc.id);
+      return true;
+    });
+  }, [data?.pages]);
 
   const loading = isFetching || isLoading;
   const hasDocs = data?.pages.some((page) => page.results.length > 0);
