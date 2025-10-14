@@ -92,9 +92,10 @@ nextjs-portal {
 
 /* Screen reader only - visually hidden but accessible to screen readers */
 .sr-only {
-  position: absolute !important;
+  position: fixed !important;
   width: 1px !important;
   height: 1px !important;
+  transform: translateX(-100vw) !important;
   padding: 0 !important;
   margin: -1px !important;
   overflow: hidden !important;
