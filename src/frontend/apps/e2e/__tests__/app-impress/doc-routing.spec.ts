@@ -60,35 +60,30 @@ test.describe('Doc Routing', () => {
 
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
 
-    // Wait for the doc link (via its dynamic title) to be visible
-    const docLink = page.getByRole('link', { name: docTitle });
-    await expect(docLink).toBeVisible();
+    const responsePromise = page.route(
+      /.*\/documents\/.*\/$|users\/me\/$/,
+      async (route) => {
+        const request = route.request();
 
-    // Intercept GET/PATCH requests to return 401
-    await page.route(/.*\/documents\/.*\/$|users\/me\/$/, async (route) => {
-      const request = route.request();
-      if (
-        request.method().includes('PATCH') ||
-        request.method().includes('GET')
-      ) {
-        await route.fulfill({
-          status: 401,
-          json: { detail: 'Log in to access the document' },
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // Explicitly wait for a 401 response after clicking
-    const wait401 = page.waitForResponse(
-      (resp) =>
-        resp.status() === 401 &&
-        /\/(documents\/[^/]+\/|users\/me\/)$/.test(resp.url()),
+        if (
+          request.method().includes('PATCH') ||
+          request.method().includes('GET')
+        ) {
+          await route.fulfill({
+            status: 401,
+            json: {
+              detail: 'Log in to access the document',
+            },
+          });
+        } else {
+          await route.continue();
+        }
+      },
     );
 
-    await docLink.click();
-    await wait401;
+    await page.getByRole('link', { name: '401-doc-parent' }).click();
+
+    await responsePromise;
 
     await expect(page.getByText('Log in to access the document.')).toBeVisible({
       timeout: 10000,

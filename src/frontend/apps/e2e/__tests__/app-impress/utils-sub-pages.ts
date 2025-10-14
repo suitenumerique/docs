@@ -117,6 +117,10 @@ export const navigateToPageFromTree = async ({
   title: string;
 }) => {
   const docTree = page.getByTestId('doc-tree');
-  await docTree.getByText(title).click();
+  await docTree
+    .getByText(title, {
+      exact: true,
+    })
+    .click();
   await verifyDocName(page, title);
 };
