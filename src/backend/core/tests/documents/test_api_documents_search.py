@@ -93,6 +93,7 @@ def test_api_documents_search_endpoint_is_none(indexer_settings):
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "deleted_at": None,
         "user_role": access.role,
     }
 
@@ -184,6 +185,7 @@ def test_api_documents_search_format(indexer_settings):
         "path": document.path,
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+        "deleted_at": None,
         "user_role": access.role,
     }
 
