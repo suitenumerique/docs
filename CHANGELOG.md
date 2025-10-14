@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.8.0] - 2025-10-14
+
 ### Added
 
 - ✨(frontend) add pdf block to the editor #1293
@@ -36,7 +38,7 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(backend) duplicate sub docs as root for reader users
+- 🐛(backend) duplicate sub docs as root for reader users #1385
 - ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
@@ -47,10 +49,11 @@ and this project adheres to
 - 🐛(frontend) exclude h4-h6 headings from table of contents #1441
 - 🔒(frontend) prevent readers from changing callout emoji #1449
 - 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
-- 🐛(backend) filter invitation with case insensitive email
+- 🐛(backend) filter invitation with case insensitive email #1457
 - 🐛(frontend) reduce no access image size from 450 to 300 #1463
 - 🐛(frontend) preserve interlink style on drag-and-drop in editor #1460
 - ✨(frontend) load docs logo from public folder via url #1462
+- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.7.0] - 2025-09-12
 
@@ -114,7 +117,6 @@ and this project adheres to
 - 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
 - 🐛(frontend) fix display bug on homepage #1332
 - 🐛link role update #1287
-- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.5.0] - 2025-07-31
 
@@ -786,7 +788,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.7.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.8.0...main
+[v3.8.0]: https://github.com/suitenumerique/docs/releases/v3.8.0
 [v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
 [v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
 [v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0
