@@ -1,6 +1,7 @@
 import { Button } from '@openfun/cunningham-react';
 import Head from 'next/head';
 import Image from 'next/image';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -8,6 +9,7 @@ import img403 from '@/assets/icons/icon-403.png';
 import { Box, Icon, Loading, StyledLink, Text } from '@/components';
 import { ButtonAccessRequest } from '@/docs/doc-share';
 import { useDocAccessRequests } from '@/docs/doc-share/api/useDocAccessRequest';
+import { useSkeletonStore } from '@/features/skeletons';
 
 const StyledButton = styled(Button)`
   width: fit-content;
@@ -19,6 +21,13 @@ interface DocProps {
 
 export const DocPage403 = ({ id }: DocProps) => {
   const { t } = useTranslation();
+  const { setIsSkeletonVisible } = useSkeletonStore();
+
+  useEffect(() => {
+    // Ensure the skeleton overlay is hidden on 403 page
+    setIsSkeletonVisible(false);
+  }, [setIsSkeletonVisible]);
+
   const {
     data: requests,
     isLoading: isLoadingRequest,

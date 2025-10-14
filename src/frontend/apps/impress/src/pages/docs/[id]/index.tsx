@@ -20,6 +20,7 @@ import {
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
+import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useBroadcastStore } from '@/stores';
@@ -61,6 +62,7 @@ interface DocProps {
 
 const DocPage = ({ id }: DocProps) => {
   const { hasLostConnection, resetLostConnection } = useProviderStore();
+  const { isSkeletonVisible, setIsSkeletonVisible } = useSkeletonStore();
   const {
     data: docQuery,
     isError,
@@ -91,6 +93,15 @@ const DocPage = ({ id }: DocProps) => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
   const { untitledDocument } = useTrans();
+
+  /**
+   * Show skeleton when loading a document
+   */
+  useEffect(() => {
+    if (!doc && !isError && !isSkeletonVisible) {
+      setIsSkeletonVisible(true);
+    }
+  }, [doc, isError, isSkeletonVisible, setIsSkeletonVisible]);
 
   /**
    * Scroll to top when navigating to a new document
@@ -129,7 +140,13 @@ const DocPage = ({ id }: DocProps) => {
 
     setDoc(docQuery);
     setCurrentDoc(docQuery);
-  }, [docQuery, setCurrentDoc, isFetching]);
+  }, [
+    docQuery,
+    setCurrentDoc,
+    isFetching,
+    isSkeletonVisible,
+    setIsSkeletonVisible,
+  ]);
 
   useEffect(() => {
     return () => {

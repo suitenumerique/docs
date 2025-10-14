@@ -13,6 +13,7 @@ import {
 } from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
 import { Versions, useDocVersion } from '@/docs/doc-versioning/';
+import { useSkeletonStore } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
 import { BlockNoteEditor, BlockNoteEditorVersion } from './BlockNoteEditor';
@@ -26,9 +27,16 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const isVersion = !!versionId && typeof versionId === 'string';
   const { provider, isReady } = useProviderStore();
+  const { setIsSkeletonVisible } = useSkeletonStore();
+  const isProviderReady = isReady && provider;
 
-  // TODO: Use skeleton instead of loading
-  if (!provider || !isReady) {
+  useEffect(() => {
+    if (isProviderReady) {
+      setIsSkeletonVisible(false);
+    }
+  }, [isProviderReady, setIsSkeletonVisible]);
+
+  if (!isProviderReady) {
     return <Loading />;
   }
 

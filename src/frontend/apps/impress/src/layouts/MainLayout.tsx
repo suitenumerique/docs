@@ -7,6 +7,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
+import { DocEditorSkeleton, Skeleton } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
 import { MAIN_LAYOUT_ID } from './conf';
@@ -66,6 +67,7 @@ export function MainLayoutContent({
       $flex={1}
       $width="100%"
       $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
+      $position="relative"
       $padding={{
         all: isDesktop ? 'base' : '0',
       }}
@@ -79,6 +81,9 @@ export function MainLayoutContent({
         overflow-x: clip;
       `}
     >
+      <Skeleton>
+        <DocEditorSkeleton />
+      </Skeleton>
       {children}
     </Box>
   );
