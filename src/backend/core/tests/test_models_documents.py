@@ -22,6 +22,7 @@ import pytest
 
 from core import factories, models
 from core.services.search_indexers import SearchIndexer
+from core.tasks.search import document_indexer_task
 
 pytestmark = pytest.mark.django_db
 
@@ -1473,10 +1474,10 @@ def test_models_documents_post_save_indexer(mock_push, indexer_settings):
         key=itemgetter("id"),
     )
 
-    # The debounce counters should be reset
-    assert cache.get(f"doc-indexer-debounce-{doc1.pk}") == 0
-    assert cache.get(f"doc-indexer-debounce-{doc2.pk}") == 0
-    assert cache.get(f"doc-indexer-debounce-{doc3.pk}") == 0
+    # The throttle counters should be reset
+    assert cache.get(f"doc-indexer-throttle-{doc1.pk}") is None
+    assert cache.get(f"doc-indexer-throttle-{doc2.pk}") is None
+    assert cache.get(f"doc-indexer-throttle-{doc3.pk}") is None
 
 
 @mock.patch.object(SearchIndexer, "push")
@@ -1486,10 +1487,31 @@ def test_models_documents_post_save_indexer_not_configured(mock_push, indexer_se
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
     indexer_settings.SEARCH_INDEXER_CLASS = None
 
-    with transaction.atomic():
-        factories.DocumentFactory()
+    user = factories.UserFactory()
 
-    assert mock_push.call_args_list == []
+    with transaction.atomic():
+        doc = factories.DocumentFactory()
+        factories.UserDocumentAccessFactory(document=doc, user=user)
+
+    assert mock_push.assert_not_called
+
+
+@mock.patch.object(SearchIndexer, "push")
+@pytest.mark.django_db(transaction=True)
+def test_models_documents_post_save_indexer_wrongly_configured(
+    mock_push, indexer_settings
+):
+    """Task should not start an indexation when disabled"""
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
+    indexer_settings.SEARCH_INDEXER_URL = None
+
+    user = factories.UserFactory()
+
+    with transaction.atomic():
+        doc = factories.DocumentFactory()
+        factories.UserDocumentAccessFactory(document=doc, user=user)
+
+    assert mock_push.assert_not_called
 
 
 @mock.patch.object(SearchIndexer, "push")
@@ -1526,10 +1548,10 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push, indexer_set
         key=itemgetter("id"),
     )
 
-    # The debounce counters should be reset
-    assert cache.get(f"doc-indexer-debounce-{doc1.pk}") == 0
-    assert cache.get(f"doc-indexer-debounce-{doc2.pk}") == 0
-    assert cache.get(f"doc-indexer-debounce-{doc3.pk}") == 0
+    # The throttle counters should be reset
+    assert cache.get(f"doc-indexer-throttle-{doc1.pk}") is None
+    assert cache.get(f"doc-indexer-throttle-{doc2.pk}") is None
+    assert cache.get(f"doc-indexer-throttle-{doc3.pk}") is None
 
 
 @mock.patch.object(SearchIndexer, "push")
@@ -1588,10 +1610,34 @@ def test_models_documents_post_save_indexer_deleted(mock_push, indexer_settings)
         key=itemgetter("id"),
     )
 
-    # The debounce counters should be reset
-    assert cache.get(f"doc-indexer-debounce-{doc.pk}") == 0
-    assert cache.get(f"doc-indexer-debounce-{doc_deleted.pk}") == 0
-    assert cache.get(f"doc-indexer-debounce-{doc_ancestor_deleted.pk}") == 0
+    # The throttle counters should be reset
+    assert cache.get(f"doc-indexer-throttle-{doc.pk}") is None
+    assert cache.get(f"doc-indexer-throttle-{doc_deleted.pk}") is None
+    assert cache.get(f"doc-indexer-throttle-{doc_ancestor_deleted.pk}") is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_models_documents_indexer_hard_deleted(indexer_settings):
+    """Indexation task on hard deleted document"""
+    indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
+
+    user = factories.UserFactory()
+
+    with transaction.atomic():
+        doc = factories.DocumentFactory(
+            link_reach=models.LinkReachChoices.AUTHENTICATED
+        )
+        factories.UserDocumentAccessFactory(document=doc, user=user)
+
+    doc_id = doc.pk
+    doc.delete()
+
+    # Call task on deleted document.
+    document_indexer_task.apply(args=[doc_id])
+
+    with mock.patch.object(SearchIndexer, "push") as mock_push:
+        # Hard delete document are not re-indexed.
+        assert mock_push.assert_not_called
 
 
 @mock.patch.object(SearchIndexer, "push")
@@ -1664,7 +1710,7 @@ def test_models_documents_post_save_indexer_restored(mock_push, indexer_settings
 
 
 @pytest.mark.django_db(transaction=True)
-def test_models_documents_post_save_indexer_debounce(indexer_settings):
+def test_models_documents_post_save_indexer_throttle(indexer_settings):
     """Test indexation task skipping on document update"""
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
@@ -1681,11 +1727,11 @@ def test_models_documents_post_save_indexer_debounce(indexer_settings):
     }
 
     with mock.patch.object(SearchIndexer, "push") as mock_push:
-        # Simulate 1 waiting task
-        cache.set(f"doc-indexer-debounce-{doc.pk}", 1)
+        # Simulate 1 running task
+        cache.set(f"doc-indexer-throttle-{doc.pk}", 1)
 
         # save doc to trigger the indexer, but nothing should be done since
-        # the counter is over 0
+        # the flag is up
         with transaction.atomic():
             doc.save()
 
@@ -1693,7 +1739,7 @@ def test_models_documents_post_save_indexer_debounce(indexer_settings):
 
     with mock.patch.object(SearchIndexer, "push") as mock_push:
         # No waiting task
-        cache.set(f"doc-indexer-debounce-{doc.pk}", 0)
+        cache.delete(f"doc-indexer-throttle-{doc.pk}")
 
         with transaction.atomic():
             doc = models.Document.objects.get(pk=doc.pk)
