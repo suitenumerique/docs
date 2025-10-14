@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) create skeleton component for DocEditor #1491
+
 ### Changed
 
 - ♻️(frontend) adapt custom blocks to new implementation #1375
