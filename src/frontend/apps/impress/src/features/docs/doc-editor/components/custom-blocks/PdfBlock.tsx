@@ -44,7 +44,13 @@ export const PdfBlock = createReactBlockSpec(
         <Box ref={contentRef} className="bn-file-block-content-wrapper">
           <PDFBlockStyle />
           <ResizableFileBlockWrapper
-            buttonIcon={<Icon iconName="upload" />}
+            buttonIcon={
+              <Icon
+                iconName="upload"
+                $size="24px"
+                $css="line-height: normal;"
+              />
+            }
             block={block}
             editor={editor as unknown as FileBlockEditor}
             buttonText={t('Add PDF')}

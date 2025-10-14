@@ -24,7 +24,7 @@ export const AlertNetwork = () => {
           $padding="xs"
           $flex={1}
           $align="center"
-          $gap={spacingsTokens['3xs']}
+          $gap={spacingsTokens['2xs']}
           $css={css`
             border: 1px solid var(--c--theme--colors--warning-300);
           `}

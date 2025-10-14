@@ -91,7 +91,7 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
           $size="18px"
           variant="symbols-outlined"
         />
-        <Text $theme="danger" $variation="600" $size="s">
+        <Text $theme="danger" $variation="600" $size="s" $css="line-height:1;">
           {t('Restore')}
         </Text>
       </BoxButton>

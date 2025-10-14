@@ -18,7 +18,7 @@ export const AlertPublic = ({ isPublicDoc }: { isPublicDoc: boolean }) => {
       $padding="xs"
       $flex={1}
       $align="center"
-      $gap={spacingsTokens['3xs']}
+      $gap={spacingsTokens['2xs']}
       $css={css`
         border: 1px solid var(--c--theme--colors--primary-300, #e3e3fd);
       `}
