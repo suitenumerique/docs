@@ -1,8 +1,8 @@
 export interface HeaderType {
   logo?: {
-    src: string;
+    src?: string;
     width?: string;
+    height?: string;
     alt?: string;
-    withTitle?: boolean;
   };
 }

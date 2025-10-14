@@ -32,6 +32,24 @@ Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom 
 
 ----
 
+# **Your logo** 📝
+
+You can add your own logo in the header from the theme customization file.
+
+### Settings 🔧
+
+```shellscript
+THEME_CUSTOMIZATION_FILE_PATH=<path>
+```
+
+### Example of JSON
+
+You can activate it with the `header.logo` configuration: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+
+This configuration is optional. If not set, the default logo will be used.
+
+----
+
 # **Footer Configuration** 📝
 
 The footer is configurable from the theme customization file.

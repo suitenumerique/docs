@@ -23,8 +23,6 @@ export const Header = () => {
 
   const logo = config?.theme_customization?.header?.logo;
 
-  const styleWidth = logo?.width || '32px';
-
   return (
     <Box
       as="header"
@@ -66,18 +64,19 @@ export const Header = () => {
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          {logo?.src && (
-            <Image
-              className="c__image-system-filter"
-              data-testid="header-icon-docs"
-              src={logo.src}
-              alt={logo?.alt || t('Logo')}
-              width={32}
-              height={32}
-              style={{ width: styleWidth, height: 'auto' }}
-              priority
-            />
-          )}
+          <Image
+            className="c__image-system-filter"
+            data-testid="header-icon-docs"
+            src={logo?.src || '/assets/icon-docs.svg'}
+            alt={logo?.alt || t('Docs')}
+            width={0}
+            height={0}
+            style={{
+              width: logo?.width || 32,
+              height: logo?.height || 'auto',
+            }}
+            priority
+          />
           <Title headingLevel="h1" aria-hidden="true" />
         </Box>
       </StyledLink>
