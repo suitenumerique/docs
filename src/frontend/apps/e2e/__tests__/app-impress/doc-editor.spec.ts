@@ -850,7 +850,6 @@ test.describe('Doc Editor', () => {
     await page.getByText('Upload file').click();
     const fileChooser = await fileChooserPromise;
 
-    console.log(path.join(__dirname, 'assets/test-pdf.pdf'));
     await fileChooser.setFiles(path.join(__dirname, 'assets/test-pdf.pdf'));
 
     // Wait for the media-check to be processed
