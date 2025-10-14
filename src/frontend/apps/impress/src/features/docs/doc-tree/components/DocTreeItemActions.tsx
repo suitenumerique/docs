@@ -152,7 +152,6 @@ export const DocTreeItemActions = ({
           options={options}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
-          aria-label={t('Open document actions menu')}
         >
           <Icon
             onClick={(e) => {
@@ -164,7 +163,7 @@ export const DocTreeItemActions = ({
             variant="filled"
             $theme="primary"
             $variation="600"
-            aria-hidden="true"
+            aria-label={t('More options')}
           />
         </DropdownMenu>
         {doc.abilities.children_create && (

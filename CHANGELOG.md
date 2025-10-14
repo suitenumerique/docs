@@ -10,6 +10,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿ add missing aria-label to add sub-doc button for accessib… #1480
+  - ♿ add missing aria-label to more options button on sub-docs #1481
 
 ## [3.8.0] - 2025-10-14
 
