@@ -50,7 +50,7 @@ export const useUpdateDocAccess = (options?: UseUpdateDocAccessOptions) => {
   return useMutation<Access, APIError, UpdateDocAccessProps>({
     mutationFn: updateDocAccess,
     ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC_ACCESSES],
       });
@@ -65,7 +65,7 @@ export const useUpdateDocAccess = (options?: UseUpdateDocAccessOptions) => {
         queryKey: [KEY_LIST_DOC],
       });
       if (options?.onSuccess) {
-        void options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, onMutateResult, context);
       }
     },
   });

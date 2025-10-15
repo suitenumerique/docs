@@ -45,7 +45,7 @@ export const useDeleteDocAccess = (options?: UseDeleteDocAccessOptions) => {
   return useMutation<void, APIError, DeleteDocAccessProps>({
     mutationFn: deleteDocAccess,
     ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC_ACCESSES],
       });
@@ -63,7 +63,7 @@ export const useDeleteDocAccess = (options?: UseDeleteDocAccessOptions) => {
         queryKey: [KEY_LIST_USER],
       });
       if (options?.onSuccess) {
-        void options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, onMutateResult, context);
       }
     },
   });
