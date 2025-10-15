@@ -1,9 +1,8 @@
 import { docxDefaultSchemaMappings } from '@blocknote/xl-docx-exporter';
-import { Paragraph } from 'docx';
+import { TextRun } from 'docx';
 
 import {
   blockMappingCalloutDocx,
-  blockMappingDividerDocx,
   blockMappingImageDocx,
   blockMappingQuoteDocx,
   blockMappingUploadLoaderDocx,
@@ -16,9 +15,8 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
   blockMapping: {
     ...docxDefaultSchemaMappings.blockMapping,
     callout: blockMappingCalloutDocx,
-    divider: blockMappingDividerDocx,
-    // We're using the file block mapping for PDF blocks
-    // The types don't match exactly but the implementation is compatible
+    // We're reusing the file block mapping for PDF blocks; both share the same
+    // implementation signature, so we can reuse the handler directly.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     pdf: docxDefaultSchemaMappings.blockMapping.file as any,
     quote: blockMappingQuoteDocx,
@@ -27,7 +25,7 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
   },
   inlineContentMapping: {
     ...docxDefaultSchemaMappings.inlineContentMapping,
-    interlinkingSearchInline: () => new Paragraph(''),
+    interlinkingSearchInline: () => new TextRun(''),
     interlinkingLinkInline: inlineContentMappingInterlinkingLinkDocx,
   },
   styleMapping: {

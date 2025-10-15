@@ -88,6 +88,10 @@ and this project adheres to
 - ✨(frontend) load docs logo from public folder via url #1462
 - 🔧(keycloak) Fix https required issue in dev mode #1286
 
+## Removed
+
+- 🔥(frontend) remove custom DividerBlock ##1375
+
 ## [3.7.0] - 2025-09-12
 
 ### Added
