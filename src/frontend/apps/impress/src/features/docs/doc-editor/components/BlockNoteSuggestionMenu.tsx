@@ -17,7 +17,6 @@ import {
 
 import {
   getCalloutReactSlashMenuItems,
-  getDividerReactSlashMenuItems,
   getPdfReactSlashMenuItems,
 } from './custom-blocks';
 import { useGetInterlinkingMenuItems } from './custom-inline-content';
@@ -59,7 +58,6 @@ export const BlockNoteSuggestionMenu = () => {
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getMultiColumnSlashMenuItems?.(editor) || [],
             getPageBreakReactSlashMenuItems(editor),
-            getDividerReactSlashMenuItems(editor, t, basicBlocksName),
             getPdfReactSlashMenuItems(editor, t, fileBlocksName),
           ),
           query,
