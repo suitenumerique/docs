@@ -59,12 +59,12 @@ export function useCreateDocAccessRequest(
   return useMutation<void, APIError, CreateDocAccessRequestParams>({
     mutationFn: createDocAccessRequest,
     ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC_ACCESS_REQUESTS],
       });
 
-      void options?.onSuccess?.(data, variables, context);
+      void options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }
@@ -169,7 +169,7 @@ export const useAcceptDocAccessRequest = (
   return useMutation<void, APIError, acceptDocAccessRequestsParams>({
     mutationFn: acceptDocAccessRequests,
     ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC_ACCESSES],
       });
@@ -179,7 +179,7 @@ export const useAcceptDocAccessRequest = (
       });
 
       if (options?.onSuccess) {
-        void options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, onMutateResult, context);
       }
     },
   });
@@ -223,13 +223,13 @@ export const useDeleteDocAccessRequest = (
   return useMutation<void, APIError, DeleteDocAccessRequestParams>({
     mutationFn: deleteDocAccessRequest,
     ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC_ACCESS_REQUESTS],
       });
 
       if (options?.onSuccess) {
-        void options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, onMutateResult, context);
       }
     },
   });
