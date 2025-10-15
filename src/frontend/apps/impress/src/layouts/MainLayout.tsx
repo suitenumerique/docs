@@ -6,7 +6,7 @@ import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
-import { LeftPanel } from '@/features/left-panel';
+import { DocCreationOverlay, LeftPanel } from '@/features/left-panel';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useResponsiveStore } from '@/stores';
 
@@ -49,11 +49,13 @@ export function MainLayout({
               ? colorsTokens['greyscale-000']
               : colorsTokens['greyscale-050']
           }
+          $position="relative"
           $css={css`
             overflow-y: auto;
             overflow-x: clip;
           `}
         >
+          <DocCreationOverlay />
           {children}
         </Box>
       </Box>

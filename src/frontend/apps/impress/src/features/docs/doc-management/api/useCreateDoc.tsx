@@ -20,9 +20,10 @@ export const createDoc = async (): Promise<Doc> => {
 
 interface CreateDocProps {
   onSuccess: (data: Doc) => void;
+  onError?: (error: APIError) => void;
 }
 
-export function useCreateDoc({ onSuccess }: CreateDocProps) {
+export function useCreateDoc({ onSuccess, onError }: CreateDocProps) {
   const queryClient = useQueryClient();
   return useMutation<Doc, APIError>({
     mutationFn: createDoc,
@@ -31,6 +32,9 @@ export function useCreateDoc({ onSuccess }: CreateDocProps) {
         queryKey: [KEY_LIST_DOC],
       });
       onSuccess(data);
+    },
+    onError: (error) => {
+      onError?.(error);
     },
   });
 }
