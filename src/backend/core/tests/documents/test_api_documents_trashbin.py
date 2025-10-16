@@ -166,10 +166,10 @@ def test_api_documents_trashbin_authenticated_direct(django_assert_num_queries):
 
     expected_ids = {str(document1.id), str(document2.id), str(document3.id)}
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(11):
         response = client.get("/api/v1.0/documents/trashbin/")
 
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200
@@ -208,10 +208,10 @@ def test_api_documents_trashbin_authenticated_via_team(
 
     expected_ids = {str(deleted_document_team1.id), str(deleted_document_team2.id)}
 
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(8):
         response = client.get("/api/v1.0/documents/trashbin/")
 
-    with django_assert_num_queries(3):
+    with django_assert_num_queries(4):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200

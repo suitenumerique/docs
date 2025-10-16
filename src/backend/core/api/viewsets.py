@@ -623,12 +623,29 @@ class DocumentViewSet(
         The selected documents are those deleted within the cutoff period defined in the
         settings (see TRASHBIN_CUTOFF_DAYS), before they are considered permanently deleted.
         """
+
+        if not request.user.is_authenticated:
+            return self.get_response_for_queryset(self.queryset.none())
+
+        access_documents_paths = (
+            models.DocumentAccess.objects.select_related("document")
+            .filter(
+                db.Q(user=self.request.user) | db.Q(team__in=self.request.user.teams),
+                role=models.RoleChoices.OWNER,
+            )
+            .values_list("document__path", flat=True)
+        )
+
+        children_clause = db.Q()
+        for path in access_documents_paths:
+            children_clause |= db.Q(path__startswith=path)
+
         queryset = self.queryset.filter(
+            children_clause,
             deleted_at__isnull=False,
             deleted_at__gte=models.get_trashbin_cutoff(),
         )
         queryset = queryset.annotate_user_roles(self.request.user)
-        queryset = queryset.filter(user_roles__contains=[models.RoleChoices.OWNER])
 
         return self.get_response_for_queryset(queryset)
 
