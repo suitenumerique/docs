@@ -240,7 +240,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               }
             }
             &:hover,
-            &:focus-within {
+            &:focus-visible {
               .doc-tree-root-item-actions {
                 opacity: 1;
               }
