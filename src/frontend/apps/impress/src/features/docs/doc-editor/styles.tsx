@@ -16,6 +16,9 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
       font-weight: 400;
     }
 
+    /**
+     * Ensure long placeholder text is truncated with ellipsis
+     */
     .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
       .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
       text-overflow: ellipsis;
@@ -29,14 +32,16 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
       position: relative;
     }
 
-    .bn-side-menu .mantine-UnstyledButton-root svg {
-      color: #767676 !important;
-    }
-
+    /**
+     * Ensure images with unsafe URLs are not interactive
+     */
     img.bn-visual-media[src*='-unsafe'] {
       pointer-events: none;
     }
 
+    /**
+     * Collaboration cursor styles
+     */
     .collaboration-cursor-custom__base {
       position: relative;
     }
@@ -87,6 +92,9 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
     .bn-side-menu[data-block-type='divider'] {
       height: 38px;
     }
+    .bn-side-menu .mantine-UnstyledButton-root svg {
+      color: #767676 !important;
+    }
 
     /**
      * Callout, Paragraph and Heading blocks
@@ -94,21 +102,17 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
     .bn-block {
       border-radius: var(--c--theme--spacings--3xs);
     }
-
     .bn-block-outer {
       border-radius: var(--c--theme--spacings--3xs);
     }
-
-    .bn-block[data-background-color] > .bn-block-content {
+    .bn-block > .bn-block-content[data-background-color] {
       padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
       border-radius: var(--c--theme--spacings--3xs);
     }
-
     .bn-block-content[data-content-type='checkListItem'][data-checked='true']
       .bn-inline-content {
       text-decoration: none;
     }
-
     h1 {
       font-size: 1.875rem;
     }
@@ -145,6 +149,16 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
     blockquote {
       border-left: 4px solid var(--c--theme--colors--greyscale-300);
       font-style: italic;
+    }
+
+    /**
+     * Divider
+    */
+    [data-content-type='divider'] hr {
+      background: #d3d2cf;
+      margin: 1rem 0;
+      width: 100%;
+      border: 1px solid #d3d2cf;
     }
   }
 

@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Changed
 
+- ♻️(frontend) adapt custom blocks to new implementation #1375
 - ♻️(backend) increase user short_name field length
 
 ### Fixed
@@ -41,10 +42,6 @@ and this project adheres to
 
 - ✨(frontend) add pdf block to the editor #1293
 - ✨List and restore deleted docs #1450
-
-### Fixed
-
-- 🐛(frontend) show full nested doc names with ajustable bar #1456
 
 ### Changed
 

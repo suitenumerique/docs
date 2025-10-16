@@ -20,6 +20,7 @@
     "@hocuspocus/server": "2.15.2",
     "@sentry/node": "10.17.0",
     "@sentry/profiling-node": "10.17.0",
+    "@tiptap/extensions": "*",
     "axios": "1.12.2",
     "cors": "2.8.5",
     "express": "5.1.0",
@@ -29,6 +30,7 @@
     "yjs": "*"
   },
   "devDependencies": {
+    "@blocknote/core": "0.41.1",
     "@hocuspocus/provider": "2.15.2",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.3",

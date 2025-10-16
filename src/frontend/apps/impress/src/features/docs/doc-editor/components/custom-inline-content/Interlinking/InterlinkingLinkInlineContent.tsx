@@ -78,7 +78,7 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
         transition: background-color 0.2s ease-in-out;
       `}
     >
-      <SelectedPageIcon width={11.5} />
+      <SelectedPageIcon width={11.5} color={colorsTokens['primary-400']} />
       <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
         {title}
       </Text>

@@ -676,10 +676,9 @@ test.describe('Doc Editor', () => {
 
     await calloutBlock.locator('.inline-content').fill('example text');
 
-    await expect(page.locator('.bn-block').first()).toHaveAttribute(
-      'data-background-color',
-      'yellow',
-    );
+    await expect(
+      page.locator('.bn-block-content[data-content-type="callout"]').first(),
+    ).toHaveAttribute('data-background-color', 'yellow');
 
     const emojiButton = calloutBlock.getByRole('button');
     await expect(emojiButton).toHaveText('💡');
@@ -703,10 +702,9 @@ test.describe('Doc Editor', () => {
     await page.locator('.mantine-Menu-dropdown > button').last().click();
     await page.locator('.bn-color-picker-dropdown > button').last().click();
 
-    await expect(page.locator('.bn-block').first()).toHaveAttribute(
-      'data-background-color',
-      'pink',
-    );
+    await expect(
+      page.locator('.bn-block-content[data-content-type="callout"]').first(),
+    ).toHaveAttribute('data-background-color', 'pink');
   });
 
   test('it checks interlink feature', async ({ page, browserName }) => {
@@ -844,10 +842,10 @@ test.describe('Doc Editor', () => {
 
     await expect(pdfBlock).toBeVisible();
 
-    await page.getByText('Add PDF').click();
+    await page.getByText(/Add (PDF|file)/).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
     const downloadPromise = page.waitForEvent('download');
-    await page.getByText('Upload file').click();
+    await page.getByText(/Upload (PDF|file)/).click();
     const fileChooser = await fileChooserPromise;
 
     await fileChooser.setFiles(path.join(__dirname, 'assets/test-pdf.pdf'));

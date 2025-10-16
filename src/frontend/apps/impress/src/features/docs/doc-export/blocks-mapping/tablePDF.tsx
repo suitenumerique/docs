@@ -92,15 +92,11 @@ export const blockMappingTablePDF: DocsExporterPDF['mappings']['blockMapping']['
                     color:
                       cellProps.textColor === 'default'
                         ? undefined
-                        : options.colors[
-                            cellProps.textColor as keyof typeof options.colors
-                          ].text,
+                        : options.colors[cellProps.textColor].text,
                     backgroundColor:
                       cellProps.backgroundColor === 'default'
                         ? undefined
-                        : options.colors[
-                            cellProps.backgroundColor as keyof typeof options.colors
-                          ].background,
+                        : options.colors[cellProps.backgroundColor].background,
                     textAlign: cellProps.textAlignment,
                   },
                 ];

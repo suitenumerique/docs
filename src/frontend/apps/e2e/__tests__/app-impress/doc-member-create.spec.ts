@@ -7,6 +7,7 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
+import { writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateRoleUser } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
@@ -240,11 +241,7 @@ test.describe('Document create member', () => {
 
     await verifyDocName(page, docTitle);
 
-    await page
-      .locator('.ProseMirror')
-      .locator('.bn-block-outer')
-      .last()
-      .fill('Hello World');
+    await writeInEditor({ page, text: 'Hello World' });
 
     const docUrl = page.url();
 
