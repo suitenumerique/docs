@@ -12,6 +12,10 @@ and this project adheres to
   - ♿ add missing aria-label to add sub-doc button for accessib… #1480
   - ♿ add missing aria-label to more options button on sub-docs #1481
 
+### Fixed
+
+- ⚡️(backend) improve trashbin endpoint performance
+
 ## [3.8.0] - 2025-10-14
 
 ### Added
