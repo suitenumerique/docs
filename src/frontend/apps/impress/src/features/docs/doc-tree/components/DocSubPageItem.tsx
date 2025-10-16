@@ -119,7 +119,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           : 'var(--c--theme--colors--greyscale-000)'};
         .light-doc-item-actions {
           display: flex;
-          position: sticky;
+          position: absolute;
           right: 0;
 
           opacity: ${menuOpen || !isDesktop ? '1' : '0'};
