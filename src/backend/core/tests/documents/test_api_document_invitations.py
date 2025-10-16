@@ -769,6 +769,37 @@ def test_api_document_invitations_update_authenticated_unprivileged(
         assert value == old_invitation_values[key]
 
 
+@pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("role", ["administrator", "owner"])
+def test_api_document_invitations_patch(via, role, mock_user_teams):
+    """Partially updating an invitation should be allowed."""
+
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory(role="editor")
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=invitation.document, user=user, role=role
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=invitation.document, team="lasuite", role=role
+        )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        {"role": "reader"},
+        format="json",
+    )
+    assert response.status_code == 200
+    invitation.refresh_from_db()
+    assert invitation.role == "reader"
+
+
 # Delete
 
 
