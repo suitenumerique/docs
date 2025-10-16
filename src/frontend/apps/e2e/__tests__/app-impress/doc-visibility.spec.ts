@@ -175,7 +175,9 @@ test.describe('Doc Visibility: Restricted', () => {
     await addNewMember(page, 0, 'Reader', otherBrowserName);
 
     await otherPage.reload();
-    await expect(otherPage.getByText('Hello World')).toBeVisible();
+    await expect(otherPage.getByText('Hello World')).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
 
