@@ -47,7 +47,7 @@ export function DocLayout() {
           return subPageToTree(doc.results);
         }}
       >
-        <MainLayout>
+        <MainLayout enableResizablePanel={true}>
           <DocPage id={id} />
         </MainLayout>
       </TreeProvider>
