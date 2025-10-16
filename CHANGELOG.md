@@ -15,6 +15,8 @@ and this project adheres to
 ### Fixed
 
 - ⚡️(backend) improve trashbin endpoint performance
+- 🐛(backend) manage invitation partial update without email #1494
+
 
 ## [3.8.0] - 2025-10-14
 

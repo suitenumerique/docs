@@ -202,8 +202,18 @@ test.describe('Document create member', () => {
     );
     await expect(userInvitation).toBeVisible();
 
+    const responsePromisePatchInvitation = page.waitForResponse(
+      (response) =>
+        response.url().includes('/invitations/') &&
+        response.status() === 200 &&
+        response.request().method() === 'PATCH',
+    );
+
     await userInvitation.getByLabel('doc-role-dropdown').click();
     await page.getByRole('menuitem', { name: 'Reader' }).click();
+
+    const responsePatchInvitation = await responsePromisePatchInvitation;
+    expect(responsePatchInvitation.ok()).toBeTruthy();
 
     const moreActions = userInvitation.getByRole('button', {
       name: 'Open invitation actions menu',

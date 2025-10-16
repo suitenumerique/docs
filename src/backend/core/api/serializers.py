@@ -749,7 +749,8 @@ class InvitationSerializer(serializers.ModelSerializer):
         if self.instance is None:
             attrs["issuer"] = user
 
-        attrs["email"] = attrs["email"].lower()
+        if attrs.get("email"):
+            attrs["email"] = attrs["email"].lower()
 
         return attrs
 
