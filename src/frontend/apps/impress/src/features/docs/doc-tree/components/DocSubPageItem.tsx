@@ -163,6 +163,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           aria-label={`${t('Open document {{title}}', { title: docTitle })}`}
           $css={css`
             text-align: left;
+            min-width: 0;
           `}
         >
           <Box $width="16px" $height="16px">
@@ -180,8 +181,10 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
               display: flex;
               flex-direction: row;
               width: 100%;
+              min-width: 0;
               gap: 0.5rem;
               align-items: center;
+              overflow: hidden;
             `}
           >
             <Text $css={ItemTextCss} $size="sm" $variation="1000">

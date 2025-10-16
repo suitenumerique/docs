@@ -51,6 +51,7 @@ and this project adheres to
 - 🐛(frontend) reduce no access image size from 450 to 300 #1463
 - 🐛(frontend) preserve interlink style on drag-and-drop in editor #1460
 - ✨(frontend) load docs logo from public folder via url #1462
+- 🐛(frontend) show full nested doc names with ajustable bar #1456
 
 ## [3.7.0] - 2025-09-12
 
