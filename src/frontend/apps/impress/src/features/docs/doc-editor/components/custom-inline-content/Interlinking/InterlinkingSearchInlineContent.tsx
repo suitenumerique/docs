@@ -47,6 +47,7 @@ export const getInterlinkinghMenuItems = (
   createPage: () => void,
 ) => [
   {
+    key: 'link-doc',
     title: t('Link a doc'),
     onItemClick: () => {
       editor.insertInlineContent([
@@ -65,6 +66,7 @@ export const getInterlinkinghMenuItems = (
     subtext: t('Link this doc to another doc'),
   },
   {
+    key: 'new-sub-doc',
     title: t('New sub-doc'),
     onItemClick: createPage,
     aliases: ['new sub-doc'],

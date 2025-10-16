@@ -21,6 +21,7 @@ and this project adheres to
 
 ### Changed
 
+- ♻️(frontend) adapt custom blocks to new implementation #1375
 - ♻️(frontend) Refactor Auth component for improved redirection logic #1461
 - ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:

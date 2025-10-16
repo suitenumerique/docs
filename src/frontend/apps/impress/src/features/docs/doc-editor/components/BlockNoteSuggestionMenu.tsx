@@ -1,5 +1,6 @@
 import { combineByGroup, filterSuggestionItems } from '@blocknote/core';
 import {
+  DefaultReactSuggestionItem,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
   getPageBreakReactSlashMenuItems,
@@ -41,28 +42,29 @@ export const BlockNoteSuggestionMenu = () => {
   const getSlashMenuItems = useMemo(() => {
     // We insert it after the "Code Block" item to have the interlinking block displayed after the basic blocks
     const defaultMenu = getDefaultReactSlashMenuItems(editor);
-    const index = defaultMenu.findIndex(
-      (item) => item.aliases?.includes('code') && item.aliases?.includes('pre'),
+
+    const combinedMenu = combineByGroup(
+      defaultMenu,
+      getPageBreakReactSlashMenuItems(editor),
+      getMultiColumnSlashMenuItems?.(editor) || [],
+      getPdfReactSlashMenuItems(editor, t, fileBlocksName),
+      getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
     );
+
+    const index = combinedMenu.findIndex(
+      (item) =>
+        (item as DefaultReactSuggestionItem & { key: string })?.key ===
+        'callout',
+    );
+
     const newSlashMenuItems = [
-      ...defaultMenu.slice(0, index + 1),
+      ...combinedMenu.slice(0, index + 1),
       ...getInterlinkingMenuItems(editor, t),
-      ...defaultMenu.slice(index + 1),
+      ...combinedMenu.slice(index + 1),
     ];
 
     return async (query: string) =>
-      Promise.resolve(
-        filterSuggestionItems(
-          combineByGroup(
-            newSlashMenuItems,
-            getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
-            getMultiColumnSlashMenuItems?.(editor) || [],
-            getPageBreakReactSlashMenuItems(editor),
-            getPdfReactSlashMenuItems(editor, t, fileBlocksName),
-          ),
-          query,
-        ),
-      );
+      Promise.resolve(filterSuggestionItems(newSlashMenuItems, query));
   }, [basicBlocksName, editor, getInterlinkingMenuItems, t, fileBlocksName]);
 
   return (

@@ -31,7 +31,10 @@ describe('DocsGridItemDate', () => {
   });
 
   [
-    { updated_at: DateTime.now().toISO(), rendered: '0 seconds ago' },
+    {
+      updated_at: DateTime.now().minus({ minutes: 1 }).toISO(),
+      rendered: '1 minute ago',
+    },
     {
       updated_at: DateTime.now().minus({ days: 1 }).toISO(),
       rendered: '1 day ago',
@@ -100,10 +103,10 @@ describe('DocsGridItemDate', () => {
       updated_at: DateTime.now().toISO(),
     },
     {
-      deleted_at: DateTime.now().toISO(),
-      rendered: '0 seconds ago',
+      deleted_at: DateTime.now().minus({ minutes: 1 }).toISO(),
+      rendered: '1 minute ago',
       trashbin_cutoff_days: 0,
-      updated_at: DateTime.now().toISO(),
+      updated_at: DateTime.now().minus({ minutes: 1 }).toISO(),
     },
   ].forEach(({ deleted_at, rendered, trashbin_cutoff_days, updated_at }) => {
     it(`should render "${rendered}" when we are in the trashbin`, async () => {

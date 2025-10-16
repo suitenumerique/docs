@@ -1,4 +1,9 @@
-import { PartialBlock } from '@blocknote/core';
+import {
+  DefaultBlockSchema,
+  DefaultInlineContentSchema,
+  DefaultStyleSchema,
+  PartialBlock,
+} from '@blocknote/core';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import { Request, Response } from 'express';
 import * as Y from 'yjs';
@@ -9,7 +14,11 @@ interface ErrorResponse {
   error: string;
 }
 
-const editor = ServerBlockNoteEditor.create();
+const editor = ServerBlockNoteEditor.create<
+  DefaultBlockSchema,
+  DefaultInlineContentSchema,
+  DefaultStyleSchema
+>();
 
 export const convertHandler = async (
   req: Request<object, Uint8Array | ErrorResponse, Buffer, object>,
@@ -27,7 +36,13 @@ export const convertHandler = async (
     ';',
   )[0];
 
-  let blocks: PartialBlock[] | null = null;
+  let blocks:
+    | PartialBlock<
+        DefaultBlockSchema,
+        DefaultInlineContentSchema,
+        DefaultStyleSchema
+      >[]
+    | null = null;
   try {
     // First, convert from the input format to blocks
     // application/x-www-form-urlencoded is interpreted as Markdown for backward compatibility
