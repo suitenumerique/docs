@@ -5346,6 +5346,11 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-underline/-/extension-underline-3.6.6.tgz#31bf3035c0e0eecb80169fe4faedcf849026963c"
   integrity sha512-PXhWYTZHM9IvGr3ElJl25qsyvKUejlul9TpFeBHv2awTY+0xoUL9FeEwOWOGx3sk8XTrz15b0/gjsgOV6U6Hiw==
 
+"@tiptap/extensions@*":
+  version "3.7.2"
+  resolved "https://registry.yarnpkg.com/@tiptap/extensions/-/extensions-3.7.2.tgz#fd2d53e59343505487e9fb6ccad8c53945d5c494"
+  integrity sha512-FaToSdU9fhQk2swkaXrAQNgdaE0dwLbUHcvilW5F4xTpQfZ3J535u5U2TUYf+f9KKSV5fTmD4QGNY9qxY7ihTg==
+
 "@tiptap/extensions@3.4.4":
   version "3.4.4"
   resolved "https://registry.yarnpkg.com/@tiptap/extensions/-/extensions-3.4.4.tgz#eef2b5d0541196d66babad6034cb1cd0b3b3ecb2"
