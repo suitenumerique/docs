@@ -16,6 +16,7 @@ and this project adheres to
 
 - ⚡️(backend) improve trashbin endpoint performance
 - 🐛(backend) manage invitation partial update without email #1494
+- 🐛(backend) fix s3 version_id validation
 
 
 ## [3.8.0] - 2025-10-14
