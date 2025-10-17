@@ -102,6 +102,7 @@ test.describe('Doc Trashbin', () => {
       page,
       browserName,
       docParent: subDocName,
+      docName: 'my-trash-editor-subsubdoc',
     });
     await verifyDocName(page, subsubDocName);
 
