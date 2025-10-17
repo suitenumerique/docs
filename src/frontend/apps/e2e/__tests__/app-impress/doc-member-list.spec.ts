@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import { createDoc, verifyDocName } from './utils-common';
 import { addNewMember } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
@@ -8,8 +8,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Document list members', () => {
-  test('it checks a big list of members', async ({ page }) => {
-    const docTitle = await goToGridDoc(page);
+  test('it checks a big list of members', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'members-big-members-list',
+      browserName,
+      1,
+    );
+
     await verifyDocName(page, docTitle);
 
     // Get the current URL and extract the last part
@@ -73,7 +79,7 @@ test.describe('Document list members', () => {
     await expect(loadMore).toBeHidden();
   });
 
-  test('it checks a big list of invitations', async ({ page }) => {
+  test('it checks a big list of invitations', async ({ page, browserName }) => {
     await page.route(
       /.*\/documents\/.*\/invitations\/\?page=.*/,
       async (route) => {
@@ -108,7 +114,12 @@ test.describe('Document list members', () => {
       },
     );
 
-    const docTitle = await goToGridDoc(page);
+    const [docTitle] = await createDoc(
+      page,
+      'members-big-invitation-list',
+      browserName,
+      1,
+    );
     await verifyDocName(page, docTitle);
     await page.getByRole('button', { name: 'Share' }).click();
 
