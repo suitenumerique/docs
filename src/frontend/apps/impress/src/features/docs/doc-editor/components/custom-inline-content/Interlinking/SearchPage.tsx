@@ -43,17 +43,19 @@ const inputStyle = css`
 `;
 
 type SearchPageProps = {
-  trigger: string;
+  trigger: '/' | '@';
   updateInlineContent: (
     update: PartialCustomInlineContentFromConfig<
       {
-        type: string;
+        type: 'interlinkingSearchInline';
         propSchema: {
           disabled: {
-            default: boolean;
+            default: false;
+            values: [true, false];
           };
           trigger: {
-            default: string;
+            default: '/';
+            values: ['/', '@'];
           };
         };
         content: 'styled';
@@ -244,7 +246,7 @@ export const SearchPage = ({
                       $padding={{ vertical: '0.5rem', horizontal: '0.2rem' }}
                       $width="100%"
                     >
-                      <FoundPageIcon />
+                      <FoundPageIcon style={{ flexShrink: 0 }} />
                       <Text
                         $size="14px"
                         $color="var(--c--theme--colors--greyscale-1000)"

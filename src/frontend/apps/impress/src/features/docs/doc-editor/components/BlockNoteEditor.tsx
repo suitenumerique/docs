@@ -1,6 +1,7 @@
-import { codeBlock } from '@blocknote/code-block';
+import { codeBlockOptions } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
+  createCodeBlockSpec,
   defaultBlockSpecs,
   defaultInlineContentSpecs,
   withPageBreak,
@@ -36,7 +37,6 @@ import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import {
   AccessibleImageBlock,
   CalloutBlock,
-  DividerBlock,
   PdfBlock,
   UploadLoaderBlock,
 } from './custom-blocks';
@@ -53,11 +53,11 @@ const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
-      callout: CalloutBlock,
-      divider: DividerBlock,
-      image: AccessibleImageBlock,
-      pdf: PdfBlock,
-      uploadLoader: UploadLoaderBlock,
+      callout: CalloutBlock(),
+      codeBlock: createCodeBlockSpec(codeBlockOptions),
+      image: AccessibleImageBlock(),
+      pdf: PdfBlock(),
+      uploadLoader: UploadLoaderBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
@@ -98,7 +98,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
-      codeBlock,
       collaboration: {
         provider,
         fragment: provider.document.getXmlFragment('document-store'),

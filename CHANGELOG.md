@@ -34,6 +34,7 @@ and this project adheres to
 
 ### Changed
 
+- ♻️(frontend) adapt custom blocks to new implementation #1375
 - ♻️(frontend) Refactor Auth component for improved redirection logic #1461
 - ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
@@ -73,6 +74,10 @@ and this project adheres to
 - 🐛(frontend) preserve interlink style on drag-and-drop in editor #1460
 - ✨(frontend) load docs logo from public folder via url #1462
 - 🔧(keycloak) Fix https required issue in dev mode #1286
+
+## Removed
+
+- 🔥(frontend) remove custom DividerBlock ##1375
 
 ## [3.7.0] - 2025-09-12
 

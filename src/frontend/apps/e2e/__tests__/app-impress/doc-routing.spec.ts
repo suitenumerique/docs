@@ -9,6 +9,7 @@ import {
   mockedDocument,
   verifyDocName,
 } from './utils-common';
+import { writeInEditor } from './utils-editor';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Routing', () => {
@@ -58,16 +59,23 @@ test.describe('Doc Routing', () => {
 
     await createRootSubPage(page, browserName, '401-doc-child');
 
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
+    await writeInEditor({ page, text: 'Hello World' });
 
     const responsePromise = page.route(
       /.*\/documents\/.*\/$|users\/me\/$/,
       async (route) => {
         const request = route.request();
 
+        // When we quit a document, a PATCH request is sent to save the document.
+        // We intercept this request to simulate a 401 error from the backend.
+        // The GET request to users/me is also intercepted to simulate the user
+        // being logged out when trying to fetch user info.
+        // This way we can test the 401 error handling when saving the document
         if (
-          request.method().includes('PATCH') ||
-          request.method().includes('GET')
+          (request.url().includes('/documents/') &&
+            request.method().includes('PATCH')) ||
+          (request.url().includes('/users/me/') &&
+            request.method().includes('GET'))
         ) {
           await route.fulfill({
             status: 401,
