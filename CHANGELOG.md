@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.8.2] - 2025-10-17
+
 ### Fixed
 
 🐛(service-worker) fix sw registration and page reload logic #1500
@@ -807,7 +809,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.8.1...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.8.2...main
+[v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2
 [v3.8.1]: https://github.com/suitenumerique/docs/releases/v3.8.1
 [v3.8.0]: https://github.com/suitenumerique/docs/releases/v3.8.0
 [v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
