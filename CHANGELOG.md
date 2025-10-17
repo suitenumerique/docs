@@ -6,16 +6,19 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿ add missing aria-label to add sub-doc button for accessib… #1480
-  - ♿ add missing aria-label to more options button on sub-docs #1481
+## [3.8.1] - 2025-10-17
 
 ### Fixed
 
-- ⚡️(backend) improve trashbin endpoint performance
+- ⚡️(backend) improve trashbin endpoint performance #1495
 - 🐛(backend) manage invitation partial update without email #1494
+- ♿(frontend) improve accessibility:
+  - ♿ add missing aria-label to add sub-doc button for accessibility #1480
+  - ♿ add missing aria-label to more options button on sub-docs #1481
+
+### Removed
+
+- 🔥(backend) remove treebeard form for the document admin #1470
 
 
 ## [3.8.0] - 2025-10-14
@@ -800,7 +803,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.8.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.8.1...main
+[v3.8.1]: https://github.com/suitenumerique/docs/releases/v3.8.1
 [v3.8.0]: https://github.com/suitenumerique/docs/releases/v3.8.0
 [v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
 [v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
