@@ -31,6 +31,7 @@ and this project adheres to
 
 - ✨(frontend) add pdf block to the editor #1293
 - ✨List and restore deleted docs #1450
+- ✨(frontend) create skeleton component for DocEditor
 
 ### Changed
 
