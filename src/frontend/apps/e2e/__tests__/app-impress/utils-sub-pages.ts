@@ -72,10 +72,12 @@ export const addChild = async ({
   page,
   browserName,
   docParent,
+  docName,
 }: {
   page: Page;
   browserName: BrowserName;
   docParent: string;
+  docName: string;
 }) => {
   let item = page.getByTestId('doc-tree-root-item');
 
@@ -99,7 +101,7 @@ export const addChild = async ({
   await item.hover();
   await item.getByTestId('doc-tree-item-actions-add-child').click();
 
-  const [name] = randomName(docParent, browserName, 1);
+  const [name] = randomName(docName, browserName, 1);
   await updateDocTitle(page, name);
 
   return name;
