@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-14 07:19+0000\n"
-"PO-Revision-Date: 2025-10-14 13:09\n"
+"POT-Creation-Date: 2025-10-17 08:36+0000\n"
+"PO-Revision-Date: 2025-10-17 13:56\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "Language: tr_TR\n"
@@ -17,20 +17,20 @@ msgstr ""
 "X-Crowdin-File: backend-impress.pot\n"
 "X-Crowdin-File-ID: 18\n"
 
-#: build/lib/core/admin.py:37 core/admin.py:37
+#: build/lib/core/admin.py:36 core/admin.py:36
 msgid "Personal info"
 msgstr ""
 
-#: build/lib/core/admin.py:50 build/lib/core/admin.py:138 core/admin.py:50
-#: core/admin.py:138
+#: build/lib/core/admin.py:49 build/lib/core/admin.py:137 core/admin.py:49
+#: core/admin.py:137
 msgid "Permissions"
 msgstr ""
 
-#: build/lib/core/admin.py:62 core/admin.py:62
+#: build/lib/core/admin.py:61 core/admin.py:61
 msgid "Important dates"
 msgstr ""
 
-#: build/lib/core/admin.py:148 core/admin.py:148
+#: build/lib/core/admin.py:147 core/admin.py:147
 msgid "Tree structure"
 msgstr ""
 
@@ -79,7 +79,7 @@ msgstr ""
 msgid "Format"
 msgstr ""
 
-#: build/lib/core/api/viewsets.py:983 core/api/viewsets.py:983
+#: build/lib/core/api/viewsets.py:1000 core/api/viewsets.py:1000
 #, python-brace-format
 msgid "copy of {title}"
 msgstr ""
