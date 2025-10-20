@@ -17,7 +17,11 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
+import {
+  Doc,
+  useIsCollaborativeEditable,
+  useProviderStore,
+} from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
 import {
@@ -79,9 +83,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
+  const { isSynced } = useProviderStore();
 
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const isConnectedToCollabServer = provider.isSynced;
+  const isConnectedToCollabServer = isSynced;
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
   const isDeletedDoc = !!doc.deleted_at;
 

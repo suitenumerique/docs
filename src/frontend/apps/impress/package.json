@@ -35,7 +35,7 @@
     "@fontsource/material-icons": "5.2.7",
     "@gouvfr-lasuite/integration": "1.0.3",
     "@gouvfr-lasuite/ui-kit": "0.16.2",
-    "@hocuspocus/provider": "2.15.2",
+    "@hocuspocus/provider": "3.3.0",
     "@mantine/core": "8.3.4",
     "@mantine/hooks": "8.3.4",
     "@openfun/cunningham-react": "3.2.3",

@@ -51,7 +51,7 @@ describe('Server Tests', () => {
 
   beforeAll(async () => {
     server = initApp().listen(port);
-    await hocuspocusServer.configure({ port: portWS }).listen();
+    await hocuspocusServer.listen(portWS);
   });
 
   afterAll(() => {
@@ -62,14 +62,11 @@ describe('Server Tests', () => {
   test('WebSocket connection with bad origin should be closed', () => {
     const { promise, done } = promiseDone();
     const room = uuidv4();
-    const ws = new WebSocket(
-      `ws://localhost:${port}/collaboration/ws/?room=${room}`,
-      {
-        headers: {
-          Origin: 'http://bad-origin.com',
-        },
+    const ws = new WebSocket(`ws://localhost:${port}/?room=${room}`, {
+      headers: {
+        Origin: 'http://bad-origin.com',
       },
-    );
+    });
 
     ws.onclose = () => {
       expect(ws.readyState).toBe(ws.CLOSED);
@@ -82,14 +79,11 @@ describe('Server Tests', () => {
   test('WebSocket connection without cookies header should be closed', () => {
     const { promise, done } = promiseDone();
     const room = uuidv4();
-    const ws = new WebSocket(
-      `ws://localhost:${port}/collaboration/ws/?room=${room}`,
-      {
-        headers: {
-          Origin: origin,
-        },
+    const ws = new WebSocket(`ws://localhost:${port}/?room=${room}`, {
+      headers: {
+        Origin: origin,
       },
-    );
+    });
 
     ws.onclose = () => {
       expect(ws.readyState).toBe(ws.CLOSED);
@@ -106,17 +100,13 @@ describe('Server Tests', () => {
       url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
-      quiet: true,
     });
 
     const providerName = uuidv4();
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
       name: providerName,
-      broadcast: false,
-      quiet: true,
-      preserveConnection: false,
-      onClose: (data) => {
+      onAuthenticationFailed(data) {
         expect(console.log).toHaveBeenCalledWith(
           expect.any(String),
           ' --- ',
@@ -126,7 +116,7 @@ describe('Server Tests', () => {
         );
 
         wsHocus.stopConnectionAttempt();
-        expect(data.event.reason).toBe('Forbidden');
+        expect(data.reason).toBe('permission-denied');
         wsHocus.webSocket?.close();
         wsHocus.disconnect();
         provider.destroy();
@@ -134,6 +124,8 @@ describe('Server Tests', () => {
         done();
       },
     });
+
+    provider.attach();
 
     return promise;
   });
@@ -145,16 +137,12 @@ describe('Server Tests', () => {
       url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
-      quiet: true,
     });
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
       name: room,
-      broadcast: false,
-      quiet: true,
-      preserveConnection: false,
-      onClose: (data) => {
+      onAuthenticationFailed: (data) => {
         expect(console.log).toHaveBeenLastCalledWith(
           expect.any(String),
           ' --- ',
@@ -163,7 +151,7 @@ describe('Server Tests', () => {
         );
 
         wsHocus.stopConnectionAttempt();
-        expect(data.event.reason).toBe('Forbidden');
+        expect(data.reason).toBe('permission-denied');
         wsHocus.webSocket?.close();
         wsHocus.disconnect();
         provider.destroy();
@@ -171,6 +159,8 @@ describe('Server Tests', () => {
         done();
       },
     });
+
+    provider.attach();
 
     return promise;
   });
@@ -182,16 +172,12 @@ describe('Server Tests', () => {
       url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
-      quiet: true,
     });
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
       name: room,
-      broadcast: false,
-      quiet: true,
-      preserveConnection: false,
-      onClose: (data) => {
+      onAuthenticationFailed: (data) => {
         expect(console.log).toHaveBeenLastCalledWith(
           expect.any(String),
           ' --- ',
@@ -200,7 +186,7 @@ describe('Server Tests', () => {
         );
 
         wsHocus.stopConnectionAttempt();
-        expect(data.event.reason).toBe('Forbidden');
+        expect(data.reason).toBe('permission-denied');
         wsHocus.webSocket?.close();
         wsHocus.disconnect();
         provider.destroy();
@@ -208,6 +194,8 @@ describe('Server Tests', () => {
         done();
       },
     });
+
+    provider.attach();
 
     return promise;
   });
@@ -224,23 +212,19 @@ describe('Server Tests', () => {
       url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
-      quiet: true,
     });
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
       name: room,
-      broadcast: false,
-      quiet: true,
-      preserveConnection: false,
-      onClose: (data) => {
+      onAuthenticationFailed: (data) => {
         expect(console.error).toHaveBeenLastCalledWith(
           '[onConnect]',
           'Backend error: Unauthorized',
         );
 
         wsHocus.stopConnectionAttempt();
-        expect(data.event.reason).toBe('Forbidden');
+        expect(data.reason).toBe('permission-denied');
         expect(fetchDocumentMock).toHaveBeenCalledExactlyOnceWith(
           room,
           expect.any(Object),
@@ -252,6 +236,8 @@ describe('Server Tests', () => {
         done();
       },
     });
+
+    provider.attach();
 
     return promise;
   });
@@ -269,16 +255,12 @@ describe('Server Tests', () => {
       url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,
       maxAttempts: 1,
-      quiet: true,
     });
 
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
       name: room,
-      broadcast: false,
-      quiet: true,
-      preserveConnection: false,
-      onClose: (data) => {
+      onAuthenticationFailed: (data) => {
         expect(console.log).toHaveBeenLastCalledWith(
           expect.any(String),
           ' --- ',
@@ -287,7 +269,7 @@ describe('Server Tests', () => {
         );
 
         wsHocus.stopConnectionAttempt();
-        expect(data.event.reason).toBe('Forbidden');
+        expect(data.reason).toBe('permission-denied');
         expect(fetchDocumentMock).toHaveBeenCalledExactlyOnceWith(
           room,
           expect.any(Object),
@@ -299,6 +281,8 @@ describe('Server Tests', () => {
         done();
       },
     });
+
+    provider.attach();
 
     return promise;
   });
@@ -322,10 +306,8 @@ describe('Server Tests', () => {
       const provider = new HocuspocusProvider({
         websocketProvider: wsHocus,
         name: room,
-        broadcast: false,
-        quiet: true,
         onConnect: () => {
-          void hocuspocusServer
+          void hocuspocusServer.hocuspocus
             .openDirectConnection(room)
             .then((connection) => {
               connection.document?.getConnections().forEach((connection) => {
@@ -346,6 +328,8 @@ describe('Server Tests', () => {
             });
         },
       });
+
+      provider.attach();
 
       return promise;
     });
@@ -373,29 +357,29 @@ describe('Server Tests', () => {
     const provider = new HocuspocusProvider({
       websocketProvider: wsHocus,
       name: room,
-      broadcast: false,
-      quiet: true,
       onConnect: () => {
-        void hocuspocusServer.openDirectConnection(room).then((connection) => {
-          connection.document?.getConnections().forEach((connection) => {
+        const document = hocuspocusServer.hocuspocus.documents.get(room);
+        if (document) {
+          document.getConnections().forEach((connection) => {
             expect(connection.context.userId).toBe('test-user-id');
           });
+        }
 
-          void connection.disconnect();
-          provider.destroy();
-          wsHocus.destroy();
+        provider.destroy();
+        wsHocus.destroy();
 
-          expect(fetchDocumentMock).toHaveBeenCalledWith(
-            room,
-            expect.any(Object),
-          );
+        expect(fetchDocumentMock).toHaveBeenCalledWith(
+          room,
+          expect.any(Object),
+        );
 
-          expect(fetchCurrentUserMock).toHaveBeenCalled();
+        expect(fetchCurrentUserMock).toHaveBeenCalled();
 
-          done();
-        });
+        done();
       },
     });
+
+    provider.attach();
 
     return promise;
   });

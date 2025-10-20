@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { css } from 'styled-components';
 import * as Y from 'yjs';
 
-import { Box, Text, TextErrors } from '@/components';
+import { Box, Loading, Text, TextErrors } from '@/components';
 import { DocHeader, DocVersionHeader } from '@/docs/doc-header/';
 import {
   Doc,
@@ -27,8 +27,9 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const isVersion = !!versionId && typeof versionId === 'string';
   const { provider } = useProviderStore();
 
+  // TODO: Use skeleton instead of loading
   if (!provider) {
-    return null;
+    return <Loading />;
   }
 
   return (

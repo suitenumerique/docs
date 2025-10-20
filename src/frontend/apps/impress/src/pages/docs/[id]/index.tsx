@@ -147,7 +147,7 @@ const DocPage = ({ id }: DocProps) => {
     }
 
     addTask(`${KEY_DOC}-${doc.id}`, () => {
-      void queryClient.resetQueries({
+      void queryClient.invalidateQueries({
         queryKey: [KEY_DOC, { id: doc.id }],
       });
     });

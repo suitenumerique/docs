@@ -45,7 +45,7 @@ describe('Server Tests', () => {
 
   test('POST /collaboration/api/reset-connections?room=[ROOM_ID] with correct API key should reset connections', async () => {
     const closeConnectionsMock = vi
-      .spyOn(hocuspocusServer, 'closeConnections')
+      .spyOn(hocuspocusServer.hocuspocus, 'closeConnections')
       .mockResolvedValue();
 
     const app = initApp();

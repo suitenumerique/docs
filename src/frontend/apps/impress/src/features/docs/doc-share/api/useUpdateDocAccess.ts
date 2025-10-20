@@ -6,7 +6,6 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Access, KEY_DOC, KEY_LIST_DOC, Role } from '@/docs/doc-management';
-import { useBroadcastStore } from '@/stores';
 
 import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';
 
@@ -45,7 +44,6 @@ type UseUpdateDocAccessOptions = UseMutationOptions<
 
 export const useUpdateDocAccess = (options?: UseUpdateDocAccessOptions) => {
   const queryClient = useQueryClient();
-  const { broadcast } = useBroadcastStore();
 
   return useMutation<Access, APIError, UpdateDocAccessProps>({
     mutationFn: updateDocAccess,
@@ -58,12 +56,10 @@ export const useUpdateDocAccess = (options?: UseUpdateDocAccessOptions) => {
         queryKey: [KEY_DOC],
       });
 
-      // Broadcast to every user connected to the document
-      broadcast(`${KEY_DOC}-${variables.docId}`);
-
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC],
       });
+
       if (options?.onSuccess) {
         void options.onSuccess(data, variables, onMutateResult, context);
       }

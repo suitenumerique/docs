@@ -70,11 +70,11 @@ describe('Server Tests', () => {
   });
 
   test('POST /collaboration/api/get-connections?room=[ROOM_ID] returns connection info, session key existing', async () => {
-    const document = await hocuspocusServer.createDocument(
+    const document = await hocuspocusServer.hocuspocus.createDocument(
       'test-room',
       {},
       uuid(),
-      { isAuthenticated: true, readOnly: false, requiresAuthentication: true },
+      { isAuthenticated: true, readOnly: false },
       {},
     );
 
@@ -138,11 +138,11 @@ describe('Server Tests', () => {
   });
 
   test('POST /collaboration/api/get-connections?room=[ROOM_ID] returns connection info, session key not existing', async () => {
-    const document = await hocuspocusServer.createDocument(
+    const document = await hocuspocusServer.hocuspocus.createDocument(
       'test-room',
       {},
       uuid(),
-      { isAuthenticated: true, readOnly: false, requiresAuthentication: true },
+      { isAuthenticated: true, readOnly: false },
       {},
     );
 
@@ -206,11 +206,11 @@ describe('Server Tests', () => {
   });
 
   test('POST /collaboration/api/get-connections?room=[ROOM_ID] returns connection info, session key not existing, read only connection', async () => {
-    const document = await hocuspocusServer.createDocument(
+    const document = await hocuspocusServer.hocuspocus.createDocument(
       'test-room',
       {},
       uuid(),
-      { isAuthenticated: true, readOnly: false, requiresAuthentication: true },
+      { isAuthenticated: true, readOnly: false },
       {},
     );
 

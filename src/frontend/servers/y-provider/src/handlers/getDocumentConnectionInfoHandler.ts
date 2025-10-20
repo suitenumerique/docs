@@ -27,7 +27,7 @@ export const getDocumentConnectionInfoHandler = (
 
   logger('Getting document connection info for room:', room);
 
-  const roomInfo = hocuspocusServer.documents.get(room);
+  const roomInfo = hocuspocusServer.hocuspocus.documents.get(room);
 
   if (!roomInfo) {
     logger('Room not found:', room);

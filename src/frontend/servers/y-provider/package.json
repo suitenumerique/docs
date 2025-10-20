@@ -10,14 +10,14 @@
     "dev": "cross-env COLLABORATION_LOGGING=true && nodemon --config nodemon.json",
     "start": "node ./dist/start-server.js",
     "lint": "eslint",
-    "test": "vitest --run --disable-console-intercept"
+    "test": "vitest"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
     "@blocknote/server-util": "0.41.1",
-    "@hocuspocus/server": "2.15.2",
+    "@hocuspocus/server": "3.3.0",
     "@sentry/node": "10.17.0",
     "@sentry/profiling-node": "10.17.0",
     "@tiptap/extensions": "*",
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@blocknote/core": "0.41.1",
-    "@hocuspocus/provider": "2.15.2",
+    "@hocuspocus/provider": "3.3.0",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.3",
     "@types/express-ws": "3.0.5",

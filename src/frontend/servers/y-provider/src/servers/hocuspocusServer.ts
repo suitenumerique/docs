@@ -4,13 +4,13 @@ import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 import { fetchCurrentUser, fetchDocument } from '@/api/collaborationBackend';
 import { logger } from '@/utils';
 
-export const hocuspocusServer = Server.configure({
+export const hocuspocusServer = new Server({
   name: 'docs-collaboration',
   timeout: 30000,
   quiet: true,
   async onConnect({
     requestHeaders,
-    connection,
+    connectionConfig,
     documentName,
     requestParameters,
     context,
@@ -58,7 +58,7 @@ export const hocuspocusServer = Server.configure({
       return Promise.reject(new Error('Backend error: Unauthorized'));
     }
 
-    connection.readOnly = !canEdit;
+    connectionConfig.readOnly = !canEdit;
 
     const session = requestHeaders['cookie']
       ?.split('; ')
