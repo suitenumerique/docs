@@ -4,12 +4,9 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import {
-  Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
-  useUpdateDocLink,
-} from '@/docs/doc-management';
+import { Doc, KEY_DOC, KEY_LIST_DOC } from '@/docs/doc-management';
+
+import { useUpdateDocLink } from '../api/useUpdateDocLink';
 
 import Desync from './../assets/desynchro.svg';
 import Undo from './../assets/undo.svg';

@@ -112,7 +112,7 @@ export const QuickSearchGroupMember = ({
       elements: members,
       endActions: undefined,
     };
-  }, [membersQuery, t]);
+  }, [membersQuery.data, t]);
 
   return (
     <Box aria-label={t('List members card')} $padding={{ bottom: '3xs' }}>

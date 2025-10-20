@@ -19,10 +19,10 @@ import {
   getDocLinkReach,
   getDocLinkRole,
   useDocUtils,
-  useUpdateDocLink,
 } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { useUpdateDocLink } from '../api/useUpdateDocLink';
 import { useTranslatedShareSettings } from '../hooks/';
 
 import { DocDesynchronized } from './DocDesynchronized';

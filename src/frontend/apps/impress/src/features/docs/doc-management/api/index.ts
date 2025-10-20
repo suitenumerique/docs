@@ -9,4 +9,3 @@ export * from './useDuplicateDoc';
 export * from './useRestoreDoc';
 export * from './useSubDocs';
 export * from './useUpdateDoc';
-export * from './useUpdateDocLink';
