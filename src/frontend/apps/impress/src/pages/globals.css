@@ -103,3 +103,9 @@ nextjs-portal {
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+/* Fix for New Document button text wrapping issue */
+[data-testid="new-doc-button"] {
+  white-space: nowrap !important;
+  min-width: fit-content !important;
+}
