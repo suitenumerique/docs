@@ -115,7 +115,9 @@ const DocPage = ({ id }: DocProps) => {
   // Invalidate when provider store reports a lost connection
   useEffect(() => {
     if (hasLostConnection && doc?.id) {
-      queryClient.invalidateQueries({ queryKey: [KEY_DOC, { id: doc.id }] });
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_DOC, { id: doc.id }],
+      });
       resetLostConnection();
     }
   }, [hasLostConnection, doc?.id, queryClient, resetLostConnection]);

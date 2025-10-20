@@ -56,7 +56,7 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    router.push(url);
+    void router.push(url);
   };
 
   return (

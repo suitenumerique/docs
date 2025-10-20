@@ -15,7 +15,7 @@ export const addNewMember = async (
   page: Page,
   index: number,
   role: 'Administrator' | 'Owner' | 'Editor' | 'Reader',
-  fillText: string = 'user.test',
+  fillText = 'user.test',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(
     (response) =>

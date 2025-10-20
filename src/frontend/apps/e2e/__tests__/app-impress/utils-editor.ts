@@ -22,6 +22,6 @@ export const writeInEditor = async ({
   text: string;
 }) => {
   const editor = await getEditor({ page });
-  editor.locator('.bn-block-outer').last().fill(text);
+  await editor.locator('.bn-block-outer').last().fill(text);
   return editor;
 };

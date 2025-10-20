@@ -64,8 +64,8 @@ describe('DocsGridItemDate', () => {
     });
   });
 
-  it(`should render rendered the updated_at field in the correct language`, () => {
-    i18next.changeLanguage('fr');
+  it(`should render rendered the updated_at field in the correct language`, async () => {
+    await i18next.changeLanguage('fr');
 
     render(
       <DocsGridItemDate
@@ -83,7 +83,7 @@ describe('DocsGridItemDate', () => {
     expect(screen.getByRole('link')).toBeInTheDocument();
     expect(screen.getByText('il y a 5 jours')).toBeInTheDocument();
 
-    i18next.changeLanguage('en');
+    await i18next.changeLanguage('en');
   });
 
   [

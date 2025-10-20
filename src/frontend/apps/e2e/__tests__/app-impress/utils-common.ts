@@ -48,7 +48,7 @@ export const overrideConfig = async (
 export const keyCloakSignIn = async (
   page: Page,
   browserName: string,
-  fromHome: boolean = true,
+  fromHome = true,
 ) => {
   if (fromHome) {
     await page.getByRole('button', { name: 'Start Writing' }).first().click();
@@ -79,8 +79,8 @@ export const createDoc = async (
   page: Page,
   docName: string,
   browserName: string,
-  length: number = 1,
-  isMobile: boolean = false,
+  length = 1,
+  isMobile = false,
 ) => {
   const randomDocs = randomName(docName, browserName, length);
 
