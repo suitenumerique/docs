@@ -83,10 +83,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
-  const { isSynced } = useProviderStore();
+  const { isSynced: isConnectedToCollabServer } = useProviderStore();
 
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const isConnectedToCollabServer = isSynced;
   const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
   const isDeletedDoc = !!doc.deleted_at;
 

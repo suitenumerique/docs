@@ -14,6 +14,7 @@ export interface UseCollaborationStore {
   destroyProvider: () => void;
   provider: HocuspocusProvider | undefined;
   isConnected: boolean;
+  isReady: boolean;
   isSynced: boolean;
   hasLostConnection: boolean;
   resetLostConnection: () => void;
@@ -22,6 +23,7 @@ export interface UseCollaborationStore {
 const defaultValues = {
   provider: undefined,
   isConnected: false,
+  isReady: false,
   isSynced: false,
   hasLostConnection: false,
 };
@@ -46,14 +48,18 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       onDisconnect(data) {
         // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
         if ((data.event as ExtendedCloseEvent).wasClean) {
-          provider.connect();
+          void provider.connect();
         }
+      },
+      onAuthenticationFailed() {
+        set({ isReady: true });
       },
       onStatus: ({ status }) => {
         set((state) => {
           const nextConnected = status === WebSocketStatus.Connected;
           return {
             isConnected: nextConnected,
+            isReady: state.isReady || status === WebSocketStatus.Disconnected,
             hasLostConnection:
               state.isConnected && !nextConnected
                 ? true
@@ -62,7 +68,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
         });
       },
       onSynced: ({ state }) => {
-        set({ isSynced: state });
+        set({ isSynced: state, isReady: true });
       },
       onClose(data) {
         /**

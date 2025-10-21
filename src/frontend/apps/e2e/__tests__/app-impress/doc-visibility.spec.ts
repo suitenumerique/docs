@@ -7,6 +7,7 @@ import {
   keyCloakSignIn,
   verifyDocName,
 } from './utils-common';
+import { writeInEditor } from './utils-editor';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
@@ -151,18 +152,15 @@ test.describe('Doc Visibility: Restricted', () => {
 
     await verifyDocName(page, docTitle);
 
-    await page
-      .locator('.ProseMirror')
-      .locator('.bn-block-outer')
-      .last()
-      .fill('Hello World');
+    await writeInEditor({ page, text: 'Hello World' });
 
     const docUrl = page.url();
 
-    const { otherBrowserName, otherPage } = await connectOtherUserToDoc({
-      browserName,
-      docUrl,
-    });
+    const { otherBrowserName, otherPage, cleanup } =
+      await connectOtherUserToDoc({
+        browserName,
+        docUrl,
+      });
 
     await expect(
       otherPage.getByText('Insufficient access rights to view the document.'),
@@ -178,6 +176,8 @@ test.describe('Doc Visibility: Restricted', () => {
     await expect(otherPage.getByText('Hello World')).toBeVisible({
       timeout: 10000,
     });
+
+    await cleanup();
   });
 });
 

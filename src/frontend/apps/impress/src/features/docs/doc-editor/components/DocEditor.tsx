@@ -25,10 +25,10 @@ interface DocEditorProps {
 export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const isVersion = !!versionId && typeof versionId === 'string';
-  const { provider } = useProviderStore();
+  const { provider, isReady } = useProviderStore();
 
   // TODO: Use skeleton instead of loading
-  if (!provider) {
+  if (!provider || !isReady) {
     return <Loading />;
   }
 
