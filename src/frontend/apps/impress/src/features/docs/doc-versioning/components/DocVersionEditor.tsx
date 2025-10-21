@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
 
 import { Box, Text, TextErrors } from '@/components';
-import { BlockNoteEditorVersion, DocEditorContainer } from '@/docs/doc-editor/';
+import { BlockNoteReader, DocEditorContainer } from '@/docs/doc-editor/';
 import { Doc, base64ToBlocknoteXmlFragment } from '@/docs/doc-management';
 import { Versions, useDocVersion } from '@/docs/doc-versioning/';
 
@@ -77,7 +77,9 @@ export const DocVersionEditor = ({
   return (
     <DocEditorContainer
       docHeader={<DocVersionHeader />}
-      docEditor={<BlockNoteEditorVersion initialContent={initialContent} />}
+      docEditor={<BlockNoteReader initialContent={initialContent} />}
+      isDeletedDoc={false}
+      readOnly={true}
     />
   );
 };

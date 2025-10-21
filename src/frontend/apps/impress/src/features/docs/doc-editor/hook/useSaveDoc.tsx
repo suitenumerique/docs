@@ -13,7 +13,6 @@ const SAVE_INTERVAL = 60000;
 export const useSaveDoc = (
   docId: string,
   yDoc: Y.Doc,
-  canSave: boolean,
   isConnectedToCollabServer: boolean,
 ) => {
   const { mutate: updateDoc } = useUpdateDoc({
@@ -47,7 +46,7 @@ export const useSaveDoc = (
   }, [yDoc]);
 
   const saveDoc = useCallback(() => {
-    if (!canSave || !isLocalChange) {
+    if (!isLocalChange) {
       return false;
     }
 
@@ -58,14 +57,7 @@ export const useSaveDoc = (
     });
 
     return true;
-  }, [
-    canSave,
-    isLocalChange,
-    updateDoc,
-    docId,
-    yDoc,
-    isConnectedToCollabServer,
-  ]);
+  }, [isLocalChange, updateDoc, docId, yDoc, isConnectedToCollabServer]);
 
   const router = useRouter();
 

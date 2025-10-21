@@ -3,21 +3,31 @@ import { css } from 'styled-components';
 
 import { Box, Loading } from '@/components';
 import { DocHeader } from '@/docs/doc-header/';
-import { Doc, useProviderStore } from '@/docs/doc-management';
+import {
+  Doc,
+  useIsCollaborativeEditable,
+  useProviderStore,
+} from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
-import { BlockNoteEditor } from './BlockNoteEditor';
+import { cssEditor } from '../styles';
+
+import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
 
 interface DocEditorContainerProps {
   docHeader: React.ReactNode;
   docEditor: React.ReactNode;
+  isDeletedDoc: boolean;
+  readOnly: boolean;
 }
 
 export const DocEditorContainer = ({
   docHeader,
   docEditor,
+  isDeletedDoc,
+  readOnly,
 }: DocEditorContainerProps) => {
   const { isDesktop } = useResponsiveStore();
 
@@ -44,7 +54,14 @@ export const DocEditorContainer = ({
           className="--docs--doc-editor-content"
         >
           <Box $css="flex:1;" $position="relative" $width="100%">
-            {docEditor}
+            <Box
+              $padding={{ top: 'md' }}
+              $background="white"
+              $css={cssEditor(readOnly, isDeletedDoc)}
+              className="--docs--editor-container"
+            >
+              {docEditor}
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -59,6 +76,8 @@ interface DocEditorProps {
 export const DocEditor = ({ doc }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
+  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
   const { setIsSkeletonVisible } = useSkeletonStore();
   const isProviderReady = isReady && provider;
 
@@ -87,7 +106,19 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
       )}
       <DocEditorContainer
         docHeader={<DocHeader doc={doc} />}
-        docEditor={<BlockNoteEditor doc={doc} provider={provider} />}
+        docEditor={
+          readOnly ? (
+            <BlockNoteReader
+              initialContent={provider.document.getXmlFragment(
+                'document-store',
+              )}
+            />
+          ) : (
+            <BlockNoteEditor doc={doc} provider={provider} />
+          )
+        }
+        isDeletedDoc={!!doc.deleted_at}
+        readOnly={readOnly}
       />
     </>
   );

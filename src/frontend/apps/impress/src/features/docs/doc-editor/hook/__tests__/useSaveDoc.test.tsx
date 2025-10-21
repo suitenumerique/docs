@@ -43,7 +43,7 @@ describe('useSaveDoc', () => {
 
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
 
-    renderHook(() => useSaveDoc(docId, yDoc, true, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true), {
       wrapper: AppWrapper,
     });
 
@@ -62,37 +62,6 @@ describe('useSaveDoc', () => {
     addEventListenerSpy.mockRestore();
   });
 
-  it('should not save when canSave is false', () => {
-    vi.useFakeTimers();
-    const yDoc = new Y.Doc();
-    const docId = 'test-doc-id';
-
-    fetchMock.patch('http://test.jest/api/v1.0/documents/test-doc-id/', {
-      body: JSON.stringify({
-        id: 'test-doc-id',
-        content: 'test-content',
-        title: 'test-title',
-      }),
-    });
-
-    renderHook(() => useSaveDoc(docId, yDoc, false, true), {
-      wrapper: AppWrapper,
-    });
-
-    act(() => {
-      // Trigger a local update
-      yDoc.getMap('test').set('key', 'value');
-
-      // Advance timers to trigger the save interval
-      vi.advanceTimersByTime(61000);
-    });
-
-    // Since canSave is false, no API call should be made
-    expect(fetchMock.calls().length).toBe(0);
-
-    vi.useRealTimers();
-  });
-
   it('should save when there are local changes', async () => {
     vi.useFakeTimers();
     const yDoc = new Y.Doc();
@@ -106,7 +75,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, true, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true), {
       wrapper: AppWrapper,
     });
 
@@ -143,7 +112,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, true, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true), {
       wrapper: AppWrapper,
     });
 
@@ -163,7 +132,7 @@ describe('useSaveDoc', () => {
     const docId = 'test-doc-id';
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
-    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true, true), {
+    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true), {
       wrapper: AppWrapper,
     });
 

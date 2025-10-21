@@ -10,16 +10,17 @@ and this project adheres to
 
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
+- ✨(frontend) ajustable left panel #1456
 
 ### Changed
 
 - ♻️(frontend) adapt custom blocks to new implementation #1375
 - ♻️(backend) increase user short_name field length
+- 🚸(frontend) separate viewers from editors #1509
 
 ### Fixed
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
-- 🐛(frontend) show full nested doc names with ajustable bar #1456
 - 🐛(backend) fix trashbin list
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
