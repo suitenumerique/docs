@@ -1,5 +1,6 @@
 import { Modal, ModalSize } from '@openfun/cunningham-react';
-import { useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
@@ -15,7 +16,14 @@ import { User } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
-import { KEY_LIST_USER, useDocAccesses, useUsers } from '../api';
+import {
+  KEY_LIST_DOC_ACCESSES,
+  KEY_LIST_DOC_ACCESS_REQUESTS,
+  KEY_LIST_DOC_INVITATIONS,
+  KEY_LIST_USER,
+  useDocAccesses,
+  useUsers,
+} from '../api';
 
 import { DocInheritedShareContent } from './DocInheritedShareContent';
 import {
@@ -48,6 +56,7 @@ type Props = {
 export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const { isDesktop } = useResponsiveStore();
 
@@ -127,6 +136,19 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
   const showInheritedShareContent =
     inheritedAccesses.length > 0 && showMemberSection && !isRootDoc;
+
+  // Invalidate relevant queries to ensure fresh data on modal open
+  useEffect(() => {
+    [
+      KEY_LIST_DOC_INVITATIONS,
+      KEY_LIST_DOC_ACCESS_REQUESTS,
+      KEY_LIST_DOC_ACCESSES,
+    ].forEach((key) => {
+      void queryClient.invalidateQueries({
+        queryKey: [key],
+      });
+    });
+  }, [queryClient]);
 
   return (
     <>
