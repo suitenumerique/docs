@@ -34,7 +34,7 @@ export const updateDoc = async ({
 };
 
 type UseUpdateDoc = UseMutationOptions<Doc, APIError, Partial<Doc>> & {
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 };
 
 export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
@@ -43,7 +43,7 @@ export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
     mutationFn: updateDoc,
     ...queryConfig,
     onSuccess: (data, variables, onMutateResult, context) => {
-      queryConfig?.listInvalideQueries?.forEach((queryKey) => {
+      queryConfig?.listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });

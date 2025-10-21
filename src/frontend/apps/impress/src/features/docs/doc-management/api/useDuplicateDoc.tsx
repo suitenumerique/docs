@@ -60,7 +60,7 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const { provider } = useProviderStore();
 
   const { mutateAsync: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
   });
 
   return useMutation<DuplicateDocResponse, APIError, DuplicateDocParams>({

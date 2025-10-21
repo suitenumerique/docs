@@ -16,7 +16,7 @@ export const useSaveDoc = (
   isConnectedToCollabServer: boolean,
 ) => {
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
       setIsLocalChange(false);
     },

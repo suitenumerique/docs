@@ -48,7 +48,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       : linkReachChoices[docLinkReach].descriptionEdit;
 
   const { mutate: updateDocLink } = useUpdateDocLink({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
 
   const linkReachOptions: DropdownMenuOption[] = useMemo(() => {

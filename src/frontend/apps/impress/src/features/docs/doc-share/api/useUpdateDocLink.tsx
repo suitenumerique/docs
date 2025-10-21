@@ -31,12 +31,12 @@ export const updateDocLink = async ({
 
 interface UpdateDocLinkProps {
   onSuccess?: (data: Doc) => void;
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 }
 
 export function useUpdateDocLink({
   onSuccess,
-  listInvalideQueries,
+  listInvalidQueries,
 }: UpdateDocLinkProps = {}) {
   const queryClient = useQueryClient();
   const { toast } = useToastProvider();
@@ -45,7 +45,7 @@ export function useUpdateDocLink({
   return useMutation<Doc, APIError, UpdateDocLinkParams>({
     mutationFn: updateDocLink,
     onSuccess: (data) => {
-      listInvalideQueries?.forEach((queryKey) => {
+      listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
