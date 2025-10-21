@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
-import { DocEditor } from '@/docs/doc-editor';
 import { Doc } from '@/docs/doc-management';
 
 import { Versions } from '../types';
 
+import { DocVersionEditor } from './DocVersionEditor';
 import { ModalConfirmationVersion } from './ModalConfirmationVersion';
 import { VersionList } from './VersionList';
 
@@ -81,7 +81,10 @@ export const ModalSelectVersion = ({
               $align="center"
             >
               {selectedVersionId && (
-                <DocEditor doc={doc} versionId={selectedVersionId} />
+                <DocVersionEditor
+                  docId={doc.id}
+                  versionId={selectedVersionId}
+                />
               )}
               {!selectedVersionId && (
                 <Box $align="center" $justify="center" $height="100%">

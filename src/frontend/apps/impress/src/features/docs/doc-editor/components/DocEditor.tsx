@@ -1,31 +1,63 @@
-import { Loader } from '@openfun/cunningham-react';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { css } from 'styled-components';
-import * as Y from 'yjs';
 
-import { Box, Loading, Text, TextErrors } from '@/components';
-import { DocHeader, DocVersionHeader } from '@/docs/doc-header/';
-import {
-  Doc,
-  base64ToBlocknoteXmlFragment,
-  useProviderStore,
-} from '@/docs/doc-management';
+import { Box, Loading } from '@/components';
+import { DocHeader } from '@/docs/doc-header/';
+import { Doc, useProviderStore } from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
-import { Versions, useDocVersion } from '@/docs/doc-versioning/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
-import { BlockNoteEditor, BlockNoteEditorVersion } from './BlockNoteEditor';
+import { BlockNoteEditor } from './BlockNoteEditor';
+
+interface DocEditorContainerProps {
+  docHeader: React.ReactNode;
+  docEditor: React.ReactNode;
+}
+
+export const DocEditorContainer = ({
+  docHeader,
+  docEditor,
+}: DocEditorContainerProps) => {
+  const { isDesktop } = useResponsiveStore();
+
+  return (
+    <>
+      <Box
+        $maxWidth="868px"
+        $width="100%"
+        $height="100%"
+        className="--docs--doc-editor"
+      >
+        <Box
+          $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
+          className="--docs--doc-editor-header"
+        >
+          {docHeader}
+        </Box>
+
+        <Box
+          $direction="row"
+          $width="100%"
+          $css="overflow-x: clip; flex: 1;"
+          $position="relative"
+          className="--docs--doc-editor-content"
+        >
+          <Box $css="flex:1;" $position="relative" $width="100%">
+            {docEditor}
+          </Box>
+        </Box>
+      </Box>
+    </>
+  );
+};
 
 interface DocEditorProps {
   doc: Doc;
-  versionId?: Versions['version_id'];
 }
 
-export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
+export const DocEditor = ({ doc }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
-  const isVersion = !!versionId && typeof versionId === 'string';
   const { provider, isReady } = useProviderStore();
   const { setIsSkeletonVisible } = useSkeletonStore();
   const isProviderReady = isReady && provider;
@@ -42,7 +74,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
 
   return (
     <>
-      {isDesktop && !isVersion && (
+      {isDesktop && (
         <Box
           $position="absolute"
           $css={css`
@@ -53,102 +85,10 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           <TableContent />
         </Box>
       )}
-      <Box
-        $maxWidth="868px"
-        $width="100%"
-        $height="100%"
-        className="--docs--doc-editor"
-      >
-        <Box
-          $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
-          className="--docs--doc-editor-header"
-        >
-          {isVersion ? <DocVersionHeader /> : <DocHeader doc={doc} />}
-        </Box>
-
-        <Box
-          $direction="row"
-          $width="100%"
-          $css="overflow-x: clip; flex: 1;"
-          $position="relative"
-          className="--docs--doc-editor-content"
-        >
-          <Box $css="flex:1;" $position="relative" $width="100%">
-            {isVersion ? (
-              <DocVersionEditor docId={doc.id} versionId={versionId} />
-            ) : (
-              <BlockNoteEditor doc={doc} provider={provider} />
-            )}
-          </Box>
-        </Box>
-      </Box>
+      <DocEditorContainer
+        docHeader={<DocHeader doc={doc} />}
+        docEditor={<BlockNoteEditor doc={doc} provider={provider} />}
+      />
     </>
   );
-};
-
-interface DocVersionEditorProps {
-  docId: Doc['id'];
-  versionId: Versions['version_id'];
-}
-
-export const DocVersionEditor = ({
-  docId,
-  versionId,
-}: DocVersionEditorProps) => {
-  const {
-    data: version,
-    isLoading,
-    isError,
-    error,
-  } = useDocVersion({
-    docId,
-    versionId,
-  });
-
-  const { replace } = useRouter();
-  const [initialContent, setInitialContent] = useState<Y.XmlFragment>();
-
-  useEffect(() => {
-    if (!version?.content) {
-      return;
-    }
-
-    setInitialContent(base64ToBlocknoteXmlFragment(version.content));
-  }, [version?.content]);
-
-  if (isError && error) {
-    if (error.status === 404) {
-      void replace(`/404`);
-      return null;
-    }
-
-    return (
-      <Box $margin="large" className="--docs--doc-version-editor-error">
-        <TextErrors
-          causes={error.cause}
-          icon={
-            error.status === 502 ? (
-              <Text
-                className="material-icons"
-                $theme="danger"
-                aria-hidden={true}
-              >
-                wifi_off
-              </Text>
-            ) : undefined
-          }
-        />
-      </Box>
-    );
-  }
-
-  if (isLoading || !version || !initialContent) {
-    return (
-      <Box $align="center" $justify="center" $height="100%">
-        <Loader />
-      </Box>
-    );
-  }
-
-  return <BlockNoteEditorVersion initialContent={initialContent} />;
 };

@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-
-import { DocTitleText } from './DocTitle';
+import { DocTitleText } from '@/docs/doc-header';
 
 export const DocVersionHeader = () => {
   const { spacingsTokens } = useCunninghamTheme();
