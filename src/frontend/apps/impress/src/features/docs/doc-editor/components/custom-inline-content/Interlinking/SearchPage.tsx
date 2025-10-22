@@ -3,6 +3,7 @@ import {
   StyleSchema,
 } from '@blocknote/core';
 import { useBlockNoteEditor } from '@blocknote/react';
+import type { KeyboardEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -99,6 +100,55 @@ export const SearchPage = ({
     }, 100);
   }, [inputRef]);
 
+  const closeSearch = (insertContent: string) => {
+    updateInlineContent({
+      type: 'interlinkingSearchInline',
+      props: {
+        disabled: true,
+        trigger,
+      },
+    });
+
+    contentRef(null);
+    editor.focus();
+    editor.insertInlineContent([insertContent]);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      // Keep the trigger character ('@' or '/') in the editor when closing with Escape
+      closeSearch(trigger);
+    } else if (e.key === 'Backspace' && search.length === 0) {
+      e.preventDefault();
+      closeSearch('');
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      // Allow arrow keys to be handled by the command menu for navigation
+      const commandList = e.currentTarget
+        .closest('.inline-content')
+        ?.nextElementSibling?.querySelector('[cmdk-list]');
+
+      // Create a synthetic keyboard event for the command menu
+      const syntheticEvent = new KeyboardEvent('keydown', {
+        key: e.key,
+        bubbles: true,
+        cancelable: true,
+      });
+      commandList?.dispatchEvent(syntheticEvent);
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      // Handle Enter key to select the currently highlighted item
+      const selectedItem = e.currentTarget
+        .closest('.inline-content')
+        ?.nextElementSibling?.querySelector(
+          '[cmdk-item][data-selected="true"]',
+        ) as HTMLElement;
+
+      selectedItem?.click();
+      e.preventDefault();
+    }
+  };
+
   return (
     <Box as="span" $position="relative">
       <Box
@@ -124,50 +174,7 @@ export const SearchPage = ({
             const value = (e.target as HTMLInputElement).value;
             setSearch(value);
           }}
-          onKeyDown={(e) => {
-            if (
-              (e.key === 'Backspace' && search.length === 0) ||
-              e.key === 'Escape'
-            ) {
-              e.preventDefault();
-
-              updateInlineContent({
-                type: 'interlinkingSearchInline',
-                props: {
-                  disabled: true,
-                  trigger,
-                },
-              });
-
-              contentRef(null);
-              editor.focus();
-              editor.insertInlineContent(['']);
-            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-              // Allow arrow keys to be handled by the command menu for navigation
-              const commandList = e.currentTarget
-                .closest('.inline-content')
-                ?.nextElementSibling?.querySelector('[cmdk-list]');
-
-              // Create a synthetic keyboard event for the command menu
-              const syntheticEvent = new KeyboardEvent('keydown', {
-                key: e.key,
-                bubbles: true,
-                cancelable: true,
-              });
-              commandList?.dispatchEvent(syntheticEvent);
-              e.preventDefault();
-            } else if (e.key === 'Enter') {
-              // Handle Enter key to select the currently highlighted item
-              const selectedItem = e.currentTarget
-                .closest('.inline-content')
-                ?.nextElementSibling?.querySelector(
-                  '[cmdk-item][data-selected="true"]',
-                ) as HTMLElement;
-
-              selectedItem?.click();
-              e.preventDefault();
-            }
-          }}
+          onKeyDown={handleKeyDown}
         />
       </Box>
       <Box
@@ -223,6 +230,8 @@ export const SearchPage = ({
                     trigger,
                   },
                 });
+
+                contentRef(null);
 
                 editor.insertInlineContent([
                   {
