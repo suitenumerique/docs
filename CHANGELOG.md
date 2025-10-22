@@ -6,7 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
-## Fixed
+### Changed
+
+- ♻️(backend) increase user short_name field length
+
+### Fixed
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(frontend) show full nested doc names with ajustable bar #1456
