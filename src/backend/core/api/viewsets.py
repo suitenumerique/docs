@@ -636,6 +636,9 @@ class DocumentViewSet(
             .values_list("document__path", flat=True)
         )
 
+        if not access_documents_paths:
+            return self.get_response_for_queryset(self.queryset.none())
+
         children_clause = db.Q()
         for path in access_documents_paths:
             children_clause |= db.Q(path__startswith=path)
