@@ -61,7 +61,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { broadcast } = useBroadcastStore();
 
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
+    listInvalidQueries: [KEY_DOC, KEY_LIST_DOC],
     onSuccess(updatedDoc) {
       // Broadcast to every user connected to the document
       broadcast(`${KEY_DOC}-${updatedDoc.id}`);

@@ -67,10 +67,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   });
   const { isFeatureFlagActivated } = useAnalytics();
   const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
   const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
 
   useEffect(() => {

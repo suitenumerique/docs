@@ -20,7 +20,7 @@ export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
   const { mutate: updateDocLink } = useUpdateDocLink({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
 
   return (

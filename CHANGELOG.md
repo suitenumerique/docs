@@ -6,15 +6,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) ajustable left panel #1456
+
 ### Changed
 
 - ♻️(frontend) adapt custom blocks to new implementation #1375
 - ♻️(backend) increase user short_name field length
+- 🚸(frontend) separate viewers from editors #1509
 
 ### Fixed
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
-- 🐛(frontend) show full nested doc names with ajustable bar #1456
 
 ## [3.8.2] - 2025-10-17
 

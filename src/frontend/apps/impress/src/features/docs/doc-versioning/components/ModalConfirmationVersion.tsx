@@ -42,7 +42,7 @@ export const ModalConfirmationVersion = ({
   const { push } = useRouter();
   const { provider } = useProviderStore();
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
       const onDisplaySuccess = () => {
         toast(t('Version restored successfully'), VariantType.SUCCESS);

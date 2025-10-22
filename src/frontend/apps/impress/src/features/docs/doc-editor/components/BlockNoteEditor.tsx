@@ -17,11 +17,7 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import {
-  Doc,
-  useIsCollaborativeEditable,
-  useProviderStore,
-} from '@/docs/doc-management';
+import { Doc, useProviderStore } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
 import {
@@ -32,7 +28,6 @@ import {
   useUploadStatus,
 } from '../hook';
 import { useEditorStore } from '../stores';
-import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
@@ -85,25 +80,19 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { t } = useTranslation();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
 
-  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
-  const isDeletedDoc = !!doc.deleted_at;
-
-  useSaveDoc(doc.id, provider.document, !readOnly, isConnectedToCollabServer);
+  useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage;
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
 
-  const collabName = readOnly
-    ? 'Reader'
-    : user?.full_name || user?.email || t('Anonymous');
+  const collabName = user?.full_name || user?.email || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
       collaboration: {
-        provider,
+        provider: provider,
         fragment: provider.document.getXmlFragment('document-store'),
         user: {
           name: collabName,
@@ -116,10 +105,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
          */
         renderCursor: (user: { color: string; name: string }) => {
           const cursorElement = document.createElement('span');
-
-          if (user.name === 'Reader') {
-            return cursorElement;
-          }
 
           cursorElement.classList.add('collaboration-cursor-custom__base');
           const caretElement = document.createElement('span');
@@ -181,12 +166,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box
-      $padding={{ top: 'md' }}
-      $background="white"
-      $css={cssEditor(readOnly, isDeletedDoc)}
-      className="--docs--editor-container"
-    >
+    <>
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
@@ -201,24 +181,21 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         editor={editor}
         formattingToolbar={false}
         slashMenu={false}
-        editable={!readOnly}
         theme="light"
       >
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>
-    </Box>
+    </>
   );
 };
 
-interface BlockNoteEditorVersionProps {
+interface BlockNoteReaderProps {
   initialContent: Y.XmlFragment;
 }
 
-export const BlockNoteEditorVersion = ({
-  initialContent,
-}: BlockNoteEditorVersionProps) => {
-  const readOnly = true;
+export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
+  const { setEditor } = useEditorStore();
   const editor = useCreateBlockNote(
     {
       collaboration: {
@@ -234,9 +211,23 @@ export const BlockNoteEditorVersion = ({
     [initialContent],
   );
 
+  useEffect(() => {
+    setEditor(editor);
+
+    return () => {
+      setEditor(undefined);
+    };
+  }, [setEditor, editor]);
+
+  useHeadings(editor);
+
   return (
-    <Box $css={cssEditor(readOnly, true)} className="--docs--editor-container">
-      <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
-    </Box>
+    <BlockNoteView
+      editor={editor}
+      editable={false}
+      theme="light"
+      formattingToolbar={false}
+      slashMenu={false}
+    />
   );
 };
