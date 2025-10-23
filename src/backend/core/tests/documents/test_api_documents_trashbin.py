@@ -293,3 +293,29 @@ def test_api_documents_trashbin_distinct():
     content = response.json()
     assert len(content["results"]) == 1
     assert content["results"][0]["id"] == str(document.id)
+
+
+def test_api_documents_trashbin_empty_queryset_bug():
+    """
+    Test that users with no owner role don't see documents.
+    """
+    # Create a new user with no owner access to any document
+    new_user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(new_user)
+
+    # Create some deleted documents owned by other users
+    other_user = factories.UserFactory()
+    item1 = factories.DocumentFactory(users=[(other_user, "owner")])
+    item1.soft_delete()
+    item2 = factories.DocumentFactory(users=[(other_user, "owner")])
+    item2.soft_delete()
+    item3 = factories.DocumentFactory(users=[(other_user, "owner")])
+    item3.soft_delete()
+
+    response = client.get("/api/v1.0/documents/trashbin/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == 0
+    assert len(content["results"]) == 0
