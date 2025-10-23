@@ -137,8 +137,7 @@
   "header": {
     "logo": {
       "src": "/assets/icon-docs.svg",
-      "width": "32px",
-      "alt": "Notes"
+      "width": "32px"
     }
   }
 }
