@@ -15,6 +15,7 @@ and this project adheres to
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(frontend) show full nested doc names with ajustable bar #1456
+- 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 
 ## [3.8.2] - 2025-10-17
 

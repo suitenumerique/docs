@@ -784,6 +784,29 @@ test.describe('Doc Editor', () => {
     ).toBeVisible();
   });
 
+  test('it keeps @ when pressing Escape', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-interlink-esc',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    const editor = await getEditor({ page });
+    await page.keyboard.press('@');
+
+    const searchInput = page.locator(
+      "span[data-inline-content-type='interlinkingSearchInline'] input",
+    );
+    await expect(searchInput).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await expect(editor.getByText('@')).toBeVisible();
+  });
+
   test('it checks multiple big doc scroll to the top', async ({
     page,
     browserName,
