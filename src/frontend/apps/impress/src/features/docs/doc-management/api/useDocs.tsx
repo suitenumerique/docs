@@ -44,7 +44,16 @@ export const constructParams = (params: DocsParams): URLSearchParams => {
 export type DocsResponse = APIList<Doc>;
 export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
   const searchParams = constructParams(params);
-  const response = await fetchAPI(`documents/?${searchParams.toString()}`);
+  let response
+
+  // HACK for fulltext search feature
+  if (searchParams.has('title')) {
+    searchParams.set('q', searchParams.get('title') || '');
+    searchParams.delete('title');
+    response = await fetchAPI(`documents/search?${searchParams.toString()}`);
+  } else {
+    response = await fetchAPI(`documents/?${searchParams.toString()}`);
+  }
 
   if (!response.ok) {
     throw new APIError('Failed to get the docs', await errorCauses(response));
