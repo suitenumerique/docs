@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
+
 ## [3.9.0] - 2025-11-10
 
 ### Added

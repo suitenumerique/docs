@@ -186,6 +186,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         formattingToolbar={false}
         slashMenu={false}
         theme="light"
+        aria-label={t('Document editor')}
       >
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
@@ -200,6 +201,7 @@ interface BlockNoteReaderProps {
 
 export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
   const { setEditor } = useEditorStore();
+  const { t } = useTranslation();
   const editor = useCreateBlockNote(
     {
       collaboration: {
@@ -231,6 +233,7 @@ export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
         editor={editor}
         editable={false}
         theme="light"
+        aria-label={t('Document version viewer')}
         formattingToolbar={false}
         slashMenu={false}
       />
