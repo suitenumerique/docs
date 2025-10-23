@@ -159,7 +159,7 @@ test.describe('Header: Override configuration', () => {
           logo: {
             src: '/assets/logo-gouv.svg',
             width: '220px',
-            alt: 'Gouvernement Logo',
+            alt: '',
           },
         },
       },
@@ -168,8 +168,11 @@ test.describe('Header: Override configuration', () => {
     await page.goto('/');
     const header = page.locator('header').first();
 
-    await expect(header.getByAltText('Gouvernement Logo')).toBeVisible();
+    const logoImage = header.getByTestId('header-icon-docs');
+    await expect(logoImage).toBeVisible();
 
-    await expect(header.getByAltText('Docs')).toBeHidden();
+    await expect(logoImage).not.toHaveAttribute('src', '/assets/icon-docs.svg');
+    await expect(logoImage).toHaveAttribute('src', '/assets/logo-gouv.svg');
+    await expect(logoImage).toHaveAttribute('alt', '');
   });
 });
