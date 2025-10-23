@@ -152,23 +152,23 @@ export const DocsGrid = ({
                   <DocGridContentList docs={docs} />
                 )}
               </Box>
-              {hasNextPage && !loading && (
-                <InView
-                  data-testid="infinite-scroll-trigger"
-                  as="div"
-                  onChange={loadMore}
-                >
-                  {!isFetching && hasNextPage && (
-                    <Button
-                      onClick={() => void fetchNextPage()}
-                      color="primary-text"
-                    >
-                      {t('More docs')}
-                    </Button>
-                  )}
-                </InView>
-              )}
             </Box>
+            {hasNextPage && !loading && (
+              <InView
+                data-testid="infinite-scroll-trigger"
+                as="div"
+                onChange={loadMore}
+              >
+                {!isFetching && hasNextPage && (
+                  <Button
+                    onClick={() => void fetchNextPage()}
+                    color="primary-text"
+                  >
+                    {t('More docs')}
+                  </Button>
+                )}
+              </InView>
+            )}
           </Box>
         )}
       </Card>

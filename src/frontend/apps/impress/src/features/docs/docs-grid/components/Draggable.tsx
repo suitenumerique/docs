@@ -17,9 +17,9 @@ export const Draggable = <T,>(props: DraggableProps<T>) => {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      role="none"
       data-testid={`draggable-doc-${props.id}`}
       className="--docs--grid-draggable"
-      role="presentation"
     >
       {props.children}
     </div>
