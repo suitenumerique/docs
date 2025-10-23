@@ -203,6 +203,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         slashMenu={false}
         editable={!readOnly}
         theme="light"
+        aria-label={t('Document editor')}
       >
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
@@ -219,6 +220,7 @@ export const BlockNoteEditorVersion = ({
   initialContent,
 }: BlockNoteEditorVersionProps) => {
   const readOnly = true;
+  const { t } = useTranslation();
   const editor = useCreateBlockNote(
     {
       collaboration: {
@@ -236,7 +238,12 @@ export const BlockNoteEditorVersion = ({
 
   return (
     <Box $css={cssEditor(readOnly, true)} className="--docs--editor-container">
-      <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
+      <BlockNoteView
+        editor={editor}
+        editable={!readOnly}
+        theme="light"
+        aria-label={t('Document version viewer')}
+      />
     </Box>
   );
 };

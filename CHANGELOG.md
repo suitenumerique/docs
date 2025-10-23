@@ -15,6 +15,8 @@ and this project adheres to
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(frontend) show full nested doc names with ajustable bar #1456
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve ARIA in document grid and editor for a11y compliance #1519
 
 ## [3.8.2] - 2025-10-17
 
