@@ -31,7 +31,7 @@ test.describe('Doc Export', () => {
 
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
-      page.getByText('Download your document in a .docx or .pdf format.'),
+      page.getByText('Download your document in a .docx, .odt or .pdf format.'),
     ).toBeVisible();
     await expect(
       page.getByRole('combobox', { name: 'Template' }),
@@ -140,6 +140,51 @@ test.describe('Doc Export', () => {
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.docx`);
+  });
+
+  test('it exports the doc to odt', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'doc-editor-odt', browserName, 1);
+
+    await verifyDocName(page, randomDoc);
+
+    await page.locator('.ProseMirror.bn-editor').click();
+    await page.locator('.ProseMirror.bn-editor').fill('Hello World ODT');
+
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+
+    await expect(image).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'Odt' }).click();
+
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.odt`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.odt`);
   });
 
   /**
@@ -441,5 +486,69 @@ test.describe('Doc Export', () => {
     const pdfParse = new PDFParse({ data: pdfBuffer });
     const pdfText = await pdfParse.getText();
     expect(pdfText.text).toContain(randomDoc);
+  });
+
+  test('it exports the doc with interlinking to odt', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'export-interlinking-odt',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'export-interlink-child-odt',
+    );
+
+    await verifyDocName(page, docChild);
+
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Link a doc').first().click();
+
+    const input = page.locator(
+      "span[data-inline-content-type='interlinkingSearchInline'] input",
+    );
+    const searchContainer = page.locator('.quick-search-container');
+
+    await input.fill('export-interlink');
+
+    await expect(searchContainer).toBeVisible();
+    await expect(searchContainer.getByText(randomDoc)).toBeVisible();
+
+    // We are in docChild, we want to create a link to randomDoc (parent)
+    await searchContainer.getByText(randomDoc).click();
+
+    // Search the interlinking link in the editor (not in the document tree)
+    const editor = page.locator('.ProseMirror.bn-editor');
+    const interlink = editor.getByRole('button', {
+      name: randomDoc,
+    });
+
+    await expect(interlink).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'Odt' }).click();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${docChild}.odt`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${docChild}.odt`);
   });
 });

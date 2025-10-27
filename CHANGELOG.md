@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(frontend) enable ODT export for documents #1524
+
 ### Fixed
 
 - ♿(frontend) improve accessibility:

@@ -5,6 +5,7 @@ import {
 } from '@blocknote/core';
 import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
+import React from 'react';
 
 export function downloadFile(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
@@ -97,4 +98,77 @@ export function docxBlockPropsToStyles(
                   throw new UnreachableCaseError(props.textAlignment);
                 })(),
   };
+}
+
+// ODT helpers
+type OdtExporterLike = {
+  options?: { colors?: typeof COLORS_DEFAULT };
+  registerStyle: (fn: (name: string) => React.ReactNode) => string;
+};
+
+function isOdtExporterLike(value: unknown): value is OdtExporterLike {
+  return (
+    !!value &&
+    typeof (value as { registerStyle?: unknown }).registerStyle === 'function'
+  );
+}
+
+export function odtRegisterParagraphStyleForBlock(
+  exporter: unknown,
+  props: Partial<DefaultProps>,
+  options?: { paddingCm?: number; parentStyleName?: string },
+) {
+  if (!isOdtExporterLike(exporter)) {
+    throw new Error('Invalid ODT exporter: missing registerStyle');
+  }
+
+  const colors = exporter.options?.colors;
+
+  const bgColorHex =
+    props.backgroundColor && props.backgroundColor !== 'default' && colors
+      ? colors[props.backgroundColor].background
+      : undefined;
+
+  const textColorHex =
+    props.textColor && props.textColor !== 'default' && colors
+      ? colors[props.textColor].text
+      : undefined;
+
+  const foTextAlign =
+    !props.textAlignment || props.textAlignment === 'left'
+      ? 'start'
+      : props.textAlignment === 'center'
+        ? 'center'
+        : props.textAlignment === 'right'
+          ? 'end'
+          : 'justify';
+
+  const paddingCm = options?.paddingCm ?? 0.42; // ~1rem (16px)
+  const parentStyleName = options?.parentStyleName;
+
+  // registerStyle is available on ODT exporter; call through with React elements
+  const styleName = exporter.registerStyle((name: string) =>
+    React.createElement(
+      'style:style',
+      {
+        'style:name': name,
+        'style:family': 'paragraph',
+        ...(parentStyleName
+          ? { 'style:parent-style-name': parentStyleName }
+          : {}),
+      },
+      React.createElement('style:paragraph-properties', {
+        'fo:text-align': foTextAlign,
+        'fo:padding': `${paddingCm}cm`,
+        ...(bgColorHex ? { 'fo:background-color': bgColorHex } : {}),
+      }),
+      textColorHex
+        ? React.createElement('style:text-properties', {
+            'fo:color': textColorHex,
+          })
+        : undefined,
+    ),
+  );
+
+  return styleName;
 }
