@@ -10,6 +10,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
+- 🐛(docx) fix image overflow by limiting width to 600px during export #1525
 
 ## [3.9.0] - 2025-11-10
 

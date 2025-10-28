@@ -50,9 +50,9 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
 
     const { width, height } = dimensions;
 
-    if (previewWidth && previewWidth > MAX_WIDTH) {
-      previewWidth = MAX_WIDTH;
-    }
+    // Ensure the final width never exceeds MAX_WIDTH to prevent images
+    // from overflowing the page width in the exported document
+    const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
 
     return [
       new Paragraph({
@@ -71,8 +71,8 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
                 }
               : undefined,
             transformation: {
-              width: previewWidth || width,
-              height: ((previewWidth || width) / width) * height,
+              width: finalWidth,
+              height: (finalWidth / width) * height,
             },
           }),
         ],
