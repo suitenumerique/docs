@@ -13,6 +13,7 @@ and this project adheres to
   - ♿(frontend) improve accessibility and styling of summary table #1528
 - 🐛(docx) fix image overflow by limiting width to 600px during export #1525
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
+- 🐛(frontend) fix pdf embed to use full width #1526
 
 ## [3.9.0] - 2025-11-10
 
@@ -32,6 +33,7 @@ and this project adheres to
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(backend) fix trashbin list #1520
+
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
 - 🐛(backend) fix s3 version_id validation #1543
