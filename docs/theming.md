@@ -86,3 +86,43 @@ THEME_CUSTOMIZATION_FILE_PATH=<path>
 ### Example of JSON
 
 The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+
+----
+
+# **Custom Export Templates** 📄
+
+You can define custom export templates to add introductory content, such as headers or titles, to documents before exporting them as PDF, Docx, etc...
+
+Export Templates are managed through the admin interface and can be selected by users during the export process.
+
+### Benefits
+
+This feature offers several advantages:
+*   **Header customization** 📄: Add custom headers, titles, or branding to exported documents.
+*   **No code changes required** 🔧: Templates are managed through the admin interface without needing developer intervention.
+*   **Flexible content** 🌟: Use HTML to create headers that match your organization's style.
+
+### Limitations ⚠️
+
+- Currently, templates are only prepended to the document.
+More complex layouts are not supported at this time.
+- The `CSS` and `Description` fields are being ignored at this time.
+- <b>Due to technical conversion limitations, not all HTML can be converted to the internal format!</b>
+
+### How to Use
+
+1. Create the Template in a new document.
+![Build Template in Editor](./assets/export-template-tutorial/build-template-in-editor.png)
+2. Copy it as HTML code using the `Copy as HTML` feature:
+   ![Three Dots Copy as HTML](./assets/export-template-tutorial/three-dots-copy-as-html.png)
+3. Log in to the admin interface at `/admin` (backend container).
+2. Create a new template:
+   ![Admin Create Template Workflow](./assets/export-template-tutorial/admin-create-template-workflow.png)
+    - **Title**: Enter a descriptive name for the template.
+    - **Code**: Paste the HTML content from step 2.
+    - **Public**: Check this box to make the template available in the frontend export modal.
+    - **Save** the template.
+
+Once saved, users can select the template from the export modal in the frontend during the export process.
+![Select Template in Editor](./assets/export-template-tutorial/select-template-in-editor.png)
+
