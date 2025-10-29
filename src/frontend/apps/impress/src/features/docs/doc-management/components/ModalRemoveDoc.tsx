@@ -6,16 +6,20 @@ import {
   useToastProvider,
 } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { useConfig } from '@/core';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
+import { useKeyboardAction } from '@/hooks';
 
 import { KEY_LIST_DOC } from '../api/useDocs';
 import { useRemoveDoc } from '../api/useRemoveDoc';
 import { useDocUtils } from '../hooks';
 import { Doc } from '../types';
+
+const CANCEL_BUTTON_ID = 'modal-remove-doc-cancel-button';
 
 interface ModalRemoveDocProps {
   doc: Doc;
@@ -57,20 +61,42 @@ export const ModalRemoveDoc = ({
     },
   });
 
+  useEffect(() => {
+    const cancelButton = document.getElementById(CANCEL_BUTTON_ID);
+    if (cancelButton instanceof HTMLButtonElement) {
+      cancelButton.focus();
+    }
+  }, []);
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleDelete = () => {
+    removeDoc({
+      docId: doc.id,
+    });
+  };
+
+  const handleCloseKeyDown = useKeyboardAction(handleClose);
+  const handleDeleteKeyDown = useKeyboardAction(handleDelete);
+
   return (
     <Modal
       isOpen
       closeOnClickOutside
       hideCloseButton
-      onClose={() => onClose()}
+      onClose={handleClose}
       aria-describedby="modal-remove-doc-title"
       rightActions={
         <>
           <Button
+            id={CANCEL_BUTTON_ID}
             aria-label={t('Cancel the deletion')}
             color="secondary"
             fullWidth
-            onClick={() => onClose()}
+            onClick={handleClose}
+            onKeyDown={handleCloseKeyDown}
           >
             {t('Cancel')}
           </Button>
@@ -78,11 +104,8 @@ export const ModalRemoveDoc = ({
             aria-label={t('Delete document')}
             color="danger"
             fullWidth
-            onClick={() =>
-              removeDoc({
-                docId: doc.id,
-              })
-            }
+            onClick={handleDelete}
+            onKeyDown={handleDeleteKeyDown}
           >
             {t('Delete')}
           </Button>
@@ -108,7 +131,8 @@ export const ModalRemoveDoc = ({
           </Text>
           <ButtonCloseModal
             aria-label={t('Close the delete modal')}
-            onClick={() => onClose()}
+            onClick={handleClose}
+            onKeyDown={handleCloseKeyDown}
           />
         </Box>
       }

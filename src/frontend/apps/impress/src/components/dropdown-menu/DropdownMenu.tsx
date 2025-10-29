@@ -1,6 +1,7 @@
 import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
 import {
   Fragment,
+  KeyboardEvent,
   PropsWithChildren,
   ReactNode,
   useCallback,
@@ -93,6 +94,18 @@ export const DropdownMenu = ({
     }
   }, [isOpen, options]);
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLElement>, option: DropdownMenuOption) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.stopPropagation();
+        onOpenChange?.(false);
+        void option.callback?.();
+      }
+    },
+    [onOpenChange],
+  );
+
   if (disabled) {
     return children;
   }
@@ -173,6 +186,7 @@ export const DropdownMenu = ({
                   onOpenChange?.(false);
                   void option.callback?.();
                 }}
+                onKeyDown={(event) => handleKeyDown(event, option)}
                 key={option.label}
                 $align="center"
                 $justify="space-between"

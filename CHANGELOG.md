@@ -23,6 +23,7 @@ and this project adheres to
 - 🐛(backend) fix trashbin list
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
+  - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
 
 ## [3.8.2] - 2025-10-17
 
