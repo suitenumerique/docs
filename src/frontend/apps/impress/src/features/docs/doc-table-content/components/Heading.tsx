@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { css } from 'styled-components';
 
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
@@ -40,7 +41,6 @@ export const Heading = ({
     <BoxButton
       id={`heading-${headingId}`}
       $width="100%"
-      key={headingId}
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
       onClick={() => {
@@ -59,8 +59,19 @@ export const Heading = ({
       }}
       $radius="4px"
       $background={isActive ? `${colorsTokens['greyscale-100']}` : 'none'}
-      $css="text-align: left;"
+      $css={css`
+        text-align: left;
+        &:focus-visible {
+          /* Scoped focus style: same footprint as hover, with theme shadow */
+          outline: none;
+          box-shadow: 0 0 0 2px ${colorsTokens['primary-400']};
+          border-radius: 4px;
+        }
+      `}
       className="--docs--table-content-heading"
+      aria-label={text}
+      aria-selected={isHighlight}
+      aria-current={isHighlight ? 'true' : undefined}
     >
       <Text
         $width="100%"
