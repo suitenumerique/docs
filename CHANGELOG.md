@@ -15,6 +15,7 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
+  - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
 - 🐛(docx) fix image overflow by limiting width to 600px during export #1525
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) fix pdf embed to use full width #1526
