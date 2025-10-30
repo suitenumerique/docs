@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
+- ✨(frontend) enable ODT export for documents #1524
 
 ### Changed
 
