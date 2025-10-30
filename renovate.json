@@ -20,6 +20,12 @@
       "allowedVersions": "<6.0.0"
     },
     {
+      "groupName": "allowed pylint versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["pylint"],
+      "allowedVersions": "<4.0.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
