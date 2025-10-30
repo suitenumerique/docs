@@ -23,6 +23,7 @@ and this project adheres to
 - 🐛(backend) fix trashbin list
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
+- 🐛(backend) fix s3 version_id validation
 
 ## [3.8.2] - 2025-10-17
 
