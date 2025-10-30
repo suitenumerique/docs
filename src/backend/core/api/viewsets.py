@@ -1105,7 +1105,7 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=True,
         methods=["get", "delete"],
-        url_path="versions/(?P<version_id>[0-9a-z-]+)",
+        url_path=r"versions/(?P<version_id>[A-Za-z0-9._+\-=~]{1,1024})",
     )
     # pylint: disable=unused-argument
     def versions_detail(self, request, pk, version_id, *args, **kwargs):
