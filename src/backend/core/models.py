@@ -906,7 +906,8 @@ class Document(MP_Node, BaseModel):
 
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
-            ancestors_deleted_at=self.ancestors_deleted_at
+            ancestors_deleted_at=self.ancestors_deleted_at,
+            updated_at=self.updated_at,
         )
 
     @transaction.atomic

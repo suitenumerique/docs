@@ -45,6 +45,7 @@ def indexer_settings_fixture(settings):
     settings.SEARCH_INDEXER_QUERY_URL = (
         "http://localhost:8081/api/v1.0/documents/search/"
     )
+    settings.SEARCH_INDEXER_COUNTDOWN = 1
 
     yield settings
 
