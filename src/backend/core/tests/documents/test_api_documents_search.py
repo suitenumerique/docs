@@ -2,7 +2,10 @@
 Tests for Documents API endpoint in impress's core app: list
 """
 
+import random
 from json import loads as json_loads
+
+from django.test import RequestFactory
 
 import pytest
 import responses
@@ -14,6 +17,15 @@ from core.services.search_indexers import get_document_indexer
 
 fake = Faker()
 pytestmark = pytest.mark.django_db
+
+
+def build_search_url(**kwargs):
+    """Build absolute uri for search endpoint with ORDERED query arguments"""
+    return (
+        RequestFactory()
+        .get("/api/v1.0/documents/search/", dict(sorted(kwargs.items())))
+        .build_absolute_uri()
+    )
 
 
 @pytest.mark.parametrize("role", models.LinkRoleChoices.values)
@@ -191,8 +203,62 @@ def test_api_documents_search_format(indexer_settings):
 
 
 @responses.activate
-def test_api_documents_search_pagination(indexer_settings):
-    """Documents should be ordered by descending "updated_at" by default"""
+@pytest.mark.parametrize(
+    "pagination, status, expected",
+    (
+        (
+            {"page": 1, "page_size": 10},
+            200,
+            {
+                "count": 10,
+                "previous": None,
+                "next": None,
+                "range": (0, None),
+            },
+        ),
+        (
+            {},
+            200,
+            {
+                "count": 10,
+                "previous": None,
+                "next": None,
+                "range": (0, None),
+                "api_page_size": 21,  # default page_size is 20
+            },
+        ),
+        (
+            {"page": 2, "page_size": 10},
+            404,
+            {},
+        ),
+        (
+            {"page": 1, "page_size": 5},
+            200,
+            {
+                "count": 10,
+                "previous": None,
+                "next": {"page": 2, "page_size": 5},
+                "range": (0, 5),
+            },
+        ),
+        (
+            {"page": 2, "page_size": 5},
+            200,
+            {
+                "count": 10,
+                "previous": {"page": 1, "page_size": 5},
+                "next": None,
+                "range": (5, None),
+            },
+        ),
+        ({"page": 3, "page_size": 5}, 404, {}),
+    ),
+)
+def test_api_documents_search_pagination(
+    indexer_settings, pagination, status, expected
+):
+    """Documents should be ordered by descending "score" by default"""
     indexer_settings.SEARCH_INDEXER_QUERY_URL = "http://find/api/v1.0/search"
 
     assert get_document_indexer() is not None
@@ -202,35 +268,159 @@ def test_api_documents_search_pagination(indexer_settings):
     client = APIClient()
     client.force_login(user)
 
-    docs = factories.DocumentFactory.create_batch(10)
+    docs = factories.DocumentFactory.create_batch(10, title="alpha", users=[user])
+
+    docs_by_uuid = {str(doc.pk): doc for doc in docs}
+    api_results = [{"_id": id} for id in docs_by_uuid.keys()]
+
+    # reorder randomly to simulate score ordering
+    random.shuffle(api_results)
 
     # Find response
     # pylint: disable-next=assignment-from-none
     api_search = responses.add(
         responses.POST,
         "http://find/api/v1.0/search",
-        json=[{"_id": str(doc.pk)} for doc in docs],
+        json=api_results,
         status=200,
     )
 
     response = client.get(
-        "/api/v1.0/documents/search/", data={"q": "alpha", "page": 2, "page_size": 5}
+        "/api/v1.0/documents/search/",
+        data={
+            "q": "alpha",
+            **pagination,
+        },
     )
 
-    assert response.status_code == 200
-    content = response.json()
-    results = content.pop("results")
-    assert len(results) == 5
+    assert response.status_code == status
 
-    # Check the query parameters.
-    assert api_search.call_count == 1
-    assert api_search.calls[0].response.status_code == 200
-    assert json_loads(api_search.calls[0].request.body) == {
-        "q": "alpha",
-        "visited": [],
-        "services": ["docs"],
-        "page_number": 2,
-        "page_size": 5,
-        "order_by": "updated_at",
-        "order_direction": "desc",
-    }
+    if response.status_code < 300:
+        previous_url = (
+            build_search_url(q="alpha", **expected["previous"])
+            if expected["previous"]
+            else None
+        )
+        next_url = (
+            build_search_url(q="alpha", **expected["next"])
+            if expected["next"]
+            else None
+        )
+        start, end = expected["range"]
+
+        content = response.json()
+
+        assert content["count"] == expected["count"]
+        assert content["previous"] == previous_url
+        assert content["next"] == next_url
+
+        results = content.pop("results")
+
+        # The find api results ordering by score is kept
+        assert [r["id"] for r in results] == [r["_id"] for r in api_results[start:end]]
+
+        # Check the query parameters.
+        assert api_search.call_count == 1
+        assert api_search.calls[0].response.status_code == 200
+        assert json_loads(api_search.calls[0].request.body) == {
+            "q": "alpha",
+            "visited": [],
+            "services": ["docs"],
+            "page_number": 1,
+            "page_size": 100,
+            "order_by": "updated_at",
+            "order_direction": "desc",
+        }
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    "pagination, status, expected",
+    (
+        (
+            {"page": 1, "page_size": 10},
+            200,
+            {"count": 10, "previous": None, "next": None, "range": (0, None)},
+        ),
+        (
+            {},
+            200,
+            {"count": 10, "previous": None, "next": None, "range": (0, None)},
+        ),
+        (
+            {"page": 2, "page_size": 10},
+            404,
+            {},
+        ),
+        (
+            {"page": 1, "page_size": 5},
+            200,
+            {
+                "count": 10,
+                "previous": None,
+                "next": {"page": 2, "page_size": 5},
+                "range": (0, 5),
+            },
+        ),
+        (
+            {"page": 2, "page_size": 5},
+            200,
+            {
+                "count": 10,
+                "previous": {"page_size": 5},
+                "next": None,
+                "range": (5, None),
+            },
+        ),
+        ({"page": 3, "page_size": 5}, 404, {}),
+    ),
+)
+def test_api_documents_search_pagination_endpoint_is_none(
+    indexer_settings, pagination, status, expected
+):
+    """Documents should be ordered by descending "-updated_at" by default"""
+    indexer_settings.SEARCH_INDEXER_QUERY_URL = None
+
+    assert get_document_indexer() is None
+
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    factories.DocumentFactory.create_batch(10, title="alpha", users=[user])
+
+    response = client.get(
+        "/api/v1.0/documents/search/",
+        data={
+            "q": "alpha",
+            **pagination,
+        },
+    )
+
+    assert response.status_code == status
+
+    if response.status_code < 300:
+        previous_url = (
+            build_search_url(q="alpha", **expected["previous"])
+            if expected["previous"]
+            else None
+        )
+        next_url = (
+            build_search_url(q="alpha", **expected["next"])
+            if expected["next"]
+            else None
+        )
+        queryset = models.Document.objects.order_by("-updated_at")
+        start, end = expected["range"]
+        expected_results = [str(d.pk) for d in queryset[start:end]]
+
+        content = response.json()
+
+        assert content["count"] == expected["count"]
+        assert content["previous"] == previous_url
+        assert content["next"] == next_url
+
+        results = content.pop("results")
+
+        assert [r["id"] for r in results] == expected_results
