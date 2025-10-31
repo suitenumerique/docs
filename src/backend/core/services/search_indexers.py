@@ -130,16 +130,17 @@ class BaseDocumentIndexer(ABC):
                 "SEARCH_INDEXER_QUERY_URL must be set in Django settings."
             )
 
-    def index(self):
+    def index(self, queryset=None):
         """
         Fetch documents in batches, serialize them, and push to the search backend.
         """
         last_id = 0
         count = 0
+        queryset = queryset or models.Document.objects.all()
 
         while True:
             documents_batch = list(
-                models.Document.objects.filter(
+                queryset.filter(
                     id__gt=last_id,
                 ).order_by("id")[: self.batch_size]
             )
