@@ -10,7 +10,7 @@ const formatDefault: DateTimeFormatOptions = {
 };
 
 export const useDate = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const formatDate = (
     date: string,
@@ -22,7 +22,19 @@ export const useDate = () => {
   };
 
   const relativeDate = (date: string): string => {
-    return DateTime.fromISO(date).setLocale(i18n.language).toRelative() || '';
+    const dateToCompare = DateTime.fromISO(date);
+
+    if (!dateToCompare.isValid) {
+      return '';
+    }
+
+    const dateNow = DateTime.now();
+
+    const differenceInSeconds = dateNow.diff(dateToCompare).as('seconds');
+
+    return Math.abs(differenceInSeconds) >= 5
+      ? dateToCompare.toRelative({ base: dateNow, locale: i18n.language })
+      : t('just now');
   };
 
   const calculateDaysLeft = (date: string, daysLimit: number): number =>

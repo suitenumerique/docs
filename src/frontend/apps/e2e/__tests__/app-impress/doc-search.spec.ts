@@ -45,7 +45,7 @@ test.describe('Document search', () => {
     const listSearch = page.getByRole('listbox').getByRole('group');
     const rowdoc = listSearch.getByRole('option').first();
     await expect(rowdoc.getByText('keyboard_return')).toBeVisible();
-    await expect(rowdoc.getByText(/seconds? ago/)).toBeVisible();
+    await expect(rowdoc.getByText(/just now/)).toBeVisible();
 
     await expect(
       listSearch.getByRole('option').getByText(doc1Title),

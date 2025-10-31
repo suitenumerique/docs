@@ -1,9 +1,9 @@
-import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { useDate } from '@/hooks/useDate';
 import { useResponsiveStore } from '@/stores';
 
 import ChildDocument from '../assets/child-document.svg';
@@ -38,6 +38,7 @@ export const SimpleDocItem = ({
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
   const { isChild } = useDocUtils(doc);
+  const { relativeDate } = useDate();
 
   return (
     <Box
@@ -100,7 +101,7 @@ export const SimpleDocItem = ({
             aria-hidden="true"
           >
             <Text $size="xs" $variation="tertiary">
-              {DateTime.fromISO(doc.updated_at).toRelative()}
+              {relativeDate(doc.updated_at)}
             </Text>
           </Box>
         )}

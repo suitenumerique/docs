@@ -32,6 +32,10 @@ describe('DocsGridItemDate', () => {
 
   [
     {
+      updated_at: DateTime.now().minus({ seconds: 1 }).toISO(),
+      rendered: 'just now',
+    },
+    {
       updated_at: DateTime.now().minus({ minutes: 1 }).toISO(),
       rendered: '1 minute ago',
     },
