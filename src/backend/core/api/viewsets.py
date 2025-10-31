@@ -1072,12 +1072,10 @@ class DocumentViewSet(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
 
-    def _simple_search_queryset(self, params):
+    def _search_simple(self, request, text):
         """
         Returns a queryset filtered by the content of the document title
         """
-        text = params.validated_data["q"]
-
         # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
         queryset = self.get_queryset()
         filterset = DocumentFilter({"title": text}, queryset=queryset)
@@ -1085,25 +1083,47 @@ class DocumentViewSet(
         if not filterset.is_valid():
             raise drf.exceptions.ValidationError(filterset.errors)
 
-        return filterset.filter_queryset(queryset)
+        queryset = filterset.filter_queryset(queryset)
 
-    def _fulltext_search_queryset(self, indexer, token, user, params):
+        return self.get_response_for_queryset(
+            queryset.order_by("-updated_at"),
+            context={
+                "request": request,
+            },
+        )
+
+    def _search_fulltext(self, indexer, request, params):
         """
         Returns a queryset from the results the fulltext search of Find
         """
+        access_token = request.session.get("oidc_access_token")
+        user = request.user
         text = params.validated_data["q"]
         queryset = models.Document.objects.all()
 
         # Retrieve the documents ids from Find.
         results = indexer.search(
             text=text,
-            token=token,
+            token=access_token,
             visited=get_visited_document_ids_of(queryset, user),
-            page=params.validated_data.get("page", 1),
-            page_size=params.validated_data.get("page_size", 20),
+            page=1,
+            page_size=100,
         )
 
-        return queryset.filter(pk__in=results)
+        docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
+        ordered_docs = [docs_by_uuid[id] for id in results]
+
+        page = self.paginate_queryset(ordered_docs)
+
+        serializer = self.get_serializer(
+            page if page else ordered_docs,
+            many=True,
+            context={
+                "request": request,
+            },
+        )
+
+        return self.get_paginated_response(serializer.data)
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
@@ -1119,29 +1139,17 @@ class DocumentViewSet(
 
         The ordering is always by the most recent first.
         """
-        access_token = request.session.get("oidc_access_token")
-        user = request.user
-
         params = serializers.SearchDocumentSerializer(data=request.query_params)
         params.is_valid(raise_exception=True)
 
         indexer = get_document_indexer()
 
         if indexer:
-            queryset = self._fulltext_search_queryset(
-                indexer, token=access_token, user=user, params=params
-            )
-        else:
-            # The indexer is not configured, we fallback on a simple icontains filter by the
-            # model field 'title'.
-            queryset = self._simple_search_queryset(params)
+            return self._search_fulltext(indexer, request, params=params)
 
-        return self.get_response_for_queryset(
-            queryset.order_by("-updated_at"),
-            context={
-                "request": request,
-            },
-        )
+        # The indexer is not configured, we fallback on a simple icontains filter by the
+        # model field 'title'.
+        return self._search_simple(request, text=params.validated_data["q"])
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
