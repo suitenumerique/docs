@@ -20,7 +20,9 @@ and this project adheres to
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(frontend) show full nested doc names with ajustable bar #1456
+- 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(backend) fix trashbin list
+
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
 - 🐛(backend) fix s3 version_id validation

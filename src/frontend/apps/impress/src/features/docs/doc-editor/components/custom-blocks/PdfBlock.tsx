@@ -22,8 +22,8 @@ import { Box, Icon } from '@/components';
 import { DocsBlockNoteEditor } from '../../types';
 
 const PDFBlockStyle = createGlobalStyle`
-  .bn-block-content[data-content-type="pdf"] {
-    width: fit-content;
+  .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper[style*="fit-content"] {
+    width: 100% !important;
   }
 `;
 
