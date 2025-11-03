@@ -388,6 +388,7 @@ class DocumentViewSet(
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
+    all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
     descendants_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
@@ -857,6 +858,60 @@ class DocumentViewSet(
                 "paths_links_mapping": paths_links_mapping,
             },
         )
+
+    @drf.decorators.action(
+        detail=False,
+        methods=["get"],
+    )
+    def all(self, request, *args, **kwargs):
+        """
+        Returns all documents (including descendants) that the user has access to.
+
+        Unlike the list endpoint which only returns top-level documents, this endpoint
+        returns all documents including children, grandchildren, etc.
+        """
+        user = self.request.user
+
+        accessible_documents = self.get_queryset()
+        accessible_paths = list(accessible_documents.values_list("path", flat=True))
+
+        if not accessible_paths:
+            return self.get_response_for_queryset(self.queryset.none())
+
+        # Build query to include all descendants using path prefix matching
+        descendants_clause = db.Q()
+        for path in accessible_paths:
+            descendants_clause |= db.Q(path__startswith=path)
+
+        queryset = self.queryset.filter(
+            descendants_clause, ancestors_deleted_at__isnull=True
+        )
+
+        # Apply existing filters
+        filterset = ListDocumentFilter(
+            self.request.GET, queryset=queryset, request=self.request
+        )
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+        filter_data = filterset.form.cleaned_data
+
+        # Filter as early as possible on fields that are available on the model
+        for field in ["is_creator_me", "title"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+
+        queryset = queryset.annotate_user_roles(user)
+
+        # Annotate favorite status and filter if applicable as late as possible
+        queryset = queryset.annotate_is_favorite(user)
+        for field in ["is_favorite", "is_masked"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+
+        # Apply ordering only now that everything is filtered and annotated
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
+        )
+
+        return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(
         detail=True,
