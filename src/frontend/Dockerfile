@@ -28,7 +28,14 @@ FROM frontend-deps AS impress-dev
 
 WORKDIR /home/frontend/apps/impress
 
-EXPOSE 3000
+EXPOSE 8080
+
+# Create nginx runtime directories and set permissions for non-root user
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+
+# Switch to non-root user
+USER nginx
 
 CMD [ "yarn", "dev"]
 
@@ -70,5 +77,12 @@ COPY ./src/frontend/apps/impress/conf/default.conf /etc/nginx/conf.d
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
+
+
+# Switch to a non-root user
+# The nginx user is created by the base image. We need to grant it permissions to write logs and pid file.
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+USER nginx
 
 CMD ["nginx", "-g", "daemon off;"]
