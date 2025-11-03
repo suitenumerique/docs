@@ -74,7 +74,7 @@ services:
       - "8071:8000"
     networks:
       default: {}
-      lasuite-net:
+      lasuite:
         aliases:
           - impress
     volumes:
@@ -99,7 +99,7 @@ services:
       - DJANGO_CONFIGURATION=Development
     networks:
       - default
-      - lasuite-net
+      - lasuite
     env_file:
       - env.d/development/common
       - env.d/development/common.local
@@ -117,7 +117,7 @@ services:
       - "8083:8083"
     networks:
       default: {}
-      lasuite-net:
+      lasuite:
         aliases:
           - nginx
     volumes:
@@ -232,6 +232,6 @@ services:
         restart: true
 
 networks:
-  lasuite-net:
-    name: lasuite-net
+  lasuite:
+    name: lasuite-network
     driver: bridge
