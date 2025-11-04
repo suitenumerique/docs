@@ -19,11 +19,9 @@ The plugin system allows developers to extend the application's functionality an
 - Build and version plugins independently.
 
 **Limitations:**
-- Primarily for UI additions/modifications.
-- Libraries used, that the host already provides, should match host versions to allow singleton behavior.
-- Cannot extend Next.js-specific features like pages.
-- No direct access to host state (only few exceptions where a global intermediary cache is used e.g. react-queries).
-- Host updates may require plugin checks/updates for DOM/component changes (usually minimal).
+- Focused on DOM/UI customisations; you cannot add Next.js routes or other server features.
+- Runs client-side without direct host state access; shared caches (e.g. React Query) only work when the dependency is also shared as a singleton.
+- Host upgrades may require tweaking selectors and matching versions for libraries the host already provides.
 
 ### Overview
 This diagram shows the plugin integration flow: fetching config and plugins, checking visibility, starting DOM observation, conditionally rendering components, and re-checking on DOM changes.
@@ -58,10 +56,10 @@ Plugins are configured via a JSON file (e.g., `impress/configuration/plugins/def
 | `injection`| Object | Yes     | Integration control. |
 |   - `target` | String | Yes   | CSS selector for insertion point. |
 |   - `position` | String | No (default: "append") | Insertion position (`before`, `after`, `replace`, `prepend`, `append`). |
-|   - `observerRoots` | String/Boolean | No | DOM observation: CSS selector, `true` (full page), `false` (none). |
+|   - `observerRoots` | String/Boolean | No | DOM observation: CSS selector, `true` (default; observe whole document), `false` (disable observers). |
 | `props`    | Object | No      | Props passed to the plugin component. |
 | `visibility` | Object | No    | Visibility controls. |
-|   - `routes` | Array  | No     | Path globs (e.g., ["/docs/*", "!/docs/secret*"]); supports negation (`!`). |
+|   - `routes` | Array  | No     | Path globs (e.g., `["/docs/*", "!/docs/secret*"]`); supports `*` and `?` wildcards plus negation (`!`). |
 
 
 ### Example
@@ -69,7 +67,7 @@ Plugins are configured via a JSON file (e.g., `impress/configuration/plugins/def
 {
   "id": "my-custom-component-1",
   "remote": {
-    "url": "localhost:3001/remoteEntry.js",
+    "url": "http://localhost:3001/remoteEntry.js",
     "name": "my-plugin",
     "module": "./MyCustomComponent"
   },
@@ -90,15 +88,16 @@ Plugins are configured via a JSON file (e.g., `impress/configuration/plugins/def
 
 ### Key Notes
 - `remote` and `injection` are required.
-    - `remote.url` can be relative if the plugins compiled `remoteEntry.js` is placed in the hosts public folder (e.g. via k8s ConfigMap)
+    - `remote.url` can be relative if the plugin's compiled `remoteEntry.js` is placed in the host's public folder (e.g. via k8s ConfigMap)
       ```diff
       - "url": "http://localhost:3001/remoteEntry.js",
       + "url": "/plugins/my-plugin/remoteEntry.js",
       ```
 - Use `target`/`position` for flexible placement (e.g., replace or append).
-- `observerRoots` enables re-injection if target lost through DOM changes<br>(e.g., components re-rendering/un-mounting)<br>It should be a selector to the closest stable ancestor<br>(e.g. `"#list"` if list is a dynamically populated container).
+- `observerRoots` controls DOM observation for reinjection. Prefer the closest stable ancestor selector (e.g. `"#list"`); leaving it as `true` watches the whole document and is noisier.
 - Restrict visibility with `routes` globs and negations.
 - Pass custom data via `props`.
+- Plugins execute on the client only; avoid assumptions that rely on server-side rendering.
 
 
 #### `injection.position`
@@ -206,7 +205,7 @@ Each shows the relevant JSON config and the resulting HTML structure after injec
 ## Development Guide
 
 ### Environment Variables
-Set `NEXT_PUBLIC_DEVELOP_PLUGINS=true` in `.env.development` for debug logs, type-sharing, and hot-reload support. This also logs all exposed modules with exact versions on startup, helping match plugin dependencies.
+Set `NEXT_PUBLIC_DEVELOP_PLUGINS=true` in `.env.development` for debug logs, type-sharing, and hot-reload support. The Next.js dev server prints the resolved exposes and shared singleton versions on startup, helping match plugin dependencies.
 
 ### Type-Sharing for Intellisense
 In plugin `tsconfig.json`:
@@ -218,7 +217,7 @@ In plugin `tsconfig.json`:
   }
 }
 ```
-Types update on build for compatibility and autocompletion.
+Types update on build for autocompletion: with `NEXT_PUBLIC_DEVELOP_PLUGINS=true` the host serves `/_next/static/chunks/@mf-types.zip`, and the sample `NativeFederationTypeScriptHost` in `webpack.config.js` unpacks it so the `@mf-types/*` aliases resolve locally.
 
 ### Exports Support
 The host automatically exposes components and some features under the same structure that is used in docs code.
@@ -239,11 +238,11 @@ import { Icon } from 'impress/components';
 - The host logs warnings for any naming conflicts during build
 
 ### Recommended Workflow
-2. Enable NEXT_PUBLIC_DEVELOP_PLUGINS and start host(docs) & plugin dev servers in parallel.
-3. Configure federation in plugin `webpack.config.js` and expose components (see Examples).
-4. Develop with hot-reload; use host components via shared types.
-5. Test in host via config; debug with logs.
-6. Version and deploy independently.
+1. Enable `NEXT_PUBLIC_DEVELOP_PLUGINS` and start host (docs) & plugin dev servers in parallel.
+2. Configure federation in plugin `webpack.config.js` and expose components (see Examples).
+3. Develop with hot-reload; use host components via shared types.
+4. Test in host via config; debug with logs.
+5. Version and deploy independently.
 
 ### Integration in Host
 1. Build plugin and host `remoteEntry.js`.
@@ -252,7 +251,7 @@ import { Icon } from 'impress/components';
 4. Verify via `[PluginSystem]` logs.
 
 ### Debugging
-Enable `NEXT_PUBLIC_DEVELOP_PLUGINS=true` for console logs like `[PluginSystem] ...`.
+With `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, `[PluginSystem]` console logs surface load, inject, and error events.
 
 Common Errors:
 | Issue                  | Cause/Fix |
@@ -267,20 +266,15 @@ Errors are isolated via host ErrorBoundary.
 ## Best Practices and Security
 
 ### Best Practices
-- Keep components modular and self-contained.
-- Use props for flexibility/reusability.
-- Document interfaces and expected props.
-- Version plugins for host compatibility.
-- Avoid internal host dependencies; use official types/components.
-- Test regularly in host; monitor logs.
-- Update federation config with host changes.
+- Build modular components with well-typed props so host teams can plug them in safely.
+- Use the host's exposed types/components rather than private internals.
+- Keep shared dependency versions aligned with the host and retest after upgrades.
+- During development run the plugin and host dev servers in parallel so you benefit from hot reload and live Module Federation.
 
 ### Security and Isolation
-- Plugins run isolated with ErrorBoundaries; errors don't crash host.
-- No direct host state access; use interfaces/props.
-- Vet third-party libraries for security.
-- Check plugin functionality after host updates.
-- Avoid unsafe external scripts/resources.
+- Plugins run behind ErrorBoundaries, keeping failures isolated but still worth monitoring.
+- Host state is inaccessible; rely on props and exposed APIs.
+- Treat plugin bundles as untrusted: vet dependencies, avoid unsafe external scripts, and re-test after host changes.
 
 ## Examples
 
@@ -288,8 +282,8 @@ Errors are isolated via host ErrorBoundary.
 Define `moduleFederationConfig` first for reuse:
 
 ```js
-const { ModuleFederationPlugin } = require('webpack').container;
-const NativeFederationTypeScriptHost = require('@module-federation/native-federation-typescript/host');
+const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
+const { NativeFederationTypeScriptHost } = require('@module-federation/native-federation-typescript/webpack');
 
 const moduleFederationConfig = {
   name: 'my-plugin',
@@ -304,22 +298,39 @@ const moduleFederationConfig = {
     react: { singleton: true },
     'react-dom': { singleton: true },
     'styled-components': { singleton: true },
-    'cunningham-react': { singleton: true },
+    '@openfun/cunningham-react': { singleton: true },
+    '@tanstack/react-query': { singleton: true },
   },
 };
 
-module.exports = {
-  plugins: [
-    new ModuleFederationPlugin(moduleFederationConfig),
-    ...(dev ? [NativeFederationTypeScriptHost({ moduleFederationConfig })] : []),
-  ]
+module.exports = (env, argv) => {
+  const dev = argv.mode !== 'production';
+
+  return {
+    entry: './src/index.tsx',
+    plugins: [
+      new ModuleFederationPlugin(moduleFederationConfig),
+      ...(dev ? [NativeFederationTypeScriptHost({ moduleFederationConfig })] : []),
+    ],
+  };
 };
 ```
-Adjust names/paths; declare shared libs as singletons. Use relative remotes if the plugin `remoteEntry.js` lives in host's public folder (e.g., public/plugins/my-plugin/remoteEntry.js).
+Adjust names/paths; declare shared libs as singletons. Use relative remotes if the plugin `remoteEntry.js` lives in host's public folder (e.g., `public/plugins/my-plugin/remoteEntry.js`).
 ```diff
 - impress: 'impress@localhost:3000/_next/static/chunks/remoteEntry.js'
 + impress: 'impress@/_next/static/chunks/remoteEntry.js',
 ```
+
+### Choosing Shared Dependencies
+
+The `shared` configuration in `webpack.config.js` is critical for performance and stability. Here’s a guide to help you decide which dependencies to share:
+
+-   **Minimal Shared Libraries**: Your plugin should always share `react`, `react-dom`, `styled-components`, and `@openfun/cunningham-react`. This ensures that your plugin uses the same core libraries as the host, preventing version conflicts and unnecessary duplication.
+
+-   **Sharing State**: Libraries that rely on a global cache or context (e.g. `@tanstack/react-query`) must be shared. If each bundle ships its own copy, the React Query context and cache live in parallel universes—the plugin's hooks will not see the host's `QueryClient`, forcing duplicate fetches or even errors. Align your plugin's dependency version with the host so the Module Federation singleton can reuse the host instance instead of bundling a second copy.
+
+-   **Expanding Shared Libraries**: Before adding a new library to your plugin, check if the host already provides it. Running the host with `NEXT_PUBLIC_DEVELOP_PLUGINS=true` prints the effective `moduleFederationConfig.shared` map (singletons + versions) to the Next.js dev server logs on startup, so you can align your plugin's `package.json` without guessing. Reusing host-provided libraries keeps the plugin lightweight and avoids duplicate bundles.
+
 
 For plugin config example, see Configuration section.
 
