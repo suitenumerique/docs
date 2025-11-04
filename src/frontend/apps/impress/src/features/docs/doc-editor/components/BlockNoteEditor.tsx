@@ -12,7 +12,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
@@ -79,6 +79,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
+  const refEditorContainer = useRef<HTMLDivElement>(null);
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
@@ -154,7 +155,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   );
 
   useHeadings(editor);
-  useShortcuts(editor);
+
+  useShortcuts(editor, refEditorContainer.current);
+
   useUploadStatus(editor);
 
   useEffect(() => {
@@ -166,7 +169,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <>
+    <Box ref={refEditorContainer}>
       {errorAttachment && (
         <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
@@ -186,7 +189,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>
-    </>
+    </Box>
   );
 };
 

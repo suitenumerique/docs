@@ -9,12 +9,13 @@ export const useHeadings = (editor: DocsBlockNoteEditor) => {
   useEffect(() => {
     setHeadings(editor);
 
-    editor?.onChange(() => {
+    const unsubscribe = editor?.onChange(() => {
       setHeadings(editor);
     });
 
     return () => {
       resetHeadings();
+      unsubscribe();
     };
   }, [editor, resetHeadings, setHeadings]);
 };

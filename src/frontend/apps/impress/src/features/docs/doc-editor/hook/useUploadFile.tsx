@@ -40,7 +40,7 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    editor.onChange((_, context) => {
+    const unsubscribe = editor.onChange((_, context) => {
       const blocksChanges = context.getChanges();
 
       if (!blocksChanges.length) {
@@ -90,7 +90,12 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
 
       return () => {
         clearTimeout(timeoutId);
+        unsubscribe();
       };
     });
+
+    return () => {
+      unsubscribe();
+    };
   }, [editor, t]);
 };
