@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { PropsWithChildren } from 'react';
 
 import { Box } from '@/components';
-import { useConfig } from '@/core';
+import { useConfig } from '@/core/config';
 
 import { HOME_URL } from '../conf';
 import { useAuth } from '../hooks';

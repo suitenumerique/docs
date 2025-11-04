@@ -6,8 +6,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "prettier --check . && yarn stylelint && next build",
+    "dev": "NEXT_PRIVATE_LOCAL_WEBPACK=true next dev",
+    "build": "prettier --check . && yarn stylelint && NEXT_PRIVATE_LOCAL_WEBPACK=true next build",
     "build:ci": "cp .env.development .env.local && yarn build",
     "build-theme": "cunningham -g css,ts -o src/cunningham --utility-classes && yarn prettier && yarn stylelint --fix",
     "start": "npx -y serve@latest out",
@@ -35,6 +35,8 @@
     "@gouvfr-lasuite/integration": "1.0.3",
     "@gouvfr-lasuite/ui-kit": "0.16.1",
     "@hocuspocus/provider": "2.15.2",
+    "@module-federation/runtime": "0.19.1",
+    "@module-federation/runtime-core": "0.19.1",
     "@openfun/cunningham-react": "3.2.3",
     "@react-pdf/renderer": "4.3.0",
     "@sentry/nextjs": "10.11.0",
@@ -67,6 +69,8 @@
     "zustand": "5.0.8"
   },
   "devDependencies": {
+    "@module-federation/nextjs-mf": "8.8.42",
+    "@module-federation/native-federation-typescript": "0.6.2",
     "@svgr/webpack": "8.1.0",
     "@tanstack/react-query-devtools": "5.87.4",
     "@testing-library/dom": "10.4.1",
@@ -93,7 +97,6 @@
     "typescript": "*",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.2.4",
-    "webpack": "5.101.3",
     "workbox-webpack-plugin": "7.1.0"
   },
   "packageManager": "yarn@1.22.22"

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { DropdownMenu, Icon, Text } from '@/components/';
-import { useConfig } from '@/core';
+import { useConfig } from '@/core/config';
 import { useAuthQuery } from '@/features/auth';
 import {
   getMatchingLocales,

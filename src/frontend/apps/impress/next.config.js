@@ -1,8 +1,14 @@
 const crypto = require('crypto');
 const path = require('path');
 
+const {
+  NativeFederationTypeScriptRemote,
+} = require('@module-federation/native-federation-typescript/webpack');
+const { NextFederationPlugin } = require('@module-federation/nextjs-mf');
 const CopyPlugin = require('copy-webpack-plugin');
 const { InjectManifest } = require('workbox-webpack-plugin');
+
+const { moduleFederationConfig } = require('./mf.config.js');
 
 const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 
@@ -21,7 +27,12 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
   },
-  webpack(config, { isServer }) {
+  webpack(config, { isServer, dev }) {
+    // Prevent rebuild loops by ignoring node_modules and build outputs
+    config.watchOptions = {
+      ignored: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
+    };
+
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.('.svg'),
@@ -67,23 +78,59 @@ const nextConfig = {
       }),
     );
 
-    if (!isServer && process.env.NEXT_PUBLIC_SW_DEACTIVATED !== 'true') {
-      config.plugins.push(
-        new InjectManifest({
-          swSrc: './src/features/service-worker/service-worker.ts',
-          swDest: '../public/service-worker.js',
-          include: [
-            ({ asset }) => {
-              return !!asset.name.match(/.*(static).*/);
-            },
-          ],
-        }),
-      );
+    if (!isServer) {
+      // Host configuration for Module Federation (PluginSystem)
+      config.plugins.push(new NextFederationPlugin(moduleFederationConfig));
+      if (dev && process.env.NEXT_PUBLIC_DEVELOP_PLUGINS === 'true') {
+        console.log('[DEBUG] moduleFederationConfig:');
+        console.log(moduleFederationConfig);
+
+        config.plugins.push(
+          // Allow the plugin to get types/intellisense from the host at development time
+          NativeFederationTypeScriptRemote({
+            moduleFederationConfig,
+          }),
+        );
+
+        // Copy the generated @mf-types.zip to .next/static/chunks so it's served at /_next/static/chunks/
+        const mfTypesSource = path.resolve(__dirname, '.next', '@mf-types.zip');
+        const mfTypesDest = path.resolve(
+          __dirname,
+          '.next',
+          'static',
+          'chunks',
+          '@mf-types.zip',
+        );
+        config.plugins.push(
+          new CopyPlugin({
+            patterns: [
+              {
+                from: mfTypesSource,
+                to: mfTypesDest,
+                force: true,
+                noErrorOnMissing: true,
+              },
+            ],
+          }),
+        );
+      }
+      if (process.env.NEXT_PUBLIC_SW_DEACTIVATED !== 'true') {
+        config.plugins.push(
+          new InjectManifest({
+            swSrc: './src/features/service-worker/service-worker.ts',
+            swDest: '../public/service-worker.js',
+            include: [
+              ({ asset }) => {
+                return !!asset.name.match(/.*(static).*/);
+              },
+            ],
+          }),
+        );
+      }
     }
 
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
-
     return config;
   },
 };

@@ -496,6 +496,18 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    PLUGINS_CONFIG_FILE_PATH = values.Value(
+        os.path.join(BASE_DIR, "impress/configuration/plugins/default.json"),
+        environ_name="PLUGINS_CONFIG_FILE_PATH",
+        environ_prefix=None,
+    )
+
+    PLUGINS_CONFIG_CACHE_TIMEOUT = values.Value(
+        60 * 60 * 2,
+        environ_name="PLUGINS_CONFIG_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # Posthog
     POSTHOG_KEY = values.DictValue(
         None, environ_name="POSTHOG_KEY", environ_prefix=None

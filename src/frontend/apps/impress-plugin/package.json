@@ -1,0 +1,37 @@
+{
+  "name": "app-impress-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production"
+  },
+  "devDependencies": {
+    "@module-federation/native-federation-typescript": "0.6.2",
+    "@openfun/cunningham-react": "3.2.3",
+    "@types/react": "19.1.1",
+    "@types/react-dom": "19.1.1",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "*",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.0"
+  },
+  "dependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "styled-components": "6.1.19",
+    "@openfun/cunningham-react": "3.2.3",
+    "react-i18next": "15.7.3",
+    "react-aria-components": "1.12.1",
+    "@gouvfr-lasuite/ui-kit": "0.16.1",
+    "yjs": "13.6.27",
+    "clsx": "2.1.1",
+    "cmdk": "1.1.1",
+    "react-intersection-observer": "9.16.0",
+    "@tanstack/react-query": "5.87.4"
+  }
+}

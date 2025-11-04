@@ -12,6 +12,7 @@ import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
 import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';
+import { PluginSystemProvider } from './plugin/PluginSystemProvider';
 
 export const DEFAULT_QUERY_RETRY = 1;
 
@@ -73,9 +74,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <CunninghamProvider theme={theme}>
-        <ConfigProvider>
-          <Auth>{children}</Auth>
-        </ConfigProvider>
+        <PluginSystemProvider>
+          <ConfigProvider>
+            <Auth>{children}</Auth>
+          </ConfigProvider>
+        </PluginSystemProvider>
       </CunninghamProvider>
     </QueryClientProvider>
   );

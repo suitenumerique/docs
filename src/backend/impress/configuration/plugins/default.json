@@ -1,0 +1,54 @@
+[
+  {
+    "id": "my-custom-component-in-header",
+    "remote": {
+      "url": "http://localhost:3002/remoteEntry.js",
+      "name": "plugin_frontend",
+      "module": "MyCustomComponent"
+    },
+    "injection": {
+      "target": "body header [data-testid=\"header-logo-link\"]",
+      "position": "after",
+      "observerRoots": "body header"
+    },
+    "props": {
+      "customMessage": "Plugin Demo",
+      "showDebugInfo": true
+    },
+    "visibility": {
+      "routes": [
+        "/docs/*"
+      ]
+    }
+  },
+  {
+    "id": "central-header-menu",
+    "remote": {
+      "url": "http://localhost:3002/remoteEntry.js",
+      "name": "plugin_frontend",
+      "module": "./MyCustomHeaderMenu"
+    },
+    "injection": {
+      "target": "body header [data-testid=\"header-logo-link\"]",
+      "position": "after",
+      "observerRoots": "body header"
+    },
+    "props": {
+      "icsBaseUrl": "http://localhost:8000",
+      "portalBaseUrl": "http://localhost:8001"
+    }
+  },
+  {
+    "id": "theme-demo-panel",
+    "remote": {
+      "url": "http://localhost:3002/remoteEntry.js",
+      "name": "plugin_frontend",
+      "module": "./ThemingDemo"
+    },
+    "injection": {
+      "target": "body",
+      "position": "append",
+      "observerRoots": false
+    }
+  }
+]

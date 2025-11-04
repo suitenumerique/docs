@@ -2164,6 +2164,7 @@ class ConfigView(drf.views.APIView):
                 dict_settings[setting] = getattr(settings, setting)
 
         dict_settings["theme_customization"] = self._load_theme_customization()
+        dict_settings["plugins"] = self._load_plugins_config()
 
         return drf.response.Response(dict_settings)
 
@@ -2201,3 +2202,44 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+    def _load_plugins_config(self):
+        if not settings.PLUGINS_CONFIG_FILE_PATH:
+            return []
+
+        cache_key = (
+            f"plugins_config_{slugify(settings.PLUGINS_CONFIG_FILE_PATH)}"
+        )
+        plugins_config = cache.get(cache_key)
+        if plugins_config is not None:
+            return plugins_config
+
+        plugins_config = []
+        try:
+            with open(
+                settings.PLUGINS_CONFIG_FILE_PATH, "r", encoding="utf-8"
+            ) as f:
+                data = json.load(f)
+                # Support both array format and object with "plugins" key
+                if isinstance(data, list):
+                    plugins_config = data
+                elif isinstance(data, dict):
+                    plugins_config = data.get("plugins", [])
+        except FileNotFoundError:
+            logger.error(
+                "Plugins configuration file not found: %s",
+                settings.PLUGINS_CONFIG_FILE_PATH,
+            )
+        except json.JSONDecodeError:
+            logger.error(
+                "Plugins configuration file is not a valid JSON: %s",
+                settings.PLUGINS_CONFIG_FILE_PATH,
+            )
+        else:
+            cache.set(
+                cache_key,
+                plugins_config,
+                settings.PLUGINS_CONFIG_CACHE_TIMEOUT,
+            )
+
+        return plugins_config

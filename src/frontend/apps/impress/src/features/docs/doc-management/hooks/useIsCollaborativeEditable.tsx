@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useConfig } from '@/core';
+import { useConfig } from '@/core/config';
 import { useIsOffline } from '@/features/service-worker';
 
 import { KEY_CAN_EDIT, useDocCanEdit } from '../api/useDocCanEdit';

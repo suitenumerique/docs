@@ -1,0 +1,109 @@
+
+ #central-menu-wrapper {
+  flex-direction: row;
+  align-self: stretch;
+  align-items: stretch;
+  gap: 25px;
+}
+
+#central-menu-wrapper > * {
+  display: flex;
+  align-items: center;
+  height: auto;
+}
+
+#central-menu-wrapper > a > div {
+  height: 100%;
+  margin: unset;
+}
+
+#central-menu-wrapper > a > div > svg {
+  width: 82px;
+}
+
+#central-menu-wrapper + div > button {
+  display: none;
+}
+
+#central-menu-wrapper #central-menu {
+  position: relative;
+  color: var(--c--theme--colors--greyscale-text);
+  display: inline-block;
+}
+
+#central-menu-wrapper #nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  height: 100%;
+  padding: 0 22px;
+  outline: none;
+}
+
+#central-menu-wrapper #nav-button:hover {
+  background-color: var(
+    --c--components--button--primary-text--background--color-hover
+  );
+}
+
+#central-menu-wrapper #nav-button.active {
+  background-color: var(--c--components--button--primary--background--color);
+  color: var(--c--theme--colors--greyscale-000);
+}
+
+[data-testid="od-menu-popover"] {
+  background: unset !important;
+  border: unset !important;
+}
+
+#nav-content {
+  position: absolute;
+  width: max-content;
+  background: var(--c--theme--colors--greyscale-000);
+  border-radius: 8px;
+  border: 1px solid var(--c--theme--colors--card-border);
+  border-top: 4px solid var(--c--components--button--primary--background--color);
+  max-width: 280px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 0 20px;
+  z-index: 1000;
+}
+
+#nav-content .menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#nav-content .menu-category {
+  font-weight: bold;
+  display: block;
+  margin: 20px 24px 8px;
+}
+
+#nav-content .menu-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#nav-content .menu-link {
+  display: flex;
+  padding: 4px 24px;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+#nav-content .menu-link:hover {
+  background-color: var(
+    --c--components--button--primary-text--background--color-hover
+  );
+}
+
+#nav-content .menu-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}

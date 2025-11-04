@@ -97,3 +97,8 @@ nextjs-portal {
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+/* PluginSystem utilities */
+[data-pluginsystem-hidden] {
+  display: none !important;
+}

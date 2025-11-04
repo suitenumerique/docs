@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Resource } from 'i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
+import { PluginConfig } from '@/core/plugin';
 import { Theme } from '@/cunningham/';
 import { FooterType } from '@/features/footer';
 import { PostHogConf } from '@/services';
@@ -26,6 +27,7 @@ export interface ConfigResponse {
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
   theme_customization?: ThemeCustomization;
+  plugins?: PluginConfig[];
 }
 
 const LOCAL_STORAGE_KEY = 'docs_config';
