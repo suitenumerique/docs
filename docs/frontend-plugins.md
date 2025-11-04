@@ -321,7 +321,7 @@ The `injection.position` property controls how your plugin is inserted relative 
 ## Development Workflow
 
 ### 1. Run Host and Plugin in Parallel
-Enable `NEXT_PUBLIC_DEVELOP_PLUGINS=true` in the host's `.env` file. Start both the host and your plugin's dev servers. This enables hot-reloading and live type-sharing.
+Enable `NEXT_PUBLIC_DEVELOP_PLUGINS=true` in the host's `.env.development` file. Start both the host and your plugin's dev servers. This enables hot-reloading and live type-sharing.
 
 ### 2. Test and Debug
 - Use the `[PluginSystem]` logs in the browser console to see if your plugin is loading correctly.
