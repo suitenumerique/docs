@@ -166,7 +166,7 @@ const normalizePluginConfigStrict = (
       injection: {
         target: String(raw.injection.target),
         position: raw.injection.position ?? 'append',
-        observerRoots: raw.injection.observerRoots ?? true,
+        observerRoots: raw.injection.observerRoots ?? false,
       },
       props: (raw.props as Record<string, unknown>) ?? {},
       visibility: {

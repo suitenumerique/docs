@@ -1,3 +1,24 @@
+# Frontend Plugin System
+
+## Table of Contents
+- [Overview](#overview)
+- [Getting Started: Building Your First Plugin](#getting-started-building-your-first-plugin)
+  - [1. Prepare the Host Environment](#1-prepare-the-host-environment)
+  - [2. Scaffolding a New Plugin Project](#2-scaffolding-a-new-plugin-project)
+  - [3. Federation Configuration](#3-federation-configuration)
+  - [4. Enabling Type-Sharing for Intellisense](#4-enabling-type-sharing-for-intellisense)
+- [Host-Plugin Interaction](#host-plugin-interaction)
+  - [Host Exports](#host-exports)
+  - [Choosing Shared Dependencies](#choosing-shared-dependencies)
+- [Plugin Configuration File](#plugin-configuration-file)
+  - [Configuration Structure](#configuration-structure)
+  - [Example Configuration](#example-configuration)
+  - [Injection Position Examples](#injection-position-examples)
+- [Development Workflow](#development-workflow)
+  - [1. Run Host and Plugin in Parallel](#1-run-host-and-plugin-in-parallel)
+  - [2. Test and Debug](#2-test-and-debug)
+  - [3. Best Practices](#3-best-practices)
+
 ## Overview
 
 The plugin system allows developers to extend the application's functionality and appearance without modifying the core. It's ideal for teams or third parties to add custom features.
@@ -7,8 +28,6 @@ The plugin system allows developers to extend the application's functionality an
 - **Host**: The main entry point application. This is Docs itself ("impress")
 - **Plugin**: A remote module integrated into the host to provide UI components.
 - **Module Federation**: Technology for runtime module sharing between apps.
-- **Container**: Environment executing a remote module.
-- **Exposed Module**: A module or component made available by a remote.
 
 ### Features and Limitations
 **Features:**
@@ -23,278 +42,75 @@ The plugin system allows developers to extend the application's functionality an
 - Runs client-side without direct host state access; shared caches (e.g. React Query) only work when the dependency is also shared as a singleton.
 - Host upgrades may require tweaking selectors and matching versions for libraries the host already provides.
 
-### Overview
-This diagram shows the plugin integration flow: fetching config and plugins, checking visibility, starting DOM observation, conditionally rendering components, and re-checking on DOM changes.
+## Getting Started: Building Your First Plugin
 
+A plugin is a standalone React application bundled with Webpack that exposes one or more components via Module Federation.
 
-```mermaid
-flowchart TD
-  subgraph Host
-  A["Fetches Config<br>(default.json)"] --> B["Fetches Plugins<br>(remoteEntry.js)"]
-  B --> C["Checks Visibility<br>(route matches)"]
-  C --> F["Checks if Targets exist<br>(CSS selector)"]
-  F --> G["Checks if Component already injected"]
-  G --> D["Render Component with Props into Targets"]
-  D --> H["Start DOM Observer<br>(if enabled)"]
-  H -.-> C
-  end
-```
+### 1. Prepare the Host Environment
 
+Developing a plugin requires running the host application (Docs) in parallel. This live integration is essential for rendering your plugin, enabling hot-reloading, sharing types for Intellisense, and discovering the exact versions of shared dependencies. The following steps prepare the host environment.
 
-## Configuration
+1.  **Clone the repository locally**: If you haven't already, clone the Docs repository to your local machine, and read how to get started with development.
+2.  **Set the development flag**: In the host application's `.env.development` file, set `NEXT_PUBLIC_DEVELOP_PLUGINS=true`.
+3.  **Stop conflicting services**: If you are using the project's Docker setup, make sure the frontend service is stopped (`docker compose stop frontend-development`) - we will run the docs frontend locally.
+4.  **Run the host**: Navigate to `src/frontend/apps/impress`, run `yarn install`, and then `yarn dev`.
+5.  **Check the logs**: On startup, the Next.js dev server will print the versions of all shared singletons (e.g., React, styled-components). You will need these for your plugin's `package.json`.
 
-Plugins are configured via a JSON file (e.g., `impress/configuration/plugins/default.json`) loaded at runtime by the host. Place it in the backend, via a Docker volume for single-file drop-in or Kubernetes ConfigMap.
+### 2. Scaffolding a New Plugin Project
 
-### Structure
-| Field       | Type    | Required | Description |
-|-------------|---------|----------|-------------|
-| `id`       | String | Yes     | Unique component identifier (e.g., "my-widget"). |
-| `remote`   | Object | Yes     | Remote module details. |
-|   - `url`  | String | Yes     | Path to `remoteEntry.js` (absolute/relative). |
-|   - `name` | String | Yes     | Federation remote name (e.g., "myPlugin"). |
-|   - `module` | String | Yes   | Exposed module (e.g., "./Widget"). |
-| `injection`| Object | Yes     | Integration control. |
-|   - `target` | String | Yes   | CSS selector for insertion point. |
-|   - `position` | String | No (default: "append") | Insertion position (`before`, `after`, `replace`, `prepend`, `append`). |
-|   - `observerRoots` | String/Boolean | No | DOM observation: CSS selector, `true` (default; observe whole document), `false` (disable observers). |
-| `props`    | Object | No      | Props passed to the plugin component. |
-| `visibility` | Object | No    | Visibility controls. |
-|   - `routes` | Array  | No     | Path globs (e.g., `["/docs/*", "!/docs/secret*"]`); supports `*` and `?` wildcards plus negation (`!`). |
+You will need to create a new, simple React project. Your project should have a `webpack.config.js` and include dependencies for React, Webpack, and TypeScript.
 
-
-### Example
+A minimal `package.json` would look like this:
 ```json
 {
-  "id": "my-custom-component-1",
-  "remote": {
-    "url": "http://localhost:3001/remoteEntry.js",
-    "name": "my-plugin",
-    "module": "./MyCustomComponent"
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "webpack serve --mode=development",
+    "build": "webpack --mode=production"
   },
-  "injection": {
-    "target": "#list #item3",
-    "position": "append",
-    "observerRoots": "#list"
+  "dependencies": {
+    "react": "<same as host>",
+    "react-dom": "<same as host>",
+    "styled-components": "<same as host>",
+    "@openfun/cunningham-react": "<same as host>",
+    "@tanstack/react-query": "<same as host>"
   },
-  "props": {
-    "title": "My Widget",
-    "color": "#ffcc00"
-  },
-  "visibility": {
-    "routes": ["/docs/*", "!/docs/secret*"]
+  "devDependencies": {
+    "webpack": "^5.0.0",
+    "webpack-cli": "^5.0.0",
+    "webpack-dev-server": "^4.0.0",
+    "ts-loader": "^9.0.0",
+    "typescript": "^5.0.0",
+    "@types/react": "^18.0.0",
+    "@module-federation/native-federation-typescript": "^0.2.1"
   }
 }
 ```
 
-### Key Notes
-- `remote` and `injection` are required.
-    - `remote.url` can be relative if the plugin's compiled `remoteEntry.js` is placed in the host's public folder (e.g. via k8s ConfigMap)
-      ```diff
-      - "url": "http://localhost:3001/remoteEntry.js",
-      + "url": "/plugins/my-plugin/remoteEntry.js",
-      ```
-- Use `target`/`position` for flexible placement (e.g., replace or append).
-- `observerRoots` controls DOM observation for reinjection. Prefer the closest stable ancestor selector (e.g. `"#list"`); leaving it as `true` watches the whole document and is noisier.
-- Restrict visibility with `routes` globs and negations.
-- Pass custom data via `props`.
-- Plugins execute on the client only; avoid assumptions that rely on server-side rendering.
+> Replace `<same as host>` with versions from the hosts dev startup log.
 
+### 3. Federation Configuration
 
-#### `injection.position`
+The core of the plugin is its Webpack configuration. Here is a sample `webpack.config.js` to get you started.
 
-Below are simple examples for all possible values.<br>
-Each shows the relevant JSON config and the resulting HTML structure after injection:
-
-
-**before**
-```json
-{
-  "injection": {
-    "target": "#list #item3",
-    "position": "before",
-    "observerRoots": "#list"
-  }
-}
-```
-```html
-<ul id="list">
-  <li id="item1"></li>
-  <li id="item2"></li>
-  <div id="plugin-container-my-custom-component-0"></div>
-  <li id="item3"></li>
-</ul>
-```
-
-**after**
-```json
-{
-  "injection": {
-    "target": "#list #item1",
-    "position": "after",
-    "observerRoots": "#list"
-  }
-}
-```
-```html
-<ul id="list">
-  <li id="item1"></li>
-  <div id="plugin-container-my-custom-component-0"></div>
-  <li id="item2"></li>
-  <li id="item3"></li>
-</ul>
-```
-
-**prepend**
-```json
-{
-  "injection": {
-    "target": "#list",
-    "position": "prepend",
-    "observerRoots": "#list"
-  }
-}
-```
-```html
-<ul id="list">
-  <div id="plugin-container-my-custom-component-0"></div>
-  <li id="item1"></li>
-  <li id="item2"></li>
-  <li id="item3"></li>
-</ul>
-```
-
-**append**
-```json
-{
-  "injection": {
-    "target": "#list",
-    "position": "append",
-    "observerRoots": "#list"
-  }
-}
-```
-```html
-<ul id="list">
-  <li id="item1"></li>
-  <li id="item2"></li>
-  <li id="item3"></li>
-  <div id="plugin-container-my-custom-component-0"></div>
-</ul>
-```
-
-**replace**
-```json
-{
-  "injection": {
-    "target": "#list #item2",
-    "position": "replace",
-    "observerRoots": "#list"
-  }
-}
-```
-```html
-<ul id="list">
-  <li id="item1"></li>
-  <div id="plugin-container-my-custom-component-0"></div>
-  <li id="item2" data-pluginsystem-hidden="true"></li>
-  <li id="item3"></li>
-</ul>
-```
-
-
-## Development Guide
-
-### Environment Variables
-Set `NEXT_PUBLIC_DEVELOP_PLUGINS=true` in `.env.development` for debug logs, type-sharing, and hot-reload support. The Next.js dev server prints the resolved exposes and shared singleton versions on startup, helping match plugin dependencies.
-
-### Type-Sharing for Intellisense
-In plugin `tsconfig.json`:
-```json
-{
-  "baseUrl": ".",
-  "paths": {
-    "*": ["./@mf-types/*"]
-  }
-}
-```
-Types update on build for autocompletion: with `NEXT_PUBLIC_DEVELOP_PLUGINS=true` the host serves `/_next/static/chunks/@mf-types.zip`, and the sample `NativeFederationTypeScriptHost` in `webpack.config.js` unpacks it so the `@mf-types/*` aliases resolve locally.
-
-### Exports Support
-The host automatically exposes components and some features under the same structure that is used in docs code.
-
-```typescript
-// Direct import
-import { useAuthQuery } from 'impress/features/auth/api/useAuthQuery';
-import { Icon } from 'impress/components/Icon';
-
-// Clean barrel export import
-import { useAuthQuery } from 'impress/features/auth/api';
-import { Icon } from 'impress/components';
-```
-
-**Important Notes:**
-- Only barrel exports with runtime values are exposed (not type-only exports)
-- In case of naming conflicts (e.g., `Button.tsx` and `Button/index.tsx`), explicit files take precedence over barrel exports
-- The host logs warnings for any naming conflicts during build
-
-### Recommended Workflow
-1. Enable `NEXT_PUBLIC_DEVELOP_PLUGINS` and start host (docs) & plugin dev servers in parallel.
-2. Configure federation in plugin `webpack.config.js` and expose components (see Examples).
-3. Develop with hot-reload; use host components via shared types.
-4. Test in host via config; debug with logs.
-5. Version and deploy independently.
-
-### Integration in Host
-1. Build plugin and host `remoteEntry.js`.
-2. Add to host config JSON.
-3. Start host; plugin loads at runtime.
-4. Verify via `[PluginSystem]` logs.
-
-### Debugging
-With `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, `[PluginSystem]` console logs surface load, inject, and error events.
-
-Common Errors:
-| Issue                  | Cause/Fix |
-|------------------------|-----------|
-| Unreachable `remoteEntry.js` | Check URL; ensure accessible. |
-| Library version conflicts | Match React/etc. versions; use singletons in federation. |
-| Invalid CSS selectors | Validate `target` against host DOM. |
-| Type mismatches       | Update shared types on build. |
-
-Errors are isolated via host ErrorBoundary.
-
-## Best Practices and Security
-
-### Best Practices
-- Build modular components with well-typed props so host teams can plug them in safely.
-- Use the host's exposed types/components rather than private internals.
-- Keep shared dependency versions aligned with the host and retest after upgrades.
-- During development run the plugin and host dev servers in parallel so you benefit from hot reload and live Module Federation.
-
-### Security and Isolation
-- Plugins run behind ErrorBoundaries, keeping failures isolated but still worth monitoring.
-- Host state is inaccessible; rely on props and exposed APIs.
-- Treat plugin bundles as untrusted: vet dependencies, avoid unsafe external scripts, and re-test after host changes.
-
-## Examples
-
-### Federation Configuration (webpack.config.js)
-Define `moduleFederationConfig` first for reuse:
-
-```js
+```javascript
 const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
 const { NativeFederationTypeScriptHost } = require('@module-federation/native-federation-typescript/webpack');
 
 const moduleFederationConfig = {
-  name: 'my-plugin',
+  name: 'my_plugin', // A unique name for your plugin
   filename: 'remoteEntry.js',
   exposes: {
+    // Maps a public name to a component file
     './MyCustomComponent': './src/MyCustomComponent.tsx',
   },
   remotes: {
+    // Allows importing from the host application
     impress: 'impress@http://localhost:3000/_next/static/chunks/remoteEntry.js',
   },
   shared: {
+    // Defines shared libraries to avoid duplication
     react: { singleton: true },
     'react-dom': { singleton: true },
     'styled-components': { singleton: true },
@@ -307,32 +123,219 @@ module.exports = (env, argv) => {
   const dev = argv.mode !== 'production';
 
   return {
-    entry: './src/index.tsx',
+    devServer: {
+      // The port should match the one in your plugin's configuration file
+      port: 8080,
+    },
+    entry: './src/index.tsx', // Your plugin's entry point; can be an empty file as modules are exposed directly.
     plugins: [
       new ModuleFederationPlugin(moduleFederationConfig),
+      // This plugin enables type-sharing for intellisense
       ...(dev ? [NativeFederationTypeScriptHost({ moduleFederationConfig })] : []),
     ],
+    // ... other webpack config (output, module rules, etc.)
   };
 };
 ```
-Adjust names/paths; declare shared libs as singletons. Use relative remotes if the plugin `remoteEntry.js` lives in host's public folder (e.g., `public/plugins/my-plugin/remoteEntry.js`).
-```diff
-- impress: 'impress@localhost:3000/_next/static/chunks/remoteEntry.js'
-+ impress: 'impress@/_next/static/chunks/remoteEntry.js',
+
+### 4. Enabling Type-Sharing for Intellisense
+
+To get autocompletion for components and hooks exposed by the host, you need to configure your plugin's `tsconfig.json` to find the host's types.
+
+In your plugin's `tsconfig.json`:
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": ["./@mf-types/*"]
+    }
+  }
+}
+```
+When you run the host application with `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, it generates a `@mf-types.zip` file. The `NativeFederationTypeScriptHost` plugin in your webpack config will automatically download and unpack it, making the host's types available to your plugin (and IDE).
+
+## Host-Plugin Interaction
+
+### Host Exports
+The host automatically exposes many of its components and hooks. You can import them in your plugin as if they were local modules, thanks to the `remotes` configuration in your `webpack.config.js`.
+
+```typescript
+// In your plugin's code
+import { Icon } from 'impress/components';
+import { useAuthQuery } from 'impress/features/auth/api';
 ```
 
 ### Choosing Shared Dependencies
 
-The `shared` configuration in `webpack.config.js` is critical for performance and stability. Here’s a guide to help you decide which dependencies to share:
+Sharing dependencies is critical for performance and stability.
+-   **Minimal Shared Libraries**: Always share `react`, `react-dom`, `styled-components`, and `@openfun/cunningham-react` to use the same instances as the host.
+-   **Sharing State**: Libraries that rely on a global context (like `@tanstack/react-query`) **must** be shared to access the host's state and cache.
+-   **Discovering More Shared Libraries**: With `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, the host prints its shared dependency map to the Next.js dev server logs on startup. You can use this to align versions and add more shared libraries to your plugin.
 
--   **Minimal Shared Libraries**: Your plugin should always share `react`, `react-dom`, `styled-components`, and `@openfun/cunningham-react`. This ensures that your plugin uses the same core libraries as the host, preventing version conflicts and unnecessary duplication.
+> **Important**: Both the host and the plugin must declare a dependency in their `shared` configuration for it to become a true singleton. If you omit a shared dependency from your plugin's config, Webpack will bundle a separate copy into your plugin, breaking the singleton pattern.
 
--   **Sharing State**: Libraries that rely on a global cache or context (e.g. `@tanstack/react-query`) must be shared. If each bundle ships its own copy, the React Query context and cache live in parallel universes—the plugin's hooks will not see the host's `QueryClient`, forcing duplicate fetches or even errors. Align your plugin's dependency version with the host so the Module Federation singleton can reuse the host instance instead of bundling a second copy.
+## Plugin Configuration File
 
--   **Expanding Shared Libraries**: Before adding a new library to your plugin, check if the host already provides it. Running the host with `NEXT_PUBLIC_DEVELOP_PLUGINS=true` prints the effective `moduleFederationConfig.shared` map (singletons + versions) to the Next.js dev server logs on startup, so you can align your plugin's `package.json` without guessing. Reusing host-provided libraries keeps the plugin lightweight and avoids duplicate bundles.
+Once your plugin is running, you need to tell the host application how to load and inject it. This is done via a JSON configuration file loaded by the host at runtime from the backend.
 
+The default path for this file in the backend container is `/app/impress/configuration/plugins/default.json`.
+> When running Docs locally the backend is bind-mapped to the container, so you can simply live edit `src/backend/impress/configuration/plugins/default.json`
 
-For plugin config example, see Configuration section.
+> When running in production you can replace this file through infrastructure methods. e.g. k8s configmap.
 
-## Summary
-The plugin system enables runtime frontend extensions via module federation, with easy config, type-sharing, and independent deployment. Focus on UI mods, match versions, and test for compatibility. Use the diagram, tables, and examples for quick reference.
+### Configuration Structure
+
+| Field       | Type    | Required | Description |
+|-------------|---------|----------|-------------|
+| `id`       | String | Yes     | Unique component identifier (e.g., "my-widget"). |
+| `remote`   | Object | Yes     | Remote module details. |
+|   - `url`  | String | Yes     | Path to `remoteEntry.js` (absolute/relative). |
+|   - `name` | String | Yes     | Federation remote name (e.g., "myPlugin"). |
+|   - `module` | String | Yes   | Exposed module (e.g., "./Widget"). |
+| `injection`| Object | Yes     | Integration control. |
+|   - `target` | String | Yes     | CSS selector for insertion point. |
+|   - `position` | String | No (default: "append") | Insertion position (`before`, `after`, `replace`, `prepend`, `append`). |
+|   - `observerRoots` | String/Boolean | No | DOM observation: CSS selector, `true` (observe whole document), or `false` (default; disable observers). |
+| `props`    | Object | No      | Props passed to the plugin component. |
+| `visibility` | Object | No    | Visibility controls. |
+|   - `routes` | Array  | No     | Path globs (e.g., `["/docs/*", "!/docs/secret*"]`); supports `*` and `?` wildcards plus negation (`!`). |
+
+### Example Configuration
+
+This JSON tells the host to load `MyCustomComponent` from your plugin's `remoteEntry.js` and inject it into the DOM.
+
+```json
+{
+  "id": "my-custom-component",
+  "remote": {
+    "url": "http://localhost:8080/remoteEntry.js",
+    "name": "my_plugin",
+    "module": "./MyCustomComponent"
+  },
+  "injection": {
+    "target": "#some-element-in-the-host"
+  }
+}
+```
+> For production, you can use a relative `url` if the plugin's `remoteEntry.js` is served from the host's public folder.
+
+### Injection Position Examples
+
+The `injection.position` property controls how your plugin is inserted relative to the `target` element.
+
+<details>
+<summary>View injection examples</summary>
+
+**before**
+```json
+{
+  "id": "my-custom-component-0",
+  "injection": {
+    "target": "#item2",
+    "position": "before"
+  }
+}
+```
+```html
+<ul id="some-element-in-the-host">
+  <li id="item1"></li>
+  <div id="plugin-container-my-custom-component-0"></div>
+  <li id="item2"></li>
+</ul>
+```
+
+**after**
+```json
+{
+  "id": "my-custom-component-0",
+  "injection": {
+    "target": "#item1",
+    "position": "after"
+  }
+}
+```
+```html
+<ul id="some-element-in-the-host">
+  <li id="item1"></li>
+  <div id="plugin-container-my-custom-component-0"></div>
+  <li id="item2"></li>
+</ul>
+```
+
+**prepend**
+```json
+{
+  "id": "my-custom-component-0",
+  "injection": {
+    "target": "#some-element-in-the-host",
+    "position": "prepend"
+  }
+}
+```
+```html
+<ul id="some-element-in-the-host">
+  <div id="plugin-container-my-custom-component-0"></div>
+  <li id="item1"></li>
+  <li id="item2"></li>
+</ul>
+```
+
+**append** (default)
+```json
+{
+  "id": "my-custom-component-0",
+  "injection": {
+    "target": "#some-element-in-the-host",
+    "position": "append"
+  }
+}
+```
+```html
+<ul id="some-element-in-the-host">
+  <li id="item1"></li>
+  <li id="item2"></li>
+  <div id="plugin-container-my-custom-component-0"></div>
+</ul>
+```
+
+**replace**
+```json
+{
+  "id": "my-custom-component-0",
+  "injection": {
+    "target": "#item1",
+    "position": "replace"
+  }
+}
+```
+```html
+<ul id="some-element-in-the-host">
+  <div id="plugin-container-my-custom-component-0"></div>
+  <li id="item1" data-pluginsystem-hidden="true"></li>
+  <li id="item2"></li>
+</ul>
+```
+</details>
+
+## Development Workflow
+
+### 1. Run Host and Plugin in Parallel
+Enable `NEXT_PUBLIC_DEVELOP_PLUGINS=true` in the host's `.env` file. Start both the host and your plugin's dev servers. This enables hot-reloading and live type-sharing.
+
+### 2. Test and Debug
+- Use the `[PluginSystem]` logs in the browser console to see if your plugin is loading correctly.
+- Errors in your plugin are caught by an `ErrorBoundary` and will not crash the host.
+
+Common Errors:
+| Issue                  | Cause/Fix |
+|------------------------|-----------|
+| Unreachable `remoteEntry.js` | Check the `url` in your config JSON. |
+| Library version conflicts | Ensure `shared` library versions in your `package.json` match the host's. |
+| Invalid CSS selectors | Validate the `target` selector against the host's DOM. |
+
+### 3. Best Practices
+- Build modular components with well-typed props.
+- Prefer using the host's exposed types and components over implementing your own.
+- Keep shared dependency versions aligned with the host and re-test after host upgrades.
+- Treat plugin bundles as untrusted: vet dependencies and avoid unsafe scripts.
