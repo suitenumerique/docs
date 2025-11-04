@@ -24,11 +24,6 @@
       "@/docs/*": ["./src/features/docs/*"]
     }
   },
-  "include": [
-    "src/custom-next.d.ts",
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-  ],
+  "include": ["src/custom-next.d.ts", "next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }
