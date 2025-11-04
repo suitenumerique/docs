@@ -23,7 +23,8 @@
 
 ## Overview
 
-The plugin system allows developers to extend the application's functionality and appearance without modifying the core. It's ideal for teams or third parties to add custom features.
+The plugin system allows developers to extend the application's functionality and appearance without modifying the core.  
+It's ideal for teams or third parties to add custom features.
 
 <br>
 
@@ -54,13 +55,15 @@ The plugin system allows developers to extend the application's functionality an
 
 ## Getting Started: Building Your First Plugin
 
-A plugin is a standalone React application bundled with Webpack that exposes one or more components via [Module Federation](#4-federation-configuration "See the federation configuration"). This guide walks you through creating your first plugin.
+A plugin is a standalone React application bundled with Webpack that exposes one or more components via [Module Federation](#4-federation-configuration "See the federation configuration").  
+This guide walks you through creating your first plugin.
 
 <br>
 
 ### 1. Prepare the Host Environment
 
-Developing a plugin requires running the host application (Docs) in parallel. This live integration is essential for rendering your plugin, enabling hot-reloading, sharing types for Intellisense, and discovering the exact versions of [shared dependencies](#choosing-shared-dependencies "Learn about shared dependencies").
+Developing a plugin requires running the host application (Docs) in parallel.  
+This live integration is essential for rendering your plugin, enabling hot-reloading, sharing types for Intellisense, and discovering the exact versions of [shared dependencies](#choosing-shared-dependencies "Learn about shared dependencies").
 
 <br>
 
@@ -68,13 +71,15 @@ Developing a plugin requires running the host application (Docs) in parallel. Th
 2.  **Set the development flag**: In the host application's `.env.development` file, set `NEXT_PUBLIC_DEVELOP_PLUGINS=true`.
 3.  **Stop conflicting services**: If you are using the project's Docker setup, make sure the frontend service is stopped (`docker compose stop frontend-development`), as we will run the Docs frontend locally.
 4.  **Run the host**: Navigate to `src/frontend/apps/impress`, run `yarn install`, and then `yarn dev`.
-5.  **Check the logs**: On startup, the Next.js dev server will print the versions of all shared singleton libraries (e.g., React, styled-components). You will need these exact versions for your plugin's `package.json`.
+5.  **Check the logs**: On startup, the Next.js dev server will print the versions of all shared singleton libraries (e.g., React, styled-components).  
+    You will need these exact versions for your plugin's `package.json`.
 
 <br>
 
 ### 2. Scaffolding a New Plugin Project
 
-Create a new, simple React project. Your project should have a [`webpack.config.js`](#4-federation-configuration "See the federation configuration") and include dependencies for React, Webpack, and TypeScript.
+Create a new, simple React project.  
+Your project should have a [`webpack.config.js`](#4-federation-configuration "See the federation configuration") and include dependencies for React, Webpack, and TypeScript.
 
 <br>
 
@@ -113,7 +118,8 @@ A minimal `package.json` would look like this:
 
 ### 3\. Creating a Plugin Component
 
-This is a React component that your `webpack.config.js` file exposes. This minimal example shows how to accept `props`, which can be passed from the [plugin configuration file](#plugin-configuration-file-reference "See the configuration file reference").
+This is a React component that your `webpack.config.js` file exposes.  
+This minimal example shows how to accept `props`, which can be passed from the [plugin configuration file](#plugin-configuration-file-reference "See the configuration file reference").
 
 <br>
 
@@ -138,7 +144,8 @@ export default MyCustomComponent;
 
 ### 4\. Federation Configuration
 
-The core of the plugin is its Webpack configuration. All plugins should use this sample `webpack.config.js` as a base.
+The core of the plugin is its Webpack configuration.  
+All plugins should use this sample `webpack.config.js` as a base.
 
 <br>
 
@@ -213,7 +220,8 @@ In your plugin's `tsconfig.json`:
 
 <br>
 
-When you run the host application with `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, it generates a `@mf-types.zip` file. The `NativeFederationTypeScriptHost` plugin in your webpack config will automatically download and unpack it, making the host's types available to your plugin and IDE.
+When you run the host application with `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, it generates a `@mf-types.zip` file.  
+The `NativeFederationTypeScriptHost` plugin in your webpack config will automatically download and unpack it, making the host's types available to your plugin and IDE.
 
 <br>
 
@@ -224,7 +232,9 @@ With the host application already running (from step 1), you can now start your 
 <br>
 
 1.  **Start the plugin**: In your plugin's project directory, run `yarn dev`.
-2.  **Configure the host**: Tell the host to load your plugin by editing its configuration file. When running Docs locally, this file is located at `src/backend/impress/configuration/plugins/default.json`. Update it to point to your local plugin's `remoteEntry.js`.
+2.  **Configure the host**: Tell the host to load your plugin by editing its configuration file.  
+    When running Docs locally, this file is located at `src/backend/impress/configuration/plugins/default.json`.  
+    Update it to point to your local plugin's `remoteEntry.js`.
 
 <br>
 
@@ -247,7 +257,8 @@ With the host application already running (from step 1), you can now start your 
 
 <br>
 
-After changing the `target` to a valid CSS selector in the host's DOM, save the file. The host application will automatically detect the change and inject your component, passing the `props` object along.
+After changing the `target` to a valid CSS selector in the host's DOM, save the file.  
+The host application will automatically detect the change and inject your component, passing the `props` object along.
 
 Your component should appear in the running host application after a reload.
 
@@ -257,7 +268,8 @@ Your component should appear in the running host application after a reload.
 
 ### Host Exports
 
-The host automatically exposes many of its components and hooks. You can import them in the plugin as if they were local modules, thanks to the [`remotes` configuration](#4-federation-configuration "See the remotes config in Webpack") in the `webpack.config.js`.
+The host automatically exposes many of its components and hooks.  
+You can import them in the plugin as if they were local modules, thanks to the [`remotes` configuration](#4-federation-configuration "See the remotes config in Webpack") in the `webpack.config.js`.
 
 <br>
 
@@ -277,11 +289,13 @@ Sharing dependencies is critical for performance and stability.
 
   - **Minimal Shared Libraries**: Always share **`react`**, **`react-dom`**, **`styled-components`**, and **`@openfun/cunningham-react`** to use the same instances as the host.
   - **Sharing State**: Libraries that rely on a global context (like `@tanstack/react-query`) **must** be shared to access the host's state and cache.
-  - **Discovering More Shared Libraries**: With `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, [the host prints its shared dependency map to the Next.js dev server logs on startup](#1-prepare-the-host-environment "See how to prepare the host"). You can use this to align versions and add more shared libraries to your plugin.
+  - **Discovering More Shared Libraries**: With `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, [the host prints its shared dependency map to the Next.js dev server logs on startup](#1-prepare-the-host-environment "See how to prepare the host").  
+    You can use this to align versions and add more shared libraries to your plugin.
 
 <br>
 
-> **Important**: Both the host and the plugin must declare a dependency in [`moduleFederationConfig.shared`](#4-federation-configuration "See the federation configuration") for it to become a true singleton. If a shared dependency is omitted from the plugin's config, Webpack will bundle a separate copy, breaking the singleton pattern.
+> **Important**: Both the host and the plugin must declare a dependency in [`moduleFederationConfig.shared`](#4-federation-configuration "See the federation configuration") for it to become a true singleton.  
+> If a shared dependency is omitted from the plugin's config, Webpack will bundle a separate copy, breaking the singleton pattern.
 
 <br>
 
@@ -314,7 +328,8 @@ Common Errors:
 
 ## Plugin Configuration File Reference
 
-This section provides a detailed reference for all fields in the plugin configuration JSON. For deployment details, see [Deploying Docs with Plugins](#deploying-docs-with-plugins "Learn about production deployment").
+This section provides a detailed reference for all fields in the plugin configuration JSON.  
+For deployment details, see [Deploying Docs with Plugins](#deploying-docs-with-plugins "Learn about production deployment").
 
 <br>
 
@@ -470,7 +485,10 @@ Run the build command in your plugin's directory:
 yarn build
 ```
 
-This command bundles your code for production. Webpack will generate a **`dist`** folder (or similar) containing the **`remoteEntry.js`** file and other JavaScript chunks. The `remoteEntry.js` is the manifest that tells other applications what modules your plugin exposes. These are the files you will need for deployment.
+This command bundles your code for production.  
+Webpack will generate a **`dist`** folder (or similar) containing the **`remoteEntry.js`** file and other JavaScript chunks.  
+The `remoteEntry.js` is the manifest that tells other applications what modules your plugin exposes.  
+These are the files you will need for deployment.
 
 <br>
 
@@ -480,15 +498,18 @@ The [`webpack.config.js` provided](#4-federation-configuration "See the federati
 
 ## Deploying Docs with Plugins
 
-To use plugins in a production environment, you need to deploy both the plugin assets and the configuration file. The recommended approach is to serve the plugin's static files from the same webserver that serves the host (docs frontend).
+To use plugins in a production environment, you need to deploy both the plugin assets and the configuration file.  
+The recommended approach is to serve the plugin's static files from the same webserver that serves the host (docs frontend).
 
 <br>
 
-1.  **Deploy Plugin Assets**: Copy the contents of your plugin's build output directory (e.g., `dist/`) into the frontend container's `/usr/share/nginx/html/assets` directory at a chosen path. For example, placing assets in `/usr/share/nginx/html/assets/plugins/my-plugin/` would make the plugin's **`remoteEntry.js`** available at `https://production.domain/assets/plugins/my-plugin/remoteEntry.js`.
+1.  **Deploy Plugin Assets**: Copy the contents of your plugin's build output directory (e.g., `dist/`) into the frontend container's `/usr/share/nginx/html/assets` directory at a chosen path.  
+    For example, placing assets in `/usr/share/nginx/html/assets/plugins/my-plugin/` would make the plugin's **`remoteEntry.js`** available at `https://production.domain/assets/plugins/my-plugin/remoteEntry.js`.
 
 <br>
 
-2.  **Deploy Plugin Configuration**: The host's [plugin configuration file](#plugin-configuration-file-reference "See the configuration file reference") must be updated to point to the deployed assets. This file is typically managed via infrastructure methods (e.g., a Kubernetes configmap replacing `/app/impress/configuration/plugins/default.json` in the backend container).
+2.  **Deploy Plugin Configuration**: The host's [plugin configuration file](#plugin-configuration-file-reference "See the configuration file reference") must be updated to point to the deployed assets.  
+    This file is typically managed via infrastructure methods (e.g., a Kubernetes configmap replacing `/app/impress/configuration/plugins/default.json` in the backend container).
 
 <br>
 
