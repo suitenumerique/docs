@@ -46,7 +46,7 @@ type CreatePDFBlockConfig = BlockConfig<
 
 interface PdfBlockComponentProps {
   block: BlockNoDefaults<
-    Record<'callout', CreatePDFBlockConfig>,
+    Record<'pdf', CreatePDFBlockConfig>,
     InlineContentSchema,
     StyleSchema
   >;

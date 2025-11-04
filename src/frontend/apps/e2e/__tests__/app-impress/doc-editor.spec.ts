@@ -494,7 +494,7 @@ test.describe('Doc Editor', () => {
         if (request.method().includes('GET')) {
           await route.fulfill({
             json: {
-              status: requestCount ? 'ready' : 'processing',
+              status: requestCount > 1 ? 'ready' : 'processing',
               file: '/anything.html',
             },
           });
@@ -518,6 +518,12 @@ test.describe('Doc Editor', () => {
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
     await expect(editor.getByText('Analyzing file...')).toBeVisible();
+
+    // To be sure the retry happens even after a page reload
+    await page.reload();
+
+    await expect(editor.getByText('Analyzing file...')).toBeVisible();
+
     // The retry takes a few seconds
     await expect(editor.getByText('test.html')).toBeVisible({
       timeout: 7000,
