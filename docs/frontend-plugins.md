@@ -218,7 +218,7 @@ This JSON tells the host to load `MyCustomComponent` from your plugin's `remoteE
   }
 }
 ```
-> For production, you can use a relative `url` if the plugin's `remoteEntry.js` is served from the host's public folder.
+> For production, it is recommended to use a relative `url` by placing the plugin's `remoteEntry.js` inside the host's public folder. This simplifies deployment by serving both the host and plugins from the same origin, which avoids the need to configure Cross-Origin Resource Sharing (CORS) policies.
 
 ### Injection Position Examples
 
