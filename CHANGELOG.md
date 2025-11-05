@@ -26,6 +26,7 @@ and this project adheres to
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
 - 🐛(backend) fix s3 version_id validation
 - 🐛(frontend) retry check media status after page reload #1555
+- 🐛(frontend) fix Interlinking memory leak #1560
 
 ## [3.8.2] - 2025-10-17
 

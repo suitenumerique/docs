@@ -29,6 +29,9 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
     render: ({ inlineContent, updateInlineContent }) => {
       const { data: doc } = useDoc({ id: inlineContent.props.docId });
 
+      /**
+       * Update the content title if the referenced doc title changes
+       */
       useEffect(() => {
         if (doc?.title && doc.title !== inlineContent.props.title) {
           updateInlineContent({
@@ -39,7 +42,15 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
             },
           });
         }
-      }, [inlineContent.props, doc?.title, updateInlineContent]);
+
+        /**
+         * ⚠️ When doing collaborative editing, doc?.title might be out of sync
+         * causing an infinite loop of updates.
+         * To prevent this, we only run this effect when doc?.title changes,
+         * not when inlineContent.props.title changes.
+         */
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [doc?.title]);
 
       return <LinkSelected {...inlineContent.props} />;
     },
