@@ -70,35 +70,43 @@ const UploadLoaderBlockComponent = ({
     loopCheckDocMediaStatus(url)
       .then((response) => {
         // Replace the loading block with the resource block (image, audio, video, pdf ...)
-        editor.replaceBlocks(
-          [block.id],
-          [
-            {
-              type: block.props.blockUploadType,
-              props: {
-                url: `${mediaUrl}${response.file}`,
-                showPreview: block.props.blockUploadShowPreview,
-                name: block.props.blockUploadName,
-                caption: '',
-                backgroundColor: 'default',
-                textAlignment: 'left',
-              },
-            } as never,
-          ],
-        );
+        try {
+          editor.replaceBlocks(
+            [block.id],
+            [
+              {
+                type: block.props.blockUploadType,
+                props: {
+                  url: `${mediaUrl}${response.file}`,
+                  showPreview: block.props.blockUploadShowPreview,
+                  name: block.props.blockUploadName,
+                  caption: '',
+                  backgroundColor: 'default',
+                  textAlignment: 'left',
+                },
+              } as never,
+            ],
+          );
+        } catch {
+          /* During collaboration, another user might have updated the block */
+        }
       })
       .catch((error) => {
         console.error('Error analyzing file:', error);
 
-        editor.updateBlock(block.id, {
-          type: 'uploadLoader',
-          props: {
-            type: 'warning',
-            information: t(
-              'The antivirus has detected an anomaly in your file.',
-            ),
-          },
-        });
+        try {
+          editor.updateBlock(block.id, {
+            type: 'uploadLoader',
+            props: {
+              type: 'warning',
+              information: t(
+                'The antivirus has detected an anomaly in your file.',
+              ),
+            },
+          });
+        } catch {
+          /* During collaboration, another user might have updated the block */
+        }
       });
   }, [block, editor, mediaUrl]);
 

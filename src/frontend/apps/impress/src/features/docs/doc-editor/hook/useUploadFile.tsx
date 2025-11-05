@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -70,22 +71,28 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       const timeoutId = setTimeout(() => {
         // Replace the resource block by a uploadLoader block
         // to show analyzing status
-        editor.replaceBlocks(
-          [blockChanges.block.id],
-          [
-            {
-              type: 'uploadLoader',
-              props: {
-                information: t('Analyzing file...'),
-                type: 'loading',
-                blockUploadName,
-                blockUploadType,
-                blockUploadUrl,
-                blockUploadShowPreview,
+        try {
+          editor.replaceBlocks(
+            [blockChanges.block.id],
+            [
+              {
+                type: 'uploadLoader',
+                props: {
+                  information: t('Analyzing file...'),
+                  type: 'loading',
+                  blockUploadName,
+                  blockUploadType,
+                  blockUploadUrl,
+                  blockUploadShowPreview,
+                },
               },
-            },
-          ],
-        );
+            ],
+          );
+        } catch (error) {
+          captureException(error, {
+            extra: { info: 'Error replacing block for upload loader' },
+          });
+        }
       }, 250);
 
       return () => {
