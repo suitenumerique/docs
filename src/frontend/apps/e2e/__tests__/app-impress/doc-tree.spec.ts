@@ -352,7 +352,7 @@ test.describe('Doc Tree', () => {
     await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
 
     await expect(row.getByText('😀')).toBeHidden();
-    await expect(titleEmojiPicker).not.toHaveText('😀');
+    await expect(titleEmojiPicker).toBeHidden();
   });
 });
 

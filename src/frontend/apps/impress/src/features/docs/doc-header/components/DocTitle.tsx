@@ -55,8 +55,16 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
   const { colorsTokens } = useCunninghamTheme();
   const { emoji } = getEmojiAndTitle(doc.title ?? '');
 
+  if (!emoji) {
+    return null;
+  }
+
   return (
-    <Tooltip content={t('Document emoji')} aria-hidden={true} placement="top">
+    <Tooltip
+      content={t('Edit document emoji')}
+      aria-hidden={true}
+      placement="top"
+    >
       <Box
         $css={css`
           padding: 4px;
@@ -70,11 +78,17 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
         `}
       >
         <DocIcon
+          buttonProps={{
+            $width: '32px',
+            $height: '32px',
+            $justify: 'space-between',
+            $align: 'center',
+          }}
           withEmojiPicker={doc.abilities.partial_update}
           docId={doc.id}
           title={doc.title}
           emoji={emoji}
-          $size="25px"
+          $size="23px"
           defaultIcon={
             <SimpleFileIcon
               width="25px"
@@ -94,7 +108,6 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
-  const { spacingsTokens } = useCunninghamTheme();
   const { isTopRoot } = useDocUtils(doc);
   const { untitledDocument } = useTrans();
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
@@ -139,19 +152,9 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       className="--docs--doc-title"
       $direction="row"
       $align="center"
-      $gap={spacingsTokens['xs']}
+      $gap="4px"
       $minHeight="40px"
     >
-      {isTopRoot && (
-        <SimpleFileIcon
-          width="25px"
-          height="25px"
-          aria-hidden="true"
-          aria-label={t('Simple document icon')}
-          color={colorsTokens['primary-500']}
-          style={{ flexShrink: '0' }}
-        />
-      )}
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
 
       <Tooltip content={t('Rename')} aria-hidden={true} placement="top">

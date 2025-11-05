@@ -68,9 +68,18 @@ test.describe('Doc Header', () => {
     await createDoc(page, 'doc-update-emoji', browserName, 1);
 
     const emojiPicker = page.locator('.--docs--doc-title').getByRole('button');
+    const optionMenu = page.getByLabel('Open the document options');
+    const addEmojiMenuItem = page.getByRole('menuitem', { name: 'Add emoji' });
+    const removeEmojiMenuItem = page.getByRole('menuitem', {
+      name: 'Remove emoji',
+    });
 
     // Top parent should not have emoji picker
     await expect(emojiPicker).toBeHidden();
+    await optionMenu.click();
+    await expect(addEmojiMenuItem).toBeHidden();
+    await expect(removeEmojiMenuItem).toBeHidden();
+    await page.keyboard.press('Escape');
 
     const { name: docChild } = await createRootSubPage(
       page,
@@ -80,13 +89,23 @@ test.describe('Doc Header', () => {
 
     await verifyDocName(page, docChild);
 
-    await expect(emojiPicker).toBeVisible();
+    // Emoji picker should be hidden initially
+    await expect(emojiPicker).toBeHidden();
+
+    // Add emoji
+    await optionMenu.click();
+    await expect(removeEmojiMenuItem).toBeHidden();
+    await addEmojiMenuItem.click();
+    await expect(emojiPicker).toHaveText('📄');
+
+    // Change emoji
     await emojiPicker.click({
       delay: 100,
     });
     await page.getByRole('button', { name: '😀' }).first().click();
     await expect(emojiPicker).toHaveText('😀');
 
+    // Update title
     const docTitle = page.getByRole('textbox', { name: 'Document title' });
     await docTitle.fill('Hello Emoji World');
     await docTitle.blur();
@@ -95,6 +114,12 @@ test.describe('Doc Header', () => {
     // Check the tree
     const row = await getTreeRow(page, 'Hello Emoji World');
     await expect(row.getByText('😀')).toBeVisible();
+
+    // Remove emoji
+    await optionMenu.click();
+    await expect(addEmojiMenuItem).toBeHidden();
+    await removeEmojiMenuItem.click();
+    await expect(emojiPicker).toBeHidden();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {
