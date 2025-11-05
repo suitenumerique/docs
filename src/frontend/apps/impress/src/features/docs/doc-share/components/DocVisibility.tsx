@@ -147,6 +147,11 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             arrowCss={css`
               color: ${colorsTokens['primary-800']} !important;
             `}
+            buttonCss={css`
+              &:hover {
+                background-color: unset;
+              }
+            `}
             disabled={!canManage}
             showArrow={true}
             topMessage={
@@ -184,6 +189,11 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
             <DropdownMenu
               testId="doc-access-mode"
+              buttonCss={css`
+                &:hover {
+                  background-color: unset;
+                }
+              `}
               disabled={!canManage}
               showArrow={true}
               options={linkRoleOptions}
@@ -196,7 +206,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               }
               label={t('Document access mode')}
             >
-              <Text $weight="initial" $variation="600">
+              <Text $weight="initial" $variation="600" $theme="primary">
                 {linkModeTranslations[docLinkRole]}
               </Text>
             </DropdownMenu>

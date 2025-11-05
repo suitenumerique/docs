@@ -31,7 +31,7 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   font-weight: 500;
   font-size: 0.938rem;
   padding: 0;
-  ${({ $css }) => $css};
+  border-radius: 4px;
   &:hover {
     background-color: var(
       --c--components--button--primary-text--background--color-hover
@@ -41,6 +41,7 @@ const StyledButton = styled(Button)<StyledButtonProps>`
     box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400);
     border-radius: 4px;
   }
+  ${({ $css }) => $css};
 `;
 
 export interface DropButtonProps {

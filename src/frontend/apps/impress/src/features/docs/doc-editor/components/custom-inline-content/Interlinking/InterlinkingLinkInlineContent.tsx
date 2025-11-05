@@ -77,7 +77,7 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
       onClick={handleClick}
       draggable="false"
       $css={css`
-        display: inline;
+        display: contents;
         padding: 0.1rem 0.4rem;
         border-radius: 4px;
         & svg {

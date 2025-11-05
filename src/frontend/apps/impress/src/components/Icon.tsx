@@ -13,7 +13,7 @@ export const Icon = ({
   iconName,
   disabled,
   variant = 'outlined',
-  $variation,
+  $variation = 'text',
   ...textProps
 }: IconProps) => {
   const hasLabel = 'aria-label' in textProps || 'aria-labelledby' in textProps;
@@ -41,15 +41,19 @@ type IconOptionsProps = TextType & {
   isHorizontal?: boolean;
 };
 
-export const IconOptions = ({ isHorizontal, ...props }: IconOptionsProps) => {
+export const IconOptions = ({
+  isHorizontal,
+  $css,
+  ...props
+}: IconOptionsProps) => {
   return (
     <Icon
-      {...props}
       iconName={isHorizontal ? 'more_horiz' : 'more_vert'}
       $css={css`
         user-select: none;
-        ${props.$css}
+        ${$css}
       `}
+      {...props}
     />
   );
 };

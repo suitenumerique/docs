@@ -27,6 +27,8 @@ and this project adheres to
 - 🐛(backend) fix s3 version_id validation
 - 🐛(frontend) retry check media status after page reload #1555
 - 🐛(frontend) fix Interlinking memory leak #1560
+- 🐛(frontend) button new doc UI fix #1557
+- 🐛(frontend) interlinking UI fix #1557
 
 ## [3.8.2] - 2025-10-17
 

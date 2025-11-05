@@ -44,6 +44,11 @@
   contain: content;
 }
 
+.c__button--medium {
+  min-height: var(--c--components--button--medium-height);
+  height: auto;
+}
+
 /**
  * Modal
 */

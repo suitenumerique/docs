@@ -1,12 +1,13 @@
 import { MouseEvent, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { BoxButton, Icon, TextType } from '@/components';
+import { BoxButton, BoxButtonType, Text, TextType } from '@/components';
 import { EmojiPicker, emojidata } from '@/docs/doc-editor/';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
 
 type DocIconProps = TextType & {
+  buttonProps?: BoxButtonType;
   emoji?: string | null;
   defaultIcon: React.ReactNode;
   docId?: string;
@@ -16,6 +17,7 @@ type DocIconProps = TextType & {
 };
 
 export const DocIcon = ({
+  buttonProps,
   emoji,
   defaultIcon,
   $size = 'sm',
@@ -81,13 +83,13 @@ export const DocIcon = ({
         ref={iconRef}
         onClick={toggleEmojiPicker}
         color="tertiary-text"
+        {...buttonProps}
       >
         {!emoji ? (
           defaultIcon
         ) : (
-          <Icon
+          <Text
             {...textProps}
-            iconName={emoji}
             $size={$size}
             $variation={$variation}
             $weight={$weight}
@@ -95,7 +97,7 @@ export const DocIcon = ({
             data-testid="doc-emoji-icon"
           >
             {emoji}
-          </Icon>
+          </Text>
         )}
       </BoxButton>
       {openEmojiPicker &&

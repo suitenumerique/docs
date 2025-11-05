@@ -134,6 +134,8 @@ test.describe('Document grid item options', () => {
   test('it deletes the document', async ({ page, browserName }) => {
     const [docTitle] = await createDoc(page, `delete doc`, browserName);
 
+    await verifyDocName(page, docTitle);
+
     await page.goto('/');
 
     await expect(page.getByText(docTitle)).toBeVisible();

@@ -149,6 +149,14 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       `}
     >
       <TreeViewItem {...props} onClick={handleActivate}>
+        <DocIcon
+          emoji={emoji}
+          withEmojiPicker={doc.abilities.partial_update}
+          defaultIcon={<SubPageIcon color={colorsTokens['primary-400']} />}
+          $size="sm"
+          docId={doc.id}
+          title={doc.title}
+        />
         <BoxButton
           onClick={(e) => {
             e.stopPropagation();
@@ -166,17 +174,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             min-width: 0;
           `}
         >
-          <Box>
-            <DocIcon
-              emoji={emoji}
-              withEmojiPicker={doc.abilities.partial_update}
-              defaultIcon={<SubPageIcon color={colorsTokens['primary-400']} />}
-              $size="sm"
-              docId={doc.id}
-              title={doc.title}
-            />
-          </Box>
-
           <Box
             $direction="row"
             $align="center"
