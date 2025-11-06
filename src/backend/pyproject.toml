@@ -27,7 +27,7 @@ requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4==4.14.2",
     "boto3==1.40.59",
-    "Brotli==1.1.0",
+    "Brotli==1.2.0",
     "celery[redis]==5.5.3",
     "django-configurations==2.5.1",
     "django-cors-headers==4.9.0",
