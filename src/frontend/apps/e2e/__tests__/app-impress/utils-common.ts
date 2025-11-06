@@ -31,7 +31,7 @@ export const overrideConfig = async (
   page: Page,
   newConfig: { [_K in keyof typeof CONFIG]?: unknown },
 ) =>
-  await page.route('**/api/v1.0/config/', async (route) => {
+  await page.route(/.*\/api\/v1.0\/config\/.*/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET')) {
       await route.fulfill({
@@ -204,7 +204,7 @@ export const waitForResponseCreateDoc = (page: Page) => {
 };
 
 export const mockedDocument = async (page: Page, data: object) => {
-  await page.route('**/documents/**/', async (route) => {
+  await page.route(/\**\/documents\/\**/, async (route) => {
     const request = route.request();
     if (
       request.method().includes('GET') &&
@@ -256,7 +256,7 @@ export const mockedDocument = async (page: Page, data: object) => {
 };
 
 export const mockedListDocs = async (page: Page, data: object[] = []) => {
-  await page.route('**/documents/**/', async (route) => {
+  await page.route(/\**\/documents\/\**/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET') && request.url().includes('page=')) {
       await route.fulfill({
@@ -301,7 +301,7 @@ export async function waitForLanguageSwitch(
   page: Page,
   lang: TestLanguageValue,
 ) {
-  await page.route('**/api/v1.0/users/**', async (route, request) => {
+  await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
     if (request.method().includes('PATCH')) {
       await route.fulfill({
         json: {

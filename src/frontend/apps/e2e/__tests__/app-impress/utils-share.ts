@@ -118,12 +118,16 @@ export const connectOtherUserToDoc = async ({
   await otherPage.goto(docUrl);
 
   if (!withoutSignIn) {
-    await otherPage
+    const loginFromApp = otherPage
       .getByRole('main', { name: 'Main content' })
-      .getByLabel('Login')
-      .click({
-        timeout: 15000,
-      });
+      .getByLabel('Login');
+    const loginFromHome = otherPage.getByRole('button', {
+      name: 'Start Writing',
+    });
+
+    await loginFromApp.or(loginFromHome).first().click({
+      timeout: 15000,
+    });
 
     await keyCloakSignIn(otherPage, otherBrowserName, false);
   }
@@ -159,7 +163,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
       ...json,
     },
   ];
-  await page.route('**/invitations/**/', async (route) => {
+  await page.route(/.*\/invitations\/.*/, async (route) => {
     const request = route.request();
     if (
       request.method().includes('GET') &&
@@ -180,7 +184,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
   });
 
   await page.route(
-    '**/invitations/120ec765-43af-4602-83eb-7f4e1224548a/**/',
+    /.*\/invitations\/120ec765-43af-4602-83eb-7f4e1224548a\/.*/,
     async (route) => {
       const request = route.request();
       if (request.method().includes('DELETE')) {
@@ -195,7 +199,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
 };
 
 export const mockedAccesses = async (page: Page, json?: object) => {
-  await page.route('**/accesses/**/', async (route) => {
+  await page.route(/.*\/accesses\/.*/, async (route) => {
     const request = route.request();
 
     if (

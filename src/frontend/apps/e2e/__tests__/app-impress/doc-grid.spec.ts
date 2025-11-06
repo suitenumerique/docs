@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getGridRow } from './utils-common';
+import { createDoc, getGridRow, verifyDocName } from './utils-common';
+import { addNewMember, connectOtherUserToDoc } from './utils-share';
 
 type SmallDoc = {
   id: string;
@@ -11,7 +12,7 @@ test.describe('Documents Grid mobile', () => {
   test.use({ viewport: { width: 500, height: 1200 } });
 
   test('it checks the grid when mobile', async ({ page }) => {
-    await page.route('**/documents/**', async (route) => {
+    await page.route(/.*\/documents\/.*/, async (route) => {
       const request = route.request();
       if (request.method().includes('GET') && request.url().includes('page=')) {
         await route.fulfill({
@@ -161,7 +162,7 @@ test.describe('Document grid item options', () => {
   test("it checks if the delete option is disabled if we don't have the destroy capability", async ({
     page,
   }) => {
-    await page.route('*/**/api/v1.0/documents/?page=1', async (route) => {
+    await page.route(/.*\/api\/v1.0\/documents\/\?page=1/, async (route) => {
       await route.fulfill({
         json: {
           results: [
@@ -192,90 +193,68 @@ test.describe('Document grid item options', () => {
     });
     await page.goto('/');
 
-    const button = page.getByTestId(
-      `docs-grid-actions-button-mocked-document-id`,
-    );
+    const button = page
+      .getByTestId(`docs-grid-actions-button-mocked-document-id`)
+      .first();
     await expect(button).toBeVisible();
     await button.click();
-    const removeButton = page.getByTestId(
-      `docs-grid-actions-remove-mocked-document-id`,
-    );
+    const removeButton = page
+      .getByTestId(`docs-grid-actions-remove-mocked-document-id`)
+      .first();
     await expect(removeButton).toBeVisible();
     await removeButton.isDisabled();
   });
 });
 
 test.describe('Documents filters', () => {
-  test('it checks the prebuild left panel filters', async ({ page }) => {
+  test('it checks the left panel filters', async ({ page, browserName }) => {
     void page.goto('/');
 
+    // Create my doc
+    const [docName] = await createDoc(page, 'my-doc', browserName, 1);
+    await verifyDocName(page, docName);
+
+    // Another user create a doc and share it with me
+    const { cleanup, otherPage, otherBrowserName } =
+      await connectOtherUserToDoc({
+        browserName,
+        docUrl: '/',
+      });
+
+    const [docShareName] = await createDoc(
+      otherPage,
+      'my-share-doc',
+      otherBrowserName,
+      1,
+    );
+
+    await verifyDocName(otherPage, docShareName);
+
+    await otherPage.getByRole('button', { name: 'Share' }).click();
+
+    await addNewMember(otherPage, 0, 'Editor', browserName);
+
+    // Let's check the filters
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const row = await getGridRow(page, docName);
+    const rowShare = await getGridRow(page, docShareName);
+
     // All Docs
-    const response = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1') &&
-        response.status() === 200,
-    );
-    const result = await response.json();
-    const allCount = result.count as number;
-    await expect(page.getByTestId('grid-loader')).toBeHidden();
+    await expect(row).toBeVisible();
+    await expect(rowShare).toBeVisible();
 
-    const allDocs = page.getByLabel('All docs');
-    const myDocs = page.getByLabel('My docs');
-    const sharedWithMe = page.getByLabel('Shared with me');
-
-    // Initial state
-    await expect(allDocs).toBeVisible();
-    await expect(allDocs).toHaveAttribute('aria-current', 'page');
-
-    await expect(myDocs).toBeVisible();
-    await expect(myDocs).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-    await expect(myDocs).not.toHaveAttribute('aria-current');
-
-    await expect(sharedWithMe).toBeVisible();
-    await expect(sharedWithMe).toHaveCSS(
-      'background-color',
-      'rgba(0, 0, 0, 0)',
-    );
-    await expect(sharedWithMe).not.toHaveAttribute('aria-current');
-
-    await allDocs.click();
-
-    await page.waitForURL('**/?target=all_docs');
-
-    let url = new URL(page.url());
-    let target = url.searchParams.get('target');
-    expect(target).toBe('all_docs');
-
-    // My docs
-    await myDocs.click();
-    url = new URL(page.url());
-    target = url.searchParams.get('target');
-    expect(target).toBe('my_docs');
-    const responseMyDocs = await page.waitForResponse(
-      (response) =>
-        response.url().endsWith('documents/?page=1&is_creator_me=true') &&
-        response.status() === 200,
-    );
-    const resultMyDocs = await responseMyDocs.json();
-    const countMyDocs = resultMyDocs.count as number;
-    await expect(page.getByTestId('grid-loader')).toBeHidden();
-    expect(countMyDocs).toBeLessThanOrEqual(allCount);
+    // My Docs
+    await page.getByRole('link', { name: 'My docs' }).click();
+    await expect(row).toBeVisible();
+    await expect(rowShare).toBeHidden();
 
     // Shared with me
-    await sharedWithMe.click();
-    url = new URL(page.url());
-    target = url.searchParams.get('target');
-    expect(target).toBe('shared_with_me');
-    const responseSharedWithMe = await page.waitForResponse(
-      (response) =>
-        response.url().includes('documents/?page=1&is_creator_me=false') &&
-        response.status() === 200,
-    );
-    const resultSharedWithMe = await responseSharedWithMe.json();
-    const countSharedWithMe = resultSharedWithMe.count as number;
-    await expect(page.getByTestId('grid-loader')).toBeHidden();
-    expect(countSharedWithMe).toBeLessThanOrEqual(allCount);
-    expect(countSharedWithMe + countMyDocs).toEqual(allCount);
+    await page.getByRole('link', { name: 'Shared with me' }).click();
+    await expect(row).toBeHidden();
+    await expect(rowShare).toBeVisible();
+
+    await cleanup();
   });
 });
 

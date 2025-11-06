@@ -31,7 +31,7 @@ test.describe('Document list members', () => {
       return cleanUrl.split('/').pop() || '';
     })();
 
-    await page.route('**/documents/**/accesses/', async (route) => {
+    await page.route(/.*\/documents\/.*\/accesses\//, async (route) => {
       const request = route.request();
       const url = new URL(request.url());
       const pageId = url.searchParams.get('page') ?? '1';

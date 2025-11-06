@@ -2,12 +2,11 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
-import { pdf } from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 
 import {
   TestLanguage,
   createDoc,
-  randomName,
   verifyDocName,
   waitForLanguageSwitch,
 } from './utils-common';
@@ -86,11 +85,16 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfData = await pdf(pdfBuffer);
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfInfo = await pdfParse.getInfo();
+    const pdfText = await pdfParse.getText();
 
-    expect(pdfData.total).toBe(2);
-    expect(pdfData.text).toContain('Hello\n\nWorld\n\n'); // This is the doc text
-    expect(pdfData.info?.Title).toBe(randomDoc);
+    expect(pdfInfo.total).toBe(2);
+    expect(pdfText.pages).toStrictEqual([
+      { text: 'Hello', num: 1 },
+      { text: 'World', num: 2 },
+    ]);
+    expect(pdfInfo?.info.Title).toBe(randomDoc);
   });
 
   test('it exports the doc to docx', async ({ page, browserName }) => {
@@ -219,10 +223,10 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfExport = await pdf(pdfBuffer);
-    const pdfText = pdfExport.text;
 
-    expect(pdfText).toContain('Hello World');
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain('Hello World');
   });
 
   test('it exports the doc with quotes', async ({ page, browserName }) => {
@@ -265,9 +269,9 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfData = await pdf(pdfBuffer);
-
-    expect(pdfData.text).toContain('Hello World'); // This is the pdf text
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain('Hello World');
   });
 
   test('it exports the doc with multi columns', async ({
@@ -320,46 +324,33 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfData = await pdf(pdfBuffer);
-    expect(pdfData.text).toContain('Column 1');
-    expect(pdfData.text).toContain('Column 2');
-    expect(pdfData.text).toContain('Column 3');
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain('Column 1');
+    expect(pdfText.text).toContain('Column 2');
+    expect(pdfText.text).toContain('Column 3');
   });
 
   test('it injects the correct language attribute into PDF export', async ({
     page,
     browserName,
   }) => {
+    const [randomDocFrench] = await createDoc(
+      page,
+      'doc-language-export-french',
+      browserName,
+      1,
+    );
+
     await waitForLanguageSwitch(page, TestLanguage.French);
 
     // Wait for the page to be ready after language switch
     await page.waitForLoadState('domcontentloaded');
 
-    const header = page.locator('header').first();
-    await header.locator('h1').getByText('Docs').click();
-
-    const randomDocFrench = randomName(
-      'doc-language-export-french',
-      browserName,
-      1,
-    )[0];
-
-    await page
-      .getByRole('button', {
-        name: 'Nouveau doc',
-      })
-      .click();
-
-    const input = page.getByRole('textbox', { name: 'Titre du document' });
-    await expect(input).toBeVisible();
-    await expect(input).toHaveText('', { timeout: 10000 });
-    await input.click();
-    await input.fill(randomDocFrench);
-    await input.blur();
-
-    const editor = page.locator('.ProseMirror.bn-editor');
-    await editor.click();
-    await editor.fill('Contenu de test pour export en français');
+    await writeInEditor({
+      page,
+      text: 'Contenu de test pour export en français',
+    });
 
     await page
       .getByRole('button', {
@@ -447,8 +438,8 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${docChild}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfData = await pdf(pdfBuffer);
-
-    expect(pdfData.text).toContain(randomDoc);
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain(randomDoc);
   });
 });
