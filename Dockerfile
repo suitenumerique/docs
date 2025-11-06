@@ -115,6 +115,14 @@ RUN DJANGO_CONFIGURATION=Build \
 # We wrap commands run in this container by the following entrypoint that
 # creates a user on-the-fly with the container user ID (see USER) and root group
 # ID.
+# Create non-root user
+RUN groupadd -r appuser -g 1000 && useradd -r -g appuser -u 1000 appuser
+
+# Change ownership of application files
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 ENTRYPOINT [ "/usr/local/bin/entrypoint" ]
 
 # ---- Development image ----
@@ -141,6 +149,14 @@ ENV DB_HOST=postgresql \
     DB_PORT=5432
 
 # Run django development server
+# Create non-root user
+RUN groupadd -r appuser -g 1000 && useradd -r -g appuser -u 1000 appuser
+
+# Change ownership of application files
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # ---- Production image ----
@@ -166,4 +182,12 @@ COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
 # The default command runs gunicorn WSGI server in impress's main module
+# Create non-root user
+RUN groupadd -r appuser -g 1000 && useradd -r -g appuser -u 1000 appuser
+
+# Change ownership of application files
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/impress.py", "impress.wsgi:application"]
