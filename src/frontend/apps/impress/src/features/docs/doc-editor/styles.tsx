@@ -1,12 +1,13 @@
 import { css } from 'styled-components';
 
-export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
+export const cssEditor = css`
   &,
   & > .bn-container,
   & .ProseMirror {
     height: 100%;
-    padding-bottom: 2rem;
+  }
 
+  & .ProseMirror {
     /**
      * WCAG Accessibility contrast fixes for BlockNote editor
      */
@@ -131,13 +132,6 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
       .bn-block-outer:not([data-prev-depth-changed]):before {
       border-left: none;
     }
-
-    ${isDeletedDoc &&
-    `
-      .node-interlinkingLinkInline button {
-        pointer-events: none;
-      }
-    `}
   }
 
   & .bn-editor {
@@ -187,8 +181,10 @@ export const cssEditor = (readonly: boolean, isDeletedDoc: boolean) => css`
   }
 
   @media screen and (width <= 560px) {
+    .--docs--doc-readonly & .bn-editor {
+      padding-left: 10px;
+    }
     & .bn-editor {
-      ${readonly && `padding-left: 10px;`}
       padding-right: 10px;
     }
     .bn-side-menu[data-block-type='heading'][data-level='1'] {

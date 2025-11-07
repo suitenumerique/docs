@@ -89,6 +89,10 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
           background-color: ${colorsTokens['greyscale-100']};
         }
         transition: background-color 0.2s ease-in-out;
+
+        .--docs--doc-deleted & {
+          pointer-events: none;
+        }
       `}
     >
       {emoji ? (

@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
@@ -11,8 +12,6 @@ import {
 import { TableContent } from '@/docs/doc-table-content/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
-
-import { cssEditor } from '../styles';
 
 import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
 
@@ -55,10 +54,13 @@ export const DocEditorContainer = ({
         >
           <Box $css="flex:1;" $position="relative" $width="100%">
             <Box
-              $padding={{ top: 'md' }}
+              $padding={{ top: 'md', bottom: '2rem' }}
               $background="white"
-              $css={cssEditor(readOnly, isDeletedDoc)}
-              className="--docs--editor-container"
+              className={clsx('--docs--editor-container', {
+                '--docs--doc-readonly': readOnly,
+                '--docs--doc-deleted': isDeletedDoc,
+              })}
+              $height="100%"
             >
               {docEditor}
             </Box>
@@ -77,7 +79,9 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
-  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+  const isDeletedDoc = !!doc.deleted_at;
+  const readOnly =
+    !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
   const { setIsSkeletonVisible } = useSkeletonStore();
   const isProviderReady = isReady && provider;
 
@@ -117,7 +121,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
             <BlockNoteEditor doc={doc} provider={provider} />
           )
         }
-        isDeletedDoc={!!doc.deleted_at}
+        isDeletedDoc={isDeletedDoc}
         readOnly={readOnly}
       />
     </>

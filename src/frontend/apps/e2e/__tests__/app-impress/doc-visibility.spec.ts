@@ -260,6 +260,10 @@ test.describe('Doc Visibility: Public', () => {
     await expect(card).toBeVisible();
     await expect(card.getByText('Reader')).toBeVisible();
 
+    await expect(
+      otherPage.locator('.--docs--editor-container.--docs--doc-readonly'),
+    ).toBeVisible();
+
     const otherEditor = await getEditor({ page: otherPage });
     await expect(otherEditor).toHaveAttribute('contenteditable', 'false');
     await expect(otherEditor.getByText('Hello Public Viewonly')).toBeVisible();
