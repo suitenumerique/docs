@@ -176,10 +176,7 @@ const DocPage = ({ id }: DocProps) => {
 
       if (error.status === 401) {
         if (authenticated) {
-          queryClient.setQueryData([KEY_AUTH], {
-            user: null,
-            authenticated: false,
-          });
+          queryClient.setQueryData([KEY_AUTH], null);
         }
         setAuthUrl();
       }
