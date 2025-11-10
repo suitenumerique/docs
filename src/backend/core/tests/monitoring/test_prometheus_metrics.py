@@ -18,8 +18,8 @@ def namespaced(metric):
     Pulls PROMETHEUS_METRIC_NAMESPACE (if any)
     from Django settings to the given metric name.
 
-    e.g. if PROMETHEUS_METRIC_NAMESPACE='impress' and metric='total_users',
-    returns 'impress_total_users'.
+    e.g. if PROMETHEUS_METRIC_NAMESPACE='impress' and metric='users_total',
+    returns 'impress_users_total'.
     """
     ns = getattr(settings, "PROMETHEUS_METRIC_NAMESPACE", "")
     return f"{ns}_{metric}" if ns else metric
@@ -44,8 +44,8 @@ class PrometheusMetricsTest(TestCase):
 
     def setUp(self):
         """
-        Create a user + document so user/doc metrics (e.g. total_users,
-        total_documents) are definitely non-zero and appear in the output list.
+        Create a user + document so user/doc metrics (e.g. users_total,
+        documents_total) are definitely non-zero and appear in the output list.
         """
         self.user = factories.UserFactory()
         self.doc = factories.DocumentFactory()
@@ -55,7 +55,7 @@ class PrometheusMetricsTest(TestCase):
     def test_prometheus_metrics_no_namespace(self):
         """
         Scenario 1: No metric namespace => we expect the custom metrics
-        to appear with their raw names (e.g. 'total_users').
+        to appear with their raw names (e.g. 'users_total').
         """
         env = {
             "MONITORING_PROMETHEUS_EXPORTER": "True",
@@ -78,10 +78,11 @@ class PrometheusMetricsTest(TestCase):
                 )
 
             # Check for selected custom metrics (no prefix)
+            # users/documents are gauges; users_active_total carries a window label
             for metric in [
-                "total_users",
-                "total_documents",
-                "active_users_today",
+                "users_total",
+                "documents_total",
+                'users_active_total{window="1d"}',
             ]:
                 self.assertIn(
                     metric,
@@ -119,9 +120,8 @@ class PrometheusMetricsTest(TestCase):
             # the define value from settings.py ...
             # We'll build the expected string via `namespaced()`.
             for base_metric in [
-                "total_users",
-                "total_documents",
-                "active_users_today",
+                "users_total",
+                "documents_total",
             ]:
                 expected_metric = namespaced(base_metric)
                 self.assertIn(
@@ -129,3 +129,11 @@ class PrometheusMetricsTest(TestCase):
                     content,
                     f"Expected custom metric {expected_metric} not found.\n{content}",
                 )
+
+            # users_active_total carries window label; ensure namespacing + label present
+            expected_active_today = namespaced("users_active_total") + '{window="1d"}'
+            self.assertIn(
+                expected_active_today,
+                content,
+                f"Expected custom metric {expected_active_today} not found.\n{content}",
+            )
