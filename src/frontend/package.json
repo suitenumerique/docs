@@ -1,7 +1,10 @@
 {
   "name": "impress",
-  "version": "2.0.1",
+  "version": "3.8.2",
   "private": true,
+  "repository": "https://github.com/suitenumerique/docs",
+  "author": "DINUM",
+  "license": "MIT",
   "workspaces": {
     "packages": [
       "apps/*",
@@ -20,7 +23,7 @@
     "app:test": "yarn APP_IMPRESS run test",
     "ci:build": "yarn APP_IMPRESS run build:ci",
     "e2e:test": "yarn APP_E2E run test",
-    "lint": "yarn APP_IMPRESS run lint && yarn APP_E2E run lint && yarn workspace eslint-config-impress run lint && yarn I18N run lint && yarn COLLABORATION_SERVER run lint",
+    "lint": "yarn APP_IMPRESS run lint && yarn APP_E2E run lint && yarn workspace eslint-plugin-docs run lint && yarn I18N run lint && yarn COLLABORATION_SERVER run lint",
     "i18n:extract": "yarn I18N run extract-translation",
     "i18n:deploy": "yarn I18N run format-deploy && yarn APP_IMPRESS prettier",
     "i18n:test": "yarn I18N run test",
@@ -28,13 +31,18 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@types/node": "22.10.3",
-    "@types/react-dom": "18.3.1",
-    "@typescript-eslint/eslint-plugin": "8.19.0",
-    "@typescript-eslint/parser": "8.19.0",
-    "eslint": "8.57.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "typescript": "5.7.2"
-  }
+    "@types/node": "24.10.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@typescript-eslint/eslint-plugin": "8.46.2",
+    "@typescript-eslint/parser": "8.46.2",
+    "docx": "9.5.0",
+    "eslint": "9.39.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "typescript": "5.9.3",
+    "wrap-ansi": "9.0.2",
+    "yjs": "13.6.27"
+  },
+  "packageManager": "yarn@1.22.22"
 }

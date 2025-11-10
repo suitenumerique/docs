@@ -1,32 +1,53 @@
-import i18n from 'i18next';
+import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
-import { BASE_LANGUAGE, LANGUAGES_ALLOWED, LANGUAGE_COOKIE_NAME } from './conf';
+import { fallbackLng } from './config';
 import resources from './translations.json';
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: BASE_LANGUAGE,
-    supportedLngs: Object.keys(LANGUAGES_ALLOWED),
-    detection: {
-      order: ['cookie', 'navigator'], // detection order
-      caches: ['cookie'], // Use cookies to store the language preference
-      lookupCookie: LANGUAGE_COOKIE_NAME,
-      cookieMinutes: 525600, // Expires after one year
-    },
-    interpolation: {
-      escapeValue: false,
-    },
-    preload: Object.keys(LANGUAGES_ALLOWED),
-    nsSeparator: false,
-    keySeparator: false,
-  })
-  .catch(() => {
-    throw new Error('i18n initialization failed');
-  });
+// Add an initialization guard
+let isInitialized = false;
 
-export default i18n;
+// Initialize i18next with the base translations only once
+if (!isInitialized && !i18next.isInitialized) {
+  isInitialized = true;
+
+  i18next
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources,
+      fallbackLng,
+      debug: false,
+      detection: {
+        order: ['cookie', 'navigator'],
+        caches: ['cookie'],
+        lookupCookie: 'docs_language',
+        cookieMinutes: 525600,
+        cookieOptions: {
+          path: '/',
+          sameSite: 'lax',
+        },
+      },
+      interpolation: {
+        escapeValue: false,
+      },
+      lowerCaseLng: true,
+      nsSeparator: false,
+      keySeparator: false,
+    })
+    .then(() => {
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute(
+          'lang',
+          i18next.language || fallbackLng,
+        );
+        i18next.on('languageChanged', (lang) => {
+          document.documentElement.setAttribute('lang', lang);
+        });
+      }
+    })
+    .catch((e) => console.error('i18n initialization failed:', e));
+}
+
+export default i18next;

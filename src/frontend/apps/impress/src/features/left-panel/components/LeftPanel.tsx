@@ -1,10 +1,11 @@
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
-import { ButtonLogin } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
+import { ButtonLogin } from '@/features/auth';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LanguagePicker } from '@/features/language';
 import { useResponsiveStore } from '@/stores';
@@ -22,34 +23,31 @@ const MobileLeftPanelStyle = createGlobalStyle`
 
 export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
+  const { t } = useTranslation();
 
-  const theme = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { togglePanel, isPanelOpen } = useLeftPanelStore();
 
   const pathname = usePathname();
-  const colors = theme.colorsTokens();
-  const spacings = theme.spacingsTokens();
-
-  const toggle = useCallback(() => {
-    togglePanel(false);
-  }, [togglePanel]);
 
   useEffect(() => {
-    toggle();
-  }, [pathname, toggle]);
+    togglePanel(false);
+  }, [pathname, togglePanel]);
 
   return (
     <>
       {isDesktop && (
         <Box
           data-testid="left-panel-desktop"
-          $css={`
+          $css={css`
             height: calc(100vh - ${HEADER_HEIGHT}px);
-            width: 300px;
-            min-width: 300px;
+            width: 100%;
             overflow: hidden;
-            border-right: 1px solid ${colors['greyscale-200']};
-        `}
+            background-color: ${colorsTokens['greyscale-000']};
+          `}
+          className="--docs--left-panel-desktop"
+          as="nav"
+          aria-label={t('Document sections')}
         >
           <Box
             $css={css`
@@ -75,21 +73,30 @@ export const LeftPanel = () => {
               position: fixed;
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
               background-color: var(--c--theme--colors--greyscale-000);
+              overflow-y: auto;
+              overflow-x: hidden;
             `}
+            className="--docs--left-panel-mobile"
           >
             <Box
               data-testid="left-panel-mobile"
+              as="nav"
+              aria-label={t('Document sections')}
               $css={css`
                 width: 100%;
                 justify-content: center;
                 align-items: center;
-                gap: ${spacings['base']};
+                gap: ${spacingsTokens['base']};
               `}
             >
               <LeftPanelHeader />
               <LeftPanelContent />
               <SeparatedSection showSeparator={false}>
-                <Box $justify="center" $align="center" $gap={spacings['sm']}>
+                <Box
+                  $justify="center"
+                  $align="center"
+                  $gap={spacingsTokens['sm']}
+                >
                   <ButtonLogin />
                   <LanguagePicker />
                 </Box>

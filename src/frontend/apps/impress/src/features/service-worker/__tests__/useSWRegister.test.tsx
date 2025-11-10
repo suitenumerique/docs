@@ -1,5 +1,5 @@
-import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 import { useSWRegister } from '../hooks/useSWRegister';
 
@@ -11,33 +11,40 @@ const TestComponent = () => {
 
 describe('useSWRegister', () => {
   it('checks service-worker is register', () => {
-    process.env.NEXT_PUBLIC_BUILD_ID = '123456';
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const registerSpy = jest.fn();
+    const registerSpy = vi.fn();
     registerSpy.mockImplementation(
       () =>
         new Promise((reject) => {
           reject('error');
         }),
     );
+
+    const addEventListenerSpy = vi.fn();
+
     Object.defineProperty(navigator, 'serviceWorker', {
       value: {
         register: registerSpy,
+        addEventListener: addEventListenerSpy,
+        removeEventListener: vi.fn(),
       },
       writable: true,
     });
 
     render(<TestComponent />);
 
-    expect(registerSpy).toHaveBeenCalledWith('/service-worker.js?v=123456');
+    expect(registerSpy).toHaveBeenCalledWith('/service-worker.js');
+    expect(addEventListenerSpy).toHaveBeenCalledWith(
+      'controllerchange',
+      expect.any(Function),
+    );
   });
 
   it('checks service-worker is not register', () => {
     process.env.NEXT_PUBLIC_SW_DEACTIVATED = 'true';
-    process.env.NEXT_PUBLIC_BUILD_ID = '123456';
 
-    const registerSpy = jest.fn();
+    const registerSpy = vi.fn();
     registerSpy.mockImplementation(
       () =>
         new Promise((reject) => {
@@ -53,6 +60,6 @@ describe('useSWRegister', () => {
 
     render(<TestComponent />);
 
-    expect(registerSpy).not.toHaveBeenCalledWith('/service-worker.js?v=123456');
+    expect(registerSpy).not.toHaveBeenCalledWith('/service-worker.js');
   });
 });

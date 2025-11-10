@@ -30,6 +30,9 @@ spec:
       imagePullSecrets:
         - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
       {{- end}}
+      {{- if .Values.backend.serviceAccountName }}
+      serviceAccountName: {{ .Values.backend.serviceAccountName }}
+      {{- end }}
       shareProcessNamespace: {{ .Values.backend.shareProcessNamespace }}
       containers:
         {{- with .Values.backend.sidecars }}
@@ -90,6 +93,11 @@ spec:
               subPath: {{ .subPath | default "" }}
               readOnly: {{ .readOnly }}
             {{- end }}
+            {{- if .Values.backend.themeCustomization.enabled }}
+            - name: theme-customization
+              mountPath: {{ .Values.backend.themeCustomization.mount_path }}
+              readOnly: true
+            {{- end }}
       {{- with .Values.backend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -117,6 +125,11 @@ spec:
             claimName: "{{ $fullName }}-{{ $name }}"
           {{- end }}
         {{- end }}
+        {{- if .Values.backend.themeCustomization.enabled }}
+        - name: theme-customization
+          configMap:
+            name: docs-theme-customization
+        {{- end }}
         {{- range .Values.backend.extraVolumes }}
         - name: {{ .name }}
           {{- if .existingClaim }}
@@ -138,3 +151,16 @@ spec:
           emptyDir: {}
           {{- end }}
         {{- end }}
+---
+{{ if .Values.backend.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+{{ end }}

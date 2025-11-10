@@ -1,11 +1,11 @@
 {
   "name": "mail_mjml",
-  "version": "2.0.1",
+  "version": "3.8.2",
   "description": "An util to generate html and text django's templates from mjml templates",
   "type": "module",
   "dependencies": {
     "@html-to/text-cli": "0.5.4",
-    "mjml": "4.15.3"
+    "mjml": "4.16.1"
   },
   "private": true,
   "scripts": {
@@ -14,9 +14,10 @@
     "build": "yarn build-mjml-to-html && yarn build-html-to-plain-text"
   },
   "volta": {
-    "node": "16.15.1"
+    "node": "22"
   },
-  "repository": "https://github.com/numerique-gouv/impress",
+  "packageManager": "yarn@1.22.22",
+  "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
   "license": "MIT"
 }

@@ -1,7 +1,7 @@
-import { BlockNoteEditor } from '@blocknote/core';
+import _ from 'lodash';
 import { create } from 'zustand';
 
-import { HeadingBlock } from '../types';
+import { DocsBlockNoteEditor, HeadingBlock } from '../types';
 
 const recursiveTextContent = (content: HeadingBlock['content']): string => {
   if (!content) {
@@ -21,15 +21,20 @@ const recursiveTextContent = (content: HeadingBlock['content']): string => {
 
 export interface UseHeadingStore {
   headings: HeadingBlock[];
-  setHeadings: (editor: BlockNoteEditor) => void;
+  setHeadings: (editor: DocsBlockNoteEditor) => void;
   resetHeadings: () => void;
 }
 
-export const useHeadingStore = create<UseHeadingStore>((set) => ({
+export const useHeadingStore = create<UseHeadingStore>((set, get) => ({
   headings: [],
   setHeadings: (editor) => {
     const headingBlocks = editor?.document
-      .filter((block) => block.type === 'heading')
+      .filter(
+        (block) =>
+          block.type === 'heading' &&
+          block.props.level >= 1 &&
+          block.props.level <= 3,
+      )
       .map((block) => ({
         ...block,
         contentText: recursiveTextContent(
@@ -37,7 +42,9 @@ export const useHeadingStore = create<UseHeadingStore>((set) => ({
         ),
       })) as unknown as HeadingBlock[];
 
-    set(() => ({ headings: headingBlocks }));
+    if (!_.isEqual(get().headings, headingBlocks)) {
+      set(() => ({ headings: headingBlocks }));
+    }
   },
   resetHeadings: () => set(() => ({ headings: [] })),
 }));

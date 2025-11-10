@@ -1,5 +1,4 @@
-import { VariantType, useToastProvider } from '@openfun/cunningham-react';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -17,11 +16,16 @@ import {
   KEY_LIST_DOC,
   LinkReach,
   LinkRole,
-  useUpdateDocLink,
-} from '@/features/docs';
+  getDocLinkReach,
+  getDocLinkRole,
+  useDocUtils,
+} from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { useUpdateDocLink } from '../api/useUpdateDocLink';
 import { useTranslatedShareSettings } from '../hooks/';
+
+import { DocDesynchronized } from './DocDesynchronized';
 
 interface DocVisibilityProps {
   doc: Doc;
@@ -29,76 +33,105 @@ interface DocVisibilityProps {
 
 export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { t } = useTranslation();
-  const { toast } = useToastProvider();
   const { isDesktop } = useResponsiveStore();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
-  const colors = colorsTokens();
-  const [linkReach, setLinkReach] = useState<LinkReach>(doc.link_reach);
-  const [docLinkRole, setDocLinkRole] = useState<LinkRole>(doc.link_role);
+  const canManage = doc.abilities.accesses_manage;
+  const docLinkReach = getDocLinkReach(doc);
+  const docLinkRole = getDocLinkRole(doc);
+  const { isDesynchronized } = useDocUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
 
-  const api = useUpdateDocLink({
-    onSuccess: () => {
-      toast(
-        t('The document visibility has been updated.'),
-        VariantType.SUCCESS,
-        {
-          duration: 4000,
-        },
-      );
-    },
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
-  });
-
-  const updateReach = (link_reach: LinkReach) => {
-    api.mutate({ id: doc.id, link_reach });
-    setLinkReach(link_reach);
-  };
-
-  const updateLinkRole = (link_role: LinkRole) => {
-    api.mutate({ id: doc.id, link_role });
-    setDocLinkRole(link_role);
-  };
-
-  const linkReachOptions: DropdownMenuOption[] = Object.keys(
-    linkReachTranslations,
-  ).map((key) => ({
-    label: linkReachTranslations[key as LinkReach],
-    icon: linkReachChoices[key as LinkReach].icon,
-    callback: () => updateReach(key as LinkReach),
-    isSelected: linkReach === (key as LinkReach),
-  }));
-
-  const linkMode: DropdownMenuOption[] = Object.keys(linkModeTranslations).map(
-    (key) => ({
-      label: linkModeTranslations[key as LinkRole],
-      callback: () => updateLinkRole(key as LinkRole),
-      isSelected: docLinkRole === (key as LinkRole),
-    }),
-  );
-
-  const showLinkRoleOptions = doc.link_reach !== LinkReach.RESTRICTED;
   const description =
     docLinkRole === LinkRole.READER
-      ? linkReachChoices[linkReach].descriptionReadOnly
-      : linkReachChoices[linkReach].descriptionEdit;
+      ? linkReachChoices[docLinkReach].descriptionReadOnly
+      : linkReachChoices[docLinkReach].descriptionEdit;
+
+  const { mutate: updateDocLink } = useUpdateDocLink({
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
+
+  const linkReachOptions: DropdownMenuOption[] = useMemo(() => {
+    return Object.values(LinkReach).map((key) => {
+      const isDisabled = doc.abilities.link_select_options[key] === undefined;
+      let linkRole = undefined;
+      if (key !== LinkReach.RESTRICTED) {
+        linkRole = docLinkRole;
+      }
+
+      return {
+        label: linkReachTranslations[key],
+        callback: () =>
+          updateDocLink({
+            id: doc.id,
+            link_reach: key,
+            link_role: linkRole,
+          }),
+        isSelected: docLinkReach === key,
+        disabled: isDisabled,
+      };
+    });
+  }, [
+    doc.abilities.link_select_options,
+    doc.id,
+    docLinkReach,
+    docLinkRole,
+    linkReachTranslations,
+    updateDocLink,
+  ]);
+
+  const haveDisabledOptions = linkReachOptions.some(
+    (option) => option.disabled,
+  );
+
+  const showLinkRoleOptions =
+    docLinkReach !== LinkReach.RESTRICTED && docLinkRole;
+
+  const linkRoleOptions: DropdownMenuOption[] = useMemo(() => {
+    const options = doc.abilities.link_select_options[docLinkReach] ?? [];
+    return Object.values(LinkRole).map((key) => {
+      const isDisabled = !options.includes(key);
+      return {
+        label: linkModeTranslations[key],
+        callback: () =>
+          updateDocLink({
+            id: doc.id,
+            link_role: key,
+            link_reach: docLinkReach,
+          }),
+        isSelected: docLinkRole === key,
+        disabled: isDisabled,
+      };
+    });
+  }, [
+    doc.abilities.link_select_options,
+    doc.id,
+    docLinkReach,
+    docLinkRole,
+    linkModeTranslations,
+    updateDocLink,
+  ]);
+
+  const haveDisabledLinkRoleOptions = linkRoleOptions.some(
+    (option) => option.disabled,
+  );
 
   return (
     <Box
       $padding={{ horizontal: 'base' }}
       aria-label={t('Doc visibility card')}
-      $gap={spacing['base']}
+      $gap={spacingsTokens['base']}
+      className="--docs--doc-visibility"
     >
       <Text $weight="700" $size="sm" $variation="700">
-        {t('Link parameters')}
+        {t('Link settings')}
       </Text>
+      {isDesynchronized && <DocDesynchronized doc={doc} />}
       <Box
         $direction="row"
         $align="center"
         $justify="space-between"
-        $gap={spacing['xs']}
+        $gap={spacingsTokens['xs']}
         $width="100%"
         $wrap="nowrap"
       >
@@ -106,46 +139,77 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           $direction="row"
           $align={isDesktop ? 'center' : undefined}
           $padding={{ horizontal: '2xs' }}
-          $gap={spacing['3xs']}
+          $gap={canManage ? spacingsTokens['3xs'] : spacingsTokens['base']}
         >
           <DropdownMenu
-            label={t('Visibility')}
+            testId="doc-visibility"
+            label={t('Document visibility')}
             arrowCss={css`
-              color: ${colors['primary-800']} !important;
+              color: ${colorsTokens['primary-800']} !important;
             `}
+            buttonCss={css`
+              &:hover {
+                background-color: unset;
+              }
+            `}
+            disabled={!canManage}
             showArrow={true}
+            topMessage={
+              haveDisabledOptions
+                ? t(
+                    'You cannot restrict access to a subpage relative to its parent page.',
+                  )
+                : undefined
+            }
             options={linkReachOptions}
           >
-            <Box $direction="row" $align="center" $gap={spacing['3xs']}>
+            <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
               <Icon
-                $theme="primary"
-                $variation="800"
-                iconName={linkReachChoices[linkReach].icon}
+                $theme={canManage ? 'primary' : 'greyscale'}
+                $variation={canManage ? '800' : '600'}
+                iconName={linkReachChoices[docLinkReach].icon}
               />
-              <Text $theme="primary" $variation="800">
-                {linkReachChoices[linkReach].label}
+              <Text
+                $theme={canManage ? 'primary' : 'greyscale'}
+                $variation={canManage ? '800' : '600'}
+                $weight="500"
+                $size="md"
+              >
+                {linkReachChoices[docLinkReach].label}
               </Text>
             </Box>
           </DropdownMenu>
           {isDesktop && (
-            <Text $size="xs" $variation="600">
+            <Text $size="xs" $variation="600" $weight="400">
               {description}
             </Text>
           )}
         </Box>
         {showLinkRoleOptions && (
-          <Box $direction="row" $align="center" $gap={spacing['3xs']}>
-            {linkReach !== LinkReach.RESTRICTED && (
-              <DropdownMenu
-                showArrow={true}
-                options={linkMode}
-                label={t('Visibility mode')}
-              >
-                <Text $weight="initial" $variation="600">
-                  {linkModeTranslations[docLinkRole]}
-                </Text>
-              </DropdownMenu>
-            )}
+          <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
+            <DropdownMenu
+              testId="doc-access-mode"
+              buttonCss={css`
+                &:hover {
+                  background-color: unset;
+                }
+              `}
+              disabled={!canManage}
+              showArrow={true}
+              options={linkRoleOptions}
+              topMessage={
+                haveDisabledLinkRoleOptions
+                  ? t(
+                      'You cannot restrict access to a subpage relative to its parent page.',
+                    )
+                  : undefined
+              }
+              label={t('Document access mode')}
+            >
+              <Text $weight="initial" $variation="600" $theme="primary">
+                {linkModeTranslations[docLinkRole]}
+              </Text>
+            </DropdownMenu>
           </Box>
         )}
       </Box>

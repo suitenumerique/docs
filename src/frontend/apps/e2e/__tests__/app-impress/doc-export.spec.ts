@@ -1,9 +1,17 @@
+import path from 'path';
+
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
-import jsdom from 'jsdom';
-import pdf from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 
-import { createDoc, verifyDocName } from './common';
+import {
+  TestLanguage,
+  createDoc,
+  verifyDocName,
+  waitForLanguageSwitch,
+} from './utils-common';
+import { openSuggestionMenu, writeInEditor } from './utils-editor';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -17,246 +25,421 @@ test.describe('Doc Export', () => {
     await createDoc(page, 'doc-editor', browserName, 1);
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
+    await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
-      page
-        .locator('div')
-        .filter({ hasText: /^Download$/ })
-        .first(),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        'Upload your docs to a Microsoft Word, Open Office or PDF document',
-      ),
+      page.getByText('Download your document in a .docx or .pdf format.'),
     ).toBeVisible();
     await expect(
       page.getByRole('combobox', { name: 'Template' }),
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Close the modal' }),
+      page.getByRole('button', {
+        name: 'Close the download modal',
+      }),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
   });
-  test('it converts the doc to pdf with a template integrated', async ({
+
+  test('it exports the doc with pdf line break', async ({
     page,
     browserName,
   }) => {
-    const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-line-break',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    const editor = await writeInEditor({ page, text: 'Hello' });
+    await page.keyboard.press('Enter');
+    await openSuggestionMenu({ page });
+    await page.getByText('Page Break').click();
+
+    await expect(
+      editor.locator('div[data-content-type="pageBreak"]'),
+    ).toBeVisible();
+
+    await writeInEditor({ page, text: 'World' });
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
 
-    await verifyDocName(page, randomDoc);
-
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello World');
-
-    await page
-      .getByRole('button', {
-        name: 'download',
-      })
-      .click();
-
-    await page
-      .getByRole('button', {
-        name: 'Download',
-      })
-      .click();
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-    const pdfText = (await pdf(pdfBuffer)).text;
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfInfo = await pdfParse.getInfo();
+    const pdfText = await pdfParse.getText();
 
-    expect(pdfText).toContain('Hello World'); // This is the doc text
+    expect(pdfInfo.total).toBe(2);
+    expect(pdfText.pages).toStrictEqual([
+      { text: 'Hello', num: 1 },
+      { text: 'World', num: 2 },
+    ]);
+    expect(pdfInfo?.info.Title).toBe(randomDoc);
   });
 
-  test('it converts the doc to docx with a template integrated', async ({
-    page,
-    browserName,
-  }) => {
+  test('it exports the doc to docx', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
-
-    const downloadPromise = page.waitForEvent('download', (download) => {
-      return download.suggestedFilename().includes(`${randomDoc}.docx`);
-    });
 
     await verifyDocName(page, randomDoc);
 
     await page.locator('.ProseMirror.bn-editor').click();
     await page.locator('.ProseMirror.bn-editor').fill('Hello World');
 
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+
+    await expect(image).toBeVisible();
+
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
 
     await page.getByRole('combobox', { name: 'Format' }).click();
-    await page.getByRole('option', { name: 'Word / Open Office' }).click();
+    await page.getByRole('option', { name: 'Docx' }).click();
 
-    await page
-      .getByRole('button', {
-        name: 'Download',
-      })
-      .click();
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.docx`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.docx`);
   });
 
-  test('it converts the blocknote json in correct html for the export', async ({
-    page,
-    browserName,
-  }) => {
-    test.setTimeout(60000);
-
+  /**
+   * This test tell us that the export to pdf is working with images
+   * but it does not tell us if the images are being displayed correctly
+   * in the pdf.
+   *
+   * TODO:  Check if the images are displayed correctly in the pdf
+   */
+  test('it exports the docs with images', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-editor', browserName, 1);
-    let body = '';
-
-    await page.route('**/templates/*/generate-document/', async (route) => {
-      const request = route.request();
-      body = request.postDataJSON().body;
-
-      await route.continue();
-    });
 
     await verifyDocName(page, randomDoc);
 
-    await page.locator('.bn-block-outer').last().fill('Hello World');
-    await page.locator('.bn-block-outer').last().click();
+    await writeInEditor({
+      page,
+      text: 'Hello World 😃🎉🚀🙋‍♀️🧑🏿‍❤️‍💋‍🧑🏾',
+    });
+
     await page.keyboard.press('Enter');
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('Break');
-    await expect(page.getByText('Break')).toBeVisible();
+    await openSuggestionMenu({ page });
+    await page.getByText('Resizable image with caption').click();
 
-    // Center the text
-    await page.getByText('Break').dblclick();
-    await page.locator('button[data-test="alignTextCenter"]').click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
 
-    // Change the background color
-    await page.locator('button[data-test="colors"]').click();
-    await page.locator('button[data-test="background-color-brown"]').click();
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
 
-    // Change the text color
-    await page.getByText('Break').dblclick();
-    await page.locator('button[data-test="colors"]').click();
-    await page.locator('button[data-test="text-color-orange"]').click();
+    await expect(image).toBeVisible();
 
-    // Add a list
-    await page.locator('.bn-block-outer').last().click();
-    await page.keyboard.press('Enter');
     await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Bullet List').click();
+    await page.getByText('Resizable image with caption').click();
+    await page.getByRole('tab', { name: 'Embed' }).click();
     await page
-      .locator('.bn-block-content[data-content-type="bulletListItem"] p')
-      .last()
-      .fill('Test List 1');
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(300);
-    await page.keyboard.press('Enter');
-    await page
-      .locator('.bn-block-content[data-content-type="bulletListItem"] p')
-      .last()
-      .fill('Test List 2');
-    await page.keyboard.press('Enter');
-    await page
-      .locator('.bn-block-content[data-content-type="bulletListItem"] p')
-      .last()
-      .fill('Test List 3');
+      .getByRole('textbox', { name: 'Enter URL' })
+      .fill('https://docs.numerique.gouv.fr/assets/logo-gouv.png');
+    await page.getByText('Embed image').click();
 
-    await page.keyboard.press('Enter');
-    await page.keyboard.press('Backspace');
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
 
-    // Add a number list
-    await page.locator('.bn-block-outer').last().click();
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Numbered List').click();
     await page
-      .locator('.bn-block-content[data-content-type="numberedListItem"] p')
-      .last()
-      .fill('Test Number 1');
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(300);
-    await page.keyboard.press('Enter');
-    await page
-      .locator('.bn-block-content[data-content-type="numberedListItem"] p')
-      .last()
-      .fill('Test Number 2');
-    await page.keyboard.press('Enter');
-    await page
-      .locator('.bn-block-content[data-content-type="numberedListItem"] p')
-      .last()
-      .fill('Test Number 3');
+      .getByRole('combobox', {
+        name: 'Template',
+      })
+      .click();
 
-    // Add img
-    await page.locator('.bn-block-outer').last().click();
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
     await page
       .getByRole('option', {
-        name: 'Image',
+        name: 'Demo Template',
       })
-      .click();
-    await page
-      .getByRole('tab', {
-        name: 'Embed',
-      })
-      .click();
-    await page
-      .getByPlaceholder('Enter URL')
-      .fill('https://example.com/image.jpg');
+      .click({
+        delay: 100,
+      });
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
+
+    const responseCorsPromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/cors-proxy/') && response.status() === 200,
+    );
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const responseCors = await responseCorsPromise;
+    expect(responseCors.ok()).toBe(true);
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain('Hello World');
+  });
+
+  test('it exports the doc with quotes', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(page, 'export-quotes', browserName, 1);
+
+    const editor = page.locator('.ProseMirror.bn-editor');
+    // Trigger slash menu to show menu
+    await editor.click();
+    await editor.fill('/');
+    await page.getByText('Quote or excerpt').click();
+
+    await expect(
+      editor.locator('.bn-block-content[data-content-type="quote"]'),
+    ).toBeVisible();
+
+    await editor
+      .locator('.bn-block-content[data-content-type="quote"]')
+      .fill('Hello World');
+
+    await expect(editor.getByText('Hello World')).toHaveCSS(
+      'font-style',
+      'italic',
+    );
+
     await page
       .getByRole('button', {
-        name: 'Embed image',
+        name: 'Export the document',
       })
       .click();
 
-    // Download
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain('Hello World');
+  });
+
+  test('it exports the doc with multi columns', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-multi-columns',
+      browserName,
+      1,
+    );
+
+    await page.locator('.bn-block-outer').last().fill('/');
+
+    await page.getByText('Three Columns', { exact: true }).click();
+
+    await page.locator('.bn-block-column').first().fill('Column 1');
+    await page.locator('.bn-block-column').nth(1).fill('Column 2');
+    await page.locator('.bn-block-column').last().fill('Column 3');
+
+    expect(await page.locator('.bn-block-column').count()).toBe(3);
+    await expect(
+      page.locator('.bn-block-column[data-node-type="column"]').first(),
+    ).toHaveText('Column 1');
+    await expect(
+      page.locator('.bn-block-column[data-node-type="column"]').nth(1),
+    ).toHaveText('Column 2');
+    await expect(
+      page.locator('.bn-block-column[data-node-type="column"]').last(),
+    ).toHaveText('Column 3');
+
     await page
       .getByRole('button', {
-        name: 'download',
+        name: 'Export the document',
       })
       .click();
+
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain('Column 1');
+    expect(pdfText.text).toContain('Column 2');
+    expect(pdfText.text).toContain('Column 3');
+  });
+
+  test('it injects the correct language attribute into PDF export', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDocFrench] = await createDoc(
+      page,
+      'doc-language-export-french',
+      browserName,
+      1,
+    );
+
+    await waitForLanguageSwitch(page, TestLanguage.French);
+
+    // Wait for the page to be ready after language switch
+    await page.waitForLoadState('domcontentloaded');
+
+    await writeInEditor({
+      page,
+      text: 'Contenu de test pour export en français',
+    });
 
     await page
       .getByRole('button', {
-        name: 'Download',
+        name: 'Exporter le document',
       })
       .click();
 
-    // Empty paragraph should be replaced by a <br/>
-    expect(body.match(/<br>/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(body).toContain('style="color: orange;"');
-    expect(body).toContain('custom-style="center"');
-    expect(body).toContain('style="background-color: brown;"');
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
 
-    const { JSDOM } = jsdom;
-    const DOMParser = new JSDOM().window.DOMParser;
-    const parser = new DOMParser();
-    const html = parser.parseFromString(body, 'text/html');
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);
+    });
 
-    const ulLis = html.querySelectorAll('ul li');
-    expect(ulLis.length).toBe(3);
-    expect(ulLis[0].textContent).toBe('Test List 1');
-    expect(ulLis[1].textContent).toBe('Test List 2');
-    expect(ulLis[2].textContent).toBe('Test List 3');
+    void page.getByTestId('doc-export-download-button').click();
 
-    const olLis = html.querySelectorAll('ol li');
-    expect(olLis.length).toBe(3);
-    expect(olLis[0].textContent).toBe('Test Number 1');
-    expect(olLis[1].textContent).toBe('Test Number 2');
-    expect(olLis[2].textContent).toBe('Test Number 3');
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDocFrench}.pdf`);
 
-    const img = html.querySelectorAll('img');
-    expect(img.length).toBe(1);
-    expect(img[0].src).toBe('https://example.com/image.jpg');
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfString = pdfBuffer.toString('latin1');
+
+    expect(pdfString).toContain('/Lang (fr)');
+  });
+
+  test('it exports the doc with interlinking', async ({
+    page,
+    browserName,
+  }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'export-interlinking',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'export-interlink-child',
+    );
+
+    await verifyDocName(page, docChild);
+
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Link a doc').first().click();
+
+    const input = page.locator(
+      "span[data-inline-content-type='interlinkingSearchInline'] input",
+    );
+    const searchContainer = page.locator('.quick-search-container');
+
+    await input.fill('export-interlink');
+
+    await expect(searchContainer).toBeVisible();
+    await expect(searchContainer.getByText(randomDoc)).toBeVisible();
+
+    // We are in docChild, we want to create a link to randomDoc (parent)
+    await searchContainer.getByText(randomDoc).click();
+
+    // Search the interlinking link in the editor (not in the document tree)
+    const editor = page.locator('.ProseMirror.bn-editor');
+    const interlink = editor.getByRole('button', {
+      name: randomDoc,
+    });
+
+    await expect(interlink).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${docChild}.pdf`);
+    });
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${docChild}.pdf`);
+
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    const pdfParse = new PDFParse({ data: pdfBuffer });
+    const pdfText = await pdfParse.getText();
+    expect(pdfText.text).toContain(randomDoc);
   });
 });

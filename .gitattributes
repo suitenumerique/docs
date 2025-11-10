@@ -1,0 +1,23 @@
+# Set the default behavior for all files
+* text=auto eol=lf
+
+# Binary files (should not be modified)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.flv binary
+*.fla binary
+*.swf binary
+*.gz binary
+*.zip binary
+*.7z binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.pdf binary

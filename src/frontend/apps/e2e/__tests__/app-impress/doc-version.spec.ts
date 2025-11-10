@@ -5,7 +5,7 @@ import {
   goToGridDoc,
   mockedDocument,
   verifyDocName,
-} from './common';
+} from './utils-common';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -18,11 +18,7 @@ test.describe('Doc Version', () => {
     await verifyDocName(page, randomDoc);
 
     await page.getByLabel('Open the document options').click();
-    await page
-      .getByRole('button', {
-        name: 'Version history',
-      })
-      .click();
+    await page.getByRole('menuitem', { name: 'Version history' }).click();
     await expect(page.getByText('History', { exact: true })).toBeVisible();
 
     const modal = page.getByLabel('version history modal');
@@ -58,11 +54,7 @@ test.describe('Doc Version', () => {
     ).toBeVisible();
 
     await page.getByLabel('Open the document options').click();
-    await page
-      .getByRole('button', {
-        name: 'Version history',
-      })
-      .click();
+    await page.getByRole('menuitem', { name: 'Version history' }).click();
 
     await expect(panel).toBeVisible();
     await expect(page.getByText('History', { exact: true })).toBeVisible();
@@ -91,7 +83,7 @@ test.describe('Doc Version', () => {
 
     await page.getByLabel('Open the document options').click();
     await expect(
-      page.getByRole('button', { name: 'Version history' }),
+      page.getByRole('menuitem', { name: 'Version history' }),
     ).toBeDisabled();
   });
 
@@ -119,22 +111,14 @@ test.describe('Doc Version', () => {
     await expect(page.getByText('World')).toBeVisible();
 
     await page.getByLabel('Open the document options').click();
-    await page
-      .getByRole('button', {
-        name: 'Version history',
-      })
-      .click();
+    await page.getByRole('menuitem', { name: 'Version history' }).click();
 
     const modal = page.getByLabel('version history modal');
     const panel = modal.getByLabel('version list');
     await expect(panel).toBeVisible();
 
     await expect(page.getByText('History', { exact: true })).toBeVisible();
-    await expect(page.getByRole('status')).toBeVisible();
-    await expect(page.getByRole('status')).toBeHidden();
-    const items = await panel.locator('.version-item').all();
-    expect(items.length).toBe(1);
-    await items[0].click();
+    await panel.getByRole('button', { name: 'version item' }).click();
 
     await expect(modal.getByText('World')).toBeHidden();
 

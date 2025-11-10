@@ -5,40 +5,55 @@ import {
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import { t } from 'i18next';
-import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/router';
+import { Trans, useTranslation } from 'react-i18next';
 
-import { Box, Text, TextErrors } from '@/components';
+import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
+import { useConfig } from '@/core';
+import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
 
+import { KEY_LIST_DOC } from '../api/useDocs';
 import { useRemoveDoc } from '../api/useRemoveDoc';
+import { useDocUtils } from '../hooks';
 import { Doc } from '../types';
 
 interface ModalRemoveDocProps {
-  onClose: () => void;
   doc: Doc;
+  onClose: () => void;
+  onSuccess?: (doc: Doc) => void;
 }
 
-export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
+export const ModalRemoveDoc = ({
+  doc,
+  onClose,
+  onSuccess,
+}: ModalRemoveDocProps) => {
   const { toast } = useToastProvider();
+  const { t } = useTranslation();
+  const { data: config } = useConfig();
+  const trashBinCutoffDays = config?.TRASHBIN_CUTOFF_DAYS || 30;
   const { push } = useRouter();
-  const pathname = usePathname();
-
+  const { hasChildren } = useDocUtils(doc);
   const {
     mutate: removeDoc,
-
     isError,
     error,
   } = useRemoveDoc({
-    onSuccess: () => {
-      toast(t('The document has been deleted.'), VariantType.SUCCESS, {
-        duration: 4000,
-      });
-      if (pathname === '/') {
+    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
+    options: {
+      onSuccess: () => {
+        if (onSuccess) {
+          onSuccess(doc);
+        } else {
+          void push('/');
+        }
+
         onClose();
-      } else {
-        void push('/');
-      }
+
+        toast(t('The document has been deleted.'), VariantType.SUCCESS, {
+          duration: 4000,
+        });
+      },
     },
   });
 
@@ -46,11 +61,13 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
     <Modal
       isOpen
       closeOnClickOutside
+      hideCloseButton
       onClose={() => onClose()}
+      aria-describedby="modal-remove-doc-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={t('Cancel the deletion')}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -58,7 +75,7 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
             {t('Cancel')}
           </Button>
           <Button
-            aria-label={t('Confirm deletion')}
+            aria-label={t('Delete document')}
             color="danger"
             fullWidth
             onClick={() =>
@@ -73,17 +90,44 @@ export const ModalRemoveDoc = ({ onClose, doc }: ModalRemoveDocProps) => {
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text $size="h6" as="h6" $margin={{ all: '0' }} $align="flex-start">
-          {t('Delete a doc')}
-        </Text>
+        <Box
+          $direction="row"
+          $justify="space-between"
+          $align="center"
+          $width="100%"
+        >
+          <Text
+            $size="h6"
+            as="h1"
+            id="modal-remove-doc-title"
+            $margin="0"
+            $align="flex-start"
+            $variation="1000"
+          >
+            {t('Delete a doc')}
+          </Text>
+          <ButtonCloseModal
+            aria-label={t('Close the delete modal')}
+            onClick={() => onClose()}
+          />
+        </Box>
       }
     >
-      <Box aria-label={t('Content modal to delete document')}>
+      <Box className="--docs--modal-remove-doc">
         {!isError && (
-          <Text $size="sm" $variation="600">
-            {t('Are you sure you want to delete the document "{{title}}"?', {
-              title: doc.title,
-            })}
+          <Text $size="sm" $variation="600" $display="inline-block" as="p">
+            {hasChildren ? (
+              <Trans t={t}>
+                This document and <strong>any sub-documents</strong> will be
+                placed in the trashbin. You can restore it within{' '}
+                {{ days: trashBinCutoffDays }} days.
+              </Trans>
+            ) : (
+              t(
+                'This document will be placed in the trashbin. You can restore it within {{days}} days.',
+                { days: trashBinCutoffDays },
+              )
+            )}
           </Text>
         )}
 

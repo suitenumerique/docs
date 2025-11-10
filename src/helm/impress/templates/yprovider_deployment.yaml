@@ -30,6 +30,9 @@ spec:
       imagePullSecrets:
         - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
       {{- end}}
+      {{- if .Values.yProvider.serviceAccountName }}
+      serviceAccountName: {{ .Values.yProvider.serviceAccountName }}
+      {{- end }}
       shareProcessNamespace: {{ .Values.yProvider.shareProcessNamespace }}
       containers:
         {{- with .Values.yProvider.sidecars }}
@@ -138,3 +141,16 @@ spec:
           emptyDir: {}
           {{- end }}
         {{- end }}
+---
+{{ if .Values.yProvider.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+{{ end }}

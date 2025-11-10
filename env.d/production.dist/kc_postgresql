@@ -1,0 +1,13 @@
+# Postgresql db container configuration
+POSTGRES_DB=keycloak
+POSTGRES_USER=keycloak
+POSTGRES_PASSWORD=<generate postgres password>
+PGDATA=/var/lib/postgresql/data/pgdata
+
+# Keycloak postgresql configuration
+KC_DB=postgres
+KC_DB_SCHEMA=public
+KC_DB_HOST=postgresql
+KC_DB_NAME=${POSTGRES_DB}
+KC_DB_USER=${POSTGRES_USER}
+KC_DB_PASSWORD=${POSTGRES_PASSWORD}

@@ -1,35 +1,33 @@
-import { Button } from '@openfun/cunningham-react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon, StyledLink } from '@/components/';
-import { ButtonLogin } from '@/core/auth';
+import { Box, StyledLink } from '@/components/';
+import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
+import { ButtonLogin } from '@/features/auth';
 import { LanguagePicker } from '@/features/language';
-import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
-import { default as IconDocs } from '../assets/icon-docs.svg?url';
 import { HEADER_HEIGHT } from '../conf';
 
+import { ButtonTogglePanel } from './ButtonTogglePanel';
 import { LaGaufre } from './LaGaufre';
-import Title from './Title/Title';
+import { Title } from './Title';
 
 export const Header = () => {
   const { t } = useTranslation();
-  const theme = useCunninghamTheme();
-  const { isPanelOpen, togglePanel } = useLeftPanelStore();
+  const { data: config } = useConfig();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
-  const spacings = theme.spacingsTokens();
-  const colors = theme.colorsTokens();
+  const logo = config?.theme_customization?.header?.logo;
 
   return (
     <Box
       as="header"
+      role="banner"
       $css={css`
-        display: flex;
         position: fixed;
         top: 0;
         left: 0;
@@ -39,46 +37,55 @@ export const Header = () => {
         align-items: center;
         justify-content: space-between;
         height: ${HEADER_HEIGHT}px;
-        min-height: ${HEADER_HEIGHT}px;
-        padding: 0 ${spacings['base']};
-        background-color: ${colors['greyscale-000']};
-        border-bottom: 1px solid ${colors['greyscale-200']};
+        padding: 0 ${spacingsTokens['base']};
+        background-color: ${colorsTokens['greyscale-000']};
+        border-bottom: 1px solid ${colorsTokens['greyscale-200']};
       `}
+      className="--docs--header"
     >
-      {!isDesktop && (
-        <Button
-          size="medium"
-          onClick={() => togglePanel()}
-          aria-label={t('Open the header menu')}
-          color="tertiary-text"
-          icon={
-            <Icon
-              $variation="800"
-              $theme="primary"
-              iconName={isPanelOpen ? 'close' : 'menu'}
-            />
+      {!isDesktop && <ButtonTogglePanel />}
+      <StyledLink
+        href="/"
+        data-testid="header-logo-link"
+        aria-label={t('Back to homepage')}
+        $css={css`
+          outline: none;
+          &:focus-visible {
+            box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400) !important;
+            border-radius: 4px;
           }
-        />
-      )}
-      <StyledLink href="/">
+        `}
+      >
         <Box
           $align="center"
-          $gap={spacings['3xs']}
+          $gap={spacingsTokens['3xs']}
           $direction="row"
           $position="relative"
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <Image priority src={IconDocs} alt={t('Docs Logo')} width={25} />
-          <Title />
+          <Image
+            className="c__image-system-filter"
+            data-testid="header-icon-docs"
+            src={logo?.src || '/assets/icon-docs.svg'}
+            alt=""
+            width={0}
+            height={0}
+            style={{
+              width: logo?.width || 32,
+              height: logo?.height || 'auto',
+            }}
+            priority
+          />
+          <Title headingLevel="h1" aria-hidden="true" />
         </Box>
       </StyledLink>
       {!isDesktop ? (
-        <Box $direction="row" $gap={spacings['sm']}>
+        <Box $direction="row" $gap={spacingsTokens['sm']}>
           <LaGaufre />
         </Box>
       ) : (
-        <Box $align="center" $gap={spacings['sm']} $direction="row">
+        <Box $align="center" $gap={spacingsTokens['sm']} $direction="row">
           <ButtonLogin />
           <LanguagePicker />
           <LaGaufre />

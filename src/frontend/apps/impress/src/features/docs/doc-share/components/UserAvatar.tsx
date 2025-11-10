@@ -1,8 +1,8 @@
 import { css } from 'styled-components';
 
-import { Box } from '@/components';
-import { User } from '@/core';
+import { Text } from '@/components';
 import { tokens } from '@/cunningham';
+import { User } from '@/features/auth';
 
 const colors = tokens.themes.default.theme.colors;
 
@@ -37,33 +37,26 @@ export const UserAvatar = ({ user, background }: Props) => {
   const splitName = name?.split(' ');
 
   return (
-    <Box
+    <Text
+      className="--docs--user-avatar"
+      $align="center"
+      $color="rgba(255, 255, 255, 0.9)"
+      $justify="center"
       $background={background || getColorFromName(name)}
       $width="24px"
       $height="24px"
-      $direction="row"
-      $align="center"
-      $justify="center"
       $radius="50%"
+      $size="10px"
+      $textAlign="center"
+      $textTransform="uppercase"
+      $weight={600}
       $css={css`
-        color: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(255, 255, 255, 0.5);
+        contain: content;
       `}
     >
-      <Box
-        $direction="row"
-        $css={css`
-          text-align: center;
-          font-style: normal;
-          font-weight: 600;
-          font-family: Arial, Helvetica, sans-serif; // Can't use marianne font because it's impossible to center with this font
-          font-size: 10px;
-          text-transform: uppercase;
-        `}
-      >
-        {splitName[0]?.charAt(0)}
-        {splitName?.[1]?.charAt(0)}
-      </Box>
-    </Box>
+      {splitName[0]?.charAt(0)}
+      {splitName?.[1]?.charAt(0)}
+    </Text>
   );
 };

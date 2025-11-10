@@ -1,44 +1,103 @@
-import { Loader } from '@openfun/cunningham-react';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import clsx from 'clsx';
+import { useEffect } from 'react';
 import { css } from 'styled-components';
-import * as Y from 'yjs';
 
-import { Box, Text, TextErrors } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
-import { DocHeader, DocVersionHeader } from '@/features/docs/doc-header/';
+import { Box, Loading } from '@/components';
+import { DocHeader } from '@/docs/doc-header/';
 import {
   Doc,
-  base64ToBlocknoteXmlFragment,
+  useIsCollaborativeEditable,
   useProviderStore,
-} from '@/features/docs/doc-management';
-import { TableContent } from '@/features/docs/doc-table-content/';
-import { Versions, useDocVersion } from '@/features/docs/doc-versioning/';
+} from '@/docs/doc-management';
+import { TableContent } from '@/docs/doc-table-content/';
+import { useSkeletonStore } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
-import { BlockNoteEditor, BlockNoteEditorVersion } from './BlockNoteEditor';
+import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
+
+interface DocEditorContainerProps {
+  docHeader: React.ReactNode;
+  docEditor: React.ReactNode;
+  isDeletedDoc: boolean;
+  readOnly: boolean;
+}
+
+export const DocEditorContainer = ({
+  docHeader,
+  docEditor,
+  isDeletedDoc,
+  readOnly,
+}: DocEditorContainerProps) => {
+  const { isDesktop } = useResponsiveStore();
+
+  return (
+    <>
+      <Box
+        $maxWidth="868px"
+        $width="100%"
+        $height="100%"
+        className="--docs--doc-editor"
+      >
+        <Box
+          $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
+          className="--docs--doc-editor-header"
+        >
+          {docHeader}
+        </Box>
+
+        <Box
+          $direction="row"
+          $width="100%"
+          $css="overflow-x: clip; flex: 1;"
+          $position="relative"
+          className="--docs--doc-editor-content"
+        >
+          <Box $css="flex:1;" $position="relative" $width="100%">
+            <Box
+              $padding={{ top: 'md', bottom: '2rem' }}
+              $background="white"
+              className={clsx('--docs--editor-container', {
+                '--docs--doc-readonly': readOnly,
+                '--docs--doc-deleted': isDeletedDoc,
+              })}
+              $height="100%"
+            >
+              {docEditor}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </>
+  );
+};
 
 interface DocEditorProps {
   doc: Doc;
-  versionId?: Versions['version_id'];
 }
 
-export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
+export const DocEditor = ({ doc }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
+  const { provider, isReady } = useProviderStore();
+  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const isDeletedDoc = !!doc.deleted_at;
+  const readOnly =
+    !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
+  const { setIsSkeletonVisible } = useSkeletonStore();
+  const isProviderReady = isReady && provider;
 
-  const isVersion = !!versionId && typeof versionId === 'string';
+  useEffect(() => {
+    if (isProviderReady) {
+      setIsSkeletonVisible(false);
+    }
+  }, [isProviderReady, setIsSkeletonVisible]);
 
-  const { colorsTokens } = useCunninghamTheme();
-
-  const { provider } = useProviderStore();
-
-  if (!provider) {
-    return null;
+  if (!isProviderReady) {
+    return <Loading />;
   }
 
   return (
     <>
-      {isDesktop && !isVersion && (
+      {isDesktop && (
         <Box
           $position="absolute"
           $css={css`
@@ -49,94 +108,22 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           <TableContent />
         </Box>
       )}
-      <Box $maxWidth="868px" $width="100%" $height="100%">
-        <Box $padding={{ horizontal: isDesktop ? '54px' : 'base' }}>
-          {isVersion ? (
-            <DocVersionHeader title={doc.title} />
+      <DocEditorContainer
+        docHeader={<DocHeader doc={doc} />}
+        docEditor={
+          readOnly ? (
+            <BlockNoteReader
+              initialContent={provider.document.getXmlFragment(
+                'document-store',
+              )}
+            />
           ) : (
-            <DocHeader doc={doc} />
-          )}
-        </Box>
-
-        <Box
-          $background={colorsTokens()['primary-bg']}
-          $direction="row"
-          $width="100%"
-          $css="overflow-x: clip; flex: 1;"
-          $position="relative"
-        >
-          <Box $css="flex:1;" $overflow="auto" $position="relative">
-            {isVersion ? (
-              <DocVersionEditor docId={doc.id} versionId={versionId} />
-            ) : (
-              <BlockNoteEditor doc={doc} provider={provider} />
-            )}
-          </Box>
-        </Box>
-      </Box>
+            <BlockNoteEditor doc={doc} provider={provider} />
+          )
+        }
+        isDeletedDoc={isDeletedDoc}
+        readOnly={readOnly}
+      />
     </>
   );
-};
-
-interface DocVersionEditorProps {
-  docId: Doc['id'];
-  versionId: Versions['version_id'];
-}
-
-export const DocVersionEditor = ({
-  docId,
-  versionId,
-}: DocVersionEditorProps) => {
-  const {
-    data: version,
-    isLoading,
-    isError,
-    error,
-  } = useDocVersion({
-    docId,
-    versionId,
-  });
-
-  const { replace } = useRouter();
-  const [initialContent, setInitialContent] = useState<Y.XmlFragment>();
-
-  useEffect(() => {
-    if (!version?.content) {
-      return;
-    }
-
-    setInitialContent(base64ToBlocknoteXmlFragment(version.content));
-  }, [version?.content]);
-
-  if (isError && error) {
-    if (error.status === 404) {
-      void replace(`/404`);
-      return null;
-    }
-
-    return (
-      <Box $margin="large">
-        <TextErrors
-          causes={error.cause}
-          icon={
-            error.status === 502 ? (
-              <Text className="material-icons" $theme="danger">
-                wifi_off
-              </Text>
-            ) : undefined
-          }
-        />
-      </Box>
-    );
-  }
-
-  if (isLoading || !version || !initialContent) {
-    return (
-      <Box $align="center" $justify="center" $height="100%">
-        <Loader />
-      </Box>
-    );
-  }
-
-  return <BlockNoteEditorVersion initialContent={initialContent} />;
 };

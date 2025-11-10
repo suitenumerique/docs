@@ -117,10 +117,10 @@ BEGIN
 END $$;
 """
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0006_add_user_full_name_and_short_name'),
+        ("core", "0006_add_user_full_name_and_short_name"),
     ]
 
     operations = [

@@ -1,0 +1,78 @@
+services:
+  postgresql:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 1s
+      timeout: 2s
+      retries: 300
+    env_file:
+      - env.d/postgresql
+      - env.d/common
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/databases/backend:/var/lib/postgresql/data/pgdata
+
+  redis:
+    image: redis:8
+
+  backend:
+    image: lasuite/impress-backend:latest
+    user: ${DOCKER_USER:-1000}
+    restart: always
+    environment:
+      - DJANGO_CONFIGURATION=Production
+    env_file:
+      - env.d/common
+      - env.d/backend
+      - env.d/yprovider
+      - env.d/postgresql
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check"]
+      interval: 15s
+      timeout: 30s
+      retries: 20
+      start_period: 10s
+    depends_on:
+      postgresql:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_started
+
+  y-provider:
+    image: lasuite/impress-y-provider:latest
+    user: ${DOCKER_USER:-1000}
+    env_file:
+      - env.d/common
+      - env.d/yprovider
+
+  frontend:
+    image: lasuite/impress-frontend:latest
+    user: "101"
+    entrypoint:
+      - /docker-entrypoint.sh
+    command: ["nginx", "-g", "daemon off;"]
+    env_file:
+      - env.d/common
+    # Uncomment and set your values if using our nginx proxy example
+    #environment:
+    # - VIRTUAL_HOST=${DOCS_HOST} # used by nginx proxy
+    # - VIRTUAL_PORT=8083 # used by nginx proxy
+    # - LETSENCRYPT_HOST=${DOCS_HOST} # used by lets encrypt to generate TLS certificate
+    volumes:
+      - ./default.conf.template:/etc/nginx/templates/docs.conf.template
+    depends_on:
+      backend:
+        condition: service_healthy
+
+# Uncomment if using our nginx proxy example
+#    networks:
+#    - proxy-tier
+#    - default
+
+# Uncomment if using our nginx proxy example
+#networks:
+#  proxy-tier:
+#    external: true

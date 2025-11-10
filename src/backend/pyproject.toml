@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impress"
-version = "2.0.1"
+version = "3.8.2"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -25,67 +25,70 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "boto3==1.35.90",
-    "Brotli==1.1.0",
-    "celery[redis]==5.4.0",
+    "beautifulsoup4==4.14.2",
+    "boto3==1.40.59",
+    "Brotli==1.2.0",
+    "celery[redis]==5.5.3",
     "django-configurations==2.5.1",
-    "django-cors-headers==4.6.0",
+    "django-cors-headers==4.9.0",
     "django-countries==7.6.1",
-    "django-filter==24.3",
+    "django-csp==4.0",
+    "django-filter==25.2",
+    "django-lasuite[all]==0.0.16",
     "django-parler==2.3",
     "django-prometheus==2.3.1",
-    "redis==5.2.1",
-    "django-redis==5.4.0",
-    "django-storages[s3]==1.14.4",
+    "django-redis==6.0.0",
+    "django-storages[s3]==1.14.6",
     "django-timezone-field>=5.1",
-    "django==5.1.4",
-    "djangorestframework==3.15.2",
+    "django==5.2.8",
+    "django-treebeard==4.7.1",
+    "djangorestframework==3.16.1",
     "drf_spectacular==0.28.0",
     "dockerflow==2024.4.2",
-    "easy_thumbnails==2.10",
-    "factory_boy==3.3.1",
+    "easy_thumbnails==2.10.1",
+    "factory_boy==3.3.3",
     "gunicorn==23.0.0",
-    "jsonschema==4.23.0",
-    "markdown==3.7",
-    "nested-multipart-parser==1.5.0",
-    "openai==1.58.1",
-    "psycopg[binary]==3.2.3",
-    "PyJWT==2.10.1",
-    "pypandoc==1.14",
-    "python-frontmatter==1.1.0",
-    "python-magic==0.4.27",
-    "requests==2.32.3",
-    "sentry-sdk==2.19.2",
-    "url-normalize==1.4.3",
-    "WeasyPrint>=60.2",
-    "whitenoise==6.8.2",
+    "jsonschema==4.25.1",
+    "lxml==6.0.2",
+    "markdown==3.9",
     "mozilla-django-oidc==4.0.1",
+    "nested-multipart-parser==1.6.0",
+    "openai==2.6.1",
+    "psycopg[binary]==3.2.12",
+    "pycrdt==0.12.42", 
+    "PyJWT==2.10.1",
+    "python-magic==0.4.27",
+    "redis<6.0.0",
+    "requests==2.32.5",
+    "sentry-sdk==2.42.1",
+    "whitenoise==6.11.0",
 ]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/numerique-gouv/impress/issues/new"
-"Changelog" = "https://github.com/numerique-gouv/impress/blob/main/CHANGELOG.md"
-"Homepage" = "https://github.com/numerique-gouv/impress"
-"Repository" = "https://github.com/numerique-gouv/impress"
+"Bug Tracker" = "https://github.com/suitenumerique/docs/issues/new"
+"Changelog" = "https://github.com/suitenumerique/docs/blob/main/CHANGELOG.md"
+"Homepage" = "https://github.com/suitenumerique/docs"
+"Repository" = "https://github.com/suitenumerique/docs"
 
 [project.optional-dependencies]
 dev = [
-    "django-extensions==3.2.3",
-    "drf-spectacular-sidecar==2024.12.1",
-    "freezegun==1.5.1",
+    "django-extensions==4.1",
+    "django-test-migrations==1.5.0",
+    "drf-spectacular-sidecar==2025.10.1",
+    "freezegun==1.5.5",
     "ipdb==0.13.13",
-    "ipython==8.31.0",
-    "pyfakefs==5.7.3",
+    "ipython==9.6.0",
+    "pyfakefs==5.10.0",
     "pylint-django==2.6.1",
-    "pylint==3.3.3",
-    "pytest-cov==6.0.0",
-    "pytest-django==4.9.0",
-    "pytest==8.3.4",
+    "pylint<4.0.0",
+    "pytest-cov==7.0.0",
+    "pytest-django==4.11.1",
+    "pytest==8.4.2",
     "pytest-icdiff==0.9",
-    "pytest-xdist==3.6.1",
-    "responses==0.25.3",
-    "ruff==0.8.4",
-    "types-requests==2.32.0.20241016",
+    "pytest-xdist==3.8.0",
+    "responses==0.25.8",
+    "ruff==0.14.2",
+    "types-requests==2.32.4.20250913",
 ]
 
 [tool.setuptools]
@@ -102,7 +105,6 @@ exclude = [
     "build",
     "venv",
     "__pycache__",
-    "*/migrations/*",
 ]
 line-length = 88
 

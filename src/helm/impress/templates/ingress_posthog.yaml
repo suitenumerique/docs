@@ -1,0 +1,86 @@
+{{- if .Values.posthog.ingress.enabled -}}
+{{- $fullName := include "impress.fullname" . -}}
+{{- if and .Values.posthog.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.posthog.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.posthog.ingress.annotations "kubernetes.io/ingress.class" .Values.posthog.ingress.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-posthog
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.labels" . | nindent 4 }}
+  {{- with .Values.posthog.ingress.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.posthog.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.posthog.ingress.className }}
+  {{- end }}
+  {{- if .Values.posthog.ingress.tls.enabled }}
+  tls:
+    {{- if .Values.posthog.ingress.host }}
+    - secretName: {{ $fullName }}-posthog-tls
+      hosts:
+        - {{ .Values.posthog.ingress.host | quote }}
+    {{- end }}
+    {{- range .Values.posthog.ingress.tls.additional }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- if .Values.posthog.ingress.host }}
+    - host: {{ .Values.posthog.ingress.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.posthog.ingress.path }}
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.posthog.fullname" . }}-proxy
+                port:
+                  number: {{ .Values.posthog.service.port }}
+              {{- else }}
+              serviceName: {{ include "impress.posthog.fullname" . }}-proxy
+              servicePort: {{ .Values.posthog.service.port }}
+            {{- end }}
+    {{- end }}
+    {{- range .Values.posthog.ingress.hosts }}
+    - host: {{ . | quote }}
+      http:
+        paths:
+          - path: {{ $.Values.posthog.ingress.path | quote }}
+          {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+          {{- end }}
+            backend:
+            {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ include "impress.posthog.fullname" . }}-proxy
+                port:
+                  number: {{ $.Values.posthog.service.port }}
+            {{- else }}
+              serviceName: {{ include "impress.posthog.fullname" . }}-proxy
+              servicePort: {{ $.Values.posthog.service.port }}
+          {{- end }}
+        {{- with $.Values.posthog.service.customBackends }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+  {{- end }}
+{{- end }}

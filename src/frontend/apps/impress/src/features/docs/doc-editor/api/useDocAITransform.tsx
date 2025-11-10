@@ -6,7 +6,9 @@ export type AITransformActions =
   | 'correct'
   | 'prompt'
   | 'rephrase'
-  | 'summarize';
+  | 'summarize'
+  | 'beautify'
+  | 'emojify';
 
 export type DocAITransform = {
   docId: string;

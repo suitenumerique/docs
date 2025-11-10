@@ -187,9 +187,9 @@ def test_api_templates_list_order_default():
     response_template_ids = [template["id"] for template in response_data["results"]]
 
     template_ids.reverse()
-    assert (
-        response_template_ids == template_ids
-    ), "created_at values are not sorted from newest to oldest"
+    assert response_template_ids == template_ids, (
+        "created_at values are not sorted from newest to oldest"
+    )
 
 
 def test_api_templates_list_order_param():
@@ -215,6 +215,23 @@ def test_api_templates_list_order_param():
 
     response_template_ids = [template["id"] for template in response_data["results"]]
 
-    assert (
-        response_template_ids == templates_ids
-    ), "created_at values are not sorted from oldest to newest"
+    assert response_template_ids == templates_ids, (
+        "created_at values are not sorted from oldest to newest"
+    )
+
+
+def test_api_template_throttling(settings):
+    """Test api template throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template"] = "2/minute"
+    client = APIClient()
+    for _i in range(2):
+        response = client.get("/api/v1.0/templates/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get("/api/v1.0/templates/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope template", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template"] = current_rate

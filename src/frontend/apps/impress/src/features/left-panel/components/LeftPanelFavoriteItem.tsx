@@ -1,11 +1,13 @@
 import { useModal } from '@openfun/cunningham-react';
+import { t } from 'i18next';
+import { DateTime } from 'luxon';
 import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc } from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
-import { DocsGridActions, SimpleDocItem } from '@/features/docs/docs-grid';
+import { Doc, SimpleDocItem } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
+import { DocsGridActions } from '@/docs/docs-grid';
 import { useResponsiveStore } from '@/stores';
 
 type LeftPanelFavoriteItemProps = {
@@ -14,32 +16,43 @@ type LeftPanelFavoriteItemProps = {
 
 export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacing = spacingsTokens();
+
   return (
     <Box
+      as="li"
       $direction="row"
       $align="center"
       $justify="space-between"
       $css={css`
-        padding: ${spacing['2xs']};
+        padding: ${spacingsTokens['2xs']};
         border-radius: 4px;
         .pinned-actions {
           opacity: ${isDesktop ? 0 : 1};
         }
         &:hover {
+          background-color: ${colorsTokens['greyscale-100']};
+        }
+        &:focus-within {
           cursor: pointer;
-
-          background-color: var(--c--theme--colors--greyscale-100);
+          box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
           .pinned-actions {
             opacity: 1;
           }
         }
       `}
       key={doc.id}
+      className="--docs--left-panel-favorite-item"
     >
-      <StyledLink href={`/docs/${doc.id}`}>
+      <StyledLink
+        href={`/docs/${doc.id}`}
+        $css={css`
+          overflow: auto;
+          outline: none !important;
+        `}
+        aria-label={`${doc.title}, ${t('Updated')} ${DateTime.fromISO(doc.updated_at).toRelative()}`}
+      >
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
       <div className="pinned-actions">

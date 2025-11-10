@@ -1,40 +1,35 @@
+import clsx from 'clsx';
 import { css } from 'styled-components';
 
 import { Text, TextType } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
 
 type IconProps = TextType & {
+  disabled?: boolean;
   iconName: string;
+  variant?: 'filled' | 'outlined' | 'symbols-outlined';
 };
-export const Icon = ({ iconName, ...textProps }: IconProps) => {
-  return (
-    <Text $isMaterialIcon {...textProps}>
-      {iconName}
-    </Text>
-  );
-};
-
-interface IconBGProps extends TextType {
-  iconName: string;
-}
-
-export const IconBG = ({ iconName, ...textProps }: IconBGProps) => {
-  const { colorsTokens } = useCunninghamTheme();
+export const Icon = ({
+  className,
+  iconName,
+  disabled,
+  variant = 'outlined',
+  $variation = 'text',
+  ...textProps
+}: IconProps) => {
+  const hasLabel = 'aria-label' in textProps || 'aria-labelledby' in textProps;
+  const ariaHidden =
+    'aria-hidden' in textProps ? textProps['aria-hidden'] : !hasLabel;
 
   return (
     <Text
-      $isMaterialIcon
-      $size="36px"
-      $theme="primary"
-      $variation="600"
-      $background={colorsTokens()['primary-bg']}
-      $css={`
-        border: 1px solid ${colorsTokens()['primary-200']}; 
-        user-select: none;
-      `}
-      $radius="12px"
-      $padding="4px"
-      $margin="auto"
+      aria-hidden={ariaHidden}
+      className={clsx('--docs--icon-bg', className, {
+        'material-icons-filled': variant === 'filled',
+        'material-icons': variant === 'outlined',
+        'material-symbols-outlined': variant === 'symbols-outlined',
+      })}
+      $variation={disabled ? '300' : $variation}
+      aria-disabled={disabled}
       {...textProps}
     >
       {iconName}
@@ -46,17 +41,19 @@ type IconOptionsProps = TextType & {
   isHorizontal?: boolean;
 };
 
-export const IconOptions = ({ isHorizontal, ...props }: IconOptionsProps) => {
+export const IconOptions = ({
+  isHorizontal,
+  $css,
+  ...props
+}: IconOptionsProps) => {
   return (
-    <Text
-      {...props}
-      $isMaterialIcon
+    <Icon
+      iconName={isHorizontal ? 'more_horiz' : 'more_vert'}
       $css={css`
         user-select: none;
-        ${props.$css}
+        ${$css}
       `}
-    >
-      {isHorizontal ? 'more_horiz' : 'more_vert'}
-    </Text>
+      {...props}
+    />
   );
 };

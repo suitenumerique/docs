@@ -17,7 +17,7 @@ class CollaborationService:
     def reset_connections(self, room, user_id=None):
         """
         Reset connections of a room in the collaboration server.
-        Reseting a connection means that the user will be disconnected and will
+        Resetting a connection means that the user will be disconnected and will
         have to reconnect to the collaboration server, with updated rights.
         """
         endpoint = "reset-connections"
@@ -41,3 +41,35 @@ class CollaborationService:
                 f"Failed to notify WebSocket server. Status code: {response.status_code}, "
                 f"Response: {response.text}"
             )
+
+    def get_document_connection_info(self, room, session_key):
+        """
+        Get the connection info for a document.
+        """
+        endpoint = "get-connections"
+        querystring = {
+            "room": room,
+            "sessionKey": session_key,
+        }
+        endpoint_url = f"{settings.COLLABORATION_API_URL}{endpoint}/"
+
+        headers = {"Authorization": settings.COLLABORATION_SERVER_SECRET}
+
+        try:
+            response = requests.get(
+                endpoint_url, headers=headers, params=querystring, timeout=10
+            )
+        except requests.RequestException as e:
+            raise requests.HTTPError("Failed to get document connection info.") from e
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("count", 0), result.get("exists", False)
+
+        if response.status_code == 404:
+            return 0, False
+
+        raise requests.HTTPError(
+            f"Failed to get document connection info. Status code: {response.status_code}, "
+            f"Response: {response.text}"
+        )

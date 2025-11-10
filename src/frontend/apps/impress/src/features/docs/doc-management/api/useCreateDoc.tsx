@@ -6,14 +6,9 @@ import { Doc } from '../types';
 
 import { KEY_LIST_DOC } from './useDocs';
 
-export type CreateDocParam = Pick<Doc, 'title'>;
-
-export const createDoc = async ({ title }: CreateDocParam): Promise<Doc> => {
+export const createDoc = async (): Promise<Doc> => {
   const response = await fetchAPI(`documents/`, {
     method: 'POST',
-    body: JSON.stringify({
-      title,
-    }),
   });
 
   if (!response.ok) {
@@ -25,17 +20,21 @@ export const createDoc = async ({ title }: CreateDocParam): Promise<Doc> => {
 
 interface CreateDocProps {
   onSuccess: (data: Doc) => void;
+  onError?: (error: APIError) => void;
 }
 
-export function useCreateDoc({ onSuccess }: CreateDocProps) {
+export function useCreateDoc({ onSuccess, onError }: CreateDocProps) {
   const queryClient = useQueryClient();
-  return useMutation<Doc, APIError, CreateDocParam>({
+  return useMutation<Doc, APIError>({
     mutationFn: createDoc,
     onSuccess: (data) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
       });
       onSuccess(data);
+    },
+    onError: (error) => {
+      onError?.(error);
     },
   });
 }

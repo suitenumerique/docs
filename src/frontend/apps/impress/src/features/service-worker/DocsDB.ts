@@ -1,10 +1,9 @@
 import { DBSchema, IDBPDatabase, deleteDB, openDB } from 'idb';
 
-import { Doc, DocsResponse } from '@/features/docs';
+import { Doc, DocsResponse } from '@/docs/doc-management';
 
 import { RequestData, RequestSerializer } from './RequestSerializer';
 
-// eslint-disable-next-line import/order
 import pkg from '@/../package.json';
 
 export type DBRequest = {

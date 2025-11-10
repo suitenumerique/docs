@@ -1,113 +1,228 @@
-# Impress
+<p align="center">
+  <a href="https://github.com/suitenumerique/docs">
+    <img alt="Docs" src="/docs/assets/banner-docs.png" width="100%" />
+  </a>
+</p>
+<p align="center">
+  <a href="https://github.com/suitenumerique/docs/stargazers/">
+    <img src="https://img.shields.io/github/stars/suitenumerique/docs" alt="">
+  </a>
+  <a href='https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md'><img alt='PRs Welcome' src='https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=shields'/></a>
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/suitenumerique/docs"/>
+  <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/suitenumerique/docs"/>
+  <a href="https://github.com/suitenumerique/docs/blob/main/LICENSE">
+    <img alt="MIT License" src="https://img.shields.io/github/license/suitenumerique/docs"/>
+  </a>    
+</p>
+<p align="center">
+  <a href="https://matrix.to/#/#docs-official:matrix.org">
+    Chat on Matrix
+  </a> - <a href="/docs/">
+    Documentation
+  </a> - <a href="#getting-started-">
+    Getting started
+  </a> - <a href="mailto:docs@numerique.gouv.fr">
+    Reach out
+  </a>
+</p>
 
-Impress is a web application for real-time collaborative text editing with user and role based access rights.
-Features include : 
-- User authentication through OIDC
-- BlocNote.js text editing experience (markdown support, dynamic conversion, block structure, slash commands for block creation) 
-- Document export to pdf and docx from predefined templates
-- Granular document permissions
-- Public link sharing
-- Offline mode
+# La Suite Docs : Collaborative Text Editing
+Docs, where your notes can become knowledge through live collaboration.
 
-Impress is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/) and [BlocNote.js](https://www.blocknotejs.org/)
+<img src="/docs/assets/docs_live_collaboration_light.gif" width="100%" align="center"/>
 
-## Getting started
+## Why use Docs ❓
+Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing.
 
-### Prerequisite
+### Write
+* 😌 Get simple, accessible online editing for your team.
+* 💅 Create clean documents with beautiful formatting options.
+* 🖌️ Focus on your content using either the in-line editor, or [the Markdown syntax](https://www.markdownguide.org/basic-syntax/).
+* 🧱 Quickly design your page thanks to the many block types, accessible from the `/` slash commands, as well as keyboard shortcuts.
+* 🔌 Write offline! Your edits will be synced once you're back online.
+* ✨ Save time thanks to our AI actions, such as rephrasing, summarizing, fixing typos, translating, etc. You can even turn your selected text into a prompt!
 
-Make sure you have a recent version of Docker and [Docker
-Compose](https://docs.docker.com/compose/install) installed on your laptop:
+### Work together
+* 🤝 Enjoy live editing! See your team collaborate in real time.
+* 🔒 Keep your information secure thanks to granular access control. Only share with the right people.
+* 📑 Export your content in multiple formats (`.odt`, `.docx`, `.pdf`) with customizable templates.
+* 📚 Turn your team's collaborative work into organized knowledge with Subpages.
 
-```bash
+### Self-host
+
+#### 🚀 Docs is easy to install on your own servers
+We use Kubernetes for our [production instance](https://docs.numerique.gouv.fr/) but also support Docker Compose. The community contributed a couple other methods (Nix, YunoHost etc.) check out the [docs](/docs/installation/README.md) to get detailed instructions and examples.
+
+#### 🌍 Known instances
+We hope to see many more, here is an incomplete list of public Docs instances. Feel free to make a PR to add ones that are not listed below🙏
+
+| Url | Org | Public |
+| --- | --- | ------- |
+| [docs.numerique.gouv.fr](https://docs.numerique.gouv.fr/)    | DINUM    | French public agents working for the central administration and the extended public sphere. ProConnect is required to login in or sign up|
+| [docs.suite.anct.gouv.fr](https://docs.suite.anct.gouv.fr/)    | ANCT    | French public agents working for the territorial administration and the extended public sphere. ProConnect is required to login in or sign up|
+| [notes.demo.opendesk.eu](https://notes.demo.opendesk.eu)    | ZenDiS    | Demo instance of OpenDesk. Request access to get credentials |
+| [notes.liiib.re](https://notes.liiib.re/)    | lasuite.coop    | Free and open demo to all. Content and accounts are reset after one month |
+| [docs.federated.nexus](https://docs.federated.nexus/)    | federated.nexus    | Public instance, but you have to [sign up for a Federated Nexus account](https://federated.nexus/register/). |
+| [docs.demo.mosacloud.eu](https://docs.demo.mosacloud.eu/)    | mosa.cloud    | Demo instance of mosa.cloud, a dutch company providing services around La Suite apps. |
+
+#### ⚠️ Advanced features
+For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under GPL and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
+
+## Getting started 🔧
+
+### Test it
+
+You can test Docs on your browser by visiting this [demo document](https://impress-preprod.beta.numerique.gouv.fr/docs/6ee5aac4-4fb9-457d-95bf-bb56c2467713/)
+
+### Run Docs locally
+
+> ⚠️ The methods described below for running Docs locally is **for testing purposes only**. It is based on building Docs using [Minio](https://min.io/) as an S3-compatible storage solution. Of course you can choose any S3-compatible storage solution.
+
+**Prerequisite**
+
+Make sure you have a recent version of Docker and [Docker Compose](https://docs.docker.com/compose/install) installed on your laptop, then type:
+
+```shellscript
 $ docker -v
-  Docker version 20.10.2, build 2291f61
 
-$ docker compose -v
-  docker compose version 1.27.4, build 40524192
+Docker version 20.10.2, build 2291f61
+
+$ docker compose version
+
+Docker Compose version v2.32.4
 ```
 
-> ⚠️ You may need to run the following commands with `sudo` but this can be
-> avoided by assigning your user to the `docker` group.
+> ⚠️ You may need to run the following commands with `sudo`, but this can be avoided by adding your user to the local `docker` group.
 
-### Project bootstrap
+**Project bootstrap**
 
-The easiest way to start working on the project is to use GNU Make:
+The easiest way to start working on the project is to use [GNU Make](https://www.gnu.org/software/make/):
 
-```bash
+```shellscript
 $ make bootstrap FLUSH_ARGS='--no-input'
 ```
 
-This command builds the `app` container, installs dependencies, performs
-database migrations and compile translations. It's a good idea to use this
-command each time you are pulling code from the project repository to avoid
-dependency-releated or migration-releated issues.
+This command builds the `app-dev` and `frontend-dev` containers, installs dependencies, performs database migrations and compiles translations. It's a good idea to use this command each time you are pulling code from the project repository to avoid dependency-related or migration-related issues.
 
 Your Docker services should now be up and running 🎉
 
-You can access to the project by going to http://localhost:3000.
-You will be prompted to log in, the default credentials are:
-```bash
+You can access the project by going to <http://localhost:3000>.
+
+You will be prompted to log in. The default credentials are:
+
+```
 username: impress
 password: impress
 ```
 
-📝 Note that if you need to run them afterwards, you can use the eponym Make rule:
+📝 Note that if you need to run them afterwards, you can use the eponymous Make rule:
 
-```bash
-$ make run-with-frontend
+```shellscript
+$ make run
 ```
 
----
+⚠️ For the frontend developer, it is often better to run the frontend in development mode locally.
 
-⚠️ For the frontend developper, it is often better to run the frontend in development mode locally. 
 To do so, install the frontend dependencies with the following command:
 
-```bash
-$ make frontend-install
+```shellscript
+$ make frontend-development-install
 ```
+
 And run the frontend locally in development mode with the following command:
 
-```bash
+```shellscript
 $ make run-frontend-development
 ```
 
 To start all the services, except the frontend container, you can use the following command:
 
-```bash
-$ make run
+```shellscript
+$ make run-backend
 ```
 
----
+To execute frontend tests & linting only
+```shellscript
+$ make frontend-test
+$ make frontend-lint
+```
 
-### Adding content
+**Adding content**
 
-You can create a basic demo site by running:
+You can create a basic demo site by running this command:
 
-    $ make demo
+```shellscript
+$ make demo
+```
 
-Finally, you can check all available Make rules using:
+Finally, you can check all available Make rules using this command:
 
-```bash
+```shellscript
 $ make help
 ```
 
-### Django admin
+**Django admin**
 
-You can access the Django admin site at
-[http://localhost:8071/admin](http://localhost:8071/admin).
+You can access the Django admin site at:
+
+<http://localhost:8071/admin>.
 
 You first need to create a superuser account:
 
-```bash
+```shellscript
 $ make superuser
 ```
 
-## Contributing
+## Feedback 🙋‍♂️🙋‍♀️
 
-This project is intended to be community-driven, so please, do not hesitate to
-get in touch if you have any question related to our implementation or design
-decisions.
+We'd love to hear your thoughts, and hear about your experiments, so come and say hi on [Matrix](https://matrix.to/#/#docs-official:matrix.org).
 
-## License
+## Roadmap 💡
 
-This work is released under the MIT License (see [LICENSE](./LICENSE)).
+Want to know where the project is headed? [🗺️ Checkout our roadmap](https://github.com/orgs/numerique-gouv/projects/13/views/11)
+
+## License 📝
+
+This work is released under the MIT License (see [LICENSE](https://github.com/suitenumerique/docs/blob/main/LICENSE)).
+
+While Docs is a public-driven initiative, our license choice is an invitation for private sector actors to use, sell and contribute to the project. 
+
+## Contributing 🙌
+
+This project is intended to be community-driven, so please, do not hesitate to [get in touch](https://matrix.to/#/#docs-official:matrix.org) if you have any question related to our implementation or design decisions.
+
+You can help us with translations on [Crowdin](https://crowdin.com/project/lasuite-docs).
+
+If you intend to make pull requests, see [CONTRIBUTING](https://github.com/suitenumerique/docs/blob/main/CONTRIBUTING.md) for guidelines.
+
+## Directory structure:
+
+```markdown
+docs
+├── bin - executable scripts or binaries that are used for various tasks, such as setup scripts, utility scripts, or custom commands.
+├── crowdin - for crowdin translations, a tool or service that helps manage translations for the project.
+├── docker - Dockerfiles and related configuration files used to build Docker images for the project. These images can be used for development, testing, or production environments.
+├── docs - documentation for the project, including user guides, API documentation, and other helpful resources.
+├── env.d/development - environment-specific configuration files for the development environment. These files might include environment variables, configuration settings, or other setup files needed for development.
+├── gitlint - configuration files for `gitlint`, a tool that enforces commit message guidelines to ensure consistency and quality in commit messages.
+├── playground - experimental or temporary code, where developers can test new features or ideas without affecting the main codebase.
+└── src - main source code directory, containing the core application code, libraries, and modules of the project.
+```
+
+## Credits ❤️
+
+### Stack
+
+Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction) and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
+
+We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/). 
+
+
+### Gov ❤️ open source
+Docs is the result of a joint effort led by the French 🇫🇷🥖 ([DINUM](https://www.numerique.gouv.fr/dinum/)) and German 🇩🇪🥨 governments ([ZenDiS](https://zendis.de/)). 
+
+We are always looking for new public partners (we are currently onboarding the Netherlands 🇳🇱🧀), feel free to [reach out](mailto:docs@numerique.gouv.fr) if you are interested in using or contributing to Docs.
+
+<p align="center">
+  <img src="/docs/assets/europe_opensource.png" width="50%"/>
+</p>

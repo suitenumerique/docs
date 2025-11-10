@@ -1,111 +1,74 @@
-import { Dictionary, locales } from '@blocknote/core';
+import { codeBlockOptions } from '@blocknote/code-block';
+import {
+  BlockNoteSchema,
+  createCodeBlockSpec,
+  defaultBlockSpecs,
+  defaultInlineContentSpecs,
+  withPageBreak,
+} from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
+import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { useAuthStore } from '@/core/auth';
-import { Doc } from '@/features/docs/doc-management';
+import { Doc, useProviderStore } from '@/docs/doc-management';
+import { useAuth } from '@/features/auth';
 
-import { useUploadFile } from '../hook';
-import { useHeadings } from '../hook/useHeadings';
-import useSaveDoc from '../hook/useSaveDoc';
+import {
+  useHeadings,
+  useSaveDoc,
+  useShortcuts,
+  useUploadFile,
+  useUploadStatus,
+} from '../hook';
 import { useEditorStore } from '../stores';
+import { cssEditor } from '../styles';
+import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
-import { BlockNoteToolbar } from './BlockNoteToolbar';
+import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
+import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
+import {
+  AccessibleImageBlock,
+  CalloutBlock,
+  PdfBlock,
+  UploadLoaderBlock,
+} from './custom-blocks';
+import {
+  InterlinkingLinkInlineContent,
+  InterlinkingSearchInlineContent,
+} from './custom-inline-content';
+import XLMultiColumn from './xl-multi-column';
 
-const cssEditor = (readonly: boolean) => css`
-  &,
-  & > .bn-container,
-  & .ProseMirror {
-    height: 100%;
+const multiColumnLocales = XLMultiColumn?.locales;
+const withMultiColumn = XLMultiColumn?.withMultiColumn;
 
-    .bn-side-menu[data-block-type='heading'][data-level='1'] {
-      height: 50px;
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='2'] {
-      height: 43px;
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='3'] {
-      height: 35px;
-    }
-    h1 {
-      font-size: 1.875rem;
-    }
-    h2 {
-      font-size: 1.5rem;
-    }
-    h3 {
-      font-size: 1.25rem;
-    }
-    a {
-      color: var(--c--theme--colors--greyscale-500);
-      cursor: pointer;
-    }
-    .bn-block-group
-      .bn-block-group
-      .bn-block-outer:not([data-prev-depth-changed]):before {
-      border-left: none;
-    }
-  }
+const baseBlockNoteSchema = withPageBreak(
+  BlockNoteSchema.create({
+    blockSpecs: {
+      ...defaultBlockSpecs,
+      callout: CalloutBlock(),
+      codeBlock: createCodeBlockSpec(codeBlockOptions),
+      image: AccessibleImageBlock(),
+      pdf: PdfBlock(),
+      uploadLoader: UploadLoaderBlock(),
+    },
+    inlineContentSpecs: {
+      ...defaultInlineContentSpecs,
+      interlinkingSearchInline: InterlinkingSearchInlineContent,
+      interlinkingLinkInline: InterlinkingLinkInlineContent,
+    },
+  }),
+);
 
-  .bn-editor {
-    color: var(--c--theme--colors--greyscale-700);
-  }
-
-  .bn-block-outer:not(:first-child) {
-    &:has(h1) {
-      padding-top: 32px;
-    }
-    &:has(h2) {
-      padding-top: 24px;
-    }
-    &:has(h3) {
-      padding-top: 16px;
-    }
-  }
-
-  & .bn-inline-content code {
-    background-color: gainsboro;
-    padding: 2px;
-    border-radius: 4px;
-  }
-
-  @media screen and (width <= 560px) {
-    & .bn-editor {
-      ${readonly && `padding-left: 10px;`}
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='1'] {
-      height: 46px;
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='2'] {
-      height: 40px;
-    }
-    .bn-side-menu[data-block-type='heading'][data-level='3'] {
-      height: 40px;
-    }
-    & .bn-editor h1 {
-      font-size: 1.6rem;
-    }
-    & .bn-editor h2 {
-      font-size: 1.35rem;
-    }
-    & .bn-editor h3 {
-      font-size: 1.2rem;
-    }
-    .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
-      .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
-      font-size: 14px;
-    }
-  }
-`;
+export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
+  baseBlockNoteSchema) as typeof baseBlockNoteSchema;
 
 interface BlockNoteEditorProps {
   doc: Doc;
@@ -113,62 +76,90 @@ interface BlockNoteEditorProps {
 }
 
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
-  const { userData } = useAuthStore();
+  const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
+  const { isSynced: isConnectedToCollabServer } = useProviderStore();
+  const refEditorContainer = useRef<HTMLDivElement>(null);
 
-  const readOnly = !doc.abilities.partial_update;
-  useSaveDoc(doc.id, provider.document, !readOnly);
+  useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
-  const lang = i18n.language;
+  const lang = i18n.resolvedLanguage;
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
 
-  const collabName = readOnly
-    ? 'Reader'
-    : userData?.full_name || userData?.email || t('Anonymous');
+  const collabName = user?.full_name || user?.email || t('Anonymous');
+  const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
-  const editor = useCreateBlockNote(
+  const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
       collaboration: {
-        provider,
+        provider: provider,
         fragment: provider.document.getXmlFragment('document-store'),
         user: {
           name: collabName,
           color: randomColor(),
         },
         /**
-         * We re-use the blocknote code to render the cursor but we:
-         * - fix rendering issue with Firefox
-         * - We don't want to show the cursor when anonymous users
+         * We render the cursor with a custom element to:
+         * - fix rendering issue with the default cursor
+         * - hide the cursor when anonymous users
          */
         renderCursor: (user: { color: string; name: string }) => {
-          const cursor = document.createElement('span');
+          const cursorElement = document.createElement('span');
 
-          if (user.name === 'Reader') {
-            return cursor;
+          cursorElement.classList.add('collaboration-cursor-custom__base');
+          const caretElement = document.createElement('span');
+          caretElement.classList.add('collaboration-cursor-custom__caret');
+          caretElement.setAttribute('spellcheck', `false`);
+          caretElement.setAttribute('style', `background-color: ${user.color}`);
+
+          if (showCursorLabels === 'always') {
+            cursorElement.setAttribute('data-active', '');
           }
 
-          cursor.classList.add('collaboration-cursor__caret');
-          cursor.setAttribute('style', `border-color: ${user.color}`);
+          const labelElement = document.createElement('span');
 
-          const label = document.createElement('span');
+          labelElement.classList.add('collaboration-cursor-custom__label');
+          labelElement.setAttribute('spellcheck', `false`);
+          labelElement.setAttribute(
+            'style',
+            `background-color: ${user.color};border: 1px solid ${user.color};`,
+          );
+          labelElement.insertBefore(document.createTextNode(user.name), null);
 
-          label.classList.add('collaboration-cursor__label');
-          label.setAttribute('style', `background-color: ${user.color}`);
-          label.insertBefore(document.createTextNode(user.name), null);
+          caretElement.insertBefore(labelElement, null);
 
-          cursor.insertBefore(label, null);
+          cursorElement.insertBefore(document.createTextNode('\u2060'), null); // Non-breaking space
+          cursorElement.insertBefore(caretElement, null);
+          cursorElement.insertBefore(document.createTextNode('\u2060'), null); // Non-breaking space
 
-          return cursor;
+          return cursorElement;
         },
+        showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
-      dictionary: locales[lang as keyof typeof locales] as Dictionary,
+      dictionary: {
+        ...locales[lang as keyof typeof locales],
+        multi_column:
+          multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
+      },
+      tables: {
+        splitCells: true,
+        cellBackgroundColor: true,
+        cellTextColor: true,
+        headers: true,
+      },
       uploadFile,
+      schema: blockNoteSchema,
     },
     [collabName, lang, provider, uploadFile],
   );
+
   useHeadings(editor);
+
+  useShortcuts(editor, refEditorContainer.current);
+
+  useUploadStatus(editor);
 
   useEffect(() => {
     setEditor(editor);
@@ -179,13 +170,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }, [setEditor, editor]);
 
   return (
-    <Box
-      $padding={{ top: 'md' }}
-      $background="white"
-      $css={cssEditor(readOnly)}
-    >
+    <Box ref={refEditorContainer} $css={cssEditor}>
       {errorAttachment && (
-        <Box $margin={{ bottom: 'big' }}>
+        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
           <TextErrors
             causes={errorAttachment.cause}
             canClose
@@ -197,23 +184,21 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       <BlockNoteView
         editor={editor}
         formattingToolbar={false}
-        editable={!readOnly}
+        slashMenu={false}
         theme="light"
       >
+        <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>
     </Box>
   );
 };
 
-interface BlockNoteEditorVersionProps {
+interface BlockNoteReaderProps {
   initialContent: Y.XmlFragment;
 }
 
-export const BlockNoteEditorVersion = ({
-  initialContent,
-}: BlockNoteEditorVersionProps) => {
-  const readOnly = true;
+export const BlockNoteReader = ({ initialContent }: BlockNoteReaderProps) => {
   const { setEditor } = useEditorStore();
   const editor = useCreateBlockNote(
     {
@@ -225,10 +210,10 @@ export const BlockNoteEditorVersion = ({
         },
         provider: undefined,
       },
+      schema: blockNoteSchema,
     },
     [initialContent],
   );
-  useHeadings(editor);
 
   useEffect(() => {
     setEditor(editor);
@@ -238,9 +223,17 @@ export const BlockNoteEditorVersion = ({
     };
   }, [setEditor, editor]);
 
+  useHeadings(editor);
+
   return (
-    <Box $css={cssEditor(readOnly)}>
-      <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
+    <Box $css={cssEditor}>
+      <BlockNoteView
+        editor={editor}
+        editable={false}
+        theme="light"
+        formattingToolbar={false}
+        slashMenu={false}
+      />
     </Box>
   );
 };

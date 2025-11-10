@@ -3,6 +3,7 @@ Test template accesses API endpoints for users in impress's core app.
 """
 
 import random
+from unittest import mock
 from uuid import uuid4
 
 import pytest
@@ -48,12 +49,7 @@ def test_api_template_accesses_list_authenticated_unrelated():
         f"/api/v1.0/templates/{template.id!s}/accesses/",
     )
     assert response.status_code == 200
-    assert response.json() == {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [],
-    }
+    assert response.json() == []
 
 
 @pytest.mark.parametrize("via", VIA)
@@ -73,14 +69,14 @@ def test_api_template_accesses_list_authenticated_related(via, mock_user_teams):
         user_access = models.TemplateAccess.objects.create(
             template=template,
             user=user,
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
     elif via == TEAM:
         mock_user_teams.return_value = ["lasuite", "unknown"]
         user_access = models.TemplateAccess.objects.create(
             template=template,
             team="lasuite",
-            role=random.choice(models.RoleChoices.choices)[0],
+            role=random.choice(models.RoleChoices.values),
         )
 
     access1 = factories.TeamTemplateAccessFactory(template=template)
@@ -96,8 +92,8 @@ def test_api_template_accesses_list_authenticated_related(via, mock_user_teams):
 
     assert response.status_code == 200
     content = response.json()
-    assert len(content["results"]) == 3
-    assert sorted(content["results"], key=lambda x: x["id"]) == sorted(
+    assert len(content) == 3
+    assert sorted(content, key=lambda x: x["id"]) == sorted(
         [
             {
                 "id": str(user_access.id),
@@ -219,7 +215,7 @@ def test_api_template_accesses_update_anonymous():
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     api_client = APIClient()
@@ -252,7 +248,7 @@ def test_api_template_accesses_update_authenticated_unrelated():
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -294,7 +290,7 @@ def test_api_template_accesses_update_authenticated_editor_or_reader(
     new_values = {
         "id": uuid4(),
         "user": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -398,7 +394,7 @@ def test_api_template_accesses_update_administrator_from_owner(via, mock_user_te
     new_values = {
         "id": uuid4(),
         "user_id": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -497,7 +493,7 @@ def test_api_template_accesses_update_owner(via, mock_user_teams):
     new_values = {
         "id": uuid4(),
         "user_id": factories.UserFactory().id,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     for field, value in new_values.items():
@@ -778,3 +774,26 @@ def test_api_template_accesses_delete_owners_last_owner(via, mock_user_teams):
 
     assert response.status_code == 403
     assert models.TemplateAccess.objects.count() == 2
+
+
+def test_api_template_accesses_throttling(settings):
+    """Test api template accesses throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template_access"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template_access"] = "2/minute"
+    template = factories.TemplateFactory()
+    user = factories.UserFactory()
+    factories.UserTemplateAccessFactory(
+        template=template, user=user, role="administrator"
+    )
+    client = APIClient()
+    client.force_login(user)
+    for _i in range(2):
+        response = client.get(f"/api/v1.0/templates/{template.id!s}/accesses/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get(f"/api/v1.0/templates/{template.id!s}/accesses/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope template_access", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["template_access"] = current_rate

@@ -1,21 +1,38 @@
-FROM node:20-alpine AS y-provider-builder
+FROM node:22-alpine AS base
+
+# Upgrade system packages to install security updates
+RUN apk update && \
+  apk upgrade && \
+  rm -rf /var/cache/apk/*
+
+FROM base AS y-provider-deps
 
 WORKDIR /home/frontend/
 
 COPY ./src/frontend/package.json ./package.json
 COPY ./src/frontend/yarn.lock ./yarn.lock
 COPY ./src/frontend/servers/y-provider/package.json ./servers/y-provider/package.json
-COPY ./src/frontend/packages/eslint-config-impress/package.json ./packages/eslint-config-impress/package.json
+COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
 
 RUN yarn install
 
-COPY ./src/frontend/packages/eslint-config-impress ./packages/eslint-config-impress
+COPY ./src/frontend/packages/eslint-plugin-docs ./packages/eslint-plugin-docs
 COPY ./src/frontend/servers/y-provider ./servers/y-provider
+
+FROM y-provider-deps AS y-provider-development
+
+WORKDIR /home/frontend/servers/y-provider
+
+EXPOSE 4444
+
+CMD [ "yarn", "dev"]
+
+FROM y-provider-deps AS y-provider-builder
 
 WORKDIR /home/frontend/servers/y-provider
 RUN yarn build
 
-FROM node:20-alpine AS y-provider
+FROM base AS y-provider
 
 WORKDIR /home/frontend/
 
@@ -30,6 +47,9 @@ COPY --from=y-provider-builder \
     ./dist
 
 RUN NODE_ENV=production yarn install --frozen-lockfile
+
+# Remove npm, contains CVE related to cross-spawn and we don't use it.
+RUN rm -rf /usr/local/bin/npm /usr/local/lib/node_modules/npm
 
 # Un-privileged user running the application
 ARG DOCKER_USER

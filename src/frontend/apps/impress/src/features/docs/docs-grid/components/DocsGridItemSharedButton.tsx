@@ -1,66 +1,57 @@
-import { Button } from '@openfun/cunningham-react';
-import { useMemo } from 'react';
+import { Button, Tooltip } from '@openfun/cunningham-react';
+import { useTranslation } from 'react-i18next';
 
-import { Box, Icon } from '@/components';
-
-import { Doc, LinkReach } from '../../doc-management';
+import { Box, Icon, Text } from '@/components';
+import { Doc } from '@/docs/doc-management';
 
 type Props = {
   doc: Doc;
   handleClick: () => void;
+  disabled: boolean;
 };
-export const DocsGridItemSharedButton = ({ doc, handleClick }: Props) => {
-  const isPublic = doc.link_reach === LinkReach.PUBLIC;
-  const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
-  const isRestricted = doc.link_reach === LinkReach.RESTRICTED;
-  const sharedCount = doc.nb_accesses - 1;
-  const isShared = sharedCount > 0;
+export const DocsGridItemSharedButton = ({
+  doc,
+  handleClick,
+  disabled,
+}: Props) => {
+  const { t } = useTranslation();
+  const sharedCount = doc.nb_accesses_direct;
+  const isShared = sharedCount - 1 > 0;
 
-  const icon = useMemo(() => {
-    if (isPublic) {
-      return 'public';
-    }
-    if (isAuthenticated) {
-      return 'corporate_fare';
-    }
-    if (isRestricted) {
-      return 'group';
-    }
-
-    return undefined;
-  }, [isPublic, isAuthenticated, isRestricted]);
-
-  if (!icon) {
-    return null;
-  }
-
-  if (!doc.abilities.accesses_view) {
-    return (
-      <Box $align="center" $width="100%">
-        <Icon $variation="800" $theme="primary" iconName={icon} />
-      </Box>
-    );
+  if (!isShared) {
+    return <Box $minWidth="50px">&nbsp;</Box>;
   }
 
   return (
-    <Button
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        handleClick();
-      }}
-      fullWidth
-      color={isRestricted ? 'tertiary' : 'primary'}
-      size="nano"
-      icon={
-        <Icon
-          $variation={isRestricted ? '800' : '000'}
-          $theme={isRestricted ? 'primary' : 'greyscale'}
-          iconName={icon}
-        />
+    <Tooltip
+      content={
+        <Text $textAlign="center" $variation="000">
+          {t('Shared with {{count}} users', { count: sharedCount })}
+        </Text>
       }
+      placement="top"
+      className="--docs--doc-tooltip-grid-item-shared-button"
     >
-      {isShared ? sharedCount : undefined}
-    </Button>
+      <Button
+        className="--docs--doc-grid-item-shared-button"
+        aria-label={t('Open the sharing settings for the document')}
+        data-testid={`docs-grid-item-shared-button-${doc.id}`}
+        style={{
+          minWidth: '50px',
+          justifyContent: 'center',
+        }}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          handleClick();
+        }}
+        color="tertiary"
+        size="nano"
+        icon={<Icon $theme="primary" iconName="group" disabled={disabled} />}
+        disabled={disabled}
+      >
+        {sharedCount}
+      </Button>
+    </Tooltip>
   );
 };

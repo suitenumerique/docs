@@ -3,8 +3,15 @@ import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 
 import { APIError } from '@/api';
-import { Box, BoxButton, InfiniteScroll, Text, TextErrors } from '@/components';
-import { Doc } from '@/features/docs/doc-management';
+import {
+  Box,
+  BoxButton,
+  Icon,
+  InfiniteScroll,
+  Text,
+  TextErrors,
+} from '@/components';
+import { Doc } from '@/docs/doc-management';
 import { useDate } from '@/hook';
 
 import { useDocVersionsInfiniteQuery } from '../api/useDocVersions';
@@ -68,9 +75,7 @@ const VersionListState = ({
             causes={error.cause}
             icon={
               error.status === 502 ? (
-                <Text $isMaterialIcon $theme="danger">
-                  wifi_off
-                </Text>
+                <Icon iconName="wifi_off" $theme="danger" />
               ) : undefined
             }
           />
@@ -109,7 +114,10 @@ export const VersionList = ({
   }, [] as Versions[]);
 
   return (
-    <Box $css="overflow-y: auto; overflow-x: hidden;">
+    <Box
+      $css="overflow-y: auto; overflow-x: hidden;"
+      className="--docs--version-list"
+    >
       <InfiniteScroll
         hasMore={hasNextPage}
         isLoading={isFetchingNextPage}

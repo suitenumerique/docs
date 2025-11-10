@@ -3,10 +3,11 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { registerRoute } from 'workbox-routing';
 import { NetworkFirst, NetworkOnly } from 'workbox-strategies';
 
-import { ApiPlugin } from './ApiPlugin';
 import { DocsDB } from './DocsDB';
 import { SyncManager } from './SyncManager';
 import { DAYS_EXP, SW_DEV_API, getCacheNameVersion } from './conf';
+import { ApiPlugin } from './plugins/ApiPlugin';
+import { OfflinePlugin } from './plugins/OfflinePlugin';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -23,6 +24,9 @@ export const isApiUrl = (href: string) => {
   );
 };
 
+const isDocumentApiUrl = (url: URL) =>
+  isApiUrl(url.href) && /.*\/documents\/([a-z0-9-]+)\/$/g.test(url.href);
+
 /**
  * API routes
  */
@@ -37,14 +41,14 @@ registerRoute(
         type: 'list',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',
 );
 
 registerRoute(
-  ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+  ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
@@ -52,20 +56,21 @@ registerRoute(
         type: 'item',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',
 );
 
 registerRoute(
-  ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+  ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
         type: 'update',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'PATCH',
@@ -79,20 +84,21 @@ registerRoute(
         type: 'create',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'POST',
 );
 
 registerRoute(
-  ({ url }) =>
-    isApiUrl(url.href) && url.href.match(/.*\/documents\/([a-z0-9\-]+)\/$/g),
+  ({ url }) => isDocumentApiUrl(url),
   new NetworkOnly({
     plugins: [
       new ApiPlugin({
         type: 'delete',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'DELETE',
@@ -111,6 +117,7 @@ registerRoute(
         type: 'synch',
         syncManager,
       }),
+      new OfflinePlugin(),
     ],
   }),
   'GET',

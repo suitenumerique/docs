@@ -1,7 +1,7 @@
 import { Command } from 'cmdk';
 import { ReactNode } from 'react';
 
-import { Box } from '../Box';
+import { Box, Text } from '@/components';
 
 import { QuickSearchData } from './QuickSearch';
 import { QuickSearchItem } from './QuickSearchItem';
@@ -18,11 +18,12 @@ export const QuickSearchGroup = <T,>({
   renderElement,
 }: Props<T>) => {
   return (
-    <Box $margin={{ top: 'base' }}>
+    <Box $margin={{ top: 'sm' }}>
       <Command.Group
         key={group.groupName}
         heading={group.groupName}
         forceMount={false}
+        contentEditable={false}
       >
         {group.startActions?.map((action, index) => {
           return (
@@ -58,7 +59,13 @@ export const QuickSearchGroup = <T,>({
           );
         })}
         {group.emptyString && group.elements.length === 0 && (
-          <span className="ml-b clr-greyscale-500">{group.emptyString}</span>
+          <Text
+            $variation="500"
+            $margin={{ left: '2xs', bottom: '3xs' }}
+            $size="sm"
+          >
+            {group.emptyString}
+          </Text>
         )}
       </Command.Group>
     </Box>

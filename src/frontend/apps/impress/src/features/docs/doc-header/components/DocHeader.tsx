@@ -1,17 +1,23 @@
-import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import { Box, HorizontalSeparator, Icon, Text } from '@/components';
+import { Box, HorizontalSeparator, Text } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
   LinkReach,
-  currentDocRole,
+  Role,
+  getDocLinkReach,
+  useIsCollaborativeEditable,
   useTrans,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
+import { useDate } from '@/hook';
 import { useResponsiveStore } from '@/stores';
 
+import { AlertNetwork } from './AlertNetwork';
+import { AlertPublic } from './AlertPublic';
+import { AlertRestore } from './AlertRestore';
+import { BoutonShare } from './BoutonShare';
 import { DocTitle } from './DocTitle';
 import { DocToolBox } from './DocToolBox';
 
@@ -20,49 +26,43 @@ interface DocHeaderProps {
 }
 
 export const DocHeader = ({ doc }: DocHeaderProps) => {
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
-
   const { t } = useTranslation();
-  const docIsPublic = doc.link_reach === LinkReach.PUBLIC;
-
   const { transRole } = useTrans();
+  const { isEditable } = useIsCollaborativeEditable(doc);
+  const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
+  const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
+  const { relativeDate, calculateDaysLeft } = useDate();
+  const { data: config } = useConfig();
+  const isDeletedDoc = !!doc.deleted_at;
+
+  let dateToDisplay = t('Last update: {{update}}', {
+    update: relativeDate(doc.updated_at),
+  });
+
+  if (config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
+    const daysLeft = calculateDaysLeft(
+      doc.deleted_at,
+      config.TRASHBIN_CUTOFF_DAYS,
+    );
+
+    dateToDisplay = `${t('Days remaining:')} ${daysLeft} ${t('days', { count: daysLeft })}`;
+  }
 
   return (
     <>
       <Box
         $width="100%"
-        $padding={{ top: isDesktop ? '4xl' : 'md' }}
-        $gap={spacings['base']}
+        $padding={{ top: isDesktop ? '50px' : 'md' }}
+        $gap={spacingsTokens['base']}
         aria-label={t('It is the card information about the document.')}
+        className="--docs--doc-header"
       >
-        {docIsPublic && (
-          <Box
-            aria-label={t('Public document')}
-            $color={colors['primary-800']}
-            $background={colors['primary-100']}
-            $radius={spacings['3xs']}
-            $direction="row"
-            $padding="xs"
-            $flex={1}
-            $align="center"
-            $gap={spacings['3xs']}
-            $css={css`
-              border: 1px solid var(--c--theme--colors--primary-300, #e3e3fd);
-            `}
-          >
-            <Icon
-              $theme="primary"
-              $variation="800"
-              data-testid="public-icon"
-              iconName="public"
-            />
-            <Text $theme="primary" $variation="800">
-              {t('Public document')}
-            </Text>
-          </Box>
+        {isDeletedDoc && <AlertRestore doc={doc} />}
+        {!isEditable && <AlertNetwork />}
+        {(docIsPublic || docIsAuth) && (
+          <AlertPublic isPublicDoc={docIsPublic} />
         )}
         <Box
           $direction="row"
@@ -76,31 +76,48 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             $css="flex:1;"
             $gap="0.5rem 1rem"
             $align="center"
+            $maxWidth="100%"
           >
-            <Box $gap={spacings['3xs']}>
+            <Box $gap={spacingsTokens['3xs']} $overflow="auto">
               <DocTitle doc={doc} />
 
               <Box $direction="row">
                 {isDesktop && (
                   <>
-                    <Text $variation="600" $size="s" $weight="bold">
-                      {transRole(currentDocRole(doc.abilities))}&nbsp;·&nbsp;
+                    <Text
+                      $variation="600"
+                      $size="s"
+                      $weight="bold"
+                      $theme={isEditable ? 'greyscale' : 'warning'}
+                    >
+                      {transRole(
+                        isEditable
+                          ? doc.user_role || doc.link_role
+                          : Role.READER,
+                      )}
+                      &nbsp;·&nbsp;
                     </Text>
                     <Text $variation="600" $size="s">
-                      {t('Last update: {{update}}', {
-                        update: DateTime.fromISO(doc.updated_at).toRelative(),
-                      })}
+                      {dateToDisplay}
                     </Text>
                   </>
                 )}
                 {!isDesktop && (
                   <Text $variation="400" $size="s">
-                    {DateTime.fromISO(doc.updated_at).toRelative()}
+                    {dateToDisplay}
                   </Text>
                 )}
               </Box>
             </Box>
-            <DocToolBox doc={doc} />
+            {!isDeletedDoc && <DocToolBox doc={doc} />}
+            {isDeletedDoc && (
+              <BoutonShare
+                doc={doc}
+                open={() => {}}
+                displayNbAccess={true}
+                isDisabled
+              />
+            )}
           </Box>
         </Box>
         <HorizontalSeparator $withPadding={false} />

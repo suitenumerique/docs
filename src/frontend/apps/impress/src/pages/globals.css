@@ -1,4 +1,9 @@
 @import url('../cunningham/cunningham-style.css');
+@import url('@fontsource/material-icons');
+@import url('@fontsource/material-icons-outlined');
+@import url('@fontsource-variable/material-symbols-outlined');
+@import url('@fontsource-variable/inter');
+@import url('/assets/fonts/Marianne/Marianne-font.css');
 
 body {
   margin: 0;
@@ -40,4 +45,61 @@ main ::-webkit-scrollbar-thumb:hover,
   font: inherit;
   cursor: pointer;
   outline: inherit;
+}
+
+.material-icons,
+.material-icons-filled,
+.material-symbols-outlined {
+  font-family: 'Material Icons Outlined', 'Material Icons', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px; /* Preferred icon size */
+  display: inline-block;
+  text-transform: none;
+  letter-spacing: normal;
+  overflow-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizelegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+.material-icons-filled {
+  font-family: 'Material Icons', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined Variable', sans-serif;
+}
+
+[data-nextjs-dialog-overlay] {
+  display: none !important;
+}
+
+nextjs-portal {
+  display: none;
+}
+
+/* Screen reader only - visually hidden but accessible to screen readers */
+.sr-only {
+  position: fixed !important;
+  width: 1px !important;
+  height: 1px !important;
+  transform: translateX(-100vw) !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }

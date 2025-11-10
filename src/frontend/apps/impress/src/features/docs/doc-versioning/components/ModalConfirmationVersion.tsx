@@ -14,7 +14,7 @@ import {
   base64ToYDoc,
   useProviderStore,
   useUpdateDoc,
-} from '@/features/docs/doc-management/';
+} from '@/docs/doc-management/';
 
 import { useDocVersion } from '../api';
 import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
@@ -42,7 +42,7 @@ export const ModalConfirmationVersion = ({
   const { push } = useRouter();
   const { provider } = useProviderStore();
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
       const onDisplaySuccess = () => {
         toast(t('Version restored successfully'), VariantType.SUCCESS);
@@ -69,10 +69,11 @@ export const ModalConfirmationVersion = ({
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      aria-describedby="modal-confirmation-version-title"
       rightActions={
         <>
           <Button
-            aria-label={t('Close the modal')}
+            aria-label={`${t('Cancel')} - ${t('Warning')}`}
             color="secondary"
             fullWidth
             onClick={() => onClose()}
@@ -100,17 +101,28 @@ export const ModalConfirmationVersion = ({
           </Button>
         </>
       }
-      size={ModalSize.MEDIUM}
+      size={ModalSize.SMALL}
       title={
-        <Text $size="h6" $align="flex-start">
+        <Text
+          as="h1"
+          $margin="0"
+          id="modal-confirmation-version-title"
+          $size="h6"
+          $align="flex-start"
+          $variation="1000"
+        >
           {t('Warning')}
         </Text>
       }
     >
-      <Box aria-label={t('Modal confirmation to restore the version')}>
+      <Box className="--docs--modal-confirmation-version">
         <Box>
-          <Text>{t('Your current document will revert to this version.')}</Text>
-          <Text>{t('If a member is editing, his works can be lost.')}</Text>
+          <Text $variation="600" as="p">
+            {t('Your current document will revert to this version.')}
+          </Text>
+          <Text $variation="600" as="p">
+            {t('If a member is editing, his works can be lost.')}
+          </Text>
         </Box>
       </Box>
     </Modal>

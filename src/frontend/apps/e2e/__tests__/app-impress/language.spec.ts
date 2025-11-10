@@ -1,29 +1,81 @@
 import { expect, test } from '@playwright/test';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
+import { TestLanguage, createDoc, waitForLanguageSwitch } from './utils-common';
+import { openSuggestionMenu } from './utils-editor';
 
 test.describe('Language', () => {
-  test('checks the language picker', async ({ page }) => {
-    await expect(page.getByLabel('Logout')).toBeVisible();
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
 
+  test('checks language switching', async ({ page }) => {
     const header = page.locator('header').first();
-    await header.getByRole('combobox').getByText('English').click();
-    await header.getByRole('option', { name: 'Français' }).click();
+    const languagePicker = header.locator('.--docs--language-picker-text');
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-us');
+
+    // initial language should be english
     await expect(
-      header.getByRole('combobox').getByText('Français'),
+      page.getByRole('button', {
+        name: 'New doc',
+      }),
+    ).toBeVisible();
+
+    // switch to french
+    await waitForLanguageSwitch(page, TestLanguage.French);
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+
+    await expect(
+      header.getByRole('button').getByText('Français'),
     ).toBeVisible();
 
     await expect(page.getByLabel('Se déconnecter')).toBeVisible();
 
-    await header.getByRole('combobox').getByText('Français').click();
-    await header.getByRole('option', { name: 'Deutsch' }).click();
-    await expect(
-      header.getByRole('combobox').getByText('Deutsch'),
-    ).toBeVisible();
+    // Switch to German using the utility function for consistency
+    await waitForLanguageSwitch(page, TestLanguage.German);
+    await expect(header.getByRole('button').getByText('Deutsch')).toBeVisible();
 
     await expect(page.getByLabel('Abmelden')).toBeVisible();
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+
+    await languagePicker.click();
+
+    await expect(page.locator('[role="menu"]')).toBeVisible();
+
+    const menuItems = page.getByRole('menuitem');
+    await expect(menuItems.first()).toBeVisible();
+
+    await menuItems.first().click();
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(languagePicker).toContainText('English');
+  });
+
+  test('can switch language using only keyboard', async ({ page }) => {
+    await page.goto('/');
+    await waitForLanguageSwitch(page, TestLanguage.English);
+
+    const languagePicker = page.getByRole('button', {
+      name: /select language/i,
+    });
+
+    await expect(languagePicker).toBeVisible();
+
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+
+    await page.keyboard.press('Enter');
+
+    const menu = page.getByRole('menu');
+    await expect(menu).toBeVisible();
+
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator('html')).not.toHaveAttribute('lang', 'en-us');
   });
 
   test('checks that backend uses the same language as the frontend', async ({
@@ -31,18 +83,11 @@ test.describe('Language', () => {
   }) => {
     // Helper function to intercept and assert 404 response
     const check404Response = async (expectedDetail: string) => {
-      const expectedBackendResponse = page.waitForResponse(
-        (response) =>
-          response.url().includes('/api') &&
-          response.url().includes('non-existent-doc-uuid') &&
-          response.status() === 404,
+      const interceptedBackendResponse = await page.request.get(
+        'http://localhost:8071/api/v1.0/documents/non-existent-doc-uuid/',
       );
 
-      // Trigger the specific 404 XHR response by navigating to a non-existent document
-      await page.goto('/docs/non-existent-doc-uuid');
-
       // Assert that the intercepted error message is in the expected language
-      const interceptedBackendResponse = await expectedBackendResponse;
       expect(await interceptedBackendResponse.json()).toStrictEqual({
         detail: expectedDetail,
       });
@@ -51,12 +96,30 @@ test.describe('Language', () => {
     // Check for English 404 response
     await check404Response('Not found.');
 
-    // Switch language to French
-    const header = page.locator('header').first();
-    await header.getByRole('combobox').getByText('English').click();
-    await header.getByRole('option', { name: 'Français' }).click();
+    await waitForLanguageSwitch(page, TestLanguage.French);
 
     // Check for French 404 response
     await check404Response('Pas trouvé.');
+  });
+
+  test('it check translations of the slash menu when changing language', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-toolbar', browserName, 1);
+
+    const editor = await openSuggestionMenu({ page });
+    await expect(page.getByText('Headings', { exact: true })).toBeVisible();
+
+    await editor.click(); // close the menu
+
+    await expect(page.getByText('Headings', { exact: true })).toBeHidden();
+
+    // Change language to French
+    await waitForLanguageSwitch(page, TestLanguage.French);
+
+    // Trigger slash menu to show french menu
+    await openSuggestionMenu({ page });
+    await expect(page.getByText('Titres', { exact: true })).toBeVisible();
   });
 });

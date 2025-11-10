@@ -23,7 +23,7 @@ def test_api_template_accesses_create_anonymous():
         {
             "user": str(other_user.id),
             "template": str(template.id),
-            "role": random.choice(models.RoleChoices.choices)[0],
+            "role": random.choice(models.RoleChoices.values),
         },
         format="json",
     )
@@ -133,7 +133,7 @@ def test_api_template_accesses_create_authenticated_administrator(via, mock_user
 
     assert response.status_code == 403
     assert response.json() == {
-        "detail": "Only owners of a resource can assign other users as owners."
+        "detail": "Only owners of a template can assign other users as owners."
     }
 
     # It should be allowed to create a lower access

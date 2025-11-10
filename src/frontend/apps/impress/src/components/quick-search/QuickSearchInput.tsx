@@ -16,6 +16,9 @@ type Props = {
   placeholder?: string;
   children?: ReactNode;
   withSeparator?: boolean;
+  listId?: string;
+  onUserInteract?: () => void;
+  isExpanded?: boolean;
 };
 export const QuickSearchInput = ({
   loading,
@@ -24,10 +27,12 @@ export const QuickSearchInput = ({
   placeholder,
   children,
   withSeparator: separator = true,
+  listId,
+  onUserInteract,
+  isExpanded,
 }: Props) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
 
   if (children) {
     return (
@@ -44,23 +49,33 @@ export const QuickSearchInput = ({
         $direction="row"
         $align="center"
         className="quick-search-input"
-        $gap={spacing['2xs']}
-        $padding={{ all: 'base' }}
+        $gap={spacingsTokens['2xs']}
+        $padding={{ horizontal: 'base', vertical: 'sm' }}
       >
-        {!loading && <Icon iconName="search" $variation="600" />}
+        {!loading && (
+          <Icon iconName="search" $variation="600" aria-hidden="true" />
+        )}
         {loading && (
           <div>
             <Loader size="small" />
           </div>
         )}
         <Command.Input
-          /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus={true}
           aria-label={t('Quick search input')}
+          aria-expanded={isExpanded}
+          aria-controls={listId}
+          onClick={(e) => {
+            e.stopPropagation();
+            onUserInteract?.();
+          }}
+          onKeyDown={() => onUserInteract?.()}
           value={inputValue}
           role="combobox"
           placeholder={placeholder ?? t('Search')}
           onValueChange={onFilter}
+          maxLength={254}
+          data-testid="quick-search-input"
         />
       </Box>
       {separator && <HorizontalSeparator $withPadding={false} />}

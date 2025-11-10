@@ -4,10 +4,8 @@ Test throttling on documents for the AI endpoint.
 
 from unittest.mock import patch
 
-from django.core.cache import cache
 from django.test import override_settings
 
-import pytest
 from rest_framework.response import Response
 from rest_framework.test import APIRequestFactory
 from rest_framework.views import APIView
@@ -23,12 +21,6 @@ class DocumentAPIView(APIView):
     def get(self, request, *args, **kwargs):
         """Minimal get method for testing purposes."""
         return Response({"message": "Success"})
-
-
-@pytest.fixture(autouse=True)
-def clear_cache():
-    """Fixture to clear the cache before each test."""
-    cache.clear()
 
 
 @override_settings(AI_DOCUMENT_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})

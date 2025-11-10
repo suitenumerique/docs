@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 
 import pytest
 
-from core import factories
+from core import factories, models
 
 pytestmark = pytest.mark.django_db
 
@@ -123,22 +123,50 @@ def test_models_document_access_get_abilities_for_owner_of_self_allowed():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
-def test_models_document_access_get_abilities_for_owner_of_self_last():
+def test_models_document_access_get_abilities_for_owner_of_self_last_on_root(
+    django_assert_num_queries,
+):
     """
-    Check abilities of self access for the owner of a document when there is only one owner left.
+    Check abilities of self access for the owner of a root document when there
+    is only one owner left.
     """
     access = factories.UserDocumentAccessFactory(role="owner")
-    abilities = access.get_abilities(access.user)
+
+    with django_assert_num_queries(2):
+        abilities = access.get_abilities(access.user)
+
     assert abilities == {
         "destroy": False,
         "retrieve": True,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
+    }
+
+
+def test_models_document_access_get_abilities_for_owner_of_self_last_on_child(
+    django_assert_num_queries,
+):
+    """
+    Check abilities of self access for the owner of a child document when there
+    is only one owner left.
+    """
+    parent = factories.DocumentFactory()
+    access = factories.UserDocumentAccessFactory(document__parent=parent, role="owner")
+
+    with django_assert_num_queries(1):
+        abilities = access.get_abilities(access.user)
+
+    assert abilities == {
+        "destroy": True,
+        "retrieve": True,
+        "update": True,
+        "partial_update": True,
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -155,7 +183,7 @@ def test_models_document_access_get_abilities_for_owner_of_owner():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -172,7 +200,7 @@ def test_models_document_access_get_abilities_for_owner_of_administrator():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["owner", "editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -189,7 +217,7 @@ def test_models_document_access_get_abilities_for_owner_of_editor():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["owner", "administrator", "reader"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -206,7 +234,7 @@ def test_models_document_access_get_abilities_for_owner_of_reader():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["owner", "administrator", "editor"],
+        "set_role_to": ["reader", "editor", "administrator", "owner"],
     }
 
 
@@ -243,7 +271,7 @@ def test_models_document_access_get_abilities_for_administrator_of_administrator
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["editor", "reader"],
+        "set_role_to": ["reader", "editor", "administrator"],
     }
 
 
@@ -260,7 +288,7 @@ def test_models_document_access_get_abilities_for_administrator_of_editor():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "reader"],
+        "set_role_to": ["reader", "editor", "administrator"],
     }
 
 
@@ -277,7 +305,7 @@ def test_models_document_access_get_abilities_for_administrator_of_reader():
         "retrieve": True,
         "update": True,
         "partial_update": True,
-        "set_role_to": ["administrator", "editor"],
+        "set_role_to": ["reader", "editor", "administrator"],
     }
 
 
@@ -294,7 +322,7 @@ def test_models_document_access_get_abilities_for_editor_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -311,7 +339,7 @@ def test_models_document_access_get_abilities_for_editor_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -333,7 +361,7 @@ def test_models_document_access_get_abilities_for_editor_of_editor_user(
 
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -353,7 +381,7 @@ def test_models_document_access_get_abilities_for_reader_of_owner():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -370,7 +398,7 @@ def test_models_document_access_get_abilities_for_reader_of_administrator():
     abilities = access.get_abilities(user)
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -392,7 +420,7 @@ def test_models_document_access_get_abilities_for_reader_of_reader_user(
 
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
@@ -400,20 +428,28 @@ def test_models_document_access_get_abilities_for_reader_of_reader_user(
 
 
 def test_models_document_access_get_abilities_preset_role(django_assert_num_queries):
-    """No query is done if the role is preset, e.g., with a query annotation."""
+    """No query is done if user roles are preset on the document, e.g., with a query annotation."""
     access = factories.UserDocumentAccessFactory(role="reader")
     user = factories.UserDocumentAccessFactory(
         document=access.document, role="reader"
     ).user
-    access.user_roles = ["reader"]
+    access.set_user_roles_tuple(None, "reader")
 
     with django_assert_num_queries(0):
         abilities = access.get_abilities(user)
 
     assert abilities == {
         "destroy": False,
-        "retrieve": True,
+        "retrieve": False,
         "update": False,
         "partial_update": False,
         "set_role_to": [],
     }
+
+
+@pytest.mark.parametrize("role", models.RoleChoices)
+def test_models_document_access_get_abilities_retrieve_own_access(role):
+    """Check abilities of self access for the owner of a document."""
+    access = factories.UserDocumentAccessFactory(role=role)
+    abilities = access.get_abilities(access.user)
+    assert abilities["retrieve"] is True

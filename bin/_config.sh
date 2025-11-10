@@ -6,8 +6,7 @@ REPO_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd)"
 UNSET_USER=0
 
 TERRAFORM_DIRECTORY="./env.d/terraform"
-COMPOSE_FILE="${REPO_DIR}/docker-compose.yml"
-COMPOSE_PROJECT="docs"
+COMPOSE_FILE="${REPO_DIR}/compose.yml"
 
 
 # _set_user: set (or unset) default user id used to run docker commands
@@ -39,10 +38,13 @@ function _set_user() {
 # options: docker compose command options
 # ARGS   : docker compose command arguments
 function _docker_compose() {
+    # Set DOCKER_USER for Windows compatibility with MinIO
+    if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || -n "${WSL_DISTRO_NAME:-}" ]]; then
+        export DOCKER_USER="0:0"
+    fi
 
-    echo "🐳(compose) project: '${COMPOSE_PROJECT}' file: '${COMPOSE_FILE}'"
+    echo "🐳(compose) file: '${COMPOSE_FILE}'"
     docker compose \
-        -p "${COMPOSE_PROJECT}" \
         -f "${COMPOSE_FILE}" \
         --project-directory "${REPO_DIR}" \
         "$@"

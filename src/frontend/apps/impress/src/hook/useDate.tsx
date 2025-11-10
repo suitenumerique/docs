@@ -21,5 +21,17 @@ export const useDate = () => {
       .toLocaleString(format);
   };
 
-  return { formatDate };
+  const relativeDate = (date: string): string => {
+    return DateTime.fromISO(date).setLocale(i18n.language).toRelative() || '';
+  };
+
+  const calculateDaysLeft = (date: string, daysLimit: number): number =>
+    Math.max(
+      0,
+      Math.ceil(
+        DateTime.fromISO(date).plus({ days: daysLimit }).diffNow('days').days,
+      ),
+    );
+
+  return { formatDate, relativeDate, calculateDaysLeft };
 };

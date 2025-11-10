@@ -9,10 +9,9 @@ import { css } from 'styled-components';
 
 import { APIError } from '@/api';
 import { Box } from '@/components';
-import { User } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, Role } from '@/features/docs';
-import { useLanguage } from '@/i18n/hooks/useLanguage';
+import { Doc, Role } from '@/docs/doc-management';
+import { User } from '@/features/auth';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
@@ -40,14 +39,11 @@ export const DocShareAddMemberList = ({
 }: Props) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
+
   const [isLoading, setIsLoading] = useState(false);
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const { contentLanguage } = useLanguage();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
   const canShare = doc.abilities.accesses_manage;
-  const spacing = spacingsTokens();
-  const color = colorsTokens();
-
   const { mutateAsync: createInvitation } = useCreateDocInvitation();
   const { mutateAsync: createDocAccess } = useCreateDocAccess();
 
@@ -90,13 +86,12 @@ export const DocShareAddMemberList = ({
       const payload = {
         role: invitationRole,
         docId: doc.id,
-        contentLanguage,
       };
 
       return isInvitationMode
         ? createInvitation({
             ...payload,
-            email: user.email,
+            email: user.email.toLowerCase(),
           })
         : createDocAccess({
             ...payload,
@@ -118,20 +113,21 @@ export const DocShareAddMemberList = ({
     <Box
       data-testid="doc-share-add-member-list"
       $direction="row"
-      $padding={spacing.sm}
+      $padding={spacingsTokens.sm}
       $align="center"
-      $background={color['greyscale-050']}
-      $radius={spacing['3xs']}
+      $background={colorsTokens['greyscale-050']}
+      $radius={spacingsTokens['3xs']}
       $css={css`
-        border: 1px solid ${color['greyscale-200']};
+        border: 1px solid ${colorsTokens['greyscale-200']};
       `}
+      className="--docs--doc-share-add-member-list"
     >
       <Box
         $direction="row"
         $align="center"
         $wrap="wrap"
         $flex={1}
-        $gap={spacing.xs}
+        $gap={spacingsTokens.xs}
       >
         {selectedUsers.map((user) => (
           <DocShareAddMemberListItem
@@ -141,7 +137,7 @@ export const DocShareAddMemberList = ({
           />
         ))}
       </Box>
-      <Box $direction="row" $align="center" $gap={spacing.xs}>
+      <Box $direction="row" $align="center" $gap={spacingsTokens.xs}>
         <DocRoleDropdown
           canUpdate={canShare}
           currentRole={invitationRole}

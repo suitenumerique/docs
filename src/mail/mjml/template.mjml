@@ -1,0 +1,59 @@
+<mjml>
+  <mj-include path="./partial/header.mjml" />
+
+  <mj-body mj-class="bg--blue-100">
+    <mj-wrapper css-class="wrapper" padding="5px 25px 0px 25px">
+      <mj-section css-class="wrapper-logo">
+        <mj-column>
+          <mj-image
+            align="center"
+            src="{{logo_img}}"
+            width="320px"
+            align="left"
+            alt="{%trans 'Logo email' %}"
+          />
+        </mj-column>
+      </mj-section>
+      <mj-section mj-class="bg--white-100" padding="0px 20px 60px 20px">
+        <mj-column>
+          <mj-text align="center">
+            <h1>{{title|capfirst}}</h1>
+          </mj-text>
+          <!-- Main Message -->
+          <mj-text>
+            {{message|capfirst}}
+            <a href="{{link}}">{{document_title}}</a>
+          </mj-text>
+          <mj-button
+            href="{{link}}"
+            background-color="#000091"
+            color="white"
+            padding-bottom="30px"
+          >
+            {% trans "Open"%}
+          </mj-button>
+          <mj-divider
+            border-width="1px"
+            border-style="solid"
+            border-color="#DDDDDD"
+            width="30%"
+            align="center"
+          />
+          <mj-text>
+            {% blocktrans %}
+              Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team.
+            {% endblocktrans %}
+          </mj-text>
+          <!-- Signature -->
+          <mj-text>
+            <p>
+              {% blocktrans %}
+                Brought to you by {{brandname}}
+              {% endblocktrans %}
+            </p>
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>

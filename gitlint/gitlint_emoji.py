@@ -31,7 +31,7 @@ class GitmojiTitle(LineRule):
             "https://raw.githubusercontent.com/carloscuesta/gitmoji/master/packages/gitmojis/src/gitmojis.json"
         ).json()["gitmojis"]
         emojis = [item["emoji"] for item in gitmojis]
-        pattern = r"^({:s})\(.*\)\s[a-z].*$".format("|".join(emojis))
+        pattern = r"^({:s})\(.*\)\s[a-zA-Z].*$".format("|".join(emojis))
         if not re.search(pattern, title):
             violation_msg = 'Title does not match regex "<gitmoji>(<scope>) <subject>"'
             return [RuleViolation(self.id, violation_msg, title)]

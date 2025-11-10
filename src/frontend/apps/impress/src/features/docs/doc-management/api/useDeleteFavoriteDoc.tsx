@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/features/docs';
+
+import { Doc } from '../types';
 
 export type DeleteFavoriteDocParams = Pick<Doc, 'id'>;
 
@@ -20,18 +21,18 @@ export const deleteFavoriteDoc = async ({ id }: DeleteFavoriteDocParams) => {
 
 interface DeleteFavoriteDocProps {
   onSuccess?: () => void;
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 }
 
 export function useDeleteFavoriteDoc({
   onSuccess,
-  listInvalideQueries,
+  listInvalidQueries,
 }: DeleteFavoriteDocProps) {
   const queryClient = useQueryClient();
   return useMutation<void, APIError, DeleteFavoriteDocParams>({
     mutationFn: deleteFavoriteDoc,
     onSuccess: () => {
-      listInvalideQueries?.forEach((queryKey) => {
+      listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });

@@ -3,18 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, HorizontalSeparator } from '@/components';
-import { Doc, useCopyDocLink } from '@/features/docs';
+import { Doc, useCopyDocLink } from '@/docs/doc-management';
 
 import { DocVisibility } from './DocVisibility';
 
-type Props = {
+type DocShareModalFooterProps = {
   doc: Doc;
   onClose: () => void;
 };
 
-export const DocShareModalFooter = ({ doc, onClose }: Props) => {
-  const canShare = doc.abilities.accesses_manage;
-
+export const DocShareModalFooter = ({
+  doc,
+  onClose,
+}: DocShareModalFooterProps) => {
   const copyDocLink = useCopyDocLink(doc.id);
   const { t } = useTranslation();
   return (
@@ -22,14 +23,13 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
       $css={css`
         flex-shrink: 0;
       `}
+      className="--docs--doc-share-modal-footer"
     >
-      <HorizontalSeparator $withPadding={true} />
-      {canShare && (
-        <>
-          <DocVisibility doc={doc} />
-          <HorizontalSeparator />
-        </>
-      )}
+      <HorizontalSeparator $withPadding={true} customPadding="12px" />
+
+      <DocVisibility doc={doc} />
+      <HorizontalSeparator customPadding="12px" />
+
       <Box
         $direction="row"
         $justify="space-between"
@@ -37,11 +37,13 @@ export const DocShareModalFooter = ({ doc, onClose }: Props) => {
       >
         <Button
           fullWidth={false}
-          onClick={() => {
-            copyDocLink();
-          }}
+          onClick={copyDocLink}
           color="tertiary"
-          icon={<span className="material-icons">add_link</span>}
+          icon={
+            <span className="material-icons" aria-hidden={true}>
+              add_link
+            </span>
+          }
         >
           {t('Copy link')}
         </Button>

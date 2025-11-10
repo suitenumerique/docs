@@ -1,19 +1,25 @@
 # Django impress
 
 # ---- base image to inherit from ----
-FROM python:3.12.6-alpine3.20 AS base
+FROM python:3.13.3-alpine AS base
 
 # Upgrade pip to its latest release to speed up dependencies installation
 RUN python -m pip install --upgrade pip setuptools
 
 # Upgrade system packages to install security updates
-RUN apk update && \
-  apk upgrade
+RUN apk update && apk upgrade --no-cache
 
 # ---- Back-end builder image ----
 FROM base AS back-builder
 
 WORKDIR /builder
+
+# Install Rust and Cargo using Alpine's package manager
+RUN apk add --no-cache \
+  build-base \
+  libffi-dev \
+  rust \
+  cargo
 
 # Copy required python dependencies
 COPY ./src/backend /builder
@@ -23,7 +29,7 @@ RUN mkdir /install && \
 
 
 # ---- mails ----
-FROM node:20 AS mail-builder
+FROM node:24 AS mail-builder
 
 COPY ./src/mail /mail/app
 
@@ -38,7 +44,7 @@ FROM base AS link-collector
 ARG IMPRESS_STATIC_ROOT=/data/static
 
 # Install pango & rdfind
-RUN apk add \
+RUN apk add --no-cache \
   pango \
   rdfind
 
@@ -51,7 +57,7 @@ COPY ./src/backend /app/
 WORKDIR /app
 
 # collectstatic
-RUN DJANGO_CONFIGURATION=Build DJANGO_JWT_PRIVATE_SIGNING_KEY=Dummy \
+RUN DJANGO_CONFIGURATION=Build \
     python manage.py collectstatic --noinput
 
 # Replace duplicated file by a symlink to decrease the overall size of the
@@ -64,7 +70,7 @@ FROM base AS core
 ENV PYTHONUNBUFFERED=1
 
 # Install required system libs
-RUN apk add \
+RUN apk add --no-cache \
   cairo \
   file \
   font-noto \
@@ -72,9 +78,10 @@ RUN apk add \
   gettext \
   gdk-pixbuf \
   libffi-dev \
-  pandoc \
   pango \
   shared-mime-info
+
+RUN wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types -O /etc/mime.types
 
 # Copy entrypoint
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
@@ -87,10 +94,23 @@ RUN chmod g=u /etc/passwd
 # Copy installed python dependencies
 COPY --from=back-builder /install /usr/local
 
+# Link certifi certificate from a static path /cert/cacert.pem to avoid issues
+# when python is upgraded and the path to the certificate changes.
+# The space between print and the ( is intended otherwise the git lint is failing
+RUN mkdir /cert && \
+    path=`python -c 'import certifi;print (certifi.where())'` && \
+    mv $path /cert/ && \
+    ln -s /cert/cacert.pem $path
+
 # Copy impress application (see .dockerignore)
 COPY ./src/backend /app/
 
 WORKDIR /app
+
+# Generate compiled translation messages
+RUN DJANGO_CONFIGURATION=Build \
+    python manage.py compilemessages
+
 
 # We wrap commands run in this container by the following entrypoint that
 # creates a user on-the-fly with the container user ID (see USER) and root group
@@ -104,7 +124,7 @@ FROM core AS backend-development
 USER root:root
 
 # Install psql
-RUN apk add postgresql-client
+RUN apk add --no-cache postgresql-client
 
 # Uninstall impress and re-install it in editable mode along with development
 # dependencies
@@ -125,6 +145,9 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # ---- Production image ----
 FROM core AS backend-production
+
+# Remove apk cache, we don't need it anymore
+RUN rm -rf /var/cache/apk/*
 
 ARG IMPRESS_STATIC_ROOT=/data/static
 

@@ -1,26 +1,51 @@
-import { useModal } from '@openfun/cunningham-react';
-import { DateTime } from 'luxon';
+import { Tooltip, useModal } from '@openfun/cunningham-react';
+import { useSearchParams } from 'next/navigation';
+import { KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, StyledLink, Text } from '@/components';
-import { Doc } from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
+import { Box, Icon, StyledLink, Text } from '@/components';
+import { useConfig } from '@/core';
+import { useCunninghamTheme } from '@/cunningham';
+import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
+import { useDate } from '@/hook';
 import { useResponsiveStore } from '@/stores';
+
+import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import { DocsGridActions } from './DocsGridActions';
 import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
-import { SimpleDocItem } from './SimpleDocItem';
+import { DocsGridTrashbinActions } from './DocsGridTrashbinActions';
 
 type DocsGridItemProps = {
   doc: Doc;
+  dragMode?: boolean;
 };
-export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
-  const { isDesktop } = useResponsiveStore();
 
+export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
+  const searchParams = useSearchParams();
+  const target = searchParams.get('target');
+  const isInTrashbin = target === 'trashbin';
+
+  const { t } = useTranslation();
+  const { isDesktop } = useResponsiveStore();
+  const { flexLeft, flexRight } = useResponsiveDocGrid();
+  const { spacingsTokens } = useCunninghamTheme();
   const shareModal = useModal();
+  const isPublic = doc.link_reach === LinkReach.PUBLIC;
+  const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
+  const isShared = isPublic || isAuthenticated;
 
   const handleShareClick = () => {
     shareModal.open();
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      (e.target as HTMLAnchorElement).click();
+    }
   };
 
   return (
@@ -29,56 +54,177 @@ export const DocsGridItem = ({ doc }: DocsGridItemProps) => {
         $direction="row"
         $width="100%"
         $align="center"
-        $gap="20px"
         role="row"
-        $padding={{ vertical: '2xs', horizontal: isDesktop ? 'base' : 'xs' }}
+        $gap="20px"
+        $padding={{ vertical: '4xs', horizontal: isDesktop ? 'base' : 'xs' }}
         $css={css`
           cursor: pointer;
           border-radius: 4px;
           &:hover {
-            background-color: var(--c--theme--colors--greyscale-100);
+            background-color: ${dragMode
+              ? 'none'
+              : 'var(--c--theme--colors--greyscale-100)'};
           }
         `}
+        className="--docs--doc-grid-item"
+        aria-label={t('Open document: {{title}}', {
+          title: doc.title || t('Untitled document'),
+        })}
       >
-        <StyledLink
-          $css="flex: 8; align-items: center;"
-          href={`/docs/${doc.id}`}
-        >
-          <Box
-            data-testid={`docs-grid-name-${doc.id}`}
-            $flex={6}
-            $padding={{ right: 'base' }}
-          >
-            <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
-          </Box>
-          {isDesktop && (
-            <Box $flex={2}>
-              <Text $variation="600" $size="xs">
-                {DateTime.fromISO(doc.updated_at).toRelative()}
-              </Text>
-            </Box>
-          )}
-        </StyledLink>
         <Box
-          $flex={1.15}
+          $flex={flexLeft}
+          role="gridcell"
+          $css={css`
+            align-items: center;
+            min-width: 0;
+          `}
+        >
+          <StyledLink
+            $css={css`
+              width: 100%;
+              align-items: center;
+              min-width: 0;
+            `}
+            href={`/docs/${doc.id}`}
+            onKeyDown={handleKeyDown}
+          >
+            <Box
+              data-testid={`docs-grid-name-${doc.id}`}
+              $direction="row"
+              $align="center"
+              $gap={spacingsTokens.xs}
+              $padding={{ right: isDesktop ? 'md' : '3xs' }}
+              $maxWidth="100%"
+            >
+              <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
+              {isShared && (
+                <Box
+                  $padding={{ top: !isDesktop ? '4xs' : undefined }}
+                  $css={
+                    !isDesktop
+                      ? css`
+                          align-self: flex-start;
+                        `
+                      : undefined
+                  }
+                >
+                  {dragMode && (
+                    <>
+                      <Icon
+                        $theme="greyscale"
+                        $variation="600"
+                        $size="14px"
+                        iconName={isPublic ? 'public' : 'vpn_lock'}
+                      />
+                      <span className="sr-only">
+                        {isPublic
+                          ? t('Accessible to anyone')
+                          : t('Accessible to authenticated users')}
+                      </span>
+                    </>
+                  )}
+                  {!dragMode && (
+                    <Tooltip
+                      content={
+                        <Text $textAlign="center" $variation="000">
+                          {isPublic
+                            ? t('Accessible to anyone')
+                            : t('Accessible to authenticated users')}
+                        </Text>
+                      }
+                      placement="top"
+                    >
+                      <div>
+                        <Icon
+                          $theme="greyscale"
+                          $variation="600"
+                          $size="14px"
+                          iconName={isPublic ? 'public' : 'vpn_lock'}
+                        />
+                        <span className="sr-only">
+                          {isPublic
+                            ? t('Accessible to anyone')
+                            : t('Accessible to authenticated users')}
+                        </span>
+                      </div>
+                    </Tooltip>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </StyledLink>
+        </Box>
+
+        <Box
+          $flex={flexRight}
           $direction="row"
           $align="center"
-          $justify="flex-end"
+          $justify={isDesktop ? 'space-between' : 'flex-end'}
           $gap="32px"
+          role="gridcell"
         >
-          {isDesktop && (
-            <DocsGridItemSharedButton
-              doc={doc}
-              handleClick={handleShareClick}
-            />
-          )}
+          <DocsGridItemDate
+            doc={doc}
+            isDesktop={isDesktop}
+            isInTrashbin={isInTrashbin}
+          />
 
-          <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+          <Box $direction="row" $align="center" $gap={spacingsTokens.lg}>
+            {isDesktop && (
+              <DocsGridItemSharedButton
+                doc={doc}
+                handleClick={handleShareClick}
+                disabled={isInTrashbin}
+              />
+            )}
+            {isInTrashbin ? (
+              <DocsGridTrashbinActions doc={doc} />
+            ) : (
+              <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+            )}
+          </Box>
         </Box>
       </Box>
       {shareModal.isOpen && (
         <DocShareModal doc={doc} onClose={shareModal.close} />
       )}
     </>
+  );
+};
+
+export const DocsGridItemDate = ({
+  doc,
+  isDesktop,
+  isInTrashbin,
+}: {
+  doc: Doc;
+  isDesktop: boolean;
+  isInTrashbin: boolean;
+}) => {
+  const { data: config } = useConfig();
+  const { t } = useTranslation();
+  const { relativeDate, calculateDaysLeft } = useDate();
+
+  if (!isDesktop) {
+    return null;
+  }
+
+  let dateToDisplay = relativeDate(doc.updated_at);
+
+  if (isInTrashbin && config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
+    const daysLeft = calculateDaysLeft(
+      doc.deleted_at,
+      config.TRASHBIN_CUTOFF_DAYS,
+    );
+
+    dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
+  }
+
+  return (
+    <StyledLink href={`/docs/${doc.id}`}>
+      <Text $variation="600" $size="xs">
+        {dateToDisplay}
+      </Text>
+    </StyledLink>
   );
 };

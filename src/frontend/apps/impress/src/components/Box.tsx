@@ -1,4 +1,4 @@
-import { ComponentPropsWithRef, ReactHTML } from 'react';
+import { ComponentPropsWithRef, HTMLElementType } from 'react';
 import styled from 'styled-components';
 import { CSSProperties, RuleSet } from 'styled-components/dist/types';
 
@@ -11,11 +11,12 @@ import {
 import { hideEffect, showEffect } from './Effect';
 
 export interface BoxProps {
-  as?: keyof ReactHTML;
+  as?: HTMLElementType;
   $align?: CSSProperties['alignItems'];
   $background?: CSSProperties['background'];
   $color?: CSSProperties['color'];
   $css?: string | RuleSet<object>;
+  $cursor?: CSSProperties['cursor'];
   $direction?: CSSProperties['flexDirection'];
   $display?: CSSProperties['display'];
   $effect?: 'show' | 'hide';
@@ -24,6 +25,7 @@ export interface BoxProps {
   $hasTransition?: boolean | 'slow';
   $height?: CSSProperties['height'];
   $justify?: CSSProperties['justifyContent'];
+  $opacity?: CSSProperties['opacity'];
   $overflow?: CSSProperties['overflow'];
   $margin?: MarginPadding;
   $maxHeight?: CSSProperties['maxHeight'];
@@ -34,7 +36,30 @@ export interface BoxProps {
   $position?: CSSProperties['position'];
   $radius?: CSSProperties['borderRadius'];
   $shrink?: CSSProperties['flexShrink'];
+  $theme?:
+    | 'primary'
+    | 'primary-text'
+    | 'secondary'
+    | 'secondary-text'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'greyscale';
   $transition?: CSSProperties['transition'];
+  $variation?:
+    | 'text'
+    | '000'
+    | '100'
+    | '200'
+    | '300'
+    | '400'
+    | '500'
+    | '600'
+    | '700'
+    | '800'
+    | '900'
+    | '1000';
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $zIndex?: CSSProperties['zIndex'];
@@ -43,13 +68,13 @@ export interface BoxProps {
 export type BoxType = ComponentPropsWithRef<typeof Box>;
 
 export const Box = styled('div')<BoxProps>`
-  display: flex;
-  flex-direction: column;
   ${({ $align }) => $align && `align-items: ${$align};`}
   ${({ $background }) => $background && `background: ${$background};`}
   ${({ $color }) => $color && `color: ${$color};`}
-  ${({ $direction }) => $direction && `flex-direction: ${$direction};`}
-  ${({ $display }) => $display && `display: ${$display};`}
+  ${({ $cursor }) => $cursor && `cursor: ${$cursor};`}
+  ${({ $direction }) => `flex-direction: ${$direction || 'column'};`}
+  ${({ $display, as }) =>
+    `display: ${$display || (as?.match('span|input') ? 'inline-flex' : 'flex')};`}
   ${({ $flex }) => $flex && `flex: ${$flex};`}
   ${({ $gap }) => $gap && `gap: ${$gap};`}
   ${({ $height }) => $height && `height: ${$height};`}
@@ -65,11 +90,18 @@ export const Box = styled('div')<BoxProps>`
   ${({ $minHeight }) => $minHeight && `min-height: ${$minHeight};`}
   ${({ $maxWidth }) => $maxWidth && `max-width: ${$maxWidth};`}
   ${({ $minWidth }) => $minWidth && `min-width: ${$minWidth};`}
+  ${({ $opacity }) => $opacity && `opacity: ${$opacity};`}
   ${({ $overflow }) => $overflow && `overflow: ${$overflow};`}
   ${({ $padding }) => $padding && stylesPadding($padding)}
   ${({ $position }) => $position && `position: ${$position};`}
   ${({ $radius }) => $radius && `border-radius: ${$radius};`}
   ${({ $shrink }) => $shrink && `flex-shrink: ${$shrink};`}
+  ${({ $theme, $variation }) => {
+    if (!$theme || !$variation) {
+      return '';
+    }
+    return `color: var(--c--theme--colors--${$theme}-${$variation});`;
+  }}
   ${({ $transition }) => $transition && `transition: ${$transition};`}
   ${({ $width }) => $width && `width: ${$width};`}
   ${({ $wrap }) => $wrap && `flex-wrap: ${$wrap};`}

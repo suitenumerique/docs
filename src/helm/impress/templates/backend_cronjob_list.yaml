@@ -1,0 +1,108 @@
+{{- if .Values.backend.cronjobs -}}
+{{- $envVars := include "impress.common.env" (list . .Values.backend) -}}
+{{- $fullName := include "impress.backend.fullname" . -}}
+{{- $component := "backend" -}}
+apiVersion: batch/v1
+kind: CronJobList
+items:
+{{- range .Values.backend.cronjobs }}
+  - apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: {{ $fullName }}-{{ .name }}
+      namespace: {{ $.Release.Namespace | quote }}
+      labels:
+        {{- include "impress.common.labels" (list $ $component) | nindent 8 }}
+    spec:
+      schedule: {{ .schedule }}
+      concurrencyPolicy: {{ .concurrencyPolicy | default "Forbid" }}
+      successfulJobsHistoryLimit: {{ .successfulJobsHistoryLimit | default 3 }}
+      failedJobsHistoryLimit: {{ .failedJobsHistoryLimit | default 1 }}
+      jobTemplate:
+        spec:
+          template:
+            metadata:
+              name: {{ $fullName }}-{{ .name }}
+            spec:
+              {{- if $.Values.image.credentials }}
+              imagePullSecrets:
+                - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+              {{- end}}
+              shareProcessNamespace: {{ $.Values.backend.shareProcessNamespace }}
+              containers:
+                {{- with $.Values.backend.sidecars }}
+                  {{- toYaml . | nindent 18 }}
+                {{- end }}
+                - name: {{ $.Chart.Name }}
+                  image: "{{ ($.Values.backend.image | default dict).repository | default $.Values.image.repository }}:{{ ($.Values.backend.image | default dict).tag | default $.Values.image.tag }}"
+                  imagePullPolicy: {{ ($.Values.backend.image | default dict).pullPolicy | default $.Values.image.pullPolicy }}
+                  args:
+                    {{- toYaml .command | nindent 22 }}
+                  env:
+                    {{- if $envVars}}
+                    {{- $envVars | indent 22 }}
+                    {{- end }}
+                  {{- with $.Values.backend.securityContext }}
+                  securityContext:
+                    {{- toYaml . | nindent 22 }}
+                  {{- end }}
+                  {{- with $.Values.backend.resources }}
+                  resources:
+                    {{- toYaml . | nindent 22 }}
+                  {{- end }}
+                  volumeMounts:
+                    {{- range $index, $value := $.Values.mountFiles }}
+                    - name: "files-{{ $index }}"
+                      mountPath: {{ $value.path }}
+                      subPath: content
+                    {{- end }}
+                    {{- range $name, $volume := $.Values.backend.persistence }}
+                    - name: "{{ $name }}"
+                      mountPath: "{{ $volume.mountPath }}"
+                    {{- end }}
+                    {{- range $.Values.backend.extraVolumeMounts }}
+                    - name: {{ .name }}
+                      mountPath: {{ .mountPath }}
+                      subPath: {{ .subPath | default "" }}
+                      readOnly: {{ .readOnly }}
+                    {{- end }}
+              restartPolicy: {{ .restartPolicy | default "Never" }}
+              volumes:
+                {{- range $index, $value := $.Values.mountFiles }}
+                - name: "files-{{ $index }}"
+                  configMap:
+                    name: "{{ include "impress.fullname" $ }}-files-{{ $index }}"
+                {{- end }}
+                {{- range $name, $volume := $.Values.backend.persistence }}
+                - name: "{{ $name }}"
+                  {{- if eq $volume.type "emptyDir" }}
+                  emptyDir: {}
+                  {{- else }}
+                  persistentVolumeClaim:
+                    claimName: "{{ $fullName }}-{{ $name }}"
+                  {{- end }}
+                {{- end }}
+                {{- range $.Values.backend.extraVolumes }}
+                - name: {{ .name }}
+                  {{- if .existingClaim }}
+                  persistentVolumeClaim:
+                    claimName: {{ .existingClaim }}
+                  {{- else if .hostPath }}
+                  hostPath:
+                    {{ toYaml .hostPath | nindent 22 }}
+                  {{- else if .csi }}
+                  csi:
+                    {{- toYaml .csi | nindent 22 }}
+                  {{- else if .configMap }}
+                  configMap:
+                    {{- toYaml .configMap | nindent 22 }}
+                  {{- else if .emptyDir }}
+                  emptyDir:
+                    {{- toYaml .emptyDir | nindent 22 }}
+                  {{- else }}
+                  emptyDir: {}
+                  {{- end }}
+                {{- end }}
+
+{{- end }}
+{{- end }}

@@ -24,6 +24,9 @@ export type BoxButtonType = BoxType & {
  */
 const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
   ({ $css, ...props }, ref) => {
+    const theme = props.$theme || 'greyscale';
+    const variation = props.$variation || '400';
+
     return (
       <Box
         ref={ref}
@@ -31,19 +34,26 @@ const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
         $background="none"
         $margin="none"
         $padding="none"
+        $hasTransition
         $css={css`
           cursor: ${props.disabled ? 'not-allowed' : 'pointer'};
           border: none;
           outline: none;
-          transition: all 0.2s ease-in-out;
           font-family: inherit;
-
           color: ${props.disabled
-            ? 'var(--c--theme--colors--greyscale-400) !important'
-            : 'inherit'};
+            ? `var(--c--theme--colors--${theme}-400) !important`
+            : `inherit`};
+
+          &:focus-visible {
+            transition: none;
+            outline: 2px solid var(--c--theme--colors--${theme}-${variation});
+            border-radius: 1px;
+            outline-offset: 4px;
+          }
           ${$css || ''}
         `}
         {...props}
+        className={`--docs--box-button ${props.className || ''}`}
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
           if (props.disabled) {
             return;

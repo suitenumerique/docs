@@ -1,0 +1,29 @@
+services:
+
+  frontend:
+    user: "${DOCKER_USER:-1000}"
+    build: 
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
+      target: frontend-production
+      args:
+        API_ORIGIN: "http://localhost:8071"
+        PUBLISH_AS_MIT: "false"
+        SW_DEACTIVATED: "true"
+    image: impress:frontend-production
+    ports:
+      - "3000:3000"
+
+  y-provider:
+    user: ${DOCKER_USER:-1000}
+    build: 
+      context: .
+      dockerfile: ./src/frontend/servers/y-provider/Dockerfile
+      target: y-provider
+    image: impress:y-provider-production
+    restart: unless-stopped
+    env_file:
+      - env.d/development/common
+      - env.d/development/common.local
+    ports:
+      - "4444:4444"

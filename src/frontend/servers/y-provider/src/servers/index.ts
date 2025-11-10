@@ -1,2 +1,2 @@
 export * from './appServer';
-export * from './hocusPocusServer';
+export * from './hocuspocusServer';

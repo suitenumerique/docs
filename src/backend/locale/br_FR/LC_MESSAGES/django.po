@@ -1,0 +1,426 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: lasuite-docs\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-14 07:19+0000\n"
+"PO-Revision-Date: 2025-10-14 13:09\n"
+"Last-Translator: \n"
+"Language-Team: Breton\n"
+"Language: br_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=5; plural=(n%10==1 && (n%100!=11 || n%100!=71 || n%100!=91) ? 0 : n%10==2 && (n%100!=12 || n%100!=72 || n%100!=92) ? 1 : ((n%10>=3 && n%10<=4) || n%10==9) && ((n%100 < 10 || n%100 > 19) || (n%100 < 70 || n%100 > 79) || (n%100 < 90 || n%100 > 99)) ? 2 : (n!=0 && n%1;\n"
+"X-Crowdin-Project: lasuite-docs\n"
+"X-Crowdin-Project-ID: 754523\n"
+"X-Crowdin-Language: br-FR\n"
+"X-Crowdin-File: backend-impress.pot\n"
+"X-Crowdin-File-ID: 18\n"
+
+#: build/lib/core/admin.py:37 core/admin.py:37
+msgid "Personal info"
+msgstr "Titouroù personel"
+
+#: build/lib/core/admin.py:50 build/lib/core/admin.py:138 core/admin.py:50
+#: core/admin.py:138
+msgid "Permissions"
+msgstr "Aotreoù"
+
+#: build/lib/core/admin.py:62 core/admin.py:62
+msgid "Important dates"
+msgstr "Deiziadoù a-bouez"
+
+#: build/lib/core/admin.py:148 core/admin.py:148
+msgid "Tree structure"
+msgstr "Gwezennadur"
+
+#: build/lib/core/api/filters.py:47 core/api/filters.py:47
+msgid "Title"
+msgstr "Titl"
+
+#: build/lib/core/api/filters.py:61 core/api/filters.py:61
+msgid "Creator is me"
+msgstr "Me eo an aozer"
+
+#: build/lib/core/api/filters.py:64 core/api/filters.py:64
+msgid "Masked"
+msgstr "Kuzhet"
+
+#: build/lib/core/api/filters.py:67 core/api/filters.py:67
+msgid "Favorite"
+msgstr "Sinedoù"
+
+#: build/lib/core/api/serializers.py:496 core/api/serializers.py:496
+msgid "A new document was created on your behalf!"
+msgstr "Ur restr nevez a zo bet krouet ganeoc'h!"
+
+#: build/lib/core/api/serializers.py:500 core/api/serializers.py:500
+msgid "You have been granted ownership of a new document:"
+msgstr "C'hwi zo bet disklaeriet perc'henn ur restr nevez:"
+
+#: build/lib/core/api/serializers.py:536 core/api/serializers.py:536
+msgid "This field is required."
+msgstr "Ar vaezienn-mañ a zo rekis."
+
+#: build/lib/core/api/serializers.py:547 core/api/serializers.py:547
+#, python-format
+msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
+msgstr ""
+
+#: build/lib/core/api/serializers.py:693 core/api/serializers.py:693
+msgid "Body"
+msgstr "Korf"
+
+#: build/lib/core/api/serializers.py:696 core/api/serializers.py:696
+msgid "Body type"
+msgstr "Doare korf"
+
+#: build/lib/core/api/serializers.py:702 core/api/serializers.py:702
+msgid "Format"
+msgstr "Stumm"
+
+#: build/lib/core/api/viewsets.py:983 core/api/viewsets.py:983
+#, python-brace-format
+msgid "copy of {title}"
+msgstr "eilenn {title}"
+
+#: build/lib/core/choices.py:35 build/lib/core/choices.py:42 core/choices.py:35
+#: core/choices.py:42
+msgid "Reader"
+msgstr "Lenner"
+
+#: build/lib/core/choices.py:36 build/lib/core/choices.py:43 core/choices.py:36
+#: core/choices.py:43
+msgid "Editor"
+msgstr "Embanner"
+
+#: build/lib/core/choices.py:44 core/choices.py:44
+msgid "Administrator"
+msgstr "Merour"
+
+#: build/lib/core/choices.py:45 core/choices.py:45
+msgid "Owner"
+msgstr "Perc'henn"
+
+#: build/lib/core/choices.py:56 core/choices.py:56
+msgid "Restricted"
+msgstr "Strishaet"
+
+#: build/lib/core/choices.py:60 core/choices.py:60
+msgid "Authenticated"
+msgstr "Anavezet"
+
+#: build/lib/core/choices.py:62 core/choices.py:62
+msgid "Public"
+msgstr "Publik"
+
+#: build/lib/core/enums.py:36 core/enums.py:36
+msgid "First child"
+msgstr "Bugel kentañ"
+
+#: build/lib/core/enums.py:37 core/enums.py:37
+msgid "Last child"
+msgstr "Bugel diwezhañ"
+
+#: build/lib/core/enums.py:38 core/enums.py:38
+msgid "First sibling"
+msgstr "Breur pe c'hoar kentañ"
+
+#: build/lib/core/enums.py:39 core/enums.py:39
+msgid "Last sibling"
+msgstr "Liamm diwezhañ"
+
+#: build/lib/core/enums.py:40 core/enums.py:40
+msgid "Left"
+msgstr "Kleiz"
+
+#: build/lib/core/enums.py:41 core/enums.py:41
+msgid "Right"
+msgstr "Dehoù"
+
+#: build/lib/core/models.py:80 core/models.py:80
+msgid "id"
+msgstr "id"
+
+#: build/lib/core/models.py:81 core/models.py:81
+msgid "primary key for the record as UUID"
+msgstr "alc'hwez kentañ evit an enrollañ evel UIID"
+
+#: build/lib/core/models.py:87 core/models.py:87
+msgid "created on"
+msgstr "krouet d'ar/al"
+
+#: build/lib/core/models.py:88 core/models.py:88
+msgid "date and time at which a record was created"
+msgstr "deiziad hag eurvezh krouidigezh an enrolladenn"
+
+#: build/lib/core/models.py:93 core/models.py:93
+msgid "updated on"
+msgstr "hizivaet d'ar/al"
+
+#: build/lib/core/models.py:94 core/models.py:94
+msgid "date and time at which a record was last updated"
+msgstr "deiziad hag eurvezh m'eo bet hizivaet an enrolladenn"
+
+#: build/lib/core/models.py:130 core/models.py:130
+msgid "We couldn't find a user with this sub but the email is already associated with a registered user."
+msgstr "N'hon eus kavet implijer ebet gant an isstrollad-mañ met ar postel a zo liammet ouzh un implijer enrollet."
+
+#: build/lib/core/models.py:141 core/models.py:141
+msgid "sub"
+msgstr "isstrollad"
+
+#: build/lib/core/models.py:142 core/models.py:142
+msgid "Required. 255 characters or fewer. ASCII characters only."
+msgstr ""
+
+#: build/lib/core/models.py:150 core/models.py:150
+msgid "full name"
+msgstr "anv klok"
+
+#: build/lib/core/models.py:151 core/models.py:151
+msgid "short name"
+msgstr "anv berr"
+
+#: build/lib/core/models.py:153 core/models.py:153
+msgid "identity email address"
+msgstr "postel identelezh"
+
+#: build/lib/core/models.py:158 core/models.py:158
+msgid "admin email address"
+msgstr "postel ar merour"
+
+#: build/lib/core/models.py:165 core/models.py:165
+msgid "language"
+msgstr "yezh"
+
+#: build/lib/core/models.py:166 core/models.py:166
+msgid "The language in which the user wants to see the interface."
+msgstr "Ar yezh a vo implijet evit etrefas an implijer."
+
+#: build/lib/core/models.py:174 core/models.py:174
+msgid "The timezone in which the user wants to see times."
+msgstr "Ar gwerzhid-eur a vo implijet evit etrefas an implijer."
+
+#: build/lib/core/models.py:177 core/models.py:177
+msgid "device"
+msgstr "trevnad"
+
+#: build/lib/core/models.py:179 core/models.py:179
+msgid "Whether the user is a device or a real user."
+msgstr "Pe vefe an implijer un aparailh pe un implijer gwirion."
+
+#: build/lib/core/models.py:182 core/models.py:182
+msgid "staff status"
+msgstr "statud ar skipailh"
+
+#: build/lib/core/models.py:184 core/models.py:184
+msgid "Whether the user can log into this admin site."
+msgstr "Ma c'hall an implijer kevreañ ouzh al lec'hienn verañ-mañ."
+
+#: build/lib/core/models.py:187 core/models.py:187
+msgid "active"
+msgstr "oberiant"
+
+#: build/lib/core/models.py:190 core/models.py:190
+msgid "Whether this user should be treated as active. Unselect this instead of deleting accounts."
+msgstr "Ma rank bezañ tretet an implijer-mañ evel oberiant. Diziuzit an dra-mañ e-plas dilemel kontoù."
+
+#: build/lib/core/models.py:202 core/models.py:202
+msgid "user"
+msgstr "implijer"
+
+#: build/lib/core/models.py:203 core/models.py:203
+msgid "users"
+msgstr "implijerien"
+
+#: build/lib/core/models.py:359 build/lib/core/models.py:1282
+#: core/models.py:359 core/models.py:1282
+msgid "title"
+msgstr "titl"
+
+#: build/lib/core/models.py:360 core/models.py:360
+msgid "excerpt"
+msgstr "bomm"
+
+#: build/lib/core/models.py:409 core/models.py:409
+msgid "Document"
+msgstr "Restr"
+
+#: build/lib/core/models.py:410 core/models.py:410
+msgid "Documents"
+msgstr "Restroù"
+
+#: build/lib/core/models.py:422 build/lib/core/models.py:820 core/models.py:422
+#: core/models.py:820
+msgid "Untitled Document"
+msgstr "Restr hep titl"
+
+#: build/lib/core/models.py:855 core/models.py:855
+#, python-brace-format
+msgid "{name} shared a document with you!"
+msgstr "{name} en deus rannet ur restr ganeoc'h!"
+
+#: build/lib/core/models.py:859 core/models.py:859
+#, python-brace-format
+msgid "{name} invited you with the role \"{role}\" on the following document:"
+msgstr "{name} en deus pedet ac'hanoc'h gant ar rol \"{role}\" war ar restr da-heul:"
+
+#: build/lib/core/models.py:865 core/models.py:865
+#, python-brace-format
+msgid "{name} shared a document with you: {title}"
+msgstr "{name} en deus rannet ur restr ganeoc'h: {title}"
+
+#: build/lib/core/models.py:965 core/models.py:965
+msgid "Document/user link trace"
+msgstr "Roud liamm ar restr/an implijer"
+
+#: build/lib/core/models.py:966 core/models.py:966
+msgid "Document/user link traces"
+msgstr "Roudoù liamm ar restr/an implijer"
+
+#: build/lib/core/models.py:972 core/models.py:972
+msgid "A link trace already exists for this document/user."
+msgstr "Ur roud liamm a zo dija evit an restr/an implijer."
+
+#: build/lib/core/models.py:995 core/models.py:995
+msgid "Document favorite"
+msgstr "Restr muiañ-karet"
+
+#: build/lib/core/models.py:996 core/models.py:996
+msgid "Document favorites"
+msgstr "Restroù muiañ-karet"
+
+#: build/lib/core/models.py:1002 core/models.py:1002
+msgid "This document is already targeted by a favorite relation instance for the same user."
+msgstr "Ar restr-mañ a zo ur restr muiañ karet gant an implijer-mañ."
+
+#: build/lib/core/models.py:1024 core/models.py:1024
+msgid "Document/user relation"
+msgstr "Liamm restr/implijer"
+
+#: build/lib/core/models.py:1025 core/models.py:1025
+msgid "Document/user relations"
+msgstr "Liammoù restr/implijer"
+
+#: build/lib/core/models.py:1031 core/models.py:1031
+msgid "This user is already in this document."
+msgstr "An implijer-mañ a zo dija er restr-mañ."
+
+#: build/lib/core/models.py:1037 core/models.py:1037
+msgid "This team is already in this document."
+msgstr "Ar skipailh-mañ a zo dija en restr-mañ."
+
+#: build/lib/core/models.py:1043 build/lib/core/models.py:1368
+#: core/models.py:1043 core/models.py:1368
+msgid "Either user or team must be set, not both."
+msgstr "An implijer pe ar skipailh a rank bezañ termenet, ket an daou avat."
+
+#: build/lib/core/models.py:1189 core/models.py:1189
+msgid "Document ask for access"
+msgstr "Goulenn tizhout ar restr"
+
+#: build/lib/core/models.py:1190 core/models.py:1190
+msgid "Document ask for accesses"
+msgstr "Goulennoù tizhout ar restr"
+
+#: build/lib/core/models.py:1196 core/models.py:1196
+msgid "This user has already asked for access to this document."
+msgstr "An implijer en deus goulennet tizhout ar restr-mañ."
+
+#: build/lib/core/models.py:1261 core/models.py:1261
+#, python-brace-format
+msgid "{name} would like access to a document!"
+msgstr "{name} en defe c'hoant da dizhout ar restr-mañ!"
+
+#: build/lib/core/models.py:1265 core/models.py:1265
+#, python-brace-format
+msgid "{name} would like access to the following document:"
+msgstr "{name} en defe c'hoant da dizhout ar restr da-heul:"
+
+#: build/lib/core/models.py:1271 core/models.py:1271
+#, python-brace-format
+msgid "{name} is asking for access to the document: {title}"
+msgstr "{name} en defe c'hoant da dizhout ar restr: {title}"
+
+#: build/lib/core/models.py:1283 core/models.py:1283
+msgid "description"
+msgstr "deskrivadur"
+
+#: build/lib/core/models.py:1284 core/models.py:1284
+msgid "code"
+msgstr "kod"
+
+#: build/lib/core/models.py:1285 core/models.py:1285
+msgid "css"
+msgstr "css"
+
+#: build/lib/core/models.py:1287 core/models.py:1287
+msgid "public"
+msgstr "publik"
+
+#: build/lib/core/models.py:1289 core/models.py:1289
+msgid "Whether this template is public for anyone to use."
+msgstr "M'eo foran ar patrom-mañ hag implijus gant n'eus forzh piv."
+
+#: build/lib/core/models.py:1295 core/models.py:1295
+msgid "Template"
+msgstr "Patrom"
+
+#: build/lib/core/models.py:1296 core/models.py:1296
+msgid "Templates"
+msgstr "Patromoù"
+
+#: build/lib/core/models.py:1349 core/models.py:1349
+msgid "Template/user relation"
+msgstr "Liamm patrom/implijer"
+
+#: build/lib/core/models.py:1350 core/models.py:1350
+msgid "Template/user relations"
+msgstr "Liammoù patrom/implijer"
+
+#: build/lib/core/models.py:1356 core/models.py:1356
+msgid "This user is already in this template."
+msgstr "An implijer-mañ a zo dija er patrom-mañ."
+
+#: build/lib/core/models.py:1362 core/models.py:1362
+msgid "This team is already in this template."
+msgstr "Ar skipailh-mañ a zo dija er patrom-mañ."
+
+#: build/lib/core/models.py:1439 core/models.py:1439
+msgid "email address"
+msgstr "postel"
+
+#: build/lib/core/models.py:1458 core/models.py:1458
+msgid "Document invitation"
+msgstr "Pedadenn d'ur restr"
+
+#: build/lib/core/models.py:1459 core/models.py:1459
+msgid "Document invitations"
+msgstr "Pedadennoù d'ur restr"
+
+#: build/lib/core/models.py:1479 core/models.py:1479
+msgid "This email is already associated to a registered user."
+msgstr "Ar postel-mañ a zo liammet ouzh un implijer enskrivet."
+
+#: core/templates/mail/html/template.html:153
+#: core/templates/mail/text/template.txt:3
+msgid "Logo email"
+msgstr "Logo ar postel"
+
+#: core/templates/mail/html/template.html:200
+#: core/templates/mail/text/template.txt:10
+msgid "Open"
+msgstr "Digeriñ"
+
+#: core/templates/mail/html/template.html:217
+#: core/templates/mail/text/template.txt:14
+msgid " Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team. "
+msgstr " Docs, hoc'h ostilh nevez ret-holl evit aozañ, rannañ ha kenlabourat war ar restr e skipailh. "
+
+#: core/templates/mail/html/template.html:224
+#: core/templates/mail/text/template.txt:16
+#, python-format
+msgid " Brought to you by %(brandname)s "
+msgstr " Kinniget gant %(brandname)s "
+

@@ -7,6 +7,7 @@ import { Box, BoxType } from '.';
 
 export const Card = ({
   children,
+  className,
   $css,
   ...props
 }: PropsWithChildren<BoxType>) => {
@@ -14,10 +15,11 @@ export const Card = ({
 
   return (
     <Box
+      className={`--docs--card ${className || ''}`}
       $background="white"
       $radius="4px"
       $css={css`
-        border: 1px solid ${colorsTokens()['greyscale-200']};
+        border: 1px solid ${colorsTokens['greyscale-200']};
         ${$css}
       `}
       {...props}

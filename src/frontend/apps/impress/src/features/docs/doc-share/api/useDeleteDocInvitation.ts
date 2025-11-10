@@ -53,17 +53,17 @@ export const useDeleteDocInvitation = (
   >({
     mutationFn: deleteDocInvitation,
     ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC_INVITATIONS],
       });
       if (options?.onSuccess) {
-        options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, onMutateResult, context);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (error, variables, onMutateResult, context) => {
       if (options?.onError) {
-        options.onError(error, variables, context);
+        void options.onError(error, variables, onMutateResult, context);
       }
     },
   });

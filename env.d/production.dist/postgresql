@@ -1,0 +1,11 @@
+# App database configuration
+DB_HOST=postgresql
+DB_NAME=docs
+DB_USER=docs
+DB_PASSWORD=<generate a secure password>
+DB_PORT=5432
+
+# Postgresql db container configuration
+POSTGRES_DB=docs
+POSTGRES_USER=docs
+POSTGRES_PASSWORD=${DB_PASSWORD}

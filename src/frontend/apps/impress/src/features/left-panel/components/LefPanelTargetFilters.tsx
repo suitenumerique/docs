@@ -1,52 +1,54 @@
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, Text } from '@/components';
+import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocDefaultFilter } from '@/features/docs';
+import { DocDefaultFilter } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 
 export const LeftPanelTargetFilters = () => {
   const { t } = useTranslation();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const { togglePanel } = useLeftPanelStore();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
-  const colors = colorsTokens();
 
-  const searchParams = useSearchParams();
   const target =
     (searchParams.get('target') as DocDefaultFilter) ??
     DocDefaultFilter.ALL_DOCS;
 
-  const router = useRouter();
+  const defaultQueries = [
+    {
+      icon: 'apps',
+      label: t('All docs'),
+      targetQuery: DocDefaultFilter.ALL_DOCS,
+    },
+    {
+      icon: 'lock',
+      label: t('My docs'),
+      targetQuery: DocDefaultFilter.MY_DOCS,
+    },
+    {
+      icon: 'group',
+      label: t('Shared with me'),
+      targetQuery: DocDefaultFilter.SHARED_WITH_ME,
+    },
+    {
+      icon: 'delete',
+      label: t('Trashbin'),
+      targetQuery: DocDefaultFilter.TRASHBIN,
+    },
+  ];
 
-  const defaultQueries = useMemo(() => {
-    return [
-      {
-        icon: 'apps',
-        label: t('All docs'),
-        targetQuery: DocDefaultFilter.ALL_DOCS,
-      },
-      {
-        icon: 'lock',
-        label: t('My docs'),
-        targetQuery: DocDefaultFilter.MY_DOCS,
-      },
-      {
-        icon: 'group',
-        label: t('Shared with me'),
-        targetQuery: DocDefaultFilter.SHARED_WITH_ME,
-      },
-    ];
-  }, [t]);
-
-  const onSelectQuery = (query: DocDefaultFilter) => {
+  const buildHref = (query: DocDefaultFilter) => {
     const params = new URLSearchParams(searchParams);
     params.set('target', query);
-    router.replace(`${pathname}?${params.toString()}`);
+    return `${pathname}?${params.toString()}`;
+  };
+
+  const handleClick = () => {
     togglePanel();
   };
 
@@ -54,31 +56,41 @@ export const LeftPanelTargetFilters = () => {
     <Box
       $justify="center"
       $padding={{ horizontal: 'sm' }}
-      $gap={spacing['2xs']}
+      $gap={spacingsTokens['2xs']}
+      className="--docs--left-panel-target-filters"
     >
       {defaultQueries.map((query) => {
         const isActive = target === query.targetQuery;
+        const href = buildHref(query.targetQuery);
 
         return (
-          <BoxButton
-            aria-label={query.label}
+          <StyledLink
             key={query.label}
-            onClick={() => onSelectQuery(query.targetQuery)}
-            $direction="row"
-            aria-selected={isActive}
-            $align="center"
-            $justify="flex-start"
-            $gap={spacing['xs']}
-            $radius={spacing['3xs']}
-            $padding={{ all: '2xs' }}
+            href={href}
+            aria-label={query.label}
+            aria-current={isActive ? 'page' : undefined}
+            onClick={handleClick}
             $css={css`
-              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: flex-start;
+              gap: ${spacingsTokens['xs']};
+              padding: ${spacingsTokens['2xs']};
+              border-radius: ${spacingsTokens['3xs']};
               background-color: ${isActive
-                ? colors['greyscale-100']
-                : undefined};
-              font-weight: ${isActive ? 700 : undefined};
+                ? colorsTokens['greyscale-100']
+                : 'transparent'};
+              font-weight: ${isActive ? 700 : 400};
+              color: inherit;
+              text-decoration: none;
+              cursor: pointer;
               &:hover {
-                background-color: ${colors['greyscale-100']};
+                background-color: ${colorsTokens['greyscale-100']};
+              }
+              &:focus-visible {
+                outline: none !important;
+                box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+                border-radius: 4px;
               }
             `}
           >
@@ -89,7 +101,7 @@ export const LeftPanelTargetFilters = () => {
             <Text $variation={isActive ? '1000' : '700'} $size="sm">
               {query.label}
             </Text>
-          </BoxButton>
+          </StyledLink>
         );
       })}
     </Box>

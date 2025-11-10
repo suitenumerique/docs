@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import { hocusPocusServer } from '@/servers/hocusPocusServer';
+import { hocuspocusServer } from '@/servers';
 import { logger } from '@/utils';
 
 type ResetConnectionsRequestQuery = {
@@ -14,14 +14,7 @@ export const collaborationResetConnectionsHandler = (
   const room = req.query.room;
   const userId = req.headers['x-user-id'];
 
-  logger(
-    'Resetting connections in room:',
-    room,
-    'for user:',
-    userId,
-    'room:',
-    room,
-  );
+  logger('Resetting connections in room:', room, 'for user:', userId);
 
   if (!room) {
     res.status(400).json({ error: 'Room name not provided' });
@@ -32,19 +25,19 @@ export const collaborationResetConnectionsHandler = (
    * If no user ID is provided, close all connections in the room
    */
   if (!userId) {
-    hocusPocusServer.closeConnections(room);
+    hocuspocusServer.hocuspocus.closeConnections(room);
   } else {
     /**
      * Close connections for the user in the room
      */
-    hocusPocusServer.documents.forEach((doc) => {
+    hocuspocusServer.hocuspocus.documents.forEach((doc) => {
       if (doc.name !== room) {
         return;
       }
 
       doc.getConnections().forEach((connection) => {
-        const connectionUserId = connection.request.headers['x-user-id'];
-        if (connectionUserId === userId) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (connection.context.userId === userId) {
           connection.close();
         }
       });

@@ -1,10 +1,7 @@
-import {
-  Button,
-  VariantType,
-  useModal,
-  useToastProvider,
-} from '@openfun/cunningham-react';
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { Button, useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -17,20 +14,33 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore } from '@/features/docs/doc-editor/';
+import Export from '@/docs/doc-export/';
 import {
   Doc,
+  KEY_DOC,
+  KEY_LIST_DOC,
   ModalRemoveDoc,
+  getEmojiAndTitle,
   useCopyDocLink,
-} from '@/features/docs/doc-management';
-import { DocShareModal } from '@/features/docs/doc-share';
+  useCreateFavoriteDoc,
+  useDeleteFavoriteDoc,
+  useDocTitleUpdate,
+  useDocUtils,
+  useDuplicateDoc,
+} from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
-} from '@/features/docs/doc-versioning';
+} from '@/docs/doc-versioning';
+import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
-import { ModalPDF } from './ModalExport';
+import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
+
+import { BoutonShare } from './BoutonShare';
+
+const ModalExport = Export?.ModalExport;
 
 interface DocToolBoxProps {
   doc: Doc;
@@ -38,52 +48,74 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { t } = useTranslation();
-  const hasAccesses = doc.nb_accesses > 1;
+  const treeContext = useTreeContext<Doc>();
   const queryClient = useQueryClient();
-
-  const copyDocLink = useCopyDocLink(doc.id);
+  const router = useRouter();
+  const { isChild, isTopRoot } = useDocUtils(doc);
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
-  const spacings = spacingsTokens();
-  const colors = colorsTokens();
-
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
-  const [isModalPDFOpen, setIsModalPDFOpen] = useState(false);
+  const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
-  const { isSmallMobile, isDesktop } = useResponsiveStore();
-  const { editor } = useEditorStore();
+  const { isSmallMobile, isMobile } = useResponsiveStore();
+  const copyDocLink = useCopyDocLink(doc.id);
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: (data) => {
+      void router.push(`/docs/${data.id}`);
+    },
+  });
+  const { isFeatureFlagActivated } = useAnalytics();
+  const removeFavoriteDoc = useDeleteFavoriteDoc({
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
+  const makeFavoriteDoc = useCreateFavoriteDoc({
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+  });
 
-  const { toast } = useToastProvider();
-  const canViewAccesses = doc.abilities.accesses_view;
+  useEffect(() => {
+    if (selectHistoryModal.isOpen) {
+      return;
+    }
+
+    void queryClient.resetQueries({
+      queryKey: [KEY_LIST_DOC_VERSIONS],
+    });
+  }, [selectHistoryModal.isOpen, queryClient]);
+
+  // Emoji Management
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+  const { updateDocEmoji } = useDocTitleUpdate();
 
   const options: DropdownMenuOption[] = [
-    ...(isSmallMobile
-      ? [
-          {
-            label: canViewAccesses ? t('Share') : t('Copy link'),
-            icon: canViewAccesses ? 'group' : 'link',
-
-            callback: () => {
-              if (canViewAccesses) {
-                modalShare.open();
-                return;
-              }
-              copyDocLink();
-            },
-          },
-          {
-            label: t('Export'),
-            icon: 'download',
-            callback: () => {
-              setIsModalPDFOpen(true);
-            },
-          },
-        ]
-      : []),
-
+    {
+      label: t('Share'),
+      icon: 'group',
+      callback: modalShare.open,
+      show: isSmallMobile,
+    },
+    {
+      label: t('Export'),
+      icon: 'download',
+      callback: () => {
+        setIsModalExportOpen(true);
+      },
+      show: !!ModalExport && isSmallMobile,
+    },
+    {
+      label: doc.is_favorite ? t('Unpin') : t('Pin'),
+      icon: 'push_pin',
+      callback: () => {
+        if (doc.is_favorite) {
+          removeFavoriteDoc.mutate({ id: doc.id });
+        } else {
+          makeFavoriteDoc.mutate({ id: doc.id });
+        }
+      },
+      testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+    },
     {
       label: t('Version history'),
       icon: 'history',
@@ -91,9 +123,32 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         selectHistoryModal.open();
       },
-      show: isDesktop,
+      show: !isMobile,
+      showSeparator: isTopRoot ? true : false,
     },
-
+    {
+      label: t('Remove emoji'),
+      icon: 'emoji_emotions',
+      callback: () => {
+        updateDocEmoji(doc.id, doc.title ?? '', '');
+      },
+      showSeparator: true,
+      show: !!emoji && doc.abilities.partial_update && !isTopRoot,
+    },
+    {
+      label: t('Add emoji'),
+      icon: 'emoji_emotions',
+      callback: () => {
+        updateDocEmoji(doc.id, doc.title ?? '', '📄');
+      },
+      showSeparator: true,
+      show: !emoji && doc.abilities.partial_update && !isTopRoot,
+    },
+    {
+      label: t('Copy link'),
+      icon: 'add_link',
+      callback: copyDocLink,
+    },
     {
       label: t('Copy as {{format}}', { format: 'Markdown' }),
       icon: 'content_copy',
@@ -107,9 +162,24 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         void copyCurrentEditorToClipboard('html');
       },
+      show: isFeatureFlagActivated('CopyAsHTML'),
+      showSeparator: true,
     },
     {
-      label: t('Delete document'),
+      label: t('Duplicate'),
+      icon: 'content_copy',
+      disabled: !doc.abilities.duplicate,
+      callback: () => {
+        duplicateDoc({
+          docId: doc.id,
+          with_accesses: false,
+          canSave: doc.abilities.partial_update,
+        });
+      },
+      showSeparator: true,
+    },
+    {
+      label: isChild ? t('Delete sub-document') : t('Delete document'),
       icon: 'delete',
       disabled: !doc.abilities.destroy,
       callback: () => {
@@ -118,38 +188,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     },
   ];
 
-  const copyCurrentEditorToClipboard = async (
-    asFormat: 'html' | 'markdown',
-  ) => {
-    if (!editor) {
-      toast(t('Editor unavailable'), VariantType.ERROR, { duration: 3000 });
-      return;
-    }
-
-    try {
-      const editorContentFormatted =
-        asFormat === 'html'
-          ? await editor.blocksToHTMLLossy()
-          : await editor.blocksToMarkdownLossy();
-      await navigator.clipboard.writeText(editorContentFormatted);
-      toast(t('Copied to clipboard'), VariantType.SUCCESS, { duration: 3000 });
-    } catch (error) {
-      console.error(error);
-      toast(t('Failed to copy to clipboard'), VariantType.ERROR, {
-        duration: 3000,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (selectHistoryModal.isOpen) {
-      return;
-    }
-
-    void queryClient.resetQueries({
-      queryKey: [KEY_LIST_DOC_VERSIONS],
-    });
-  }, [selectHistoryModal.isOpen, queryClient]);
+  const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
 
   return (
     <Box
@@ -158,106 +197,90 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       $align="center"
       $gap="0.5rem 1.5rem"
       $wrap={isSmallMobile ? 'wrap' : 'nowrap'}
+      className="--docs--doc-toolbox"
     >
       <Box
         $direction="row"
         $align="center"
         $margin={{ left: 'auto' }}
-        $gap={spacings['2xs']}
+        $gap={spacingsTokens['2xs']}
       >
-        {canViewAccesses && !isSmallMobile && (
-          <>
-            {!hasAccesses && (
-              <Button
-                color="tertiary-text"
-                onClick={() => {
-                  modalShare.open();
-                }}
-                size={isSmallMobile ? 'small' : 'medium'}
-              >
-                {t('Share')}
-              </Button>
-            )}
-            {hasAccesses && (
-              <Box
-                $css={css`
-                  .c__button--medium {
-                    height: 32px;
-                    padding: 10px var(--c--theme--spacings--xs);
-                    gap: 7px;
-                  }
-                `}
-              >
-                <Button
-                  color="tertiary"
-                  aria-label="Share button"
-                  icon={
-                    <Icon iconName="group" $theme="primary" $variation="800" />
-                  }
-                  onClick={() => {
-                    modalShare.open();
-                  }}
-                  size={isSmallMobile ? 'small' : 'medium'}
-                >
-                  {doc.nb_accesses - 1}
-                </Button>
-              </Box>
-            )}
-          </>
-        )}
-        {!canViewAccesses && !isSmallMobile && (
+        <BoutonShare
+          doc={doc}
+          open={modalShare.open}
+          isHidden={isSmallMobile}
+          displayNbAccess={doc.abilities.accesses_view}
+        />
+
+        {!isSmallMobile && ModalExport && (
           <Button
-            color="tertiary-text"
-            onClick={() => {
-              copyDocLink();
-            }}
-            size={isSmallMobile ? 'small' : 'medium'}
-          >
-            {t('Copy link')}
-          </Button>
-        )}
-        {!isSmallMobile && (
-          <Button
+            data-testid="doc-open-modal-download-button"
             color="tertiary-text"
             icon={
-              <Icon iconName="download" $theme="primary" $variation="800" />
+              <Icon
+                iconName="download"
+                $theme="primary"
+                $variation="800"
+                aria-hidden={true}
+              />
             }
             onClick={() => {
-              setIsModalPDFOpen(true);
+              setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
+            aria-label={t('Export the document')}
           />
         )}
-        <DropdownMenu options={options}>
-          <IconOptions
-            isHorizontal
-            $theme="primary"
-            $padding={{ all: 'xs' }}
-            $css={css`
-              border-radius: 4px;
-              &:hover {
-                background-color: ${colors['greyscale-100']};
-              }
-              ${isSmallMobile
-                ? css`
-                    padding: 10px;
-                    border: 1px solid ${colors['greyscale-300']};
-                  `
-                : ''}
-            `}
-            aria-label={t('Open the document options')}
-          />
+        <DropdownMenu
+          options={options}
+          label={t('Open the document options')}
+          buttonCss={css`
+            padding: ${spacingsTokens['xs']};
+            &:hover {
+              background-color: ${colorsTokens['greyscale-100']};
+            }
+            ${isSmallMobile
+              ? css`
+                  border: 1px solid ${colorsTokens['greyscale-300']};
+                `
+              : ''}
+          `}
+        >
+          <IconOptions aria-hidden="true" isHorizontal $theme="primary" />
         </DropdownMenu>
       </Box>
 
       {modalShare.isOpen && (
-        <DocShareModal onClose={() => modalShare.close()} doc={doc} />
+        <DocShareModal
+          onClose={() => modalShare.close()}
+          doc={doc}
+          isRootDoc={treeContext?.root?.id === doc.id}
+        />
       )}
-      {isModalPDFOpen && (
-        <ModalPDF onClose={() => setIsModalPDFOpen(false)} doc={doc} />
+      {isModalExportOpen && ModalExport && (
+        <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
       )}
       {isModalRemoveOpen && (
-        <ModalRemoveDoc onClose={() => setIsModalRemoveOpen(false)} doc={doc} />
+        <ModalRemoveDoc
+          onClose={() => setIsModalRemoveOpen(false)}
+          doc={doc}
+          onSuccess={() => {
+            const isTopParent = doc.id === treeContext?.root?.id;
+            const parentId =
+              treeContext?.treeData.getParentId(doc.id) ||
+              treeContext?.root?.id;
+
+            if (isTopParent) {
+              void router.push(`/`);
+            } else if (parentId) {
+              void router.push(`/docs/${parentId}`).then(() => {
+                setTimeout(() => {
+                  treeContext?.treeData.deleteNode(doc.id);
+                }, 100);
+              });
+            }
+          }}
+        />
       )}
       {selectHistoryModal.isOpen && (
         <ModalSelectVersion

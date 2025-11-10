@@ -4,7 +4,7 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore, useHeadingStore } from '@/features/docs/doc-editor';
+import { useEditorStore, useHeadingStore } from '@/docs/doc-editor';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
 import { Heading } from './Heading';
@@ -13,7 +13,6 @@ export const TableContent = () => {
   const { headings } = useHeadingStore();
   const { editor } = useEditorStore();
   const { spacingsTokens } = useCunninghamTheme();
-  const spacing = spacingsTokens();
 
   const [headingIdHighlight, setHeadingIdHighlight] = useState<string>();
 
@@ -48,16 +47,27 @@ export const TableContent = () => {
       }
     };
 
-    document.getElementById(MAIN_LAYOUT_ID)?.addEventListener('scroll', () => {
-      setTimeout(() => {
+    let timeout: NodeJS.Timeout;
+    const scrollFn = () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+
+      timeout = setTimeout(() => {
         handleScroll();
       }, 300);
-    });
+    };
+
+    document
+      .getElementById(MAIN_LAYOUT_ID)
+      ?.addEventListener('scroll', scrollFn);
 
     handleScroll();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      document
+        .getElementById(MAIN_LAYOUT_ID)
+        ?.removeEventListener('scroll', scrollFn);
     };
   }, [headings, setHeadingIdHighlight]);
 
@@ -111,6 +121,7 @@ export const TableContent = () => {
           gap: var(--c--theme--spacings--2xs);
         `}
       `}
+      className="--docs--table-content"
     >
       {!isHover && (
         <BoxButton onClick={onOpen} $justify="center" $align="center">
@@ -146,7 +157,7 @@ export const TableContent = () => {
             </BoxButton>
           </Box>
           <Box
-            $gap={spacing['3xs']}
+            $gap={spacingsTokens['3xs']}
             $css={css`
               overflow-y: auto;
             `}

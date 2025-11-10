@@ -1,22 +1,22 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
-import { APIError, APIList, errorCauses, fetchAPI } from '@/api';
-import { User } from '@/core/auth';
-import { Doc } from '@/features/docs/doc-management';
+import { APIError, errorCauses, fetchAPI } from '@/api';
+import { Doc } from '@/docs/doc-management';
+import { User } from '@/features/auth';
 
 export type UsersParams = {
   query: string;
   docId: Doc['id'];
 };
 
-type UsersResponse = APIList<User>;
+type UsersResponse = User[];
 
 export const getUsers = async ({
   query,
   docId,
 }: UsersParams): Promise<UsersResponse> => {
   const queriesParams = [];
-  queriesParams.push(query ? `q=${query}` : '');
+  queriesParams.push(query ? `q=${encodeURIComponent(query)}` : '');
   queriesParams.push(docId ? `document_id=${docId}` : '');
   const queryParams = queriesParams.filter(Boolean).join('&');
 

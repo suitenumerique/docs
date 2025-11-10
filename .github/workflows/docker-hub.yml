@@ -11,6 +11,7 @@ on:
   pull_request:
     branches:
       - 'main'
+      - 'ci/trivy-fails'
 
 env:
   DOCKER_USER: 1001:127
@@ -30,15 +31,17 @@ jobs:
           images: lasuite/impress-backend
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '--target backend-production -f Dockerfile'
           docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
-        continue-on-error: true
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -46,7 +49,7 @@ jobs:
           context: .
           target: backend-production
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -64,15 +67,17 @@ jobs:
           images: lasuite/impress-frontend
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
+        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '-f src/frontend/Dockerfile --target frontend-production'
           docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-        continue-on-error: true
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -80,8 +85,10 @@ jobs:
           context: .
           file: ./src/frontend/Dockerfile
           target: frontend-production
-          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+            PUBLISH_AS_MIT=false
+          push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -99,15 +106,14 @@ jobs:
           images: lasuite/impress-y-provider
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       -
         name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '-f src/frontend/servers/y-provider/Dockerfile --target y-provider'
-          docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-        continue-on-error: true
+          docker-image-name: 'docker.io/lasuite/impress-y-provider:${{ github.sha }}'
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -116,7 +122,7 @@ jobs:
           file: ./src/frontend/servers/y-provider/Dockerfile
           target: y-provider
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -125,15 +131,11 @@ jobs:
       - build-and-push-frontend
       - build-and-push-backend
     runs-on: ubuntu-latest
-    if: |
-      github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
     steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Call argocd github webhook
-        run: |
-          data='{"ref": "'$GITHUB_REF'","repository": {"html_url":"'$GITHUB_SERVER_URL'/'$GITHUB_REPOSITORY'"}}'
-          sig=$(echo -n ${data} | openssl dgst -sha1 -hmac ''${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET}}'' | awk '{print "X-Hub-Signature: sha1="$2}')
-          curl -X POST -H 'X-GitHub-Event:push' -H "Content-Type: application/json" -H "${sig}" --data "${data}" ${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}
+      - uses: numerique-gouv/action-argocd-webhook-notification@main
+        id: notify
+        with:
+          deployment_repo_path: "${{ secrets.DEPLOYMENT_REPO_URL }}"
+          argocd_webhook_secret: "${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET }}"
+          argocd_url: "${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}"

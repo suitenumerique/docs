@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0004_migrate_is_public_to_link_reach'),
+        ("core", "0004_migrate_is_public_to_link_reach"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='document',
-            name='title',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='title'),
+            model_name="document",
+            name="title",
+            field=models.CharField(
+                blank=True, max_length=255, null=True, verbose_name="title"
+            ),
         ),
     ]

@@ -17,7 +17,6 @@ export const QuickSearchItemContent = ({
   right,
 }: QuickSearchItemContentProps) => {
   const { spacingsTokens } = useCunninghamTheme();
-  const spacings = spacingsTokens();
 
   const { isDesktop } = useResponsiveStore();
 
@@ -25,14 +24,15 @@ export const QuickSearchItemContent = ({
     <Box
       $direction="row"
       $align="center"
-      $padding={{ horizontal: '2xs', vertical: '3xs' }}
+      $padding={{ horizontal: '2xs', vertical: '4xs' }}
       $justify="space-between"
+      $minHeight="34px"
       $width="100%"
     >
       <Box
         $direction="row"
         $align="center"
-        $gap={spacings['2xs']}
+        $gap={spacingsTokens['2xs']}
         $width="100%"
       >
         {left}

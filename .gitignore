@@ -30,6 +30,7 @@ MANIFEST
 .next/
 
 # Translations	# Translations
+*.mo
 *.pot
 
 # Environments
@@ -39,8 +40,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-env.d/development/*
-!env.d/development/*.dist
+env.d/development/*.local
 env.d/terraform
 
 # npm
@@ -75,3 +75,6 @@ db.sqlite3
 .vscode/
 *.iml
 .devcontainer
+
+# Cursor rules
+.cursorrules

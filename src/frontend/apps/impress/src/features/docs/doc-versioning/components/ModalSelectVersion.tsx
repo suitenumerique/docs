@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
-import { DocEditor } from '@/features/docs/doc-editor';
-import { Doc } from '@/features/docs/doc-management';
+import { Box, ButtonCloseModal, Text } from '@/components';
+import { Doc } from '@/docs/doc-management';
 
 import { Versions } from '../types';
 
+import { DocVersionEditor } from './DocVersionEditor';
 import { ModalConfirmationVersion } from './ModalConfirmationVersion';
 import { VersionList } from './VersionList';
 
@@ -36,8 +36,9 @@ export const ModalSelectVersion = ({
   const { t } = useTranslation();
   const [selectedVersionId, setSelectedVersionId] =
     useState<Versions['version_id']>();
-
+  const canRestore = doc.abilities.partial_update;
   const restoreModal = useModal();
+
   return (
     <>
       <Modal
@@ -46,16 +47,25 @@ export const ModalSelectVersion = ({
         closeOnClickOutside={true}
         size={ModalSize.EXTRA_LARGE}
         onClose={onClose}
+        aria-describedby="modal-select-version-title"
       >
         <NoPaddingStyle />
         <Box
           aria-label="version history modal"
-          className="noPadding"
+          className="--docs--modal-select-version noPadding"
           $direction="row"
           $height="100%"
           $maxHeight="calc(100vh - 2em - 12px)"
           $overflow="hidden"
         >
+          <Text
+            as="h1"
+            $margin="0"
+            id="modal-select-version-title"
+            className="sr-only"
+          >
+            {t('Version history')}
+          </Text>
           <Box
             $css={css`
               display: flex;
@@ -71,7 +81,10 @@ export const ModalSelectVersion = ({
               $align="center"
             >
               {selectedVersionId && (
-                <DocEditor doc={doc} versionId={selectedVersionId} />
+                <DocVersionEditor
+                  docId={doc.id}
+                  versionId={selectedVersionId}
+                />
               )}
               {!selectedVersionId && (
                 <Box $align="center" $justify="center" $height="100%">
@@ -113,11 +126,10 @@ export const ModalSelectVersion = ({
                 <Text $size="h6" $variation="1000" $weight="bold">
                   {t('History')}
                 </Text>
-                <Button
+                <ButtonCloseModal
+                  aria-label={t('Close the version history modal')}
                   onClick={onClose}
                   size="nano"
-                  color="primary-text"
-                  icon={<Icon iconName="close" />}
                 />
               </Box>
 
@@ -127,21 +139,23 @@ export const ModalSelectVersion = ({
                 selectedVersionId={selectedVersionId}
               />
             </Box>
-            <Box
-              $padding="xs"
-              $css={css`
-                border-top: 1px solid var(--c--theme--colors--greyscale-200);
-              `}
-            >
-              <Button
-                fullWidth
-                disabled={!selectedVersionId}
-                onClick={restoreModal.open}
-                color="primary"
+            {canRestore && (
+              <Box
+                $padding="xs"
+                $css={css`
+                  border-top: 1px solid var(--c--theme--colors--greyscale-200);
+                `}
               >
-                {t('Restore')}
-              </Button>
-            </Box>
+                <Button
+                  fullWidth
+                  disabled={!selectedVersionId}
+                  onClick={restoreModal.open}
+                  color="primary"
+                >
+                  {t('Restore')}
+                </Button>
+              </Box>
+            )}
           </Box>
         </Box>
       </Modal>

@@ -75,15 +75,11 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.customBackends Add custom backends to ingress
   customBackends: []
 
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-response-headers
-  ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/auth-url
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/enable-websocket
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-read-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/proxy-send-timeout
   ## @param ingressCollaborationWS.annotations.nginx.ingress.kubernetes.io/upstream-hash-by
   annotations:
-    nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Can-Edit, X-User-Id"
-    nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/collaboration-auth/
     nginx.ingress.kubernetes.io/enable-websocket: "true"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
@@ -166,10 +162,13 @@ ingressMedia:
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-url
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/auth-response-headers
   ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/upstream-vhost
+  ## @param ingressMedia.annotations.nginx.ingress.kubernetes.io/configuration-snippet
   annotations:
     nginx.ingress.kubernetes.io/auth-url: https://impress.example.com/api/v1.0/documents/media-auth/
     nginx.ingress.kubernetes.io/auth-response-headers: "Authorization, X-Amz-Date, X-Amz-Content-SHA256"
     nginx.ingress.kubernetes.io/upstream-vhost: minio.impress.svc.cluster.local:9000
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Content-Security-Policy "default-src 'none'" always;
 
 ## @param serviceMedia.host
 ## @param serviceMedia.port
@@ -202,6 +201,12 @@ backend:
   ## @param backend.migrateJobAnnotations Annotations for the migrate job
   migrateJobAnnotations: {}
 
+  ## @param backend.jobs.ttlSecondsAfterFinished Period to wait before remove jobs
+  ## @param backend.jobs.backoffLimit Numbers of jobs retries
+  jobs:
+    ttlSecondsAfterFinished: 30
+    backoffLimit: 2
+
   ## @param backend.securityContext Configure backend Pod security context
   securityContext: null
 
@@ -231,25 +236,65 @@ backend:
     targetPort: 8000
     annotations: {}
 
- ## @param backend.migrate.command backend migrate command
- ## @param backend.migrate.restartPolicy backend migrate job restart policy
+  ## @param backend.migrate.command backend migrate command
+  ## @param backend.migrate.restartPolicy backend migrate job restart policy
   migrate:
     command:
-      - "python"
-      - "manage.py"
-      - "migrate"
-      - "--no-input"
+      - /bin/sh
+      - "-c"
+      - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
+
+        python manage.py migrate --no-input
     restartPolicy: Never
 
- ## @param backend.createsuperuser.command backend migrate command
- ## @param backend.createsuperuser.restartPolicy backend migrate job restart policy
+  ## @param backend.createsuperuser.command backend migrate command
+  ## @param backend.createsuperuser.restartPolicy backend migrate job restart policy
   createsuperuser:
     command:
       - "/bin/sh"
       - "-c"
       - |
+        while ! python manage.py check --database default > /dev/null 2>&1
+        do
+          echo "Database not ready"
+          sleep 2
+        done
+
+        echo "Database is ready"
+
         python manage.py createsuperuser --email $DJANGO_SUPERUSER_EMAIL --password $DJANGO_SUPERUSER_PASSWORD
     restartPolicy: Never
+
+  ## @extra backend.job job dedicated to run a random management command, for example after a deployment
+  ## @param backend.job.name The name to use to describe this job
+  ## @param backend.job.command The management command to execute
+  ## @param backend.job.restartPolicy The restart policy for the job.
+  ## @extra backend.job.annotations Annotations to add to the job [default: argocd.argoproj.io/hook: PostSync]
+  ## @skip backend.job.annotations.argocd.argoproj.io/hook
+  job:
+    name: ""
+    command: []
+    restartPolicy: Never
+    annotations:
+      argocd.argoproj.io/hook: PostSync
+
+  # List of cronjob to add
+  # cronjobs:
+  #   - name: reset-database
+  #     schedule: "0 */2 * * *"
+  #     command:
+  #       - "/bin/sh"
+  #       - "-c"
+  #       - python manage.py flush --no-input
+  ## @param backend.cronjobs Cronjob name, schedule, command
+  cronjobs: []
 
   ## @param backend.probes.liveness.path [nullable] Configure path for backend HTTP liveness probe
   ## @param backend.probes.liveness.targetPort [nullable] Configure port for backend HTTP liveness probe
@@ -294,6 +339,50 @@ backend:
 
   ## @param backend.extraVolumes Additional volumes to mount on the backend.
   extraVolumes: []
+
+  ## @param backend.pdb.enabled Enable pdb on backend
+  pdb:
+    enabled: true
+
+  ## @param backend.serviceAccountName Optional service account name to use for backend pods
+  serviceAccountName: null
+
+  ## @param backend.themeCustomization.enabled Enable theme customization
+  ## @param backend.themeCustomization.file_content Content of the theme customization file. Must be a json object.
+  ## @param backend.themeCustomization.mount_path Path where the customization file will be mounted in the backend deployment.
+  themeCustomization:
+    enabled: false
+    file_content: ""
+    mount_path: /app/impress/configuration/theme
+
+
+  ## @param backend.celery.replicas Amount of celery replicas
+  ## @param backend.celery.command Override the celery container command
+  ## @param backend.celery.args Override the celery container args
+  ## @param backend.celery.resources Resource requirements for the celery container
+  ## @param backend.celery.probes.liveness.exec.command Override the celery container liveness probe command
+  ## @param backend.celery.probes.liveness.initialDelaySeconds Initial delay for the celery container liveness probe
+  ## @param backend.celery.probes.liveness.timeoutSeconds Timeout for the celery container liveness probe
+  ## @param backend.celery.probes.readiness.exec.command Override the celery container readiness probe command
+  ## @param backend.celery.probes.readiness.initialDelaySeconds Initial delay for the celery container readiness probe
+  ## @param backend.celery.probes.readiness.timeoutSeconds Timeout for the celery container readiness probe
+  celery:
+    replicas: 1
+    command: []
+    args: ["celery", "-A", "impress.celery_app", "worker", "-l", "INFO", "-n", "impress@%h"]
+    resources: {}
+    probes:
+      liveness:
+        exec:
+          command: ["/bin/sh", "-c", "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME"]
+        initialDelaySeconds: 60
+        timeoutSeconds: 5
+      readiness:
+        exec:
+          command: ["/bin/sh", "-c", "celery -A impress.celery_app inspect ping -d impress@$HOSTNAME"]
+        initialDelaySeconds: 15
+        timeoutSeconds: 5
+
 
 
 ## @section frontend
@@ -389,6 +478,84 @@ frontend:
 
   ## @param frontend.extraVolumes Additional volumes to mount on the frontend.
   extraVolumes: []
+
+  ## @param frontend.pdb.enabled Enable pdb on frontend
+  pdb:
+    enabled: true
+
+  ## @param frontend.serviceAccountName Optional service account name to use for frontend pods
+  serviceAccountName: null
+
+## @section posthog
+
+posthog:
+
+  ## @param posthog.ingress.enabled Enable or disable the ingress resource creation
+  ## @param posthog.ingress.className Kubernetes ingress class name to use (e.g., nginx, traefik)
+  ## @param posthog.ingress.host Primary hostname for the ingress resource
+  ## @param posthog.ingress.path URL path prefix for the ingress routes (e.g., /)
+  ## @param posthog.ingress.hosts Additional hostnames array to be included in the ingress
+  ## @param posthog.ingress.tls.enabled Enable or disable TLS/HTTPS for the ingress
+  ## @param posthog.ingress.tls.additional Additional TLS configurations for extra hosts/certificates
+  ## @param posthog.ingress.customBackends Custom backend service configurations for the ingress
+  ## @param posthog.ingress.annotations Additional Kubernetes annotations to apply to the ingress
+  ingress:
+    enabled: false
+    className: null
+    host: impress.example.com
+    path: /
+    hosts: [ ]
+    tls:
+      enabled: true
+      additional: [ ]
+
+    customBackends: [ ]
+    annotations: {}
+
+  ## @param posthog.ingressAssets.enabled Enable or disable the ingress resource creation
+  ## @param posthog.ingressAssets.className Kubernetes ingress class name to use (e.g., nginx, traefik)
+  ## @param posthog.ingressAssets.host Primary hostname for the ingress resource
+  ## @param posthog.ingressAssets.paths URL paths prefix for the ingress routes (e.g., /static)
+  ## @param posthog.ingressAssets.hosts Additional hostnames array to be included in the ingress
+  ## @param posthog.ingressAssets.tls.enabled Enable or disable TLS/HTTPS for the ingress
+  ## @param posthog.ingressAssets.tls.additional Additional TLS configurations for extra hosts/certificates
+  ## @param posthog.ingressAssets.customBackends Custom backend service configurations for the ingress
+  ## @param posthog.ingressAssets.annotations Additional Kubernetes annotations to apply to the ingress
+  ingressAssets:
+    enabled: false
+    className: null
+    host: impress.example.com
+    paths:
+    - /static
+    - /array
+    hosts: [ ]
+    tls:
+      enabled: true
+      additional: [ ]
+
+    customBackends: [ ]
+    annotations: {}
+
+  ## @param posthog.service.type Service type (e.g. ExternalName, ClusterIP, LoadBalancer)
+  ## @param posthog.service.externalName External service hostname when type is ExternalName
+  ## @param posthog.service.port Port number for the service
+  ## @param posthog.service.annotations Additional annotations to apply to the service
+  service:
+    type: ExternalName
+    externalName: eu.i.posthog.com
+    port: 443
+    annotations: {}
+
+  ## @param posthog.assetsService.type Service type (e.g. ExternalName, ClusterIP, LoadBalancer)
+  ## @param posthog.assetsService.externalName External service hostname when type is ExternalName
+  ## @param posthog.assetsService.port Port number for the service
+  ## @param posthog.assetsService.annotations Additional annotations to apply to the service
+  assetsService:
+    type: ExternalName
+    externalName: eu-assets.i.posthog.com
+    port: 443
+    annotations: {}
+
 
 ## @section yProvider
 
@@ -487,3 +654,10 @@ yProvider:
 
   ## @param yProvider.extraVolumes Additional volumes to mount on the yProvider.
   extraVolumes: []
+
+  ## @param yProvider.pdb.enabled Enable pdb on yProvider
+  pdb:
+    enabled: true
+
+  ## @param yProvider.serviceAccountName Optional service account name to use for yProvider pods
+  serviceAccountName: null

@@ -6,8 +6,6 @@ import {
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
-import { KEY_LIST_DOC } from './useDocs';
-
 interface RemoveDocProps {
   docId: string;
 }
@@ -24,22 +22,30 @@ export const removeDoc = async ({ docId }: RemoveDocProps): Promise<void> => {
 
 type UseRemoveDocOptions = UseMutationOptions<void, APIError, RemoveDocProps>;
 
-export const useRemoveDoc = (options?: UseRemoveDocOptions) => {
+export const useRemoveDoc = ({
+  listInvalidQueries,
+  options,
+}: {
+  listInvalidQueries?: string[];
+  options?: UseRemoveDocOptions;
+}) => {
   const queryClient = useQueryClient();
   return useMutation<void, APIError, RemoveDocProps>({
     mutationFn: removeDoc,
     ...options,
-    onSuccess: (data, variables, context) => {
-      void queryClient.invalidateQueries({
-        queryKey: [KEY_LIST_DOC],
+    onSuccess: (data, variables, onMutateResult, context) => {
+      listInvalidQueries?.forEach((queryKey) => {
+        void queryClient.invalidateQueries({
+          queryKey: [queryKey],
+        });
       });
       if (options?.onSuccess) {
-        options.onSuccess(data, variables, context);
+        void options.onSuccess(data, variables, onMutateResult, context);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (error, variables, onMutateResult, context) => {
       if (options?.onError) {
-        options.onError(error, variables, context);
+        void options.onError(error, variables, onMutateResult, context);
       }
     },
   });

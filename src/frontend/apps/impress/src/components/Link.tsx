@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import styled from 'styled-components';
+import styled, { RuleSet } from 'styled-components';
 
 export interface LinkProps {
-  $css?: string;
+  $css?: string | RuleSet<object>;
 }
 
 export const StyledLink = styled(Link)<LinkProps>`
@@ -12,5 +12,5 @@ export const StyledLink = styled(Link)<LinkProps>`
     color: #ffffff;
   }
   display: flex;
-  ${({ $css }) => $css && `${$css};`}
+  ${({ $css }) => $css && (typeof $css === 'string' ? `${$css};` : $css)}
 `;

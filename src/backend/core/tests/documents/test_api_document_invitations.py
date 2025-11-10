@@ -304,7 +304,7 @@ def test_api_document_invitations_create_anonymous():
     document = factories.DocumentFactory()
     invitation_values = {
         "email": "guest@example.com",
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     response = APIClient().post(
@@ -325,7 +325,7 @@ def test_api_document_invitations_create_authenticated_outsider():
     document = factories.DocumentFactory()
     invitation_values = {
         "email": "guest@example.com",
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     client = APIClient()
@@ -370,7 +370,7 @@ def test_api_document_invitations_create_privileged_members(
     Only owners and administrators should be able to invite new users.
     Only owners can invite owners.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(language="en-us")
     document = factories.DocumentFactory()
     if via == USER:
         factories.UserDocumentAccessFactory(document=document, user=user, role=inviting)
@@ -422,11 +422,12 @@ def test_api_document_invitations_create_privileged_members(
         }
 
 
-def test_api_document_invitations_create_email_from_content_language():
+def test_api_document_invitations_create_email_from_senders_language():
     """
-    The email generated is from the language set in the Content-Language header
+    When inviting on a document a user who does not exist yet in our database,
+    the invitation email should be sent in the language of the sending user.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(language="fr-fr")
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
@@ -444,7 +445,6 @@ def test_api_document_invitations_create_email_from_content_language():
         f"/api/v1.0/documents/{document.id!s}/invitations/",
         invitation_values,
         format="json",
-        headers={"Content-Language": "fr-fr"},
     )
 
     assert response.status_code == 201
@@ -458,52 +458,17 @@ def test_api_document_invitations_create_email_from_content_language():
 
     email_content = " ".join(email.body.split())
     assert f"{user.full_name} a partagé un document avec vous!" in email_content
-
-
-def test_api_document_invitations_create_email_from_content_language_not_supported():
-    """
-    If the language from the Content-Language is not supported
-    it will display the default language, English.
-    """
-    user = factories.UserFactory()
-    document = factories.DocumentFactory()
-    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
-
-    invitation_values = {
-        "email": "guest@example.com",
-        "role": "reader",
-    }
-
-    assert len(mail.outbox) == 0
-
-    client = APIClient()
-    client.force_login(user)
-
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/invitations/",
-        invitation_values,
-        format="json",
-        headers={"Content-Language": "not-supported"},
+    assert (
+        "Docs, votre nouvel outil incontournable pour organiser, partager et collaborer "
+        "sur vos documents en équipe." in email_content
     )
-
-    assert response.status_code == 201
-    assert response.json()["email"] == "guest@example.com"
-    assert models.Invitation.objects.count() == 1
-    assert len(mail.outbox) == 1
-
-    email = mail.outbox[0]
-
-    assert email.to == ["guest@example.com"]
-
-    email_content = " ".join(email.body.split())
-    assert f"{user.full_name} shared a document with you!" in email_content
 
 
 def test_api_document_invitations_create_email_full_name_empty():
     """
     If the full name of the user is empty, it will display the email address.
     """
-    user = factories.UserFactory(full_name="")
+    user = factories.UserFactory(full_name="", language="en-us")
     document = factories.DocumentFactory()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
@@ -550,7 +515,7 @@ def test_api_document_invitations_create_issuer_and_document_override():
         "document": str(other_document.id),
         "issuer": str(factories.UserFactory().id),
         "email": "guest@example.com",
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     client = APIClient()
@@ -595,9 +560,11 @@ def test_api_document_invitations_create_cannot_duplicate_invitation():
     )
 
     assert response.status_code == 400
-    assert response.json() == [
-        "Document invitation with this Email address and Document already exists."
-    ]
+    assert response.json() == {
+        "__all__": [
+            "Document invitation with this Email address and Document already exists."
+        ],
+    }
 
 
 def test_api_document_invitations_create_cannot_invite_existing_users():
@@ -608,10 +575,10 @@ def test_api_document_invitations_create_cannot_invite_existing_users():
     document = factories.DocumentFactory(users=[(user, "owner")])
     existing_user = factories.UserFactory()
 
-    # Build an invitation to the email of an exising identity in the db
+    # Build an invitation to the email of an existing identity in the db
     invitation_values = {
         "email": existing_user.email,
-        "role": random.choice(models.RoleChoices.choices)[0],
+        "role": random.choice(models.RoleChoices.values),
     }
 
     client = APIClient()
@@ -624,7 +591,35 @@ def test_api_document_invitations_create_cannot_invite_existing_users():
     )
 
     assert response.status_code == 400
-    assert response.json() == ["This email is already associated to a registered user."]
+    assert response.json() == {
+        "email": ["This email is already associated to a registered user."]
+    }
+
+
+def test_api_document_invitations_create_lower_email():
+    """
+    No matter the case, the email should be converted to lowercase.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "owner")])
+
+    # Build an invitation to the email of an existing identity in the db
+    invitation_values = {
+        "email": "GuEst@example.com",
+        "role": random.choice(models.RoleChoices.values),
+    }
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/invitations/",
+        invitation_values,
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["email"] == "guest@example.com"
 
 
 # Update
@@ -774,6 +769,37 @@ def test_api_document_invitations_update_authenticated_unprivileged(
         assert value == old_invitation_values[key]
 
 
+@pytest.mark.parametrize("via", VIA)
+@pytest.mark.parametrize("role", ["administrator", "owner"])
+def test_api_document_invitations_patch(via, role, mock_user_teams):
+    """Partially updating an invitation should be allowed."""
+
+    user = factories.UserFactory()
+    invitation = factories.InvitationFactory(role="editor")
+
+    if via == USER:
+        factories.UserDocumentAccessFactory(
+            document=invitation.document, user=user, role=role
+        )
+    elif via == TEAM:
+        mock_user_teams.return_value = ["lasuite", "unknown"]
+        factories.TeamDocumentAccessFactory(
+            document=invitation.document, team="lasuite", role=role
+        )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.patch(
+        f"/api/v1.0/documents/{invitation.document.id!s}/invitations/{invitation.id!s}/",
+        {"role": "reader"},
+        format="json",
+    )
+    assert response.status_code == 200
+    invitation.refresh_from_db()
+    assert invitation.role == "reader"
+
+
 # Delete
 
 
@@ -855,3 +881,29 @@ def test_api_document_invitations_delete_readers_or_editors(via, role, mock_user
         response.json()["detail"]
         == "You do not have permission to perform this action."
     )
+
+
+def test_api_document_invitations_throttling(settings):
+    """Test api document ask for access throttling."""
+    current_rate = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["invitation"]
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["invitation"] = "2/minute"
+    user = factories.UserFactory()
+    document = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
+
+    factories.InvitationFactory(document=document, issuer=user)
+
+    client = APIClient()
+    client.force_login(user)
+
+    for _i in range(2):
+        response = client.get(f"/api/v1.0/documents/{document.id}/invitations/")
+        assert response.status_code == 200
+    with mock.patch("core.api.throttling.capture_message") as mock_capture_message:
+        response = client.get(f"/api/v1.0/documents/{document.id}/invitations/")
+        assert response.status_code == 429
+        mock_capture_message.assert_called_once_with(
+            "Rate limit exceeded for scope invitation", "warning"
+        )
+    settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["invitation"] = current_rate

@@ -1,3 +1,4 @@
-import { initServer } from './servers/appServer';
+import { PORT } from '@/env';
+import { initApp } from '@/servers';
 
-initServer();
+initApp().listen(PORT, () => console.log('App listening on port :', PORT));

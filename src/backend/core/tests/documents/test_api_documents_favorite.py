@@ -45,7 +45,10 @@ def test_api_document_favorite_anonymous_user(method, reach):
     ],
 )
 def test_api_document_favorite_authenticated_post_allowed(reach, has_role):
-    """Authenticated users should be able to mark a document as favorite using POST."""
+    """
+    Authenticated users should be able to mark a document to which they have access
+    as favorite using POST.
+    """
     user = factories.UserFactory()
     document = factories.DocumentFactory(link_reach=reach)
     client = APIClient()
@@ -69,7 +72,10 @@ def test_api_document_favorite_authenticated_post_allowed(reach, has_role):
 
 
 def test_api_document_favorite_authenticated_post_forbidden():
-    """Authenticated users should be able to mark a document as favorite using POST."""
+    """
+    Authenticated users should not be allowed to mark a document to which they don't
+    have access as favorite using POST.
+    """
     user = factories.UserFactory()
     document = factories.DocumentFactory(link_reach="restricted")
     client = APIClient()

@@ -1,24 +1,27 @@
+import crypto from 'crypto';
+
 import { expect, test } from '@playwright/test';
 
-import { keyCloakSignIn, mockedDocument } from './common';
+import {
+  createDoc,
+  expectLoginPage,
+  keyCloakSignIn,
+  mockedDocument,
+  verifyDocName,
+} from './utils-common';
+import { writeInEditor } from './utils-editor';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc Routing', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('Check the presence of the meta tag noindex', async ({ page }) => {
-    const buttonCreateHomepage = page.getByRole('button', {
-      name: 'New doc',
-    });
-
-    await expect(buttonCreateHomepage).toBeVisible();
-    await buttonCreateHomepage.click();
-    await expect(
-      page.getByRole('button', {
-        name: 'Share',
-      }),
-    ).toBeVisible();
+  test('Check the presence of the meta tag noindex', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-routing-test', browserName, 1);
     const metaDescription = page.locator('meta[name="robots"]');
     await expect(metaDescription).toHaveAttribute('content', 'noindex');
   });
@@ -38,7 +41,6 @@ test.describe('Doc Routing', () => {
   });
 
   test('checks 404 on docs/[id] page', async ({ page }) => {
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(300);
 
     await page.goto('/docs/some-unknown-doc');
@@ -50,29 +52,78 @@ test.describe('Doc Routing', () => {
       timeout: 15000,
     });
   });
+
+  test('checks 401 on docs/[id] page', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(page, '401-doc-parent', browserName, 1);
+    await verifyDocName(page, docTitle);
+
+    await createRootSubPage(page, browserName, '401-doc-child');
+
+    await writeInEditor({ page, text: 'Hello World' });
+
+    const responsePromise = page.route(
+      /.*\/documents\/.*\/$|users\/me\/$/,
+      async (route) => {
+        const request = route.request();
+
+        // When we quit a document, a PATCH request is sent to save the document.
+        // We intercept this request to simulate a 401 error from the backend.
+        // The GET request to users/me is also intercepted to simulate the user
+        // being logged out when trying to fetch user info.
+        // This way we can test the 401 error handling when saving the document
+        if (
+          (request.url().includes('/documents/') &&
+            request.method().includes('PATCH')) ||
+          (request.url().includes('/users/me/') &&
+            request.method().includes('GET'))
+        ) {
+          await route.fulfill({
+            status: 401,
+            json: {
+              detail: 'Log in to access the document',
+            },
+          });
+        } else {
+          await route.continue();
+        }
+      },
+    );
+
+    await page.getByRole('link', { name: '401-doc-parent' }).click();
+
+    await responsePromise;
+
+    await expect(page.getByText('Log in to access the document.')).toBeVisible({
+      timeout: 10000,
+    });
+
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      'content',
+      'noindex',
+    );
+    await expect(page).toHaveTitle(/401 Unauthorized - Docs/);
+  });
 });
 
-test.describe('Doc Routing: Not loggued', () => {
+test.describe('Doc Routing: Not logged', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('checks redirect to a doc after login', async ({
     page,
     browserName,
   }) => {
-    await mockedDocument(page, { link_reach: 'public' });
-    await page.goto('/docs/mocked-document-id/');
+    const uuid = crypto.randomUUID();
+    await mockedDocument(page, { link_reach: 'public', id: uuid });
+    await page.goto(`/docs/${uuid}/`);
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
     await page.getByRole('button', { name: 'Login' }).click();
-    await keyCloakSignIn(page, browserName);
+    await keyCloakSignIn(page, browserName, false);
     await expect(page.locator('h2').getByText('Mocked document')).toBeVisible();
   });
 
+  // eslint-disable-next-line playwright/expect-expect
   test('The homepage redirects to login.', async ({ page }) => {
     await page.goto('/');
-    await expect(
-      page.getByRole('button', {
-        name: 'Sign In',
-      }),
-    ).toBeVisible();
+    await expectLoginPage(page);
   });
 });

@@ -1,27 +1,62 @@
-import { test as setup } from '@playwright/test';
+import { FullConfig, FullProject, chromium, expect } from '@playwright/test';
 
-import { keyCloakSignIn } from './common';
+import { keyCloakSignIn } from './utils-common';
 
-setup('authenticate-chromium', async ({ page }) => {
-  await page.goto('/');
-  await keyCloakSignIn(page, 'chromium');
-  await page
-    .context()
-    .storageState({ path: `playwright/.auth/user-chromium.json` });
-});
+const saveStorageState = async (
+  browserConfig: FullProject<unknown, unknown>,
+) => {
+  if (!browserConfig) {
+    throw new Error('No browser config found');
+  }
 
-setup('authenticate-webkit', async ({ page }) => {
-  await page.goto('/');
-  await keyCloakSignIn(page, 'webkit');
-  await page
-    .context()
-    .storageState({ path: `playwright/.auth/user-webkit.json` });
-});
+  const browserName = browserConfig.name || 'chromium';
 
-setup('authenticate-firefox', async ({ page }) => {
-  await page.goto('/');
-  await keyCloakSignIn(page, 'firefox');
-  await page
-    .context()
-    .storageState({ path: `playwright/.auth/user-firefox.json` });
-});
+  const { storageState, ...useConfig } = browserConfig.use;
+  const browser = await chromium.launch();
+  const context = await browser.newContext(useConfig);
+  const page = await context.newPage();
+
+  try {
+    // eslint-disable-next-line playwright/no-networkidle
+    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.content();
+    await expect(page.getByText('Docs').first()).toBeVisible();
+
+    await keyCloakSignIn(page, browserName);
+
+    await expect(
+      page.locator('header').first().getByRole('button', {
+        name: 'Logout',
+      }),
+    ).toBeVisible({ timeout: 10000 });
+
+    await page.context().storageState({
+      path: storageState as string,
+    });
+  } catch (error) {
+    console.log(error);
+
+    await page.screenshot({
+      path: `./screenshots/${browserName}-${Date.now()}.png`,
+    });
+    // Get console logs
+    const consoleLogs = await page.evaluate(() =>
+      console.log(window.console.log),
+    );
+    console.log(consoleLogs);
+  } finally {
+    await browser.close();
+  }
+};
+
+async function globalSetup(config: FullConfig) {
+  const chromeConfig = config.projects.find((p) => p.name === 'chromium')!;
+  const firefoxConfig = config.projects.find((p) => p.name === 'firefox')!;
+  const webkitConfig = config.projects.find((p) => p.name === 'webkit')!;
+
+  await saveStorageState(chromeConfig);
+  await saveStorageState(webkitConfig);
+  await saveStorageState(firefoxConfig);
+}
+
+export default globalSetup;

@@ -2,9 +2,9 @@
 Test AI transform API endpoint for users in impress's core app.
 """
 
+import random
 from unittest.mock import MagicMock, patch
 
-from django.core.cache import cache
 from django.test import override_settings
 
 import pytest
@@ -16,12 +16,6 @@ from core.tests.conftest import TEAM, USER, VIA
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def clear_cache():
-    """Fixture to clear the cache before each test."""
-    cache.clear()
-
-
 @pytest.fixture
 def ai_settings():
     """Fixture to set AI settings."""
@@ -31,6 +25,9 @@ def ai_settings():
         yield
 
 
+@override_settings(
+    AI_ALLOW_REACH_FROM=random.choice(["public", "authenticated", "restricted"])
+)
 @pytest.mark.parametrize(
     "reach, role",
     [
@@ -57,9 +54,44 @@ def test_api_documents_ai_transform_anonymous_forbidden(reach, role):
     }
 
 
+@override_settings(AI_ALLOW_REACH_FROM="public")
 @pytest.mark.usefixtures("ai_settings")
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_transform_anonymous_success(mock_create):
+    """
+    Anonymous users should be able to request AI transform to a document
+    if the link reach and role permit it.
+    """
+    document = factories.DocumentFactory(link_reach="public", link_role="editor")
+
+    mock_create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
+    )
+
+    url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
+    response = APIClient().post(url, {"text": "Hello", "action": "summarize"})
+
+    assert response.status_code == 200
+    assert response.json() == {"answer": "Salut"}
+    mock_create.assert_called_once_with(
+        model="llama",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Summarize the markdown text, preserving language and markdown formatting. "
+                    "Do not provide any other information. Preserve the language."
+                ),
+            },
+            {"role": "user", "content": "Hello"},
+        ],
+    )
+
+
+@override_settings(AI_ALLOW_REACH_FROM=random.choice(["authenticated", "restricted"]))
+@pytest.mark.usefixtures("ai_settings")
+@patch("openai.resources.chat.completions.Completions.create")
+def test_api_documents_ai_transform_anonymous_limited_by_setting(mock_create):
     """
     Anonymous users should be able to request AI transform to a document
     if the link reach and role permit it.
@@ -74,23 +106,7 @@ def test_api_documents_ai_transform_anonymous_success(mock_create):
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
     response = APIClient().post(url, {"text": "Hello", "action": "summarize"})
 
-    assert response.status_code == 200
-    assert response.json() == {"answer": "Salut"}
-    mock_create.assert_called_once_with(
-        model="llama",
-        response_format={"type": "json_object"},
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Summarize the markdown text, preserving language and markdown formatting. "
-                    'Return JSON: {"answer": "your markdown summary"}. Do not provide any other '
-                    "information."
-                ),
-            },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
-        ],
-    )
+    assert response.status_code == 401
 
 
 @pytest.mark.parametrize(
@@ -134,7 +150,7 @@ def test_api_documents_ai_transform_authenticated_forbidden(reach, role):
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_transform_authenticated_success(mock_create, reach, role):
     """
-    Autenticated who are not related to a document should be able to request AI transform
+    Authenticated who are not related to a document should be able to request AI transform
     if the link reach and role permit it.
     """
     user = factories.UserFactory()
@@ -144,9 +160,8 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
 
     document = factories.DocumentFactory(link_reach=reach, link_role=role)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -156,16 +171,18 @@ def test_api_documents_ai_transform_authenticated_success(mock_create, reach, ro
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    'Answer the prompt in markdown format. Return JSON: {"answer": '
-                    '"Your markdown answer"}. Do not provide any other information.'
+                    "Answer the prompt using markdown formatting for structure and emphasis. "
+                    "Return the content directly without wrapping it in code blocks or markdown delimiters. "
+                    "Preserve the language and markdown formatting. "
+                    "Do not provide any other information. "
+                    "Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -220,9 +237,8 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
             document=document, team="lasuite", role=role
         )
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -232,16 +248,18 @@ def test_api_documents_ai_transform_success(mock_create, via, role, mock_user_te
     assert response.json() == {"answer": "Salut"}
     mock_create.assert_called_once_with(
         model="llama",
-        response_format={"type": "json_object"},
         messages=[
             {
                 "role": "system",
                 "content": (
-                    'Answer the prompt in markdown format. Return JSON: {"answer": '
-                    '"Your markdown answer"}. Do not provide any other information.'
+                    "Answer the prompt using markdown formatting for structure and emphasis. "
+                    "Return the content directly without wrapping it in code blocks or markdown delimiters. "
+                    "Preserve the language and markdown formatting. "
+                    "Do not provide any other information. "
+                    "Preserve the language."
                 ),
             },
-            {"role": "user", "content": '{"markdown_input": "Hello"}'},
+            {"role": "user", "content": "Hello"},
         ],
     )
 
@@ -289,9 +307,8 @@ def test_api_documents_ai_transform_throttling_document(mock_create):
     client = APIClient()
     document = factories.DocumentFactory(link_reach="public", link_role="editor")
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     url = f"/api/v1.0/documents/{document.id!s}/ai-transform/"
@@ -324,9 +341,8 @@ def test_api_documents_ai_transform_throttling_user(mock_create):
     client = APIClient()
     client.force_login(user)
 
-    answer = '{"answer": "Salut"}'
     mock_create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content=answer))]
+        choices=[MagicMock(message=MagicMock(content="Salut"))]
     )
 
     for _ in range(3):

@@ -18,11 +18,16 @@ from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
 from configurations import Configuration, values
+from csp.constants import NONE
+from lasuite.configuration.values import SecretFileValue
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import ignore_logger
+
+# pylint: disable=too-many-lines
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join("/", "data")
+DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 MONITORING_PROMETHEUS_EXPORTER = (
     os.getenv("MONITORING_PROMETHEUS_EXPORTER", "False").lower() == "true"
 )
@@ -67,7 +72,7 @@ class Base(Configuration):
 
     # Security
     ALLOWED_HOSTS = values.ListValue([])
-    SECRET_KEY = values.Value(None)
+    SECRET_KEY = SecretFileValue(None)
     SERVER_TO_SERVER_API_TOKENS = values.ListValue([])
 
     # Application definition
@@ -78,7 +83,7 @@ class Base(Configuration):
     DATABASES = {
         "default": {
             "ENGINE": values.Value(
-                "django.db.backends.postgresql_psycopg2",
+                "django.db.backends.postgresql",
                 environ_name="DB_ENGINE",
                 environ_prefix=None,
             ),
@@ -86,7 +91,7 @@ class Base(Configuration):
                 "impress", environ_name="DB_NAME", environ_prefix=None
             ),
             "USER": values.Value("dinum", environ_name="DB_USER", environ_prefix=None),
-            "PASSWORD": values.Value(
+            "PASSWORD": SecretFileValue(
                 "pass", environ_name="DB_PASSWORD", environ_prefix=None
             ),
             "HOST": values.Value(
@@ -124,10 +129,10 @@ class Base(Configuration):
     AWS_S3_ENDPOINT_URL = values.Value(
         environ_name="AWS_S3_ENDPOINT_URL", environ_prefix=None
     )
-    AWS_S3_ACCESS_KEY_ID = values.Value(
+    AWS_S3_ACCESS_KEY_ID = SecretFileValue(
         environ_name="AWS_S3_ACCESS_KEY_ID", environ_prefix=None
     )
-    AWS_S3_SECRET_ACCESS_KEY = values.Value(
+    AWS_S3_SECRET_ACCESS_KEY = SecretFileValue(
         environ_name="AWS_S3_SECRET_ACCESS_KEY", environ_prefix=None
     )
     AWS_S3_REGION_NAME = values.Value(
@@ -140,7 +145,7 @@ class Base(Configuration):
     )
 
     # Document images
-    DOCUMENT_IMAGE_MAX_SIZE = values.Value(
+    DOCUMENT_IMAGE_MAX_SIZE = values.IntegerValue(
         10 * (2**20),  # 10MB
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
@@ -213,9 +218,12 @@ class Base(Configuration):
         "application/x-ms-regedit",
         "application/x-msdownload",
         "application/xml",
-        "image/svg+xml",
     ]
-
+    DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED = values.BooleanValue(
+        True,
+        environ_name="DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED",
+        environ_prefix=None,
+    )
     # Document versions
     DOCUMENT_VERSIONS_PAGE_SIZE = 50
 
@@ -224,7 +232,9 @@ class Base(Configuration):
 
     # Languages
     LANGUAGE_CODE = values.Value("en-us")
-    LANGUAGE_COOKIE_NAME = "docs_language"  # cookie & language is set from frontend
+    # cookie & language is set from frontend
+    LANGUAGE_COOKIE_NAME = "docs_language"
+    LANGUAGE_COOKIE_PATH = "/"
 
     DRF_NESTED_MULTIPART_PARSER = {
         # output of parser is converted to querydict
@@ -236,9 +246,11 @@ class Base(Configuration):
     # fallback/default languages throughout the app.
     LANGUAGES = values.SingleNestedTupleValue(
         (
-            ("en-us", _("English")),
-            ("fr-fr", _("French")),
-            ("de-de", _("German")),
+            ("en-us", "English"),
+            ("fr-fr", "Français"),
+            ("de-de", "Deutsch"),
+            ("nl-nl", "Nederlands"),
+            ("es-es", "Español"),
         )
     )
 
@@ -282,8 +294,10 @@ class Base(Configuration):
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "core.middleware.ForceSessionMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
+        "csp.middleware.CSPMiddleware",
     ]
 
     if MONITORING_PROMETHEUS_EXPORTER:
@@ -306,6 +320,7 @@ class Base(Configuration):
             float("inf"),
         )
 
+
     AUTHENTICATION_BACKENDS = [
         "django.contrib.auth.backends.ModelBackend",
         "core.authentication.backends.OIDCAuthenticationBackend",
@@ -320,9 +335,11 @@ class Base(Configuration):
         # Third party apps
         "corsheaders",
         "django_prometheus",
+        "django_filters",
         "dockerflow.django",
         "rest_framework",
         "parler",
+        "treebeard",
         "easy_thumbnails",
         # Django
         "django.contrib.admin",
@@ -335,6 +352,8 @@ class Base(Configuration):
         "django.contrib.staticfiles",
         # OIDC third party
         "mozilla_django_oidc",
+        "lasuite.malware_detection",
+        "csp",
     ]
 
     # Cache
@@ -351,12 +370,71 @@ class Base(Configuration):
             "rest_framework.parsers.JSONParser",
             "nested_multipart_parser.drf.DrfNestedParser",
         ],
+        "DEFAULT_RENDERER_CLASSES": [
+            # 🔒️ Disable BrowsableAPIRenderer which provides forms allowing a user to
+            # see all the data in the database (ie a serializer with a ForeignKey field
+            # will generate a form with a field with all possible values of the FK).
+            "rest_framework.renderers.JSONRenderer",
+        ],
         "EXCEPTION_HANDLER": "core.api.exception_handler",
         "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
         "PAGE_SIZE": 20,
         "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
         "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+        "DEFAULT_THROTTLE_CLASSES": [
+            "lasuite.drf.throttling.MonitoredScopedRateThrottle",
+        ],
+        "DEFAULT_THROTTLE_RATES": {
+            "user_list_sustained": values.Value(
+                default="180/hour",
+                environ_name="API_USERS_LIST_THROTTLE_RATE_SUSTAINED",
+                environ_prefix=None,
+            ),
+            "user_list_burst": values.Value(
+                default="30/minute",
+                environ_name="API_USERS_LIST_THROTTLE_RATE_BURST",
+                environ_prefix=None,
+            ),
+            "document": values.Value(
+                default="80/minute",
+                environ_name="API_DOCUMENT_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "document_access": values.Value(
+                default="50/minute",
+                environ_name="API_DOCUMENT_ACCESS_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "template": values.Value(
+                default="30/minute",
+                environ_name="API_TEMPLATE_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "template_access": values.Value(
+                default="30/minute",
+                environ_name="API_TEMPLATE_ACCESS_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "invitation": values.Value(
+                default="60/minute",
+                environ_name="API_INVITATION_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "document_ask_for_access": values.Value(
+                default="30/minute",
+                environ_name="API_DOCUMENT_ASK_FOR_ACCESS_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+            "config": values.Value(
+                default="30/minute",
+                environ_name="API_CONFIG_THROTTLE_RATE",
+                environ_prefix=None,
+            ),
+        },
     }
+    MONITORED_THROTTLE_FAILURE_CALLBACK = (
+        "core.api.throttling.sentry_monitoring_throttle_failure"
+    )
 
     SPECTACULAR_SETTINGS = {
         "TITLE": "Impress API",
@@ -374,12 +452,16 @@ class Base(Configuration):
         "REDOC_DIST": "SIDECAR",
     }
 
+    TRASHBIN_CUTOFF_DAYS = values.Value(
+        30, environ_name="TRASHBIN_CUTOFF_DAYS", environ_prefix=None
+    )
+
     # Mail
     EMAIL_BACKEND = values.Value("django.core.mail.backends.smtp.EmailBackend")
     EMAIL_BRAND_NAME = values.Value(None)
     EMAIL_HOST = values.Value(None)
     EMAIL_HOST_USER = values.Value(None)
-    EMAIL_HOST_PASSWORD = values.Value(None)
+    EMAIL_HOST_PASSWORD = SecretFileValue(None)
     EMAIL_LOGO_IMG = values.Value(None)
     EMAIL_PORT = values.PositiveIntegerValue(None)
     EMAIL_USE_TLS = values.BooleanValue(False)
@@ -391,7 +473,7 @@ class Base(Configuration):
 
     # CORS
     CORS_ALLOW_CREDENTIALS = True
-    CORS_ALLOW_ALL_ORIGINS = values.BooleanValue(True)
+    CORS_ALLOW_ALL_ORIGINS = values.BooleanValue(False)
     CORS_ALLOWED_ORIGINS = values.ListValue([])
     CORS_ALLOWED_ORIGIN_REGEXES = values.ListValue([])
 
@@ -402,16 +484,46 @@ class Base(Configuration):
     COLLABORATION_API_URL = values.Value(
         None, environ_name="COLLABORATION_API_URL", environ_prefix=None
     )
-    COLLABORATION_SERVER_SECRET = values.Value(
+    COLLABORATION_SERVER_SECRET = SecretFileValue(
         None, environ_name="COLLABORATION_SERVER_SECRET", environ_prefix=None
     )
     COLLABORATION_WS_URL = values.Value(
         None, environ_name="COLLABORATION_WS_URL", environ_prefix=None
     )
+    COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = values.BooleanValue(
+        False,
+        environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+        environ_prefix=None,
+    )
 
     # Frontend
     FRONTEND_THEME = values.Value(
         None, environ_name="FRONTEND_THEME", environ_prefix=None
+    )
+    FRONTEND_HOMEPAGE_FEATURE_ENABLED = values.BooleanValue(
+        default=True,
+        environ_name="FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+        environ_prefix=None,
+    )
+    FRONTEND_CSS_URL = values.Value(
+        None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
+    )
+
+    THEME_CUSTOMIZATION_FILE_PATH = values.Value(
+        os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
+        environ_name="THEME_CUSTOMIZATION_FILE_PATH",
+        environ_prefix=None,
+    )
+
+    THEME_CUSTOMIZATION_CACHE_TIMEOUT = values.IntegerValue(
+        60 * 60 * 24,
+        environ_name="THEME_CUSTOMIZATION_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
+    # Posthog
+    POSTHOG_KEY = values.DictValue(
+        None, environ_name="POSTHOG_KEY", environ_prefix=None
     )
 
     # Crisp
@@ -432,7 +544,10 @@ class Base(Configuration):
     # Session
     SESSION_ENGINE = "django.contrib.sessions.backends.cache"
     SESSION_CACHE_ALIAS = "default"
-    SESSION_COOKIE_AGE = 60 * 60 * 12
+    SESSION_COOKIE_AGE = values.PositiveIntegerValue(
+        default=60 * 60 * 12, environ_name="SESSION_COOKIE_AGE", environ_prefix=None
+    )
+    SESSION_COOKIE_NAME = "docs_sessionid"
 
     # OIDC - Authorization Code Flow
     OIDC_CREATE_USER = values.BooleanValue(
@@ -445,7 +560,7 @@ class Base(Configuration):
     OIDC_RP_CLIENT_ID = values.Value(
         "impress", environ_name="OIDC_RP_CLIENT_ID", environ_prefix=None
     )
-    OIDC_RP_CLIENT_SECRET = values.Value(
+    OIDC_RP_CLIENT_SECRET = SecretFileValue(
         None,
         environ_name="OIDC_RP_CLIENT_SECRET",
         environ_prefix=None,
@@ -497,6 +612,28 @@ class Base(Configuration):
         environ_name="OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION",
         environ_prefix=None,
     )
+    OIDC_USE_PKCE = values.BooleanValue(
+        default=False, environ_name="OIDC_USE_PKCE", environ_prefix=None
+    )
+    OIDC_PKCE_CODE_CHALLENGE_METHOD = values.Value(
+        default="S256",
+        environ_name="OIDC_PKCE_CODE_CHALLENGE_METHOD",
+        environ_prefix=None,
+    )
+    OIDC_PKCE_CODE_VERIFIER_SIZE = values.IntegerValue(
+        default=64, environ_name="OIDC_PKCE_CODE_VERIFIER_SIZE", environ_prefix=None
+    )
+    OIDC_STORE_ACCESS_TOKEN = values.BooleanValue(
+        default=False, environ_name="OIDC_STORE_ACCESS_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN = values.BooleanValue(
+        default=False, environ_name="OIDC_STORE_REFRESH_TOKEN", environ_prefix=None
+    )
+    OIDC_STORE_REFRESH_TOKEN_KEY = values.Value(
+        default=None,
+        environ_name="OIDC_STORE_REFRESH_TOKEN_KEY",
+        environ_prefix=None,
+    )
 
     # WARNING: Enabling this setting allows multiple user accounts to share the same email
     # address. This may cause security issues and is not recommended for production use when
@@ -510,14 +647,23 @@ class Base(Configuration):
     USER_OIDC_ESSENTIAL_CLAIMS = values.ListValue(
         default=[], environ_name="USER_OIDC_ESSENTIAL_CLAIMS", environ_prefix=None
     )
-    USER_OIDC_FIELDS_TO_FULLNAME = values.ListValue(
-        default=["first_name", "last_name"],
-        environ_name="USER_OIDC_FIELDS_TO_FULLNAME",
+
+    OIDC_USERINFO_FULLNAME_FIELDS = values.ListValue(
+        default=values.ListValue(  # retrocompatibility
+            default=["first_name", "last_name"],
+            environ_name="USER_OIDC_FIELDS_TO_FULLNAME",
+            environ_prefix=None,
+        ),
+        environ_name="OIDC_USERINFO_FULLNAME_FIELDS",
         environ_prefix=None,
     )
-    USER_OIDC_FIELD_TO_SHORTNAME = values.Value(
-        default="first_name",
-        environ_name="USER_OIDC_FIELD_TO_SHORTNAME",
+    OIDC_USERINFO_SHORTNAME_FIELD = values.Value(
+        default=values.Value(  # retrocompatibility
+            default="first_name",
+            environ_name="USER_OIDC_FIELD_TO_SHORTNAME",
+            environ_prefix=None,
+        ),
+        environ_name="OIDC_USERINFO_SHORTNAME_FIELD",
         environ_prefix=None,
     )
 
@@ -526,10 +672,18 @@ class Base(Configuration):
     )
 
     # AI service
-    AI_API_KEY = values.Value(None, environ_name="AI_API_KEY", environ_prefix=None)
+    AI_FEATURE_ENABLED = values.BooleanValue(
+        default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
+    )
+    AI_API_KEY = SecretFileValue(None, environ_name="AI_API_KEY", environ_prefix=None)
     AI_BASE_URL = values.Value(None, environ_name="AI_BASE_URL", environ_prefix=None)
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
-
+    AI_ALLOW_REACH_FROM = values.Value(
+        choices=("public", "authenticated", "restricted"),
+        default="authenticated",
+        environ_name="AI_ALLOW_REACH_FROM",
+        environ_prefix=None,
+    )
     AI_DOCUMENT_RATE_THROTTLE_RATES = {
         "minute": 5,
         "hour": 100,
@@ -542,7 +696,7 @@ class Base(Configuration):
     }
 
     # Y provider microservice
-    Y_PROVIDER_API_KEY = values.Value(
+    Y_PROVIDER_API_KEY = SecretFileValue(
         environ_name="Y_PROVIDER_API_KEY",
         environ_prefix=None,
     )
@@ -553,7 +707,7 @@ class Base(Configuration):
 
     # Conversion endpoint
     CONVERSION_API_ENDPOINT = values.Value(
-        default="convert-markdown",
+        default="convert",
         environ_name="CONVERSION_API_ENDPOINT",
         environ_prefix=None,
     )
@@ -573,20 +727,28 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    NO_WEBSOCKET_CACHE_TIMEOUT = values.Value(
+        default=120,
+        environ_name="NO_WEBSOCKET_CACHE_TIMEOUT",
+        environ_prefix=None,
+    )
+
     # Logging
     # We want to make it easy to log to console but by default we log production
     # to Sentry and don't want to log to console.
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
+        "formatters": {
+            "simple": {
+                "format": "{asctime} {name} {levelname} {message}",
+                "style": "{",
+            },
+        },
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": values.Value(
-                    "ERROR",
-                    environ_name="LOGGING_LEVEL_HANDLERS_CONSOLE",
-                    environ_prefix=None,
-                ),
+                "formatter": "simple",
             },
         },
         # Override root logger to send it to console
@@ -606,7 +768,69 @@ class Base(Configuration):
                 ),
                 "propagate": False,
             },
+            "docs.security": {
+                "handlers": ["console"],
+                "level": values.Value(
+                    "INFO",
+                    environ_name="LOGGING_LEVEL_LOGGERS_SECURITY",
+                    environ_prefix=None,
+                ),
+                "propagate": False,
+            },
         },
+    }
+
+    MALWARE_DETECTION = {
+        "BACKEND": values.Value(
+            "lasuite.malware_detection.backends.dummy.DummyBackend",
+            environ_name="MALWARE_DETECTION_BACKEND",
+            environ_prefix=None,
+        ),
+        "PARAMETERS": values.DictValue(
+            default={
+                "callback_path": "core.malware_detection.malware_detection_callback",
+            },
+            environ_name="MALWARE_DETECTION_PARAMETERS",
+            environ_prefix=None,
+        ),
+    }
+
+    API_USERS_LIST_LIMIT = values.PositiveIntegerValue(
+        default=5,
+        environ_name="API_USERS_LIST_LIMIT",
+        environ_prefix=None,
+    )
+
+    # Content Security Policy
+    # See https://content-security-policy.com/ for more information.
+    CONTENT_SECURITY_POLICY = {
+        "EXCLUDE_URL_PREFIXES": values.ListValue(
+            ["/admin"],
+            environ_name="CONTENT_SECURITY_POLICY_EXCLUDE_URL_PREFIXES",
+            environ_prefix=None,
+        ),
+        "DIRECTIVES": values.DictValue(
+            default={
+                "default-src": [NONE],
+                "script-src": [NONE],
+                "style-src": [NONE],
+                "img-src": [NONE],
+                "connect-src": [NONE],
+                "font-src": [NONE],
+                "object-src": [NONE],
+                "media-src": [NONE],
+                "frame-src": [NONE],
+                "child-src": [NONE],
+                "form-action": [NONE],
+                "frame-ancestors": [NONE],
+                "base-uri": [NONE],
+                "worker-src": [NONE],
+                "manifest-src": [NONE],
+                "prefetch-src": [NONE],
+            },
+            environ_name="CONTENT_SECURITY_POLICY_DIRECTIVES",
+            environ_prefix=None,
+        ),
     }
 
     # pylint: disable=invalid-name
@@ -655,8 +879,10 @@ class Base(Configuration):
                 release=get_release(),
                 integrations=[DjangoIntegration()],
             )
-            with sentry_sdk.configure_scope() as scope:
-                scope.set_extra("application", "backend")
+            sentry_sdk.set_tag("application", "backend")
+
+            # Ignore the logs added by the DockerflowMiddleware
+            ignore_logger("request.summary")
 
         if (
             cls.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION
@@ -701,9 +927,25 @@ class Development(Base):
     CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000"]
     DEBUG = True
 
-    SESSION_COOKIE_NAME = "impress_sessionid"
-
     USE_SWAGGER = True
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": values.Value(
+                "redis://redis:6379/2",
+                environ_name="REDIS_URL",
+                environ_prefix=None,
+            ),
+            "TIMEOUT": values.IntegerValue(
+                30,  # timeout in seconds
+                environ_name="CACHES_DEFAULT_TIMEOUT",
+                environ_prefix=None,
+            ),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        },
+    }
 
     def __init__(self):
         # pylint: disable=invalid-name
@@ -717,6 +959,9 @@ class Test(Base):
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ]
     USE_SWAGGER = True
+    # Static files are not used in the test environment
+    # Tests are raising warnings because the /data/static directory does not exist
+    STATIC_ROOT = None
 
     CELERY_TASK_ALWAYS_EAGER = values.BooleanValue(True)
 
@@ -789,9 +1034,19 @@ class Production(Base):
                 environ_name="REDIS_URL",
                 environ_prefix=None,
             ),
+            "TIMEOUT": values.IntegerValue(
+                30,  # timeout in seconds
+                environ_name="CACHES_DEFAULT_TIMEOUT",
+                environ_prefix=None,
+            ),
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             },
+            "KEY_PREFIX": values.Value(
+                "docs",
+                environ_name="CACHES_KEY_PREFIX",
+                environ_prefix=None,
+            ),
         },
     }
 

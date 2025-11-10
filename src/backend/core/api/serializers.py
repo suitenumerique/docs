@@ -1,16 +1,19 @@
 """Client serializers for the impress core app."""
 
+import binascii
 import mimetypes
+from base64 import b64decode
 
 from django.conf import settings
 from django.db.models import Q
 from django.utils.functional import lazy
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 import magic
-from rest_framework import exceptions, serializers
+from rest_framework import serializers
 
-from core import enums, models
+from core import choices, enums, models, utils, validators
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
@@ -23,103 +26,42 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "email", "full_name", "short_name"]
+        fields = ["id", "email", "full_name", "short_name", "language"]
         read_only_fields = ["id", "email", "full_name", "short_name"]
 
 
-class BaseAccessSerializer(serializers.ModelSerializer):
+class UserLightSerializer(UserSerializer):
+    """Serialize users with limited fields."""
+
+    full_name = serializers.SerializerMethodField(read_only=True)
+    short_name = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.User
+        fields = ["full_name", "short_name"]
+        read_only_fields = ["full_name", "short_name"]
+
+    def get_full_name(self, instance):
+        """Return the full name of the user."""
+        if not instance.full_name:
+            email = instance.email.split("@")[0]
+            return slugify(email)
+
+        return instance.full_name
+
+    def get_short_name(self, instance):
+        """Return the short name of the user."""
+        if not instance.short_name:
+            email = instance.email.split("@")[0]
+            return slugify(email)
+
+        return instance.short_name
+
+
+class TemplateAccessSerializer(serializers.ModelSerializer):
     """Serialize template accesses."""
 
     abilities = serializers.SerializerMethodField(read_only=True)
-
-    def update(self, instance, validated_data):
-        """Make "user" field is readonly but only on update."""
-        validated_data.pop("user", None)
-        return super().update(instance, validated_data)
-
-    def get_abilities(self, access) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return access.get_abilities(request.user)
-        return {}
-
-    def validate(self, attrs):
-        """
-        Check access rights specific to writing (create/update)
-        """
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-        role = attrs.get("role")
-
-        # Update
-        if self.instance:
-            can_set_role_to = self.instance.get_abilities(user)["set_role_to"]
-
-            if role and role not in can_set_role_to:
-                message = (
-                    f"You are only allowed to set role to {', '.join(can_set_role_to)}"
-                    if can_set_role_to
-                    else "You are not allowed to set this role for this template."
-                )
-                raise exceptions.PermissionDenied(message)
-
-        # Create
-        else:
-            try:
-                resource_id = self.context["resource_id"]
-            except KeyError as exc:
-                raise exceptions.ValidationError(
-                    "You must set a resource ID in kwargs to create a new access."
-                ) from exc
-
-            if not self.Meta.model.objects.filter(  # pylint: disable=no-member
-                Q(user=user) | Q(team__in=user.teams),
-                role__in=[models.RoleChoices.OWNER, models.RoleChoices.ADMIN],
-                **{self.Meta.resource_field_name: resource_id},  # pylint: disable=no-member
-            ).exists():
-                raise exceptions.PermissionDenied(
-                    "You are not allowed to manage accesses for this resource."
-                )
-
-            if (
-                role == models.RoleChoices.OWNER
-                and not self.Meta.model.objects.filter(  # pylint: disable=no-member
-                    Q(user=user) | Q(team__in=user.teams),
-                    role=models.RoleChoices.OWNER,
-                    **{self.Meta.resource_field_name: resource_id},  # pylint: disable=no-member
-                ).exists()
-            ):
-                raise exceptions.PermissionDenied(
-                    "Only owners of a resource can assign other users as owners."
-                )
-
-        # pylint: disable=no-member
-        attrs[f"{self.Meta.resource_field_name}_id"] = self.context["resource_id"]
-        return attrs
-
-
-class DocumentAccessSerializer(BaseAccessSerializer):
-    """Serialize document accesses."""
-
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=models.User.objects.all(),
-        write_only=True,
-        source="user",
-        required=False,
-        allow_null=True,
-    )
-    user = UserSerializer(read_only=True)
-
-    class Meta:
-        model = models.DocumentAccess
-        resource_field_name = "document"
-        fields = ["id", "user", "user_id", "team", "role", "abilities"]
-        read_only_fields = ["id", "abilities"]
-
-
-class TemplateAccessSerializer(BaseAccessSerializer):
-    """Serialize template accesses."""
 
     class Meta:
         model = models.TemplateAccess
@@ -127,85 +69,172 @@ class TemplateAccessSerializer(BaseAccessSerializer):
         fields = ["id", "user", "team", "role", "abilities"]
         read_only_fields = ["id", "abilities"]
 
-
-class BaseResourceSerializer(serializers.ModelSerializer):
-    """Serialize documents."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-    accesses = TemplateAccessSerializer(many=True, read_only=True)
-
-    def get_abilities(self, document) -> dict:
+    def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
         request = self.context.get("request")
         if request:
-            return document.get_abilities(request.user)
+            return instance.get_abilities(request.user)
         return {}
 
+    def update(self, instance, validated_data):
+        """Make "user" field is readonly but only on update."""
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
 
-class ListDocumentSerializer(BaseResourceSerializer):
+
+class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
-    nb_accesses = serializers.IntegerField(read_only=True)
+    nb_accesses_ancestors = serializers.IntegerField(read_only=True)
+    nb_accesses_direct = serializers.IntegerField(read_only=True)
+    user_role = serializers.SerializerMethodField(read_only=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
+    deleted_at = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.Document
         fields = [
             "id",
             "abilities",
-            "content",
+            "ancestors_link_reach",
+            "ancestors_link_role",
+            "computed_link_reach",
+            "computed_link_role",
             "created_at",
             "creator",
+            "deleted_at",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "title",
             "updated_at",
+            "user_role",
         ]
         read_only_fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
+            "computed_link_reach",
+            "computed_link_role",
             "created_at",
             "creator",
+            "deleted_at",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "updated_at",
+            "user_role",
         ]
+
+    def to_representation(self, instance):
+        """Precompute once per instance"""
+        paths_links_mapping = self.context.get("paths_links_mapping")
+
+        if paths_links_mapping is not None:
+            links = paths_links_mapping.get(instance.path[: -instance.steplen], [])
+            instance.ancestors_link_definition = choices.get_equivalent_link_definition(
+                links
+            )
+
+        return super().to_representation(instance)
+
+    def get_abilities(self, instance) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if not request:
+            return {}
+
+        return instance.get_abilities(request.user)
+
+    def get_user_role(self, instance):
+        """
+        Return roles of the logged-in user for the current document,
+        taking into account ancestors.
+        """
+        request = self.context.get("request")
+        return instance.get_role(request.user) if request else None
+
+    def get_deleted_at(self, instance):
+        """Return the deleted_at of the current document."""
+        return instance.ancestors_deleted_at
+
+
+class DocumentLightSerializer(serializers.ModelSerializer):
+    """Minial document serializer for nesting in document accesses."""
+
+    class Meta:
+        model = models.Document
+        fields = ["id", "path", "depth"]
+        read_only_fields = ["id", "path", "depth"]
 
 
 class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
     content = serializers.CharField(required=False)
+    websocket = serializers.BooleanField(required=False, write_only=True)
 
     class Meta:
         model = models.Document
         fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
+            "computed_link_reach",
+            "computed_link_role",
             "content",
             "created_at",
             "creator",
+            "deleted_at",
+            "depth",
+            "excerpt",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "title",
             "updated_at",
+            "user_role",
+            "websocket",
         ]
         read_only_fields = [
             "id",
             "abilities",
+            "ancestors_link_reach",
+            "ancestors_link_role",
+            "computed_link_reach",
+            "computed_link_role",
             "created_at",
             "creator",
+            "deleted_at",
+            "depth",
             "is_favorite",
             "link_role",
             "link_reach",
-            "nb_accesses",
+            "nb_accesses_ancestors",
+            "nb_accesses_direct",
+            "numchild",
+            "path",
             "updated_at",
+            "user_role",
         ]
 
     def get_fields(self):
@@ -231,6 +260,158 @@ class DocumentSerializer(ListDocumentSerializer):
 
         return value
 
+    def validate_content(self, value):
+        """Validate the content field."""
+        if not value:
+            return None
+
+        try:
+            b64decode(value, validate=True)
+        except binascii.Error as err:
+            raise serializers.ValidationError("Invalid base64 content.") from err
+
+        return value
+
+    def save(self, **kwargs):
+        """
+        Process the content field to extract attachment keys and update the document's
+        "attachments" field for access control.
+        """
+        content = self.validated_data.get("content", "")
+        extracted_attachments = set(utils.extract_attachments(content))
+
+        existing_attachments = (
+            set(self.instance.attachments or []) if self.instance else set()
+        )
+        new_attachments = extracted_attachments - existing_attachments
+
+        if new_attachments:
+            attachments_documents = (
+                models.Document.objects.filter(
+                    attachments__overlap=list(new_attachments)
+                )
+                .only("path", "attachments")
+                .order_by("path")
+            )
+
+            user = self.context["request"].user
+            readable_per_se_paths = (
+                models.Document.objects.readable_per_se(user)
+                .order_by("path")
+                .values_list("path", flat=True)
+            )
+            readable_attachments_paths = utils.filter_descendants(
+                [doc.path for doc in attachments_documents],
+                readable_per_se_paths,
+                skip_sorting=True,
+            )
+
+            readable_attachments = set()
+            for document in attachments_documents:
+                if document.path not in readable_attachments_paths:
+                    continue
+                readable_attachments.update(set(document.attachments) & new_attachments)
+
+            # Update attachments with readable keys
+            self.validated_data["attachments"] = list(
+                existing_attachments | readable_attachments
+            )
+
+        return super().save(**kwargs)
+
+
+class DocumentAccessSerializer(serializers.ModelSerializer):
+    """Serialize document accesses."""
+
+    document = DocumentLightSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.User.objects.all(),
+        write_only=True,
+        source="user",
+        required=False,
+        allow_null=True,
+    )
+    user = UserSerializer(read_only=True)
+    team = serializers.CharField(required=False, allow_blank=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
+    max_ancestors_role = serializers.SerializerMethodField(read_only=True)
+    max_role = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.DocumentAccess
+        resource_field_name = "document"
+        fields = [
+            "id",
+            "document",
+            "user",
+            "user_id",
+            "team",
+            "role",
+            "abilities",
+            "max_ancestors_role",
+            "max_role",
+        ]
+        read_only_fields = [
+            "id",
+            "document",
+            "abilities",
+            "max_ancestors_role",
+            "max_role",
+        ]
+
+    def get_abilities(self, instance) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return instance.get_abilities(request.user)
+        return {}
+
+    def get_max_ancestors_role(self, instance):
+        """Return max_ancestors_role if annotated; else None."""
+        return getattr(instance, "max_ancestors_role", None)
+
+    def get_max_role(self, instance):
+        """Return max_ancestors_role if annotated; else None."""
+        return choices.RoleChoices.max(
+            getattr(instance, "max_ancestors_role", None),
+            instance.role,
+        )
+
+    def update(self, instance, validated_data):
+        """Make "user" field readonly but only on update."""
+        validated_data.pop("team", None)
+        validated_data.pop("user", None)
+        return super().update(instance, validated_data)
+
+
+class DocumentAccessLightSerializer(DocumentAccessSerializer):
+    """Serialize document accesses with limited fields."""
+
+    user = UserLightSerializer(read_only=True)
+
+    class Meta:
+        model = models.DocumentAccess
+        resource_field_name = "document"
+        fields = [
+            "id",
+            "document",
+            "user",
+            "team",
+            "role",
+            "abilities",
+            "max_ancestors_role",
+            "max_role",
+        ]
+        read_only_fields = [
+            "id",
+            "document",
+            "team",
+            "role",
+            "abilities",
+            "max_ancestors_role",
+            "max_role",
+        ]
+
 
 class ServerCreateDocumentSerializer(serializers.Serializer):
     """
@@ -250,7 +431,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
     content = serializers.CharField(required=True)
     # User
     sub = serializers.CharField(
-        required=True, validators=[models.User.sub_validator], max_length=255
+        required=True, validators=[validators.sub_validator], max_length=255
     )
     email = serializers.EmailField(required=True)
     language = serializers.ChoiceField(
@@ -279,15 +460,13 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             language = user.language or language
 
         try:
-            document_content = YdocConverter().convert_markdown(
-                validated_data["content"]
-            )
+            document_content = YdocConverter().convert(validated_data["content"])
         except ConversionError as err:
             raise serializers.ValidationError(
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = models.Document.objects.create(
+        document = models.Document.add_root(
             title=validated_data["title"],
             content=document_content,
             creator=user,
@@ -330,11 +509,15 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
         raise NotImplementedError("Update is not supported for this serializer.")
 
 
-class LinkDocumentSerializer(BaseResourceSerializer):
+class LinkDocumentSerializer(serializers.ModelSerializer):
     """
     Serialize link configuration for documents.
     We expose it separately from document in order to simplify and secure access control.
     """
+
+    link_reach = serializers.ChoiceField(
+        choices=models.LinkReachChoices.choices, required=True
+    )
 
     class Meta:
         model = models.Document
@@ -342,6 +525,79 @@ class LinkDocumentSerializer(BaseResourceSerializer):
             "link_role",
             "link_reach",
         ]
+
+    def validate(self, attrs):
+        """Validate that link_role and link_reach are compatible using get_select_options."""
+        link_reach = attrs.get("link_reach")
+        link_role = attrs.get("link_role")
+
+        if not link_reach:
+            raise serializers.ValidationError(
+                {"link_reach": _("This field is required.")}
+            )
+
+        # Get available options based on ancestors' link definition
+        available_options = models.LinkReachChoices.get_select_options(
+            **self.instance.ancestors_link_definition
+        )
+
+        # Validate link_reach is allowed
+        if link_reach not in available_options:
+            msg = _(
+                "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
+            )
+            raise serializers.ValidationError(
+                {"link_reach": msg % {"link_reach": link_reach}}
+            )
+
+        # Validate link_role is compatible with link_reach
+        allowed_roles = available_options[link_reach]
+
+        # Restricted reach: link_role must be None
+        if link_reach == models.LinkReachChoices.RESTRICTED:
+            if link_role is not None:
+                raise serializers.ValidationError(
+                    {
+                        "link_role": (
+                            "Cannot set link_role when link_reach is 'restricted'. "
+                            "Link role must be null for restricted reach."
+                        )
+                    }
+                )
+            return attrs
+        # Non-restricted: link_role must be in allowed roles
+        if link_role not in allowed_roles:
+            allowed_roles_str = ", ".join(allowed_roles) if allowed_roles else "none"
+            raise serializers.ValidationError(
+                {
+                    "link_role": (
+                        f"Link role '{link_role}' is not allowed for link reach '{link_reach}'. "
+                        f"Allowed roles: {allowed_roles_str}"
+                    )
+                }
+            )
+        return attrs
+
+
+class DocumentDuplicationSerializer(serializers.Serializer):
+    """
+    Serializer for duplicating a document.
+    Allows specifying whether to keep access permissions.
+    """
+
+    with_accesses = serializers.BooleanField(default=False)
+
+    def create(self, validated_data):
+        """
+        This serializer is not intended to create objects.
+        """
+        raise NotImplementedError("This serializer does not support creation.")
+
+    def update(self, instance, validated_data):
+        """
+        This serializer is not intended to update objects.
+        """
+        raise NotImplementedError("This serializer does not support updating.")
 
 
 # Suppress the warning about not implementing `create` and `update` methods
@@ -367,16 +623,17 @@ class FileUploadSerializer(serializers.Serializer):
         mime = magic.Magic(mime=True)
         magic_mime_type = mime.from_buffer(file.read(1024))
         file.seek(0)  # Reset file pointer to the beginning after reading
+        self.context["is_unsafe"] = False
+        if settings.DOCUMENT_ATTACHMENT_CHECK_UNSAFE_MIME_TYPES_ENABLED:
+            self.context["is_unsafe"] = (
+                magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
+            )
 
-        self.context["is_unsafe"] = (
-            magic_mime_type in settings.DOCUMENT_UNSAFE_MIME_TYPES
-        )
+            extension_mime_type, _ = mimetypes.guess_type(file.name)
 
-        extension_mime_type, _ = mimetypes.guess_type(file.name)
-
-        # Try guessing a coherent extension from the mimetype
-        if extension_mime_type != magic_mime_type:
-            self.context["is_unsafe"] = True
+            # Try guessing a coherent extension from the mimetype
+            if extension_mime_type != magic_mime_type:
+                self.context["is_unsafe"] = True
 
         guessed_ext = mimetypes.guess_extension(magic_mime_type)
         # Missing extensions or extensions longer than 5 characters (it's as long as an extension
@@ -388,6 +645,8 @@ class FileUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError("Could not determine file extension.")
 
         self.context["expected_extension"] = extension
+        self.context["content_type"] = magic_mime_type
+        self.context["file_name"] = file.name
 
         return file
 
@@ -395,11 +654,16 @@ class FileUploadSerializer(serializers.Serializer):
         """Override validate to add the computed extension to validated_data."""
         attrs["expected_extension"] = self.context["expected_extension"]
         attrs["is_unsafe"] = self.context["is_unsafe"]
+        attrs["content_type"] = self.context["content_type"]
+        attrs["file_name"] = self.context["file_name"]
         return attrs
 
 
-class TemplateSerializer(BaseResourceSerializer):
+class TemplateSerializer(serializers.ModelSerializer):
     """Serialize templates."""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+    accesses = TemplateAccessSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Template
@@ -413,6 +677,13 @@ class TemplateSerializer(BaseResourceSerializer):
             "is_public",
         ]
         read_only_fields = ["id", "accesses", "abilities"]
+
+    def get_abilities(self, document) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return document.get_abilities(request.user)
+        return {}
 
 
 # pylint: disable=abstract-method
@@ -478,6 +749,9 @@ class InvitationSerializer(serializers.ModelSerializer):
         if self.instance is None:
             attrs["issuer"] = user
 
+        if attrs.get("email"):
+            attrs["email"] = attrs["email"].lower()
+
         return attrs
 
     def validate_role(self, role):
@@ -498,6 +772,50 @@ class InvitationSerializer(serializers.ModelSerializer):
                 )
 
         return role
+
+
+class RoleSerializer(serializers.Serializer):
+    """Serializer validating role choices."""
+
+    role = serializers.ChoiceField(
+        choices=models.RoleChoices.choices, required=False, allow_null=True
+    )
+
+
+class DocumentAskForAccessCreateSerializer(serializers.Serializer):
+    """Serializer for creating a document ask for access."""
+
+    role = serializers.ChoiceField(
+        choices=models.RoleChoices.choices,
+        required=False,
+        default=models.RoleChoices.READER,
+    )
+
+
+class DocumentAskForAccessSerializer(serializers.ModelSerializer):
+    """Serializer for document ask for access model"""
+
+    abilities = serializers.SerializerMethodField(read_only=True)
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = models.DocumentAskForAccess
+        fields = [
+            "id",
+            "document",
+            "user",
+            "role",
+            "created_at",
+            "abilities",
+        ]
+        read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
+
+    def get_abilities(self, invitation) -> dict:
+        """Return abilities of the logged-in user on the instance."""
+        request = self.context.get("request")
+        if request:
+            return invitation.get_abilities(request.user)
+        return {}
 
 
 class VersionFilterSerializer(serializers.Serializer):
@@ -537,3 +855,37 @@ class AITranslateSerializer(serializers.Serializer):
         if len(value.strip()) == 0:
             raise serializers.ValidationError("Text field cannot be empty.")
         return value
+
+
+class MoveDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for validating input data to move a document within the tree structure.
+
+    Fields:
+        - target_document_id (UUIDField): The ID of the target parent document where the
+            document should be moved. This field is required and must be a valid UUID.
+        - position (ChoiceField): Specifies the position of the document in relation to
+            the target parent's children.
+          Choices:
+            - "first-child": Place the document as the first child of the target parent.
+            - "last-child": Place the document as the last child of the target parent (default).
+            - "left": Place the document as the left sibling of the target parent.
+            - "right": Place the document as the right sibling of the target parent.
+
+    Example:
+        Input payload for moving a document:
+        {
+            "target_document_id": "123e4567-e89b-12d3-a456-426614174000",
+            "position": "first-child"
+        }
+
+    Notes:
+        - The `target_document_id` is mandatory.
+        - The `position` defaults to "last-child" if not provided.
+    """
+
+    target_document_id = serializers.UUIDField(required=True)
+    position = serializers.ChoiceField(
+        choices=enums.MoveNodePositionChoices.choices,
+        default=enums.MoveNodePositionChoices.LAST_CHILD,
+    )

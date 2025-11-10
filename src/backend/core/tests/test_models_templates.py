@@ -2,10 +2,6 @@
 Unit tests for the Template model
 """
 
-import os
-import time
-from unittest import mock
-
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError
 
@@ -189,31 +185,3 @@ def test_models_templates_get_abilities_preset_role(django_assert_num_queries):
         "partial_update": False,
         "generate_document": True,
     }
-
-
-def test_models_templates__generate_word():
-    """Generate word document and assert no tmp files are left in /tmp folder."""
-    template = factories.TemplateFactory()
-    response = template.generate_word("<p>Test body</p>", {})
-
-    assert response.status_code == 200
-    assert len([f for f in os.listdir("/tmp") if f.startswith("docx_")]) == 0
-
-
-@mock.patch(
-    "pypandoc.convert_text",
-    side_effect=RuntimeError("Conversion failed"),
-)
-def test_models_templates__generate_word__raise_error(_mock_pypandoc):
-    """
-    Generate word document and assert no tmp files are left in /tmp folder
-    even when the conversion fails.
-    """
-    template = factories.TemplateFactory()
-
-    try:
-        template.generate_word("<p>Test body</p>", {})
-    except RuntimeError as e:
-        assert str(e) == "Conversion failed"
-        time.sleep(0.5)
-        assert len([f for f in os.listdir("/tmp") if f.startswith("docx_")]) == 0

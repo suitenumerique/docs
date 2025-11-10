@@ -6,25 +6,42 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0011_populate_creator_field_and_make_it_required'),
+        ("core", "0011_populate_creator_field_and_make_it_required"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='document',
-            name='creator',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='documents_created', to=settings.AUTH_USER_MODEL),
+            model_name="document",
+            name="creator",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name="documents_created",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='invitation',
-            name='issuer',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='invitations', to=settings.AUTH_USER_MODEL),
+            model_name="invitation",
+            name="issuer",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="invitations",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='language',
-            field=models.CharField(choices="(('en-us', 'English'), ('fr-fr', 'French'), ('de-de', 'German'))", default='en-us', help_text='The language in which the user wants to see the interface.', max_length=10, verbose_name='language'),
+            model_name="user",
+            name="language",
+            field=models.CharField(
+                choices="(('en-us', 'English'), ('fr-fr', 'French'), ('de-de', 'German'))",
+                default="en-us",
+                help_text="The language in which the user wants to see the interface.",
+                max_length=10,
+                verbose_name="language",
+            ),
         ),
     ]

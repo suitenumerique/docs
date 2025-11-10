@@ -1,5 +1,5 @@
 import { Command } from 'cmdk';
-import { ReactNode, useRef } from 'react';
+import { PropsWithChildren, ReactNode, useId, useRef, useState } from 'react';
 
 import { hasChildrens } from '@/utils/children';
 
@@ -30,7 +30,6 @@ export type QuickSearchProps = {
   loading?: boolean;
   label?: string;
   placeholder?: string;
-  children?: ReactNode;
 };
 
 export const QuickSearch = ({
@@ -42,14 +41,38 @@ export const QuickSearch = ({
   label,
   placeholder,
   children,
-}: QuickSearchProps) => {
+}: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
+  const listId = useId();
+  const NO_SELECTION_VALUE = '__none__';
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [selectedValue, setSelectedValue] = useState(NO_SELECTION_VALUE);
+  const isExpanded = userInteracted;
+
+  const handleValueChange = (val: string) => {
+    if (userInteracted) {
+      setSelectedValue(val);
+    }
+  };
+
+  const handleUserInteract = () => {
+    if (!userInteracted) {
+      setUserInteracted(true);
+    }
+  };
 
   return (
     <>
       <QuickSearchStyle />
       <div className="quick-search-container">
-        <Command label={label} shouldFilter={false} ref={ref}>
+        <Command
+          label={label}
+          shouldFilter={false}
+          ref={ref}
+          tabIndex={0}
+          value={selectedValue}
+          onValueChange={handleValueChange}
+        >
           {showInput && (
             <QuickSearchInput
               loading={loading}
@@ -57,11 +80,14 @@ export const QuickSearch = ({
               inputValue={inputValue}
               onFilter={onFilter}
               placeholder={placeholder}
+              listId={listId}
+              isExpanded={isExpanded}
+              onUserInteract={handleUserInteract}
             >
               {inputContent}
             </QuickSearchInput>
           )}
-          <Command.List>
+          <Command.List id={listId} aria-label={label} role="listbox">
             <Box>{children}</Box>
           </Command.List>
         </Command>

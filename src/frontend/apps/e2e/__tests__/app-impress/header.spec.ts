@@ -1,21 +1,53 @@
 import { expect, test } from '@playwright/test';
 
-import { keyCloakSignIn } from './common';
+import {
+  expectLoginPage,
+  keyCloakSignIn,
+  overrideConfig,
+} from './utils-common';
 
 test.describe('Header', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
-
   test('checks all the elements are visible', async ({ page }) => {
+    await page.goto('/');
+
     const header = page.locator('header').first();
 
-    await expect(header.getByAltText('Docs Logo')).toBeVisible();
-    await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
-      'color',
-      'rgb(0, 0, 145)',
+    await expect(header.getByTestId('header-logo-link')).toBeVisible();
+    await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
+      'font-family',
+      /Roboto/i,
     );
-    await expect(header.locator('h2').getByText('Docs')).toHaveCSS(
+
+    await expect(
+      header.getByRole('button', {
+        name: 'Logout',
+      }),
+    ).toBeVisible();
+
+    await expect(header.getByText('English')).toBeVisible();
+  });
+
+  test('checks all the elements are visible with DSFR theme', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            alt: 'Gouvernement Logo',
+          },
+        },
+      },
+    });
+    await page.goto('/');
+
+    const header = page.locator('header').first();
+
+    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
+    await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
       'font-family',
       /Marianne/i,
     );
@@ -36,6 +68,11 @@ test.describe('Header', () => {
   });
 
   test('checks La Gauffre interaction', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+    });
+    await page.goto('/');
+
     const header = page.locator('header').first();
 
     await expect(
@@ -48,7 +85,6 @@ test.describe('Header', () => {
      * La gaufre load a js file from a remote server,
      * it takes some time to load the file and have the interaction available
      */
-    // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(1500);
 
     await header
@@ -68,15 +104,26 @@ test.describe('Header', () => {
 test.describe('Header mobile', () => {
   test.use({ viewport: { width: 500, height: 1200 } });
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
+  test('it checks the header when mobile with DSFR theme', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            alt: 'Gouvernement Logo',
+          },
+        },
+      },
+    });
 
-  test('it checks the header when mobile', async ({ page }) => {
+    await page.goto('/');
+
     const header = page.locator('header').first();
 
     await expect(header.getByLabel('Open the header menu')).toBeVisible();
-    await expect(header.getByRole('link', { name: 'Docs Logo' })).toBeVisible();
+    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
     await expect(
       header.getByRole('button', {
         name: 'Les services de La Suite numérique',
@@ -88,6 +135,7 @@ test.describe('Header mobile', () => {
 test.describe('Header: Log out', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
+  // eslint-disable-next-line playwright/expect-expect
   test('checks logout button', async ({ page, browserName }) => {
     await page.goto('/');
     await keyCloakSignIn(page, browserName);
@@ -98,6 +146,33 @@ test.describe('Header: Log out', () => {
       })
       .click();
 
-    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expectLoginPage(page);
+  });
+});
+
+test.describe('Header: Override configuration', () => {
+  test('checks the header is correctly overrided', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            alt: '',
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+    const header = page.locator('header').first();
+
+    const logoImage = header.getByTestId('header-icon-docs');
+    await expect(logoImage).toBeVisible();
+
+    await expect(logoImage).not.toHaveAttribute('src', '/assets/icon-docs.svg');
+    await expect(logoImage).toHaveAttribute('src', '/assets/logo-gouv.svg');
+    await expect(logoImage).toHaveAttribute('alt', '');
   });
 });

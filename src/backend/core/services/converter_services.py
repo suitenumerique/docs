@@ -1,4 +1,6 @@
-"""Converter services."""
+"""Y-Provider API services."""
+
+from base64 import b64encode
 
 from django.conf import settings
 
@@ -17,14 +19,6 @@ class ServiceUnavailableError(ConversionError):
     """Raised when the conversion service is unavailable."""
 
 
-class InvalidResponseError(ConversionError):
-    """Raised when the conversion service returns an invalid response."""
-
-
-class MissingContentError(ConversionError):
-    """Raised when the response is missing required content."""
-
-
 class YdocConverter:
     """Service class for conversion-related operations."""
 
@@ -32,47 +26,47 @@ class YdocConverter:
     def auth_header(self):
         """Build microservice authentication header."""
         # Note: Yprovider microservice accepts only raw token, which is not recommended
-        return settings.Y_PROVIDER_API_KEY
+        return f"Bearer {settings.Y_PROVIDER_API_KEY}"
 
-    def convert_markdown(self, text):
+    def _request(self, url, data, content_type, accept):
+        """Make a request to the Y-Provider API."""
+        response = requests.post(
+            url,
+            data=data,
+            headers={
+                "Authorization": self.auth_header,
+                "Content-Type": content_type,
+                "Accept": accept,
+            },
+            timeout=settings.CONVERSION_API_TIMEOUT,
+            verify=settings.CONVERSION_API_SECURE,
+        )
+        response.raise_for_status()
+        return response
+
+    def convert(
+        self, text, content_type="text/markdown", accept="application/vnd.yjs.doc"
+    ):
         """Convert a Markdown text into our internal format using an external microservice."""
 
         if not text:
             raise ValidationError("Input text cannot be empty")
 
         try:
-            response = requests.post(
+            response = self._request(
                 f"{settings.Y_PROVIDER_API_BASE_URL}{settings.CONVERSION_API_ENDPOINT}/",
-                json={
-                    "content": text,
-                },
-                headers={
-                    "Authorization": self.auth_header,
-                    "Content-Type": "application/json",
-                },
-                timeout=settings.CONVERSION_API_TIMEOUT,
-                verify=settings.CONVERSION_API_SECURE,
+                text,
+                content_type,
+                accept,
             )
-            response.raise_for_status()
-            conversion_response = response.json()
-
+            if accept == "application/vnd.yjs.doc":
+                return b64encode(response.content).decode("utf-8")
+            if accept in {"text/markdown", "text/html"}:
+                return response.text
+            if accept == "application/json":
+                return response.json()
+            raise ValidationError("Unsupported format")
         except requests.RequestException as err:
             raise ServiceUnavailableError(
                 "Failed to connect to conversion service",
             ) from err
-
-        except ValueError as err:
-            raise InvalidResponseError(
-                "Could not parse conversion service response"
-            ) from err
-
-        try:
-            document_content = conversion_response[
-                settings.CONVERSION_API_CONTENT_FIELD
-            ]
-        except KeyError as err:
-            raise MissingContentError(
-                f"Response missing required field: {settings.CONVERSION_API_CONTENT_FIELD}"
-            ) from err
-
-        return document_content

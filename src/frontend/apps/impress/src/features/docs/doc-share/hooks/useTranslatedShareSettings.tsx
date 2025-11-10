@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { LinkReach, LinkRole } from '@/features/docs/doc-management/types';
+import { LinkReach, LinkRole } from '@/docs/doc-management/types';
 
 export const useTranslatedShareSettings = () => {
   const { t } = useTranslation();
@@ -13,7 +13,7 @@ export const useTranslatedShareSettings = () => {
 
   const linkModeTranslations = {
     [LinkRole.READER]: t('Reading'),
-    [LinkRole.EDITOR]: t('Edition'),
+    [LinkRole.EDITOR]: t('Editing'),
   };
 
   const linkReachChoices = {
@@ -26,7 +26,7 @@ export const useTranslatedShareSettings = () => {
     },
     [LinkReach.AUTHENTICATED]: {
       label: linkReachTranslations[LinkReach.AUTHENTICATED],
-      icon: 'corporate_fare',
+      icon: 'vpn_lock',
       value: LinkReach.AUTHENTICATED,
       descriptionReadOnly: t(
         'Anyone with the link can view the document if they are logged in',

@@ -1,10 +1,8 @@
 import { COLLABORATION_LOGGING } from './env';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function logger(...args: any[]) {
+export function logger(...args: unknown[]) {
   if (COLLABORATION_LOGGING === 'true') {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    console.log(...args);
+    console.log(new Date().toISOString(), ' --- ', ...args);
   }
 }
 
