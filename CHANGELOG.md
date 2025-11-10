@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.9.0] - 2025-11-10
+
 ### Added
 
 - ✨(frontend) create skeleton component for DocEditor #1491
@@ -15,16 +17,16 @@ and this project adheres to
 ### Changed
 
 - ♻️(frontend) adapt custom blocks to new implementation #1375
-- ♻️(backend) increase user short_name field length
+- ♻️(backend) increase user short_name field length #1510
 - 🚸(frontend) separate viewers from editors #1509
 
 ### Fixed
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
-- 🐛(backend) fix trashbin list
+- 🐛(backend) fix trashbin list #1520
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
-- 🐛(backend) fix s3 version_id validation
+- 🐛(backend) fix s3 version_id validation #1543
 - 🐛(frontend) retry check media status after page reload #1555
 - 🐛(frontend) fix Interlinking memory leak #1560
 - 🐛(frontend) button new doc UI fix #1557
@@ -841,7 +843,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.8.2...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.9.0...main
+[v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
 [v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2
 [v3.8.1]: https://github.com/suitenumerique/docs/releases/v3.8.1
 [v3.8.0]: https://github.com/suitenumerique/docs/releases/v3.8.0
