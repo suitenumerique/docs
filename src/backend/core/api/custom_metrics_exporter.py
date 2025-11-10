@@ -42,7 +42,7 @@ class CustomMetricsExporter:
 
         # Group user queries/metrics into a dictionary
         user_metrics = {
-            "total": models.User.objects.count(),
+            "count": models.User.objects.count(),
             "active_today": models.User.objects.filter(
                 Q(documentaccess__updated_at__gte=times["today_start_utc"])
                 | Q(link_traces__created_at__gte=times["today_start_utc"])
@@ -68,7 +68,7 @@ class CustomMetricsExporter:
 
         # Group document queries/metrics into a dictionary
         doc_metrics = {
-            "total": models.Document.objects.count(),
+            "count": models.Document.objects.count(),
             "shared": (
                 models.Document.objects.annotate(access_count=Count("accesses"))
                 .filter(access_count__gt=1)
@@ -103,46 +103,48 @@ class CustomMetricsExporter:
         # -- User metrics
         metrics.append(
             GaugeMetricFamily(
-                metric_name("users_total"),
+                metric_name("users"),
                 "Current number of users",
-                value=user_metrics["total"],
+                value=user_metrics["count"],
             )
         )
         # Aggregate active users into a single metric with a 'window' label
         active_users_metric = GaugeMetricFamily(
-            metric_name("users_active_total"),
+            metric_name("users_active"),
             "Users active within the given window",
             labels=["window"],
         )
-        active_users_metric.add_metric(["1d"], user_metrics["active_today"])
-        active_users_metric.add_metric(["7d"], user_metrics["active_7d"])
-        active_users_metric.add_metric(["30d"], user_metrics["active_30d"])
+        active_users_metric.add_metric(["one_day"], user_metrics["active_today"])
+        active_users_metric.add_metric(["seven_days"], user_metrics["active_7d"])
+        active_users_metric.add_metric(["thirty_days"], user_metrics["active_30d"])
         metrics.append(active_users_metric)
 
         # -- Document metrics
         metrics.append(
             GaugeMetricFamily(
-                metric_name("documents_total"),
+                metric_name("documents"),
                 "Current number of documents",
-                value=doc_metrics["total"],
+                value=doc_metrics["count"],
             )
         )
         metrics.append(
             GaugeMetricFamily(
-                metric_name("documents_shared_total"),
+                metric_name("documents_shared"),
                 "Current number of shared documents",
                 value=doc_metrics["shared"],
             )
         )
         # Aggregate active documents into a single metric with a 'window' label
         active_documents_metric = GaugeMetricFamily(
-            metric_name("documents_active_total"),
+            metric_name("documents_active"),
             "Documents active within the given window",
             labels=["window"],
         )
-        active_documents_metric.add_metric(["1d"], doc_metrics["active_today"])
-        active_documents_metric.add_metric(["7d"], doc_metrics["active_7d"])
-        active_documents_metric.add_metric(["30d"], doc_metrics["active_30d"])
+        active_documents_metric.add_metric(["one_day"], doc_metrics["active_today"])
+        active_documents_metric.add_metric(["seven_days"], doc_metrics["active_7d"])
+        active_documents_metric.add_metric(
+            ["thirty_days"], doc_metrics["active_30d"]
+        )
         metrics.append(active_documents_metric)
 
         # -- Document oldest/newest creation timestamps in seconds
@@ -164,7 +166,7 @@ class CustomMetricsExporter:
 
         # -- User document distribution
         user_distribution_metric = GaugeMetricFamily(
-            metric_name("user_documents_total"),
+            metric_name("user_documents"),
             "Number of documents per user",
             labels=["user_email"],
         )
