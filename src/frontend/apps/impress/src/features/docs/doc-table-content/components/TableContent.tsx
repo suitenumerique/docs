@@ -108,9 +108,10 @@ export const TableContent = () => {
       $align="center"
       $padding={isHover ? 'xs' : '0'}
       $justify="center"
-      $position="relative"
+      $position="sticky"
       aria-label={t('Summary')}
       $css={css`
+        top: 0;
         border: 1px solid ${colorsTokens['greyscale-300']};
         overflow: hidden;
         border-radius: ${spacingsTokens['3xs']};
