@@ -103,7 +103,15 @@ export const blockMappingTablePDF: DocsExporterPDF['mappings']['blockMapping']['
 
                 return (
                   <TD key={colIndex} style={arrayStyle}>
-                    <Text style={styles.cell}>
+                    <Text
+                      style={[
+                        styles.cell,
+                        {
+                          width: '100%',
+                          textAlign: cellProps.textAlignment ?? 'left',
+                        },
+                      ]}
+                    >
                       {exporter.transformInlineContent(cell)}
                     </Text>
                   </TD>
