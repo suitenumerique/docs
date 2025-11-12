@@ -2162,7 +2162,19 @@ class DocumentAskForAccessViewSet(
         serializer = serializers.RoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        document_ask_for_access.accept(role=serializer.validated_data.get("role"))
+        document = self.get_document_or_404()
+        user_role = document.get_role(request.user)
+        target_role = serializer.validated_data.get("role")
+
+        if models.RoleChoices.get_priority(user_role) < models.RoleChoices.get_priority(
+            target_role
+        ):
+            return drf.response.Response(
+                {"detail": "You cannot accept a role higher than your own."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        document_ask_for_access.accept(role=target_role)
         return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
 
