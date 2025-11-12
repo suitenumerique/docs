@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(frontend) enable ODT export for documents #1524
+- ✨(frontend) improve mobile UX by showing subdocs count #1540
 
 ### Fixed
 
@@ -27,7 +28,6 @@ and this project adheres to
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
-- ✨(frontend) improve mobile UX by showing subdocs count #1540
 
 ### Changed
 
