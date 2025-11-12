@@ -115,7 +115,10 @@ def test_api_documents_ask_for_access_create_authenticated_non_root_document():
     assert response.status_code == 404
 
 
-def test_api_documents_ask_for_access_create_authenticated_specific_role():
+@pytest.mark.parametrize(
+    "role", [role for role in RoleChoices if role != RoleChoices.OWNER]
+)
+def test_api_documents_ask_for_access_create_authenticated_specific_role(role):
     """
     Authenticated users should be able to create a document ask for access with a specific role.
     """
@@ -127,15 +130,33 @@ def test_api_documents_ask_for_access_create_authenticated_specific_role():
 
     response = client.post(
         f"/api/v1.0/documents/{document.id}/ask-for-access/",
-        data={"role": RoleChoices.EDITOR},
+        data={"role": role},
     )
     assert response.status_code == 201
 
     assert DocumentAskForAccess.objects.filter(
         document=document,
         user=user,
-        role=RoleChoices.EDITOR,
+        role=role,
     ).exists()
+
+
+def test_api_documents_ask_for_access_create_authenticated_owner_role():
+    """
+    Authenticated users should not be able to create a document ask for access with the owner role.
+    """
+    document = DocumentFactory()
+    user = UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/",
+        data={"role": RoleChoices.OWNER},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"role": ['"owner" is not a valid choice.']}
 
 
 def test_api_documents_ask_for_access_create_authenticated_already_has_access():

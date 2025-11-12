@@ -786,7 +786,9 @@ class DocumentAskForAccessCreateSerializer(serializers.Serializer):
     """Serializer for creating a document ask for access."""
 
     role = serializers.ChoiceField(
-        choices=models.RoleChoices.choices,
+        choices=[
+            role for role in choices.RoleChoices if role != models.RoleChoices.OWNER
+        ],
         required=False,
         default=models.RoleChoices.READER,
     )
@@ -810,11 +812,11 @@ class DocumentAskForAccessSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
 
-    def get_abilities(self, invitation) -> dict:
+    def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
         request = self.context.get("request")
         if request:
-            return invitation.get_abilities(request.user)
+            return instance.get_abilities(request.user)
         return {}
 
 
