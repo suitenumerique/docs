@@ -443,7 +443,7 @@ const MyCustomComponent: React.FC<ComponentProps> = ({
           >
             <Loading />
             <Text $size="s" style={{ marginTop: '16px', color: '#666' }}>
-              Loading plugin data...
+              Fake Loading...
             </Text>
           </Box>
         ) : (

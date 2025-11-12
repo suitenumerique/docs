@@ -153,8 +153,7 @@ const ThemingDemo: React.FC = () => {
           color: 'var(--c--theme--colors--greyscale-600)',
           lineHeight: '1.4',
         }}>
-          💡 This demo overrides primary-500, primary-600, and secondary-500 tokens.
-          Any component using these tokens will update!
+          💡 This demo overrides primary-500, primary-600, and secondary-500 css variables. It only works with CSS.
         </div>
       </div>
     </>

@@ -28,9 +28,15 @@ const nextConfig = {
     NEXT_PUBLIC_BUILD_ID: buildId,
   },
   webpack(config, { isServer, dev }) {
-    // Prevent rebuild loops by ignoring node_modules and build outputs
+    // Prevent rebuild loops by ignoring node_modules and generated types/outputs
     config.watchOptions = {
-      ignored: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
+      ignored: [
+        '**/node_modules/**',
+        '**/.next/**',
+        '**/dist/**',
+        '**/@mf-types/**',
+        '**/@mf-types.zip',
+      ],
     };
 
     // Grab the existing rule that handles SVG imports

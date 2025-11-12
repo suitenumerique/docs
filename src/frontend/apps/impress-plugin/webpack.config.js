@@ -1,6 +1,11 @@
 const path = require('path');
-const { NativeFederationTypeScriptHost } = require('@module-federation/native-federation-typescript/webpack');
 const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
+const {
+  NativeFederationTypeScriptHost,
+} = require('@module-federation/native-federation-typescript/webpack');
+const {
+  NativeFederationTypeScriptHost: NativeFederationTypeScriptHostCore,
+} = require('@module-federation/native-federation-typescript');
 
 const moduleFederationConfig = {
   name: 'plugin_frontend',
@@ -28,6 +33,24 @@ const moduleFederationConfig = {
     'react-intersection-observer': { singleton: true },
     '@tanstack/react-query': { singleton: true },
     'zustand': { singleton: true },
+  },
+};
+
+let mfTypesReady;
+const ensureFederatedTypesPlugin = {
+  apply(compiler) {
+    compiler.hooks.beforeCompile.tapPromise(
+      'EnsureFederatedTypes',
+      async () => {
+        if (!mfTypesReady) {
+          const downloader = NativeFederationTypeScriptHostCore.raw({
+            moduleFederationConfig,
+          });
+          mfTypesReady = downloader.writeBundle();
+        }
+        await mfTypesReady;
+      },
+    );
   },
 };
 
@@ -70,10 +93,11 @@ module.exports = (env, argv) => {
       new ModuleFederationPlugin(moduleFederationConfig),
       ...(dev
         ? [
-            NativeFederationTypeScriptHost({
-              moduleFederationConfig,
-            }),
-          ]
+          ensureFederatedTypesPlugin,
+          NativeFederationTypeScriptHost({
+            moduleFederationConfig,
+          }),
+        ]
         : []),
     ],
   };

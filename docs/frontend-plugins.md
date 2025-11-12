@@ -155,13 +155,22 @@ export default MyCustomComponent;
 ### 4\. Federation Configuration
 
 The core of the plugin is its Webpack configuration. <br>
-All plugins should use this sample `webpack.config.js` as a base.
+All plugins should use this `webpack.config.js` as a base.
+
+Disclaimer:
+We try to not change this file.<br>
+But in the future, it may evolve as the plugin system matures.
 
 <br>
 
 ```javascript
 const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
-const { NativeFederationTypeScriptHost } = require('@module-federation/native-federation-typescript/webpack');
+const {
+  NativeFederationTypeScriptHost,
+} = require('@module-federation/native-federation-typescript/webpack');
+const {
+  NativeFederationTypeScriptHost: NativeFederationTypeScriptHostCore,
+} = require('@module-federation/native-federation-typescript');
 
 module.exports = (env, argv) => {
   const dev = argv.mode !== 'production';
@@ -189,6 +198,24 @@ module.exports = (env, argv) => {
     },
   };
 
+  let mfTypesReady;
+  const ensureFederatedTypesPlugin = {
+    apply(compiler) {
+      compiler.hooks.beforeCompile.tapPromise(
+        'EnsureFederatedTypes',
+        async () => {
+          if (!mfTypesReady) {
+            const downloader = NativeFederationTypeScriptHostCore.raw({
+              moduleFederationConfig,
+            });
+            mfTypesReady = downloader.writeBundle();
+          }
+          await mfTypesReady;
+        },
+      );
+    },
+  };
+
   return {
     devServer: {
       // The port should match the one in your plugin's configuration file
@@ -198,7 +225,12 @@ module.exports = (env, argv) => {
     plugins: [
       new ModuleFederationPlugin(moduleFederationConfig),
       // This plugin enables type-sharing for intellisense
-      ...(dev ? [NativeFederationTypeScriptHost({ moduleFederationConfig })] : []),
+      ...(dev
+        ? [
+            ensureFederatedTypesPlugin, // ensures the zip is ready before the first compile
+            NativeFederationTypeScriptHost({ moduleFederationConfig }),
+          ]
+        : []),
     ],
     // ... other webpack config (output, module rules, etc.)
   };
@@ -232,8 +264,8 @@ In your plugin's `tsconfig.json`:
 <br>
 
 When you run the host application with `NEXT_PUBLIC_DEVELOP_PLUGINS=true`, it generates a `@mf-types.zip` file. <br>
-The `NativeFederationTypeScriptHost` plugin in your webpack config will automatically download and unpack it, <br>
-making the host's types available to your plugin and IDE.
+The `NativeFederationTypeScriptHost` plugin in your webpack config will automatically download and unpack it ahead of the first compile, <br>
+making the host's types available to your plugin and IDE. In development with this flag enabled, route changes may be slower because type generation and automatic exposure run during rebuilds; this does not affect production where navigations are instant.
 
 <br>
 
