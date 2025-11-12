@@ -12,7 +12,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 import * as Y from 'yjs';
@@ -100,6 +100,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
   const threadStore = useComments(doc.id, canSeeComment, user);
+
+  const currentUserAvatarUrl = useMemo(() => {
+    if (!canSeeComment) {
+      return undefined;
+    }
+    return avatarUrlFromName(collabName, themeTokens?.font?.families?.base);
+  }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
@@ -201,7 +208,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ref={refEditorContainer}
       $css={css`
         ${cssEditor};
-        ${cssComments(canSeeComment)}
+        ${cssComments(canSeeComment, currentUserAvatarUrl)}
       `}
     >
       {errorAttachment && (
