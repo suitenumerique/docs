@@ -155,10 +155,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const threadStore = useComments(doc.id, canSeeComment, user);
 
   const currentUserAvatarUrl = useMemo(() => {
-    if (!canSeeComment) {
-      return undefined;
+    if (canSeeComment) {
+      return avatarUrlFromName(collabName, themeTokens?.font?.families?.base);
     }
-    return avatarUrlFromName(collabName, themeTokens?.font?.families?.base);
   }, [canSeeComment, collabName, themeTokens?.font?.families?.base]);
 
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
