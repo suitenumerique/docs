@@ -36,7 +36,7 @@ type CreatePDFBlockConfig = BlockConfig<
     backgroundColor: { default: 'default' };
     caption: { default: '' };
     name: { default: '' };
-    previewWidth: { default: undefined; type: 'number' };
+    previewWidth: { default: 512; type: 'number' };
     showPreview: { default: true };
     textAlignment: { default: 'left' };
     url: { default: '' };
@@ -117,7 +117,7 @@ export const PdfBlock = createReactBlockSpec(
       backgroundColor: { default: 'default' as const },
       caption: { default: '' as const },
       name: { default: '' as const },
-      previewWidth: { default: undefined, type: 'number' },
+      previewWidth: { default: 512, type: 'number' },
       showPreview: { default: true },
       textAlignment: { default: 'left' as const },
       url: { default: '' as const },

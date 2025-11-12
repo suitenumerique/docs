@@ -53,15 +53,68 @@ import XLMultiColumn from './xl-multi-column';
 const multiColumnLocales = XLMultiColumn?.locales;
 const withMultiColumn = XLMultiColumn?.withMultiColumn;
 
+// Patch video/file/audio/image blocks to have a valid number default for previewWidth
+// This fixes the ProseMirror error: "No value supplied for attribute previewWidth"
+// BlockNote's default blocks use `undefined` which causes runtime errors
+const patchedVideoBlock = {
+  ...defaultBlockSpecs.video,
+  config: {
+    ...defaultBlockSpecs.video.config,
+    propSchema: {
+      ...defaultBlockSpecs.video.config.propSchema,
+      previewWidth: { default: 512, type: 'number' as const },
+    },
+  },
+};
+
+const patchedFileBlock = {
+  ...defaultBlockSpecs.file,
+  config: {
+    ...defaultBlockSpecs.file.config,
+    propSchema: {
+      ...defaultBlockSpecs.file.config.propSchema,
+      previewWidth: { default: 512, type: 'number' as const },
+    },
+  },
+};
+
+const patchedAudioBlock = {
+  ...defaultBlockSpecs.audio,
+  config: {
+    ...defaultBlockSpecs.audio.config,
+    propSchema: {
+      ...defaultBlockSpecs.audio.config.propSchema,
+      previewWidth: { default: 512, type: 'number' as const },
+    },
+  },
+};
+
+const patchedImageBlock = () => {
+  const imageSpec = AccessibleImageBlock();
+  return {
+    ...imageSpec,
+    config: {
+      ...imageSpec.config,
+      propSchema: {
+        ...imageSpec.config.propSchema,
+        previewWidth: { default: 512, type: 'number' as const },
+      },
+    },
+  };
+};
+
 const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      audio: patchedAudioBlock,
       callout: CalloutBlock(),
       codeBlock: createCodeBlockSpec(codeBlockOptions),
-      image: AccessibleImageBlock(),
+      file: patchedFileBlock,
+      image: patchedImageBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
+      video: patchedVideoBlock,
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
