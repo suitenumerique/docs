@@ -15,6 +15,11 @@ export const cssComments = (
       }
     }
 
+    em-emoji-picker {
+      box-shadow: 0px 6px 18px 0px #00001229;
+      min-height: 420px;
+    }
+
     // Thread modal
     .bn-thread {
       width: 400px;
@@ -44,16 +49,6 @@ export const cssComments = (
       .bn-thread-comments {
         overflow: auto;
         max-height: 500px;
-
-        // to allow popovers to escape the thread container
-        &:has(em-emoji-picker) {
-          max-height: none;
-          overflow: visible;
-        }
-
-        em-emoji-picker {
-          box-shadow: 0px 6px 18px 0px #00001229;
-        }
       }
 
       .bn-thread-comment {
