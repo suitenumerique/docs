@@ -1205,23 +1205,14 @@ class DocumentAskForAccess(BaseModel):
 
     def get_abilities(self, user):
         """Compute and return abilities for a given user."""
-        roles = []
+        user_role = self.document.get_role(user)
+        is_admin_or_owner = user_role in PRIVILEGED_ROLES
 
-        if user.is_authenticated:
-            teams = user.teams
-            try:
-                roles = self.user_roles or []
-            except AttributeError:
-                try:
-                    roles = self.document.accesses.filter(
-                        models.Q(user=user) | models.Q(team__in=teams),
-                    ).values_list("role", flat=True)
-                except (self._meta.model.DoesNotExist, IndexError):
-                    roles = []
-
-        is_admin_or_owner = bool(
-            set(roles).intersection({RoleChoices.OWNER, RoleChoices.ADMIN})
-        )
+        set_role_to = [
+            role
+            for role in RoleChoices.values
+            if RoleChoices.get_priority(role) <= RoleChoices.get_priority(user_role)
+        ]
 
         return {
             "destroy": is_admin_or_owner,
@@ -1229,6 +1220,7 @@ class DocumentAskForAccess(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
             "accept": is_admin_or_owner,
+            "set_role_to": set_role_to,
         }
 
     def accept(self, role=None):
