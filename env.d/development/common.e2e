@@ -7,3 +7,8 @@ Y_PROVIDER_API_BASE_URL=http://y-provider:4444/api/
 # Throttle
 API_DOCUMENT_THROTTLE_RATE=1000/min
 API_CONFIG_THROTTLE_RATE=1000/min
+
+# Store OIDC tokens in the session.
+OIDC_STORE_ACCESS_TOKEN = True
+OIDC_STORE_REFRESH_TOKEN = True # Store the encrypted refresh token in the session.
+OIDC_STORE_REFRESH_TOKEN_KEY = "na1hhus-OLhq9mb9SO3R-8E4dONuMnqpZSY_SX8xcFk="
