@@ -122,15 +122,22 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       if (isTopRoot) {
         const sanitizedTitle = updateDocTitle(doc, inputText);
         setTitleDisplay(sanitizedTitle);
+        return sanitizedTitle;
       } else {
-        const sanitizedTitle = updateDocTitle(
-          doc,
-          emoji ? `${emoji} ${inputText}` : inputText,
-        );
+        const { emoji: pastedEmoji } = getEmojiAndTitle(inputText);
+        const textPreservingPastedEmoji = pastedEmoji
+          ? `\u200B${inputText}`
+          : inputText;
+        const finalTitle = emoji
+          ? `${emoji} ${textPreservingPastedEmoji}`
+          : textPreservingPastedEmoji;
+
+        const sanitizedTitle = updateDocTitle(doc, finalTitle);
         const { titleWithoutEmoji: sanitizedTitleWithoutEmoji } =
           getEmojiAndTitle(sanitizedTitle);
 
         setTitleDisplay(sanitizedTitleWithoutEmoji);
+        return sanitizedTitleWithoutEmoji;
       }
     },
     [updateDocTitle, doc, emoji, isTopRoot],

@@ -20,6 +20,7 @@ and this project adheres to
 - 🐛(docx) fix image overflow by limiting width to 600px during export #1525
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) fix pdf embed to use full width #1526
+- 🐛(frontend) prevent duplicate emoji when used as first character in t… #1595
 
 ## [3.9.0] - 2025-11-10
 
