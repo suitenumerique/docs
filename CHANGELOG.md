@@ -31,6 +31,10 @@ and this project adheres to
 
 - mitigate role escalation in the ask_for_access viewset #1580
 
+### Removed
+
+- 🔥(backend) remove api managing templates
+
 ## [3.9.0] - 2025-11-10
 
 ### Added
