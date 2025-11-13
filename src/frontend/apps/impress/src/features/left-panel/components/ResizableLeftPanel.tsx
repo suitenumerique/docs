@@ -5,23 +5,12 @@ import {
   PanelGroup,
   PanelResizeHandle,
 } from 'react-resizable-panels';
-import { createGlobalStyle } from 'styled-components';
 
 import { useCunninghamTheme } from '@/cunningham';
 
-interface PanelStyleProps {
-  $isResizing: boolean;
-}
-
-const PanelStyle = createGlobalStyle<PanelStyleProps>`
-  ${({ $isResizing }) => $isResizing && `body * { transition: none !important; }`}
-`;
-
 // Convert a target pixel width to a percentage of the current viewport width.
-// react-resizable-panels expects sizes in %, not px.
-const calculateDefaultSize = (targetWidth: number) => {
-  const windowWidth = window.innerWidth;
-  return (targetWidth / windowWidth) * 100;
+const pxToPercent = (px: number) => {
+  return (px / window.innerWidth) * 100;
 };
 
 type ResizableLeftPanelProps = {
@@ -37,60 +26,49 @@ export const ResizableLeftPanel = ({
   minPanelSizePx = 300,
   maxPanelSizePx = 450,
 }: ResizableLeftPanelProps) => {
-  const [isResizing, setIsResizing] = useState(false);
   const { colorsTokens } = useCunninghamTheme();
   const ref = useRef<ImperativePanelHandle>(null);
-  const resizeTimeoutRef = useRef<number | undefined>(undefined);
+  const savedWidthPxRef = useRef<number>(minPanelSizePx);
 
-  const [minPanelSize, setMinPanelSize] = useState(0);
-  const [maxPanelSize, setMaxPanelSize] = useState(0);
+  const [panelSizePercent, setPanelSizePercent] = useState(() =>
+    pxToPercent(minPanelSizePx),
+  );
 
-  // Single resize listener that handles both panel size updates and transition disabling
+  const minPanelSizePercent = pxToPercent(minPanelSizePx);
+  const maxPanelSizePercent = Math.min(pxToPercent(maxPanelSizePx), 40);
+
+  // Keep pixel width constant on window resize
   useEffect(() => {
     const handleResize = () => {
-      // Update panel sizes (px -> %)
-      const min = Math.round(calculateDefaultSize(minPanelSizePx));
-      const max = Math.round(
-        Math.min(calculateDefaultSize(maxPanelSizePx), 40),
-      );
-      setMinPanelSize(min);
-      setMaxPanelSize(max);
-
-      // Temporarily disable transitions to avoid flicker
-      setIsResizing(true);
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
+      const newPercent = pxToPercent(savedWidthPxRef.current);
+      setPanelSizePercent(newPercent);
+      if (ref.current) {
+        ref.current.resize?.(newPercent - (ref.current.getSize() || 0));
       }
-      resizeTimeoutRef.current = window.setTimeout(() => {
-        setIsResizing(false);
-      }, 150);
     };
-
-    handleResize();
 
     window.addEventListener('resize', handleResize);
-
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current);
-      }
     };
-  }, [minPanelSizePx, maxPanelSizePx]);
+  }, []);
+
+  const handleResize = (sizePercent: number) => {
+    const widthPx = (sizePercent / 100) * window.innerWidth;
+    savedWidthPxRef.current = widthPx;
+    setPanelSizePercent(sizePercent);
+  };
 
   return (
     <>
-      <PanelStyle $isResizing={isResizing} />
-      <PanelGroup
-        autoSaveId="docs-left-panel-persistence"
-        direction="horizontal"
-      >
+      <PanelGroup direction="horizontal">
         <Panel
           ref={ref}
           order={0}
-          defaultSize={minPanelSize}
-          minSize={minPanelSize}
-          maxSize={maxPanelSize}
+          defaultSize={panelSizePercent}
+          minSize={minPanelSizePercent}
+          maxSize={maxPanelSizePercent}
+          onResize={handleResize}
         >
           {leftPanel}
         </Panel>
