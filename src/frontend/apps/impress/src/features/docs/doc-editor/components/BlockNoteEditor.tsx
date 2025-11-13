@@ -67,17 +67,6 @@ const patchedVideoBlock = {
   },
 };
 
-const patchedFileBlock = {
-  ...defaultBlockSpecs.file,
-  config: {
-    ...defaultBlockSpecs.file.config,
-    propSchema: {
-      ...defaultBlockSpecs.file.config.propSchema,
-      previewWidth: { default: 512, type: 'number' as const },
-    },
-  },
-};
-
 const patchedAudioBlock = {
   ...defaultBlockSpecs.audio,
   config: {
@@ -110,7 +99,6 @@ const baseBlockNoteSchema = withPageBreak(
       audio: patchedAudioBlock,
       callout: CalloutBlock(),
       codeBlock: createCodeBlockSpec(codeBlockOptions),
-      file: patchedFileBlock,
       image: patchedImageBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
