@@ -287,6 +287,7 @@ def test_api_documents_ask_for_access_list_authenticated_own_request():
                     "update": False,
                     "partial_update": False,
                     "retrieve": False,
+                    "set_role_to": [],
                 },
             }
         ],
@@ -356,6 +357,15 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
 
     response = client.get(f"/api/v1.0/documents/{document.id}/ask-for-access/")
     assert response.status_code == 200
+
+    expected_set_role_to = [
+        RoleChoices.READER,
+        RoleChoices.EDITOR,
+        RoleChoices.ADMIN,
+    ]
+    if role == RoleChoices.OWNER:
+        expected_set_role_to.append(RoleChoices.OWNER)
+
     assert response.json() == {
         "count": 3,
         "next": None,
@@ -375,6 +385,7 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
                     "update": True,
                     "partial_update": True,
                     "retrieve": True,
+                    "set_role_to": expected_set_role_to,
                 },
             }
             for document_ask_for_access in document_ask_for_accesses
@@ -467,6 +478,13 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
         f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/"
     )
     assert response.status_code == 200
+    expected_set_role_to = [
+        RoleChoices.READER,
+        RoleChoices.EDITOR,
+        RoleChoices.ADMIN,
+    ]
+    if role == RoleChoices.OWNER:
+        expected_set_role_to.append(RoleChoices.OWNER)
     assert response.json() == {
         "id": str(document_ask_for_access.id),
         "document": str(document.id),
@@ -481,6 +499,7 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
             "update": True,
             "partial_update": True,
             "retrieve": True,
+            "set_role_to": expected_set_role_to,
         },
     }
 
