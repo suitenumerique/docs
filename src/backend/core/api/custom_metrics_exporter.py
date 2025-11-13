@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Count, F, Max, Min, Q
+from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import now
 
 from prometheus_client.core import GaugeMetricFamily
@@ -92,11 +92,6 @@ class CustomMetricsExporter:
             newest=Max("created_at"),
         )
 
-        # Prepare user distribution data
-        user_doc_counts = models.DocumentAccess.objects.values("user_id").annotate(
-            doc_count=Count("document_id"), admin_email=F("user__admin_email")
-        )
-
         # Collect all metrics in one list
         metrics = []
 
@@ -163,19 +158,6 @@ class CustomMetricsExporter:
                     ["newest"], doc_ages["newest"].timestamp()
                 )
             metrics.append(docs_created_ts_metric)
-
-        # -- User document distribution
-        user_distribution_metric = GaugeMetricFamily(
-            metric_name("user_documents"),
-            "Number of documents per user",
-            labels=["user_email"],
-        )
-        for user in user_doc_counts:
-            if user["admin_email"]:  # Validate email existence
-                user_distribution_metric.add_metric(
-                    [user["admin_email"]], user["doc_count"]
-                )
-        metrics.append(user_distribution_metric)
 
         # Yield from metrics
         yield from metrics
