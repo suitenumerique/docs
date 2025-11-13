@@ -15,6 +15,10 @@ and this project adheres to
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) fix pdf embed to use full width #1526
 
+### Removed
+
+- 🔥(backend) remove api managing templates
+
 ## [3.9.0] - 2025-11-10
 
 ### Added
