@@ -40,6 +40,7 @@ and this project adheres to
 ### Security
 
 - mitigate role escalation in the ask_for_access viewset #1580
+- 🐛(frontend) preserve left panel width on window resize #1588
 
 ### Removed
 
