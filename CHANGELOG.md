@@ -18,6 +18,7 @@ and this project adheres to
   - ♿(frontend) improve screen reader support in DocShare modal #1628
 - 🐛(frontend) fix toolbar not activated when reader #1640
 - 🐛(frontend) preserve left panel width on window resize #1588
+- 🐛(frontend) prevent duplicate as first character in title #1595
 
 ## [3.10.0] - 2025-11-18
 
