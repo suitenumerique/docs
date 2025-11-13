@@ -22,6 +22,7 @@ and this project adheres to
 - 🐛(frontend) make summary button fixed to remain visible during scroll #1581
 - 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(pdf) fix table cell alignment issue in exported documents #1582
+- 🐛(frontend) prevent duplicate emoji when used as first character in t… #1595
 
 ## [3.9.0] - 2025-11-10
 
