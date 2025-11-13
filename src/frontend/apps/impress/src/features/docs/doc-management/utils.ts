@@ -26,12 +26,14 @@ export const getEmojiAndTitle = (title: string) => {
   // Use emoji-regex library for comprehensive emoji detection compatible with ES5
   const regex = emojiRegex();
 
-  // Check if the title starts with an emoji
-  const match = title.match(regex);
+  // Ignore leading spaces when checking for a leading emoji
+  const leadingSpacesLength = title.match(/^\s+/)?.[0]?.length ?? 0;
+  const trimmedStart = title.slice(leadingSpacesLength);
+  const match = trimmedStart.match(regex);
 
-  if (match && title.startsWith(match[0])) {
+  if (match && trimmedStart.startsWith(match[0])) {
     const emoji = match[0];
-    const titleWithoutEmoji = title.substring(emoji.length).trim();
+    const titleWithoutEmoji = trimmedStart.substring(emoji.length).trim();
     return { emoji, titleWithoutEmoji };
   }
 
