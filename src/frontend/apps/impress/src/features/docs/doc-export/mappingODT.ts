@@ -32,5 +32,30 @@ export const odtDocsSchemaMappings: DocsExporterODT['mappings'] = {
   },
   styleMapping: {
     ...odtDefaultSchemaMappings.styleMapping,
+    textColor: (val, exporter): Record<string, string> => {
+      if (!val) {
+        return {};
+      }
+      const color = exporter.options.colors?.[val]?.text;
+
+      if (!color) {
+        return {};
+      }
+
+      return { 'fo:color': color };
+    },
+
+    backgroundColor: (val, exporter): Record<string, string> => {
+      if (!val) {
+        return {};
+      }
+      const color = exporter.options.colors?.[val]?.background;
+
+      if (!color) {
+        return {};
+      }
+
+      return { 'fo:background-color': color };
+    },
   },
 };
