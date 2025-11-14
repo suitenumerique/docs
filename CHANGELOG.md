@@ -20,6 +20,7 @@ and this project adheres to
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) make summary button fixed to remain visible during scroll #1581
 - 🐛(frontend) fix pdf embed to use full width #1526
+- 🐛(frontend) fix alignment of side menu #1597
 - 🐛(frontend) fix fallback translations with Trans #1620
 - 🐛(export) fix image overflow by limiting width to 600px during export #1525
 - 🐛(export) fix table cell alignment issue in exported documents #1582
