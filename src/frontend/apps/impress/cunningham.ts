@@ -1,5 +1,7 @@
 import { cunninghamConfig as tokens } from '@gouvfr-lasuite/ui-kit';
 
+console.log('Using Cunningham theme for Impress docs', tokens);
+
 const customColors = {
   'primary-action': '#1212FF',
   'primary-bg': '#FAFAFA',
@@ -36,9 +38,10 @@ const customColors = {
   'yellow-500': '#B7A73F',
   'yellow-600': '#66673D',
 };
+//tokens.themes.default.globals.
 
-tokens.themes.default.theme = {
-  ...tokens.themes.default.theme,
+tokens.themes.default.globals = {
+  ...tokens.themes.default.globals,
   ...{
     logo: {
       src: '',
@@ -47,11 +50,11 @@ tokens.themes.default.theme = {
       widthFooter: '',
     },
     colors: {
-      ...tokens.themes.default.theme.colors,
+      ...tokens.themes.default.globals.colors,
       ...customColors,
     },
     font: {
-      ...tokens.themes.default.theme.font,
+      ...tokens.themes.default.globals.font,
       families: {
         base: 'sans-serif',
         accent: 'sans-serif',
@@ -73,13 +76,13 @@ tokens.themes.default.components = {
     },
     button: {
       ...tokens.themes.default.components.button,
-      primary: {
-        ...tokens.themes.default.components.button.primary,
-        ...{
-          'background--disabled': 'var(--c--theme--colors--greyscale-100)',
-        },
-        disabled: 'var(--c--theme--colors--greyscale-400)',
-      },
+      // primary: {
+      //   ...tokens.themes.default.components.button.primary,
+      //   ...{
+      //     'background--disabled': 'var(--c--theme--colors--greyscale-100)',
+      //   },
+      //   disabled: 'var(--c--theme--colors--greyscale-400)',
+      // },
     },
   },
 };
