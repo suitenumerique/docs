@@ -27,6 +27,8 @@ SEARCH_INDEXER_URL="http://find:8000/api/v1.0/documents/index/"
 
 # Search endpoint. Uses the OIDC token for authentication
 SEARCH_INDEXER_QUERY_URL="http://find:8000/api/v1.0/documents/search/"
+# Maximum number of results expected from the search endpoint
+SEARCH_INDEXER_QUERY_LIMIT=50
 ```
 
 We also need to enable the **OIDC Token** refresh or the authentication will fail quickly.
