@@ -326,8 +326,7 @@ def test_api_documents_search_pagination(
             "q": "alpha",
             "visited": [],
             "services": ["docs"],
-            "page_number": 1,
-            "page_size": 100,
+            "nb_results": 50,
             "order_by": "updated_at",
             "order_direction": "desc",
         }
