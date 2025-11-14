@@ -588,10 +588,48 @@ def test_services_search_indexers_search(mock_post, indexer_settings):
     assert query_data["q"] == "alpha"
     assert sorted(query_data["visited"]) == sorted([str(doc1.pk), str(doc2.pk)])
     assert query_data["services"] == ["docs"]
-    assert query_data["page_number"] == 1
-    assert query_data["page_size"] == 50
+    assert query_data["nb_results"] == 50
     assert query_data["order_by"] == "updated_at"
     assert query_data["order_direction"] == "desc"
 
     assert kwargs.get("headers") == {"Authorization": "Bearer mytoken"}
     assert kwargs.get("timeout") == 10
+
+
+@patch("requests.post")
+def test_services_search_indexers_search_nb_results(mock_post, indexer_settings):
+    """
+    Find API call should have nb_results == SEARCH_INDEXER_QUERY_LIMIT
+    or the given nb_results argument.
+    """
+    indexer_settings.SEARCH_INDEXER_QUERY_LIMIT = 25
+
+    user = factories.UserFactory()
+    indexer = SearchIndexer()
+
+    mock_response = mock_post.return_value
+    mock_response.raise_for_status.return_value = None  # No error
+
+    doc1, doc2, _ = factories.DocumentFactory.create_batch(3)
+
+    create_link = partial(models.LinkTrace.objects.create, user=user, is_masked=False)
+
+    create_link(document=doc1)
+    create_link(document=doc2)
+
+    visited = get_visited_document_ids_of(models.Document.objects.all(), user)
+
+    indexer.search("alpha", visited=visited, token="mytoken")
+
+    args, kwargs = mock_post.call_args
+
+    assert args[0] == indexer_settings.SEARCH_INDEXER_QUERY_URL
+    assert kwargs.get("json")["nb_results"] == 25
+
+    # The argument overrides the setting value
+    indexer.search("alpha", visited=visited, token="mytoken", nb_results=109)
+
+    args, kwargs = mock_post.call_args
+
+    assert args[0] == indexer_settings.SEARCH_INDEXER_QUERY_URL
+    assert kwargs.get("json")["nb_results"] == 109
