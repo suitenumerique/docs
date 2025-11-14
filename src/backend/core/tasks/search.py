@@ -23,11 +23,9 @@ def document_indexer_task(document_id):
     """Celery Task : Sends indexation query for a document."""
     indexer = get_document_indexer()
 
-    if indexer is None:
-        return
-
-    logger.info("Start document %s indexation", document_id)
-    indexer.index(models.Document.objects.filter(pk=document_id))
+    if indexer:
+        logger.info("Start document %s indexation", document_id)
+        indexer.index(models.Document.objects.filter(pk=document_id))
 
 
 def batch_indexer_throttle_acquire(timeout: int = 0, atomic: bool = True):
