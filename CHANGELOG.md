@@ -23,6 +23,10 @@ and this project adheres to
 - 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(pdf) fix table cell alignment issue in exported documents #1582
 
+### Removed
+
+- 🔥(backend) remove api managing templates
+
 ## [3.9.0] - 2025-11-10
 
 ### Added

@@ -1831,10 +1831,7 @@ class DocumentAccessViewSet(
 
 
 class TemplateViewSet(
-    drf.mixins.CreateModelMixin,
-    drf.mixins.DestroyModelMixin,
     drf.mixins.RetrieveModelMixin,
-    drf.mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
     """Template ViewSet"""
@@ -1889,100 +1886,6 @@ class TemplateViewSet(
 
         serializer = self.get_serializer(queryset, many=True)
         return drf.response.Response(serializer.data)
-
-    @transaction.atomic
-    def perform_create(self, serializer):
-        """Set the current user as owner of the newly created object."""
-        obj = serializer.save()
-        models.TemplateAccess.objects.create(
-            template=obj,
-            user=self.request.user,
-            role=models.RoleChoices.OWNER,
-        )
-
-
-class TemplateAccessViewSet(
-    ResourceAccessViewsetMixin,
-    drf.mixins.CreateModelMixin,
-    drf.mixins.DestroyModelMixin,
-    drf.mixins.RetrieveModelMixin,
-    drf.mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
-):
-    """
-    API ViewSet for all interactions with template accesses.
-
-    GET /api/v1.0/templates/<template_id>/accesses/:<template_access_id>
-        Return list of all template accesses related to the logged-in user or one
-        template access if an id is provided.
-
-    POST /api/v1.0/templates/<template_id>/accesses/ with expected data:
-        - user: str
-        - role: str [administrator|editor|reader]
-        Return newly created template access
-
-    PUT /api/v1.0/templates/<template_id>/accesses/<template_access_id>/ with expected data:
-        - role: str [owner|admin|editor|reader]
-        Return updated template access
-
-    PATCH /api/v1.0/templates/<template_id>/accesses/<template_access_id>/ with expected data:
-        - role: str [owner|admin|editor|reader]
-        Return partially updated template access
-
-    DELETE /api/v1.0/templates/<template_id>/accesses/<template_access_id>/
-        Delete targeted template access
-    """
-
-    lookup_field = "pk"
-    permission_classes = [permissions.ResourceAccessPermission]
-    throttle_scope = "template_access"
-    queryset = models.TemplateAccess.objects.select_related("user").all()
-    resource_field_name = "template"
-    serializer_class = serializers.TemplateAccessSerializer
-
-    @cached_property
-    def template(self):
-        """Get related template from resource ID in url."""
-        try:
-            return models.Template.objects.get(pk=self.kwargs["resource_id"])
-        except models.Template.DoesNotExist as excpt:
-            raise drf.exceptions.NotFound() from excpt
-
-    def list(self, request, *args, **kwargs):
-        """Restrict templates returned by the list endpoint"""
-        user = self.request.user
-        teams = user.teams
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # Limit to resource access instances related to a resource THAT also has
-        # a resource access instance for the logged-in user (we don't want to list
-        # only the resource access instances pointing to the logged-in user)
-        queryset = queryset.filter(
-            db.Q(template__accesses__user=user)
-            | db.Q(template__accesses__team__in=teams),
-        ).distinct()
-
-        serializer = self.get_serializer(queryset, many=True)
-        return drf.response.Response(serializer.data)
-
-    def perform_create(self, serializer):
-        """
-        Actually create the new template access:
-        - Ensures the `template_id` is explicitly set from the URL.
-        - If the assigned role is `OWNER`, checks that the requesting user is an owner
-          of the document. This is the only permission check deferred until this step;
-          all other access checks are handled earlier in the permission lifecycle.
-        """
-        role = serializer.validated_data.get("role")
-        if (
-            role == choices.RoleChoices.OWNER
-            and self.template.get_role(self.request.user) != choices.RoleChoices.OWNER
-        ):
-            raise drf.exceptions.PermissionDenied(
-                "Only owners of a template can assign other users as owners."
-            )
-
-        serializer.save(template_id=self.kwargs["resource_id"])
 
 
 class InvitationViewset(
