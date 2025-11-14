@@ -1,10 +1,15 @@
+import { captureException } from '@sentry/nextjs';
 import Head from 'next/head';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement, useCallback, useEffect } from 'react';
 
 import { Loading } from '@/components';
-import { LinkReach, useCreateDoc } from '@/features/docs/doc-management';
+import {
+  LinkReach,
+  LinkRole,
+  useCreateDoc,
+} from '@/features/docs/doc-management';
 import { useUpdateDocLink } from '@/features/docs/doc-share/api/useUpdateDocLink';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -15,8 +20,8 @@ const Page: NextPageWithLayout = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const linkReach = searchParams.get('link-reach');
-  const linkTitle = searchParams.get('title');
-  const linkpermission = searchParams.get('linkpermission');
+  const linkRole = searchParams.get('link-role');
+  const title = searchParams.get('title');
   const peoplesharing = searchParams.get('peoplesharing');
 
   const {
@@ -25,49 +30,75 @@ const Page: NextPageWithLayout = () => {
     data: doc,
   } = useCreateDoc({
     onSuccess: (doc) => {
-      if (linkReach || linkpermission || peoplesharing) {
+      if ((linkReach && linkRole) || linkReach || peoplesharing) {
         return;
       }
 
-      router
-        .push(`/docs/${doc.id}`)
-        .then(() => {})
-        .catch(() => {});
+      redirectToDoc(doc.id);
     },
     onError: () => {},
   });
 
-  const { mutate: updateDocLink } = useUpdateDocLink();
+  const { mutate: updateDocLink } = useUpdateDocLink({
+    onSuccess: (response, params) => {
+      if (peoplesharing || !params.id) {
+        return;
+      }
+
+      redirectToDoc(params.id);
+    },
+    onError: (error, params) => {
+      captureException(error, {
+        extra: {
+          docId: params.id,
+          linkReach,
+          linkRole,
+        },
+      });
+
+      if (params.id) {
+        redirectToDoc(params.id);
+      }
+    },
+  });
+
+  const redirectToDoc = useCallback(
+    (docId: string) => {
+      void router.push(`/docs/${docId}`);
+    },
+    [router],
+  );
 
   useEffect(() => {
     setIsSkeletonVisible(true);
   }, [setIsSkeletonVisible]);
 
+  // Doc creation effect
   useEffect(() => {
     if (doc) {
       return;
     }
 
-    createDoc();
-  }, [createDoc, doc]);
+    createDoc({
+      title: title || undefined,
+    });
+  }, [createDoc, doc, title]);
 
   useEffect(() => {
     if (!linkReach || !doc) {
       return;
     }
 
-    console.log('linkReach', linkReach);
-
-    if (!Object.values(LinkReach).includes(linkReach as LinkReach)) {
-      throw new Error('Invalid link reach value');
-    }
-
     updateDocLink({
       id: doc.id,
       link_reach: linkReach as LinkReach,
-      //link_role: linkRole,
+      link_role: (linkRole as LinkRole | undefined) || undefined,
     });
-  }, [linkReach, doc, updateDocLink]);
+  }, [linkReach, doc, updateDocLink, redirectToDoc, linkRole]);
+
+  if (!linkReach && linkRole) {
+    console.warn('link-reach parameter is missing');
+  }
 
   return <Loading />;
 };
