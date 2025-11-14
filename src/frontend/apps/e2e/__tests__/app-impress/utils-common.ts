@@ -70,6 +70,14 @@ export const keyCloakSignIn = async (
   await page.click('button[type="submit"]', { force: true });
 };
 
+export const getOtherBrowserName = (browserName: BrowserName) => {
+  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
+  if (!otherBrowserName) {
+    throw new Error('No alternative browser found');
+  }
+  return otherBrowserName;
+};
+
 export const randomName = (name: string, browserName: string, length: number) =>
   Array.from({ length }, (_el, index) => {
     return `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`;
@@ -125,7 +133,9 @@ export const verifyDocName = async (page: Page, docName: string) => {
   try {
     await expect(
       page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText(docName);
+    ).toContainText(docName, {
+      timeout: 1000,
+    });
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();
   }

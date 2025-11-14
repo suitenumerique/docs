@@ -39,5 +39,25 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     // that is not available in italics
     code: (enabled?: boolean) =>
       enabled ? { fontFamily: 'Courier', backgroundColor: '#dcdcdc' } : {},
+    // If the color is not defined, we fall back to default colors
+    textColor: (val, exporter) => {
+      if (!val) {
+        return {};
+      }
+
+      return {
+        color: exporter.options.colors?.[val]?.text || '#3c3b38',
+      };
+    },
+    // If the color is not defined, we fall back to default colors
+    backgroundColor: (val, exporter) => {
+      if (!val) {
+        return {};
+      }
+      return {
+        backgroundColor:
+          exporter.options.colors?.[val]?.background || '#ffffff',
+      };
+    },
   },
 };

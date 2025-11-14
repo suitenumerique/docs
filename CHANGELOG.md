@@ -30,6 +30,7 @@ and this project adheres to
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
+- ✨ Add comments feature to the editor #1330
 
 ### Changed
 
@@ -159,6 +160,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) Comments on text editor #1309
 - 👷(CI) add bundle size check job #1268
 - ✨(frontend) use title first emoji as doc icon in tree #1289
 

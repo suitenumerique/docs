@@ -132,6 +132,10 @@ export const cssEditor = css`
       .bn-block-outer:not([data-prev-depth-changed]):before {
       border-left: none;
     }
+
+    .bn-toolbar {
+      max-width: 95vw;
+    }
   }
 
   & .bn-editor {
