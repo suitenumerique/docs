@@ -77,6 +77,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
               currentRole={role}
               onSelectRole={setRole}
               canUpdate={doc.abilities.accesses_manage}
+              rolesAllowed={accessRequest.abilities.set_role_to}
             />
             <Button
               color="tertiary"
