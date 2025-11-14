@@ -132,5 +132,6 @@ export interface AccessRequest {
     partial_update: boolean;
     retrieve: boolean;
     accept: boolean;
+    set_role_to: Role[];
   };
 }
