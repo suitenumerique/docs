@@ -2,7 +2,7 @@
  * We use mainly the Blocknotes code, mixed with @ag-media/react-pdf-table
  * to have a better Table support.
  * See:
- * https://github.com/TypeCellOS/BlockNote/blob/004c0bf720fe1415c497ad56449015c5f4dd7ba0/packages/xl-pdf-exporter/src/pdf/util/table/Table.tsx
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/src/pdf/util/table/Table.tsx
  *
  * We succeeded to manage the colspan, but rowspan is not supported yet.
  */
@@ -92,11 +92,12 @@ export const blockMappingTablePDF: DocsExporterPDF['mappings']['blockMapping']['
                     color:
                       cellProps.textColor === 'default'
                         ? undefined
-                        : options.colors[cellProps.textColor].text,
+                        : options.colors?.[cellProps.textColor]?.text,
                     backgroundColor:
                       cellProps.backgroundColor === 'default'
                         ? undefined
-                        : options.colors[cellProps.backgroundColor].background,
+                        : options.colors?.[cellProps.backgroundColor]
+                            ?.background,
                     textAlign: cellProps.textAlignment,
                   },
                 ];
