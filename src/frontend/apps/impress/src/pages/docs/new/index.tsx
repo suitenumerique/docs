@@ -8,8 +8,17 @@ import { Loading } from '@/components';
 import {
   LinkReach,
   LinkRole,
+  Role,
   useCreateDoc,
 } from '@/features/docs/doc-management';
+import {
+  KEY_LIST_USER,
+  getUsers,
+  useCreateDocAccess,
+  useCreateDocInvitation,
+  useDocAccesses,
+  useUsers,
+} from '@/features/docs/doc-share';
 import { useUpdateDocLink } from '@/features/docs/doc-share/api/useUpdateDocLink';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -22,7 +31,9 @@ const Page: NextPageWithLayout = () => {
   const linkReach = searchParams.get('link-reach');
   const linkRole = searchParams.get('link-role');
   const title = searchParams.get('title');
-  const peoplesharing = searchParams.get('peoplesharing');
+  const members = searchParams.get('members');
+  const { mutateAsync: createInvitation } = useCreateDocInvitation();
+  const { mutateAsync: createDocAccess } = useCreateDocAccess();
 
   const {
     mutate: createDoc,
@@ -30,7 +41,7 @@ const Page: NextPageWithLayout = () => {
     data: doc,
   } = useCreateDoc({
     onSuccess: (doc) => {
-      if ((linkReach && linkRole) || linkReach || peoplesharing) {
+      if ((linkReach && linkRole) || linkReach || members) {
         return;
       }
 
@@ -40,8 +51,8 @@ const Page: NextPageWithLayout = () => {
   });
 
   const { mutate: updateDocLink } = useUpdateDocLink({
-    onSuccess: (response, params) => {
-      if (peoplesharing || !params.id) {
+    onSuccess: (_, params) => {
+      if (members || !params.id) {
         return;
       }
 
@@ -84,6 +95,7 @@ const Page: NextPageWithLayout = () => {
     });
   }, [createDoc, doc, title]);
 
+  // Doc link update effect
   useEffect(() => {
     if (!linkReach || !doc) {
       return;
@@ -95,6 +107,119 @@ const Page: NextPageWithLayout = () => {
       link_role: (linkRole as LinkRole | undefined) || undefined,
     });
   }, [linkReach, doc, updateDocLink, redirectToDoc, linkRole]);
+
+  // const onInvite = async () => {
+  //   setIsLoading(true);
+  //   const promises = selectedUsers.map((user) => {
+  //     const isInvitationMode = user.id === user.email;
+
+  //     const payload = {
+  //       role: invitationRole,
+  //       docId: doc.id,
+  //     };
+
+  //     return isInvitationMode
+  //       ? createInvitation({
+  //           ...payload,
+  //           email: user.email.toLowerCase(),
+  //         })
+  //       : createDocAccess({
+  //           ...payload,
+  //           memberId: user.id,
+  //         });
+  //   });
+
+  //   const settledPromises = await Promise.allSettled(promises);
+  //   settledPromises.forEach((settledPromise) => {
+  //     if (settledPromise.status === 'rejected') {
+  //       onError(settledPromise.reason as APIErrorUser);
+  //     }
+  //   });
+  //   afterInvite?.();
+  //   setIsLoading(false);
+  // };
+
+  // members=user%40example.org%2Ceditor%7Cuser2%40example.org%2Creader
+  // members=user@example.org,editor|user2@example.org,reader
+  useEffect(() => {
+    if (!members || !doc) {
+      return;
+    }
+
+    console.log('members', members);
+    const membersList = members.split('|').map((memberStr) => {
+      const [email, role] = memberStr.split(',');
+      return { email, role: role as Role };
+    });
+
+    console.log('membersList', membersList);
+
+    for (const member of membersList) {
+      getUsers({
+        query: member.email,
+        docId: doc.id,
+      })
+        .then((users) => {
+          if (users.length > 0) {
+            console.log('User exists:', users);
+            // User exists, create doc access
+            // createDocAccess({
+            //   role: member.role,
+            //   docId: doc.id,
+            //   memberId: users[0].id,
+            // }).catch(() => {
+            //   // Ignore errors
+            // });
+          } else {
+            console.log('User does not exist:', {
+              role: member.role,
+              docId: doc.id,
+              email: member.email.toLowerCase(),
+            });
+            // User does not exist, create invitation
+            // createInvitation({
+            //   role: member.role,
+            //   docId: doc.id,
+            //   email: member.email.toLowerCase(),
+            // }).catch(() => {
+            //   // Ignore errors
+            // });
+          }
+        })
+        .catch(() => {
+          // Ignore errors
+        });
+
+      // const isInvitationMode = !member.email.match(
+      //   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      // );
+
+      // const payload = {
+      //   role: member.role,
+      //   docId: doc.id,
+      // };
+
+      // if (isInvitationMode) {
+      //   createInvitation({
+      //     ...payload,
+      //     email: member.email.toLowerCase(),
+      //   }).catch(() => {
+      //     // Ignore errors
+      //   });
+      // } else {
+      //   createDocAccess({
+      //     ...payload,
+      //     memberId: member.email,
+      //   }).catch(() => {
+      //     // Ignore errors
+      //   });
+      // }
+    }
+
+    //redirectToDoc(doc.id);
+
+    //getUsers
+  }, [createDocAccess, createInvitation, doc, members]);
 
   if (!linkReach && linkRole) {
     console.warn('link-reach parameter is missing');
