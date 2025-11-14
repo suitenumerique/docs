@@ -160,6 +160,9 @@ test.describe('Document list members', () => {
       `You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.`,
     );
     await expect(soloOwner).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Administrator' }),
+    ).toBeDisabled();
 
     await list.click({
       force: true, // Force click to close the dropdown
@@ -186,9 +189,17 @@ test.describe('Document list members', () => {
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
+    await newUserRoles.click();
+    await expect(page.getByRole('menuitem', { name: 'Owner' })).toBeDisabled();
+    await list.click({
+      force: true, // Force click to close the dropdown
+    });
+
     await currentUserRole.click();
     await page.getByRole('menuitem', { name: 'Reader' }).click();
-    await list.click();
+    await list.click({
+      force: true, // Force click to close the dropdown
+    });
     await expect(currentUserRole).toBeHidden();
   });
 
