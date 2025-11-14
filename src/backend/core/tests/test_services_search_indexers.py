@@ -301,6 +301,44 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
 
 @patch.object(SearchIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_batch_size_argument(mock_push):
+    """
+    Documents indexing should be processed in batches,
+    batch_size overrides SEARCH_INDEXER_BATCH_SIZE
+    """
+    documents = factories.DocumentFactory.create_batch(5)
+
+    # Attach a single user access to each document
+    expected_user_subs = {}
+    for document in documents:
+        access = factories.UserDocumentAccessFactory(document=document)
+        expected_user_subs[str(document.id)] = str(access.user.sub)
+
+    assert SearchIndexer().index(batch_size=2) == 5
+
+    # Should be 3 batches: 2 + 2 + 1
+    assert mock_push.call_count == 3
+
+    seen_doc_ids = set()
+
+    for call in mock_push.call_args_list:
+        batch = call.args[0]
+        assert isinstance(batch, list)
+
+        for doc_json in batch:
+            doc_id = doc_json["id"]
+            seen_doc_ids.add(doc_id)
+
+            # Only one user expected per document
+            assert doc_json["users"] == [expected_user_subs[doc_id]]
+            assert doc_json["groups"] == []
+
+    # Make sure all 5 documents were indexed
+    assert seen_doc_ids == {str(d.id) for d in documents}
+
+
+@patch.object(SearchIndexer, "push")
+@pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ignore_empty_documents(mock_push):
     """
     Documents indexing should be processed in batches,
@@ -325,6 +363,25 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
             empty_title,
         )
     }
+
+
+@patch.object(SearchIndexer, "push")
+def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings):
+    """
+    Documents indexing batch can be empty if all the docs are empty.
+    """
+    indexer_settings.SEARCH_INDEXER_BATCH_SIZE = 2
+
+    document = factories.DocumentFactory()
+
+    # Only empty docs
+    factories.DocumentFactory.create_batch(5, content="", title="")
+
+    assert SearchIndexer().index() == 1
+    assert mock_push.call_count == 1
+
+    results = [doc["id"] for doc in mock_push.call_args[0][0]]
+    assert results == [str(document.id)]
 
 
 @patch.object(SearchIndexer, "push")

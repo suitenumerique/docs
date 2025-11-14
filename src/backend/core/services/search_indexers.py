@@ -102,15 +102,11 @@ class BaseDocumentIndexer(ABC):
     `serialize_document()` and `push()` to define backend-specific behavior.
     """
 
-    def __init__(self, batch_size=None):
+    def __init__(self):
         """
         Initialize the indexer.
-
-        Args:
-            batch_size (int, optional): Number of documents per batch.
-                Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
         """
-        self.batch_size = batch_size or settings.SEARCH_INDEXER_BATCH_SIZE
+        self.batch_size = settings.SEARCH_INDEXER_BATCH_SIZE
         self.indexer_url = settings.SEARCH_INDEXER_URL
         self.indexer_secret = settings.SEARCH_INDEXER_SECRET
         self.search_url = settings.SEARCH_INDEXER_QUERY_URL
@@ -130,19 +126,26 @@ class BaseDocumentIndexer(ABC):
                 "SEARCH_INDEXER_QUERY_URL must be set in Django settings."
             )
 
-    def index(self, queryset=None):
+    def index(self, queryset=None, batch_size=None):
         """
         Fetch documents in batches, serialize them, and push to the search backend.
+
+        Args:
+            queryset (optional): Document queryset
+                Defaults to all documents without filter.
+            batch_size (int, optional): Number of documents per batch.
+                Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
         """
         last_id = 0
         count = 0
         queryset = queryset or models.Document.objects.all()
+        batch_size = batch_size or self.batch_size
 
         while True:
             documents_batch = list(
                 queryset.filter(
                     id__gt=last_id,
-                ).order_by("id")[: self.batch_size]
+                ).order_by("id")[:batch_size]
             )
 
             if not documents_batch:
@@ -158,8 +161,9 @@ class BaseDocumentIndexer(ABC):
                 if document.content or document.title
             ]
 
-            self.push(serialized_batch)
-            count += len(serialized_batch)
+            if serialized_batch:
+                self.push(serialized_batch)
+                count += len(serialized_batch)
 
         return count
 

@@ -17,6 +17,17 @@ class Command(BaseCommand):
 
     help = __doc__
 
+    def add_arguments(self, parser):
+        """Add argument to require forcing execution when not in debug mode."""
+        parser.add_argument(
+            "--batch-size",
+            action="store",
+            dest="batch_size",
+            type=int,
+            default=50,
+            help="Indexation query batch size",
+        )
+
     def handle(self, *args, **options):
         """Launch and log search index generation."""
         indexer = get_document_indexer()
@@ -26,9 +37,10 @@ class Command(BaseCommand):
 
         logger.info("Starting to regenerate Find index...")
         start = time.perf_counter()
+        batch_size = options["batch_size"]
 
         try:
-            count = indexer.index()
+            count = indexer.index(batch_size=batch_size)
         except Exception as err:
             raise CommandError("Unable to regenerate index") from err
 
