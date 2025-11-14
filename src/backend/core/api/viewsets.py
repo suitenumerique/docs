@@ -1105,8 +1105,6 @@ class DocumentViewSet(
             text=text,
             token=access_token,
             visited=get_visited_document_ids_of(queryset, user),
-            page=1,
-            page_size=100,
         )
 
         docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}

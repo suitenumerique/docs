@@ -110,6 +110,7 @@ class BaseDocumentIndexer(ABC):
         self.indexer_url = settings.SEARCH_INDEXER_URL
         self.indexer_secret = settings.SEARCH_INDEXER_SECRET
         self.search_url = settings.SEARCH_INDEXER_QUERY_URL
+        self.search_limit = settings.SEARCH_INDEXER_QUERY_LIMIT
 
         if not self.indexer_url:
             raise ImproperlyConfigured(
@@ -184,7 +185,7 @@ class BaseDocumentIndexer(ABC):
         """
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def search(self, text, token, visited=(), page=1, page_size=50):
+    def search(self, text, token, visited=(), nb_results=None):
         """
         Search for documents in Find app.
         Ensure the same default ordering as "Docs" list : -updated_at
@@ -197,20 +198,17 @@ class BaseDocumentIndexer(ABC):
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
                 Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
-            page (int, optional):
-                The page number to retrieve.
-                Defaults to 1 if not specified.
-            page_size (int, optional):
-                The number of results to return per page.
+            nb_results (int, optional):
+                The number of results to return.
                 Defaults to 50 if not specified.
         """
+        nb_results = nb_results or self.search_limit
         response = self.search_query(
             data={
                 "q": text,
                 "visited": visited,
                 "services": ["docs"],
-                "page_number": page,
-                "page_size": page_size,
+                "nb_results": nb_results,
                 "order_by": "updated_at",
                 "order_direction": "desc",
             },
