@@ -187,6 +187,7 @@ class DocumentSerializer(ListDocumentSerializer):
 
     content = serializers.CharField(required=False)
     websocket = serializers.BooleanField(required=False, write_only=True)
+    file = serializers.FileField(required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = models.Document
@@ -203,6 +204,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "deleted_at",
             "depth",
             "excerpt",
+            "file",
             "is_favorite",
             "link_role",
             "link_reach",
