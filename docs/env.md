@@ -103,6 +103,7 @@ These are the environment variables you can set for the `impress-backend` contai
 | USER_OIDC_ESSENTIAL_CLAIMS                      | Essential claims in OIDC token                                                                                              | []                                                                      |
 | Y_PROVIDER_API_BASE_URL                         | Y Provider url                                                                                                              |                                                                         |
 | Y_PROVIDER_API_KEY                              | Y provider API key                                                                                                          |                                                                         |
+| DOCSPEC_API_URL                                 | URL to endpoint of DocSpec conversion API                                                                                   |                                                                         |
 
 
 ## impress-frontend image

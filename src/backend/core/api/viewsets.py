@@ -39,14 +39,12 @@ from core import authentication, choices, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import (
+    ConversionError,
     ServiceUnavailableError as YProviderServiceUnavailableError,
-)
-from core.services.converter_services import (
     ValidationError as YProviderValidationError,
+    Converter,
 )
-from core.services.converter_services import (
-    YdocConverter,
-)
+from core.services import mime_types
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
@@ -502,6 +500,27 @@ class DocumentViewSet(
                 f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
                 "IN SHARE ROW EXCLUSIVE MODE;"
             )
+
+        # Remove file from validated_data as it's not a model field
+        # Process it if present
+        uploaded_file = serializer.validated_data.pop("file", None)
+
+        # If a file is uploaded, convert it to Yjs format and set as content
+        if uploaded_file:
+            try:
+                file_content = uploaded_file.read()
+
+                converter = Converter()
+                converted_content = converter.convert(
+                    file_content,
+                    content_type=uploaded_file.content_type,
+                    accept=mime_types.YJS
+                )
+                serializer.validated_data["content"] = converted_content
+            except ConversionError as err:
+                raise drf.exceptions.ValidationError(
+                    {"file": ["Could not convert file content"]}
+                ) from err
 
         obj = models.Document.add_root(
             creator=self.request.user,
@@ -1602,14 +1621,14 @@ class DocumentViewSet(
         if base64_content is not None:
             # Convert using the y-provider service
             try:
-                yprovider = YdocConverter()
+                yprovider = Converter()
                 result = yprovider.convert(
                     base64.b64decode(base64_content),
-                    "application/vnd.yjs.doc",
+                    mime_types.YJS,
                     {
-                        "markdown": "text/markdown",
-                        "html": "text/html",
-                        "json": "application/json",
+                        "markdown": mime_types.MARKDOWN,
+                        "html": mime_types.HTML,
+                        "json": mime_types.JSON,
                     }[content_format],
                 )
                 content = result

@@ -1,5 +1,5 @@
 import { Button } from '@openfun/cunningham-react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
@@ -9,6 +9,7 @@ import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
+import { useImportDoc } from '../api/useImportDoc';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import {
@@ -27,6 +28,7 @@ export const DocsGrid = ({
 
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const {
     data,
@@ -75,6 +77,33 @@ export const DocsGrid = ({
       title = t('All docs');
   }
 
+  const resetImportInput = () => {
+    if (!importInputRef.current) {
+      return;
+    }
+
+    importInputRef.current.value = '';
+  };
+
+  const { mutate: importDoc } = useImportDoc({
+    onSuccess: resetImportInput,
+    onError: resetImportInput,
+  });
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(event);
+
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+
+    const file = event.target.files[0];
+
+    console.log(file);
+
+    importDoc(file);
+  };
+
   return (
     <Box
       $position="relative"
@@ -106,6 +135,14 @@ export const DocsGrid = ({
         >
           {title}
         </Text>
+
+        <input
+          type="file"
+          name="doc"
+          accept=".md,.docx"
+          onChange={handleImport}
+          ref={importInputRef}
+        ></input>
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
