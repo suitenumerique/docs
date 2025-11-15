@@ -11,6 +11,7 @@ from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from core.services import mime_types
 import magic
 from rest_framework import serializers
 
@@ -18,7 +19,7 @@ from core import choices, enums, models, utils, validators
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
-    YdocConverter,
+    Converter,
 )
 
 
@@ -164,6 +165,7 @@ class DocumentSerializer(ListDocumentSerializer):
 
     content = serializers.CharField(required=False)
     websocket = serializers.BooleanField(required=False, write_only=True)
+    file = serializers.FileField(required=False, write_only=True, allow_null=True)
 
     class Meta:
         model = models.Document
@@ -180,6 +182,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "deleted_at",
             "depth",
             "excerpt",
+            "file",
             "is_favorite",
             "link_role",
             "link_reach",
@@ -437,7 +440,11 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             language = user.language or language
 
         try:
-            document_content = YdocConverter().convert(validated_data["content"])
+            document_content = Converter().convert(
+                validated_data["content"],
+                mime_types.MARKDOWN,
+                mime_types.YJS
+            )
         except ConversionError as err:
             raise serializers.ValidationError(
                 {"content": ["Could not convert content"]}
