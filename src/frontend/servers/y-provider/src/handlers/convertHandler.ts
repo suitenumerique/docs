@@ -48,6 +48,7 @@ export const convertHandler = async (
     // application/x-www-form-urlencoded is interpreted as Markdown for backward compatibility
     if (
       contentType === 'text/markdown' ||
+      contentType === 'text/x-markdown' ||
       contentType === 'application/x-www-form-urlencoded'
     ) {
       blocks = await editor.tryParseMarkdownToBlocks(req.body.toString());
