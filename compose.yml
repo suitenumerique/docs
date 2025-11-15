@@ -231,6 +231,11 @@ services:
         condition: service_healthy
         restart: true
 
+  docspec:
+    image: ghcr.io/docspecio/api:2.0.0
+    ports:
+      - "4000:4000"
+
 networks:
   lasuite:
     name: lasuite-network
