@@ -31,15 +31,10 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
       const svgText = await blob.text();
       const FALLBACK_SIZE = 536;
       previewWidth = previewWidth || blob.size || FALLBACK_SIZE;
-      pngConverted = await convertSvgToPng(svgText, previewWidth);
-      const img = new Image();
-      img.src = pngConverted;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          dimensions = { width: img.width, height: img.height };
-          resolve(null);
-        };
-      });
+
+      const result = await convertSvgToPng(svgText, previewWidth);
+      pngConverted = result.png;
+      dimensions = { width: result.width, height: result.height };
     } else {
       dimensions = await getImageDimensions(blob);
     }
