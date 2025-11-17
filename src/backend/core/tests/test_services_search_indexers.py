@@ -13,6 +13,9 @@ import responses
 from requests import HTTPError
 
 from core import factories, models, utils
+from core.services.converter_services import (
+    ServiceUnavailableError as YProviderServiceUnavailableError,
+)
 from core.services.search_indexers import (
     BaseDocumentIndexer,
     SearchIndexer,
@@ -172,13 +175,22 @@ def test_services_search_endpoint_is_empty(indexer_settings):
 
 
 @pytest.mark.usefixtures("indexer_settings")
-def test_services_search_indexers_serialize_document_returns_expected_json():
+@patch("core.services.converter_services.YdocConverter.convert")
+def test_services_search_indexers_serialize_document_returns_expected_json(
+    mock_convert,
+):
     """
     It should serialize documents with correct metadata and access control.
     """
     user_a, user_b = factories.UserFactory.create_batch(2)
     document = factories.DocumentFactory()
     factories.DocumentFactory(parent=document)
+
+    markdown_content = (
+        f"## {document.title}\n{utils.base64_yjs_to_text(document.content)}"
+    )
+
+    mock_convert.return_value = markdown_content
 
     factories.UserDocumentAccessFactory(document=document, user=user_a)
     factories.UserDocumentAccessFactory(document=document, user=user_b)
@@ -195,6 +207,8 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
     indexer = SearchIndexer()
     result = indexer.serialize_document(document, accesses)
 
+    assert mock_convert.call_count == 1
+
     assert set(result.pop("users")) == {str(user_a.sub), str(user_b.sub)}
     assert set(result.pop("groups")) == {"team1", "team2"}
     assert result == {
@@ -203,11 +217,63 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
         "depth": 1,
         "path": document.path,
         "numchild": 1,
-        "content": utils.base64_yjs_to_text(document.content),
+        "content": markdown_content,
+        "mimetype": "text/markdown",
         "created_at": document.created_at.isoformat(),
         "updated_at": document.updated_at.isoformat(),
         "reach": document.link_reach,
-        "size": 13,
+        "size": len(markdown_content),
+        "is_active": True,
+    }
+
+
+@pytest.mark.usefixtures("indexer_settings")
+@patch("core.services.converter_services.YdocConverter.convert")
+def test_services_search_indexers_serialize_document_no_converter(
+    mock_convert,
+):
+    """
+    It should serialize documents with correct metadata and access control.
+    """
+    user_a, user_b = factories.UserFactory.create_batch(2)
+    document = factories.DocumentFactory()
+    factories.DocumentFactory(parent=document)
+
+    mock_convert.side_effect = YProviderServiceUnavailableError()
+
+    text_content = utils.base64_yjs_to_text(document.content)
+
+    factories.UserDocumentAccessFactory(document=document, user=user_a)
+    factories.UserDocumentAccessFactory(document=document, user=user_b)
+    factories.TeamDocumentAccessFactory(document=document, team="team1")
+    factories.TeamDocumentAccessFactory(document=document, team="team2")
+
+    accesses = {
+        document.path: {
+            "users": {str(user_a.sub), str(user_b.sub)},
+            "teams": {"team1", "team2"},
+        }
+    }
+
+    indexer = SearchIndexer()
+    result = indexer.serialize_document(document, accesses)
+
+    assert mock_convert.call_count == 1
+
+    assert set(result.pop("users")) == {str(user_a.sub), str(user_b.sub)}
+    assert set(result.pop("groups")) == {"team1", "team2"}
+    assert result == {
+        "id": str(document.id),
+        "title": document.title,
+        "depth": 1,
+        "path": document.path,
+        "numchild": 1,
+        "content": text_content,
+        "mimetype": "text/markdown",
+        "created_at": document.created_at.isoformat(),
+        "updated_at": document.updated_at.isoformat(),
+        "reach": document.link_reach,
+        "size": len(text_content),
         "is_active": True,
     }
 

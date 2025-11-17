@@ -1,5 +1,6 @@
 """Document search index management utilities and indexers"""
 
+import base64
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -14,6 +15,12 @@ from django.utils.module_loading import import_string
 import requests
 
 from core import models, utils
+from core.services.converter_services import (
+    ServiceUnavailableError as YProviderServiceUnavailableError,
+)
+from core.services.converter_services import (
+    YdocConverter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +238,32 @@ class SearchIndexer(BaseDocumentIndexer):
     Document indexer that pushes documents to La Suite Find app.
     """
 
+    def to_markdown(self, document):
+        """
+        Convert document as markdown.
+        Returns raw text if Ydoc service is not accessible
+        """
+        content = ""
+        base64_content = document.content
+
+        if base64_content is not None and len(base64_content) > 0:
+            # Convert using the y-provider service
+            try:
+                yprovider = YdocConverter()
+                result = yprovider.convert(
+                    base64.b64decode(base64_content),
+                    "application/vnd.yjs.doc",
+                    "text/markdown",
+                )
+                content = result
+            except YProviderServiceUnavailableError as e:
+                logger.error(
+                    "Error getting content for document %s: %s", document.pk, e
+                )
+                return utils.base64_yjs_to_text(base64_content)
+
+        return content
+
     def serialize_document(self, document, accesses):
         """
         Convert a Document to the JSON format expected by La Suite Find.
@@ -243,8 +276,7 @@ class SearchIndexer(BaseDocumentIndexer):
             dict: A JSON-serializable dictionary.
         """
         doc_path = document.path
-        doc_content = document.content
-        text_content = utils.base64_yjs_to_text(doc_content) if doc_content else ""
+        text_content = self.to_markdown(document)
 
         return {
             "id": str(document.id),
@@ -259,6 +291,7 @@ class SearchIndexer(BaseDocumentIndexer):
             "groups": list(accesses.get(doc_path, {}).get("teams", set())),
             "reach": document.computed_link_reach,
             "size": len(text_content.encode("utf-8")),
+            "mimetype": "text/markdown",
             "is_active": not bool(document.ancestors_deleted_at),
         }
 
