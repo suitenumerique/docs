@@ -8,7 +8,8 @@ export const ButtonCloseModal = (props: ButtonProps) => {
     <Button
       type="button"
       size="small"
-      color="primary-text"
+      color="brand"
+      variant="tertiary"
       icon={
         <Box as="span" aria-hidden="true" className="material-icons-filled">
           close

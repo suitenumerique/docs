@@ -76,7 +76,8 @@ export const BoutonShare = ({
 
   return (
     <Button
-      color="primary-text"
+      color="brand"
+      variant="tertiary"
       onClick={open}
       size="medium"
       disabled={isDisabled}

@@ -9,11 +9,13 @@ type ColorsTokens = Tokens['globals']['colors'];
 type FontSizesTokens = Tokens['globals']['font']['sizes'];
 type SpacingsTokens = Tokens['globals']['spacings'];
 type ComponentTokens = Tokens['components'];
+type ContextualTokens = Tokens['contextuals'];
 export type Theme = keyof typeof tokens.themes;
 
 interface ThemeStore {
   colorsTokens: Partial<ColorsTokens>;
   componentTokens: ComponentTokens;
+  contextualTokens: ContextualTokens;
   currentTokens: Partial<Tokens>;
   fontSizesTokens: Partial<FontSizesTokens>;
   setTheme: (theme: Theme) => void;
@@ -32,6 +34,7 @@ const defaultTokens = getMergedTokens(DEFAULT_THEME);
 const initialState: ThemeStore = {
   colorsTokens: defaultTokens.globals.colors,
   componentTokens: defaultTokens.components,
+  contextualTokens: defaultTokens.contextuals,
   currentTokens: tokens.themes[DEFAULT_THEME] as Partial<Tokens>,
   fontSizesTokens: defaultTokens.globals.font.sizes,
   setTheme: () => {},
@@ -48,6 +51,7 @@ export const useCunninghamTheme = create<ThemeStore>((set) => ({
     set({
       colorsTokens: newTokens.globals.colors,
       componentTokens: newTokens.components,
+      contextualTokens: newTokens.contextuals,
       currentTokens: tokens.themes[theme] as Partial<Tokens>,
       fontSizesTokens: newTokens.globals.font.sizes,
       spacingsTokens: newTokens.globals.spacings,

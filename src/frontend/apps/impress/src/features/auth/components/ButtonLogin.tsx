@@ -18,7 +18,8 @@ export const ButtonLogin = () => {
     return (
       <Button
         onClick={() => gotoLogin()}
-        color="primary-text"
+        color="brand"
+        variant="tertiary"
         aria-label={t('Login')}
         className="--docs--button-login"
       >
@@ -31,14 +32,15 @@ export const ButtonLogin = () => {
     <Box
       $css={css`
         .--docs--button-logout:focus-visible {
-          box-shadow: 0 0 0 2px ${colorsTokens['primary-400']} !important;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
           border-radius: 4px;
         }
       `}
     >
       <Button
         onClick={gotoLogout}
-        color="primary-text"
+        color="brand"
+        variant="tertiary"
         aria-label={t('Logout')}
         className="--docs--button-logout"
       >

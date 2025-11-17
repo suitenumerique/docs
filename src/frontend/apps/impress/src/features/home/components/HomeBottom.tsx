@@ -20,7 +20,7 @@ export function HomeBottom() {
 
 function HomeProConnect() {
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens, contextualTokens } = useCunninghamTheme();
   const { isMobile } = useResponsiveStore();
   const parentGap = '230px';
 
@@ -47,7 +47,7 @@ function HomeProConnect() {
           <IconDocs
             aria-label={t('Docs Logo')}
             width={34}
-            color={colorsTokens['primary-text']}
+            color={contextualTokens['content']['semantic']['brand']['tertiary']}
           />
           <Title />
         </Box>

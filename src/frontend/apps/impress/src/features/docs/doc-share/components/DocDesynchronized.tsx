@@ -53,7 +53,8 @@ export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
             })
           }
           size="small"
-          color="primary-text"
+          color="brand"
+          variant="tertiary"
           icon={<Undo />}
         >
           {t('Restore')}

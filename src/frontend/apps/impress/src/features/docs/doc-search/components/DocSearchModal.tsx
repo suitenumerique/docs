@@ -85,7 +85,8 @@ const DocSearchModalGlobal = ({
             aria-label={t('Close the search modal')}
             onClick={modalProps.onClose}
             size="small"
-            color="primary-text"
+            color="brand"
+            variant="tertiary"
           />
         </Box>
         <QuickSearch

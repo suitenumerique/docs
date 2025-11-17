@@ -34,7 +34,7 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   border-radius: 4px;
   &:hover {
     background-color: var(
-      --c--components--button--primary-text--background--color-hover
+      --c--contextuals--background--semantic--brand--primary-hover
     );
   }
   &:focus-visible {

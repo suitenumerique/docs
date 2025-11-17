@@ -162,7 +162,8 @@ export const DocsGrid = ({
                 {!isFetching && hasNextPage && (
                   <Button
                     onClick={() => void fetchNextPage()}
-                    color="primary-text"
+                    color="brand"
+                    variant="tertiary"
                   >
                     {t('More docs')}
                   </Button>

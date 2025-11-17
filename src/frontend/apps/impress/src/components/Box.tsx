@@ -43,41 +43,11 @@ export interface BoxProps {
     | 'info'
     | 'success'
     | 'warning'
-    | 'red'
-    | 'orange'
-    | 'brown'
-    | 'yellow'
-    | 'green'
-    | 'blue-1'
-    | 'blue-2'
-    | 'purple'
-    | 'pink'
-    | 'black'
-    | 'white';
+    | 'neutral'
+    | 'contextual'
+    | 'disabled';
   $transition?: CSSProperties['transition'];
-  $variation?:
-    | 'text'
-    | '000'
-    | '050'
-    | '100'
-    | '150'
-    | '200'
-    | '250'
-    | '300'
-    | '350'
-    | '400'
-    | '450'
-    | '500'
-    | '550'
-    | '600'
-    | '650'
-    | '700'
-    | '750'
-    | '800'
-    | '850'
-    | '900'
-    | '950'
-    | '1000';
+  $variation?: 'primary' | 'secondary' | 'tertiary';
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $zIndex?: CSSProperties['zIndex'];
@@ -118,7 +88,7 @@ export const Box = styled('div')<BoxProps>`
     if (!$theme || !$variation) {
       return '';
     }
-    return `color: var(--c--globals--colors--${$theme}-${$variation});`;
+    return `color: var(--c--contextuals--content--semantic--${$theme}--${$variation});`;
   }}
   ${({ $transition }) => $transition && `transition: ${$transition};`}
   ${({ $width }) => $width && `width: ${$width};`}

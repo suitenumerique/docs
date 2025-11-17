@@ -49,12 +49,14 @@ export const LanguagePicker = () => {
           display: flex;
         }
         & .material-icons {
-          color: var(--c--components--button--primary-text--color) !important;
+          color: var(
+            --c--contextuals--content--palette--brand--primary
+          ) !important;
         }
       `}
     >
       <Text
-        $theme="primary"
+        $theme="brand"
         $direction="row"
         $gap="0.5rem"
         className="--docs--language-picker-text"

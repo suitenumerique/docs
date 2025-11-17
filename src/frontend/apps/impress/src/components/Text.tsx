@@ -39,8 +39,8 @@ const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
       <TextStyled
         ref={ref}
         as="span"
-        $theme="gray"
-        $variation="text"
+        $theme="neutral"
+        $variation="primary"
         className={className}
         {...props}
       />

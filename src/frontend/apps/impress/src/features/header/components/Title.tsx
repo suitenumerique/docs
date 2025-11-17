@@ -9,7 +9,7 @@ type TitleSemanticsProps = {
 
 export const Title = ({ headingLevel = 'h2' }: TitleSemanticsProps) => {
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
 
   return (
     <Box
@@ -21,9 +21,10 @@ export const Title = ({ headingLevel = 'h2' }: TitleSemanticsProps) => {
       <Text
         $margin="none"
         as={headingLevel}
-        $color={colorsTokens['primary-text']}
         $zIndex={1}
         $size="1.375rem"
+        $theme="brand"
+        $variation="primary"
       >
         {t('Docs')}
       </Text>

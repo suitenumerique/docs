@@ -15,7 +15,7 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { componentTokens, spacingsTokens, colorsTokens } =
+  const { componentTokens, spacingsTokens, colorsTokens, contextualTokens } =
     useCunninghamTheme();
   const { isMobile, isSmallMobile } = useResponsiveStore();
   const withProConnect = componentTokens['home-proconnect'];
@@ -50,7 +50,7 @@ export default function HomeBanner() {
           <IconDocs
             aria-label={t('Back to homepage')}
             width={64}
-            color={colorsTokens['primary-text']}
+            color={contextualTokens['content']['semantic']['brand']['tertiary']}
           />
           <Text
             as="h2"
