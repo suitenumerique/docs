@@ -806,6 +806,12 @@ test.describe('Doc Editor', () => {
     });
     await expect(interlinkChild1).toBeVisible({ timeout: 10000 });
     await expect(interlinkChild1.locator('svg').first()).toBeVisible();
+
+    await page.keyboard.press('@');
+
+    await page.keyboard.press('Escape');
+
+    await expect(editor.getByText('@')).toBeVisible();
   });
 
   test('it checks multiple big doc scroll to the top', async ({

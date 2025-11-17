@@ -1,4 +1,5 @@
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
+import { ODTExporter } from '@blocknote/xl-odt-exporter';
 import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
@@ -23,12 +24,14 @@ import { Doc, useTrans } from '@/docs/doc-management';
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
+import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
 import { downloadFile } from '../utils';
 
 enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
+  ODT = 'odt',
 }
 
 interface ModalExportProps {
@@ -124,7 +127,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         : rawPdfDocument;
 
       blobExport = await pdf(pdfDocument).toBlob();
-    } else {
+    } else if (format === DocDownloadFormat.DOCX) {
       const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
@@ -133,6 +136,16 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         documentOptions: { title: documentTitle },
         sectionOptions: {},
       });
+    } else if (format === DocDownloadFormat.ODT) {
+      const exporter = new ODTExporter(editor.schema, odtDocsSchemaMappings, {
+        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+      });
+
+      blobExport = await exporter.toODTDocument(exportDocument);
+    } else {
+      toast(t('The export failed'), VariantType.ERROR);
+      setIsExporting(false);
+      return;
     }
 
     downloadFile(blobExport, `${filename}.${format}`);
@@ -213,7 +226,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         className="--docs--modal-export-content"
       >
         <Text $variation="600" $size="sm" as="p">
-          {t('Download your document in a .docx or .pdf format.')}
+          {t('Download your document in a .docx, .odt or .pdf format.')}
         </Text>
         <Select
           clearable={false}
@@ -231,6 +244,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           label={t('Format')}
           options={[
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
+            { label: t('ODT'), value: DocDownloadFormat.ODT },
             { label: t('PDF'), value: DocDownloadFormat.PDF },
           ]}
           value={format}

@@ -44,7 +44,7 @@ describe('DocToolBox - Licence', () => {
     await userEvent.click(optionsButton);
     expect(
       await screen.findByText(
-        'Download your document in a .docx or .pdf format.',
+        'Download your document in a .docx, .odt or .pdf format.',
       ),
     ).toBeInTheDocument();
   }, 10000);

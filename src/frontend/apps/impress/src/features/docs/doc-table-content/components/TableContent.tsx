@@ -12,7 +12,7 @@ import { Heading } from './Heading';
 export const TableContent = () => {
   const { headings } = useHeadingStore();
   const { editor } = useEditorStore();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
 
   const [headingIdHighlight, setHeadingIdHighlight] = useState<string>();
 
@@ -99,33 +99,63 @@ export const TableContent = () => {
 
   return (
     <Box
+      as="nav"
       id="summaryContainer"
       $width={!isHover ? '40px' : '200px'}
       $height={!isHover ? '40px' : 'auto'}
       $maxHeight="calc(50vh - 60px)"
       $zIndex={1000}
       $align="center"
-      $padding="xs"
+      $padding={isHover ? 'xs' : '0'}
       $justify="center"
+      $position="sticky"
+      aria-label={t('Summary')}
       $css={css`
-        border: 1px solid #ccc;
+        top: 0;
+        border: 1px solid ${colorsTokens['greyscale-300']};
         overflow: hidden;
-        border-radius: var(--c--theme--spacings--3xs);
-        background: var(--c--theme--colors--greyscale-000);
+        border-radius: ${spacingsTokens['3xs']};
+        background: ${colorsTokens['greyscale-000']};
         ${isHover &&
         css`
           display: flex;
           flex-direction: column;
           justify-content: flex-start;
           align-items: flex-start;
-          gap: var(--c--theme--spacings--2xs);
+          gap: ${spacingsTokens['2xs']};
         `}
       `}
       className="--docs--table-content"
     >
       {!isHover && (
-        <BoxButton onClick={onOpen} $justify="center" $align="center">
-          <Icon iconName="list" $theme="primary" $variation="800" />
+        <BoxButton
+          onClick={onOpen}
+          $width="100%"
+          $height="100%"
+          $justify="center"
+          $align="center"
+          aria-label={t('Summary')}
+          aria-expanded={isHover}
+          aria-controls="toc-list"
+          $css={css`
+            &:hover {
+              background: ${colorsTokens['primary-100']};
+            }
+            &:focus-visible {
+              outline: none;
+              box-shadow: 0 0 0 4px ${colorsTokens['primary-400']};
+              background: ${colorsTokens['primary-100']};
+              width: 90%;
+              height: 90%;
+            }
+          `}
+        >
+          <Icon
+            iconName="list"
+            $theme="primary"
+            $variation="800"
+            variant="symbols-outlined"
+          />
         </BoxButton>
       )}
       {isHover && (
@@ -134,10 +164,11 @@ export const TableContent = () => {
           $overflow="hidden"
           $css={css`
             user-select: none;
+            padding: ${spacingsTokens['4xs']};
           `}
         >
           <Box
-            $margin={{ bottom: '10px' }}
+            $margin={{ bottom: spacingsTokens.xs }}
             $direction="row"
             $justify="space-between"
             $align="center"
@@ -149,30 +180,46 @@ export const TableContent = () => {
               onClick={onClose}
               $justify="center"
               $align="center"
+              aria-label={t('Summary')}
+              aria-expanded={isHover}
+              aria-controls="toc-list"
               $css={css`
+                transition: none !important;
                 transform: rotate(180deg);
+                &:focus-visible {
+                  outline: none;
+                  box-shadow: 0 0 0 2px ${colorsTokens['primary-400']};
+                  border-radius: 4px;
+                }
               `}
             >
               <Icon iconName="menu_open" $theme="primary" $variation="800" />
             </BoxButton>
           </Box>
           <Box
+            as="ul"
+            id="toc-list"
+            role="list"
             $gap={spacingsTokens['3xs']}
             $css={css`
               overflow-y: auto;
+              list-style: none;
+              padding: ${spacingsTokens['3xs']};
+              margin: 0;
             `}
           >
             {headings?.map(
               (heading) =>
                 heading.contentText && (
-                  <Heading
-                    editor={editor}
-                    headingId={heading.id}
-                    level={heading.props.level}
-                    text={heading.contentText}
-                    key={heading.id}
-                    isHighlight={headingIdHighlight === heading.id}
-                  />
+                  <Box as="li" role="listitem" key={heading.id}>
+                    <Heading
+                      editor={editor}
+                      headingId={heading.id}
+                      level={heading.props.level}
+                      text={heading.contentText}
+                      isHighlight={headingIdHighlight === heading.id}
+                    />
+                  </Box>
                 ),
             )}
           </Box>

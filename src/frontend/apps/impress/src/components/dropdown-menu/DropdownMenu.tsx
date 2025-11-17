@@ -12,6 +12,7 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { useKeyboardAction } from '@/hooks';
 
 import { useDropdownKeyboardNav } from './hook/useDropdownKeyboardNav';
 
@@ -57,6 +58,7 @@ export const DropdownMenu = ({
   testId,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const keyboardAction = useKeyboardAction();
   const [isOpen, setIsOpen] = useState(opened ?? false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const blockButtonRef = useRef<HTMLDivElement>(null);
@@ -92,6 +94,14 @@ export const DropdownMenu = ({
       }
     }
   }, [isOpen, options]);
+
+  const triggerOption = useCallback(
+    (option: DropdownMenuOption) => {
+      onOpenChange?.(false);
+      void option.callback?.();
+    },
+    [onOpenChange],
+  );
 
   if (disabled) {
     return children;
@@ -170,9 +180,9 @@ export const DropdownMenu = ({
                 onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  onOpenChange?.(false);
-                  void option.callback?.();
+                  triggerOption(option);
                 }}
+                onKeyDown={keyboardAction(() => triggerOption(option))}
                 key={option.label}
                 $align="center"
                 $justify="space-between"

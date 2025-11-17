@@ -99,6 +99,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     <>
       {isDesktop && (
         <Box
+          $height="100vh"
           $position="absolute"
           $css={css`
             top: 72px;
