@@ -8,7 +8,7 @@ export const cssEditor = css`
   }
 
   & .bn-editor {
-    color: var(--c--theme--colors--greyscale-700);
+    color: var(--c--globals--colors--greyscale-700);
   }
 
   /**
@@ -104,14 +104,14 @@ export const cssEditor = css`
   * Callout, Paragraph and Heading blocks
   */
   .bn-block {
-    border-radius: var(--c--theme--spacings--3xs);
+    border-radius: var(--c--globals--spacings--3xs);
   }
   .bn-block-outer {
-    border-radius: var(--c--theme--spacings--3xs);
+    border-radius: var(--c--globals--spacings--3xs);
   }
   .bn-block > .bn-block-content[data-background-color] {
-    padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
-    border-radius: var(--c--theme--spacings--3xs);
+    padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);
+    border-radius: var(--c--globals--spacings--3xs);
   }
   .bn-block-content[data-content-type='checkListItem'][data-checked='true']
     .bn-inline-content {
@@ -127,7 +127,7 @@ export const cssEditor = css`
     font-size: 1.25rem;
   }
   a {
-    color: var(--c--theme--colors--greyscale-600);
+    color: var(--c--globals--colors--greyscale-600);
     cursor: pointer;
   }
   .bn-block-group
@@ -144,7 +144,7 @@ export const cssEditor = css`
   * Quotes
   */
   blockquote {
-    border-left: 4px solid var(--c--theme--colors--greyscale-300);
+    border-left: 4px solid var(--c--globals--colors--gray-300);
     font-style: italic;
   }
 

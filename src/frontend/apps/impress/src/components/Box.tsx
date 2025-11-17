@@ -37,28 +37,46 @@ export interface BoxProps {
   $radius?: CSSProperties['borderRadius'];
   $shrink?: CSSProperties['flexShrink'];
   $theme?:
-    | 'primary'
-    | 'primary-text'
-    | 'secondary'
-    | 'secondary-text'
+    | 'brand'
+    | 'error'
+    | 'gray'
     | 'info'
     | 'success'
     | 'warning'
-    | 'danger'
-    | 'greyscale';
+    | 'red'
+    | 'orange'
+    | 'brown'
+    | 'yellow'
+    | 'green'
+    | 'blue-1'
+    | 'blue-2'
+    | 'purple'
+    | 'pink'
+    | 'black'
+    | 'white';
   $transition?: CSSProperties['transition'];
   $variation?:
     | 'text'
     | '000'
+    | '050'
     | '100'
+    | '150'
     | '200'
+    | '250'
     | '300'
+    | '350'
     | '400'
+    | '450'
     | '500'
+    | '550'
     | '600'
+    | '650'
     | '700'
+    | '750'
     | '800'
+    | '850'
     | '900'
+    | '950'
     | '1000';
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
@@ -100,7 +118,7 @@ export const Box = styled('div')<BoxProps>`
     if (!$theme || !$variation) {
       return '';
     }
-    return `color: var(--c--theme--colors--${$theme}-${$variation});`;
+    return `color: var(--c--globals--colors--${$theme}-${$variation});`;
   }}
   ${({ $transition }) => $transition && `transition: ${$transition};`}
   ${({ $width }) => $width && `width: ${$width};`}

@@ -58,7 +58,7 @@ export const Heading = ({
         });
       }}
       $radius="4px"
-      $background={isActive ? `${colorsTokens['greyscale-100']}` : 'none'}
+      $background={isActive ? `${colorsTokens['gray-100']}` : 'none'}
       $css={css`
         text-align: left;
         &:focus-visible {

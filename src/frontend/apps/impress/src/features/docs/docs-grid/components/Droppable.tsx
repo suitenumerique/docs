@@ -39,11 +39,11 @@ export const Droppable = ({
       $css={css`
         border-radius: 4px;
         background-color: ${enableHover
-          ? 'var(--c--theme--colors--primary-100)'
+          ? 'var(--c--globals--colors--primary-100)'
           : 'transparent'};
         border: 1.5px solid
           ${enableHover
-            ? 'var(--c--theme--colors--primary-500)'
+            ? 'var(--c--globals--colors--primary-500)'
             : 'transparent'};
       `}
       className="--docs--grid-droppable"

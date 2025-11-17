@@ -32,7 +32,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
           opacity: ${isDesktop ? 0 : 1};
         }
         &:hover {
-          background-color: ${colorsTokens['greyscale-100']};
+          background-color: ${colorsTokens['gray-100']};
         }
         &:focus-within {
           cursor: pointer;

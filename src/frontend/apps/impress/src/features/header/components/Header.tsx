@@ -38,8 +38,8 @@ export const Header = () => {
         justify-content: space-between;
         height: ${HEADER_HEIGHT}px;
         padding: 0 ${spacingsTokens['base']};
-        background-color: ${colorsTokens['greyscale-000']};
-        border-bottom: 1px solid ${colorsTokens['greyscale-200']};
+        background-color: ${colorsTokens['gray-000']};
+        border-bottom: 1px solid ${colorsTokens['gray-200']};
       `}
       className="--docs--header"
     >
@@ -51,7 +51,7 @@ export const Header = () => {
         $css={css`
           outline: none;
           &:focus-visible {
-            box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400) !important;
+            box-shadow: 0 0 0 2px var(--c--globals--colors--primary-400) !important;
             border-radius: 4px;
           }
         `}

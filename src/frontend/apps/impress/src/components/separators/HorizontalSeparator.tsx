@@ -33,7 +33,7 @@ export const HorizontalSeparator = ({
       $background={
         variant === SeparatorVariant.DARK
           ? '#e5e5e533'
-          : colorsTokens['greyscale-100']
+          : colorsTokens['gray-100']
       }
       className="--docs--horizontal-separator"
     />

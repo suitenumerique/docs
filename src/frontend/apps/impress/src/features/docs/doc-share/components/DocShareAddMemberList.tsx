@@ -121,10 +121,10 @@ export const DocShareAddMemberList = ({
       $direction="row"
       $padding={spacingsTokens.sm}
       $align="center"
-      $background={colorsTokens['greyscale-050']}
+      $background={colorsTokens['gray-050']}
       $radius={spacingsTokens['3xs']}
       $css={css`
-        border: 1px solid ${colorsTokens['greyscale-200']};
+        border: 1px solid ${colorsTokens['gray-200']};
       `}
       className="--docs--doc-share-add-member-list"
     >

@@ -38,7 +38,7 @@ const StyledButton = styled(Button)<StyledButtonProps>`
     );
   }
   &:focus-visible {
-    box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400);
+    box-shadow: 0 0 0 2px var(--c--globals--colors--primary-400);
     border-radius: 4px;
   }
   ${({ $css }) => $css};

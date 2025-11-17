@@ -116,7 +116,7 @@ export const DocRoleDropdown = ({
       label="doc-role-dropdown"
       showArrow={true}
       arrowCss={css`
-        color: var(--c--theme--colors--primary-800) !important;
+        color: var(--c--globals--colors--primary-800) !important;
       `}
       options={[
         ...roles,

@@ -63,7 +63,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           &:hover {
             background-color: ${dragMode
               ? 'none'
-              : 'var(--c--theme--colors--greyscale-100)'};
+              : 'var(--c--globals--colors--gray-100)'};
           }
         `}
         className="--docs--doc-grid-item"
@@ -111,7 +111,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                   {dragMode && (
                     <>
                       <Icon
-                        $theme="greyscale"
+                        $theme="gray"
                         $variation="600"
                         $size="14px"
                         iconName={isPublic ? 'public' : 'vpn_lock'}
@@ -136,7 +136,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                     >
                       <div>
                         <Icon
-                          $theme="greyscale"
+                          $theme="gray"
                           $variation="600"
                           $size="14px"
                           iconName={isPublic ? 'public' : 'vpn_lock'}

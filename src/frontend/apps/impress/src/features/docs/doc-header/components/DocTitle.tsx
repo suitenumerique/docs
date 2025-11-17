@@ -71,7 +71,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
           padding-top: 3px;
           cursor: pointer;
           &:hover {
-            background-color: ${colorsTokens['greyscale-100']};
+            background-color: ${colorsTokens['gray-100']};
             border-radius: 4px;
           }
           transition: background-color 0.2s ease-in-out;
@@ -171,7 +171,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')
           }
-          $color={colorsTokens['greyscale-1000']}
+          $color={colorsTokens['gray-1000']}
           $padding={{ right: 'big' }}
           $css={css`
             &[contenteditable='true']:empty:not(:focus):before {
@@ -181,8 +181,8 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
               font-style: italic;
             }
             font-size: ${isDesktop
-              ? css`var(--c--theme--font--sizes--h2)`
-              : css`var(--c--theme--font--sizes--sm)`};
+              ? css`var(--c--globals--font--sizes--h2)`
+              : css`var(--c--globals--font--sizes--sm)`};
             font-weight: 700;
             outline: none;
           `}

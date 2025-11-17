@@ -115,32 +115,32 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-disabled={isDisabled}
       $css={css`
         background-color: ${menuOpen
-          ? 'var(--c--theme--colors--greyscale-100)'
-          : 'var(--c--theme--colors--greyscale-000)'};
+          ? 'var(--c--globals--colors--gray-100)'
+          : 'var(--c--globals--colors--gray-000)'};
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           position: absolute;
           right: 0;
           background: ${isDesktop
-            ? 'var(--c--theme--colors--greyscale-100)'
-            : 'var(--c--theme--colors--greyscale-000)'};
+            ? 'var(--c--globals--colors--gray-100)'
+            : 'var(--c--globals--colors--gray-000)'};
         }
         .c__tree-view--node.isSelected {
           .light-doc-item-actions {
-            background: var(--c--theme--colors--greyscale-100);
+            background: var(--c--globals--colors--gray-100);
           }
         }
         .c__tree-view--node.isFocused {
           outline: none !important;
-          box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
+          box-shadow: 0 0 0 2px var(--c--globals--colors--primary-500) !important;
           border-radius: 4px;
         }
         &:hover {
-          background-color: var(--c--theme--colors--greyscale-100);
+          background-color: var(--c--globals--colors--gray-100);
           border-radius: 4px;
           .light-doc-item-actions {
             display: flex;
-            background: var(--c--theme--colors--greyscale-100);
+            background: var(--c--globals--colors--gray-100);
           }
         }
         .row.preview & {

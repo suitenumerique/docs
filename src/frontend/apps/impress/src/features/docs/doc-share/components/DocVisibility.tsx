@@ -165,12 +165,12 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
           >
             <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
               <Icon
-                $theme={canManage ? 'primary' : 'greyscale'}
+                $theme={canManage ? 'primary' : 'gray'}
                 $variation={canManage ? '800' : '600'}
                 iconName={linkReachChoices[docLinkReach].icon}
               />
               <Text
-                $theme={canManage ? 'primary' : 'greyscale'}
+                $theme={canManage ? 'primary' : 'gray'}
                 $variation={canManage ? '800' : '600'}
                 $weight="500"
                 $size="md"

@@ -15,7 +15,7 @@ const BlueStripe = styled.div`
   position: absolute;
   height: 2px;
   width: 100%;
-  background: var(--c--theme--colors--primary-600);
+  background: var(--c--globals--colors--primary-600);
   top: 0;
 `;
 
@@ -120,7 +120,7 @@ export const Footer = () => {
                     gap:0.2rem;
                     transition: box-shadow 0.3s;
                     &:hover {
-                      box-shadow: 0px 2px 0 0 var(--c--theme--colors--greyscale-text);
+                      box-shadow: 0px 2px 0 0 var(--c--globals--colors--gray-text);
                     }
                   `}
                 >
@@ -136,7 +136,7 @@ export const Footer = () => {
           $padding={{ top: 'tiny' }}
           $css={`
             flex-wrap: wrap;
-            border-top: 1px solid var(--c--theme--colors--greyscale-200); 
+            border-top: 1px solid var(--c--globals--colors--gray-200); 
             column-gap: 1rem;
             row-gap: .5rem;
           `}
@@ -151,7 +151,7 @@ export const Footer = () => {
                   padding-right: 1rem;
                   &:not(:last-child) {
                     box-shadow: inset -1px 0px 0px 0px
-                      var(--c--theme--colors--greyscale-200);
+                      var(--c--globals--colors--gray-200);
                   }
                 `}
               >
@@ -162,7 +162,7 @@ export const Footer = () => {
                   $css={css`
                     &:hover {
                       box-shadow: 0px 2px 0 0
-                        var(--c--theme--colors--greyscale-text);
+                        var(--c--globals--colors--gray-text);
                     }
                   `}
                 >
@@ -187,8 +187,7 @@ export const Footer = () => {
                 target="__blank"
                 $css={css`
                   display: inline-flex;
-                  box-shadow: 0px 1px 0 0
-                    var(--c--theme--colors--greyscale-text);
+                  box-shadow: 0px 1px 0 0 var(--c--globals--colors--gray-text);
                   gap: 0.2rem;
                 `}
               >

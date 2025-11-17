@@ -56,7 +56,7 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
       $align="center"
       $gap={spacingsTokens['3xs']}
       $css={css`
-        border: 1px solid var(--c--theme--colors--danger-300, #e3e3fd);
+        border: 1px solid var(--c--globals--colors--danger-300, #e3e3fd);
       `}
       $justify="space-between"
     >

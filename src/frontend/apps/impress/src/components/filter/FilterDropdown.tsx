@@ -34,14 +34,15 @@ export const FilterDropdown = ({
         $css={css`
           border: 1px solid
             ${selectedOption
-              ? 'var(--c--theme--colors--primary-500)'
-              : 'var(--c--theme--colors--greyscale-250)'};
+              ? 'var(--c--globals--colors--primary-500)'
+              : 'var(--c--globals--colors--gray-250)'};
           border-radius: 4px;
           background-color: ${selectedOption
-            ? 'var(--c--theme--colors--primary-100)'
-            : 'var(--c--theme--colors--greyscale-000)'};
-          gap: var(--c--theme--spacings--2xs);
-          padding: var(--c--theme--spacings--2xs) var(--c--theme--spacings--xs);
+            ? 'var(--c--globals--colors--primary-100)'
+            : 'var(--c--globals--colors--gray-000)'};
+          gap: var(--c--globals--spacings--2xs);
+          padding: var(--c--globals--spacings--2xs)
+            var(--c--globals--spacings--xs);
         `}
         color="secondary"
         $direction="row"
@@ -50,7 +51,7 @@ export const FilterDropdown = ({
         <Text
           $weight={400}
           $variation={selectedOption ? '800' : '600'}
-          $theme={selectedOption ? 'primary' : 'greyscale'}
+          $theme={selectedOption ? 'primary' : 'gray'}
         >
           {selectedOption?.label ?? options[0].label}
         </Text>
@@ -58,7 +59,7 @@ export const FilterDropdown = ({
           $size="16px"
           iconName="keyboard_arrow_down"
           $variation={selectedOption ? '800' : '600'}
-          $theme={selectedOption ? 'primary' : 'greyscale'}
+          $theme={selectedOption ? 'primary' : 'gray'}
         />
       </Box>
     </DropdownMenu>

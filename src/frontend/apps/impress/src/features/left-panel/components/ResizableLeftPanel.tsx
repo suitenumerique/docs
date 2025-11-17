@@ -76,7 +76,7 @@ export const ResizableLeftPanel = ({
           style={{
             borderRightWidth: '1px',
             borderRightStyle: 'solid',
-            borderRightColor: colorsTokens['greyscale-200'],
+            borderRightColor: colorsTokens['gray-200'],
             width: '1px',
             cursor: 'col-resize',
           }}

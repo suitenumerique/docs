@@ -153,7 +153,7 @@ export const DocShareModalInviteUserRow = ({
             $css={css`
               contain: content;
             `}
-            $color="var(--c--theme--colors--greyscale-400)"
+            $color="var(--c--globals--colors--gray-400)"
             $cursor="pointer"
           >
             <Text $theme="primary" $variation="800" $size="sm">

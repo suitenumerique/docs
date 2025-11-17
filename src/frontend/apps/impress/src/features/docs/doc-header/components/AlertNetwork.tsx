@@ -26,7 +26,7 @@ export const AlertNetwork = () => {
           $align="center"
           $gap={spacingsTokens['2xs']}
           $css={css`
-            border: 1px solid var(--c--theme--colors--warning-300);
+            border: 1px solid var(--c--globals--colors--warning-300);
           `}
         >
           <Box $direction="row" $gap={spacingsTokens['2xs']} $align="center">

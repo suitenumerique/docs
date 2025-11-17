@@ -22,18 +22,18 @@ export const QuickSearchStyle = createGlobalStyle`
       padding: 8px;
       background: white;
       outline: none;
-      color: var(--c--theme--colors--greyscale-1000);
+      color: var(--c--globals--colors--gray-1000);
       border-radius: 0;
 
       &::placeholder {
-        color: var(--c--theme--colors--greyscale-500);
+        color: var(--c--globals--colors--gray-500);
       }
     }
 
     [cmdk-item] {
       content-visibility: auto;
       cursor: pointer;
-      border-radius: var(--c--theme--spacings--xs);
+      border-radius: var(--c--globals--spacings--xs);
       font-size: 14px;
       display: flex;
       align-items: center;
@@ -49,14 +49,14 @@ export const QuickSearchStyle = createGlobalStyle`
 
       &:hover,
       &[data-selected='true'] {
-        background: var(--c--theme--colors--greyscale-100);
+        background: var(--c--globals--colors--gray-100);
         .show-right-on-focus {
           opacity: 1;
         }
       }
 
       &[data-disabled='true'] {
-        color: var(--c--theme--colors--greyscale-500);
+        color: var(--c--globals--colors--gray-500);
         cursor: not-allowed;
       }
 
@@ -83,7 +83,7 @@ export const QuickSearchStyle = createGlobalStyle`
         height: 20px;
         border-radius: 4px;
         color: white;
-        background: var(--c--theme--colors--greyscale-500);
+        background: var(--c--globals--colors--gray-500);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -94,7 +94,7 @@ export const QuickSearchStyle = createGlobalStyle`
     [cmdk-separator] {
       height: 1px;
       width: 100%;
-      background: var(--c--theme--colors--greyscale-500);
+      background: var(--c--globals--colors--gray-500);
       margin: 4px 0;
     }
 
@@ -104,13 +104,13 @@ export const QuickSearchStyle = createGlobalStyle`
 
     [cmdk-group-heading] {
       user-select: none;
-      font-size: var(--c--theme--font--sizes--sm);
-      color: var(--c--theme--colors--greyscale-700);
+      font-size: var(--c--globals--font--sizes--sm);
+      color: var(--c--globals--colors--gray-700);
       font-weight: bold;
 
       display: flex;
       align-items: center;
-      margin-bottom: var(--c--theme--spacings--xs);
+      margin-bottom: var(--c--globals--spacings--xs);
     }
 
     [cmdk-empty] {
@@ -128,8 +128,8 @@ export const QuickSearchStyle = createGlobalStyle`
     }
 
     .c__modal__title {
-      font-size: var(--c--theme--font--sizes--xs);
-      padding: var(--c--theme--spacings--base);
+      font-size: var(--c--globals--font--sizes--xs);
+      padding: var(--c--globals--spacings--base);
       margin-bottom: 0;
     }
   }

@@ -73,8 +73,8 @@ export function MainLayoutContent({
       }}
       $background={
         currentBackgroundColor === 'white'
-          ? colorsTokens['greyscale-000']
-          : colorsTokens['greyscale-050']
+          ? colorsTokens['gray-000']
+          : colorsTokens['gray-050']
       }
       $css={css`
         overflow-y: auto;
@@ -111,7 +111,7 @@ export function MainLayoutContent({
         $css={css`
           width: 300px;
           min-width: 300px;
-          border-right: 1px solid ${colorsTokens['greyscale-200']};
+          border-right: 1px solid ${colorsTokens['gray-200']};
         `}
       >
         <LeftPanel />

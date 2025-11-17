@@ -24,7 +24,7 @@ export type BoxButtonType = BoxType & {
  */
 const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
   ({ $css, ...props }, ref) => {
-    const theme = props.$theme || 'greyscale';
+    const theme = props.$theme || 'gray';
     const variation = props.$variation || '400';
 
     return (
@@ -41,12 +41,12 @@ const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
           outline: none;
           font-family: inherit;
           color: ${props.disabled
-            ? `var(--c--theme--colors--${theme}-400) !important`
+            ? `var(--c--globals--colors--${theme}-400) !important`
             : `inherit`};
 
           &:focus-visible {
             transition: none;
-            outline: 2px solid var(--c--theme--colors--${theme}-${variation});
+            outline: 2px solid var(--c--globals--colors--${theme}-${variation});
             border-radius: 1px;
             outline-offset: 4px;
           }

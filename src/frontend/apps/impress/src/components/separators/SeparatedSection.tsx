@@ -21,7 +21,7 @@ export const SeparatedSection = ({
         padding: ${spacingsTokens['sm']} 0;
         ${showSeparator &&
         css`
-          border-bottom: 1px solid ${colorsTokens['greyscale-200']};
+          border-bottom: 1px solid ${colorsTokens['gray-200']};
         `}
       `}
     >

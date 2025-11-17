@@ -20,7 +20,7 @@ export const AlertPublic = ({ isPublicDoc }: { isPublicDoc: boolean }) => {
       $align="center"
       $gap={spacingsTokens['2xs']}
       $css={css`
-        border: 1px solid var(--c--theme--colors--primary-300, #e3e3fd);
+        border: 1px solid var(--c--globals--colors--primary-300, #e3e3fd);
       `}
     >
       <Icon

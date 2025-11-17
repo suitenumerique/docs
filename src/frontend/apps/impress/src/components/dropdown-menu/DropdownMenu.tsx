@@ -128,7 +128,7 @@ export const DropdownMenu = ({
               $css={
                 arrowCss ??
                 css`
-                  color: var(--c--theme--colors--primary-600);
+                  color: var(--c--globals--colors--primary-600);
                 `
               }
               iconName={isOpen ? 'arrow_drop_up' : 'arrow_drop_down'}
@@ -186,7 +186,7 @@ export const DropdownMenu = ({
                 key={option.label}
                 $align="center"
                 $justify="space-between"
-                $background={colorsTokens['greyscale-000']}
+                $background={colorsTokens['gray-000']}
                 $color={colorsTokens['primary-600']}
                 $padding={{ vertical: 'xs', horizontal: 'base' }}
                 $width="100%"
@@ -203,26 +203,26 @@ export const DropdownMenu = ({
                     border-bottom-left-radius: 4px;
                     border-bottom-right-radius: 4px;
                   `}
-                font-size: var(--c--theme--font--sizes--sm);
-                  color: var(--c--theme--colors--greyscale-1000);
+                font-size: var(--c--globals--font--sizes--sm);
+                  color: var(--c--globals--colors--gray-1000);
                   font-weight: 500;
                   cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
                   user-select: none;
 
                   &:hover {
-                    background-color: var(--c--theme--colors--greyscale-050);
+                    background-color: var(--c--globals--colors--gray-050);
                   }
 
                   &:focus-visible {
-                    outline: 2px solid var(--c--theme--colors--primary-400);
+                    outline: 2px solid var(--c--globals--colors--primary-400);
                     outline-offset: -2px;
-                    background-color: var(--c--theme--colors--greyscale-050);
+                    background-color: var(--c--globals--colors--gray-050);
                   }
 
                   ${isFocused &&
                   css`
                     outline-offset: -2px;
-                    background-color: var(--c--theme--colors--greyscale-050);
+                    background-color: var(--c--globals--colors--gray-050);
                   `}
                 `}
               >
@@ -234,7 +234,7 @@ export const DropdownMenu = ({
                   {option.icon && typeof option.icon === 'string' && (
                     <Icon
                       $size="20px"
-                      $theme="greyscale"
+                      $theme="gray"
                       $variation={isDisabled ? '400' : '1000'}
                       iconName={option.icon}
                       aria-hidden="true"
@@ -252,7 +252,7 @@ export const DropdownMenu = ({
                   <Icon
                     iconName="check"
                     $size="20px"
-                    $theme="greyscale"
+                    $theme="gray"
                     aria-hidden="true"
                   />
                 )}

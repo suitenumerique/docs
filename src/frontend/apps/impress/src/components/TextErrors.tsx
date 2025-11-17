@@ -7,7 +7,7 @@ import { Box, Text, TextType } from '@/components';
 
 const AlertStyled = styled(Alert)`
   & .c__button--tertiary:hover {
-    background-color: var(--c--theme--colors--greyscale-200);
+    background-color: var(--c--globals--colors--gray-200);
   }
 `;
 

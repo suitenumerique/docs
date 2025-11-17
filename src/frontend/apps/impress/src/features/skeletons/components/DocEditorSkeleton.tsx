@@ -29,9 +29,9 @@ export const DocEditorSkeleton = () => {
         $css={css`
           background: linear-gradient(
             90deg,
-            ${colorsTokens['greyscale-100']} 0%,
-            ${colorsTokens['greyscale-200']} 50%,
-            ${colorsTokens['greyscale-100']} 100%
+            ${colorsTokens['gray-100']} 0%,
+            ${colorsTokens['gray-200']} 50%,
+            ${colorsTokens['gray-100']} 100%
           );
           background-size: 1000px 100%;
           animation: ${shimmer} 2s infinite linear;
@@ -51,9 +51,9 @@ export const DocEditorSkeleton = () => {
         $css={css`
           background: linear-gradient(
             90deg,
-            ${colorsTokens['greyscale-100']} 0%,
-            ${colorsTokens['greyscale-200']} 50%,
-            ${colorsTokens['greyscale-100']} 100%
+            ${colorsTokens['gray-100']} 0%,
+            ${colorsTokens['gray-200']} 50%,
+            ${colorsTokens['gray-100']} 100%
           );
           background-size: 1000px 100%;
           animation: ${shimmer} 2s infinite linear;

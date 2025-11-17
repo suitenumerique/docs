@@ -237,11 +237,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           buttonCss={css`
             padding: ${spacingsTokens['xs']};
             &:hover {
-              background-color: ${colorsTokens['greyscale-100']};
+              background-color: ${colorsTokens['gray-100']};
             }
             ${isSmallMobile
               ? css`
-                  border: 1px solid ${colorsTokens['greyscale-300']};
+                  border: 1px solid ${colorsTokens['gray-300']};
                 `
               : ''}
           `}

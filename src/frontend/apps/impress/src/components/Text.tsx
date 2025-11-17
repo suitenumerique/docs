@@ -5,7 +5,7 @@ import { tokens } from '@/cunningham';
 
 import { Box, BoxProps } from './Box';
 
-const { sizes } = tokens.themes.default.theme.font;
+const { sizes } = tokens.themes.default.globals.font;
 type TextSizes = keyof typeof sizes;
 
 export interface TextProps extends BoxProps {
@@ -39,7 +39,7 @@ const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
       <TextStyled
         ref={ref}
         as="span"
-        $theme="greyscale"
+        $theme="gray"
         $variation="text"
         className={className}
         {...props}

@@ -47,7 +47,7 @@ export const BoutonShare = ({
         $css={css`
           .c__button--medium {
             height: 32px;
-            padding: 10px var(--c--theme--spacings--xs);
+            padding: 10px var(--c--globals--spacings--xs);
             gap: 7px;
           }
         `}

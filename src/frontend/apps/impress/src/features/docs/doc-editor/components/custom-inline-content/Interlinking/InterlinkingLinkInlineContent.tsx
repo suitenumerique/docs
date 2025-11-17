@@ -86,7 +86,7 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
           margin-right: 0.2rem;
         }
         &:hover {
-          background-color: ${colorsTokens['greyscale-100']};
+          background-color: ${colorsTokens['gray-100']};
         }
         transition: background-color 0.2s ease-in-out;
 

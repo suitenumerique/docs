@@ -102,7 +102,7 @@ export const ModalSelectVersion = ({
             $height="calc(100vh - 2em - 12px)"
             $css={css`
               overflow-y: hidden;
-              border-left: 1px solid var(--c--theme--colors--greyscale-200);
+              border-left: 1px solid var(--c--globals--colors--gray-200);
             `}
           >
             <Box
@@ -118,8 +118,7 @@ export const ModalSelectVersion = ({
                 $direction="row"
                 $align="center"
                 $css={css`
-                  border-bottom: 1px solid
-                    var(--c--theme--colors--greyscale-200);
+                  border-bottom: 1px solid var(--c--globals--colors--gray-200);
                 `}
                 $padding="sm"
               >
@@ -143,7 +142,7 @@ export const ModalSelectVersion = ({
               <Box
                 $padding="xs"
                 $css={css`
-                  border-top: 1px solid var(--c--theme--colors--greyscale-200);
+                  border-top: 1px solid var(--c--globals--colors--gray-200);
                 `}
               >
                 <Button

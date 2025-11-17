@@ -49,11 +49,7 @@ export const DocInheritedShareContent = ({
               <Button
                 size="small"
                 icon={
-                  <Icon
-                    $theme="greyscale"
-                    $variation="600"
-                    iconName="open_in_new"
-                  />
+                  <Icon $theme="gray" $variation="600" iconName="open_in_new" />
                 }
                 color="tertiary-text"
               />

@@ -24,14 +24,14 @@ export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
       $justify="center"
       $align="center"
       $gap={spacingsTokens['3xs']}
-      $background={colorsTokens['greyscale-250']}
+      $background={colorsTokens['gray-250']}
       $padding={{
         left: spacingsTokens['xs'],
         right: spacingsTokens['4xs'],
         vertical: spacingsTokens['4xs'],
       }}
       $css={css`
-        color: ${colorsTokens['greyscale-1000']};
+        color: ${colorsTokens['gray-1000']};
         font-size: ${fontSizesTokens['xs']};
       `}
       className="--docs--doc-share-add-member-list-item"

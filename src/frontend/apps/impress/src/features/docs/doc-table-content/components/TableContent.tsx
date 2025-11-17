@@ -112,10 +112,10 @@ export const TableContent = () => {
       aria-label={t('Summary')}
       $css={css`
         top: 0;
-        border: 1px solid ${colorsTokens['greyscale-300']};
+        border: 1px solid ${colorsTokens['gray-300']};
         overflow: hidden;
         border-radius: ${spacingsTokens['3xs']};
-        background: ${colorsTokens['greyscale-000']};
+        background: ${colorsTokens['gray-000']};
         ${isHover &&
         css`
           display: flex;

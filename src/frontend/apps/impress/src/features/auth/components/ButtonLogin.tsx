@@ -56,9 +56,9 @@ export const ProConnectButton = () => {
       onClick={() => gotoLogin()}
       aria-label={t('Proconnect Login')}
       $css={css`
-        background-color: var(--c--theme--colors--primary-text);
+        background-color: var(--c--globals--colors--primary-text);
         &:hover {
-          background-color: var(--c--theme--colors--primary-action);
+          background-color: var(--c--globals--colors--primary-action);
         }
       `}
       $radius="4px"

@@ -78,14 +78,14 @@ export const LeftPanelTargetFilters = () => {
               padding: ${spacingsTokens['2xs']};
               border-radius: ${spacingsTokens['3xs']};
               background-color: ${isActive
-                ? colorsTokens['greyscale-100']
+                ? colorsTokens['gray-100']
                 : 'transparent'};
               font-weight: ${isActive ? 700 : 400};
               color: inherit;
               text-decoration: none;
               cursor: pointer;
               &:hover {
-                background-color: ${colorsTokens['greyscale-100']};
+                background-color: ${colorsTokens['gray-100']};
               }
               &:focus-visible {
                 outline: none !important;

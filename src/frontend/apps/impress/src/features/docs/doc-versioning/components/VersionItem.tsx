@@ -32,13 +32,13 @@ export const VersionItem = ({
       <Box
         $width="100%"
         as="li"
-        $background={isActive ? colorsTokens['greyscale-100'] : 'transparent'}
+        $background={isActive ? colorsTokens['gray-100'] : 'transparent'}
         $radius={spacingsTokens['3xs']}
         $css={`
           cursor: pointer;
 
           &:hover {
-            background: ${colorsTokens['greyscale-100']};
+            background: ${colorsTokens['gray-100']};
           }
         `}
         $hasTransition

@@ -149,13 +149,13 @@ export const DraggableDocGridContentList = ({
 
   const overlayBgColor = useMemo(() => {
     if (!canDrag) {
-      return 'var(--c--theme--colors--danger-600)';
+      return 'var(--c--globals--colors--danger-600)';
     }
     if (canDrop !== undefined && !canDrop) {
-      return 'var(--c--theme--colors--danger-600)';
+      return 'var(--c--globals--colors--danger-600)';
     }
     if (isError) {
-      return 'var(--c--theme--colors--danger-600)';
+      return 'var(--c--globals--colors--danger-600)';
     }
 
     return '#5858D3';
