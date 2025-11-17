@@ -27,6 +27,33 @@ test.describe('Home page', () => {
     // Check the titles
     const h2 = page.locator('h2');
     await expect(h2.getByText('Govs ❤️ Open Source.')).toBeVisible();
+    await expect(page.getByText('Docs is built on top of')).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: 'Django Rest Framework',
+      }),
+    ).toHaveAttribute('href', 'https://www.django-rest-framework.org/');
+    await expect(page.getByText('You can easily self-host Docs')).toBeVisible();
+    await expect(
+      page
+        .getByRole('link', {
+          name: 'licence',
+        })
+        .first(),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/suitenumerique/docs/blob/main/LICENSE',
+    );
+    await expect(
+      page.getByText('Docs is the result of a joint effort lead by the French'),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('link', {
+          name: 'Zendis',
+        })
+        .first(),
+    ).toHaveAttribute('href', 'https://zendis.de/');
     await expect(
       h2.getByText('Collaborative writing, Simplified.'),
     ).toBeVisible();
