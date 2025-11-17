@@ -52,20 +52,17 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
             $justify="space-between"
             $align="center"
           >
+            {authenticated && <LeftPanelHeaderButton />}
             <Box $direction="row" $gap="2px">
               <Button
                 data-testid="home-button"
                 onClick={goToHome}
                 aria-label={t('Back to homepage')}
                 size="medium"
-                color="tertiary-text"
+                color="brand"
+                variant="tertiary"
                 icon={
-                  <Icon
-                    $variation="800"
-                    $theme="primary"
-                    iconName="house"
-                    aria-hidden="true"
-                  />
+                  <Icon $color="inherit" iconName="house" aria-hidden="true" />
                 }
               />
               {authenticated && (
@@ -73,12 +70,12 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                   data-testid="search-docs-button"
                   onClick={openSearchModal}
                   size="medium"
-                  color="tertiary-text"
+                  color="brand"
+                  variant="tertiary"
                   aria-label={t('Search docs')}
                   icon={
                     <Icon
-                      $variation="800"
-                      $theme="primary"
+                      $color="inherit"
                       iconName="search"
                       aria-hidden="true"
                     />
@@ -86,8 +83,6 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                 />
               )}
             </Box>
-
-            {authenticated && <LeftPanelHeaderButton />}
           </Box>
         </SeparatedSection>
         {children}

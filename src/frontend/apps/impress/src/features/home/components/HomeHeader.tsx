@@ -66,7 +66,7 @@ export const HomeHeader = () => {
             data-testid="header-icon-docs"
             aria-label={t('Docs Logo')}
             width={32}
-            color={contextualTokens['content']['semantic']['brand']['tertiary']}
+            color={contextualTokens['content']['semantic']['brand']['primary']}
           />
           <Title />
         </Box>

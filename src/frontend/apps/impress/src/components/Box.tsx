@@ -36,6 +36,8 @@ export interface BoxProps {
   $position?: CSSProperties['position'];
   $radius?: CSSProperties['borderRadius'];
   $shrink?: CSSProperties['flexShrink'];
+  $layer?: 'background' | 'content' | 'border';
+  $scope?: 'surface' | 'semantic' | 'palette' | (string & {});
   $theme?:
     | 'brand'
     | 'error'
@@ -47,7 +49,7 @@ export interface BoxProps {
     | 'contextual'
     | 'disabled';
   $transition?: CSSProperties['transition'];
-  $variation?: 'primary' | 'secondary' | 'tertiary';
+  $variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $zIndex?: CSSProperties['zIndex'];
@@ -57,8 +59,6 @@ export type BoxType = ComponentPropsWithRef<typeof Box>;
 
 export const Box = styled('div')<BoxProps>`
   ${({ $align }) => $align && `align-items: ${$align};`}
-  ${({ $background }) => $background && `background: ${$background};`}
-  ${({ $color }) => $color && `color: ${$color};`}
   ${({ $cursor }) => $cursor && `cursor: ${$cursor};`}
   ${({ $direction }) => `flex-direction: ${$direction || 'column'};`}
   ${({ $display, as }) =>
@@ -84,11 +84,27 @@ export const Box = styled('div')<BoxProps>`
   ${({ $position }) => $position && `position: ${$position};`}
   ${({ $radius }) => $radius && `border-radius: ${$radius};`}
   ${({ $shrink }) => $shrink && `flex-shrink: ${$shrink};`}
-  ${({ $theme, $variation }) => {
-    if (!$theme || !$variation) {
+  ${({ $layer, $theme, $variation, $scope, $background }) => {
+    if ($background) {
+      return `background: ${$background};`;
+    }
+
+    if (!$layer || !$scope || $layer !== 'background') {
       return '';
     }
-    return `color: var(--c--contextuals--content--semantic--${$theme}--${$variation});`;
+
+    return `background: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
+  }}
+  ${({ $layer, $theme, $variation, $scope, $color }) => {
+    if ($color) {
+      return `color: ${$color};`;
+    }
+
+    if (!$layer || !$scope || $layer === 'background') {
+      return '';
+    }
+
+    return `color: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
   }}
   ${({ $transition }) => $transition && `transition: ${$transition};`}
   ${({ $width }) => $width && `width: ${$width};`}

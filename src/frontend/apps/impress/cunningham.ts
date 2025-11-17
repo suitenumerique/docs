@@ -40,6 +40,25 @@ console.log('Using Cunningham theme for Impress docs', tokens);
 // };
 //tokens.themes.default.globals.
 
+// tokens.themes.default = {
+//   ...tokens.themes.default,
+//   ...{
+//     contextuals: {
+//       ...tokens.themes.default.contextuals,
+//       content: {
+//         ...tokens.themes.default.contextuals.content,
+//         semantic: {
+//           ...tokens.themes.default.contextuals.content.semantic,
+//           brand: {
+//             ...tokens.themes.default.contextuals.content.semantic.brand,
+//             text: 'var(--c--globals--colors--primary-100)',
+//           },
+//         },
+//       },
+//     },
+//   },
+// };
+
 tokens.themes.default.globals = {
   ...tokens.themes.default.globals,
   ...{

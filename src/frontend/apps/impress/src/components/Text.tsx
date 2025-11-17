@@ -27,7 +27,6 @@ export const TextStyled = styled(Box)<TextProps>`
   ${({ $size }) =>
     $size &&
     `font-size: ${$size in sizes ? sizes[$size as TextSizes] : $size};`}
-  ${({ $color }) => $color && `color: ${$color};`}
   ${({ $ellipsis }) =>
     $ellipsis &&
     `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`}
@@ -41,6 +40,8 @@ const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
         as="span"
         $theme="neutral"
         $variation="primary"
+        $layer="content"
+        $scope="semantic"
         className={className}
         {...props}
       />
