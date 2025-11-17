@@ -57,6 +57,7 @@ export const LanguagePicker = () => {
     >
       <Text
         $theme="brand"
+        $variation="tertiary"
         $direction="row"
         $gap="0.5rem"
         className="--docs--language-picker-text"

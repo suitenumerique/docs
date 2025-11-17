@@ -49,6 +49,13 @@
   height: auto;
 }
 
+.c__button--brand--tertiary:hover,
+.c__button--brand--tertiary:focus-visible {
+  background-color: var(
+    --c--contextuals--background--semantic--brand--tertiary-hover
+  );
+}
+
 /**
  * Modal
 */

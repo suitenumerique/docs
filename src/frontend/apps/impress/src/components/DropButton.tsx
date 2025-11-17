@@ -34,11 +34,11 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   border-radius: 4px;
   &:hover {
     background-color: var(
-      --c--contextuals--background--semantic--brand--primary-hover
+      --c--contextuals--background--semantic--brand--tertiary-hover
     );
   }
   &:focus-visible {
-    box-shadow: 0 0 0 2px var(--c--globals--colors--primary-400);
+    box-shadow: 0 0 0 2px var(--c--globals--colors--tertiary-400);
     border-radius: 4px;
   }
   ${({ $css }) => $css};
