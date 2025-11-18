@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useTranslation } from 'react-i18next';
 
+import { SkipToContent } from '@/components';
 import { AppProvider } from '@/core/';
 import { useCunninghamTheme } from '@/cunningham';
 import { useOffline, useSWRegister } from '@/features/service-worker/';
@@ -49,6 +50,7 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
+      <SkipToContent />
       <AppProvider>{getLayout(<Component {...pageProps} />)}</AppProvider>
     </>
   );
