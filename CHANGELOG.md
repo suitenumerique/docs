@@ -8,7 +8,7 @@ and this project adheres to
 
 ### Added
 
-- ✨(frontend) enable ODT export for documents #1524
+- ✨(export) enable ODT export for documents #1524
 - ✨(frontend) improve mobile UX by showing subdocs count #1540
 
 ### Fixed
@@ -17,13 +17,14 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
-- 🐛(docx) fix image overflow by limiting width to 600px during export #1525
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) make summary button fixed to remain visible during scroll #1581
 - 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(frontend) fix fallback translations with Trans #1620
-- 🐛(pdf) fix table cell alignment issue in exported documents #1582
-- 🐛(pdf) preserve image aspect ratio in PDF export #1622
+- 🐛(export) fix image overflow by limiting width to 600px during export #1525
+- 🐛(export) fix table cell alignment issue in exported documents #1582
+- 🐛(export) preserve image aspect ratio in PDF export #1622
+- 🐛(export) Export fails when paste with style #1552
 
 ### Security
 

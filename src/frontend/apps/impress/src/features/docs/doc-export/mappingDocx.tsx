@@ -39,39 +39,5 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
             shading: { fill: 'DCDCDC' },
           }
         : {},
-    // If the color is not defined, we fall back to default colors
-    backgroundColor: (val, exporter) => {
-      if (!val) {
-        return {};
-      }
-
-      const backgroundColor = exporter.options.colors?.[val]?.background;
-
-      if (!backgroundColor) {
-        return {};
-      }
-
-      return {
-        shading: {
-          fill: backgroundColor.slice(1),
-        },
-      };
-    },
-    // If the color is not defined, we fall back to default colors
-    textColor: (val, exporter) => {
-      if (!val) {
-        return {};
-      }
-
-      const color = exporter.options.colors?.[val]?.text;
-
-      if (!color) {
-        return {};
-      }
-
-      return {
-        color: color.slice(1),
-      };
-    },
   },
 };
