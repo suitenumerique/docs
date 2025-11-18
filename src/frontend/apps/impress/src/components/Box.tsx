@@ -50,7 +50,8 @@ export interface BoxProps {
     | 'disabled'
     | (string & {});
   $transition?: CSSProperties['transition'];
-  $variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
+  //$variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
+  $variation?: 'primary' | 'secondary' | 'tertiary';
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $withThemeBG?: boolean;
@@ -152,7 +153,7 @@ export const Box = styled('div')<BoxProps>`
     return (
       effect &&
       ` 
-        transition: all 0.3s ease-in-out;
+        transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out);
         ${effect}
       `
     );

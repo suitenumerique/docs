@@ -88,7 +88,8 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
         &:hover {
           background-color: ${colorsTokens['gray-100']};
         }
-        transition: background-color 0.2s ease-in-out;
+        transition: background-color var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-out);
 
         .--docs--doc-deleted & {
           pointer-events: none;

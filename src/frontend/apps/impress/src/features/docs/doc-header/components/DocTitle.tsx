@@ -74,7 +74,8 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
             background-color: ${colorsTokens['gray-100']};
             border-radius: 4px;
           }
-          transition: background-color 0.2s ease-in-out;
+          transition: background-color var(--c--globals--transitions--duration)
+            var(--c--globals--transitions--ease-out);
         `}
       >
         <DocIcon
