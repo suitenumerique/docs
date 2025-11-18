@@ -18,6 +18,7 @@ type DocRoleDropdownProps = {
   onSelectRole: (role: Role) => void;
   rolesAllowed?: Role[];
   isLastOwner?: boolean;
+  ariaLabel?: string;
 };
 
 export const DocRoleDropdown = ({
@@ -29,6 +30,7 @@ export const DocRoleDropdown = ({
   rolesAllowed,
   access,
   isLastOwner = false,
+  ariaLabel,
 }: DocRoleDropdownProps) => {
   const { t } = useTranslation();
   const { transRole, translatedRoles } = useTrans();
@@ -113,11 +115,15 @@ export const DocRoleDropdown = ({
   return (
     <DropdownMenu
       topMessage={topMessage}
-      label="doc-role-dropdown"
+      label={t('{{action}}, current role: {{role}}', {
+        action: ariaLabel,
+        role: transRole(currentRole),
+      })}
       showArrow={true}
       arrowCss={css`
         color: var(--c--theme--colors--primary-800) !important;
       `}
+      testId="doc-role-dropdown"
       options={[
         ...roles,
         {

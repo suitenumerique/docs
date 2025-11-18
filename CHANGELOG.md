@@ -17,6 +17,7 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
+  - ♿(frontend) improve screen reader support in DocShare modal #1628
 - 🐛(docx) fix image overflow by limiting width to 600px during export #1525
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) make summary button fixed to remain visible during scroll #1581
