@@ -41,7 +41,8 @@ export const LanguagePicker = () => {
       showArrow
       label={t('Select language')}
       buttonCss={css`
-        transition: all 0.15s ease-in-out !important;
+        transition: all var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-in) !important;
         border-radius: 4px;
         padding: 0.5rem 0.6rem;
         & > div {

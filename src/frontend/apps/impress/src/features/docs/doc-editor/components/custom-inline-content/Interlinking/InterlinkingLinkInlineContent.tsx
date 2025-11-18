@@ -98,7 +98,7 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
       {emoji ? (
         <Text $size="16px">{emoji}</Text>
       ) : (
-        <SelectedPageIcon width={11.5} color={colorsTokens['primary-400']} />
+        <SelectedPageIcon width={11.5} color={colorsTokens['brand-400']} />
       )}
       <Text
         $weight="500"

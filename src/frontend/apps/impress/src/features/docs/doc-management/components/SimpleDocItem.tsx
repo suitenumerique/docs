@@ -63,13 +63,13 @@ export const SimpleDocItem = ({
           <PinnedDocumentIcon
             aria-hidden="true"
             data-testid="doc-pinned-icon"
-            color={colorsTokens['primary-500']}
+            color={colorsTokens['brand-500']}
           />
         ) : isChild ? (
           <ChildDocument
             aria-hidden="true"
             data-testid="doc-child-icon"
-            color={colorsTokens['primary-500']}
+            color={colorsTokens['brand-500']}
           />
         ) : (
           <SimpleFileIcon
@@ -77,7 +77,7 @@ export const SimpleDocItem = ({
             height="32px"
             aria-hidden="true"
             data-testid="doc-simple-icon"
-            color={colorsTokens['primary-500']}
+            color={colorsTokens['brand-500']}
           />
         )}
       </Box>

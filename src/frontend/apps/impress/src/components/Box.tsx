@@ -47,11 +47,13 @@ export interface BoxProps {
     | 'warning'
     | 'neutral'
     | 'contextual'
-    | 'disabled';
+    | 'disabled'
+    | (string & {});
   $transition?: CSSProperties['transition'];
   $variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
+  $withThemeBG?: boolean;
   $zIndex?: CSSProperties['zIndex'];
 }
 
@@ -68,9 +70,9 @@ export const Box = styled('div')<BoxProps>`
   ${({ $height }) => $height && `height: ${$height};`}
   ${({ $hasTransition }) =>
     $hasTransition && $hasTransition === 'slow'
-      ? `transition: all 0.5s ease-in-out;`
+      ? `transition: all 0.5s var(--c--globals--transitions--ease-in);`
       : $hasTransition
-        ? `transition: all 0.3s ease-in-out;`
+        ? `transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-in);`
         : ''}
   ${({ $justify }) => $justify && `justify-content: ${$justify};`}
   ${({ $margin }) => $margin && stylesMargin($margin)}
@@ -84,24 +86,49 @@ export const Box = styled('div')<BoxProps>`
   ${({ $position }) => $position && `position: ${$position};`}
   ${({ $radius }) => $radius && `border-radius: ${$radius};`}
   ${({ $shrink }) => $shrink && `flex-shrink: ${$shrink};`}
-  ${({ $layer, $theme, $variation, $scope, $background }) => {
+  ${({
+    $layer = 'background',
+    $theme = 'brand',
+    $variation = 'primary',
+    $scope = 'semantic',
+    $background,
+    $withThemeBG,
+  }) => {
     if ($background) {
       return `background: ${$background};`;
     }
 
-    if (!$layer || !$scope || $layer !== 'background') {
+    if (!$layer || !$scope || !$theme || !$withThemeBG) {
       return '';
     }
 
     return `background: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
   }}
-  ${({ $layer, $theme, $variation, $scope, $color }) => {
+  ${({
+    $layer = 'content',
+    $theme = 'neutral',
+    $variation = 'primary',
+    $scope = 'semantic',
+    $color,
+    $withThemeBG,
+  }) => {
     if ($color) {
       return `color: ${$color};`;
     }
 
-    if (!$layer || !$scope || $layer === 'background') {
+    if (!$layer || !$scope || !$theme) {
       return '';
+    }
+
+    // There is a special case when primary with background
+    if (
+      $withThemeBG &&
+      $layer === 'content' &&
+      $scope === 'semantic' &&
+      $variation === 'primary' &&
+      $theme
+    ) {
+      $variation = `on-${$theme}`;
     }
 
     return `color: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;

@@ -139,12 +139,12 @@ export const TableContent = () => {
           aria-controls="toc-list"
           $css={css`
             &:hover {
-              background: ${colorsTokens['primary-100']};
+              background: ${colorsTokens['brand-100']};
             }
             &:focus-visible {
               outline: none;
-              box-shadow: 0 0 0 4px ${colorsTokens['primary-400']};
-              background: ${colorsTokens['primary-100']};
+              box-shadow: 0 0 0 4px ${colorsTokens['brand-400']};
+              background: ${colorsTokens['brand-100']};
               width: 90%;
               height: 90%;
             }
@@ -188,7 +188,7 @@ export const TableContent = () => {
                 transform: rotate(180deg);
                 &:focus-visible {
                   outline: none;
-                  box-shadow: 0 0 0 2px ${colorsTokens['primary-400']};
+                  box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
                   border-radius: 4px;
                 }
               `}

@@ -20,7 +20,7 @@ export function HomeBottom() {
 
 function HomeProConnect() {
   const { t } = useTranslation();
-  const { spacingsTokens, contextualTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isMobile } = useResponsiveStore();
   const parentGap = '230px';
 
@@ -43,12 +43,9 @@ function HomeProConnect() {
           $position="relative"
           $height="fit-content"
           $css="zoom: 1.9;"
+          $theme="brand"
         >
-          <IconDocs
-            aria-label={t('Docs Logo')}
-            width={34}
-            color={contextualTokens['content']['semantic']['brand']['tertiary']}
-          />
+          <IconDocs aria-label={t('Docs Logo')} width={34} />
           <Title />
         </Box>
         <Text $size="md" $variation="1000" $textAlign="center">

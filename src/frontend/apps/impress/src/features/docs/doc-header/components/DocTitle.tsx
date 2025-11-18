@@ -95,7 +95,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
               height="25px"
               aria-hidden="true"
               aria-label={t('Simple document icon')}
-              color={colorsTokens['primary-500']}
+              color={colorsTokens['brand-500']}
             />
           }
         />

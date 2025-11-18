@@ -25,15 +25,15 @@ export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
 
   return (
     <Box
-      $background={colorsTokens['primary-100']}
+      $background={colorsTokens['brand-100']}
       $padding="3xs"
       $direction="row"
       $align="center"
       $justify="space-between"
       $gap={spacingsTokens['4xs']}
-      $color={colorsTokens['primary-800']}
+      $color={colorsTokens['brand-800']}
       $css={css`
-        border: 1px solid ${colorsTokens['primary-300']};
+        border: 1px solid ${colorsTokens['brand-300']};
         border-radius: ${spacingsTokens['2xs']};
       `}
     >

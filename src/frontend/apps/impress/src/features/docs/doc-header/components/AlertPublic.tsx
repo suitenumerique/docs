@@ -11,8 +11,8 @@ export const AlertPublic = ({ isPublicDoc }: { isPublicDoc: boolean }) => {
   return (
     <Box
       aria-label={t('Public document')}
-      $color={colorsTokens['primary-800']}
-      $background={colorsTokens['primary-050']}
+      $color={colorsTokens['brand-800']}
+      $background={colorsTokens['brand-050']}
       $radius={spacingsTokens['3xs']}
       $direction="row"
       $padding="xs"

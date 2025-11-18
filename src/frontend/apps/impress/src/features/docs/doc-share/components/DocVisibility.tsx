@@ -145,7 +145,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             testId="doc-visibility"
             label={t('Document visibility')}
             arrowCss={css`
-              color: ${colorsTokens['primary-800']} !important;
+              color: ${colorsTokens['brand-800']} !important;
             `}
             buttonCss={css`
               &:hover {

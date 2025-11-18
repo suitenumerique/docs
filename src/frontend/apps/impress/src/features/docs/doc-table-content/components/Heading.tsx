@@ -64,7 +64,7 @@ export const Heading = ({
         &:focus-visible {
           /* Scoped focus style: same footprint as hover, with theme shadow */
           outline: none;
-          box-shadow: 0 0 0 2px ${colorsTokens['primary-400']};
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
           border-radius: 4px;
         }
       `}

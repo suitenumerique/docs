@@ -36,7 +36,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         }
         &:focus-within {
           cursor: pointer;
-          box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-500']} !important;
           .pinned-actions {
             opacity: 1;
           }

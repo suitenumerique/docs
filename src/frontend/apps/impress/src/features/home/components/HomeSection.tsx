@@ -200,28 +200,19 @@ const SectionTag = ({
   tag: string;
   availableSoon?: boolean;
 }) => {
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   return (
     <Box
-      $background={
-        !availableSoon
-          ? colorsTokens['primary-100']
-          : colorsTokens['warning-100']
-      }
       $padding={{ horizontal: spacingsTokens['sm'], vertical: '6px' }}
       $css={css`
         align-self: flex-start;
         border-radius: 4px;
       `}
+      $theme={availableSoon ? 'warning' : 'brand'}
+      $variation="tertiary"
+      $withThemeBG
     >
-      <Text
-        $size="md"
-        $variation={availableSoon ? '600' : '800'}
-        $weight="bold"
-        $theme={availableSoon ? 'warning' : 'primary'}
-      >
-        {tag}
-      </Text>
+      {tag}
     </Box>
   );
 };
