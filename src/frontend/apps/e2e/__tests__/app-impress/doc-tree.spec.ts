@@ -226,7 +226,7 @@ test.describe('Doc Tree', () => {
     const currentUser = list.getByTestId(
       `doc-share-member-row-user.test@${browserName}.test`,
     );
-    const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await currentUserRole.click();
     await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();

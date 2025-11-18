@@ -152,7 +152,7 @@ test.describe('Document list members', () => {
     const currentUser = list.getByTestId(
       `doc-share-member-row-user.test@${browserName}.test`,
     );
-    const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await expect(currentUser).toBeVisible();
     await expect(currentUserRole).toBeVisible();
     await currentUserRole.click();
@@ -169,7 +169,7 @@ test.describe('Document list members', () => {
     });
     const newUserEmail = await addNewMember(page, 0, 'Owner');
     const newUser = list.getByTestId(`doc-share-member-row-${newUserEmail}`);
-    const newUserRoles = newUser.getByLabel('doc-role-dropdown');
+    const newUserRoles = newUser.getByTestId('doc-role-dropdown');
 
     await expect(newUser).toBeVisible();
 
@@ -214,9 +214,7 @@ test.describe('Document list members', () => {
 
     const emailMyself = `user.test@${browserName}.test`;
     const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
-    const mySelfRole = mySelf.getByRole('button', {
-      name: 'doc-role-dropdown',
-    });
+    const mySelfRole = mySelf.getByTestId('doc-role-dropdown');
 
     const userOwnerEmail = await addNewMember(page, 0, 'Owner');
     const userOwner = list.getByTestId(
@@ -231,9 +229,7 @@ test.describe('Document list members', () => {
     const userReader = list.getByTestId(
       `doc-share-member-row-${userReaderEmail}`,
     );
-    const userReaderRole = userReader.getByRole('button', {
-      name: 'doc-role-dropdown',
-    });
+    const userReaderRole = userReader.getByTestId('doc-role-dropdown');
 
     await expect(mySelf).toBeVisible();
     await expect(userOwner).toBeVisible();

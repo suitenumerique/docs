@@ -38,9 +38,9 @@ export const addNewMember = async (
   await page.getByRole('option', { name: users[index].email }).click();
 
   // Choose a role
-  await page.getByLabel('doc-role-dropdown').click();
+  await page.getByTestId('doc-role-dropdown').click();
   await page.getByRole('menuitem', { name: role }).click();
-  await page.getByRole('button', { name: /^Invite / }).click();
+  await page.getByTestId('doc-share-invite-button').click();
 
   return users[index].email;
 };
@@ -74,7 +74,7 @@ export const updateRoleUser = async (
   const list = page.getByTestId('doc-share-quick-search');
 
   const currentUser = list.getByTestId(`doc-share-member-row-${email}`);
-  const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+  const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
   await currentUserRole.click();
   await page.getByRole('menuitem', { name: role }).click();
   await list.click();

@@ -15,6 +15,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
+  - ♿(frontend) improve screen reader support in DocShare modal #1628
 - 🐛(frontend) fix toolbar not activated when reader #1640
 - 🐛(frontend) preserve left panel width on window resize #1588
 
@@ -51,7 +52,6 @@ and this project adheres to
 ### Removed
 
 - 🔥(backend) remove api managing templates
-
 
 ## [3.9.0] - 2025-11-10
 

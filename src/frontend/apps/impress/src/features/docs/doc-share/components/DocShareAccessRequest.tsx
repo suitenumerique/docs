@@ -78,6 +78,9 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
               onSelectRole={setRole}
               canUpdate={doc.abilities.accesses_manage}
               rolesAllowed={accessRequest.abilities.set_role_to}
+              ariaLabel={t('Change role for {{name}}', {
+                name: accessRequest.user.full_name || accessRequest.user.email,
+              })}
             />
             <Button
               color="tertiary"

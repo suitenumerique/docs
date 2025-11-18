@@ -153,6 +153,7 @@ export const DocShareAddMemberList = ({
           onClick={() => void onInvite()}
           disabled={isLoading}
           aria-label={inviteLabel}
+          data-testid="doc-share-invite-button"
         >
           {t('Invite')}
         </Button>
