@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
@@ -53,6 +54,7 @@ export function MainLayoutContent({
 }: PropsWithChildren<MainLayoutContentProps>) {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
+  const { colorsTokens } = useCunninghamTheme();
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
   const mainContent = (
@@ -61,6 +63,7 @@ export function MainLayoutContent({
       role="main"
       aria-label={t('Main content')}
       id={MAIN_LAYOUT_ID}
+      tabIndex={-1}
       $align="center"
       $flex={1}
       $width="100%"
@@ -77,6 +80,10 @@ export function MainLayoutContent({
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
+        &:focus {
+          outline: 3px solid ${colorsTokens['brand-400']};
+          outline-offset: -3px;
+        }
       `}
     >
       <Skeleton>

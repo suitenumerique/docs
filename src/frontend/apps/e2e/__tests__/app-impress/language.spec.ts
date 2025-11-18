@@ -66,6 +66,7 @@ test.describe('Language', () => {
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
 
     await page.keyboard.press('Enter');
 

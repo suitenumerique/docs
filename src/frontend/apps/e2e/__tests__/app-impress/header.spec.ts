@@ -177,3 +177,27 @@ test.describe('Header: Override configuration', () => {
     await expect(logoImage).toHaveAttribute('alt', '');
   });
 });
+
+test.describe('Header: Skip to Content', () => {
+  test('it displays skip link on first TAB and focuses main content on click', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // Wait for skip button to be mounted (client-side only component)
+    const skipButton = page.getByRole('button', { name: 'Go to content' });
+    await skipButton.waitFor({ state: 'attached' });
+
+    // First TAB shows the skip button
+    await page.keyboard.press('Tab');
+
+    // The skip button should be visible and focused
+    await expect(skipButton).toBeFocused();
+    await expect(skipButton).toBeVisible();
+
+    // Clicking moves focus to the main content
+    await skipButton.click();
+    const mainContent = page.locator('main#mainContent');
+    await expect(mainContent).toBeFocused();
+  });
+});

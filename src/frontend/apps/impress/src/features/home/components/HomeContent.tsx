@@ -5,6 +5,7 @@ import { css } from 'styled-components';
 import { Box, Icon, Text } from '@/components';
 import { Footer } from '@/features/footer';
 import { LeftPanel } from '@/features/left-panel';
+import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useResponsiveStore } from '@/stores';
 
 import SC1ResponsiveEn from '../assets/SC1-responsive-en.png';
@@ -34,8 +35,19 @@ export function HomeContent() {
     <Box
       as="main"
       role="main"
+      id={MAIN_LAYOUT_ID}
+      tabIndex={-1}
       className="--docs--home-content"
       aria-label={t('Main content')}
+      $css={css`
+        &:focus {
+          outline: 3px solid var(--c--theme--colors--primary-600);
+          outline-offset: -3px;
+        }
+        &:focus:not(:focus-visible) {
+          outline: none;
+        }
+      `}
     >
       <HomeHeader />
       {isSmallMobile && (
