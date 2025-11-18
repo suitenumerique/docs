@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve share modal button accessibility #1626
+
 ## [3.10.0] - 2025-11-18
 
 ### Added

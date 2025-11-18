@@ -108,6 +108,12 @@ export const DocShareAddMemberList = ({
     afterInvite?.();
     setIsLoading(false);
   };
+  const inviteLabel =
+    selectedUsers.length === 1
+      ? t('Invite {{name}}', {
+          name: selectedUsers[0].full_name || selectedUsers[0].email,
+        })
+      : t('Invite {{count}} members', { count: selectedUsers.length });
 
   return (
     <Box
@@ -143,7 +149,11 @@ export const DocShareAddMemberList = ({
           currentRole={invitationRole}
           onSelectRole={setInvitationRole}
         />
-        <Button onClick={() => void onInvite()} disabled={isLoading}>
+        <Button
+          onClick={() => void onInvite()}
+          disabled={isLoading}
+          aria-label={inviteLabel}
+        >
           {t('Invite')}
         </Button>
       </Box>
