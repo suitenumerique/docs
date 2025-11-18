@@ -117,7 +117,6 @@ export const HomeSection = ({
             $css={css`
               line-height: ${!isSmallDevice ? '50px' : 'normal'};
             `}
-            $variation="1000"
             $weight="bold"
             $size={!isSmallDevice ? 'xs-alt' : isSmallMobile ? 'h6' : 'h4'}
             $textAlign="left"
@@ -127,7 +126,7 @@ export const HomeSection = ({
           </Text>
           <Text
             as="div"
-            $variation="700"
+            $variation="secondary"
             $weight="400"
             $size={isSmallMobile ? 'ml' : 'md'}
           >

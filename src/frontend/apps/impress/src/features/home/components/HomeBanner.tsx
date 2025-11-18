@@ -64,7 +64,12 @@ export default function HomeBanner() {
           >
             {t('Collaborative writing, Simplified.')}
           </Text>
-          <Text $size="lg" $textAlign="center" $margin={{ bottom: 'small' }}>
+          <Text
+            $size="lg"
+            $textAlign="center"
+            $margin={{ bottom: 'small' }}
+            $variation="secondary"
+          >
             {t(
               'Collaborate and write in real time, without layout constraints.',
             )}

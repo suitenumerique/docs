@@ -34,11 +34,11 @@ export const FilterDropdown = ({
         $css={css`
           border: 1px solid
             ${selectedOption
-              ? 'var(--c--globals--colors--primary-500)'
+              ? 'var(--c--globals--colors--brand-500)'
               : 'var(--c--globals--colors--gray-250)'};
           border-radius: 4px;
           background-color: ${selectedOption
-            ? 'var(--c--globals--colors--primary-100)'
+            ? 'var(--c--globals--colors--brand-100)'
             : 'var(--c--globals--colors--gray-000)'};
           gap: var(--c--globals--spacings--2xs);
           padding: var(--c--globals--spacings--2xs)

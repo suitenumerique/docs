@@ -48,7 +48,7 @@ function HomeProConnect() {
           <IconDocs aria-label={t('Docs Logo')} width={34} />
           <Title />
         </Box>
-        <Text $size="md" $variation="1000" $textAlign="center">
+        <Text $size="md" $variation="secondary" $textAlign="center">
           {t('Docs is already available, log in to use it now.')}
         </Text>
         <ProConnectButton />

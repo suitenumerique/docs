@@ -54,7 +54,7 @@ export const Header = () => {
         $css={css`
           outline: none;
           &:focus-visible {
-            box-shadow: 0 0 0 2px var(--c--globals--colors--primary-400) !important;
+            box-shadow: 0 0 0 2px var(--c--globals--colors--brand-400) !important;
             border-radius: 4px;
           }
         `}

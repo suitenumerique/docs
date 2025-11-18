@@ -128,7 +128,7 @@ export const DropdownMenu = ({
               $css={
                 arrowCss ??
                 css`
-                  color: var(--c--globals--colors--primary-600);
+                  color: var(--c--globals--colors--brand-600);
                 `
               }
               iconName={isOpen ? 'arrow_drop_up' : 'arrow_drop_down'}
@@ -214,7 +214,7 @@ export const DropdownMenu = ({
                   }
 
                   &:focus-visible {
-                    outline: 2px solid var(--c--globals--colors--primary-400);
+                    outline: 2px solid var(--c--globals--colors--brand-400);
                     outline-offset: -2px;
                     background-color: var(--c--globals--colors--gray-050);
                   }

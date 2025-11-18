@@ -38,7 +38,6 @@ export const LeftPanelFavorites = () => {
       >
         <Text
           $size="sm"
-          $variation="700"
           $padding={{ horizontal: '3xs' }}
           $weight="700"
           id="pinned-docs-title"
