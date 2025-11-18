@@ -23,6 +23,7 @@ and this project adheres to
 - 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(frontend) fix fallback translations with Trans #1620
 - 🐛(pdf) fix table cell alignment issue in exported documents #1582
+- 🐛(frontend) prevent duplicate emoji when used as first character in t… #1595
 
 ### Security
 
