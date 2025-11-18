@@ -58,9 +58,9 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
       >
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
-      <div className="pinned-actions">
+      <Box className="pinned-actions" $align="center">
         <DocsGridActions doc={doc} openShareModal={shareModal.open} />
-      </div>
+      </Box>
       {shareModal.isOpen && (
         <DocShareModal doc={doc} onClose={shareModal.close} />
       )}

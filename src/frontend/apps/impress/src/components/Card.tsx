@@ -11,7 +11,7 @@ export const Card = ({
   $css,
   ...props
 }: PropsWithChildren<BoxType>) => {
-  const { colorsTokens } = useCunninghamTheme();
+  const { contextualTokens } = useCunninghamTheme();
 
   return (
     <Box
@@ -19,7 +19,7 @@ export const Card = ({
       $background="white"
       $radius="4px"
       $css={css`
-        border: 1px solid ${colorsTokens['gray-200']};
+        border: 1px solid ${contextualTokens['border']['surface']['primary']};
         ${$css}
       `}
       {...props}

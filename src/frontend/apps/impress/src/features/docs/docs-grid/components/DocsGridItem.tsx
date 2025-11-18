@@ -63,7 +63,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           &:hover {
             background-color: ${dragMode
               ? 'none'
-              : 'var(--c--globals--colors--gray-100)'};
+              : 'var(--c--globals--colors--gray-050)'};
           }
         `}
         className="--docs--doc-grid-item"

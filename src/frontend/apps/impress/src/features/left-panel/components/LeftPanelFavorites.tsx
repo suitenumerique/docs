@@ -46,7 +46,7 @@ export const LeftPanelFavorites = () => {
           {t('Pinned documents')}
         </Text>
         <Box>
-          <Box as="ul" $padding="none">
+          <Box as="ul" $padding="none" $margin={{ top: '4xs' }}>
             {favoriteDocs.map((doc) => (
               <LeftPanelFavoriteItem key={doc.id} doc={doc} />
             ))}
