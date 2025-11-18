@@ -89,7 +89,7 @@ export const LeftPanelTargetFilters = () => {
               }
               &:focus-visible {
                 outline: none !important;
-                box-shadow: 0 0 0 2px ${colorsTokens['brand-500']} !important;
+                box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
                 border-radius: 4px;
               }
             `}

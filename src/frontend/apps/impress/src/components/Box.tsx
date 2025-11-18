@@ -70,9 +70,9 @@ export const Box = styled('div')<BoxProps>`
   ${({ $height }) => $height && `height: ${$height};`}
   ${({ $hasTransition }) =>
     $hasTransition && $hasTransition === 'slow'
-      ? `transition: all 0.5s var(--c--globals--transitions--ease-in);`
+      ? `transition: all 0.5s var(--c--globals--transitions--ease-out);`
       : $hasTransition
-        ? `transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-in);`
+        ? `transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out);`
         : ''}
   ${({ $justify }) => $justify && `justify-content: ${$justify};`}
   ${({ $margin }) => $margin && stylesMargin($margin)}

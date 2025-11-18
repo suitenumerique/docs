@@ -53,36 +53,44 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
             $align="center"
           >
             {authenticated && <LeftPanelHeaderButton />}
-            <Box $direction="row" $gap="2px">
-              <Button
-                data-testid="home-button"
-                onClick={goToHome}
-                aria-label={t('Back to homepage')}
-                size="medium"
-                color="brand"
-                variant="tertiary"
-                icon={
-                  <Icon $color="inherit" iconName="house" aria-hidden="true" />
-                }
-              />
-              {authenticated && (
-                <Button
-                  data-testid="search-docs-button"
-                  onClick={openSearchModal}
-                  size="medium"
-                  color="brand"
-                  variant="tertiary"
-                  aria-label={t('Search docs')}
-                  icon={
-                    <Icon
-                      $color="inherit"
-                      iconName="search"
-                      aria-hidden="true"
-                    />
-                  }
-                />
-              )}
-            </Box>
+            {(router.pathname !== '/' || authenticated) && (
+              <Box $direction="row" $gap="2px">
+                {router.pathname !== '/' && (
+                  <Button
+                    data-testid="home-button"
+                    onClick={goToHome}
+                    aria-label={t('Back to homepage')}
+                    size="medium"
+                    color="brand"
+                    variant="tertiary"
+                    icon={
+                      <Icon
+                        $color="inherit"
+                        iconName="house"
+                        aria-hidden="true"
+                      />
+                    }
+                  />
+                )}
+                {authenticated && (
+                  <Button
+                    data-testid="search-docs-button"
+                    onClick={openSearchModal}
+                    size="medium"
+                    color="brand"
+                    variant="tertiary"
+                    aria-label={t('Search docs')}
+                    icon={
+                      <Icon
+                        $color="inherit"
+                        iconName="search"
+                        aria-hidden="true"
+                      />
+                    }
+                  />
+                )}
+              </Box>
+            )}
           </Box>
         </SeparatedSection>
         {children}
