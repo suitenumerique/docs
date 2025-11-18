@@ -208,7 +208,7 @@ test.describe('Doc Header', () => {
     await expect(
       invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
-    const invitationRole = invitationCard.getByLabel('doc-role-dropdown');
+    const invitationRole = invitationCard.getByTestId('doc-role-dropdown');
     await expect(invitationRole).toBeVisible();
 
     await invitationRole.click();
@@ -217,7 +217,7 @@ test.describe('Doc Header', () => {
     await expect(invitationCard).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
-    const roles = memberCard.getByLabel('doc-role-dropdown');
+    const roles = memberCard.getByTestId('doc-role-dropdown');
     await expect(memberCard).toBeVisible();
     await expect(
       memberCard.getByText('test.test@accesses.test').first(),

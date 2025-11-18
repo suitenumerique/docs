@@ -112,6 +112,9 @@ export const DocShareInvitationItem = ({
               canUpdate={canUpdate}
               doc={doc}
               access={invitation}
+              ariaLabel={t('Change role for {{email}}', {
+                email: invitation.email,
+              })}
             />
 
             {canUpdate && (

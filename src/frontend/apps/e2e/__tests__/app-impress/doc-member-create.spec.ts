@@ -74,7 +74,7 @@ test.describe('Document create member', () => {
     await expect(list.getByText(email)).toBeVisible();
 
     // Check roles are displayed
-    await list.getByLabel('doc-role-dropdown').click();
+    await list.getByTestId('doc-role-dropdown').click();
     await expect(page.getByRole('menuitem', { name: 'Reader' })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: 'Editor' })).toBeVisible();
     await expect(page.getByRole('menuitem', { name: 'Owner' })).toBeVisible();
@@ -128,7 +128,7 @@ test.describe('Document create member', () => {
 
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
-    await container.getByLabel('doc-role-dropdown').click();
+    await container.getByTestId('doc-role-dropdown').click();
     await page.getByRole('menuitem', { name: 'Owner' }).click();
 
     const responsePromiseCreateInvitation = page.waitForResponse(
@@ -146,7 +146,7 @@ test.describe('Document create member', () => {
     await page.getByTestId(`search-user-row-${email}`).click();
 
     // Choose a role
-    await container.getByLabel('doc-role-dropdown').click();
+    await container.getByTestId('doc-role-dropdown').click();
     await page.getByRole('menuitem', { name: 'Owner' }).click();
 
     const responsePromiseCreateInvitationFail = page.waitForResponse(
@@ -183,7 +183,7 @@ test.describe('Document create member', () => {
 
     // Choose a role
     const container = page.getByTestId('doc-share-add-member-list');
-    await container.getByLabel('doc-role-dropdown').click();
+    await container.getByTestId('doc-role-dropdown').click();
     await page.getByRole('menuitem', { name: 'Administrator' }).click();
 
     const responsePromiseCreateInvitation = page.waitForResponse(
@@ -210,7 +210,7 @@ test.describe('Document create member', () => {
         response.request().method() === 'PATCH',
     );
 
-    await userInvitation.getByLabel('doc-role-dropdown').click();
+    await userInvitation.getByTestId('doc-role-dropdown').click();
     await page.getByRole('menuitem', { name: 'Reader' }).click();
 
     const responsePatchInvitation = await responsePromisePatchInvitation;
@@ -272,7 +272,7 @@ test.describe('Document create member', () => {
     const container = page.getByTestId(
       `doc-share-access-request-row-${emailRequest}`,
     );
-    await container.getByLabel('doc-role-dropdown').click();
+    await container.getByTestId('doc-role-dropdown').click();
     await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await container.getByRole('button', { name: 'Approve' }).click();
 
