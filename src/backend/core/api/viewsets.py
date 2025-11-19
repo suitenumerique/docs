@@ -1,4 +1,5 @@
 """API endpoints"""
+
 # pylint: disable=too-many-lines
 
 import base64
@@ -18,7 +19,7 @@ from django.core.validators import URLValidator
 from django.db import connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Left, Length
+from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
@@ -37,6 +38,7 @@ from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
 
 from core import authentication, choices, enums, models
+from core.api.filters import remove_accents
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import (
@@ -188,13 +190,15 @@ class UserViewSet(
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
         filter_data = filterset.form.cleaned_data
-        query = filter_data["q"]
+        query = remove_accents(filter_data["q"])
 
         # For emails, match emails by Levenstein distance to prevent typing errors
         if "@" in query:
             return (
                 queryset.annotate(
-                    distance=RawSQL("levenshtein(email::text, %s::text)", (query,))
+                    distance=RawSQL(
+                        "levenshtein(unaccent(email::text), %s::text)", (query,)
+                    )
                 )
                 .filter(distance__lte=3)
                 .order_by("distance", "email")[: settings.API_USERS_LIST_LIMIT]
@@ -203,11 +207,15 @@ class UserViewSet(
         # Use trigram similarity for non-email-like queries
         # For performance reasons we filter first by similarity, which relies on an
         # index, then only calculate precise similarity scores for sorting purposes
+
         return (
-            queryset.filter(email__trigram_word_similar=query)
-            .annotate(similarity=TrigramSimilarity("email", query))
+            queryset.annotate(
+                sim_email=TrigramSimilarity("email", query),
+                sim_name=TrigramSimilarity("full_name", query),
+            )
+            .annotate(similarity=Greatest("sim_email", "sim_name"))
             .filter(similarity__gt=0.2)
-            .order_by("-similarity", "email")[: settings.API_USERS_LIST_LIMIT]
+            .order_by("-similarity")[: settings.API_USERS_LIST_LIMIT]
         )
 
     @drf.decorators.action(
