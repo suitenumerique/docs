@@ -6,10 +6,18 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.10.0] - 2025-11-18
+
 ### Added
 
 - ✨(export) enable ODT export for documents #1524
 - ✨(frontend) improve mobile UX by showing subdocs count #1540
+
+### Changed
+
+- ♻️(frontend) preserve @ character when esc is pressed after typing it #1512
+- ♻️(frontend) make summary button fixed to remain visible during scroll #1581
+- ♻️(frontend) pdf embed use full width #1526
 
 ### Fixed
 
@@ -17,9 +25,6 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
-- 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
-- 🐛(frontend) make summary button fixed to remain visible during scroll #1581
-- 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(frontend) fix alignment of side menu #1597
 - 🐛(frontend) fix fallback translations with Trans #1620
 - 🐛(export) fix image overflow by limiting width to 600px during export #1525
@@ -34,6 +39,7 @@ and this project adheres to
 ### Removed
 
 - 🔥(backend) remove api managing templates
+
 
 ## [3.9.0] - 2025-11-10
 
@@ -53,7 +59,6 @@ and this project adheres to
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(backend) fix trashbin list #1520
-
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
 - 🐛(backend) fix s3 version_id validation #1543
@@ -873,7 +878,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.9.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.10.0...main
+[v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
 [v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
 [v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2
 [v3.8.1]: https://github.com/suitenumerique/docs/releases/v3.8.1
