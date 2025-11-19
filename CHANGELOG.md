@@ -17,6 +17,7 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
+  - ♿(frontend) fix toggle panel button a11y with dynamic label and aria-… #1634
 - 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
 - 🐛(frontend) make summary button fixed to remain visible during scroll #1581
 - 🐛(frontend) fix pdf embed to use full width #1526
