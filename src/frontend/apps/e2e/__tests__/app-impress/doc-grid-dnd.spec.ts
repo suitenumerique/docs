@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, mockedListDocs } from './utils-common';
+import { createDoc, mockedListDocs, toggleHeaderMenu } from './utils-common';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc grid dnd', () => {
@@ -185,10 +185,7 @@ test.describe('Doc grid dnd mobile', () => {
       true,
     );
 
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('menu')
-      .click();
+    await toggleHeaderMenu(page);
 
     await expect(page.locator('.--docs-sub-page-item').first()).toHaveAttribute(
       'draggable',

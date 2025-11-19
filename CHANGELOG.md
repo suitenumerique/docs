@@ -10,6 +10,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
+  - ♿(frontend) fix toggle panel button a11y labels #1634
 - ⚡️(frontend) Enhance/html copy to download #1669
 
 ### Fixed
@@ -23,8 +24,6 @@ and this project adheres to
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
 - ✨(frontend) link to create new doc #1574
-- ♿(frontend) improve accessibility:
-  - ♿(frontend) add skip to content button for keyboard accessibility #1624
 
 ### Fixed
 

@@ -83,6 +83,34 @@ export const randomName = (name: string, browserName: string, length: number) =>
     return `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`;
   });
 
+export const openHeaderMenu = async (page: Page) => {
+  const toggleButton = page.getByTestId('header-menu-toggle');
+  await expect(toggleButton).toBeVisible();
+
+  const isExpanded =
+    (await toggleButton.getAttribute('aria-expanded')) === 'true';
+  if (!isExpanded) {
+    await toggleButton.click();
+  }
+};
+
+export const closeHeaderMenu = async (page: Page) => {
+  const toggleButton = page.getByTestId('header-menu-toggle');
+  await expect(toggleButton).toBeVisible();
+
+  const isExpanded =
+    (await toggleButton.getAttribute('aria-expanded')) === 'true';
+  if (isExpanded) {
+    await toggleButton.click();
+  }
+};
+
+export const toggleHeaderMenu = async (page: Page) => {
+  const toggleButton = page.getByTestId('header-menu-toggle');
+  await expect(toggleButton).toBeVisible();
+  await toggleButton.click();
+};
+
 export const createDoc = async (
   page: Page,
   docName: string,
@@ -94,10 +122,7 @@ export const createDoc = async (
 
   for (let i = 0; i < randomDocs.length; i++) {
     if (isMobile) {
-      await page
-        .getByRole('button', { name: 'Open the header menu' })
-        .getByText('menu')
-        .click();
+      await openHeaderMenu(page);
     }
 
     await page
