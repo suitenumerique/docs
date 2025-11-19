@@ -16,7 +16,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/server-util": "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/server-util@2183",
+    "@blocknote/server-util": "0.42.3",
     "@hocuspocus/server": "3.4.0",
     "@sentry/node": "10.22.0",
     "@sentry/profiling-node": "10.22.0",
@@ -30,7 +30,7 @@
     "yjs": "*"
   },
   "devDependencies": {
-    "@blocknote/core": "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@2183",
+    "@blocknote/core": "0.42.3",
     "@hocuspocus/provider": "3.4.0",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.5",
