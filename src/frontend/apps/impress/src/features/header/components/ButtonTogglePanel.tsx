@@ -12,7 +12,10 @@ export const ButtonTogglePanel = () => {
     <Button
       size="medium"
       onClick={() => togglePanel()}
-      aria-label={t('Open the header menu')}
+      aria-label={t(
+        isPanelOpen ? 'Close the header menu' : 'Open the header menu',
+      )}
+      aria-expanded={isPanelOpen}
       variant="tertiary"
       icon={
         <Icon $withThemeInherited iconName={isPanelOpen ? 'close' : 'menu'} />
