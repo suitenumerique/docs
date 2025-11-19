@@ -42,7 +42,5 @@ def test_api_templates_create_authenticated():
         format="json",
     )
 
-    assert response.status_code == 201
-    template = Template.objects.get()
-    assert template.title == "my template"
-    assert template.accesses.filter(role="owner", user=user).exists()
+    assert response.status_code == 405
+    assert not Template.objects.exists()

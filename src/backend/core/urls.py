@@ -34,15 +34,6 @@ document_related_router.register(
 )
 
 
-# - Routes nested under a template
-template_related_router = DefaultRouter()
-template_related_router.register(
-    "accesses",
-    viewsets.TemplateAccessViewSet,
-    basename="template_accesses",
-)
-
-
 urlpatterns = [
     path(
         f"api/{settings.API_VERSION}/",
@@ -53,10 +44,6 @@ urlpatterns = [
                 re_path(
                     r"^documents/(?P<resource_id>[0-9a-z-]*)/",
                     include(document_related_router.urls),
-                ),
-                re_path(
-                    r"^templates/(?P<resource_id>[0-9a-z-]*)/",
-                    include(template_related_router.urls),
                 ),
             ]
         ),
