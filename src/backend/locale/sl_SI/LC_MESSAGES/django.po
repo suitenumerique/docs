@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-23 11:01+0000\n"
-"PO-Revision-Date: 2025-11-10 09:54\n"
+"POT-Creation-Date: 2025-11-17 08:04+0000\n"
+"PO-Revision-Date: 2025-11-19 10:13\n"
 "Last-Translator: \n"
 "Language-Team: Slovenian\n"
 "Language: sl_SI\n"
@@ -234,8 +234,8 @@ msgstr "uporabnik"
 msgid "users"
 msgstr "uporabniki"
 
-#: build/lib/core/models.py:361 build/lib/core/models.py:1284
-#: core/models.py:361 core/models.py:1284
+#: build/lib/core/models.py:361 build/lib/core/models.py:1276
+#: core/models.py:361 core/models.py:1276
 msgid "title"
 msgstr "naslov"
 
@@ -311,8 +311,8 @@ msgstr "Ta uporabnik je že v tem dokumentu."
 msgid "This team is already in this document."
 msgstr "Ta ekipa je že v tem dokumentu."
 
-#: build/lib/core/models.py:1045 build/lib/core/models.py:1370
-#: core/models.py:1045 core/models.py:1370
+#: build/lib/core/models.py:1045 build/lib/core/models.py:1362
+#: core/models.py:1045 core/models.py:1362
 msgid "Either user or team must be set, not both."
 msgstr "Nastaviti je treba bodisi uporabnika ali ekipo, a ne obojega."
 
@@ -328,78 +328,78 @@ msgstr ""
 msgid "This user has already asked for access to this document."
 msgstr ""
 
-#: build/lib/core/models.py:1263 core/models.py:1263
+#: build/lib/core/models.py:1255 core/models.py:1255
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr ""
 
-#: build/lib/core/models.py:1267 core/models.py:1267
+#: build/lib/core/models.py:1259 core/models.py:1259
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr ""
 
-#: build/lib/core/models.py:1273 core/models.py:1273
+#: build/lib/core/models.py:1265 core/models.py:1265
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr ""
 
-#: build/lib/core/models.py:1285 core/models.py:1285
+#: build/lib/core/models.py:1277 core/models.py:1277
 msgid "description"
 msgstr "opis"
 
-#: build/lib/core/models.py:1286 core/models.py:1286
+#: build/lib/core/models.py:1278 core/models.py:1278
 msgid "code"
 msgstr "koda"
 
-#: build/lib/core/models.py:1287 core/models.py:1287
+#: build/lib/core/models.py:1279 core/models.py:1279
 msgid "css"
 msgstr "css"
 
-#: build/lib/core/models.py:1289 core/models.py:1289
+#: build/lib/core/models.py:1281 core/models.py:1281
 msgid "public"
 msgstr "javno"
 
-#: build/lib/core/models.py:1291 core/models.py:1291
+#: build/lib/core/models.py:1283 core/models.py:1283
 msgid "Whether this template is public for anyone to use."
 msgstr "Ali je ta predloga javna za uporabo."
 
-#: build/lib/core/models.py:1297 core/models.py:1297
+#: build/lib/core/models.py:1289 core/models.py:1289
 msgid "Template"
 msgstr "Predloga"
 
-#: build/lib/core/models.py:1298 core/models.py:1298
+#: build/lib/core/models.py:1290 core/models.py:1290
 msgid "Templates"
 msgstr "Predloge"
 
-#: build/lib/core/models.py:1351 core/models.py:1351
+#: build/lib/core/models.py:1343 core/models.py:1343
 msgid "Template/user relation"
 msgstr "Odnos predloga/uporabnik"
 
-#: build/lib/core/models.py:1352 core/models.py:1352
+#: build/lib/core/models.py:1344 core/models.py:1344
 msgid "Template/user relations"
 msgstr "Odnosi med predlogo in uporabnikom"
 
-#: build/lib/core/models.py:1358 core/models.py:1358
+#: build/lib/core/models.py:1350 core/models.py:1350
 msgid "This user is already in this template."
 msgstr "Ta uporabnik je že v tej predlogi."
 
-#: build/lib/core/models.py:1364 core/models.py:1364
+#: build/lib/core/models.py:1356 core/models.py:1356
 msgid "This team is already in this template."
 msgstr "Ta ekipa je že v tej predlogi."
 
-#: build/lib/core/models.py:1441 core/models.py:1441
+#: build/lib/core/models.py:1433 core/models.py:1433
 msgid "email address"
 msgstr "elektronski naslov"
 
-#: build/lib/core/models.py:1460 core/models.py:1460
+#: build/lib/core/models.py:1452 core/models.py:1452
 msgid "Document invitation"
 msgstr "Vabilo na dokument"
 
-#: build/lib/core/models.py:1461 core/models.py:1461
+#: build/lib/core/models.py:1453 core/models.py:1453
 msgid "Document invitations"
 msgstr "Vabila na dokument"
 
-#: build/lib/core/models.py:1481 core/models.py:1481
+#: build/lib/core/models.py:1473 core/models.py:1473
 msgid "This email is already associated to a registered user."
 msgstr "Ta e-poštni naslov je že povezan z registriranim uporabnikom."
 
