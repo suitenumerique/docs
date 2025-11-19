@@ -1070,12 +1070,11 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@blocknote/code-block@0.42.1":
+"@blocknote/code-block@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/code-block@2183":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/code-block/-/code-block-0.42.1.tgz#53e4c6f5eb86c6ff4d7d49a437b94154e91e70f3"
-  integrity sha512-IcxHZ7vLlHpyaUCTxK95/XvY+9KjNBBSb8yF66DQfyZ/wzpOvcaNvmX5okfI38e4sOmOLrNMwG9h2d38ddy9Dw==
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/code-block@2183#ccc7b2181cce68d16411e3f245f13bcdc0d50be9"
   dependencies:
-    "@blocknote/core" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
     "@shikijs/core" "^3.13.0"
     "@shikijs/engine-javascript" "^3.13.0"
     "@shikijs/langs" "^3.13.0"
@@ -1083,10 +1082,9 @@
     "@shikijs/themes" "^3.13.0"
     "@shikijs/types" "^3.13.0"
 
-"@blocknote/core@0.42.1":
+"@blocknote/core@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/core/-/core-0.42.1.tgz#46933ceb51f13fd0286e42c814c20a15ec6865e8"
-  integrity sha512-WfGgCp6l1oM3yGHHc0XSGp7CdrD8j5WCrg8VCGJyIpJW4oD0VZFH5t/4c2SjfCNDHA/DYtVGyOSVI+ezZD7uEA==
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880#90ca822cfee74cb17612fe66bf23ecca8ebfa68b"
   dependencies:
     "@emoji-mart/data" "^1.2.1"
     "@shikijs/types" "3.13.0"
@@ -1128,21 +1126,64 @@
     y-protocols "^1.0.6"
     yjs "^13.6.27"
 
-"@blocknote/mantine@0.42.1":
+"@blocknote/core@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@2183":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/mantine/-/mantine-0.42.1.tgz#f98ffe50b1b6d7c6125a5c50623de5b0dfa5e2e4"
-  integrity sha512-u5reSCpBJRWtMkfSr+K/bHgxVsTrUo1/hg9f5QzsAZuzKhFM+XLlsE9psGqXwYd9mOYPTc5xgWKLC0wa160jog==
+  uid "90ca822cfee74cb17612fe66bf23ecca8ebfa68b"
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@2183#90ca822cfee74cb17612fe66bf23ecca8ebfa68b"
   dependencies:
-    "@blocknote/core" "0.42.1"
-    "@blocknote/react" "0.42.1"
+    "@emoji-mart/data" "^1.2.1"
+    "@shikijs/types" "3.13.0"
+    "@tiptap/core" "^3.10.2"
+    "@tiptap/extension-bold" "^3.7.2"
+    "@tiptap/extension-code" "^3.7.2"
+    "@tiptap/extension-gapcursor" "^3.7.2"
+    "@tiptap/extension-history" "^3.7.2"
+    "@tiptap/extension-horizontal-rule" "^3.7.2"
+    "@tiptap/extension-italic" "^3.7.2"
+    "@tiptap/extension-link" "^3.7.2"
+    "@tiptap/extension-paragraph" "^3.7.2"
+    "@tiptap/extension-strike" "^3.7.2"
+    "@tiptap/extension-text" "^3.7.2"
+    "@tiptap/extension-underline" "^3.7.2"
+    "@tiptap/pm" "^3.10.2"
+    emoji-mart "^5.6.0"
+    fast-deep-equal "^3.1.3"
+    hast-util-from-dom "^5.0.1"
+    prosemirror-dropcursor "^1.8.2"
+    prosemirror-highlight "^0.13.0"
+    prosemirror-model "^1.25.4"
+    prosemirror-state "^1.4.4"
+    prosemirror-tables "^1.8.1"
+    prosemirror-transform "^1.10.4"
+    prosemirror-view "^1.41.3"
+    rehype-format "^5.0.1"
+    rehype-parse "^9.0.1"
+    rehype-remark "^10.0.1"
+    rehype-stringify "^10.0.1"
+    remark-gfm "^4.0.1"
+    remark-parse "^11.0.0"
+    remark-rehype "^11.1.2"
+    remark-stringify "^11.0.0"
+    unified "^11.0.5"
+    unist-util-visit "^5.0.0"
+    uuid "^8.3.2"
+    y-prosemirror "^1.3.7"
+    y-protocols "^1.0.6"
+    yjs "^13.6.27"
+
+"@blocknote/mantine@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/mantine@2183":
+  version "0.42.1"
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/mantine@2183#74214c65fcd365e68351217066a9249103e70174"
+  dependencies:
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/react" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880"
     react-icons "^5.5.0"
 
-"@blocknote/react@0.42.1":
+"@blocknote/react@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/react/-/react-0.42.1.tgz#4fea38aeff56438858cf324d7dbab56059799ffc"
-  integrity sha512-AlS0Xyz6DFCg+Rm+W8Yaa+/30H0yezD9Ky1blIHT4DogQttp2D0iov38d0Gjk8kkBEV1/HtLdjfnjw2qYkXF9A==
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880#2703eed2efd77d578c2094c3dea6c832cf28d6bd"
   dependencies:
-    "@blocknote/core" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
     "@emoji-mart/data" "^1.2.1"
     "@floating-ui/react" "^0.27.16"
     "@tiptap/core" "^3.10.2"
@@ -1152,13 +1193,27 @@
     lodash.merge "^4.6.2"
     react-icons "^5.5.0"
 
-"@blocknote/server-util@0.42.1":
+"@blocknote/react@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@2183":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/server-util/-/server-util-0.42.1.tgz#f9229f111efab90fe2f35ea2f4434d6e755d2bf5"
-  integrity sha512-SK2KVBy6xbtssAdotBKuri9XjSBP2OAYBw2QAwlxSR23RCB2blmV/d2ejt1E1lgfN1KAdPg8gUdf3FOJMlPhtA==
+  uid "2703eed2efd77d578c2094c3dea6c832cf28d6bd"
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@2183#2703eed2efd77d578c2094c3dea6c832cf28d6bd"
   dependencies:
-    "@blocknote/core" "0.42.1"
-    "@blocknote/react" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@emoji-mart/data" "^1.2.1"
+    "@floating-ui/react" "^0.27.16"
+    "@tiptap/core" "^3.10.2"
+    "@tiptap/pm" "^3.10.2"
+    "@tiptap/react" "^3.10.2"
+    emoji-mart "^5.6.0"
+    lodash.merge "^4.6.2"
+    react-icons "^5.5.0"
+
+"@blocknote/server-util@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/server-util@2183":
+  version "0.42.1"
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/server-util@2183#c3de87251492fec0a6ef1887a40e4cf6076f813b"
+  dependencies:
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/react" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880"
     "@tiptap/core" "^3.10.2"
     "@tiptap/pm" "^3.10.2"
     jsdom "^25.0.1"
@@ -1166,24 +1221,23 @@
     y-protocols "^1.0.6"
     yjs "^13.6.27"
 
-"@blocknote/xl-docx-exporter@0.42.1":
+"@blocknote/xl-docx-exporter@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-docx-exporter@2183":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/xl-docx-exporter/-/xl-docx-exporter-0.42.1.tgz#894875f1d71e8d6d10b35a682f327648b11bea99"
-  integrity sha512-6czqjsVlfFCJmd696b3eiKtNzWg22Z8Ydc7YYO2NpABnTmqs6aEQ782+TvREpZ2MH7z3qgNzsp0YWVh8U6BrRw==
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-docx-exporter@2183#c8dbd76d3e5344c9b134cc900cf87f5ed9292a33"
   dependencies:
-    "@blocknote/core" "0.42.1"
-    "@blocknote/xl-multi-column" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/xl-multi-column" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@009cb604565b1348591048dc374763b4308e3880"
     buffer "^6.0.3"
     docx "^9.5.1"
     image-meta "^0.2.2"
 
-"@blocknote/xl-multi-column@0.42.1":
+"@blocknote/xl-multi-column@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@009cb604565b1348591048dc374763b4308e3880":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/xl-multi-column/-/xl-multi-column-0.42.1.tgz#d79d982470f24c1f25bc41d30336f48d12412120"
-  integrity sha512-7LkmNcR2xB/HBb9wxIr9UvIr0PuUWkpr7p0cX44qmWR+IUJeck7/AwA74J8b/Aq/ICS9xBy7ED3Ci95tLwveeA==
+  uid c48272172892e1cb19c3c3e229ff7c53679d551a
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@009cb604565b1348591048dc374763b4308e3880#c48272172892e1cb19c3c3e229ff7c53679d551a"
   dependencies:
-    "@blocknote/core" "0.42.1"
-    "@blocknote/react" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/react" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880"
     "@tiptap/core" "^3.10.2"
     prosemirror-model "^1.25.4"
     prosemirror-state "^1.4.4"
@@ -1192,25 +1246,37 @@
     prosemirror-view "^1.41.3"
     react-icons "^5.5.0"
 
-"@blocknote/xl-odt-exporter@0.42.1":
+"@blocknote/xl-multi-column@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@2183":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/xl-odt-exporter/-/xl-odt-exporter-0.42.1.tgz#ec45b2a0a386a31ff5d4cc7022284a0bc678832e"
-  integrity sha512-Vb3QJJZyfOYMRu7P+pAH9KAw+n3F6yJlsLI4ZdCYRAeSluq8/frZUmt7UlPtVDgurlVbOQ1pXMBt13Fx1jJ53g==
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@2183#c48272172892e1cb19c3c3e229ff7c53679d551a"
   dependencies:
-    "@blocknote/core" "0.42.1"
-    "@blocknote/xl-multi-column" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/react" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880"
+    "@tiptap/core" "^3.10.2"
+    prosemirror-model "^1.25.4"
+    prosemirror-state "^1.4.4"
+    prosemirror-tables "^1.8.1"
+    prosemirror-transform "^1.10.4"
+    prosemirror-view "^1.41.3"
+    react-icons "^5.5.0"
+
+"@blocknote/xl-odt-exporter@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-odt-exporter@2183":
+  version "0.42.1"
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-odt-exporter@2183#33af5cd93f776967be5e936be6514f4e380dbcf6"
+  dependencies:
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/xl-multi-column" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@009cb604565b1348591048dc374763b4308e3880"
     "@zip.js/zip.js" "^2.8.8"
     buffer "^6.0.3"
     image-meta "^0.2.2"
 
-"@blocknote/xl-pdf-exporter@0.42.1":
+"@blocknote/xl-pdf-exporter@https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-pdf-exporter@2183":
   version "0.42.1"
-  resolved "https://registry.yarnpkg.com/@blocknote/xl-pdf-exporter/-/xl-pdf-exporter-0.42.1.tgz#bada55cc85e809a9509b86b9928881f6e54868a0"
-  integrity sha512-fGiWUoQAjKwGGAfgxezki5PvnNLqTgPnAvh9yX7jN8zwrD/ssOGBHYnt/aPkWBkHVXD140kpRKxro8eTCI3bAA==
+  resolved "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-pdf-exporter@2183#cba855bbc19941f842eab8cfe65089d16a6f0fc7"
   dependencies:
-    "@blocknote/core" "0.42.1"
-    "@blocknote/react" "0.42.1"
-    "@blocknote/xl-multi-column" "0.42.1"
+    "@blocknote/core" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/core@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/react" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/react@009cb604565b1348591048dc374763b4308e3880"
+    "@blocknote/xl-multi-column" "https://pkg.pr.new/TypeCellOS/BlockNote/@blocknote/xl-multi-column@009cb604565b1348591048dc374763b4308e3880"
     "@react-pdf/renderer" "^4.3.0"
     buffer "^6.0.3"
     docx "^9.5.1"
