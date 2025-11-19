@@ -156,11 +156,11 @@ export const DocShareModalInviteUserRow = ({
             $color="var(--c--globals--colors--gray-400)"
             $cursor="pointer"
           >
-            <Text $theme="primary" $variation="800" $size="sm">
+            <Text $theme="brand" $variation="800" $size="sm">
               {t('Add')}
             </Text>
             <Icon
-              $theme="primary"
+              $theme="brand"
               $variation="800"
               iconName="add"
               aria-hidden="true"

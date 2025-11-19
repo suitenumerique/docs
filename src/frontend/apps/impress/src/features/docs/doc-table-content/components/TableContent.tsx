@@ -152,7 +152,7 @@ export const TableContent = () => {
         >
           <Icon
             iconName="list"
-            $theme="primary"
+            $theme="brand"
             $variation="800"
             variant="symbols-outlined"
           />
@@ -173,7 +173,7 @@ export const TableContent = () => {
             $justify="space-between"
             $align="center"
           >
-            <Text $weight="500" $size="sm" $variation="800" $theme="primary">
+            <Text $weight="500" $size="sm" $variation="800" $theme="brand">
               {t('Summary')}
             </Text>
             <BoxButton
@@ -193,7 +193,7 @@ export const TableContent = () => {
                 }
               `}
             >
-              <Icon iconName="menu_open" $theme="primary" $variation="800" />
+              <Icon iconName="menu_open" $theme="brand" $variation="800" />
             </BoxButton>
           </Box>
           <Box

@@ -24,12 +24,12 @@ export const AlertPublic = ({ isPublicDoc }: { isPublicDoc: boolean }) => {
       `}
     >
       <Icon
-        $theme="primary"
+        $theme="brand"
         $variation="800"
         data-testid="public-icon"
         iconName={isPublicDoc ? 'public' : 'vpn_lock'}
       />
-      <Text $theme="primary" $variation="800" $weight="500">
+      <Text $theme="brand" $variation="800" $weight="500">
         {isPublicDoc
           ? t('Public document')
           : t('Document accessible to any connected person')}

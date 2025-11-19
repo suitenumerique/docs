@@ -58,7 +58,7 @@ export const BoutonShare = ({
           icon={
             <Icon
               iconName="group"
-              $theme="primary"
+              $theme="brand"
               $variation="800"
               variant="filled"
               disabled={isDisabled}

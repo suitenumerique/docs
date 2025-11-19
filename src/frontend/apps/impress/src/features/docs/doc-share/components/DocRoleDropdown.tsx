@@ -127,7 +127,7 @@ export const DocRoleDropdown = ({
         },
       ]}
     >
-      <Text $theme="primary" $variation="800">
+      <Text $theme="brand" $variation="800">
         {transRole(currentRole)}
       </Text>
     </DropdownMenu>

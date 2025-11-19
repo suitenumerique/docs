@@ -219,7 +219,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             icon={
               <Icon
                 iconName="download"
-                $theme="primary"
+                $theme="brand"
                 $variation="800"
                 aria-hidden={true}
               />
@@ -246,7 +246,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               : ''}
           `}
         >
-          <IconOptions aria-hidden="true" isHorizontal $theme="primary" />
+          <IconOptions aria-hidden="true" isHorizontal $theme="brand" />
         </DropdownMenu>
       </Box>
 

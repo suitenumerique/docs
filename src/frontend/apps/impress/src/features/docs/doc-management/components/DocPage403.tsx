@@ -77,7 +77,7 @@ export const DocPage403 = ({ id }: DocProps) => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {hasRequested
               ? t('Your access request for this document is pending.')
               : t('Insufficient access rights to view the document.')}
@@ -101,7 +101,7 @@ export const DocPage403 = ({ id }: DocProps) => {
           <Box $direction="row" $gap="0.7rem">
             <StyledLink href="/">
               <StyledButton
-                icon={<Icon iconName="house" $theme="primary" />}
+                icon={<Icon iconName="house" $theme="brand" />}
                 color="tertiary"
               >
                 {t('Home')}

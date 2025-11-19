@@ -17,7 +17,7 @@ export const ButtonTogglePanel = () => {
       icon={
         <Icon
           $variation="800"
-          $theme="primary"
+          $theme="brand"
           iconName={isPanelOpen ? 'close' : 'menu'}
         />
       }

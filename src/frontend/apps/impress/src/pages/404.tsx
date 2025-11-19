@@ -51,7 +51,7 @@ const Page: NextPageWithLayout = () => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {t(
               'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
             )}

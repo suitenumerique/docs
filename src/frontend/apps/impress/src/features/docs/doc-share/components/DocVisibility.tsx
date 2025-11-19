@@ -206,7 +206,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               }
               label={t('Document access mode')}
             >
-              <Text $weight="initial" $variation="600" $theme="primary">
+              <Text $weight="initial" $variation="600" $theme="brand">
                 {linkModeTranslations[docLinkRole]}
               </Text>
             </DropdownMenu>

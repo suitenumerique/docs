@@ -180,7 +180,7 @@ export const DocTreeItemActions = ({
             }}
             iconName="more_horiz"
             variant="filled"
-            $theme="primary"
+            $theme="brand"
             $variation="600"
             aria-label={t('More options')}
           />
@@ -202,7 +202,7 @@ export const DocTreeItemActions = ({
             <Icon
               variant="filled"
               $variation="800"
-              $theme="primary"
+              $theme="brand"
               iconName="add_box"
             />
           </BoxButton>

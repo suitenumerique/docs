@@ -39,7 +39,7 @@ export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
     >
       <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
         <Desync />
-        <Text $size="xs" $theme="primary" $variation="800" $weight="400">
+        <Text $size="xs" $theme="brand" $variation="800" $weight="400">
           {t('The link sharing rules differ from the parent document')}
         </Text>
       </Box>

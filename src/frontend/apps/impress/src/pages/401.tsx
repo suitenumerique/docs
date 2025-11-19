@@ -55,7 +55,7 @@ const Page: NextPageWithLayout = () => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {t('Log in to access the document.')}
           </Text>
 
