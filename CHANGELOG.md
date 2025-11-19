@@ -26,6 +26,7 @@ and this project adheres to
 - 🐛(export) fix table cell alignment issue in exported documents #1582
 - 🐛(export) preserve image aspect ratio in PDF export #1622
 - 🐛(export) Export fails when paste with style #1552
+- 👷(CI) free disk space in some jobs #1635
 
 ### Security
 
@@ -33,7 +34,7 @@ and this project adheres to
 
 ### Removed
 
-- 🔥(backend) remove api managing templates
+- 🔥(backend) remove api managing templates #1590
 
 ## [3.9.0] - 2025-11-10
 
