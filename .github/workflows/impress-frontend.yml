@@ -82,12 +82,6 @@ jobs:
       - name: Set e2e env variables
         run: cat env.d/development/common.e2e >> env.d/development/common.local
 
-      - name: Free disk space
-        run: |
-          docker system prune -af --volumes
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
-          df -h
-
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright chromium
 
