@@ -41,7 +41,8 @@ export const DocShareAddMemberList = ({
   const { toast } = useToastProvider();
 
   const [isLoading, setIsLoading] = useState(false);
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens, colorsTokens, contextualTokens } =
+    useCunninghamTheme();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
   const canShare = doc.abilities.accesses_manage;
   const { mutateAsync: createInvitation } = useCreateDocInvitation();
@@ -121,7 +122,9 @@ export const DocShareAddMemberList = ({
       $direction="row"
       $padding={spacingsTokens.sm}
       $align="center"
-      $background={colorsTokens['gray-050']}
+      $background={
+        contextualTokens['background']['semantic']['contextual']['primary']
+      }
       $radius={spacingsTokens['3xs']}
       $css={css`
         border: 1px solid ${colorsTokens['gray-200']};

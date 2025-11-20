@@ -33,13 +33,11 @@ export const FilterDropdown = ({
       <Box
         $css={css`
           border: 1px solid
-            ${selectedOption
-              ? 'var(--c--globals--colors--brand-500)'
-              : 'var(--c--globals--colors--gray-250)'};
+            var(--c--contextuals--border--semantic--neutral--tertiary);
           border-radius: 4px;
-          background-color: ${selectedOption
-            ? 'var(--c--globals--colors--brand-100)'
-            : 'var(--c--globals--colors--gray-000)'};
+          background-color: var(
+            --c--contextuals--background--semantic--neutral--tertiary
+          );
           gap: var(--c--globals--spacings--2xs);
           padding: var(--c--globals--spacings--2xs)
             var(--c--globals--spacings--xs);
@@ -48,18 +46,14 @@ export const FilterDropdown = ({
         $direction="row"
         $align="center"
       >
-        <Text
-          $weight={400}
-          $variation={selectedOption ? '800' : '600'}
-          $theme={selectedOption ? 'primary' : 'gray'}
-        >
+        <Text $weight={400} $variation="tertiary" $theme="neutral">
           {selectedOption?.label ?? options[0].label}
         </Text>
         <Icon
           $size="16px"
           iconName="keyboard_arrow_down"
-          $variation={selectedOption ? '800' : '600'}
-          $theme={selectedOption ? 'primary' : 'gray'}
+          $variation="tertiary"
+          $theme="neutral"
         />
       </Box>
     </DropdownMenu>

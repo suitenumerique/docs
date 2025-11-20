@@ -39,7 +39,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens, contextualTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
 
@@ -115,20 +115,12 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-disabled={isDisabled}
       $css={css`
         background-color: ${menuOpen
-          ? 'var(--c--globals--colors--gray-100)'
+          ? 'var(--c--contextuals--background--semantic--brand--tertiary-hover)'
           : 'var(--c--globals--colors--gray-000)'};
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           position: absolute;
           right: 0;
-          background: ${isDesktop
-            ? 'var(--c--globals--colors--gray-100)'
-            : 'var(--c--globals--colors--gray-000)'};
-        }
-        .c__tree-view--node.isSelected {
-          .light-doc-item-actions {
-            background: var(--c--globals--colors--gray-100);
-          }
         }
         .c__tree-view--node.isFocused {
           outline: none !important;
@@ -136,11 +128,12 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           border-radius: 4px;
         }
         &:hover {
-          background-color: var(--c--globals--colors--gray-100);
+          background-color: var(
+            --c--contextuals--background--semantic--gray--tertiary
+          );
           border-radius: 4px;
           .light-doc-item-actions {
             display: flex;
-            background: var(--c--globals--colors--gray-100);
           }
         }
         .row.preview & {
@@ -152,7 +145,13 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         <DocIcon
           emoji={emoji}
           withEmojiPicker={doc.abilities.partial_update}
-          defaultIcon={<SubPageIcon color={colorsTokens['brand-400']} />}
+          defaultIcon={
+            <SubPageIcon
+              color={
+                contextualTokens['content']['semantic']['info']['tertiary']
+              }
+            />
+          }
           $size="sm"
           docId={doc.id}
           title={doc.title}
@@ -187,7 +186,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
               overflow: hidden;
             `}
           >
-            <Text $css={ItemTextCss} $size="sm" $variation="1000">
+            <Text $css={ItemTextCss} $size="sm">
               {displayTitle}
             </Text>
             {doc.nb_accesses_direct >= 1 && (
@@ -195,7 +194,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
                 variant="filled"
                 iconName="group"
                 $size="16px"
-                $variation="400"
                 aria-hidden="true"
               />
             )}

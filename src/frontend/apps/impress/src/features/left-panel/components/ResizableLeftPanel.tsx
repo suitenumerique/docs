@@ -26,7 +26,7 @@ export const ResizableLeftPanel = ({
   minPanelSizePx = 300,
   maxPanelSizePx = 450,
 }: ResizableLeftPanelProps) => {
-  const { colorsTokens } = useCunninghamTheme();
+  const { contextualTokens } = useCunninghamTheme();
   const ref = useRef<ImperativePanelHandle>(null);
   const savedWidthPxRef = useRef<number>(minPanelSizePx);
 
@@ -76,7 +76,7 @@ export const ResizableLeftPanel = ({
           style={{
             borderRightWidth: '1px',
             borderRightStyle: 'solid',
-            borderRightColor: colorsTokens['gray-200'],
+            borderRightColor: contextualTokens['border']['surface']['primary'],
             width: '1px',
             cursor: 'col-resize',
           }}

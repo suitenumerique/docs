@@ -287,11 +287,7 @@ export const SearchPage = ({
                       </Box>
                     }
                     right={
-                      <Icon
-                        iconName="keyboard_return"
-                        $variation="600"
-                        spellCheck="false"
-                      />
+                      <Icon iconName="keyboard_return" spellCheck="false" />
                     }
                   />
                 );

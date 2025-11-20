@@ -13,7 +13,8 @@ export const LeftPanelTargetFilters = () => {
   const searchParams = useSearchParams();
 
   const { togglePanel } = useLeftPanelStore();
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens, contextualTokens } =
+    useCunninghamTheme();
 
   const target =
     (searchParams.get('target') as DocDefaultFilter) ??
@@ -78,14 +79,18 @@ export const LeftPanelTargetFilters = () => {
               padding: ${spacingsTokens['2xs']};
               border-radius: ${spacingsTokens['3xs']};
               background-color: ${isActive
-                ? colorsTokens['gray-050']
+                ? contextualTokens['background']['semantic']['contextual'][
+                    'primary'
+                  ]
                 : 'transparent'};
               font-weight: ${isActive ? 700 : 400};
               color: inherit;
               text-decoration: none;
               cursor: pointer;
               &:hover {
-                background-color: ${colorsTokens['gray-050']};
+                background-color: ${contextualTokens['background']['semantic'][
+                  'contextual'
+                ]['primary']};
               }
               &:focus-visible {
                 outline: none !important;

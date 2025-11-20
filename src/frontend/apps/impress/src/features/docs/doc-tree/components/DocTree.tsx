@@ -218,11 +218,13 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             border-radius: 4px;
             width: 100%;
             background-color: ${rootIsSelected || rootActionsOpen
-              ? 'var(--c--globals--colors--gray-100)'
+              ? 'var(--c--contextuals--background--semantic--gray--primary)'
               : 'transparent'};
 
             &:hover {
-              background-color: var(--c--globals--colors--gray-100);
+              background-color: var(
+                --c--contextuals--background--semantic--neutral--tertiary
+              );
             }
 
             &:focus-visible {

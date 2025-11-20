@@ -16,7 +16,8 @@ type LeftPanelFavoriteItemProps = {
 
 export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens, contextualTokens } =
+    useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
   return (
@@ -32,7 +33,9 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
           opacity: ${isDesktop ? 0 : 1};
         }
         &:hover {
-          background-color: ${colorsTokens['gray-050']};
+          background-color: ${contextualTokens['background']['semantic'][
+            'contextual'
+          ]['primary']};
           .pinned-actions {
             opacity: 1;
           }

@@ -124,7 +124,6 @@ export const DropdownMenu = ({
           >
             <Box>{children}</Box>
             <Icon
-              $variation="600"
               $css={
                 arrowCss ??
                 css`
@@ -147,7 +146,6 @@ export const DropdownMenu = ({
       >
         {topMessage && (
           <Text
-            $variation="700"
             $wrap="wrap"
             $size="xs"
             $weight="bold"
@@ -210,19 +208,25 @@ export const DropdownMenu = ({
                   user-select: none;
 
                   &:hover {
-                    background-color: var(--c--globals--colors--gray-050);
+                    background-color: var(
+                      --c--contextuals--background--semantic--gray--tertiary
+                    );
                   }
 
                   &:focus-visible {
                     outline: 2px solid var(--c--globals--colors--brand-400);
                     outline-offset: -2px;
-                    background-color: var(--c--globals--colors--gray-050);
+                    background-color: var(
+                      --c--contextuals--background--semantic--gray--primary
+                    );
                   }
 
                   ${isFocused &&
                   css`
                     outline-offset: -2px;
-                    background-color: var(--c--globals--colors--gray-050);
+                    background-color: var(
+                      --c--contextuals--background--semantic--gray--primary
+                    );
                   `}
                 `}
               >
@@ -235,7 +239,7 @@ export const DropdownMenu = ({
                     <Icon
                       $size="20px"
                       $theme="gray"
-                      $variation={isDisabled ? '400' : '1000'}
+                      $variation={isDisabled ? 'tertiary' : 'primary'}
                       iconName={option.icon}
                       aria-hidden="true"
                     />
@@ -243,7 +247,7 @@ export const DropdownMenu = ({
                   {option.icon &&
                     typeof option.icon !== 'string' &&
                     option.icon}
-                  <Text $variation={isDisabled ? '400' : '1000'}>
+                  <Text $variation={isDisabled ? 'tertiary' : 'primary'}>
                     {option.label}
                   </Text>
                 </Box>
