@@ -25,22 +25,13 @@ from core.services.converter_services import (
 class UserSerializer(serializers.ModelSerializer):
     """Serialize users."""
 
-    class Meta:
-        model = models.User
-        fields = ["id", "email", "full_name", "short_name", "language"]
-        read_only_fields = ["id", "email", "full_name", "short_name"]
-
-
-class UserLightSerializer(UserSerializer):
-    """Serialize users with limited fields."""
-
     full_name = serializers.SerializerMethodField(read_only=True)
     short_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.User
-        fields = ["full_name", "short_name"]
-        read_only_fields = ["full_name", "short_name"]
+        fields = ["id", "email", "full_name", "short_name", "language"]
+        read_only_fields = ["id", "email", "full_name", "short_name"]
 
     def get_full_name(self, instance):
         """Return the full name of the user."""
@@ -57,6 +48,15 @@ class UserLightSerializer(UserSerializer):
             return slugify(email)
 
         return instance.short_name
+
+
+class UserLightSerializer(UserSerializer):
+    """Serialize users with limited fields."""
+
+    class Meta:
+        model = models.User
+        fields = ["full_name", "short_name"]
+        read_only_fields = ["full_name", "short_name"]
 
 
 class TemplateAccessSerializer(serializers.ModelSerializer):
