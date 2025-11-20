@@ -32,6 +32,7 @@ and this project adheres to
 
 - ✨(export) enable ODT export for documents #1524
 - ✨(frontend) improve mobile UX by showing subdocs count #1540
+- ✅(e2e) add test to compare generated PDF against reference template #1648
 
 ### Changed
 
