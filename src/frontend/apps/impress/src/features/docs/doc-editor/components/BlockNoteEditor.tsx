@@ -289,11 +289,13 @@ export const BlockNoteReader = ({
         editor={editor}
         editable={false}
         theme="light"
-        aria-label={t('Document version viewer')}
+        aria-label={t('Document viewer')}
         formattingToolbar={false}
         slashMenu={false}
         comments={false}
-      />
+      >
+        <BlockNoteToolbar />
+      </BlockNoteView>
     </Box>
   );
 };

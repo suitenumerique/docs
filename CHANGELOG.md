@@ -6,10 +6,17 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨ Add comments feature to the editor #1330
+- ✨(backend) Comments on text editor #1330
+
 ### Fixed
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
+- 🐛(frontend) fix toolbar not activated when reader #1640
+- 🐛(frontend) preserve left panel width on window resize #1588
 
 ## [3.10.0] - 2025-11-18
 
@@ -40,7 +47,6 @@ and this project adheres to
 ### Security
 
 - mitigate role escalation in the ask_for_access viewset #1580
-- 🐛(frontend) preserve left panel width on window resize #1588
 
 ### Removed
 
@@ -54,7 +60,6 @@ and this project adheres to
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
-- ✨ Add comments feature to the editor #1330
 
 ### Changed
 
@@ -183,7 +188,6 @@ and this project adheres to
 
 ### Added
 
-- ✨(backend) Comments on text editor #1309
 - 👷(CI) add bundle size check job #1268
 - ✨(frontend) use title first emoji as doc icon in tree #1289
 

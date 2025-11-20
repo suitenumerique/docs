@@ -86,6 +86,7 @@ export const SearchPage = ({
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
+  const isEditable = editor.isEditable;
 
   /**
    * createReactInlineContentSpec add automatically the focus after
@@ -101,6 +102,10 @@ export const SearchPage = ({
   }, [inputRef]);
 
   const closeSearch = (insertContent: string) => {
+    if (!isEditable) {
+      return;
+    }
+
     updateInlineContent({
       type: 'interlinkingSearchInline',
       props: {
@@ -223,6 +228,10 @@ export const SearchPage = ({
               search={search}
               filters={{ target: DocSearchTarget.CURRENT }}
               onSelect={(doc) => {
+                if (!isEditable) {
+                  return;
+                }
+
                 updateInlineContent({
                   type: 'interlinkingSearchInline',
                   props: {

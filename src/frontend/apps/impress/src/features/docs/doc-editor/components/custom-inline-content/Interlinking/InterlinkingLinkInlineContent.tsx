@@ -26,14 +26,19 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
     content: 'none',
   },
   {
-    render: ({ inlineContent, updateInlineContent }) => {
+    render: ({ editor, inlineContent, updateInlineContent }) => {
       const { data: doc } = useDoc({ id: inlineContent.props.docId });
+      const isEditable = editor.isEditable;
 
       /**
        * Update the content title if the referenced doc title changes
        */
       useEffect(() => {
-        if (doc?.title && doc.title !== inlineContent.props.title) {
+        if (
+          isEditable &&
+          doc?.title &&
+          doc.title !== inlineContent.props.title
+        ) {
           updateInlineContent({
             type: 'interlinkingLinkInline',
             props: {
@@ -50,7 +55,7 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
          * not when inlineContent.props.title changes.
          */
         // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [doc?.title]);
+      }, [doc?.title, isEditable]);
 
       return <LinkSelected {...inlineContent.props} />;
     },
