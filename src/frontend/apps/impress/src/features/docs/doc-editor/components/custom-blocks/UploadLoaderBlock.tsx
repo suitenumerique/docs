@@ -59,9 +59,15 @@ const UploadLoaderBlockComponent = ({
   editor,
 }: UploadLoaderBlockComponentProps) => {
   const mediaUrl = useMediaUrl();
+  const isEditable = editor.isEditable;
 
   useEffect(() => {
-    if (!block.props.blockUploadUrl || block.props.type !== 'loading') {
+    const shouldCheckStatus =
+      block.props.blockUploadUrl &&
+      block.props.type === 'loading' &&
+      isEditable;
+
+    if (!shouldCheckStatus) {
       return;
     }
 
@@ -108,7 +114,7 @@ const UploadLoaderBlockComponent = ({
           /* During collaboration, another user might have updated the block */
         }
       });
-  }, [block, editor, mediaUrl]);
+  }, [block, editor, mediaUrl, isEditable]);
 
   return (
     <Box className="bn-visual-media-wrapper" $direction="row" $gap="0.5rem">
