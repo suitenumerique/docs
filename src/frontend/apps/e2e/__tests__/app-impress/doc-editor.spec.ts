@@ -241,20 +241,66 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
   });
 
-  test('it cannot edit if viewer', async ({ page }) => {
-    await mockedDocument(page, {
-      user_role: 'reader',
+  test('it cannot edit if viewer but see and can get resources', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(page, 'doc-viewer', browserName, 1);
+    await verifyDocName(page, docTitle);
+
+    await writeInEditor({ page, text: 'Hello World' });
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    // Close the modal
+    await page.getByRole('button', { name: 'close' }).first().click();
+
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: page.url(),
+      withoutSignIn: true,
+      docTitle,
     });
 
-    await goToGridDoc(page);
+    await expect(
+      otherPage.getByLabel('It is the card information').getByText('Reader'),
+    ).toBeVisible();
 
-    const card = page.getByLabel('It is the card information');
-    await expect(card).toBeVisible();
-
-    await expect(card.getByText('Reader')).toBeVisible();
-
-    const editor = page.locator('.ProseMirror');
+    // Cannot edit
+    const editor = otherPage.locator('.ProseMirror');
     await expect(editor).toHaveAttribute('contenteditable', 'false');
+
+    // Owner add a image
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(
+      path.join(__dirname, 'assets/logo-suite-numerique.png'),
+    );
+
+    // Owner see the image
+    await expect(
+      page.locator('.--docs--editor-container img.bn-visual-media').first(),
+    ).toBeVisible();
+
+    // Viewser see the image
+    const viewerImg = otherPage
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+    await expect(viewerImg).toBeVisible();
+
+    // Viewer can download the image
+    await viewerImg.click();
+    const downloadPromise = otherPage.waitForEvent('download');
+    await otherPage.getByRole('button', { name: 'Download image' }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('logo-suite-numerique.png');
+
+    await cleanup();
   });
 
   test('it adds an image to the doc editor', async ({ page, browserName }) => {
