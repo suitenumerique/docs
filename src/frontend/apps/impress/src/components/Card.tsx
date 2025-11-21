@@ -15,9 +15,9 @@ export const Card = ({
       className={`--docs--card ${className || ''}`}
       $radius="4px"
       $padding={{ horizontal: 'xs', vertical: '3xs' }}
-      $scope="surface"
-      $theme="primary"
-      $variation=""
+      $scope={props.$theme ? props.$scope || 'semantic' : 'surface'}
+      $theme={props.$theme || 'primary'}
+      $variation={props.$theme ? props.$variation || 'tertiary' : ''}
       {...props}
     >
       {children}

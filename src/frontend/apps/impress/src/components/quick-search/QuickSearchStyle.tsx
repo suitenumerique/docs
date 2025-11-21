@@ -49,7 +49,7 @@ export const QuickSearchStyle = createGlobalStyle`
 
       &:hover,
       &[data-selected='true'] {
-        background: var(--c--globals--colors--gray-100);
+        background: var(--c--contextuals--background--semantic--contextual--primary);
         .show-right-on-focus {
           opacity: 1;
         }

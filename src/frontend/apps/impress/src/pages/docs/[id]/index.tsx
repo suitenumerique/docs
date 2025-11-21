@@ -196,7 +196,7 @@ const DocPage = ({ id }: DocProps) => {
           causes={error.cause}
           icon={
             error.status === 502 ? (
-              <Icon iconName="wifi_off" $theme="danger" $variation="600" />
+              <Icon iconName="wifi_off" $theme="danger" $withThemeInherited />
             ) : undefined
           }
         />

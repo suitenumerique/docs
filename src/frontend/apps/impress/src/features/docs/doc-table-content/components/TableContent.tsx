@@ -112,7 +112,7 @@ export const TableContent = () => {
       aria-label={t('Summary')}
       $css={css`
         top: 0;
-        border: 1px solid ${colorsTokens['gray-300']};
+        border: 1px solid ${colorsTokens['brand-100']};
         overflow: hidden;
         border-radius: ${spacingsTokens['3xs']};
         background: ${colorsTokens['gray-000']};
@@ -138,9 +138,6 @@ export const TableContent = () => {
           aria-expanded={isHover}
           aria-controls="toc-list"
           $css={css`
-            &:hover {
-              background: ${colorsTokens['brand-100']};
-            }
             &:focus-visible {
               outline: none;
               box-shadow: 0 0 0 4px ${colorsTokens['brand-400']};
@@ -151,9 +148,9 @@ export const TableContent = () => {
           `}
         >
           <Icon
-            iconName="list"
             $theme="brand"
-            $variation="800"
+            $variation="tertiary"
+            iconName="list"
             variant="symbols-outlined"
           />
         </BoxButton>
@@ -173,7 +170,7 @@ export const TableContent = () => {
             $justify="space-between"
             $align="center"
           >
-            <Text $weight="500" $size="sm" $variation="800" $theme="brand">
+            <Text $weight="500" $size="sm">
               {t('Summary')}
             </Text>
             <BoxButton
@@ -193,7 +190,7 @@ export const TableContent = () => {
                 }
               `}
             >
-              <Icon iconName="menu_open" $theme="brand" $variation="800" />
+              <Icon iconName="menu_open" $theme="brand" $variation="tertiary" />
             </BoxButton>
           </Box>
           <Box

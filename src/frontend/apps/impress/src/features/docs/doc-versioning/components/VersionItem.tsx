@@ -53,7 +53,7 @@ export const VersionItem = ({
           $width="100%"
         >
           <Box $direction="row" $gap="0.5rem" $align="center">
-            <Text $weight="bold" $size="sm" $variation="1000">
+            <Text $weight="bold" $size="sm">
               {text}
             </Text>
           </Box>

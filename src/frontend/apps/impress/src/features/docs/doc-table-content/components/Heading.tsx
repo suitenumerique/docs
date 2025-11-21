@@ -76,7 +76,6 @@ export const Heading = ({
       <Text
         $width="100%"
         $padding={{ vertical: 'xtiny', left: leftPaddingMap[level] }}
-        $variation={isActive ? '1000' : '700'}
         $weight={isHighlight ? 'bold' : 'normal'}
         $css="overflow-wrap: break-word;"
         $hasTransition

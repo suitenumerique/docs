@@ -34,7 +34,7 @@ interface DocVisibilityProps {
 export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const canManage = doc.abilities.accesses_manage;
   const docLinkReach = getDocLinkReach(doc);
   const docLinkRole = getDocLinkRole(doc);
@@ -123,7 +123,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       $gap={spacingsTokens['base']}
       className="--docs--doc-visibility"
     >
-      <Text $weight="700" $size="sm" $variation="700">
+      <Text $weight="700" $size="sm">
         {t('Link settings')}
       </Text>
       {isDesynchronized && <DocDesynchronized doc={doc} />}
@@ -145,7 +145,9 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             testId="doc-visibility"
             label={t('Document visibility')}
             arrowCss={css`
-              color: ${colorsTokens['brand-800']} !important;
+              color: var(
+                --c--contextuals--content--semantic--brand--tertiary
+              ) !important;
             `}
             buttonCss={css`
               &:hover {
@@ -163,24 +165,24 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             }
             options={linkReachOptions}
           >
-            <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
+            <Box
+              $theme={canManage ? 'brand' : 'gray'}
+              $variation={canManage ? 'tertiary' : 'primary'}
+              $direction="row"
+              $align="center"
+              $gap={spacingsTokens['3xs']}
+            >
               <Icon
-                $theme={canManage ? 'primary' : 'gray'}
-                $variation={canManage ? '800' : '600'}
                 iconName={linkReachChoices[docLinkReach].icon}
+                $withThemeInherited
               />
-              <Text
-                $theme={canManage ? 'primary' : 'gray'}
-                $variation={canManage ? '800' : '600'}
-                $weight="500"
-                $size="md"
-              >
+              <Text $weight="500" $size="md" $withThemeInherited>
                 {linkReachChoices[docLinkReach].label}
               </Text>
             </Box>
           </DropdownMenu>
           {isDesktop && (
-            <Text $size="xs" $variation="600" $weight="400">
+            <Text $size="xs" $variation="secondary" $weight="400">
               {description}
             </Text>
           )}
@@ -194,6 +196,11 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
                   background-color: unset;
                 }
               `}
+              arrowCss={css`
+                color: var(
+                  --c--contextuals--content--semantic--brand--tertiary
+                ) !important;
+              `}
               disabled={!canManage}
               showArrow={true}
               options={linkRoleOptions}
@@ -206,7 +213,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               }
               label={t('Document access mode')}
             >
-              <Text $weight="initial" $variation="600" $theme="brand">
+              <Text $weight="initial" $theme="brand" $variation="tertiary">
                 {linkModeTranslations[docLinkRole]}
               </Text>
             </DropdownMenu>
@@ -214,7 +221,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
         )}
       </Box>
       {!isDesktop && (
-        <Text $size="xs" $variation="600">
+        <Text $size="xs" $variation="secondary">
           {description}
         </Text>
       )}
