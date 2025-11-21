@@ -10,7 +10,7 @@ const GaufreStyle = createGlobalStyle`
   .lasuite-gaufre-btn{
     box-shadow: inset 0 0 0 0 !important;
     border-radius: var(--c--components--button--border-radius) !important;
-    transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-in) !important;
+    transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out) !important;
     &:hover {
       background: var(--c--contextuals--background--semantic--brand--tertiary-hover) !important;
     }

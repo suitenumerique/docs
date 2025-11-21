@@ -74,6 +74,7 @@ console.log('Using Cunningham theme for Impress docs', {
 
 mergedColors = {
   ...mergedColors,
+  'logo-1': '#2845C1',
   'black-000': '#FFFFFF',
   'black-050': '#F2F2F2',
   'black-100': '#E5E5E5',

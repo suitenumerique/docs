@@ -3,7 +3,7 @@ export const tokens = {
     default: {
       globals: {
         colors: {
-          'logo-1': '#377FDB',
+          'logo-1': '#2845C1',
           'logo-2': '#377FDB',
           'logo-1-dark': '#95ABFF',
           'logo-2-dark': '#95ABFF',
@@ -574,7 +574,7 @@ export const tokens = {
           text: { primary: '#F2F2F2' },
         },
         content: {
-          logo1: '#377FDB',
+          logo1: '#2845C1',
           logo2: '#377FDB',
           semantic: {
             brand: {

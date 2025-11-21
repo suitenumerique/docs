@@ -1,9 +1,8 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, Text } from '@/components';
+import { Box, BoxButton, Card, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
@@ -44,7 +43,7 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
   });
 
   return (
-    <Box
+    <Card
       className="--docs--alert-restore"
       aria-label={t('Alert deleted document')}
       $radius={spacingsTokens['3xs']}
@@ -53,23 +52,17 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
       $flex={1}
       $align="center"
       $gap={spacingsTokens['3xs']}
-      $css={css`
-        border: 1px solid
-          var(--c--contextuals--border--semantic--error--tertiary);
-      `}
       $justify="space-between"
-      $withThemeBG
       $theme="error"
-      $variation="tertiary"
     >
       <Box
-        $color="inherit"
+        $withThemeInherited
         $direction="row"
         $align="center"
         $gap={spacingsTokens['2xs']}
       >
         <Icon
-          $color="inherit"
+          $withThemeInherited
           data-testid="public-icon"
           iconName="delete"
           variant="symbols-outlined"
@@ -84,19 +77,19 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
         }
         $direction="row"
         $gap="0.2rem"
-        $color="inherit"
+        $withThemeInherited
         $align="center"
       >
         <Icon
           iconName="undo"
-          $color="inherit"
+          $withThemeInherited
           $size="18px"
           variant="symbols-outlined"
         />
-        <Text $color="inherit" $size="s" $css="line-height:1;">
+        <Text $withThemeInherited $size="s" $css="line-height:1;">
           {t('Restore')}
         </Text>
       </BoxButton>
-    </Box>
+    </Card>
   );
 };

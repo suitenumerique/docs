@@ -18,7 +18,7 @@ export const Title = ({ headingLevel = 'h2' }: TitleSemanticsProps) => {
       as={headingLevel}
       $zIndex={1}
       $size="1.375rem"
-      $theme="brand"
+      $color="var(--c--contextuals--content--logo1)"
     >
       {t('Docs')}
     </Text>

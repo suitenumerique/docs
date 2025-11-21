@@ -2,40 +2,37 @@ import { Button, Modal, ModalSize } from '@openfun/cunningham-react';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import { Box, BoxButton, Icon, Text } from '@/components';
+import { Box, BoxButton, Card, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 export const AlertNetwork = () => {
   const { t } = useTranslation();
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <>
       <Box>
-        <Box
+        <Card
           $direction="row"
           $justify="space-between"
           $width="100%"
-          $background={colorsTokens['warning-100']}
           $radius={spacingsTokens['3xs']}
           $padding="xs"
           $flex={1}
           $align="center"
           $gap={spacingsTokens['2xs']}
-          $css={css`
-            border: 1px solid var(--c--globals--colors--warning-300);
-          `}
+          $theme="warning"
         >
-          <Box $direction="row" $gap={spacingsTokens['2xs']} $align="center">
-            <Icon
-              iconName="mobiledata_off"
-              $theme="warning"
-              $variation="secondary"
-            />
-            <Text $theme="warning" $variation="secondary" $weight={500}>
+          <Box
+            $direction="row"
+            $gap={spacingsTokens['2xs']}
+            $align="center"
+            $withThemeInherited
+          >
+            <Icon iconName="mobiledata_off" $withThemeInherited />
+            <Text $withThemeInherited $weight={500}>
               {t('Others are editing. Your network prevent changes.')}
             </Text>
           </Box>
@@ -44,25 +41,20 @@ export const AlertNetwork = () => {
             $gap={spacingsTokens['3xs']}
             $align="center"
             onClick={() => setIsModalOpen(true)}
+            $withThemeInherited
           >
             <Icon
               iconName="info"
-              $theme="warning"
-              $variation="secondary"
+              $withThemeInherited
               $size="16px"
               $weight="500"
               $margin={{ top: 'auto' }}
             />
-            <Text
-              $theme="warning"
-              $variation="secondary"
-              $weight="500"
-              $size="xs"
-            >
+            <Text $withThemeInherited $weight="500" $size="xs">
               {t('Learn more')}
             </Text>
           </BoxButton>
-        </Box>
+        </Card>
       </Box>
       {isModalOpen && (
         <AlertNetworkModal onClose={() => setIsModalOpen(false)} />

@@ -149,7 +149,7 @@ export const Box = styled('div')<BoxProps>`
       return `color: ${$color};`;
     }
 
-    if (!$layer || !$scope || !$theme) {
+    if (!$layer || !$scope) {
       return '';
     }
 

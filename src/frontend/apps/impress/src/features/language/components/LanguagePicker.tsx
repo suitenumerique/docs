@@ -42,7 +42,7 @@ export const LanguagePicker = () => {
       label={t('Select language')}
       buttonCss={css`
         transition: all var(--c--globals--transitions--duration)
-          var(--c--globals--transitions--ease-in) !important;
+          var(--c--globals--transitions--ease-out) !important;
         border-radius: 4px;
         padding: 0.5rem 0.6rem;
         & > div {
