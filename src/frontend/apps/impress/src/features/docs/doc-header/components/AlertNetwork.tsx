@@ -30,8 +30,12 @@ export const AlertNetwork = () => {
           `}
         >
           <Box $direction="row" $gap={spacingsTokens['2xs']} $align="center">
-            <Icon iconName="mobiledata_off" $theme="warning" $variation="600" />
-            <Text $theme="warning" $variation="600" $weight={500}>
+            <Icon
+              iconName="mobiledata_off"
+              $theme="warning"
+              $variation="secondary"
+            />
+            <Text $theme="warning" $variation="secondary" $weight={500}>
               {t('Others are editing. Your network prevent changes.')}
             </Text>
           </Box>
@@ -44,12 +48,17 @@ export const AlertNetwork = () => {
             <Icon
               iconName="info"
               $theme="warning"
-              $variation="600"
+              $variation="secondary"
               $size="16px"
               $weight="500"
               $margin={{ top: 'auto' }}
             />
-            <Text $theme="warning" $variation="600" $weight="500" $size="xs">
+            <Text
+              $theme="warning"
+              $variation="secondary"
+              $weight="500"
+              $size="xs"
+            >
               {t('Learn more')}
             </Text>
           </BoxButton>
@@ -74,20 +83,14 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
       onClose={() => onClose()}
       rightActions={
         <>
-          <Button aria-label={t('OK')} onClick={onClose} color="danger">
+          <Button aria-label={t('OK')} onClick={onClose} color="error">
             {t('I understand')}
           </Button>
         </>
       }
       size={ModalSize.MEDIUM}
       title={
-        <Text
-          $size="h6"
-          as="h6"
-          $margin={{ all: '0' }}
-          $align="flex-start"
-          $variation="1000"
-        >
+        <Text $size="h6" as="h6" $margin={{ all: '0' }} $align="flex-start">
           {t("Why you can't edit the document?")}
         </Text>
       }
@@ -97,14 +100,14 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
         className="--docs--modal-alert-network"
         $margin={{ top: 'md' }}
       >
-        <Text $size="sm" $variation="600">
+        <Text $size="sm" $variation="secondary">
           {t(
             'Others are editing this document. Unfortunately your network blocks WebSockets, the technology enabling real-time co-editing.',
           )}
         </Text>
         <Text
           $size="sm"
-          $variation="600"
+          $variation="secondary"
           $margin={{ top: 'xs' }}
           $weight="bold"
           $display="inline"
@@ -112,7 +115,7 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
           {t("This means you can't edit until others leave.")}{' '}
           <Text
             $size="sm"
-            $variation="600"
+            $variation="secondary"
             $margin={{ top: 'xs' }}
             $weight="normal"
             $display="inline"

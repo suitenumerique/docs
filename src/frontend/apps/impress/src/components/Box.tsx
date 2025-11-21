@@ -14,6 +14,7 @@ export interface BoxProps {
   as?: HTMLElementType;
   $align?: CSSProperties['alignItems'];
   $background?: CSSProperties['background'];
+  $border?: CSSProperties['border'];
   $color?: CSSProperties['color'];
   $css?: string | RuleSet<object>;
   $cursor?: CSSProperties['cursor'];
@@ -55,6 +56,8 @@ export interface BoxProps {
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $withThemeBG?: boolean;
+  $withThemeInherited?: boolean;
+  $withThemeBorder?: boolean;
   $zIndex?: CSSProperties['zIndex'];
 }
 
@@ -88,12 +91,36 @@ export const Box = styled('div')<BoxProps>`
   ${({ $radius }) => $radius && `border-radius: ${$radius};`}
   ${({ $shrink }) => $shrink && `flex-shrink: ${$shrink};`}
   ${({
+    $layer = 'border',
+    $theme = 'brand',
+    $variation = 'primary',
+    $scope = 'semantic',
+    $border,
+    $withThemeBorder,
+    $withThemeInherited,
+  }) => {
+    if ($border) {
+      return `border: ${$border};`;
+    }
+
+    if (!$layer || !$scope || !$theme || !$withThemeBorder) {
+      return '';
+    }
+
+    if ($withThemeInherited) {
+      return `border: inherit;`;
+    }
+
+    return `border: 1px solid var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
+  }}
+  ${({
     $layer = 'background',
     $theme = 'brand',
     $variation = 'primary',
     $scope = 'semantic',
     $background,
     $withThemeBG,
+    $withThemeInherited,
   }) => {
     if ($background) {
       return `background: ${$background};`;
@@ -101,6 +128,10 @@ export const Box = styled('div')<BoxProps>`
 
     if (!$layer || !$scope || !$theme || !$withThemeBG) {
       return '';
+    }
+
+    if ($withThemeInherited) {
+      return `background: inherit;`;
     }
 
     return `background: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
@@ -112,6 +143,7 @@ export const Box = styled('div')<BoxProps>`
     $scope = 'semantic',
     $color,
     $withThemeBG,
+    $withThemeInherited,
   }) => {
     if ($color) {
       return `color: ${$color};`;
@@ -130,6 +162,10 @@ export const Box = styled('div')<BoxProps>`
       $theme
     ) {
       $variation = `on-${$theme}`;
+    }
+
+    if ($withThemeInherited) {
+      return `color: inherit;`;
     }
 
     return `color: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;

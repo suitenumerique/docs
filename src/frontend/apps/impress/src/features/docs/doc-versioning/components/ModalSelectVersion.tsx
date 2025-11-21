@@ -122,7 +122,7 @@ export const ModalSelectVersion = ({
                 `}
                 $padding="sm"
               >
-                <Text $size="h6" $variation="1000" $weight="bold">
+                <Text $size="h6" $weight="bold">
                   {t('History')}
                 </Text>
                 <ButtonCloseModal
@@ -149,7 +149,6 @@ export const ModalSelectVersion = ({
                   fullWidth
                   disabled={!selectedVersionId}
                   onClick={restoreModal.open}
-                  color="primary"
                 >
                   {t('Restore')}
                 </Button>

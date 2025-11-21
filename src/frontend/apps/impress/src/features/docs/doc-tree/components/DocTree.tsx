@@ -218,12 +218,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             border-radius: 4px;
             width: 100%;
             background-color: ${rootIsSelected || rootActionsOpen
-              ? 'var(--c--contextuals--background--semantic--gray--primary)'
+              ? 'var(--c--contextuals--background--semantic--contextual--primary)'
               : 'transparent'};
 
             &:hover {
               background-color: var(
-                --c--contextuals--background--semantic--neutral--tertiary
+                --c--contextuals--background--semantic--contextual--primary
               );
             }
 
@@ -234,7 +234,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             }
 
             .doc-tree-root-item-actions {
-              display: 'flex';
+              display: flex;
               opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {

@@ -40,10 +40,8 @@ const BoxButton = forwardRef<HTMLDivElement, BoxButtonType>(
           border: none;
           outline: none;
           font-family: inherit;
-          color: ${props.disabled
-            ? `var(--c--contextuals--content--semantic--disabled--primary) !important`
-            : `inherit`};
-
+          color: ${props.disabled &&
+          `var(--c--contextuals--content--semantic--disabled--primary)`};
           &:focus-visible {
             transition: none;
             outline: 2px solid

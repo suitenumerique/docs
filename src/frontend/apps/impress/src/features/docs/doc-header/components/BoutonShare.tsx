@@ -53,13 +53,12 @@ export const BoutonShare = ({
         `}
       >
         <Button
-          color="tertiary"
           aria-label={t('Share button')}
+          variant="secondary"
           icon={
             <Icon
               iconName="group"
-              $theme="brand"
-              $variation="800"
+              $color="inherit"
               variant="filled"
               disabled={isDisabled}
             />

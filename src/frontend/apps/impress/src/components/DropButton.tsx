@@ -33,6 +33,7 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   font-size: 0.938rem;
   padding: 0;
   border-radius: 4px;
+  color: var(--c--contextuals--content--semantic--brand--tertiary);
   &:hover {
     background-color: var(
       --c--contextuals--background--semantic--brand--tertiary-hover

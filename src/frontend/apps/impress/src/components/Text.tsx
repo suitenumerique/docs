@@ -33,8 +33,8 @@ export const TextStyled = styled(Box)<TextProps>`
 `;
 
 const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
-  ({ className, ...props }, ref) => {
-    return <TextStyled ref={ref} as="span" className={className} {...props} />;
+  (props, ref) => {
+    return <TextStyled ref={ref} as="span" {...props} />;
   },
 );
 

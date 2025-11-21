@@ -17,7 +17,7 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const treeContext = useTreeContext<Doc>();
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { mutate: restoreDoc, error } = useRestoreDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN, KEY_DOC],
     options: {
@@ -47,8 +47,6 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
     <Box
       className="--docs--alert-restore"
       aria-label={t('Alert deleted document')}
-      $color={colorsTokens['danger-800']}
-      $background={colorsTokens['danger-100']}
       $radius={spacingsTokens['3xs']}
       $direction="row"
       $padding="xs"
@@ -56,21 +54,27 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
       $align="center"
       $gap={spacingsTokens['3xs']}
       $css={css`
-        border: 1px solid var(--c--globals--colors--danger-300, #e3e3fd);
+        border: 1px solid
+          var(--c--contextuals--border--semantic--error--tertiary);
       `}
       $justify="space-between"
+      $withThemeBG
+      $theme="error"
+      $variation="tertiary"
     >
-      <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
+      <Box
+        $color="inherit"
+        $direction="row"
+        $align="center"
+        $gap={spacingsTokens['2xs']}
+      >
         <Icon
-          $theme="danger"
-          $variation="700"
+          $color="inherit"
           data-testid="public-icon"
           iconName="delete"
           variant="symbols-outlined"
         />
-        <Text $theme="danger" $variation="700" $weight="500">
-          {t('Document deleted')}
-        </Text>
+        {t('Document deleted')}
       </Box>
       <BoxButton
         onClick={() =>
@@ -80,18 +84,16 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
         }
         $direction="row"
         $gap="0.2rem"
-        $theme="danger"
-        $variation="600"
+        $color="inherit"
         $align="center"
       >
         <Icon
           iconName="undo"
-          $theme="danger"
-          $variation="600"
+          $color="inherit"
           $size="18px"
           variant="symbols-outlined"
         />
-        <Text $theme="danger" $variation="600" $size="s" $css="line-height:1;">
+        <Text $color="inherit" $size="s" $css="line-height:1;">
           {t('Restore')}
         </Text>
       </BoxButton>

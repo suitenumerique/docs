@@ -25,7 +25,7 @@ export const DocsGridItemSharedButton = ({
   return (
     <Tooltip
       content={
-        <Text $textAlign="center" $variation="000">
+        <Text $textAlign="center">
           {t('Shared with {{count}} users', { count: sharedCount })}
         </Text>
       }

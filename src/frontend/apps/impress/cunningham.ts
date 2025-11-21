@@ -1,6 +1,19 @@
 import { cunninghamConfig as tokens } from '@gouvfr-lasuite/ui-kit';
+import { defaultTokens } from '@openfun/cunningham-react';
+import merge from 'lodash/merge';
 
-console.log('Using Cunningham theme for Impress docs', tokens);
+// Uikit does not provide the full list of tokens.
+// To be able to override correctly, we need to merge with the default tokens.
+let mergedColors = merge(
+  defaultTokens.globals.colors,
+  tokens.themes.default.globals.colors,
+);
+
+console.log('Using Cunningham theme for Impress docs', {
+  b1: tokens.themes.default.globals.colors['blue1-100'],
+  d1: defaultTokens.globals.colors['blue-1-100'],
+  merged: mergedColors['blue1-100'],
+});
 
 // const customColors = {
 //   'primary-action': '#1212FF',
@@ -59,13 +72,54 @@ console.log('Using Cunningham theme for Impress docs', tokens);
 //   },
 // };
 
+mergedColors = {
+  ...mergedColors,
+  'black-000': '#FFFFFF',
+  'black-050': '#F2F2F2',
+  'black-100': '#E5E5E5',
+  'black-150': '#D9D9D9',
+  'black-200': '#CCCCCC',
+  'black-250': '#BFBFBF',
+  'black-300': '#B2B2B2',
+  'black-350': '#A6A6A6',
+  'black-400': '#999999',
+  'black-450': '#8C8C8C',
+  'black-500': '#7F7F7F',
+  'black-550': '#737373',
+  'black-600': '#666666',
+  'black-650': '#595959',
+  'black-700': '#4C4C4C',
+  'black-750': '#404040',
+  'black-800': '#333333',
+  'black-850': '#262626',
+  'black-900': '#191919',
+  'black-950': '#0D0D0D',
+  'white-000': '#FFFFFF',
+  'white-050': '#F2F2F2',
+  'white-100': '#E5E5E5',
+  'white-150': '#D9D9D9',
+  'white-200': '#CCCCCC',
+  'white-250': '#BFBFBF',
+  'white-300': '#B2B2B2',
+  'white-350': '#A6A6A6',
+  'white-400': '#999999',
+  'white-450': '#8C8C8C',
+  'white-500': '#7F7F7F',
+  'white-550': '#737373',
+  'white-600': '#666666',
+  'white-650': '#595959',
+  'white-700': '#4C4C4C',
+  'white-750': '#404040',
+  'white-800': '#333333',
+  'white-850': '#262626',
+  'white-900': '#191919',
+  'white-950': '#0D0D0D',
+};
+
 tokens.themes.default.globals = {
   ...tokens.themes.default.globals,
   ...{
-    // colors: {
-    //   ...tokens.themes.default.globals.colors,
-    //   //...customColors,
-    // },
+    colors: mergedColors,
     font: {
       ...tokens.themes.default.globals.font,
       families: {

@@ -44,6 +44,10 @@
   contain: content;
 }
 
+.c__button:focus-visible {
+  outline: none;
+}
+
 .c__button--medium {
   min-height: var(--c--components--button--medium-height);
   height: auto;

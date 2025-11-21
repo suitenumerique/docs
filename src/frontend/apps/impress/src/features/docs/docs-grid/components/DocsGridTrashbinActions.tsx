@@ -44,8 +44,6 @@ export const DocsGridTrashbinActions = ({
       icon: (
         <Icon
           $size="20px"
-          $theme="gray"
-          $variation="1000"
           iconName="undo"
           aria-hidden="true"
           variant="symbols-outlined"

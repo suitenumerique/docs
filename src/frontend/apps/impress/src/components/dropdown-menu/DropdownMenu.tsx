@@ -134,7 +134,9 @@ export const DropdownMenu = ({
             />
           </Box>
         ) : (
-          <Box ref={blockButtonRef}>{children}</Box>
+          <Box ref={blockButtonRef} $color="inherit">
+            {children}
+          </Box>
         )
       }
     >
@@ -209,7 +211,7 @@ export const DropdownMenu = ({
 
                   &:hover {
                     background-color: var(
-                      --c--contextuals--background--semantic--gray--tertiary
+                      --c--contextuals--background--semantic--contextual--primary
                     );
                   }
 
@@ -217,17 +219,20 @@ export const DropdownMenu = ({
                     outline: 2px solid var(--c--globals--colors--brand-400);
                     outline-offset: -2px;
                     background-color: var(
-                      --c--contextuals--background--semantic--gray--primary
+                      --c--contextuals--background--semantic--contextual--primary
                     );
                   }
 
-                  ${isFocused &&
+                  /**
+                  * TODO: This part seems to have a problem with DocToolBox
+                  */
+                  /* ${isFocused &&
                   css`
                     outline-offset: -2px;
                     background-color: var(
-                      --c--contextuals--background--semantic--gray--primary
+                      --c--contextuals--background--semantic--contextual--primary
                     );
-                  `}
+                  `} */
                 `}
               >
                 <Box

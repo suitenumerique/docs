@@ -1,27 +1,23 @@
 import { PropsWithChildren } from 'react';
-import { css } from 'styled-components';
-
-import { useCunninghamTheme } from '@/cunningham';
 
 import { Box, BoxType } from '.';
 
 export const Card = ({
   children,
   className,
-  $css,
   ...props
 }: PropsWithChildren<BoxType>) => {
-  const { contextualTokens } = useCunninghamTheme();
-
   return (
     <Box
+      role="region"
+      $withThemeBG
+      $withThemeBorder
       className={`--docs--card ${className || ''}`}
-      $background="white"
       $radius="4px"
-      $css={css`
-        border: 1px solid ${contextualTokens['border']['surface']['primary']};
-        ${$css}
-      `}
+      $padding={{ horizontal: 'xs', vertical: '3xs' }}
+      $scope="surface"
+      $theme="primary"
+      $variation=""
       {...props}
     >
       {children}
