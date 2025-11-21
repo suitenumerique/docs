@@ -10,7 +10,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
-
+- ✨(frontend) add /new route for document creation #1641
 ## [3.10.0] - 2025-11-18
 
 ### Added
