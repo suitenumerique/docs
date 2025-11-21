@@ -80,7 +80,8 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
               rolesAllowed={accessRequest.abilities.set_role_to}
             />
             <Button
-              color="tertiary"
+              color="brand"
+              variant="tertiary"
               onClick={() =>
                 acceptDocAccessRequests({
                   docId: doc.id,
@@ -103,7 +104,7 @@ const DocShareAccessRequestItem = ({ doc, accessRequest }: Props) => {
                 }
                 aria-label={t('Close the access request modal')}
               >
-                <Icon iconName="close" $variation="600" $size="16px" />
+                <Icon iconName="close" $size="16px" />
               </BoxButton>
             )}
           </Box>
@@ -194,7 +195,7 @@ export const ButtonAccessRequest = ({
 
   if (docAccessError?.status === 404) {
     return (
-      <Text $maxWidth="320px" $textAlign="center" $variation="600" $size="sm">
+      <Text $maxWidth="320px" $textAlign="center" $size="sm">
         {t(
           'As this is a sub-document, please request access to the parent document to enable these features.',
         )}

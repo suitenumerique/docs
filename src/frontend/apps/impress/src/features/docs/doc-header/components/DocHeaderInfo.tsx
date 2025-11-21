@@ -47,7 +47,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
     return (
       <>
         <Text
-          $variation="600"
+          $variation="tertiary"
           $size="s"
           $weight="bold"
           $theme={isEditable ? 'gray' : 'warning'}
@@ -55,7 +55,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
           {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
           &nbsp;·&nbsp;
         </Text>
-        <Text $variation="600" $size="s">
+        <Text $variation="tertiary" $size="s">
           {dateToDisplay}
         </Text>
       </>
@@ -64,11 +64,11 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
 
   return (
     <>
-      <Text $variation="400" $size="s">
+      <Text $variation="tertiary" $size="s">
         {hasChildren ? relativeOnly : dateToDisplay}
       </Text>
       {hasChildren && (
-        <Text $variation="400" $size="s">
+        <Text $variation="tertiary" $size="s">
           &nbsp;•&nbsp;
           {t('Contains {{count}} sub-documents', {
             count: childrenCount,

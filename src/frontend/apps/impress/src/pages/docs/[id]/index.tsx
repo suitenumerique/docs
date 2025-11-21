@@ -101,6 +101,10 @@ const DocPage = ({ id }: DocProps) => {
     if (!doc && !isError && !isSkeletonVisible) {
       setIsSkeletonVisible(true);
     }
+
+    if (isError) {
+      setIsSkeletonVisible(false);
+    }
   }, [doc, isError, isSkeletonVisible, setIsSkeletonVisible]);
 
   /**
@@ -140,13 +144,7 @@ const DocPage = ({ id }: DocProps) => {
 
     setDoc(docQuery);
     setCurrentDoc(docQuery);
-  }, [
-    docQuery,
-    setCurrentDoc,
-    isFetching,
-    isSkeletonVisible,
-    setIsSkeletonVisible,
-  ]);
+  }, [docQuery, setCurrentDoc, isFetching]);
 
   useEffect(() => {
     return () => {

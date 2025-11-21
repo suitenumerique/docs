@@ -51,8 +51,7 @@ export interface BoxProps {
     | 'disabled'
     | (string & {});
   $transition?: CSSProperties['transition'];
-  //$variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
-  $variation?: 'primary' | 'secondary' | 'tertiary';
+  $variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
   $width?: CSSProperties['width'];
   $wrap?: CSSProperties['flexWrap'];
   $withThemeBG?: boolean;

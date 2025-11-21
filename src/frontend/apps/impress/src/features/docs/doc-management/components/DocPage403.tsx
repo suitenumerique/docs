@@ -88,7 +88,6 @@ export const DocPage403 = ({ id }: DocProps) => {
               as="p"
               $maxWidth="320px"
               $textAlign="center"
-              $variation="600"
               $size="sm"
               $margin={{ top: '0' }}
             >
@@ -101,8 +100,9 @@ export const DocPage403 = ({ id }: DocProps) => {
           <Box $direction="row" $gap="0.7rem">
             <StyledLink href="/">
               <StyledButton
-                icon={<Icon iconName="house" $theme="brand" />}
-                color="tertiary"
+                icon={<Icon iconName="house" $withThemeInherited />}
+                color="brand"
+                variant="secondary"
               >
                 {t('Home')}
               </StyledButton>

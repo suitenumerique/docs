@@ -25,11 +25,11 @@ export const LoadMoreText = ({
     >
       <Icon
         $theme="brand"
-        $variation="800"
+        $variation="secondary"
         iconName="arrow_downward"
         $size="md"
       />
-      <Text $theme="brand" $variation="800">
+      <Text $theme="brand" $variation="secondary">
         {t('Load more')}
       </Text>
     </Box>

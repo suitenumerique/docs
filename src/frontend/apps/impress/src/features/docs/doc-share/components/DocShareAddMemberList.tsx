@@ -5,7 +5,6 @@ import {
 } from '@openfun/cunningham-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
 import { APIError } from '@/api';
 import { Box, Card } from '@/components';
