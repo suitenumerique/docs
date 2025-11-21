@@ -1,4 +1,5 @@
 import {
+  TreeViewDataType,
   TreeViewItem,
   TreeViewNodeProps,
   useTreeContext,
@@ -68,7 +69,10 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           node.open();
 
           router.push(`/docs/${createdDoc.id}`);
-          treeContext?.treeData.setChildren(node.data.value.id, allChildren);
+          treeContext?.treeData.setChildren(
+            node.data.value.id,
+            allChildren as TreeViewDataType<Doc>[],
+          );
           treeContext?.treeData.setSelectedNode(createdDoc);
           togglePanel();
         })

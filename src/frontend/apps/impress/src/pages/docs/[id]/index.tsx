@@ -43,9 +43,12 @@ export function DocLayout() {
 
       <TreeProvider
         initialNodeId={id}
-        onLoadChildren={async (docId: string) => {
-          const doc = await getDocChildren({ docId });
-          return subPageToTree(doc.results);
+        onLoadChildren={async (docId: string, page: number) => {
+          const doc = await getDocChildren({ docId, page });
+          return {
+            children: subPageToTree(doc.results),
+            hasMore: !!doc.next,
+          };
         }}
       >
         <MainLayout enableResizablePanel={true}>
