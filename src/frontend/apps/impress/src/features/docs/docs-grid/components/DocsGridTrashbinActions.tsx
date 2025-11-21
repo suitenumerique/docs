@@ -44,8 +44,6 @@ export const DocsGridTrashbinActions = ({
       icon: (
         <Icon
           $size="20px"
-          $theme="greyscale"
-          $variation="1000"
           iconName="undo"
           aria-hidden="true"
           variant="symbols-outlined"
@@ -70,18 +68,24 @@ export const DocsGridTrashbinActions = ({
       options={options}
       label={menuLabel}
       aria-label={t('More options')}
+      buttonCss={css`
+        &:hover {
+          background-color: unset;
+        }
+      `}
     >
       <Icon
         data-testid={`docs-grid-actions-button-${doc.id}`}
         iconName="more_horiz"
-        $theme="primary"
-        $variation="600"
+        $theme="brand"
+        $variation="secondary"
         $css={css`
           cursor: pointer;
           &:hover {
             opacity: 0.8;
           }
         `}
+        aria-hidden="true"
       />
     </DropdownMenu>
   );

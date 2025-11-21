@@ -18,7 +18,7 @@ import { Title } from './Title';
 export const Header = () => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens, contextualTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
   const logo = config?.theme_customization?.header?.logo;
@@ -38,8 +38,11 @@ export const Header = () => {
         justify-content: space-between;
         height: ${HEADER_HEIGHT}px;
         padding: 0 ${spacingsTokens['base']};
-        background-color: ${colorsTokens['greyscale-000']};
-        border-bottom: 1px solid ${colorsTokens['greyscale-200']};
+        background-color: ${contextualTokens['background']['surface'][
+          'primary'
+        ]};
+        border-bottom: 1px solid
+          ${contextualTokens['border']['surface']['primary']};
       `}
       className="--docs--header"
     >
@@ -51,7 +54,7 @@ export const Header = () => {
         $css={css`
           outline: none;
           &:focus-visible {
-            box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400) !important;
+            box-shadow: 0 0 0 2px var(--c--globals--colors--brand-400) !important;
             border-radius: 4px;
           }
         `}

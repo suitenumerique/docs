@@ -46,17 +46,15 @@ export const CommentToolbarButton = () => {
           <Icon
             iconName="comment"
             className="--docs--icon-bg"
-            $theme="greyscale"
-            $variation="600"
+            $theme="gray"
             $padding="0.15rem"
             $size="16px"
-            $color={colorsTokens['greyscale-600']}
           />
           {t('Comment')}
         </Box>
       </Components.Generic.Toolbar.Button>
       <Box
-        $background={colorsTokens['greyscale-100']}
+        $background={colorsTokens['gray-100']}
         $width="1px"
         $height="70%"
         $margin={{ left: '2px' }}

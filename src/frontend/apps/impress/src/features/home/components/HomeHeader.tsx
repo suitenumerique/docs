@@ -17,8 +17,9 @@ export const getHeaderHeight = (isSmallMobile: boolean) =>
 
 export const HomeHeader = () => {
   const { t } = useTranslation();
-  const { themeTokens, spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const logo = themeTokens.logo;
+  const { spacingsTokens, componentTokens, contextualTokens } =
+    useCunninghamTheme();
+  const logo = componentTokens.logo;
   const { isSmallMobile } = useResponsiveStore();
 
   return (
@@ -65,7 +66,7 @@ export const HomeHeader = () => {
             data-testid="header-icon-docs"
             aria-label={t('Docs Logo')}
             width={32}
-            color={colorsTokens['primary-text']}
+            color={contextualTokens['content']['semantic']['brand']['primary']}
           />
           <Title />
         </Box>

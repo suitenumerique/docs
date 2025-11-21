@@ -25,7 +25,7 @@ export const DocsGridItemSharedButton = ({
   return (
     <Tooltip
       content={
-        <Text $textAlign="center" $variation="000">
+        <Text $textAlign="center">
           {t('Shared with {{count}} users', { count: sharedCount })}
         </Text>
       }
@@ -37,17 +37,25 @@ export const DocsGridItemSharedButton = ({
         aria-label={t('Open the sharing settings for the document')}
         data-testid={`docs-grid-item-shared-button-${doc.id}`}
         style={{
-          minWidth: '50px',
-          justifyContent: 'center',
+          padding: `0 var(--c--globals--spacings--xxxs) 0 var(--c--globals--spacings--xxxs)`,
         }}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
           handleClick();
         }}
-        color="tertiary"
+        color="brand"
+        variant="secondary"
         size="nano"
-        icon={<Icon $theme="primary" iconName="group" disabled={disabled} />}
+        icon={
+          <Icon
+            $theme="brand"
+            $variation="secondary"
+            iconName="group"
+            disabled={disabled}
+            variant="filled"
+          />
+        }
         disabled={disabled}
       >
         {sharedCount}

@@ -13,7 +13,8 @@ export const LeftPanelTargetFilters = () => {
   const searchParams = useSearchParams();
 
   const { togglePanel } = useLeftPanelStore();
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { colorsTokens, spacingsTokens, contextualTokens } =
+    useCunninghamTheme();
 
   const target =
     (searchParams.get('target') as DocDefaultFilter) ??
@@ -78,29 +79,28 @@ export const LeftPanelTargetFilters = () => {
               padding: ${spacingsTokens['2xs']};
               border-radius: ${spacingsTokens['3xs']};
               background-color: ${isActive
-                ? colorsTokens['greyscale-100']
+                ? contextualTokens['background']['semantic']['contextual'][
+                    'primary'
+                  ]
                 : 'transparent'};
               font-weight: ${isActive ? 700 : 400};
               color: inherit;
               text-decoration: none;
               cursor: pointer;
               &:hover {
-                background-color: ${colorsTokens['greyscale-100']};
+                background-color: ${contextualTokens['background']['semantic'][
+                  'contextual'
+                ]['primary']};
               }
               &:focus-visible {
                 outline: none !important;
-                box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+                box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
                 border-radius: 4px;
               }
             `}
           >
-            <Icon
-              $variation={isActive ? '1000' : '700'}
-              iconName={query.icon}
-            />
-            <Text $variation={isActive ? '1000' : '700'} $size="sm">
-              {query.label}
-            </Text>
+            <Icon iconName={query.icon} />
+            <Text $size="sm">{query.label}</Text>
           </StyledLink>
         );
       })}

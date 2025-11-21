@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { AlertModal, Box, Text } from '@/components';
+import { AlertModal, Card, Text } from '@/components';
 import { Doc, KEY_LIST_DOC } from '@/docs/doc-management';
 import {
   getDocAccesses,
@@ -147,19 +147,8 @@ export const DraggableDocGridContentList = ({
     return selectedDoc?.title || t('Unnamed document');
   }, [canDrag, canDrop, selectedDoc, t]);
 
-  const overlayBgColor = useMemo(() => {
-    if (!canDrag) {
-      return 'var(--c--theme--colors--danger-600)';
-    }
-    if (canDrop !== undefined && !canDrop) {
-      return 'var(--c--theme--colors--danger-600)';
-    }
-    if (isError) {
-      return 'var(--c--theme--colors--danger-600)';
-    }
-
-    return '#5858D3';
-  }, [canDrag, canDrop, isError]);
+  const cannotMoveDoc =
+    !canDrag || (canDrop !== undefined && !canDrop) || isError;
 
   if (docs.length === 0) {
     return null;
@@ -183,20 +172,20 @@ export const DraggableDocGridContentList = ({
           />
         ))}
         <DragOverlay dropAnimation={null}>
-          <Box
+          <Card
             $width="fit-content"
-            $padding={{ horizontal: 'xs', vertical: '3xs' }}
             $radius="12px"
-            $background={overlayBgColor}
             data-testid="drag-doc-overlay"
-            $height="auto"
             role="alert"
-            aria-label={t('Drag  and drop status')}
+            aria-label={t('Drag and drop status')}
+            $theme={cannotMoveDoc ? 'error' : 'brand'}
+            $variation="tertiary"
+            $scope="semantic"
           >
-            <Text $size="xs" $variation="000" $weight="500">
+            <Text $size="xs" $weight="500" $withThemeInherited>
               {overlayText}
             </Text>
-          </Box>
+          </Card>
         </DragOverlay>
       </DndContext>
       {modalConfirmation.isOpen && (

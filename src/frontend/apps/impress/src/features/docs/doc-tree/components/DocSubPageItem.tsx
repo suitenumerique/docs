@@ -1,4 +1,5 @@
 import {
+  TreeViewDataType,
   TreeViewItem,
   TreeViewNodeProps,
   useTreeContext,
@@ -39,7 +40,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const treeContext = useTreeContext<Doc>();
   const { untitledDocument } = useTrans();
   const { node } = props;
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens, contextualTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
 
@@ -68,7 +69,10 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           node.open();
 
           router.push(`/docs/${createdDoc.id}`);
-          treeContext?.treeData.setChildren(node.data.value.id, allChildren);
+          treeContext?.treeData.setChildren(
+            node.data.value.id,
+            allChildren as TreeViewDataType<Doc>[],
+          );
           treeContext?.treeData.setSelectedNode(createdDoc);
           togglePanel();
         })
@@ -115,32 +119,25 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-disabled={isDisabled}
       $css={css`
         background-color: ${menuOpen
-          ? 'var(--c--theme--colors--greyscale-100)'
-          : 'var(--c--theme--colors--greyscale-000)'};
+          ? 'var(--c--contextuals--background--semantic--brand--tertiary-hover)'
+          : 'var(--c--globals--colors--gray-000)'};
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           position: absolute;
           right: 0;
-          background: ${isDesktop
-            ? 'var(--c--theme--colors--greyscale-100)'
-            : 'var(--c--theme--colors--greyscale-000)'};
-        }
-        .c__tree-view--node.isSelected {
-          .light-doc-item-actions {
-            background: var(--c--theme--colors--greyscale-100);
-          }
         }
         .c__tree-view--node.isFocused {
           outline: none !important;
-          box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
+          box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
           border-radius: 4px;
         }
         &:hover {
-          background-color: var(--c--theme--colors--greyscale-100);
+          background-color: var(
+            --c--contextuals--background--semantic--gray--tertiary
+          );
           border-radius: 4px;
           .light-doc-item-actions {
             display: flex;
-            background: var(--c--theme--colors--greyscale-100);
           }
         }
         .row.preview & {
@@ -152,7 +149,13 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         <DocIcon
           emoji={emoji}
           withEmojiPicker={doc.abilities.partial_update}
-          defaultIcon={<SubPageIcon color={colorsTokens['primary-400']} />}
+          defaultIcon={
+            <SubPageIcon
+              color={
+                contextualTokens['content']['semantic']['info']['tertiary']
+              }
+            />
+          }
           $size="sm"
           docId={doc.id}
           title={doc.title}
@@ -187,7 +190,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
               overflow: hidden;
             `}
           >
-            <Text $css={ItemTextCss} $size="sm" $variation="1000">
+            <Text $css={ItemTextCss} $size="sm">
               {displayTitle}
             </Text>
             {doc.nb_accesses_direct >= 1 && (
@@ -195,7 +198,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
                 variant="filled"
                 iconName="group"
                 $size="16px"
-                $variation="400"
                 aria-hidden="true"
               />
             )}

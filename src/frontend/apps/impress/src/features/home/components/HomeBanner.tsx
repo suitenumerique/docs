@@ -15,7 +15,7 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { componentTokens, spacingsTokens, colorsTokens } =
+  const { componentTokens, spacingsTokens, contextualTokens } =
     useCunninghamTheme();
   const { isMobile, isSmallMobile } = useResponsiveStore();
   const withProConnect = componentTokens['home-proconnect'];
@@ -50,12 +50,11 @@ export default function HomeBanner() {
           <IconDocs
             aria-label={t('Back to homepage')}
             width={64}
-            color={colorsTokens['primary-text']}
+            color={contextualTokens['content']['semantic']['brand']['primary']}
           />
           <Text
             as="h2"
             $size={!isMobile ? 'xs-alt' : '2.3rem'}
-            $variation="800"
             $weight="bold"
             $textAlign="center"
             $margin="none"
@@ -67,9 +66,9 @@ export default function HomeBanner() {
           </Text>
           <Text
             $size="lg"
-            $variation="700"
             $textAlign="center"
             $margin={{ bottom: 'small' }}
+            $variation="secondary"
           >
             {t(
               'Collaborate and write in real time, without layout constraints.',
@@ -104,10 +103,9 @@ export default function HomeBanner() {
       </Box>
       <Box $css="bottom: 3rem" $position="absolute">
         <Button
-          color="secondary"
-          icon={
-            <Icon $theme="primary" $variation="800" iconName="expand_more" />
-          }
+          color="brand"
+          variant="secondary"
+          icon={<Icon $color="inherit" iconName="expand_more" />}
           onClick={(e) => {
             e.preventDefault();
             document

@@ -41,21 +41,16 @@ export const DocInheritedShareContent = ({
         }}
       >
         <Box $direction="row" $align="center" $gap={spacingsTokens['4xs']}>
-          <Text $variation="1000" $weight="bold" $size="sm">
+          <Text $weight="bold" $size="sm">
             {t('People with access via the parent document')}
           </Text>
           <Box>
             <StyledLink href={`/docs/${rawAccesses[0].document.id}`}>
               <Button
                 size="small"
-                icon={
-                  <Icon
-                    $theme="greyscale"
-                    $variation="600"
-                    iconName="open_in_new"
-                  />
-                }
-                color="tertiary-text"
+                icon={<Icon iconName="open_in_new" />}
+                color="neutral"
+                variant="tertiary"
               />
             </StyledLink>
           </Box>

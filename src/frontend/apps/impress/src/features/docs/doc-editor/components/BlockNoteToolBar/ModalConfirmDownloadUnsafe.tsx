@@ -24,14 +24,14 @@ export const ModalConfirmDownloadUnsafe = ({
         <>
           <Button
             aria-label={t('Cancel the download')}
-            color="secondary"
+            variant="secondary"
             onClick={() => onClose()}
           >
             {t('Cancel')}
           </Button>
           <Button
             aria-label={t('Download')}
-            color="danger"
+            color="error"
             data-testid="modal-download-unsafe-button"
             onClick={() => {
               if (onConfirm) {
@@ -52,7 +52,6 @@ export const ModalConfirmDownloadUnsafe = ({
           $gap="0.7rem"
           $size="h6"
           $align="flex-start"
-          $variation="1000"
           $direction="row"
           $margin="0"
         >
@@ -67,8 +66,10 @@ export const ModalConfirmDownloadUnsafe = ({
       >
         <Box>
           <Box $direction="column" $gap="0.35rem" $margin={{ top: 'sm' }}>
-            <Text $variation="700">{t('This file is flagged as unsafe.')}</Text>
-            <Text $variation="600">
+            <Text $variation="secondary">
+              {t('This file is flagged as unsafe.')}
+            </Text>
+            <Text $variation="secondary">
               {t('Please download it only if it comes from a trusted source.')}
             </Text>
           </Box>

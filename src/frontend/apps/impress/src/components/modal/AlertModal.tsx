@@ -38,7 +38,6 @@ export const AlertModal = ({
           $margin="0"
           id="alert-modal-title"
           $align="flex-start"
-          $variation="1000"
         >
           {title}
         </Text>
@@ -47,7 +46,7 @@ export const AlertModal = ({
         <>
           <Button
             aria-label={`${t('Cancel')} - ${title}`}
-            color="secondary"
+            variant="secondary"
             fullWidth
             onClick={() => onClose()}
           >
@@ -55,7 +54,7 @@ export const AlertModal = ({
           </Button>
           <Button
             aria-label={confirmLabel ?? t('Confirm')}
-            color="danger"
+            color="error"
             onClick={onConfirm}
           >
             {confirmLabel ?? t('Confirm')}
@@ -65,7 +64,7 @@ export const AlertModal = ({
     >
       <Box className="--docs--alert-modal">
         <Box>
-          <Text $variation="600" as="p">
+          <Text $variation="secondary" as="p">
             {description}
           </Text>
         </Box>

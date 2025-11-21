@@ -24,7 +24,11 @@ export const DocSearchItem = ({ doc }: DocSearchItemProps) => {
           </Box>
         }
         right={
-          <Icon iconName="keyboard_return" $theme="primary" $variation="800" />
+          <Icon
+            iconName="keyboard_return"
+            $theme="brand"
+            $variation="secondary"
+          />
         }
       />
     </Box>

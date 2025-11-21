@@ -5,7 +5,7 @@ import { tokens } from '@/cunningham';
 
 import { Box, BoxProps } from './Box';
 
-const { sizes } = tokens.themes.default.theme.font;
+const { sizes } = tokens.themes.default.globals.font;
 type TextSizes = keyof typeof sizes;
 
 export interface TextProps extends BoxProps {
@@ -27,24 +27,14 @@ export const TextStyled = styled(Box)<TextProps>`
   ${({ $size }) =>
     $size &&
     `font-size: ${$size in sizes ? sizes[$size as TextSizes] : $size};`}
-  ${({ $color }) => $color && `color: ${$color};`}
   ${({ $ellipsis }) =>
     $ellipsis &&
     `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`}
 `;
 
 const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
-  ({ className, ...props }, ref) => {
-    return (
-      <TextStyled
-        ref={ref}
-        as="span"
-        $theme="greyscale"
-        $variation="text"
-        className={className}
-        {...props}
-      />
-    );
+  (props, ref) => {
+    return <TextStyled ref={ref} as="span" {...props} />;
   },
 );
 

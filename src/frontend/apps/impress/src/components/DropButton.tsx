@@ -17,7 +17,8 @@ const StyledPopover = styled(Popover)`
   border-radius: 4px;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
   border: 1px solid #dddddd;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity var(--c--globals--transitions--duration)
+    var(--c--globals--transitions--ease-out);
 `;
 
 interface StyledButtonProps {
@@ -32,13 +33,14 @@ const StyledButton = styled(Button)<StyledButtonProps>`
   font-size: 0.938rem;
   padding: 0;
   border-radius: 4px;
+  color: var(--c--contextuals--content--semantic--brand--tertiary);
   &:hover {
     background-color: var(
-      --c--components--button--primary-text--background--color-hover
+      --c--contextuals--background--semantic--brand--tertiary-hover
     );
   }
   &:focus-visible {
-    box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400);
+    box-shadow: 0 0 0 2px var(--c--globals--colors--tertiary-400);
     border-radius: 4px;
   }
   ${({ $css }) => $css};

@@ -41,7 +41,8 @@ export const LanguagePicker = () => {
       showArrow
       label={t('Select language')}
       buttonCss={css`
-        transition: all 0.15s ease-in-out !important;
+        transition: all var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-out) !important;
         border-radius: 4px;
         padding: 0.5rem 0.6rem;
         & > div {
@@ -49,12 +50,15 @@ export const LanguagePicker = () => {
           display: flex;
         }
         & .material-icons {
-          color: var(--c--components--button--primary-text--color) !important;
+          color: var(
+            --c--contextuals--content--palette--brand--primary
+          ) !important;
         }
       `}
     >
       <Text
-        $theme="primary"
+        $theme="brand"
+        $variation="tertiary"
         $direction="row"
         $gap="0.5rem"
         className="--docs--language-picker-text"

@@ -4,15 +4,12 @@ import { tokens } from '@/cunningham';
 
 import { AvatarSvg } from './AvatarSvg';
 
-const colors = tokens.themes.default.theme.colors;
+const colors = tokens.themes.default.globals.colors;
 
 const avatarsColors = [
-  colors['blue-500'],
+  colors['blue-1-500'],
   colors['brown-500'],
-  colors['cyan-500'],
-  colors['gold-500'],
   colors['green-500'],
-  colors['olive-500'],
   colors['orange-500'],
   colors['pink-500'],
   colors['purple-500'],

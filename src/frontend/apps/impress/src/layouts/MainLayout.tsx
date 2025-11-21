@@ -53,7 +53,7 @@ export function MainLayoutContent({
   enableResizablePanel = false,
 }: PropsWithChildren<MainLayoutContentProps>) {
   const { isDesktop } = useResponsiveStore();
-  const { colorsTokens } = useCunninghamTheme();
+  const { contextualTokens } = useCunninghamTheme();
   const { t } = useTranslation();
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
@@ -73,8 +73,8 @@ export function MainLayoutContent({
       }}
       $background={
         currentBackgroundColor === 'white'
-          ? colorsTokens['greyscale-000']
-          : colorsTokens['greyscale-050']
+          ? contextualTokens['background']['surface']['primary']
+          : contextualTokens['background']['surface']['tertiary']
       }
       $css={css`
         overflow-y: auto;
@@ -110,8 +110,8 @@ export function MainLayoutContent({
       <Box
         $css={css`
           width: 300px;
-          min-width: 300px;
-          border-right: 1px solid ${colorsTokens['greyscale-200']};
+          border-right: 1px solid
+            ${contextualTokens['border']['surface']['primary']};
         `}
       >
         <LeftPanel />

@@ -7,7 +7,7 @@ import { Box, Text, TextType } from '@/components';
 
 const AlertStyled = styled(Alert)`
   & .c__button--tertiary:hover {
-    background-color: var(--c--theme--colors--greyscale-200);
+    background-color: var(--c--globals--colors--gray-200);
   }
 `;
 
@@ -54,8 +54,7 @@ export const TextOnlyErrors = ({
         causes.map((cause, i) => (
           <Text
             key={`causes-${i}`}
-            $theme="danger"
-            $variation="600"
+            $theme="error"
             $textAlign="center"
             {...textProps}
           >
@@ -64,12 +63,7 @@ export const TextOnlyErrors = ({
         ))}
 
       {!causes && (
-        <Text
-          $theme="danger"
-          $variation="600"
-          $textAlign="center"
-          {...textProps}
-        >
+        <Text $theme="error" $textAlign="center" {...textProps}>
           {defaultMessage || t('Something bad happens, please retry.')}
         </Text>
       )}
