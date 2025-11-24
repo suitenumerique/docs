@@ -41,7 +41,7 @@
     "@mantine/hooks": "8.3.6",
     "@openfun/cunningham-react": "3.2.3",
     "@react-pdf/renderer": "4.3.1",
-    "@sentry/nextjs": "10.22.0",
+    "@sentry/nextjs": "10.27.0",
     "@tanstack/react-query": "5.90.6",
     "@tiptap/extensions": "*",
     "canvg": "4.0.3",
