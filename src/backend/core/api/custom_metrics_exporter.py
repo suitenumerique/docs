@@ -21,16 +21,18 @@ class CustomMetricsExporter:
     - use labels inside the metric name
     """
 
+    def _get_metric_name(self, name):
+        """
+        Get the Prometheus metric if PROMETHEUS_METRIC_NAMESPACE is set.
+        """
+        namespace = getattr(settings, "PROMETHEUS_METRIC_NAMESPACE", "")
+        return f"{namespace}_{name}" if namespace else name
+
     def collect(self):
         """
         Collect and yield Prometheus metrics for user activity, document activity,
         and document statistics over various time periods.
         """
-
-        namespace = getattr(settings, "PROMETHEUS_METRIC_NAMESPACE", "")
-
-        def metric_name(name):
-            return f"{namespace}_{name}" if namespace else name
 
         # Group time boundaries into a dictionary to reduce separate local variables
         times = {}
@@ -98,14 +100,14 @@ class CustomMetricsExporter:
         # -- User metrics
         metrics.append(
             GaugeMetricFamily(
-                metric_name("users"),
+                self._get_metric_name("users"),
                 "Current number of users",
                 value=user_metrics["count"],
             )
         )
         # Aggregate active users into a single metric with a 'window' label
         active_users_metric = GaugeMetricFamily(
-            metric_name("users_active"),
+            self._get_metric_name("users_active"),
             "Users active within the given window",
             labels=["window"],
         )
@@ -117,21 +119,21 @@ class CustomMetricsExporter:
         # -- Document metrics
         metrics.append(
             GaugeMetricFamily(
-                metric_name("documents"),
+                self._get_metric_name("documents"),
                 "Current number of documents",
                 value=doc_metrics["count"],
             )
         )
         metrics.append(
             GaugeMetricFamily(
-                metric_name("documents_shared"),
+                self._get_metric_name("documents_shared"),
                 "Current number of shared documents",
                 value=doc_metrics["shared"],
             )
         )
         # Aggregate active documents into a single metric with a 'window' label
         active_documents_metric = GaugeMetricFamily(
-            metric_name("documents_active"),
+            self._get_metric_name("documents_active"),
             "Documents active within the given window",
             labels=["window"],
         )
@@ -145,7 +147,7 @@ class CustomMetricsExporter:
         # -- Document oldest/newest creation timestamps in seconds
         if doc_ages["oldest"] or doc_ages["newest"]:
             docs_created_ts_metric = GaugeMetricFamily(
-                metric_name("documents_created_timestamp_seconds"),
+                self._get_metric_name("documents_created_timestamp_seconds"),
                 "Document creation timestamps (Unix time) for oldest/newest documents",
                 labels=["bound"],
             )
