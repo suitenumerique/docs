@@ -1,0 +1,156 @@
+{{- $envVars := include "impress.common.env" (list . .Values.docSpecApi) -}}
+{{- $fullName := include "impress.docSpecApi.fullname" . -}}
+{{- $component := "docspec" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    {{- with .Values.backend.dpAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  replicas: {{ .Values.docSpecApi.replicas }}
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.docSpecApi.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "impress.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end}}
+      {{- if .Values.docSpecApi.serviceAccountName }}
+      serviceAccountName: {{ .Values.docSpecApi.serviceAccountName }}
+      {{- end }}
+      shareProcessNamespace: {{ .Values.docSpecApi.shareProcessNamespace }}
+      containers:
+        {{- with .Values.docSpecApi.sidecars }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        - name: {{ .Chart.Name }}
+          image: "{{ (.Values.docSpecApi.image | default dict).repository | default .Values.image.repository }}:{{ (.Values.docSpecApi.image | default dict).tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ (.Values.docSpecApi.image | default dict).pullPolicy | default .Values.image.pullPolicy }}
+          {{- with .Values.yPrdocspecovider.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.docSpecApi.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            {{- if $envVars}}
+            {{- $envVars | indent 12 }}
+            {{- end }}
+          {{- with .Values.docSpecApi.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.docSpecApi.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.docSpecApi.probes.liveness }}
+          livenessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.docSpecApi.probes.liveness (dict "targetPort" .Values.docSpecApi.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.docSpecApi.probes.readiness }}
+          readinessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.docSpecApi.probes.readiness (dict "targetPort" .Values.docSpecApi.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.docSpecApi.probes.startup }}
+          startupProbe:
+            {{- include "impress.probes.abstract" (merge .Values.docSpecApi.probes.startup (dict "targetPort" .Values.docSpecApi.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- with .Values.docSpecApi.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- range $index, $value := .Values.mountFiles }}
+            - name: "files-{{ $index }}"
+              mountPath: {{ $value.path }}
+              subPath: content
+            {{- end }}
+            {{- range $name, $volume := .Values.docSpecApi.persistence }}
+            - name: "{{ $name }}"
+              mountPath: "{{ $volume.mountPath }}"
+            {{- end }}
+            {{- range .Values.docSpecApi.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .subPath | default "" }}
+              readOnly: {{ .readOnly }}
+            {{- end }}
+      {{- with .Values.docSpecApi.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.docSpecApi.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.docSpecApi.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- range $index, $value := .Values.mountFiles }}
+        - name: "files-{{ $index }}"
+          configMap:
+            name: "{{ include "impress.fullname" $ }}-files-{{ $index }}"
+        {{- end }}
+        {{- range $name, $volume := .Values.docSpecApi.persistence }}
+        - name: "{{ $name }}"
+          {{- if eq $volume.type "emptyDir" }}
+          emptyDir: {}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: "{{ $fullName }}-{{ $name }}"
+          {{- end }}
+        {{- end }}
+        {{- range .Values.docSpecApi.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .existingClaim }}
+          {{- else if .hostPath }}
+          hostPath:
+            {{ toYaml .hostPath | nindent 12 }}
+          {{- else if .csi }}
+          csi:
+            {{- toYaml .csi | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+---
+{{ if .Values.docSpecApi.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+{{ end }}

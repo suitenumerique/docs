@@ -219,6 +219,6 @@ services:
         restart: true
 
   docspec:
-    image: ghcr.io/docspecio/api:2.0.0
+    image: ghcr.io/docspecio/api:2.0.2
     ports:
       - "4000:4000"

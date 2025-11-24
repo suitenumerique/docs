@@ -166,6 +166,14 @@ Requires top level scope
 {{ include "impress.fullname" . }}-y-provider
 {{- end }}
 
+{{/*
+Full name for the docSpecApi
+
+Requires top level scope
+*/}}
+{{- define "impress.docSpecApi.fullname" -}}
+{{ include "impress.fullname" . }}-docspec-api
+{{- end }}
 
 {{/*
 Full name for the Celery Worker

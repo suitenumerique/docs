@@ -1,0 +1,21 @@
+{{- $envVars := include "impress.common.env" (list . .Values.yProvider) -}}
+{{- $fullName := include "impress.docspec.fullname" . -}}
+{{- $component := "docspec" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+  annotations:
+    {{- toYaml $.Values.docspec.service.annotations | nindent 4 }}
+spec:
+  type: {{ .Values.docspec.service.type }}
+  ports:
+    - port: {{ .Values.docspec.service.port }}
+      targetPort: {{ .Values.docspec.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}

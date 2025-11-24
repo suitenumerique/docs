@@ -661,3 +661,109 @@ yProvider:
 
   ## @param yProvider.serviceAccountName Optional service account name to use for yProvider pods
   serviceAccountName: null
+
+
+## @section docSpecApi
+
+docSpecApi:
+  ## @param docSpecApi.image.repository Repository to use to pull impress's docSpecApi container image
+  ## @param docSpecApi.image.tag impress's docSpecApi container tag
+  ## @param docSpecApi.image.pullPolicy docSpecApi container image pull policy
+  image:
+    repository: ghcr.io/docspecio/api
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  ## @param docSpecApi.command Override the docSpecApi container command
+  command: []
+
+  ## @param docSpecApi.args Override the docSpecApi container args
+  args: []
+
+  ## @param docSpecApi.replicas Amount of docSpecApi replicas
+  replicas: 3
+
+  ## @param docSpecApi.shareProcessNamespace Enable share process namedocSpecApi between containers
+  shareProcessNamespace: false
+
+  ## @param docSpecApi.sidecars Add sidecars containers to docSpecApi deployment
+  sidecars: []
+
+  ## @param docSpecApi.securityContext Configure docSpecApi Pod security context
+  securityContext: null
+
+  ## @param docSpecApi.envVars Configure docSpecApi container environment variables
+  ## @extra docSpecApi.envVars.BY_VALUE Example environment variable by setting value directly
+  ## @extra docSpecApi.envVars.FROM_CONFIGMAP.configMapKeyRef.name Name of a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra docSpecApi.envVars.FROM_CONFIGMAP.configMapKeyRef.key Key within a ConfigMap when configuring env vars from a ConfigMap
+  ## @extra docSpecApi.envVars.FROM_SECRET.secretKeyRef.name Name of a Secret when configuring env vars from a Secret
+  ## @extra docSpecApi.envVars.FROM_SECRET.secretKeyRef.key Key within a Secret when configuring env vars from a Secret
+  ## @skip docSpecApi.envVars
+  envVars:
+    <<: *commonEnvVars
+
+  ## @param docSpecApi.podAnnotations Annotations to add to the docSpecApi Pod
+  podAnnotations: {}
+
+  ## @param docSpecApi.dpAnnotations Annotations to add to the docSpecApi Deployment
+  dpAnnotations: {}
+
+  ## @param docSpecApi.service.type docSpecApi Service type
+  ## @param docSpecApi.service.port docSpecApi Service listening port
+  ## @param docSpecApi.service.targetPort docSpecApi container listening port
+  ## @param docSpecApi.service.annotations Annotations to add to the docSpecApi Service
+  service:
+    type: ClusterIP
+    port: 443
+    targetPort: 4000
+    annotations: {}
+
+  ## @extra docSpecApi.probes.liveness.path Configure path for docSpecApi HTTP liveness probe
+  ## @extra docSpecApi.probes.liveness.targetPort Configure port for docSpecApi HTTP liveness probe
+  ## @extra docSpecApi.probes.liveness.initialDelaySeconds Configure initial delay for docSpecApi liveness probe
+  ## @extra docSpecApi.probes.liveness.initialDelaySeconds Configure timeout for docSpecApi liveness probe
+  ## @extra docSpecApi.probes.startup.path Configure path for docSpecApi HTTP startup probe
+  ## @extra docSpecApi.probes.startup.targetPort Configure port for docSpecApi HTTP startup probe
+  ## @extra docSpecApi.probes.startup.initialDelaySeconds Configure initial delay for docSpecApi startup probe
+  ## @extra docSpecApi.probes.startup.initialDelaySeconds Configure timeout for docSpecApi startup probe
+  ## @extra docSpecApi.probes.readiness.path Configure path for docSpecApi HTTP readiness probe
+  ## @extra docSpecApi.probes.readiness.targetPort Configure port for docSpecApi HTTP readiness probe
+  ## @extra docSpecApi.probes.readiness.initialDelaySeconds Configure initial delay for docSpecApi readiness probe
+  ## @extra docSpecApi.probes.readiness.initialDelaySeconds Configure timeout for docSpecApi readiness probe
+  probes:
+    liveness:
+      ## @param docSpecApi.probes.liveness.path
+      ## @param docSpecApi.probes.liveness.initialDelaySeconds
+      path: /health
+      initialDelaySeconds: 10
+
+  ## @param docSpecApi.resources Resource requirements for the docSpecApi container
+  resources: {}
+
+  ## @param docSpecApi.nodeSelector Node selector for the docSpecApi Pod
+  nodeSelector: {}
+
+  ## @param docSpecApi.tolerations Tolerations for the docSpecApi Pod
+  tolerations: []
+
+  ## @param docSpecApi.affinity Affinity for the docSpecApi Pod
+  affinity: {}
+
+  ## @param docSpecApi.persistence Additional volumes to create and mount on the docSpecApi. Used for debugging purposes
+  ## @extra docSpecApi.persistence.volume-name.size Size of the additional volume
+  ## @extra docSpecApi.persistence.volume-name.type Type of the additional volume, persistentVolumeClaim or emptyDir
+  ## @extra docSpecApi.persistence.volume-name.mountPath Path where the volume should be mounted to
+  persistence: {}
+
+  ## @param docSpecApi.extraVolumeMounts Additional volumes to mount on the docSpecApi.
+  extraVolumeMounts: []
+
+  ## @param docSpecApi.extraVolumes Additional volumes to mount on the docSpecApi.
+  extraVolumes: []
+
+  ## @param docSpecApi.pdb.enabled Enable pdb on docSpecApi
+  pdb:
+    enabled: true
+
+  ## @param docSpecApi.serviceAccountName Optional service account name to use for docSpecApi pods
+  serviceAccountName: null
