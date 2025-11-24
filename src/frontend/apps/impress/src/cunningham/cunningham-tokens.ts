@@ -801,6 +801,7 @@ export const tokens = {
         logo: { src: '', alt: '', widthHeader: '', widthFooter: '' },
         'la-gaufre': false,
         'home-proconnect': false,
+        icon: { src: '/assets/icon-docs.svg', width: '32px', height: 'auto' },
         favicon: {
           'png-light': '/assets/favicon-light.png',
           'png-dark': '/assets/favicon-dark.png',
@@ -1549,6 +1550,11 @@ export const tokens = {
         },
         'la-gaufre': true,
         'home-proconnect': true,
+        icon: {
+          src: '/assets/icon-docs-dsfr.svg',
+          width: '32px',
+          height: 'auto',
+        },
         favicon: {
           ico: '/assets/favicon-dsfr.ico',
           'png-light': '/assets/favicon-dsfr.png',

@@ -32,9 +32,9 @@ Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom 
 
 ----
 
-# **Your logo** 📝
+# **Your Docs icon** 📝
 
-You can add your own logo in the header from the theme customization file.
+You can add your own Docs icon in the header from the theme customization file.
 
 ### Settings 🔧
 
@@ -44,9 +44,9 @@ THEME_CUSTOMIZATION_FILE_PATH=<path>
 
 ### Example of JSON
 
-You can activate it with the `header.logo` configuration: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+You can activate it with the `header.icon` configuration: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
 
-This configuration is optional. If not set, the default logo will be used.
+This configuration is optional. If not set, the default icon will be used.
 
 ----
 

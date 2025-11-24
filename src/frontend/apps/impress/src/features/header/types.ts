@@ -1,5 +1,5 @@
 export interface HeaderType {
-  logo?: {
+  icon?: {
     src?: string;
     width?: string;
     height?: string;

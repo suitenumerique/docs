@@ -18,10 +18,11 @@ import { Title } from './Title';
 export const Header = () => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
-  const { spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens, componentTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
-  const logo = config?.theme_customization?.header?.logo;
+  const icon =
+    config?.theme_customization?.header?.icon || componentTokens.icon;
 
   return (
     <Box
@@ -65,15 +66,14 @@ export const Header = () => {
           $margin={{ top: 'auto' }}
         >
           <Image
-            className="c__image-system-filter"
             data-testid="header-icon-docs"
-            src={logo?.src || '/assets/icon-docs.svg'}
+            src={icon.src || ''}
             alt=""
             width={0}
             height={0}
             style={{
-              width: logo?.width || 32,
-              height: logo?.height || 'auto',
+              width: icon.width,
+              height: icon.height,
             }}
             priority
           />

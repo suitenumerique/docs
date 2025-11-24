@@ -1,8 +1,7 @@
 import Image from 'next/image';
-import { useTranslation } from 'react-i18next';
 
-import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonTogglePanel, Title } from '@/features/header/';
 import { LaGaufre } from '@/features/header/components/LaGaufre';
@@ -16,10 +15,13 @@ export const getHeaderHeight = (isSmallMobile: boolean) =>
   isSmallMobile ? HEADER_HEIGHT_MOBILE : HEADER_HEIGHT;
 
 export const HomeHeader = () => {
-  const { t } = useTranslation();
-  const { themeTokens, spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const logo = themeTokens.logo;
+  const { spacingsTokens, componentTokens } = useCunninghamTheme();
+  const logo = componentTokens.logo;
   const { isSmallMobile } = useResponsiveStore();
+  const { data: config } = useConfig();
+
+  const icon =
+    config?.theme_customization?.header?.icon || componentTokens.icon;
 
   return (
     <Box
@@ -61,11 +63,17 @@ export const HomeHeader = () => {
           $position="relative"
           $height="fit-content"
         >
-          <IconDocs
+          <Image
             data-testid="header-icon-docs"
-            aria-label={t('Docs Logo')}
-            width={32}
-            color={colorsTokens['primary-text']}
+            src={icon.src || ''}
+            alt=""
+            width={0}
+            height={0}
+            style={{
+              width: icon.width,
+              height: icon.height,
+            }}
+            priority
           />
           <Title />
         </Box>
