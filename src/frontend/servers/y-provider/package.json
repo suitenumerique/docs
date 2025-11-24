@@ -18,7 +18,7 @@
   "dependencies": {
     "@blocknote/server-util": "0.42.3",
     "@hocuspocus/server": "3.4.0",
-    "@sentry/node": "10.22.0",
+    "@sentry/node": "10.27.0",
     "@sentry/profiling-node": "10.22.0",
     "@tiptap/extensions": "*",
     "axios": "1.13.1",
