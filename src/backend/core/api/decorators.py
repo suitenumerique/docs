@@ -1,8 +1,7 @@
 """Decorators for Impress' core application."""
-
-import os
 from ipaddress import ip_address, ip_network
 
+from django.conf import settings
 from django.http import HttpResponseForbidden
 
 
@@ -11,24 +10,23 @@ def monitoring_cidr_protected_view(view):
     Decorator to restrict access to a view based on CIDR ranges.
 
     Checks the client's IP address against allowed CIDR ranges specified
-    in the MONITORING_ALLOWED_CIDR_RANGES environment variable. If the
+    in the MONITORING_ALLOWED_CIDR_RANGES setting. If the
     IP address is not within the allowed ranges, access is denied.
     """
 
     def wrapped_view(request, *args, **kwargs):
-        cidr_env_raw = os.environ.get("MONITORING_ALLOWED_CIDR_RANGES", "")
-        cidr_env_stripped = cidr_env_raw.strip().strip('"').strip("'")
+        configured_ranges = [
+            str(value).strip().strip('"').strip("'")
+            for value in (settings.MONITORING_ALLOWED_CIDR_RANGES or [])
+        ]
+        configured_ranges = [value for value in configured_ranges if value]
 
-        allow_all = cidr_env_stripped == "*"
+        allow_all = configured_ranges == ["*"]
 
         allowed_cidr_ranges = []
         if not allow_all:
             try:
-                allowed_cidr_ranges = [
-                    ip_network(c.strip().strip('"').strip("'"))
-                    for c in cidr_env_stripped.split(",")
-                    if c.strip()
-                ]
+                allowed_cidr_ranges = [ip_network(cidr) for cidr in configured_ranges]
             except ValueError as e:
                 raise ValueError(
                     f"Invalid CIDR range in MONITORING_ALLOWED_CIDR_RANGES: {e}"

@@ -1,9 +1,7 @@
 """Test prometheus metrics CIDR protection of impress's core app."""
 
-import os
-from unittest.mock import patch
-
 from django.test import TestCase
+from django.test.utils import override_settings
 
 
 class PrometheusCidrProtectionTest(TestCase):
@@ -21,9 +19,9 @@ class PrometheusCidrProtectionTest(TestCase):
             # 1) MONITORING_PROMETHEUS_EXPORTER=True => No CIDR => 403
             {
                 "name": "No CIDR => 403 + 'No allowed CIDR ranges configured.'",
-                "env": {
-                    "MONITORING_PROMETHEUS_EXPORTER": "True",
-                    # We do NOT define MONITORING_ALLOWED_CIDR_RANGES
+                "settings": {
+                    "MONITORING_PROMETHEUS_EXPORTER": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "remote_addr": "127.0.0.1",
                 "expected_status": 403,
@@ -32,9 +30,9 @@ class PrometheusCidrProtectionTest(TestCase):
             # 2) MONITORING_PROMETHEUS_EXPORTER=True => CIDR=172.19.0.0/16 => IP outside => 403
             {
                 "name": "CIDR='172.19.0.0/16' => IP outside => 403 => 'Access denied'",
-                "env": {
-                    "MONITORING_PROMETHEUS_EXPORTER": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "172.19.0.0/16",
+                "settings": {
+                    "MONITORING_PROMETHEUS_EXPORTER": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["172.19.0.0/16"],
                 },
                 "remote_addr": "127.0.0.1",
                 "expected_status": 403,
@@ -43,9 +41,9 @@ class PrometheusCidrProtectionTest(TestCase):
             # 3) MONITORING_PROMETHEUS_EXPORTER=True => CIDR='*' => any IP => 200 => known metric
             {
                 "name": "CIDR='*' => any IP => 200 => 'process_virtual_memory_bytes'",
-                "env": {
-                    "MONITORING_PROMETHEUS_EXPORTER": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "*",
+                "settings": {
+                    "MONITORING_PROMETHEUS_EXPORTER": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["*"],
                 },
                 "remote_addr": "8.8.8.8",
                 "expected_status": 200,
@@ -55,9 +53,9 @@ class PrometheusCidrProtectionTest(TestCase):
             # 4) MONITORING_PROMETHEUS_EXPORTER=True => CIDR=172.19.0.0/16 => IP inside => 200
             {
                 "name": "CIDR='172.19.0.0/16' => IP inside => 200 => known metric",
-                "env": {
-                    "MONITORING_PROMETHEUS_EXPORTER": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "172.19.0.0/16",
+                "settings": {
+                    "MONITORING_PROMETHEUS_EXPORTER": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["172.19.0.0/16"],
                 },
                 "remote_addr": "172.19.0.2",
                 "expected_status": 200,
@@ -66,8 +64,9 @@ class PrometheusCidrProtectionTest(TestCase):
             # 5) MONITORING_PROMETHEUS_EXPORTER not set => no CIDR => 403
             {
                 "name": "MONITORING_PROMETHEUS_EXPORTER not set => no CIDR => 403 => 'No allowed CIDR ranges configured.'",
-                "env": {
-                    # No MONITORING_PROMETHEUS_EXPORTER
+                "settings": {
+                    "MONITORING_PROMETHEUS_EXPORTER": False,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "remote_addr": "127.0.0.1",
                 "expected_status": 403,
@@ -76,8 +75,9 @@ class PrometheusCidrProtectionTest(TestCase):
             # 6) MONITORING_PROMETHEUS_EXPORTER='False' => no CIDR => 403
             {
                 "name": "MONITORING_PROMETHEUS_EXPORTER='False' => no CIDR => 403 => 'No allowed CIDR ranges configured.'",
-                "env": {
-                    "MONITORING_PROMETHEUS_EXPORTER": "False",
+                "settings": {
+                    "MONITORING_PROMETHEUS_EXPORTER": False,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "remote_addr": "127.0.0.1",
                 "expected_status": 403,
@@ -87,7 +87,7 @@ class PrometheusCidrProtectionTest(TestCase):
 
         for scenario in scenarios:
             with self.subTest(msg=scenario["name"]):
-                with patch.dict(os.environ, scenario["env"], clear=True):
+                with override_settings(**scenario["settings"]):
                     response = self.client.get(
                         "/prometheus/", REMOTE_ADDR=scenario["remote_addr"]
                     )

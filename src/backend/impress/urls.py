@@ -1,7 +1,5 @@
 """URL configuration for the impress project"""
 
-import os
-
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -24,7 +22,7 @@ urlpatterns = [
 ]
 
 # Conditionally add Prometheus Exporter endpoint
-if os.environ.get("MONITORING_PROMETHEUS_EXPORTER", "False").lower() == "true":
+if settings.MONITORING_PROMETHEUS_EXPORTER:
     urlpatterns.append(
         path(
             "prometheus/",
@@ -34,7 +32,7 @@ if os.environ.get("MONITORING_PROMETHEUS_EXPORTER", "False").lower() == "true":
     )
 
 # Conditionally add liveness and readiness probe endpoints
-if os.environ.get("MONITORING_PROBING", "False").lower() == "true":
+if settings.MONITORING_PROBING:
     urlpatterns.append(
         path(
             "probes/liveness/",

@@ -1,8 +1,5 @@
 """Test prometheus metrics of impress's core app."""
 
-import os
-from unittest.mock import patch
-
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -57,11 +54,10 @@ class PrometheusMetricsTest(TestCase):
         Scenario 1: No metric namespace => we expect the custom metrics
         to appear with their raw names (e.g. 'users').
         """
-        env = {
-            "MONITORING_PROMETHEUS_EXPORTER": "True",
-            "MONITORING_ALLOWED_CIDR_RANGES": "*",
-        }
-        with patch.dict(os.environ, env, clear=True):
+        with override_settings(
+            MONITORING_PROMETHEUS_EXPORTER=True,
+            MONITORING_ALLOWED_CIDR_RANGES=["*"],
+        ):
             response = self.client.get("/prometheus/", REMOTE_ADDR="127.0.0.1")
             self.assertEqual(
                 200, response.status_code, "Expected 200 OK but got a different status."
@@ -96,11 +92,10 @@ class PrometheusMetricsTest(TestCase):
         Scenario 2: We set PROMETHEUS_METRIC_NAMESPACE='impress' in settings,
         so all custom metrics should appear prefixed with 'impress_'.
         """
-        env = {
-            "MONITORING_PROMETHEUS_EXPORTER": "True",
-            "MONITORING_ALLOWED_CIDR_RANGES": "*",
-        }
-        with patch.dict(os.environ, env, clear=True):
+        with override_settings(
+            MONITORING_PROMETHEUS_EXPORTER=True,
+            MONITORING_ALLOWED_CIDR_RANGES=["*"],
+        ):
             response = self.client.get("/prometheus/", REMOTE_ADDR="127.0.0.1")
             self.assertEqual(
                 200, response.status_code, "Expected 200 OK but got a different status."

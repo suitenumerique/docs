@@ -28,9 +28,6 @@ from sentry_sdk.integrations.logging import ignore_logger
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
-MONITORING_PROMETHEUS_EXPORTER = (
-    os.getenv("MONITORING_PROMETHEUS_EXPORTER", "False").lower() == "true"
-)
 
 
 def get_release():
@@ -299,27 +296,6 @@ class Base(Configuration):
         "dockerflow.django.middleware.DockerflowMiddleware",
         "csp.middleware.CSPMiddleware",
     ]
-
-    if MONITORING_PROMETHEUS_EXPORTER:
-        MIDDLEWARE.insert(0, "django_prometheus.middleware.PrometheusBeforeMiddleware")
-        MIDDLEWARE.append("django_prometheus.middleware.PrometheusAfterMiddleware")
-        PROMETHEUS_METRIC_NAMESPACE = "impress"
-        PROMETHEUS_LATENCY_BUCKETS = (
-            0.05,
-            0.1,
-            0.25,
-            0.5,
-            0.75,
-            1.0,
-            1.5,
-            2.5,
-            5.0,
-            10.0,
-            15.0,
-            30.0,
-            float("inf"),
-        )
-
 
     AUTHENTICATION_BACKENDS = [
         "django.contrib.auth.backends.ModelBackend",
@@ -833,6 +809,23 @@ class Base(Configuration):
         ),
     }
 
+    # Monitoring
+    MONITORING_PROMETHEUS_EXPORTER = values.BooleanValue(
+        False,
+        environ_name="MONITORING_PROMETHEUS_EXPORTER",
+        environ_prefix=None,
+    )
+    MONITORING_PROBING = values.BooleanValue(
+        False,
+        environ_name="MONITORING_PROBING",
+        environ_prefix=None,
+    )
+    MONITORING_ALLOWED_CIDR_RANGES = values.ListValue(
+        [],
+        environ_name="MONITORING_ALLOWED_CIDR_RANGES",
+        environ_prefix=None,
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -870,6 +863,30 @@ class Base(Configuration):
         settings to be loaded.
         """
         super().post_setup()
+
+        # Monitoring hooks: done late so middleware stack is settled.
+        if cls.MONITORING_PROMETHEUS_EXPORTER:
+            cls.MIDDLEWARE = [
+                "django_prometheus.middleware.PrometheusBeforeMiddleware",
+                *cls.MIDDLEWARE,
+                "django_prometheus.middleware.PrometheusAfterMiddleware",
+            ]
+            cls.PROMETHEUS_METRIC_NAMESPACE = "docs"
+            cls.PROMETHEUS_LATENCY_BUCKETS = (
+                0.05,
+                0.1,
+                0.25,
+                0.5,
+                0.75,
+                1.0,
+                1.5,
+                2.5,
+                5.0,
+                10.0,
+                15.0,
+                30.0,
+                float("inf"),
+            )
 
         # The SENTRY_DSN setting should be available to activate sentry for an environment
         if cls.SENTRY_DSN is not None:
@@ -955,6 +972,9 @@ class Development(Base):
 class Test(Base):
     """Test environment settings"""
 
+    MONITORING_PROMETHEUS_EXPORTER = True
+    MONITORING_PROBING = True
+    MONITORING_ALLOWED_CIDR_RANGES = ["*"]
     PASSWORD_HASHERS = [
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ]

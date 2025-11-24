@@ -1,9 +1,7 @@
 """Test liveness and readiness CIDR protected probes of impress's core app."""
 
-import os
-from unittest.mock import patch
-
 from django.test import TestCase
+from django.test.utils import override_settings
 
 
 class ProbesCidrProtectionTest(TestCase):
@@ -18,9 +16,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 1) No CIDR => 403 on liveness (MONITORING_PROBING="True")
             {
                 "name": "No CIDR => 403 + 'No allowed CIDR ranges configured.' => liveness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    # We do NOT define MONITORING_ALLOWED_CIDR_RANGES at all
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "endpoint": "/probes/liveness/",
                 "remote_addr": "127.0.0.1",
@@ -30,8 +28,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 2) No CIDR => 403 on readiness (MONITORING_PROBING="True")
             {
                 "name": "No CIDR => 403 + 'No allowed CIDR ranges configured.' => readiness",
-                "env": {
-                    "MONITORING_PROBING": "True",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "endpoint": "/probes/readiness/",
                 "remote_addr": "127.0.0.1",
@@ -41,9 +40,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 3) CIDR=172.19.0.0/16 => IP outside => 403 on liveness
             {
                 "name": "CIDR='172.19.0.0/16' => IP outside => 403 => liveness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "172.19.0.0/16",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["172.19.0.0/16"],
                 },
                 "endpoint": "/probes/liveness/",
                 "remote_addr": "127.0.0.1",
@@ -53,9 +52,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 4) CIDR=172.19.0.0/16 => IP outside => 403 on readiness
             {
                 "name": "CIDR='172.19.0.0/16' => IP outside => 403 => readiness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "172.19.0.0/16",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["172.19.0.0/16"],
                 },
                 "endpoint": "/probes/readiness/",
                 "remote_addr": "127.0.0.1",
@@ -65,9 +64,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 5) CIDR='*' => any IP => 200 => liveness
             {
                 "name": "CIDR='*' => any IP => 200 => liveness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "*",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["*"],
                 },
                 "endpoint": "/probes/liveness/",
                 "remote_addr": "8.8.8.8",
@@ -77,9 +76,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 6) CIDR='*' => any IP => 200 => readiness
             {
                 "name": "CIDR='*' => any IP => 200 => readiness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "*",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["*"],
                 },
                 "endpoint": "/probes/readiness/",
                 "remote_addr": "8.8.8.8",
@@ -89,9 +88,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 7) CIDR=172.19.0.0/16 => IP inside => 200 => liveness
             {
                 "name": "CIDR='172.19.0.0/16' => IP inside => 200 => liveness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "172.19.0.0/16",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["172.19.0.0/16"],
                 },
                 "endpoint": "/probes/liveness/",
                 "remote_addr": "172.19.0.2",
@@ -101,9 +100,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 8) CIDR=172.19.0.0/16 => IP inside => 200 => readiness
             {
                 "name": "CIDR='172.19.0.0/16' => IP inside => 200 => readiness",
-                "env": {
-                    "MONITORING_PROBING": "True",
-                    "MONITORING_ALLOWED_CIDR_RANGES": "172.19.0.0/16",
+                "settings": {
+                    "MONITORING_PROBING": True,
+                    "MONITORING_ALLOWED_CIDR_RANGES": ["172.19.0.0/16"],
                 },
                 "endpoint": "/probes/readiness/",
                 "remote_addr": "172.19.0.2",
@@ -113,8 +112,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 9) MONITORING_PROBING not set => no CIDR => 403
             {
                 "name": "MONITORING_PROBING not set => liveness => 403 => 'No allowed CIDR ranges configured.'",
-                "env": {
-                    # No MONITORING_PROBING, no CIDR
+                "settings": {
+                    "MONITORING_PROBING": False,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "endpoint": "/probes/liveness/",
                 "remote_addr": "127.0.0.1",
@@ -124,8 +124,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 10) MONITORING_PROBING not set => readiness => 403
             {
                 "name": "MONITORING_PROBING not set => readiness => 403 => 'No allowed CIDR ranges configured.'",
-                "env": {
-                    # No MONITORING_PROBING, no CIDR
+                "settings": {
+                    "MONITORING_PROBING": False,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "endpoint": "/probes/readiness/",
                 "remote_addr": "127.0.0.1",
@@ -135,8 +136,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 11) MONITORING_PROBING='False' => no CIDR => 403
             {
                 "name": 'MONITORING_PROBING="False" => liveness => 403 => "No allowed CIDR..."',
-                "env": {
-                    "MONITORING_PROBING": "False",
+                "settings": {
+                    "MONITORING_PROBING": False,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "endpoint": "/probes/liveness/",
                 "remote_addr": "127.0.0.1",
@@ -146,8 +148,9 @@ class ProbesCidrProtectionTest(TestCase):
             # 12) MONITORING_PROBING='False' => readiness => 403
             {
                 "name": 'MONITORING_PROBING="False" => readiness => 403 => "No allowed CIDR..."',
-                "env": {
-                    "MONITORING_PROBING": "False",
+                "settings": {
+                    "MONITORING_PROBING": False,
+                    "MONITORING_ALLOWED_CIDR_RANGES": [],
                 },
                 "endpoint": "/probes/readiness/",
                 "remote_addr": "127.0.0.1",
@@ -158,7 +161,7 @@ class ProbesCidrProtectionTest(TestCase):
 
         for scenario in scenarios:
             with self.subTest(msg=scenario["name"]):
-                with patch.dict(os.environ, scenario["env"], clear=True):
+                with override_settings(**scenario["settings"]):
                     response = self.client.get(
                         scenario["endpoint"], REMOTE_ADDR=scenario["remote_addr"]
                     )
