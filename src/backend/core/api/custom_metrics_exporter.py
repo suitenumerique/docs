@@ -78,7 +78,6 @@ class CustomMetricsExporter:
             ),
             "active_today": models.Document.objects.filter(
                 updated_at__gte=times["today_start_utc"],
-                updated_at__lt=times["today_start_utc"] + timedelta(days=1),
             ).count(),
             "active_7d": models.Document.objects.filter(
                 updated_at__gte=times["one_week_ago"]
