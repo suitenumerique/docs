@@ -173,5 +173,4 @@ export const getCalloutFormattingToolbarItems = (
   name: t('Callout'),
   type: 'callout',
   icon: () => <Icon iconName="lightbulb" $size="16px" />,
-  isSelected: (block) => block.type === 'callout',
 });

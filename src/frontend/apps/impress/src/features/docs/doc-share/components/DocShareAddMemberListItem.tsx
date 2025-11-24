@@ -1,4 +1,5 @@
 import { Button } from '@openfun/cunningham-react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon, Text } from '@/components';
@@ -10,6 +11,7 @@ type Props = {
   onRemoveUser?: (user: User) => void;
 };
 export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
+  const { t } = useTranslation();
   const { spacingsTokens, colorsTokens, fontSizesTokens } =
     useCunninghamTheme();
 
@@ -42,6 +44,9 @@ export const DocShareAddMemberListItem = ({ user, onRemoveUser }: Props) => {
         size="nano"
         onClick={() => onRemoveUser?.(user)}
         icon={<Icon $variation="600" $size="sm" iconName="close" />}
+        aria-label={t('Remove {{name}} from the invite list', {
+          name: user.full_name || user.email,
+        })}
       />
     </Box>
   );

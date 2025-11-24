@@ -30,7 +30,4 @@ export const odtDocsSchemaMappings: DocsExporterODT['mappings'] = {
     interlinkingSearchInline: () => null,
     interlinkingLinkInline: inlineContentMappingInterlinkingLinkODT,
   },
-  styleMapping: {
-    ...odtDefaultSchemaMappings.styleMapping,
-  },
 };

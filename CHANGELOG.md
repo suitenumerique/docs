@@ -8,8 +8,25 @@ and this project adheres to
 
 ### Added
 
-- ✨(frontend) enable ODT export for documents #1524
+- ✨(backend) add prometheus metrics and probe endpoints #455
+
+### Fixed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve share modal button accessibility #1626
+
+## [3.10.0] - 2025-11-18
+
+### Added
+
+- ✨(export) enable ODT export for documents #1524
 - ✨(frontend) improve mobile UX by showing subdocs count #1540
+
+### Changed
+
+- ♻️(frontend) preserve @ character when esc is pressed after typing it #1512
+- ♻️(frontend) make summary button fixed to remain visible during scroll #1581
+- ♻️(frontend) pdf embed use full width #1526
 
 ### Fixed
 
@@ -17,11 +34,22 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
-- 🐛(docx) fix image overflow by limiting width to 600px during export #1525
-- 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
-- 🐛(frontend) make summary button fixed to remain visible during scroll #1581
-- 🐛(frontend) fix pdf embed to use full width #1526
-- 🐛(pdf) fix table cell alignment issue in exported documents #1582
+- 🐛(frontend) fix alignment of side menu #1597
+- 🐛(frontend) fix fallback translations with Trans #1620
+- 🐛(export) fix image overflow by limiting width to 600px during export #1525
+- 🐛(export) fix table cell alignment issue in exported documents #1582
+- 🐛(export) preserve image aspect ratio in PDF export #1622
+- 🐛(export) Export fails when paste with style #1552
+
+### Security
+
+- mitigate role escalation in the ask_for_access viewset #1580
+- 🐛(frontend) preserve left panel width on window resize #1588
+
+### Removed
+
+- 🔥(backend) remove api managing templates
+
 
 ## [3.9.0] - 2025-11-10
 
@@ -30,7 +58,8 @@ and this project adheres to
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
-- ✨(backend) add prometheus metrics and probe endpoints #455
+- ✨ Add comments feature to the editor #1330
+
 
 ### Changed
 
@@ -42,7 +71,6 @@ and this project adheres to
 
 - 🐛(frontend) fix duplicate document entries in grid #1479
 - 🐛(backend) fix trashbin list #1520
-
 - ♿(frontend) improve accessibility:
   - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
 - 🐛(backend) fix s3 version_id validation #1543
@@ -160,6 +188,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) Comments on text editor #1309
 - 👷(CI) add bundle size check job #1268
 - ✨(frontend) use title first emoji as doc icon in tree #1289
 
@@ -862,7 +891,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.9.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.10.0...main
+[v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
 [v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
 [v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2
 [v3.8.1]: https://github.com/suitenumerique/docs/releases/v3.8.1

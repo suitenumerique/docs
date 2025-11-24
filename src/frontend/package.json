@@ -1,6 +1,6 @@
 {
   "name": "impress",
-  "version": "3.9.0",
+  "version": "3.10.0",
   "private": true,
   "repository": "https://github.com/suitenumerique/docs",
   "author": "DINUM",
@@ -31,6 +31,7 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
+    "@tiptap/extensions": "3.10.2",
     "@types/node": "24.10.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
@@ -38,6 +39,10 @@
     "@typescript-eslint/parser": "8.46.2",
     "docx": "9.5.0",
     "eslint": "9.39.0",
+    "prosemirror-state": "1.4.4",
+    "prosemirror-view": "1.41.3",
+    "prosemirror-model": "1.25.4",
+    "prosemirror-transform": "1.10.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "typescript": "5.9.3",

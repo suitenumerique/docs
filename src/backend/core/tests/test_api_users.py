@@ -278,6 +278,35 @@ def test_api_users_retrieve_me_authenticated():
     }
 
 
+def test_api_users_retrieve_me_authenticated_empty_name():
+    """
+    Authenticated users should be able to retrieve their own user via the "/users/me" path.
+    when no name is provided, the full name and short name should be the email without the domain.
+    """
+    user = factories.UserFactory(
+        email="test_foo@test.com",
+        full_name=None,
+        short_name=None,
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    factories.UserFactory.create_batch(2)
+    response = client.get(
+        "/api/v1.0/users/me/",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": str(user.id),
+        "email": "test_foo@test.com",
+        "full_name": "test_foo",
+        "language": user.language,
+        "short_name": "test_foo",
+    }
+
+
 def test_api_users_retrieve_anonymous():
     """Anonymous users should not be allowed to retrieve a user."""
     client = APIClient()

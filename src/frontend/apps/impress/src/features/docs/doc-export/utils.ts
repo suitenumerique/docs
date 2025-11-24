@@ -20,18 +20,21 @@ export function downloadFile(blob: Blob, filename: string) {
 }
 
 /**
- * Converts an SVG string into a PNG image and returns it as a data URL.
+ * Converts an SVG string into a PNG image and returns it as a data URL with dimensions.
  *
  * This function creates a canvas, parses the SVG, calculates the appropriate height
  * to preserve the aspect ratio, and renders the SVG onto the canvas using Canvg.
  *
  * @param {string} svgText - The raw SVG markup to convert.
  * @param {number} width - The desired width of the output PNG (height is auto-calculated to preserve aspect ratio).
- * @returns {Promise<string>} A Promise that resolves to a PNG image encoded as a base64 data URL.
+ * @returns {Promise<{ png: string; width: number; height: number }>} A Promise that resolves to an object containing the PNG data URL and its dimensions.
  *
  * @throws Will throw an error if the canvas context cannot be initialized.
  */
-export async function convertSvgToPng(svgText: string, width: number) {
+export async function convertSvgToPng(
+  svgText: string,
+  width: number,
+): Promise<{ png: string; width: number; height: number }> {
   // Create a canvas and render the SVG onto it
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', {
@@ -64,7 +67,11 @@ export async function convertSvgToPng(svgText: string, width: number) {
   svg.resize(width, height, true);
   await svg.render();
 
-  return canvas.toDataURL('image/png');
+  return {
+    png: canvas.toDataURL('image/png'),
+    width,
+    height: height || width,
+  };
 }
 
 export function docxBlockPropsToStyles(

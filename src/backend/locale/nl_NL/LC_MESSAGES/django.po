@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-23 11:01+0000\n"
-"PO-Revision-Date: 2025-11-10 09:54\n"
+"POT-Creation-Date: 2025-11-17 08:04+0000\n"
+"PO-Revision-Date: 2025-11-19 10:13\n"
 "Last-Translator: \n"
 "Language-Team: Dutch\n"
 "Language: nl_NL\n"
@@ -234,8 +234,8 @@ msgstr "gebruiker"
 msgid "users"
 msgstr "gebruikers"
 
-#: build/lib/core/models.py:361 build/lib/core/models.py:1284
-#: core/models.py:361 core/models.py:1284
+#: build/lib/core/models.py:361 build/lib/core/models.py:1276
+#: core/models.py:361 core/models.py:1276
 msgid "title"
 msgstr "titel"
 
@@ -311,8 +311,8 @@ msgstr "De gebruiker bestaat al in dit document."
 msgid "This team is already in this document."
 msgstr "Dit team bestaat al in dit document."
 
-#: build/lib/core/models.py:1045 build/lib/core/models.py:1370
-#: core/models.py:1045 core/models.py:1370
+#: build/lib/core/models.py:1045 build/lib/core/models.py:1362
+#: core/models.py:1045 core/models.py:1362
 msgid "Either user or team must be set, not both."
 msgstr "Een gebruiker of team moet gekozen worden, maar niet beide."
 
@@ -328,78 +328,78 @@ msgstr "Document verzoekt om toegangen"
 msgid "This user has already asked for access to this document."
 msgstr "Deze gebruiker heeft al om toegang tot dit document gevraagd."
 
-#: build/lib/core/models.py:1263 core/models.py:1263
+#: build/lib/core/models.py:1255 core/models.py:1255
 #, python-brace-format
 msgid "{name} would like access to a document!"
 msgstr "{name} verzoekt toegang tot een document!"
 
-#: build/lib/core/models.py:1267 core/models.py:1267
+#: build/lib/core/models.py:1259 core/models.py:1259
 #, python-brace-format
 msgid "{name} would like access to the following document:"
 msgstr "{name} verzoekt toegang tot het volgende document:"
 
-#: build/lib/core/models.py:1273 core/models.py:1273
+#: build/lib/core/models.py:1265 core/models.py:1265
 #, python-brace-format
 msgid "{name} is asking for access to the document: {title}"
 msgstr "{name} verzoekt toegang tot het document: {title}"
 
-#: build/lib/core/models.py:1285 core/models.py:1285
+#: build/lib/core/models.py:1277 core/models.py:1277
 msgid "description"
 msgstr "omschrijving"
 
-#: build/lib/core/models.py:1286 core/models.py:1286
+#: build/lib/core/models.py:1278 core/models.py:1278
 msgid "code"
 msgstr "code"
 
-#: build/lib/core/models.py:1287 core/models.py:1287
+#: build/lib/core/models.py:1279 core/models.py:1279
 msgid "css"
 msgstr "css"
 
-#: build/lib/core/models.py:1289 core/models.py:1289
+#: build/lib/core/models.py:1281 core/models.py:1281
 msgid "public"
 msgstr "publiek"
 
-#: build/lib/core/models.py:1291 core/models.py:1291
+#: build/lib/core/models.py:1283 core/models.py:1283
 msgid "Whether this template is public for anyone to use."
 msgstr "Of dit sjabloon door iedereen publiekelijk te gebruiken is."
 
-#: build/lib/core/models.py:1297 core/models.py:1297
+#: build/lib/core/models.py:1289 core/models.py:1289
 msgid "Template"
 msgstr "Sjabloon"
 
-#: build/lib/core/models.py:1298 core/models.py:1298
+#: build/lib/core/models.py:1290 core/models.py:1290
 msgid "Templates"
 msgstr "Sjabloon"
 
-#: build/lib/core/models.py:1351 core/models.py:1351
+#: build/lib/core/models.py:1343 core/models.py:1343
 msgid "Template/user relation"
 msgstr "Sjabloon/gebruiker relatie"
 
-#: build/lib/core/models.py:1352 core/models.py:1352
+#: build/lib/core/models.py:1344 core/models.py:1344
 msgid "Template/user relations"
 msgstr "Sjabloon/gebruiker relaties"
 
-#: build/lib/core/models.py:1358 core/models.py:1358
+#: build/lib/core/models.py:1350 core/models.py:1350
 msgid "This user is already in this template."
 msgstr "De gebruiker bestaat al in dit sjabloon."
 
-#: build/lib/core/models.py:1364 core/models.py:1364
+#: build/lib/core/models.py:1356 core/models.py:1356
 msgid "This team is already in this template."
 msgstr "Het team bestaat al in dit sjabloon."
 
-#: build/lib/core/models.py:1441 core/models.py:1441
+#: build/lib/core/models.py:1433 core/models.py:1433
 msgid "email address"
 msgstr "e-mailadres"
 
-#: build/lib/core/models.py:1460 core/models.py:1460
+#: build/lib/core/models.py:1452 core/models.py:1452
 msgid "Document invitation"
 msgstr "Document uitnodiging"
 
-#: build/lib/core/models.py:1461 core/models.py:1461
+#: build/lib/core/models.py:1453 core/models.py:1453
 msgid "Document invitations"
 msgstr "Document uitnodigingen"
 
-#: build/lib/core/models.py:1481 core/models.py:1481
+#: build/lib/core/models.py:1473 core/models.py:1473
 msgid "This email is already associated to a registered user."
 msgstr "Deze email is al geassocieerd met een geregistreerde gebruiker."
 

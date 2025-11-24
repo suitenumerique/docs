@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
+import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { AIGroupButton } from './AIButton';
@@ -25,10 +26,12 @@ export const BlockNoteToolbar = () => {
   const { data: conf } = useConfig();
 
   const toolbarItems = useMemo(() => {
-    const toolbarItems = getFormattingToolbarItems([
+    let toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
       getCalloutFormattingToolbarItems(t),
     ]);
+
+    // Find the index of the file download button
     const fileDownloadButtonIndex = toolbarItems.findIndex(
       (item) =>
         typeof item === 'object' &&
@@ -36,6 +39,8 @@ export const BlockNoteToolbar = () => {
         'key' in item &&
         (item as { key: string }).key === 'fileDownloadButton',
     );
+
+    // Replace the default file download button with our custom FileDownloadButton
     if (fileDownloadButtonIndex !== -1) {
       toolbarItems.splice(
         fileDownloadButtonIndex,
@@ -50,12 +55,22 @@ export const BlockNoteToolbar = () => {
       );
     }
 
+    // Remove default Comment button
+    toolbarItems = toolbarItems.filter((item) => {
+      if (typeof item === 'object' && item !== null && 'key' in item) {
+        return item.key !== 'addCommentButton';
+      }
+      return true;
+    });
+
     return toolbarItems;
   }, [dict, t]);
 
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
+        <CommentToolbarButton />
+
         {toolbarItems}
 
         {/* Extra button to do some AI powered actions */}

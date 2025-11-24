@@ -6,12 +6,14 @@ import { convertSvgToPng } from '../utils';
 
 const PIXELS_PER_POINT = 0.75;
 const FONT_SIZE = 16;
+const MAX_WIDTH = 600;
 
 export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['image'] =
   async (block, exporter) => {
     const blob = await exporter.resolveFile(block.props.url);
     let pngConverted: string | undefined;
-    let width = block.props.previewWidth || undefined;
+    let dimensions: { width: number; height: number } | undefined;
+    let previewWidth = block.props.previewWidth || undefined;
 
     if (!blob.type.includes('image')) {
       return <View wrap={false} />;
@@ -20,16 +22,33 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
     if (blob.type.includes('svg')) {
       const svgText = await blob.text();
       const FALLBACK_SIZE = 536;
-      width = width || blob.size || FALLBACK_SIZE;
-      pngConverted = await convertSvgToPng(svgText, width);
+      previewWidth = previewWidth || FALLBACK_SIZE;
+
+      const result = await convertSvgToPng(svgText, previewWidth);
+      pngConverted = result.png;
+      dimensions = { width: result.width, height: result.height };
+    } else {
+      dimensions = await getImageDimensions(blob);
     }
+
+    if (!dimensions) {
+      return <View wrap={false} />;
+    }
+
+    const { width, height } = dimensions;
+
+    // Ensure the final width never exceeds MAX_WIDTH to prevent images
+    // from overflowing the page width in the exported document
+    const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
+    const finalHeight = (finalWidth / width) * height;
 
     return (
       <View wrap={false}>
         <Image
           src={pngConverted || blob}
           style={{
-            width: width ? width * PIXELS_PER_POINT : undefined,
+            width: finalWidth * PIXELS_PER_POINT,
+            height: finalHeight * PIXELS_PER_POINT,
             maxWidth: '100%',
           }}
         />
@@ -37,6 +56,21 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
       </View>
     );
   };
+
+async function getImageDimensions(blob: Blob) {
+  if (typeof window !== 'undefined') {
+    const url = URL.createObjectURL(blob);
+    const img = document.createElement('img');
+    img.src = url;
+
+    return new Promise<{ width: number; height: number }>((resolve) => {
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+    });
+  }
+}
 
 function caption(
   props: Partial<DefaultProps & { caption: string; previewWidth: number }>,

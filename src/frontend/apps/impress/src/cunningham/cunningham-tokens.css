@@ -556,8 +556,10 @@
   --c--theme--logo--widthHeader: 110px;
   --c--theme--logo--widthFooter: 220px;
   --c--theme--logo--alt: gouvernement logo;
-  --c--theme--font--families--base: marianne;
-  --c--theme--font--families--accent: marianne;
+  --c--theme--font--families--base:
+    marianne, inter, roboto flex variable, sans-serif;
+  --c--theme--font--families--accent:
+    marianne, inter, roboto flex variable, sans-serif;
   --c--components--la-gaufre: true;
   --c--components--home-proconnect: true;
   --c--components--favicon--ico: /assets/favicon-dsfr.ico;

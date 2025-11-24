@@ -1,4 +1,5 @@
 """Client serializers for the impress core app."""
+# pylint: disable=too-many-lines
 
 import binascii
 import mimetypes
@@ -24,22 +25,13 @@ from core.services.converter_services import (
 class UserSerializer(serializers.ModelSerializer):
     """Serialize users."""
 
-    class Meta:
-        model = models.User
-        fields = ["id", "email", "full_name", "short_name", "language"]
-        read_only_fields = ["id", "email", "full_name", "short_name"]
-
-
-class UserLightSerializer(UserSerializer):
-    """Serialize users with limited fields."""
-
     full_name = serializers.SerializerMethodField(read_only=True)
     short_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.User
-        fields = ["full_name", "short_name"]
-        read_only_fields = ["full_name", "short_name"]
+        fields = ["id", "email", "full_name", "short_name", "language"]
+        read_only_fields = ["id", "email", "full_name", "short_name"]
 
     def get_full_name(self, instance):
         """Return the full name of the user."""
@@ -56,6 +48,15 @@ class UserLightSerializer(UserSerializer):
             return slugify(email)
 
         return instance.short_name
+
+
+class UserLightSerializer(UserSerializer):
+    """Serialize users with limited fields."""
+
+    class Meta:
+        model = models.User
+        fields = ["full_name", "short_name"]
+        read_only_fields = ["full_name", "short_name"]
 
 
 class TemplateAccessSerializer(serializers.ModelSerializer):
@@ -786,7 +787,9 @@ class DocumentAskForAccessCreateSerializer(serializers.Serializer):
     """Serializer for creating a document ask for access."""
 
     role = serializers.ChoiceField(
-        choices=models.RoleChoices.choices,
+        choices=[
+            role for role in choices.RoleChoices if role != models.RoleChoices.OWNER
+        ],
         required=False,
         default=models.RoleChoices.READER,
     )
@@ -810,11 +813,11 @@ class DocumentAskForAccessSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "document", "user", "role", "created_at", "abilities"]
 
-    def get_abilities(self, invitation) -> dict:
+    def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
         request = self.context.get("request")
         if request:
-            return invitation.get_abilities(request.user)
+            return instance.get_abilities(request.user)
         return {}
 
 
@@ -889,3 +892,124 @@ class MoveDocumentSerializer(serializers.Serializer):
         choices=enums.MoveNodePositionChoices.choices,
         default=enums.MoveNodePositionChoices.LAST_CHILD,
     )
+
+
+class ReactionSerializer(serializers.ModelSerializer):
+    """Serialize reactions."""
+
+    users = UserLightSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Reaction
+        fields = [
+            "id",
+            "emoji",
+            "created_at",
+            "users",
+        ]
+        read_only_fields = ["id", "created_at", "users"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serialize comments (nested under a thread) with reactions and abilities."""
+
+    user = UserLightSerializer(read_only=True)
+    abilities = serializers.SerializerMethodField()
+    reactions = ReactionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Comment
+        fields = [
+            "id",
+            "user",
+            "body",
+            "created_at",
+            "updated_at",
+            "reactions",
+            "abilities",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "created_at",
+            "updated_at",
+            "reactions",
+            "abilities",
+        ]
+
+    def validate(self, attrs):
+        """Validate comment data."""
+
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        attrs["thread_id"] = self.context["thread_id"]
+        attrs["user_id"] = user.id if user else None
+        return attrs
+
+    def get_abilities(self, obj):
+        """Return comment's abilities."""
+        request = self.context.get("request")
+        if request:
+            return obj.get_abilities(request.user)
+        return {}
+
+
+class ThreadSerializer(serializers.ModelSerializer):
+    """Serialize threads in a backward compatible shape for current frontend.
+
+    We expose a flatten representation where ``content`` maps to the first
+    comment's body. Creating a thread requires a ``content`` field which is
+    stored as the first comment.
+    """
+
+    creator = UserLightSerializer(read_only=True)
+    abilities = serializers.SerializerMethodField(read_only=True)
+    body = serializers.JSONField(write_only=True, required=True)
+    comments = serializers.SerializerMethodField(read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Thread
+        fields = [
+            "id",
+            "body",
+            "created_at",
+            "updated_at",
+            "creator",
+            "abilities",
+            "comments",
+            "resolved",
+            "resolved_at",
+            "resolved_by",
+            "metadata",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "creator",
+            "abilities",
+            "comments",
+            "resolved",
+            "resolved_at",
+            "resolved_by",
+            "metadata",
+        ]
+
+    def validate(self, attrs):
+        """Validate thread data."""
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        attrs["document_id"] = self.context["resource_id"]
+        attrs["creator_id"] = user.id if user else None
+
+        return attrs
+
+    def get_abilities(self, thread):
+        """Return thread's abilities."""
+        request = self.context.get("request")
+        if request:
+            return thread.get_abilities(request.user)
+        return {}

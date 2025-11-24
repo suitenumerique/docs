@@ -90,12 +90,14 @@ export const DocRoleDropdown = ({
   const roles: DropdownMenuOption[] = Object.keys(translatedRoles).map(
     (key, index) => {
       const isLast = index === Object.keys(translatedRoles).length - 1;
+      const isRoleAllowed = rolesAllowed?.includes(key as Role) ?? true;
+
       return {
         label: transRole(key as Role),
         callback: () => onSelectRole?.(key as Role),
         isSelected: currentRole === (key as Role),
         showSeparator: isLast,
-        disabled: isLastOwner && key !== 'owner',
+        disabled: (isLastOwner && key !== 'owner') || !isRoleAllowed,
       };
     },
   );
