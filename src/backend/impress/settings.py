@@ -14,6 +14,7 @@ import os
 import tomllib
 from socket import gethostbyname, gethostname
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 import sentry_sdk
@@ -75,6 +76,34 @@ class Base(Configuration):
     # Application definition
     ROOT_URLCONF = "impress.urls"
     WSGI_APPLICATION = "impress.wsgi.application"
+
+    # Monitoring
+    DOCKERFLOW_CHECKS = [
+        "core.checks.database_check",
+        "core.checks.cache_check",
+        "core.checks.media_storage_check",
+    ]
+    PROMETHEUS_EXPORTER_ENABLED = values.BooleanValue(
+        False,
+        environ_name="PROMETHEUS_EXPORTER_ENABLED",
+        environ_prefix=None,
+    )
+    PROMETHEUS_METRIC_NAMESPACE = values.Value(
+        "docs",
+        environ_name="PROMETHEUS_METRIC_NAMESPACE",
+        environ_prefix=None,
+    )
+    MONITORING_BASIC_AUTH_USERNAME = values.Value(
+        "",
+        environ_name="MONITORING_BASIC_AUTH_USERNAME",
+        environ_prefix=None,
+    )
+    MONITORING_BASIC_AUTH_PASSWORD = SecretFileValue(
+        "",
+        environ_name="MONITORING_BASIC_AUTH_PASSWORD",
+        environ_prefix=None,
+    )
+
 
     # Database
     DATABASES = {
@@ -809,23 +838,6 @@ class Base(Configuration):
         ),
     }
 
-    # Monitoring
-    MONITORING_PROMETHEUS_EXPORTER = values.BooleanValue(
-        False,
-        environ_name="MONITORING_PROMETHEUS_EXPORTER",
-        environ_prefix=None,
-    )
-    MONITORING_PROBING = values.BooleanValue(
-        False,
-        environ_name="MONITORING_PROBING",
-        environ_prefix=None,
-    )
-    MONITORING_ALLOWED_CIDR_RANGES = values.ListValue(
-        [],
-        environ_name="MONITORING_ALLOWED_CIDR_RANGES",
-        environ_prefix=None,
-    )
-
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -864,29 +876,42 @@ class Base(Configuration):
         """
         super().post_setup()
 
-        # Monitoring hooks: done late so middleware stack is settled.
-        if cls.MONITORING_PROMETHEUS_EXPORTER:
+        # Monitoring hooks: applied late so middleware stack is settled.
+        if cls.PROMETHEUS_EXPORTER_ENABLED:
+            if not cls.MONITORING_BASIC_AUTH_USERNAME or not cls.MONITORING_BASIC_AUTH_PASSWORD:
+                raise ImproperlyConfigured(
+                    "MONITORING_BASIC_AUTH_USERNAME and MONITORING_BASIC_AUTH_PASSWORD "
+                    "must be set when PROMETHEUS_EXPORTER_ENABLED is true."
+                )
             cls.MIDDLEWARE = [
                 "django_prometheus.middleware.PrometheusBeforeMiddleware",
                 *cls.MIDDLEWARE,
                 "django_prometheus.middleware.PrometheusAfterMiddleware",
             ]
-            cls.PROMETHEUS_METRIC_NAMESPACE = "docs"
-            cls.PROMETHEUS_LATENCY_BUCKETS = (
-                0.05,
-                0.1,
-                0.25,
-                0.5,
-                0.75,
-                1.0,
-                1.5,
-                2.5,
-                5.0,
-                10.0,
-                15.0,
-                30.0,
-                float("inf"),
-            )
+            
+            _PROMETHEUS_DB_BACKENDS = {
+                "django.db.backends.sqlite3": "django_prometheus.db.backends.sqlite3",
+                "django.db.backends.sqlite": "django_prometheus.db.backends.sqlite",
+                "django.db.backends.postgresql": "django_prometheus.db.backends.postgresql",
+                "django.db.backends.postgresql_psycopg2": "django_prometheus.db.backends.postgresql",
+                "django.db.backends.mysql": "django_prometheus.db.backends.mysql",
+                "django.contrib.gis.db.backends.postgis": "django_prometheus.db.backends.postgis",
+            }
+
+            _PROMETHEUS_CACHE_BACKENDS = {
+                "django.core.cache.backends.locmem.LocMemCache": "django_prometheus.cache.backends.locmem.LocMemCache",
+                "django.core.cache.backends.filebased.FileBasedCache": "django_prometheus.cache.backends.filebased.FileBasedCache",
+                "django.core.cache.backends.memcached.MemcachedCache": "django_prometheus.cache.backends.memcached.MemcachedCache",
+                "django.core.cache.backends.memcached.PyLibMCCache": "django_prometheus.cache.backends.memcached.PyLibMCCache",
+                "django_redis.cache.RedisCache": "django_prometheus.cache.backends.redis.RedisCache",
+            }
+            
+            for _alias, config in cls.DATABASES.items():
+                current = config.get("ENGINE")
+                config["ENGINE"] = _PROMETHEUS_DB_BACKENDS.get(current, current)
+            for _alias, config in cls.CACHES.items():
+                current = config.get("BACKEND")
+                config["BACKEND"] = _PROMETHEUS_CACHE_BACKENDS.get(current, current)
 
         # The SENTRY_DSN setting should be available to activate sentry for an environment
         if cls.SENTRY_DSN is not None:
@@ -972,9 +997,6 @@ class Development(Base):
 class Test(Base):
     """Test environment settings"""
 
-    MONITORING_PROMETHEUS_EXPORTER = True
-    MONITORING_PROBING = True
-    MONITORING_ALLOWED_CIDR_RANGES = ["*"]
     PASSWORD_HASHERS = [
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ]

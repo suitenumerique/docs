@@ -65,9 +65,9 @@ services:
     environment:
       - PYLINTHOME=/app/.pylint.d
       - DJANGO_CONFIGURATION=Development
-      - MONITORING_PROMETHEUS_EXPORTER=true
-      - MONITORING_PROBING=true
-      - MONITORING_ALLOWED_CIDR_RANGES=*
+      - PROMETHEUS_EXPORTER_ENABLED=true
+      - MONITORING_BASIC_AUTH_USERNAME=monitoring
+      - MONITORING_BASIC_AUTH_PASSWORD=monitoring
     env_file:
       - env.d/development/common
       - env.d/development/common.local
