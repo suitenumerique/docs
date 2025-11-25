@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled, { css } from 'styled-components';
 
@@ -81,12 +81,6 @@ export const SkipToContent = () => {
   const { t } = useTranslation();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Prevent SSR flash - only render client-side
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Reset focus after route change so first TAB goes to skip link
   useEffect(() => {
@@ -115,11 +109,6 @@ export const SkipToContent = () => {
       mainContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-
-  // Don't render during SSR to prevent flash
-  if (!isMounted) {
-    return null;
-  }
 
   return (
     <SkipLink
