@@ -1,17 +1,19 @@
-"""Custom Prometheus Metrics Exporter for Impress' core application."""
+"""Custom Business metrics collector for Docs."""
 
 from datetime import timedelta
 
 from django.conf import settings
+from django.db import DatabaseError
 from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import now
 
 from prometheus_client.core import GaugeMetricFamily
+from prometheus_client.registry import Collector
 
 from core import models
 
 
-class CustomMetricsExporter:
+class CustomCollector(Collector):
     """
     Custom Prometheus metrics collector for various application metrics.
 
@@ -28,6 +30,38 @@ class CustomMetricsExporter:
         namespace = getattr(settings, "PROMETHEUS_METRIC_NAMESPACE", "")
         return f"{namespace}_{name}" if namespace else name
 
+    def describe(self):
+        """
+        Advertise metric definitions without hitting the DB (for auto_describe=True).
+        """
+        yield GaugeMetricFamily(
+            self._get_metric_name("users"),
+            "Current number of users",
+        )
+        yield GaugeMetricFamily(
+            self._get_metric_name("users_active"),
+            "Users active within the given window",
+            labels=["window"],
+        )
+        yield GaugeMetricFamily(
+            self._get_metric_name("documents"),
+            "Current number of documents",
+        )
+        yield GaugeMetricFamily(
+            self._get_metric_name("documents_shared"),
+            "Current number of shared documents",
+        )
+        yield GaugeMetricFamily(
+            self._get_metric_name("documents_active"),
+            "Documents active within the given window",
+            labels=["window"],
+        )
+        yield GaugeMetricFamily(
+            self._get_metric_name("documents_created_timestamp_seconds"),
+            "Document creation timestamps (Unix time) for oldest/newest documents",
+            labels=["bound"],
+        )
+
     def collect(self):
         """
         Collect and yield Prometheus metrics for user activity, document activity,
@@ -42,56 +76,59 @@ class CustomMetricsExporter:
         times["one_week_ago"] = times["today_start_utc"] - timedelta(days=7)
         times["one_month_ago"] = times["today_start_utc"] - timedelta(days=30)
 
-        # Group user queries/metrics into a dictionary
-        user_metrics = {
-            "count": models.User.objects.count(),
-            "active_today": models.User.objects.filter(
-                Q(documentaccess__updated_at__gte=times["today_start_utc"])
-                | Q(link_traces__created_at__gte=times["today_start_utc"])
-                | Q(last_login__gte=times["today_start_utc"])
-            )
-            .distinct()
-            .count(),
-            "active_7d": models.User.objects.filter(
-                Q(documentaccess__updated_at__gte=times["one_week_ago"])
-                | Q(link_traces__created_at__gte=times["one_week_ago"])
-                | Q(last_login__gte=times["one_week_ago"])
-            )
-            .distinct()
-            .count(),
-            "active_30d": models.User.objects.filter(
-                Q(documentaccess__updated_at__gte=times["one_month_ago"])
-                | Q(link_traces__created_at__gte=times["one_month_ago"])
-                | Q(last_login__gte=times["one_month_ago"])
-            )
-            .distinct()
-            .count(),
-        }
+        try:
+            # Group user queries/metrics into a dictionary
+            user_metrics = {
+                "count": models.User.objects.count(),
+                "active_today": models.User.objects.filter(
+                    Q(documentaccess__updated_at__gte=times["today_start_utc"])
+                    | Q(link_traces__created_at__gte=times["today_start_utc"])
+                    | Q(last_login__gte=times["today_start_utc"])
+                )
+                .distinct()
+                .count(),
+                "active_7d": models.User.objects.filter(
+                    Q(documentaccess__updated_at__gte=times["one_week_ago"])
+                    | Q(link_traces__created_at__gte=times["one_week_ago"])
+                    | Q(last_login__gte=times["one_week_ago"])
+                )
+                .distinct()
+                .count(),
+                "active_30d": models.User.objects.filter(
+                    Q(documentaccess__updated_at__gte=times["one_month_ago"])
+                    | Q(link_traces__created_at__gte=times["one_month_ago"])
+                    | Q(last_login__gte=times["one_month_ago"])
+                )
+                .distinct()
+                .count(),
+            }
 
-        # Group document queries/metrics into a dictionary
-        doc_metrics = {
-            "count": models.Document.objects.count(),
-            "shared": (
-                models.Document.objects.annotate(access_count=Count("accesses"))
-                .filter(access_count__gt=1)
-                .count()
-            ),
-            "active_today": models.Document.objects.filter(
-                updated_at__gte=times["today_start_utc"],
-            ).count(),
-            "active_7d": models.Document.objects.filter(
-                updated_at__gte=times["one_week_ago"]
-            ).count(),
-            "active_30d": models.Document.objects.filter(
-                updated_at__gte=times["one_month_ago"]
-            ).count(),
-        }
+            # Group document queries/metrics into a dictionary
+            doc_metrics = {
+                "count": models.Document.objects.count(),
+                "shared": (
+                    models.Document.objects.annotate(access_count=Count("accesses"))
+                    .filter(access_count__gt=1)
+                    .count()
+                ),
+                "active_today": models.Document.objects.filter(
+                    updated_at__gte=times["today_start_utc"],
+                ).count(),
+                "active_7d": models.Document.objects.filter(
+                    updated_at__gte=times["one_week_ago"]
+                ).count(),
+                "active_30d": models.Document.objects.filter(
+                    updated_at__gte=times["one_month_ago"]
+                ).count(),
+            }
 
-        # Use a single aggregation call for oldest/newest document creation date
-        doc_ages = models.Document.objects.aggregate(
-            oldest=Min("created_at"),
-            newest=Max("created_at"),
-        )
+            # Use a single aggregation call for oldest/newest document creation date
+            doc_ages = models.Document.objects.aggregate(
+                oldest=Min("created_at"),
+                newest=Max("created_at"),
+            )
+        except DatabaseError:
+            return
 
         # Collect all metrics in one list
         metrics = []
