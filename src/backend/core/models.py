@@ -28,6 +28,7 @@ from django.utils.translation import get_language, override
 from django.utils.translation import gettext_lazy as _
 
 from botocore.exceptions import ClientError
+from django_prometheus.models import ExportModelOperationsMixin
 from rest_framework.exceptions import ValidationError
 from timezone_field import TimeZoneField
 from treebeard.mp_tree import MP_Node, MP_NodeManager, MP_NodeQuerySet
@@ -134,7 +135,12 @@ class UserManager(auth_models.UserManager):
         return None
 
 
-class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
+class User(
+    ExportModelOperationsMixin("user"),
+    AbstractBaseUser,
+    BaseModel,
+    auth_models.PermissionsMixin,
+):
     """User model to work with OIDC only authentication."""
 
     sub = models.CharField(
@@ -355,7 +361,7 @@ class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
 
 
 # pylint: disable=too-many-public-methods
-class Document(MP_Node, BaseModel):
+class Document(ExportModelOperationsMixin("document"), MP_Node, BaseModel):
     """Pad document carrying the content."""
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
@@ -1013,7 +1019,7 @@ class DocumentFavorite(BaseModel):
         return f"{self.user!s} favorite on document {self.document!s}"
 
 
-class DocumentAccess(BaseAccess):
+class DocumentAccess(ExportModelOperationsMixin("document_access"), BaseAccess):
     """Relation model to give access to a document for a user or a team with a role."""
 
     document = models.ForeignKey(
@@ -1179,7 +1185,9 @@ class DocumentAccess(BaseAccess):
         }
 
 
-class DocumentAskForAccess(BaseModel):
+class DocumentAskForAccess(
+    ExportModelOperationsMixin("document_ask_for_access"), BaseModel
+):
     """Relation model to ask for access to a document."""
 
     document = models.ForeignKey(
@@ -1277,7 +1285,7 @@ class DocumentAskForAccess(BaseModel):
         self.document.send_email(subject, [email], context, language)
 
 
-class Thread(BaseModel):
+class Thread(ExportModelOperationsMixin("thread"), BaseModel):
     """Discussion thread attached to a document.
 
     A thread groups one or many comments. For backward compatibility with the
@@ -1341,7 +1349,7 @@ class Thread(BaseModel):
         return self.comments.order_by("created_at").first()
 
 
-class Comment(BaseModel):
+class Comment(ExportModelOperationsMixin("comment"), BaseModel):
     """A comment belonging to a thread."""
 
     thread = models.ForeignKey(
@@ -1389,7 +1397,7 @@ class Comment(BaseModel):
         }
 
 
-class Reaction(BaseModel):
+class Reaction(ExportModelOperationsMixin("reaction"), BaseModel):
     """Aggregated reactions for a given emoji on a comment.
 
     We store one row per (comment, emoji) and maintain the list of user IDs who
@@ -1581,7 +1589,7 @@ class TemplateAccess(BaseAccess):
         }
 
 
-class Invitation(BaseModel):
+class Invitation(ExportModelOperationsMixin("invitation"), BaseModel):
     """User invitation to a document."""
 
     email = models.EmailField(_("email address"), null=False, blank=False)
