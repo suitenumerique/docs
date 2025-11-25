@@ -8,7 +8,7 @@ and this project adheres to
 
 ### Added
 
-- ✨(backend) add prometheus metrics and probe endpoints #455
+- ✨(backend) Add prometheus metrics #562
 
 ### Fixed
 
@@ -59,7 +59,6 @@ and this project adheres to
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
 - ✨ Add comments feature to the editor #1330
-
 
 ### Changed
 
