@@ -48,7 +48,7 @@ const SkipLink = styled(Box)<{
     font-weight: 500;
     line-height: 18px;
 
-    /* Skip link behavior - Fondu enchainé */
+    /* Skip link appearance - Fade in/out */
     text-decoration: none;
     white-space: nowrap;
     opacity: 0;
