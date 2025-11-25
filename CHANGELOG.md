@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add prometheus metrics and probe endpoints #455
+
 ### Fixed
 
 - ♿(frontend) improve accessibility:
@@ -55,6 +59,7 @@ and this project adheres to
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
 - ✨ Add comments feature to the editor #1330
+
 
 ### Changed
 

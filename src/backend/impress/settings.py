@@ -310,6 +310,7 @@ class Base(Configuration):
         "drf_spectacular",
         # Third party apps
         "corsheaders",
+        "django_prometheus",
         "django_filters",
         "dockerflow.django",
         "rest_framework",
@@ -808,6 +809,23 @@ class Base(Configuration):
         ),
     }
 
+    # Monitoring
+    MONITORING_PROMETHEUS_EXPORTER = values.BooleanValue(
+        False,
+        environ_name="MONITORING_PROMETHEUS_EXPORTER",
+        environ_prefix=None,
+    )
+    MONITORING_PROBING = values.BooleanValue(
+        False,
+        environ_name="MONITORING_PROBING",
+        environ_prefix=None,
+    )
+    MONITORING_ALLOWED_CIDR_RANGES = values.ListValue(
+        [],
+        environ_name="MONITORING_ALLOWED_CIDR_RANGES",
+        environ_prefix=None,
+    )
+
     # pylint: disable=invalid-name
     @property
     def ENVIRONMENT(self):
@@ -845,6 +863,30 @@ class Base(Configuration):
         settings to be loaded.
         """
         super().post_setup()
+
+        # Monitoring hooks: done late so middleware stack is settled.
+        if cls.MONITORING_PROMETHEUS_EXPORTER:
+            cls.MIDDLEWARE = [
+                "django_prometheus.middleware.PrometheusBeforeMiddleware",
+                *cls.MIDDLEWARE,
+                "django_prometheus.middleware.PrometheusAfterMiddleware",
+            ]
+            cls.PROMETHEUS_METRIC_NAMESPACE = "docs"
+            cls.PROMETHEUS_LATENCY_BUCKETS = (
+                0.05,
+                0.1,
+                0.25,
+                0.5,
+                0.75,
+                1.0,
+                1.5,
+                2.5,
+                5.0,
+                10.0,
+                15.0,
+                30.0,
+                float("inf"),
+            )
 
         # The SENTRY_DSN setting should be available to activate sentry for an environment
         if cls.SENTRY_DSN is not None:
@@ -930,6 +972,9 @@ class Development(Base):
 class Test(Base):
     """Test environment settings"""
 
+    MONITORING_PROMETHEUS_EXPORTER = True
+    MONITORING_PROBING = True
+    MONITORING_ALLOWED_CIDR_RANGES = ["*"]
     PASSWORD_HASHERS = [
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ]
