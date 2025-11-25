@@ -1,134 +1,88 @@
 """Test prometheus metrics of impress's core app."""
 
-from django.conf import settings
-from django.test import TestCase
-from django.test.utils import override_settings
+import base64
+import importlib
 
-from prometheus_client import REGISTRY
+import pytest
+
+from django.conf import settings
+from django.test.utils import override_settings
+from django.urls import clear_url_caches
 
 from core import factories
-from core.api.custom_metrics_exporter import CustomMetricsExporter
+
+
+def _auth_header(username, password):
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("utf-8")
+    return f"Basic {token}"
+
+
+BASE_SETTINGS = {
+    "PROMETHEUS_EXPORTER_ENABLED": True,
+    "MONITORING_BASIC_AUTH_USERNAME": "monitoring",
+    "MONITORING_BASIC_AUTH_PASSWORD": "secret",
+}
+
+DEFAULT_METRICS = [
+    "process_virtual_memory_bytes",
+    "process_resident_memory_bytes",
+]
 
 
 def namespaced(metric):
     """
     Pulls PROMETHEUS_METRIC_NAMESPACE (if any)
     from Django settings to the given metric name.
-
-    e.g. if PROMETHEUS_METRIC_NAMESPACE='impress' and metric='users',
-    returns 'impress_users'.
     """
     ns = getattr(settings, "PROMETHEUS_METRIC_NAMESPACE", "")
     return f"{ns}_{metric}" if ns else metric
 
 
-class PrometheusMetricsTest(TestCase):
+@pytest.mark.django_db
+@pytest.mark.parametrize("namespace", ["", "impress"])
+def test_prometheus_metrics(client, namespace):
     """
-    Tests hitting the /prometheus/ endpoint.
-    We forcibly register the CustomMetricsExporter (normally done in wsgi.py)
-    so its metrics will appear even though wsgi.py is not invoked in tests.
+    Hitting /metrics/ should return default + custom metrics; custom ones should
+    reflect PROMETHEUS_METRIC_NAMESPACE when set.
     """
+    # Ensure non-zero custom metrics
+    user = factories.UserFactory()
+    doc = factories.DocumentFactory()
+    doc.accesses.create(role="owner", user=user)
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # Ensure CustomMetricsExporter is registered
-        if not any(
-            isinstance(collector, CustomMetricsExporter)
-            for collector in REGISTRY._collector_to_names
-        ):
-            REGISTRY.register(CustomMetricsExporter())
+    metrics_path = "/metrics/"
+    settings_override = {
+        **BASE_SETTINGS,
+        "PROMETHEUS_METRIC_NAMESPACE": namespace,
+    }
 
-    def setUp(self):
-        """
-        Create a user + document so user/doc metrics (e.g. users,
-        documents) are definitely non-zero and appear in the output list.
-        """
-        self.user = factories.UserFactory()
-        self.doc = factories.DocumentFactory()
-        self.doc.accesses.create(role="owner", user=self.user)
+    try:
+        with override_settings(**settings_override):
+            clear_url_caches()
+            importlib.reload(importlib.import_module("impress.urls"))
 
-    @override_settings(PROMETHEUS_METRIC_NAMESPACE="")
-    def test_prometheus_metrics_no_namespace(self):
-        """
-        Scenario 1: No metric namespace => we expect the custom metrics
-        to appear with their raw names (e.g. 'users').
-        """
-        with override_settings(
-            MONITORING_PROMETHEUS_EXPORTER=True,
-            MONITORING_ALLOWED_CIDR_RANGES=["*"],
-        ):
-            response = self.client.get("/prometheus/", REMOTE_ADDR="127.0.0.1")
-            self.assertEqual(
-                200, response.status_code, "Expected 200 OK but got a different status."
+            response = client.get(
+                metrics_path,
+                REMOTE_ADDR="127.0.0.1",
+                HTTP_AUTHORIZATION=_auth_header("monitoring", "secret"),
+            )
+            assert response.status_code == 200, (
+                "Expected 200 OK but got a different status."
             )
             content = response.content.decode("utf-8")
 
-            # Check for a couple default 'process_' metrics
-            for metric in [
-                "process_virtual_memory_bytes",
-                "process_resident_memory_bytes",
-            ]:
-                self.assertIn(
-                    metric, content, f"Missing default process metric {metric}"
+            for metric in DEFAULT_METRICS:
+                assert metric in content, f"Missing default process metric {metric}"
+
+            expected_custom = [
+                namespaced("users"),
+                namespaced("documents"),
+                namespaced("users_active") + '{window="one_day"}',
+            ]
+            for metric in expected_custom:
+                assert metric in content, (
+                    f"Expected custom metric {metric} not found.\n{content}"
                 )
-
-            # Check for selected custom metrics (no prefix)
-            # users/documents are gauges; users_active carries a window label
-            for metric in [
-                "users",
-                "documents",
-                'users_active{window="one_day"}',
-            ]:
-                self.assertIn(
-                    metric,
-                    content,
-                    f"Expected custom metric {metric} not found.\n{content}",
-                )
-
-    @override_settings(PROMETHEUS_METRIC_NAMESPACE="impress")
-    def test_prometheus_metrics_with_namespace(self):
-        """
-        Scenario 2: We set PROMETHEUS_METRIC_NAMESPACE='impress' in settings,
-        so all custom metrics should appear prefixed with 'impress_'.
-        """
-        with override_settings(
-            MONITORING_PROMETHEUS_EXPORTER=True,
-            MONITORING_ALLOWED_CIDR_RANGES=["*"],
-        ):
-            response = self.client.get("/prometheus/", REMOTE_ADDR="127.0.0.1")
-            self.assertEqual(
-                200, response.status_code, "Expected 200 OK but got a different status."
-            )
-            content = response.content.decode("utf-8")
-
-            # Check for default metrics
-            for metric in [
-                "process_virtual_memory_bytes",
-                "process_resident_memory_bytes",
-            ]:
-                self.assertIn(
-                    metric, content, f"Missing default process metric {metric}"
-                )
-
-            # Check custom metrics that should be prefixed with
-            # the define value from settings.py ...
-            # We'll build the expected string via `namespaced()`.
-            for base_metric in [
-                "users",
-                "documents",
-            ]:
-                expected_metric = namespaced(base_metric)
-                self.assertIn(
-                    expected_metric,
-                    content,
-                    f"Expected custom metric {expected_metric} not found.\n{content}",
-                )
-
-            # users_active carries window label; ensure namespacing + label present
-            expected_active_today = namespaced("users_active") + '{window="one_day"}'
-            self.assertIn(
-                expected_active_today,
-                content,
-                f"Expected custom metric {expected_active_today} not found.\n{content}",
-            )
+    finally:
+        clear_url_caches()
+        importlib.reload(importlib.import_module("impress.urls"))
