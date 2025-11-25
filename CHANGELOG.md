@@ -11,6 +11,10 @@ and this project adheres to
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
 
+### Changed
+
+- ⚡️(sw) stop to cache external resources likes videos #1655
+
 ### Fixed
 
 - ♿(frontend) improve accessibility:
