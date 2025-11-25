@@ -891,18 +891,23 @@ class Base(Configuration):
             
             _PROMETHEUS_DB_BACKENDS = {
                 "django.db.backends.sqlite3": "django_prometheus.db.backends.sqlite3",
-                "django.db.backends.sqlite": "django_prometheus.db.backends.sqlite",
                 "django.db.backends.postgresql": "django_prometheus.db.backends.postgresql",
-                "django.db.backends.postgresql_psycopg2": "django_prometheus.db.backends.postgresql",
                 "django.db.backends.mysql": "django_prometheus.db.backends.mysql",
                 "django.contrib.gis.db.backends.postgis": "django_prometheus.db.backends.postgis",
+                "django.contrib.gis.db.backends.spatialite": "django_prometheus.db.backends.spatialite",
             }
 
             _PROMETHEUS_CACHE_BACKENDS = {
-                "django.core.cache.backends.locmem.LocMemCache": "django_prometheus.cache.backends.locmem.LocMemCache",
-                "django.core.cache.backends.filebased.FileBasedCache": "django_prometheus.cache.backends.filebased.FileBasedCache",
-                "django.core.cache.backends.memcached.MemcachedCache": "django_prometheus.cache.backends.memcached.MemcachedCache",
+                "django.core.cache.backends.locmem.LocMemCache": "impress.prometheus_cache.LocMemCache",
+                "django_prometheus.cache.backends.locmem.LocMemCache": "impress.prometheus_cache.LocMemCache",
+                "django.core.cache.backends.filebased.FileBasedCache": "impress.prometheus_cache.FileBasedCache",
+                "django_prometheus.cache.backends.filebased.FileBasedCache": "impress.prometheus_cache.FileBasedCache",
+                "django_memcached_consul.memcached.MemcachedCache": "impress.prometheus_cache.MemcachedConsulCache",
+                "django_prometheus.cache.backends.django_memcached_consul.MemcachedCache": "impress.prometheus_cache.MemcachedConsulCache",
                 "django.core.cache.backends.memcached.PyLibMCCache": "django_prometheus.cache.backends.memcached.PyLibMCCache",
+                "django.core.cache.backends.memcached.PyMemcacheCache": "django_prometheus.cache.backends.memcached.PyMemcacheCache",
+                "django_prometheus.cache.backends.memcached.PyLibMCCache": "django_prometheus.cache.backends.memcached.PyLibMCCache",
+                "django_prometheus.cache.backends.memcached.PyMemcacheCache": "django_prometheus.cache.backends.memcached.PyMemcacheCache",
                 "django_redis.cache.RedisCache": "django_prometheus.cache.backends.redis.RedisCache",
             }
             

@@ -11,27 +11,10 @@ TEAM = "team"
 VIA = [USER, TEAM]
 
 
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers",
-        "no_clear_cache: skip the autouse cache.clear() fixture for this test",
-    )
-
-
 @pytest.fixture(autouse=True)
-def clear_cache(request):
-    """
-    Clear the cache before each test.
-
-    Can be disabled with @pytest.mark.no_clear_cache for tests that need to
-    exercise cache-backed behavior without interference.
-    """
-    if request.node.get_closest_marker("no_clear_cache"):
-        yield
-        return
-
+def clear_cache():
+    """Fixture to clear the cache before each test."""
     cache.clear()
-    yield
 
 
 @pytest.fixture
