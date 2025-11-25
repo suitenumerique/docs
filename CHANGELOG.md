@@ -10,6 +10,10 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
+
+### Added
+
+- ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
 
 ## [3.10.0] - 2025-11-18
