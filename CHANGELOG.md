@@ -24,6 +24,11 @@ and this project adheres to
 - 🐛(frontend) preserve left panel width on window resize #1588
 - 🐛(frontend) prevent duplicate as first character in title #1595
 
+### Added
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) add skip to content button for keyboard accessibility #1624
+
 ## [3.10.0] - 2025-11-18
 
 ### Added
@@ -43,6 +48,9 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
+- 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
+- 🐛(frontend) make summary button fixed to remain visible during scroll #1581
+- 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(frontend) fix alignment of side menu #1597
 - 🐛(frontend) fix fallback translations with Trans #1620
 - 🐛(export) fix image overflow by limiting width to 600px during export #1525
