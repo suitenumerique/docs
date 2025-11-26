@@ -54,7 +54,7 @@ export const Skeleton = ({ children }: PropsWithChildren) => {
       $align="center"
       $width="100%"
       $height="100%"
-      $background={colorsTokens['greyscale-000']}
+      $background={colorsTokens['gray-000']}
       $css={css`
         position: absolute;
         inset: 0;

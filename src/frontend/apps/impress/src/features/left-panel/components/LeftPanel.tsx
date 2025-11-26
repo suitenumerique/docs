@@ -25,7 +25,7 @@ export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
 
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { togglePanel, isPanelOpen } = useLeftPanelStore();
 
   const pathname = usePathname();
@@ -43,7 +43,7 @@ export const LeftPanel = () => {
             height: calc(100vh - ${HEADER_HEIGHT}px);
             width: 100%;
             overflow: hidden;
-            background-color: ${colorsTokens['greyscale-000']};
+            background-color: var(--c--globals--colors--gray-000);
           `}
           className="--docs--left-panel-desktop"
           as="nav"
@@ -69,10 +69,10 @@ export const LeftPanel = () => {
               z-index: 999;
               width: 100dvw;
               height: calc(100dvh - 52px);
-              border-right: 1px solid var(--c--theme--colors--greyscale-200);
+              border-right: 1px solid var(--c--globals--colors--gray-200);
               position: fixed;
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
-              background-color: var(--c--theme--colors--greyscale-000);
+              background-color: var(--c--globals--colors--gray-000);
               overflow-y: auto;
               overflow-x: hidden;
             `}

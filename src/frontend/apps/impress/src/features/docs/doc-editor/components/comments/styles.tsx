@@ -11,7 +11,7 @@ export const cssComments = (
       .bn-thread-mark:not([data-orphan='true']),
       .bn-thread-mark-selected:not([data-orphan='true']) {
         background: ${canSeeComment ? '#EDB40066' : 'transparent'};
-        color: var(--c--theme--colors--greyscale-700);
+        color: var(--c--globals--colors--greyscale-700);
       }
     }
 
@@ -31,7 +31,7 @@ export const cssComments = (
       max-height: 500px;
 
       .bn-default-styles {
-        font-family: var(--c--theme--font--families--base);
+        font-family: var(--c--globals--font--families--base);
       }
 
       .bn-block {
@@ -52,21 +52,22 @@ export const cssComments = (
         padding: 8px;
 
         & .bn-editor {
-          padding-left: 32px;
+          padding-left: var(--c--globals--spacings--lg);
           .bn-inline-content {
-            color: var(--c--theme--colors--greyscale-700);
+            color: var(--c--globals--colors--greyscale-700);
           }
         }
 
         // Emoji
         & .bn-badge-group {
-          padding-left: 32px;
+          padding-left: var(--c--globals--spacings--lg);
           .bn-badge label {
-            padding: 0 4px;
+            padding: var(--c--globals--spacings--0)
+              var(--c--globals--spacings--st);
             background: none;
-            border: 1px solid var(--c--theme--colors--greyscale-300);
-            border-radius: 4px;
-            height: 24px;
+            border: 1px solid var(--c--globals--colors--greyscale-300);
+            border-radius: var(--c--globals--spacings--st);
+            height: var(--c--globals--spacings--md);
           }
         }
 
@@ -102,17 +103,17 @@ export const cssComments = (
               background-color: transparent;
 
               &:hover {
-                background-color: var(--c--theme--colors--greyscale-100);
+                background-color: var(--c--globals--colors--greyscale-100);
               }
             }
 
             button[role='menuitem'] svg {
-              color: var(--c--theme--colors--greyscale-600);
+              color: var(--c--globals--colors--greyscale-600);
             }
           }
 
           & svg {
-            color: var(--c--theme--colors--info-600);
+            color: var(--c--globals--colors--info-600);
           }
         }
 
@@ -125,19 +126,19 @@ export const cssComments = (
             gap: 0.4rem !important;
 
             & > button {
-              height: 24px;
-              padding-inline: 4px;
+              height: var(--c--globals--spacings--md);
+              padding-inline: var(--c--globals--spacings--st);
 
               &[data-test='save'] {
-                border: 1px solid var(--c--theme--colors--info-600);
-                background: var(--c--theme--colors--info-600);
+                border: 1px solid var(--c--globals--colors--info-600);
+                background: var(--c--globals--colors--info-600);
                 color: white;
               }
 
               &[data-test='cancel'] {
                 background: white;
-                border: 1px solid var(--c--theme--colors--greyscale-300);
-                color: var(--c--theme--colors--info-600);
+                border: 1px solid var(--c--globals--colors--greyscale-300);
+                color: var(--c--globals--colors--info-600);
               }
             }
           }
@@ -179,19 +180,19 @@ export const cssComments = (
 
           button {
             font-size: 0;
-            background: var(--c--theme--colors--info-600);
-            width: 24px;
-            height: 24px;
-            padding: 0;
+            background: var(--c--globals--colors--info-600);
+            width: var(--c--globals--spacings--md);
+            height: var(--c--globals--spacings--md);
+            padding: var(--c--globals--spacings--0);
 
             &:disabled {
-              background: var(--c--theme--colors--greyscale-300);
+              background: var(--c--globals--colors--greyscale-300);
             }
 
             & .mantine-Button-label::before {
               content: '🡡';
               font-size: 13px;
-              color: var(--c--theme--colors--greyscale-100);
+              color: var(--c--globals--colors--greyscale-100);
             }
           }
         }

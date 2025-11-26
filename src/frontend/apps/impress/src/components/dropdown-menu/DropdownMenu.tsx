@@ -124,18 +124,19 @@ export const DropdownMenu = ({
           >
             <Box>{children}</Box>
             <Icon
-              $variation="600"
               $css={
                 arrowCss ??
                 css`
-                  color: var(--c--theme--colors--primary-600);
+                  color: var(--c--globals--colors--brand-600);
                 `
               }
               iconName={isOpen ? 'arrow_drop_up' : 'arrow_drop_down'}
             />
           </Box>
         ) : (
-          <Box ref={blockButtonRef}>{children}</Box>
+          <Box ref={blockButtonRef} $color="inherit">
+            {children}
+          </Box>
         )
       }
     >
@@ -147,7 +148,6 @@ export const DropdownMenu = ({
       >
         {topMessage && (
           <Text
-            $variation="700"
             $wrap="wrap"
             $size="xs"
             $weight="bold"
@@ -186,8 +186,8 @@ export const DropdownMenu = ({
                 key={option.label}
                 $align="center"
                 $justify="space-between"
-                $background={colorsTokens['greyscale-000']}
-                $color={colorsTokens['primary-600']}
+                $background={colorsTokens['gray-000']}
+                $color={colorsTokens['brand-600']}
                 $padding={{ vertical: 'xs', horizontal: 'base' }}
                 $width="100%"
                 $gap={spacingsTokens['base']}
@@ -200,30 +200,39 @@ export const DropdownMenu = ({
                   `}
                   ${index === options.length - 1 &&
                   css`
-                    border-bottom-left-radius: 4px;
-                    border-bottom-right-radius: 4px;
+                    border-bottom-left-radius: var(--c--globals--spacings--st);
+                    border-bottom-right-radius: var(--c--globals--spacings--st);
                   `}
-                font-size: var(--c--theme--font--sizes--sm);
-                  color: var(--c--theme--colors--greyscale-1000);
-                  font-weight: 500;
+                  font-size: var(--c--globals--font--sizes--sm);
+                  color: var(--c--globals--colors--gray-1000);
+                  font-weight: var(--c--globals--font--weights--medium);
                   cursor: ${isDisabled ? 'not-allowed' : 'pointer'};
                   user-select: none;
 
                   &:hover {
-                    background-color: var(--c--theme--colors--greyscale-050);
+                    background-color: var(
+                      --c--contextuals--background--semantic--contextual--primary
+                    );
                   }
 
                   &:focus-visible {
-                    outline: 2px solid var(--c--theme--colors--primary-400);
+                    outline: 2px solid var(--c--globals--colors--brand-400);
                     outline-offset: -2px;
-                    background-color: var(--c--theme--colors--greyscale-050);
+                    background-color: var(
+                      --c--contextuals--background--semantic--contextual--primary
+                    );
                   }
 
-                  ${isFocused &&
+                  /**
+                  * TODO: This part seems to have a problem with DocToolBox
+                  */
+                  /* ${isFocused &&
                   css`
                     outline-offset: -2px;
-                    background-color: var(--c--theme--colors--greyscale-050);
-                  `}
+                    background-color: var(
+                      --c--contextuals--background--semantic--contextual--primary
+                    );
+                  `} */
                 `}
               >
                 <Box
@@ -234,8 +243,8 @@ export const DropdownMenu = ({
                   {option.icon && typeof option.icon === 'string' && (
                     <Icon
                       $size="20px"
-                      $theme="greyscale"
-                      $variation={isDisabled ? '400' : '1000'}
+                      $theme="gray"
+                      $variation={isDisabled ? 'tertiary' : 'primary'}
                       iconName={option.icon}
                       aria-hidden="true"
                     />
@@ -243,7 +252,7 @@ export const DropdownMenu = ({
                   {option.icon &&
                     typeof option.icon !== 'string' &&
                     option.icon}
-                  <Text $variation={isDisabled ? '400' : '1000'}>
+                  <Text $variation={isDisabled ? 'tertiary' : 'primary'}>
                     {option.label}
                   </Text>
                 </Box>
@@ -252,7 +261,7 @@ export const DropdownMenu = ({
                   <Icon
                     iconName="check"
                     $size="20px"
-                    $theme="greyscale"
+                    $theme="gray"
                     aria-hidden="true"
                   />
                 )}

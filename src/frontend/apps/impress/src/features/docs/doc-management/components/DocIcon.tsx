@@ -21,7 +21,7 @@ export const DocIcon = ({
   emoji,
   defaultIcon,
   $size = 'sm',
-  $variation = '1000',
+  $variation = 'secondary',
   $weight = '400',
   docId,
   title,

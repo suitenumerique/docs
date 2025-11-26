@@ -29,9 +29,9 @@ export const DocEditorSkeleton = () => {
         $css={css`
           background: linear-gradient(
             90deg,
-            ${colorsTokens['greyscale-100']} 0%,
-            ${colorsTokens['greyscale-200']} 50%,
-            ${colorsTokens['greyscale-100']} 100%
+            ${colorsTokens['black-050']} 0%,
+            ${colorsTokens['black-100']} 50%,
+            ${colorsTokens['black-050']} 100%
           );
           background-size: 1000px 100%;
           animation: ${shimmer} 2s infinite linear;
@@ -51,9 +51,9 @@ export const DocEditorSkeleton = () => {
         $css={css`
           background: linear-gradient(
             90deg,
-            ${colorsTokens['greyscale-100']} 0%,
-            ${colorsTokens['greyscale-200']} 50%,
-            ${colorsTokens['greyscale-100']} 100%
+            ${colorsTokens['black-050']} 0%,
+            ${colorsTokens['black-100']} 50%,
+            ${colorsTokens['black-050']} 100%
           );
           background-size: 1000px 100%;
           animation: ${shimmer} 2s infinite linear;
@@ -100,7 +100,7 @@ export const DocEditorSkeleton = () => {
               >
                 {/* Title and metadata skeleton */}
                 <Box $gap="0.25rem" $css="flex:1;">
-                  {/* Title - "Document sans titre" style */}
+                  {/* Title - "Untitled Document" style */}
                   <SkeletonLine $width="35%" $height="40px" />
 
                   {/* Metadata (role and last update) */}
@@ -111,7 +111,7 @@ export const DocEditorSkeleton = () => {
 
                 {/* Toolbox skeleton (buttons) */}
                 <Box $direction="row" $gap="0.75rem" $align="center">
-                  {/* Partager button */}
+                  {/* Share button */}
                   <SkeletonLine $width="90px" $height="40px" />
                   {/* Download icon */}
                   <SkeletonCircle $width="40px" $height="40px" />

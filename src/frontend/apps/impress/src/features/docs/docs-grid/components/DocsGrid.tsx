@@ -98,18 +98,13 @@ export const DocsGrid = ({
           bottom: 'md',
         }}
       >
-        <Text
-          as="h2"
-          $size="h4"
-          $variation="1000"
-          $margin={{ top: '0px', bottom: '10px' }}
-        >
+        <Text as="h2" $size="h4" $margin={{ top: '0px', bottom: '10px' }}>
           {title}
         </Text>
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
-            <Text $size="sm" $variation="600" $weight="700">
+            <Text $size="sm" $weight="700">
               {t('No documents found')}
             </Text>
           </Box>
@@ -126,7 +121,7 @@ export const DocsGrid = ({
                   role="row"
                 >
                   <Box $flex={flexLeft} $padding="3xs" role="columnheader">
-                    <Text $size="xs" $variation="600" $weight="500">
+                    <Text $size="xs" $variation="secondary" $weight="500">
                       {t('Name')}
                     </Text>
                   </Box>
@@ -136,7 +131,7 @@ export const DocsGrid = ({
                       $padding={{ vertical: '3xs' }}
                       role="columnheader"
                     >
-                      <Text $size="xs" $weight="500" $variation="600">
+                      <Text $size="xs" $weight="500" $variation="secondary">
                         {DocDefaultFilter.TRASHBIN === target
                           ? t('Days remaining')
                           : t('Updated at')}
@@ -162,7 +157,8 @@ export const DocsGrid = ({
                 {!isFetching && hasNextPage && (
                   <Button
                     onClick={() => void fetchNextPage()}
-                    color="primary-text"
+                    color="brand"
+                    variant="tertiary"
                   >
                     {t('More docs')}
                   </Button>

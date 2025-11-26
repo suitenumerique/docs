@@ -6,8 +6,6 @@ import {
   PanelResizeHandle,
 } from 'react-resizable-panels';
 
-import { useCunninghamTheme } from '@/cunningham';
-
 // Convert a target pixel width to a percentage of the current viewport width.
 const pxToPercent = (px: number) => {
   return (px / window.innerWidth) * 100;
@@ -26,7 +24,6 @@ export const ResizableLeftPanel = ({
   minPanelSizePx = 300,
   maxPanelSizePx = 450,
 }: ResizableLeftPanelProps) => {
-  const { colorsTokens } = useCunninghamTheme();
   const ref = useRef<ImperativePanelHandle>(null);
   const savedWidthPxRef = useRef<number>(minPanelSizePx);
 
@@ -76,7 +73,7 @@ export const ResizableLeftPanel = ({
           style={{
             borderRightWidth: '1px',
             borderRightStyle: 'solid',
-            borderRightColor: colorsTokens['greyscale-200'],
+            borderRightColor: 'var(--c--contextuals--border--surface--primary)',
             width: '1px',
             cursor: 'col-resize',
           }}

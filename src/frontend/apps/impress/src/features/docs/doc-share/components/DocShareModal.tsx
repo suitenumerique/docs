@@ -262,7 +262,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   <Text
                     $maxWidth="320px"
                     $textAlign="center"
-                    $variation="600"
+                    $variation="secondary"
                     $size="sm"
                     as="p"
                   >
@@ -272,7 +272,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   </Text>
                   <ButtonAccessRequest
                     docId={doc.id}
-                    color="tertiary"
+                    variant="secondary"
                     size="small"
                   />
                 </Box>

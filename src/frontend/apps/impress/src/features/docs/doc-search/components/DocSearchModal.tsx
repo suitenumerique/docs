@@ -85,7 +85,8 @@ const DocSearchModalGlobal = ({
             aria-label={t('Close the search modal')}
             onClick={modalProps.onClose}
             size="small"
-            color="primary-text"
+            color="brand"
+            variant="tertiary"
           />
         </Box>
         <QuickSearch
@@ -112,7 +113,6 @@ const DocSearchModalGlobal = ({
                 $justify="center"
               >
                 <Image
-                  className="c__image-system-filter"
                   width={320}
                   src={EmptySearchIcon}
                   alt={t('No active search')}

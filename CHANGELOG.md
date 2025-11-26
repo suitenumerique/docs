@@ -14,6 +14,7 @@ and this project adheres to
 ### Changed
 
 - ⚡️(sw) stop to cache external resources likes videos #1655
+- 💥(frontend) upgrade to ui-kit v2
 
 ### Fixed
 

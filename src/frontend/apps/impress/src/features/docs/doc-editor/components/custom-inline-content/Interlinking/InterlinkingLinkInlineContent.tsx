@@ -91,9 +91,10 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
           margin-right: 0.2rem;
         }
         &:hover {
-          background-color: ${colorsTokens['greyscale-100']};
+          background-color: ${colorsTokens['gray-100']};
         }
-        transition: background-color 0.2s ease-in-out;
+        transition: background-color var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-out);
 
         .--docs--doc-deleted & {
           pointer-events: none;
@@ -103,7 +104,7 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
       {emoji ? (
         <Text $size="16px">{emoji}</Text>
       ) : (
-        <SelectedPageIcon width={11.5} color={colorsTokens['primary-400']} />
+        <SelectedPageIcon width={11.5} color={colorsTokens['brand-400']} />
       )}
       <Text
         $weight="500"

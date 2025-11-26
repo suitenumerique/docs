@@ -106,7 +106,12 @@ export const DocRoleDropdown = ({
 
   if (!canUpdate) {
     return (
-      <Text aria-label={t('Document role text')} $variation="600">
+      <Text
+        $variation="tertiary"
+        aria-label={t('Document role text')}
+        $weight={500}
+        $size="s"
+      >
         {transRole(currentRole)}
       </Text>
     );
@@ -121,7 +126,8 @@ export const DocRoleDropdown = ({
       })}
       showArrow={true}
       arrowCss={css`
-        color: var(--c--theme--colors--primary-800) !important;
+        color: var(--c--contextuals--content--semantic--brand--tertiary);
+        font-size: 16px;
       `}
       testId="doc-role-dropdown"
       options={[
@@ -132,8 +138,14 @@ export const DocRoleDropdown = ({
           callback: onRemove,
         },
       ]}
+      buttonCss={css`
+        &:hover {
+          background: none;
+        }
+        font-size: 12px;
+      `}
     >
-      <Text $theme="primary" $variation="800">
+      <Text $theme="brand" $variation="tertiary">
         {transRole(currentRole)}
       </Text>
     </DropdownMenu>

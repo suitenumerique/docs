@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc } from './utils-common';
+import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
 
 test.describe('Left panel desktop', () => {
   test.beforeEach(async ({ page }) => {
@@ -10,8 +10,12 @@ test.describe('Left panel desktop', () => {
   test('checks all the elements are visible', async ({ page }) => {
     await expect(page.getByTestId('left-panel-desktop')).toBeVisible();
     await expect(page.getByTestId('left-panel-mobile')).toBeHidden();
-    await expect(page.getByTestId('home-button')).toBeVisible();
+    await expect(page.getByTestId('home-button')).toBeHidden();
     await expect(page.getByTestId('new-doc-button')).toBeVisible();
+
+    await goToGridDoc(page);
+
+    await expect(page.getByTestId('home-button')).toBeVisible();
   });
 
   test('checks resize handle is present and functional on document page', async ({
@@ -87,6 +91,9 @@ test.describe('Left panel mobile', () => {
     await expect(newDocButton).not.toBeInViewport();
     await expect(languageButton).not.toBeInViewport();
     await expect(logoutButton).not.toBeInViewport();
+
+    const title = await goToGridDoc(page);
+    await verifyDocName(page, title);
 
     await header.getByLabel('Open the header menu').click();
 

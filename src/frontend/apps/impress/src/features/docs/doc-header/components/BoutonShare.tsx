@@ -46,20 +46,19 @@ export const BoutonShare = ({
       <Box
         $css={css`
           .c__button--medium {
-            height: 32px;
-            padding: 10px var(--c--theme--spacings--xs);
+            height: var(--c--globals--spacings--lg);
+            padding: 10px var(--c--globals--spacings--xs);
             gap: 7px;
           }
         `}
       >
         <Button
-          color="tertiary"
           aria-label={t('Share button')}
+          variant="secondary"
           icon={
             <Icon
               iconName="group"
-              $theme="primary"
-              $variation="800"
+              $color="inherit"
               variant="filled"
               disabled={isDisabled}
             />
@@ -76,7 +75,8 @@ export const BoutonShare = ({
 
   return (
     <Button
-      color="primary-text"
+      color="brand"
+      variant="tertiary"
       onClick={open}
       size="medium"
       disabled={isDisabled}

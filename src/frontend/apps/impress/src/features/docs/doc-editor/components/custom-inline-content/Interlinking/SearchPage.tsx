@@ -35,11 +35,11 @@ import { DocSearchSubPageContent, DocSearchTarget } from '@/docs/doc-search';
 import { useResponsiveStore } from '@/stores';
 
 const inputStyle = css`
-  background-color: var(--c--theme--colors--greyscale-100);
+  background-color: var(--c--globals--colors--gray-100);
   border: none;
   outline: none;
-  color: var(--c--theme--colors--greyscale-700);
-  font-size: 16px;
+  color: var(--c--globals--colors--gray-700);
+  font-size: var(--c--globals--font--sizes--md);
   width: 100%;
   font-family: 'Inter';
 `;
@@ -159,8 +159,8 @@ export const SearchPage = ({
       <Box
         as="span"
         className="inline-content"
-        $background={colorsTokens['greyscale-100']}
-        $color="var(--c--theme--colors--greyscale-700)"
+        $background={colorsTokens['gray-100']}
+        $color="var(--c--globals--colors--gray-700)"
         $direction="row"
         $radius="3px"
         $padding="1px"
@@ -198,9 +198,9 @@ export const SearchPage = ({
         <QuickSearch showInput={false}>
           <Card
             $css={css`
-              box-shadow: 0 0 3px 0px var(--c--theme--colors--greyscale-200);
+              box-shadow: 0 0 3px 0px var(--c--globals--colors--gray-200);
               & > div {
-                margin-top: 0;
+                margin-top: var(--c--globals--spacings--0);
                 & [cmdk-group-heading] {
                   padding: 0.4rem;
                   margin: 0;
@@ -287,8 +287,8 @@ export const SearchPage = ({
                         </Box>
 
                         <Text
-                          $size="14px"
-                          $color="var(--c--theme--colors--greyscale-1000)"
+                          $size="sm"
+                          $color="var(--c--globals--colors--gray-1000)"
                           spellCheck="false"
                         >
                           {titleWithoutEmoji}
@@ -296,11 +296,7 @@ export const SearchPage = ({
                       </Box>
                     }
                     right={
-                      <Icon
-                        iconName="keyboard_return"
-                        $variation="600"
-                        spellCheck="false"
-                      />
+                      <Icon iconName="keyboard_return" spellCheck="false" />
                     }
                   />
                 );
@@ -317,7 +313,7 @@ export const SearchPage = ({
                       <Box
                         $css={css`
                           border-top: 1px solid
-                            var(--c--theme--colors--greyscale-200);
+                            var(--c--globals--colors--gray-200);
                         `}
                         $width="100%"
                       >
@@ -332,15 +328,15 @@ export const SearchPage = ({
                           $css={css`
                             &:hover {
                               background-color: var(
-                                --c--theme--colors--greyscale-100
+                                --c--globals--colors--gray-100
                               );
                             }
                           `}
                         >
                           <AddPageIcon />
                           <Text
-                            $size="14px"
-                            $color="var(--c--theme--colors--greyscale-1000)"
+                            $size="sm"
+                            $color="var(--c--globals--colors--gray-1000)"
                             contentEditable={false}
                           >
                             {t('New sub-doc')}

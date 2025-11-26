@@ -117,7 +117,6 @@ export const HomeSection = ({
             $css={css`
               line-height: ${!isSmallDevice ? '50px' : 'normal'};
             `}
-            $variation="1000"
             $weight="bold"
             $size={!isSmallDevice ? 'xs-alt' : isSmallMobile ? 'h6' : 'h4'}
             $textAlign="left"
@@ -127,7 +126,7 @@ export const HomeSection = ({
           </Text>
           <Text
             as="div"
-            $variation="700"
+            $variation="secondary"
             $weight="400"
             $size={isSmallMobile ? 'ml' : 'md'}
           >
@@ -175,7 +174,6 @@ export const HomeSection = ({
 
         {illustration && (isSmallDevice || !video) && (
           <Image
-            className="c__image-system-filter"
             src={illustration}
             alt={t('Illustration')}
             style={{
@@ -200,28 +198,19 @@ const SectionTag = ({
   tag: string;
   availableSoon?: boolean;
 }) => {
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   return (
     <Box
-      $background={
-        !availableSoon
-          ? colorsTokens['primary-100']
-          : colorsTokens['warning-100']
-      }
       $padding={{ horizontal: spacingsTokens['sm'], vertical: '6px' }}
       $css={css`
         align-self: flex-start;
-        border-radius: 4px;
+        border-radius: var(--c--globals--spacings--st);
       `}
+      $theme={availableSoon ? 'warning' : 'brand'}
+      $variation="tertiary"
+      $withThemeBG
     >
-      <Text
-        $size="md"
-        $variation={availableSoon ? '600' : '800'}
-        $weight="bold"
-        $theme={availableSoon ? 'warning' : 'primary'}
-      >
-        {tag}
-      </Text>
+      {tag}
     </Box>
   );
 };

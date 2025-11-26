@@ -174,7 +174,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         <>
           <Button
             aria-label={t('Cancel the download')}
-            color="secondary"
+            variant="secondary"
             fullWidth
             onClick={() => onClose()}
           >
@@ -183,7 +183,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           <Button
             data-testid="doc-export-download-button"
             aria-label={t('Download')}
-            color="primary"
+            variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
@@ -205,7 +205,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             $margin="0"
             id="modal-export-title"
             $size="h6"
-            $variation="1000"
             $align="flex-start"
             data-testid="modal-export-title"
           >
@@ -225,7 +224,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $gap="1rem"
         className="--docs--modal-export-content"
       >
-        <Text $variation="600" $size="sm" as="p">
+        <Text $variation="secondary" $size="sm" as="p">
           {t('Download your document in a .docx, .odt or .pdf format.')}
         </Text>
         <Select

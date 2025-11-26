@@ -119,7 +119,7 @@ export const DocTreeItemActions = ({
       : []),
     {
       label: t('Duplicate'),
-      icon: <Icon $variation="600" iconName="content_copy" />,
+      icon: <Icon iconName="content_copy" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
         duplicateDoc({
@@ -180,8 +180,8 @@ export const DocTreeItemActions = ({
             }}
             iconName="more_horiz"
             variant="filled"
-            $theme="primary"
-            $variation="600"
+            $theme="brand"
+            $variation="secondary"
             aria-label={t('More options')}
           />
         </DropdownMenu>
@@ -195,16 +195,12 @@ export const DocTreeItemActions = ({
                 parentId: doc.id,
               });
             }}
-            color="primary"
+            $theme="brand"
+            $variation="secondary"
             aria-label={t('Add a sub page')}
             data-testid="doc-tree-item-actions-add-child"
           >
-            <Icon
-              variant="filled"
-              $variation="800"
-              $theme="primary"
-              iconName="add_box"
-            />
+            <Icon variant="filled" $color="inherit" iconName="add_box" />
           </BoxButton>
         )}
       </Box>

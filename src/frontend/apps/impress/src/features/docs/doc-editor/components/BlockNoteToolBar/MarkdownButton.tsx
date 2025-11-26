@@ -91,7 +91,7 @@ export function MarkdownButton() {
         <Text
           aria-hidden={true}
           $css={css`
-            font-family: var(--c--theme--font--families--base);
+            font-family: var(--c--globals--font--families--base);
           `}
           $weight="bold"
         >

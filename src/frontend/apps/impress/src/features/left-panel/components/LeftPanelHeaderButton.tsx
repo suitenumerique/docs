@@ -50,9 +50,9 @@ export const LeftPanelHeaderButton = () => {
   return (
     <Button
       data-testid="new-doc-button"
-      color="primary"
+      color="brand"
       onClick={handleClick}
-      icon={<Icon $variation="000" iconName="add" aria-hidden="true" />}
+      icon={<Icon $color="inherit" iconName="add" aria-hidden="true" />}
       disabled={isLoading}
     >
       {t('New doc')}

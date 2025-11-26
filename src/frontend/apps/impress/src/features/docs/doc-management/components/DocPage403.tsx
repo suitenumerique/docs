@@ -65,7 +65,6 @@ export const DocPage403 = ({ id }: DocProps) => {
         $padding={{ bottom: '2rem' }}
       >
         <Image
-          className="c__image-system-filter"
           src={img403}
           alt={t('Image 403')}
           width={300}
@@ -77,7 +76,7 @@ export const DocPage403 = ({ id }: DocProps) => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {hasRequested
               ? t('Your access request for this document is pending.')
               : t('Insufficient access rights to view the document.')}
@@ -88,7 +87,6 @@ export const DocPage403 = ({ id }: DocProps) => {
               as="p"
               $maxWidth="320px"
               $textAlign="center"
-              $variation="600"
               $size="sm"
               $margin={{ top: '0' }}
             >
@@ -101,8 +99,9 @@ export const DocPage403 = ({ id }: DocProps) => {
           <Box $direction="row" $gap="0.7rem">
             <StyledLink href="/">
               <StyledButton
-                icon={<Icon iconName="house" $theme="primary" />}
-                color="tertiary"
+                icon={<Icon iconName="house" $withThemeInherited />}
+                color="brand"
+                variant="secondary"
               >
                 {t('Home')}
               </StyledButton>

@@ -58,7 +58,7 @@ export const DocSearchFilters = ({
         />
       </Box>
       {hasFilters && (
-        <Button color="primary-text" size="small" onClick={onReset}>
+        <Button color="brand" variant="tertiary" size="small" onClick={onReset}>
           {t('Reset')}
         </Button>
       )}

@@ -37,13 +37,13 @@ export const Droppable = ({
       data-testid={`droppable-doc-${id}`}
       role="none"
       $css={css`
-        border-radius: 4px;
+        border-radius: var(--c--globals--spacings--st);
         background-color: ${enableHover
-          ? 'var(--c--theme--colors--primary-100)'
+          ? 'var(--c--globals--colors--brand-100)'
           : 'transparent'};
         border: 1.5px solid
           ${enableHover
-            ? 'var(--c--theme--colors--primary-500)'
+            ? 'var(--c--globals--colors--brand-500)'
             : 'transparent'};
       `}
       className="--docs--grid-droppable"

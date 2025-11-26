@@ -78,29 +78,26 @@ export const LeftPanelTargetFilters = () => {
               padding: ${spacingsTokens['2xs']};
               border-radius: ${spacingsTokens['3xs']};
               background-color: ${isActive
-                ? colorsTokens['greyscale-100']
+                ? 'var(--c--contextuals--background--semantic--contextual--primary)'
                 : 'transparent'};
               font-weight: ${isActive ? 700 : 400};
               color: inherit;
               text-decoration: none;
               cursor: pointer;
               &:hover {
-                background-color: ${colorsTokens['greyscale-100']};
+                background-color: var(
+                  --c--contextuals--background--semantic--contextual--primary
+                );
               }
               &:focus-visible {
                 outline: none !important;
-                box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
-                border-radius: 4px;
+                box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
+                border-radius: var(--c--globals--spacings--st);
               }
             `}
           >
-            <Icon
-              $variation={isActive ? '1000' : '700'}
-              iconName={query.icon}
-            />
-            <Text $variation={isActive ? '1000' : '700'} $size="sm">
-              {query.label}
-            </Text>
+            <Icon iconName={query.icon} />
+            <Text $size="sm">{query.label}</Text>
           </StyledLink>
         );
       })}

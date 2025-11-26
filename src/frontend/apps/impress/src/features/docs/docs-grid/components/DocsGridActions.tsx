@@ -89,12 +89,17 @@ export const DocsGridActions = ({
         options={options}
         label={menuLabel}
         aria-label={t('More options')}
+        buttonCss={css`
+          &:hover {
+            background-color: unset;
+          }
+        `}
       >
         <Icon
           data-testid={`docs-grid-actions-button-${doc.id}`}
           iconName="more_horiz"
-          $theme="primary"
-          $variation="600"
+          $theme="brand"
+          $variation="secondary"
           $css={css`
             cursor: pointer;
             &:hover {

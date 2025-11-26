@@ -13,7 +13,7 @@ export const Icon = ({
   iconName,
   disabled,
   variant = 'outlined',
-  $variation = 'text',
+  $theme = 'neutral',
   ...textProps
 }: IconProps) => {
   const hasLabel = 'aria-label' in textProps || 'aria-labelledby' in textProps;
@@ -28,7 +28,7 @@ export const Icon = ({
         'material-icons': variant === 'outlined',
         'material-symbols-outlined': variant === 'symbols-outlined',
       })}
-      $variation={disabled ? '300' : $variation}
+      $theme={disabled ? 'disabled' : $theme}
       aria-disabled={disabled}
       {...textProps}
     >

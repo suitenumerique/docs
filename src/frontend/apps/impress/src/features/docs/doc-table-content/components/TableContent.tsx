@@ -111,11 +111,11 @@ export const TableContent = () => {
       $position="sticky"
       aria-label={t('Summary')}
       $css={css`
-        top: 0;
-        border: 1px solid ${colorsTokens['greyscale-300']};
+        top: var(--c--globals--spacings--0);
+        border: 1px solid ${colorsTokens['brand-100']};
         overflow: hidden;
         border-radius: ${spacingsTokens['3xs']};
-        background: ${colorsTokens['greyscale-000']};
+        background: ${colorsTokens['gray-000']};
         ${isHover &&
         css`
           display: flex;
@@ -138,22 +138,19 @@ export const TableContent = () => {
           aria-expanded={isHover}
           aria-controls="toc-list"
           $css={css`
-            &:hover {
-              background: ${colorsTokens['primary-100']};
-            }
             &:focus-visible {
               outline: none;
-              box-shadow: 0 0 0 4px ${colorsTokens['primary-400']};
-              background: ${colorsTokens['primary-100']};
+              box-shadow: 0 0 0 4px ${colorsTokens['brand-400']};
+              background: ${colorsTokens['brand-100']};
               width: 90%;
               height: 90%;
             }
           `}
         >
           <Icon
+            $theme="brand"
+            $variation="tertiary"
             iconName="list"
-            $theme="primary"
-            $variation="800"
             variant="symbols-outlined"
           />
         </BoxButton>
@@ -173,7 +170,7 @@ export const TableContent = () => {
             $justify="space-between"
             $align="center"
           >
-            <Text $weight="500" $size="sm" $variation="800" $theme="primary">
+            <Text $weight="500" $size="sm">
               {t('Summary')}
             </Text>
             <BoxButton
@@ -188,12 +185,12 @@ export const TableContent = () => {
                 transform: rotate(180deg);
                 &:focus-visible {
                   outline: none;
-                  box-shadow: 0 0 0 2px ${colorsTokens['primary-400']};
-                  border-radius: 4px;
+                  box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
+                  border-radius: var(--c--globals--spacings--st);
                 }
               `}
             >
-              <Icon iconName="menu_open" $theme="primary" $variation="800" />
+              <Icon iconName="menu_open" $theme="brand" $variation="tertiary" />
             </BoxButton>
           </Box>
           <Box

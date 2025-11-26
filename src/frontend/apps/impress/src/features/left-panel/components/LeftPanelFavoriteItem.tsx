@@ -32,11 +32,16 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
           opacity: ${isDesktop ? 0 : 1};
         }
         &:hover {
-          background-color: ${colorsTokens['greyscale-100']};
+          background-color: var(
+            --c--contextuals--background--semantic--contextual--primary
+          );
+          .pinned-actions {
+            opacity: 1;
+          }
         }
         &:focus-within {
           cursor: pointer;
-          box-shadow: 0 0 0 2px ${colorsTokens['primary-500']} !important;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
           .pinned-actions {
             opacity: 1;
           }
@@ -55,9 +60,9 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
       >
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
-      <div className="pinned-actions">
+      <Box className="pinned-actions" $align="center">
         <DocsGridActions doc={doc} openShareModal={shareModal.open} />
-      </div>
+      </Box>
       {shareModal.isOpen && (
         <DocShareModal doc={doc} onClose={shareModal.close} />
       )}

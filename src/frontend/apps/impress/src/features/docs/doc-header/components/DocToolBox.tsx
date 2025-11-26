@@ -215,14 +215,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         {!isSmallMobile && ModalExport && (
           <Button
             data-testid="doc-open-modal-download-button"
-            color="tertiary-text"
+            variant="tertiary"
             icon={
-              <Icon
-                iconName="download"
-                $theme="primary"
-                $variation="800"
-                aria-hidden={true}
-              />
+              <Icon iconName="download" $color="inherit" aria-hidden={true} />
             }
             onClick={() => {
               setIsModalExportOpen(true);
@@ -236,17 +231,14 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           label={t('Open the document options')}
           buttonCss={css`
             padding: ${spacingsTokens['xs']};
-            &:hover {
-              background-color: ${colorsTokens['greyscale-100']};
-            }
             ${isSmallMobile
               ? css`
-                  border: 1px solid ${colorsTokens['greyscale-300']};
+                  border: 1px solid ${colorsTokens['gray-300']};
                 `
               : ''}
           `}
         >
-          <IconOptions aria-hidden="true" isHorizontal $theme="primary" />
+          <IconOptions aria-hidden="true" isHorizontal $color="inherit" />
         </DropdownMenu>
       </Box>
 

@@ -57,15 +57,15 @@ export const Heading = ({
           block: 'start',
         });
       }}
-      $radius="4px"
-      $background={isActive ? `${colorsTokens['greyscale-100']}` : 'none'}
+      $radius="var(--c--globals--spacings--st)"
+      $background={isActive ? `${colorsTokens['gray-100']}` : 'none'}
       $css={css`
         text-align: left;
         &:focus-visible {
           /* Scoped focus style: same footprint as hover, with theme shadow */
           outline: none;
-          box-shadow: 0 0 0 2px ${colorsTokens['primary-400']};
-          border-radius: 4px;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
+          border-radius: var(--c--globals--spacings--st);
         }
       `}
       className="--docs--table-content-heading"
@@ -76,7 +76,6 @@ export const Heading = ({
       <Text
         $width="100%"
         $padding={{ vertical: 'xtiny', left: leftPaddingMap[level] }}
-        $variation={isActive ? '1000' : '700'}
         $weight={isHighlight ? 'bold' : 'normal'}
         $css="overflow-wrap: break-word;"
         $hasTransition

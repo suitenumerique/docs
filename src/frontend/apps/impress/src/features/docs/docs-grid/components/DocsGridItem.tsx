@@ -63,7 +63,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           &:hover {
             background-color: ${dragMode
               ? 'none'
-              : 'var(--c--theme--colors--greyscale-100)'};
+              : 'var(--c--contextuals--background--semantic--contextual--primary)'};
           }
         `}
         className="--docs--doc-grid-item"
@@ -111,8 +111,9 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                   {dragMode && (
                     <>
                       <Icon
-                        $theme="greyscale"
-                        $variation="600"
+                        $layer="background"
+                        $theme="neutral"
+                        $variation="primary"
                         $size="14px"
                         iconName={isPublic ? 'public' : 'vpn_lock'}
                       />
@@ -126,7 +127,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                   {!dragMode && (
                     <Tooltip
                       content={
-                        <Text $textAlign="center" $variation="000">
+                        <Text $textAlign="center">
                           {isPublic
                             ? t('Accessible to anyone')
                             : t('Accessible to authenticated users')}
@@ -136,9 +137,10 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
                     >
                       <div>
                         <Icon
-                          $theme="greyscale"
-                          $variation="600"
-                          $size="14px"
+                          $layer="background"
+                          $theme="neutral"
+                          $variation="primary"
+                          $size="sm"
                           iconName={isPublic ? 'public' : 'vpn_lock'}
                         />
                         <span className="sr-only">
@@ -222,7 +224,12 @@ export const DocsGridItemDate = ({
 
   return (
     <StyledLink href={`/docs/${doc.id}`}>
-      <Text $variation="600" $size="xs">
+      <Text
+        $size="xs"
+        $layer="background"
+        $theme="neutral"
+        $variation="primary"
+      >
         {dateToDisplay}
       </Text>
     </StyledLink>

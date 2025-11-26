@@ -215,24 +215,26 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           onKeyDown={handleRootKeyDown}
           $css={css`
             padding: ${spacingsTokens['2xs']};
-            border-radius: 4px;
+            border-radius: var(--c--globals--spacings--st);
             width: 100%;
             background-color: ${rootIsSelected || rootActionsOpen
-              ? 'var(--c--theme--colors--greyscale-100)'
+              ? 'var(--c--contextuals--background--semantic--contextual--primary)'
               : 'transparent'};
 
             &:hover {
-              background-color: var(--c--theme--colors--greyscale-100);
+              background-color: var(
+                --c--contextuals--background--semantic--contextual--primary
+              );
             }
 
             &:focus-visible {
               outline: none !important;
-              box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
-              border-radius: 4px;
+              box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
+              border-radius: var(--c--globals--spacings--st);
             }
 
             .doc-tree-root-item-actions {
-              display: 'flex';
+              display: flex;
               opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {

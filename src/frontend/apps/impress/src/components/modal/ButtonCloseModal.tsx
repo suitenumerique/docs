@@ -1,18 +1,21 @@
 import { Button, type ButtonProps } from '@openfun/cunningham-react';
 import React from 'react';
 
-import { Box } from '@/components';
+import { Icon } from '@/components';
 
 export const ButtonCloseModal = (props: ButtonProps) => {
   return (
     <Button
       type="button"
       size="small"
-      color="primary-text"
+      color="brand"
+      variant="tertiary"
       icon={
-        <Box as="span" aria-hidden="true" className="material-icons-filled">
-          close
-        </Box>
+        <Icon
+          $withThemeInherited
+          iconName="close"
+          className="material-icons-filled"
+        />
       }
       {...props}
     />

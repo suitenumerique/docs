@@ -43,7 +43,6 @@ const Page: NextPageWithLayout = () => {
           {t('401 Unauthorized')} - {t('Docs')}
         </Text>
         <Image
-          className="c__image-system-filter"
           src={img401}
           alt=""
           width={300}
@@ -55,7 +54,7 @@ const Page: NextPageWithLayout = () => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {t('Log in to access the document.')}
           </Text>
 

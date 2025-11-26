@@ -10,16 +10,16 @@ const {
   bx,
   l,
   ...spacingsLight
-} = tokens.themes.default.theme.spacings;
+} = tokens.themes.default.globals.spacings;
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
 const spacings = {
-  xtiny: tokens.themes.default.theme.spacings['st'],
-  tiny: tokens.themes.default.theme.spacings['t'],
-  small: tokens.themes.default.theme.spacings['s'],
-  big: tokens.themes.default.theme.spacings['b'],
-  xbig: tokens.themes.default.theme.spacings['bx'],
-  large: tokens.themes.default.theme.spacings['l'],
+  xtiny: tokens.themes.default.globals.spacings['st'],
+  tiny: tokens.themes.default.globals.spacings['t'],
+  small: tokens.themes.default.globals.spacings['s'],
+  big: tokens.themes.default.globals.spacings['b'],
+  xbig: tokens.themes.default.globals.spacings['bx'],
+  large: tokens.themes.default.globals.spacings['l'],
   ...spacingsLight,
 };
 

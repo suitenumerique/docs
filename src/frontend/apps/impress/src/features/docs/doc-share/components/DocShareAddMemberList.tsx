@@ -5,10 +5,9 @@ import {
 } from '@openfun/cunningham-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
 import { APIError } from '@/api';
-import { Box } from '@/components';
+import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
@@ -41,7 +40,7 @@ export const DocShareAddMemberList = ({
   const { toast } = useToastProvider();
 
   const [isLoading, setIsLoading] = useState(false);
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const [invitationRole, setInvitationRole] = useState<Role>(Role.EDITOR);
   const canShare = doc.abilities.accesses_manage;
   const { mutateAsync: createInvitation } = useCreateDocInvitation();
@@ -116,17 +115,16 @@ export const DocShareAddMemberList = ({
       : t('Invite {{count}} members', { count: selectedUsers.length });
 
   return (
-    <Box
+    <Card
+      className="--docs--doc-share-add-member-list"
       data-testid="doc-share-add-member-list"
       $direction="row"
-      $padding={spacingsTokens.sm}
       $align="center"
-      $background={colorsTokens['greyscale-050']}
-      $radius={spacingsTokens['3xs']}
-      $css={css`
-        border: 1px solid ${colorsTokens['greyscale-200']};
-      `}
-      className="--docs--doc-share-add-member-list"
+      $padding={spacingsTokens.sm}
+      $scope="surface"
+      $theme="tertiary"
+      $variation=""
+      $border="1px solid var(--c--contextuals--border--semantic--contextual--primary)"
     >
       <Box
         $direction="row"
@@ -148,6 +146,7 @@ export const DocShareAddMemberList = ({
           canUpdate={canShare}
           currentRole={invitationRole}
           onSelectRole={setInvitationRole}
+          ariaLabel={t('Invite new members')}
         />
         <Button
           onClick={() => void onInvite()}
@@ -158,6 +157,6 @@ export const DocShareAddMemberList = ({
           {t('Invite')}
         </Button>
       </Box>
-    </Box>
+    </Card>
   );
 };

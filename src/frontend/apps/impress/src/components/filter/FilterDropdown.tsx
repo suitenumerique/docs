@@ -33,32 +33,27 @@ export const FilterDropdown = ({
       <Box
         $css={css`
           border: 1px solid
-            ${selectedOption
-              ? 'var(--c--theme--colors--primary-500)'
-              : 'var(--c--theme--colors--greyscale-250)'};
-          border-radius: 4px;
-          background-color: ${selectedOption
-            ? 'var(--c--theme--colors--primary-100)'
-            : 'var(--c--theme--colors--greyscale-000)'};
-          gap: var(--c--theme--spacings--2xs);
-          padding: var(--c--theme--spacings--2xs) var(--c--theme--spacings--xs);
+            var(--c--contextuals--border--semantic--neutral--tertiary);
+          border-radius: var(--c--globals--spacings--st);
+          background-color: var(
+            --c--contextuals--background--semantic--neutral--tertiary
+          );
+          gap: var(--c--globals--spacings--2xs);
+          padding: var(--c--globals--spacings--2xs)
+            var(--c--globals--spacings--xs);
         `}
         color="secondary"
         $direction="row"
         $align="center"
       >
-        <Text
-          $weight={400}
-          $variation={selectedOption ? '800' : '600'}
-          $theme={selectedOption ? 'primary' : 'greyscale'}
-        >
+        <Text $weight={400} $variation="tertiary" $theme="neutral">
           {selectedOption?.label ?? options[0].label}
         </Text>
         <Icon
-          $size="16px"
+          $size="s"
           iconName="keyboard_arrow_down"
-          $variation={selectedOption ? '800' : '600'}
-          $theme={selectedOption ? 'primary' : 'greyscale'}
+          $variation="tertiary"
+          $theme="neutral"
         />
       </Box>
     </DropdownMenu>

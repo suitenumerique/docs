@@ -98,7 +98,7 @@ export const ModalRemoveDoc = ({
           <Button
             ref={cancelButtonRef}
             aria-label={t('Cancel the deletion')}
-            color="secondary"
+            variant="secondary"
             fullWidth
             onClick={handleClose}
             onKeyDown={handleCloseKeyDown}
@@ -107,7 +107,7 @@ export const ModalRemoveDoc = ({
           </Button>
           <Button
             aria-label={t('Delete document')}
-            color="danger"
+            color="error"
             fullWidth
             onClick={handleDelete}
             onKeyDown={handleDeleteKeyDown}
@@ -130,7 +130,6 @@ export const ModalRemoveDoc = ({
             id="modal-remove-doc-title"
             $margin="0"
             $align="flex-start"
-            $variation="1000"
           >
             {t('Delete a doc')}
           </Text>
@@ -144,7 +143,12 @@ export const ModalRemoveDoc = ({
     >
       <Box className="--docs--modal-remove-doc">
         {!isError && (
-          <Text $size="sm" $variation="600" $display="inline-block" as="p">
+          <Text
+            $size="sm"
+            $variation="secondary"
+            $display="inline-block"
+            as="p"
+          >
             {hasChildren ? (
               <Trans t={t}>
                 This document and <strong>any sub-documents</strong> will be
