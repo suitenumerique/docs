@@ -1,17 +1,21 @@
-import { VariantType, useToastProvider } from '@openfun/cunningham-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
+import {
+  UseMutationOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/docs/doc-management';
+import { Doc, LinkReach, LinkRole } from '@/docs/doc-management';
 
 export type UpdateDocLinkParams = Pick<Doc, 'id' | 'link_reach'> &
   Partial<Pick<Doc, 'link_role'>>;
 
+type UpdateDocLinkResponse = { link_role: LinkRole; link_reach: LinkReach };
+
 export const updateDocLink = async ({
   id,
   ...params
-}: UpdateDocLinkParams): Promise<Doc> => {
+}: UpdateDocLinkParams): Promise<UpdateDocLinkResponse> => {
   const response = await fetchAPI(`documents/${id}/link-configuration/`, {
     method: 'PUT',
     body: JSON.stringify({
@@ -26,40 +30,31 @@ export const updateDocLink = async ({
     );
   }
 
-  return response.json() as Promise<Doc>;
+  return response.json() as Promise<UpdateDocLinkResponse>;
 };
 
-interface UpdateDocLinkProps {
-  onSuccess?: (data: Doc) => void;
+type UseUpdateDocLinkOptions = UseMutationOptions<
+  UpdateDocLinkResponse,
+  APIError,
+  UpdateDocLinkParams
+> & {
   listInvalidQueries?: string[];
-}
+};
 
-export function useUpdateDocLink({
-  onSuccess,
-  listInvalidQueries,
-}: UpdateDocLinkProps = {}) {
+export function useUpdateDocLink(options?: UseUpdateDocLinkOptions) {
   const queryClient = useQueryClient();
-  const { toast } = useToastProvider();
-  const { t } = useTranslation();
 
-  return useMutation<Doc, APIError, UpdateDocLinkParams>({
+  return useMutation<UpdateDocLinkResponse, APIError, UpdateDocLinkParams>({
     mutationFn: updateDocLink,
-    onSuccess: (data) => {
-      listInvalidQueries?.forEach((queryKey) => {
+    ...options,
+    onSuccess: (data, variables, onMutateResult, context) => {
+      options?.listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
       });
 
-      toast(
-        t('The document visibility has been updated.'),
-        VariantType.SUCCESS,
-        {
-          duration: 2000,
-        },
-      );
-
-      onSuccess?.(data);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 }
