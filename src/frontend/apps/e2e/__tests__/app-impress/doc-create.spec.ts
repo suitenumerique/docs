@@ -7,6 +7,7 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
+import { writeInEditor } from './utils-editor';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -71,6 +72,53 @@ test.describe('Doc Create', () => {
     await expect(input).toHaveText('', { timeout: 10000 });
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
+    ).toBeVisible();
+  });
+
+  test('it creates a doc with link "/doc/new/', async ({ page }) => {
+    // Private doc creation
+    await page.goto('/docs/new/?title=My+private+doc+from+url');
+
+    await verifyDocName(page, 'My private doc from url');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      page.getByTestId('doc-visibility').getByText('Private').first(),
+    ).toBeVisible();
+
+    // Public editing doc creation
+    await page.goto(
+      '/docs/new/?title=My+public+doc+from+url&link-reach=public&link-role=editor',
+    );
+
+    await verifyDocName(page, 'My public doc from url');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      page.getByTestId('doc-visibility').getByText('Public').first(),
+    ).toBeVisible();
+
+    await expect(
+      page.getByTestId('doc-access-mode').getByText('Editing').first(),
+    ).toBeVisible();
+
+    // Authenticated reading doc creation
+    await page.goto(
+      '/docs/new/?title=My+authenticated+doc+from+url&link-reach=authenticated&link-role=reader',
+    );
+
+    await verifyDocName(page, 'My authenticated doc from url');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      page.getByTestId('doc-visibility').getByText('Connected').first(),
+    ).toBeVisible();
+
+    await expect(
+      page.getByTestId('doc-access-mode').getByText('Reading').first(),
     ).toBeVisible();
   });
 });
