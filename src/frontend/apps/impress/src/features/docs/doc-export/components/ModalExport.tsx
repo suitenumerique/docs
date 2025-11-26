@@ -26,9 +26,14 @@ import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
-import { downloadFile } from '../utils';
+import {
+  deriveMediaFilename,
+  downloadFile,
+  generateHtmlDocument,
+} from '../utils';
 
 enum DocDownloadFormat {
+  HTML = 'html',
   PDF = 'pdf',
   DOCX = 'docx',
   ODT = 'odt',
@@ -142,6 +147,59 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       });
 
       blobExport = await exporter.toODTDocument(exportDocument);
+    } else if (format === DocDownloadFormat.HTML) {
+      // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
+      const fullHtml = await editor.blocksToFullHTML();
+
+      // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
+      const domParser = new DOMParser();
+      const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
+
+      const mediaFiles: { filename: string; blob: Blob }[] = [];
+      const mediaElements = Array.from(
+        parsedDocument.querySelectorAll<
+          | HTMLImageElement
+          | HTMLVideoElement
+          | HTMLAudioElement
+          | HTMLSourceElement
+        >('img, video, audio, source'),
+      );
+
+      await Promise.all(
+        mediaElements.map(async (element, index) => {
+          const src = element.getAttribute('src');
+
+          if (!src) {
+            return;
+          }
+
+          const fetched = await exportCorsResolveFileUrl(doc.id, src);
+
+          if (!(fetched instanceof Blob)) {
+            return;
+          }
+
+          const filename = deriveMediaFilename({
+            src,
+            index,
+            blob: fetched,
+          });
+          element.setAttribute('src', filename);
+          mediaFiles.push({ filename, blob: fetched });
+        }),
+      );
+
+      const lang = i18next.language || 'fr';
+
+      const htmlContent = generateHtmlDocument(
+        documentTitle,
+        editorHtmlWithLocalMedia,
+        lang,
+      );
+
+      blobExport = new Blob([htmlContent], {
+        type: 'text/html;charset=utf-8',
+      });
     } else {
       toast(t('The export failed'), VariantType.ERROR);
       setIsExporting(false);
@@ -230,25 +288,27 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         <Select
           clearable={false}
           fullWidth
-          label={t('Template')}
-          options={templateOptions}
-          value={templateSelected}
-          onChange={(options) =>
-            setTemplateSelected(options.target.value as string)
-          }
-        />
-        <Select
-          clearable={false}
-          fullWidth
           label={t('Format')}
           options={[
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
             { label: t('ODT'), value: DocDownloadFormat.ODT },
             { label: t('PDF'), value: DocDownloadFormat.PDF },
+            { label: t('HTML'), value: DocDownloadFormat.HTML },
           ]}
           value={format}
           onChange={(options) =>
             setFormat(options.target.value as DocDownloadFormat)
+          }
+        />
+        <Select
+          clearable={false}
+          fullWidth
+          label={t('Template')}
+          options={templateOptions}
+          value={templateSelected}
+          disabled={format === DocDownloadFormat.HTML}
+          onChange={(options) =>
+            setTemplateSelected(options.target.value as string)
           }
         />
 
