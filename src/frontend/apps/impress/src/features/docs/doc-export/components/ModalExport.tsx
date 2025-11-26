@@ -26,9 +26,10 @@ import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
-import { downloadFile } from '../utils';
+import { downloadFile, escapeHtml } from '../utils';
 
 enum DocDownloadFormat {
+  HTML = 'html',
   PDF = 'pdf',
   DOCX = 'docx',
   ODT = 'odt',
@@ -142,6 +143,26 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       });
 
       blobExport = await exporter.toODTDocument(exportDocument);
+    } else if (format === DocDownloadFormat.HTML) {
+      const editorHtml = await editor.blocksToHTMLLossy();
+      const lang = i18next.language || 'fr';
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="${lang}">
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(documentTitle)}</title>
+  </head>
+  <body>
+    <main role="main">
+${editorHtml}
+    </main>
+  </body>
+</html>`;
+
+      blobExport = new Blob([htmlContent], {
+        type: 'text/html;charset=utf-8',
+      });
     } else {
       toast(t('The export failed'), VariantType.ERROR);
       setIsExporting(false);
@@ -230,25 +251,27 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         <Select
           clearable={false}
           fullWidth
-          label={t('Template')}
-          options={templateOptions}
-          value={templateSelected}
-          onChange={(options) =>
-            setTemplateSelected(options.target.value as string)
-          }
-        />
-        <Select
-          clearable={false}
-          fullWidth
           label={t('Format')}
           options={[
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
             { label: t('ODT'), value: DocDownloadFormat.ODT },
             { label: t('PDF'), value: DocDownloadFormat.PDF },
+            { label: t('HTML'), value: DocDownloadFormat.HTML },
           ]}
           value={format}
           onChange={(options) =>
             setFormat(options.target.value as DocDownloadFormat)
+          }
+        />
+        <Select
+          clearable={false}
+          fullWidth
+          label={t('Template')}
+          options={templateOptions}
+          value={templateSelected}
+          disabled={format === DocDownloadFormat.HTML}
+          onChange={(options) =>
+            setTemplateSelected(options.target.value as string)
           }
         />
 
