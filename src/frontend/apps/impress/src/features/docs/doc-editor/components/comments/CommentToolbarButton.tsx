@@ -1,4 +1,9 @@
-import { useBlockNoteEditor, useComponentsContext } from '@blocknote/react';
+import {
+  useBlockNoteEditor,
+  useComponentsContext,
+  useSelectedBlocks,
+} from '@blocknote/react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -24,7 +29,18 @@ export const CommentToolbarButton = () => {
     DocsStyleSchema
   >();
 
-  if (!editor.isEditable || !Components || !currentDoc?.abilities.comment) {
+  const selectedBlocks = useSelectedBlocks(editor);
+
+  const show = useMemo(() => {
+    return !!selectedBlocks.find((block) => block.content !== undefined);
+  }, [selectedBlocks]);
+
+  if (
+    !show ||
+    !editor.isEditable ||
+    !Components ||
+    !currentDoc?.abilities.comment
+  ) {
     return null;
   }
 
@@ -34,8 +50,10 @@ export const CommentToolbarButton = () => {
         className="bn-button"
         onClick={() => {
           editor.comments?.startPendingComment();
+          editor.formattingToolbar.closeMenu();
         }}
         aria-haspopup="dialog"
+        data-test="comment-toolbar-button"
       >
         <Box
           $direction="row"

@@ -24,15 +24,13 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Editor', () => {
-  test('it checks default toolbar buttons are displayed', async ({
+  test('it checks toolbar buttons are displayed', async ({
     page,
     browserName,
   }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('test content');
+    const editor = await writeInEditor({ page, text: 'test content' });
 
     await editor
       .getByText('test content', {
@@ -41,6 +39,9 @@ test.describe('Doc Editor', () => {
       .selectText();
 
     const toolbar = page.locator('.bn-formatting-toolbar');
+    await expect(
+      toolbar.locator('button[data-test="comment-toolbar-button"]'),
+    ).toBeVisible();
     await expect(toolbar.locator('button[data-test="bold"]')).toBeVisible();
     await expect(toolbar.locator('button[data-test="italic"]')).toBeVisible();
     await expect(
@@ -62,6 +63,53 @@ test.describe('Doc Editor', () => {
     ).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="createLink"]'),
+    ).toBeVisible();
+    await expect(
+      toolbar.locator('button[data-test="ai-actions"]'),
+    ).toBeVisible();
+    await expect(
+      toolbar.locator('button[data-test="convertMarkdown"]'),
+    ).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await page.locator('.bn-block-outer').last().click();
+
+    await page.keyboard.press('Enter');
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(
+      path.join(__dirname, 'assets/logo-suite-numerique.png'),
+    );
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+
+    await expect(image).toHaveAttribute('role', 'presentation');
+
+    await image.dblclick();
+
+    await expect(
+      toolbar.locator('button[data-test="comment-toolbar-button"]'),
+    ).toBeHidden();
+    await expect(
+      toolbar.locator('button[data-test="ai-actions"]'),
+    ).toBeHidden();
+    await expect(
+      toolbar.locator('button[data-test="convertMarkdown"]'),
+    ).toBeHidden();
+
+    await expect(
+      toolbar.locator('button[data-test="editcaption"]'),
+    ).toBeVisible();
+    await expect(
+      toolbar.locator('button[data-test="downloadfile"]'),
     ).toBeVisible();
   });
 
