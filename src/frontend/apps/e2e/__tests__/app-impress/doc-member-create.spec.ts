@@ -84,7 +84,7 @@ test.describe('Document create member', () => {
 
     // Validate
     await page.getByRole('menuitem', { name: 'Administrator' }).click();
-    await page.getByRole('button', { name: /^Invite / }).click();
+    await page.getByTestId('doc-share-invite-button').click();
 
     // Check invitation added
     await expect(
@@ -135,7 +135,7 @@ test.describe('Document create member', () => {
       (response) =>
         response.url().includes('/invitations/') && response.status() === 201,
     );
-    await page.getByRole('button', { name: /^Invite / }).click();
+    await page.getByTestId('doc-share-invite-button').click();
 
     // Check invitation sent
 
@@ -154,7 +154,7 @@ test.describe('Document create member', () => {
         response.url().includes('/invitations/') && response.status() === 400,
     );
 
-    await page.getByRole('button', { name: /^Invite / }).click();
+    await page.getByTestId('doc-share-invite-button').click();
     await expect(
       page.getByText(`"${email}" is already invited to the document.`),
     ).toBeVisible();
@@ -191,7 +191,7 @@ test.describe('Document create member', () => {
         response.url().includes('/invitations/') && response.status() === 201,
     );
 
-    await page.getByRole('button', { name: /^Invite / }).click();
+    await page.getByTestId('doc-share-invite-button').click();
 
     // Check invitation sent
     const responseCreateInvitation = await responsePromiseCreateInvitation;
@@ -216,12 +216,8 @@ test.describe('Document create member', () => {
     const responsePatchInvitation = await responsePromisePatchInvitation;
     expect(responsePatchInvitation.ok()).toBeTruthy();
 
-    const moreActions = userInvitation.getByRole('button', {
-      name: 'Open invitation actions menu',
-    });
-    await moreActions.click();
-
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await userInvitation.getByTestId('doc-role-dropdown').click();
+    await page.getByRole('menuitem', { name: 'Remove access' }).click();
 
     await expect(userInvitation).toBeHidden();
   });
