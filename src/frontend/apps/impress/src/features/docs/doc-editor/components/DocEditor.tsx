@@ -1,6 +1,5 @@
 import clsx from 'clsx';
 import { useEffect } from 'react';
-import { css } from 'styled-components';
 
 import { Box, Loading } from '@/components';
 import { DocHeader } from '@/docs/doc-header/';
@@ -97,18 +96,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
 
   return (
     <>
-      {isDesktop && (
-        <Box
-          $height="100vh"
-          $position="absolute"
-          $css={css`
-            top: 72px;
-            right: 20px;
-          `}
-        >
-          <TableContent />
-        </Box>
-      )}
+      {isDesktop && <TableContent />}
       <DocEditorContainer
         docHeader={<DocHeader doc={doc} />}
         docEditor={
