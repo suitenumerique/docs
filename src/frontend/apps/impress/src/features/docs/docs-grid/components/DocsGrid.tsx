@@ -1,5 +1,6 @@
 import { Button } from '@openfun/cunningham-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
@@ -10,6 +11,7 @@ import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
+import { useImportDoc } from '../api/useImportDoc';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import {
@@ -25,6 +27,28 @@ export const DocsGrid = ({
   target = DocDefaultFilter.ALL_DOCS,
 }: DocsGridProps) => {
   const { t } = useTranslation();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const { getRootProps, getInputProps, open } = useDropzone({
+    accept: {
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        ['.docx'],
+      'text/markdown': ['.md'],
+    },
+    onDrop(acceptedFiles) {
+      setIsDragOver(false);
+      for (const file of acceptedFiles) {
+        importDoc(file);
+      }
+    },
+    onDragEnter: () => {
+      setIsDragOver(true);
+    },
+    onDragLeave: () => {
+      setIsDragOver(false);
+    },
+    noClick: true,
+  });
+  const { mutate: importDoc } = useImportDoc();
 
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
@@ -77,12 +101,20 @@ export const DocsGrid = ({
         $width="100%"
         $css={css`
           ${!isDesktop ? 'border: none;' : ''}
+          ${isDragOver
+            ? `
+              border: 2px dashed var(--c--contextuals--border--semantic--brand--primary);
+              background-color: var(--c--contextuals--background--semantic--brand--tertiary);
+            `
+            : ''}
         `}
         $padding={{
           bottom: 'md',
         }}
+        {...getRootProps({ className: 'dropzone' })}
       >
-        <DocGridTitleBar target={target} />
+        <input {...getInputProps()} />
+        <DocGridTitleBar target={target} onUploadClick={open} />
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
@@ -158,7 +190,13 @@ export const DocsGrid = ({
   );
 };
 
-const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
+const DocGridTitleBar = ({
+  target,
+  onUploadClick,
+}: {
+  target: DocDefaultFilter;
+  onUploadClick: () => void;
+}) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
@@ -200,6 +238,17 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
           {title}
         </Text>
       </Box>
+      <Button
+        color="brand"
+        variant="tertiary"
+        onClick={(e) => {
+          e.stopPropagation();
+          onUploadClick();
+        }}
+        aria-label={t('Open the upload dialog')}
+      >
+        <Icon iconName="upload_file" $withThemeInherited />
+      </Button>
     </Box>
   );
 };
