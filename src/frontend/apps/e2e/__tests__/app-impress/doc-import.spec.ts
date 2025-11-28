@@ -65,6 +65,57 @@ test.describe('Doc Import', () => {
     await expect(docsGrid.getByText('test_import.docx').first()).toBeVisible();
     await expect(docsGrid.getByText('test_import.md').first()).toBeVisible();
   });
+
+  test('it imports TOTO TUTU with the import icon', async ({ page }) => {
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByLabel('Open the upload dialog').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/toto.docx'));
+    await fileChooser.setFiles(path.join(__dirname, 'assets/tutu.docx'));
+
+    await expect(
+      page.getByText('The document "toto.docx" has been successfully imported'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('The document "tutu.docx" has been successfully imported'),
+    ).toBeVisible();
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid.getByText('toto.docx').first()).toBeVisible();
+    await expect(docsGrid.getByText('tutu.docx').first()).toBeVisible();
+  });
+
+  test('it imports TOTO TUTU with the drag and drop area', async ({ page }) => {
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid).toBeVisible();
+
+    await dragAndDropFiles(page, "[data-testid='docs-grid']", [
+      {
+        filePath: path.join(__dirname, 'assets/toto.docx'),
+        fileName: 'toto.docx',
+        fileType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+      {
+        filePath: path.join(__dirname, 'assets/tutu.docx'),
+        fileName: 'tutu.docx',
+        fileType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+    ]);
+
+    // Wait for success messages
+    await expect(
+      page.getByText('The document "toto.docx" has been successfully imported'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('The document "tutu.docx" has been successfully imported'),
+    ).toBeVisible();
+
+    await expect(docsGrid.getByText('toto.docx').first()).toBeVisible();
+    await expect(docsGrid.getByText('tutu.docx').first()).toBeVisible();
+  });
 });
 
 const dragAndDropFiles = async (
