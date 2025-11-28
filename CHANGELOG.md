@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) add import document area in docs grid #1567
 - ✨(backend) add documents/all endpoint with descendants #1553
 - ✅(export) add PDF regression tests #1762
 - 📝(docs) Add language configuration documentation #1757

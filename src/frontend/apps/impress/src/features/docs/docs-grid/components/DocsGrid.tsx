@@ -1,5 +1,10 @@
-import { Button } from '@openfun/cunningham-react';
-import { useMemo } from 'react';
+import {
+  Button,
+  VariantType,
+  useToastProvider,
+} from '@openfun/cunningham-react';
+import { useMemo, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
@@ -10,6 +15,7 @@ import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
+import { ContentTypesAllowed, useImportDoc } from '../api/useImportDoc';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import {
@@ -25,6 +31,44 @@ export const DocsGrid = ({
   target = DocDefaultFilter.ALL_DOCS,
 }: DocsGridProps) => {
   const { t } = useTranslation();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const { toast } = useToastProvider();
+  const { getRootProps, getInputProps, open } = useDropzone({
+    accept: {
+      [ContentTypesAllowed.Docx]: ['.docx'],
+      [ContentTypesAllowed.Markdown]: ['.md'],
+    },
+    onDrop(acceptedFiles) {
+      setIsDragOver(false);
+      for (const file of acceptedFiles) {
+        importDoc(file);
+      }
+    },
+    onDragEnter: () => {
+      setIsDragOver(true);
+    },
+    onDragLeave: () => {
+      setIsDragOver(false);
+    },
+    onDropRejected(fileRejections) {
+      toast(
+        t(
+          `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
+          {
+            documentName: fileRejections?.[0].file.name || '',
+          },
+        ),
+        VariantType.ERROR,
+      );
+    },
+    noClick: true,
+  });
+  const { mutate: importDoc } = useImportDoc();
+
+  const withUpload =
+    !target ||
+    target === DocDefaultFilter.ALL_DOCS ||
+    target === DocDefaultFilter.MY_DOCS;
 
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
@@ -77,12 +121,24 @@ export const DocsGrid = ({
         $width="100%"
         $css={css`
           ${!isDesktop ? 'border: none;' : ''}
+          ${isDragOver
+            ? `
+              border: 2px dashed var(--c--contextuals--border--semantic--brand--primary);
+              background-color: var(--c--contextuals--background--semantic--brand--tertiary);
+            `
+            : ''}
         `}
         $padding={{
           bottom: 'md',
         }}
+        {...(withUpload ? getRootProps({ className: 'dropzone' }) : {})}
       >
-        <DocGridTitleBar target={target} />
+        {withUpload && <input {...getInputProps()} />}
+        <DocGridTitleBar
+          target={target}
+          onUploadClick={open}
+          withUpload={withUpload}
+        />
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
@@ -158,7 +214,15 @@ export const DocsGrid = ({
   );
 };
 
-const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
+const DocGridTitleBar = ({
+  target,
+  onUploadClick,
+  withUpload,
+}: {
+  target: DocDefaultFilter;
+  onUploadClick: () => void;
+  withUpload: boolean;
+}) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
@@ -200,6 +264,19 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
           {title}
         </Text>
       </Box>
+      {withUpload && (
+        <Button
+          color="brand"
+          variant="tertiary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onUploadClick();
+          }}
+          aria-label={t('Open the upload dialog')}
+        >
+          <Icon iconName="upload_file" $withThemeInherited />
+        </Button>
+      )}
     </Box>
   );
 };
