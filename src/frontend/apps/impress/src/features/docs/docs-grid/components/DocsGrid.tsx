@@ -1,4 +1,8 @@
-import { Button } from '@openfun/cunningham-react';
+import {
+  Button,
+  VariantType,
+  useToastProvider,
+} from '@openfun/cunningham-react';
 import { useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +32,7 @@ export const DocsGrid = ({
 }: DocsGridProps) => {
   const { t } = useTranslation();
   const [isDragOver, setIsDragOver] = useState(false);
+  const { toast } = useToastProvider();
   const { getRootProps, getInputProps, open } = useDropzone({
     accept: {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
@@ -46,9 +51,21 @@ export const DocsGrid = ({
     onDragLeave: () => {
       setIsDragOver(false);
     },
+    onDropRejected(fileRejections) {
+      toast(
+        t(
+          `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
+          {
+            documentName: fileRejections?.[0].file.name || '',
+          },
+        ),
+        VariantType.ERROR,
+      );
+    },
     noClick: true,
   });
   const { mutate: importDoc } = useImportDoc();
+  const withUpload = target === DocDefaultFilter.ALL_DOCS;
 
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
@@ -111,10 +128,14 @@ export const DocsGrid = ({
         $padding={{
           bottom: 'md',
         }}
-        {...getRootProps({ className: 'dropzone' })}
+        {...(withUpload ? getRootProps({ className: 'dropzone' }) : {})}
       >
-        <input {...getInputProps()} />
-        <DocGridTitleBar target={target} onUploadClick={open} />
+        {withUpload && <input {...getInputProps()} />}
+        <DocGridTitleBar
+          target={target}
+          onUploadClick={open}
+          withUpload={withUpload}
+        />
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
@@ -193,9 +214,11 @@ export const DocsGrid = ({
 const DocGridTitleBar = ({
   target,
   onUploadClick,
+  withUpload,
 }: {
   target: DocDefaultFilter;
   onUploadClick: () => void;
+  withUpload: boolean;
 }) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
@@ -238,17 +261,19 @@ const DocGridTitleBar = ({
           {title}
         </Text>
       </Box>
-      <Button
-        color="brand"
-        variant="tertiary"
-        onClick={(e) => {
-          e.stopPropagation();
-          onUploadClick();
-        }}
-        aria-label={t('Open the upload dialog')}
-      >
-        <Icon iconName="upload_file" $withThemeInherited />
-      </Button>
+      {withUpload && (
+        <Button
+          color="brand"
+          variant="tertiary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onUploadClick();
+          }}
+          aria-label={t('Open the upload dialog')}
+        >
+          <Icon iconName="upload_file" $withThemeInherited />
+        </Button>
+      )}
     </Box>
   );
 };
