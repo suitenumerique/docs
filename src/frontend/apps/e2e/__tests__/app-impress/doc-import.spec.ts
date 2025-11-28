@@ -1,0 +1,149 @@
+import { readFileSync } from 'fs';
+import path from 'path';
+
+import { Page, expect, test } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  await page.goto('/');
+});
+
+test.describe('Doc Import', () => {
+  test('it imports 2 docs with the import icon', async ({ page }) => {
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByLabel('Open the upload dialog').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test_import.docx'));
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test_import.md'));
+
+    await expect(
+      page.getByText(
+        'The document "test_import.docx" has been successfully imported',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        'The document "test_import.md" has been successfully imported',
+      ),
+    ).toBeVisible();
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid.getByText('test_import.docx')).toBeVisible();
+    await expect(docsGrid.getByText('test_import.md')).toBeVisible();
+  });
+
+  test('it imports 2 docs with the drag and drop area', async ({ page }) => {
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid).toBeVisible();
+
+    await dragAndDropFiles(page, "[data-testid='docs-grid']", [
+      {
+        filePath: path.join(__dirname, 'assets/test_import.docx'),
+        fileName: 'test_import.docx',
+        fileType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+      {
+        filePath: path.join(__dirname, 'assets/test_import.md'),
+        fileName: 'test_import.md',
+        fileType: 'text/markdown',
+      },
+    ]);
+
+    // Wait for success messages
+    await expect(
+      page.getByText(
+        'The document "test_import.docx" has been successfully imported',
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        'The document "test_import.md" has been successfully imported',
+      ),
+    ).toBeVisible();
+
+    await expect(docsGrid.getByText('test_import.docx').first()).toBeVisible();
+    await expect(docsGrid.getByText('test_import.md').first()).toBeVisible();
+  });
+
+  test('it imports TOTO TUTU with the import icon', async ({ page }) => {
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByLabel('Open the upload dialog').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/toto.docx'));
+    await fileChooser.setFiles(path.join(__dirname, 'assets/tutu.docx'));
+
+    await expect(
+      page.getByText('The document "toto.docx" has been successfully imported'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('The document "tutu.docx" has been successfully imported'),
+    ).toBeVisible();
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid.getByText('toto.docx').first()).toBeVisible();
+    await expect(docsGrid.getByText('tutu.docx').first()).toBeVisible();
+  });
+
+  test('it imports TOTO TUTU with the drag and drop area', async ({ page }) => {
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid).toBeVisible();
+
+    await dragAndDropFiles(page, "[data-testid='docs-grid']", [
+      {
+        filePath: path.join(__dirname, 'assets/toto.docx'),
+        fileName: 'toto.docx',
+        fileType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+      {
+        filePath: path.join(__dirname, 'assets/tutu.docx'),
+        fileName: 'tutu.docx',
+        fileType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+    ]);
+
+    // Wait for success messages
+    await expect(
+      page.getByText('The document "toto.docx" has been successfully imported'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('The document "tutu.docx" has been successfully imported'),
+    ).toBeVisible();
+
+    await expect(docsGrid.getByText('toto.docx').first()).toBeVisible();
+    await expect(docsGrid.getByText('tutu.docx').first()).toBeVisible();
+  });
+});
+
+const dragAndDropFiles = async (
+  page: Page,
+  selector: string,
+  files: Array<{ filePath: string; fileName: string; fileType?: string }>,
+) => {
+  const filesData = files.map((file) => ({
+    bufferData: `data:application/octet-stream;base64,${readFileSync(file.filePath).toString('base64')}`,
+    fileName: file.fileName,
+    fileType: file.fileType || '',
+  }));
+
+  const dataTransfer = await page.evaluateHandle(async (filesInfo) => {
+    const dt = new DataTransfer();
+
+    for (const fileInfo of filesInfo) {
+      const blobData = await fetch(fileInfo.bufferData).then((res) =>
+        res.blob(),
+      );
+      const file = new File([blobData], fileInfo.fileName, {
+        type: fileInfo.fileType,
+      });
+      dt.items.add(file);
+    }
+
+    return dt;
+  }, filesData);
+
+  await page.dispatchEvent(selector, 'drop', { dataTransfer });
+};
