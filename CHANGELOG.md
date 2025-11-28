@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨ Import of documents #7765
+
 ### Changed
 
 - ♿(frontend) improve accessibility:
