@@ -15,6 +15,7 @@ and this project adheres to
 
 - ⚡️(sw) stop to cache external resources likes videos #1655
 - 💥(frontend) upgrade to ui-kit v2
+- ⚡️(frontend) improve perf on upload and table of contents #1662
 
 ### Fixed
 
