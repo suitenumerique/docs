@@ -1,8 +1,14 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { useMemo } from 'react';
+import {
+  Button,
+  Tooltip as TooltipBase,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/cunningham-react';
+import { useMemo, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
-import { css } from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import AllDocs from '@/assets/icons/doc-all.svg';
 import { Box, Card, Icon, Text } from '@/components';
@@ -10,6 +16,7 @@ import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
+import { ContentTypesAllowed, useImportDoc } from '../api/useImportDoc';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import {
@@ -18,13 +25,89 @@ import {
 } from './DocGridContentList';
 import { DocsGridLoader } from './DocsGridLoader';
 
+const Tooltip = styled(TooltipBase)`
+  & {
+    max-width: 200px;
+
+    .c__tooltip__content {
+      max-width: 200px;
+      width: max-content;
+    }
+  }
+`;
+
 type DocsGridProps = {
   target?: DocDefaultFilter;
 };
+
 export const DocsGrid = ({
   target = DocDefaultFilter.ALL_DOCS,
 }: DocsGridProps) => {
   const { t } = useTranslation();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const { toast } = useToastProvider();
+
+  const MAX_FILE_SIZE = {
+    bytes: 10 * 1024 * 1024, // 10 MB
+    text: '10MB',
+  };
+
+  const { getRootProps, getInputProps, open } = useDropzone({
+    accept: {
+      [ContentTypesAllowed.Docx]: ['.docx'],
+      [ContentTypesAllowed.Markdown]: ['.md'],
+    },
+    maxSize: MAX_FILE_SIZE.bytes,
+    onDrop(acceptedFiles) {
+      setIsDragOver(false);
+      for (const file of acceptedFiles) {
+        importDoc(file);
+      }
+    },
+    onDragEnter: () => {
+      setIsDragOver(true);
+    },
+    onDragLeave: () => {
+      setIsDragOver(false);
+    },
+    onDropRejected(fileRejections) {
+      fileRejections.forEach((rejection) => {
+        const isFileTooLarge = rejection.errors.some(
+          (error) => error.code === 'file-too-large',
+        );
+
+        if (isFileTooLarge) {
+          toast(
+            t(
+              'The document "{{documentName}}" is too large. Maximum file size is {{maxFileSize}}.',
+              {
+                documentName: rejection.file.name,
+                maxFileSize: MAX_FILE_SIZE.text,
+              },
+            ),
+            VariantType.ERROR,
+          );
+        } else {
+          toast(
+            t(
+              `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
+              {
+                documentName: rejection.file.name,
+              },
+            ),
+            VariantType.ERROR,
+          );
+        }
+      });
+    },
+    noClick: true,
+  });
+  const { mutate: importDoc } = useImportDoc();
+
+  const withUpload =
+    !target ||
+    target === DocDefaultFilter.ALL_DOCS ||
+    target === DocDefaultFilter.MY_DOCS;
 
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
@@ -77,12 +160,24 @@ export const DocsGrid = ({
         $width="100%"
         $css={css`
           ${!isDesktop ? 'border: none;' : ''}
+          ${isDragOver
+            ? `
+              border: 2px dashed var(--c--contextuals--border--semantic--brand--primary);
+              background-color: var(--c--contextuals--background--semantic--brand--tertiary);
+            `
+            : ''}
         `}
         $padding={{
           bottom: 'md',
         }}
+        {...(withUpload ? getRootProps({ className: 'dropzone' }) : {})}
       >
-        <DocGridTitleBar target={target} />
+        {withUpload && <input {...getInputProps()} />}
+        <DocGridTitleBar
+          target={target}
+          onUploadClick={open}
+          withUpload={withUpload}
+        />
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
@@ -158,7 +253,15 @@ export const DocsGrid = ({
   );
 };
 
-const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
+const DocGridTitleBar = ({
+  target,
+  onUploadClick,
+  withUpload,
+}: {
+  target: DocDefaultFilter;
+  onUploadClick: () => void;
+  withUpload: boolean;
+}) => {
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
 
@@ -194,6 +297,27 @@ const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
           {title}
         </Text>
       </Box>
+      {withUpload && (
+        <Tooltip
+          content={
+            <Text $textAlign="center" $theme="neutral" $variation="tertiary">
+              {t('Import Docx or Markdown files')}
+            </Text>
+          }
+        >
+          <Button
+            color="brand"
+            variant="tertiary"
+            onClick={(e) => {
+              e.stopPropagation();
+              onUploadClick();
+            }}
+            aria-label={t('Open the upload dialog')}
+          >
+            <Icon iconName="upload_file" $withThemeInherited />
+          </Button>
+        </Tooltip>
+      )}
     </Box>
   );
 };

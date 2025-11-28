@@ -9,6 +9,7 @@ and this project adheres to
 ### Added 
 
 - ✨(frontend) integrate configurable Waffle #1795
+- ✨ Import of documents #1609
 
 ### Changed
 
