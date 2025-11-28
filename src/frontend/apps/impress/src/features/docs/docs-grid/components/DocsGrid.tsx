@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import { css } from 'styled-components';
 
-import { Box, Card, Text } from '@/components';
+import AllDocs from '@/assets/icons/doc-all.svg';
+import { Box, Card, Icon, Text } from '@/components';
 import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
@@ -60,21 +61,6 @@ export const DocsGrid = ({
     void fetchNextPage();
   };
 
-  let title = t('All docs');
-  switch (target) {
-    case DocDefaultFilter.MY_DOCS:
-      title = t('My docs');
-      break;
-    case DocDefaultFilter.SHARED_WITH_ME:
-      title = t('Shared with me');
-      break;
-    case DocDefaultFilter.TRASHBIN:
-      title = t('Trashbin');
-      break;
-    default:
-      title = t('All docs');
-  }
-
   return (
     <Box
       $position="relative"
@@ -93,14 +79,10 @@ export const DocsGrid = ({
           ${!isDesktop ? 'border: none;' : ''}
         `}
         $padding={{
-          top: 'base',
-          horizontal: isDesktop ? 'md' : 'xs',
           bottom: 'md',
         }}
       >
-        <Text as="h2" $size="h4" $margin={{ top: '0px', bottom: '10px' }}>
-          {title}
-        </Text>
+        <DocGridTitleBar target={target} />
 
         {!hasDocs && !loading && (
           <Box $padding={{ vertical: 'sm' }} $align="center" $justify="center">
@@ -110,7 +92,11 @@ export const DocsGrid = ({
           </Box>
         )}
         {hasDocs && (
-          <Box $gap="6px" $overflow="auto">
+          <Box
+            $gap="6px"
+            $overflow="auto"
+            $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
+          >
             <Box role="grid" aria-label={t('Documents grid')}>
               <Box role="rowgroup">
                 <Box
@@ -168,6 +154,52 @@ export const DocsGrid = ({
           </Box>
         )}
       </Card>
+    </Box>
+  );
+};
+
+const DocGridTitleBar = ({ target }: { target: DocDefaultFilter }) => {
+  const { t } = useTranslation();
+  const { isDesktop } = useResponsiveStore();
+
+  let title = t('All docs');
+  let icon = <Icon icon={<AllDocs width={24} height={24} />} />;
+  switch (target) {
+    case DocDefaultFilter.MY_DOCS:
+      icon = <Icon iconName="lock" />;
+      title = t('My docs');
+      break;
+    case DocDefaultFilter.SHARED_WITH_ME:
+      icon = <Icon iconName="group" />;
+      title = t('Shared with me');
+      break;
+    case DocDefaultFilter.TRASHBIN:
+      icon = <Icon iconName="delete" />;
+      title = t('Trashbin');
+      break;
+    default:
+      title = t('All docs');
+  }
+
+  return (
+    <Box
+      $direction="row"
+      $padding={{
+        vertical: 'md',
+        horizontal: isDesktop ? 'md' : 'xs',
+      }}
+      $css={css`
+        border-bottom: 1px solid var(--c--contextuals--border--surface--primary);
+      `}
+      $align="center"
+      $justify="space-between"
+    >
+      <Box $direction="row" $gap="xs" $align="center">
+        {icon}
+        <Text as="h2" $size="h4" $margin="none">
+          {title}
+        </Text>
+      </Box>
     </Box>
   );
 };
