@@ -75,27 +75,31 @@ const UploadLoaderBlockComponent = ({
 
     loopCheckDocMediaStatus(url)
       .then((response) => {
-        // Replace the loading block with the resource block (image, audio, video, pdf ...)
-        try {
-          editor.replaceBlocks(
-            [block.id],
-            [
-              {
-                type: block.props.blockUploadType,
-                props: {
-                  url: `${mediaUrl}${response.file}`,
-                  showPreview: block.props.blockUploadShowPreview,
-                  name: block.props.blockUploadName,
-                  caption: '',
-                  backgroundColor: 'default',
-                  textAlignment: 'left',
-                },
-              } as never,
-            ],
-          );
-        } catch {
-          /* During collaboration, another user might have updated the block */
-        }
+        // Add random delay to reduce collision probability during collaboration
+        const randomDelay = Math.random() * 800;
+        setTimeout(() => {
+          // Replace the loading block with the resource block (image, audio, video, pdf ...)
+          try {
+            editor.replaceBlocks(
+              [block.id],
+              [
+                {
+                  type: block.props.blockUploadType,
+                  props: {
+                    url: `${mediaUrl}${response.file}`,
+                    showPreview: block.props.blockUploadShowPreview,
+                    name: block.props.blockUploadName,
+                    caption: '',
+                    backgroundColor: 'default',
+                    textAlignment: 'left',
+                  },
+                } as never,
+              ],
+            );
+          } catch {
+            /* During collaboration, another user might have updated the block */
+          }
+        }, randomDelay);
       })
       .catch((error) => {
         console.error('Error analyzing file:', error);
