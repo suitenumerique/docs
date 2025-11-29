@@ -1013,3 +1013,44 @@ class ThreadSerializer(serializers.ModelSerializer):
         if request:
             return thread.get_abilities(request.user)
         return {}
+
+
+class OutlineImportSerializer(serializers.Serializer):
+    """Serializer for validating Outline export zip uploads."""
+
+    file = serializers.FileField()
+
+    def validate_file(self, file):
+        """Validate that the uploaded file is a valid zip archive."""
+        name = getattr(file, "name", "")
+        if not name.endswith(".zip"):
+            raise serializers.ValidationError("Must be a .zip file")
+
+        # Validate it's actually a valid zip file by attempting to open it
+        try:
+            import io
+            import zipfile
+
+            content = file.read()
+            file.seek(0)  # Reset file pointer after reading
+            zipfile.ZipFile(io.BytesIO(content))
+        except zipfile.BadZipFile as exc:
+            raise serializers.ValidationError("Invalid zip archive") from exc
+
+        return file
+
+
+class OutlineImportJobSerializer(serializers.ModelSerializer):
+    """Serializer for Outline import job status."""
+
+    class Meta:
+        model = models.OutlineImportJob
+        fields = [
+            "id",
+            "status",
+            "created_document_ids",
+            "error_message",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
