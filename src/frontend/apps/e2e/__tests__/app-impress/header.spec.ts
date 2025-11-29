@@ -32,6 +32,15 @@ test.describe('Header', () => {
   }) => {
     await overrideConfig(page, {
       FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            alt: 'Gouvernement Logo',
+          },
+        },
+      },
     });
     await page.goto('/');
 
@@ -98,6 +107,15 @@ test.describe('Header mobile', () => {
   test('it checks the header when mobile with DSFR theme', async ({ page }) => {
     await overrideConfig(page, {
       FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            alt: 'Gouvernement Logo',
+          },
+        },
+      },
     });
 
     await page.goto('/');
@@ -129,5 +147,33 @@ test.describe('Header: Log out', () => {
       .click();
 
     await expectLoginPage(page);
+  });
+});
+
+test.describe('Header: Override configuration', () => {
+  test('checks the header is correctly overrided', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        header: {
+          icon: {
+            src: '/assets/logo-gouv.svg',
+            width: '220px',
+            height: 'auto',
+            alt: '',
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+    const header = page.locator('header').first();
+
+    const logoImage = header.getByTestId('header-icon-docs');
+    await expect(logoImage).toBeVisible();
+
+    await expect(logoImage).not.toHaveAttribute('src', '/assets/icon-docs.svg');
+    await expect(logoImage).toHaveAttribute('src', '/assets/logo-gouv.svg');
+    await expect(logoImage).toHaveAttribute('alt', '');
   });
 });

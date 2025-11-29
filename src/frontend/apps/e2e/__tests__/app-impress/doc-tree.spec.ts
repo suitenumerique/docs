@@ -9,7 +9,11 @@ import {
   verifyDocName,
 } from './utils-common';
 import { addNewMember } from './utils-share';
-import { clickOnAddRootSubPage, createRootSubPage } from './utils-sub-pages';
+import {
+  clickOnAddRootSubPage,
+  createRootSubPage,
+  getTreeRow,
+} from './utils-sub-pages';
 
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
@@ -222,7 +226,7 @@ test.describe('Doc Tree', () => {
     const currentUser = list.getByTestId(
       `doc-share-member-row-user.test@${browserName}.test`,
     );
-    const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await currentUserRole.click();
     await page.getByRole('menuitem', { name: 'Administrator' }).click();
     await list.click();
@@ -297,6 +301,58 @@ test.describe('Doc Tree', () => {
 
     // Now test keyboard navigation on sub-document
     await expect(docTree.getByText(docChild)).toBeVisible();
+  });
+
+  test('it updates the child icon from the tree', async ({
+    page,
+    browserName,
+  }) => {
+    const [docParent] = await createDoc(
+      page,
+      'doc-child-emoji',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-child-emoji-child',
+    );
+
+    const row = await getTreeRow(page, docChild);
+
+    // Check Remove emoji is not present initially
+    await row.hover();
+    const menu = row.getByText(`more_horiz`);
+    await menu.click();
+    await expect(
+      page.getByRole('menuitem', { name: 'Remove emoji' }),
+    ).toBeHidden();
+
+    // Close the menu
+    await page.keyboard.press('Escape');
+
+    // Update the emoji from the tree
+    await row.locator('.--docs--doc-icon').click();
+    await page.getByRole('button', { name: '😀' }).first().click();
+
+    // Verify the emoji is updated in the tree and in the document title
+    await expect(row.getByText('😀')).toBeVisible();
+
+    const titleEmojiPicker = page
+      .locator('.--docs--doc-title')
+      .getByRole('button');
+    await expect(titleEmojiPicker).toHaveText('😀');
+
+    // Now remove the emoji using the new action
+    await row.hover();
+    await menu.click();
+    await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
+
+    await expect(row.getByText('😀')).toBeHidden();
+    await expect(titleEmojiPicker).toBeHidden();
   });
 });
 

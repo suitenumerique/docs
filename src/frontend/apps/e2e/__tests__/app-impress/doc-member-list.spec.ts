@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import { createDoc, verifyDocName } from './utils-common';
 import { addNewMember } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
@@ -8,8 +8,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Document list members', () => {
-  test('it checks a big list of members', async ({ page }) => {
-    const docTitle = await goToGridDoc(page);
+  test('it checks a big list of members', async ({ page, browserName }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'members-big-members-list',
+      browserName,
+      1,
+    );
+
     await verifyDocName(page, docTitle);
 
     // Get the current URL and extract the last part
@@ -25,7 +31,7 @@ test.describe('Document list members', () => {
       return cleanUrl.split('/').pop() || '';
     })();
 
-    await page.route('**/documents/**/accesses/', async (route) => {
+    await page.route(/.*\/documents\/.*\/accesses\//, async (route) => {
       const request = route.request();
       const url = new URL(request.url());
       const pageId = url.searchParams.get('page') ?? '1';
@@ -73,7 +79,7 @@ test.describe('Document list members', () => {
     await expect(loadMore).toBeHidden();
   });
 
-  test('it checks a big list of invitations', async ({ page }) => {
+  test('it checks a big list of invitations', async ({ page, browserName }) => {
     await page.route(
       /.*\/documents\/.*\/invitations\/\?page=.*/,
       async (route) => {
@@ -108,7 +114,12 @@ test.describe('Document list members', () => {
       },
     );
 
-    const docTitle = await goToGridDoc(page);
+    const [docTitle] = await createDoc(
+      page,
+      'members-big-invitation-list',
+      browserName,
+      1,
+    );
     await verifyDocName(page, docTitle);
     await page.getByRole('button', { name: 'Share' }).click();
 
@@ -141,7 +152,7 @@ test.describe('Document list members', () => {
     const currentUser = list.getByTestId(
       `doc-share-member-row-user.test@${browserName}.test`,
     );
-    const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+    const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await expect(currentUser).toBeVisible();
     await expect(currentUserRole).toBeVisible();
     await currentUserRole.click();
@@ -149,13 +160,16 @@ test.describe('Document list members', () => {
       `You are the sole owner of this group, make another member the group owner before you can change your own role or be removed from your document.`,
     );
     await expect(soloOwner).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Administrator' }),
+    ).toBeDisabled();
 
     await list.click({
       force: true, // Force click to close the dropdown
     });
     const newUserEmail = await addNewMember(page, 0, 'Owner');
     const newUser = list.getByTestId(`doc-share-member-row-${newUserEmail}`);
-    const newUserRoles = newUser.getByLabel('doc-role-dropdown');
+    const newUserRoles = newUser.getByTestId('doc-role-dropdown');
 
     await expect(newUser).toBeVisible();
 
@@ -175,9 +189,17 @@ test.describe('Document list members', () => {
     await list.click();
     await expect(currentUserRole).toBeVisible();
 
+    await newUserRoles.click();
+    await expect(page.getByRole('menuitem', { name: 'Owner' })).toBeDisabled();
+    await list.click({
+      force: true, // Force click to close the dropdown
+    });
+
     await currentUserRole.click();
     await page.getByRole('menuitem', { name: 'Reader' }).click();
-    await list.click();
+    await list.click({
+      force: true, // Force click to close the dropdown
+    });
     await expect(currentUserRole).toBeHidden();
   });
 
@@ -192,9 +214,7 @@ test.describe('Document list members', () => {
 
     const emailMyself = `user.test@${browserName}.test`;
     const mySelf = list.getByTestId(`doc-share-member-row-${emailMyself}`);
-    const mySelfRole = mySelf.getByRole('button', {
-      name: 'doc-role-dropdown',
-    });
+    const mySelfRole = mySelf.getByTestId('doc-role-dropdown');
 
     const userOwnerEmail = await addNewMember(page, 0, 'Owner');
     const userOwner = list.getByTestId(
@@ -209,9 +229,7 @@ test.describe('Document list members', () => {
     const userReader = list.getByTestId(
       `doc-share-member-row-${userReaderEmail}`,
     );
-    const userReaderRole = userReader.getByRole('button', {
-      name: 'doc-role-dropdown',
-    });
+    const userReaderRole = userReader.getByTestId('doc-role-dropdown');
 
     await expect(mySelf).toBeVisible();
     await expect(userOwner).toBeVisible();

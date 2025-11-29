@@ -31,15 +31,10 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
       const svgText = await blob.text();
       const FALLBACK_SIZE = 536;
       previewWidth = previewWidth || blob.size || FALLBACK_SIZE;
-      pngConverted = await convertSvgToPng(svgText, previewWidth);
-      const img = new Image();
-      img.src = pngConverted;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          dimensions = { width: img.width, height: img.height };
-          resolve(null);
-        };
-      });
+
+      const result = await convertSvgToPng(svgText, previewWidth);
+      pngConverted = result.png;
+      dimensions = { width: result.width, height: result.height };
     } else {
       dimensions = await getImageDimensions(blob);
     }
@@ -50,9 +45,9 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
 
     const { width, height } = dimensions;
 
-    if (previewWidth && previewWidth > MAX_WIDTH) {
-      previewWidth = MAX_WIDTH;
-    }
+    // Ensure the final width never exceeds MAX_WIDTH to prevent images
+    // from overflowing the page width in the exported document
+    const finalWidth = Math.min(previewWidth || width, MAX_WIDTH);
 
     return [
       new Paragraph({
@@ -71,8 +66,8 @@ export const blockMappingImageDocx: DocsExporterDocx['mappings']['blockMapping']
                 }
               : undefined,
             transformation: {
-              width: previewWidth || width,
-              height: ((previewWidth || width) / width) * height,
+              width: finalWidth,
+              height: (finalWidth / width) * height,
             },
           }),
         ],
@@ -100,16 +95,13 @@ function blockPropsToStyles(
         ? undefined
         : {
             type: ShadingType.SOLID,
-            color:
-              colors[
-                props.backgroundColor as keyof typeof colors
-              ].background.slice(1),
+            color: colors[props.backgroundColor].background.slice(1),
           },
     run:
       props.textColor === 'default' || !props.textColor
         ? undefined
         : {
-            color: colors[props.textColor as keyof typeof colors].text.slice(1),
+            color: colors[props.textColor].text.slice(1),
           },
     alignment:
       !props.textAlignment || props.textAlignment === 'left'

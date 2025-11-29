@@ -25,12 +25,12 @@ export const collaborationResetConnectionsHandler = (
    * If no user ID is provided, close all connections in the room
    */
   if (!userId) {
-    hocuspocusServer.closeConnections(room);
+    hocuspocusServer.hocuspocus.closeConnections(room);
   } else {
     /**
      * Close connections for the user in the room
      */
-    hocuspocusServer.documents.forEach((doc) => {
+    hocuspocusServer.hocuspocus.documents.forEach((doc) => {
       if (doc.name !== room) {
         return;
       }

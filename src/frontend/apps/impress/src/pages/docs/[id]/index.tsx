@@ -16,9 +16,11 @@ import {
   useDoc,
   useDocStore,
   useProviderStore,
+  useTrans,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
+import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useBroadcastStore } from '@/stores';
@@ -41,12 +43,15 @@ export function DocLayout() {
 
       <TreeProvider
         initialNodeId={id}
-        onLoadChildren={async (docId: string) => {
-          const doc = await getDocChildren({ docId });
-          return subPageToTree(doc.results);
+        onLoadChildren={async (docId: string, page: number) => {
+          const doc = await getDocChildren({ docId, page });
+          return {
+            children: subPageToTree(doc.results),
+            hasMore: !!doc.next,
+          };
         }}
       >
-        <MainLayout>
+        <MainLayout enableResizablePanel={true}>
           <DocPage id={id} />
         </MainLayout>
       </TreeProvider>
@@ -60,6 +65,7 @@ interface DocProps {
 
 const DocPage = ({ id }: DocProps) => {
   const { hasLostConnection, resetLostConnection } = useProviderStore();
+  const { isSkeletonVisible, setIsSkeletonVisible } = useSkeletonStore();
   const {
     data: docQuery,
     isError,
@@ -89,6 +95,20 @@ const DocPage = ({ id }: DocProps) => {
   useCollaboration(doc?.id, doc?.content);
   const { t } = useTranslation();
   const { authenticated } = useAuth();
+  const { untitledDocument } = useTrans();
+
+  /**
+   * Show skeleton when loading a document
+   */
+  useEffect(() => {
+    if (!doc && !isError && !isSkeletonVisible) {
+      setIsSkeletonVisible(true);
+    }
+
+    if (isError) {
+      setIsSkeletonVisible(false);
+    }
+  }, [doc, isError, isSkeletonVisible, setIsSkeletonVisible]);
 
   /**
    * Scroll to top when navigating to a new document
@@ -113,7 +133,9 @@ const DocPage = ({ id }: DocProps) => {
   // Invalidate when provider store reports a lost connection
   useEffect(() => {
     if (hasLostConnection && doc?.id) {
-      queryClient.invalidateQueries({ queryKey: [KEY_DOC, { id: doc.id }] });
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_DOC, { id: doc.id }],
+      });
       resetLostConnection();
     }
   }, [hasLostConnection, doc?.id, queryClient, resetLostConnection]);
@@ -143,7 +165,7 @@ const DocPage = ({ id }: DocProps) => {
     }
 
     addTask(`${KEY_DOC}-${doc.id}`, () => {
-      void queryClient.resetQueries({
+      void queryClient.invalidateQueries({
         queryKey: [KEY_DOC, { id: doc.id }],
       });
     });
@@ -155,10 +177,7 @@ const DocPage = ({ id }: DocProps) => {
 
       if (error.status === 401) {
         if (authenticated) {
-          queryClient.setQueryData([KEY_AUTH], {
-            user: null,
-            authenticated: false,
-          });
+          queryClient.setQueryData([KEY_AUTH], null);
         }
         setAuthUrl();
       }
@@ -178,7 +197,7 @@ const DocPage = ({ id }: DocProps) => {
           causes={error.cause}
           icon={
             error.status === 502 ? (
-              <Icon iconName="wifi_off" $theme="danger" $variation="600" />
+              <Icon iconName="wifi_off" $theme="danger" $withThemeInherited />
             ) : undefined
           }
         />
@@ -194,11 +213,11 @@ const DocPage = ({ id }: DocProps) => {
     <>
       <Head>
         <title>
-          {doc.title} - {t('Docs')}
+          {doc.title || untitledDocument} - {t('Docs')}
         </title>
         <meta
           property="og:title"
-          content={`${doc.title} - ${t('Docs')}`}
+          content={`${doc.title || untitledDocument} - ${t('Docs')}`}
           key="title"
         />
       </Head>

@@ -53,7 +53,7 @@ export const QuickSearchInput = ({
         $padding={{ horizontal: 'base', vertical: 'sm' }}
       >
         {!loading && (
-          <Icon iconName="search" $variation="600" aria-hidden="true" />
+          <Icon iconName="search" $variation="secondary" aria-hidden="true" />
         )}
         {loading && (
           <div>

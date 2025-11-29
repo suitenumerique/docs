@@ -10,13 +10,16 @@ import {
   getEmojiAndTitle,
 } from '../utils';
 
-// Mock Y.js
-vi.mock('yjs', () => ({
-  Doc: vi.fn().mockImplementation(() => ({
-    getXmlFragment: vi.fn().mockReturnValue('mocked-xml-fragment'),
-  })),
-  applyUpdate: vi.fn(),
-}));
+vi.mock('yjs', () => {
+  class MockDoc {
+    getXmlFragment = vi.fn().mockReturnValue('mocked-xml-fragment');
+  }
+
+  return {
+    Doc: MockDoc,
+    applyUpdate: vi.fn(),
+  };
+});
 
 describe('doc-management utils', () => {
   beforeEach(() => {
@@ -26,45 +29,30 @@ describe('doc-management utils', () => {
   describe('base64ToYDoc', () => {
     it('should convert base64 string to Y.Doc', () => {
       const base64String = 'dGVzdA=='; // "test" in base64
-      const mockYDoc = { getXmlFragment: vi.fn() };
-
-      (Y.Doc as any).mockReturnValue(mockYDoc);
 
       const result = base64ToYDoc(base64String);
 
-      expect(Y.Doc).toHaveBeenCalled();
-      expect(Y.applyUpdate).toHaveBeenCalledWith(mockYDoc, expect.any(Buffer));
-      expect(result).toBe(mockYDoc);
+      expect(result).toBeInstanceOf(Y.Doc);
+      expect(Y.applyUpdate).toHaveBeenCalledWith(result, expect.any(Buffer));
     });
 
     it('should handle empty base64 string', () => {
       const base64String = '';
-      const mockYDoc = { getXmlFragment: vi.fn() };
-
-      (Y.Doc as any).mockReturnValue(mockYDoc);
 
       const result = base64ToYDoc(base64String);
 
-      expect(Y.Doc).toHaveBeenCalled();
-      expect(Y.applyUpdate).toHaveBeenCalledWith(mockYDoc, expect.any(Buffer));
-      expect(result).toBe(mockYDoc);
+      expect(result).toBeInstanceOf(Y.Doc);
+      expect(Y.applyUpdate).toHaveBeenCalledWith(result, expect.any(Buffer));
     });
   });
 
   describe('base64ToBlocknoteXmlFragment', () => {
     it('should convert base64 to Blocknote XML fragment', () => {
       const base64String = 'dGVzdA==';
-      const mockYDoc = {
-        getXmlFragment: vi.fn().mockReturnValue('mocked-xml-fragment'),
-      };
-
-      (Y.Doc as any).mockReturnValue(mockYDoc);
 
       const result = base64ToBlocknoteXmlFragment(base64String);
 
-      expect(Y.Doc).toHaveBeenCalled();
-      expect(Y.applyUpdate).toHaveBeenCalledWith(mockYDoc, expect.any(Buffer));
-      expect(mockYDoc.getXmlFragment).toHaveBeenCalledWith('document-store');
+      expect(Y.applyUpdate).toHaveBeenCalled();
       expect(result).toBe('mocked-xml-fragment');
     });
   });

@@ -158,33 +158,6 @@ registerRoute(
 );
 
 /**
- * External urls cache strategy
- */
-registerRoute(
-  ({ url }) => !url.href.includes(self.location.origin),
-  new NetworkFirst({
-    cacheName: getCacheNameVersion('default-external'),
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxAgeSeconds: 24 * 60 * 60 * DAYS_EXP,
-      }),
-      new OfflinePlugin(),
-    ],
-  }),
-  'GET',
-);
-
-/**
- * Admin cache strategy
- */
-registerRoute(
-  ({ url }) =>
-    url.href.includes(self.location.origin) && url.href.includes('/admin/'),
-  new NetworkOnly(),
-);
-
-/**
  * Cache strategy static files images (images / svg)
  */
 registerRoute(
@@ -215,6 +188,24 @@ registerRoute(
       }),
     ],
   }),
+);
+
+/**
+ * External urls cache strategy
+ */
+registerRoute(
+  ({ url }) => !url.href.includes(self.location.origin),
+  new NetworkOnly(),
+  'GET',
+);
+
+/**
+ * Admin cache strategy
+ */
+registerRoute(
+  ({ url }) =>
+    url.href.includes(self.location.origin) && url.href.includes('/admin/'),
+  new NetworkOnly(),
 );
 
 /**

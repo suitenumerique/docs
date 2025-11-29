@@ -2,7 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
-import { Doc, KEY_LIST_DOC } from '..';
+import { Doc } from '../types';
+
+import { KEY_LIST_DOC } from './useDocs';
 
 export type CreateChildDocParam = Pick<Doc, 'title'> & {
   parentId: string;

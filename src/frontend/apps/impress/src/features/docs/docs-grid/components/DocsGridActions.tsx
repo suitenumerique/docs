@@ -27,10 +27,10 @@ export const DocsGridActions = ({
   const { mutate: duplicateDoc } = useDuplicateDoc();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC],
+    listInvalidQueries: [KEY_LIST_DOC],
   });
   const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC],
+    listInvalidQueries: [KEY_LIST_DOC],
   });
 
   const options: DropdownMenuOption[] = [
@@ -45,6 +45,7 @@ export const DocsGridActions = ({
         }
       },
       testId: `docs-grid-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
+      showSeparator: true,
     },
     {
       label: t('Share'),
@@ -66,9 +67,10 @@ export const DocsGridActions = ({
           canSave: false,
         });
       },
+      showSeparator: true,
     },
     {
-      label: t('Remove'),
+      label: t('Delete'),
       icon: 'delete',
       callback: () => deleteModal.open(),
       disabled: !doc.abilities.destroy,
@@ -87,12 +89,17 @@ export const DocsGridActions = ({
         options={options}
         label={menuLabel}
         aria-label={t('More options')}
+        buttonCss={css`
+          &:hover {
+            background-color: unset;
+          }
+        `}
       >
         <Icon
           data-testid={`docs-grid-actions-button-${doc.id}`}
           iconName="more_horiz"
-          $theme="primary"
-          $variation="600"
+          $theme="brand"
+          $variation="secondary"
           $css={css`
             cursor: pointer;
             &:hover {

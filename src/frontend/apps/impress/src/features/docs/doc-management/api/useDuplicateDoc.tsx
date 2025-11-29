@@ -60,7 +60,7 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
   const { provider } = useProviderStore();
 
   const { mutateAsync: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
   });
 
   return useMutation<DuplicateDocResponse, APIError, DuplicateDocParams>({
@@ -80,7 +80,7 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
 
       return await duplicateDoc(variables);
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
       void queryClient.resetQueries({
         queryKey: [KEY_LIST_DOC],
       });
@@ -89,14 +89,14 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
         duration: 3000,
       });
 
-      void options?.onSuccess?.(data, variables, context);
+      void options?.onSuccess?.(data, variables, onMutateResult, context);
     },
-    onError: (error, variables, context) => {
+    onError: (error, variables, onMutateResult, context) => {
       toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
         duration: 3000,
       });
 
-      void options?.onError?.(error, variables, context);
+      void options?.onError?.(error, variables, onMutateResult, context);
     },
   });
 }

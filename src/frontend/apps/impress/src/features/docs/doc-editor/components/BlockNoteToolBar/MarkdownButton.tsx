@@ -6,6 +6,9 @@ import {
 import { forEach, isArray } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
+
+import { Text } from '@/components';
 
 type Block = {
   type: string;
@@ -22,7 +25,7 @@ function isBlock(block: Block): block is Block {
   );
 }
 
-const recursiveContent = (content: Block[], base: string = '') => {
+const recursiveContent = (content: Block[], base = '') => {
   let fullContent = base;
   for (const innerContent of content) {
     if (innerContent.type === 'text') {
@@ -83,8 +86,18 @@ export function MarkdownButton() {
       mainTooltip={t('Convert Markdown')}
       onClick={handleConvertMarkdown}
       className="--docs--editor-markdown-button"
-    >
-      M
-    </Components.FormattingToolbar.Button>
+      label="M"
+      icon={
+        <Text
+          aria-hidden={true}
+          $css={css`
+            font-family: var(--c--globals--font--families--base);
+          `}
+          $weight="bold"
+        >
+          M
+        </Text>
+      }
+    />
   );
 }

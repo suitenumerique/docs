@@ -5,7 +5,8 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/docs/doc-management';
+
+import { Doc } from '../types';
 
 import { KEY_CAN_EDIT } from './useDocCanEdit';
 
@@ -33,7 +34,7 @@ export const updateDoc = async ({
 };
 
 type UseUpdateDoc = UseMutationOptions<Doc, APIError, Partial<Doc>> & {
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 };
 
 export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
@@ -41,18 +42,18 @@ export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
   return useMutation<Doc, APIError, UpdateDocParams>({
     mutationFn: updateDoc,
     ...queryConfig,
-    onSuccess: (data, variables, context) => {
-      queryConfig?.listInvalideQueries?.forEach((queryKey) => {
+    onSuccess: (data, variables, onMutateResult, context) => {
+      queryConfig?.listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });
       });
 
       if (queryConfig?.onSuccess) {
-        void queryConfig.onSuccess(data, variables, context);
+        void queryConfig.onSuccess(data, variables, onMutateResult, context);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (error, variables, onMutateResult, context) => {
       // If error it means the user is probably not allowed to edit the doc
       // so we invalidate the canEdit query to update the UI accordingly
       void queryClient.invalidateQueries({
@@ -60,7 +61,7 @@ export function useUpdateDoc(queryConfig?: UseUpdateDoc) {
       });
 
       if (queryConfig?.onError) {
-        queryConfig.onError(error, variables, context);
+        queryConfig.onError(error, variables, onMutateResult, context);
       }
     },
   });

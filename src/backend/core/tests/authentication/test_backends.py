@@ -57,7 +57,7 @@ def test_authentication_getter_existing_user_via_email(
 
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
-    with django_assert_num_queries(3):  # user by sub, user by mail, update sub
+    with django_assert_num_queries(4):  # user by sub, user by mail, update sub
         user = klass.get_or_create_user(
             access_token="test-token", id_token=None, payload=None
         )
@@ -214,7 +214,7 @@ def test_authentication_getter_existing_user_change_fields_sub(
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
     # One and only one additional update query when a field has changed
-    with django_assert_num_queries(2):
+    with django_assert_num_queries(3):
         authenticated_user = klass.get_or_create_user(
             access_token="test-token", id_token=None, payload=None
         )
@@ -256,7 +256,7 @@ def test_authentication_getter_existing_user_change_fields_email(
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
     # One and only one additional update query when a field has changed
-    with django_assert_num_queries(3):
+    with django_assert_num_queries(4):
         authenticated_user = klass.get_or_create_user(
             access_token="test-token", id_token=None, payload=None
         )

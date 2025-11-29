@@ -48,11 +48,11 @@ def test_api_documents_trashbin_format():
 
     other_users = factories.UserFactory.create_batch(3)
     document = factories.DocumentFactory(
-        deleted_at=timezone.now(),
         users=factories.UserFactory.create_batch(2),
         favorited_by=[user, *other_users],
         link_traces=other_users,
     )
+    document.soft_delete()
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
     response = client.get("/api/v1.0/documents/trashbin/")
@@ -70,40 +70,41 @@ def test_api_documents_trashbin_format():
     assert results[0] == {
         "id": str(document.id),
         "abilities": {
-            "accesses_manage": True,
-            "accesses_view": True,
-            "ai_transform": True,
-            "ai_translate": True,
-            "attachment_upload": True,
-            "can_edit": True,
-            "children_create": True,
-            "children_list": True,
-            "collaboration_auth": True,
-            "descendants": True,
-            "cors_proxy": True,
-            "content": True,
-            "destroy": True,
-            "duplicate": True,
-            "favorite": True,
-            "invite_owner": True,
-            "link_configuration": True,
+            "accesses_manage": False,
+            "accesses_view": False,
+            "ai_transform": False,
+            "ai_translate": False,
+            "attachment_upload": False,
+            "can_edit": False,
+            "children_create": False,
+            "children_list": False,
+            "collaboration_auth": False,
+            "descendants": False,
+            "cors_proxy": False,
+            "comment": False,
+            "content": False,
+            "destroy": False,
+            "duplicate": False,
+            "favorite": False,
+            "invite_owner": False,
+            "link_configuration": False,
             "link_select_options": {
-                "authenticated": ["reader", "editor"],
-                "public": ["reader", "editor"],
+                "authenticated": ["reader", "commenter", "editor"],
+                "public": ["reader", "commenter", "editor"],
                 "restricted": None,
             },
-            "mask": True,
-            "media_auth": True,
-            "media_check": True,
+            "mask": False,
+            "media_auth": False,
+            "media_check": False,
             "move": False,  # Can't move a deleted document
-            "partial_update": True,
+            "partial_update": False,
             "restore": True,
             "retrieve": True,
             "tree": True,
-            "update": True,
-            "versions_destroy": True,
-            "versions_list": True,
-            "versions_retrieve": True,
+            "update": False,
+            "versions_destroy": False,
+            "versions_list": False,
+            "versions_retrieve": False,
         },
         "ancestors_link_reach": None,
         "ancestors_link_role": None,
@@ -113,6 +114,7 @@ def test_api_documents_trashbin_format():
         "creator": str(document.creator.id),
         "depth": 1,
         "excerpt": document.excerpt,
+        "deleted_at": document.ancestors_deleted_at.isoformat().replace("+00:00", "Z"),
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 0,
@@ -165,10 +167,10 @@ def test_api_documents_trashbin_authenticated_direct(django_assert_num_queries):
 
     expected_ids = {str(document1.id), str(document2.id), str(document3.id)}
 
-    with django_assert_num_queries(10):
+    with django_assert_num_queries(11):
         response = client.get("/api/v1.0/documents/trashbin/")
 
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(5):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200
@@ -207,10 +209,10 @@ def test_api_documents_trashbin_authenticated_via_team(
 
     expected_ids = {str(deleted_document_team1.id), str(deleted_document_team2.id)}
 
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(8):
         response = client.get("/api/v1.0/documents/trashbin/")
 
-    with django_assert_num_queries(3):
+    with django_assert_num_queries(4):
         response = client.get("/api/v1.0/documents/trashbin/")
 
     assert response.status_code == 200
@@ -292,3 +294,29 @@ def test_api_documents_trashbin_distinct():
     content = response.json()
     assert len(content["results"]) == 1
     assert content["results"][0]["id"] == str(document.id)
+
+
+def test_api_documents_trashbin_empty_queryset_bug():
+    """
+    Test that users with no owner role don't see documents.
+    """
+    # Create a new user with no owner access to any document
+    new_user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(new_user)
+
+    # Create some deleted documents owned by other users
+    other_user = factories.UserFactory()
+    item1 = factories.DocumentFactory(users=[(other_user, "owner")])
+    item1.soft_delete()
+    item2 = factories.DocumentFactory(users=[(other_user, "owner")])
+    item2.soft_delete()
+    item3 = factories.DocumentFactory(users=[(other_user, "owner")])
+    item3.soft_delete()
+
+    response = client.get("/api/v1.0/documents/trashbin/")
+
+    assert response.status_code == 200
+    content = response.json()
+    assert content["count"] == 0
+    assert len(content["results"]) == 0

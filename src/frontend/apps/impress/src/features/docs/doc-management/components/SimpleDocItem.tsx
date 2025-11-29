@@ -4,13 +4,12 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, getEmojiAndTitle, useTrans } from '@/docs/doc-management';
+import { Doc, useDocUtils, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import ChildDocument from '../assets/child-document.svg';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
-
-import { DocIcon } from './DocIcon';
 
 const ItemTextCss = css`
   overflow: hidden;
@@ -34,13 +33,10 @@ export const SimpleDocItem = ({
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
-
-  const { emoji, titleWithoutEmoji: displayTitle } = getEmojiAndTitle(
-    doc.title || untitledDocument,
-  );
+  const { isChild } = useDocUtils(doc);
 
   return (
     <Box
@@ -67,31 +63,32 @@ export const SimpleDocItem = ({
           <PinnedDocumentIcon
             aria-hidden="true"
             data-testid="doc-pinned-icon"
-            color={colorsTokens['primary-500']}
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
+          />
+        ) : isChild ? (
+          <ChildDocument
+            aria-hidden="true"
+            data-testid="doc-child-icon"
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         ) : (
-          <DocIcon
-            emoji={emoji}
-            defaultIcon={
-              <SimpleFileIcon
-                aria-hidden="true"
-                data-testid="doc-simple-icon"
-                color={colorsTokens['primary-500']}
-              />
-            }
-            $size="25px"
+          <SimpleFileIcon
+            width="32px"
+            height="32px"
+            aria-hidden="true"
+            data-testid="doc-simple-icon"
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         )}
       </Box>
       <Box $justify="center" $overflow="auto">
         <Text
           $size="sm"
-          $variation="1000"
           $weight="500"
           $css={ItemTextCss}
           data-testid="doc-title"
         >
-          {displayTitle}
+          {doc.title || untitledDocument}
         </Text>
         {(!isDesktop || showAccesses) && (
           <Box
@@ -101,7 +98,7 @@ export const SimpleDocItem = ({
             $margin={{ top: '-2px' }}
             aria-hidden="true"
           >
-            <Text $variation="600" $size="xs">
+            <Text $size="xs" $variation="tertiary">
               {DateTime.fromISO(doc.updated_at).toRelative()}
             </Text>
           </Box>

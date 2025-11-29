@@ -1,11 +1,11 @@
 import { Modal, ModalSize } from '@openfun/cunningham-react';
-import { useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, HorizontalSeparator, Text } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
+import { Box, ButtonCloseModal, HorizontalSeparator, Text } from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
@@ -16,7 +16,14 @@ import { User } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
-import { KEY_LIST_USER, useDocAccesses, useUsers } from '../api';
+import {
+  KEY_LIST_DOC_ACCESSES,
+  KEY_LIST_DOC_ACCESS_REQUESTS,
+  KEY_LIST_DOC_INVITATIONS,
+  KEY_LIST_USER,
+  useDocAccesses,
+  useUsers,
+} from '../api';
 
 import { DocInheritedShareContent } from './DocInheritedShareContent';
 import {
@@ -49,6 +56,7 @@ type Props = {
 export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const { isDesktop } = useResponsiveStore();
 
@@ -68,6 +76,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [userQuery, setUserQuery] = useState('');
   const [inputValue, setInputValue] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
   const [listHeight, setListHeight] = useState<string>('400px');
   const canShare = doc.abilities.accesses_manage && isRootDoc;
@@ -80,6 +89,19 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
     setSelectedUsers((prev) => [...prev, user]);
     setUserQuery('');
     setInputValue('');
+
+    // Announce to screen readers
+    const userName = user.full_name || user.email;
+    setLiveAnnouncement(
+      t(
+        '{{name}} added to invite list. Add more members or press Tab to select role and invite.',
+        {
+          name: userName,
+        },
+      ),
+    );
+    // Clear announcement after it's been read
+    setTimeout(() => setLiveAnnouncement(''), 100);
   };
 
   const { data: membersQuery } = useDocAccesses({
@@ -106,6 +128,16 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
       }
       const newArray = [...prevState];
       newArray.splice(index, 1);
+
+      // Announce to screen readers
+      const userName = row.full_name || row.email;
+      setLiveAnnouncement(
+        t('{{name}} removed from invite list', {
+          name: userName,
+        }),
+      );
+      setTimeout(() => setLiveAnnouncement(''), 100);
+
       return newArray;
     });
   };
@@ -128,6 +160,19 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
 
   const showInheritedShareContent =
     inheritedAccesses.length > 0 && showMemberSection && !isRootDoc;
+
+  // Invalidate relevant queries to ensure fresh data on modal open
+  useEffect(() => {
+    [
+      KEY_LIST_DOC_INVITATIONS,
+      KEY_LIST_DOC_ACCESS_REQUESTS,
+      KEY_LIST_DOC_ACCESSES,
+    ].forEach((key) => {
+      void queryClient.invalidateQueries({
+        queryKey: [key],
+      });
+    });
+  }, [queryClient]);
 
   return (
     <>
@@ -154,12 +199,22 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
             <ButtonCloseModal
               aria-label={t('Close the share modal')}
               onClick={onClose}
+              tabIndex={-1}
             />
           </Box>
         }
         hideCloseButton
       >
         <ShareModalStyle />
+        {/* Screen reader announcements */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {liveAnnouncement}
+        </div>
         <Box
           $height="auto"
           $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
@@ -207,7 +262,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   <Text
                     $maxWidth="320px"
                     $textAlign="center"
-                    $variation="600"
+                    $variation="secondary"
                     $size="sm"
                     as="p"
                   >
@@ -217,7 +272,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   </Text>
                   <ButtonAccessRequest
                     docId={doc.id}
-                    color="tertiary"
+                    variant="secondary"
                     size="small"
                   />
                 </Box>

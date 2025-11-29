@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { css } from 'styled-components';
 
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
@@ -40,7 +41,6 @@ export const Heading = ({
     <BoxButton
       id={`heading-${headingId}`}
       $width="100%"
-      key={headingId}
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
       onClick={() => {
@@ -57,15 +57,25 @@ export const Heading = ({
           block: 'start',
         });
       }}
-      $radius="4px"
-      $background={isActive ? `${colorsTokens['greyscale-100']}` : 'none'}
-      $css="text-align: left;"
+      $radius="var(--c--globals--spacings--st)"
+      $background={isActive ? `${colorsTokens['gray-100']}` : 'none'}
+      $css={css`
+        text-align: left;
+        &:focus-visible {
+          /* Scoped focus style: same footprint as hover, with theme shadow */
+          outline: none;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']};
+          border-radius: var(--c--globals--spacings--st);
+        }
+      `}
       className="--docs--table-content-heading"
+      aria-label={text}
+      aria-selected={isHighlight}
+      aria-current={isHighlight ? 'true' : undefined}
     >
       <Text
         $width="100%"
         $padding={{ vertical: 'xtiny', left: leftPaddingMap[level] }}
-        $variation={isActive ? '1000' : '700'}
         $weight={isHighlight ? 'bold' : 'normal'}
         $css="overflow-wrap: break-word;"
         $hasTransition

@@ -1,8 +1,9 @@
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, StyledLink } from '@/components/';
+import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
 import { LanguagePicker } from '@/features/language';
@@ -16,8 +17,12 @@ import { Title } from './Title';
 
 export const Header = () => {
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { data: config } = useConfig();
+  const { spacingsTokens, componentTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
+
+  const icon =
+    config?.theme_customization?.header?.icon || componentTokens.icon;
 
   return (
     <Box
@@ -34,8 +39,8 @@ export const Header = () => {
         justify-content: space-between;
         height: ${HEADER_HEIGHT}px;
         padding: 0 ${spacingsTokens['base']};
-        background-color: ${colorsTokens['greyscale-000']};
-        border-bottom: 1px solid ${colorsTokens['greyscale-200']};
+        background-color: var(--c--contextuals--background--surface--primary);
+        border-bottom: 1px solid var(--c--contextuals--border--surface--primary);
       `}
       className="--docs--header"
     >
@@ -47,8 +52,8 @@ export const Header = () => {
         $css={css`
           outline: none;
           &:focus-visible {
-            box-shadow: 0 0 0 2px var(--c--theme--colors--primary-400) !important;
-            border-radius: 4px;
+            box-shadow: 0 0 0 2px var(--c--globals--colors--brand-400) !important;
+            border-radius: var(--c--globals--spacings--st);
           }
         `}
       >
@@ -60,11 +65,17 @@ export const Header = () => {
           $height="fit-content"
           $margin={{ top: 'auto' }}
         >
-          <IconDocs
+          <Image
             data-testid="header-icon-docs"
-            width={32}
-            color={colorsTokens['primary-text']}
-            aria-hidden="true"
+            src={icon.src || ''}
+            alt=""
+            width={0}
+            height={0}
+            style={{
+              width: icon.width,
+              height: icon.height,
+            }}
+            priority
           />
           <Title headingLevel="h1" aria-hidden="true" />
         </Box>

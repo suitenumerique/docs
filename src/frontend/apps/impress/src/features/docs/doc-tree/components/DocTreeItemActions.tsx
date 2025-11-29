@@ -13,8 +13,10 @@ import {
   Doc,
   ModalRemoveDoc,
   Role,
+  getEmojiAndTitle,
   useCopyDocLink,
   useCreateChildDoc,
+  useDocTitleUpdate,
   useDuplicateDoc,
 } from '@/docs/doc-management';
 
@@ -44,6 +46,7 @@ export const DocTreeItemActions = ({
   const copyLink = useCopyDocLink(doc.id);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc | null>();
+
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (duplicatedDoc) => {
       // Reset the tree context root will reset the full tree view.
@@ -51,6 +54,13 @@ export const DocTreeItemActions = ({
       void router.push(`/docs/${duplicatedDoc.id}`);
     },
   });
+
+  // Emoji Management
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+  const { updateDocEmoji } = useDocTitleUpdate();
+  const removeEmoji = () => {
+    updateDocEmoji(doc.id, doc.title ?? '', '');
+  };
 
   const handleDetachDoc = () => {
     if (!treeContext?.root) {
@@ -82,6 +92,15 @@ export const DocTreeItemActions = ({
     },
     ...(!isRoot
       ? [
+          ...(emoji && doc.abilities.partial_update
+            ? [
+                {
+                  label: t('Remove emoji'),
+                  icon: <Icon iconName="emoji_emotions" $size="24px" />,
+                  callback: removeEmoji,
+                },
+              ]
+            : []),
           {
             label: t('Move to my docs'),
             isDisabled: doc.user_role !== Role.OWNER,
@@ -100,7 +119,7 @@ export const DocTreeItemActions = ({
       : []),
     {
       label: t('Duplicate'),
-      icon: <Icon $variation="600" iconName="content_copy" />,
+      icon: <Icon iconName="content_copy" />,
       isDisabled: !doc.abilities.duplicate,
       callback: () => {
         duplicateDoc({
@@ -126,16 +145,13 @@ export const DocTreeItemActions = ({
   });
 
   const onSuccessDelete = () => {
-    if (parentId) {
-      void router.push(`/docs/${parentId}`).then(() => {
-        setTimeout(() => {
-          treeContext?.treeData.deleteNode(doc.id);
-        }, 100);
-      });
-    } else if (doc.id === treeContext?.root?.id && !parentId) {
+    const isTopParent = doc.id === treeContext?.root?.id && !parentId;
+    const parentIdComputed = parentId || treeContext?.root?.id;
+
+    if (isTopParent) {
       void router.push(`/`);
-    } else if (treeContext && treeContext.root) {
-      void router.push(`/docs/${treeContext.root.id}`).then(() => {
+    } else if (parentIdComputed) {
+      void router.push(`/docs/${parentIdComputed}`).then(() => {
         setTimeout(() => {
           treeContext?.treeData.deleteNode(doc.id);
         }, 100);
@@ -155,7 +171,6 @@ export const DocTreeItemActions = ({
           options={options}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
-          aria-label={t('Open document actions menu')}
         >
           <Icon
             onClick={(e) => {
@@ -165,9 +180,9 @@ export const DocTreeItemActions = ({
             }}
             iconName="more_horiz"
             variant="filled"
-            $theme="primary"
-            $variation="600"
-            aria-hidden="true"
+            $theme="brand"
+            $variation="secondary"
+            aria-label={t('More options')}
           />
         </DropdownMenu>
         {doc.abilities.children_create && (
@@ -180,15 +195,12 @@ export const DocTreeItemActions = ({
                 parentId: doc.id,
               });
             }}
-            color="primary"
+            $theme="brand"
+            $variation="secondary"
+            aria-label={t('Add a sub page')}
             data-testid="doc-tree-item-actions-add-child"
           >
-            <Icon
-              variant="filled"
-              $variation="800"
-              $theme="primary"
-              iconName="add_box"
-            />
+            <Icon variant="filled" $color="inherit" iconName="add_box" />
           </BoxButton>
         )}
       </Box>

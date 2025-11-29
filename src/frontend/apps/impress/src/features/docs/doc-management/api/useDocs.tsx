@@ -3,6 +3,7 @@ import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import {
   APIError,
   APIList,
+  InfiniteQueryConfig,
   errorCauses,
   fetchAPI,
   useAPIInfiniteQuery,
@@ -54,10 +55,10 @@ export const getDocs = async (params: DocsParams): Promise<DocsResponse> => {
 
 export const KEY_LIST_DOC = 'docs';
 
-export function useDocs(
-  params: DocsParams,
-  queryConfig?: UseQueryOptions<DocsResponse, APIError, DocsResponse>,
-) {
+type UseDocsOptions = UseQueryOptions<DocsResponse, APIError, DocsResponse>;
+type UseInfiniteDocsOptions = InfiniteQueryConfig<DocsResponse>;
+
+export function useDocs(params: DocsParams, queryConfig?: UseDocsOptions) {
   return useQuery<DocsResponse, APIError, DocsResponse>({
     queryKey: [KEY_LIST_DOC, params],
     queryFn: () => getDocs(params),
@@ -65,6 +66,9 @@ export function useDocs(
   });
 }
 
-export const useInfiniteDocs = (params: DocsParams) => {
-  return useAPIInfiniteQuery(KEY_LIST_DOC, getDocs, params);
+export const useInfiniteDocs = (
+  params: DocsParams,
+  queryConfig?: UseInfiniteDocsOptions,
+) => {
+  return useAPIInfiniteQuery(KEY_LIST_DOC, getDocs, params, queryConfig);
 };

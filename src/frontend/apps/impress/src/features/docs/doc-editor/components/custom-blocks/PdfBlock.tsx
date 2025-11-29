@@ -1,11 +1,19 @@
-/* eslint-disable react-hooks/rules-of-hooks */
-import { insertOrUpdateBlock } from '@blocknote/core';
+import {
+  BlockConfig,
+  BlockNoDefaults,
+  BlockNoteEditor,
+  InlineContentSchema,
+  StyleSchema,
+  insertOrUpdateBlock,
+} from '@blocknote/core';
+import * as locales from '@blocknote/core/locales';
 import {
   AddFileButton,
   ResizableFileBlockWrapper,
   createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
@@ -14,57 +22,112 @@ import { Box, Icon } from '@/components';
 import { DocsBlockNoteEditor } from '../../types';
 
 const PDFBlockStyle = createGlobalStyle`
-  .bn-block-content[data-content-type="pdf"] {
-    width: fit-content;
+  .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper[style*="fit-content"] {
+    width: 100% !important;
   }
 `;
 
 type FileBlockEditor = Parameters<typeof AddFileButton>[0]['editor'];
+type FileBlockBlock = Parameters<typeof AddFileButton>[0]['block'];
+
+type CreatePDFBlockConfig = BlockConfig<
+  'pdf',
+  {
+    backgroundColor: { default: 'default' };
+    caption: { default: '' };
+    name: { default: '' };
+    previewWidth: { default: undefined; type: 'number' };
+    showPreview: { default: true };
+    textAlignment: { default: 'left' };
+    url: { default: '' };
+  },
+  'none'
+>;
+
+interface PdfBlockComponentProps {
+  block: BlockNoDefaults<
+    Record<'pdf', CreatePDFBlockConfig>,
+    InlineContentSchema,
+    StyleSchema
+  >;
+  contentRef: (node: HTMLElement | null) => void;
+  editor: BlockNoteEditor<
+    Record<'pdf', CreatePDFBlockConfig>,
+    InlineContentSchema,
+    StyleSchema
+  >;
+}
+
+const PdfBlockComponent = ({
+  editor,
+  block,
+  contentRef,
+}: PdfBlockComponentProps) => {
+  const pdfUrl = block.props.url;
+  const { i18n, t } = useTranslation();
+  const lang = i18n.resolvedLanguage;
+
+  useEffect(() => {
+    if (lang && locales[lang as keyof typeof locales]) {
+      locales[lang as keyof typeof locales].file_blocks.add_button_text['pdf'] =
+        t('Add PDF');
+      (
+        locales[lang as keyof typeof locales].file_panel.embed
+          .embed_button as Record<string, string>
+      )['pdf'] = t('Add PDF');
+      (
+        locales[lang as keyof typeof locales].file_panel.upload
+          .file_placeholder as Record<string, string>
+      )['pdf'] = t('Upload PDF');
+    }
+  }, [lang, t]);
+
+  return (
+    <Box ref={contentRef} className="bn-file-block-content-wrapper">
+      <PDFBlockStyle />
+      <ResizableFileBlockWrapper
+        buttonIcon={
+          <Icon iconName="upload" $size="24px" $css="line-height: normal;" />
+        }
+        block={block as unknown as FileBlockBlock}
+        editor={editor as unknown as FileBlockEditor}
+      >
+        <Box
+          className="bn-visual-media"
+          role="presentation"
+          as="embed"
+          $width="100%"
+          $height="450px"
+          type="application/pdf"
+          src={pdfUrl}
+          contentEditable={false}
+          draggable={false}
+          onClick={() => editor.setTextCursorPosition(block)}
+        />
+      </ResizableFileBlockWrapper>
+    </Box>
+  );
+};
 
 export const PdfBlock = createReactBlockSpec(
   {
     type: 'pdf',
     content: 'none',
     propSchema: {
-      name: { default: '' as const },
-      url: { default: '' as const },
+      backgroundColor: { default: 'default' as const },
       caption: { default: '' as const },
-      showPreview: { default: true },
+      name: { default: '' as const },
       previewWidth: { default: undefined, type: 'number' },
+      showPreview: { default: true },
+      textAlignment: { default: 'left' as const },
+      url: { default: '' as const },
     },
-    isFileBlock: true,
-    fileBlockAccept: ['application/pdf'],
   },
   {
-    render: ({ editor, block, contentRef }) => {
-      const { t } = useTranslation();
-      const pdfUrl = block.props.url;
-
-      return (
-        <Box ref={contentRef} className="bn-file-block-content-wrapper">
-          <PDFBlockStyle />
-          <ResizableFileBlockWrapper
-            buttonIcon={<Icon iconName="upload" />}
-            block={block}
-            editor={editor as unknown as FileBlockEditor}
-            buttonText={t('Add PDF')}
-          >
-            <Box
-              className="bn-visual-media"
-              role="presentation"
-              as="embed"
-              $width="100%"
-              $height="450px"
-              type="application/pdf"
-              src={pdfUrl}
-              contentEditable={false}
-              draggable={false}
-              onClick={() => editor.setTextCursorPosition(block)}
-            />
-          </ResizableFileBlockWrapper>
-        </Box>
-      );
+    meta: {
+      fileBlockAccept: ['application/pdf'],
     },
+    render: (props) => <PdfBlockComponent {...props} />,
   },
 );
 

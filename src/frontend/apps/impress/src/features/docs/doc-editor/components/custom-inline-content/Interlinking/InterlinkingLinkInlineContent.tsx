@@ -1,12 +1,13 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { createReactInlineContentSpec } from '@blocknote/react';
+import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
 
-import { StyledLink, Text } from '@/components';
+import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import SelectedPageIcon from '@/docs/doc-editor/assets/doc-selected.svg';
-import { useDoc } from '@/docs/doc-management';
+import { getEmojiAndTitle, useDoc } from '@/docs/doc-management';
 
 export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
   {
@@ -25,11 +26,19 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
     content: 'none',
   },
   {
-    render: ({ inlineContent, updateInlineContent }) => {
+    render: ({ editor, inlineContent, updateInlineContent }) => {
       const { data: doc } = useDoc({ id: inlineContent.props.docId });
+      const isEditable = editor.isEditable;
 
+      /**
+       * Update the content title if the referenced doc title changes
+       */
       useEffect(() => {
-        if (doc?.title && doc.title !== inlineContent.props.title) {
+        if (
+          isEditable &&
+          doc?.title &&
+          doc.title !== inlineContent.props.title
+        ) {
           updateInlineContent({
             type: 'interlinkingLinkInline',
             props: {
@@ -38,7 +47,15 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
             },
           });
         }
-      }, [inlineContent.props, doc?.title, updateInlineContent]);
+
+        /**
+         * ⚠️ When doing collaborative editing, doc?.title might be out of sync
+         * causing an infinite loop of updates.
+         * To prevent this, we only run this effect when doc?.title changes,
+         * not when inlineContent.props.title changes.
+         */
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [doc?.title, isEditable]);
 
       return <LinkSelected {...inlineContent.props} />;
     },
@@ -52,12 +69,20 @@ interface LinkSelectedProps {
 const LinkSelected = ({ url, title }: LinkSelectedProps) => {
   const { colorsTokens } = useCunninghamTheme();
 
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(title);
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    void router.push(url);
+  };
+
   return (
-    <StyledLink
-      href={url}
+    <BoxButton
+      onClick={handleClick}
       draggable="false"
       $css={css`
-        display: inline;
+        display: contents;
         padding: 0.1rem 0.4rem;
         border-radius: 4px;
         & svg {
@@ -66,15 +91,32 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
           margin-right: 0.2rem;
         }
         &:hover {
-          background-color: ${colorsTokens['greyscale-100']};
+          background-color: ${colorsTokens['gray-100']};
         }
-        transition: background-color 0.2s ease-in-out;
+        transition: background-color var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-out);
+
+        .--docs--doc-deleted & {
+          pointer-events: none;
+        }
       `}
     >
-      <SelectedPageIcon width={11.5} />
-      <Text $weight="500" spellCheck="false" $size="16px" $display="inline">
-        {title}
+      {emoji ? (
+        <Text $size="16px">{emoji}</Text>
+      ) : (
+        <SelectedPageIcon width={11.5} color={colorsTokens['brand-400']} />
+      )}
+      <Text
+        $weight="500"
+        spellCheck="false"
+        $size="16px"
+        $display="inline"
+        $css={css`
+          margin-left: 2px;
+        `}
+      >
+        {titleWithoutEmoji}
       </Text>
-    </StyledLink>
+    </BoxButton>
   );
 };

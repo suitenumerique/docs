@@ -15,7 +15,7 @@ const BlueStripe = styled.div`
   position: absolute;
   height: 2px;
   width: 100%;
-  background: var(--c--theme--colors--primary-600);
+  background: var(--c--globals--colors--brand-700);
   top: 0;
 `;
 
@@ -83,7 +83,6 @@ export const Footer = () => {
                 >
                   {logo?.src && (
                     <Image
-                      className="c__image-system-filter"
                       priority
                       src={logo.src}
                       alt={logo?.alt || t('Logo')}
@@ -116,11 +115,14 @@ export const Footer = () => {
                   key={label}
                   href={href}
                   target="__blank"
-                  $css={`
-                    gap:0.2rem;
+                  $css={css`
+                    gap: 0.2rem;
                     transition: box-shadow 0.3s;
                     &:hover {
-                      box-shadow: 0px 2px 0 0 var(--c--theme--colors--greyscale-text);
+                      box-shadow: 0px 2px 0 0
+                        var(
+                          --c--contextuals--content--semantic--neutral--secondary
+                        );
                     }
                   `}
                 >
@@ -136,7 +138,7 @@ export const Footer = () => {
           $padding={{ top: 'tiny' }}
           $css={`
             flex-wrap: wrap;
-            border-top: 1px solid var(--c--theme--colors--greyscale-200); 
+            border-top: 1px solid var(--c--globals--colors--gray-200); 
             column-gap: 1rem;
             row-gap: .5rem;
           `}
@@ -151,18 +153,20 @@ export const Footer = () => {
                   padding-right: 1rem;
                   &:not(:last-child) {
                     box-shadow: inset -1px 0px 0px 0px
-                      var(--c--theme--colors--greyscale-200);
+                      var(--c--globals--colors--gray-200);
                   }
                 `}
               >
                 <Text
-                  $variation="600"
-                  $size="m"
+                  $size="s"
+                  $variation="secondary"
                   $transition="box-shadow 0.3s"
                   $css={css`
                     &:hover {
                       box-shadow: 0px 2px 0 0
-                        var(--c--theme--colors--greyscale-text);
+                        var(
+                          --c--contextuals--content--semantic--neutral--secondary
+                        );
                     }
                   `}
                 >
@@ -174,9 +178,9 @@ export const Footer = () => {
         {bottomInformation && (
           <Text
             as="p"
-            $size="m"
+            $size="s"
             $margin={{ top: 'big' }}
-            $variation="600"
+            $variation="secondary"
             $display="inline"
             className="--docs--footer-licence"
           >
@@ -188,11 +192,11 @@ export const Footer = () => {
                 $css={css`
                   display: inline-flex;
                   box-shadow: 0px 1px 0 0
-                    var(--c--theme--colors--greyscale-text);
+                    var(--c--contextuals--content--semantic--neutral--secondary);
                   gap: 0.2rem;
                 `}
               >
-                <Text $variation="600">{bottomInformation.link.label}</Text>
+                <Text>{bottomInformation.link.label}</Text>
                 <IconLink width={14} />
               </StyledLink>
             )}

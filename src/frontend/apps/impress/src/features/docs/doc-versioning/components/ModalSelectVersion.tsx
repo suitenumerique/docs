@@ -3,13 +3,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Text } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
-import { DocEditor } from '@/docs/doc-editor';
+import { Box, ButtonCloseModal, Text } from '@/components';
 import { Doc } from '@/docs/doc-management';
 
 import { Versions } from '../types';
 
+import { DocVersionEditor } from './DocVersionEditor';
 import { ModalConfirmationVersion } from './ModalConfirmationVersion';
 import { VersionList } from './VersionList';
 
@@ -82,7 +81,10 @@ export const ModalSelectVersion = ({
               $align="center"
             >
               {selectedVersionId && (
-                <DocEditor doc={doc} versionId={selectedVersionId} />
+                <DocVersionEditor
+                  docId={doc.id}
+                  versionId={selectedVersionId}
+                />
               )}
               {!selectedVersionId && (
                 <Box $align="center" $justify="center" $height="100%">
@@ -100,7 +102,7 @@ export const ModalSelectVersion = ({
             $height="calc(100vh - 2em - 12px)"
             $css={css`
               overflow-y: hidden;
-              border-left: 1px solid var(--c--theme--colors--greyscale-200);
+              border-left: 1px solid var(--c--globals--colors--gray-200);
             `}
           >
             <Box
@@ -116,12 +118,11 @@ export const ModalSelectVersion = ({
                 $direction="row"
                 $align="center"
                 $css={css`
-                  border-bottom: 1px solid
-                    var(--c--theme--colors--greyscale-200);
+                  border-bottom: 1px solid var(--c--globals--colors--gray-200);
                 `}
                 $padding="sm"
               >
-                <Text $size="h6" $variation="1000" $weight="bold">
+                <Text $size="h6" $weight="bold">
                   {t('History')}
                 </Text>
                 <ButtonCloseModal
@@ -141,14 +142,13 @@ export const ModalSelectVersion = ({
               <Box
                 $padding="xs"
                 $css={css`
-                  border-top: 1px solid var(--c--theme--colors--greyscale-200);
+                  border-top: 1px solid var(--c--globals--colors--gray-200);
                 `}
               >
                 <Button
                   fullWidth
                   disabled={!selectedVersionId}
                   onClick={restoreModal.open}
-                  color="primary"
                 >
                   {t('Restore')}
                 </Button>

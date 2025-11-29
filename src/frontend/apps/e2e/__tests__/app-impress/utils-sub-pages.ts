@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
 import {
+  BrowserName,
   randomName,
   updateDocTitle,
   verifyDocName,
@@ -9,9 +10,9 @@ import {
 
 export const createRootSubPage = async (
   page: Page,
-  browserName: string,
+  browserName: BrowserName,
   docName: string,
-  isMobile: boolean = false,
+  isMobile = false,
 ) => {
   if (isMobile) {
     await page
@@ -67,6 +68,63 @@ export const clickOnAddRootSubPage = async (page: Page) => {
   await rootItem.getByTestId('doc-tree-item-actions-add-child').click();
 };
 
+export const addChild = async ({
+  page,
+  browserName,
+  docParent,
+  docName,
+}: {
+  page: Page;
+  browserName: BrowserName;
+  docParent: string;
+  docName: string;
+}) => {
+  let item = page.getByTestId('doc-tree-root-item');
+
+  const isParent = await item
+    .filter({
+      hasText: docParent,
+    })
+    .first()
+    .count();
+
+  if (!isParent) {
+    const items = page.getByRole('treeitem');
+
+    item = items
+      .filter({
+        hasText: docParent,
+      })
+      .first();
+  }
+
+  await item.hover();
+  await item.getByTestId('doc-tree-item-actions-add-child').click();
+
+  const [name] = randomName(docName, browserName, 1);
+  await updateDocTitle(page, name);
+
+  return name;
+};
+
+export const getTreeRow = async (page: Page, title: string) => {
+  const docTree = page.getByTestId('doc-tree');
+  const row = docTree
+    .getByRole('treeitem')
+    .filter({
+      hasText: title,
+    })
+    .first();
+
+  await expect(row).toBeVisible();
+
+  return row;
+};
+
+export const navigateToTopParentFromTree = async ({ page }: { page: Page }) => {
+  await page.getByRole('link', { name: /Open root document/ }).click();
+};
+
 export const navigateToPageFromTree = async ({
   page,
   title,
@@ -75,6 +133,10 @@ export const navigateToPageFromTree = async ({
   title: string;
 }) => {
   const docTree = page.getByTestId('doc-tree');
-  await docTree.getByText(title).click();
+  await docTree
+    .getByText(title, {
+      exact: true,
+    })
+    .click();
   await verifyDocName(page, title);
 };

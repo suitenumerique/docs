@@ -4,11 +4,13 @@ import { Resource } from 'i18next';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
 import { FooterType } from '@/features/footer';
+import { HeaderType } from '@/features/header';
 import { PostHogConf } from '@/services';
 
 interface ThemeCustomization {
   footer?: FooterType;
   translations?: Resource;
+  header?: HeaderType;
 }
 
 export interface ConfigResponse {
@@ -25,6 +27,7 @@ export interface ConfigResponse {
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
+  TRASHBIN_CUTOFF_DAYS?: number;
   theme_customization?: ThemeCustomization;
 }
 

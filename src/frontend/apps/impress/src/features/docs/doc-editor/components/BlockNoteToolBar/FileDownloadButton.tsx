@@ -1,9 +1,16 @@
+/**
+ * We added some custom logic to the original Blocknote FileDownloadButton
+ * component to handle our file download use case.
+ *
+ * Original source:
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/FormattingToolbar/DefaultButtons/FileDownloadButton.tsx
+ */
+
 import {
   BlockSchema,
   InlineContentSchema,
   StyleSchema,
-  checkBlockIsFileBlock,
-  checkBlockIsFileBlockWithPlaceholder,
+  blockHasType,
 } from '@blocknote/core';
 import {
   useBlockNoteEditor,
@@ -41,7 +48,9 @@ export const FileDownloadButton = ({
 
     const block = selectedBlocks[0];
 
-    if (checkBlockIsFileBlock(block, editor)) {
+    if (
+      blockHasType(block, editor, block.type, { url: 'string', name: 'string' })
+    ) {
       return block;
     }
 
@@ -53,6 +62,7 @@ export const FileDownloadButton = ({
       editor.focus();
 
       const url = fileBlock.props.url as string;
+      const name = fileBlock.props.name as string | undefined;
 
       /**
        * If not hosted on our domain, means not a file uploaded by the user,
@@ -76,16 +86,12 @@ export const FileDownloadButton = ({
 
       if (!url.includes('-unsafe')) {
         const blob = (await exportResolveFileUrl(url)) as Blob;
-        downloadFile(
-          blob,
-          fileBlock.props.name || url.split('/').pop() || 'file',
-        );
+        downloadFile(blob, name || url.split('/').pop() || 'file');
       } else {
         const onConfirm = async () => {
           const blob = (await exportResolveFileUrl(url)) as Blob;
 
-          const baseName =
-            fileBlock.props.name || url.split('/').pop() || 'file';
+          const baseName = name || url.split('/').pop() || 'file';
 
           const regFindLastDot = /(\.[^/.]+)$/;
           const unsafeName = baseName.includes('.')
@@ -100,11 +106,7 @@ export const FileDownloadButton = ({
     }
   }, [editor, fileBlock, open]);
 
-  if (
-    !fileBlock ||
-    checkBlockIsFileBlockWithPlaceholder(fileBlock, editor) ||
-    !Components
-  ) {
+  if (!fileBlock || fileBlock.props.url === '' || !Components) {
     return null;
   }
 

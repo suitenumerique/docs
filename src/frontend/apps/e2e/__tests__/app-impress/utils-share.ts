@@ -1,21 +1,21 @@
 import { Page, chromium, expect } from '@playwright/test';
 
 import {
-  BROWSERS,
   BrowserName,
+  getOtherBrowserName,
   keyCloakSignIn,
   verifyDocName,
 } from './utils-common';
 
-export type Role = 'Administrator' | 'Owner' | 'Member' | 'Editor' | 'Reader';
+export type Role = 'Administrator' | 'Owner' | 'Editor' | 'Reader';
 export type LinkReach = 'Private' | 'Connected' | 'Public';
 export type LinkRole = 'Reading' | 'Editing';
 
 export const addNewMember = async (
   page: Page,
   index: number,
-  role: 'Administrator' | 'Owner' | 'Editor' | 'Reader',
-  fillText: string = 'user.test',
+  role: Role,
+  fillText = 'user.test',
 ) => {
   const responsePromiseSearchUser = page.waitForResponse(
     (response) =>
@@ -38,9 +38,9 @@ export const addNewMember = async (
   await page.getByRole('option', { name: users[index].email }).click();
 
   // Choose a role
-  await page.getByLabel('doc-role-dropdown').click();
+  await page.getByTestId('doc-role-dropdown').click();
   await page.getByRole('menuitem', { name: role }).click();
-  await page.getByRole('button', { name: 'Invite' }).click();
+  await page.getByTestId('doc-share-invite-button').click();
 
   return users[index].email;
 };
@@ -74,7 +74,7 @@ export const updateRoleUser = async (
   const list = page.getByTestId('doc-share-quick-search');
 
   const currentUser = list.getByTestId(`doc-share-member-row-${email}`);
-  const currentUserRole = currentUser.getByLabel('doc-role-dropdown');
+  const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
   await currentUserRole.click();
   await page.getByRole('menuitem', { name: role }).click();
   await list.click();
@@ -88,21 +88,30 @@ export const updateRoleUser = async (
  * @param docTitle The title of the document (optional).
  * @returns An object containing the other browser, context, and page.
  */
+type ConnectOtherUserToDocParams = {
+  docUrl: string;
+  docTitle?: string;
+  withoutSignIn?: boolean;
+} & (
+  | {
+      otherBrowserName: BrowserName;
+      browserName?: never;
+    }
+  | {
+      browserName: BrowserName;
+      otherBrowserName?: never;
+    }
+);
+
 export const connectOtherUserToDoc = async ({
   browserName,
   docUrl,
   docTitle,
+  otherBrowserName: _otherBrowserName,
   withoutSignIn,
-}: {
-  browserName: BrowserName;
-  docUrl: string;
-  docTitle?: string;
-  withoutSignIn?: boolean;
-}) => {
-  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
-  if (!otherBrowserName) {
-    throw new Error('No alternative browser found');
-  }
+}: ConnectOtherUserToDocParams) => {
+  const otherBrowserName =
+    _otherBrowserName || getOtherBrowserName(browserName);
 
   const otherBrowser = await chromium.launch({ headless: true });
   const otherContext = await otherBrowser.newContext({
@@ -118,12 +127,16 @@ export const connectOtherUserToDoc = async ({
   await otherPage.goto(docUrl);
 
   if (!withoutSignIn) {
-    await otherPage
+    const loginFromApp = otherPage
       .getByRole('main', { name: 'Main content' })
-      .getByLabel('Login')
-      .click({
-        timeout: 15000,
-      });
+      .getByLabel('Login');
+    const loginFromHome = otherPage.getByRole('button', {
+      name: 'Start Writing',
+    });
+
+    await loginFromApp.or(loginFromHome).first().click({
+      timeout: 15000,
+    });
 
     await keyCloakSignIn(otherPage, otherBrowserName, false);
   }
@@ -159,7 +172,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
       ...json,
     },
   ];
-  await page.route('**/invitations/**/', async (route) => {
+  await page.route(/.*\/invitations\/.*/, async (route) => {
     const request = route.request();
     if (
       request.method().includes('GET') &&
@@ -180,7 +193,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
   });
 
   await page.route(
-    '**/invitations/120ec765-43af-4602-83eb-7f4e1224548a/**/',
+    /.*\/invitations\/120ec765-43af-4602-83eb-7f4e1224548a\/.*/,
     async (route) => {
       const request = route.request();
       if (request.method().includes('DELETE')) {
@@ -195,7 +208,7 @@ export const mockedInvitations = async (page: Page, json?: object) => {
 };
 
 export const mockedAccesses = async (page: Page, json?: object) => {
-  await page.route('**/accesses/**/', async (route) => {
+  await page.route(/.*\/accesses\/.*/, async (route) => {
     const request = route.request();
 
     if (

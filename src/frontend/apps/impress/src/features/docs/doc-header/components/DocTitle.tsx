@@ -1,4 +1,3 @@
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { Tooltip } from '@openfun/cunningham-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,14 +7,16 @@ import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
+  DocIcon,
+  getEmojiAndTitle,
   useDocStore,
+  useDocTitleUpdate,
+  useDocUtils,
   useIsCollaborativeEditable,
   useTrans,
-  useUpdateDoc,
 } from '@/docs/doc-management';
-import { useBroadcastStore, useResponsiveStore } from '@/stores';
+import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
+import { useResponsiveStore } from '@/stores';
 
 interface DocTitleProps {
   doc: Doc;
@@ -42,59 +43,102 @@ export const DocTitleText = () => {
       as="h2"
       $margin={{ all: 'none', left: 'none' }}
       $size={isMobile ? 'h4' : 'h2'}
-      $variation="1000"
     >
       {currentDoc?.title || untitledDocument}
     </Text>
   );
 };
 
+const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
+  const { t } = useTranslation();
+  const { colorsTokens } = useCunninghamTheme();
+  const { emoji } = getEmojiAndTitle(doc.title ?? '');
+
+  if (!emoji) {
+    return null;
+  }
+
+  return (
+    <Tooltip
+      content={t('Edit document emoji')}
+      aria-hidden={true}
+      placement="top"
+    >
+      <Box
+        $css={css`
+          padding: 4px;
+          padding-top: 3px;
+          cursor: pointer;
+          &:hover {
+            background-color: ${colorsTokens['gray-100']};
+            border-radius: var(--c--globals--spacings--st);
+          }
+          transition: background-color var(--c--globals--transitions--duration)
+            var(--c--globals--transitions--ease-out);
+        `}
+      >
+        <DocIcon
+          buttonProps={{
+            $width: '32px',
+            $height: '32px',
+            $justify: 'space-between',
+            $align: 'center',
+          }}
+          withEmojiPicker={doc.abilities.partial_update}
+          docId={doc.id}
+          title={doc.title}
+          emoji={emoji}
+          $size="23px"
+          defaultIcon={
+            <SimpleFileIcon
+              width="25px"
+              height="25px"
+              aria-hidden="true"
+              aria-label={t('Simple document icon')}
+              color={colorsTokens['brand-500']}
+            />
+          }
+        />
+      </Box>
+    </Tooltip>
+  );
+};
+
 const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
-  const { colorsTokens } = useCunninghamTheme();
-  const [titleDisplay, setTitleDisplay] = useState(doc.title);
-  const treeContext = useTreeContext<Doc>();
-
+  const { isTopRoot } = useDocUtils(doc);
   const { untitledDocument } = useTrans();
+  const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
+  const [titleDisplay, setTitleDisplay] = useState(
+    isTopRoot ? doc.title : titleWithoutEmoji,
+  );
 
-  const { broadcast } = useBroadcastStore();
-
-  const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_DOC, KEY_LIST_DOC],
-    onSuccess(updatedDoc) {
-      // Broadcast to every user connected to the document
-      broadcast(`${KEY_DOC}-${updatedDoc.id}`);
-
-      if (!treeContext) {
-        return;
-      }
-
-      if (treeContext.root?.id === updatedDoc.id) {
-        treeContext?.setRoot(updatedDoc);
-      } else {
-        treeContext?.treeData.updateNode(updatedDoc.id, updatedDoc);
-      }
-    },
-  });
+  const { updateDocTitle } = useDocTitleUpdate();
 
   const handleTitleSubmit = useCallback(
     (inputText: string) => {
-      let sanitizedTitle = inputText.trim();
-      sanitizedTitle = sanitizedTitle.replace(/(\r\n|\n|\r)/gm, '');
-
-      // When blank we set to untitled
-      if (!sanitizedTitle) {
-        setTitleDisplay('');
-      }
-
-      // If mutation we update
-      if (sanitizedTitle !== doc.title) {
+      if (isTopRoot) {
+        const sanitizedTitle = updateDocTitle(doc, inputText);
         setTitleDisplay(sanitizedTitle);
-        updateDoc({ id: doc.id, title: sanitizedTitle });
+        return sanitizedTitle;
+      } else {
+        const { emoji: pastedEmoji } = getEmojiAndTitle(inputText);
+        const textPreservingPastedEmoji = pastedEmoji
+          ? `\u200B${inputText}`
+          : inputText;
+        const finalTitle = emoji
+          ? `${emoji} ${textPreservingPastedEmoji}`
+          : textPreservingPastedEmoji;
+
+        const sanitizedTitle = updateDocTitle(doc, finalTitle);
+        const { titleWithoutEmoji: sanitizedTitleWithoutEmoji } =
+          getEmojiAndTitle(sanitizedTitle);
+
+        setTitleDisplay(sanitizedTitleWithoutEmoji);
       }
     },
-    [doc.id, doc.title, updateDoc],
+    [updateDocTitle, doc, emoji, isTopRoot],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -105,43 +149,53 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   };
 
   useEffect(() => {
-    setTitleDisplay(doc.title);
-  }, [doc]);
+    setTitleDisplay(isTopRoot ? doc.title : titleWithoutEmoji);
+  }, [doc.title, isTopRoot, titleWithoutEmoji]);
 
   return (
-    <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
-      <Box
-        as="span"
-        role="textbox"
-        className="--docs--doc-title-input"
-        contentEditable
-        defaultValue={titleDisplay || undefined}
-        onKeyDownCapture={handleKeyDown}
-        suppressContentEditableWarning={true}
-        aria-label={`${t('Document title')}`}
-        aria-multiline={false}
-        onBlurCapture={(event) =>
-          handleTitleSubmit(event.target.textContent || '')
-        }
-        $color={colorsTokens['greyscale-1000']}
-        $minHeight="40px"
-        $padding={{ right: 'big' }}
-        $css={css`
-          &[contenteditable='true']:empty:not(:focus):before {
-            content: '${untitledDocument}';
-            color: grey;
-            pointer-events: none;
-            font-style: italic;
+    <Box
+      className="--docs--doc-title"
+      $direction="row"
+      $align="center"
+      $gap="4px"
+      $minHeight="40px"
+    >
+      {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
+
+      <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
+        <Box
+          as="span"
+          role="textbox"
+          className="--docs--doc-title-input"
+          contentEditable
+          defaultValue={titleDisplay || undefined}
+          onKeyDownCapture={handleKeyDown}
+          suppressContentEditableWarning={true}
+          aria-label={`${t('Document title')}`}
+          aria-multiline={false}
+          onBlurCapture={(event) =>
+            handleTitleSubmit(event.target.textContent || '')
           }
-          font-size: ${isDesktop
-            ? css`var(--c--theme--font--sizes--h2)`
-            : css`var(--c--theme--font--sizes--sm)`};
-          font-weight: 700;
-          outline: none;
-        `}
-      >
-        {titleDisplay}
-      </Box>
-    </Tooltip>
+          $padding={{ right: 'big' }}
+          $css={css`
+            &[contenteditable='true']:empty:not(:focus):before {
+              content: '${untitledDocument}';
+              color: var(
+                --c--contextuals--content--semantic--neutral--tertiary
+              );
+              pointer-events: none;
+              font-style: italic;
+            }
+            font-size: ${isDesktop
+              ? css`var(--c--globals--font--sizes--h2)`
+              : css`var(--c--globals--font--sizes--sm)`};
+            font-weight: 700;
+            outline: none;
+          `}
+        >
+          {titleDisplay}
+        </Box>
+      </Tooltip>
+    </Box>
   );
 };

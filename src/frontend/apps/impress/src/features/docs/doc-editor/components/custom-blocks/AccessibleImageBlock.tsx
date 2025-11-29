@@ -1,43 +1,62 @@
+/**
+ * AccessibleImageBlock.tsx
+ *
+ * This file defines a custom BlockNote block specification for an accessible image block.
+ * It extends the default image block to ensure compliance with accessibility standards,
+ * specifically RGAA 1.9.1, by using <figure> and <figcaption> elements when a caption is provided.
+ *
+ * The accessible image block ensures that:
+ * - Images with captions are wrapped in <figure> and <figcaption> elements.
+ * - The <img> element has an appropriate alt attribute based on the caption.
+ * - Accessibility attributes such as role and aria-label are added for better screen reader support.
+ * - Images without captions have alt="" and are marked as decorative with aria-hidden="true".
+ *
+ * This implementation leverages BlockNote's existing image block functionality while enhancing it for accessibility.
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/core/src/blocks/Image/block.ts
+ */
+
 import {
   BlockFromConfig,
   BlockNoteEditor,
-  BlockSchemaWithBlock,
+  ImageOptions,
   InlineContentSchema,
+  InlineContentSchemaFromSpecs,
   StyleSchema,
   createBlockSpec,
-  imageBlockConfig,
+  createImageBlockConfig,
+  defaultInlineContentSpecs,
   imageParse,
   imageRender,
   imageToExternalHTML,
 } from '@blocknote/core';
 import { t } from 'i18next';
 
-type ImageBlockConfig = typeof imageBlockConfig;
+type CreateImageBlockConfig = ReturnType<typeof createImageBlockConfig>;
 
-export const accessibleImageRender = (
-  block: BlockFromConfig<ImageBlockConfig, InlineContentSchema, StyleSchema>,
-  editor: BlockNoteEditor<
-    BlockSchemaWithBlock<ImageBlockConfig['type'], ImageBlockConfig>,
-    InlineContentSchema,
-    StyleSchema
-  >,
-) => {
-  const imageRenderComputed = imageRender(block, editor);
-  const dom = imageRenderComputed.dom;
-  const imgSelector = dom.querySelector('img');
-
-  const withCaption =
-    block.props.caption && dom.querySelector('.bn-file-caption');
-
-  const accessibleImageWithCaption = () => {
-    imgSelector?.setAttribute('alt', block.props.caption);
-    imgSelector?.removeAttribute('aria-hidden');
-    imgSelector?.setAttribute('tabindex', '0');
+export const accessibleImageRender =
+  (config: ImageOptions) =>
+  (
+    block: BlockFromConfig<
+      CreateImageBlockConfig,
+      InlineContentSchema,
+      StyleSchema
+    >,
+    editor: BlockNoteEditor<
+      Record<'image', CreateImageBlockConfig>,
+      InlineContentSchemaFromSpecs<typeof defaultInlineContentSpecs>,
+      StyleSchema
+    >,
+  ) => {
+    const imageRenderComputed = imageRender(config);
+    const dom = imageRenderComputed(block, editor).dom;
+    const imgSelector = dom.querySelector('img');
 
     // Fix RGAA 1.9.1: Convert to figure/figcaption structure if caption exists
-    const captionElement = dom.querySelector('.bn-file-caption');
+    const accessibleImageWithCaption = () => {
+      imgSelector?.setAttribute('alt', block.props.caption);
+      imgSelector?.removeAttribute('aria-hidden');
+      imgSelector?.setAttribute('tabindex', '0');
 
-    if (captionElement) {
       const figureElement = document.createElement('figure');
 
       // Copy all attributes from the original div
@@ -76,32 +95,36 @@ export const accessibleImageRender = (
         ...imageRenderComputed,
         dom: figureElement,
       };
-    }
+    };
+
+    const accessibleImage = () => {
+      imgSelector?.setAttribute('alt', '');
+      imgSelector?.setAttribute('role', 'presentation');
+      imgSelector?.setAttribute('aria-hidden', 'true');
+      imgSelector?.setAttribute('tabindex', '-1');
+
+      return {
+        ...imageRenderComputed,
+        dom,
+      };
+    };
+
+    const withCaption =
+      block.props.caption && dom.querySelector('.bn-file-caption');
+
+    // Set accessibility attributes for the image
+    return withCaption ? accessibleImageWithCaption() : accessibleImage();
   };
 
-  const accessibleImage = () => {
-    imgSelector?.setAttribute('alt', '');
-    imgSelector?.setAttribute('role', 'presentation');
-    imgSelector?.setAttribute('aria-hidden', 'true');
-    imgSelector?.setAttribute('tabindex', '-1');
-  };
-
-  // Set accessibility attributes for the image
-  const result = withCaption ? accessibleImageWithCaption() : accessibleImage();
-
-  // Return the result if accessibleImageWithCaption created a figure, otherwise return original
-  if (result) {
-    return result;
-  }
-
-  return {
-    ...imageRenderComputed,
-    dom,
-  };
-};
-
-export const AccessibleImageBlock = createBlockSpec(imageBlockConfig, {
-  render: accessibleImageRender,
-  parse: imageParse,
-  toExternalHTML: imageToExternalHTML,
-});
+export const AccessibleImageBlock = createBlockSpec(
+  createImageBlockConfig,
+  (config) => ({
+    meta: {
+      fileBlockAccept: ['image/*'],
+    },
+    render: accessibleImageRender(config),
+    parse: imageParse(config),
+    toExternalHTML: imageToExternalHTML(config),
+    runsBefore: ['file'],
+  }),
+);

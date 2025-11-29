@@ -1,4 +1,5 @@
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
+import { ODTExporter } from '@blocknote/xl-odt-exporter';
 import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
@@ -16,20 +17,21 @@ import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
+import { Box, ButtonCloseModal, Text } from '@/components';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
+import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
 import { downloadFile } from '../utils';
 
 enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
+  ODT = 'odt',
 }
 
 interface ModalExportProps {
@@ -125,7 +127,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         : rawPdfDocument;
 
       blobExport = await pdf(pdfDocument).toBlob();
-    } else {
+    } else if (format === DocDownloadFormat.DOCX) {
       const exporter = new DOCXExporter(editor.schema, docxDocsSchemaMappings, {
         resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
       });
@@ -134,6 +136,16 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         documentOptions: { title: documentTitle },
         sectionOptions: {},
       });
+    } else if (format === DocDownloadFormat.ODT) {
+      const exporter = new ODTExporter(editor.schema, odtDocsSchemaMappings, {
+        resolveFileUrl: async (url) => exportCorsResolveFileUrl(doc.id, url),
+      });
+
+      blobExport = await exporter.toODTDocument(exportDocument);
+    } else {
+      toast(t('The export failed'), VariantType.ERROR);
+      setIsExporting(false);
+      return;
     }
 
     downloadFile(blobExport, `${filename}.${format}`);
@@ -162,7 +174,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         <>
           <Button
             aria-label={t('Cancel the download')}
-            color="secondary"
+            variant="secondary"
             fullWidth
             onClick={() => onClose()}
           >
@@ -171,7 +183,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           <Button
             data-testid="doc-export-download-button"
             aria-label={t('Download')}
-            color="primary"
+            variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
@@ -193,7 +205,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             $margin="0"
             id="modal-export-title"
             $size="h6"
-            $variation="1000"
             $align="flex-start"
             data-testid="modal-export-title"
           >
@@ -213,8 +224,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         $gap="1rem"
         className="--docs--modal-export-content"
       >
-        <Text $variation="600" $size="sm" as="p">
-          {t('Download your document in a .docx or .pdf format.')}
+        <Text $variation="secondary" $size="sm" as="p">
+          {t('Download your document in a .docx, .odt or .pdf format.')}
         </Text>
         <Select
           clearable={false}
@@ -232,6 +243,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           label={t('Format')}
           options={[
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
+            { label: t('ODT'), value: DocDownloadFormat.ODT },
             { label: t('PDF'), value: DocDownloadFormat.PDF },
           ]}
           value={format}

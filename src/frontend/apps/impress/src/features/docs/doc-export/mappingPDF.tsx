@@ -2,7 +2,6 @@ import { pdfDefaultSchemaMappings } from '@blocknote/xl-pdf-exporter';
 
 import {
   blockMappingCalloutPDF,
-  blockMappingDividerPDF,
   blockMappingHeadingPDF,
   blockMappingImagePDF,
   blockMappingParagraphPDF,
@@ -21,7 +20,6 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     heading: blockMappingHeadingPDF,
     image: blockMappingImagePDF,
     paragraph: blockMappingParagraphPDF,
-    divider: blockMappingDividerPDF,
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
     // We're using the file block mapping for PDF blocks

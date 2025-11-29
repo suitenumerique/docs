@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, StyledLink } from '@/components';
+import { Box, Overlayer, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, SimpleDocItem } from '@/docs/doc-management';
 
@@ -184,7 +184,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
           outline: none !important;
-
           &:focus-visible {
             outline: none !important;
           }
@@ -216,24 +215,26 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           onKeyDown={handleRootKeyDown}
           $css={css`
             padding: ${spacingsTokens['2xs']};
-            border-radius: 4px;
+            border-radius: var(--c--globals--spacings--st);
             width: 100%;
             background-color: ${rootIsSelected || rootActionsOpen
-              ? 'var(--c--theme--colors--greyscale-100)'
+              ? 'var(--c--contextuals--background--semantic--contextual--primary)'
               : 'transparent'};
 
             &:hover {
-              background-color: var(--c--theme--colors--greyscale-100);
+              background-color: var(
+                --c--contextuals--background--semantic--contextual--primary
+              );
             }
 
             &:focus-visible {
               outline: none !important;
-              box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
-              border-radius: 4px;
+              box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
+              border-radius: var(--c--globals--spacings--st);
             }
 
             .doc-tree-root-item-actions {
-              display: 'flex';
+              display: flex;
               opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {
@@ -241,7 +242,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               }
             }
             &:hover,
-            &:focus-within {
+            &:focus-visible {
               .doc-tree-root-item-actions {
                 opacity: 1;
               }
@@ -289,29 +290,31 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       {initialOpenState &&
         treeContext.treeData.nodes.length > 0 &&
         treeRoot && (
-          <TreeView
-            dndRootElement={treeRoot}
-            initialOpenState={initialOpenState}
-            afterMove={handleMove}
-            selectedNodeId={
-              treeContext.treeData.selectedNode?.id ??
-              treeContext.initialTargetId ??
-              undefined
-            }
-            canDrop={({ parentNode }) => {
-              const parentDoc = parentNode?.data.value as Doc;
-              if (!parentDoc) {
-                return currentDoc.abilities.move && isDesktop;
+          <Overlayer isOverlay={currentDoc.deleted_at != null} inert>
+            <TreeView
+              dndRootElement={treeRoot}
+              initialOpenState={initialOpenState}
+              afterMove={handleMove}
+              selectedNodeId={
+                treeContext.treeData.selectedNode?.id ??
+                treeContext.initialTargetId ??
+                undefined
               }
-              return parentDoc.abilities.move && isDesktop;
-            }}
-            canDrag={(node) => {
-              const doc = node.value as Doc;
-              return doc.abilities.move && isDesktop;
-            }}
-            rootNodeId={treeContext.root.id}
-            renderNode={DocSubPageItem}
-          />
+              canDrop={({ parentNode }) => {
+                const parentDoc = parentNode?.data.value as Doc;
+                if (!parentDoc) {
+                  return currentDoc.abilities.move && isDesktop;
+                }
+                return parentDoc.abilities.move && isDesktop;
+              }}
+              canDrag={(node) => {
+                const doc = node.value as Doc;
+                return doc.abilities.move && isDesktop;
+              }}
+              rootNodeId={treeContext.root.id}
+              renderNode={DocSubPageItem}
+            />
+          </Overlayer>
         )}
     </Box>
   );

@@ -18,6 +18,7 @@ type DocRoleDropdownProps = {
   onSelectRole: (role: Role) => void;
   rolesAllowed?: Role[];
   isLastOwner?: boolean;
+  ariaLabel?: string;
 };
 
 export const DocRoleDropdown = ({
@@ -29,6 +30,7 @@ export const DocRoleDropdown = ({
   rolesAllowed,
   access,
   isLastOwner = false,
+  ariaLabel,
 }: DocRoleDropdownProps) => {
   const { t } = useTranslation();
   const { transRole, translatedRoles } = useTrans();
@@ -90,19 +92,26 @@ export const DocRoleDropdown = ({
   const roles: DropdownMenuOption[] = Object.keys(translatedRoles).map(
     (key, index) => {
       const isLast = index === Object.keys(translatedRoles).length - 1;
+      const isRoleAllowed = rolesAllowed?.includes(key as Role) ?? true;
+
       return {
         label: transRole(key as Role),
         callback: () => onSelectRole?.(key as Role),
         isSelected: currentRole === (key as Role),
         showSeparator: isLast,
-        disabled: isLastOwner && key !== 'owner',
+        disabled: (isLastOwner && key !== 'owner') || !isRoleAllowed,
       };
     },
   );
 
   if (!canUpdate) {
     return (
-      <Text aria-label={t('Document role text')} $variation="600">
+      <Text
+        $variation="tertiary"
+        aria-label={t('Document role text')}
+        $weight={500}
+        $size="s"
+      >
         {transRole(currentRole)}
       </Text>
     );
@@ -111,11 +120,16 @@ export const DocRoleDropdown = ({
   return (
     <DropdownMenu
       topMessage={topMessage}
-      label="doc-role-dropdown"
+      label={t('{{action}}, current role: {{role}}', {
+        action: ariaLabel,
+        role: transRole(currentRole),
+      })}
       showArrow={true}
       arrowCss={css`
-        color: var(--c--theme--colors--primary-800) !important;
+        color: var(--c--contextuals--content--semantic--brand--tertiary);
+        font-size: 16px;
       `}
+      testId="doc-role-dropdown"
       options={[
         ...roles,
         {
@@ -124,8 +138,14 @@ export const DocRoleDropdown = ({
           callback: onRemove,
         },
       ]}
+      buttonCss={css`
+        &:hover {
+          background: none;
+        }
+        font-size: 12px;
+      `}
     >
-      <Text $theme="primary" $variation="800">
+      <Text $theme="brand" $variation="tertiary">
         {transRole(currentRole)}
       </Text>
     </DropdownMenu>

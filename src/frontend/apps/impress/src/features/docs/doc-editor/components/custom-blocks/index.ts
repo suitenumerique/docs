@@ -1,5 +1,5 @@
 export * from './AccessibleImageBlock';
 export * from './CalloutBlock';
-export * from './DividerBlock';
+export { default as emojidata } from './initEmojiCallout';
 export * from './PdfBlock';
 export * from './UploadLoaderBlock';

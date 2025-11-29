@@ -115,7 +115,10 @@ def test_api_documents_ask_for_access_create_authenticated_non_root_document():
     assert response.status_code == 404
 
 
-def test_api_documents_ask_for_access_create_authenticated_specific_role():
+@pytest.mark.parametrize(
+    "role", [role for role in RoleChoices if role != RoleChoices.OWNER]
+)
+def test_api_documents_ask_for_access_create_authenticated_specific_role(role):
     """
     Authenticated users should be able to create a document ask for access with a specific role.
     """
@@ -127,15 +130,33 @@ def test_api_documents_ask_for_access_create_authenticated_specific_role():
 
     response = client.post(
         f"/api/v1.0/documents/{document.id}/ask-for-access/",
-        data={"role": RoleChoices.EDITOR},
+        data={"role": role},
     )
     assert response.status_code == 201
 
     assert DocumentAskForAccess.objects.filter(
         document=document,
         user=user,
-        role=RoleChoices.EDITOR,
+        role=role,
     ).exists()
+
+
+def test_api_documents_ask_for_access_create_authenticated_owner_role():
+    """
+    Authenticated users should not be able to create a document ask for access with the owner role.
+    """
+    document = DocumentFactory()
+    user = UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/",
+        data={"role": RoleChoices.OWNER},
+    )
+    assert response.status_code == 400
+    assert response.json() == {"role": ['"owner" is not a valid choice.']}
 
 
 def test_api_documents_ask_for_access_create_authenticated_already_has_access():
@@ -266,6 +287,7 @@ def test_api_documents_ask_for_access_list_authenticated_own_request():
                     "update": False,
                     "partial_update": False,
                     "retrieve": False,
+                    "set_role_to": [],
                 },
             }
         ],
@@ -335,6 +357,16 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
 
     response = client.get(f"/api/v1.0/documents/{document.id}/ask-for-access/")
     assert response.status_code == 200
+
+    expected_set_role_to = [
+        RoleChoices.READER,
+        RoleChoices.COMMENTER,
+        RoleChoices.EDITOR,
+        RoleChoices.ADMIN,
+    ]
+    if role == RoleChoices.OWNER:
+        expected_set_role_to.append(RoleChoices.OWNER)
+
     assert response.json() == {
         "count": 3,
         "next": None,
@@ -354,6 +386,7 @@ def test_api_documents_ask_for_access_list_owner_or_admin(role):
                     "update": True,
                     "partial_update": True,
                     "retrieve": True,
+                    "set_role_to": expected_set_role_to,
                 },
             }
             for document_ask_for_access in document_ask_for_accesses
@@ -446,6 +479,14 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
         f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/"
     )
     assert response.status_code == 200
+    expected_set_role_to = [
+        RoleChoices.READER,
+        RoleChoices.COMMENTER,
+        RoleChoices.EDITOR,
+        RoleChoices.ADMIN,
+    ]
+    if role == RoleChoices.OWNER:
+        expected_set_role_to.append(RoleChoices.OWNER)
     assert response.json() == {
         "id": str(document_ask_for_access.id),
         "document": str(document.id),
@@ -460,6 +501,7 @@ def test_api_documents_ask_for_access_retrieve_owner_or_admin(role):
             "update": True,
             "partial_update": True,
             "retrieve": True,
+            "set_role_to": expected_set_role_to,
         },
     }
 
@@ -747,6 +789,53 @@ def test_api_documents_ask_for_access_accept_authenticated_owner_or_admin_update
     ).exists()
     document_access.refresh_from_db()
     assert document_access.role == RoleChoices.ADMIN
+
+
+def test_api_documents_ask_for_access_accept_admin_cannot_accept_owner_role():
+    """
+    Admin users should not be able to accept document ask for access with the owner role.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, RoleChoices.ADMIN)])
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": RoleChoices.OWNER},
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "You cannot accept a role higher than your own."
+    }
+
+
+def test_api_documents_ask_for_access_accept_owner_can_accept_owner_role():
+    """
+    Owner users should be able to accept document ask for access with the owner role.
+    """
+    user = UserFactory()
+    document = DocumentFactory(users=[(user, RoleChoices.OWNER)])
+    document_ask_for_access = DocumentAskForAccessFactory(
+        document=document, role=RoleChoices.READER
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id}/ask-for-access/{document_ask_for_access.id}/accept/",
+        data={"role": RoleChoices.OWNER},
+    )
+    assert response.status_code == 204
+
+    assert not DocumentAskForAccess.objects.filter(
+        id=document_ask_for_access.id
+    ).exists()
 
 
 @pytest.mark.parametrize("role", [RoleChoices.OWNER, RoleChoices.ADMIN])

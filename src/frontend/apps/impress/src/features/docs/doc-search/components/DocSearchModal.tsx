@@ -5,8 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, Text } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
+import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useDocUtils } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
@@ -86,7 +85,8 @@ const DocSearchModalGlobal = ({
             aria-label={t('Close the search modal')}
             onClick={modalProps.onClose}
             size="small"
-            color="primary-text"
+            color="brand"
+            variant="tertiary"
           />
         </Box>
         <QuickSearch
@@ -113,7 +113,6 @@ const DocSearchModalGlobal = ({
                 $justify="center"
               >
                 <Image
-                  className="c__image-system-filter"
                   width={320}
                   src={EmptySearchIcon}
                   alt={t('No active search')}

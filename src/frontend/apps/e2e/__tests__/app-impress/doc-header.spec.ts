@@ -8,7 +8,7 @@ import {
   verifyDocName,
 } from './utils-common';
 import { mockedAccesses, mockedInvitations } from './utils-share';
-import { createRootSubPage } from './utils-sub-pages';
+import { createRootSubPage, getTreeRow } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -65,25 +65,61 @@ test.describe('Doc Header', () => {
     page,
     browserName,
   }) => {
-    await createDoc(page, 'doc-update', browserName, 1);
+    await createDoc(page, 'doc-update-emoji', browserName, 1);
+
+    const emojiPicker = page.locator('.--docs--doc-title').getByRole('button');
+    const optionMenu = page.getByLabel('Open the document options');
+    const addEmojiMenuItem = page.getByRole('menuitem', { name: 'Add emoji' });
+    const removeEmojiMenuItem = page.getByRole('menuitem', {
+      name: 'Remove emoji',
+    });
+
+    // Top parent should not have emoji picker
+    await expect(emojiPicker).toBeHidden();
+    await optionMenu.click();
+    await expect(addEmojiMenuItem).toBeHidden();
+    await expect(removeEmojiMenuItem).toBeHidden();
+    await page.keyboard.press('Escape');
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-update-emoji-child',
+    );
+
+    await verifyDocName(page, docChild);
+
+    // Emoji picker should be hidden initially
+    await expect(emojiPicker).toBeHidden();
+
+    // Add emoji
+    await optionMenu.click();
+    await expect(removeEmojiMenuItem).toBeHidden();
+    await addEmojiMenuItem.click();
+    await expect(emojiPicker).toHaveText('📄');
+
+    // Change emoji
+    await emojiPicker.click({
+      delay: 100,
+    });
+    await page.getByRole('button', { name: '😀' }).first().click();
+    await expect(emojiPicker).toHaveText('😀');
+
+    // Update title
     const docTitle = page.getByRole('textbox', { name: 'Document title' });
-    await expect(docTitle).toBeVisible();
-    await docTitle.fill('👍 Hello Emoji World');
+    await docTitle.fill('Hello Emoji World');
     await docTitle.blur();
-    await verifyDocName(page, '👍 Hello Emoji World');
+    await verifyDocName(page, 'Hello Emoji World');
 
     // Check the tree
-    const docTree = page.getByTestId('doc-tree');
-    await expect(docTree.getByText('Hello Emoji World')).toBeVisible();
-    await expect(docTree.getByTestId('doc-emoji-icon')).toBeVisible();
-    await expect(docTree.getByTestId('doc-simple-icon')).toBeHidden();
+    const row = await getTreeRow(page, 'Hello Emoji World');
+    await expect(row.getByText('😀')).toBeVisible();
 
-    await page.getByTestId('home-button').click();
-
-    // Check the documents grid
-    const gridRow = await getGridRow(page, 'Hello Emoji World');
-    await expect(gridRow.getByTestId('doc-emoji-icon')).toBeVisible();
-    await expect(gridRow.getByTestId('doc-simple-icon')).toBeHidden();
+    // Remove emoji
+    await optionMenu.click();
+    await expect(addEmojiMenuItem).toBeHidden();
+    await removeEmojiMenuItem.click();
+    await expect(emojiPicker).toBeHidden();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {
@@ -96,7 +132,7 @@ test.describe('Doc Header', () => {
       page.getByRole('heading', { name: 'Delete a doc' }),
     ).toBeVisible();
 
-    await expect(page.getByText(`This document and any sub-`)).toBeVisible();
+    await expect(page.getByText(`This document will be`)).toBeVisible();
 
     await page
       .getByRole('button', {
@@ -172,7 +208,7 @@ test.describe('Doc Header', () => {
     await expect(
       invitationCard.getByText('test.test@invitation.test').first(),
     ).toBeVisible();
-    const invitationRole = invitationCard.getByLabel('doc-role-dropdown');
+    const invitationRole = invitationCard.getByTestId('doc-role-dropdown');
     await expect(invitationRole).toBeVisible();
 
     await invitationRole.click();
@@ -181,7 +217,7 @@ test.describe('Doc Header', () => {
     await expect(invitationCard).toBeHidden();
 
     const memberCard = shareModal.getByLabel('List members card');
-    const roles = memberCard.getByLabel('doc-role-dropdown');
+    const roles = memberCard.getByTestId('doc-role-dropdown');
     await expect(memberCard).toBeVisible();
     await expect(
       memberCard.getByText('test.test@accesses.test').first(),

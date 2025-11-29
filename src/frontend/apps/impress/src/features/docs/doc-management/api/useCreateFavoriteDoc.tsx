@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/docs/doc-management';
+
+import { Doc } from '../types';
 
 export type CreateFavoriteDocParams = Pick<Doc, 'id'>;
 
@@ -20,18 +21,18 @@ export const createFavoriteDoc = async ({ id }: CreateFavoriteDocParams) => {
 
 interface CreateFavoriteDocProps {
   onSuccess?: () => void;
-  listInvalideQueries?: string[];
+  listInvalidQueries?: string[];
 }
 
 export function useCreateFavoriteDoc({
   onSuccess,
-  listInvalideQueries,
+  listInvalidQueries,
 }: CreateFavoriteDocProps) {
   const queryClient = useQueryClient();
   return useMutation<void, APIError, CreateFavoriteDocParams>({
     mutationFn: createFavoriteDoc,
     onSuccess: () => {
-      listInvalideQueries?.forEach((queryKey) => {
+      listInvalidQueries?.forEach((queryKey) => {
         void queryClient.invalidateQueries({
           queryKey: [queryKey],
         });

@@ -8,10 +8,113 @@ and this project adheres to
 
 ### Added
 
-- ✨(frontend) add pdf block to the editor #1293
+- ✨ Add comments feature to the editor #1330
+- ✨(backend) Comments on text editor #1330
 
 ### Changed
 
+- ⚡️(sw) stop to cache external resources likes videos #1655
+- 💥(frontend) upgrade to ui-kit v2
+
+### Fixed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve share modal button accessibility #1626
+  - ♿(frontend) improve screen reader support in DocShare modal #1628
+- 🐛(frontend) fix toolbar not activated when reader #1640
+- 🐛(frontend) preserve left panel width on window resize #1588
+- 🐛(frontend) prevent duplicate as first character in title #1595
+
+## [3.10.0] - 2025-11-18
+
+### Added
+
+- ✨(export) enable ODT export for documents #1524
+- ✨(frontend) improve mobile UX by showing subdocs count #1540
+
+### Changed
+
+- ♻️(frontend) preserve @ character when esc is pressed after typing it #1512
+- ♻️(frontend) make summary button fixed to remain visible during scroll #1581
+- ♻️(frontend) pdf embed use full width #1526
+
+### Fixed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
+  - ♿(frontend) improve accessibility and styling of summary table #1528
+  - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
+- 🐛(frontend) fix alignment of side menu #1597
+- 🐛(frontend) fix fallback translations with Trans #1620
+- 🐛(export) fix image overflow by limiting width to 600px during export #1525
+- 🐛(export) fix table cell alignment issue in exported documents #1582
+- 🐛(export) preserve image aspect ratio in PDF export #1622
+- 🐛(export) Export fails when paste with style #1552
+
+### Security
+
+- mitigate role escalation in the ask_for_access viewset #1580
+
+### Removed
+
+- 🔥(backend) remove api managing templates
+
+## [3.9.0] - 2025-11-10
+
+### Added
+
+- ✨(frontend) create skeleton component for DocEditor #1491
+- ✨(frontend) add an EmojiPicker in the document tree and title #1381
+- ✨(frontend) ajustable left panel #1456
+
+### Changed
+
+- ♻️(frontend) adapt custom blocks to new implementation #1375
+- ♻️(backend) increase user short_name field length #1510
+- 🚸(frontend) separate viewers from editors #1509
+
+### Fixed
+
+- 🐛(frontend) fix duplicate document entries in grid #1479
+- 🐛(backend) fix trashbin list #1520
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) remove empty alt on logo due to Axe a11y error #1516
+- 🐛(backend) fix s3 version_id validation #1543
+- 🐛(frontend) retry check media status after page reload #1555
+- 🐛(frontend) fix Interlinking memory leak #1560
+- 🐛(frontend) button new doc UI fix #1557
+- 🐛(frontend) interlinking UI fix #1557
+
+## [3.8.2] - 2025-10-17
+
+### Fixed
+
+- 🐛(service-worker) fix sw registration and page reload logic #1500
+
+## [3.8.1] - 2025-10-17
+
+### Fixed
+
+- ⚡️(backend) improve trashbin endpoint performance #1495
+- 🐛(backend) manage invitation partial update without email #1494
+- ♿(frontend) improve accessibility:
+  - ♿ add missing aria-label to add sub-doc button for accessibility #1480
+  - ♿ add missing aria-label to more options button on sub-docs #1481
+
+### Removed
+
+- 🔥(backend) remove treebeard form for the document admin #1470
+
+## [3.8.0] - 2025-10-14
+
+### Added
+
+- ✨(frontend) add pdf block to the editor #1293
+- ✨List and restore deleted docs #1450
+
+### Changed
+
+- ♻️(frontend) Refactor Auth component for improved redirection logic #1461
 - ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
   - ♿(frontend) enable enter key to open documentss #1354
@@ -30,10 +133,11 @@ and this project adheres to
   - ♿ add h1 for SR on 40X pages and remove alt texts #1438
   - ♿ update labels and shared document icon accessibility #1442
 - 🍱(frontend) Fonts GDPR compliants #1453
+- ♻️(service-worker) improve SW registration and update handling #1473
 
 ### Fixed
 
-- 🐛(backend) duplicate sub docs as root for reader users
+- 🐛(backend) duplicate sub docs as root for reader users #1385
 - ⚗️(service-worker) remove index from cache first strategy #1395
 - 🐛(frontend) fix 404 page when reload 403 page #1402
 - 🐛(frontend) fix legacy role computation #1376
@@ -44,14 +148,24 @@ and this project adheres to
 - 🐛(frontend) exclude h4-h6 headings from table of contents #1441
 - 🔒(frontend) prevent readers from changing callout emoji #1449
 - 🐛(frontend) fix overlapping placeholders in multi-column layout #1455
-- 🐛(backend) filter invitation with case insensitive email
+- 🐛(backend) filter invitation with case insensitive email #1457
 - 🐛(frontend) reduce no access image size from 450 to 300 #1463
+- 🐛(frontend) preserve interlink style on drag-and-drop in editor #1460
+- ✨(frontend) load docs logo from public folder via url #1462
+- 🔧(keycloak) Fix https required issue in dev mode #1286
+
+## Removed
+
+- 🔥(frontend) remove custom DividerBlock ##1375
 
 ## [3.7.0] - 2025-09-12
 
 ### Added
 
 - ✨(api) add API route to fetch document content #1206
+- ✨(frontend) doc emojis improvements #1381
+  - add an EmojiPicker in the document tree and document title
+  - remove emoji buttons in menus
 
 ### Changed
 
@@ -65,6 +179,8 @@ and this project adheres to
   - ✨unify tab focus style for better visual consistency #1341
   - ♿hide decorative icons, label menus, avoid accessible name… #1362
 - ♻️(tilt) use helm dev-backend chart
+- 🩹(frontend) on main pages do not display leading emoji as page icon #1381
+- 🩹(frontend) handle properly emojis in interlinking #1381
 
 ### Removed
 
@@ -109,7 +225,6 @@ and this project adheres to
 - 🐛(frontend) fix dnd conflict with tree and Blocknote #1328
 - 🐛(frontend) fix display bug on homepage #1332
 - 🐛link role update #1287
-- 🔧(keycloak) Fix https required issue in dev mode #1286
 
 ## [3.5.0] - 2025-07-31
 
@@ -781,7 +896,12 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.7.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v3.10.0...main
+[v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
+[v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
+[v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2
+[v3.8.1]: https://github.com/suitenumerique/docs/releases/v3.8.1
+[v3.8.0]: https://github.com/suitenumerique/docs/releases/v3.8.0
 [v3.7.0]: https://github.com/suitenumerique/docs/releases/v3.7.0
 [v3.6.0]: https://github.com/suitenumerique/docs/releases/v3.6.0
 [v3.5.0]: https://github.com/suitenumerique/docs/releases/v3.5.0

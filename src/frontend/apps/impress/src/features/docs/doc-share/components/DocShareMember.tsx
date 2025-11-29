@@ -77,6 +77,9 @@ export const DocShareMemberItem = ({
               rolesAllowed={access.abilities.set_role_to}
               access={access}
               doc={doc}
+              ariaLabel={t('Change role for {{name}}', {
+                name: access.user.full_name || access.user.email,
+              })}
             />
           </Box>
         }
@@ -112,7 +115,7 @@ export const QuickSearchGroupMember = ({
       elements: members,
       endActions: undefined,
     };
-  }, [membersQuery, t]);
+  }, [membersQuery.data, t]);
 
   return (
     <Box aria-label={t('List members card')} $padding={{ bottom: '3xs' }}>

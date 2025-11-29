@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { TestLanguage, createDoc, waitForLanguageSwitch } from './utils-common';
+import { openSuggestionMenu } from './utils-editor';
 
 test.describe('Language', () => {
   test.beforeEach(async ({ page }) => {
@@ -51,6 +52,7 @@ test.describe('Language', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(languagePicker).toContainText('English');
   });
+
   test('can switch language using only keyboard', async ({ page }) => {
     await page.goto('/');
     await waitForLanguageSwitch(page, TestLanguage.English);
@@ -106,18 +108,18 @@ test.describe('Language', () => {
   }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    const editor = page.locator('.ProseMirror');
-
-    // Trigger slash menu to show english menu
-    await editor.click();
-    await editor.fill('/');
+    const editor = await openSuggestionMenu({ page });
     await expect(page.getByText('Headings', { exact: true })).toBeVisible();
+
+    await editor.click(); // close the menu
+
+    await expect(page.getByText('Headings', { exact: true })).toBeHidden();
 
     // Change language to French
     await waitForLanguageSwitch(page, TestLanguage.French);
 
     // Trigger slash menu to show french menu
-    await editor.locator('.bn-block-outer').last().fill('/');
+    await openSuggestionMenu({ page });
     await expect(page.getByText('Titres', { exact: true })).toBeVisible();
   });
 });

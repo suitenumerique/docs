@@ -56,6 +56,7 @@ export interface Doc {
   content: Base64;
   created_at: string;
   creator: string;
+  deleted_at: string | null;
   depth: number;
   path: string;
   is_favorite: boolean;
@@ -79,6 +80,7 @@ export interface Doc {
     children_create: boolean;
     children_list: boolean;
     collaboration_auth: boolean;
+    comment: boolean;
     destroy: boolean;
     duplicate: boolean;
     favorite: boolean;
@@ -107,6 +109,7 @@ export enum DocDefaultFilter {
   ALL_DOCS = 'all_docs',
   MY_DOCS = 'my_docs',
   SHARED_WITH_ME = 'shared_with_me',
+  TRASHBIN = 'trashbin',
 }
 
 export type DocsOrdering =
@@ -130,5 +133,6 @@ export interface AccessRequest {
     partial_update: boolean;
     retrieve: boolean;
     accept: boolean;
+    set_role_to: Role[];
   };
 }

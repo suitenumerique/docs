@@ -1,8 +1,7 @@
-import { Loader } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
 
-import { Box } from '@/components';
+import { Loading } from '@/components';
 import { useConfig } from '@/core';
 
 import { HOME_URL } from '../conf';
@@ -14,57 +13,65 @@ export const Auth = ({ children }: PropsWithChildren) => {
     useAuth();
   const { replace, pathname } = useRouter();
   const { data: config } = useConfig();
-
-  if (isLoading && !isFetchedAfterMount) {
-    return (
-      <Box $height="100vh" $width="100vw" $align="center" $justify="center">
-        <Loader />
-      </Box>
-    );
-  }
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   /**
-   * If the user is authenticated and wanted initially to access a document,
-   * we redirect to the document page.
+   * If the user is authenticated and initially wanted to access a specific page, redirect him to that page now.
    */
-  if (authenticated) {
+  useEffect(() => {
+    if (!authenticated || isRedirecting) {
+      return;
+    }
+
     const authUrl = getAuthUrl();
     if (authUrl) {
-      void replace(authUrl);
-      return (
-        <Box $height="100vh" $width="100vw" $align="center" $justify="center">
-          <Loader />
-        </Box>
-      );
+      setIsRedirecting(true);
+      void replace(authUrl).then(() => setIsRedirecting(false));
     }
-  }
+  }, [authenticated, isRedirecting, pathname, replace]);
 
   /**
-   * If the user is not authenticated and the path is not allowed, we redirect to the login page.
+   * If the user is not authenticated and not on a allowed pages
    */
-  if (!authenticated && !pathAllowed) {
+  useEffect(() => {
+    if (isLoading || authenticated || pathAllowed || isRedirecting) {
+      return;
+    }
+
+    /**
+     * The homepage feature is enabled, redirect them to the homepage
+     */
     if (config?.FRONTEND_HOMEPAGE_FEATURE_ENABLED) {
-      void replace(HOME_URL);
-    } else {
-      gotoLogin();
-    }
-    return (
-      <Box $height="100vh" $width="100vw" $align="center" $justify="center">
-        <Loader />
-      </Box>
-    );
-  }
+      if (pathname !== HOME_URL) {
+        setIsRedirecting(true);
+        void replace(HOME_URL).then(() => setIsRedirecting(false));
+      }
 
-  /**
-   * If the user is authenticated and the path is the home page, we redirect to the index.
-   */
-  if (pathname === HOME_URL && authenticated) {
-    void replace('/');
-    return (
-      <Box $height="100vh" $width="100vw" $align="center" $justify="center">
-        <Loader />
-      </Box>
-    );
+      return;
+    }
+
+    /**
+     * Redirect them to login page
+     */
+    setIsRedirecting(true);
+    gotoLogin();
+  }, [
+    authenticated,
+    pathAllowed,
+    config?.FRONTEND_HOMEPAGE_FEATURE_ENABLED,
+    replace,
+    isLoading,
+    isRedirecting,
+    pathname,
+  ]);
+
+  const shouldShowLoader =
+    (isLoading && !isFetchedAfterMount) ||
+    isRedirecting ||
+    (!authenticated && !pathAllowed);
+
+  if (shouldShowLoader) {
+    return <Loading $height="100vh" $width="100vw" />;
   }
 
   return children;

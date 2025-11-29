@@ -1,4 +1,5 @@
 import {
+  TreeViewDataType,
   TreeViewItem,
   TreeViewNodeProps,
   useTreeContext,
@@ -12,10 +13,10 @@ import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import {
   Doc,
+  DocIcon,
   getEmojiAndTitle,
   useTrans,
 } from '@/features/docs/doc-management';
-import { DocIcon } from '@/features/docs/doc-management/components/DocIcon';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
@@ -68,7 +69,10 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           node.open();
 
           router.push(`/docs/${createdDoc.id}`);
-          treeContext?.treeData.setChildren(node.data.value.id, allChildren);
+          treeContext?.treeData.setChildren(
+            node.data.value.id,
+            allChildren as TreeViewDataType<Doc>[],
+          );
           treeContext?.treeData.setSelectedNode(createdDoc);
           togglePanel();
         })
@@ -101,6 +105,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isExpanded = node.isOpen;
   const isSelected = isSelectedNow;
   const ariaLabel = docTitle;
+  const isDisabled = !!doc.deleted_at;
 
   return (
     <Box
@@ -111,34 +116,26 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-label={ariaLabel}
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
+      aria-disabled={isDisabled}
       $css={css`
-        background-color: ${menuOpen
-          ? 'var(--c--theme--colors--greyscale-100)'
-          : 'var(--c--theme--colors--greyscale-000)'};
+        background-color: var(--c--globals--colors--gray-000);
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           position: absolute;
-          right: 0;
-          background: ${isDesktop
-            ? 'var(--c--theme--colors--greyscale-100)'
-            : 'var(--c--theme--colors--greyscale-000)'};
-        }
-        .c__tree-view--node.isSelected {
-          .light-doc-item-actions {
-            background: var(--c--theme--colors--greyscale-100);
-          }
+          right: var(--c--globals--spacings--0);
         }
         .c__tree-view--node.isFocused {
           outline: none !important;
-          box-shadow: 0 0 0 2px var(--c--theme--colors--primary-500) !important;
-          border-radius: 4px;
+          box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
+          border-radius: var(--c--globals--spacings--st);
         }
         &:hover {
-          background-color: var(--c--theme--colors--greyscale-100);
-          border-radius: 4px;
+          background-color: var(
+            --c--contextuals--background--semantic--gray--tertiary
+          );
+          border-radius: var(--c--globals--spacings--st);
           .light-doc-item-actions {
             display: flex;
-            background: var(--c--theme--colors--greyscale-100);
           }
         }
         .row.preview & {
@@ -147,6 +144,16 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       `}
     >
       <TreeViewItem {...props} onClick={handleActivate}>
+        <DocIcon
+          emoji={emoji}
+          withEmojiPicker={doc.abilities.partial_update}
+          defaultIcon={
+            <SubPageIcon color="var(--c--contextuals--content--semantic--info--tertiary)" />
+          }
+          $size="sm"
+          docId={doc.id}
+          title={doc.title}
+        />
         <BoxButton
           onClick={(e) => {
             e.stopPropagation();
@@ -161,12 +168,9 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           aria-label={`${t('Open document {{title}}', { title: docTitle })}`}
           $css={css`
             text-align: left;
+            min-width: 0;
           `}
         >
-          <Box $width="16px" $height="16px">
-            <DocIcon emoji={emoji} defaultIcon={<SubPageIcon />} $size="sm" />
-          </Box>
-
           <Box
             $direction="row"
             $align="center"
@@ -174,19 +178,20 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
               display: flex;
               flex-direction: row;
               width: 100%;
+              min-width: 0;
               gap: 0.5rem;
               align-items: center;
+              overflow: hidden;
             `}
           >
-            <Text $css={ItemTextCss} $size="sm" $variation="1000">
+            <Text $css={ItemTextCss} $size="sm">
               {displayTitle}
             </Text>
             {doc.nb_accesses_direct >= 1 && (
               <Icon
                 variant="filled"
                 iconName="group"
-                $size="16px"
-                $variation="400"
+                $size="md"
                 aria-hidden="true"
               />
             )}

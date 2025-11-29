@@ -8,12 +8,12 @@ import {
   KEY_LIST_DOC,
   Role,
 } from '@/docs/doc-management';
-import { KEY_LIST_DOC_ACCESSES } from '@/docs/doc-share';
 import { User } from '@/features/auth';
 import { useBroadcastStore } from '@/stores';
 
 import { OptionType } from '../types';
 
+import { KEY_LIST_DOC_ACCESSES } from './useDocAccesses';
 import { KEY_LIST_USER } from './useUsers';
 
 interface CreateDocAccessParams {

@@ -1,49 +1,37 @@
-import { Loader } from '@openfun/cunningham-react';
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import clsx from 'clsx';
+import { useEffect } from 'react';
 import { css } from 'styled-components';
-import * as Y from 'yjs';
 
-import { Box, Text, TextErrors } from '@/components';
-import { DocHeader, DocVersionHeader } from '@/docs/doc-header/';
+import { Box, Loading } from '@/components';
+import { DocHeader } from '@/docs/doc-header/';
 import {
   Doc,
-  base64ToBlocknoteXmlFragment,
+  useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
-import { Versions, useDocVersion } from '@/docs/doc-versioning/';
+import { useSkeletonStore } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
-import { BlockNoteEditor, BlockNoteEditorVersion } from './BlockNoteEditor';
+import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
 
-interface DocEditorProps {
-  doc: Doc;
-  versionId?: Versions['version_id'];
+interface DocEditorContainerProps {
+  docHeader: React.ReactNode;
+  docEditor: React.ReactNode;
+  isDeletedDoc: boolean;
+  readOnly: boolean;
 }
 
-export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
+export const DocEditorContainer = ({
+  docHeader,
+  docEditor,
+  isDeletedDoc,
+  readOnly,
+}: DocEditorContainerProps) => {
   const { isDesktop } = useResponsiveStore();
-  const isVersion = !!versionId && typeof versionId === 'string';
-  const { provider } = useProviderStore();
-
-  if (!provider) {
-    return null;
-  }
 
   return (
     <>
-      {isDesktop && !isVersion && (
-        <Box
-          $position="absolute"
-          $css={css`
-            top: 72px;
-            right: 20px;
-          `}
-        >
-          <TableContent />
-        </Box>
-      )}
       <Box
         $maxWidth="868px"
         $width="100%"
@@ -54,7 +42,7 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
           className="--docs--doc-editor-header"
         >
-          {isVersion ? <DocVersionHeader /> : <DocHeader doc={doc} />}
+          {docHeader}
         </Box>
 
         <Box
@@ -65,11 +53,17 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
           className="--docs--doc-editor-content"
         >
           <Box $css="flex:1;" $position="relative" $width="100%">
-            {isVersion ? (
-              <DocVersionEditor docId={doc.id} versionId={versionId} />
-            ) : (
-              <BlockNoteEditor doc={doc} provider={provider} />
-            )}
+            <Box
+              $padding={{ top: 'md', bottom: '2rem' }}
+              $background="white"
+              className={clsx('--docs--editor-container', {
+                '--docs--doc-readonly': readOnly,
+                '--docs--doc-deleted': isDeletedDoc,
+              })}
+              $height="100%"
+            >
+              {docEditor}
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -77,69 +71,61 @@ export const DocEditor = ({ doc, versionId }: DocEditorProps) => {
   );
 };
 
-interface DocVersionEditorProps {
-  docId: Doc['id'];
-  versionId: Versions['version_id'];
+interface DocEditorProps {
+  doc: Doc;
 }
 
-export const DocVersionEditor = ({
-  docId,
-  versionId,
-}: DocVersionEditorProps) => {
-  const {
-    data: version,
-    isLoading,
-    isError,
-    error,
-  } = useDocVersion({
-    docId,
-    versionId,
-  });
-
-  const { replace } = useRouter();
-  const [initialContent, setInitialContent] = useState<Y.XmlFragment>();
+export const DocEditor = ({ doc }: DocEditorProps) => {
+  const { isDesktop } = useResponsiveStore();
+  const { provider, isReady } = useProviderStore();
+  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const isDeletedDoc = !!doc.deleted_at;
+  const readOnly =
+    !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
+  const { setIsSkeletonVisible } = useSkeletonStore();
+  const isProviderReady = isReady && provider;
 
   useEffect(() => {
-    if (!version?.content) {
-      return;
+    if (isProviderReady) {
+      setIsSkeletonVisible(false);
     }
+  }, [isProviderReady, setIsSkeletonVisible]);
 
-    setInitialContent(base64ToBlocknoteXmlFragment(version.content));
-  }, [version?.content]);
-
-  if (isError && error) {
-    if (error.status === 404) {
-      void replace(`/404`);
-      return null;
-    }
-
-    return (
-      <Box $margin="large" className="--docs--doc-version-editor-error">
-        <TextErrors
-          causes={error.cause}
-          icon={
-            error.status === 502 ? (
-              <Text
-                className="material-icons"
-                $theme="danger"
-                aria-hidden={true}
-              >
-                wifi_off
-              </Text>
-            ) : undefined
-          }
-        />
-      </Box>
-    );
+  if (!isProviderReady) {
+    return <Loading />;
   }
 
-  if (isLoading || !version || !initialContent) {
-    return (
-      <Box $align="center" $justify="center" $height="100%">
-        <Loader />
-      </Box>
-    );
-  }
-
-  return <BlockNoteEditorVersion initialContent={initialContent} />;
+  return (
+    <>
+      {isDesktop && (
+        <Box
+          $height="100vh"
+          $position="absolute"
+          $css={css`
+            top: 72px;
+            right: 20px;
+          `}
+        >
+          <TableContent />
+        </Box>
+      )}
+      <DocEditorContainer
+        docHeader={<DocHeader doc={doc} />}
+        docEditor={
+          readOnly ? (
+            <BlockNoteReader
+              initialContent={provider.document.getXmlFragment(
+                'document-store',
+              )}
+              docId={doc.id}
+            />
+          ) : (
+            <BlockNoteEditor doc={doc} provider={provider} />
+          )
+        }
+        isDeletedDoc={isDeletedDoc}
+        readOnly={readOnly}
+      />
+    </>
+  );
 };

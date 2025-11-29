@@ -1,18 +1,23 @@
 import {
   Button,
+  ButtonElement,
   Modal,
   ModalSize,
   VariantType,
   useToastProvider,
 } from '@openfun/cunningham-react';
-import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/router';
+import { useEffect, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
-import { Box, Text, TextErrors } from '@/components';
-import ButtonCloseModal from '@/components/modal/ButtonCloseModal';
+import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
+import { useConfig } from '@/core';
+import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
+import { useKeyboardAction } from '@/hooks';
 
+import { KEY_LIST_DOC } from '../api/useDocs';
 import { useRemoveDoc } from '../api/useRemoveDoc';
+import { useDocUtils } from '../hooks';
 import { Doc } from '../types';
 
 interface ModalRemoveDocProps {
@@ -28,54 +33,84 @@ export const ModalRemoveDoc = ({
 }: ModalRemoveDocProps) => {
   const { toast } = useToastProvider();
   const { t } = useTranslation();
+  const { data: config } = useConfig();
+  const trashBinCutoffDays = config?.TRASHBIN_CUTOFF_DAYS || 30;
   const { push } = useRouter();
-  const pathname = usePathname();
+  const { hasChildren } = useDocUtils(doc);
+  const cancelButtonRef = useRef<ButtonElement>(null);
   const {
     mutate: removeDoc,
     isError,
     error,
   } = useRemoveDoc({
-    onSuccess: () => {
-      if (onSuccess) {
-        onSuccess(doc);
-      } else if (pathname === '/') {
-        onClose();
-      } else {
-        void push('/');
-      }
+    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
+    options: {
+      onSuccess: () => {
+        if (onSuccess) {
+          onSuccess(doc);
+        } else {
+          void push('/');
+        }
 
-      toast(t('The document has been deleted.'), VariantType.SUCCESS, {
-        duration: 4000,
-      });
+        onClose();
+
+        toast(t('The document has been deleted.'), VariantType.SUCCESS, {
+          duration: 4000,
+        });
+      },
     },
   });
+
+  useEffect(() => {
+    const TIMEOUT_MODAL_MOUNTING = 100;
+    const timeoutId = setTimeout(() => {
+      const buttonElement = cancelButtonRef.current;
+      if (buttonElement) {
+        buttonElement.focus();
+      }
+    }, TIMEOUT_MODAL_MOUNTING);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  const keyboardAction = useKeyboardAction();
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleDelete = () => {
+    removeDoc({ docId: doc.id });
+  };
+
+  const handleCloseKeyDown = keyboardAction(handleClose);
+  const handleDeleteKeyDown = keyboardAction(handleDelete);
 
   return (
     <Modal
       isOpen
       closeOnClickOutside
       hideCloseButton
-      onClose={() => onClose()}
+      onClose={handleClose}
       aria-describedby="modal-remove-doc-title"
       rightActions={
         <>
           <Button
+            ref={cancelButtonRef}
             aria-label={t('Cancel the deletion')}
-            color="secondary"
+            variant="secondary"
             fullWidth
-            onClick={() => onClose()}
+            onClick={handleClose}
+            onKeyDown={handleCloseKeyDown}
           >
             {t('Cancel')}
           </Button>
           <Button
             aria-label={t('Delete document')}
-            color="danger"
+            color="error"
             fullWidth
-            onClick={() =>
-              removeDoc({
-                docId: doc.id,
-              })
-            }
+            onClick={handleDelete}
+            onKeyDown={handleDeleteKeyDown}
           >
             {t('Delete')}
           </Button>
@@ -95,24 +130,37 @@ export const ModalRemoveDoc = ({
             id="modal-remove-doc-title"
             $margin="0"
             $align="flex-start"
-            $variation="1000"
           >
             {t('Delete a doc')}
           </Text>
           <ButtonCloseModal
             aria-label={t('Close the delete modal')}
-            onClick={() => onClose()}
+            onClick={handleClose}
+            onKeyDown={handleCloseKeyDown}
           />
         </Box>
       }
     >
       <Box className="--docs--modal-remove-doc">
         {!isError && (
-          <Text $size="sm" $variation="600" $display="inline-block" as="p">
-            <Trans t={t}>
-              This document and <strong>any sub-documents</strong> will be
-              permanently deleted. This action is irreversible.
-            </Trans>
+          <Text
+            $size="sm"
+            $variation="secondary"
+            $display="inline-block"
+            as="p"
+          >
+            {hasChildren ? (
+              <Trans t={t}>
+                This document and <strong>any sub-documents</strong> will be
+                placed in the trashbin. You can restore it within{' '}
+                {{ days: trashBinCutoffDays }} days.
+              </Trans>
+            ) : (
+              t(
+                'This document will be placed in the trashbin. You can restore it within {{days}} days.',
+                { days: trashBinCutoffDays },
+              )
+            )}
           </Text>
         )}
 

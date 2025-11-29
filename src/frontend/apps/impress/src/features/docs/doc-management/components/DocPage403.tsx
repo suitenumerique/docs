@@ -1,6 +1,7 @@
 import { Button } from '@openfun/cunningham-react';
 import Head from 'next/head';
 import Image from 'next/image';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -8,6 +9,7 @@ import img403 from '@/assets/icons/icon-403.png';
 import { Box, Icon, Loading, StyledLink, Text } from '@/components';
 import { ButtonAccessRequest } from '@/docs/doc-share';
 import { useDocAccessRequests } from '@/docs/doc-share/api/useDocAccessRequest';
+import { useSkeletonStore } from '@/features/skeletons';
 
 const StyledButton = styled(Button)`
   width: fit-content;
@@ -19,6 +21,13 @@ interface DocProps {
 
 export const DocPage403 = ({ id }: DocProps) => {
   const { t } = useTranslation();
+  const { setIsSkeletonVisible } = useSkeletonStore();
+
+  useEffect(() => {
+    // Ensure the skeleton overlay is hidden on 403 page
+    setIsSkeletonVisible(false);
+  }, [setIsSkeletonVisible]);
+
   const {
     data: requests,
     isLoading: isLoadingRequest,
@@ -56,7 +65,6 @@ export const DocPage403 = ({ id }: DocProps) => {
         $padding={{ bottom: '2rem' }}
       >
         <Image
-          className="c__image-system-filter"
           src={img403}
           alt={t('Image 403')}
           width={300}
@@ -68,7 +76,7 @@ export const DocPage403 = ({ id }: DocProps) => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {hasRequested
               ? t('Your access request for this document is pending.')
               : t('Insufficient access rights to view the document.')}
@@ -79,7 +87,6 @@ export const DocPage403 = ({ id }: DocProps) => {
               as="p"
               $maxWidth="320px"
               $textAlign="center"
-              $variation="600"
               $size="sm"
               $margin={{ top: '0' }}
             >
@@ -92,8 +99,9 @@ export const DocPage403 = ({ id }: DocProps) => {
           <Box $direction="row" $gap="0.7rem">
             <StyledLink href="/">
               <StyledButton
-                icon={<Icon iconName="house" $theme="primary" />}
-                color="tertiary"
+                icon={<Icon iconName="house" $withThemeInherited />}
+                color="brand"
+                variant="secondary"
               >
                 {t('Home')}
               </StyledButton>

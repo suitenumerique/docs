@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
@@ -23,6 +23,7 @@ export const CONFIG = {
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
   SENTRY_DSN: null,
+  TRASHBIN_CUTOFF_DAYS: 30,
   theme_customization: {},
 } as const;
 
@@ -30,7 +31,7 @@ export const overrideConfig = async (
   page: Page,
   newConfig: { [_K in keyof typeof CONFIG]?: unknown },
 ) =>
-  await page.route('**/api/v1.0/config/', async (route) => {
+  await page.route(/.*\/api\/v1.0\/config\/.*/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET')) {
       await route.fulfill({
@@ -47,7 +48,7 @@ export const overrideConfig = async (
 export const keyCloakSignIn = async (
   page: Page,
   browserName: string,
-  fromHome: boolean = true,
+  fromHome = true,
 ) => {
   if (fromHome) {
     await page.getByRole('button', { name: 'Start Writing' }).first().click();
@@ -69,6 +70,14 @@ export const keyCloakSignIn = async (
   await page.click('button[type="submit"]', { force: true });
 };
 
+export const getOtherBrowserName = (browserName: BrowserName) => {
+  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
+  if (!otherBrowserName) {
+    throw new Error('No alternative browser found');
+  }
+  return otherBrowserName;
+};
+
 export const randomName = (name: string, browserName: string, length: number) =>
   Array.from({ length }, (_el, index) => {
     return `${browserName}-${Math.floor(Math.random() * 10000)}-${index}-${name}`;
@@ -78,8 +87,8 @@ export const createDoc = async (
   page: Page,
   docName: string,
   browserName: string,
-  length: number = 1,
-  isMobile: boolean = false,
+  length = 1,
+  isMobile = false,
 ) => {
   const randomDocs = randomName(docName, browserName, length);
 
@@ -124,7 +133,9 @@ export const verifyDocName = async (page: Page, docName: string) => {
   try {
     await expect(
       page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText(docName);
+    ).toContainText(docName, {
+      timeout: 1000,
+    });
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();
   }
@@ -203,7 +214,7 @@ export const waitForResponseCreateDoc = (page: Page) => {
 };
 
 export const mockedDocument = async (page: Page, data: object) => {
-  await page.route('**/documents/**/', async (route) => {
+  await page.route(/\**\/documents\/\**/, async (route) => {
     const request = route.request();
     if (
       request.method().includes('GET') &&
@@ -255,7 +266,7 @@ export const mockedDocument = async (page: Page, data: object) => {
 };
 
 export const mockedListDocs = async (page: Page, data: object[] = []) => {
-  await page.route('**/documents/**/', async (route) => {
+  await page.route(/\**\/documents\/\**/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET') && request.url().includes('page=')) {
       await route.fulfill({
@@ -276,6 +287,7 @@ export const expectLoginPage = async (page: Page) =>
   ).toBeVisible({
     timeout: 10000,
   });
+
 // language helper
 export const TestLanguage = {
   English: {
@@ -299,7 +311,7 @@ export async function waitForLanguageSwitch(
   page: Page,
   lang: TestLanguageValue,
 ) {
-  await page.route('**/api/v1.0/users/**', async (route, request) => {
+  await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
     if (request.method().includes('PATCH')) {
       await route.fulfill({
         json: {
@@ -325,3 +337,19 @@ export async function waitForLanguageSwitch(
 
   await page.getByRole('menuitem', { name: lang.label }).click();
 }
+
+export const clickInEditorMenu = async (page: Page, textButton: string) => {
+  await page.getByRole('button', { name: 'Open the document options' }).click();
+  await page.getByRole('menuitem', { name: textButton }).click();
+};
+
+export const clickInGridMenu = async (
+  page: Page,
+  row: Locator,
+  textButton: string,
+) => {
+  await row
+    .getByRole('button', { name: /Open the menu of actions for the document/ })
+    .click();
+  await page.getByRole('menuitem', { name: textButton }).click();
+};

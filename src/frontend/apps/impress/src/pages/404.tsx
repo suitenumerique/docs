@@ -39,7 +39,6 @@ const Page: NextPageWithLayout = () => {
           {t('Page Not Found - Error 404')} - {t('Docs')}
         </Text>
         <Image
-          className="c__image-system-filter"
           src={img403}
           alt=""
           width={300}
@@ -51,7 +50,7 @@ const Page: NextPageWithLayout = () => {
         />
 
         <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="primary">
+          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
             {t(
               'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
             )}
