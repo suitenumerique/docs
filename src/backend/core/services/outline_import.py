@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import io
-import mimetypes
+import posixpath
 import re
 import uuid
 import zipfile
 from typing import Iterable
-import posixpath
+
+import magic
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import transaction
 
 from lasuite.malware_detection import malware_detection
 
@@ -47,14 +49,13 @@ def _ensure_dir_documents(user, dir_path: str, dir_docs: dict[str, models.Docume
                 title=part,
                 link_reach=models.LinkReachChoices.RESTRICTED,
             )
+            models.DocumentAccess.objects.create(
+                document=doc,
+                user=user,
+                role=models.RoleChoices.OWNER,
+            )
         else:
             doc = parent.add_child(creator=user, title=part)
-
-        models.DocumentAccess.objects.update_or_create(
-            document=doc,
-            user=user,
-            defaults={"role": models.RoleChoices.OWNER},
-        )
         dir_docs[current] = doc
         parent = doc
 
@@ -63,14 +64,15 @@ def _ensure_dir_documents(user, dir_path: str, dir_docs: dict[str, models.Docume
 
 def _upload_attachment(user, doc: models.Document, arcname: str, data: bytes) -> str:
     """Upload a binary asset into object storage and return its public media URL."""
-    content_type, _ = mimetypes.guess_type(arcname)
+    mime = magic.Magic(mime=True)
+    content_type = mime.from_buffer(data[:1024]) if data else None
     ext = (arcname.split(".")[-1] or "bin").lower()
     file_id = uuid.uuid4()
     key = f"{doc.key_base}/{enums.ATTACHMENTS_FOLDER:s}/{file_id!s}.{ext}"
     extra_args = {
         "Metadata": {
             "owner": str(user.id),
-            "status": enums.DocumentAttachmentStatus.READY,
+            "status": enums.DocumentAttachmentStatus.PROCESSING,
         },
     }
     if content_type:
@@ -85,21 +87,26 @@ def _upload_attachment(user, doc: models.Document, arcname: str, data: bytes) ->
     return f"{settings.MEDIA_BASE_URL}{settings.MEDIA_URL}{key}"
 
 
+@transaction.atomic
 def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
     """Process an Outline export zip and create Docs documents.
+
+    This function runs within an atomic transaction, ensuring that either all documents
+    are created successfully or none are (rollback on any error).
 
     Returns the list of created document IDs (stringified UUIDs) corresponding to
     markdown-backed documents. Container folders used to rebuild hierarchy are not listed.
     """
     archive = zipfile.ZipFile(io.BytesIO(zip_bytes))
 
-    # Basic Zip Slip protection: refuse absolute or parent-traversal entries
+    # Basic Zip Slip protection: refuse paths that escape the archive root
     for name in archive.namelist():
         # Normalize to posix separators and check traversal
         if name.startswith("/") or "\\" in name:
             raise OutlineImportError("Unsafe path in archive")
-        parts = [p for p in name.split("/") if p]
-        if any(part == ".." for part in parts):
+        # Normalize the path and check if it escapes the root after normalization
+        normalized = posixpath.normpath(name)
+        if normalized.startswith("..") or normalized.startswith("/"):
             raise OutlineImportError("Unsafe path in archive")
 
     created_ids: list[str] = []
@@ -156,6 +163,11 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
                 title=title,
                 link_reach=models.LinkReachChoices.RESTRICTED,
             )
+            models.DocumentAccess.objects.create(
+                document=doc,
+                user=user,
+                role=models.RoleChoices.OWNER,
+            )
         else:
             doc = parent_doc.add_child(creator=user, title=title)
 
@@ -164,12 +176,6 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
         base_path = md_path.rsplit(".md", 1)[0]
         if base_path in md_with_dirs:
             dir_docs[base_path] = doc
-
-        models.DocumentAccess.objects.update_or_create(
-            document=doc,
-            user=user,
-            defaults={"role": models.RoleChoices.OWNER},
-        )
 
         def replace_img_link(match: re.Match[str]) -> str:
             url = match.group(1)
