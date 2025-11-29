@@ -23,4 +23,7 @@ app = Celery("impress")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django apps.
-app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+# autodiscover_tasks looks for "tasks.py" in each app by default
+# We also need to discover tasks in subdirectories like core/tasks/
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS + ["core.tasks"], related_name="mail")
+app.autodiscover_tasks(lambda: ["core.tasks"], related_name="outline_import")

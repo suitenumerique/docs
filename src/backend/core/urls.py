@@ -8,12 +8,18 @@ from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
 from core.api import imports as import_views
+from core.api import import_viewsets
 
 # - Main endpoints
 router = DefaultRouter()
 router.register("templates", viewsets.TemplateViewSet, basename="templates")
 router.register("documents", viewsets.DocumentViewSet, basename="documents")
 router.register("users", viewsets.UserViewSet, basename="users")
+router.register(
+    "imports/outline/jobs",
+    import_viewsets.OutlineImportJobViewSet,
+    basename="outline-import-job",
+)
 
 # - Routes nested under a document
 document_related_router = DefaultRouter()
@@ -62,8 +68,9 @@ urlpatterns = [
                     include(thread_related_router.urls),
                 ),
                 path(
-                    "imports/outline/upload",
+                    "imports/outline/upload/",
                     import_views.OutlineImportUploadView.as_view(),
+                    name="outline-import-upload",
                 ),
             ]
         ),

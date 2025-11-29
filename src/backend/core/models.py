@@ -1662,3 +1662,55 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
+
+
+class OutlineImportJob(BaseModel):
+    """Track async Outline import jobs."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        SCANNING = "scanning", _("Scanning")
+        PROCESSING = "processing", _("Processing")
+        COMPLETED = "completed", _("Completed")
+        FAILED = "failed", _("Failed")
+
+    user = models.ForeignKey(
+        User,
+        verbose_name=_("user"),
+        help_text=_("user who initiated the import"),
+        on_delete=models.CASCADE,
+        related_name="outline_import_jobs",
+    )
+    status = models.CharField(
+        verbose_name=_("status"),
+        help_text=_("current status of the import job"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    zip_file_key = models.CharField(
+        verbose_name=_("zip file key"),
+        help_text=_("S3 key of the uploaded zip file"),
+        max_length=255,
+    )
+    created_document_ids = ArrayField(
+        models.UUIDField(),
+        verbose_name=_("created document IDs"),
+        help_text=_("list of document IDs created during import"),
+        default=list,
+        blank=True,
+    )
+    error_message = models.TextField(
+        verbose_name=_("error message"),
+        help_text=_("error message if import failed"),
+        blank=True,
+    )
+
+    class Meta:
+        db_table = "core_outline_import_job"
+        verbose_name = _("Outline import job")
+        verbose_name_plural = _("Outline import jobs")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"OutlineImportJob {self.id} ({self.status})"

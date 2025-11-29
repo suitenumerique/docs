@@ -202,9 +202,12 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
             )
             doc.content = ydoc_b64
             doc.save()
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             # Keep doc without content on conversion error but continue import
-            pass
+            import logging
+            logging.getLogger(__name__).warning(
+                "Failed to convert markdown for document %s: %s", doc.id, e
+            )
 
         created_ids.append(str(doc.id))
 
