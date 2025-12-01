@@ -4,7 +4,12 @@ import { css } from 'styled-components';
 
 import { Box, BoxButton, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useEditorStore, useHeadingStore } from '@/docs/doc-editor';
+import {
+  DocsBlockNoteEditor,
+  HeadingBlock,
+  useEditorStore,
+  useHeadingStore,
+} from '@/docs/doc-editor';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
 import { Heading } from './Heading';
@@ -12,6 +17,8 @@ import { Heading } from './Heading';
 export const TableContent = () => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [containerHeight, setContainerHeight] = useState('100vh');
+  const { headings } = useHeadingStore();
+  const { editor } = useEditorStore();
 
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -29,6 +36,15 @@ export const TableContent = () => {
   const onOpen = () => {
     setIsOpen(true);
   };
+
+  if (
+    !editor ||
+    !headings ||
+    headings.length === 0 ||
+    (headings.length === 1 && !headings[0].contentText)
+  ) {
+    return null;
+  }
 
   return (
     <Box
@@ -96,7 +112,13 @@ export const TableContent = () => {
             />
           </BoxButton>
         )}
-        {isOpen && <TableContentOpened setIsOpen={setIsOpen} />}
+        {isOpen && (
+          <TableContentOpened
+            setIsOpen={setIsOpen}
+            headings={headings}
+            editor={editor}
+          />
+        )}
       </Box>
     </Box>
   );
@@ -104,11 +126,13 @@ export const TableContent = () => {
 
 const TableContentOpened = ({
   setIsOpen,
+  headings,
+  editor,
 }: {
   setIsOpen: (isOpen: boolean) => void;
+  headings: HeadingBlock[];
+  editor: DocsBlockNoteEditor;
 }) => {
-  const { headings } = useHeadingStore();
-  const { editor } = useEditorStore();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const [headingIdHighlight, setHeadingIdHighlight] = useState<string>();
   const { t } = useTranslation();
@@ -171,15 +195,6 @@ const TableContentOpened = ({
   const onClose = () => {
     setIsOpen(false);
   };
-
-  if (
-    !editor ||
-    !headings ||
-    headings.length === 0 ||
-    (headings.length === 1 && !headings[0].contentText)
-  ) {
-    return null;
-  }
 
   return (
     <Box
