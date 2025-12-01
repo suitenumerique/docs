@@ -10,7 +10,7 @@ const formatDefault: DateTimeFormatOptions = {
 };
 
 export const useDate = () => {
-  const { i18n ,t } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const formatDate = (
     date: string,
@@ -24,7 +24,9 @@ export const useDate = () => {
   const relativeDate = (date: string): string => {
     const dateToCompare = DateTime.fromISO(date);
 
-    if (!dateToCompare.isValid) return '';
+    if (!dateToCompare.isValid) {
+      return '';
+    }
 
     const dateNow = DateTime.now();
 
