@@ -121,7 +121,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
         background-color: var(--c--globals--colors--gray-000);
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
-          position: absolute;
           right: var(--c--globals--spacings--0);
         }
         .c__tree-view--node.isFocused {

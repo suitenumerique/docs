@@ -234,7 +234,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             }
 
             .doc-tree-root-item-actions {
-              display: flex;
+              display: ${rootActionsOpen ? 'flex' : 'none'};
               opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {
@@ -244,6 +244,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             &:hover,
             &:focus-visible {
               .doc-tree-root-item-actions {
+                display: flex;
                 opacity: 1;
               }
             }
