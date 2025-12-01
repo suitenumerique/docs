@@ -6,6 +6,7 @@
   "prCreation": "not-pending",
   "rebaseWhen": "conflicted",
   "updateNotScheduled": false,
+  "minimumReleaseAge": "15 days",
   "packageRules": [
     {
       "enabled": false,
