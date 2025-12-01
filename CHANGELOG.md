@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
+- ✨(frontend) link to create new doc #1574
 
 ### Changed
 

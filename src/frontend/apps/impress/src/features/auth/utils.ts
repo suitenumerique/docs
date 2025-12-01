@@ -27,7 +27,7 @@ export const setAuthUrl = () => {
     window.location.pathname !== '/' &&
     window.location.pathname !== `${HOME_URL}/`
   ) {
-    localStorage.setItem(PATH_AUTH_LOCAL_STORAGE, window.location.pathname);
+    localStorage.setItem(PATH_AUTH_LOCAL_STORAGE, window.location.href);
   }
 };
 
