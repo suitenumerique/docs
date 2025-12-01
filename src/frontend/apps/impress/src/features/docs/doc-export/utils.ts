@@ -5,7 +5,10 @@ import {
 } from '@blocknote/core';
 import { Canvg } from 'canvg';
 import { IParagraphOptions, ShadingType } from 'docx';
+import JSZip from 'jszip';
 import React from 'react';
+
+import { exportResolveFileUrl } from './api';
 
 export function downloadFile(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
@@ -287,4 +290,63 @@ ${editorHtmlWithLocalMedia}
     </main>
   </body>
 </html>`;
+};
+
+export const addMediaFilesToZip = async (
+  parsedDocument: Document,
+  zip: JSZip,
+  mediaUrl: string,
+) => {
+  const mediaFiles: { filename: string; blob: Blob }[] = [];
+  const mediaElements = Array.from(
+    parsedDocument.querySelectorAll<
+      HTMLImageElement | HTMLVideoElement | HTMLAudioElement | HTMLSourceElement
+    >('img, video, audio, source'),
+  );
+
+  await Promise.all(
+    mediaElements.map(async (element, index) => {
+      const src = element.getAttribute('src');
+
+      if (!src) {
+        return;
+      }
+
+      // data: URLs are already embedded and work offline; no need to create separate files.
+      if (src.startsWith('data:')) {
+        return;
+      }
+
+      // Only download same-origin resources (internal media like /media/...).
+      // External URLs keep their original src and are not included in the ZIP
+      let url: URL | null = null;
+      try {
+        url = new URL(src, mediaUrl);
+      } catch {
+        url = null;
+      }
+
+      if (!url || url.origin !== mediaUrl) {
+        return;
+      }
+
+      const fetched = await exportResolveFileUrl(url.href);
+
+      if (!(fetched instanceof Blob)) {
+        return;
+      }
+
+      const filename = deriveMediaFilename({
+        src: url.href,
+        index,
+        blob: fetched,
+      });
+      element.setAttribute('src', filename);
+      mediaFiles.push({ filename, blob: fetched });
+    }),
+  );
+
+  mediaFiles.forEach(({ filename, blob }) => {
+    zip.file(filename, blob);
+  });
 };

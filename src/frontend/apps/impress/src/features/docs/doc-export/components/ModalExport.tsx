@@ -13,13 +13,16 @@ import {
 import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';
+import JSZip from 'jszip';
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
+import { useMediaUrl } from '@/core';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
+import { fallbackLng } from '@/i18n/config';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
@@ -27,7 +30,7 @@ import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
 import {
-  deriveMediaFilename,
+  addMediaFilesToZip,
   downloadFile,
   generateHtmlDocument,
 } from '../utils';
@@ -57,6 +60,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     DocDownloadFormat.PDF,
   );
   const { untitledDocument } = useTrans();
+  const mediaUrl = useMediaUrl();
 
   const templateOptions = useMemo(() => {
     const templateOptions = (templates?.pages || [])
@@ -155,41 +159,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       const domParser = new DOMParser();
       const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
 
-      const mediaFiles: { filename: string; blob: Blob }[] = [];
-      const mediaElements = Array.from(
-        parsedDocument.querySelectorAll<
-          | HTMLImageElement
-          | HTMLVideoElement
-          | HTMLAudioElement
-          | HTMLSourceElement
-        >('img, video, audio, source'),
-      );
+      const zip = new JSZip();
 
-      await Promise.all(
-        mediaElements.map(async (element, index) => {
-          const src = element.getAttribute('src');
+      await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
 
-          if (!src) {
-            return;
-          }
-
-          const fetched = await exportCorsResolveFileUrl(doc.id, src);
-
-          if (!(fetched instanceof Blob)) {
-            return;
-          }
-
-          const filename = deriveMediaFilename({
-            src,
-            index,
-            blob: fetched,
-          });
-          element.setAttribute('src', filename);
-          mediaFiles.push({ filename, blob: fetched });
-        }),
-      );
-
-      const lang = i18next.language || 'fr';
+      const lang = i18next.language || fallbackLng;
+      const editorHtmlWithLocalMedia = parsedDocument.body.innerHTML;
 
       const htmlContent = generateHtmlDocument(
         documentTitle,
@@ -197,16 +172,19 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         lang,
       );
 
-      blobExport = new Blob([htmlContent], {
-        type: 'text/html;charset=utf-8',
-      });
+      zip.file('index.html', htmlContent);
+
+      blobExport = await zip.generateAsync({ type: 'blob' });
     } else {
       toast(t('The export failed'), VariantType.ERROR);
       setIsExporting(false);
       return;
     }
 
-    downloadFile(blobExport, `${filename}.${format}`);
+    const downloadExtension =
+      format === DocDownloadFormat.HTML ? 'zip' : format;
+
+    downloadFile(blobExport, `${filename}.${downloadExtension}`);
 
     toast(
       t('Your {{format}} was downloaded succesfully', {
@@ -283,7 +261,9 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         className="--docs--modal-export-content"
       >
         <Text $variation="secondary" $size="sm" as="p">
-          {t('Download your document in a .docx, .odt or .pdf format.')}
+          {t(
+            'Download your document in a .docx, .odt, .pdf or .html(zip) format.',
+          )}
         </Text>
         <Select
           clearable={false}
