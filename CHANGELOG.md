@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.0.0] - 2025-12-01
+
 ### Added
 
 - ✨ Add comments feature to the editor #1330
@@ -15,14 +17,14 @@ and this project adheres to
 ### Changed
 
 - ⚡️(sw) stop to cache external resources likes videos #1655
-- 💥(frontend) upgrade to ui-kit v2
+- 💥(frontend) upgrade to ui-kit v2 #1605
 - ⚡️(frontend) improve perf on upload and table of contents #1662
-
-### Fixed
-
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
   - ♿(frontend) improve screen reader support in DocShare modal #1628
+
+### Fixed
+
 - 🐛(frontend) fix toolbar not activated when reader #1640
 - 🐛(frontend) preserve left panel width on window resize #1588
 - 🐛(frontend) prevent duplicate as first character in title #1595
@@ -898,7 +900,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.10.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.0.0...main
+[v4.0.0]: https://github.com/suitenumerique/docs/releases/v4.0.0
 [v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
 [v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
 [v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2

@@ -16,6 +16,29 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+## [4.0.0] - 2025-11-26
+
+- ⚠️ We updated `@gouvfr-lasuite/ui-kit` to `0.18.0`, so if you are customizing Docs with a css layer or with a custom template, you need to update your customization to follow the new design system structure.  
+More information about the changes in the design system can be found here:
+  - https://suitenumerique.github.io/cunningham/storybook/?path=/docs/migrating-from-v3-to-v4--docs
+  - https://github.com/suitenumerique/docs/pull/1605
+  - https://github.com/suitenumerique/docs/blob/main/docs/theming.md
+
+- If you were using the `THEME_CUSTOMIZATION_FILE_PATH` and have overridden the header logo, you need to update your customization file to follow the new structure of the header, it is now: 
+  ```json
+  {
+    ...,
+    "header": {
+      "icon": {
+        "src": "your_logo_src",
+        "width": "your_logo_width",
+        "height": "your_logo_height"
+      }
+    }
+  }
+  ```
+
+
 ## [3.3.0] - 2025-05-22
 
 ⚠️ For some advanced features (ex: Export as PDF) Docs relies on XL packages from BlockNote. These are licenced under AGPL-3.0 and are not MIT compatible. You can perfectly use Docs without these packages by setting the environment variable `PUBLISH_AS_MIT` to true. That way you'll build an image of the application without the features that are not MIT compatible. Read the [environment variables documentation](/docs/env.md) for more information.
