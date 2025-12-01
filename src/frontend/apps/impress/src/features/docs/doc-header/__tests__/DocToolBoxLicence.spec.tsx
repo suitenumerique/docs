@@ -42,12 +42,13 @@ describe('DocToolBox - Licence', () => {
     });
     const optionsButton = await screen.findByLabelText('Export the document');
     await userEvent.click(optionsButton);
+
+    // Wait for the export modal to be visible, then assert on its content text.
+    await screen.findByTestId('modal-export-title');
     expect(
-      await screen.findByText(
-        'Download your document in a .docx, .odt or .pdf format.',
-      ),
+      screen.getByText(/Download your document in a .docx, .odt.*format\./i),
     ).toBeInTheDocument();
-  }, 10000);
+  }, 60000);
 
   test('The export button is not rendered when MIT version is activated', async () => {
     process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = 'true';

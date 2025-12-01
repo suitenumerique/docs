@@ -31,7 +31,7 @@ test.describe('Doc Export', () => {
 
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
-      page.getByText('Download your document in a .docx, .odt or .pdf format.'),
+      page.getByText(/Download your document in a \.docx, \.odt.*format\./i),
     ).toBeVisible();
     await expect(
       page.getByRole('combobox', { name: 'Template' }),
@@ -185,6 +185,64 @@ test.describe('Doc Export', () => {
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.odt`);
+  });
+
+  test('it exports the doc to html zip', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-html-zip',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    // Add some content and at least one image so that the ZIP contains media files.
+    await page.locator('.ProseMirror.bn-editor').click();
+    await page.locator('.ProseMirror.bn-editor').fill('Hello HTML ZIP');
+
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+
+    await expect(image).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'HTML' }).click();
+
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.zip`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.zip`);
+
+    const zipBuffer = await cs.toBuffer(await download.createReadStream());
+
+    // ZIP files start with "PK\x03\x04"
+    expect(zipBuffer.length).toBeGreaterThan(4);
+    expect(zipBuffer[0]).toBe(0x50);
+    expect(zipBuffer[1]).toBe(0x4b);
   });
 
   /**
