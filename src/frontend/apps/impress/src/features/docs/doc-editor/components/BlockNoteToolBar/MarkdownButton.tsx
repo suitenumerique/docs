@@ -94,6 +94,7 @@ export function MarkdownButton() {
             font-family: var(--c--globals--font--families--base);
           `}
           $weight="bold"
+          $size="sm"
         >
           M
         </Text>

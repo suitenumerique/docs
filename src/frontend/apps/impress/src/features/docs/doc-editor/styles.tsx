@@ -8,7 +8,7 @@ export const cssEditor = css`
   }
 
   & .bn-editor {
-    color: var(--c--globals--colors--greyscale-700);
+    color: var(--c--globals--colors--gray-700);
   }
 
   /**
@@ -127,7 +127,7 @@ export const cssEditor = css`
     font-size: 1.25rem;
   }
   a {
-    color: var(--c--globals--colors--greyscale-600);
+    color: var(--c--globals--colors--gray-600);
     cursor: pointer;
   }
   .bn-block-group

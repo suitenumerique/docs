@@ -11,7 +11,7 @@ export const cssComments = (
       .bn-thread-mark:not([data-orphan='true']),
       .bn-thread-mark-selected:not([data-orphan='true']) {
         background: ${canSeeComment ? '#EDB40066' : 'transparent'};
-        color: var(--c--globals--colors--greyscale-700);
+        color: var(--c--globals--colors--gray-700);
       }
     }
 
@@ -54,7 +54,7 @@ export const cssComments = (
         & .bn-editor {
           padding-left: var(--c--globals--spacings--lg);
           .bn-inline-content {
-            color: var(--c--globals--colors--greyscale-700);
+            color: var(--c--globals--colors--gray-700);
           }
         }
 
@@ -65,7 +65,7 @@ export const cssComments = (
             padding: var(--c--globals--spacings--0)
               var(--c--globals--spacings--st);
             background: none;
-            border: 1px solid var(--c--globals--colors--greyscale-300);
+            border: 1px solid var(--c--globals--colors--gray-300);
             border-radius: var(--c--globals--spacings--st);
             height: var(--c--globals--spacings--md);
           }
@@ -103,12 +103,12 @@ export const cssComments = (
               background-color: transparent;
 
               &:hover {
-                background-color: var(--c--globals--colors--greyscale-100);
+                background-color: var(--c--globals--colors--gray-100);
               }
             }
 
             button[role='menuitem'] svg {
-              color: var(--c--globals--colors--greyscale-600);
+              color: var(--c--globals--colors--gray-600);
             }
           }
 
@@ -137,7 +137,7 @@ export const cssComments = (
 
               &[data-test='cancel'] {
                 background: white;
-                border: 1px solid var(--c--globals--colors--greyscale-300);
+                border: 1px solid var(--c--globals--colors--gray-300);
                 color: var(--c--globals--colors--info-600);
               }
             }
@@ -186,13 +186,14 @@ export const cssComments = (
             padding: var(--c--globals--spacings--0);
 
             &:disabled {
-              background: var(--c--globals--colors--greyscale-300);
+              background: var(--c--globals--colors--gray-300);
             }
 
             & .mantine-Button-label::before {
-              content: '🡡';
-              font-size: 13px;
-              color: var(--c--globals--colors--greyscale-100);
+              content: 'arrow_upward_alt';
+              font-family: 'Material Symbols Outlined Variable', sans-serif;
+              font-size: 18px;
+              color: var(--c--globals--colors--gray-100);
             }
           }
         }
