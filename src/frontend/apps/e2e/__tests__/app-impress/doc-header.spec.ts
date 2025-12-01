@@ -582,7 +582,11 @@ test.describe('Doc Header', () => {
     await child.hover();
     await child.getByText(`more_horiz`).click();
 
+    const currentUrl = page.url();
+
     await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+
+    await expect(page).not.toHaveURL(new RegExp(currentUrl));
 
     await verifyDocName(page, duplicateTitle);
 
