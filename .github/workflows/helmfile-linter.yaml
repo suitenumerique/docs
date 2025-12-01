@@ -21,10 +21,10 @@ jobs:
       shell: bash
       run: |
         set -e
-        HELMFILE=src/helm/helmfile.yaml
+        HELMFILE=src/helm/helmfile.yaml.gotmpl
         environments=$(awk 'BEGIN {in_env=0} /^environments:/ {in_env=1; next} /^---/ {in_env=0} in_env && /^  [^ ]/ {gsub(/^  /,""); gsub(/:.*$/,""); print}' "$HELMFILE")
         for env in $environments; do
           echo "################### $env lint ###################"
-          helmfile -e $env -f $HELMFILE lint || exit 1
+          helmfile -e $env lint -f $HELMFILE || exit 1
           echo -e "\n"
         done

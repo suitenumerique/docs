@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { DropdownMenu, Icon, Text } from '@/components/';
+import { Box, DropdownMenu, Icon } from '@/components/';
 import { useConfig } from '@/core';
 import { useAuthQuery } from '@/features/auth';
 import {
@@ -41,32 +41,32 @@ export const LanguagePicker = () => {
       showArrow
       label={t('Select language')}
       buttonCss={css`
-        transition: all 0.15s ease-in-out !important;
-        border-radius: 4px;
+        transition: all var(--c--globals--transitions--duration)
+          var(--c--globals--transitions--ease-out) !important;
+        border-radius: var(--c--globals--spacings--st);
         padding: 0.5rem 0.6rem;
         & > div {
           gap: 0.2rem;
           display: flex;
         }
         & .material-icons {
-          color: var(--c--components--button--primary-text--color) !important;
+          color: var(
+            --c--contextuals--content--palette--brand--primary
+          ) !important;
         }
       `}
     >
-      <Text
-        $theme="primary"
+      <Box
+        className="--docs--language-picker-text"
+        $theme="brand"
+        $variation="tertiary"
         $direction="row"
         $gap="0.5rem"
-        className="--docs--language-picker-text"
+        $align="center"
       >
-        <Icon
-          iconName="translate"
-          $color="inherit"
-          $size="xl"
-          aria-hidden="true"
-        />
+        <Icon iconName="translate" $color="inherit" $size="xl" />
         {currentLanguageLabel}
-      </Text>
+      </Box>
     </DropdownMenu>
   );
 };

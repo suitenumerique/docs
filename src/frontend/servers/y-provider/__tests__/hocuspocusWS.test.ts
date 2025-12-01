@@ -7,8 +7,8 @@ import {
 import { v1 as uuidv1, v4 as uuidv4 } from 'uuid';
 import {
   afterAll,
+  afterEach,
   beforeAll,
-  beforeEach,
   describe,
   expect,
   test,
@@ -45,7 +45,8 @@ import { hocuspocusServer, initApp } from '@/servers';
 describe('Server Tests', () => {
   let server: Server;
 
-  beforeEach(() => {
+  afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -203,11 +204,12 @@ describe('Server Tests', () => {
   test('WebSocket connection fails if user can not access document', () => {
     const { promise, done } = promiseDone();
 
+    const room = uuidv4();
+
     const fetchDocumentMock = vi
       .spyOn(CollaborationBackend, 'fetchDocument')
       .mockRejectedValue(new Error('some error'));
 
-    const room = uuidv4();
     const wsHocus = new HocuspocusProviderWebsocket({
       url: `ws://localhost:${portWS}/?room=${room}`,
       WebSocketPolyfill: WebSocket,

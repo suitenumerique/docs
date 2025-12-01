@@ -43,9 +43,12 @@ export function DocLayout() {
 
       <TreeProvider
         initialNodeId={id}
-        onLoadChildren={async (docId: string) => {
-          const doc = await getDocChildren({ docId });
-          return subPageToTree(doc.results);
+        onLoadChildren={async (docId: string, page: number) => {
+          const doc = await getDocChildren({ docId, page });
+          return {
+            children: subPageToTree(doc.results),
+            hasMore: !!doc.next,
+          };
         }}
       >
         <MainLayout enableResizablePanel={true}>
@@ -101,6 +104,10 @@ const DocPage = ({ id }: DocProps) => {
     if (!doc && !isError && !isSkeletonVisible) {
       setIsSkeletonVisible(true);
     }
+
+    if (isError) {
+      setIsSkeletonVisible(false);
+    }
   }, [doc, isError, isSkeletonVisible, setIsSkeletonVisible]);
 
   /**
@@ -140,13 +147,7 @@ const DocPage = ({ id }: DocProps) => {
 
     setDoc(docQuery);
     setCurrentDoc(docQuery);
-  }, [
-    docQuery,
-    setCurrentDoc,
-    isFetching,
-    isSkeletonVisible,
-    setIsSkeletonVisible,
-  ]);
+  }, [docQuery, setCurrentDoc, isFetching]);
 
   useEffect(() => {
     return () => {
@@ -176,10 +177,7 @@ const DocPage = ({ id }: DocProps) => {
 
       if (error.status === 401) {
         if (authenticated) {
-          queryClient.setQueryData([KEY_AUTH], {
-            user: null,
-            authenticated: false,
-          });
+          queryClient.setQueryData([KEY_AUTH], null);
         }
         setAuthUrl();
       }
@@ -199,7 +197,7 @@ const DocPage = ({ id }: DocProps) => {
           causes={error.cause}
           icon={
             error.status === 502 ? (
-              <Icon iconName="wifi_off" $theme="danger" $variation="600" />
+              <Icon iconName="wifi_off" $theme="danger" $withThemeInherited />
             ) : undefined
           }
         />

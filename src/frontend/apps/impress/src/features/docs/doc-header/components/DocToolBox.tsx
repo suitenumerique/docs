@@ -60,7 +60,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
-  const { isSmallMobile, isDesktop } = useResponsiveStore();
+  const { isSmallMobile, isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
@@ -69,10 +69,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   });
   const { isFeatureFlagActivated } = useAnalytics();
   const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
   const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalideQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
   });
 
   useEffect(() => {
@@ -90,28 +90,20 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { updateDocEmoji } = useDocTitleUpdate();
 
   const options: DropdownMenuOption[] = [
-    ...(isSmallMobile
-      ? [
-          {
-            label: t('Share'),
-            icon: 'group',
-            callback: modalShare.open,
-          },
-          {
-            label: t('Export'),
-            icon: 'download',
-            callback: () => {
-              setIsModalExportOpen(true);
-            },
-            show: !!ModalExport,
-          },
-          {
-            label: t('Copy link'),
-            icon: 'add_link',
-            callback: copyDocLink,
-          },
-        ]
-      : []),
+    {
+      label: t('Share'),
+      icon: 'group',
+      callback: modalShare.open,
+      show: isSmallMobile,
+    },
+    {
+      label: t('Export'),
+      icon: 'download',
+      callback: () => {
+        setIsModalExportOpen(true);
+      },
+      show: !!ModalExport && isSmallMobile,
+    },
     {
       label: doc.is_favorite ? t('Unpin') : t('Pin'),
       icon: 'push_pin',
@@ -124,17 +116,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
     },
-    ...(emoji && doc.abilities.partial_update && !isTopRoot
-      ? [
-          {
-            label: t('Remove emoji'),
-            icon: 'emoji_emotions',
-            callback: () => {
-              updateDocEmoji(doc.id, doc.title ?? '', '');
-            },
-          },
-        ]
-      : []),
     {
       label: t('Version history'),
       icon: 'history',
@@ -142,7 +123,31 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         selectHistoryModal.open();
       },
-      show: isDesktop,
+      show: !isMobile,
+      showSeparator: isTopRoot ? true : false,
+    },
+    {
+      label: t('Remove emoji'),
+      icon: 'emoji_emotions',
+      callback: () => {
+        updateDocEmoji(doc.id, doc.title ?? '', '');
+      },
+      showSeparator: true,
+      show: !!emoji && doc.abilities.partial_update && !isTopRoot,
+    },
+    {
+      label: t('Add emoji'),
+      icon: 'emoji_emotions',
+      callback: () => {
+        updateDocEmoji(doc.id, doc.title ?? '', '📄');
+      },
+      showSeparator: true,
+      show: !emoji && doc.abilities.partial_update && !isTopRoot,
+    },
+    {
+      label: t('Copy link'),
+      icon: 'add_link',
+      callback: copyDocLink,
     },
     {
       label: t('Copy as {{format}}', { format: 'Markdown' }),
@@ -158,6 +163,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         void copyCurrentEditorToClipboard('html');
       },
       show: isFeatureFlagActivated('CopyAsHTML'),
+      showSeparator: true,
     },
     {
       label: t('Duplicate'),
@@ -170,6 +176,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           canSave: doc.abilities.partial_update,
         });
       },
+      showSeparator: true,
     },
     {
       label: isChild ? t('Delete sub-document') : t('Delete document'),
@@ -208,14 +215,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         {!isSmallMobile && ModalExport && (
           <Button
             data-testid="doc-open-modal-download-button"
-            color="tertiary-text"
+            variant="tertiary"
             icon={
-              <Icon
-                iconName="download"
-                $theme="primary"
-                $variation="800"
-                aria-hidden={true}
-              />
+              <Icon iconName="download" $color="inherit" aria-hidden={true} />
             }
             onClick={() => {
               setIsModalExportOpen(true);
@@ -224,25 +226,19 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             aria-label={t('Export the document')}
           />
         )}
-        <DropdownMenu options={options} label={t('Open the document options')}>
-          <IconOptions
-            aria-hidden="true"
-            isHorizontal
-            $theme="primary"
-            $padding={{ all: 'xs' }}
-            $css={css`
-              border-radius: 4px;
-              &:hover {
-                background-color: ${colorsTokens['greyscale-100']};
-              }
-              ${isSmallMobile
-                ? css`
-                    padding: 10px;
-                    border: 1px solid ${colorsTokens['greyscale-300']};
-                  `
-                : ''}
-            `}
-          />
+        <DropdownMenu
+          options={options}
+          label={t('Open the document options')}
+          buttonCss={css`
+            padding: ${spacingsTokens['xs']};
+            ${isSmallMobile
+              ? css`
+                  border: 1px solid ${colorsTokens['gray-300']};
+                `
+              : ''}
+          `}
+        >
+          <IconOptions aria-hidden="true" isHorizontal $color="inherit" />
         </DropdownMenu>
       </Box>
 

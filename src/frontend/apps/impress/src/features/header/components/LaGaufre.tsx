@@ -9,6 +9,12 @@ import { useCunninghamTheme } from '@/cunningham';
 const GaufreStyle = createGlobalStyle`
   .lasuite-gaufre-btn{
     box-shadow: inset 0 0 0 0 !important;
+    border-radius: var(--c--components--button--border-radius) !important;
+    transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out) !important;
+    &:hover, &:focus-visible {
+      background: var(--c--contextuals--background--semantic--contextual--primary) !important;
+    }
+    color: var(--c--contextuals--content--semantic--brand--tertiary) !important;
   }
 `;
 

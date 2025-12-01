@@ -43,7 +43,6 @@ export const DocTitleText = () => {
       as="h2"
       $margin={{ all: 'none', left: 'none' }}
       $size={isMobile ? 'h4' : 'h2'}
-      $variation="1000"
     >
       {currentDoc?.title || untitledDocument}
     </Text>
@@ -55,33 +54,48 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
   const { colorsTokens } = useCunninghamTheme();
   const { emoji } = getEmojiAndTitle(doc.title ?? '');
 
+  if (!emoji) {
+    return null;
+  }
+
   return (
-    <Tooltip content={t('Document emoji')} aria-hidden={true} placement="top">
+    <Tooltip
+      content={t('Edit document emoji')}
+      aria-hidden={true}
+      placement="top"
+    >
       <Box
         $css={css`
           padding: 4px;
           padding-top: 3px;
           cursor: pointer;
           &:hover {
-            background-color: ${colorsTokens['greyscale-100']};
-            border-radius: 4px;
+            background-color: ${colorsTokens['gray-100']};
+            border-radius: var(--c--globals--spacings--st);
           }
-          transition: background-color 0.2s ease-in-out;
+          transition: background-color var(--c--globals--transitions--duration)
+            var(--c--globals--transitions--ease-out);
         `}
       >
         <DocIcon
+          buttonProps={{
+            $width: '32px',
+            $height: '32px',
+            $justify: 'space-between',
+            $align: 'center',
+          }}
           withEmojiPicker={doc.abilities.partial_update}
           docId={doc.id}
           title={doc.title}
           emoji={emoji}
-          $size="25px"
+          $size="23px"
           defaultIcon={
             <SimpleFileIcon
               width="25px"
               height="25px"
               aria-hidden="true"
               aria-label={t('Simple document icon')}
-              color={colorsTokens['primary-500']}
+              color={colorsTokens['brand-500']}
             />
           }
         />
@@ -93,8 +107,6 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
 const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
-  const { colorsTokens } = useCunninghamTheme();
-  const { spacingsTokens } = useCunninghamTheme();
   const { isTopRoot } = useDocUtils(doc);
   const { untitledDocument } = useTrans();
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
@@ -109,11 +121,17 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       if (isTopRoot) {
         const sanitizedTitle = updateDocTitle(doc, inputText);
         setTitleDisplay(sanitizedTitle);
+        return sanitizedTitle;
       } else {
-        const sanitizedTitle = updateDocTitle(
-          doc,
-          emoji ? `${emoji} ${inputText}` : inputText,
-        );
+        const { emoji: pastedEmoji } = getEmojiAndTitle(inputText);
+        const textPreservingPastedEmoji = pastedEmoji
+          ? `\u200B${inputText}`
+          : inputText;
+        const finalTitle = emoji
+          ? `${emoji} ${textPreservingPastedEmoji}`
+          : textPreservingPastedEmoji;
+
+        const sanitizedTitle = updateDocTitle(doc, finalTitle);
         const { titleWithoutEmoji: sanitizedTitleWithoutEmoji } =
           getEmojiAndTitle(sanitizedTitle);
 
@@ -139,19 +157,9 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       className="--docs--doc-title"
       $direction="row"
       $align="center"
-      $gap={spacingsTokens['xs']}
+      $gap="4px"
       $minHeight="40px"
     >
-      {isTopRoot && (
-        <SimpleFileIcon
-          width="25px"
-          height="25px"
-          aria-hidden="true"
-          aria-label={t('Simple document icon')}
-          color={colorsTokens['primary-500']}
-          style={{ flexShrink: '0' }}
-        />
-      )}
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
 
       <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
@@ -168,18 +176,19 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')
           }
-          $color={colorsTokens['greyscale-1000']}
           $padding={{ right: 'big' }}
           $css={css`
             &[contenteditable='true']:empty:not(:focus):before {
               content: '${untitledDocument}';
-              color: grey;
+              color: var(
+                --c--contextuals--content--semantic--neutral--tertiary
+              );
               pointer-events: none;
               font-style: italic;
             }
             font-size: ${isDesktop
-              ? css`var(--c--theme--font--sizes--h2)`
-              : css`var(--c--theme--font--sizes--sm)`};
+              ? css`var(--c--globals--font--sizes--h2)`
+              : css`var(--c--globals--font--sizes--sm)`};
             font-weight: 700;
             outline: none;
           `}

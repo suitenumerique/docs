@@ -42,7 +42,7 @@ export const ModalConfirmationVersion = ({
   const { push } = useRouter();
   const { provider } = useProviderStore();
   const { mutate: updateDoc } = useUpdateDoc({
-    listInvalideQueries: [KEY_LIST_DOC_VERSIONS],
+    listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
       const onDisplaySuccess = () => {
         toast(t('Version restored successfully'), VariantType.SUCCESS);
@@ -74,7 +74,7 @@ export const ModalConfirmationVersion = ({
         <>
           <Button
             aria-label={`${t('Cancel')} - ${t('Warning')}`}
-            color="secondary"
+            variant="secondary"
             fullWidth
             onClick={() => onClose()}
           >
@@ -82,7 +82,7 @@ export const ModalConfirmationVersion = ({
           </Button>
           <Button
             aria-label={t('Restore')}
-            color="danger"
+            color="error"
             fullWidth
             onClick={() => {
               if (!version?.content) {
@@ -109,7 +109,6 @@ export const ModalConfirmationVersion = ({
           id="modal-confirmation-version-title"
           $size="h6"
           $align="flex-start"
-          $variation="1000"
         >
           {t('Warning')}
         </Text>
@@ -117,10 +116,10 @@ export const ModalConfirmationVersion = ({
     >
       <Box className="--docs--modal-confirmation-version">
         <Box>
-          <Text $variation="600" as="p">
+          <Text $variation="secondary" as="p">
             {t('Your current document will revert to this version.')}
           </Text>
-          <Text $variation="600" as="p">
+          <Text $variation="secondary" as="p">
             {t('If a member is editing, his works can be lost.')}
           </Text>
         </Box>

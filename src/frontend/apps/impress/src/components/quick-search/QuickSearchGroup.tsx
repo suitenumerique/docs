@@ -59,11 +59,7 @@ export const QuickSearchGroup = <T,>({
           );
         })}
         {group.emptyString && group.elements.length === 0 && (
-          <Text
-            $variation="500"
-            $margin={{ left: '2xs', bottom: '3xs' }}
-            $size="sm"
-          >
+          <Text $margin={{ left: '2xs', bottom: '3xs' }} $size="sm">
             {group.emptyString}
           </Text>
         )}

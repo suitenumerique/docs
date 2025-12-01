@@ -3,25 +3,13 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import {
-  Box,
-  DropdownMenu,
-  DropdownMenuOption,
-  Icon,
-  IconOptions,
-  LoadMoreText,
-  Text,
-} from '@/components';
+import { Box, BoxButton, Icon, LoadMoreText, Text } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 
-import {
-  useDeleteDocInvitation,
-  useDocInvitationsInfinite,
-  useUpdateDocInvitation,
-} from '../api';
+import { useDocInvitationsInfinite, useUpdateDocInvitation } from '../api';
 import { Invitation } from '../types';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
@@ -61,18 +49,6 @@ export const DocShareInvitationItem = ({
     },
   });
 
-  const { mutate: removeDocInvitation } = useDeleteDocInvitation({
-    onError: (error) => {
-      toast(
-        error?.data?.role?.[0] ?? t('Error during delete invitation'),
-        VariantType.ERROR,
-        {
-          duration: 4000,
-        },
-      );
-    },
-  });
-
   const onUpdate = (newRole: Role) => {
     updateDocInvitation({
       docId: doc.id,
@@ -80,19 +56,6 @@ export const DocShareInvitationItem = ({
       invitationId: invitation.id,
     });
   };
-
-  const onRemove = () => {
-    removeDocInvitation({ invitationId: invitation.id, docId: doc.id });
-  };
-
-  const moreActions: DropdownMenuOption[] = [
-    {
-      label: t('Delete'),
-      icon: 'delete',
-      callback: onRemove,
-      disabled: !canUpdate,
-    },
-  ];
 
   return (
     <Box
@@ -112,17 +75,10 @@ export const DocShareInvitationItem = ({
               canUpdate={canUpdate}
               doc={doc}
               access={invitation}
+              ariaLabel={t('Change role for {{email}}', {
+                email: invitation.email,
+              })}
             />
-
-            {canUpdate && (
-              <DropdownMenu
-                data-testid="doc-share-invitation-more-actions"
-                options={moreActions}
-                label={t('Open invitation actions menu')}
-              >
-                <IconOptions isHorizontal $variation="600" aria-hidden="true" />
-              </DropdownMenu>
-            )}
           </Box>
         }
       />
@@ -146,26 +102,22 @@ export const DocShareModalInviteUserRow = ({
       <SearchUserRow
         user={user}
         right={
-          <Box
+          <BoxButton
             className="right-hover"
             $direction="row"
             $align="center"
             $css={css`
               contain: content;
             `}
-            $color="var(--c--theme--colors--greyscale-400)"
-            $cursor="pointer"
+            $theme="brand"
+            $variation="tertiary"
+            $gap="var(--c--globals--spacings--xxxs)"
           >
-            <Text $theme="primary" $variation="800" $size="sm">
+            <Text $withThemeInherited $size="sm">
               {t('Add')}
             </Text>
-            <Icon
-              $theme="primary"
-              $variation="800"
-              iconName="add"
-              aria-hidden="true"
-            />
-          </Box>
+            <Icon $withThemeInherited iconName="add" />
+          </BoxButton>
         }
       />
     </Box>

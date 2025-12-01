@@ -14,6 +14,7 @@ export interface BoxProps {
   as?: HTMLElementType;
   $align?: CSSProperties['alignItems'];
   $background?: CSSProperties['background'];
+  $border?: CSSProperties['border'];
   $color?: CSSProperties['color'];
   $css?: string | RuleSet<object>;
   $cursor?: CSSProperties['cursor'];
@@ -36,41 +37,34 @@ export interface BoxProps {
   $position?: CSSProperties['position'];
   $radius?: CSSProperties['borderRadius'];
   $shrink?: CSSProperties['flexShrink'];
+  $transition?: CSSProperties['transition'];
+  $width?: CSSProperties['width'];
+  $zIndex?: CSSProperties['zIndex'];
+  $wrap?: CSSProperties['flexWrap'];
+  // Theming props
+  $layer?: 'background' | 'content' | 'border';
   $theme?:
-    | 'primary'
-    | 'primary-text'
-    | 'secondary'
-    | 'secondary-text'
+    | 'brand'
+    | 'error'
+    | 'gray'
     | 'info'
     | 'success'
     | 'warning'
-    | 'danger'
-    | 'greyscale';
-  $transition?: CSSProperties['transition'];
-  $variation?:
-    | 'text'
-    | '000'
-    | '100'
-    | '200'
-    | '300'
-    | '400'
-    | '500'
-    | '600'
-    | '700'
-    | '800'
-    | '900'
-    | '1000';
-  $width?: CSSProperties['width'];
-  $wrap?: CSSProperties['flexWrap'];
-  $zIndex?: CSSProperties['zIndex'];
+    | 'neutral'
+    | 'contextual'
+    | 'disabled'
+    | (string & {});
+  $scope?: 'surface' | 'semantic' | 'palette' | (string & {});
+  $variation?: 'primary' | 'secondary' | 'tertiary' | (string & {});
+  $withThemeBG?: boolean;
+  $withThemeBorder?: boolean;
+  $withThemeInherited?: boolean;
 }
 
 export type BoxType = ComponentPropsWithRef<typeof Box>;
 
 export const Box = styled('div')<BoxProps>`
   ${({ $align }) => $align && `align-items: ${$align};`}
-  ${({ $background }) => $background && `background: ${$background};`}
-  ${({ $color }) => $color && `color: ${$color};`}
   ${({ $cursor }) => $cursor && `cursor: ${$cursor};`}
   ${({ $direction }) => `flex-direction: ${$direction || 'column'};`}
   ${({ $display, as }) =>
@@ -80,9 +74,9 @@ export const Box = styled('div')<BoxProps>`
   ${({ $height }) => $height && `height: ${$height};`}
   ${({ $hasTransition }) =>
     $hasTransition && $hasTransition === 'slow'
-      ? `transition: all 0.5s ease-in-out;`
+      ? `transition: all 0.5s var(--c--globals--transitions--ease-out);`
       : $hasTransition
-        ? `transition: all 0.3s ease-in-out;`
+        ? `transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out);`
         : ''}
   ${({ $justify }) => $justify && `justify-content: ${$justify};`}
   ${({ $margin }) => $margin && stylesMargin($margin)}
@@ -96,11 +90,85 @@ export const Box = styled('div')<BoxProps>`
   ${({ $position }) => $position && `position: ${$position};`}
   ${({ $radius }) => $radius && `border-radius: ${$radius};`}
   ${({ $shrink }) => $shrink && `flex-shrink: ${$shrink};`}
-  ${({ $theme, $variation }) => {
-    if (!$theme || !$variation) {
+  ${({
+    $layer = 'border',
+    $theme = 'brand',
+    $variation = 'primary',
+    $scope = 'semantic',
+    $border,
+    $withThemeBorder,
+    $withThemeInherited,
+  }) => {
+    if ($border) {
+      return `border: ${$border};`;
+    }
+
+    if (!$layer || !$scope || !$theme || !$withThemeBorder) {
       return '';
     }
-    return `color: var(--c--theme--colors--${$theme}-${$variation});`;
+
+    if ($withThemeInherited) {
+      return `border: inherit;`;
+    }
+
+    return `border: 1px solid var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
+  }}
+  ${({
+    $layer = 'background',
+    $theme = 'brand',
+    $variation = 'primary',
+    $scope = 'semantic',
+    $background,
+    $withThemeBG,
+    $withThemeInherited,
+  }) => {
+    if ($background) {
+      return `background: ${$background};`;
+    }
+
+    if (!$layer || !$scope || !$theme || !$withThemeBG) {
+      return '';
+    }
+
+    if ($withThemeInherited) {
+      return `background: inherit;`;
+    }
+
+    return `background: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
+  }}
+  ${({
+    $layer = 'content',
+    $theme = 'neutral',
+    $variation = 'primary',
+    $scope = 'semantic',
+    $color,
+    $withThemeBG,
+    $withThemeInherited,
+  }) => {
+    if ($color) {
+      return `color: ${$color};`;
+    }
+
+    if (!$layer || !$scope) {
+      return '';
+    }
+
+    // There is a special case when primary with background
+    if (
+      $withThemeBG &&
+      $layer === 'content' &&
+      $scope === 'semantic' &&
+      $variation === 'primary' &&
+      $theme
+    ) {
+      $variation = `on-${$theme}`;
+    }
+
+    if ($withThemeInherited) {
+      return `color: inherit;`;
+    }
+
+    return `color: var(--c--contextuals--${$layer}--${$scope}${$theme ? `--${$theme}` : ''}${$variation ? `--${$variation}` : ''});`;
   }}
   ${({ $transition }) => $transition && `transition: ${$transition};`}
   ${({ $width }) => $width && `width: ${$width};`}
@@ -121,7 +189,7 @@ export const Box = styled('div')<BoxProps>`
     return (
       effect &&
       ` 
-        transition: all 0.3s ease-in-out;
+        transition: all var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out);
         ${effect}
       `
     );

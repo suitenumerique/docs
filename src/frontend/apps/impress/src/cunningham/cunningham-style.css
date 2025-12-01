@@ -26,7 +26,7 @@
   * Select
   **/
   --c--components--forms-select--value-color--disabled: var(
-    --c--theme--colors--greyscale-400
+    --c--globals--colors--gray-400
   );
 
   /**
@@ -44,6 +44,19 @@
   contain: content;
 }
 
+.c__button:disabled {
+  cursor: unset;
+}
+
+.c__button:focus-visible {
+  outline: none;
+}
+
+.c__button--medium {
+  min-height: var(--c--components--button--medium-height);
+  height: auto;
+}
+
 /**
  * Modal
 */
@@ -55,14 +68,11 @@
  * Tooltip
 */
 .c__tooltip {
-  padding: 4px 6px;
+  padding: var(--c--globals--font--sizes--sm) var(--c--globals--spacings--xxs);
 }
 
-/**
- * Image System
-*/
-.c__image-system-filter {
-  filter: var(--c--components--image-system-filter);
+.c__tooltip .react-aria-OverlayArrow svg {
+  display: none;
 }
 
 /**

@@ -4,9 +4,7 @@ import {
   QuickSearchItemContentProps,
 } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
-import { User } from '@/features/auth';
-
-import { UserAvatar } from './UserAvatar';
+import { User, UserAvatar } from '@/features/auth';
 
 type Props = {
   user: User;
@@ -36,17 +34,15 @@ export const SearchUserRow = ({
           className="--docs--search-user-row"
         >
           <UserAvatar
-            user={user}
-            background={
-              isInvitation ? colorsTokens['greyscale-400'] : undefined
-            }
+            fullName={user.full_name || user.email}
+            background={isInvitation ? colorsTokens['gray-400'] : undefined}
           />
           <Box $direction="column">
-            <Text $size="sm" $weight="500" $variation="1000">
+            <Text $size="sm" $weight="500">
               {hasFullName ? user.full_name : user.email}
             </Text>
             {hasFullName && (
-              <Text $size="xs" $margin={{ top: '-2px' }} $variation="600">
+              <Text $size="xs" $margin={{ top: '-2px' }} $variation="secondary">
                 {user.email}
               </Text>
             )}

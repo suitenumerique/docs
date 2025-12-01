@@ -21,8 +21,8 @@ import emojidata from './initEmojiCallout';
 
 const CalloutBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="callout"][data-background-color] {
-    padding: var(--c--theme--spacings--3xs) var(--c--theme--spacings--3xs);
-    border-radius: var(--c--theme--spacings--3xs);
+    padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);
+    border-radius: var(--c--globals--spacings--3xs);
   }
 `;
 
@@ -173,5 +173,4 @@ export const getCalloutFormattingToolbarItems = (
   name: t('Callout'),
   type: 'callout',
   icon: () => <Icon iconName="lightbulb" $size="16px" />,
-  isSelected: (block) => block.type === 'callout',
 });

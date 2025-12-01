@@ -33,7 +33,7 @@ export const SimpleDocItem = ({
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
   const { isChild } = useDocUtils(doc);
@@ -63,13 +63,13 @@ export const SimpleDocItem = ({
           <PinnedDocumentIcon
             aria-hidden="true"
             data-testid="doc-pinned-icon"
-            color={colorsTokens['primary-500']}
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         ) : isChild ? (
           <ChildDocument
             aria-hidden="true"
             data-testid="doc-child-icon"
-            color={colorsTokens['primary-500']}
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         ) : (
           <SimpleFileIcon
@@ -77,14 +77,13 @@ export const SimpleDocItem = ({
             height="32px"
             aria-hidden="true"
             data-testid="doc-simple-icon"
-            color={colorsTokens['primary-500']}
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         )}
       </Box>
       <Box $justify="center" $overflow="auto">
         <Text
           $size="sm"
-          $variation="1000"
           $weight="500"
           $css={ItemTextCss}
           data-testid="doc-title"
@@ -99,7 +98,7 @@ export const SimpleDocItem = ({
             $margin={{ top: '-2px' }}
             aria-hidden="true"
           >
-            <Text $variation="600" $size="xs">
+            <Text $size="xs" $variation="tertiary">
               {DateTime.fromISO(doc.updated_at).toRelative()}
             </Text>
           </Box>

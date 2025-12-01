@@ -119,6 +119,10 @@ test.describe('Doc Trashbin', () => {
     await row.getByText(subDocName).click();
     await verifyDocName(page, subDocName);
 
+    await expect(
+      page.locator('.--docs--editor-container.--docs--doc-deleted'),
+    ).toBeVisible();
+
     await expect(page.getByLabel('Alert deleted document')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Share' })).toBeDisabled();
     await expect(page.locator('.bn-editor')).toHaveAttribute(

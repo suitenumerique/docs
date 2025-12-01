@@ -31,7 +31,7 @@ export const overrideConfig = async (
   page: Page,
   newConfig: { [_K in keyof typeof CONFIG]?: unknown },
 ) =>
-  await page.route('**/api/v1.0/config/', async (route) => {
+  await page.route(/.*\/api\/v1.0\/config\/.*/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET')) {
       await route.fulfill({
@@ -68,6 +68,14 @@ export const keyCloakSignIn = async (
   await page.getByRole('textbox', { name: 'username' }).fill(login);
   await page.getByRole('textbox', { name: 'password' }).fill(password);
   await page.click('button[type="submit"]', { force: true });
+};
+
+export const getOtherBrowserName = (browserName: BrowserName) => {
+  const otherBrowserName = BROWSERS.find((b) => b !== browserName);
+  if (!otherBrowserName) {
+    throw new Error('No alternative browser found');
+  }
+  return otherBrowserName;
 };
 
 export const randomName = (name: string, browserName: string, length: number) =>
@@ -125,7 +133,9 @@ export const verifyDocName = async (page: Page, docName: string) => {
   try {
     await expect(
       page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText(docName);
+    ).toContainText(docName, {
+      timeout: 1000,
+    });
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();
   }
@@ -204,7 +214,7 @@ export const waitForResponseCreateDoc = (page: Page) => {
 };
 
 export const mockedDocument = async (page: Page, data: object) => {
-  await page.route('**/documents/**/', async (route) => {
+  await page.route(/\**\/documents\/\**/, async (route) => {
     const request = route.request();
     if (
       request.method().includes('GET') &&
@@ -256,7 +266,7 @@ export const mockedDocument = async (page: Page, data: object) => {
 };
 
 export const mockedListDocs = async (page: Page, data: object[] = []) => {
-  await page.route('**/documents/**/', async (route) => {
+  await page.route(/\**\/documents\/\**/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET') && request.url().includes('page=')) {
       await route.fulfill({
@@ -277,6 +287,7 @@ export const expectLoginPage = async (page: Page) =>
   ).toBeVisible({
     timeout: 10000,
   });
+
 // language helper
 export const TestLanguage = {
   English: {
@@ -300,7 +311,7 @@ export async function waitForLanguageSwitch(
   page: Page,
   lang: TestLanguageValue,
 ) {
-  await page.route('**/api/v1.0/users/**', async (route, request) => {
+  await page.route(/\**\/api\/v1.0\/users\/\**/, async (route, request) => {
     if (request.method().includes('PATCH')) {
       await route.fulfill({
         json: {

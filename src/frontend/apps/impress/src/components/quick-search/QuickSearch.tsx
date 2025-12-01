@@ -69,7 +69,7 @@ export const QuickSearch = ({
           label={label}
           shouldFilter={false}
           ref={ref}
-          tabIndex={0}
+          tabIndex={-1}
           value={selectedValue}
           onValueChange={handleValueChange}
         >

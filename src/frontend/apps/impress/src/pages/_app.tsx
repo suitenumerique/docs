@@ -33,7 +33,6 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             'Docs: Your new companion to collaborate on documents efficiently, intuitively, and securely.',
           )}
         />
-        <link rel="icon" href={favicon['ico']} sizes="any" />
         <link rel="icon" href={favicon['png-light']} type="image/png" />
         <link
           rel="icon"

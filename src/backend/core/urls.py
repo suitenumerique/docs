@@ -26,20 +26,22 @@ document_related_router.register(
     viewsets.InvitationViewset,
     basename="invitations",
 )
-
+document_related_router.register(
+    "threads",
+    viewsets.ThreadViewSet,
+    basename="threads",
+)
 document_related_router.register(
     "ask-for-access",
     viewsets.DocumentAskForAccessViewSet,
     basename="ask_for_access",
 )
 
-
-# - Routes nested under a template
-template_related_router = DefaultRouter()
-template_related_router.register(
-    "accesses",
-    viewsets.TemplateAccessViewSet,
-    basename="template_accesses",
+thread_related_router = DefaultRouter()
+thread_related_router.register(
+    "comments",
+    viewsets.CommentViewSet,
+    basename="comments",
 )
 
 
@@ -55,8 +57,8 @@ urlpatterns = [
                     include(document_related_router.urls),
                 ),
                 re_path(
-                    r"^templates/(?P<resource_id>[0-9a-z-]*)/",
-                    include(template_related_router.urls),
+                    r"^documents/(?P<resource_id>[0-9a-z-]*)/threads/(?P<thread_id>[0-9a-z-]*)/",
+                    include(thread_related_router.urls),
                 ),
             ]
         ),

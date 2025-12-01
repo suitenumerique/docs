@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 
 import { DocsBlockNoteEditor } from '../types';
 
-export const useShortcuts = (editor: DocsBlockNoteEditor) => {
+export const useShortcuts = (
+  editor: DocsBlockNoteEditor,
+  el: HTMLDivElement | null,
+) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === '@' && editor?.isFocused()) {
@@ -29,11 +32,14 @@ export const useShortcuts = (editor: DocsBlockNoteEditor) => {
       }
     };
 
-    // Attach the event listener to the document instead of the window
-    document.addEventListener('keydown', handleKeyDown);
+    if (!el) {
+      return;
+    }
+
+    el.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      el.removeEventListener('keydown', handleKeyDown);
     };
-  }, [editor]);
+  }, [editor, el]);
 };

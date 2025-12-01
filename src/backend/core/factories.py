@@ -256,3 +256,49 @@ class InvitationFactory(factory.django.DjangoModelFactory):
     document = factory.SubFactory(DocumentFactory)
     role = factory.fuzzy.FuzzyChoice([role[0] for role in models.RoleChoices.choices])
     issuer = factory.SubFactory(UserFactory)
+
+
+class ThreadFactory(factory.django.DjangoModelFactory):
+    """A factory to create threads for a document"""
+
+    class Meta:
+        model = models.Thread
+
+    document = factory.SubFactory(DocumentFactory)
+    creator = factory.SubFactory(UserFactory)
+
+
+class CommentFactory(factory.django.DjangoModelFactory):
+    """A factory to create comments for a thread"""
+
+    class Meta:
+        model = models.Comment
+
+    thread = factory.SubFactory(ThreadFactory)
+    user = factory.SubFactory(UserFactory)
+    body = factory.Faker("text")
+
+
+class ReactionFactory(factory.django.DjangoModelFactory):
+    """A factory to create reactions for a comment"""
+
+    class Meta:
+        model = models.Reaction
+
+    comment = factory.SubFactory(CommentFactory)
+    emoji = "test"
+
+    @factory.post_generation
+    def users(self, create, extracted, **kwargs):
+        """Add users to reaction from a given list of users or create one if not provided."""
+        if not create:
+            return
+
+        if not extracted:
+            # the factory is being created, but no users were provided
+            user = UserFactory()
+            self.users.add(user)
+            return
+
+        # Add the iterable of groups using bulk addition
+        self.users.add(*extracted)

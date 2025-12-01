@@ -18,7 +18,8 @@ export const ButtonLogin = () => {
     return (
       <Button
         onClick={() => gotoLogin()}
-        color="primary-text"
+        color="brand"
+        variant="tertiary"
         aria-label={t('Login')}
         className="--docs--button-login"
       >
@@ -31,14 +32,15 @@ export const ButtonLogin = () => {
     <Box
       $css={css`
         .--docs--button-logout:focus-visible {
-          box-shadow: 0 0 0 2px ${colorsTokens['primary-400']} !important;
-          border-radius: 4px;
+          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
+          border-radius: var(--c--globals--spacings--st);
         }
       `}
     >
       <Button
         onClick={gotoLogout}
-        color="primary-text"
+        color="brand"
+        variant="tertiary"
         aria-label={t('Logout')}
         className="--docs--button-logout"
       >
@@ -56,9 +58,13 @@ export const ProConnectButton = () => {
       onClick={() => gotoLogin()}
       aria-label={t('Proconnect Login')}
       $css={css`
-        background-color: var(--c--theme--colors--primary-text);
+        background-color: var(
+          --c--contextuals--background--semantic--brand--primary
+        );
         &:hover {
-          background-color: var(--c--theme--colors--primary-action);
+          background-color: var(
+            --c--contextuals--background--semantic--brand--primary-hover
+          );
         }
       `}
       $radius="4px"

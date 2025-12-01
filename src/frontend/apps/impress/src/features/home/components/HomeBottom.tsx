@@ -20,7 +20,7 @@ export function HomeBottom() {
 
 function HomeProConnect() {
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isMobile } = useResponsiveStore();
   const parentGap = '230px';
 
@@ -43,15 +43,12 @@ function HomeProConnect() {
           $position="relative"
           $height="fit-content"
           $css="zoom: 1.9;"
+          $theme="brand"
         >
-          <IconDocs
-            aria-label={t('Docs Logo')}
-            width={34}
-            color={colorsTokens['primary-text']}
-          />
+          <IconDocs aria-label={t('Docs Logo')} width={34} />
           <Title />
         </Box>
-        <Text $size="md" $variation="1000" $textAlign="center">
+        <Text $size="md" $variation="secondary" $textAlign="center">
           {t('Docs is already available, log in to use it now.')}
         </Text>
         <ProConnectButton />

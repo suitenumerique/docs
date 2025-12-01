@@ -21,6 +21,7 @@ from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -1831,10 +1832,7 @@ class DocumentAccessViewSet(
 
 
 class TemplateViewSet(
-    drf.mixins.CreateModelMixin,
-    drf.mixins.DestroyModelMixin,
     drf.mixins.RetrieveModelMixin,
-    drf.mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
     """Template ViewSet"""
@@ -1889,100 +1887,6 @@ class TemplateViewSet(
 
         serializer = self.get_serializer(queryset, many=True)
         return drf.response.Response(serializer.data)
-
-    @transaction.atomic
-    def perform_create(self, serializer):
-        """Set the current user as owner of the newly created object."""
-        obj = serializer.save()
-        models.TemplateAccess.objects.create(
-            template=obj,
-            user=self.request.user,
-            role=models.RoleChoices.OWNER,
-        )
-
-
-class TemplateAccessViewSet(
-    ResourceAccessViewsetMixin,
-    drf.mixins.CreateModelMixin,
-    drf.mixins.DestroyModelMixin,
-    drf.mixins.RetrieveModelMixin,
-    drf.mixins.UpdateModelMixin,
-    viewsets.GenericViewSet,
-):
-    """
-    API ViewSet for all interactions with template accesses.
-
-    GET /api/v1.0/templates/<template_id>/accesses/:<template_access_id>
-        Return list of all template accesses related to the logged-in user or one
-        template access if an id is provided.
-
-    POST /api/v1.0/templates/<template_id>/accesses/ with expected data:
-        - user: str
-        - role: str [administrator|editor|reader]
-        Return newly created template access
-
-    PUT /api/v1.0/templates/<template_id>/accesses/<template_access_id>/ with expected data:
-        - role: str [owner|admin|editor|reader]
-        Return updated template access
-
-    PATCH /api/v1.0/templates/<template_id>/accesses/<template_access_id>/ with expected data:
-        - role: str [owner|admin|editor|reader]
-        Return partially updated template access
-
-    DELETE /api/v1.0/templates/<template_id>/accesses/<template_access_id>/
-        Delete targeted template access
-    """
-
-    lookup_field = "pk"
-    permission_classes = [permissions.ResourceAccessPermission]
-    throttle_scope = "template_access"
-    queryset = models.TemplateAccess.objects.select_related("user").all()
-    resource_field_name = "template"
-    serializer_class = serializers.TemplateAccessSerializer
-
-    @cached_property
-    def template(self):
-        """Get related template from resource ID in url."""
-        try:
-            return models.Template.objects.get(pk=self.kwargs["resource_id"])
-        except models.Template.DoesNotExist as excpt:
-            raise drf.exceptions.NotFound() from excpt
-
-    def list(self, request, *args, **kwargs):
-        """Restrict templates returned by the list endpoint"""
-        user = self.request.user
-        teams = user.teams
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # Limit to resource access instances related to a resource THAT also has
-        # a resource access instance for the logged-in user (we don't want to list
-        # only the resource access instances pointing to the logged-in user)
-        queryset = queryset.filter(
-            db.Q(template__accesses__user=user)
-            | db.Q(template__accesses__team__in=teams),
-        ).distinct()
-
-        serializer = self.get_serializer(queryset, many=True)
-        return drf.response.Response(serializer.data)
-
-    def perform_create(self, serializer):
-        """
-        Actually create the new template access:
-        - Ensures the `template_id` is explicitly set from the URL.
-        - If the assigned role is `OWNER`, checks that the requesting user is an owner
-          of the document. This is the only permission check deferred until this step;
-          all other access checks are handled earlier in the permission lifecycle.
-        """
-        role = serializer.validated_data.get("role")
-        if (
-            role == choices.RoleChoices.OWNER
-            and self.template.get_role(self.request.user) != choices.RoleChoices.OWNER
-        ):
-            raise drf.exceptions.PermissionDenied(
-                "Only owners of a template can assign other users as owners."
-            )
-
-        serializer.save(template_id=self.kwargs["resource_id"])
 
 
 class InvitationViewset(
@@ -2162,7 +2066,18 @@ class DocumentAskForAccessViewSet(
         serializer = serializers.RoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        document_ask_for_access.accept(role=serializer.validated_data.get("role"))
+        target_role = serializer.validated_data.get(
+            "role", document_ask_for_access.role
+        )
+        abilities = document_ask_for_access.get_abilities(request.user)
+
+        if target_role not in abilities["set_role_to"]:
+            return drf.response.Response(
+                {"detail": "You cannot accept a role higher than your own."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        document_ask_for_access.accept(role=target_role)
         return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
 
@@ -2236,3 +2151,132 @@ class ConfigView(drf.views.APIView):
             )
 
         return theme_customization
+
+
+class CommentViewSetMixin:
+    """Comment ViewSet Mixin."""
+
+    _document = None
+
+    def get_document_or_404(self):
+        """Get the document related to the viewset or raise a 404 error."""
+        if self._document is None:
+            try:
+                self._document = models.Document.objects.get(
+                    pk=self.kwargs["resource_id"],
+                )
+            except models.Document.DoesNotExist as e:
+                raise drf.exceptions.NotFound("Document not found.") from e
+        return self._document
+
+
+class ThreadViewSet(
+    ResourceAccessViewsetMixin,
+    CommentViewSetMixin,
+    drf.mixins.CreateModelMixin,
+    drf.mixins.ListModelMixin,
+    drf.mixins.RetrieveModelMixin,
+    drf.mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Thread API: list/create threads and nested comment operations."""
+
+    permission_classes = [permissions.CommentPermission]
+    pagination_class = Pagination
+    serializer_class = serializers.ThreadSerializer
+    queryset = models.Thread.objects.select_related("creator", "document").filter(
+        resolved=False
+    )
+    resource_field_name = "document"
+
+    def perform_create(self, serializer):
+        """Create the first comment of the thread."""
+        body = serializer.validated_data["body"]
+        del serializer.validated_data["body"]
+        thread = serializer.save()
+
+        models.Comment.objects.create(
+            thread=thread,
+            user=self.request.user if self.request.user.is_authenticated else None,
+            body=body,
+        )
+
+    @drf.decorators.action(detail=True, methods=["post"], url_path="resolve")
+    def resolve(self, request, *args, **kwargs):
+        """Resolve a thread."""
+        thread = self.get_object()
+        if not thread.resolved:
+            thread.resolved = True
+            thread.resolved_at = timezone.now()
+            thread.resolved_by = request.user
+            thread.save(update_fields=["resolved", "resolved_at", "resolved_by"])
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CommentViewSet(
+    CommentViewSetMixin,
+    viewsets.ModelViewSet,
+):
+    """Comment API: list/create comments and nested reaction operations."""
+
+    permission_classes = [permissions.CommentPermission]
+    pagination_class = Pagination
+    serializer_class = serializers.CommentSerializer
+    queryset = models.Comment.objects.select_related("user").all()
+
+    def get_queryset(self):
+        """Override to filter on related resource."""
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                thread=self.kwargs["thread_id"],
+                thread__document=self.kwargs["resource_id"],
+            )
+        )
+
+    def get_serializer_context(self):
+        """Extra context provided to the serializer class."""
+        context = super().get_serializer_context()
+        context["document_id"] = self.kwargs["resource_id"]
+        context["thread_id"] = self.kwargs["thread_id"]
+        return context
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post", "delete"],
+    )
+    def reactions(self, request, *args, **kwargs):
+        """POST: add reaction; DELETE: remove reaction.
+
+        Emoji is expected in request.data['emoji'] for both operations.
+        """
+        comment = self.get_object()
+        serializer = serializers.ReactionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if request.method == "POST":
+            reaction, created = models.Reaction.objects.get_or_create(
+                comment=comment,
+                emoji=serializer.validated_data["emoji"],
+            )
+            if not created and reaction.users.filter(id=request.user.id).exists():
+                return drf.response.Response(
+                    {"user_already_reacted": True}, status=status.HTTP_400_BAD_REQUEST
+                )
+            reaction.users.add(request.user)
+            return drf.response.Response(status=status.HTTP_201_CREATED)
+
+        # DELETE
+        try:
+            reaction = models.Reaction.objects.get(
+                comment=comment,
+                emoji=serializer.validated_data["emoji"],
+                users__in=[request.user],
+            )
+        except models.Reaction.DoesNotExist as e:
+            raise drf.exceptions.NotFound("Reaction not found.") from e
+        reaction.users.remove(request.user)
+        if not reaction.users.exists():
+            reaction.delete()
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)

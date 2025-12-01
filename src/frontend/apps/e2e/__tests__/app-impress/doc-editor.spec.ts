@@ -24,15 +24,13 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Editor', () => {
-  test('it checks default toolbar buttons are displayed', async ({
+  test('it checks toolbar buttons are displayed', async ({
     page,
     browserName,
   }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    const editor = page.locator('.ProseMirror');
-    await editor.click();
-    await editor.fill('test content');
+    const editor = await writeInEditor({ page, text: 'test content' });
 
     await editor
       .getByText('test content', {
@@ -41,6 +39,9 @@ test.describe('Doc Editor', () => {
       .selectText();
 
     const toolbar = page.locator('.bn-formatting-toolbar');
+    await expect(
+      toolbar.locator('button[data-test="comment-toolbar-button"]'),
+    ).toBeVisible();
     await expect(toolbar.locator('button[data-test="bold"]')).toBeVisible();
     await expect(toolbar.locator('button[data-test="italic"]')).toBeVisible();
     await expect(
@@ -62,6 +63,53 @@ test.describe('Doc Editor', () => {
     ).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="createLink"]'),
+    ).toBeVisible();
+    await expect(
+      toolbar.locator('button[data-test="ai-actions"]'),
+    ).toBeVisible();
+    await expect(
+      toolbar.locator('button[data-test="convertMarkdown"]'),
+    ).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await page.locator('.bn-block-outer').last().click();
+
+    await page.keyboard.press('Enter');
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(
+      path.join(__dirname, 'assets/logo-suite-numerique.png'),
+    );
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+
+    await expect(image).toHaveAttribute('role', 'presentation');
+
+    await image.dblclick();
+
+    await expect(
+      toolbar.locator('button[data-test="comment-toolbar-button"]'),
+    ).toBeHidden();
+    await expect(
+      toolbar.locator('button[data-test="ai-actions"]'),
+    ).toBeHidden();
+    await expect(
+      toolbar.locator('button[data-test="convertMarkdown"]'),
+    ).toBeHidden();
+
+    await expect(
+      toolbar.locator('button[data-test="editcaption"]'),
+    ).toBeVisible();
+    await expect(
+      toolbar.locator('button[data-test="downloadfile"]'),
     ).toBeVisible();
   });
 
@@ -241,20 +289,66 @@ test.describe('Doc Editor', () => {
     await expect(editor.getByText('Hello World Doc persisted 2')).toBeVisible();
   });
 
-  test('it cannot edit if viewer', async ({ page }) => {
-    await mockedDocument(page, {
-      user_role: 'reader',
+  test('it cannot edit if viewer but see and can get resources', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(page, 'doc-viewer', browserName, 1);
+    await verifyDocName(page, docTitle);
+
+    await writeInEditor({ page, text: 'Hello World' });
+
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    // Close the modal
+    await page.getByRole('button', { name: 'close' }).first().click();
+
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      browserName,
+      docUrl: page.url(),
+      withoutSignIn: true,
+      docTitle,
     });
 
-    await goToGridDoc(page);
+    await expect(
+      otherPage.getByLabel('It is the card information').getByText('Reader'),
+    ).toBeVisible();
 
-    const card = page.getByLabel('It is the card information');
-    await expect(card).toBeVisible();
-
-    await expect(card.getByText('Reader')).toBeVisible();
-
-    const editor = page.locator('.ProseMirror');
+    // Cannot edit
+    const editor = otherPage.locator('.ProseMirror');
     await expect(editor).toHaveAttribute('contenteditable', 'false');
+
+    // Owner add a image
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(
+      path.join(__dirname, 'assets/logo-suite-numerique.png'),
+    );
+
+    // Owner see the image
+    await expect(
+      page.locator('.--docs--editor-container img.bn-visual-media').first(),
+    ).toBeVisible();
+
+    // Viewser see the image
+    const viewerImg = otherPage
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+    await expect(viewerImg).toBeVisible();
+
+    // Viewer can download the image
+    await viewerImg.click();
+    const downloadPromise = otherPage.waitForEvent('download');
+    await otherPage.getByRole('button', { name: 'Download image' }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('logo-suite-numerique.png');
+
+    await cleanup();
   });
 
   test('it adds an image to the doc editor', async ({ page, browserName }) => {
@@ -494,7 +588,7 @@ test.describe('Doc Editor', () => {
         if (request.method().includes('GET')) {
           await route.fulfill({
             json: {
-              status: requestCount ? 'ready' : 'processing',
+              status: requestCount > 1 ? 'ready' : 'processing',
               file: '/anything.html',
             },
           });
@@ -518,6 +612,12 @@ test.describe('Doc Editor', () => {
     await fileChooser.setFiles(path.join(__dirname, 'assets/test.html'));
 
     await expect(editor.getByText('Analyzing file...')).toBeVisible();
+
+    // To be sure the retry happens even after a page reload
+    await page.reload();
+
+    await expect(editor.getByText('Analyzing file...')).toBeVisible();
+
     // The retry takes a few seconds
     await expect(editor.getByText('test.html')).toBeVisible({
       timeout: 7000,
@@ -800,6 +900,12 @@ test.describe('Doc Editor', () => {
     });
     await expect(interlinkChild1).toBeVisible({ timeout: 10000 });
     await expect(interlinkChild1.locator('svg').first()).toBeVisible();
+
+    await page.keyboard.press('@');
+
+    await page.keyboard.press('Escape');
+
+    await expect(editor.getByText('@')).toBeVisible();
   });
 
   test('it checks multiple big doc scroll to the top', async ({

@@ -44,7 +44,7 @@ describe('DocsGridItemDate', () => {
       rendered: '5 days ago',
     },
     {
-      updated_at: DateTime.now().minus({ days: 30 }).toISO(),
+      updated_at: DateTime.now().minus({ days: 35 }).toISO(),
       rendered: '1 month ago',
     },
   ].forEach(({ updated_at, rendered }) => {

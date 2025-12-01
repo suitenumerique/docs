@@ -3,8 +3,8 @@ import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import IconDocs from '@/assets/icons/icon-docs.svg';
 import { Box, Icon, Text } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { ProConnectButton, gotoLogin } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
@@ -15,10 +15,13 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { componentTokens, spacingsTokens, colorsTokens } =
-    useCunninghamTheme();
+  const { componentTokens, spacingsTokens } = useCunninghamTheme();
   const { isMobile, isSmallMobile } = useResponsiveStore();
   const withProConnect = componentTokens['home-proconnect'];
+  const { data: config } = useConfig();
+
+  const icon =
+    config?.theme_customization?.header?.icon || componentTokens.icon;
 
   return (
     <Box
@@ -47,15 +50,21 @@ export default function HomeBanner() {
           $align="center"
           $gap={spacingsTokens['sm']}
         >
-          <IconDocs
-            aria-label={t('Back to homepage')}
-            width={64}
-            color={colorsTokens['primary-text']}
+          <Image
+            data-testid="header-icon-docs"
+            src={icon.src || ''}
+            alt=""
+            width={0}
+            height={0}
+            style={{
+              width: '64px',
+              height: 'auto',
+            }}
+            priority
           />
           <Text
             as="h2"
             $size={!isMobile ? 'xs-alt' : '2.3rem'}
-            $variation="800"
             $weight="bold"
             $textAlign="center"
             $margin="none"
@@ -67,9 +76,9 @@ export default function HomeBanner() {
           </Text>
           <Text
             $size="lg"
-            $variation="700"
             $textAlign="center"
             $margin={{ bottom: 'small' }}
+            $variation="secondary"
           >
             {t(
               'Collaborate and write in real time, without layout constraints.',
@@ -88,7 +97,6 @@ export default function HomeBanner() {
         </Box>
         {!isMobile && (
           <Image
-            className="c__image-system-filter"
             src={banner}
             alt={t('Banner image')}
             priority
@@ -104,10 +112,9 @@ export default function HomeBanner() {
       </Box>
       <Box $css="bottom: 3rem" $position="absolute">
         <Button
-          color="secondary"
-          icon={
-            <Icon $theme="primary" $variation="800" iconName="expand_more" />
-          }
+          color="brand"
+          variant="secondary"
+          icon={<Icon $color="inherit" iconName="expand_more" />}
           onClick={(e) => {
             e.preventDefault();
             document

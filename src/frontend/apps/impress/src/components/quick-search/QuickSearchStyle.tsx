@@ -19,25 +19,25 @@ export const QuickSearchStyle = createGlobalStyle`
       border: none;
       width: 100%;
       font-size: 17px;
-      padding: 8px;
+      padding: var(--c--globals--spacings--xs);
       background: white;
       outline: none;
-      color: var(--c--theme--colors--greyscale-1000);
-      border-radius: 0;
+      color: var(--c--globals--colors--gray-1000);
+      border-radius: var(--c--globals--spacings--0);
 
       &::placeholder {
-        color: var(--c--theme--colors--greyscale-500);
+        color: var(--c--globals--colors--gray-500);
       }
     }
 
     [cmdk-item] {
       content-visibility: auto;
       cursor: pointer;
-      border-radius: var(--c--theme--spacings--xs);
-      font-size: 14px;
+      border-radius: var(--c--globals--spacings--xs);
+      font-size: var(--c--globals--font--sizes--sm);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap:  var(--c--globals--spacings--xs);
       user-select: none;
       will-change: background, color;
       transition: all 150ms ease;
@@ -49,19 +49,19 @@ export const QuickSearchStyle = createGlobalStyle`
 
       &:hover,
       &[data-selected='true'] {
-        background: var(--c--theme--colors--greyscale-100);
+        background: var(--c--contextuals--background--semantic--contextual--primary);
         .show-right-on-focus {
           opacity: 1;
         }
       }
 
       &[data-disabled='true'] {
-        color: var(--c--theme--colors--greyscale-500);
+        color: var(--c--globals--colors--gray-500);
         cursor: not-allowed;
       }
 
       & + [cmdk-item] {
-        margin-top: 4px;
+        margin-top: var(--c--globals--spacings--st);
       }
     }
 
@@ -79,11 +79,11 @@ export const QuickSearchStyle = createGlobalStyle`
       kbd {
         font-size: 12px;
         min-width: 20px;
-        padding: 4px;
+        padding: var(--c--globals--spacings--st);
         height: 20px;
-        border-radius: 4px;
+        border-radius: var(--c--globals--spacings--st);
         color: white;
-        background: var(--c--theme--colors--greyscale-500);
+        background: var(--c--globals--colors--gray-500);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -94,23 +94,23 @@ export const QuickSearchStyle = createGlobalStyle`
     [cmdk-separator] {
       height: 1px;
       width: 100%;
-      background: var(--c--theme--colors--greyscale-500);
-      margin: 4px 0;
+      background: var(--c--globals--colors--gray-500);
+      margin: var(--c--globals--spacings--st) 0;
     }
 
     *:not([hidden]) + [cmdk-group] {
-      margin-top: 8px;
+      margin-top: var(--c--globals--spacings--xs);
     }
 
     [cmdk-group-heading] {
       user-select: none;
-      font-size: var(--c--theme--font--sizes--sm);
-      color: var(--c--theme--colors--greyscale-700);
+      font-size: var(--c--globals--font--sizes--sm);
+      color: var(--c--globals--colors--gray-700);
       font-weight: bold;
 
       display: flex;
       align-items: center;
-      margin-bottom: var(--c--theme--spacings--xs);
+      margin-bottom: var(--c--globals--spacings--xs);
     }
 
     [cmdk-empty] {
@@ -128,9 +128,9 @@ export const QuickSearchStyle = createGlobalStyle`
     }
 
     .c__modal__title {
-      font-size: var(--c--theme--font--sizes--xs);
-      padding: var(--c--theme--spacings--base);
-      margin-bottom: 0;
+      font-size: var(--c--globals--font--sizes--xs);
+      padding: var(--c--globals--spacings--base);
+      margin-bottom: var(--c--globals--spacings--0);
     }
   }
 `;

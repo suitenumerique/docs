@@ -80,6 +80,7 @@ export interface Doc {
     children_create: boolean;
     children_list: boolean;
     collaboration_auth: boolean;
+    comment: boolean;
     destroy: boolean;
     duplicate: boolean;
     favorite: boolean;
@@ -132,5 +133,6 @@ export interface AccessRequest {
     partial_update: boolean;
     retrieve: boolean;
     accept: boolean;
+    set_role_to: Role[];
   };
 }

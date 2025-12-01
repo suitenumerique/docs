@@ -1,2 +1,2 @@
 export * from './DocHeader';
-export * from './DocVersionHeader';
+export * from './DocTitle';

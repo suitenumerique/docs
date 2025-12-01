@@ -44,7 +44,7 @@ export function useAuthQuery(
     staleTime: 1000 * 60 * 15, // 15 minutes
     retry: (failureCount, error) => {
       // we assume that a 401 means the user is not logged in
-      if (error.status == 401) {
+      if (error.status === 401) {
         return false;
       }
       return failureCount < DEFAULT_QUERY_RETRY;

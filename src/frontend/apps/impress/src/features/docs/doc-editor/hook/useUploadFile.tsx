@@ -1,35 +1,12 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { Block } from '@blocknote/core';
+import { captureException } from '@sentry/nextjs';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { backendUrl } from '@/api';
-import { useMediaUrl } from '@/core/config';
-import { sleep } from '@/utils';
 
-import { checkDocMediaStatus, useCreateDocAttachment } from '../api';
+import { useCreateDocAttachment } from '../api';
 import { DocsBlockNoteEditor } from '../types';
-
-/**
- * Upload file can be analyzed on the server side,
- * we had this function to wait for the analysis to be done
- * before returning the file url. It will keep the loader
- * on the upload button until the analysis is done.
- * @param url
- * @returns Promise<CheckDocMediaStatusResponse> status_code
- * @description Waits for the upload to be analyzed by checking the status of the file.
- */
-const loopCheckDocMediaStatus = async (url: string) => {
-  const SLEEP_TIME = 5000;
-  const response = await checkDocMediaStatus({
-    urlMedia: url,
-  });
-
-  if (response.status === 'ready') {
-    return response;
-  } else {
-    await sleep(SLEEP_TIME);
-    return await loopCheckDocMediaStatus(url);
-  }
-};
 
 export const useUploadFile = (docId: string) => {
   const {
@@ -60,120 +37,93 @@ export const useUploadFile = (docId: string) => {
   };
 };
 
+/**
+ * When we upload a file it can takes some time to analyze it (e.g. virus scan).
+ * This hook listen to upload end and replace the uploaded block by a uploadLoader
+ * block to show analyzing status.
+ * The uploadLoader block will then handle the status display until the analysis is done
+ * then replaced by the final block (e.g. image, pdf, etc.).
+ * @param editor
+ */
 export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
   const ANALYZE_URL = 'media-check';
   const { t } = useTranslation();
-  const mediaUrl = useMediaUrl();
-  const timeoutIds = useRef<Record<string, NodeJS.Timeout>>({});
 
-  const blockAnalyzeProcess = useCallback(
-    (editor: DocsBlockNoteEditor, blockId: string, url: string) => {
-      if (timeoutIds.current[url]) {
-        clearTimeout(timeoutIds.current[url]);
+  /**
+   * Replace the resource block by a uploadLoader block to show analyzing status
+   */
+  const replaceBlockWithUploadLoader = useCallback(
+    (block: Block) => {
+      if (
+        !block ||
+        !('url' in block.props) ||
+        ('url' in block.props && !block.props.url.includes(ANALYZE_URL))
+      ) {
+        return;
       }
 
-      // Delay to let the time to the dom to be rendered
-      const timoutId = setTimeout(() => {
-        // Replace the resource block by a loading block
-        const { insertedBlocks, removedBlocks } = editor.replaceBlocks(
-          [blockId],
+      const blockUploadUrl = block.props.url;
+      const blockUploadType = block.type;
+      const blockUploadName = block.props.name;
+      const blockUploadShowPreview =
+        ('showPreview' in block.props && block.props.showPreview) || false;
+
+      try {
+        editor.replaceBlocks(
+          [block.id],
           [
             {
               type: 'uploadLoader',
               props: {
                 information: t('Analyzing file...'),
                 type: 'loading',
+                blockUploadName,
+                blockUploadType,
+                blockUploadUrl,
+                blockUploadShowPreview,
               },
             },
           ],
         );
-
-        loopCheckDocMediaStatus(url)
-          .then((response) => {
-            if (insertedBlocks.length === 0 || removedBlocks.length === 0) {
-              return;
-            }
-
-            const loadingBlockId = insertedBlocks[0].id;
-            const removedBlock = removedBlocks[0];
-
-            removedBlock.props = {
-              ...removedBlock.props,
-              url: `${mediaUrl}${response.file}`,
-            };
-
-            // Replace the loading block with the resource block (image, audio, video, pdf ...)
-            editor.replaceBlocks([loadingBlockId], [removedBlock]);
-          })
-          .catch((error) => {
-            console.error('Error analyzing file:', error);
-
-            const loadingBlock = insertedBlocks[0];
-
-            if (!loadingBlock) {
-              return;
-            }
-
-            loadingBlock.props = {
-              ...loadingBlock.props,
-              type: 'warning',
-              information: t(
-                'The antivirus has detected an anomaly in your file.',
-              ),
-            };
-
-            editor.updateBlock(loadingBlock.id, loadingBlock);
-          });
-      }, 250);
-
-      timeoutIds.current[url] = timoutId;
+      } catch (error) {
+        captureException(error, {
+          extra: { info: 'Error replacing block for upload loader' },
+        });
+      }
     },
-    [t, mediaUrl],
+    [editor, t],
   );
 
   useEffect(() => {
-    const blocksAnalyze = editor?.document.filter(
-      (block) => 'url' in block.props && block.props.url.includes(ANALYZE_URL),
+    const imagesBlocks = editor?.document.filter(
+      (block) =>
+        block.type === 'image' && block.props.url.includes(ANALYZE_URL),
     );
 
-    if (!blocksAnalyze?.length) {
-      return;
-    }
-
-    blocksAnalyze.forEach((block) => {
-      if (!('url' in block.props)) {
-        return;
-      }
-
-      blockAnalyzeProcess(editor, block.id, block.props.url);
+    imagesBlocks.forEach((block) => {
+      replaceBlockWithUploadLoader(block as Block);
     });
-  }, [blockAnalyzeProcess, editor]);
+  }, [editor, replaceBlockWithUploadLoader]);
 
+  /**
+   * Handle upload end to replace the upload block by a uploadLoader
+   * block to show analyzing status
+   */
   useEffect(() => {
-    editor.onChange((_, context) => {
-      const blocksChanges = context.getChanges();
-
-      if (!blocksChanges.length) {
+    editor.onUploadEnd((blockId) => {
+      if (!blockId) {
         return;
       }
 
-      const blockChanges = blocksChanges[0];
+      const innerTimeoutId = setTimeout(() => {
+        const block = editor.getBlock({ id: blockId });
 
-      if (
-        blockChanges.source.type !== 'local' ||
-        blockChanges.type !== 'update' ||
-        !('url' in blockChanges.block.props) ||
-        ('url' in blockChanges.block.props &&
-          !blockChanges.block.props.url.includes(ANALYZE_URL))
-      ) {
-        return;
-      }
+        replaceBlockWithUploadLoader(block as Block);
+      }, 300);
 
-      blockAnalyzeProcess(
-        editor,
-        blockChanges.block.id,
-        blockChanges.block.props.url,
-      );
+      return () => {
+        clearTimeout(innerTimeoutId);
+      };
     });
-  }, [blockAnalyzeProcess, mediaUrl, editor, t]);
+  }, [editor, replaceBlockWithUploadLoader]);
 };

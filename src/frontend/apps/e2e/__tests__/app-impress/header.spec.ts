@@ -156,9 +156,10 @@ test.describe('Header: Override configuration', () => {
       FRONTEND_THEME: 'dsfr',
       theme_customization: {
         header: {
-          logo: {
+          icon: {
             src: '/assets/logo-gouv.svg',
             width: '220px',
+            height: 'auto',
             alt: '',
           },
         },

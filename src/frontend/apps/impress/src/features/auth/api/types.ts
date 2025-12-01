@@ -13,3 +13,5 @@ export interface User {
   short_name: string;
   language?: string;
 }
+
+export type UserLight = Pick<User, 'full_name' | 'short_name'>;

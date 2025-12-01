@@ -51,3 +51,13 @@ export type DocsExporterDocx = Exporter<
   IRunPropertiesOptions,
   TextRun
 >;
+
+export type DocsExporterODT = Exporter<
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+  React.ReactNode,
+  React.ReactNode,
+  Record<string, string>,
+  React.ReactNode
+>;

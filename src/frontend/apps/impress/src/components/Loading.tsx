@@ -24,12 +24,12 @@ export const LoadMoreText = ({
       className="--docs--load-more"
     >
       <Icon
-        $theme="primary"
-        $variation="800"
+        $theme="brand"
+        $variation="secondary"
         iconName="arrow_downward"
         $size="md"
       />
-      <Text $theme="primary" $variation="800">
+      <Text $theme="brand" $variation="secondary">
         {t('Load more')}
       </Text>
     </Box>

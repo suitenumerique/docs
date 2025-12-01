@@ -1,4 +1,5 @@
 import { APIError, errorCauses } from '@/api';
+import { sleep } from '@/utils';
 
 interface CheckDocMediaStatusResponse {
   file?: string;
@@ -24,4 +25,29 @@ export const checkDocMediaStatus = async ({
   }
 
   return response.json() as Promise<CheckDocMediaStatusResponse>;
+};
+
+/**
+ * Upload file can be analyzed on the server side,
+ * we had this function to wait for the analysis to be done
+ * before returning the file url. It will keep the loader
+ * on the upload button until the analysis is done.
+ * @param url
+ * @returns Promise<CheckDocMediaStatusResponse> status_code
+ * @description Waits for the upload to be analyzed by checking the status of the file.
+ */
+export const loopCheckDocMediaStatus = async (
+  url: string,
+): Promise<CheckDocMediaStatusResponse> => {
+  const SLEEP_TIME = 5000;
+  const response = await checkDocMediaStatus({
+    urlMedia: url,
+  });
+
+  if (response.status === 'ready') {
+    return response;
+  } else {
+    await sleep(SLEEP_TIME);
+    return await loopCheckDocMediaStatus(url);
+  }
 };

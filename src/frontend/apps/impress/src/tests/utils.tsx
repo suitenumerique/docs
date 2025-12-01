@@ -15,10 +15,12 @@ export const AppWrapper = ({ children }: PropsWithChildren) => {
   });
 
   return (
-    <TreeProvider initialTreeData={[]}>
-      <QueryClientProvider client={queryClient}>
-        <CunninghamProvider theme="default">{children}</CunninghamProvider>
-      </QueryClientProvider>
-    </TreeProvider>
+    <CunninghamProvider theme="default">
+      <TreeProvider initialTreeData={[]}>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </TreeProvider>
+    </CunninghamProvider>
   );
 };

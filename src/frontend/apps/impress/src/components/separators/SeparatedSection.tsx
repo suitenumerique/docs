@@ -13,7 +13,8 @@ export const SeparatedSection = ({
   showSeparator = true,
   children,
 }: PropsWithChildren<Props>) => {
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
+
   return (
     <Box
       $css={css`
@@ -21,7 +22,8 @@ export const SeparatedSection = ({
         padding: ${spacingsTokens['sm']} 0;
         ${showSeparator &&
         css`
-          border-bottom: 1px solid ${colorsTokens['greyscale-200']};
+          border-bottom: 1px solid
+            var(--c--contextuals--border--surface--primary);
         `}
       `}
     >

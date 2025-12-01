@@ -23,8 +23,9 @@ export const blockMappingParagraphPDF: DocsExporterPDF['mappings']['blockMapping
         });
       }
     }
+
     return (
-      <Text key={block.id}>
+      <Text key={'paragraph' + block.id}>
         {exporter.transformInlineContent(block.content)}
       </Text>
     );
