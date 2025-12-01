@@ -13,6 +13,7 @@ import {
 import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';
+import JSZip from 'jszip';
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -145,7 +146,88 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       blobExport = await exporter.toODTDocument(exportDocument);
     } else if (format === DocDownloadFormat.HTML) {
       const editorHtml = await editor.blocksToHTMLLossy();
+
+      // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
+      const domParser = new DOMParser();
+      const parsedDocument = domParser.parseFromString(editorHtml, 'text/html');
+
+      const mediaFiles: { filename: string; blob: Blob }[] = [];
+      const mediaElements = Array.from(
+        parsedDocument.querySelectorAll<
+          | HTMLImageElement
+          | HTMLVideoElement
+          | HTMLAudioElement
+          | HTMLSourceElement
+        >('img, video, audio, source'),
+      );
+
+      await Promise.all(
+        mediaElements.map(async (element, index) => {
+          const src = element.getAttribute('src');
+
+          if (!src) {
+            return;
+          }
+
+          const fetched = await exportCorsResolveFileUrl(doc.id, src);
+
+          if (!(fetched instanceof Blob)) {
+            return;
+          }
+
+          // Derive a readable filename:
+          // - data: URLs → use a generic "media-N.ext"
+          // - normal URLs → keep the last path segment as base name.
+          let baseName = `media-${index + 1}`;
+
+          if (!src.startsWith('data:')) {
+            try {
+              const url = new URL(src, window.location.origin);
+              const lastSegment = url.pathname.split('/').pop();
+              if (lastSegment) {
+                baseName = `${index + 1}-${lastSegment}`;
+              }
+            } catch {
+              // Ignore invalid URLs, keep default baseName.
+            }
+          }
+
+          let filename = baseName;
+
+          // Ensure the filename has an extension consistent with the blob MIME type.
+          const mimeType = fetched.type;
+          if (mimeType && !baseName.includes('.')) {
+            const subtype = mimeType.split('/')[1] || '';
+            let extension = '';
+
+            if (subtype.includes('svg')) {
+              extension = 'svg';
+            } else if (subtype.includes('jpeg') || subtype.includes('pjpeg')) {
+              extension = 'jpg';
+            } else if (subtype.includes('png')) {
+              extension = 'png';
+            } else if (subtype.includes('gif')) {
+              extension = 'gif';
+            } else if (subtype.includes('webp')) {
+              extension = 'webp';
+            } else if (subtype.includes('pdf')) {
+              extension = 'pdf';
+            } else if (subtype) {
+              extension = subtype.split('+')[0];
+            }
+
+            if (extension) {
+              filename = `${baseName}.${extension}`;
+            }
+          }
+
+          element.setAttribute('src', filename);
+          mediaFiles.push({ filename, blob: fetched });
+        }),
+      );
+
       const lang = i18next.language || 'fr';
+      const editorHtmlWithLocalMedia = parsedDocument.body.innerHTML;
 
       const htmlContent = `<!DOCTYPE html>
 <html lang="${lang}">
@@ -155,21 +237,29 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   </head>
   <body>
     <main role="main">
-${editorHtml}
+${editorHtmlWithLocalMedia}
     </main>
   </body>
 </html>`;
 
-      blobExport = new Blob([htmlContent], {
-        type: 'text/html;charset=utf-8',
+      const zip = new JSZip();
+      zip.file('index.html', htmlContent);
+
+      mediaFiles.forEach(({ filename, blob }) => {
+        zip.file(filename, blob);
       });
+
+      blobExport = await zip.generateAsync({ type: 'blob' });
     } else {
       toast(t('The export failed'), VariantType.ERROR);
       setIsExporting(false);
       return;
     }
 
-    downloadFile(blobExport, `${filename}.${format}`);
+    const downloadExtension =
+      format === DocDownloadFormat.HTML ? 'zip' : format;
+
+    downloadFile(blobExport, `${filename}.${downloadExtension}`);
 
     toast(
       t('Your {{format}} was downloaded succesfully', {
@@ -246,7 +336,9 @@ ${editorHtml}
         className="--docs--modal-export-content"
       >
         <Text $variation="secondary" $size="sm" as="p">
-          {t('Download your document in a .docx, .odt or .pdf format.')}
+          {t(
+            'Download your document in a .docx, .odt, .pdf or .html(zip) format.',
+          )}
         </Text>
         <Select
           clearable={false}
