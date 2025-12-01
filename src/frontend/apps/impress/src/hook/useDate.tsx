@@ -22,19 +22,17 @@ export const useDate = () => {
   };
 
   const relativeDate = (date: string): string => {
-    const dateTime = DateTime.fromISO(date).setLocale(i18n.language);
-    const relative = dateTime.toRelative();
-    if (relative) {
-      const diffInSeconds = Math.abs(dateTime.diffNow('seconds').seconds);
-      if (diffInSeconds < 1) {
-        return t('just now');
-      }
-      if (relative.includes('0 seconds') || relative.includes('0 second') ||
-        relative.match(/0\s*(second|seconde|segundo|秒)/i)) {
-        return t('just now');
-      }
-    }
-    return relative;
+    const dateToCompare = DateTime.fromISO(date);
+
+    if (!dateToCompare.isValid) return '';
+
+    const dateNow = DateTime.now();
+
+    const differenceInSeconds = dateNow.diff(dateToCompare).as('seconds');
+
+    return Math.abs(differenceInSeconds) >= 5
+      ? dateToCompare.toRelative({ base: dateNow, locale: i18n.language })
+      : t('just now');
   };
 
   const calculateDaysLeft = (date: string, daysLimit: number): number =>
