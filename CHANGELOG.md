@@ -10,6 +10,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
+- ⚡️(frontend) Enhance/html copy to download #1669
 
 ### Fixed
 

@@ -408,40 +408,6 @@ test.describe('Doc Header', () => {
     expect(clipboardContent.trim()).toBe('# Hello World');
   });
 
-  test('It checks the copy as HTML button', async ({ page, browserName }) => {
-    test.skip(
-      browserName === 'webkit',
-      'navigator.clipboard is not working with webkit and playwright',
-    );
-
-    // create page and navigate to it
-    await page
-      .getByRole('button', {
-        name: 'New doc',
-      })
-      .click();
-
-    // Add dummy content to the doc
-    const editor = page.locator('.ProseMirror');
-    const docFirstBlock = editor.locator('.bn-block-content').first();
-    await docFirstBlock.click();
-    await page.keyboard.type('# Hello World', { delay: 100 });
-    const docFirstBlockContent = docFirstBlock.locator('h1');
-    await expect(docFirstBlockContent).toHaveText('Hello World');
-
-    // Copy content to clipboard
-    await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Copy as HTML' }).click();
-    await expect(page.getByText('Copied to clipboard')).toBeVisible();
-
-    // Test that clipboard is in HTML format
-    const handle = await page.evaluateHandle(() =>
-      navigator.clipboard.readText(),
-    );
-    const clipboardContent = await handle.jsonValue();
-    expect(clipboardContent.trim()).toBe(`<h1>Hello World</h1><p></p>`);
-  });
-
   test('it checks the copy link button', async ({ page, browserName }) => {
     test.skip(
       browserName === 'webkit',
