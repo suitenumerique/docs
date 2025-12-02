@@ -210,6 +210,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       $height="100%"
       role="tree"
       aria-label={t('Document tree')}
+      aria-describedby="doc-tree-keyboard-instructions"
       $css={css`
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
@@ -229,6 +230,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         }
       `}
     >
+      {/* Instructions clavier pour les lecteurs d'écran */}
+      <Box id="doc-tree-keyboard-instructions" className="sr-only">
+        {t(
+          'Use arrow keys to navigate between documents. Press Enter to open a document. Press F2 to access document actions.',
+        )}
+      </Box>
       <Box
         $padding={{ horizontal: 'sm', top: 'sm', bottom: '4px' }}
         $css={css`
