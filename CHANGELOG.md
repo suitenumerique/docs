@@ -18,6 +18,8 @@ and this project adheres to
 - 🛂(backend) stop throttling collaboration servers #1730
 - 🚸(backend) use unaccented full name for user search #1637
 - 🌐(backend) internationalize demo #1644
+- ♿(frontend) improve accessibility:
+  - ♿️Improve keyboard accessibility for the document tree #1681
 
 ### Fixed
 
