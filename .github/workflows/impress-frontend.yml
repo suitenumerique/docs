@@ -85,6 +85,9 @@ jobs:
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright chromium
 
+      - name: Free disk space before Docker
+        uses: ./.github/actions/free-disk-space
+
       - name: Start Docker services
         run: make bootstrap-e2e FLUSH_ARGS='--no-input'
 
@@ -123,6 +126,9 @@ jobs:
 
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright firefox webkit chromium
+
+      - name: Free disk space before Docker
+        uses: ./.github/actions/free-disk-space
 
       - name: Start Docker services
         run: make bootstrap-e2e FLUSH_ARGS='--no-input'
