@@ -20,6 +20,7 @@ import {
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
+import { useActionableMode } from '../hooks/useActionableMode';
 import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
@@ -106,6 +107,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isSelected = isSelectedNow;
   const ariaLabel = docTitle;
   const isDisabled = !!doc.deleted_at;
+  const { actionsRef, onKeyDownCapture } = useActionableMode(node, menuOpen);
 
   return (
     <Box
@@ -117,6 +119,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
       aria-disabled={isDisabled}
+      onKeyDownCapture={onKeyDownCapture}
       $css={css`
         background-color: var(--c--globals--colors--gray-000);
         .light-doc-item-actions {
@@ -127,12 +130,24 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           outline: none !important;
           box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
           border-radius: var(--c--globals--spacings--st);
+          .light-doc-item-actions {
+            display: flex;
+          }
+        }
+        /* Retirer le focus visuel du tree item quand le focus est sur les actions */
+        &:has(.light-doc-item-actions *:focus) .c__tree-view--node.isFocused {
+          box-shadow: none !important;
         }
         &:hover {
           background-color: var(
             --c--contextuals--background--semantic--gray--tertiary
           );
           border-radius: var(--c--globals--spacings--st);
+          .light-doc-item-actions {
+            display: flex;
+          }
+        }
+        &:focus-within {
           .light-doc-item-actions {
             display: flex;
           }
@@ -153,6 +168,27 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           docId={doc.id}
           title={doc.title}
         />
+        <Box
+          $direction="row"
+          $align="center"
+          className="light-doc-item-actions actions"
+          role="toolbar"
+          aria-label={`${t('Actions for {{title}}', { title: docTitle })}`}
+          $css={css`
+            margin-left: auto;
+            order: 2;
+          `}
+        >
+          <DocTreeItemActions
+            doc={doc}
+            isOpen={menuOpen}
+            onOpenChange={setMenuOpen}
+            parentId={node.data.parentKey}
+            onCreateSuccess={afterCreate}
+            actionsRef={actionsRef}
+            onKeyDownCapture={onKeyDownCapture}
+          />
+        </Box>
         <BoxButton
           onClick={(e) => {
             e.stopPropagation();
@@ -168,6 +204,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $css={css`
             text-align: left;
             min-width: 0;
+            order: 1;
           `}
         >
           <Box
@@ -196,21 +233,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             )}
           </Box>
         </BoxButton>
-        <Box
-          $direction="row"
-          $align="center"
-          className="light-doc-item-actions"
-          role="toolbar"
-          aria-label={`${t('Actions for {{title}}', { title: docTitle })}`}
-        >
-          <DocTreeItemActions
-            doc={doc}
-            isOpen={menuOpen}
-            onOpenChange={setMenuOpen}
-            parentId={node.data.parentKey}
-            onCreateSuccess={afterCreate}
-          />
-        </Box>
       </TreeViewItem>
     </Box>
   );
