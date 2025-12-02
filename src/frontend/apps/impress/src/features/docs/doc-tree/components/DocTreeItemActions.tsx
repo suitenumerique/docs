@@ -195,6 +195,7 @@ export const DocTreeItemActions = ({
               onOpenChange?.(!isOpen);
             }}
             aria-label={t('More options')}
+            tabIndex={-1}
             $css={css`
               background: transparent;
               border: none;
@@ -233,6 +234,7 @@ export const DocTreeItemActions = ({
             $variation="secondary"
             aria-label={t('Add a sub page')}
             data-testid="doc-tree-item-actions-add-child"
+            tabIndex={-1}
             $css={css`
               &:focus-visible {
                 outline: 2px solid var(--c--globals--colors--brand-500) !important;

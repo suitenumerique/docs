@@ -6,7 +6,7 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -16,6 +16,8 @@ import { Doc, SimpleDocItem } from '@/docs/doc-management';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
 import { useMoveDoc } from '../api/useMove';
+import { useActionableMode } from '../hooks/useActionableMode';
+import type { ActionableNodeLike } from '../hooks/useActionableMode';
 import { findIndexInTree } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
@@ -32,11 +34,28 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
   const [rootActionsOpen, setRootActionsOpen] = useState(false);
+  const [rootItemFocused, setRootItemFocused] = useState(false);
   const rootIsSelected =
     !!treeContext?.root?.id &&
     treeContext?.treeData.selectedNode?.id === treeContext.root.id;
+  const rootItemRef = useRef<HTMLDivElement>(null);
 
   const { t } = useTranslation();
+
+  /**
+   * Fake node to reuse useActionableMode hook for the root item.
+   * This allows F2 keyboard navigation and Escape handling on the root item
+   * without duplicating the logic from DocSubPageItem.
+   */
+  const fakeRootNode: ActionableNodeLike = {
+    isFocused: rootItemFocused,
+    focus: () => {
+      rootItemRef.current?.focus();
+    },
+  };
+
+  const { actionsRef: rootActionsRef, onKeyDownCapture: onRootToolbarKeys } =
+    useActionableMode(fakeRootNode, rootActionsOpen);
 
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
@@ -85,12 +104,23 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   }, [router, treeContext?.root?.id]);
 
   const handleRootFocus = useCallback(() => {
+    setRootItemFocused(true);
     selectRoot();
   }, [selectRoot]);
 
-  // activate root document with enter or space
+  const handleRootBlur = useCallback(() => {
+    setRootItemFocused(false);
+  }, []);
+
+  // activate root document with enter or space (only when not in actions)
   const handleRootKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // Ignore if focus is in actions
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('.doc-tree-root-item-actions')) {
+        return;
+      }
+
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         selectRoot();
@@ -206,12 +236,14 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         `}
       >
         <Box
+          ref={rootItemRef}
           data-testid="doc-tree-root-item"
           role="treeitem"
           aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || t('Untitled document') })}`}
           aria-selected={rootIsSelected}
           tabIndex={0}
           onFocus={handleRootFocus}
+          onBlur={handleRootBlur}
           onKeyDown={handleRootKeyDown}
           $css={css`
             padding: ${spacingsTokens['2xs']};
@@ -234,7 +266,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             }
 
             .doc-tree-root-item-actions {
-              display: ${rootActionsOpen ? 'flex' : 'none'};
+              display: flex;
               opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {
@@ -242,11 +274,16 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               }
             }
             &:hover,
-            &:focus-visible {
+            &:focus-visible,
+            &:focus-within {
               .doc-tree-root-item-actions {
                 display: flex;
                 opacity: 1;
               }
+            }
+            /* Retirer le focus visuel du root item quand le focus est sur les actions */
+            &:has(.doc-tree-root-item-actions *:focus) {
+              box-shadow: none !important;
             }
           `}
         >
@@ -282,6 +319,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 isOpen={rootActionsOpen}
                 isRoot={true}
                 onOpenChange={setRootActionsOpen}
+                actionsRef={rootActionsRef}
+                onKeyDownCapture={onRootToolbarKeys}
               />
             </Box>
           </StyledLink>

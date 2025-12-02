@@ -204,7 +204,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $css={css`
             text-align: left;
             min-width: 0;
-            order: 1;
           `}
         >
           <Box
