@@ -145,11 +145,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       blobExport = await exporter.toODTDocument(exportDocument);
     } else if (format === DocDownloadFormat.HTML) {
-      const editorHtml = await editor.blocksToHTMLLossy();
+      // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
+      const fullHtml = await editor.blocksToFullHTML();
 
       // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
       const domParser = new DOMParser();
-      const parsedDocument = domParser.parseFromString(editorHtml, 'text/html');
+      const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
 
       const mediaFiles: { filename: string; blob: Blob }[] = [];
       const mediaElements = Array.from(
