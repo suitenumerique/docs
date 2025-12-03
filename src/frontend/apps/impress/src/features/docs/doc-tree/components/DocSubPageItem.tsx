@@ -100,11 +100,21 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // F2: focus first action button
-    const shoulOpenActions = !menuOpen && node.isFocused;
-    if (e.key === 'F2' && shoulOpenActions) {
+    const shouldOpenActions = !menuOpen && node.isFocused;
+    if (e.key === 'F2' && shouldOpenActions) {
       buttonOptionRef.current?.focus();
       e.stopPropagation();
       return;
+    }
+  };
+
+  const handleActionsOpenChange = (isOpen: boolean) => {
+    setMenuOpen(isOpen);
+
+    // When the menu closes (via Escape or activating an option),
+    // return focus to the tree item so focus is not lost.
+    if (!isOpen) {
+      node.focus();
     }
   };
 
@@ -181,7 +191,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           <DocTreeItemActions
             doc={doc}
             isOpen={menuOpen}
-            onOpenChange={setMenuOpen}
+            onOpenChange={handleActionsOpenChange}
             parentId={node.data.parentKey}
             onCreateSuccess={afterCreate}
             actionsRef={actionsRef}
