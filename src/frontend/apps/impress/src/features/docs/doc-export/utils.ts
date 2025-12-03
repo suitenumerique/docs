@@ -261,3 +261,30 @@ export const deriveMediaFilename = ({
 
   return filename;
 };
+
+/**
+ * Generates a complete HTML document structure for export.
+ *
+ * @param documentTitle - The title of the document (will be escaped)
+ * @param editorHtmlWithLocalMedia - The HTML content from the editor
+ * @param lang - The language code for the document (e.g., 'fr', 'en')
+ * @returns A complete HTML5 document string
+ */
+export const generateHtmlDocument = (
+  documentTitle: string,
+  editorHtmlWithLocalMedia: string,
+  lang: string,
+): string => {
+  return `<!DOCTYPE html>
+<html lang="${lang}">
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(documentTitle)}</title>
+  </head>
+  <body>
+    <main role="main">
+${editorHtmlWithLocalMedia}
+    </main>
+  </body>
+</html>`;
+};

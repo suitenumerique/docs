@@ -27,7 +27,11 @@ import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
-import { deriveMediaFilename, downloadFile, escapeHtml } from '../utils';
+import {
+  deriveMediaFilename,
+  downloadFile,
+  generateHtmlDocument,
+} from '../utils';
 
 enum DocDownloadFormat {
   HTML = 'html',
@@ -189,18 +193,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       const lang = i18next.language || 'fr';
       const editorHtmlWithLocalMedia = parsedDocument.body.innerHTML;
 
-      const htmlContent = `<!DOCTYPE html>
-<html lang="${lang}">
-  <head>
-    <meta charset="utf-8" />
-    <title>${escapeHtml(documentTitle)}</title>
-  </head>
-  <body>
-    <main role="main">
-${editorHtmlWithLocalMedia}
-    </main>
-  </body>
-</html>`;
+      const htmlContent = generateHtmlDocument(
+        documentTitle,
+        editorHtmlWithLocalMedia,
+        lang,
+      );
 
       const zip = new JSZip();
       zip.file('index.html', htmlContent);
