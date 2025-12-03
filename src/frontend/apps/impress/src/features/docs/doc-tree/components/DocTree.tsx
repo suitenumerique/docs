@@ -16,8 +16,6 @@ import { Doc, SimpleDocItem } from '@/docs/doc-management';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
 import { useMoveDoc } from '../api/useMove';
-import { useActionableMode } from '../hooks/useActionableMode';
-import type { ActionableNodeLike } from '../hooks/useActionableMode';
 import { findIndexInTree } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
@@ -34,28 +32,14 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
   const [rootActionsOpen, setRootActionsOpen] = useState(false);
-  const [rootItemFocused, setRootItemFocused] = useState(false);
   const rootIsSelected =
     !!treeContext?.root?.id &&
     treeContext?.treeData.selectedNode?.id === treeContext.root.id;
   const rootItemRef = useRef<HTMLDivElement>(null);
+  const rootActionsRef = useRef<HTMLDivElement>(null);
+  const rootButtonOptionRef = useRef<HTMLButtonElement | null>(null);
 
   const { t } = useTranslation();
-
-  /**
-   * Fake node to reuse useActionableMode hook for the root item.
-   * This allows F2 keyboard navigation and Escape handling on the root item
-   * without duplicating the logic from DocSubPageItem.
-   */
-  const fakeRootNode: ActionableNodeLike = {
-    isFocused: rootItemFocused,
-    focus: () => {
-      rootItemRef.current?.focus();
-    },
-  };
-
-  const { actionsRef: rootActionsRef, onKeyDownCapture: onRootToolbarKeys } =
-    useActionableMode(fakeRootNode, rootActionsOpen);
 
   const [initialOpenState, setInitialOpenState] = useState<OpenMap | undefined>(
     undefined,
@@ -104,17 +88,19 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   }, [router, treeContext?.root?.id]);
 
   const handleRootFocus = useCallback(() => {
-    setRootItemFocused(true);
     selectRoot();
   }, [selectRoot]);
 
-  const handleRootBlur = useCallback(() => {
-    setRootItemFocused(false);
-  }, []);
-
-  // activate root document with enter or space (only when not in actions)
+  // Handle keyboard navigation for root item
   const handleRootKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // F2: focus first action button
+      if (e.key === 'F2' && !rootActionsOpen) {
+        e.preventDefault();
+        rootButtonOptionRef.current?.focus();
+        return;
+      }
+
       // Ignore if focus is in actions
       const target = e.target as HTMLElement | null;
       if (target?.closest('.doc-tree-root-item-actions')) {
@@ -127,7 +113,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         navigateToRoot();
       }
     },
-    [selectRoot, navigateToRoot],
+    [selectRoot, navigateToRoot, rootActionsOpen],
   );
 
   /**
@@ -250,7 +236,6 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           aria-selected={rootIsSelected}
           tabIndex={0}
           onFocus={handleRootFocus}
-          onBlur={handleRootBlur}
           onKeyDown={handleRootKeyDown}
           $css={css`
             padding: ${spacingsTokens['2xs']};
@@ -327,7 +312,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 isRoot={true}
                 onOpenChange={setRootActionsOpen}
                 actionsRef={rootActionsRef}
-                onKeyDownCapture={onRootToolbarKeys}
+                buttonOptionRef={rootButtonOptionRef}
               />
             </Box>
           </StyledLink>
