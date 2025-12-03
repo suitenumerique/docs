@@ -2,6 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
+import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
 
 import {
@@ -215,7 +216,12 @@ test.describe('Doc Export', () => {
       .locator('.--docs--editor-container img.bn-visual-media')
       .first();
 
-    await expect(image).toBeVisible();
+    // Wait for the image to be attached and have a valid src (aria-hidden prevents toBeVisible on Chromium)
+    await expect(image).toBeAttached({ timeout: 10000 });
+    await expect(image).toHaveAttribute('src', /.*\.svg/);
+
+    // Give some time for the image to be fully processed
+    await page.waitForTimeout(1000);
 
     await page
       .getByRole('button', {
@@ -238,11 +244,31 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.zip`);
 
     const zipBuffer = await cs.toBuffer(await download.createReadStream());
+    // Unzip and inspect contents
+    const zip = await JSZip.loadAsync(zipBuffer);
 
-    // ZIP files start with "PK\x03\x04"
-    expect(zipBuffer.length).toBeGreaterThan(4);
-    expect(zipBuffer[0]).toBe(0x50);
-    expect(zipBuffer[1]).toBe(0x4b);
+    // Check that index.html exists
+    const indexHtml = zip.file('index.html');
+    expect(indexHtml).not.toBeNull();
+
+    // Read and verify HTML content
+    const htmlContent = await indexHtml!.async('string');
+    console.log('HTML content preview:', htmlContent.substring(0, 1000));
+    expect(htmlContent).toContain('Hello HTML ZIP');
+
+    // Check for media files (they are at the root of the ZIP, not in a media/ folder)
+    // Media files are named like "1-test.svg" or "media-1.png" by deriveMediaFilename
+    const allFiles = Object.keys(zip.files);
+    console.log('All files in ZIP:', allFiles);
+    const mediaFiles = allFiles.filter(
+      (name) => name !== 'index.html' && !name.endsWith('/'),
+    );
+    console.log('Media files found:', mediaFiles);
+    expect(mediaFiles.length).toBeGreaterThan(0);
+
+    // Verify the SVG image is included
+    const svgFile = mediaFiles.find((name) => name.endsWith('.svg'));
+    expect(svgFile).toBeDefined();
   });
 
   /**
