@@ -11,6 +11,10 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
 
+### Fixed
+
+- 🐛(nginx) fix / location to handle new static pages
+
 ## [4.0.0] - 2025-12-01
 
 ### Added
