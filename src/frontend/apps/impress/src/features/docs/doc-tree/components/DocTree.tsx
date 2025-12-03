@@ -37,7 +37,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     treeContext?.treeData.selectedNode?.id === treeContext.root.id;
   const rootItemRef = useRef<HTMLDivElement>(null);
   const rootActionsRef = useRef<HTMLDivElement>(null);
-  const rootButtonOptionRef = useRef<HTMLButtonElement | null>(null);
+  const rootButtonOptionRef = useRef<HTMLDivElement | null>(null);
 
   const { t } = useTranslation();
 

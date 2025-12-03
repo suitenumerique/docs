@@ -33,7 +33,7 @@ type DocTreeItemActionsProps = {
   onOpenChange?: (isOpen: boolean) => void;
   parentId?: string | null;
   actionsRef?: React.RefObject<HTMLDivElement | null>;
-  buttonOptionRef?: React.RefObject<HTMLButtonElement | null>;
+  buttonOptionRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 export const DocTreeItemActions = ({
@@ -48,7 +48,7 @@ export const DocTreeItemActions = ({
 }: DocTreeItemActionsProps) => {
   const internalActionsRef = useRef<HTMLDivElement | null>(null);
   const targetActionsRef = actionsRef ?? internalActionsRef;
-  const internalButtonRef = useRef<HTMLButtonElement | null>(null);
+  const internalButtonRef = useRef<HTMLDivElement | null>(null);
   const targetButtonRef = buttonOptionRef ?? internalButtonRef;
   const router = useRouter();
   const { t } = useTranslation();
@@ -187,10 +187,8 @@ export const DocTreeItemActions = ({
           isOpen={isOpen}
           onOpenChange={onOpenChange}
         >
-          <Box
-            as="button"
+          <BoxButton
             ref={targetButtonRef}
-            type="button"
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -220,7 +218,7 @@ export const DocTreeItemActions = ({
               $theme="brand"
               $variation="secondary"
             />
-          </Box>
+          </BoxButton>
         </DropdownMenu>
         {doc.abilities.children_create && (
           <BoxButton
