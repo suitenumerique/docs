@@ -198,8 +198,14 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           // Ensure the filename has an extension consistent with the blob MIME type.
           const mimeType = fetched.type;
           if (mimeType && !baseName.includes('.')) {
-            const subtype = mimeType.split('/')[1] || '';
+            const slashIndex = mimeType.indexOf('/');
+            const rawSubtype =
+              slashIndex !== -1 && slashIndex < mimeType.length - 1
+                ? mimeType.slice(slashIndex + 1)
+                : '';
+
             let extension = '';
+            const subtype = rawSubtype.toLowerCase();
 
             if (subtype.includes('svg')) {
               extension = 'svg';
