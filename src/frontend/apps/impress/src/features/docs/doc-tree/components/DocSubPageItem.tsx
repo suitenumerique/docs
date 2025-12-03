@@ -5,7 +5,7 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -19,9 +19,6 @@ import {
 } from '@/features/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
-
-import { useActionableMode } from '../hooks/useActionableMode';
-import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -47,7 +44,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const isSelectedNow = treeContext?.treeData.selectedNode?.id === doc.id;
-  const isActive = node.isFocused || menuOpen || isSelectedNow;
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
@@ -93,21 +89,24 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
-  useKeyboardActivation(
-    ['Enter'],
-    isActive && !menuOpen,
-    handleActivate,
-    true,
-    '.c__tree-view',
-  );
-
   const docTitle = doc.title || untitledDocument;
   const hasChildren = (doc.children?.length || 0) > 0;
   const isExpanded = node.isOpen;
   const isSelected = isSelectedNow;
   const ariaLabel = docTitle;
   const isDisabled = !!doc.deleted_at;
-  const { actionsRef, onKeyDownCapture } = useActionableMode(node, menuOpen);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const buttonOptionRef = useRef<HTMLButtonElement | null>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // F2: focus first action button
+    const shoulOpenActions = !menuOpen && node.isFocused;
+    if (e.key === 'F2' && shoulOpenActions) {
+      buttonOptionRef.current?.focus();
+      e.stopPropagation();
+      return;
+    }
+  };
 
   return (
     <Box
@@ -119,7 +118,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
       aria-disabled={isDisabled}
-      onKeyDownCapture={onKeyDownCapture}
+      onKeyDown={handleKeyDown}
       $css={css`
         background-color: var(--c--globals--colors--gray-000);
         .light-doc-item-actions {
@@ -186,7 +185,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             parentId={node.data.parentKey}
             onCreateSuccess={afterCreate}
             actionsRef={actionsRef}
-            onKeyDownCapture={onKeyDownCapture}
+            buttonOptionRef={buttonOptionRef}
           />
         </Box>
         <BoxButton

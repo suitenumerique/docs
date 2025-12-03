@@ -33,7 +33,7 @@ type DocTreeItemActionsProps = {
   onOpenChange?: (isOpen: boolean) => void;
   parentId?: string | null;
   actionsRef?: React.RefObject<HTMLDivElement | null>;
-  onKeyDownCapture?: (e: React.KeyboardEvent) => void;
+  buttonOptionRef?: React.RefObject<HTMLButtonElement | null>;
 };
 
 export const DocTreeItemActions = ({
@@ -44,10 +44,12 @@ export const DocTreeItemActions = ({
   onOpenChange,
   parentId,
   actionsRef,
-  onKeyDownCapture,
+  buttonOptionRef,
 }: DocTreeItemActionsProps) => {
   const internalActionsRef = useRef<HTMLDivElement | null>(null);
   const targetActionsRef = actionsRef ?? internalActionsRef;
+  const internalButtonRef = useRef<HTMLButtonElement | null>(null);
+  const targetButtonRef = buttonOptionRef ?? internalButtonRef;
   const router = useRouter();
   const { t } = useTranslation();
   const deleteModal = useModal();
@@ -174,7 +176,6 @@ export const DocTreeItemActions = ({
     <Box className="doc-tree-root-item-actions actions">
       <Box
         ref={targetActionsRef}
-        onKeyDownCapture={onKeyDownCapture}
         $direction="row"
         $align="center"
         className="--docs--doc-tree-item-actions"
@@ -188,6 +189,7 @@ export const DocTreeItemActions = ({
         >
           <Box
             as="button"
+            ref={targetButtonRef}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
