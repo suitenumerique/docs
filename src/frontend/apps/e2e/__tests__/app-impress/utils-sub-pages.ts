@@ -1,7 +1,9 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 
 import {
   BrowserName,
+  closeHeaderMenu,
+  openHeaderMenu,
   randomName,
   updateDocTitle,
   verifyDocName,
@@ -15,10 +17,7 @@ export const createRootSubPage = async (
   isMobile = false,
 ) => {
   if (isMobile) {
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('menu')
-      .click();
+    await openHeaderMenu(page);
   }
 
   // Get response
@@ -29,10 +28,7 @@ export const createRootSubPage = async (
   const subPageJson = (await response.json()) as { id: string };
 
   if (isMobile) {
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('menu')
-      .click();
+    await openHeaderMenu(page);
   }
 
   // Get doc tree
@@ -44,13 +40,10 @@ export const createRootSubPage = async (
     .getByTestId(`doc-sub-page-item-${subPageJson.id}`)
     .first();
   await expect(subPageItem).toBeVisible();
-  await subPageItem.click();
+  await clickLocatorEvenIfOutOfViewport(subPageItem);
 
   if (isMobile) {
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('close')
-      .click();
+    await closeHeaderMenu(page);
   }
 
   // Update sub page name
@@ -59,6 +52,28 @@ export const createRootSubPage = async (
 
   // Return sub page data
   return { name: randomDocs[0], docTreeItem: subPageItem, item: subPageJson };
+};
+
+const clickLocatorEvenIfOutOfViewport = async (locator: Locator) => {
+  await locator.scrollIntoViewIfNeeded();
+  try {
+    await locator.click({ force: true });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes('outside of the viewport')
+    ) {
+      const elementHandle = await locator.elementHandle();
+      if (!elementHandle) {
+        throw error;
+      }
+      await elementHandle.evaluate((element) =>
+        (element as HTMLElement).click(),
+      );
+    } else {
+      throw error;
+    }
+  }
 };
 
 export const clickOnAddRootSubPage = async (page: Page) => {

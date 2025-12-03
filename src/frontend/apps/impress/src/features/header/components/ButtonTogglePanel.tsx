@@ -21,6 +21,7 @@ export const ButtonTogglePanel = () => {
         <Icon $withThemeInherited iconName={isPanelOpen ? 'close' : 'menu'} />
       }
       className="--docs--button-toggle-panel"
+      data-testid="header-menu-toggle"
     />
   );
 };
