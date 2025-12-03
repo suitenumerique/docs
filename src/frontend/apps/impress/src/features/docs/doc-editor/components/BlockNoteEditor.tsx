@@ -259,7 +259,6 @@ export const BlockNoteReader = ({
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { threadStore } = useComments(docId, false, user);
-  const { t } = useTranslation();
   const editor = useCreateBlockNote(
     {
       collaboration: {
@@ -305,7 +304,6 @@ export const BlockNoteReader = ({
         editor={editor}
         editable={false}
         theme="light"
-        aria-label={t('Document viewer')}
         formattingToolbar={false}
         slashMenu={false}
         comments={false}
