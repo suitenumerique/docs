@@ -48,7 +48,7 @@ describe('DocToolBox - Licence', () => {
     expect(
       screen.getByText(/Download your document in a .docx, .odt.*format\./i),
     ).toBeInTheDocument();
-  }, 60000);
+  }, 10000);
 
   test('The export button is not rendered when MIT version is activated', async () => {
     process.env.NEXT_PUBLIC_PUBLISH_AS_MIT = 'true';
