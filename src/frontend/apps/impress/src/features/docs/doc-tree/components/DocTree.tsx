@@ -116,6 +116,20 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     [selectRoot, navigateToRoot, rootActionsOpen],
   );
 
+  // Handle menu open/close for root item - mirrors DocSubPageItem behavior
+  const handleRootActionsOpenChange = useCallback((isOpen: boolean) => {
+    setRootActionsOpen(isOpen);
+
+    // When the menu closes, return focus to the root tree item
+    // (same behavior as DocSubPageItem for consistency)
+    // Use requestAnimationFrame for smoother focus transition without flickering
+    if (!isOpen) {
+      requestAnimationFrame(() => {
+        rootItemRef.current?.focus();
+      });
+    }
+  }, []);
+
   /**
    * This effect is used to reset the tree when a new document
    * that is not part of the current tree is loaded.
@@ -310,7 +324,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 }}
                 isOpen={rootActionsOpen}
                 isRoot={true}
-                onOpenChange={setRootActionsOpen}
+                onOpenChange={handleRootActionsOpenChange}
                 actionsRef={rootActionsRef}
                 buttonOptionRef={rootButtonOptionRef}
               />
