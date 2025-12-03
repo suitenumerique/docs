@@ -27,7 +27,7 @@ import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
-import { downloadFile, escapeHtml } from '../utils';
+import { deriveMediaFilename, downloadFile, escapeHtml } from '../utils';
 
 enum DocDownloadFormat {
   HTML = 'html',
@@ -176,58 +176,11 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             return;
           }
 
-          // Derive a readable filename:
-          // - data: URLs → use a generic "media-N.ext"
-          // - normal URLs → keep the last path segment as base name.
-          let baseName = `media-${index + 1}`;
-
-          if (!src.startsWith('data:')) {
-            try {
-              const url = new URL(src, window.location.origin);
-              const lastSegment = url.pathname.split('/').pop();
-              if (lastSegment) {
-                baseName = `${index + 1}-${lastSegment}`;
-              }
-            } catch {
-              // Ignore invalid URLs, keep default baseName.
-            }
-          }
-
-          let filename = baseName;
-
-          // Ensure the filename has an extension consistent with the blob MIME type.
-          const mimeType = fetched.type;
-          if (mimeType && !baseName.includes('.')) {
-            const slashIndex = mimeType.indexOf('/');
-            const rawSubtype =
-              slashIndex !== -1 && slashIndex < mimeType.length - 1
-                ? mimeType.slice(slashIndex + 1)
-                : '';
-
-            let extension = '';
-            const subtype = rawSubtype.toLowerCase();
-
-            if (subtype.includes('svg')) {
-              extension = 'svg';
-            } else if (subtype.includes('jpeg') || subtype.includes('pjpeg')) {
-              extension = 'jpg';
-            } else if (subtype.includes('png')) {
-              extension = 'png';
-            } else if (subtype.includes('gif')) {
-              extension = 'gif';
-            } else if (subtype.includes('webp')) {
-              extension = 'webp';
-            } else if (subtype.includes('pdf')) {
-              extension = 'pdf';
-            } else if (subtype) {
-              extension = subtype.split('+')[0];
-            }
-
-            if (extension) {
-              filename = `${baseName}.${extension}`;
-            }
-          }
-
+          const filename = deriveMediaFilename({
+            src,
+            index,
+            blob: fetched,
+          });
           element.setAttribute('src', filename);
           mediaFiles.push({ filename, blob: fetched });
         }),

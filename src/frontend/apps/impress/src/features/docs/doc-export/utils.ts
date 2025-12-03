@@ -188,3 +188,76 @@ export const escapeHtml = (value: string): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+interface MediaFilenameParams {
+  src: string;
+  index: number;
+  blob: Blob;
+}
+
+/**
+ * Derives a stable, readable filename for media exported in the HTML ZIP.
+ *
+ * Rules:
+ * - Default base name is "media-{index+1}".
+ * - For non data: URLs, we reuse the last path segment when possible (e.g. 1-photo.png).
+ * - If the base name has no extension, we try to infer one from the blob MIME type.
+ */
+export const deriveMediaFilename = ({
+  src,
+  index,
+  blob,
+}: MediaFilenameParams): string => {
+  // Default base name
+  let baseName = `media-${index + 1}`;
+
+  // Try to reuse the last path segment for non data URLs.
+  if (!src.startsWith('data:')) {
+    try {
+      const url = new URL(src, window.location.origin);
+      const lastSegment = url.pathname.split('/').pop();
+      if (lastSegment) {
+        baseName = `${index + 1}-${lastSegment}`;
+      }
+    } catch {
+      // Ignore invalid URLs, keep default baseName.
+    }
+  }
+
+  let filename = baseName;
+
+  // Ensure the filename has an extension consistent with the blob MIME type.
+  const mimeType = blob.type;
+  if (mimeType && !baseName.includes('.')) {
+    const slashIndex = mimeType.indexOf('/');
+    const rawSubtype =
+      slashIndex !== -1 && slashIndex < mimeType.length - 1
+        ? mimeType.slice(slashIndex + 1)
+        : '';
+
+    let extension = '';
+    const subtype = rawSubtype.toLowerCase();
+
+    if (subtype.includes('svg')) {
+      extension = 'svg';
+    } else if (subtype.includes('jpeg') || subtype.includes('pjpeg')) {
+      extension = 'jpg';
+    } else if (subtype.includes('png')) {
+      extension = 'png';
+    } else if (subtype.includes('gif')) {
+      extension = 'gif';
+    } else if (subtype.includes('webp')) {
+      extension = 'webp';
+    } else if (subtype.includes('pdf')) {
+      extension = 'pdf';
+    } else if (subtype) {
+      extension = subtype.split('+')[0];
+    }
+
+    if (extension) {
+      filename = `${baseName}.${extension}`;
+    }
+  }
+
+  return filename;
+};
