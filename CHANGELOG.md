@@ -81,6 +81,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) add documents/all endpoint with descendants #1553
 - ✨(frontend) create skeleton component for DocEditor #1491
 - ✨(frontend) add an EmojiPicker in the document tree and title #1381
 - ✨(frontend) ajustable left panel #1456
