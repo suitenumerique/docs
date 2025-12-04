@@ -408,7 +408,10 @@ test.describe('Doc Header', () => {
     expect(clipboardContent.trim()).toBe('# Hello World');
   });
 
-  test('It checks the copy as HTML button', async ({ page, browserName }) => {
+  test('It no longer shows the copy as HTML button', async ({
+    page,
+    browserName,
+  }) => {
     test.skip(
       browserName === 'webkit',
       'navigator.clipboard is not working with webkit and playwright',
@@ -429,17 +432,16 @@ test.describe('Doc Header', () => {
     const docFirstBlockContent = docFirstBlock.locator('h1');
     await expect(docFirstBlockContent).toHaveText('Hello World');
 
-    // Copy content to clipboard
+    // Open document options menu
     await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Copy as HTML' }).click();
-    await expect(page.getByText('Copied to clipboard')).toBeVisible();
 
-    // Test that clipboard is in HTML format
-    const handle = await page.evaluateHandle(() =>
-      navigator.clipboard.readText(),
+    // We should no longer see "Copy as HTML" in the menu
+    await expect(
+      page.getByRole('menuitem', { name: 'Copy as Markdown' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menu').getByText('Copy as HTML')).toHaveCount(
+      0,
     );
-    const clipboardContent = await handle.jsonValue();
-    expect(clipboardContent.trim()).toBe(`<h1>Hello World</h1><p></p>`);
   });
 
   test('it checks the copy link button', async ({ page, browserName }) => {

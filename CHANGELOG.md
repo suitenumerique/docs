@@ -10,6 +10,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
+- ⚡️(frontend) Enhance/html copy to download #1669
 
 ### Fixed
 
@@ -36,6 +37,9 @@ and this project adheres to
 - ⚡️(sw) stop to cache external resources likes videos #1655
 - 💥(frontend) upgrade to ui-kit v2 #1605
 - ⚡️(frontend) improve perf on upload and table of contents #1662
+
+### Fixed
+
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
   - ♿(frontend) improve screen reader support in DocShare modal #1628
