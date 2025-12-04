@@ -24,6 +24,7 @@ and this project adheres to
 - ✨(frontend) link to create new doc #1574
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
+- ✨(auth) add silent login #1690
 
 ### Fixed
 
