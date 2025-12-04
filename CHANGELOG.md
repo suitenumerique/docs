@@ -10,6 +10,8 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
+  - ♿(frontend) add missing label and fix Axes errors to improve a11y
+    #1693
 
 ### Fixed
 
@@ -22,8 +24,6 @@ and this project adheres to
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
 - ✨(frontend) link to create new doc #1574
-- ♿(frontend) improve accessibility:
-  - ♿(frontend) add skip to content button for keyboard accessibility #1624
 
 ### Fixed
 
@@ -52,6 +52,7 @@ and this project adheres to
 - ♻️(frontend) preserve @ character when esc is pressed after typing it #1512
 - ♻️(frontend) make summary button fixed to remain visible during scroll #1581
 - ♻️(frontend) pdf embed use full width #1526
+  #1624
 
 ### Fixed
 

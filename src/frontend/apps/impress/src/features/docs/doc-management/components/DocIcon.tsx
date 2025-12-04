@@ -1,5 +1,6 @@
 import { MouseEvent, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 import { BoxButton, BoxButtonType, Text, TextType } from '@/components';
 import { EmojiPicker, emojidata } from '@/docs/doc-editor/';
@@ -30,6 +31,7 @@ export const DocIcon = ({
   ...textProps
 }: DocIconProps) => {
   const { updateDocEmoji } = useDocTitleUpdate();
+  const { t } = useTranslation();
 
   const iconRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +85,8 @@ export const DocIcon = ({
         ref={iconRef}
         onClick={toggleEmojiPicker}
         color="tertiary-text"
+        aria-label={t(emoji ? 'Edit document emoji' : 'Add emoji')}
+        title={t(emoji ? 'Edit document emoji' : 'Add emoji')}
         {...buttonProps}
       >
         {!emoji ? (
