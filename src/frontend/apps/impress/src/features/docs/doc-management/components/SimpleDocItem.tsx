@@ -4,12 +4,13 @@ import { css } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, useDocUtils, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import ChildDocument from '../assets/child-document.svg';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
+import { useDocUtils, useTrans } from '../hooks';
+import { Doc } from '../types';
 
 const ItemTextCss = css`
   overflow: hidden;
