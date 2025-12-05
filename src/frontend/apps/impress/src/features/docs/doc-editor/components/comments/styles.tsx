@@ -13,6 +13,10 @@ export const cssComments = (
         background: ${canSeeComment ? '#EDB40066' : 'transparent'};
         color: var(--c--globals--colors--gray-700);
       }
+
+      [data-show-selection] {
+        color: HighlightText;
+      }
     }
 
     em-emoji-picker {

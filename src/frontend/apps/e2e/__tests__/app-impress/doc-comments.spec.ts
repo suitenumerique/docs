@@ -116,8 +116,7 @@ test.describe('Doc Comments', () => {
     await createDoc(page, 'comment-interaction', browserName, 1);
 
     // Checks add react reaction
-    const editor = page.locator('.ProseMirror');
-    await editor.locator('.bn-block-outer').last().fill('Hello World');
+    const editor = await writeInEditor({ page, text: 'Hello' });
     await editor.getByText('Hello').selectText();
     await page.getByRole('button', { name: 'Comment' }).click();
 
@@ -177,6 +176,28 @@ test.describe('Doc Comments', () => {
     await thread.getByText('This is an edited comment').first().hover();
     await thread.locator('[data-test="resolve"]').click();
     await expect(thread).toBeHidden();
+    await expect(editor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
+
+    /* Delete the last comment remove the thread */
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Comment' }).click();
+
+    await thread.getByRole('paragraph').first().fill('This is a new comment');
+    await thread.locator('[data-test="save"]').click();
+
+    await expect(editor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgba(237, 180, 0, 0.4)',
+    );
+    await editor.getByText('Hello').click();
+
+    await thread.getByText('This is a new comment').first().hover();
+    await thread.locator('[data-test="moreactions"]').first().click();
+    await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
+
     await expect(editor.getByText('Hello')).toHaveCSS(
       'background-color',
       'rgba(0, 0, 0, 0)',
@@ -291,5 +312,29 @@ test.describe('Doc Comments', () => {
     await expect(otherThread.locator('[data-test="moreactions"]')).toBeHidden();
 
     await cleanup();
+  });
+});
+
+test.describe('Doc Comments mobile', () => {
+  test.use({ viewport: { width: 500, height: 1200 } });
+
+  test('Comments are not visible on mobile', async ({ page, browserName }) => {
+    await page
+      .locator('header')
+      .first()
+      .getByLabel('Open the header menu')
+      .click();
+    await createDoc(page, 'comment-mobile', browserName, 1);
+    await page
+      .locator('header')
+      .first()
+      .getByLabel('Open the header menu')
+      .click();
+
+    // Checks add react reaction
+    const editor = await writeInEditor({ page, text: 'Hello' });
+    await editor.getByText('Hello').selectText();
+    await expect(page.getByRole('button', { name: 'Comment' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Paragraph' })).toBeVisible();
   });
 });
