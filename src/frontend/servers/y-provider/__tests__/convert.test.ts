@@ -69,7 +69,7 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', 'wrong-api-key')
+      .set('authorization', `Bearer wrong-api-key`)
       .set('content-type', 'application/json');
 
     expect(response.status).toBe(401);
@@ -99,7 +99,7 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'application/json');
 
     expect(response.status).toBe(400);
@@ -114,7 +114,7 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'application/json')
       .send('');
 
@@ -129,9 +129,10 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'image/png')
       .send('randomdata');
+
     expect(response.status).toBe(415);
     expect(response.body).toStrictEqual({ error: 'Unsupported Content-Type' });
   });
@@ -141,38 +142,73 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'text/markdown')
       .set('accept', 'image/png')
       .send('# Header');
+
     expect(response.status).toBe(406);
     expect(response.body).toStrictEqual({ error: 'Unsupported format' });
   });
 
-  test.each([[apiKey], [`Bearer ${apiKey}`]])(
-    'POST /api/convert with correct content with Authorization: %s',
-    async (authHeader) => {
-      const app = initApp();
+  test('POST /api/convert BlockNote to Markdown', async () => {
+    const app = initApp();
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.blocknote+json')
+      .set('accept', 'text/markdown')
+      .send(expectedBlocks);
 
-      const response = await request(app)
-        .post('/api/convert')
-        .set('Origin', origin)
-        .set('Authorization', authHeader)
-        .set('content-type', 'text/markdown')
-        .set('accept', 'application/vnd.yjs.doc')
-        .send(expectedMarkdown);
+    expect(response.status).toBe(200);
+    expect(response.header['content-type']).toBe(
+      'text/markdown; charset=utf-8',
+    );
+    expect(typeof response.text).toBe('string');
+    expect(response.text.trim()).toBe(expectedMarkdown);
+  });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toBeInstanceOf(Buffer);
+  test('POST /api/convert BlockNote to Yjs', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create();
+    const blocks = await editor.tryParseMarkdownToBlocks(expectedMarkdown);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.blocknote+json')
+      .set('accept', 'application/vnd.yjs.doc')
+      .send(blocks)
+      .responseType('blob');
 
-      const editor = ServerBlockNoteEditor.create();
-      const doc = new Y.Doc();
-      Y.applyUpdate(doc, response.body);
-      const blocks = editor.yDocToBlocks(doc, 'document-store');
+    expect(response.status).toBe(200);
+    expect(response.header['content-type']).toBe('application/vnd.yjs.doc');
 
-      expect(blocks).toStrictEqual(expectedBlocks);
-    },
-  );
+    // Decode the Yjs response and verify it contains the correct blocks
+    const responseBuffer = Buffer.from(response.body as Buffer);
+    const ydoc = new Y.Doc();
+    Y.applyUpdate(ydoc, responseBuffer);
+    const decodedBlocks = editor.yDocToBlocks(ydoc, 'document-store');
+
+    expect(decodedBlocks).toStrictEqual(expectedBlocks);
+  });
+
+  test('POST /api/convert BlockNote to HTML', async () => {
+    const app = initApp();
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.blocknote+json')
+      .set('accept', 'text/html')
+      .send(expectedBlocks);
+
+    expect(response.status).toBe(200);
+    expect(response.header['content-type']).toBe('text/html; charset=utf-8');
+    expect(typeof response.text).toBe('string');
+    expect(response.text).toBe(expectedHTML);
+  });
 
   test('POST /api/convert Yjs to HTML', async () => {
     const app = initApp();
@@ -183,10 +219,11 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'application/vnd.yjs.doc')
       .set('accept', 'text/html')
       .send(Buffer.from(yjsUpdate));
+
     expect(response.status).toBe(200);
     expect(response.header['content-type']).toBe('text/html; charset=utf-8');
     expect(typeof response.text).toBe('string');
@@ -202,10 +239,11 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'application/vnd.yjs.doc')
       .set('accept', 'text/markdown')
       .send(Buffer.from(yjsUpdate));
+
     expect(response.status).toBe(200);
     expect(response.header['content-type']).toBe(
       'text/markdown; charset=utf-8',
@@ -223,15 +261,16 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'application/vnd.yjs.doc')
       .set('accept', 'application/json')
       .send(Buffer.from(yjsUpdate));
+
     expect(response.status).toBe(200);
     expect(response.header['content-type']).toBe(
       'application/json; charset=utf-8',
     );
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toBeInstanceOf(Array);
     expect(response.body).toStrictEqual(expectedBlocks);
   });
 
@@ -240,15 +279,16 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'text/markdown')
       .set('accept', 'application/json')
       .send(expectedMarkdown);
+
     expect(response.status).toBe(200);
     expect(response.header['content-type']).toBe(
       'application/json; charset=utf-8',
     );
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toBeInstanceOf(Array);
     expect(response.body).toStrictEqual(expectedBlocks);
   });
 
@@ -257,11 +297,12 @@ describe('Server Tests', () => {
     const response = await request(app)
       .post('/api/convert')
       .set('origin', origin)
-      .set('authorization', apiKey)
+      .set('authorization', `Bearer ${apiKey}`)
       .set('content-type', 'application/vnd.yjs.doc')
       .set('accept', 'application/json')
       .send(Buffer.from('notvalidyjs'));
+
     expect(response.status).toBe(400);
-    expect(response.body).toStrictEqual({ error: 'Invalid Yjs content' });
+    expect(response.body).toStrictEqual({ error: 'Invalid content' });
   });
 });
