@@ -1,3 +1,5 @@
+"""MIME type constants for document conversion."""
+
 BLOCKNOTE = "application/vnd.blocknote+json"
 YJS = "application/vnd.yjs.doc"
 MARKDOWN = "text/markdown"
