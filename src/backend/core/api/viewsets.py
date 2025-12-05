@@ -43,15 +43,19 @@ from rest_framework.permissions import AllowAny
 
 from core import authentication, choices, enums, models
 from core.api.filters import remove_accents
+from core.services import mime_types
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
 from core.services.converter_services import (
     ConversionError,
-    ServiceUnavailableError as YProviderServiceUnavailableError,
-    ValidationError as YProviderValidationError,
     Converter,
 )
-from core.services import mime_types
+from core.services.converter_services import (
+    ServiceUnavailableError as YProviderServiceUnavailableError,
+)
+from core.services.converter_services import (
+    ValidationError as YProviderValidationError,
+)
 from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
@@ -538,7 +542,7 @@ class DocumentViewSet(
                 converted_content = converter.convert(
                     file_content,
                     content_type=uploaded_file.content_type,
-                    accept=mime_types.YJS
+                    accept=mime_types.YJS,
                 )
                 serializer.validated_data["content"] = converted_content
                 serializer.validated_data["title"] = uploaded_file.name
