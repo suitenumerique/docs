@@ -3,6 +3,8 @@ import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { DEFAULT_QUERY_RETRY } from '@/core';
 
+import { attemptSilentLogin, canAttemptSilentLogin } from '../utils';
+
 import { User } from './types';
 
 type UserResponse = User | null;
@@ -11,16 +13,20 @@ type UserResponse = User | null;
  * Asynchronously retrieves the current user's data from the API.
  * This function is called during frontend initialization to check
  * the user's authentication status through a session cookie.
+ * If a 401 is received, it will attempt silent login if allowed by retry logic.
  *
  * @async
  * @function getMe
  * @throws {Error} Throws an error if the API request fails.
- * @returns {Promise<User>} A promise that resolves to the user data.
+ * @returns {Promise<User>} A promise that resolves to the user data or null if not authenticated.
  */
 export const getMe = async (): Promise<UserResponse> => {
   const response = await fetchAPI(`users/me/`);
 
   if (response.status === 401) {
+    if (canAttemptSilentLogin()) {
+      attemptSilentLogin(30); // 30 second retry interval
+    }
     return null;
   }
 
