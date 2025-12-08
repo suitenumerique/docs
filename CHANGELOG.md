@@ -11,6 +11,7 @@ and this project adheres to
 ### Added
 
 - ⚡️(frontend) export html #1669
+- ✨(backend) allow to create a new user in a marketing system
 
 ### Changed
 

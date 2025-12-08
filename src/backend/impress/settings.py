@@ -328,6 +328,7 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        "lasuite.marketing",
         "csp",
     ]
 
@@ -804,6 +805,30 @@ class Base(Configuration):
                 "prefetch-src": [NONE],
             },
             environ_name="CONTENT_SECURITY_POLICY_DIRECTIVES",
+            environ_prefix=None,
+        ),
+    }
+
+    # Marketing and communication settings
+    SIGNUP_NEW_USER_TO_MARKETING_EMAIL = values.BooleanValue(
+        False,
+        environ_name="SIGNUP_NEW_USER_TO_MARKETING_EMAIL",
+        environ_prefix=None,
+        help_text=(
+            "When enabled, new users are automatically added to mailing list "
+            "for product updates, marketing communications, and customized emails. "
+        ),
+    )
+
+    LASUITE_MARKETING = {
+        "BACKEND": values.Value(
+            "lasuite.marketing.backends.dummy.DummyBackend",
+            environ_name="LASUITE_MARKETING_BACKEND",
+            environ_prefix=None,
+        ),
+        "PARAMETERS": values.DictValue(
+            default={},
+            environ_name="LASUITE_MARKETING_PARAMETERS",
             environ_prefix=None,
         ),
     }
