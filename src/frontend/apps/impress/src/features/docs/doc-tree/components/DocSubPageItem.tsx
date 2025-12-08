@@ -181,7 +181,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             $css: css`
               &:focus-visible {
                 outline: 2px solid var(--c--globals--colors--brand-500);
-                outline-offset: 2px;
+                outline-offset: var(--c--globals--spacings--4xs);
               }
             `,
           }}
