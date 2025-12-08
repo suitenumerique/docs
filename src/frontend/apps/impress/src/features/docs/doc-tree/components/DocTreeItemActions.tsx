@@ -196,17 +196,10 @@ export const DocTreeItemActions = ({
             }}
             aria-label={t('More options')}
             tabIndex={-1}
+            $theme="brand"
+            $variation="secondary"
             $css={css`
-              background: transparent;
-              border: none;
-              padding: 0;
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-
               &:focus-visible {
-                outline: 2px solid var(--c--globals--colors--brand-500) !important;
                 outline-offset: -2px;
                 border-radius: var(--c--globals--spacings--st);
               }
@@ -237,7 +230,6 @@ export const DocTreeItemActions = ({
             tabIndex={-1}
             $css={css`
               &:focus-visible {
-                outline: 2px solid var(--c--globals--colors--brand-500) !important;
                 outline-offset: -2px;
                 border-radius: var(--c--globals--spacings--st);
               }
