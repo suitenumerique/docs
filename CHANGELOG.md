@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
+- ✨(backend) manage reconciliation requests for user accounts #1708
 
 ### Changed
 
