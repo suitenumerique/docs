@@ -20,6 +20,8 @@ import {
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
+import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
+
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
 
@@ -44,6 +46,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const isSelectedNow = treeContext?.treeData.selectedNode?.id === doc.id;
+  const isActive = node.isFocused || menuOpen || isSelectedNow;
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
@@ -97,6 +100,15 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isDisabled = !!doc.deleted_at;
   const actionsRef = useRef<HTMLDivElement>(null);
   const buttonOptionRef = useRef<HTMLDivElement | null>(null);
+
+  // Active le document avec Enter/Espace via un handler global sur la tree-view
+  useKeyboardActivation(
+    ['Enter', ' '],
+    isActive && !menuOpen,
+    handleActivate,
+    true,
+    '.c__tree-view',
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // F2: focus first action button
