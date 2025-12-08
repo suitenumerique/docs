@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 21:44+0000\n"
-"PO-Revision-Date: 2026-01-05 08:21\n"
+"POT-Creation-Date: 2026-01-08 15:38+0000\n"
+"PO-Revision-Date: 2026-01-13 13:17\n"
 "Last-Translator: \n"
 "Language-Team: Italian\n"
 "Language: it_IT\n"
@@ -79,7 +79,7 @@ msgstr ""
 msgid "Format"
 msgstr "Formato"
 
-#: build/lib/core/api/viewsets.py:1024 core/api/viewsets.py:1024
+#: build/lib/core/api/viewsets.py:1081 core/api/viewsets.py:1081
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "copia di {title}"

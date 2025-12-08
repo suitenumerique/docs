@@ -1,0 +1,5 @@
+merge_accept,active_email,inactive_email,status
+true,user.test10@example.com,user.test11@example.com|user.test12@example.com,pending
+true,user.test30@example.com,user.test31@example.com|user.test32@example.com|user.test33@example.com|user.test34@example.com|user.test35@example.com,pending
+true,user.test20@example.com,user.test21@example.com,pending
+true,user.test22@example.com,user.test23@example.com,pending
