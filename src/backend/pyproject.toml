@@ -34,7 +34,7 @@ dependencies = [
     "django-countries==8.1.0",
     "django-csp==4.0",
     "django-filter==25.2",
-    "django-lasuite[all]==0.0.18",
+    "django-lasuite[all]==0.0.22",
     "django-parler==2.3",
     "django-redis==6.0.0",
     "django-storages[s3]==1.14.6",
