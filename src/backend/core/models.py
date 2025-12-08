@@ -1,6 +1,7 @@
 """
 Declare and configure the models for the impress core application
 """
+
 # pylint: disable=too-many-lines
 
 import hashlib
@@ -263,6 +264,174 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         Must be cached if retrieved remotely.
         """
         return []
+
+
+class UserReconciliation(BaseModel):
+    """Model to run batch jobs to replace an active user by another one"""
+
+    active_email = models.EmailField(_("Active email address"))
+    inactive_email = models.EmailField(_("Email address to deactivate"))
+    active_email_checked = models.BooleanField(default=False)
+    inactive_email_checked = models.BooleanField(default=False)
+    active_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="active_user",
+    )
+    inactive_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="inactive_user",
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", _("Pending")),
+            ("ready", _("Ready")),
+            ("done", _("Done")),
+            ("error", _("Error")),
+        ],
+        default="pending",
+    )
+    logs = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("user reconciliation")
+        verbose_name_plural = _("user reconciliations")
+
+    def process_documentaccess_reconciliation(self):
+        """
+        Process the reconciliation by transferring document accesses from the inactive user
+        to the active user.
+        """
+        updated_accesses = []
+        removed_accesses = []
+        inactive_accesses = DocumentAccess.objects.filter(user=self.inactive_user)
+
+        # Check documents where the active user already has access
+        documents_with_both_users = inactive_accesses.values_list("document", flat=True)
+        existing_accesses = DocumentAccess.objects.filter(user=self.active_user).filter(
+            document__in=documents_with_both_users
+        )
+        existing_roles_per_doc = {
+            x: y for (x, y) in existing_accesses.values_list("document", "role")
+        }
+
+        for entry in inactive_accesses:
+            if entry.document_id in existing_roles_per_doc:
+                # Update role if needed
+                existing_role = existing_roles_per_doc[entry.document_id]
+                max_role = RoleChoices.max(entry.role, existing_role)
+                if existing_role != max_role:
+                    existing_access = existing_accesses.get(document=entry.document)
+                    existing_access.role = max_role
+                    updated_accesses.append(existing_access)
+                removed_accesses.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_accesses.append(entry)
+
+        self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
+            and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
+        self.status = "done"
+        self.save()
+
+        return updated_accesses, removed_accesses
+
+    def process_invitation_reconciliation(self):
+        """
+        Process the reconciliation by transferring invitations from the inactive user
+        to the active user.
+        """
+
+        updated_invitations = []
+        removed_invitations = []
+        inactive_invitations = Invitation.objects.filter(email=self.inactive_email)
+
+        # Check documents where the active user already has access
+        documents_with_both_users = inactive_invitations.values_list(
+            "document", flat=True
+        )
+        existing_accesses = Invitation.objects.filter(email=self.active_email).filter(
+            document__in=documents_with_both_users
+        )
+        existing_roles_per_doc = {
+            x: y for (x, y) in existing_accesses.values_list("document", "role")
+        }
+
+        for entry in inactive_invitations:
+            if entry.document_id in existing_roles_per_doc:
+                # Update role if needed
+                existing_role = existing_roles_per_doc[entry.document_id]
+                max_role = RoleChoices.max(entry.role, existing_role)
+                if existing_role != max_role:
+                    existing_access = existing_accesses.get(document=entry.document)
+                    existing_access.role = max_role
+                    updated_invitations.append(existing_access)
+                removed_invitations.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_invitations.append(entry)
+
+        self.logs += f"""Requested update for {len(updated_invitations)} Invitation items
+            and deletion for {len(removed_invitations)} Invitation items.\n"""
+        self.status = "done"
+        self.save()
+
+        return updated_invitations, removed_invitations
+
+    def save(self, *args, **kwargs):
+        """
+        For pending queries, identify the actual users and send validation emails
+        """
+        if self.status == "pending":
+            self.active_user = User.objects.filter(email=self.active_email).first()
+            self.inactive_user = User.objects.filter(email=self.inactive_email).first()
+
+            if self.active_user and self.inactive_user:
+                email_subject = _("Account reconciliation request")
+                email_content = _(
+                    """
+                    Please click here.
+                    """
+                )
+                if not self.active_email_checked:
+                    self.active_user.email_user(email_subject, email_content)
+                if not self.inactive_email_checked:
+                    self.inactive_user.email_user(email_subject, email_content)
+                self.status = "ready"
+            else:
+                self.status = "error"
+                self.logs = "Error: Both active and inactive users need to exist."
+
+        super().save(*args, **kwargs)
+
+
+class UserReconciliationCsvImport(BaseModel):
+    """Model to import reconciliations requests from an external source
+    (eg, )"""
+
+    file = models.FileField(upload_to="imports/")
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", _("Pending")),
+            ("running", _("Running")),
+            ("done", _("Done")),
+            ("error", _("Error")),
+        ],
+        default="pending",
+    )
+    logs = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = _("user reconciliation CSV import")
+        verbose_name_plural = _("user reconciliation CSV imports")
 
 
 class BaseAccess(BaseModel):

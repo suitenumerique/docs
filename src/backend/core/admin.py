@@ -1,12 +1,17 @@
 """Admin classes and registrations for core app."""
 
-from django.contrib import admin
+from os import remove
+from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
+from django.forms import ModelForm
+from django.shortcuts import render, redirect
+from django.urls import path
 from django.utils.translation import gettext_lazy as _
 
 from treebeard.admin import TreeAdmin
 
-from . import models
+from core import models
+from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
 
 
 class TemplateAccessInline(admin.TabularInline):
@@ -102,6 +107,87 @@ class UserAdmin(auth_admin.UserAdmin):
         "updated_at",
     )
     search_fields = ("id", "sub", "admin_email", "email", "full_name")
+
+
+class UserReconciliationCsvImportForm(ModelForm):
+    class Meta:
+        model = models.UserReconciliationCsvImport
+        fields = ("file",)
+
+
+@admin.register(models.UserReconciliationCsvImport)
+class UserReconciliationCsvImportAdmin(admin.ModelAdmin):
+    list_display = ("id", "created_at", "status")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        if not change:
+            user_reconciliation_csv_import_job.delay(obj.pk)
+            messages.success(request, "Import job created and queued.")
+        return redirect("..")
+
+
+@admin.action(description="Process selected user reconciliations")
+def process_reconciliation(modeladmin, request, queryset):
+    """
+    Admin action to process selected user reconciliations.
+    The action will process only entries that are ready and have both emails checked.
+
+    Its action is threefold:
+    - Transfer document accesses from inactive to active user, updating roles as needed.
+    - Transfer invitations from inactive to active user, updating roles as needed.
+    - Activate the active user and deactivate the inactive user.
+    """
+    processable_entries = queryset.filter(
+        status="ready", active_email_checked=True, inactive_email_checked=True
+    )
+
+    # Prepare the bulk operations
+    updated_documentaccess = []
+    removed_documentaccess = []
+    updated_invitations = []
+    removed_invitations = []
+    update_users_active_status = []
+
+    for entry in processable_entries:
+        new_updated_documentaccess, new_removed_documentaccess = (
+            entry.process_documentaccess_reconciliation()
+        )
+        updated_documentaccess += new_updated_documentaccess
+        removed_documentaccess += new_removed_documentaccess
+
+        new_updated_invitations, new_removed_invitations = (
+            entry.process_invitation_reconciliation()
+        )
+        updated_invitations += new_updated_invitations
+        removed_invitations += new_removed_invitations
+
+        entry.active_user.is_active = True
+        entry.inactive_user.is_active = False
+        update_users_active_status.append(entry.active_user)
+        update_users_active_status.append(entry.inactive_user)
+
+    # Actually perform the bulk operations
+    models.DocumentAccess.objects.bulk_update(updated_documentaccess, ["user", "role"])
+
+    if len(removed_documentaccess):
+        ids_to_delete = [rd.id for rd in removed_documentaccess]
+        models.DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
+
+    models.Invitation.objects.bulk_update(updated_invitations, ["email", "role"])
+
+    if len(removed_invitations):
+        ids_to_delete = [ri.id for ri in removed_invitations]
+        models.Invitation.objects.filter(id__in=ids_to_delete).delete()
+
+    models.User.objects.bulk_update(update_users_active_status, ["is_active"])
+
+
+@admin.register(models.UserReconciliation)
+class UserReconciliationAdmin(admin.ModelAdmin):
+    list_display = ["id", "created_at", "status"]
+    actions = [process_reconciliation]
 
 
 @admin.register(models.Template)
