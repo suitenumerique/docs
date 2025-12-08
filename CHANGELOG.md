@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) allow to create a new user in a marketing system
+- ✨(backend) manage reconciliation requests for user accounts #1708
 
 ### Changed
 
