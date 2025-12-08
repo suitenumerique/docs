@@ -287,7 +287,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 opacity: 1;
               }
             }
-            /* Retirer le focus visuel du root item quand le focus est sur les actions */
+            /* Remove visual focus from the root item when focus is on the actions */
             &:has(.doc-tree-root-item-actions *:focus) {
               box-shadow: none !important;
             }
