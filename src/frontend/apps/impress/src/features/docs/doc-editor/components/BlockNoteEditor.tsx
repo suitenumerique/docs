@@ -195,6 +195,43 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   useUploadStatus(editor);
 
   useEffect(() => {
+    if (!refEditorContainer.current) {
+      return;
+    }
+
+    const setEditorAriaAttributes = () => {
+      const editorElement =
+        refEditorContainer.current?.querySelector<HTMLElement>(
+          '.ProseMirror.bn-editor[contenteditable="true"]',
+        );
+
+      if (!editorElement) {
+        return;
+      }
+
+      const label = t('Document editor');
+
+      editorElement.setAttribute('aria-label', label);
+      editorElement.setAttribute('title', label);
+    };
+
+    setEditorAriaAttributes();
+
+    const observer = new MutationObserver(() => {
+      setEditorAriaAttributes();
+    });
+
+    observer.observe(refEditorContainer.current, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [t]);
+
+  useEffect(() => {
     setEditor(editor);
 
     return () => {
@@ -226,7 +263,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         slashMenu={false}
         theme="light"
         comments={canSeeComment}
-        aria-label={t('Document editor')}
       >
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
@@ -247,7 +283,6 @@ export const BlockNoteReader = ({
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const threadStore = useComments(docId, false, user);
-  const { t } = useTranslation();
   const editor = useCreateBlockNote(
     {
       collaboration: {
@@ -289,7 +324,6 @@ export const BlockNoteReader = ({
         editor={editor}
         editable={false}
         theme="light"
-        aria-label={t('Document viewer')}
         formattingToolbar={false}
         slashMenu={false}
         comments={false}
