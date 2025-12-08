@@ -143,8 +143,9 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             display: flex;
           }
         }
-        /* Retirer le focus visuel du tree item quand le focus est sur les actions */
-        &:has(.light-doc-item-actions *:focus) .c__tree-view--node.isFocused {
+        /* Remove visual focus from the tree item when focus is on actions or emoji button */
+        &:has(.light-doc-item-actions *:focus, .--docs--doc-icon:focus-visible)
+          .c__tree-view--node.isFocused {
           box-shadow: none !important;
         }
         &:hover {
@@ -176,6 +177,14 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           $size="sm"
           docId={doc.id}
           title={doc.title}
+          buttonProps={{
+            $css: css`
+              &:focus-visible {
+                outline: 2px solid var(--c--globals--colors--brand-500);
+                outline-offset: 2px;
+              }
+            `,
+          }}
         />
         <Box
           $direction="row"
