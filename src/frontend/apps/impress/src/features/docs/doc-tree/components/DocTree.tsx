@@ -230,10 +230,10 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         }
       `}
     >
-      {/* Instructions clavier pour les lecteurs d'écran */}
+      {/* Keyboard instructions for screen readers */}
       <Box id="doc-tree-keyboard-instructions" className="sr-only">
         {t(
-          'Use arrow keys to navigate between documents. Press Enter to open a document. Press F2 to access document actions.',
+          'Use arrow keys to navigate between documents. Press Enter to open a document. Press F2 to focus the emoji button when available, then press F2 again to access document actions.',
         )}
       </Box>
       <Box
