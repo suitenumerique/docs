@@ -174,6 +174,13 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       zip.file('index.html', htmlContent);
 
+      // CSS Styles
+      const cssResponse = await fetch(
+        new URL('../assets/export-html-styles.txt', import.meta.url).toString(),
+      );
+      const cssContent = await cssResponse.text();
+      zip.file('styles.css', cssContent);
+
       blobExport = await zip.generateAsync({ type: 'blob' });
     } else {
       toast(t('The export failed'), VariantType.ERROR);

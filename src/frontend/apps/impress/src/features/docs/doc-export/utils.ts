@@ -283,6 +283,7 @@ export const generateHtmlDocument = (
   <head>
     <meta charset="utf-8" />
     <title>${escapeHtml(documentTitle)}</title>
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <main role="main">

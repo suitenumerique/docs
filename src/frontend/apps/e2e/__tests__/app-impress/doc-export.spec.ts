@@ -254,6 +254,7 @@ test.describe('Doc Export', () => {
     // Read and verify HTML content
     const htmlContent = await indexHtml!.async('string');
     expect(htmlContent).toContain('Hello HTML ZIP');
+    expect(htmlContent).toContain('href="styles.css"');
 
     // Check for media files (they are at the root of the ZIP, not in a media/ folder)
     // Media files are named like "1-test.svg" or "media-1.png" by deriveMediaFilename
@@ -266,6 +267,8 @@ test.describe('Doc Export', () => {
     // Verify the SVG image is included
     const svgFile = mediaFiles.find((name) => name.endsWith('.svg'));
     expect(svgFile).toBeDefined();
+    const styleFile = mediaFiles.find((name) => name === 'styles.css');
+    expect(styleFile).toBeDefined();
   });
 
   /**
