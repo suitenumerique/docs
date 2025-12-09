@@ -15,6 +15,7 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
   - ♿(frontend) fix toggle panel button a11y labels #1634
+- 🔒️(frontend) remove dangerouslySetInnerHTML from codebase #1712
 - ⚡️(frontend) improve Comments feature #1687
 
 ### Fixed
