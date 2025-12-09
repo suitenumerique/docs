@@ -6,7 +6,7 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -35,6 +35,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const rootIsSelected =
     !!treeContext?.root?.id &&
     treeContext?.treeData.selectedNode?.id === treeContext.root.id;
+  const rootItemRef = useRef<HTMLDivElement>(null);
+  const rootActionsRef = useRef<HTMLDivElement>(null);
+  const rootButtonOptionRef = useRef<HTMLDivElement | null>(null);
 
   const { t } = useTranslation();
 
@@ -88,17 +91,44 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     selectRoot();
   }, [selectRoot]);
 
-  // activate root document with enter or space
+  // Handle keyboard navigation for root item
   const handleRootKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // F2: focus first action button
+      if (e.key === 'F2' && !rootActionsOpen) {
+        e.preventDefault();
+        rootButtonOptionRef.current?.focus();
+        return;
+      }
+
+      // Ignore if focus is in actions
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('.doc-tree-root-item-actions')) {
+        return;
+      }
+
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         selectRoot();
         navigateToRoot();
       }
     },
-    [selectRoot, navigateToRoot],
+    [selectRoot, navigateToRoot, rootActionsOpen],
   );
+
+  // Handle menu open/close for root item - mirrors DocSubPageItem behavior
+  const handleRootActionsOpenChange = useCallback((isOpen: boolean) => {
+    setRootActionsOpen(isOpen);
+
+    // When the menu closes, return focus to the root tree item
+    // (same behavior as DocSubPageItem for consistency)
+    // Use requestAnimationFrame for smoother focus transition without flickering
+    if (!isOpen) {
+      requestAnimationFrame(() => {
+        rootItemRef.current?.focus();
+      });
+    }
+  }, []);
 
   /**
    * This effect is used to reset the tree when a new document
@@ -180,6 +210,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       $height="100%"
       role="tree"
       aria-label={t('Document tree')}
+      aria-describedby="doc-tree-keyboard-instructions"
       $css={css`
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
@@ -199,6 +230,12 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         }
       `}
     >
+      {/* Keyboard instructions for screen readers */}
+      <Box id="doc-tree-keyboard-instructions" className="sr-only">
+        {t(
+          'Use arrow keys to navigate between documents. Press Enter to open a document. Press F2 to focus the emoji button when available, then press F2 again to access document actions.',
+        )}
+      </Box>
       <Box
         $padding={{ horizontal: 'sm', top: 'sm', bottom: '4px' }}
         $css={css`
@@ -206,6 +243,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         `}
       >
         <Box
+          ref={rootItemRef}
           data-testid="doc-tree-root-item"
           role="treeitem"
           aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || t('Untitled document') })}`}
@@ -234,7 +272,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             }
 
             .doc-tree-root-item-actions {
-              display: ${rootActionsOpen ? 'flex' : 'none'};
+              display: flex;
               opacity: ${rootActionsOpen ? '1' : '0'};
 
               &:has(.isOpen) {
@@ -242,11 +280,16 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               }
             }
             &:hover,
-            &:focus-visible {
+            &:focus-visible,
+            &:focus-within {
               .doc-tree-root-item-actions {
                 display: flex;
                 opacity: 1;
               }
+            }
+            /* Remove visual focus from the root item when focus is on the actions */
+            &:has(.doc-tree-root-item-actions *:focus) {
+              box-shadow: none !important;
             }
           `}
         >
@@ -281,7 +324,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
                 }}
                 isOpen={rootActionsOpen}
                 isRoot={true}
-                onOpenChange={setRootActionsOpen}
+                onOpenChange={handleRootActionsOpenChange}
+                actionsRef={rootActionsRef}
+                buttonOptionRef={rootButtonOptionRef}
               />
             </Box>
           </StyledLink>

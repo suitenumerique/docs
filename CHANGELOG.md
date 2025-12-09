@@ -21,6 +21,8 @@ and this project adheres to
 ### Fixed
 
 - 🐛(nginx) fix / location to handle new static pages
+- ♿(frontend) improve accessibility:
+  - ♿️Improve keyboard accessibility for the document tree #1681
 
 ## [4.0.0] - 2025-12-01
 
