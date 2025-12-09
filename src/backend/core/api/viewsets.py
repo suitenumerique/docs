@@ -3,8 +3,10 @@
 # pylint: disable=too-many-lines
 
 import base64
+import ipaddress
 import json
 import logging
+import socket
 import uuid
 from collections import defaultdict
 from urllib.parse import unquote, urlencode, urlparse
@@ -1655,6 +1657,102 @@ class DocumentViewSet(
 
         return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 
+    def _reject_invalid_ips(self, ips):
+        """
+        Check if an IP address is safe from SSRF attacks.
+
+        Raises:
+            drf.exceptions.ValidationError: If the IP is unsafe
+        """
+        for ip in ips:
+            # Block loopback addresses (check before private,
+            # as 127.0.0.1 might be considered private)
+            if ip.is_loopback:
+                raise drf.exceptions.ValidationError(
+                    "Access to loopback addresses is not allowed"
+                )
+
+            # Block link-local addresses (169.254.0.0/16) - check before private
+            if ip.is_link_local:
+                raise drf.exceptions.ValidationError(
+                    "Access to link-local addresses is not allowed"
+                )
+
+            # Block private IP ranges
+            if ip.is_private:
+                raise drf.exceptions.ValidationError(
+                    "Access to private IP addresses is not allowed"
+                )
+
+            # Block multicast addresses
+            if ip.is_multicast:
+                raise drf.exceptions.ValidationError(
+                    "Access to multicast addresses is not allowed"
+                )
+
+            # Block reserved addresses (including 0.0.0.0)
+            if ip.is_reserved:
+                raise drf.exceptions.ValidationError(
+                    "Access to reserved IP addresses is not allowed"
+                )
+
+    def _validate_url_against_ssrf(self, url):
+        """
+        Validate that a URL is safe from SSRF (Server-Side Request Forgery) attacks.
+
+        Blocks:
+        - localhost and its variations
+        - Private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+        - Link-local addresses (169.254.0.0/16)
+        - Loopback addresses
+
+        Raises:
+            drf.exceptions.ValidationError: If the URL is unsafe
+        """
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+
+        if not hostname:
+            raise drf.exceptions.ValidationError("Invalid hostname")
+
+
+        # Resolve hostname to IP address(es)
+        # Check all resolved IPs to prevent DNS rebinding attacks
+        try:
+            # Try to parse as IP address first (if hostname is already an IP)
+            try:
+                ip = ipaddress.ip_address(hostname)
+                resolved_ips = [ip]
+            except ValueError:
+                # Resolve hostname to IP addresses (supports both IPv4 and IPv6)
+                resolved_ips = []
+                try:
+                    # Get all address info (IPv4 and IPv6)
+                    addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC)
+                    for family, _, _, _, sockaddr in addr_info:
+                        if family == socket.AF_INET:
+                            # IPv4
+                            ip = ipaddress.ip_address(sockaddr[0])
+                            resolved_ips.append(ip)
+                        elif family == socket.AF_INET6:
+                            # IPv6
+                            ip = ipaddress.ip_address(sockaddr[0])
+                            resolved_ips.append(ip)
+                except (socket.gaierror, OSError) as e:
+                    raise drf.exceptions.ValidationError(
+                        f"Failed to resolve hostname: {str(e)}"
+                    ) from e
+
+                if not resolved_ips:
+                    raise drf.exceptions.ValidationError(
+                        "No IP addresses found for hostname"
+                    ) from None
+        except ValueError as e:
+            raise drf.exceptions.ValidationError(f"Invalid IP address: {str(e)}") from e
+
+        # Check all resolved IPs to ensure none are private/internal
+        self._reject_invalid_ips(resolved_ips)
+
     @drf.decorators.action(
         detail=True,
         methods=["get"],
@@ -1685,6 +1783,16 @@ class DocumentViewSet(
         except drf.exceptions.ValidationError as e:
             return drf.response.Response(
                 {"detail": str(e)},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate URL against SSRF attacks
+        try:
+            self._validate_url_against_ssrf(url)
+        except drf.exceptions.ValidationError as e:
+            logger.error("Potential SSRF attack detected: %s", e)
+            return drf.response.Response(
+                {"detail": "Invalid URL used."},
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
 

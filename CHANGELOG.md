@@ -17,6 +17,10 @@ and this project adheres to
 
 - ✅(backend) reduce flakiness on backend test #1769
 
+### Security
+
+- 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
+
 ## [4.3.0] - 2026-01-05
 
 ### Added
