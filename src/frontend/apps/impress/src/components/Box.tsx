@@ -4,6 +4,8 @@ import { CSSProperties, RuleSet } from 'styled-components/dist/types';
 
 import {
   MarginPadding,
+  Spacings,
+  spacingValue,
   stylesMargin,
   stylesPadding,
 } from '@/utils/styleBuilder';
@@ -22,7 +24,7 @@ export interface BoxProps {
   $display?: CSSProperties['display'];
   $effect?: 'show' | 'hide';
   $flex?: CSSProperties['flex'];
-  $gap?: CSSProperties['gap'];
+  $gap?: Spacings;
   $hasTransition?: boolean | 'slow';
   $height?: CSSProperties['height'];
   $justify?: CSSProperties['justifyContent'];
@@ -70,7 +72,7 @@ export const Box = styled('div')<BoxProps>`
   ${({ $display, as }) =>
     `display: ${$display || (as?.match('span|input') ? 'inline-flex' : 'flex')};`}
   ${({ $flex }) => $flex && `flex: ${$flex};`}
-  ${({ $gap }) => $gap && `gap: ${$gap};`}
+  ${({ $gap }) => $gap && `gap: ${spacingValue($gap)};`}
   ${({ $height }) => $height && `height: ${$height};`}
   ${({ $hasTransition }) =>
     $hasTransition && $hasTransition === 'slow'

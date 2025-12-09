@@ -67,5 +67,7 @@ DJANGO_SERVER_TO_SERVER_API_TOKENS=server-api-token
 Y_PROVIDER_API_BASE_URL=http://y-provider-development:4444/api/
 Y_PROVIDER_API_KEY=yprovider-api-key
 
+DOCSPEC_API_URL=http://docspec:4000/conversion
+
 # Theme customization
 THEME_CUSTOMIZATION_CACHE_TIMEOUT=15
