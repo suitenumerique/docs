@@ -1,3 +1,8 @@
+/**
+ * This file is adapted from BlockNote's AddCommentButton component
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/FormattingToolbar/DefaultButtons/AddCommentButton.tsx
+ */
+
 import {
   useBlockNoteEditor,
   useComponentsContext,
@@ -10,6 +15,7 @@ import { css } from 'styled-components';
 import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDocStore } from '@/features/docs/doc-management';
+import { useResponsiveStore } from '@/stores';
 
 import {
   DocsBlockSchema,
@@ -22,6 +28,7 @@ export const CommentToolbarButton = () => {
   const { currentDoc } = useDocStore();
   const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { isDesktop } = useResponsiveStore();
 
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
@@ -35,7 +42,18 @@ export const CommentToolbarButton = () => {
     return !!selectedBlocks.find((block) => block.content !== undefined);
   }, [selectedBlocks]);
 
+  const focusOnInputThread = () => {
+    // Use setTimeout to ensure the DOM has been updated with the new comment
+    setTimeout(() => {
+      const threadElement = document.querySelector<HTMLElement>(
+        '.bn-thread .bn-editor',
+      );
+      threadElement?.focus();
+    }, 400);
+  };
+
   if (
+    !isDesktop ||
     !show ||
     !editor.isEditable ||
     !Components ||
@@ -51,6 +69,7 @@ export const CommentToolbarButton = () => {
         onClick={() => {
           editor.comments?.startPendingComment();
           editor.formattingToolbar.closeMenu();
+          focusOnInputThread();
         }}
         aria-haspopup="dialog"
         data-test="comment-toolbar-button"

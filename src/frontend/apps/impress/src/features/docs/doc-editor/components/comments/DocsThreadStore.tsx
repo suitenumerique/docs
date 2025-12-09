@@ -118,6 +118,21 @@ export class DocsThreadStore extends ThreadStore {
   }
 
   /**
+   * Scrolls to the bottom of a thread modal
+   * @param threadId
+   */
+  private scrollToBottomOfThread() {
+    // Use setTimeout to ensure the DOM has been updated with the new comment
+    setTimeout(() => {
+      const threadElement = document.querySelector('.bn-thread');
+      threadElement?.scrollBy({
+        top: threadElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    }, 200);
+  }
+
+  /**
    * Notifies all subscribers about the current thread state
    */
   private notifySubscribers() {
@@ -345,6 +360,10 @@ export class DocsThreadStore extends ThreadStore {
       await this.refreshThread(threadId);
     }
     this.ping(threadId);
+
+    // Auto-scroll to bottom of thread after adding comment
+    this.scrollToBottomOfThread();
+
     return serverCommentToClientComment(comment);
   };
 
@@ -405,10 +424,20 @@ export class DocsThreadStore extends ThreadStore {
     // Optimistically remove the comment locally if we have the thread
     const existing = this.threads.get(threadId);
     if (existing) {
+      const updatedComments = existing.comments.filter(
+        (c) => c.id !== commentId,
+      );
+
+      // If this was the last comment, delete the thread
+      if (updatedComments.length === 0) {
+        await this.deleteThread({ threadId });
+        return;
+      }
+
       const updated: ClientThreadData = {
         ...existing,
         updatedAt: new Date(),
-        comments: existing.comments.filter((c) => c.id !== commentId),
+        comments: updatedComments,
       };
       this.upsertClientThreadData(updated);
       this.notifySubscribers();
@@ -419,10 +448,6 @@ export class DocsThreadStore extends ThreadStore {
     this.ping(threadId);
   };
 
-  /**
-   * UI not implemented
-   * @param _options
-   */
   public deleteThread = async (_options: { threadId: string }) => {
     const response = await fetchAPI(
       `documents/${this.docId}/threads/${_options.threadId}/`,
