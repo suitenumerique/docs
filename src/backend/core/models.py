@@ -432,32 +432,35 @@ class Document(MP_Node, BaseModel):
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
         super().save(*args, **kwargs)
-
         if self._content:
-            file_key = self.file_key
-            bytes_content = self._content.encode("utf-8")
+            self.save_content(self._content)
 
-            # Attempt to directly check if the object exists using the storage client.
-            try:
-                response = default_storage.connection.meta.client.head_object(
-                    Bucket=default_storage.bucket_name, Key=file_key
-                )
-            except ClientError as excpt:
-                # If the error is a 404, the object doesn't exist, so we should create it.
-                if excpt.response["Error"]["Code"] == "404":
-                    has_changed = True
-                else:
-                    raise
+    def save_content(self, content):
+        """Save content to object storage."""
+
+        file_key = self.file_key
+        bytes_content = content.encode("utf-8")
+
+        # Attempt to directly check if the object exists using the storage client.
+        try:
+            response = default_storage.connection.meta.client.head_object(
+                Bucket=default_storage.bucket_name, Key=file_key
+            )
+        except ClientError as excpt:
+            # If the error is a 404, the object doesn't exist, so we should create it.
+            if excpt.response["Error"]["Code"] == "404":
+                has_changed = True
             else:
-                # Compare the existing ETag with the MD5 hash of the new content.
-                has_changed = (
-                    response["ETag"].strip('"')
-                    != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
-                )
+                raise
+        else:
+            # Compare the existing ETag with the MD5 hash of the new content.
+            has_changed = (
+                response["ETag"].strip('"') != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
+            )
 
-            if has_changed:
-                content_file = ContentFile(bytes_content)
-                default_storage.save(file_key, content_file)
+        if has_changed:
+            content_file = ContentFile(bytes_content)
+            default_storage.save(file_key, content_file)
 
     def is_leaf(self):
         """
@@ -903,7 +906,8 @@ class Document(MP_Node, BaseModel):
 
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
-            ancestors_deleted_at=self.ancestors_deleted_at
+            ancestors_deleted_at=self.ancestors_deleted_at,
+            updated_at=self.updated_at,
         )
 
     @transaction.atomic
