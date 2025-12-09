@@ -1715,7 +1715,6 @@ class DocumentViewSet(
         if not hostname:
             raise drf.exceptions.ValidationError("Invalid hostname")
 
-
         # Resolve hostname to IP address(es)
         # Check all resolved IPs to prevent DNS rebinding attacks
         try:
@@ -1804,14 +1803,15 @@ class DocumentViewSet(
                     "User-Agent": request.headers.get("User-Agent", ""),
                     "Accept": request.headers.get("Accept", ""),
                 },
+                allow_redirects=False,
                 timeout=10,
             )
+            response.raise_for_status()
             content_type = response.headers.get("Content-Type", "")
 
             if not content_type.startswith("image/"):
                 return drf.response.Response(
-                    {"detail": "Invalid URL used."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"detail": "Invalid URL used."}, status=status.HTTP_400_BAD_REQUEST
                 )
 
             # Use StreamingHttpResponse with the response's iter_content to properly stream the data
@@ -1829,7 +1829,7 @@ class DocumentViewSet(
         except requests.RequestException as e:
             logger.exception(e)
             return drf.response.Response(
-                {"error": f"Failed to fetch resource from {url}"},
+                {"detail": "Invalid URL used."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

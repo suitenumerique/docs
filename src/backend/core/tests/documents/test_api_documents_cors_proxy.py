@@ -190,6 +190,53 @@ def test_api_docs_cors_proxy_unsupported_media_type(mock_getaddrinfo):
     assert response.json() == {"detail": "Invalid URL used."}
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_redirect(mock_getaddrinfo):
+    """Test the CORS proxy API for documents with a redirect."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/index.html"
+    responses.get(
+        url_to_fetch,
+        body=b"",
+        status=302,
+        headers={"Location": "https://external-url.com/other/assets/index.html"},
+    )
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid URL used."}
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_url_not_returning_200(mock_getaddrinfo):
+    """Test the CORS proxy API for documents with a URL that does not return 200."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/index.html"
+    responses.get(url_to_fetch, body=b"", status=404)
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid URL used."}
+
+
 @pytest.mark.parametrize(
     "url_to_fetch",
     [
@@ -229,9 +276,7 @@ def test_api_docs_cors_proxy_request_failed(mock_getaddrinfo):
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 400
-    assert response.json() == {
-        "error": "Failed to fetch resource from https://external-url.com/assets/index.html"
-    }
+    assert response.json() == {"detail": "Invalid URL used."}
 
 
 @pytest.mark.parametrize(
