@@ -1810,7 +1810,8 @@ class DocumentViewSet(
 
             if not content_type.startswith("image/"):
                 return drf.response.Response(
-                    status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                    {"detail": "Invalid URL used."},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
             # Use StreamingHttpResponse with the response's iter_content to properly stream the data

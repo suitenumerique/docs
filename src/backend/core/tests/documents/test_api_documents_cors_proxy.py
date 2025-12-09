@@ -186,7 +186,8 @@ def test_api_docs_cors_proxy_unsupported_media_type(mock_getaddrinfo):
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
-    assert response.status_code == 415
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid URL used."}
 
 
 @pytest.mark.parametrize(
