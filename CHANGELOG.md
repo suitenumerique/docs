@@ -22,6 +22,10 @@ and this project adheres to
 
 - 🐛(nginx) fix / location to handle new static pages
 
+### Security
+
+- 🔒️(backend) validate more strictly url used by cors-proxy endpoint
+
 ## [4.0.0] - 2025-12-01
 
 ### Added
