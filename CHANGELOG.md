@@ -18,9 +18,13 @@ and this project adheres to
 - 🔒️(frontend) remove dangerouslySetInnerHTML from codebase #1712
 - ⚡️(frontend) improve Comments feature #1687
 
+
 ### Fixed
 
 - 🐛(nginx) fix / location to handle new static pages
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) improve editor a11y and brand/neutral contrast #1683
+
 
 ## [4.0.0] - 2025-12-01
 
