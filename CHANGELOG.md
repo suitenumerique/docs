@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.1.0] - 2025-12-09
+
 ### Added
 
 - ⚡️(frontend) export html #1669
@@ -20,7 +22,7 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(nginx) fix / location to handle new static pages
+- 🐛(nginx) fix / location to handle new static pages #1682
 
 ## [4.0.0] - 2025-12-01
 
@@ -30,12 +32,6 @@ and this project adheres to
 - ✨(backend) Comments on text editor #1330
 - ✨(frontend) link to create new doc #1574
 
-### Fixed
-
-- 🐛(frontend) fix toolbar not activated when reader #1640
-- 🐛(frontend) preserve left panel width on window resize #1588
-- 🐛(frontend) prevent duplicate as first character in title #1595
-
 ### Changed
 
 - ⚡️(sw) stop to cache external resources likes videos #1655
@@ -44,6 +40,12 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
   - ♿(frontend) improve screen reader support in DocShare modal #1628
+
+### Fixed
+
+- 🐛(frontend) fix toolbar not activated when reader #1640
+- 🐛(frontend) preserve left panel width on window resize #1588
+- 🐛(frontend) prevent duplicate as first character in title #1595
 
 ## [3.10.0] - 2025-11-18
 
@@ -64,9 +66,6 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
-- 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
-- 🐛(frontend) make summary button fixed to remain visible during scroll #1581
-- 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(frontend) fix alignment of side menu #1597
 - 🐛(frontend) fix fallback translations with Trans #1620
 - 🐛(export) fix image overflow by limiting width to 600px during export #1525
@@ -919,7 +918,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.0.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.1.0...main
+[v4.1.0]: https://github.com/suitenumerique/docs/releases/v4.1.0
 [v4.0.0]: https://github.com/suitenumerique/docs/releases/v4.0.0
 [v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
 [v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
