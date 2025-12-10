@@ -87,7 +87,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  const canSeeComment = doc.abilities.comment && isDesktop;
+  const canSeeComment = doc.abilities.comment;
+  // Determine if comments should be visible in the UI
+  const showComments = canSeeComment && isDesktop;
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
@@ -207,7 +209,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       ref={refEditorContainer}
       $css={css`
         ${cssEditor};
-        ${cssComments(canSeeComment, currentUserAvatarUrl)}
+        ${cssComments(showComments, currentUserAvatarUrl)}
       `}
     >
       {errorAttachment && (
@@ -225,7 +227,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         formattingToolbar={false}
         slashMenu={false}
         theme="light"
-        comments={canSeeComment}
+        comments={showComments}
         aria-label={t('Document editor')}
       >
         <BlockNoteSuggestionMenu />

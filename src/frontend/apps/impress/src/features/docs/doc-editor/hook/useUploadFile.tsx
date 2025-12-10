@@ -95,6 +95,11 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
   );
 
   useEffect(() => {
+    // Check if editor and its view are mounted before accessing document
+    if (!editor || !editor._tiptapEditor?.view?.dom) {
+      return;
+    }
+
     const imagesBlocks = editor?.document.filter(
       (block) =>
         block.type === 'image' && block.props.url.includes(ANALYZE_URL),
@@ -110,6 +115,11 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
    * block to show analyzing status
    */
   useEffect(() => {
+    // Check if editor and its view are mounted before setting up handlers
+    if (!editor || !editor._tiptapEditor?.view?.dom) {
+      return;
+    }
+
     editor.onUploadEnd((blockId) => {
       if (!blockId) {
         return;

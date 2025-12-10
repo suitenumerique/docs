@@ -28,6 +28,11 @@ export interface UseHeadingStore {
 export const useHeadingStore = create<UseHeadingStore>((set, get) => ({
   headings: [],
   setHeadings: (editor) => {
+    // Check if editor and its view are mounted before accessing document
+    if (!editor || !editor._tiptapEditor?.view?.dom) {
+      return;
+    }
+
     const headingBlocks = editor?.document
       .filter(
         (block) =>
