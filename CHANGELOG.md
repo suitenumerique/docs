@@ -6,12 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) allow to create a new user in a marketing system
+
 ## [4.1.0] - 2025-12-09
 
 ### Added
 
 - ⚡️(frontend) export html #1669
-- ✨(backend) allow to create a new user in a marketing system
 
 ### Changed
 
