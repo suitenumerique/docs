@@ -53,11 +53,51 @@ export function MainLayoutContent({
   enableResizablePanel = false,
 }: PropsWithChildren<MainLayoutContentProps>) {
   const { isDesktop } = useResponsiveStore();
+
+  if (enableResizablePanel) {
+    return (
+      <ResizableLeftPanel leftPanel={<LeftPanel />}>
+        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+      </ResizableLeftPanel>
+    );
+  }
+
+  if (!isDesktop) {
+    return (
+      <>
+        <LeftPanel />
+        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Box
+        $css={css`
+          width: 300px;
+          border-right: 1px solid
+            var(--c--contextuals--border--surface--primary);
+        `}
+      >
+        <LeftPanel />
+      </Box>
+      <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+    </>
+  );
+}
+
+const MainContent = ({
+  children,
+  backgroundColor,
+}: PropsWithChildren<MainLayoutContentProps>) => {
+  const { isDesktop } = useResponsiveStore();
+
   const { t } = useTranslation();
   const { colorsTokens } = useCunninghamTheme();
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
-  const mainContent = (
+  return (
     <Box
       as="main"
       role="main"
@@ -92,36 +132,4 @@ export function MainLayoutContent({
       {children}
     </Box>
   );
-
-  if (!isDesktop) {
-    return (
-      <>
-        <LeftPanel />
-        {mainContent}
-      </>
-    );
-  }
-
-  if (enableResizablePanel) {
-    return (
-      <ResizableLeftPanel leftPanel={<LeftPanel />}>
-        {mainContent}
-      </ResizableLeftPanel>
-    );
-  }
-
-  return (
-    <>
-      <Box
-        $css={css`
-          width: 300px;
-          border-right: 1px solid
-            var(--c--contextuals--border--surface--primary);
-        `}
-      >
-        <LeftPanel />
-      </Box>
-      {mainContent}
-    </>
-  );
-}
+};

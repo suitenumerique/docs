@@ -21,6 +21,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(nginx) fix / location to handle new static pages
+- 🐛(frontend) rerendering during resize window #1715
 
 ## [4.0.0] - 2025-12-01
 

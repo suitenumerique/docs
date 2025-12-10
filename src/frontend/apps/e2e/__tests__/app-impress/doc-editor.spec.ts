@@ -996,4 +996,44 @@ test.describe('Doc Editor', () => {
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe('test-pdf.pdf');
   });
+
+  test('it preserves text when switching between mobile and desktop views', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'doc-viewport-test',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docTitle);
+
+    const editor = await writeInEditor({
+      page,
+      text: 'Hello World - Desktop Text',
+    });
+    await expect(editor.getByText('Hello World - Desktop Text')).toBeVisible();
+
+    await page.waitForTimeout(500);
+
+    // Switch to mobile viewport
+    await page.setViewportSize({ width: 500, height: 1200 });
+    await page.waitForTimeout(500);
+
+    await expect(editor.getByText('Hello World - Desktop Text')).toBeVisible();
+
+    await writeInEditor({
+      page,
+      text: 'Mobile Text',
+    });
+
+    await page.waitForTimeout(500);
+
+    // Switch back to desktop viewport
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.waitForTimeout(500);
+
+    await expect(editor.getByText('Mobile Text')).toBeVisible();
+  });
 });
