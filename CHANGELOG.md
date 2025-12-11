@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) allow to create a new user in a marketing system
+- ✨(helm) redirecting system #1697
 
 ## [4.1.0] - 2025-12-09
 

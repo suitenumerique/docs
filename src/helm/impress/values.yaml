@@ -85,6 +85,12 @@ ingressCollaborationWS:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
     nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
 
+ingressRedirects:
+  enabled: false
+  namePrefix: impress-redir
+  defaultHost: impress.example.com
+  rules: []
+
 ## @param ingressCollaborationApi.enabled whether to enable the Ingress or not
 ## @param ingressCollaborationApi.className IngressClass to use for the Ingress
 ## @param ingressCollaborationApi.host Host for the Ingress
