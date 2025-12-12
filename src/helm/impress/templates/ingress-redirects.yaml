@@ -1,0 +1,49 @@
+{{- if and .Values.ingress.enabled .Values.ingressRedirects.enabled }}
+{{- $fullName := include "impress.fullname" . -}}
+{{- $ns := .Release.Namespace -}}
+{{- $class := .Values.ingress.className -}}
+{{- $defaultHost := .Values.ingressRedirects.defaultHost | default .Values.ingress.host -}}
+
+{{- range $i, $r := .Values.ingressRedirects.rules }}
+{{- $host := $r.host | default $defaultHost -}}
+{{- $from := $r.from | default "/home" -}}
+{{- $to := required (printf "ingressRedirects.rules[%d].to is required" $i) $r.to -}}
+{{- $name := printf "%s-redirect-%s" $fullName (replace "/" "-" (trimAll "/" $from)) | trunc 63 | trimSuffix "-" -}}
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  annotations:
+    {{- if or (not $r.code) (eq (toString $r.code) "301") }}
+    nginx.ingress.kubernetes.io/permanent-redirect: "{{ $to }}"
+    {{- else }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      return {{ $r.code }} {{ $to }};
+    {{- end }}
+spec:
+  {{- if $class }}
+  ingressClassName: {{ $class }}
+  {{- end }}
+  rules:
+  - host: {{ $host }}
+    http:
+      paths:
+      - path: {{ $from }}
+        pathType: Exact
+        backend:
+          service:
+            name: {{ include "impress.frontend.fullname" $ }}
+            port:
+              number: {{ $.Values.frontend.service.port }}
+      - path: {{ printf "%s/" (trimSuffix "/" $from) }}
+        pathType: Exact
+        backend:
+          service:
+            name: {{ include "impress.frontend.fullname" $ }}
+            port:
+              number: {{ $.Values.frontend.service.port }}
+---
+{{- end }}
+{{- end }}

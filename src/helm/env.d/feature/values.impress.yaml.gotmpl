@@ -141,6 +141,14 @@ yProvider:
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
 
+ingressRedirects:
+  enabled: true
+  defaultHost: {{ .Values.feature }}-docs.{{ .Values.domain }}
+  rules:
+    - name: home        
+      from: /home
+      to: https://lasuite.numerique.gouv.fr/produits/docs
+
 ingress:
   enabled: true
   host: {{ .Values.feature }}-docs.{{ .Values.domain }}
