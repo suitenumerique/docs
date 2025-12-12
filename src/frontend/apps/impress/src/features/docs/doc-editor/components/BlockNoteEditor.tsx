@@ -162,6 +162,26 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
       },
+      pasteHandler: ({ event, defaultPasteHandler }) => {
+        // Get clipboard data
+        const blocknoteData = event.clipboardData?.getData('blocknote/html');
+
+        /**
+         * When pasting comments, the data-bn-thread-id
+         * attribute is present in the clipboard data.
+         * This indicates that the pasted content contains comments.
+         * But if the content with comments comes from another document,
+         * it will create orphaned comments that are not linked to this document
+         * and create errors.
+         * To avoid this, we refresh the threads to ensure that only comments
+         * relevant to the current document are displayed.
+         */
+        if (blocknoteData && blocknoteData.includes('data-bn-thread-id')) {
+          void threadStore.refreshThreads();
+        }
+
+        return defaultPasteHandler();
+      },
       resolveUsers: async (userIds) => {
         return Promise.resolve(
           userIds.map((encodedURIUserId) => {

@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) allow to create a new user in a marketing system
 
+### Fixed
+
+- 🐛(frontend) paste content with comments from another document #1732
+
 ## [4.1.0] - 2025-12-09
 
 ### Added
