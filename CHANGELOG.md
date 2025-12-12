@@ -64,6 +64,7 @@ and this project adheres to
 - ♻️(frontend) preserve @ character when esc is pressed after typing it #1512
 - ♻️(frontend) make summary button fixed to remain visible during scroll #1581
 - ♻️(frontend) pdf embed use full width #1526
+- 🚸(backend) use unaccented full name for user search #1637
 
 ### Fixed
 

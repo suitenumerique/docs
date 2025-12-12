@@ -76,6 +76,131 @@ def test_api_users_list_query_email():
     assert user_ids == []
 
 
+def test_api_users_list_query_email_with_internationalized_domain_names():
+    """
+    Authenticated users should be able to list users and filter by email.
+    It should work even if the email address contains an internationalized domain name.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    jean = factories.UserFactory(email="jean.martin@éducation.fr")
+    marie = factories.UserFactory(email="marie.durand@education.fr")
+    kurokawa = factories.UserFactory(email="contact@黒川.日本")
+
+    response = client.get("/api/v1.0/users/?q=jean.martin@education.fr")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(jean.id)]
+
+    response = client.get("/api/v1.0/users/?q=jean.martin@éducation.fr")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(jean.id)]
+
+    response = client.get("/api/v1.0/users/?q=marie.durand@education.fr")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(marie.id)]
+
+    response = client.get("/api/v1.0/users/?q=marie.durand@éducation.fr")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(marie.id)]
+
+    response = client.get("/api/v1.0/users/?q=contact@黒川.日本")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(kurokawa.id)]
+
+
+def test_api_users_list_query_full_name():
+    """
+    Authenticated users should be able to list users and filter by full name.
+    Only results with a Trigram similarity greater than 0.2 with the query should be returned.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    dave = factories.UserFactory(email="contact@work.com", full_name="David Bowman")
+
+    response = client.get(
+        "/api/v1.0/users/?q=David",
+    )
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(dave.id)]
+
+    response = client.get("/api/v1.0/users/?q=Bowman")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(dave.id)]
+
+    response = client.get("/api/v1.0/users/?q=bowman")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(dave.id)]
+
+    response = client.get("/api/v1.0/users/?q=BOWMAN")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(dave.id)]
+
+    response = client.get("/api/v1.0/users/?q=BoWmAn")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(dave.id)]
+
+    response = client.get("/api/v1.0/users/?q=Bovin")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == []
+
+
+def test_api_users_list_query_accented_full_name():
+    """
+    Authenticated users should be able to list users and filter by full name with accents.
+    Only results with a Trigram similarity greater than 0.2 with the query should be returned.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    fred = factories.UserFactory(
+        email="contact@work.com", full_name="Frédérique Lefèvre"
+    )
+
+    response = client.get("/api/v1.0/users/?q=Frédérique")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(fred.id)]
+
+    response = client.get("/api/v1.0/users/?q=Frederique")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(fred.id)]
+
+    response = client.get("/api/v1.0/users/?q=Lefèvre")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(fred.id)]
+
+    response = client.get("/api/v1.0/users/?q=Lefevre")
+    assert response.status_code == 200
+    user_ids = [user["id"] for user in response.json()]
+    assert user_ids == [str(fred.id)]
+
+    response = client.get("/api/v1.0/users/?q=François Lorfebvre")
+    assert response.status_code == 200
+    users = [user["full_name"] for user in response.json()]
+    assert users == []
+
+
 def test_api_users_list_limit(settings):
     """
     Authenticated users should be able to list users and the number of results
