@@ -318,6 +318,49 @@ test.describe('Doc Comments', () => {
 
     await cleanup();
   });
+
+  test('it checks comments pasting from another document', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'comment-doc-1', browserName, 1);
+
+    // We add a comment in the first document
+    const editor1 = await writeInEditor({ page, text: 'Document One' });
+    await editor1.getByText('Document One').selectText();
+    await page.getByRole('button', { name: 'Comment' }).click();
+
+    const thread1 = page.locator('.bn-thread');
+    await thread1.getByRole('paragraph').first().fill('Comment in Doc One');
+    await thread1.locator('[data-test="save"]').click();
+    await expect(thread1.getByText('Comment in Doc One').first()).toBeHidden();
+
+    await expect(editor1.getByText('Document One')).toHaveCSS(
+      'background-color',
+      'rgba(237, 180, 0, 0.4)',
+    );
+
+    await editor1.getByText('Document One').click();
+    // We copy the content including the comment from the first document
+    await editor1.getByText('Document One').selectText();
+    await page.keyboard.press('Control+C');
+
+    // We create a second document
+    await createDoc(page, 'comment-doc-2', browserName, 1);
+
+    // We paste the content into the second document
+    const editor2 = await writeInEditor({ page, text: '' });
+    await editor2.click();
+    await page.keyboard.press('Control+V');
+
+    await expect(editor2.getByText('Document One')).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
+
+    await editor2.getByText('Document One').click();
+    await expect(page.locator('.bn-thread')).toBeHidden();
+  });
 });
 
 test.describe('Doc Comments mobile', () => {

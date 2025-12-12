@@ -15,6 +15,10 @@ and this project adheres to
 - 🚸(backend) use unaccented full name for user search #1637
 - 🌐(backend) internationalize demo #1644
 
+### Fixed
+
+- 🐛(frontend) paste content with comments from another document #1732
+
 ## [4.1.0] - 2025-12-09
 
 ### Added
