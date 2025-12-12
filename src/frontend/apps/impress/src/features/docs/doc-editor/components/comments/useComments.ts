@@ -1,6 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { User } from '@/features/auth';
+import { useCunninghamTheme } from '@/cunningham';
+import { User, avatarUrlFromName } from '@/features/auth';
 import { Doc, useProviderStore } from '@/features/docs/doc-management';
 
 import { DocsThreadStore } from './DocsThreadStore';
@@ -12,6 +14,9 @@ export function useComments(
   user: User | null | undefined,
 ) {
   const { provider } = useProviderStore();
+  const { t } = useTranslation();
+  const { themeTokens } = useCunninghamTheme();
+
   const threadStore = useMemo(() => {
     return new DocsThreadStore(
       docId,
@@ -29,5 +34,25 @@ export function useComments(
     };
   }, [threadStore]);
 
-  return threadStore;
+  const resolveUsers = useCallback(
+    async (userIds: string[]) => {
+      return Promise.resolve(
+        userIds.map((encodedURIUserId) => {
+          const fullName = decodeURIComponent(encodedURIUserId);
+
+          return {
+            id: encodedURIUserId,
+            username: fullName || t('Anonymous'),
+            avatarUrl: avatarUrlFromName(
+              fullName,
+              themeTokens?.font?.families?.base,
+            ),
+          };
+        }),
+      );
+    },
+    [t, themeTokens?.font?.families?.base],
+  );
+
+  return { threadStore, resolveUsers };
 }

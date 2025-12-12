@@ -4,8 +4,8 @@ import {
   BlockNoteEditor,
   InlineContentSchema,
   StyleSchema,
-  insertOrUpdateBlock,
 } from '@blocknote/core';
+import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import * as locales from '@blocknote/core/locales';
 import {
   AddFileButton,
@@ -139,7 +139,7 @@ export const getPdfReactSlashMenuItems = (
   {
     title: t('PDF'),
     onItemClick: () => {
-      insertOrUpdateBlock(editor, { type: 'pdf' });
+      insertOrUpdateBlockForSlashMenu(editor, { type: 'pdf' });
     },
     aliases: [t('pdf'), t('document'), t('embed'), t('file')],
     group,

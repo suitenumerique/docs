@@ -6,23 +6,24 @@
  * https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/FormattingToolbar/DefaultButtons/FileDownloadButton.tsx
  */
 
-import {
-  BlockSchema,
-  InlineContentSchema,
-  StyleSchema,
-  blockHasType,
-} from '@blocknote/core';
+import { blockHasType } from '@blocknote/core';
 import {
   useBlockNoteEditor,
   useComponentsContext,
   useDictionary,
-  useSelectedBlocks,
+  useEditorState,
 } from '@blocknote/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { RiDownload2Fill } from 'react-icons/ri';
 
 import { downloadFile, exportResolveFileUrl } from '@/docs/doc-export';
 import { isSafeUrl } from '@/utils/url';
+
+import {
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+} from '../../types';
 
 export const FileDownloadButton = ({
   open,
@@ -33,36 +34,43 @@ export const FileDownloadButton = ({
   const Components = useComponentsContext();
 
   const editor = useBlockNoteEditor<
-    BlockSchema,
-    InlineContentSchema,
-    StyleSchema
+    DocsBlockSchema,
+    DocsInlineContentSchema,
+    DocsStyleSchema
   >();
 
-  const selectedBlocks = useSelectedBlocks(editor);
+  const fileBlock = useEditorState({
+    editor,
+    selector: ({ editor }) => {
+      const selectedBlocks = editor.getSelection()?.blocks || [
+        editor.getTextCursorPosition().block,
+      ];
 
-  const fileBlock = useMemo(() => {
-    // Checks if only one block is selected.
-    if (selectedBlocks.length !== 1) {
-      return undefined;
-    }
+      if (selectedBlocks.length !== 1) {
+        return undefined;
+      }
 
-    const block = selectedBlocks[0];
+      const block = selectedBlocks[0];
 
-    if (
-      blockHasType(block, editor, block.type, { url: 'string', name: 'string' })
-    ) {
+      if (
+        !blockHasType(block, editor, block.type, {
+          url: 'string',
+          name: 'string',
+        })
+      ) {
+        return undefined;
+      }
+
       return block;
-    }
-
-    return undefined;
-  }, [editor, selectedBlocks]);
+    },
+  });
 
   const onClick = useCallback(async () => {
     if (fileBlock && fileBlock.props.url) {
       editor.focus();
 
       const url = fileBlock.props.url as string;
-      const name = fileBlock.props.name as string | undefined;
+      const name = fileBlock.props.name as string;
 
       /**
        * If not hosted on our domain, means not a file uploaded by the user,
@@ -110,19 +118,18 @@ export const FileDownloadButton = ({
     return null;
   }
 
+  const blockType = fileBlock.type as string;
+  const tooltipText =
+    dict.formatting_toolbar.file_download.tooltip[blockType] ||
+    dict.formatting_toolbar.file_download.tooltip['file'];
+
   return (
     <>
       <Components.FormattingToolbar.Button
         className="bn-button --docs--editor-file-download-button"
         data-test="downloadfile"
-        label={
-          dict.formatting_toolbar.file_download.tooltip[fileBlock.type] ||
-          dict.formatting_toolbar.file_download.tooltip['file']
-        }
-        mainTooltip={
-          dict.formatting_toolbar.file_download.tooltip[fileBlock.type] ||
-          dict.formatting_toolbar.file_download.tooltip['file']
-        }
+        label={tooltipText}
+        mainTooltip={tooltipText}
         icon={<RiDownload2Fill />}
         onClick={() => void onClick()}
       />

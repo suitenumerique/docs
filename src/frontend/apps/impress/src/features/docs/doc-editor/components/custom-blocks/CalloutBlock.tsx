@@ -5,8 +5,8 @@ import {
   InlineContentSchema,
   StyleSchema,
   defaultProps,
-  insertOrUpdateBlock,
 } from '@blocknote/core';
+import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
@@ -156,7 +156,7 @@ export const getCalloutReactSlashMenuItems = (
     key: 'callout',
     title: t('Callout'),
     onItemClick: () => {
-      insertOrUpdateBlock(editor, {
+      insertOrUpdateBlockForSlashMenu(editor, {
         type: 'callout',
       });
     },
