@@ -3,9 +3,12 @@
  * https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/FormattingToolbar/DefaultButtons/AddCommentButton.tsx
  */
 
+import { CommentsExtension } from '@blocknote/core/comments';
+import { FormattingToolbarExtension } from '@blocknote/core/extensions';
 import {
   useBlockNoteEditor,
   useComponentsContext,
+  useExtension,
   useSelectedBlocks,
 } from '@blocknote/react';
 import { useMemo } from 'react';
@@ -29,6 +32,10 @@ export const CommentToolbarButton = () => {
   const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
+  const comments = useExtension('comments') as unknown as ReturnType<
+    ReturnType<typeof CommentsExtension>
+  >;
+  const { store } = useExtension(FormattingToolbarExtension);
 
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
@@ -53,6 +60,7 @@ export const CommentToolbarButton = () => {
   };
 
   if (
+    !comments ||
     !isDesktop ||
     !show ||
     !editor.isEditable ||
@@ -67,8 +75,8 @@ export const CommentToolbarButton = () => {
       <Components.Generic.Toolbar.Button
         className="bn-button"
         onClick={() => {
-          editor.comments?.startPendingComment();
-          editor.formattingToolbar.closeMenu();
+          comments.startPendingComment();
+          store.setState(false);
           focusOnInputThread();
         }}
         aria-haspopup="dialog"

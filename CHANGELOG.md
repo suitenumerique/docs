@@ -10,6 +10,11 @@ and this project adheres to
 
 - ✨(backend) allow to create a new user in a marketing system
 
+### Fixed
+
+- 🐛(frontend) Select text + Go back one page crash the app #1733
+
+
 ## [4.1.0] - 2025-12-09
 
 ### Added

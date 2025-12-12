@@ -1,4 +1,5 @@
-import { combineByGroup, filterSuggestionItems } from '@blocknote/core';
+import { combineByGroup } from '@blocknote/core';
+import { filterSuggestionItems } from '@blocknote/core/extensions';
 import {
   DefaultReactSuggestionItem,
   SuggestionMenuController,

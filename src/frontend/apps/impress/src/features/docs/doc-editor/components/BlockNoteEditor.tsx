@@ -6,6 +6,7 @@ import {
   defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
+import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
@@ -101,7 +102,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const cursorName = collabName || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
-  const threadStore = useComments(doc.id, canSeeComment, user);
+  const { resolveUsers, threadStore } = useComments(
+    doc.id,
+    canSeeComment,
+    user,
+  );
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
@@ -162,22 +167,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
       },
-      resolveUsers: async (userIds) => {
-        return Promise.resolve(
-          userIds.map((encodedURIUserId) => {
-            const fullName = decodeURIComponent(encodedURIUserId);
-
-            return {
-              id: encodedURIUserId,
-              username: fullName || t('Anonymous'),
-              avatarUrl: avatarUrlFromName(
-                fullName,
-                themeTokens?.font?.families?.base,
-              ),
-            };
-          }),
-        );
-      },
+      extensions: [CommentsExtension({ threadStore, resolveUsers })],
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -187,7 +177,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [cursorName, lang, provider, uploadFile, threadStore],
+    [cursorName, lang, provider, uploadFile, threadStore, resolveUsers],
   );
 
   useHeadings(editor);
