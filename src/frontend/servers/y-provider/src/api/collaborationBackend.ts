@@ -2,7 +2,7 @@ import { IncomingHttpHeaders } from 'http';
 
 import axios from 'axios';
 
-import { COLLABORATION_BACKEND_BASE_URL } from '@/env';
+import { COLLABORATION_BACKEND_BASE_URL, Y_PROVIDER_API_KEY } from '@/env';
 
 export interface User {
   id: string;
@@ -61,6 +61,7 @@ async function fetch<T>(
       headers: {
         cookie: requestHeaders['cookie'],
         origin: requestHeaders['origin'],
+        'X-Y-Provider-Key': Y_PROVIDER_API_KEY,
       },
     },
   );

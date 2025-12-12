@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) allow to create a new user in a marketing system
 
+### Changed
+
+- 🛂(backend) stop throttling collaboration servers #1730
+
 ## [4.1.0] - 2025-12-09
 
 ### Added
