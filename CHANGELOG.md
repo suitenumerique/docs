@@ -52,6 +52,10 @@ and this project adheres to
 - 🐛(frontend) preserve left panel width on window resize #1588
 - 🐛(frontend) prevent duplicate as first character in title #1595
 
+### Changed
+
+- 🌐(backend) internationalize demo #1644
+
 ## [3.10.0] - 2025-11-18
 
 ### Added

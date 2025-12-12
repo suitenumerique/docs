@@ -17,7 +17,8 @@ from core import models
 
 from demo import defaults
 
-fake = Faker()
+languages = [x for (x, y) in settings.LANGUAGES]
+fake = Faker(languages)
 
 logger = logging.getLogger("impress.commands.demo.create_demo")
 
@@ -127,7 +128,7 @@ def create_demo(stdout):
                     is_staff=False,
                     short_name=first_name,
                     full_name=f"{first_name:s} {random.choice(last_names):s}",
-                    language=random.choice(settings.LANGUAGES)[0],
+                    language=random.choice(languages),
                 )
             )
         queue.flush()
@@ -179,8 +180,7 @@ def create_demo(stdout):
                     is_superuser=False,
                     is_active=True,
                     is_staff=False,
-                    language=dev_user["language"]
-                    or random.choice(settings.LANGUAGES)[0],
+                    language=dev_user["language"] or random.choice(languages),
                 )
             )
 
