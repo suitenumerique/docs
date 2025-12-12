@@ -55,7 +55,11 @@ from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
-from .throttling import UserListThrottleBurst, UserListThrottleSustained
+from .throttling import (
+    DocumentThrottle,
+    UserListThrottleBurst,
+    UserListThrottleSustained,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -373,6 +377,7 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
+    throttle_classes = [DocumentThrottle]
     throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
