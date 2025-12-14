@@ -200,7 +200,7 @@ export class DocsThreadStore extends ThreadStore {
     const { editor } = useEditorStore.getState();
 
     // Should not happen
-    if (!editor) {
+    if (!editor || !editor._tiptapEditor?.view?.dom) {
       console.warn('Editor to add thread not ready');
       return Promise.resolve();
     }

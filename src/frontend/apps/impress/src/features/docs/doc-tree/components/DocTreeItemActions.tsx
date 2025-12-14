@@ -17,8 +17,8 @@ import {
   useCopyDocLink,
   useCreateChildDoc,
   useDocTitleUpdate,
-  useDuplicateDoc,
 } from '@/docs/doc-management';
+import { useDuplicateDoc } from '@/docs/doc-management/api';
 
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';

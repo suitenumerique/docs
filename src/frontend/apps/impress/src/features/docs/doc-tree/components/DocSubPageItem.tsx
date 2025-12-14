@@ -16,7 +16,7 @@ import {
   DocIcon,
   getEmojiAndTitle,
   useTrans,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 

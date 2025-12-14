@@ -6,7 +6,7 @@ import {
   getOtherBrowserName,
   verifyDocName,
 } from './utils-common';
-import { writeInEditor } from './utils-editor';
+import { getEditor, writeInEditor } from './utils-editor';
 import {
   addNewMember,
   connectOtherUserToDoc,
@@ -48,6 +48,7 @@ test.describe('Doc Comments', () => {
     await thread.locator('[data-test="save"]').click();
     await expect(thread.getByText('This is a comment').first()).toBeHidden();
 
+    await editor.first().click();
     await editor.getByText('Hello').click();
 
     await thread.getByText('This is a comment').first().hover();
@@ -135,6 +136,7 @@ test.describe('Doc Comments', () => {
       'background-color',
       'rgba(237, 180, 0, 0.4)',
     );
+    await editor.first().click();
     await editor.getByText('Hello').click();
 
     await thread.getByText('This is a comment').first().hover();
@@ -197,6 +199,7 @@ test.describe('Doc Comments', () => {
       'background-color',
       'rgba(237, 180, 0, 0.4)',
     );
+    await editor.first().click();
     await editor.getByText('Hello').click();
 
     await thread.getByText('This is a new comment').first().hover();
@@ -216,6 +219,8 @@ test.describe('Doc Comments', () => {
 
     // We share the doc with another user
     const otherBrowserName = getOtherBrowserName(browserName);
+
+    const editor = await getEditor({ page });
 
     // Add a new member with editor role
     await page.getByRole('button', { name: 'Share' }).click();
@@ -240,7 +245,7 @@ test.describe('Doc Comments', () => {
       text: 'Hello, I can edit the document',
     });
     await expect(
-      otherEditor.getByText('Hello, I can edit the document'),
+      editor.getByText('Hello, I can edit the document'),
     ).toBeVisible();
     await otherEditor.getByText('Hello').selectText();
     await otherPage.getByRole('button', { name: 'Comment' }).click();

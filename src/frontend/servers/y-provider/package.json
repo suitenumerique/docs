@@ -16,7 +16,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.42.3",
+    "@blocknote/server-util": "0.44.2",
     "@hocuspocus/server": "3.4.0",
     "@sentry/node": "10.26.0",
     "@sentry/profiling-node": "10.26.0",
@@ -30,7 +30,7 @@
     "yjs": "*"
   },
   "devDependencies": {
-    "@blocknote/core": "0.42.3",
+    "@blocknote/core": "0.44.2",
     "@hocuspocus/provider": "3.4.0",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.5",

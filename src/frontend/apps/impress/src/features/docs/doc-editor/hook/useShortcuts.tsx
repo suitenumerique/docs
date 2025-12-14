@@ -8,7 +8,7 @@ export const useShortcuts = (
 ) => {
   useEffect(() => {
     // Check if editor and its view are mounted
-    if (!editor || !editor._tiptapEditor?.view?.dom || !el) {
+    if (!editor || !el) {
       return;
     }
 
