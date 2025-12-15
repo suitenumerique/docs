@@ -97,34 +97,41 @@ const CalloutComponent = ({
       `}
     >
       <CalloutBlockStyle />
-      <BoxButton
-        contentEditable={false}
-        onClick={toggleEmojiPicker}
-        $css={css`
-          font-size: 1.125rem;
-          cursor: ${isEditable ? 'pointer' : 'default'};
-          ${isEditable &&
-          `
+      <Box $position="relative">
+        <BoxButton
+          contentEditable={false}
+          onClick={toggleEmojiPicker}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && openEmojiPicker) {
+              setOpenEmojiPicker(false);
+            }
+          }}
+          $css={css`
+            font-size: 1.125rem;
+            cursor: ${isEditable ? 'pointer' : 'default'};
+            ${isEditable &&
+            `
           &:hover {
             background-color: rgba(0, 0, 0, 0.1);
           }
           `}
-        `}
-        $align="center"
-        $width="28px"
-        $radius="4px"
-      >
-        {block.props.emoji}
-      </BoxButton>
+          `}
+          $align="center"
+          $width="28px"
+          $radius="4px"
+        >
+          {block.props.emoji}
+        </BoxButton>
 
-      {openEmojiPicker && (
-        <EmojiPicker
-          emojiData={emojidata}
-          onClickOutside={onClickOutside}
-          onEmojiSelect={onEmojiSelect}
-          withOverlay={true}
-        />
-      )}
+        {openEmojiPicker && (
+          <EmojiPicker
+            emojiData={emojidata}
+            onClickOutside={onClickOutside}
+            onEmojiSelect={onEmojiSelect}
+            withOverlay={true}
+          />
+        )}
+      </Box>
       <Box as="p" className="inline-content" ref={contentRef} />
     </Box>
   );
