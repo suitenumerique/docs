@@ -39,6 +39,7 @@ backend:
     OIDC_OP_TOKEN_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/token
     OIDC_OP_USER_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/userinfo
     OIDC_OP_LOGOUT_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/logout
+    OIDC_REDIRECT_ALLOWED_HOSTS: "{{ .Values.feature }}-docs.{{ .Values.domain }}"
     OIDC_RP_CLIENT_ID: docs
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
