@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(backend) add async indexation of documents on save (or access save) #1276
 - ✨(backend) add debounce mechanism to limit indexation jobs #1276
 - ✨(api) add API route to search for indexed documents in Find #1276
+- 🥅(frontend) add boundary error page #1728
 
 ### Changed
 
