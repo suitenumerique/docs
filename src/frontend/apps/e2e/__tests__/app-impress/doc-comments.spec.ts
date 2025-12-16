@@ -153,7 +153,7 @@ test.describe('Doc Comments', () => {
     await thread.getByRole('menuitem', { name: 'Edit comment' }).click();
     const commentEditor = thread.getByText('This is a comment').first();
     await commentEditor.fill('This is an edited comment');
-    const saveBtn = thread.getByRole('button', { name: 'Save' });
+    const saveBtn = thread.locator('button[data-test="save"]').first();
     await saveBtn.click();
     await expect(saveBtn).toBeHidden();
     await expect(
@@ -163,7 +163,8 @@ test.describe('Doc Comments', () => {
 
     // Add second comment
     await thread.getByRole('paragraph').last().fill('This is a second comment');
-    await thread.getByRole('button', { name: 'Save' }).click();
+    await saveBtn.click();
+    await expect(saveBtn).toBeHidden();
     await expect(
       thread.getByText('This is an edited comment').first(),
     ).toBeVisible();
@@ -371,7 +372,7 @@ test.describe('Doc Comments', () => {
 test.describe('Doc Comments mobile', () => {
   test.use({ viewport: { width: 500, height: 1200 } });
 
-  test('Comments are not visible on mobile', async ({ page, browserName }) => {
+  test('Can comments on mobile', async ({ page, browserName }) => {
     const [title] = await createDoc(
       page,
       'comment-mobile',
@@ -387,7 +388,16 @@ test.describe('Doc Comments mobile', () => {
     // Checks add react reaction
     const editor = await writeInEditor({ page, text: 'Hello' });
     await editor.getByText('Hello').selectText();
-    await expect(page.getByRole('button', { name: 'Comment' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Paragraph' })).toBeVisible();
+    await page.getByRole('button', { name: 'Comment' }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+    await expect(thread.getByText('This is a comment').first()).toBeHidden();
+
+    await editor.first().click();
+    await editor.getByText('Hello').click();
+
+    await expect(thread.getByText('This is a comment').first()).toBeVisible();
   });
 });

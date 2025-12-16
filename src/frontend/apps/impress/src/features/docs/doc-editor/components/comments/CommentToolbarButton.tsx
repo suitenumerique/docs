@@ -18,7 +18,6 @@ import { css } from 'styled-components';
 import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDocStore } from '@/features/docs/doc-management';
-import { useResponsiveStore } from '@/stores';
 
 import {
   DocsBlockSchema,
@@ -31,7 +30,6 @@ export const CommentToolbarButton = () => {
   const { currentDoc } = useDocStore();
   const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
   const comments = useExtension('comments') as unknown as ReturnType<
     ReturnType<typeof CommentsExtension>
   >;
@@ -61,7 +59,6 @@ export const CommentToolbarButton = () => {
 
   if (
     !comments ||
-    !isDesktop ||
     !show ||
     !editor.isEditable ||
     !Components ||
