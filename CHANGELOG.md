@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(helm) redirecting system #1697
+- 📱(frontend) add comments for smaller device #1737
 
 ### Fixed
 

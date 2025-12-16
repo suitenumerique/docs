@@ -23,7 +23,6 @@ import { Box, TextErrors } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useProviderStore } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
-import { useResponsiveStore } from '@/stores';
 
 import {
   useHeadings,
@@ -86,12 +85,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
   const canSeeComment = doc.abilities.comment;
   // Determine if comments should be visible in the UI
-  const showComments = canSeeComment && isDesktop;
+  const showComments = canSeeComment;
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
