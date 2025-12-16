@@ -31,8 +31,8 @@ backend:
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
-    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_USERINFO_SHORTNAME_FIELD: "first_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "name"
     OIDC_OP_JWKS_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/certs
     OIDC_OP_AUTHORIZATION_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/auth
     OIDC_OP_TOKEN_ENDPOINT: https://docs-keycloak.127.0.0.1.nip.io/realms/docs/protocol/openid-connect/token
@@ -42,7 +42,7 @@ backend:
     OIDC_RP_CLIENT_ID: docs
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
-    OIDC_RP_SCOPES: "openid email given_name usual_name"
+    OIDC_RP_SCOPES: "openid email profile"
     LOGIN_REDIRECT_URL: https://docs.127.0.0.1.nip.io
     LOGIN_REDIRECT_URL_FAILURE: https://docs.127.0.0.1.nip.io
     LOGOUT_REDIRECT_URL: https://docs.127.0.0.1.nip.io
