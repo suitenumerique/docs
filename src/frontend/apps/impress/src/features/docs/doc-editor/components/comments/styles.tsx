@@ -26,13 +26,16 @@ export const cssComments = (
 
     // Thread modal
     .bn-thread {
-      width: 400px;
+      width: 100%;
+      min-width: calc(min(400px, 90vw));
+      max-width: calc(min(400px, 90vw));
+      max-height: calc(min(500px, 60vh));
       padding: 8px;
       box-shadow: 0px 6px 18px 0px #00001229;
       margin-left: 20px;
+      margin-right: 20px;
       gap: 0;
       overflow: auto;
-      max-height: 500px;
 
       .bn-default-styles {
         font-family: var(--c--globals--font--families--base);

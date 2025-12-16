@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) allow to create a new user in a marketing system
+- 📱(frontend) add comments for smaller device #1737
 
 ### Changed
 
