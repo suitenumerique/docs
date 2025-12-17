@@ -29,11 +29,12 @@ import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
+import { downloadFile } from '../utils';
 import {
   addMediaFilesToZip,
-  downloadFile,
   generateHtmlDocument,
-} from '../utils';
+  improveHtmlAccessibility,
+} from '../utils_html';
 
 enum DocDownloadFormat {
   HTML = 'html',
@@ -161,10 +162,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       const zip = new JSZip();
 
+      improveHtmlAccessibility(parsedDocument, documentTitle);
       await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
 
       const lang = i18next.language || fallbackLng;
-      const editorHtmlWithLocalMedia = parsedDocument.body.innerHTML;
+      const body = parsedDocument.body;
+      const editorHtmlWithLocalMedia = body ? body.innerHTML : '';
 
       const htmlContent = generateHtmlDocument(
         documentTitle,

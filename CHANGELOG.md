@@ -21,6 +21,11 @@ and this project adheres to
 
 - 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) make html export accessible to screen reader users #1743
+
 ## [4.3.0] - 2026-01-05
 
 ### Added
@@ -64,7 +69,6 @@ and this project adheres to
 - 🐛(frontend) paste content with comments from another document #1732
 - 🐛(frontend) Select text + Go back one page crash the app #1733
 - 🐛(frontend) fix versioning conflict #1742
-
 
 ## [4.1.0] - 2025-12-09
 

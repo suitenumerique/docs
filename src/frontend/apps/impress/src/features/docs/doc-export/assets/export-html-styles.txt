@@ -184,6 +184,75 @@ s {
   margin: 0;
 }
 
+/* Remove bullet points from checkbox lists */
+ul.checklist,
+ul:has(li input[type='checkbox']) {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+ul.checklist li,
+ul:has(li input[type='checkbox']) li {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+ul.checklist li input[type='checkbox'],
+ul:has(li input[type='checkbox']) li input[type='checkbox'] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+ul.checklist li p,
+ul:has(li input[type='checkbox']) li p {
+  margin: 0;
+  flex: 1;
+}
+
+/* Native HTML Lists - remove default margins */
+ol,
+ul {
+  margin: 0;
+  padding-left: 24px;
+}
+
+ol {
+  list-style-type: decimal;
+}
+
+ul {
+  list-style-type: disc;
+}
+
+/* Nested lists */
+ul ul {
+  list-style-type: circle;
+}
+
+/* Keep decimal numbering for nested ol (remove this if you want letters) */
+ol ol {
+  list-style-type: decimal;
+}
+
+li {
+  margin: 0;
+  padding: 0;
+  line-height: 24px;
+}
+
+li p {
+  margin: 0;
+  display: inline;
+}
+
+
+
 /* Quotes */
 blockquote,
 .bn-block-content[data-content-type='quote'] blockquote {
