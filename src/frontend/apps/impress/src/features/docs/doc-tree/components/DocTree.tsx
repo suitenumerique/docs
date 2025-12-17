@@ -128,6 +128,27 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     }
   }, []);
 
+  const handleRowKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter') {
+      return;
+    }
+
+    const target = e.target as HTMLElement | null;
+    if (
+      !target ||
+      !(
+        target.classList.contains('c__tree-view--row') ||
+        target.classList.contains('c__tree-view--node')
+      )
+    ) {
+      return;
+    }
+
+    e.currentTarget
+      .querySelector<HTMLDivElement>('.c__tree-view--node')
+      ?.click();
+  }, []);
+
   /**
    * This effect is used to reset the tree when a new document
    * that is not part of the current tree is loaded.
@@ -357,6 +378,9 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               }}
               rootNodeId={treeContext.root.id}
               renderNode={DocSubPageItem}
+              rowProps={{
+                onKeyDown: handleRowKeyDown,
+              }}
             />
           </Overlayer>
         )}

@@ -14,6 +14,11 @@ and this project adheres to
 
 - ✅(e2e) fix e2e test for other browsers #1799
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+
 ## [4.4.0] - 2026-01-13
 
 ### Added

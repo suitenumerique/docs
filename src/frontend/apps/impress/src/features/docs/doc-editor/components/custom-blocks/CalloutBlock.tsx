@@ -106,11 +106,6 @@ const CalloutComponent = ({
         <BoxButton
           contentEditable={false}
           onClick={toggleEmojiPicker}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape' && openEmojiPicker) {
-              setOpenEmojiPicker(false);
-            }
-          }}
           $css={css`
             font-size: 1.125rem;
             cursor: ${isEditable ? 'pointer' : 'default'};
