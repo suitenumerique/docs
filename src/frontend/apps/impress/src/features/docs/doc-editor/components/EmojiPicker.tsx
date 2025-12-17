@@ -20,20 +20,19 @@ export const EmojiPicker = ({
 }: EmojiPickerProps) => {
   const { i18n } = useTranslation();
 
-  // Close picker with Escape key for keyboard users
+  // Handle Escape key to close the picker
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        event.preventDefault();
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         onClickOutside();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown, true);
-
+    document.addEventListener('keydown', handleEscape, true);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('keydown', handleEscape, true);
     };
   }, [onClickOutside]);
 

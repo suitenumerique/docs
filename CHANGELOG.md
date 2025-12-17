@@ -21,7 +21,7 @@ and this project adheres to
 - 🌐(backend) internationalize demo #1644
 - ♿(frontend) improve accessibility:
   - ♿️Improve keyboard accessibility for the document tree #1681
-  - ♿️(frontend) fix subdoc opening and emoji pick focus
+  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
 
 ### Fixed
 
