@@ -21,12 +21,12 @@ and this project adheres to
 - 🌐(backend) internationalize demo #1644
 - ♿(frontend) improve accessibility:
   - ♿️Improve keyboard accessibility for the document tree #1681
+  - ♿️(frontend) fix subdoc opening and emoji pick focus
 
 ### Fixed
 
 - 🐛(frontend) paste content with comments from another document #1732
 - 🐛(frontend) Select text + Go back one page crash the app #1733
-
 
 ## [4.1.0] - 2025-12-09
 
