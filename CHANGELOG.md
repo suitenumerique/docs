@@ -6,9 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.2.0] - 2025-12-17
+
 ### Added
 
-- ✨(backend) allow to create a new user in a marketing system
+- ✨(backend) allow to create a new user in a marketing system #1707
 - ✨(backend) add async indexation of documents on save (or access save) #1276
 - ✨(backend) add debounce mechanism to limit indexation jobs #1276
 - ✨(api) add API route to search for indexed documents in Find #1276
@@ -942,7 +944,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.1.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.2.0...main
+[v4.2.0]: https://github.com/suitenumerique/docs/releases/v4.2.0
 [v4.1.0]: https://github.com/suitenumerique/docs/releases/v4.1.0
 [v4.0.0]: https://github.com/suitenumerique/docs/releases/v4.0.0
 [v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
