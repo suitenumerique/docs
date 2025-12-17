@@ -293,6 +293,170 @@ ${editorHtmlWithLocalMedia}
 </html>`;
 };
 
+/**
+ * Enrich the HTML produced by the editor with semantic tags and basic a11y defaults.
+ *
+ * Notes:
+ * - We work directly on the parsed Document so modifications are reflected before we zip files.
+ * - We keep the editor inner structure but upgrade the key block types to native elements.
+ */
+export const improveHtmlAccessibility = (
+  parsedDocument: Document,
+  documentTitle: string,
+) => {
+  const body = parsedDocument.body;
+  if (!body) {
+    return;
+  }
+
+  // 1) Headings: convert heading blocks to h1-h6 based on data-level
+  const headingBlocks = Array.from(
+    body.querySelectorAll<HTMLElement>("[data-content-type='heading']"),
+  );
+
+  headingBlocks.forEach((block) => {
+    const rawLevel = Number(block.getAttribute('data-level')) || 1;
+    const level = Math.min(Math.max(rawLevel, 1), 6);
+    const heading = parsedDocument.createElement(`h${level}`);
+    heading.innerHTML = block.innerHTML;
+    block.replaceWith(heading);
+  });
+
+  // 2) Lists: group consecutive list items into UL/OL with LI children
+  const listItemSelector =
+    "[data-content-type='bulletListItem'], [data-content-type='numberedListItem']";
+  const listItems = Array.from(
+    body.querySelectorAll<HTMLElement>(listItemSelector),
+  );
+
+  listItems.forEach((item) => {
+    const parent = item.parentElement;
+    if (!parent) {
+      return;
+    }
+
+    const isBullet =
+      item.getAttribute('data-content-type') === 'bulletListItem';
+    const listTag = isBullet ? 'ul' : 'ol';
+
+    // If the previous sibling is already the right list, reuse it; otherwise create a new one.
+    let previousSibling = item.previousElementSibling;
+    let listContainer: HTMLElement | null = null;
+
+    if (previousSibling?.tagName.toLowerCase() === listTag) {
+      listContainer = previousSibling as HTMLElement;
+    } else {
+      listContainer = parsedDocument.createElement(listTag);
+      parent.insertBefore(listContainer, item);
+    }
+
+    const li = parsedDocument.createElement('li');
+    li.innerHTML = item.innerHTML;
+    listContainer.appendChild(li);
+    parent.removeChild(item);
+  });
+
+  // 3) Quotes -> <blockquote>
+  const quoteBlocks = Array.from(
+    body.querySelectorAll<HTMLElement>("[data-content-type='quote']"),
+  );
+  quoteBlocks.forEach((block) => {
+    const quote = parsedDocument.createElement('blockquote');
+    quote.innerHTML = block.innerHTML;
+    block.replaceWith(quote);
+  });
+
+  // 4) Callouts -> <aside role="note">
+  const calloutBlocks = Array.from(
+    body.querySelectorAll<HTMLElement>("[data-content-type='callout']"),
+  );
+  calloutBlocks.forEach((block) => {
+    const aside = parsedDocument.createElement('aside');
+    aside.setAttribute('role', 'note');
+    aside.innerHTML = block.innerHTML;
+    block.replaceWith(aside);
+  });
+
+  // 5) Checklists -> list + checkbox semantics
+  const checkListItems = Array.from(
+    body.querySelectorAll<HTMLElement>("[data-content-type='checkListItem']"),
+  );
+  checkListItems.forEach((item) => {
+    const parent = item.parentElement;
+    if (!parent) {
+      return;
+    }
+
+    let previousSibling = item.previousElementSibling;
+    let listContainer: HTMLElement | null = null;
+
+    if (previousSibling?.tagName.toLowerCase() === 'ul') {
+      listContainer = previousSibling as HTMLElement;
+    } else {
+      listContainer = parsedDocument.createElement('ul');
+      listContainer.setAttribute('role', 'list');
+      parent.insertBefore(listContainer, item);
+    }
+
+    const li = parsedDocument.createElement('li');
+    li.innerHTML = item.innerHTML;
+
+    // Ensure checkbox has an accessible state; fall back to aria-checked if missing.
+    const checkbox = li.querySelector<HTMLInputElement>(
+      "input[type='checkbox']",
+    );
+    if (checkbox && !checkbox.hasAttribute('aria-checked')) {
+      checkbox.setAttribute(
+        'aria-checked',
+        checkbox.checked ? 'true' : 'false',
+      );
+    }
+
+    listContainer.appendChild(li);
+    parent.removeChild(item);
+  });
+
+  // 6) Code blocks -> <pre><code>
+  const codeBlocks = Array.from(
+    body.querySelectorAll<HTMLElement>("[data-content-type='codeBlock']"),
+  );
+  codeBlocks.forEach((block) => {
+    const pre = parsedDocument.createElement('pre');
+    const code = parsedDocument.createElement('code');
+    code.innerHTML = block.innerHTML;
+    pre.appendChild(code);
+    block.replaceWith(pre);
+  });
+
+  // 7) Ensure images have alt text (empty when not provided)
+  body.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+    if (!img.hasAttribute('alt')) {
+      img.setAttribute('alt', '');
+    }
+  });
+
+  // 8) Wrap content in an article with a title landmark if none exists
+  const existingH1 = body.querySelector('h1');
+  if (!existingH1) {
+    const titleHeading = parsedDocument.createElement('h1');
+    titleHeading.id = 'doc-title';
+    titleHeading.textContent = documentTitle;
+    body.insertBefore(titleHeading, body.firstChild);
+  }
+
+  // If there is no article, group the body content inside one for better semantics.
+  const hasArticle = body.querySelector('article');
+  if (!hasArticle) {
+    const article = parsedDocument.createElement('article');
+    article.setAttribute('role', 'document');
+    article.setAttribute('aria-labelledby', 'doc-title');
+    while (body.firstChild) {
+      article.appendChild(body.firstChild);
+    }
+    body.appendChild(article);
+  }
+};
+
 export const addMediaFilesToZip = async (
   parsedDocument: Document,
   zip: JSZip,

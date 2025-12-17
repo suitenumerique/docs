@@ -33,6 +33,7 @@ import {
   addMediaFilesToZip,
   downloadFile,
   generateHtmlDocument,
+  improveHtmlAccessibility,
 } from '../utils';
 
 enum DocDownloadFormat {
@@ -161,10 +162,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       const zip = new JSZip();
 
+      improveHtmlAccessibility(parsedDocument, documentTitle);
       await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
 
       const lang = i18next.language || fallbackLng;
-      const editorHtmlWithLocalMedia = parsedDocument.body.innerHTML;
+      const body = parsedDocument.body;
+      const editorHtmlWithLocalMedia = body ? body.innerHTML : '';
 
       const htmlContent = generateHtmlDocument(
         documentTitle,
