@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { css } from 'styled-components';
 
 import { Box, SeparatedSection } from '@/components';
+import { useDocStore } from '@/docs/doc-management';
 
 import { LeftPanelTargetFilters } from './LefPanelTargetFilters';
 import { LeftPanelDocContent } from './LeftPanelDocContent';
@@ -11,6 +12,7 @@ export const LeftPanelContent = () => {
   const router = useRouter();
   const isHome = router.pathname === '/';
   const isDoc = router.pathname === '/docs/[id]';
+  const { currentDoc } = useDocStore();
 
   return (
     <>
@@ -36,7 +38,7 @@ export const LeftPanelContent = () => {
           </Box>
         </>
       )}
-      {isDoc && <LeftPanelDocContent />}
+      {isDoc && currentDoc && <LeftPanelDocContent doc={currentDoc} />}
     </>
   );
 };

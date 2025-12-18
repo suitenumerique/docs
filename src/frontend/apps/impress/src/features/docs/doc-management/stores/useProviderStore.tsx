@@ -52,13 +52,29 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
         }
       },
       onAuthenticationFailed() {
-        set({ isReady: true });
+        set({ isReady: true, isConnected: false });
+      },
+      onAuthenticated() {
+        set({ isReady: true, isConnected: true });
       },
       onStatus: ({ status }) => {
         set((state) => {
           const nextConnected = status === WebSocketStatus.Connected;
+
+          /**
+           * status === WebSocketStatus.Connected does not mean we are totally connected
+           * because authentication can still be in progress and failed
+           * So we only update isConnected when we loose the connection
+           */
+          const connected =
+            status !== WebSocketStatus.Connected
+              ? {
+                  isConnected: false,
+                }
+              : undefined;
+
           return {
-            isConnected: nextConnected,
+            ...connected,
             isReady: state.isReady || status === WebSocketStatus.Disconnected,
             hasLostConnection:
               state.isConnected && !nextConnected

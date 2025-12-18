@@ -8,7 +8,7 @@ export const useHeadings = (editor: DocsBlockNoteEditor) => {
 
   useEffect(() => {
     // Check if editor and its view are mounted before accessing document
-    if (!editor || !editor._tiptapEditor?.view?.dom) {
+    if (!editor) {
       return;
     }
 

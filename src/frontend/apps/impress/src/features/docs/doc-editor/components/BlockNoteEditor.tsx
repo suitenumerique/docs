@@ -6,6 +6,7 @@ import {
   defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
+import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
 import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
@@ -101,7 +102,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const cursorName = collabName || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
-  const threadStore = useComments(doc.id, canSeeComment, user);
+  const { resolveUsers, threadStore } = useComments(
+    doc.id,
+    canSeeComment,
+    user,
+  );
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
@@ -156,28 +161,32 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
-      comments: { threadStore },
       dictionary: {
         ...locales[lang as keyof typeof locales],
         multi_column:
           multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
       },
-      resolveUsers: async (userIds) => {
-        return Promise.resolve(
-          userIds.map((encodedURIUserId) => {
-            const fullName = decodeURIComponent(encodedURIUserId);
+      pasteHandler: ({ event, defaultPasteHandler }) => {
+        // Get clipboard data
+        const blocknoteData = event.clipboardData?.getData('blocknote/html');
 
-            return {
-              id: encodedURIUserId,
-              username: fullName || t('Anonymous'),
-              avatarUrl: avatarUrlFromName(
-                fullName,
-                themeTokens?.font?.families?.base,
-              ),
-            };
-          }),
-        );
+        /**
+         * When pasting comments, the data-bn-thread-id
+         * attribute is present in the clipboard data.
+         * This indicates that the pasted content contains comments.
+         * But if the content with comments comes from another document,
+         * it will create orphaned comments that are not linked to this document
+         * and create errors.
+         * To avoid this, we refresh the threads to ensure that only comments
+         * relevant to the current document are displayed.
+         */
+        if (blocknoteData && blocknoteData.includes('data-bn-thread-id')) {
+          void threadStore.refreshThreads();
+        }
+
+        return defaultPasteHandler();
       },
+      extensions: [CommentsExtension({ threadStore, resolveUsers })],
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -187,7 +196,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [cursorName, lang, provider, uploadFile, threadStore],
+    [cursorName, lang, provider, uploadFile, threadStore, resolveUsers],
   );
 
   useHeadings(editor);
@@ -248,7 +257,7 @@ export const BlockNoteReader = ({
 }: BlockNoteReaderProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
-  const threadStore = useComments(docId, false, user);
+  const { threadStore } = useComments(docId, false, user);
   const { t } = useTranslation();
   const editor = useCreateBlockNote(
     {
@@ -261,12 +270,16 @@ export const BlockNoteReader = ({
         provider: undefined,
       },
       schema: blockNoteSchema,
-      comments: { threadStore },
-      resolveUsers: async () => {
-        return Promise.resolve([]);
-      },
+      extensions: [
+        CommentsExtension({
+          threadStore,
+          resolveUsers: async () => {
+            return Promise.resolve([]);
+          },
+        }),
+      ],
     },
-    [initialContent],
+    [initialContent, threadStore],
   );
 
   useEffect(() => {

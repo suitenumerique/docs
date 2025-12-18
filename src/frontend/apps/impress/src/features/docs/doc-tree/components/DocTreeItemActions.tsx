@@ -1,10 +1,12 @@
 import {
   DropdownMenu,
   DropdownMenuOption,
+  useArrowRoving,
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useModal } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -17,8 +19,8 @@ import {
   useCopyDocLink,
   useCreateChildDoc,
   useDocTitleUpdate,
-  useDuplicateDoc,
 } from '@/docs/doc-management';
+import { useDuplicateDoc } from '@/docs/doc-management/api';
 
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -30,6 +32,8 @@ type DocTreeItemActionsProps = {
   onCreateSuccess?: (newDoc: Doc) => void;
   onOpenChange?: (isOpen: boolean) => void;
   parentId?: string | null;
+  actionsRef?: React.RefObject<HTMLDivElement | null>;
+  buttonOptionRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 export const DocTreeItemActions = ({
@@ -39,13 +43,22 @@ export const DocTreeItemActions = ({
   onCreateSuccess,
   onOpenChange,
   parentId,
+  actionsRef,
+  buttonOptionRef,
 }: DocTreeItemActionsProps) => {
+  const internalActionsRef = useRef<HTMLDivElement | null>(null);
+  const targetActionsRef = actionsRef ?? internalActionsRef;
+  const internalButtonRef = useRef<HTMLDivElement | null>(null);
+  const targetButtonRef = buttonOptionRef ?? internalButtonRef;
   const router = useRouter();
   const { t } = useTranslation();
   const deleteModal = useModal();
   const copyLink = useCopyDocLink(doc.id);
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc | null>();
+
+  // Keyboard navigation inside the actions toolbar (ArrowLeft / ArrowRight).
+  useArrowRoving(targetActionsRef.current);
 
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (duplicatedDoc) => {
@@ -160,30 +173,45 @@ export const DocTreeItemActions = ({
   };
 
   return (
-    <Box className="doc-tree-root-item-actions">
+    <Box className="doc-tree-root-item-actions actions">
       <Box
+        ref={targetActionsRef}
         $direction="row"
         $align="center"
         className="--docs--doc-tree-item-actions"
         $gap="4px"
+        tabIndex={-1}
       >
         <DropdownMenu
           options={options}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
         >
-          <Icon
+          <BoxButton
+            ref={targetButtonRef}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
               onOpenChange?.(!isOpen);
             }}
-            iconName="more_horiz"
-            variant="filled"
+            aria-label={t('More options')}
+            tabIndex={-1}
             $theme="brand"
             $variation="secondary"
-            aria-label={t('More options')}
-          />
+            $css={css`
+              &:focus-visible {
+                outline-offset: -2px;
+                border-radius: var(--c--globals--spacings--st);
+              }
+            `}
+          >
+            <Icon
+              iconName="more_horiz"
+              variant="filled"
+              $theme="brand"
+              $variation="secondary"
+            />
+          </BoxButton>
         </DropdownMenu>
         {doc.abilities.children_create && (
           <BoxButton
@@ -199,6 +227,13 @@ export const DocTreeItemActions = ({
             $variation="secondary"
             aria-label={t('Add a sub page')}
             data-testid="doc-tree-item-actions-add-child"
+            tabIndex={-1}
+            $css={css`
+              &:focus-visible {
+                outline-offset: -2px;
+                border-radius: var(--c--globals--spacings--st);
+              }
+            `}
           >
             <Icon variant="filled" $color="inherit" iconName="add_box" />
           </BoxButton>

@@ -77,7 +77,6 @@ export function useDocVersionsInfiniteQuery(
     getNextPageParam(lastPage) {
       return lastPage.next_version_id_marker || undefined;
     },
-
     ...queryConfig,
   });
 }

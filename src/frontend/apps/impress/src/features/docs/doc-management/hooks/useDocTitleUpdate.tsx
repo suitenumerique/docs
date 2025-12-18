@@ -1,14 +1,11 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { useCallback } from 'react';
 
-import {
-  Doc,
-  KEY_DOC,
-  KEY_LIST_DOC,
-  getEmojiAndTitle,
-  useUpdateDoc,
-} from '@/docs/doc-management';
 import { useBroadcastStore } from '@/stores';
+
+import { KEY_DOC, KEY_LIST_DOC, useUpdateDoc } from '../api';
+import { Doc } from '../types';
+import { getEmojiAndTitle } from '../utils';
 
 interface UseDocUpdateOptions {
   onSuccess?: (updatedDoc: Doc) => void;

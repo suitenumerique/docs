@@ -29,7 +29,7 @@ export const useHeadingStore = create<UseHeadingStore>((set, get) => ({
   headings: [],
   setHeadings: (editor) => {
     // Check if editor and its view are mounted before accessing document
-    if (!editor || !editor._tiptapEditor?.view?.dom) {
+    if (!editor?.document) {
       return;
     }
 

@@ -802,6 +802,8 @@ test.describe('Doc Editor', () => {
     await page.getByText('Symbols').scrollIntoViewIfNeeded();
     await expect(page.getByRole('button', { name: '🛃' })).toBeVisible();
 
+    await page.keyboard.press('Escape');
+
     await page.locator('.bn-side-menu > button').last().click();
     await page.locator('.mantine-Menu-dropdown > button').last().click();
     await page.locator('.bn-color-picker-dropdown > button').last().click();

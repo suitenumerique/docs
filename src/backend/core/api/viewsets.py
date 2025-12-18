@@ -23,6 +23,7 @@ from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -33,6 +34,7 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -50,12 +52,20 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     YdocConverter,
 )
+from core.services.search_indexers import (
+    get_document_indexer,
+    get_visited_document_ids_of,
+)
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
-from .throttling import UserListThrottleBurst, UserListThrottleSustained
+from .throttling import (
+    DocumentThrottle,
+    UserListThrottleBurst,
+    UserListThrottleSustained,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -373,6 +383,7 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
+    throttle_classes = [DocumentThrottle]
     throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
@@ -382,6 +393,7 @@ class DocumentViewSet(
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
+    search_serializer_class = serializers.ListDocumentSerializer
 
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
@@ -1072,6 +1084,83 @@ class DocumentViewSet(
         return drf_response.Response(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
+
+    def _search_simple(self, request, text):
+        """
+        Returns a queryset filtered by the content of the document title
+        """
+        # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
+        queryset = self.get_queryset()
+        filterset = DocumentFilter({"title": text}, queryset=queryset)
+
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.filter_queryset(queryset)
+
+        return self.get_response_for_queryset(
+            queryset.order_by("-updated_at"),
+            context={
+                "request": request,
+            },
+        )
+
+    def _search_fulltext(self, indexer, request, params):
+        """
+        Returns a queryset from the results the fulltext search of Find
+        """
+        access_token = request.session.get("oidc_access_token")
+        user = request.user
+        text = params.validated_data["q"]
+        queryset = models.Document.objects.all()
+
+        # Retrieve the documents ids from Find.
+        results = indexer.search(
+            text=text,
+            token=access_token,
+            visited=get_visited_document_ids_of(queryset, user),
+        )
+
+        docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
+        ordered_docs = [docs_by_uuid[id] for id in results]
+
+        page = self.paginate_queryset(ordered_docs)
+
+        serializer = self.get_serializer(
+            page if page else ordered_docs,
+            many=True,
+            context={
+                "request": request,
+            },
+        )
+
+        return self.get_paginated_response(serializer.data)
+
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list.
+
+        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
+        Depending of the configuration it can be:
+         - A fulltext search through the opensearch indexation app "find" if the backend is
+           enabled (see SEARCH_INDEXER_CLASS)
+         - A filtering by the model field 'title'.
+
+        The ordering is always by the most recent first.
+        """
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
+
+        indexer = get_document_indexer()
+
+        if indexer:
+            return self._search_fulltext(indexer, request, params=params)
+
+        # The indexer is not configured, we fallback on a simple icontains filter by the
+        # model field 'title'.
+        return self._search_simple(request, text=params.validated_data["q"])
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):

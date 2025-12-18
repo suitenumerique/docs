@@ -1,4 +1,7 @@
 import { Button } from '@openfun/cunningham-react';
+import * as Sentry from '@sentry/nextjs';
+import { NextPageContext } from 'next';
+import NextError from 'next/error';
 import Head from 'next/head';
 import Image from 'next/image';
 import { ReactElement } from 'react';
@@ -8,24 +11,25 @@ import styled from 'styled-components';
 import error_img from '@/assets/icons/error-planetes.png';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { PageLayout } from '@/layouts';
-import { NextPageWithLayout } from '@/types/next';
 
 const StyledButton = styled(Button)`
   width: fit-content;
 `;
 
-const Page: NextPageWithLayout = () => {
+const Error = () => {
   const { t } = useTranslation();
+
+  const errorTitle = t('An unexpected error occurred.');
 
   return (
     <>
       <Head>
         <title>
-          {t('Page Not Found - Error 404')} - {t('Docs')}
+          {errorTitle} - {t('Docs')}
         </title>
         <meta
           property="og:title"
-          content={`${t('Page Not Found - Error 404')} - ${t('Docs')}`}
+          content={`${errorTitle} - ${t('Docs')}`}
           key="title"
         />
       </Head>
@@ -35,8 +39,8 @@ const Page: NextPageWithLayout = () => {
         $gap="md"
         $padding={{ bottom: '2rem' }}
       >
-        <Text as="h1" $textAlign="center" className="sr-only">
-          {t('Page Not Found - Error 404')} - {t('Docs')}
+        <Text as="h2" $textAlign="center" className="sr-only">
+          {errorTitle} - {t('Docs')}
         </Text>
         <Image
           src={error_img}
@@ -55,9 +59,7 @@ const Page: NextPageWithLayout = () => {
           $theme="neutral"
           $margin="0"
         >
-          {t(
-            'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
-          )}
+          {errorTitle}
         </Text>
 
         <Box $direction="row" $gap="sm">
@@ -75,14 +77,50 @@ const Page: NextPageWithLayout = () => {
               {t('Home')}
             </StyledButton>
           </StyledLink>
+
+          <StyledButton
+            color="neutral"
+            variant="bordered"
+            icon={
+              <Icon
+                iconName="refresh"
+                variant="symbols-outlined"
+                $withThemeInherited
+              />
+            }
+            onClick={() => window.location.reload()}
+          >
+            {t('Refresh page')}
+          </StyledButton>
         </Box>
       </Box>
     </>
   );
 };
 
-Page.getLayout = function getLayout(page: ReactElement) {
+Error.getInitialProps = async (contextData: NextPageContext) => {
+  const { res, err, asPath, pathname, query } = contextData;
+
+  Sentry.captureException(err, {
+    contexts: {
+      nextjs: {
+        page: pathname,
+        path: asPath,
+        query: query,
+        statusCode: res?.statusCode || err?.statusCode,
+      },
+    },
+    tags: {
+      errorPage: '_error.tsx',
+      statusCode: String(res?.statusCode || err?.statusCode || 'unknown'),
+    },
+  });
+
+  return NextError.getInitialProps(contextData);
+};
+
+Error.getLayout = function getLayout(page: ReactElement) {
   return <PageLayout withFooter={false}>{page}</PageLayout>;
 };
 
-export default Page;
+export default Error;
