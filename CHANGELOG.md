@@ -15,6 +15,7 @@ and this project adheres to
 - ✨(backend) add debounce mechanism to limit indexation jobs #1276
 - ✨(api) add API route to search for indexed documents in Find #1276
 - 🥅(frontend) add boundary error page #1728
+- ✨(backend) manage reconciliation requests for user accounts #1708
 
 ### Changed
 
