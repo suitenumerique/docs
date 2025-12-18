@@ -1,4 +1,4 @@
-import { deriveMediaFilename } from '../utils';
+import { deriveMediaFilename } from '../utils_html';
 
 describe('deriveMediaFilename', () => {
   test('uses last URL segment when src is a valid URL', () => {

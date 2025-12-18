@@ -29,12 +29,12 @@ import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
+import { downloadFile } from '../utils';
 import {
   addMediaFilesToZip,
-  downloadFile,
   generateHtmlDocument,
   improveHtmlAccessibility,
-} from '../utils';
+} from '../utils_html';
 
 enum DocDownloadFormat {
   HTML = 'html',
