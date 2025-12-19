@@ -42,9 +42,20 @@ items:
                     {{- if $envVars}}
                     {{- $envVars | indent 22 }}
                     {{- end }}
-                  {{- with $.Values.backend.securityContext }}
+                  {{- if .Values.backend.securityContext }}
+                  {{- with .Values.backend.securityContext }}
                   securityContext:
-                    {{- toYaml . | nindent 22 }}
+                    {{- toYaml . | nindent 12 }}
+                  {{- end }}
+                  {{- else }}
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                      - "ALL"
+                    runAsNonRoot: true
+                    seccompProfile:
+                      type: RuntimeDefault
                   {{- end }}
                   {{- with $.Values.backend.resources }}
                   resources:

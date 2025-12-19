@@ -52,10 +52,20 @@ spec:
             {{- if $envVars}}
             {{- $envVars | indent 12 }}
             {{- end }}
+          {{- if .Values.backend.securityContext }}
           {{- with .Values.backend.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- else }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - "ALL"
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           {{- with .Values.backend.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
