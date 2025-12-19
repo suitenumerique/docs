@@ -171,6 +171,7 @@ export const SearchPage = ({
         {trigger}
         <Box
           as="input"
+          name="doc-search-input"
           $padding={{ left: '3px' }}
           $css={inputStyle}
           ref={inputRef}

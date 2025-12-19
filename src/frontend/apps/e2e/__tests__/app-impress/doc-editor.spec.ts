@@ -880,14 +880,15 @@ test.describe('Doc Editor', () => {
     // Wait for the interlink to be created and rendered
     const editor = await getEditor({ page });
 
-    const interlinkChild2 = editor.getByRole('button', {
-      name: docChild2,
-    });
+    const interlinkChild = editor
+      .locator('.--docs--interlinking-link-inline-content')
+      .first();
 
-    await expect(interlinkChild2).toBeVisible({ timeout: 10000 });
-    await expect(interlinkChild2).toContainText('😀');
-    await expect(interlinkChild2.locator('svg').first()).toBeHidden();
-    await interlinkChild2.click();
+    await expect(interlinkChild).toBeVisible({ timeout: 10000 });
+    await expect(interlinkChild).toContainText('😀');
+    await expect(interlinkChild).toContainText(docChild2);
+    await expect(interlinkChild.locator('svg').first()).toBeHidden();
+    await interlinkChild.click();
 
     await verifyDocName(page, docChild2);
 
@@ -897,11 +898,9 @@ test.describe('Doc Editor', () => {
     await input.fill(docChild1);
     await searchContainer.getByText(docChild1).click();
 
-    const interlinkChild1 = editor.getByRole('button', {
-      name: docChild1,
-    });
-    await expect(interlinkChild1).toBeVisible({ timeout: 10000 });
-    await expect(interlinkChild1.locator('svg').first()).toBeVisible();
+    await expect(interlinkChild).toContainText(docChild1);
+    await expect(interlinkChild).toBeVisible({ timeout: 10000 });
+    await expect(interlinkChild.locator('svg').first()).toBeVisible();
 
     await page.keyboard.press('@');
 
