@@ -53,10 +53,20 @@ spec:
             {{- if $envVars}}
             {{- $envVars | indent 12 }}
             {{- end }}
+          {{- if .Values.frontend.securityContext }}
           {{- with .Values.frontend.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- else }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - "ALL"
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: http
               containerPort: {{ .Values.frontend.service.targetPort }}

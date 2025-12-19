@@ -53,9 +53,20 @@ spec:
             {{- if $envVars}}
             {{- $envVars | indent 12 }}
             {{- end }}
+          {{- if .Values.yProvider.securityContext }}
           {{- with .Values.yProvider.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- else }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - "ALL"
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           {{- end }}
           ports:
             - name: http
