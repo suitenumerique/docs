@@ -10,6 +10,12 @@ body {
   padding: 0;
 }
 
+/* stylelint-disable-next-line selector-id-pattern */
+body > #__next > .c__app > div:has(> .c__loader) {
+  min-height: 100vh;
+  width: 100vw;
+}
+
 * {
   box-sizing: border-box;
 }
