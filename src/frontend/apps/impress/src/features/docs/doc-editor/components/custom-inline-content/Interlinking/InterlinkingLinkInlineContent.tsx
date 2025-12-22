@@ -79,10 +79,11 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
 
   return (
     <BoxButton
+      as="span"
       onClick={handleClick}
       draggable="false"
       $css={css`
-        display: contents;
+        display: inline;
         padding: 0.1rem 0.4rem;
         border-radius: 4px;
         & svg {
@@ -91,7 +92,9 @@ const LinkSelected = ({ url, title }: LinkSelectedProps) => {
           margin-right: 0.2rem;
         }
         &:hover {
-          background-color: ${colorsTokens['gray-100']};
+          background-color: var(
+            --c--contextuals--background--semantic--contextual--primary
+          );
         }
         transition: background-color var(--c--globals--transitions--duration)
           var(--c--globals--transitions--ease-out);
