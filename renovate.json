@@ -30,8 +30,11 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@next/eslint-plugin-next",
         "docx",
+        "eslint-config-next",
         "fetch-mock",
+        "next",
         "node",
         "node-fetch",
         "workbox-webpack-plugin"
