@@ -10,6 +10,7 @@ export const CONFIG = {
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,
   ENVIRONMENT: 'development',
   FRONTEND_CSS_URL: null,
+  FRONTEND_JS_URL: null,
   FRONTEND_HOMEPAGE_FEATURE_ENABLED: true,
   FRONTEND_THEME: null,
   MEDIA_BASE_URL: 'http://localhost:8083',

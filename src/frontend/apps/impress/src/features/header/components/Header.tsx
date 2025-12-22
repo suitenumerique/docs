@@ -29,6 +29,7 @@ export const Header = () => {
       <SkipToContent />
       <Box
         as="header"
+        className="--docs--header"
         role="banner"
         $css={css`
           position: fixed;
@@ -45,7 +46,6 @@ export const Header = () => {
           border-bottom: 1px solid
             var(--c--contextuals--border--surface--primary);
         `}
-        className="--docs--header"
       >
         {!isDesktop && <ButtonTogglePanel />}
         <StyledLink
@@ -88,7 +88,12 @@ export const Header = () => {
             <LaGaufre />
           </Box>
         ) : (
-          <Box $align="center" $gap={spacingsTokens['sm']} $direction="row">
+          <Box
+            className="--docs--header-block-right"
+            $align="center"
+            $gap={spacingsTokens['sm']}
+            $direction="row"
+          >
             <ButtonLogin />
             <LanguagePicker />
             <LaGaufre />
