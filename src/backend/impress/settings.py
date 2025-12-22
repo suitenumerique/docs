@@ -71,6 +71,7 @@ class Base(Configuration):
     ALLOWED_HOSTS = values.ListValue([])
     SECRET_KEY = SecretFileValue(None)
     SERVER_TO_SERVER_API_TOKENS = values.ListValue([])
+    USE_X_FORWARDED_HOST = values.BooleanValue(False)
 
     # Application definition
     ROOT_URLCONF = "impress.urls"
@@ -1023,6 +1024,10 @@ class Production(Base):
     CSRF_TRUSTED_ORIGINS = values.ListValue([])
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    USE_X_FORWARDED_HOST = values.BooleanValue(
+        False,
+        environ_name="USE_X_FORWARDED_HOST"
+    )
 
     # SECURE_PROXY_SSL_HEADER allows to fix the scheme in Django's HttpRequest
     # object when your application is behind a reverse proxy.
@@ -1073,6 +1078,25 @@ class Production(Base):
                 environ_prefix=None,
             ),
         },
+    }
+
+    DATABASES = {
+        "default": {
+            **Base.DATABASES["default"],
+            "OPTIONS": {
+                "sslmode": values.Value(
+                    "require",
+                    environ_name="DB_SSLMODE",
+                    environ_prefix=None,
+                ),
+                "channel_binding": values.Value(
+                    "require",
+                    environ_name="DB_CHANNEL_BINDING",
+                    environ_prefix=None,
+                ),
+            },
+            "DISABLE_SERVER_SIDE_CURSORS": True
+        }
     }
 
 

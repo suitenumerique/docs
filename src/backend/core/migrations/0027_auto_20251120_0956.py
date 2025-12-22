@@ -11,15 +11,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-                CREATE OR REPLACE FUNCTION public.immutable_unaccent(regdictionary, text)
-                RETURNS text
-                LANGUAGE c IMMUTABLE PARALLEL SAFE STRICT AS
-                '$libdir/unaccent', 'unaccent_dict';
+                CREATE EXTENSION IF NOT EXISTS unaccent;
 
                 CREATE OR REPLACE FUNCTION public.f_unaccent(text)
                 RETURNS text
                 LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
-                RETURN public.immutable_unaccent(regdictionary 'public.unaccent', $1);
+                RETURN unaccent($1);
 
                 CREATE INDEX IF NOT EXISTS user_email_unaccent_trgm_idx
                 ON impress_user
