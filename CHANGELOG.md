@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+## Changed
+
+- ✈️(frontend) pause Posthog when offline #1755
+
 ## [4.2.0] - 2025-12-17
 
 ### Added
