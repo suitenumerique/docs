@@ -13,12 +13,13 @@ import {
   createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Icon } from '@/components';
+import { Box, Icon, Loading } from '@/components';
 
+import { ANALYZE_URL } from '../../conf';
 import { DocsBlockNoteEditor } from '../../types';
 
 const PDFBlockStyle = createGlobalStyle`
@@ -66,6 +67,9 @@ const PdfBlockComponent = ({
   const pdfUrl = block.props.url;
   const { i18n, t } = useTranslation();
   const lang = i18n.resolvedLanguage;
+  const [isPDFContent, setIsPDFContent] = useState<boolean | null>(null);
+  const [isPDFContentLoading, setIsPDFContentLoading] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (lang && locales[lang as keyof typeof locales]) {
@@ -82,9 +86,55 @@ const PdfBlockComponent = ({
     }
   }, [lang, t]);
 
+  useEffect(() => {
+    if (!pdfUrl || pdfUrl.includes(ANALYZE_URL)) {
+      return;
+    }
+
+    const validatePDFContent = async () => {
+      setIsPDFContentLoading(true);
+      try {
+        const response = await fetch(pdfUrl, {
+          credentials: 'include',
+        });
+        const contentType = response.headers.get('content-type');
+
+        if (response.ok && contentType?.includes('application/pdf')) {
+          setIsPDFContent(true);
+        } else {
+          setIsPDFContent(false);
+        }
+      } catch {
+        setIsPDFContent(false);
+      } finally {
+        setIsPDFContentLoading(false);
+      }
+    };
+
+    void validatePDFContent();
+  }, [pdfUrl]);
+
   return (
     <Box ref={contentRef} className="bn-file-block-content-wrapper">
       <PDFBlockStyle />
+      {isPDFContentLoading && <Loading />}
+      {!isPDFContentLoading && isPDFContent !== null && !isPDFContent && (
+        <Box
+          $align="center"
+          $justify="center"
+          $color="#666"
+          $background="#f5f5f5"
+          $border="1px solid #ddd"
+          $height="300px"
+          $css={css`
+            text-align: center;
+          `}
+          contentEditable={false}
+          onClick={() => editor.setTextCursorPosition(block)}
+        >
+          {t('Invalid or missing PDF file.')}
+        </Box>
+      )}
       <ResizableFileBlockWrapper
         buttonIcon={
           <Icon iconName="upload" $size="24px" $css="line-height: normal;" />
@@ -92,18 +142,21 @@ const PdfBlockComponent = ({
         block={block as unknown as FileBlockBlock}
         editor={editor as unknown as FileBlockEditor}
       >
-        <Box
-          className="bn-visual-media"
-          role="presentation"
-          as="embed"
-          $width="100%"
-          $height="450px"
-          type="application/pdf"
-          src={pdfUrl}
-          contentEditable={false}
-          draggable={false}
-          onClick={() => editor.setTextCursorPosition(block)}
-        />
+        {!isPDFContentLoading && isPDFContent && (
+          <Box
+            as="embed"
+            className="bn-visual-media"
+            role="presentation"
+            $width="100%"
+            $height="450px"
+            type="application/pdf"
+            src={pdfUrl}
+            aria-label={block.props.name || t('PDF document')}
+            contentEditable={false}
+            draggable={false}
+            onClick={() => editor.setTextCursorPosition(block)}
+          />
+        )}
       </ResizableFileBlockWrapper>
     </Box>
   );

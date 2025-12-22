@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(helm) redirecting system #1697
 
+## Changed
+
+- 🦺(frontend) check content type pdf on PdfBlock #1756
+
 ### Fixed
 
 - 🐛(frontend) fix tables deletion #1752
