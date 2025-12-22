@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(frontend) fix children not display when first resize #1753
+
 ## [4.2.0] - 2025-12-17
 
 ### Added
