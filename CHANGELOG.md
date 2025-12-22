@@ -11,9 +11,14 @@ and this project adheres to
 - ✨(helm) redirecting system #1697
 - 📱(frontend) add comments for smaller device #1737
 
+### Changed
+
+- 🥅(frontend) intercept 401 error on GET threads #1754
+
 ### Fixed
 
 - 🐛(frontend) fix tables deletion #1752
+
 
 ## [4.2.0] - 2025-12-17
 
