@@ -16,6 +16,7 @@ import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
+import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
@@ -117,7 +118,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
       collaboration: {
-        provider: provider,
+        provider: provider as { awareness?: Awareness | undefined },
         fragment: provider.document.getXmlFragment('document-store'),
         user: {
           name: cursorName,
@@ -163,8 +164,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       dictionary: {
         ...locales[lang as keyof typeof locales],
-        multi_column:
-          multiColumnLocales?.[lang as keyof typeof multiColumnLocales],
+        ...(multiColumnLocales && {
+          multi_column:
+            multiColumnLocales[lang as keyof typeof multiColumnLocales],
+        }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
         // Get clipboard data
