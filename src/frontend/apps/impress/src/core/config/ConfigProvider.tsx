@@ -1,5 +1,6 @@
 import { Loader } from '@openfun/cunningham-react';
 import Head from 'next/head';
+import Script from 'next/script';
 import { PropsWithChildren, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -86,6 +87,9 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
         <Head>
           <link rel="stylesheet" href={conf?.FRONTEND_CSS_URL} />
         </Head>
+      )}
+      {conf?.FRONTEND_JS_URL && (
+        <Script src={conf?.FRONTEND_JS_URL} strategy="afterInteractive" />
       )}
       <AnalyticsProvider>
         <CrispProvider websiteId={conf?.CRISP_WEBSITE_ID}>
