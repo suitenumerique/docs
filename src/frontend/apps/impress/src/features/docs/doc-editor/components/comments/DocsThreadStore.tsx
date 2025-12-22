@@ -37,7 +37,8 @@ export class DocsThreadStore extends ThreadStore {
     if (docAuth.canSee) {
       this.awareness = awareness;
       this.awareness?.on('update', this.onAwarenessUpdate);
-      void this.refreshThreads();
+
+      this.refreshThreads();
     }
   }
 
@@ -98,9 +99,9 @@ export class DocsThreadStore extends ThreadStore {
 
       // If we know the threadId, schedule a targeted refresh. Otherwise, fall back to full refresh.
       if (ping.threadId) {
-        await this.refreshThread(ping.threadId);
+        void this.refreshThread(ping.threadId);
       } else {
-        await this.refreshThreads();
+        this.refreshThreads();
       }
     }
   };
@@ -280,7 +281,7 @@ export class DocsThreadStore extends ThreadStore {
         }),
       );
 
-      await this.refreshThreads();
+      this.refreshThreads();
       return;
     }
 
@@ -298,7 +299,17 @@ export class DocsThreadStore extends ThreadStore {
     this.notifySubscribers();
   }
 
-  public async refreshThreads(): Promise<void> {
+  public refreshThreads() {
+    this.initThreads().catch((e) => {
+      if (!(e instanceof APIError) || e.status !== 401) {
+        throw e;
+      }
+
+      return;
+    });
+  }
+
+  public async initThreads(): Promise<void> {
     const response = await fetchAPI(`documents/${this.docId}/threads/`, {
       method: 'GET',
     });
@@ -484,7 +495,7 @@ export class DocsThreadStore extends ThreadStore {
       );
     }
 
-    await this.refreshThreads();
+    this.refreshThreads();
     this.ping(threadId);
   };
 
