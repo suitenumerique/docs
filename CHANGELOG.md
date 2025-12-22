@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 🥅(frontend) intercept 401 error on GET threads #1754
+
 ## [4.2.0] - 2025-12-17
 
 ### Added
