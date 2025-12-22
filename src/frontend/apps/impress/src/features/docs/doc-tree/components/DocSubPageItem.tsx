@@ -172,7 +172,10 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           emoji={emoji}
           withEmojiPicker={doc.abilities.partial_update}
           defaultIcon={
-            <SubPageIcon color="var(--c--contextuals--content--semantic--info--tertiary)" />
+            <SubPageIcon
+              color="var(--c--contextuals--content--semantic--info--tertiary)"
+              style={{ flexShrink: 0 }}
+            />
           }
           $size="sm"
           docId={doc.id}
