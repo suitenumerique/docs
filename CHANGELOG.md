@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(helm) redirecting system #1697
+- 📝(docs) Add language configuration documentation #1757
 
 ### Fixed
 
