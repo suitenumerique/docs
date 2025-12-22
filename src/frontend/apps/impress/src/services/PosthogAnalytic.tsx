@@ -3,6 +3,7 @@ import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { JSX, PropsWithChildren, ReactNode, useEffect } from 'react';
 
+import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { AbstractAnalytic, AnalyticEvent } from '@/libs/';
 
 export class PostHogAnalytic extends AbstractAnalytic {
@@ -45,6 +46,8 @@ export function PostHogProvider({
   children,
   conf,
 }: PropsWithChildren<PostHogProviderProps>) {
+  const isOffline = useIsOffline((state) => state.isOffline);
+
   useEffect(() => {
     if (!conf?.id || !conf?.host || posthog.__loaded) {
       return;
@@ -53,9 +56,9 @@ export function PostHogProvider({
     posthog.init(conf.id, {
       api_host: conf.host,
       person_profiles: 'always',
-      loaded: (posthog) => {
+      loaded: (posthogInstance) => {
         if (process.env.NODE_ENV === 'development') {
-          posthog.debug();
+          posthogInstance.debug();
         }
       },
       capture_pageview: false,
@@ -70,6 +73,15 @@ export function PostHogProvider({
       Router.events.off('routeChangeComplete', handleRouteChange);
     };
   }, [conf?.host, conf?.id]);
+
+  // Disable PostHog when offline to prevent retry requests
+  useEffect(() => {
+    if (isOffline) {
+      posthog.opt_out_capturing();
+    } else {
+      posthog.opt_in_capturing();
+    }
+  }, [isOffline]);
 
   return <PHProvider client={posthog}>{children}</PHProvider>;
 }
