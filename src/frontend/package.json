@@ -31,14 +31,14 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/extensions": "3.11.0",
-    "@types/node": "24.10.1",
-    "@types/react": "19.2.6",
+    "@tiptap/extensions": "3.13.0",
+    "@types/node": "24.10.4",
+    "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "docx": "9.5.0",
-    "eslint": "9.39.1",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "eslint": "9.39.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "typescript": "5.9.3",
     "wrap-ansi": "9.0.2",
     "yjs": "13.6.27"
