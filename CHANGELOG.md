@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨(backend) add documents/all endpoint with descendants #1553
 - ✅(export) add PDF regression tests #1762
+- 📝(docs) Add language configuration documentation #1757
 
 ### Fixed 
 
