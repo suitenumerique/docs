@@ -21,6 +21,7 @@ export interface ConfigResponse {
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
+  FRONTEND_JS_URL?: string;
   FRONTEND_THEME?: Theme;
   LANGUAGES: [string, string][];
   LANGUAGE_CODE: string;

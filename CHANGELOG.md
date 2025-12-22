@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(helm) redirecting system #1697
+- ✨(project) add custom js support via config #1759
 
 ### Fixed
 
