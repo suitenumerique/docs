@@ -15,6 +15,10 @@ and this project adheres to
 
 - 🥅(frontend) intercept 401 error on GET threads #1754
 
+## Changed
+
+- 🦺(frontend) check content type pdf on PdfBlock #1756
+
 ### Fixed
 
 - 🐛(frontend) fix tables deletion #1752

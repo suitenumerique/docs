@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { backendUrl } from '@/api';
 
 import { useCreateDocAttachment } from '../api';
+import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
 export const useUploadFile = (docId: string) => {
@@ -46,7 +47,6 @@ export const useUploadFile = (docId: string) => {
  * @param editor
  */
 export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
-  const ANALYZE_URL = 'media-check';
   const { t } = useTranslation();
 
   /**

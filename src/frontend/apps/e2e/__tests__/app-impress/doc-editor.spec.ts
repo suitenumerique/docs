@@ -960,13 +960,35 @@ test.describe('Doc Editor', () => {
   test('it embeds PDF', async ({ page, browserName }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    await page.getByRole('button', { name: 'Close the share modal' }).click();
+
     await openSuggestionMenu({ page });
     await page.getByText('Embed a PDF file').click();
 
-    const pdfBlock = page.locator('div[data-content-type="pdf"]').first();
+    const pdfBlock = page.locator('div[data-content-type="pdf"]').last();
 
     await expect(pdfBlock).toBeVisible();
 
+    // Try with invalid PDF first
+    await page.getByText(/Add (PDF|file)/).click();
+
+    await page.locator('[data-test="embed-tab"]').click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('https://example.test/test.test');
+
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    await expect(page.getByText('Invalid or missing PDF file')).toBeVisible();
+
+    await openSuggestionMenu({ page });
+    await page.getByText('Embed a PDF file').click();
+
+    // Now with a valid PDF
     await page.getByText(/Add (PDF|file)/).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
     const downloadPromise = page.waitForEvent('download');
@@ -991,7 +1013,7 @@ test.describe('Doc Editor', () => {
     await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
 
     // Check download with original filename
-    await page.locator('.bn-block-content[data-content-type="pdf"]').click();
+    await pdfBlock.click();
     await page.locator('[data-test="downloadfile"]').click();
 
     const download = await downloadPromise;
