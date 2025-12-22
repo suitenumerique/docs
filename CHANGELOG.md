@@ -14,10 +14,8 @@ and this project adheres to
 ### Changed
 
 - 🥅(frontend) intercept 401 error on GET threads #1754
-
-## Changed
-
 - 🦺(frontend) check content type pdf on PdfBlock #1756
+- ✈️(frontend) pause Posthog when offline #1755
 
 ### Fixed
 
