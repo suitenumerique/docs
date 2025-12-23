@@ -7,11 +7,15 @@ on:
     branches:
       - 'main'
 
+permissions: {}
+
 jobs:
   helmfile-lint:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/helmfile/helmfile:v0.171.0@sha256:1b1d83b5db69c3bb9e8f6855a8076bdc18c816332af1208c43b4e294a74dd33f # ratchet:ghcr.io/helmfile/helmfile:v0.171.0
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4

@@ -8,17 +8,23 @@ on:
     branches:
       - "*"
 
+permissions: {}
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
       with-build_mails: true
+    permissions:
+      contents: read
 
   lint-git:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' # Makes sense only for pull requests
     env:
       BASEREF: ${{ github.event.pull_request.base.ref }}
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -47,6 +53,8 @@ jobs:
     if: |
       contains(github.event.pull_request.labels.*.name, 'noChangeLog') == false &&
       github.event_name == 'pull_request'
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -58,6 +66,8 @@ jobs:
 
   lint-changelog:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -74,6 +84,8 @@ jobs:
   lint-spell-mistakes:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -98,6 +110,8 @@ jobs:
     defaults:
       run:
         working-directory: src/backend
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -122,6 +136,8 @@ jobs:
   test-back:
     runs-on: ubuntu-latest
     needs: install-dependencies
+    permissions:
+      contents: read
 
     defaults:
       run:

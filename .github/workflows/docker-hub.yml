@@ -13,12 +13,16 @@ on:
       - 'main'
       - 'ci/trivy-fails'
 
+permissions: {}
+
 env:
   DOCKER_USER: 1001:127
 
 jobs:
   build-and-push-backend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -56,6 +60,8 @@ jobs:
           docker volume prune -f
   build-and-push-frontend:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -97,6 +103,8 @@ jobs:
           docker volume prune -f
   build-and-push-y-provider:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -137,6 +145,8 @@ jobs:
       - build-and-push-backend
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+    permissions:
+      contents: read
     steps:
       - uses: numerique-gouv/action-argocd-webhook-notification@cac2ee67896eb13e84e804f60c4271370424eaa8 # ratchet:numerique-gouv/action-argocd-webhook-notification@main
         id: notify

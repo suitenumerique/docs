@@ -14,10 +14,14 @@ on:
         type: boolean
         default: false
 
+permissions: {}
+
 jobs:
   front-dependencies-installation:
     if: ${{ inputs.with-front-dependencies-installation == true }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -50,6 +54,8 @@ jobs:
     defaults:
       run:
         working-directory: src/mail
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4

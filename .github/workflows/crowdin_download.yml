@@ -6,12 +6,16 @@ on:
     branches:
       - 'release/**'
 
+permissions: {}
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
       node_version: '22.x'
       with-front-dependencies-installation: true
+    permissions:
+      contents: read
 
   synchronize-with-crowdin:
     runs-on: ubuntu-latest

@@ -6,6 +6,8 @@ on:
     branches:
       - main
 
+permissions: {}
+
 jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
@@ -13,10 +15,14 @@ jobs:
       node_version: '22.x'
       with-front-dependencies-installation: true
       with-build_mails: true
+    permissions:
+      contents: read
 
   synchronize-with-crowdin:
     needs: install-dependencies
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
