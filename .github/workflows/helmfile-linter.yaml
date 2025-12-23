@@ -11,20 +11,20 @@ jobs:
   helmfile-lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/helmfile/helmfile:v0.171.0
+      image: ghcr.io/helmfile/helmfile:v0.171.0@sha256:1b1d83b5db69c3bb9e8f6855a8076bdc18c816332af1208c43b4e294a74dd33f # ratchet:ghcr.io/helmfile/helmfile:v0.171.0
     steps:
-    -
-      name: Checkout repository
-      uses: actions/checkout@v4
-    -
-      name: Helmfile lint
-      shell: bash
-      run: |
-        set -e
-        HELMFILE=src/helm/helmfile.yaml.gotmpl
-        environments=$(awk 'BEGIN {in_env=0} /^environments:/ {in_env=1; next} /^---/ {in_env=0} in_env && /^  [^ ]/ {gsub(/^  /,""); gsub(/:.*$/,""); print}' "$HELMFILE")
-        for env in $environments; do
-          echo "################### $env lint ###################"
-          helmfile -e $env lint -f $HELMFILE || exit 1
-          echo -e "\n"
-        done
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
+      - name: Helmfile lint
+        shell: bash
+        run: |
+          set -e
+          HELMFILE=src/helm/helmfile.yaml.gotmpl
+          environments=$(awk 'BEGIN {in_env=0} /^environments:/ {in_env=1; next} /^---/ {in_env=0} in_env && /^  [^ ]/ {gsub(/^  /,""); gsub(/:.*$/,""); print}' "$HELMFILE")
+          for env in $environments; do
+            echo "################### $env lint ###################"
+            helmfile -e $env lint -f $HELMFILE || exit 1
+            echo -e "\n"
+          done
+
+

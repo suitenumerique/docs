@@ -20,31 +20,26 @@ jobs:
   build-and-push-backend:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Docker meta
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
+      - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # ratchet:docker/metadata-action@v5
         with:
           images: lasuite/impress-backend
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # ratchet:docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
+      - name: Run trivy scan
+        uses: numerique-gouv/action-trivy-cache@59cfbd7227acfb664db9422ec9471f6bca22488c # ratchet:numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '--target backend-production -f Dockerfile'
           docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
-      -
-        name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Build and push
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # ratchet:docker/build-push-action@v6
         with:
           context: .
           target: backend-production
@@ -52,41 +47,35 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - 
-        name: Cleanup Docker after build
+      - name: Cleanup Docker after build
         if: always()
         run: |
           docker system prune -af
           docker volume prune -f
-
   build-and-push-frontend:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Docker meta
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
+      - name: Docker meta
+
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # ratchet:docker/metadata-action@v5
         with:
           images: lasuite/impress-frontend
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
-        uses: docker/login-action@v3
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # ratchet:docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
+      - name: Run trivy scan
+        uses: numerique-gouv/action-trivy-cache@59cfbd7227acfb664db9422ec9471f6bca22488c # ratchet:numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '-f src/frontend/Dockerfile --target frontend-production'
           docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-      -
-        name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Build and push
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # ratchet:docker/build-push-action@v6
         with:
           context: .
           file: ./src/frontend/Dockerfile
@@ -97,38 +86,32 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - 
-        name: Cleanup Docker after build
+      - name: Cleanup Docker after build
         if: always()
         run: |
           docker system prune -af
           docker volume prune -f
-
   build-and-push-y-provider:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout repository
-        uses: actions/checkout@v4
-      -
-        name: Docker meta
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
+      - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # ratchet:docker/metadata-action@v5
         with:
           images: lasuite/impress-y-provider
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
+      - name: Run trivy scan
+        uses: numerique-gouv/action-trivy-cache@59cfbd7227acfb664db9422ec9471f6bca22488c # ratchet:numerique-gouv/action-trivy-cache@main
         with:
           docker-build-args: '-f src/frontend/servers/y-provider/Dockerfile --target y-provider'
           docker-image-name: 'docker.io/lasuite/impress-y-provider:${{ github.sha }}'
-      -
-        name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Build and push
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # ratchet:docker/build-push-action@v6
         with:
           context: .
           file: ./src/frontend/servers/y-provider/Dockerfile
@@ -137,13 +120,11 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - 
-        name: Cleanup Docker after build
+      - name: Cleanup Docker after build
         if: always()
         run: |
           docker system prune -af
           docker volume prune -f
-
   notify-argocd:
     needs:
       - build-and-push-frontend
@@ -151,9 +132,28 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
     steps:
-      - uses: numerique-gouv/action-argocd-webhook-notification@main
+      - uses: numerique-gouv/action-argocd-webhook-notification@cac2ee67896eb13e84e804f60c4271370424eaa8 # ratchet:numerique-gouv/action-argocd-webhook-notification@main
         id: notify
         with:
           deployment_repo_path: "${{ secrets.DEPLOYMENT_REPO_URL }}"
           argocd_webhook_secret: "${{ secrets.ARGOCD_PREPROD_WEBHOOK_SECRET }}"
           argocd_url: "${{ vars.ARGOCD_PREPROD_WEBHOOK_URL }}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
