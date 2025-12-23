@@ -53,6 +53,7 @@ jobs:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
           fail-on-cache-miss: true
+          lookup-only: true
       - name: generate translations files
         working-directory: src/frontend
         run: yarn i18n:deploy
