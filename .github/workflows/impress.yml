@@ -17,6 +17,8 @@ jobs:
   lint-git:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' # Makes sense only for pull requests
+    env:
+      BASEREF: ${{ github.event.pull_request.base.ref }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # ratchet:actions/checkout@v4
@@ -27,7 +29,7 @@ jobs:
       - name: Enforce absence of print statements in code
         if: always()
         run: |
-          ! git diff origin/${{ github.event.pull_request.base.ref }}..HEAD -- . ':(exclude)**/impress.yml' | grep "print("
+          ! git diff origin/${BASEREF}..HEAD -- . ':(exclude)**/impress.yml' | grep "print("
       - name: Check absence of fixup commits
         if: always()
         run: |
@@ -37,7 +39,7 @@ jobs:
         run: pip install --user requests gitlint
       - name: Lint commit messages added to main
         if: always()
-        run: ~/.local/bin/gitlint --commits origin/${{ github.event.pull_request.base.ref }}..HEAD
+        run: ~/.local/bin/gitlint --commits origin/${BASEREF}..HEAD
 
   check-changelog:
     runs-on: ubuntu-latest
