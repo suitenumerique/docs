@@ -21,9 +21,6 @@ export const blockMappingImagePDF: DocsExporterPDF['mappings']['blockMapping']['
 
     if (blob.type.includes('svg')) {
       const svgText = await blob.text();
-      const FALLBACK_SIZE = 536;
-      previewWidth = previewWidth || FALLBACK_SIZE;
-
       const result = await convertSvgToPng(svgText, previewWidth);
       pngConverted = result.png;
       dimensions = { width: result.width, height: result.height };
