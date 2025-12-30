@@ -63,13 +63,11 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
     });
     treeContext?.treeData.handleMove(result);
   };
+
   /**
    * This function resets the tree states.
    */
   const resetStateTree = useCallback(() => {
-    if (!treeContext?.root?.id) {
-      return;
-    }
     treeContext?.setRoot(null);
     setInitialOpenState(undefined);
   }, [treeContext]);
