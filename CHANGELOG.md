@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(helm) redirecting system #1697
+- ✅(export) add PDF regression tests #1762
 
 ### Fixed
 

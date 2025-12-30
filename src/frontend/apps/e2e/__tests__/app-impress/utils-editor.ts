@@ -11,7 +11,9 @@ export const openSuggestionMenu = async ({ page }: { page: Page }) => {
   await editor.click();
   await writeInEditor({ page, text: '/' });
 
-  return editor;
+  const suggestionMenu = page.locator('.bn-suggestion-menu');
+
+  return { editor, suggestionMenu };
 };
 
 export const writeInEditor = async ({

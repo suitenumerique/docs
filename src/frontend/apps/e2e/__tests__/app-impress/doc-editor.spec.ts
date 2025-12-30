@@ -604,7 +604,7 @@ test.describe('Doc Editor', () => {
 
     await verifyDocName(page, randomDoc);
 
-    const editor = await openSuggestionMenu({ page });
+    const { editor } = await openSuggestionMenu({ page });
     await page.getByText('Embedded file').click();
     await page.getByText('Upload file').click();
 

@@ -109,8 +109,10 @@ test.describe('Language', () => {
   }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
-    const editor = await openSuggestionMenu({ page });
-    await expect(page.getByText('Headings', { exact: true })).toBeVisible();
+    const { editor, suggestionMenu } = await openSuggestionMenu({ page });
+    await expect(
+      suggestionMenu.getByText('Headings', { exact: true }),
+    ).toBeVisible();
 
     await editor.click(); // close the menu
 
@@ -121,6 +123,8 @@ test.describe('Language', () => {
 
     // Trigger slash menu to show french menu
     await openSuggestionMenu({ page });
-    await expect(page.getByText('Titres', { exact: true })).toBeVisible();
+    await expect(
+      suggestionMenu.getByText('Titres', { exact: true }),
+    ).toBeVisible();
   });
 });
