@@ -126,6 +126,20 @@ test.describe('Config', () => {
     ).toBeAttached();
   });
 
+  test('it checks FRONTEND_JS_URL config', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_JS_URL: 'http://localhost:123465/js/script.js',
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page
+        .locator('script[src="http://localhost:123465/js/script.js"]')
+        .first(),
+    ).toBeAttached();
+  });
+
   test('it checks theme_customization.translations config', async ({
     page,
   }) => {

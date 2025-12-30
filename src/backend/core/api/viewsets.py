@@ -2197,6 +2197,7 @@ class ConfigView(drf.views.APIView):
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+            "FRONTEND_JS_URL",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",
