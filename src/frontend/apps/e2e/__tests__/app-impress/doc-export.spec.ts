@@ -527,7 +527,7 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, docChild);
 
-    await page.locator('.bn-block-outer').last().fill('/');
+    const editor = await openSuggestionMenu({ page });
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
@@ -544,12 +544,11 @@ test.describe('Doc Export', () => {
     await searchContainer.getByText(randomDoc).click();
 
     // Search the interlinking link in the editor (not in the document tree)
-    const editor = page.locator('.ProseMirror.bn-editor');
-    const interlink = editor.getByRole('button', {
-      name: randomDoc,
-    });
+    const interlink = editor
+      .locator('.--docs--interlinking-link-inline-content')
+      .first();
 
-    await expect(interlink).toBeVisible();
+    await expect(interlink).toContainText(randomDoc);
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${docChild}.pdf`);
@@ -593,7 +592,7 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, docChild);
 
-    await page.locator('.bn-block-outer').last().fill('/');
+    const editor = await openSuggestionMenu({ page });
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
@@ -610,12 +609,11 @@ test.describe('Doc Export', () => {
     await searchContainer.getByText(randomDoc).click();
 
     // Search the interlinking link in the editor (not in the document tree)
-    const editor = page.locator('.ProseMirror.bn-editor');
-    const interlink = editor.getByRole('button', {
-      name: randomDoc,
-    });
+    const interlink = editor
+      .locator('.--docs--interlinking-link-inline-content')
+      .first();
 
-    await expect(interlink).toBeVisible();
+    await expect(interlink).toContainText(randomDoc);
 
     await page
       .getByRole('button', {
