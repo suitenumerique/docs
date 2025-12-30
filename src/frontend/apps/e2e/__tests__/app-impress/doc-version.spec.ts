@@ -42,8 +42,8 @@ test.describe('Doc Version', () => {
     // Write more
     await writeInEditor({ page, text: 'It will create a version' });
 
-    await openSuggestionMenu({ page });
-    await page.getByText('Add a callout block').click();
+    const { suggestionMenu } = await openSuggestionMenu({ page });
+    await suggestionMenu.getByText('Add a callout block').click();
 
     const calloutBlock = page
       .locator('div[data-content-type="callout"]')

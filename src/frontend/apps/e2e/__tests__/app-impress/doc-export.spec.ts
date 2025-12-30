@@ -1,6 +1,7 @@
+import fs from 'fs';
 import path from 'path';
 
-import { expect, test } from '@playwright/test';
+import { Download, expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
@@ -633,4 +634,151 @@ test.describe('Doc Export', () => {
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${docChild}.odt`);
   });
+
+  test('it exports the doc to PDF and checks regressions', async ({
+    page,
+    browserName,
+  }) => {
+    // Override content prop with assets/base-content-test-pdf.txt
+    await page.route(/\**\/documents\/\**/, async (route) => {
+      const request = route.request();
+      if (
+        request.method().includes('GET') &&
+        !request.url().includes('page=') &&
+        !request.url().includes('versions') &&
+        !request.url().includes('accesses') &&
+        !request.url().includes('invitations')
+      ) {
+        const response = await route.fetch();
+        const json = await response.json();
+        json.content = fs.readFileSync(
+          path.join(__dirname, 'assets/base-content-test-pdf.txt'),
+          'utf-8',
+        );
+        void route.fulfill({
+          response,
+          body: JSON.stringify(json),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-export-regressions',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    // Add Image SVG
+    await page.keyboard.press('Enter');
+    const { suggestionMenu } = await openSuggestionMenu({ page });
+    await suggestionMenu.getByText('Resizable image with caption').click();
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media[src$=".svg"]')
+      .first();
+    await expect(image).toBeVisible();
+    await page.keyboard.press('Enter');
+
+    // Add Image PNG
+    await openSuggestionMenu({ page });
+    await suggestionMenu.getByText('Resizable image with caption').click();
+    const fileChooserPNGPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+    const fileChooserPNG = await fileChooserPNGPromise;
+    await fileChooserPNG.setFiles(
+      path.join(__dirname, 'assets/logo-suite-numerique.png'),
+    );
+    const imagePng = page
+      .locator('.--docs--editor-container img.bn-visual-media[src$=".png"]')
+      .first();
+    await expect(imagePng).toBeVisible();
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    await expect(
+      page.getByTestId('doc-open-modal-download-button'),
+    ).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.pdf`);
+    });
+
+    await page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
+
+    // If we need to update the PDF regression fixture, uncomment the line below
+    //await savePDFToAssetFolder(download);
+
+    // Assert the generated PDF matches "assets/doc-export-regressions.pdf"
+    await comparePDFWithAssetFolder(download);
+  });
 });
+
+export const savePDFToAssetFolder = async (download: Download) => {
+  const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+  const pdfPath = path.join(__dirname, 'assets', `doc-export-regressions.pdf`);
+  fs.writeFileSync(pdfPath, pdfBuffer);
+};
+
+export const comparePDFWithAssetFolder = async (download: Download) => {
+  const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+
+  // Load reference PDF for comparison
+  const referencePdfPath = path.join(
+    __dirname,
+    'assets',
+    'doc-export-regressions.pdf',
+  );
+
+  const referencePdfBuffer = fs.readFileSync(referencePdfPath);
+
+  // Parse both PDFs
+  const generatedPdf = new PDFParse({ data: pdfBuffer });
+  const referencePdf = new PDFParse({ data: referencePdfBuffer });
+
+  const [generatedInfo, referenceInfo] = await Promise.all([
+    generatedPdf.getInfo(),
+    referencePdf.getInfo(),
+  ]);
+
+  const [generatedScreenshot, referenceScreenshot] = await Promise.all([
+    generatedPdf.getScreenshot(),
+    referencePdf.getScreenshot(),
+  ]);
+  generatedScreenshot.pages[0].data;
+
+  const [generatedText, referenceText] = await Promise.all([
+    generatedPdf.getText(),
+    referencePdf.getText(),
+  ]);
+
+  // Compare page count
+  expect(generatedInfo.total).toBe(referenceInfo.total);
+
+  // Compare text content
+  expect(generatedText.text).toBe(referenceText.text);
+
+  // Compare screenshots page by page
+  for (let i = 0; i < generatedScreenshot.pages.length; i++) {
+    const genPage = generatedScreenshot.pages[i];
+    const refPage = referenceScreenshot.pages[i];
+
+    expect(genPage.width).toBe(refPage.width);
+    expect(genPage.height).toBe(refPage.height);
+    expect(genPage.data).toStrictEqual(refPage.data);
+  }
+};
