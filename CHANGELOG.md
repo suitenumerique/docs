@@ -31,13 +31,13 @@ and this project adheres to
 - 🌐(backend) internationalize demo #1644
 - ♿(frontend) improve accessibility:
   - ♿️Improve keyboard accessibility for the document tree #1681
+  - ♿(frontend) make html export accessible to screen reader users #1743
 
 ### Fixed
 
 - 🐛(frontend) paste content with comments from another document #1732
 - 🐛(frontend) Select text + Go back one page crash the app #1733
 - 🐛(frontend) fix versioning conflict #1742
-
 
 ## [4.1.0] - 2025-12-09
 
