@@ -227,7 +227,14 @@ backend:
     backoffLimit: 2
 
   ## @param backend.securityContext Configure backend Pod security context
-  securityContext: null
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param backend.envVars Configure backend container environment variables
   ## @extra backend.envVars.BY_VALUE Example environment variable by setting value directly
@@ -431,7 +438,14 @@ frontend:
   sidecars: []
 
   ## @param frontend.securityContext Configure frontend Pod security context
-  securityContext: null
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param frontend.envVars Configure frontend container environment variables
   ## @extra frontend.envVars.BY_VALUE Example environment variable by setting value directly
@@ -603,7 +617,14 @@ yProvider:
   sidecars: []
 
   ## @param yProvider.securityContext Configure yProvider Pod security context
-  securityContext: null
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param yProvider.envVars Configure yProvider container environment variables
   ## @extra yProvider.envVars.BY_VALUE Example environment variable by setting value directly
