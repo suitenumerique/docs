@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 🔒(helm) Set default security context
+
 ## [4.2.0] - 2025-12-17
 
 ### Added
