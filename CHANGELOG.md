@@ -11,6 +11,10 @@ and this project adheres to
 - ✨(backend) add documents/all endpoint with descendants #1553
 - ✅(export) add PDF regression tests #1762
 
+### Fixed 
+
+- ✅(backend) reduce flakiness on backend test #1769
+
 ## [4.3.0] - 2026-01-05
 
 ### Added

@@ -311,7 +311,7 @@ def test_api_users_list_query_short_queries():
     """
     Queries shorter than 5 characters should return an empty result set.
     """
-    user = factories.UserFactory(email="paul@example.com")
+    user = factories.UserFactory(email="paul@example.com", full_name="Paul")
     client = APIClient()
     client.force_login(user)
 
