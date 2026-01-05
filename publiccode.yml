@@ -1,16 +1,18 @@
-publiccodeYmlVersion: "2.4.0"
+publiccodeYmlVersion: "0.5.0"
 name: Docs
 url: https://github.com/suitenumerique/docs
 landingURL: https://github.com/suitenumerique/docs
-creationDate: 2023-12-10
 logo: https://raw.githubusercontent.com/suitenumerique/docs/main/docs/assets/docs-logo.png
 usedBy:
-  - Direction interministériel du numérique (DINUM)
+  - Direction interministérielle du numérique (DINUM)
 fundedBy:
-  - name: Direction interministériel du numérique (DINUM)
-    url: https://www.numerique.gouv.fr
+  - name: Direction interministérielle du numérique (DINUM)
+    uri: https://www.numerique.gouv.fr
 roadmap: "https://github.com/orgs/suitenumerique/projects/2/views/1"
 softwareType: "standalone/other"
+platforms:
+  - "web"
+developmentStatus: "stable"
 description:
   en:
     shortDescription: "The open source document editor where your notes can become knowledge through live collaboration"
@@ -18,10 +20,18 @@ description:
     shortDescription: "L'éditeur de documents open source où vos notes peuvent devenir des connaissances grâce à la collaboration en direct."
 legal:
   license: MIT
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - de
+    - en
+    - es
+    - fr
+    - nl
 maintenance:
   type: internal
   contacts:
     - name: "Virgile Deville"
       email: "virgile.deville@numerique.gouv.fr"
-    - name: "samuel.paccoud"
+    - name: "Samuel Paccoud"
       email: "samuel.paccoud@numerique.gouv.fr"
