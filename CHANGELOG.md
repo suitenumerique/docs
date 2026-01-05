@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-01-05
+
 ### Added
 
 - ✨(helm) redirecting system #1697
@@ -952,7 +954,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.2.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.3.0...main
+[v4.3.0]: https://github.com/suitenumerique/docs/releases/v4.3.0
 [v4.2.0]: https://github.com/suitenumerique/docs/releases/v4.2.0
 [v4.1.0]: https://github.com/suitenumerique/docs/releases/v4.1.0
 [v4.0.0]: https://github.com/suitenumerique/docs/releases/v4.0.0
