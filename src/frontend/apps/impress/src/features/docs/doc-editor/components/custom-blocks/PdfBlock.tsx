@@ -59,11 +59,7 @@ interface PdfBlockComponentProps {
   >;
 }
 
-const PdfBlockComponent = ({
-  editor,
-  block,
-  contentRef,
-}: PdfBlockComponentProps) => {
+const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   const pdfUrl = block.props.url;
   const { i18n, t } = useTranslation();
   const lang = i18n.resolvedLanguage;
@@ -114,27 +110,34 @@ const PdfBlockComponent = ({
     void validatePDFContent();
   }, [pdfUrl]);
 
+  if (isPDFContentLoading) {
+    return <Loading />;
+  }
+
+  if (!isPDFContentLoading && isPDFContent !== null && !isPDFContent) {
+    return (
+      <Box
+        $align="center"
+        $justify="center"
+        $color="#666"
+        $background="#f5f5f5"
+        $border="1px solid #ddd"
+        $height="300px"
+        $css={css`
+          text-align: center;
+        `}
+        $width="100%"
+        contentEditable={false}
+        onClick={() => editor.setTextCursorPosition(block)}
+      >
+        {t('Invalid or missing PDF file.')}
+      </Box>
+    );
+  }
+
   return (
-    <Box ref={contentRef} className="bn-file-block-content-wrapper">
+    <>
       <PDFBlockStyle />
-      {isPDFContentLoading && <Loading />}
-      {!isPDFContentLoading && isPDFContent !== null && !isPDFContent && (
-        <Box
-          $align="center"
-          $justify="center"
-          $color="#666"
-          $background="#f5f5f5"
-          $border="1px solid #ddd"
-          $height="300px"
-          $css={css`
-            text-align: center;
-          `}
-          contentEditable={false}
-          onClick={() => editor.setTextCursorPosition(block)}
-        >
-          {t('Invalid or missing PDF file.')}
-        </Box>
-      )}
       <ResizableFileBlockWrapper
         buttonIcon={
           <Icon iconName="upload" $size="24px" $css="line-height: normal;" />
@@ -158,7 +161,7 @@ const PdfBlockComponent = ({
           />
         )}
       </ResizableFileBlockWrapper>
-    </Box>
+    </>
   );
 };
 
