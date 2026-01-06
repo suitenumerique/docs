@@ -394,6 +394,8 @@ test.describe('Doc Comments mobile', () => {
     await thread.getByRole('paragraph').first().fill('This is a comment');
     await thread.locator('[data-test="save"]').click();
     await expect(thread.getByText('This is a comment').first()).toBeHidden();
+    // Check toolbar is closed after adding a comment
+    await expect(page.getByRole('button', { name: 'Paragraph' })).toBeHidden();
 
     await editor.first().click();
     await editor.getByText('Hello').click();

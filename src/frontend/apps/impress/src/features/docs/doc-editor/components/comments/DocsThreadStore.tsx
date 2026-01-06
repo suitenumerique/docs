@@ -212,6 +212,17 @@ export class DocsThreadStore extends ThreadStore {
       .setMark?.('comment', { orphan: false, threadId })
       .run?.();
 
+    /**
+     * We have some issues with mobiles and the formatting toolbar reopening
+     * after adding a comment, so we restore the cursor position here.
+     * By restoring the cursor position at the head of the selection,
+     * it will automatically close the formatting toolbar.
+     */
+    const cursorPos = editor._tiptapEditor?.state.selection.head;
+    if (cursorPos !== undefined) {
+      editor._tiptapEditor?.commands.setTextSelection(cursorPos);
+    }
+
     return Promise.resolve();
   };
 
@@ -241,6 +252,7 @@ export class DocsThreadStore extends ThreadStore {
     this.upsertClientThreadData(threadData);
     this.notifySubscribers();
     this.ping(threadData.id);
+
     return threadData;
   };
 
