@@ -24,7 +24,7 @@ and this project adheres to
 
 - 🐛(frontend) fix tables deletion #1739
 - 🐛(frontend) fix children not display when first resize #1753
-
+- 📝(doc) fix publiccode.yml syntax #1770
 
 ## [4.2.0] - 2025-12-17
 
