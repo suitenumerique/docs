@@ -35,7 +35,7 @@ export const BlockNoteToolbar = () => {
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
   const { t } = useTranslation();
   const { data: conf } = useConfig();
-  const { isMobile, isTablet } = useResponsiveStore();
+  const { isTablet, isInputTouch } = useResponsiveStore();
 
   const toolbarItems = useMemo(() => {
     let toolbarItems = getFormattingToolbarItems([
@@ -96,7 +96,7 @@ export const BlockNoteToolbar = () => {
 
   return (
     <>
-      {isMobile || isTablet ? (
+      {isInputTouch && isTablet ? (
         <MobileFormattingToolbarController
           formattingToolbar={formattingToolbar}
         />
@@ -133,7 +133,6 @@ const MobileFormattingToolbarController = ({
 
   return (
     <Box
-      $margin="auto"
       $position="absolute"
       $css={`
         & > div {
