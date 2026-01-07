@@ -2,8 +2,10 @@
 Unit tests for the UserReconciliationCsvImport model
 """
 
+import uuid
 from pathlib import Path
 
+from django.core import mail
 from django.core.files.base import ContentFile
 
 import pytest
@@ -86,11 +88,22 @@ def test_incorrect_csv_format_handling():
     user_reconciliation_csv_import_job(csv_import.id)
     csv_import.refresh_from_db()
 
-    assert "Enter a valid email address." in csv_import.logs
+    assert "This field cannot be blank" in csv_import.logs
     assert csv_import.status == "error"
 
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 1
 
-def test_incorrect_csv_data_handling():
+    # pylint: disable-next=no-member
+    email = mail.outbox[0]
+
+    assert email.to == ["user.test40@example.com", ""]
+    email_content = " ".join(email.body.split())
+
+    assert "Reconciliation of your Docs accounts not completed" in email_content
+
+
+def test_incorrect_csv_data_handling_grist_form():
     """Test that a CSV file with incorrect data is handled gracefully."""
     example_csv_path = (
         Path(__file__).parent / "data/example_reconciliation_grist_form_error.csv"
@@ -211,11 +224,63 @@ def test_user_reconciliation_is_created(user_reconciliation_users_and_docs):
         inactive_email=user_2.email,
         active_email_checked=False,
         inactive_email_checked=True,
+        active_confirmation_id=uuid.uuid4(),
+        inactive_confirmation_id=uuid.uuid4(),
         status="pending",
     )
 
     rec.save()
     assert rec.status == "ready"
+
+
+def test_user_reconciliation_verification_emails_are_sent(
+    user_reconciliation_users_and_docs,
+):
+    """Test that both UserReconciliation verification emails are sent."""
+    user_1, user_2, _userdocs_u1, _userdocs_u2 = user_reconciliation_users_and_docs
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_email_checked=False,
+        inactive_email_checked=False,
+        active_confirmation_id=uuid.uuid4(),
+        inactive_confirmation_id=uuid.uuid4(),
+        status="pending",
+    )
+
+    rec.save()
+
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 2
+
+    # pylint: disable-next=no-member
+    email_1 = mail.outbox[0]
+
+    assert email_1.to == [user_1.email]
+    email_1_content = " ".join(email_1.body.split())
+
+    assert (
+        "You have requested a reconciliation of your user accounts on Docs."
+        in email_1_content
+    )
+    active_confirmation_id = rec.active_confirmation_id
+    inactive_confirmation_id = rec.inactive_confirmation_id
+    assert f"user_reconciliations/active/{active_confirmation_id}/" in email_1_content
+
+    # pylint: disable-next=no-member
+    email_2 = mail.outbox[1]
+
+    assert email_2.to == [user_2.email]
+    email_2_content = " ".join(email_2.body.split())
+
+    assert (
+        "You have requested a reconciliation of your user accounts on Docs."
+        in email_2_content
+    )
+
+    assert (
+        f"user_reconciliations/inactive/{inactive_confirmation_id}/" in email_2_content
+    )
 
 
 def test_user_reconciliation_only_starts_if_checks_are_made(
@@ -318,3 +383,14 @@ def test_process_documentaccess_reconciliation(
 
     assert user_1.is_active is True
     assert user_2.is_active is False
+
+    # pylint: disable-next=no-member
+    assert len(mail.outbox) == 1
+
+    # pylint: disable-next=no-member
+    email = mail.outbox[0]
+
+    assert email.to == [user_1.email]
+    email_content = " ".join(email.body.split())
+
+    assert "Your accounts have been merged" in email_content

@@ -251,6 +251,37 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
         valid_invitations.delete()
 
+    def send_email(self, subject, context=None, language=None):
+        """Generate and send email to the user from a template."""
+        emails = [self.email]
+        context = context or {}
+        domain = Site.objects.get_current().domain
+        language = language or get_language()
+        context.update(
+            {
+                "brandname": settings.EMAIL_BRAND_NAME,
+                "domain": domain,
+                "logo_img": settings.EMAIL_LOGO_IMG,
+            }
+        )
+
+        with override(language):
+            msg_html = render_to_string("mail/html/user_template.html", context)
+            msg_plain = render_to_string("mail/text/user_template.txt", context)
+            subject = str(subject)  # Force translation
+
+            try:
+                send_mail(
+                    subject.capitalize(),
+                    msg_plain,
+                    settings.EMAIL_FROM,
+                    emails,
+                    html_message=msg_html,
+                    fail_silently=False,
+                )
+            except smtplib.SMTPException as exception:
+                logger.error("invitation to %s was not sent: %s", emails, exception)
+
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Email this user."""
         if not self.email:
@@ -287,6 +318,12 @@ class UserReconciliation(BaseModel):
         blank=True,
         related_name="inactive_user",
     )
+    active_confirmation_id = models.UUIDField(
+        default=uuid.uuid4, unique=True, editable=False, null=True
+    )
+    inactive_confirmation_id = models.UUIDField(
+        default=uuid.uuid4, unique=True, editable=False, null=True
+    )
 
     status = models.CharField(
         max_length=20,
@@ -303,6 +340,7 @@ class UserReconciliation(BaseModel):
     class Meta:
         verbose_name = _("user reconciliation")
         verbose_name_plural = _("user reconciliations")
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"Reconciliation from {self.inactive_email} to {self.active_email}"
@@ -316,16 +354,14 @@ class UserReconciliation(BaseModel):
             self.inactive_user = User.objects.filter(email=self.inactive_email).first()
 
             if self.active_user and self.inactive_user:
-                email_subject = _("Account reconciliation request")
-                email_content = _(
-                    """
-                    Please click here.
-                    """
-                )
                 if not self.active_email_checked:
-                    self.active_user.email_user(email_subject, email_content)
+                    self.send_reconciliation_confirm_email(
+                        self.active_user, "active", self.active_confirmation_id
+                    )
                 if not self.inactive_email_checked:
-                    self.inactive_user.email_user(email_subject, email_content)
+                    self.send_reconciliation_confirm_email(
+                        self.inactive_user, "inactive", self.inactive_confirmation_id
+                    )
                 self.status = "ready"
             else:
                 self.status = "error"
@@ -366,9 +402,54 @@ class UserReconciliation(BaseModel):
         self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
             and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
         self.status = "done"
+        self.send_reconciliation_done_email()
+
         self.save()
 
         return updated_accesses, removed_accesses
+
+    def send_reconciliation_confirm_email(
+        self, user, user_type, confirmation_id, language=None
+    ):
+        """Method allowing to send confirmation email for reconciliation requests."""
+        language = language or get_language()
+        domain = Site.objects.get_current().domain
+
+        with override(language):
+            subject = _("Confirm by clicking the link to start the reconciliation")
+            context = {
+                "title": subject,
+                "message_bold": _(
+                    "You have requested a reconciliation of your user accounts on Docs."
+                ),
+                "message": _(
+                    """To confirm that you are the one who initiated the request
+                    and that this email belongs to you:"""
+                ),
+                "link": f"{domain}/user_reconciliations/{user_type}/{confirmation_id}/",
+                "link_label": str(_("Click here")),
+                "button_label": str(_("Confirm")),
+            }
+
+        user.send_email(subject, context, language)
+
+    def send_reconciliation_done_email(self, language=None):
+        """Method allowing to send done email for reconciliation requests."""
+        language = language or get_language()
+        domain = Site.objects.get_current().domain
+
+        with override(language):
+            subject = _("Your accounts have been merged")
+            context = {
+                "title": subject,
+                "message_bold": _("Your reconciliation request has been processed."),
+                "message": _("New documents are likely associated with your account:"),
+                "link": f"{domain}/",
+                "link_label": str(_("Click here to see")),
+                "button_label": str(_("See my documents")),
+            }
+
+        self.active_user.send_email(subject, context, language)
 
 
 class UserReconciliationCsvImport(BaseModel):
@@ -394,6 +475,66 @@ class UserReconciliationCsvImport(BaseModel):
 
     def __str__(self):
         return f"User reconciliation CSV import {self.id}"
+
+    def send_email(self, subject, emails, context=None, language=None):
+        """Generate and send email to the user from a template."""
+        context = context or {}
+        domain = Site.objects.get_current().domain
+        language = language or get_language()
+        context.update(
+            {
+                "brandname": settings.EMAIL_BRAND_NAME,
+                "domain": domain,
+                "logo_img": settings.EMAIL_LOGO_IMG,
+            }
+        )
+
+        with override(language):
+            msg_html = render_to_string("mail/html/user_template.html", context)
+            msg_plain = render_to_string("mail/text/user_template.txt", context)
+            subject = str(subject)  # Force translation
+
+            try:
+                send_mail(
+                    subject.capitalize(),
+                    msg_plain,
+                    settings.EMAIL_FROM,
+                    emails,
+                    html_message=msg_html,
+                    fail_silently=False,
+                )
+            except smtplib.SMTPException as exception:
+                logger.error("invitation to %s was not sent: %s", emails, exception)
+
+    def send_reconciliation_error_email(self, email_1, email_2, language=None):
+        """Method allowing to send email for reconciliation requests with errors."""
+        language = language or get_language()
+        domain = Site.objects.get_current().domain
+
+        emails = [email_1, email_2]
+
+        with override(language):
+            subject = _("Reconciliation of your Docs accounts not completed")
+            context = {
+                "title": subject,
+                "message_bold": _("Your request for reconciliation was unsuccessful."),
+                "message": _(
+                    """Reconciliation failed for the following email addresses:
+
+                            - {email1}
+                            - {email2}
+
+                            Please check for typos.
+
+                            You can submit another request with the valid email addresses.
+                             """
+                ).format(email1=email_1, email2=email_2),
+                "link": f"{domain}/",
+                "link_label": str(_("Click here")),
+                "button_label": str(_("Make a new request")),
+            }
+
+        self.send_email(subject, emails, context, language)
 
 
 class BaseAccess(BaseModel):

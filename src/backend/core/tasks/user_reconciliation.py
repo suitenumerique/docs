@@ -2,6 +2,7 @@
 
 import csv
 import traceback
+import uuid
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -42,21 +43,37 @@ def user_reconciliation_csv_import_job(job_id):
                     )
 
                     active_email = row["active_email"]
-                    validate_email(active_email)
                     inactive_emails = row["inactive_email"].split("|")
+                    try:
+                        validate_email(active_email)
+                    except ValidationError as e:
+                        job.send_reconciliation_error_email(
+                            active_email, inactive_emails[0]
+                        )
+                        job.status = "error"
+                        job.logs = f"{e!s}\n{traceback.format_exc()}"
 
                     for inactive_email in inactive_emails:
-                        validate_email(inactive_email)
+                        try:
+                            validate_email(inactive_email)
+                        except ValidationError as e:
+                            job.send_reconciliation_error_email(
+                                active_email, inactive_email
+                            )
+                            job.status = "error"
+                            job.logs = f"{e!s}\n{traceback.format_exc()}"
                         if inactive_email == active_email:
                             raise ValueError(
                                 "Active and inactive emails cannot be the same."
                             )
 
                         rec_entry = UserReconciliation.objects.create(
-                            active_email=row["active_email"],
+                            active_email=active_email,
                             inactive_email=inactive_email,
                             active_email_checked=active_email_checked,
                             inactive_email_checked=inactive_email_checked,
+                            active_confirmation_id=uuid.uuid4(),
+                            inactive_confirmation_id=uuid.uuid4(),
                             status="pending",
                         )
                         rec_entry.save()
