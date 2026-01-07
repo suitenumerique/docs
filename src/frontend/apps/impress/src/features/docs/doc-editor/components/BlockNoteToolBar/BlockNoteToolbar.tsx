@@ -1,15 +1,26 @@
+import { FormattingToolbarExtension } from '@blocknote/core/extensions';
 import {
+  ExperimentalMobileFormattingToolbarController,
   FormattingToolbar,
   FormattingToolbarController,
   blockTypeSelectItems,
   getFormattingToolbarItems,
+  useBlockNoteEditor,
   useDictionary,
+  useExtensionState,
 } from '@blocknote/react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Box } from '@/components';
 import { useConfig } from '@/core/config/api';
+import { useResponsiveStore } from '@/stores';
 
+import {
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+} from '../../types';
 import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
@@ -24,6 +35,7 @@ export const BlockNoteToolbar = () => {
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
   const { t } = useTranslation();
   const { data: conf } = useConfig();
+  const { isMobile, isTablet } = useResponsiveStore();
 
   const toolbarItems = useMemo(() => {
     let toolbarItems = getFormattingToolbarItems([
@@ -84,7 +96,13 @@ export const BlockNoteToolbar = () => {
 
   return (
     <>
-      <FormattingToolbarController formattingToolbar={formattingToolbar} />
+      {isMobile || isTablet ? (
+        <MobileFormattingToolbarController
+          formattingToolbar={formattingToolbar}
+        />
+      ) : (
+        <FormattingToolbarController formattingToolbar={formattingToolbar} />
+      )}
       {confirmOpen && (
         <ModalConfirmDownloadUnsafe
           onClose={() => setIsConfirmOpen(false)}
@@ -92,5 +110,41 @@ export const BlockNoteToolbar = () => {
         />
       )}
     </>
+  );
+};
+
+const MobileFormattingToolbarController = ({
+  formattingToolbar,
+}: {
+  formattingToolbar: () => React.ReactNode;
+}) => {
+  const editor = useBlockNoteEditor<
+    DocsBlockSchema,
+    DocsInlineContentSchema,
+    DocsStyleSchema
+  >();
+  const show = useExtensionState(FormattingToolbarExtension, {
+    editor,
+  });
+
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <Box
+      $margin="auto"
+      $position="absolute"
+      $css={`
+        & > div {
+        left: 50%;
+        transform: translate(0px, 0px) scale(1) translateX(-50%)!important;
+      }
+    `}
+    >
+      <ExperimentalMobileFormattingToolbarController
+        formattingToolbar={formattingToolbar}
+      />
+    </Box>
   );
 };

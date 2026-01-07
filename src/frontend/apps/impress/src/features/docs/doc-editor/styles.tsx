@@ -180,6 +180,9 @@ export const cssEditor = css`
     & .bn-editor {
       padding-right: 36px;
     }
+    & .bn-toolbar {
+      max-width: 100vw;
+    }
   }
 
   @media screen and (width <= 560px) {
