@@ -1,4 +1,4 @@
-import { Tooltip, useModal } from '@openfun/cunningham-react';
+import { Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
 import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';

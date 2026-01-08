@@ -1,4 +1,4 @@
-import { Button } from '@openfun/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
 import { useRouter } from 'next/router';
 import { PropsWithChildren, useCallback, useState } from 'react';

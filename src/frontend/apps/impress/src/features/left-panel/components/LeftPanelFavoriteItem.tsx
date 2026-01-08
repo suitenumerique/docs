@@ -1,4 +1,4 @@
-import { useModal } from '@openfun/cunningham-react';
+import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
 import { DateTime } from 'luxon';
 import { css } from 'styled-components';

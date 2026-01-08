@@ -1,7 +1,7 @@
 import { DndContext, DragOverlay, Modifier } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
+import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
-import { useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';

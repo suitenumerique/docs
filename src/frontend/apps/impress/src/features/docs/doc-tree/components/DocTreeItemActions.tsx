@@ -1,10 +1,10 @@
+import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import {
   DropdownMenu,
   DropdownMenuOption,
   useArrowRoving,
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
-import { useModal } from '@openfun/cunningham-react';
 import { useRouter } from 'next/router';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';

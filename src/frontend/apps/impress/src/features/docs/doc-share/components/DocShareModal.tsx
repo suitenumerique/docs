@@ -1,4 +1,4 @@
-import { Modal, ModalSize } from '@openfun/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-import { Button } from '@openfun/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import * as Sentry from '@sentry/nextjs';
 import { NextPageContext } from 'next';
 import NextError from 'next/error';

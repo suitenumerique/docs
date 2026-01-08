@@ -1,4 +1,4 @@
-import { Loader } from '@openfun/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/cunningham-react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box } from '@/components';

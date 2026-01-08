@@ -1,4 +1,4 @@
-import { Loader } from '@openfun/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/cunningham-react';
 import { Command } from 'cmdk';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-import { CunninghamProvider } from '@openfun/cunningham-react';
+import { CunninghamProvider } from '@gouvfr-lasuite/cunningham-react';
 import {
   MutationCache,
   QueryClient,

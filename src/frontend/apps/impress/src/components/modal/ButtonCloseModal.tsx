@@ -1,4 +1,4 @@
-import { Button, type ButtonProps } from '@openfun/cunningham-react';
+import { Button, type ButtonProps } from '@gouvfr-lasuite/cunningham-react';
 import React from 'react';
 
 import { Icon } from '@/components';

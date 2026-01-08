@@ -4,7 +4,7 @@ import {
   ModalSize,
   VariantType,
   useToastProvider,
-} from '@openfun/cunningham-react';
+} from '@gouvfr-lasuite/cunningham-react';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
 

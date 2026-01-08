@@ -1,4 +1,7 @@
-import { VariantType, useToastProvider } from '@openfun/cunningham-react';
+import {
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/cunningham-react';
 import {
   UseMutationOptions,
   useMutation,

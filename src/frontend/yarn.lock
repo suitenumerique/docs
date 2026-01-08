@@ -2682,41 +2682,6 @@
   resolved "https://registry.yarnpkg.com/@nolyfill/is-core-module/-/is-core-module-1.0.39.tgz#3dc35ba0f1e66b403c00b39344f870298ebb1c8e"
   integrity sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==
 
-"@openfun/cunningham-react@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@openfun/cunningham-react/-/cunningham-react-4.0.0.tgz#5d273c72a2ced76cf060931b546238b7ee75c6ec"
-  integrity sha512-2JgIRDl2UE/PMcOrjjfxbhFRwEwF7JFAaPoN/Xjq+sOYHP6WasRxFRrkwhnuZ5ZU7lOpzaAFyPtkawoBF6GsEQ==
-  dependencies:
-    "@fontsource-variable/roboto-flex" "5.2.5"
-    "@fontsource/material-icons-outlined" "5.2.5"
-    "@internationalized/date" "3.8.0"
-    "@openfun/cunningham-tokens" "*"
-    "@react-aria/calendar" "3.8.0"
-    "@react-aria/datepicker" "3.14.2"
-    "@react-aria/i18n" "3.12.8"
-    "@react-stately/calendar" "3.8.0"
-    "@react-stately/datepicker" "3.14.0"
-    "@tanstack/react-table" "8.21.3"
-    "@types/react-modal" "3.16.3"
-    chromatic "11.28.2"
-    classnames "2.5.1"
-    downshift "9.0.9"
-    react-aria "3.39.0"
-    react-aria-components "1.8.0"
-    react-modal "3.16.3"
-    react-stately "3.37.0"
-
-"@openfun/cunningham-tokens@*":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@openfun/cunningham-tokens/-/cunningham-tokens-3.0.0.tgz#2346ebcb7d18a35cbbb1c4f4c501f238173a3c8c"
-  integrity sha512-YMLLL7CaQA1+kuSVxf3UgXNjdyeX6Dj2Kdlz/9+lX2ePm51rPxZsEGXWeUVafNLFH+T/zpsajiEzgJ9mBEJd5w==
-  dependencies:
-    chalk "4.1.2"
-    commander "13.1.0"
-    deepmerge "4.3.1"
-    figlet "1.8.1"
-    ts-node "10.9.2"
-
 "@opentelemetry/api-logs@0.208.0":
   version "0.208.0"
   resolved "https://registry.yarnpkg.com/@opentelemetry/api-logs/-/api-logs-0.208.0.tgz#56d3891010a1fa1cf600ba8899ed61b43ace511c"

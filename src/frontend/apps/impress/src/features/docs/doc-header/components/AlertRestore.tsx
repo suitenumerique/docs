@@ -1,9 +1,9 @@
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import {
   Button,
   VariantType,
   useToastProvider,
-} from '@openfun/cunningham-react';
+} from '@gouvfr-lasuite/cunningham-react';
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Icon } from '@/components';

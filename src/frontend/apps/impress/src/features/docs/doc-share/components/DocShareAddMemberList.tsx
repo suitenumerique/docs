@@ -2,7 +2,7 @@ import {
   Button,
   VariantType,
   useToastProvider,
-} from '@openfun/cunningham-react';
+} from '@gouvfr-lasuite/cunningham-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

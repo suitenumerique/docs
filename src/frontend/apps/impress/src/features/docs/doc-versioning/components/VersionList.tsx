@@ -1,4 +1,4 @@
-import { Loader } from '@openfun/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/cunningham-react';
 import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 

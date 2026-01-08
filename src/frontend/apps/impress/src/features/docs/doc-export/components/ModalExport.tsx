@@ -9,7 +9,7 @@ import {
   Select,
   VariantType,
   useToastProvider,
-} from '@openfun/cunningham-react';
+} from '@gouvfr-lasuite/cunningham-react';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';

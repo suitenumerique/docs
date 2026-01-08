@@ -1,5 +1,5 @@
+import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
-import { Button, useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';

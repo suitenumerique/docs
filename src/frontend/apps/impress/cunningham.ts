@@ -1,5 +1,5 @@
+import { defaultTokens } from '@gouvfr-lasuite/cunningham-react';
 import { cunninghamConfig as tokens } from '@gouvfr-lasuite/ui-kit';
-import { defaultTokens } from '@openfun/cunningham-react';
 import merge from 'lodash/merge';
 
 // Uikit does not provide the full list of tokens.

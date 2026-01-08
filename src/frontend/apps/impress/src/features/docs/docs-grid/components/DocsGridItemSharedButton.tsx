@@ -1,4 +1,4 @@
-import { Button, Tooltip } from '@openfun/cunningham-react';
+import { Button, Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
