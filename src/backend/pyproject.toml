@@ -48,6 +48,7 @@ dependencies = [
     "factory_boy==3.3.3",
     "gunicorn==23.0.0",
     "jsonschema==4.25.1",
+    "langfuse==3.11.2",
     "lxml==6.0.2",
     "markdown==3.10",
     "mozilla-django-oidc==5.0.2",

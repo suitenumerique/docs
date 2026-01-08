@@ -699,6 +699,16 @@ class Base(Configuration):
         "day": 200,
     }
 
+    LANGFUSE_SECRET_KEY = SecretFileValue(
+        None, environ_name="LANGFUSE_SECRET_KEY", environ_prefix=None
+    )
+    LANGFUSE_PUBLIC_KEY = values.Value(
+        None, environ_name="LANGFUSE_PUBLIC_KEY", environ_prefix=None
+    )
+    LANGFUSE_BASE_URL = values.Value(
+        None, environ_name="LANGFUSE_BASE_URL", environ_prefix=None
+    )
+
     # Y provider microservice
     Y_PROVIDER_API_KEY = SecretFileValue(
         environ_name="Y_PROVIDER_API_KEY",
