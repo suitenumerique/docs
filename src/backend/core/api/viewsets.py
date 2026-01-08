@@ -49,7 +49,6 @@ from core.services.converter_services import (
     Converter,
     ServiceUnavailableError as YProviderServiceUnavailableError,
     ValidationError as YProviderValidationError,
-    YdocConverter,
 )
 from core.services.search_indexers import (
     get_document_indexer,
