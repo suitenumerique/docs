@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add documents/all endpoint with descendants #1553
+
 ## [4.3.0] - 2026-01-05
 
 ### Added
