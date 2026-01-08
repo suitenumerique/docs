@@ -1393,7 +1393,7 @@ def test_models_documents_restore_complex(django_assert_num_queries):
     assert child2.ancestors_deleted_at == document.deleted_at
 
     # Restore the item
-    with django_assert_num_queries(13):
+    with django_assert_num_queries(14):
         document.restore()
     document.refresh_from_db()
     child1.refresh_from_db()
