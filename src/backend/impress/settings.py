@@ -709,6 +709,12 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # DocSpec API microservice
+    DOCSPEC_API_URL = values.Value(
+        environ_name="DOCSPEC_API_URL",
+        environ_prefix=None
+    )
+
     # Conversion endpoint
     CONVERSION_API_ENDPOINT = values.Value(
         default="convert",
