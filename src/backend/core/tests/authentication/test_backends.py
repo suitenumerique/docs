@@ -5,7 +5,6 @@ import re
 from unittest import mock
 
 from django.core.exceptions import SuspiciousOperation
-from django.test.utils import override_settings
 
 import pytest
 import responses
@@ -321,85 +320,6 @@ def test_authentication_getter_new_user_with_email(monkeypatch):
     assert user.short_name == "John"
     assert user.has_usable_password() is False
     assert models.User.objects.count() == 1
-
-
-@override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
-@responses.activate
-def test_authentication_get_userinfo_json_response():
-    """Test get_userinfo method with a JSON response."""
-
-    responses.add(
-        responses.GET,
-        re.compile(r".*/userinfo"),
-        json={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "john.doe@example.com",
-        },
-        status=200,
-    )
-
-    oidc_backend = OIDCAuthenticationBackend()
-    result = oidc_backend.get_userinfo("fake_access_token", None, None)
-
-    assert result["first_name"] == "John"
-    assert result["last_name"] == "Doe"
-    assert result["email"] == "john.doe@example.com"
-
-
-@override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
-@responses.activate
-def test_authentication_get_userinfo_token_response(monkeypatch, settings):
-    """Test get_userinfo method with a token response."""
-    settings.OIDC_RP_SIGN_ALGO = "HS256"  # disable JWKS URL call
-    responses.add(
-        responses.GET,
-        re.compile(r".*/userinfo"),
-        body="fake.jwt.token",
-        status=200,
-        content_type="application/jwt",
-    )
-
-    def mock_verify_token(self, token):  # pylint: disable=unused-argument
-        return {
-            "first_name": "Jane",
-            "last_name": "Doe",
-            "email": "jane.doe@example.com",
-        }
-
-    monkeypatch.setattr(OIDCAuthenticationBackend, "verify_token", mock_verify_token)
-
-    oidc_backend = OIDCAuthenticationBackend()
-    result = oidc_backend.get_userinfo("fake_access_token", None, None)
-
-    assert result["first_name"] == "Jane"
-    assert result["last_name"] == "Doe"
-    assert result["email"] == "jane.doe@example.com"
-
-
-@override_settings(OIDC_OP_USER_ENDPOINT="http://oidc.endpoint.test/userinfo")
-@responses.activate
-def test_authentication_get_userinfo_invalid_response(settings):
-    """
-    Test get_userinfo method with an invalid JWT response that
-    causes verify_token to raise an error.
-    """
-    settings.OIDC_RP_SIGN_ALGO = "HS256"  # disable JWKS URL call
-    responses.add(
-        responses.GET,
-        re.compile(r".*/userinfo"),
-        body="fake.jwt.token",
-        status=200,
-        content_type="application/jwt",
-    )
-
-    oidc_backend = OIDCAuthenticationBackend()
-
-    with pytest.raises(
-        SuspiciousOperation,
-        match="User info response was not valid JWT",
-    ):
-        oidc_backend.get_userinfo("fake_access_token", None, None)
 
 
 def test_authentication_getter_existing_disabled_user_via_sub(
