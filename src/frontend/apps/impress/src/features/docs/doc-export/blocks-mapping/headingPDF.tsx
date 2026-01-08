@@ -1,3 +1,7 @@
+/**
+ * Derivated from Blockquote PDF mapping
+ * @see: https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/src/pdf/defaultSchema/blocks.tsx
+ */
 import { Text } from '@react-pdf/renderer';
 
 import { DocsExporterPDF } from '../types';
@@ -30,6 +34,15 @@ export const blockMappingHeadingPDF: DocsExporterPDF['mappings']['blockMapping']
     const fontSizeEM =
       block.props.level === 1 ? 2 : block.props.level === 2 ? 1.5 : 1.17;
 
+    const levelFontSizeEM = {
+      1: 2,
+      2: 1.5,
+      3: 1.17,
+      4: 1,
+      5: 0.83,
+      6: 0.67,
+    }[block.props.level as 1 | 2 | 3 | 4 | 5 | 6];
+
     // Extract plain text for bookmark title
     const bookmarkTitle =
       extractTextFromBlockContent(block.content) || 'Untitled';
@@ -42,7 +55,7 @@ export const blockMappingHeadingPDF: DocsExporterPDF['mappings']['blockMapping']
           title: bookmarkTitle,
         }}
         style={{
-          fontSize: fontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
+          fontSize: levelFontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
           fontWeight: 700,
           marginTop: `${fontSizeEM * MERGE_RATIO}px`,
           marginBottom: `${fontSizeEM * MERGE_RATIO}px`,

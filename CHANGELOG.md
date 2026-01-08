@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨ Import of documents #7765
 - ✨(backend) add documents/all endpoint with descendants #1553
+- ✅(export) add PDF regression tests #1762
 
 ## [4.3.0] - 2026-01-05
 
