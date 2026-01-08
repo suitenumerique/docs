@@ -31,18 +31,18 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/extensions": "3.13.0",
+    "@tiptap/extensions": "3.14.0",
     "@types/node": "24.10.4",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "docx": "9.5.0",
     "eslint": "9.39.2",
-    "prosemirror-view": "1.41.3",
+    "prosemirror-view": "1.41.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "typescript": "5.9.3",
     "wrap-ansi": "9.0.2",
-    "yjs": "13.6.27"
+    "yjs": "13.6.28"
   },
   "packageManager": "yarn@1.22.22"
 }

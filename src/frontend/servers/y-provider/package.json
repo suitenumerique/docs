@@ -18,15 +18,15 @@
   "dependencies": {
     "@blocknote/server-util": "0.45.0",
     "@hocuspocus/server": "3.4.3",
-    "@sentry/node": "10.30.0",
-    "@sentry/profiling-node": "10.30.0",
+    "@sentry/node": "10.32.1",
+    "@sentry/profiling-node": "10.32.1",
     "@tiptap/extensions": "*",
     "axios": "1.13.2",
     "cors": "2.8.5",
     "express": "5.2.1",
     "express-ws": "5.0.2",
     "uuid": "13.0.0",
-    "y-protocols": "1.0.6",
+    "y-protocols": "1.0.7",
     "yjs": "*"
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "ts-node": "10.9.2",
     "tsc-alias": "1.8.16",
     "typescript": "*",
-    "vitest": "4.0.15",
+    "vitest": "4.0.16",
     "vitest-mock-extended": "3.1.0",
     "ws": "8.18.3"
   },
