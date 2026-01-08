@@ -54,9 +54,6 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
-from core.services.converter_services import (
-    YdocConverter,
-)
 from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,

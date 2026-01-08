@@ -1057,6 +1057,9 @@ class Production(Base):
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
 
+    # Conversion API: Always verify SSL in production
+    CONVERSION_API_SECURE = True
+
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
