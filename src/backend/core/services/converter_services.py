@@ -1,13 +1,14 @@
 """Y-Provider API services."""
 
+import typing
 from base64 import b64encode
 
 from django.conf import settings
 
 import requests
-import typing
 
 from core.services import mime_types
+
 
 class ConversionError(Exception):
     """Base exception for conversion-related errors."""
@@ -22,10 +23,15 @@ class ServiceUnavailableError(ConversionError):
 
 
 class ConverterProtocol(typing.Protocol):
-    def convert(self, text, content_type, accept): ...
+    """Protocol for converter classes."""
+
+    def convert(self, text, content_type, accept):
+        """Convert content from one format to another."""
 
 
 class Converter:
+    """Orchestrates conversion between different formats using specialized converters."""
+
     docspec: ConverterProtocol
     ydoc: ConverterProtocol
 
@@ -33,17 +39,17 @@ class Converter:
         self.docspec = DocSpecConverter()
         self.ydoc = YdocConverter()
 
-    def convert(self, input, content_type, accept):
+    def convert(self, data, content_type, accept):
         """Convert input into other formats using external microservices."""
-        
+
         if content_type == mime_types.DOCX and accept == mime_types.YJS:
             return self.convert(
-                self.docspec.convert(input, mime_types.DOCX, mime_types.BLOCKNOTE),
+                self.docspec.convert(data, mime_types.DOCX, mime_types.BLOCKNOTE),
                 mime_types.BLOCKNOTE,
-                mime_types.YJS
+                mime_types.YJS,
             )
-        
-        return self.ydoc.convert(input, content_type, accept)
+
+        return self.ydoc.convert(data, content_type, accept)
 
 
 class DocSpecConverter:
@@ -61,15 +67,17 @@ class DocSpecConverter:
         )
         response.raise_for_status()
         return response
-    
+
     def convert(self, data, content_type, accept):
         """Convert a Document to BlockNote."""
         if not data:
             raise ValidationError("Input data cannot be empty")
-        
+
         if content_type != mime_types.DOCX or accept != mime_types.BLOCKNOTE:
-            raise ValidationError(f"Conversion from {content_type} to {accept} is not supported.")
-        
+            raise ValidationError(
+                f"Conversion from {content_type} to {accept} is not supported."
+            )
+
         try:
             return self._request(settings.DOCSPEC_API_URL, data, content_type).content
         except requests.RequestException as err:
@@ -103,9 +111,7 @@ class YdocConverter:
         response.raise_for_status()
         return response
 
-    def convert(
-        self, text, content_type=mime_types.MARKDOWN, accept=mime_types.YJS
-    ):
+    def convert(self, text, content_type=mime_types.MARKDOWN, accept=mime_types.YJS):
         """Convert a Markdown text into our internal format using an external microservice."""
 
         if not text:

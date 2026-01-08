@@ -11,11 +11,11 @@ from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from core.services import mime_types
 import magic
 from rest_framework import serializers
 
 from core import choices, enums, models, utils, validators
+from core.services import mime_types
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
@@ -465,9 +465,7 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
 
         try:
             document_content = Converter().convert(
-                validated_data["content"],
-                mime_types.MARKDOWN,
-                mime_types.YJS
+                validated_data["content"], mime_types.MARKDOWN, mime_types.YJS
             )
         except ConversionError as err:
             raise serializers.ValidationError(
