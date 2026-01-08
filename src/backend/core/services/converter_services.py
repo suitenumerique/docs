@@ -25,7 +25,7 @@ class ServiceUnavailableError(ConversionError):
 class ConverterProtocol(typing.Protocol):
     """Protocol for converter classes."""
 
-    def convert(self, text, content_type, accept):
+    def convert(self, data, content_type, accept):
         """Convert content from one format to another."""
 
 
@@ -43,10 +43,11 @@ class Converter:
         """Convert input into other formats using external microservices."""
 
         if content_type == mime_types.DOCX and accept == mime_types.YJS:
-            return self.convert(
-                self.docspec.convert(data, mime_types.DOCX, mime_types.BLOCKNOTE),
-                mime_types.BLOCKNOTE,
-                mime_types.YJS,
+            blocknote_data = self.docspec.convert(
+                data, mime_types.DOCX, mime_types.BLOCKNOTE
+            )
+            return self.ydoc.convert(
+                blocknote_data, mime_types.BLOCKNOTE, mime_types.YJS
             )
 
         return self.ydoc.convert(data, content_type, accept)
@@ -111,16 +112,16 @@ class YdocConverter:
         response.raise_for_status()
         return response
 
-    def convert(self, text, content_type=mime_types.MARKDOWN, accept=mime_types.YJS):
+    def convert(self, data, content_type=mime_types.MARKDOWN, accept=mime_types.YJS):
         """Convert a Markdown text into our internal format using an external microservice."""
 
-        if not text:
-            raise ValidationError("Input text cannot be empty")
+        if not data:
+            raise ValidationError("Input data cannot be empty")
 
         try:
             response = self._request(
                 f"{settings.Y_PROVIDER_API_BASE_URL}{settings.CONVERSION_API_ENDPOINT}/",
-                text,
+                data,
                 content_type,
                 accept,
             )

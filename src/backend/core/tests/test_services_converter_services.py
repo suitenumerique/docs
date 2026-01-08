@@ -22,9 +22,9 @@ def test_auth_header(settings):
 
 
 def test_convert_empty_text():
-    """Should raise ValidationError when text is empty."""
+    """Should raise ValidationError when data is empty."""
     converter = YdocConverter()
-    with pytest.raises(ValidationError, match="Input text cannot be empty"):
+    with pytest.raises(ValidationError, match="Input data cannot be empty"):
         converter.convert("")
 
 
@@ -143,5 +143,5 @@ def test_convert_none_input():
     """Should raise ValidationError when input is None."""
     converter = YdocConverter()
 
-    with pytest.raises(ValidationError, match="Input text cannot be empty"):
+    with pytest.raises(ValidationError, match="Input data cannot be empty"):
         converter.convert(None)
