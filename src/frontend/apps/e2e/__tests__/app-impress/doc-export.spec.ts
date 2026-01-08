@@ -2,6 +2,7 @@ import path from 'path';
 
 import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
+import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
 
 import {
@@ -31,7 +32,7 @@ test.describe('Doc Export', () => {
 
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
-      page.getByText('Download your document in a .docx, .odt or .pdf format.'),
+      page.getByText(/Download your document in a \.docx, \.odt.*format\./i),
     ).toBeVisible();
     await expect(
       page.getByRole('combobox', { name: 'Template' }),
@@ -185,6 +186,89 @@ test.describe('Doc Export', () => {
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.odt`);
+  });
+
+  test('it exports the doc to html zip', async ({ page, browserName }) => {
+    const [randomDoc] = await createDoc(
+      page,
+      'doc-editor-html-zip',
+      browserName,
+      1,
+    );
+
+    await verifyDocName(page, randomDoc);
+
+    // Add some content and at least one image so that the ZIP contains media files.
+    await page.locator('.ProseMirror.bn-editor').click();
+    await page.locator('.ProseMirror.bn-editor').fill('Hello HTML ZIP');
+
+    await page.keyboard.press('Enter');
+    await page.locator('.bn-block-outer').last().fill('/');
+    await page.getByText('Resizable image with caption').click();
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Upload image').click();
+
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
+
+    const image = page
+      .locator('.--docs--editor-container img.bn-visual-media')
+      .first();
+
+    // Wait for the image to be attached and have a valid src (aria-hidden prevents toBeVisible on Chromium)
+    await expect(image).toBeAttached({ timeout: 10000 });
+    await expect(image).toHaveAttribute('src', /.*\.svg/);
+
+    // Give some time for the image to be fully processed
+    await page.waitForTimeout(1000);
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'HTML' }).click();
+
+    await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
+
+    const downloadPromise = page.waitForEvent('download', (download) => {
+      return download.suggestedFilename().includes(`${randomDoc}.zip`);
+    });
+
+    void page.getByTestId('doc-export-download-button').click();
+
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe(`${randomDoc}.zip`);
+
+    const zipBuffer = await cs.toBuffer(await download.createReadStream());
+    // Unzip and inspect contents
+    const zip = await JSZip.loadAsync(zipBuffer);
+
+    // Check that index.html exists
+    const indexHtml = zip.file('index.html');
+    expect(indexHtml).not.toBeNull();
+
+    // Read and verify HTML content
+    const htmlContent = await indexHtml!.async('string');
+    expect(htmlContent).toContain('Hello HTML ZIP');
+    expect(htmlContent).toContain('href="styles.css"');
+
+    // Check for media files (they are at the root of the ZIP, not in a media/ folder)
+    // Media files are named like "1-test.svg" or "media-1.png" by deriveMediaFilename
+    const allFiles = Object.keys(zip.files);
+    const mediaFiles = allFiles.filter(
+      (name) => name !== 'index.html' && !name.endsWith('/'),
+    );
+    expect(mediaFiles.length).toBeGreaterThan(0);
+
+    // Verify the SVG image is included
+    const svgFile = mediaFiles.find((name) => name.endsWith('.svg'));
+    expect(svgFile).toBeDefined();
+    const styleFile = mediaFiles.find((name) => name === 'styles.css');
+    expect(styleFile).toBeDefined();
   });
 
   /**
@@ -443,7 +527,7 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, docChild);
 
-    await page.locator('.bn-block-outer').last().fill('/');
+    const editor = await openSuggestionMenu({ page });
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
@@ -460,12 +544,11 @@ test.describe('Doc Export', () => {
     await searchContainer.getByText(randomDoc).click();
 
     // Search the interlinking link in the editor (not in the document tree)
-    const editor = page.locator('.ProseMirror.bn-editor');
-    const interlink = editor.getByRole('button', {
-      name: randomDoc,
-    });
+    const interlink = editor
+      .locator('.--docs--interlinking-link-inline-content')
+      .first();
 
-    await expect(interlink).toBeVisible();
+    await expect(interlink).toContainText(randomDoc);
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${docChild}.pdf`);
@@ -509,7 +592,7 @@ test.describe('Doc Export', () => {
 
     await verifyDocName(page, docChild);
 
-    await page.locator('.bn-block-outer').last().fill('/');
+    const editor = await openSuggestionMenu({ page });
     await page.getByText('Link a doc').first().click();
 
     const input = page.locator(
@@ -526,12 +609,11 @@ test.describe('Doc Export', () => {
     await searchContainer.getByText(randomDoc).click();
 
     // Search the interlinking link in the editor (not in the document tree)
-    const editor = page.locator('.ProseMirror.bn-editor');
-    const interlink = editor.getByRole('button', {
-      name: randomDoc,
-    });
+    const interlink = editor
+      .locator('.--docs--interlinking-link-inline-content')
+      .first();
 
-    await expect(interlink).toBeVisible();
+    await expect(interlink).toContainText(randomDoc);
 
     await page
       .getByRole('button', {

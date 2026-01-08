@@ -72,6 +72,11 @@ services:
       - env.d/development/postgresql.local
     ports:
       - "8071:8000"
+    networks:
+      default: {}
+      lasuite:
+        aliases:
+          - impress
     volumes:
       - ./src/backend:/app
       - ./data/static:/data/static
@@ -92,6 +97,9 @@ services:
     command: ["celery", "-A", "impress.celery_app", "worker", "-l", "DEBUG"]
     environment:
       - DJANGO_CONFIGURATION=Development
+    networks:
+      - default
+      - lasuite
     env_file:
       - env.d/development/common
       - env.d/development/common.local
@@ -107,6 +115,11 @@ services:
     image: nginx:1.25
     ports:
       - "8083:8083"
+    networks:
+      default: {}
+      lasuite:
+        aliases:
+          - nginx
     volumes:
       - ./docker/files/etc/nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
@@ -219,6 +232,14 @@ services:
         restart: true
 
   docspec:
-    image: ghcr.io/docspecio/api:2.4.4
+    image: ghcr.io/docspecio/api:2.6.0
     ports:
       - "4000:4000"
+    networks:
+      - lasuite
+      - default
+
+networks:
+  lasuite:
+    name: lasuite-network
+    driver: bridge

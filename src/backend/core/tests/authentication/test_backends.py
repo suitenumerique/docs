@@ -2,6 +2,7 @@
 
 import random
 import re
+from unittest import mock
 
 from django.core.exceptions import SuspiciousOperation
 from django.test.utils import override_settings
@@ -12,7 +13,10 @@ from cryptography.fernet import Fernet
 from lasuite.oidc_login.backends import get_oidc_refresh_token
 
 from core import models
-from core.authentication.backends import OIDCAuthenticationBackend
+from core.authentication.backends import (
+    OIDCAuthenticationBackend,
+    create_or_update_contact,
+)
 from core.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -509,3 +513,79 @@ def test_authentication_session_tokens(
     assert user is not None
     assert request.session["oidc_access_token"] == "test-access-token"
     assert get_oidc_refresh_token(request.session) == "test-refresh-token"
+
+
+def test_authentication_post_get_or_create_user_new_user_to_marketing_email(settings):
+    """
+    New user and SIGNUP_NEW_USER_TO_MARKETING_EMAIL enabled should create a contact
+    in the marketing backend.
+    """
+
+    user = UserFactory()
+    settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = True
+
+    klass = OIDCAuthenticationBackend()
+    with mock.patch.object(
+        create_or_update_contact, "delay"
+    ) as mock_create_or_update_contact:
+        klass.post_get_or_create_user(user, {}, True)
+        mock_create_or_update_contact.assert_called_once_with(
+            email=user.email, attributes={"DOCS_SOURCE": ["SIGNIN"]}
+        )
+
+
+def test_authentication_post_get_or_create_user_new_user_to_marketing_email_disabled(
+    settings,
+):
+    """
+    New user and SIGNUP_NEW_USER_TO_MARKETING_EMAIL disabled should not create a contact
+    in the marketing backend.
+    """
+
+    user = UserFactory()
+    settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = False
+
+    klass = OIDCAuthenticationBackend()
+    with mock.patch.object(
+        create_or_update_contact, "delay"
+    ) as mock_create_or_update_contact:
+        klass.post_get_or_create_user(user, {}, True)
+        mock_create_or_update_contact.assert_not_called()
+
+
+def test_authentication_post_get_or_create_user_existing_user_to_marketing_email(
+    settings,
+):
+    """
+    Existing user and SIGNUP_NEW_USER_TO_MARKETING_EMAIL enabled should not create a contact
+    in the marketing backend.
+    """
+
+    user = UserFactory()
+    settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = True
+
+    klass = OIDCAuthenticationBackend()
+    with mock.patch.object(
+        create_or_update_contact, "delay"
+    ) as mock_create_or_update_contact:
+        klass.post_get_or_create_user(user, {}, False)
+        mock_create_or_update_contact.assert_not_called()
+
+
+def test_authentication_post_get_or_create_user_existing_user_to_marketing_email_disabled(
+    settings,
+):
+    """
+    Existing user and SIGNUP_NEW_USER_TO_MARKETING_EMAIL disabled should not create a contact
+    in the marketing backend.
+    """
+
+    user = UserFactory()
+    settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL = False
+
+    klass = OIDCAuthenticationBackend()
+    with mock.patch.object(
+        create_or_update_contact, "delay"
+    ) as mock_create_or_update_contact:
+        klass.post_get_or_create_user(user, {}, False)
+        mock_create_or_update_contact.assert_not_called()

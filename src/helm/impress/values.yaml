@@ -85,6 +85,25 @@ ingressCollaborationWS:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
     nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
 
+## @param ingressRedirects.enabled whether to enable the Ingress Redirects or not
+## @param ingressRedirects.className IngressClass to use for the Ingress Redirects
+## @param ingressRedirects.host Host for the Ingress Redirects
+ingressRedirects:
+  enabled: false
+  className: null
+  host: impress.example.com
+  ## @param ingressRedirects.tls.enabled Weather to enable TLS for the Ingress Redirects
+  ## @param ingressRedirects.tls.secretName Secret name for TLS config
+  ## @skip ingressRedirects.tls.additional
+  ## @extra ingressRedirects.tls.additional[].secretName Secret name for additional TLS config
+  ## @extra ingressRedirects.tls.additional[].hosts[] Hosts for additional TLS config
+  tls:
+    enabled: true
+    secretName: null
+    additional: []
+  ## @param ingressRedirects.rules Rules for the Ingress Redirects
+  rules: []
+
 ## @param ingressCollaborationApi.enabled whether to enable the Ingress or not
 ## @param ingressCollaborationApi.className IngressClass to use for the Ingress
 ## @param ingressCollaborationApi.host Host for the Ingress

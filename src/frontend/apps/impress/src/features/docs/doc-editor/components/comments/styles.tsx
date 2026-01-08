@@ -13,6 +13,10 @@ export const cssComments = (
         background: ${canSeeComment ? '#EDB40066' : 'transparent'};
         color: var(--c--globals--colors--gray-700);
       }
+
+      [data-show-selection] {
+        color: HighlightText;
+      }
     }
 
     em-emoji-picker {
@@ -22,13 +26,16 @@ export const cssComments = (
 
     // Thread modal
     .bn-thread {
-      width: 400px;
+      width: 100%;
+      min-width: calc(min(400px, 90vw));
+      max-width: calc(min(400px, 90vw));
+      max-height: calc(min(500px, 60vh));
       padding: 8px;
       box-shadow: 0px 6px 18px 0px #00001229;
       margin-left: 20px;
+      margin-right: 20px;
       gap: 0;
       overflow: auto;
-      max-height: 500px;
 
       .bn-default-styles {
         font-family: var(--c--globals--font--families--base);
@@ -113,7 +120,7 @@ export const cssComments = (
           }
 
           & svg {
-            color: var(--c--globals--colors--info-600);
+            color: var(--c--contextuals--background--semantic--brand--primary);
           }
         }
 
@@ -130,15 +137,23 @@ export const cssComments = (
               padding-inline: var(--c--globals--spacings--st);
 
               &[data-test='save'] {
-                border: 1px solid var(--c--globals--colors--info-600);
-                background: var(--c--globals--colors--info-600);
-                color: white;
+                border: 1px solid
+                  var(--c--contextuals--background--semantic--brand--primary);
+                background: var(
+                  --c--contextuals--background--semantic--brand--primary
+                );
+                color: var(
+                  --c--contextuals--content--semantic--brand--on-brand
+                );
               }
 
               &[data-test='cancel'] {
                 background: white;
-                border: 1px solid var(--c--globals--colors--gray-300);
-                color: var(--c--globals--colors--info-600);
+                border: 1px solid
+                  var(--c--contextuals--border--surface--primary);
+                color: var(
+                  --c--contextuals--background--semantic--brand--primary
+                );
               }
             }
           }
@@ -180,7 +195,9 @@ export const cssComments = (
 
           button {
             font-size: 0;
-            background: var(--c--globals--colors--info-600);
+            background: var(
+              --c--contextuals--background--semantic--brand--primary
+            );
             width: var(--c--globals--spacings--md);
             height: var(--c--globals--spacings--md);
             padding: var(--c--globals--spacings--0);
@@ -193,7 +210,7 @@ export const cssComments = (
               content: 'arrow_upward_alt';
               font-family: 'Material Symbols Outlined Variable', sans-serif;
               font-size: 18px;
-              color: var(--c--globals--colors--gray-100);
+              color: var(--c--contextuals--content--semantic--brand--on-brand);
             }
           }
         }

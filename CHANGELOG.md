@@ -9,15 +9,71 @@ and this project adheres to
 ### Added
 
 - ✨ Import of documents #7765
+- ✨(backend) add documents/all endpoint with descendants #1553
+
+## [4.3.0] - 2026-01-05
+
+### Added
+
+- ✨(helm) redirecting system #1697
+- 📱(frontend) add comments for smaller device #1737
+- ✨(project) add custom js support via config #1759
+
+### Changed
+
+- 🥅(frontend) intercept 401 error on GET threads #1754
+- 🦺(frontend) check content type pdf on PdfBlock #1756
+- ✈️(frontend) pause Posthog when offline #1755
+
+### Fixed
+
+- 🐛(frontend) fix tables deletion #1739
+- 🐛(frontend) fix children not display when first resize #1753
+- 🐛(frontend) fix clickable main content regression #1773
+
+## [4.2.0] - 2025-12-17
+
+### Added
+
+- ✨(backend) allow to create a new user in a marketing system #1707
+- ✨(backend) add async indexation of documents on save (or access save) #1276
+- ✨(backend) add debounce mechanism to limit indexation jobs #1276
+- ✨(api) add API route to search for indexed documents in Find #1276
+- 🥅(frontend) add boundary error page #1728
+
+### Changed
+
+- 🛂(backend) stop throttling collaboration servers #1730
+- 🚸(backend) use unaccented full name for user search #1637
+- 🌐(backend) internationalize demo #1644
+- ♿(frontend) improve accessibility:
+  - ♿️Improve keyboard accessibility for the document tree #1681
+
+### Fixed
+
+- 🐛(frontend) paste content with comments from another document #1732
+- 🐛(frontend) Select text + Go back one page crash the app #1733
+- 🐛(frontend) fix versioning conflict #1742
+
+
+## [4.1.0] - 2025-12-09
+
+### Added
+
+- ⚡️(frontend) export html #1669
 
 ### Changed
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) add skip to content button for keyboard accessibility #1624
+  - ♿(frontend) fix toggle panel button a11y labels #1634
+- 🔒️(frontend) remove dangerouslySetInnerHTML from codebase #1712
+- ⚡️(frontend) improve Comments feature #1687
 
 ### Fixed
 
-- 🐛(nginx) fix / location to handle new static pages
+- 🐛(nginx) fix / location to handle new static pages #1682
+- 🐛(frontend) rerendering during resize window #1715
 
 ## [4.0.0] - 2025-12-01
 
@@ -26,14 +82,6 @@ and this project adheres to
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
 - ✨(frontend) link to create new doc #1574
-- ♿(frontend) improve accessibility:
-  - ♿(frontend) add skip to content button for keyboard accessibility #1624
-
-### Fixed
-
-- 🐛(frontend) fix toolbar not activated when reader #1640
-- 🐛(frontend) preserve left panel width on window resize #1588
-- 🐛(frontend) prevent duplicate as first character in title #1595
 
 ### Changed
 
@@ -43,6 +91,12 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
   - ♿(frontend) improve screen reader support in DocShare modal #1628
+
+### Fixed
+
+- 🐛(frontend) fix toolbar not activated when reader #1640
+- 🐛(frontend) preserve left panel width on window resize #1588
+- 🐛(frontend) prevent duplicate as first character in title #1595
 
 ## [3.10.0] - 2025-11-18
 
@@ -63,9 +117,6 @@ and this project adheres to
   - ♿(frontend) improve ARIA in doc grid and editor for a11y #1519
   - ♿(frontend) improve accessibility and styling of summary table #1528
   - ♿(frontend) add focus trap and enter key support to remove doc modal #1531
-- 🐛(frontend) preserve @ character when esc is pressed after typing it #1512
-- 🐛(frontend) make summary button fixed to remain visible during scroll #1581
-- 🐛(frontend) fix pdf embed to use full width #1526
 - 🐛(frontend) fix alignment of side menu #1597
 - 🐛(frontend) fix fallback translations with Trans #1620
 - 🐛(export) fix image overflow by limiting width to 600px during export #1525
@@ -918,7 +969,10 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.0.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.3.0...main
+[v4.3.0]: https://github.com/suitenumerique/docs/releases/v4.3.0
+[v4.2.0]: https://github.com/suitenumerique/docs/releases/v4.2.0
+[v4.1.0]: https://github.com/suitenumerique/docs/releases/v4.1.0
 [v4.0.0]: https://github.com/suitenumerique/docs/releases/v4.0.0
 [v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
 [v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0

@@ -90,7 +90,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     }
   }, [isProviderReady, setIsSkeletonVisible]);
 
-  if (!isProviderReady) {
+  if (!isProviderReady || provider?.configuration.name !== doc.id) {
     return <Loading />;
   }
 

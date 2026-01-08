@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impress"
-version = "4.0.0"
+version = "4.3.0"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -34,12 +34,12 @@ dependencies = [
     "django-countries==8.1.0",
     "django-csp==4.0",
     "django-filter==25.2",
-    "django-lasuite[all]==0.0.18",
+    "django-lasuite[all]==0.0.22",
     "django-parler==2.3",
     "django-redis==6.0.0",
     "django-storages[s3]==1.14.6",
     "django-timezone-field>=5.1",
-    "django==5.2.8",
+    "django==5.2.9",
     "django-treebeard==4.7.1",
     "djangorestframework==3.16.1",
     "drf_spectacular==0.29.0",

@@ -8,7 +8,7 @@ To use this feature, simply set the `FRONTEND_CSS_URL` environment variable to t
 FRONTEND_CSS_URL=http://anything/custom-style.css
 ```
 
-Once you've set this variable, our application will load your custom CSS file and apply the styles to our frontend application.
+Once you've set this variable, Docs will load your custom CSS file and apply the styles to our frontend application.
 
 ### Benefits
 
@@ -29,6 +29,61 @@ body {
 ```
 
 Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom CSS file. Once you've done this, our application will load your custom CSS file and apply the styles, changing the background color to the custom color you specified.
+
+----
+
+# Runtime JavaScript Injection 🚀
+
+### How to Use
+
+To use this feature, simply set the `FRONTEND_JS_URL` environment variable to the URL of your custom JavaScript file. For example:
+
+```javascript
+FRONTEND_JS_URL=http://anything/custom-script.js
+```
+
+Once you've set this variable, Docs will load your custom JavaScript file and execute it in the browser, allowing you to modify the application's behavior at runtime.
+
+### Benefits
+
+This feature provides several benefits, including:
+
+*   **Dynamic customization** 🔄: With this feature, you can dynamically modify the behavior and appearance of our application without requiring any code changes.
+*   **Flexibility** 🌈: You can add custom functionality, modify existing features, or integrate third-party services.
+*   **Runtime injection** ⏱️: This feature allows you to inject JavaScript into the application at runtime, without requiring a restart or recompilation.
+
+### Example Use Case
+
+Let's say you want to add a custom menu to the application header. You can create a custom JavaScript file with the following contents:
+
+```javascript
+(function() {
+  'use strict';
+
+  function initCustomMenu() {
+    // Wait for the page to be fully loaded
+    const header = document.querySelector('header');
+    if (!header) return false;
+
+    // Create and inject your custom menu
+    const customMenu = document.createElement('div');
+    customMenu.innerHTML = '<button>Custom Menu</button>';
+    header.appendChild(customMenu);
+    
+    console.log('Custom menu added successfully');
+    return true;
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomMenu);
+  } else {
+    initCustomMenu();
+  }
+})();
+```
+
+Then, set the `FRONTEND_JS_URL` environment variable to the URL of your custom JavaScript file. Once you've done this, our application will load your custom JavaScript file and execute it, adding your custom menu to the header.
 
 ----
 

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { backendUrl } from '@/api';
 
 import { useCreateDocAttachment } from '../api';
+import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
 export const useUploadFile = (docId: string) => {
@@ -46,7 +47,6 @@ export const useUploadFile = (docId: string) => {
  * @param editor
  */
 export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
-  const ANALYZE_URL = 'media-check';
   const { t } = useTranslation();
 
   /**
@@ -95,7 +95,12 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
   );
 
   useEffect(() => {
-    const imagesBlocks = editor?.document.filter(
+    // Check if editor and its view are mounted before accessing document
+    if (!editor?.document) {
+      return;
+    }
+
+    const imagesBlocks = editor.document.filter(
       (block) =>
         block.type === 'image' && block.props.url.includes(ANALYZE_URL),
     );
@@ -110,6 +115,11 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
    * block to show analyzing status
    */
   useEffect(() => {
+    // Check if editor and its view are mounted before setting up handlers
+    if (!editor) {
+      return;
+    }
+
     editor.onUploadEnd((blockId) => {
       if (!blockId) {
         return;

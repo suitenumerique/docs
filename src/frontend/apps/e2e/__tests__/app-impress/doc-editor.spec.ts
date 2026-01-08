@@ -802,6 +802,8 @@ test.describe('Doc Editor', () => {
     await page.getByText('Symbols').scrollIntoViewIfNeeded();
     await expect(page.getByRole('button', { name: '🛃' })).toBeVisible();
 
+    await page.keyboard.press('Escape');
+
     await page.locator('.bn-side-menu > button').last().click();
     await page.locator('.mantine-Menu-dropdown > button').last().click();
     await page.locator('.bn-color-picker-dropdown > button').last().click();
@@ -878,14 +880,15 @@ test.describe('Doc Editor', () => {
     // Wait for the interlink to be created and rendered
     const editor = await getEditor({ page });
 
-    const interlinkChild2 = editor.getByRole('button', {
-      name: docChild2,
-    });
+    const interlinkChild = editor
+      .locator('.--docs--interlinking-link-inline-content')
+      .first();
 
-    await expect(interlinkChild2).toBeVisible({ timeout: 10000 });
-    await expect(interlinkChild2).toContainText('😀');
-    await expect(interlinkChild2.locator('svg').first()).toBeHidden();
-    await interlinkChild2.click();
+    await expect(interlinkChild).toBeVisible({ timeout: 10000 });
+    await expect(interlinkChild).toContainText('😀');
+    await expect(interlinkChild).toContainText(docChild2);
+    await expect(interlinkChild.locator('svg').first()).toBeHidden();
+    await interlinkChild.click();
 
     await verifyDocName(page, docChild2);
 
@@ -895,11 +898,9 @@ test.describe('Doc Editor', () => {
     await input.fill(docChild1);
     await searchContainer.getByText(docChild1).click();
 
-    const interlinkChild1 = editor.getByRole('button', {
-      name: docChild1,
-    });
-    await expect(interlinkChild1).toBeVisible({ timeout: 10000 });
-    await expect(interlinkChild1.locator('svg').first()).toBeVisible();
+    await expect(interlinkChild).toContainText(docChild1);
+    await expect(interlinkChild).toBeVisible({ timeout: 10000 });
+    await expect(interlinkChild.locator('svg').first()).toBeVisible();
 
     await page.keyboard.press('@');
 
@@ -959,13 +960,35 @@ test.describe('Doc Editor', () => {
   test('it embeds PDF', async ({ page, browserName }) => {
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Reading');
+
+    await page.getByRole('button', { name: 'Close the share modal' }).click();
+
     await openSuggestionMenu({ page });
     await page.getByText('Embed a PDF file').click();
 
-    const pdfBlock = page.locator('div[data-content-type="pdf"]').first();
+    const pdfBlock = page.locator('div[data-content-type="pdf"]').last();
 
     await expect(pdfBlock).toBeVisible();
 
+    // Try with invalid PDF first
+    await page.getByText(/Add (PDF|file)/).click();
+
+    await page.locator('[data-test="embed-tab"]').click();
+
+    await page
+      .locator('[data-test="embed-input"]')
+      .fill('https://example.test/test.test');
+
+    await page.locator('[data-test="embed-input-button"]').click();
+
+    await expect(page.getByText('Invalid or missing PDF file')).toBeVisible();
+
+    await openSuggestionMenu({ page });
+    await page.getByText('Embed a PDF file').click();
+
+    // Now with a valid PDF
     await page.getByText(/Add (PDF|file)/).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
     const downloadPromise = page.waitForEvent('download');
@@ -990,10 +1013,50 @@ test.describe('Doc Editor', () => {
     await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
 
     // Check download with original filename
-    await page.locator('.bn-block-content[data-content-type="pdf"]').click();
+    await pdfBlock.click();
     await page.locator('[data-test="downloadfile"]').click();
 
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe('test-pdf.pdf');
+  });
+
+  test('it preserves text when switching between mobile and desktop views', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'doc-viewport-test',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docTitle);
+
+    const editor = await writeInEditor({
+      page,
+      text: 'Hello World - Desktop Text',
+    });
+    await expect(editor.getByText('Hello World - Desktop Text')).toBeVisible();
+
+    await page.waitForTimeout(500);
+
+    // Switch to mobile viewport
+    await page.setViewportSize({ width: 500, height: 1200 });
+    await page.waitForTimeout(500);
+
+    await expect(editor.getByText('Hello World - Desktop Text')).toBeVisible();
+
+    await writeInEditor({
+      page,
+      text: 'Mobile Text',
+    });
+
+    await page.waitForTimeout(500);
+
+    // Switch back to desktop viewport
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.waitForTimeout(500);
+
+    await expect(editor.getByText('Mobile Text')).toBeVisible();
   });
 });

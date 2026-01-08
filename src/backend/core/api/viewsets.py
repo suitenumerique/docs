@@ -1,4 +1,5 @@
 """API endpoints"""
+
 # pylint: disable=too-many-lines
 
 import base64
@@ -18,10 +19,11 @@ from django.core.validators import URLValidator
 from django.db import connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Left, Length
+from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -32,11 +34,13 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
 
 from core import authentication, choices, enums, models
+from core.api.filters import remove_accents
 from core.services import mime_types
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
@@ -50,12 +54,23 @@ from core.services.converter_services import (
 from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
+from core.services.converter_services import (
+    YdocConverter,
+)
+from core.services.search_indexers import (
+    get_document_indexer,
+    get_visited_document_ids_of,
+)
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
-from .throttling import UserListThrottleBurst, UserListThrottleSustained
+from .throttling import (
+    DocumentThrottle,
+    UserListThrottleBurst,
+    UserListThrottleSustained,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -190,13 +205,15 @@ class UserViewSet(
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
         filter_data = filterset.form.cleaned_data
-        query = filter_data["q"]
+        query = remove_accents(filter_data["q"])
 
         # For emails, match emails by Levenstein distance to prevent typing errors
         if "@" in query:
             return (
                 queryset.annotate(
-                    distance=RawSQL("levenshtein(email::text, %s::text)", (query,))
+                    distance=RawSQL(
+                        "levenshtein(unaccent(email::text), %s::text)", (query,)
+                    )
                 )
                 .filter(distance__lte=3)
                 .order_by("distance", "email")[: settings.API_USERS_LIST_LIMIT]
@@ -205,11 +222,15 @@ class UserViewSet(
         # Use trigram similarity for non-email-like queries
         # For performance reasons we filter first by similarity, which relies on an
         # index, then only calculate precise similarity scores for sorting purposes
+
         return (
-            queryset.filter(email__trigram_word_similar=query)
-            .annotate(similarity=TrigramSimilarity("email", query))
+            queryset.annotate(
+                sim_email=TrigramSimilarity("email", query),
+                sim_name=TrigramSimilarity("full_name", query),
+            )
+            .annotate(similarity=Greatest("sim_email", "sim_name"))
             .filter(similarity__gt=0.2)
-            .order_by("-similarity", "email")[: settings.API_USERS_LIST_LIMIT]
+            .order_by("-similarity")[: settings.API_USERS_LIST_LIMIT]
         )
 
     @drf.decorators.action(
@@ -367,15 +388,18 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
+    throttle_classes = [DocumentThrottle]
     throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
+    all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
     descendants_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
+    search_serializer_class = serializers.ListDocumentSerializer
 
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
@@ -863,6 +887,60 @@ class DocumentViewSet(
         )
 
     @drf.decorators.action(
+        detail=False,
+        methods=["get"],
+    )
+    def all(self, request, *args, **kwargs):
+        """
+        Returns all documents (including descendants) that the user has access to.
+
+        Unlike the list endpoint which only returns top-level documents, this endpoint
+        returns all documents including children, grandchildren, etc.
+        """
+        user = self.request.user
+
+        accessible_documents = self.get_queryset()
+        accessible_paths = list(accessible_documents.values_list("path", flat=True))
+
+        if not accessible_paths:
+            return self.get_response_for_queryset(self.queryset.none())
+
+        # Build query to include all descendants using path prefix matching
+        descendants_clause = db.Q()
+        for path in accessible_paths:
+            descendants_clause |= db.Q(path__startswith=path)
+
+        queryset = self.queryset.filter(
+            descendants_clause, ancestors_deleted_at__isnull=True
+        )
+
+        # Apply existing filters
+        filterset = ListDocumentFilter(
+            self.request.GET, queryset=queryset, request=self.request
+        )
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+        filter_data = filterset.form.cleaned_data
+
+        # Filter as early as possible on fields that are available on the model
+        for field in ["is_creator_me", "title"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+
+        queryset = queryset.annotate_user_roles(user)
+
+        # Annotate favorite status and filter if applicable as late as possible
+        queryset = queryset.annotate_is_favorite(user)
+        for field in ["is_favorite", "is_masked"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+
+        # Apply ordering only now that everything is filtered and annotated
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
+        )
+
+        return self.get_response_for_queryset(queryset)
+
+    @drf.decorators.action(
         detail=True,
         methods=["get"],
         ordering=["path"],
@@ -1088,6 +1166,83 @@ class DocumentViewSet(
         return drf_response.Response(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
+
+    def _search_simple(self, request, text):
+        """
+        Returns a queryset filtered by the content of the document title
+        """
+        # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
+        queryset = self.get_queryset()
+        filterset = DocumentFilter({"title": text}, queryset=queryset)
+
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.filter_queryset(queryset)
+
+        return self.get_response_for_queryset(
+            queryset.order_by("-updated_at"),
+            context={
+                "request": request,
+            },
+        )
+
+    def _search_fulltext(self, indexer, request, params):
+        """
+        Returns a queryset from the results the fulltext search of Find
+        """
+        access_token = request.session.get("oidc_access_token")
+        user = request.user
+        text = params.validated_data["q"]
+        queryset = models.Document.objects.all()
+
+        # Retrieve the documents ids from Find.
+        results = indexer.search(
+            text=text,
+            token=access_token,
+            visited=get_visited_document_ids_of(queryset, user),
+        )
+
+        docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
+        ordered_docs = [docs_by_uuid[id] for id in results]
+
+        page = self.paginate_queryset(ordered_docs)
+
+        serializer = self.get_serializer(
+            page if page else ordered_docs,
+            many=True,
+            context={
+                "request": request,
+            },
+        )
+
+        return self.get_paginated_response(serializer.data)
+
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list.
+
+        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
+        Depending of the configuration it can be:
+         - A fulltext search through the opensearch indexation app "find" if the backend is
+           enabled (see SEARCH_INDEXER_CLASS)
+         - A filtering by the model field 'title'.
+
+        The ordering is always by the most recent first.
+        """
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
+
+        indexer = get_document_indexer()
+
+        if indexer:
+            return self._search_fulltext(indexer, request, params=params)
+
+        # The indexer is not configured, we fallback on a simple icontains filter by the
+        # model field 'title'.
+        return self._search_simple(request, text=params.validated_data["q"])
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
@@ -2124,6 +2279,7 @@ class ConfigView(drf.views.APIView):
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+            "FRONTEND_JS_URL",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",

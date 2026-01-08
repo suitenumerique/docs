@@ -99,6 +99,31 @@ class Base(Configuration):
     }
     DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
+    # Search
+    SEARCH_INDEXER_CLASS = values.Value(
+        default=None,
+        environ_name="SEARCH_INDEXER_CLASS",
+        environ_prefix=None,
+    )
+    SEARCH_INDEXER_BATCH_SIZE = values.IntegerValue(
+        default=100_000, environ_name="SEARCH_INDEXER_BATCH_SIZE", environ_prefix=None
+    )
+    SEARCH_INDEXER_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_URL", environ_prefix=None
+    )
+    SEARCH_INDEXER_COUNTDOWN = values.IntegerValue(
+        default=1, environ_name="SEARCH_INDEXER_COUNTDOWN", environ_prefix=None
+    )
+    SEARCH_INDEXER_SECRET = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_SECRET", environ_prefix=None
+    )
+    SEARCH_INDEXER_QUERY_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_QUERY_URL", environ_prefix=None
+    )
+    SEARCH_INDEXER_QUERY_LIMIT = values.PositiveIntegerValue(
+        default=50, environ_name="SEARCH_INDEXER_QUERY_LIMIT", environ_prefix=None
+    )
+
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(DATA_DIR, "static")
@@ -328,6 +353,7 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        "lasuite.marketing",
         "csp",
     ]
 
@@ -482,6 +508,9 @@ class Base(Configuration):
     )
     FRONTEND_CSS_URL = values.Value(
         None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
+    )
+    FRONTEND_JS_URL = values.Value(
+        None, environ_name="FRONTEND_JS_URL", environ_prefix=None
     )
 
     THEME_CUSTOMIZATION_FILE_PATH = values.Value(
@@ -807,6 +836,30 @@ class Base(Configuration):
                 "prefetch-src": [NONE],
             },
             environ_name="CONTENT_SECURITY_POLICY_DIRECTIVES",
+            environ_prefix=None,
+        ),
+    }
+
+    # Marketing and communication settings
+    SIGNUP_NEW_USER_TO_MARKETING_EMAIL = values.BooleanValue(
+        False,
+        environ_name="SIGNUP_NEW_USER_TO_MARKETING_EMAIL",
+        environ_prefix=None,
+        help_text=(
+            "When enabled, new users are automatically added to mailing list "
+            "for product updates, marketing communications, and customized emails. "
+        ),
+    )
+
+    LASUITE_MARKETING = {
+        "BACKEND": values.Value(
+            "lasuite.marketing.backends.dummy.DummyBackend",
+            environ_name="LASUITE_MARKETING_BACKEND",
+            environ_prefix=None,
+        ),
+        "PARAMETERS": values.DictValue(
+            default={},
+            environ_name="LASUITE_MARKETING_PARAMETERS",
             environ_prefix=None,
         ),
     }

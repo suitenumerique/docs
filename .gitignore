@@ -43,6 +43,10 @@ venv.bak/
 env.d/development/*.local
 env.d/terraform
 
+# Docker
+compose.override.yml
+docker/auth/*.local
+
 # npm
 node_modules
 

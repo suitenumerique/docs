@@ -32,13 +32,18 @@ export const DocVersionEditor = ({
   const { replace } = useRouter();
   const [initialContent, setInitialContent] = useState<Y.XmlFragment>();
 
+  // Reset initialContent when versionId changes to avoid conflicts between versions
   useEffect(() => {
-    if (!version?.content) {
+    setInitialContent(undefined);
+  }, [versionId]);
+
+  useEffect(() => {
+    if (!version?.content || isLoading || initialContent) {
       return;
     }
 
     setInitialContent(base64ToBlocknoteXmlFragment(version.content));
-  }, [version?.content]);
+  }, [versionId, version?.content, isLoading, initialContent]);
 
   if (isError && error) {
     if (error.status === 404) {

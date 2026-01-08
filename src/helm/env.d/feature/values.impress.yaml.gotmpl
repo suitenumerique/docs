@@ -32,17 +32,18 @@ backend:
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
-    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_USERINFO_SHORTNAME_FIELD: "first_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "name"
     OIDC_OP_JWKS_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/certs
     OIDC_OP_AUTHORIZATION_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/auth
     OIDC_OP_TOKEN_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/token
     OIDC_OP_USER_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/userinfo
     OIDC_OP_LOGOUT_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/logout
+    OIDC_REDIRECT_ALLOWED_HOSTS: "{{ .Values.feature }}-docs.{{ .Values.domain }}"
     OIDC_RP_CLIENT_ID: docs
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
-    OIDC_RP_SCOPES: "openid email"
+    OIDC_RP_SCOPES: "openid email profile"
     LOGIN_REDIRECT_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     LOGIN_REDIRECT_URL_FAILURE: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     LOGOUT_REDIRECT_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}

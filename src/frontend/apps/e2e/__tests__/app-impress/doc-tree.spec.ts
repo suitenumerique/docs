@@ -303,6 +303,40 @@ test.describe('Doc Tree', () => {
     await expect(docTree.getByText(docChild)).toBeVisible();
   });
 
+  test('keyboard navigation with F2 focuses root actions button', async ({
+    page,
+    browserName,
+  }) => {
+    // Create a parent document to initialize the tree
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-keyboard-f2-root',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible();
+
+    const rootItem = page.getByTestId('doc-tree-root-item');
+    await expect(rootItem).toBeVisible();
+
+    // Focus the root item
+    await rootItem.focus();
+    await expect(rootItem).toBeFocused();
+
+    // Press F2 → focus should move to the root actions \"More options\" button
+    await page.keyboard.press('F2');
+
+    const rootActions = rootItem.locator('.doc-tree-root-item-actions');
+    const rootMoreOptionsButton = rootActions.getByRole('button', {
+      name: /more options/i,
+    });
+
+    await expect(rootMoreOptionsButton).toBeFocused();
+  });
+
   test('it updates the child icon from the tree', async ({
     page,
     browserName,

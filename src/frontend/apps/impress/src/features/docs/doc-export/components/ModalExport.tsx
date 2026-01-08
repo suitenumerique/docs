@@ -13,22 +13,30 @@ import {
 import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';
+import JSZip from 'jszip';
 import { cloneElement, isValidElement, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
+import { useMediaUrl } from '@/core';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
+import { fallbackLng } from '@/i18n/config';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { TemplatesOrdering, useTemplates } from '../api/useTemplates';
 import { docxDocsSchemaMappings } from '../mappingDocx';
 import { odtDocsSchemaMappings } from '../mappingODT';
 import { pdfDocsSchemaMappings } from '../mappingPDF';
-import { downloadFile } from '../utils';
+import {
+  addMediaFilesToZip,
+  downloadFile,
+  generateHtmlDocument,
+} from '../utils';
 
 enum DocDownloadFormat {
+  HTML = 'html',
   PDF = 'pdf',
   DOCX = 'docx',
   ODT = 'odt',
@@ -52,6 +60,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     DocDownloadFormat.PDF,
   );
   const { untitledDocument } = useTrans();
+  const mediaUrl = useMediaUrl();
 
   const templateOptions = useMemo(() => {
     const templateOptions = (templates?.pages || [])
@@ -142,13 +151,47 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       });
 
       blobExport = await exporter.toODTDocument(exportDocument);
+    } else if (format === DocDownloadFormat.HTML) {
+      // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
+      const fullHtml = await editor.blocksToFullHTML();
+
+      // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
+      const domParser = new DOMParser();
+      const parsedDocument = domParser.parseFromString(fullHtml, 'text/html');
+
+      const zip = new JSZip();
+
+      await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
+
+      const lang = i18next.language || fallbackLng;
+      const editorHtmlWithLocalMedia = parsedDocument.body.innerHTML;
+
+      const htmlContent = generateHtmlDocument(
+        documentTitle,
+        editorHtmlWithLocalMedia,
+        lang,
+      );
+
+      zip.file('index.html', htmlContent);
+
+      // CSS Styles
+      const cssResponse = await fetch(
+        new URL('../assets/export-html-styles.txt', import.meta.url).toString(),
+      );
+      const cssContent = await cssResponse.text();
+      zip.file('styles.css', cssContent);
+
+      blobExport = await zip.generateAsync({ type: 'blob' });
     } else {
       toast(t('The export failed'), VariantType.ERROR);
       setIsExporting(false);
       return;
     }
 
-    downloadFile(blobExport, `${filename}.${format}`);
+    const downloadExtension =
+      format === DocDownloadFormat.HTML ? 'zip' : format;
+
+    downloadFile(blobExport, `${filename}.${downloadExtension}`);
 
     toast(
       t('Your {{format}} was downloaded succesfully', {
@@ -225,18 +268,10 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
         className="--docs--modal-export-content"
       >
         <Text $variation="secondary" $size="sm" as="p">
-          {t('Download your document in a .docx, .odt or .pdf format.')}
+          {t(
+            'Download your document in a .docx, .odt, .pdf or .html(zip) format.',
+          )}
         </Text>
-        <Select
-          clearable={false}
-          fullWidth
-          label={t('Template')}
-          options={templateOptions}
-          value={templateSelected}
-          onChange={(options) =>
-            setTemplateSelected(options.target.value as string)
-          }
-        />
         <Select
           clearable={false}
           fullWidth
@@ -245,10 +280,22 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
             { label: t('ODT'), value: DocDownloadFormat.ODT },
             { label: t('PDF'), value: DocDownloadFormat.PDF },
+            { label: t('HTML'), value: DocDownloadFormat.HTML },
           ]}
           value={format}
           onChange={(options) =>
             setFormat(options.target.value as DocDownloadFormat)
+          }
+        />
+        <Select
+          clearable={false}
+          fullWidth
+          label={t('Template')}
+          options={templateOptions}
+          value={templateSelected}
+          disabled={format === DocDownloadFormat.HTML}
+          onChange={(options) =>
+            setTemplateSelected(options.target.value as string)
           }
         />
 

@@ -44,7 +44,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
     if (config?.FRONTEND_HOMEPAGE_FEATURE_ENABLED) {
       if (pathname !== HOME_URL) {
         setIsRedirecting(true);
-        void replace(HOME_URL).then(() => setIsRedirecting(false));
+        window.location.replace(HOME_URL);
       }
 
       return;
