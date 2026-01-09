@@ -19,6 +19,7 @@ and this project adheres to
 - ✅(backend) reduce flakiness on backend test #1769
 - 🐛(frontend) fix clickable main content regression #1773
 - 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
+- 💄(frontend) fix icon position in callout block #1779
 
 ### Security
 
