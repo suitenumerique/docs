@@ -74,7 +74,9 @@ export function MarkdownButton() {
   };
 
   const show = useMemo(() => {
-    return !!selectedBlocks.find((block) => block.content !== undefined);
+    return (
+      selectedBlocks.filter((block) => block.content !== undefined).length !== 0
+    );
   }, [selectedBlocks]);
 
   if (!show || !editor.isEditable || !Components) {
