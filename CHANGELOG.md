@@ -12,6 +12,12 @@ and this project adheres to
 - ✅(export) add PDF regression tests #1762
 - 📝(docs) Add language configuration documentation #1757
 - 🔒(helm) Set default security context #1750
+- ✨ Import of documents #7765
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) make html export accessible to screen reader users #1743
 
 ### Fixed 
 
@@ -21,11 +27,6 @@ and this project adheres to
 ### Security
 
 - 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿(frontend) make html export accessible to screen reader users #1743
 
 ## [4.3.0] - 2026-01-05
 
