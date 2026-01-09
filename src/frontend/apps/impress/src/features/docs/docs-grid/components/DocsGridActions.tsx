@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
 import {
   Doc,
   KEY_LIST_DOC,
+  KEY_LIST_FAVORITE_DOC,
   ModalRemoveDoc,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
@@ -27,10 +28,10 @@ export const DocsGridActions = ({
   const { mutate: duplicateDoc } = useDuplicateDoc();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalidQueries: [KEY_LIST_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
   });
   const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalidQueries: [KEY_LIST_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
   });
 
   const options: DropdownMenuOption[] = [
