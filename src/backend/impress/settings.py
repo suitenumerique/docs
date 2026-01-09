@@ -453,7 +453,7 @@ class Base(Configuration):
         "REDOC_DIST": "SIDECAR",
     }
 
-    TRASHBIN_CUTOFF_DAYS = values.Value(
+    TRASHBIN_CUTOFF_DAYS = values.IntegerValue(
         30, environ_name="TRASHBIN_CUTOFF_DAYS", environ_prefix=None
     )
 
