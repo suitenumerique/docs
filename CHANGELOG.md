@@ -13,9 +13,10 @@ and this project adheres to
 - 📝(docs) Add language configuration documentation #1757
 - 🔒(helm) Set default security context #1750
 
-### Fixed 
+### Fixed
 
 - ✅(backend) reduce flakiness on backend test #1769
+- 🐛(frontend) fix clickable main content regression #1773
 
 ### Security
 
@@ -25,6 +26,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) make html export accessible to screen reader users #1743
+  - ♿(frontend) add missing label and fix Axes errors to improve a11y #1693
 
 ## [4.3.0] - 2026-01-05
 
@@ -44,7 +46,6 @@ and this project adheres to
 
 - 🐛(frontend) fix tables deletion #1739
 - 🐛(frontend) fix children not display when first resize #1753
-- 🐛(frontend) fix clickable main content regression #1773
 
 ## [4.2.0] - 2025-12-17
 

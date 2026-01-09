@@ -199,7 +199,6 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
             <ButtonCloseModal
               aria-label={t('Close the share modal')}
               onClick={onClose}
-              tabIndex={-1}
             />
           </Box>
         }
