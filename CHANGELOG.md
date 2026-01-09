@@ -16,6 +16,7 @@ and this project adheres to
 ### Fixed 
 
 - ✅(backend) reduce flakiness on backend test #1769
+- 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
 
 ### Security
 
