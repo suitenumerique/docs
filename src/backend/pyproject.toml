@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
 ]
-description = "An application to print markdown to pdf from a set of managed templates."
+description = "Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing."
 keywords = ["Django", "Contacts", "Templates", "RBAC"]
 license = { file = "LICENSE" }
 readme = "README.md"

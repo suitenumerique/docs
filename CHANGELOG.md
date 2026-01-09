@@ -28,6 +28,11 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿(frontend) make html export accessible to screen reader users #1743
 
+### Removed
+
+- 🔥(project) remove all code related to template #1780
+
+
 ## [4.3.0] - 2026-01-05
 
 ### Added

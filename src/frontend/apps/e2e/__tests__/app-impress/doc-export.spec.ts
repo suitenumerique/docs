@@ -35,9 +35,6 @@ test.describe('Doc Export', () => {
     await expect(
       page.getByText(/Download your document in a \.docx, \.odt.*format\./i),
     ).toBeVisible();
-    await expect(
-      page.getByRole('combobox', { name: 'Template' }),
-    ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
     await expect(
       page.getByRole('button', {
@@ -235,20 +232,6 @@ test.describe('Doc Export', () => {
         name: 'Export the document',
       })
       .click();
-
-    await page
-      .getByRole('combobox', {
-        name: 'Template',
-      })
-      .click();
-
-    await page
-      .getByRole('option', {
-        name: 'Demo Template',
-      })
-      .click({
-        delay: 100,
-      });
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 

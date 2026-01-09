@@ -406,16 +406,6 @@ class Base(Configuration):
                 environ_name="API_DOCUMENT_ACCESS_THROTTLE_RATE",
                 environ_prefix=None,
             ),
-            "template": values.Value(
-                default="30/minute",
-                environ_name="API_TEMPLATE_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
-            "template_access": values.Value(
-                default="30/minute",
-                environ_name="API_TEMPLATE_ACCESS_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
             "invitation": values.Value(
                 default="60/minute",
                 environ_name="API_INVITATION_THROTTLE_RATE",
