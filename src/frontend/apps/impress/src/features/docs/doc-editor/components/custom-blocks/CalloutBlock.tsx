@@ -97,7 +97,12 @@ const CalloutComponent = ({
       `}
     >
       <CalloutBlockStyle />
-      <Box $position="relative">
+      <Box
+        $position="relative"
+        $css={css`
+          align-self: start;
+        `}
+      >
         <BoxButton
           contentEditable={false}
           onClick={toggleEmojiPicker}
