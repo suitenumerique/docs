@@ -12,6 +12,7 @@ and this project adheres to
 - ✅(export) add PDF regression tests #1762
 - 📝(docs) Add language configuration documentation #1757
 - 🔒(helm) Set default security context #1750
+- ✨(backend) use langfuse to monitor AI actions
 
 ### Fixed 
 
