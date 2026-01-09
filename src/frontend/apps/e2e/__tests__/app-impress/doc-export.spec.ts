@@ -327,6 +327,13 @@ test.describe('Doc Export', () => {
     page,
     browserName,
   }) => {
+    // PDF Binary comparison is different depending on the browser used
+    // We only run this test on Chromium to avoid having to maintain
+    // multiple sets of PDF fixtures
+    if (browserName !== 'chromium') {
+      test.skip();
+    }
+
     const randomDoc = await overrideDocContent({ page, browserName });
 
     await page
@@ -471,6 +478,8 @@ export const overrideDocContent = async ({
   await expect(image).toBeVisible();
   await page.keyboard.press('Enter');
 
+  await page.waitForTimeout(1000);
+
   // Add Image PNG
   await openSuggestionMenu({ page });
   await suggestionMenu.getByText('Resizable image with caption').click();
@@ -484,6 +493,8 @@ export const overrideDocContent = async ({
     .locator('.--docs--editor-container img.bn-visual-media[src$=".png"]')
     .first();
   await expect(imagePng).toBeVisible();
+
+  await page.waitForTimeout(1000);
 
   return randomDoc;
 };

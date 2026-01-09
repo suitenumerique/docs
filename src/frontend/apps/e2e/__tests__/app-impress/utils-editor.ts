@@ -7,9 +7,7 @@ export const getEditor = async ({ page }: { page: Page }) => {
 };
 
 export const openSuggestionMenu = async ({ page }: { page: Page }) => {
-  const editor = await getEditor({ page });
-  await editor.click();
-  await writeInEditor({ page, text: '/' });
+  const editor = await writeInEditor({ page, text: '/' });
 
   const suggestionMenu = page.locator('.bn-suggestion-menu');
 
@@ -24,6 +22,11 @@ export const writeInEditor = async ({
   text: string;
 }) => {
   const editor = await getEditor({ page });
-  await editor.locator('.bn-block-outer .bn-inline-content').last().fill(text);
+  await editor
+    .locator('.bn-block-outer:last-child')
+    .last()
+    .locator('.bn-inline-content:last-child')
+    .last()
+    .fill(text);
   return editor;
 };
