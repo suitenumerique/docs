@@ -10,6 +10,12 @@ and this project adheres to
 
 - ✨(frontend) integrate configurable Waffle #1795
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+- ✨(backend) add field for button label in email template #1817
+
 ### Fixed
 
 - ✅(e2e) fix e2e test for other browsers #1799
@@ -17,16 +23,13 @@ and this project adheres to
 - 🐛(frontend) fix emojipicker closing in tree #1808
 - 🐛(frontend) display children in favorite #1782
 
-### Changed
+### Removed
 
-- ♿(frontend) improve accessibility:
-  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
-- ✨(backend) add field for button label in email template #1817
+- 🔥(project) remove all code related to template #1780
 
 ### Security
 
 - 🔒️(trivy) fix vulnerability about jaraco.context #1806
-
 
 ## [4.4.0] - 2026-01-13
 

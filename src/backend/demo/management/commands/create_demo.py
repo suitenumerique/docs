@@ -216,29 +216,6 @@ def create_demo(stdout):
 
         queue.flush()
 
-    with Timeit(stdout, "Creating Template"):
-        with open(
-            file="demo/data/template/code.txt", mode="r", encoding="utf-8"
-        ) as text_file:
-            code_data = text_file.read()
-
-        with open(
-            file="demo/data/template/css.txt", mode="r", encoding="utf-8"
-        ) as text_file:
-            css_data = text_file.read()
-
-        queue.push(
-            models.Template(
-                id="baca9e2a-59fb-42ef-b5c6-6f6b05637111",
-                title="Demo Template",
-                description="This is the demo template",
-                code=code_data,
-                css=css_data,
-                is_public=True,
-            )
-        )
-        queue.flush()
-
 
 class Command(BaseCommand):
     """A management command to create a demo database."""

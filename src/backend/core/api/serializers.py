@@ -59,30 +59,6 @@ class UserLightSerializer(UserSerializer):
         read_only_fields = ["full_name", "short_name"]
 
 
-class TemplateAccessSerializer(serializers.ModelSerializer):
-    """Serialize template accesses."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.TemplateAccess
-        resource_field_name = "template"
-        fields = ["id", "user", "team", "role", "abilities"]
-        read_only_fields = ["id", "abilities"]
-
-    def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return instance.get_abilities(request.user)
-        return {}
-
-    def update(self, instance, validated_data):
-        """Make "user" field is readonly but only on update."""
-        validated_data.pop("user", None)
-        return super().update(instance, validated_data)
-
-
 class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
@@ -658,52 +634,6 @@ class FileUploadSerializer(serializers.Serializer):
         attrs["content_type"] = self.context["content_type"]
         attrs["file_name"] = self.context["file_name"]
         return attrs
-
-
-class TemplateSerializer(serializers.ModelSerializer):
-    """Serialize templates."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-    accesses = TemplateAccessSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = models.Template
-        fields = [
-            "id",
-            "title",
-            "accesses",
-            "abilities",
-            "css",
-            "code",
-            "is_public",
-        ]
-        read_only_fields = ["id", "accesses", "abilities"]
-
-    def get_abilities(self, document) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return document.get_abilities(request.user)
-        return {}
-
-
-# pylint: disable=abstract-method
-class DocumentGenerationSerializer(serializers.Serializer):
-    """Serializer to receive a request to generate a document on a template."""
-
-    body = serializers.CharField(label=_("Body"))
-    body_type = serializers.ChoiceField(
-        choices=["html", "markdown"],
-        label=_("Body type"),
-        required=False,
-        default="html",
-    )
-    format = serializers.ChoiceField(
-        choices=["pdf", "docx"],
-        label=_("Format"),
-        required=False,
-        default="pdf",
-    )
 
 
 class InvitationSerializer(serializers.ModelSerializer):

@@ -10,7 +10,6 @@ from core.api import viewsets
 
 # - Main endpoints
 router = DefaultRouter()
-router.register("templates", viewsets.TemplateViewSet, basename="templates")
 router.register("documents", viewsets.DocumentViewSet, basename="documents")
 router.register("users", viewsets.UserViewSet, basename="users")
 

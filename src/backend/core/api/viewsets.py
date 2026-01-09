@@ -2109,64 +2109,6 @@ class DocumentAccessViewSet(
         )
 
 
-class TemplateViewSet(
-    drf.mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Template ViewSet"""
-
-    filter_backends = [drf.filters.OrderingFilter]
-    permission_classes = [
-        permissions.IsAuthenticatedOrSafe,
-        permissions.ResourceWithAccessPermission,
-    ]
-    throttle_scope = "template"
-    ordering = ["-created_at"]
-    ordering_fields = ["created_at", "updated_at", "title"]
-    serializer_class = serializers.TemplateSerializer
-    queryset = models.Template.objects.all()
-
-    def get_queryset(self):
-        """Custom queryset to get user related templates."""
-        queryset = super().get_queryset()
-        user = self.request.user
-
-        if not user.is_authenticated:
-            return queryset
-
-        user_roles_query = (
-            models.TemplateAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                template_id=db.OuterRef("pk"),
-            )
-            .values("template")
-            .annotate(roles_array=ArrayAgg("role"))
-            .values("roles_array")
-        )
-        return queryset.annotate(user_roles=db.Subquery(user_roles_query)).distinct()
-
-    def list(self, request, *args, **kwargs):
-        """Restrict templates returned by the list endpoint"""
-        queryset = self.filter_queryset(self.get_queryset())
-        user = self.request.user
-        if user.is_authenticated:
-            queryset = queryset.filter(
-                db.Q(accesses__user=user)
-                | db.Q(accesses__team__in=user.teams)
-                | db.Q(is_public=True)
-            )
-        else:
-            queryset = queryset.filter(is_public=True)
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return drf.response.Response(serializer.data)
-
-
 class InvitationViewset(
     drf.mixins.CreateModelMixin,
     drf.mixins.ListModelMixin,
