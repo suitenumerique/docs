@@ -4,7 +4,6 @@ import * as Y from 'yjs';
 
 import { useUpdateDoc } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
-import { isFirefox } from '@/utils/userAgent';
 
 import { toBase64 } from '../utils';
 
@@ -62,24 +61,8 @@ export const useSaveDoc = (
   const router = useRouter();
 
   useEffect(() => {
-    const onSave = (e?: Event) => {
-      const isSaving = saveDoc();
-
-      /**
-       * Firefox does not trigger the request every time the user leaves the page.
-       * Plus the request is not intercepted by the service worker.
-       * So we prevent the default behavior to have the popup asking the user
-       * if he wants to leave the page, by adding the popup, we let the time to the
-       * request to be sent, and intercepted by the service worker (for the offline part).
-       */
-      if (
-        isSaving &&
-        typeof e !== 'undefined' &&
-        e.preventDefault &&
-        isFirefox()
-      ) {
-        e.preventDefault();
-      }
+    const onSave = () => {
+      saveDoc();
     };
 
     // Save every minute

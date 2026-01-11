@@ -14,19 +14,20 @@ and this project adheres to
 - 🔒(helm) Set default security context #1750
 - ✨(backend) use langfuse to monitor AI actions
 
-### Fixed 
-
-- ✅(backend) reduce flakiness on backend test #1769
-- 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
-
-### Security
-
-- 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
-
 ### Changed
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) make html export accessible to screen reader users #1743
+
+### Fixed 
+
+- ✅(backend) reduce flakiness on backend test #1769
+- 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
+- 🚸(frontend) remove blocking modal on save in Firefox #1787
+
+### Security
+
+- 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
 
 ## [4.3.0] - 2026-01-05
 

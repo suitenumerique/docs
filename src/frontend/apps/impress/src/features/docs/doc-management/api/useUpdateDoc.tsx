@@ -24,6 +24,7 @@ export const updateDoc = async ({
     body: JSON.stringify({
       ...params,
     }),
+    keepalive: true,
   });
 
   if (!response.ok) {
