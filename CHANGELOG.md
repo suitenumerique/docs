@@ -38,6 +38,7 @@ and this project adheres to
 - ✨(helm) redirecting system #1697
 - 📱(frontend) add comments for smaller device #1737
 - ✨(project) add custom js support via config #1759
+- ✨(backend) manage reconciliation requests for user accounts #1708
 
 ### Changed
 
