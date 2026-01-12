@@ -1,0 +1,108 @@
+{{- if .Values.docSpec.enabled -}}
+{{- $envVars := include "impress.common.env" (list . .Values.docSpec) -}}
+{{- $fullName := include "impress.docSpec.fullname" . -}}
+{{- $component := "docspec" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  replicas: {{ .Values.docSpec.replicas }}
+  selector:
+    matchLabels:
+      {{- include "impress.common.selectorLabels" (list . $component) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "impress.common.selectorLabels" (list . $component) | nindent 8 }}
+    spec:
+      {{- if $.Values.image.credentials }}
+      imagePullSecrets:
+        - name: {{ include "impress.secret.dockerconfigjson.name" (dict "fullname" (include "impress.fullname" .) "imageCredentials" $.Values.image.credentials) }}
+      {{- end}}
+      containers:
+        - name: {{ .Chart.Name }}-docspec
+          image: "{{ .Values.docSpec.image.repository }}:{{ .Values.docSpec.image.tag }}"
+          imagePullPolicy: {{ .Values.docSpec.image.pullPolicy }}
+          {{- with .Values.docSpec.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.docSpec.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if $envVars }}
+          env:
+            {{- $envVars | indent 12 }}
+          {{- end }}
+          {{- with .Values.docSpec.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.docSpec.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.docSpec.probes.liveness }}
+          livenessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.docSpec.probes.liveness (dict "targetPort" .Values.docSpec.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.docSpec.probes.readiness }}
+          readinessProbe:
+            {{- include "impress.probes.abstract" (merge .Values.docSpec.probes.readiness (dict "targetPort" .Values.docSpec.service.targetPort )) | nindent 12 }}
+          {{- end }}
+          {{- with .Values.docSpec.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.docSpec.extraVolumeMounts }}
+          volumeMounts:
+            {{- range .Values.docSpec.extraVolumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+      {{- with .Values.docSpec.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.docSpec.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.docSpec.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.docSpec.extraVolumes }}
+      volumes:
+        {{- range .Values.docSpec.extraVolumes }}
+        - name: {{ .name }}
+          {{- if .persistentVolumeClaim }}
+          persistentVolumeClaim:
+            {{- toYaml .persistentVolumeClaim | nindent 12 }}
+          {{- else if .emptyDir }}
+          emptyDir:
+            {{- toYaml .emptyDir | nindent 12 }}
+          {{- else if .configMap }}
+          configMap:
+            {{- toYaml .configMap | nindent 12 }}
+          {{- else if .secret }}
+          secret:
+            {{- toYaml .secret | nindent 12 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+{{- end }}
