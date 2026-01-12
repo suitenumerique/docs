@@ -1,5 +1,6 @@
 """Y-Provider API services."""
 
+import logging
 import typing
 from base64 import b64encode
 
@@ -8,6 +9,8 @@ from django.conf import settings
 import requests
 
 from core.services import mime_types
+
+logger = logging.getLogger(__name__)
 
 
 class ConversionError(Exception):
@@ -66,6 +69,13 @@ class DocSpecConverter:
             timeout=settings.CONVERSION_API_TIMEOUT,
             verify=settings.CONVERSION_API_SECURE,
         )
+        if not response.ok:
+            logger.error(
+                "DocSpec API error: url=%s, status=%d, response=%s",
+                url,
+                response.status_code,
+                response.text[:200] if response.text else "empty",
+            )
         response.raise_for_status()
         return response
 
@@ -82,6 +92,7 @@ class DocSpecConverter:
         try:
             return self._request(settings.DOCSPEC_API_URL, data, content_type).content
         except requests.RequestException as err:
+            logger.exception("DocSpec service error: url=%s", settings.DOCSPEC_API_URL)
             raise ServiceUnavailableError(
                 "Failed to connect to DocSpec conversion service",
             ) from err
@@ -109,6 +120,13 @@ class YdocConverter:
             timeout=settings.CONVERSION_API_TIMEOUT,
             verify=settings.CONVERSION_API_SECURE,
         )
+        if not response.ok:
+            logger.error(
+                "Y-Provider API error: url=%s, status=%d, response=%s",
+                url,
+                response.status_code,
+                response.text[:200] if response.text else "empty",
+            )
         response.raise_for_status()
         return response
 
@@ -118,13 +136,9 @@ class YdocConverter:
         if not data:
             raise ValidationError("Input data cannot be empty")
 
+        url = f"{settings.Y_PROVIDER_API_BASE_URL}{settings.CONVERSION_API_ENDPOINT}/"
         try:
-            response = self._request(
-                f"{settings.Y_PROVIDER_API_BASE_URL}{settings.CONVERSION_API_ENDPOINT}/",
-                data,
-                content_type,
-                accept,
-            )
+            response = self._request(url, data, content_type, accept)
             if accept == mime_types.YJS:
                 return b64encode(response.content).decode("utf-8")
             if accept in {mime_types.MARKDOWN, "text/html"}:
@@ -133,6 +147,7 @@ class YdocConverter:
                 return response.json()
             raise ValidationError("Unsupported format")
         except requests.RequestException as err:
+            logger.exception("Y-Provider service error: url=%s", url)
             raise ServiceUnavailableError(
                 f"Failed to connect to YDoc conversion service {content_type}, {accept}",
             ) from err

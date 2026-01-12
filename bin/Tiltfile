@@ -8,6 +8,7 @@ docker_build(
     dockerfile='../Dockerfile',
     only=['./src/backend', './src/mail', './docker'],
     target = 'backend-production',
+    build_args={'DOCKER_USER': '1000:1000'},
     live_update=[
         sync('../src/backend', '/app'),
         run(
@@ -23,6 +24,7 @@ docker_build(
     dockerfile='../src/frontend/servers/y-provider/Dockerfile',
     only=['./src/frontend/', './docker/', './.dockerignore'],
     target = 'y-provider',
+    build_args={'DOCKER_USER': '1000:1000'},
     live_update=[
         sync('../src/frontend/servers/y-provider/src', '/home/frontend/servers/y-provider/src'),
     ]
@@ -34,6 +36,7 @@ docker_build(
     dockerfile='../src/frontend/Dockerfile',
     only=['./src/frontend', './docker', './.dockerignore'],
     target = 'impress',
+    build_args={'DOCKER_USER': '1000:1000'},
     live_update=[
         sync('../src/frontend', '/home/frontend'),
     ]
