@@ -224,7 +224,9 @@ export const updateDocTitle = async (page: Page, title: string) => {
   await expect(input).toHaveText('');
   await expect(input).toBeVisible();
   await input.click();
-  await input.fill(title);
+  await input.fill(title, {
+    force: true,
+  });
   await input.click();
   await input.blur();
   await verifyDocName(page, title);
