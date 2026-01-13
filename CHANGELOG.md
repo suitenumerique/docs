@@ -12,7 +12,13 @@ and this project adheres to
 - ✅(export) add PDF regression tests #1762
 - 📝(docs) Add language configuration documentation #1757
 - 🔒(helm) Set default security context #1750
-- ✨(backend) use langfuse to monitor AI actions
+- ✨(backend) use langfuse to monitor AI actions #1776
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) make html export accessible to screen reader users #1743
+  - ♿(frontend) add missing label and fix Axes errors to improve a11y #1693
 
 ### Fixed
 
@@ -24,12 +30,7 @@ and this project adheres to
 ### Security
 
 - 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
-
-### Changed
-
-- ♿(frontend) improve accessibility:
-  - ♿(frontend) make html export accessible to screen reader users #1743
-  - ♿(frontend) add missing label and fix Axes errors to improve a11y #1693
+- 🔒️(frontend) fix props vulnerability in Interlinking #1792
 
 ## [4.3.0] - 2026-01-05
 
