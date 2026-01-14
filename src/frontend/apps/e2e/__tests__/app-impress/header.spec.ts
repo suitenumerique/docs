@@ -59,45 +59,90 @@ test.describe('Header', () => {
     ).toBeVisible();
 
     await expect(header.getByText('English')).toBeVisible();
-
-    await expect(
-      header.getByRole('button', {
-        name: 'Les services de La Suite numérique',
-      }),
-    ).toBeVisible();
   });
 
-  test('checks La Gauffre interaction', async ({ page }) => {
+  test('checks a custom waffle', async ({ page }) => {
     await overrideConfig(page, {
-      FRONTEND_THEME: 'dsfr',
+      theme_customization: {
+        waffle: {
+          data: {
+            services: [
+              {
+                name: 'Docs E2E Custom 1',
+                url: 'https://docs.numerique.gouv.fr/',
+                maturity: 'stable',
+                logo: 'https://lasuite.numerique.gouv.fr/assets/products/docs.svg',
+              },
+              {
+                name: 'Docs E2E Custom 2',
+                url: 'https://docs.numerique.gouv.fr/',
+                maturity: 'stable',
+                logo: 'https://lasuite.numerique.gouv.fr/assets/products/docs.svg',
+              },
+            ],
+          },
+          showMoreLimit: 9,
+        },
+      },
     });
     await page.goto('/');
 
     const header = page.locator('header').first();
 
     await expect(
-      header.getByRole('button', {
-        name: 'Les services de La Suite numérique',
-      }),
+      header.getByRole('button', { name: 'Digital LaSuite services' }),
     ).toBeVisible();
 
     /**
-     * La gaufre load a js file from a remote server,
+     * The Waffle loads a js file from a remote server,
+     * it takes some time to load the file and have the interaction available
+     */
+    await page.waitForTimeout(1500);
+
+    await header
+      .getByRole('button', { name: 'Digital LaSuite services' })
+      .click();
+
+    await expect(
+      page.getByRole('link', { name: 'Docs E2E Custom 1' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Docs E2E Custom 2' }),
+    ).toBeVisible();
+  });
+
+  test('checks the waffle dsfr', async ({ page }) => {
+    await overrideConfig(page, {
+      theme_customization: {
+        waffle: {
+          apiUrl: 'https://lasuite.numerique.gouv.fr/api/services',
+          showMoreLimit: 9,
+        },
+      },
+    });
+    await page.goto('/');
+
+    const header = page.locator('header').first();
+
+    await expect(
+      header.getByRole('button', { name: 'Digital LaSuite services' }),
+    ).toBeVisible();
+
+    /**
+     * The Waffle loads a js file from a remote server,
      * it takes some time to load the file and have the interaction available
      */
     await page.waitForTimeout(1500);
 
     await header
       .getByRole('button', {
-        name: 'Les services de La Suite numérique',
+        name: 'Digital LaSuite services',
       })
       .click();
 
-    await expect(
-      page.getByRole('link', { name: 'France Transfert' }),
-    ).toBeVisible();
-
+    await expect(page.getByRole('link', { name: 'Tchap' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Grist' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Visio' })).toBeVisible();
   });
 });
 
@@ -124,11 +169,6 @@ test.describe('Header mobile', () => {
 
     await expect(header.getByLabel('Open the header menu')).toBeVisible();
     await expect(header.getByTestId('header-icon-docs')).toBeVisible();
-    await expect(
-      header.getByRole('button', {
-        name: 'Les services de La Suite numérique',
-      }),
-    ).toBeVisible();
   });
 });
 

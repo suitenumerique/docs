@@ -1,4 +1,6 @@
-# Runtime Theming 🎨
+# Customization Guide 🛠  ️
+
+## Runtime Theming 🎨
 
 ### How to Use
 
@@ -32,7 +34,7 @@ Then, set the `FRONTEND_CSS_URL` environment variable to the URL of your custom 
 
 ----
 
-# Runtime JavaScript Injection 🚀
+## Runtime JavaScript Injection 🚀
 
 ### How to Use
 
@@ -87,7 +89,7 @@ Then, set the `FRONTEND_JS_URL` environment variable to the URL of your custom J
 
 ----
 
-# **Your Docs icon** 📝
+## **Your Docs icon** 📝
 
 You can add your own Docs icon in the header from the theme customization file.
 
@@ -105,7 +107,7 @@ This configuration is optional. If not set, the default icon will be used.
 
 ----
 
-# **Footer Configuration** 📝
+## **Footer Configuration** 📝
 
 The footer is configurable from the theme customization file.
 
@@ -128,7 +130,7 @@ Below is a visual example of a configured footer ⬇️:
 
 ----
 
-# **Custom Translations** 📝
+## **Custom Translations** 📝
 
 The translations can be partially overridden from the theme customization file.
 
@@ -141,3 +143,35 @@ THEME_CUSTOMIZATION_FILE_PATH=<path>
 ### Example of JSON
 
 The json must follow some rules: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+
+----
+
+## **Waffle Configuration** 🧇
+
+The Waffle (La Gaufre) is a widget that displays a grid of services.
+
+![Waffle Configuration Example](./assets/waffle.png)
+
+### Settings 🔧
+
+```shellscript
+THEME_CUSTOMIZATION_FILE_PATH=<path>
+```
+
+### Configuration
+
+The Waffle can be configured in the theme customization file with the `waffle` key.
+
+### Available Properties
+
+See: [LaGaufreV2Props](https://github.com/suitenumerique/ui-kit/blob/main/src/components/la-gaufre/LaGaufreV2.tsx#L49)
+
+### Complete Example
+
+From the theme customization file: https://github.com/suitenumerique/docs/blob/main/src/helm/env.d/dev/configuration/theme/demo.json
+
+### Behavior
+
+- If `data.services` is provided, the Waffle will display those services statically
+- If no data is provided, services can be fetched dynamically from an API endpoint thanks to the `apiUrl` property
+

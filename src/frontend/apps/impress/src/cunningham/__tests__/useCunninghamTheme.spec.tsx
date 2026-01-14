@@ -5,7 +5,7 @@ describe('<useCunninghamTheme />', () => {
     expect(useCunninghamTheme.getState().componentTokens.logo?.src).toBe('');
 
     // Change theme
-    useCunninghamTheme.getState().setTheme('dsfr-light');
+    useCunninghamTheme.getState().setTheme('dsfr');
 
     const { componentTokens } = useCunninghamTheme.getState();
     const logo = componentTokens.logo;

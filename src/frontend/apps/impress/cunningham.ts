@@ -26,7 +26,6 @@ const themeWhiteLabelLight = getUIKitThemesFromGlobals(whiteLabelGlobals, {
         widthHeader: '',
         widthFooter: '',
       },
-      'la-gaufre': false,
       'home-proconnect': false,
       icon: {
         src: '/assets/icon-docs.svg',
@@ -64,7 +63,6 @@ const themesDSFRLight = getUIKitThemesFromGlobals(dsfrGlobals, {
         widthFooter: '220px',
         alt: 'Gouvernement Logo',
       },
-      'la-gaufre': true,
       'home-proconnect': true,
       icon: {
         src: '/assets/icon-docs-dsfr.svg',

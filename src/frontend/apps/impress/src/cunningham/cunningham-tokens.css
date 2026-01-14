@@ -893,7 +893,6 @@
   --c--components--logo--alt: ;
   --c--components--logo--widthheader: ;
   --c--components--logo--widthfooter: ;
-  --c--components--la-gaufre: false;
   --c--components--home-proconnect: false;
   --c--components--icon--src: /assets/icon-docs.svg;
   --c--components--icon--width: 32px;
@@ -2594,7 +2593,6 @@
   --c--components--logo--alt: gouvernement logo;
   --c--components--logo--widthHeader: 110px;
   --c--components--logo--widthFooter: 220px;
-  --c--components--la-gaufre: true;
   --c--components--home-proconnect: true;
   --c--components--icon--src: /assets/icon-docs-dsfr.svg;
   --c--components--icon--width: 32px;

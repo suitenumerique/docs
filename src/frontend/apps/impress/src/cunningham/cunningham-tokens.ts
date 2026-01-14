@@ -677,7 +677,6 @@ export const tokens = {
           info: { 'background-color': '#D5E4F3', color: '#005BC0' },
         },
         logo: { src: '', alt: '', widthHeader: '', widthFooter: '' },
-        'la-gaufre': false,
         'home-proconnect': false,
         icon: { src: '/assets/icon-docs.svg', width: '32px', height: 'auto' },
         favicon: {
@@ -1973,7 +1972,6 @@ export const tokens = {
           widthHeader: '110px',
           widthFooter: '220px',
         },
-        'la-gaufre': true,
         'home-proconnect': true,
         icon: {
           src: '/assets/icon-docs-dsfr.svg',
