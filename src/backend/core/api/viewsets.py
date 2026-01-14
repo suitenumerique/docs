@@ -225,10 +225,11 @@ class UserViewSet(
         # For performance reasons we filter first by similarity, which relies on an
         # index, then only calculate precise similarity scores for sorting purposes.
         #
-        # Additionally we reorder results to prefer users "closer" to the current
+        # Additionally results are reordered to prefer users "closer" to the current
         # user: users they recently shared documents with, same full domain, same
         # partial domain (e.g. both end with "gouv.fr"). To achieve that without
-        # complex SQL we build a proximity score in Python and returnthe top N results.
+        # complex SQL, we build a proximity score in Python and return the
+        # top N results.
         current_user = self.request.user
         shared_map = users_sharing_documents_with(current_user)
 
@@ -287,9 +288,6 @@ class UserViewSet(
                 sim,
             )
 
-        # Sort candidates by the key descending and return top N as a queryset-like
-        # list. Keep return type consistent with previous behavior (QuerySet slice
-        # was returned) by returning a list of model instances.
         candidates.sort(key=_sort_key, reverse=True)
 
         return candidates[: settings.API_USERS_LIST_LIMIT]
@@ -2295,7 +2293,8 @@ class InvitationViewset(
                 )
                 # Abilities are computed based on logged-in user's role and
                 # the user role on each document access
-                .annotate(user_roles=db.Subquery(user_roles_query)).distinct()
+                .annotate(user_roles=db.Subquery(user_roles_query))
+                .distinct()
             )
         return queryset
 

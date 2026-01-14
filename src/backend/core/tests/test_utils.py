@@ -111,6 +111,7 @@ def test_utils_extract_email_domain_parts_when_email_is_valid():
 
 
 def test_utils_extract_email_domain_parts_when_email_is_empty():
+    """Test extraction of email domain parts in case of an empty email."""
     empty_email = ""
     full_domain, partial_domain = utils.extract_email_domain_parts(empty_email)
     assert full_domain == ""

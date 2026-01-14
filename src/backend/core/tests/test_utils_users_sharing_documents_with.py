@@ -1,3 +1,7 @@
+"""
+Unit tests for the users_sharing_documents_with utility function.
+"""
+
 from django.utils import timezone
 
 import pytest
