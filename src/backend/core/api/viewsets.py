@@ -628,12 +628,29 @@ class DocumentViewSet(
         """Get list of favorite documents for the current user."""
         user = request.user
 
+        queryset = self.get_queryset()
+
+        # Among the results, we may have documents that are ancestors/descendants
+        # of each other. In this case we want to keep only the highest ancestors.
+        root_paths = utils.filter_root_paths(
+            queryset.order_by("path").values_list("path", flat=True),
+            skip_sorting=True,
+        )
+
+        path_list = db.Q()
+        for path in root_paths:
+            path_list |= db.Q(path__startswith=path)
+
         favorite_documents_ids = models.DocumentFavorite.objects.filter(
             user=user
         ).values_list("document_id", flat=True)
 
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.queryset.filter(path_list)
         queryset = queryset.filter(id__in=favorite_documents_ids)
+        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate(
+            is_favorite=db.Value(True, output_field=db.BooleanField())
+        )
         return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(

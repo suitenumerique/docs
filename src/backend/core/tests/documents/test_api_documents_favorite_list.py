@@ -83,3 +83,34 @@ def test_api_document_favorite_list_authenticated_with_favorite():
             }
         ],
     }
+
+
+def test_api_document_favorite_list_with_favorite_children():
+    """Authenticated users should receive their favorite documents, including children."""
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(creator=user, users=[user])
+    children = factories.DocumentFactory.create_batch(
+        2, parent=root, favorited_by=[user]
+    )
+
+    access = factories.UserDocumentAccessFactory(
+        user=user, role=models.RoleChoices.READER, document__favorited_by=[user]
+    )
+
+    other_root = factories.DocumentFactory(creator=user, users=[user])
+    factories.DocumentFactory.create_batch(2, parent=other_root)
+
+    response = client.get("/api/v1.0/documents/favorite_list/")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 3
+
+    content = response.json()["results"]
+
+    assert content[0]["id"] == str(children[0].id)
+    assert content[1]["id"] == str(children[1].id)
+    assert content[2]["id"] == str(access.document.id)
