@@ -4,7 +4,7 @@ import { Box } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonTogglePanel, Title } from '@/features/header/';
-import { LaGaufre } from '@/features/header/components/LaGaufre';
+import { Waffle } from '@/features/header/components/Waffle';
 import { LanguagePicker } from '@/features/language';
 import { useResponsiveStore } from '@/stores';
 
@@ -81,7 +81,7 @@ export const HomeHeader = () => {
       {!isSmallMobile && (
         <Box $direction="row" $gap="1rem" $align="center">
           <LanguagePicker />
-          <LaGaufre />
+          <Waffle />
         </Box>
       )}
     </Box>

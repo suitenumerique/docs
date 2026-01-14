@@ -12,8 +12,8 @@ import { useResponsiveStore } from '@/stores';
 import { HEADER_HEIGHT } from '../conf';
 
 import { ButtonTogglePanel } from './ButtonTogglePanel';
-import { LaGaufre } from './LaGaufre';
 import { Title } from './Title';
+import { Waffle } from './Waffle';
 
 export const Header = () => {
   const { t } = useTranslation();
@@ -85,7 +85,7 @@ export const Header = () => {
         </StyledLink>
         {!isDesktop ? (
           <Box $direction="row" $gap={spacingsTokens['sm']}>
-            <LaGaufre />
+            <Waffle />
           </Box>
         ) : (
           <Box
@@ -96,7 +96,7 @@ export const Header = () => {
           >
             <ButtonLogin />
             <LanguagePicker />
-            <LaGaufre />
+            <Waffle />
           </Box>
         )}
       </Box>

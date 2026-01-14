@@ -114,9 +114,6 @@ test.describe('Home page', () => {
     await expect(languageButton).toBeVisible();
 
     await expect(
-      header.getByRole('button', { name: 'Les services de La Suite numé' }),
-    ).toBeVisible();
-    await expect(
       header.getByRole('img', { name: 'Gouvernement Logo' }),
     ).toBeVisible();
     await expect(header.getByTestId('header-icon-docs')).toBeVisible();

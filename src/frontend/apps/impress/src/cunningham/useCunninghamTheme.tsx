@@ -28,7 +28,7 @@ const getMergedTokens = (theme: Theme) => {
   return merge({}, tokens.themes['default'], tokens.themes[theme]);
 };
 
-const DEFAULT_THEME: Theme = 'generic';
+const DEFAULT_THEME: Theme = 'default';
 const defaultTokens = getMergedTokens(DEFAULT_THEME);
 
 const initialState: ThemeStore = {

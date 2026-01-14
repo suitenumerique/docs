@@ -139,5 +139,30 @@
       "src": "/assets/icon-docs.svg",
       "width": "32px"
     }
+  },
+  "waffle": {
+    "data": {
+      "services": [
+        {
+          "name": "Docs",
+          "url": "https://docs.numerique.gouv.fr/",
+          "maturity": "stable",
+          "logo": "https://lasuite.numerique.gouv.fr/assets/products/docs.svg"
+        },
+        {
+          "name": "Visio",
+          "url": "https://visio.numerique.gouv.fr/",
+          "maturity": "stable",
+          "logo": "https://lasuite.numerique.gouv.fr/assets/products/visio.svg"
+        },
+        {
+          "name": "Fichiers",
+          "url": "https://fichiers.numerique.gouv.fr/",
+          "maturity": "stable",
+          "logo": "https://lasuite.numerique.gouv.fr/assets/products/fichiers.svg"
+        }
+      ]
+    },
+    "showMoreLimit": 9
   }
 }
