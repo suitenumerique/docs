@@ -38,6 +38,11 @@ and this project adheres to
 - 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
 - 🔒️(frontend) fix props vulnerability in Interlinking #1792
 
+### Removed
+
+- 🔥(project) remove all code related to template #1780
+
+
 ## [4.3.0] - 2026-01-05
 
 ### Added
