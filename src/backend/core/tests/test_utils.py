@@ -100,3 +100,18 @@ def test_utils_get_ancestor_to_descendants_map_multiple_paths():
         "000100020005": {"000100020005"},
         "00010003": {"00010003"},
     }
+
+
+def test_utils_extract_email_domain_parts_when_email_is_valid():
+    """Test extraction of email domain parts."""
+    email = "firstname.lastname@numerique.gouv.fr"
+    full_domain, partial_domain = utils.extract_email_domain_parts(email)
+    assert full_domain == "numerique.gouv.fr"
+    assert partial_domain == "gouv.fr"
+
+
+def test_utils_extract_email_domain_parts_when_email_is_empty():
+    empty_email = ""
+    full_domain, partial_domain = utils.extract_email_domain_parts(empty_email)
+    assert full_domain == ""
+    assert partial_domain == ""
