@@ -28,7 +28,7 @@ dependencies = [
     "beautifulsoup4==4.14.3",
     "boto3==1.42.17",
     "Brotli==1.2.0",
-    "celery[redis]==5.6.0",
+    "celery[redis]==5.5.3",
     "django-configurations==2.5.1",
     "django-cors-headers==4.9.0",
     "django-countries==8.2.0",
