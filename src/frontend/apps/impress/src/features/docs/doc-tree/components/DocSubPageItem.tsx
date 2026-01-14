@@ -18,6 +18,7 @@ import {
   useTrans,
 } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
+import { useKeyboardActivation } from '@/hooks/useKeyboardActivation';
 import { useResponsiveStore } from '@/stores';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
@@ -97,6 +98,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const isDisabled = !!doc.deleted_at;
   const actionsRef = useRef<HTMLDivElement>(null);
   const buttonOptionRef = useRef<HTMLDivElement | null>(null);
+  const isActive = node.isFocused;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // F2: focus first action button
@@ -107,6 +109,14 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       return;
     }
   };
+
+  useKeyboardActivation(
+    ['Enter'],
+    isActive && !menuOpen,
+    handleActivate,
+    true,
+    '.c__tree-view',
+  );
 
   const handleActionsOpenChange = (isOpen: boolean) => {
     setMenuOpen(isOpen);

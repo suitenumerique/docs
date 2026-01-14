@@ -57,6 +57,11 @@ and this project adheres to
 - 🐛(frontend) fix tables deletion #1739
 - 🐛(frontend) fix children not display when first resize #1753
 
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+
 ## [4.2.0] - 2025-12-17
 
 ### Added
