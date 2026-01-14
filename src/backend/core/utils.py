@@ -4,10 +4,14 @@ import base64
 import re
 from collections import defaultdict
 
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import models as db
+
 import pycrdt
 from bs4 import BeautifulSoup
 
-from core import enums
+from core import enums, models
 
 
 def get_ancestor_to_descendants_map(paths, steplen):
@@ -96,3 +100,39 @@ def extract_attachments(content):
 
     xml_content = base64_yjs_to_xml(content)
     return re.findall(enums.MEDIA_STORAGE_URL_EXTRACT, xml_content)
+
+
+def users_sharing_documents_with(user):
+    """
+    Returns a map of users sharing documents with the given user,
+    sorted by last shared date.
+    """
+
+    user_docs_qs = models.DocumentAccess.objects.filter(user=user).values_list(
+        "document_id", flat=True
+    )
+    shared_qs = (
+        models.DocumentAccess.objects.filter(document_id__in=user_docs_qs)
+        .exclude(user=user)
+        .values("user")
+        .annotate(last_shared=db.Max("created_at"))
+    )
+    return {item["user"]: item["last_shared"] for item in shared_qs}
+
+
+def extract_email_domain_parts(email):
+    """
+    Extracts the full domain and partial domain from an email address as a tuple.
+    The partial domain consists of the last two segments of the domain, eg. "gouv.fr".
+
+    If the email is invalid (eg, is an empty string), returns empty strings.
+    """
+    try:
+        validate_email(email)
+    except ValidationError:
+        return "", ""
+
+    domain = email.split("@", 1)[1].lower()
+    parts = domain.split(".")
+    partial_domain = ".".join(parts[-2:]) if len(parts) >= 2 else domain
+    return domain, partial_domain
