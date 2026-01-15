@@ -2,8 +2,14 @@ import { MouseEvent, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { BoxButton, BoxButtonType, Text, TextType } from '@/components';
-import { EmojiPicker, emojidata } from '@/docs/doc-editor/';
+import {
+  BoxButton,
+  BoxButtonType,
+  EmojiPicker,
+  Text,
+  TextType,
+  emojidata,
+} from '@/components';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
 
