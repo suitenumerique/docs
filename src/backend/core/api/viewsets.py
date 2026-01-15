@@ -264,7 +264,7 @@ class ReconciliationConfirmView(APIView):
         """
         try:
             # validate UUID
-            uuid_obj = uuid.UUID(confirmation_id)
+            uuid_obj = uuid.UUID(str(confirmation_id))
         except ValueError:
             return Response(
                 {"detail": "Badly formatted confirmation id"},
