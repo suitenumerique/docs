@@ -93,7 +93,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n } = useTranslation();
-  const lang = i18n.resolvedLanguage;
+  let lang = i18n.resolvedLanguage;
+  if (!lang || !(lang in locales)) {
+    lang = 'en';
+  }
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
 
