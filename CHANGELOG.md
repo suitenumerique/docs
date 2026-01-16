@@ -10,6 +10,11 @@ and this project adheres to
 
 - ✅(e2e) fix e2e test for other browsers #1799
 
+### Security
+
+- 🔒️(trivy) fix vulnerability about jaraco.context #1806
+
+
 ## [4.4.0] - 2026-01-13
 
 ### Added
