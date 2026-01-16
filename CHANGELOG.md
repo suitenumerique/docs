@@ -21,6 +21,11 @@ and this project adheres to
 - ♿(frontend) improve accessibility:
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
 
+### Security
+
+- 🔒️(trivy) fix vulnerability about jaraco.context #1806
+
+
 ## [4.4.0] - 2026-01-13
 
 ### Added
