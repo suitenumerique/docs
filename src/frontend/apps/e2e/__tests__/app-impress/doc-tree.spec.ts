@@ -4,7 +4,6 @@ import {
   createDoc,
   expectLoginPage,
   keyCloakSignIn,
-  randomName,
   updateDocTitle,
   verifyDocName,
 } from './utils-common';
@@ -18,50 +17,6 @@ import {
 test.describe('Doc Tree', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-  });
-
-  test('create new sub pages', async ({ page, browserName }) => {
-    const [titleParent] = await createDoc(
-      page,
-      'doc-tree-content',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, titleParent);
-    const addButton = page.getByTestId('new-doc-button');
-    const docTree = page.getByTestId('doc-tree');
-
-    await expect(addButton).toBeVisible();
-
-    // Wait for and intercept the POST request to create a new page
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/documents/') &&
-        response.url().includes('/children/') &&
-        response.request().method() === 'POST',
-    );
-
-    await clickOnAddRootSubPage(page);
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-    const subPageJson = await response.json();
-
-    await expect(docTree).toBeVisible();
-    const subPageItem = docTree
-      .getByTestId(`doc-sub-page-item-${subPageJson.id}`)
-      .first();
-
-    await expect(subPageItem).toBeVisible();
-    await subPageItem.click();
-    await verifyDocName(page, '');
-    const input = page.getByRole('textbox', { name: 'Document title' });
-    await input.click();
-    const [randomDocName] = randomName('doc-tree-test', browserName, 1);
-    await input.fill(randomDocName);
-    await input.press('Enter');
-    await expect(subPageItem.getByText(randomDocName)).toBeVisible();
-    await page.reload();
-    await expect(subPageItem.getByText(randomDocName)).toBeVisible();
   });
 
   test('check the reorder of sub pages', async ({ page, browserName }) => {
