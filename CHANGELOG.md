@@ -8,7 +8,7 @@ and this project adheres to
 
 ### Added
 
-- ✨ Import of documents #7765
+- ✨ Import of documents #1609
 
 ### Fixed
 

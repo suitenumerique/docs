@@ -33,11 +33,18 @@ export const DocsGrid = ({
   const { t } = useTranslation();
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToastProvider();
+
+  const MAX_FILE_SIZE = {
+    bytes: 10 * 1024 * 1024, // 10 MB
+    text: '10MB',
+  };
+
   const { getRootProps, getInputProps, open } = useDropzone({
     accept: {
       [ContentTypesAllowed.Docx]: ['.docx'],
       [ContentTypesAllowed.Markdown]: ['.md'],
     },
+    maxSize: MAX_FILE_SIZE.bytes,
     onDrop(acceptedFiles) {
       setIsDragOver(false);
       for (const file of acceptedFiles) {
@@ -51,15 +58,34 @@ export const DocsGrid = ({
       setIsDragOver(false);
     },
     onDropRejected(fileRejections) {
-      toast(
-        t(
-          `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
-          {
-            documentName: fileRejections?.[0].file.name || '',
-          },
-        ),
-        VariantType.ERROR,
-      );
+      fileRejections.forEach((rejection) => {
+        const isFileTooLarge = rejection.errors.some(
+          (error) => error.code === 'file-too-large',
+        );
+
+        if (isFileTooLarge) {
+          toast(
+            t(
+              'The document "{{documentName}}" is too large. Maximum file size is {{maxFileSize}}.',
+              {
+                documentName: rejection.file.name,
+                maxFileSize: MAX_FILE_SIZE.text,
+              },
+            ),
+            VariantType.ERROR,
+          );
+        } else {
+          toast(
+            t(
+              `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
+              {
+                documentName: rejection.file.name,
+              },
+            ),
+            VariantType.ERROR,
+          );
+        }
+      });
     },
     noClick: true,
   });
