@@ -1,0 +1,20 @@
+{{- if .Values.docSpec.enabled -}}
+{{- $fullName := include "impress.docSpec.fullname" . -}}
+{{- $component := "docspec" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+spec:
+  type: {{ .Values.docSpec.service.type }}
+  ports:
+    - port: {{ .Values.docSpec.service.port }}
+      targetPort: {{ .Values.docSpec.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}
+{{- end }}

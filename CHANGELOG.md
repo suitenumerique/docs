@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨ Import of documents #1609
+
 ### Fixed
 
 - ✅(e2e) fix e2e test for other browsers #1799

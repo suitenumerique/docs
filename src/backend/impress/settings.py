@@ -719,6 +719,9 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    # DocSpec API microservice
+    DOCSPEC_API_URL = values.Value(environ_name="DOCSPEC_API_URL", environ_prefix=None)
+
     # Conversion endpoint
     CONVERSION_API_ENDPOINT = values.Value(
         default="convert",
@@ -1063,6 +1066,9 @@ class Production(Base):
 
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
+
+    # Conversion API: Always verify SSL in production
+    CONVERSION_API_SECURE = True
 
     CACHES = {
         "default": {

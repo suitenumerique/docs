@@ -701,3 +701,69 @@ yProvider:
 
   ## @param yProvider.serviceAccountName Optional service account name to use for yProvider pods
   serviceAccountName: null
+
+## @section docSpec
+docSpec:
+  ## @param docSpec.enabled Enable docSpec deployment
+  enabled: false
+
+  ## @param docSpec.image.repository Repository to use to pull docSpec container image
+  ## @param docSpec.image.tag docSpec container tag
+  ## @param docSpec.image.pullPolicy docSpec container image pull policy
+  image:
+    repository: ghcr.io/docspecio/api
+    pullPolicy: IfNotPresent
+    tag: "2.6.3"
+
+  ## @param docSpec.command Override the docSpec container command
+  command: []
+
+  ## @param docSpec.args Override the docSpec container args
+  args: []
+
+  ## @param docSpec.replicas Amount of docSpec replicas
+  replicas: 1
+
+  ## @param docSpec.securityContext Configure docSpec Pod security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  ## @param docSpec.envVars Configure docSpec container environment variables
+  envVars: {}
+
+  ## @param docSpec.service Configure docSpec service
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+
+  ## @param docSpec.probes Configure docSpec probes
+  probes:
+    liveness:
+      path: /health
+    readiness:
+      path: /health
+
+  ## @param docSpec.resources docSpec resources
+  resources: {}
+
+  ## @param docSpec.nodeSelector Node selector for the docSpec Pod
+  nodeSelector: {}
+
+  ## @param docSpec.tolerations Tolerations for the docSpec Pod
+  tolerations: []
+
+  ## @param docSpec.affinity Affinity for the docSpec Pod
+  affinity: {}
+
+  ## @param docSpec.extraVolumeMounts Additional volumes to mount on docSpec
+  extraVolumeMounts: []
+
+  ## @param docSpec.extraVolumes Additional volumes to mount on docSpec
+  extraVolumes: []
