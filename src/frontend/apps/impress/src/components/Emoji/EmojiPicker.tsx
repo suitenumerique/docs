@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
 
+export const PICKER_HEIGHT = 500;
+
 interface EmojiPickerProps {
   emojiData: EmojiMartData;
   onClickOutside: () => void;
@@ -21,7 +23,7 @@ export const EmojiPicker = ({
   const { i18n } = useTranslation();
 
   const pickerContent = (
-    <Box $position="absolute" $zIndex={1000} $margin="2rem 0 0 0">
+    <Box $position="absolute" $zIndex={1000}>
       <Picker
         data={emojiData}
         locale={i18n.resolvedLanguage}
