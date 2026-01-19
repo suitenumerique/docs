@@ -20,6 +20,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+  - ♿️(frontend) Keyboard focus Fixes for docs Tree/Editor #1816
 
 ## [4.4.0] - 2026-01-13
 

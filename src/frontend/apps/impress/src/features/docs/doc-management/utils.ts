@@ -38,3 +38,15 @@ export const getEmojiAndTitle = (title: string) => {
 
   return { emoji: null, titleWithoutEmoji: title };
 };
+
+export const cssSelectors = {
+  DOC_TITLE: '.--docs--doc-title-input[contenteditable="true"]',
+  DOC_TREE_ROOT: '[data-testid="doc-tree-root-item"]',
+  DOC_TREE: '[data-testid="doc-tree"]',
+  DOC_EDITOR_FOCUS: '.--docs--main-editor, .--docs--doc-title-input',
+  DOC_TREE_ROW: '.c__tree-view--row',
+  DOC_TREE_NODE: '.c__tree-view--node',
+  DOC_TREE_FOCUSED_NODE: '.c__tree-view--node.isFocused',
+  DOC_TREE_SELECTED_ROW: '.c__tree-view--row[aria-selected="true"]',
+  DOC_TREE_SELECTED_NODE: '.c__tree-view--node[aria-selected="true"]',
+} as const;

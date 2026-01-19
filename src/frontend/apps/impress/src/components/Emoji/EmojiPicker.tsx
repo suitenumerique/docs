@@ -12,6 +12,7 @@ interface EmojiPickerProps {
   onClickOutside: () => void;
   onEmojiSelect: ({ native }: { native: string }) => void;
   withOverlay?: boolean;
+  onEscape?: () => void;
 }
 
 export const EmojiPicker = ({
@@ -19,12 +20,17 @@ export const EmojiPicker = ({
   onClickOutside,
   onEmojiSelect,
   withOverlay = false,
+  onEscape,
 }: EmojiPickerProps) => {
   const { i18n } = useTranslation();
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
-      onClickOutside();
+      if (onEscape) {
+        onEscape();
+      } else {
+        onClickOutside();
+      }
     }
   };
 
