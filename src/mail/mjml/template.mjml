@@ -22,7 +22,7 @@
           <!-- Main Message -->
           <mj-text>
             {{message|capfirst}}
-            <a href="{{link}}">{{document_title}}</a>
+            <a href="{{link}}">{{link_label}}</a>
           </mj-text>
           <mj-button
             href="{{link}}"
@@ -30,7 +30,7 @@
             color="white"
             padding-bottom="30px"
           >
-            {% trans "Open"%}
+            {{button_label}}
           </mj-button>
           <mj-divider
             border-width="1px"

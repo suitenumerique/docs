@@ -18,6 +18,7 @@ and this project adheres to
 
 - ♿(frontend) improve accessibility:
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+- ✨(backend) add field for button label in email template #1817
 
 ## [4.4.0] - 2026-01-13
 
