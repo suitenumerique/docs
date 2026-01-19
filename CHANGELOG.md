@@ -13,6 +13,7 @@ and this project adheres to
 ### Fixed
 
 - ✅(e2e) fix e2e test for other browsers #1799
+- 🐛(frontend) add fallback for unsupported Blocknote languages #1810
 
 ### Changed
 
