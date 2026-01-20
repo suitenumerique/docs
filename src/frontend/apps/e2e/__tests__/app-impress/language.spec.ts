@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { TestLanguage, createDoc, waitForLanguageSwitch } from './utils-common';
+import {
+  TestLanguage,
+  createDoc,
+  overrideConfig,
+  waitForLanguageSwitch,
+} from './utils-common';
 import { openSuggestionMenu } from './utils-editor';
 
 test.describe('Language', () => {
@@ -107,6 +112,15 @@ test.describe('Language', () => {
     page,
     browserName,
   }) => {
+    await overrideConfig(page, {
+      LANGUAGES: [
+        ['en-us', 'English'],
+        ['fr-fr', 'Français'],
+        ['sv-se', 'Svenska'],
+      ],
+      LANGUAGE_CODE: 'en-us',
+    });
+
     await createDoc(page, 'doc-toolbar', browserName, 1);
 
     const { editor, suggestionMenu } = await openSuggestionMenu({ page });
@@ -125,6 +139,15 @@ test.describe('Language', () => {
     await openSuggestionMenu({ page });
     await expect(
       suggestionMenu.getByText('Titres', { exact: true }),
+    ).toBeVisible();
+
+    /**
+     * Swedish is not yet supported in the BlockNote locales, so it should fallback to English
+     */
+    await waitForLanguageSwitch(page, TestLanguage.Swedish);
+    await openSuggestionMenu({ page });
+    await expect(
+      suggestionMenu.getByText('Headings', { exact: true }),
     ).toBeVisible();
   });
 });

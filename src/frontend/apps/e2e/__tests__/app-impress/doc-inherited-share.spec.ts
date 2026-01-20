@@ -21,7 +21,7 @@ test.describe('Inherited share accesses', () => {
       `doc-share-member-row-user.test@${browserName}.test`,
     );
     await expect(user).toBeVisible();
-    await expect(user.getByText('E2E Chromium')).toBeVisible();
+    await expect(user.getByText(`E2E ${browserName}`)).toBeVisible();
     await expect(user.getByText('Owner')).toBeVisible();
 
     await page

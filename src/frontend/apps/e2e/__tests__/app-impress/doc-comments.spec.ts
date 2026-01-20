@@ -58,7 +58,7 @@ test.describe('Doc Comments', () => {
     await page.getByRole('button', { name: '👍' }).click();
 
     await expect(
-      thread.getByRole('img', { name: 'E2E Chromium' }).first(),
+      thread.getByRole('img', { name: `E2E ${browserName}` }).first(),
     ).toBeVisible();
     await expect(thread.getByText('This is a comment').first()).toBeVisible();
     await expect(thread.getByText(`E2E ${browserName}`).first()).toBeVisible();

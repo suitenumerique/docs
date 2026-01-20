@@ -12,12 +12,9 @@ import { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, BoxButton, Icon } from '@/components';
+import { Box, BoxButton, EmojiPicker, Icon, emojidata } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-import { EmojiPicker } from '../EmojiPicker';
-
-import emojidata from './initEmojiCallout';
 
 const CalloutBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="callout"][data-background-color] {
@@ -97,15 +94,15 @@ const CalloutComponent = ({
       `}
     >
       <CalloutBlockStyle />
-      <Box $position="relative">
+      <Box
+        $position="relative"
+        $css={css`
+          align-self: start;
+        `}
+      >
         <BoxButton
           contentEditable={false}
           onClick={toggleEmojiPicker}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape' && openEmojiPicker) {
-              setOpenEmojiPicker(false);
-            }
-          }}
           $css={css`
             font-size: 1.125rem;
             cursor: ${isEditable ? 'pointer' : 'default'};

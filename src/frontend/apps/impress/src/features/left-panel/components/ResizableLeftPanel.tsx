@@ -72,7 +72,14 @@ export const ResizableLeftPanel = ({
       <Panel
         ref={ref}
         order={0}
-        defaultSize={isDesktop ? panelSizePercent : 0}
+        defaultSize={
+          isDesktop
+            ? Math.max(
+                minPanelSizePercent,
+                Math.min(panelSizePercent, maxPanelSizePercent),
+              )
+            : 0
+        }
         minSize={isDesktop ? minPanelSizePercent : 0}
         maxSize={isDesktop ? maxPanelSizePercent : 0}
         onResize={handleResize}

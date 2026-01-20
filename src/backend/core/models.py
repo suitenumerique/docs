@@ -1096,7 +1096,8 @@ class Document(MP_Node, BaseModel):
                 "document": self,
                 "domain": domain,
                 "link": f"{domain}/docs/{self.id}/",
-                "document_title": self.title or str(_("Untitled Document")),
+                "link_label": self.title or str(_("Untitled Document")),
+                "button_label": _("Open"),
                 "logo_img": settings.EMAIL_LOGO_IMG,
             }
         )

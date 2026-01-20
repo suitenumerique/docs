@@ -6,29 +6,54 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added 
+
+- ✨(frontend) integrate configurable Waffle #1795
+
+### Fixed
+
+- ✅(e2e) fix e2e test for other browsers #1799
+- 🐛(frontend) add fallback for unsupported Blocknote languages #1810
+- 🐛(frontend) fix emojipicker closing in tree #1808
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+- ✨(backend) add field for button label in email template #1817
+
+### Security
+
+- 🔒️(trivy) fix vulnerability about jaraco.context #1806
+
+
+## [4.4.0] - 2026-01-13
+
 ### Added
 
 - ✨(backend) add documents/all endpoint with descendants #1553
 - ✅(export) add PDF regression tests #1762
 - 📝(docs) Add language configuration documentation #1757
 - 🔒(helm) Set default security context #1750
-- ✨(backend) use langfuse to monitor AI actions
-
-### Fixed
-
-- ✅(backend) reduce flakiness on backend test #1769
-- 🐛(frontend) fix clickable main content regression #1773
-- 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
-
-### Security
-
-- 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
+- ✨(backend) use langfuse to monitor AI actions #1776
 
 ### Changed
 
 - ♿(frontend) improve accessibility:
   - ♿(frontend) make html export accessible to screen reader users #1743
   - ♿(frontend) add missing label and fix Axes errors to improve a11y #1693
+
+### Fixed
+
+- ✅(backend) reduce flakiness on backend test #1769
+- 🐛(frontend) fix clickable main content regression #1773
+- 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
+- 💄(frontend) fix icon position in callout block #1779
+
+### Security
+
+- 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
+- 🔒️(frontend) fix props vulnerability in Interlinking #1792
 
 ## [4.3.0] - 2026-01-05
 
@@ -987,7 +1012,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.3.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.4.0...main
+[v4.4.0]: https://github.com/suitenumerique/docs/releases/v4.4.0
 [v4.3.0]: https://github.com/suitenumerique/docs/releases/v4.3.0
 [v4.2.0]: https://github.com/suitenumerique/docs/releases/v4.2.0
 [v4.1.0]: https://github.com/suitenumerique/docs/releases/v4.1.0
