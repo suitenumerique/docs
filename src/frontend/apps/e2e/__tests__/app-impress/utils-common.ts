@@ -330,6 +330,10 @@ export const TestLanguage = {
     label: 'Deutsch',
     expectedLocale: ['de-de'],
   },
+  Swedish: {
+    label: 'Svenska',
+    expectedLocale: ['sv-se'],
+  },
 } as const;
 
 type TestLanguageKey = keyof typeof TestLanguage;

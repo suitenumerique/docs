@@ -12,12 +12,9 @@ import { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, BoxButton, Icon } from '@/components';
+import { Box, BoxButton, EmojiPicker, Icon, emojidata } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-import { EmojiPicker } from '../EmojiPicker';
-
-import emojidata from './initEmojiCallout';
 
 const CalloutBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="callout"][data-background-color] {
