@@ -162,7 +162,7 @@ ingress:
   enabled: true
   host: {{ .Values.feature }}-docs.{{ .Values.domain }}
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
     cert-manager.io/cluster-issuer: letsencrypt
 
 ingressCollaborationWS:
