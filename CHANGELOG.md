@@ -22,6 +22,11 @@ and this project adheres to
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
 - ✨(backend) add field for button label in email template #1817
 
+### Security
+
+- 🔒️(trivy) fix vulnerability about jaraco.context #1806
+
+
 ## [4.4.0] - 2026-01-13
 
 ### Added
