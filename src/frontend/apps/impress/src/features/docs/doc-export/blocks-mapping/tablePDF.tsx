@@ -135,7 +135,7 @@ export const utilTable = (
   columnWidths: (number | undefined)[],
 ) => {
   const totalColumnWidthKnown = columnWidths.reduce(
-    (sum: number, w) => sum + (w ?? 0),
+    (sum: number, w) => sum + (w && !isNaN(w) ? w : 0),
     0,
   );
   const nbColumnWidthUnknown = columnWidths.filter((w) => !w).length;
