@@ -29,6 +29,10 @@ from sentry_sdk.integrations.logging import ignore_logger
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 
+KB = 1024
+MB = KB * KB
+GB = MB * KB
+
 
 def get_release():
     """
@@ -168,7 +172,7 @@ class Base(Configuration):
 
     # Document images
     DOCUMENT_IMAGE_MAX_SIZE = values.IntegerValue(
-        10 * (2**20),  # 10MB
+        10 * MB,  # 10MB
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
     )
@@ -711,6 +715,19 @@ class Base(Configuration):
 
     # DocSpec API microservice
     DOCSPEC_API_URL = values.Value(environ_name="DOCSPEC_API_URL", environ_prefix=None)
+
+    # Imported file settings
+    CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
+        20 * MB,  # 10MB
+        environ_name="CONVERSION_FILE_MAX_SIZE",
+        environ_prefix=None,
+    )
+
+    CONVERSION_FILE_EXTENSIONS_ALLOWED = values.ListValue(
+        default=[".docx", ".md"],
+        environ_name="CONVERSION_FILE_EXTENSIONS_ALLOWED",
+        environ_prefix=None,
+    )
 
     # Conversion endpoint
     CONVERSION_API_ENDPOINT = values.Value(

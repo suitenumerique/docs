@@ -356,3 +356,58 @@ def test_api_documents_create_with_file_unicode_filename(mock_convert):
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "文档-télécharger-документ.docx"
+
+
+def test_api_documents_create_with_file_max_size_exceeded(settings):
+    """
+    The uploaded file should not exceed the maximum size in settings.
+    """
+    settings.CONVERSION_FILE_MAX_SIZE = 1  # 1 byte for test
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    file = BytesIO(b"a" * (10))
+    file.name = "test.docx"
+
+    response = client.post(
+        "/api/v1.0/documents/",
+        {
+            "file": file,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+
+    assert response.json() == {"file": ["File size exceeds the maximum limit of 0 MB."]}
+
+
+def test_api_documents_create_with_file_extension_not_allowed(settings):
+    """
+    The uploaded file should not have an allowed extension.
+    """
+    settings.CONVERSION_FILE_EXTENSIONS_ALLOWED = [".docx"]
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    file = BytesIO(b"fake docx content")
+    file.name = "test.md"
+
+    response = client.post(
+        "/api/v1.0/documents/",
+        {
+            "file": file,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "file": [
+            "File extension .md is not allowed. Allowed extensions are: ['.docx']."
+        ]
+    }

@@ -4,6 +4,7 @@
 import binascii
 import mimetypes
 from base64 import b64decode
+from os.path import splitext
 
 from django.conf import settings
 from django.db.models import Q
@@ -165,7 +166,9 @@ class DocumentSerializer(ListDocumentSerializer):
 
     content = serializers.CharField(required=False)
     websocket = serializers.BooleanField(required=False, write_only=True)
-    file = serializers.FileField(required=False, write_only=True, allow_null=True)
+    file = serializers.FileField(
+        required=False, write_only=True, allow_null=True, max_length=255
+    )
 
     class Meta:
         model = models.Document
@@ -251,6 +254,30 @@ class DocumentSerializer(ListDocumentSerializer):
             raise serializers.ValidationError("Invalid base64 content.") from err
 
         return value
+
+    def validate_file(self, file):
+        """Add file size and type constraints as defined in settings."""
+        if not file:
+            return None
+
+        # Validate file size
+        if file.size > settings.CONVERSION_FILE_MAX_SIZE:
+            max_size = settings.CONVERSION_FILE_MAX_SIZE // (1024 * 1024)
+            raise serializers.ValidationError(
+                f"File size exceeds the maximum limit of {max_size:d} MB."
+            )
+
+        _name, extension = splitext(file.name)
+
+        if extension.lower() not in settings.CONVERSION_FILE_EXTENSIONS_ALLOWED:
+            raise serializers.ValidationError(
+                (
+                    f"File extension {extension} is not allowed. Allowed extensions"
+                    f" are: {settings.CONVERSION_FILE_EXTENSIONS_ALLOWED}."
+                )
+            )
+
+        return file
 
     def save(self, **kwargs):
         """
