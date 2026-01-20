@@ -5,6 +5,7 @@ import { Box, Loading } from '@/components';
 import { DocHeader } from '@/docs/doc-header/';
 import {
   Doc,
+  useDocFocusManagement,
   useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
@@ -82,7 +83,9 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
   const readOnly =
     !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
   const { setIsSkeletonVisible } = useSkeletonStore();
-  const isProviderReady = isReady && provider;
+  const isProviderReady = Boolean(isReady && provider);
+
+  useDocFocusManagement(doc.id, isProviderReady);
 
   useEffect(() => {
     if (isProviderReady) {

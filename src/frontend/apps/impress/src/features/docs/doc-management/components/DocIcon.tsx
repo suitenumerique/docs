@@ -15,6 +15,13 @@ import {
 } from '@/components';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
+import { cssSelectors } from '../utils';
+
+const getClosestTreeItem = (element: HTMLElement | null) =>
+  element?.closest<HTMLElement>(cssSelectors.DOC_TREE_ROW) ??
+  element?.closest<HTMLElement>(cssSelectors.DOC_TREE_NODE) ??
+  element?.closest<HTMLElement>('[role="treeitem"]') ??
+  null;
 
 type DocIconProps = TextType & {
   buttonProps?: BoxButtonType;
@@ -110,6 +117,30 @@ export const DocIcon = ({
     setOpenEmojiPicker(false);
   };
 
+  const handleEscape = () => {
+    setOpenEmojiPicker(false);
+    window.requestAnimationFrame(() => {
+      const localTreeItem = getClosestTreeItem(iconRef.current);
+      const docTree = document.querySelector<HTMLElement>(
+        cssSelectors.DOC_TREE,
+      );
+      const docTreeItem =
+        localTreeItem ||
+        docTree?.querySelector<HTMLElement>(
+          cssSelectors.DOC_TREE_FOCUSED_NODE,
+        ) ||
+        docTree?.querySelector<HTMLElement>(
+          cssSelectors.DOC_TREE_SELECTED_ROW,
+        ) ||
+        docTree?.querySelector<HTMLElement>(
+          cssSelectors.DOC_TREE_SELECTED_NODE,
+        ) ||
+        document.querySelector<HTMLElement>(cssSelectors.DOC_TREE_ROOT);
+
+      docTreeItem?.focus();
+    });
+  };
+
   return (
     <>
       <BoxButton
@@ -151,6 +182,7 @@ export const DocIcon = ({
               onEmojiSelect={handleEmojiSelect}
               onClickOutside={handleClickOutside}
               withOverlay={true}
+              onEscape={handleEscape}
             />
           </Box>,
           document.body,

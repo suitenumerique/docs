@@ -73,7 +73,7 @@ test.describe('Doc Editor', () => {
 
     await page.keyboard.press('Escape');
 
-    await page.locator('.bn-block-outer').last().click();
+    await page.locator('.ProseMirror').focus();
 
     await page.keyboard.press('Enter');
 
