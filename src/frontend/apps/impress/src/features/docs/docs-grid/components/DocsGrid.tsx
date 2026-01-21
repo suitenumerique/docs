@@ -1,11 +1,8 @@
 import {
   Button,
   Tooltip as TooltipBase,
-  VariantType,
-  useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
 import { useMemo, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
 import styled, { css } from 'styled-components';
@@ -16,7 +13,7 @@ import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
-import { ContentTypesAllowed, useImportDoc } from '../api/useImportDoc';
+import { useImport } from '../hooks/useImport';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
 import {
@@ -45,64 +42,11 @@ export const DocsGrid = ({
 }: DocsGridProps) => {
   const { t } = useTranslation();
   const [isDragOver, setIsDragOver] = useState(false);
-  const { toast } = useToastProvider();
-
-  const MAX_FILE_SIZE = {
-    bytes: 10 * 1024 * 1024, // 10 MB
-    text: '10MB',
-  };
-
-  const { getRootProps, getInputProps, open } = useDropzone({
-    accept: {
-      [ContentTypesAllowed.Docx]: ['.docx'],
-      [ContentTypesAllowed.Markdown]: ['.md'],
+  const { getRootProps, getInputProps, open } = useImport({
+    onDragOver: (dragOver: boolean) => {
+      setIsDragOver(dragOver);
     },
-    maxSize: MAX_FILE_SIZE.bytes,
-    onDrop(acceptedFiles) {
-      setIsDragOver(false);
-      for (const file of acceptedFiles) {
-        importDoc(file);
-      }
-    },
-    onDragEnter: () => {
-      setIsDragOver(true);
-    },
-    onDragLeave: () => {
-      setIsDragOver(false);
-    },
-    onDropRejected(fileRejections) {
-      fileRejections.forEach((rejection) => {
-        const isFileTooLarge = rejection.errors.some(
-          (error) => error.code === 'file-too-large',
-        );
-
-        if (isFileTooLarge) {
-          toast(
-            t(
-              'The document "{{documentName}}" is too large. Maximum file size is {{maxFileSize}}.',
-              {
-                documentName: rejection.file.name,
-                maxFileSize: MAX_FILE_SIZE.text,
-              },
-            ),
-            VariantType.ERROR,
-          );
-        } else {
-          toast(
-            t(
-              `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
-              {
-                documentName: rejection.file.name,
-              },
-            ),
-            VariantType.ERROR,
-          );
-        }
-      });
-    },
-    noClick: true,
   });
-  const { mutate: importDoc } = useImportDoc();
 
   const withUpload =
     !target ||

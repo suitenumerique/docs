@@ -8,6 +8,8 @@ export const CONFIG = {
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,
+  CONVERSION_FILE_EXTENSIONS_ALLOWED: ['.docx', '.md'],
+  CONVERSION_FILE_MAX_SIZE: 20971520,
   ENVIRONMENT: 'development',
   FRONTEND_CSS_URL: null,
   FRONTEND_JS_URL: null,

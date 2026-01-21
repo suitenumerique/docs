@@ -2340,6 +2340,8 @@ class ConfigView(drf.views.APIView):
             "AI_FEATURE_ENABLED",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+            "CONVERSION_FILE_EXTENSIONS_ALLOWED",
+            "CONVERSION_FILE_MAX_SIZE",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",

@@ -17,43 +17,22 @@ import {
 } from '@/api';
 import { Doc, DocsResponse, KEY_LIST_DOC } from '@/docs/doc-management';
 
-enum ContentTypes {
+export enum ContentTypes {
   Docx = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   Markdown = 'text/markdown',
   OctetStream = 'application/octet-stream',
 }
 
-export enum ContentTypesAllowed {
-  Docx = ContentTypes.Docx,
-  Markdown = ContentTypes.Markdown,
-}
-
-const getMimeType = (file: File): string => {
-  if (file.type) {
-    return file.type;
-  }
-
-  const extension = file.name.split('.').pop()?.toLowerCase();
-
-  switch (extension) {
-    case 'md':
-      return ContentTypes.Markdown;
-    case 'markdown':
-      return ContentTypes.Markdown;
-    case 'docx':
-      return ContentTypes.Docx;
-    default:
-      return ContentTypes.OctetStream;
-  }
-};
-
-export const importDoc = async (file: File): Promise<Doc> => {
+export const importDoc = async ([file, mimeType]: [
+  File,
+  string,
+]): Promise<Doc> => {
   const form = new FormData();
 
   form.append(
     'file',
     new File([file], file.name, {
-      type: getMimeType(file),
+      type: mimeType,
       lastModified: file.lastModified,
     }),
   );
@@ -71,14 +50,14 @@ export const importDoc = async (file: File): Promise<Doc> => {
   return response.json() as Promise<Doc>;
 };
 
-type UseImportDocOptions = UseMutationOptions<Doc, APIError, File>;
+type UseImportDocOptions = UseMutationOptions<Doc, APIError, [File, string]>;
 
 export function useImportDoc(props?: UseImportDocOptions) {
   const { toast } = useToastProvider();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  return useMutation<Doc, APIError, File>({
+  return useMutation<Doc, APIError, [File, string]>({
     mutationFn: importDoc,
     ...props,
     onSuccess: (...successProps) => {
@@ -135,7 +114,7 @@ export function useImportDoc(props?: UseImportDocOptions) {
     onError: (...errorProps) => {
       toast(
         t(`The document "{{documentName}}" import has failed`, {
-          documentName: errorProps?.[1].name || '',
+          documentName: errorProps?.[1][0].name || '',
         }),
         VariantType.ERROR,
       );
