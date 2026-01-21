@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨(frontend) integrate configurable Waffle #1795
 - ✨ Import of documents #1609
+- 🚨(CI) gives warning if theme not updated #1811
 
 ### Changed
 
