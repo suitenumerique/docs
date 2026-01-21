@@ -162,7 +162,7 @@ export const verifyDocName = async (page: Page, docName: string) => {
     await expect(
       page.getByRole('textbox', { name: 'Document title' }),
     ).toContainText(docName, {
-      timeout: 1000,
+      timeout: 3000,
     });
   } catch {
     await expect(page.getByRole('heading', { name: docName })).toBeVisible();

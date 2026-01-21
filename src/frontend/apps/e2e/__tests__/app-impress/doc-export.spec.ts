@@ -447,6 +447,8 @@ export const overrideDocContent = async ({
 
   await verifyDocName(page, randomDoc);
 
+  await page.waitForTimeout(1000);
+
   // Add Image SVG
   await page.keyboard.press('Enter');
   const { suggestionMenu } = await openSuggestionMenu({ page });
