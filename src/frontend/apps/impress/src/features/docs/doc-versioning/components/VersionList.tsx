@@ -12,7 +12,7 @@ import {
   TextErrors,
 } from '@/components';
 import { Doc } from '@/docs/doc-management';
-import { useDate } from '@/hook';
+import { useDate } from '@/hooks';
 
 import { useDocVersionsInfiniteQuery } from '../api/useDocVersions';
 import { Versions } from '../types';

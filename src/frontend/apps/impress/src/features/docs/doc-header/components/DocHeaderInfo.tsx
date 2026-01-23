@@ -9,7 +9,7 @@ import {
   useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
-import { useDate } from '@/hook';
+import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 interface DocHeaderInfoProps {

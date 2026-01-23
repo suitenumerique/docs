@@ -7,7 +7,7 @@ import { Box, Icon, SeparatedSection } from '@/components';
 import { useDocStore } from '@/docs/doc-management';
 import { DocSearchModal } from '@/docs/doc-search/';
 import { useAuth } from '@/features/auth';
-import { useCmdK } from '@/hook/useCmdK';
+import { useCmdK } from '@/hooks/useCmdK';
 
 import { useLeftPanelStore } from '../stores';
 
