@@ -3,10 +3,11 @@
  */
 
 import { Crisp } from 'crisp-sdk-web';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { JSX, PropsWithChildren, ReactNode, useEffect, useState } from 'react';
 import { createGlobalStyle } from 'styled-components';
 
 import { User } from '@/features/auth';
+import { AbstractAnalytic, AnalyticEvent } from '@/libs';
 
 const CrispStyle = createGlobalStyle`
   #crisp-chatbox a{
@@ -70,3 +71,34 @@ export const CrispProvider = ({
     </>
   );
 };
+
+export class CrispAnalytic extends AbstractAnalytic {
+  private conf?: CrispProviderProps = undefined;
+  private EVENT = {
+    PUBLIC_DOC_NOT_CONNECTED: 'public-doc-not-connected',
+  };
+
+  public constructor(conf?: CrispProviderProps) {
+    super();
+
+    this.conf = conf;
+  }
+
+  public Provider(children?: ReactNode): JSX.Element {
+    return (
+      <CrispProvider websiteId={this.conf?.websiteId}>{children}</CrispProvider>
+    );
+  }
+
+  public trackEvent(evt: AnalyticEvent): void {
+    if (evt.eventName === 'doc') {
+      if (evt.isPublic && !evt.authenticated) {
+        Crisp.trigger.run(this.EVENT.PUBLIC_DOC_NOT_CONNECTED);
+      }
+    }
+  }
+
+  public isFeatureFlagActivated(): boolean {
+    return true;
+  }
+}

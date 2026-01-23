@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(frontend) integrate configurable Waffle #1795
 - ✨ Import of documents #1609
 - 🚨(CI) gives warning if theme not updated #1811
+- ✨(frontend) Add stat from Crisp #1824
 - ✨(auth) add silent login #1690
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
 

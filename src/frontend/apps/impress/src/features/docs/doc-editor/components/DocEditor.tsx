@@ -1,15 +1,19 @@
 import clsx from 'clsx';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Box, Loading } from '@/components';
 import { DocHeader } from '@/docs/doc-header/';
 import {
   Doc,
+  LinkReach,
+  getDocLinkReach,
   useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
+import { useAuth } from '@/features/auth/';
 import { useSkeletonStore } from '@/features/skeletons';
+import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
 import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
@@ -83,12 +87,40 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
   const { setIsSkeletonVisible } = useSkeletonStore();
   const isProviderReady = isReady && provider;
+  const { trackEvent } = useAnalytics();
+  const [hasTracked, setHasTracked] = useState(false);
+  const { authenticated } = useAuth();
+  const isPublicDoc = getDocLinkReach(doc) === LinkReach.PUBLIC;
 
   useEffect(() => {
     if (isProviderReady) {
       setIsSkeletonVisible(false);
     }
   }, [isProviderReady, setIsSkeletonVisible]);
+
+  /**
+   * Track doc view event only once per doc change
+   */
+  useEffect(() => {
+    setHasTracked(false);
+  }, [doc.id]);
+
+  /**
+   * Track doc view event
+   */
+  useEffect(() => {
+    if (hasTracked) {
+      return;
+    }
+
+    setHasTracked(true);
+
+    trackEvent({
+      eventName: 'doc',
+      isPublic: isPublicDoc,
+      authenticated,
+    });
+  }, [authenticated, hasTracked, isPublicDoc, trackEvent]);
 
   if (!isProviderReady || provider?.configuration.name !== doc.id) {
     return <Loading />;
