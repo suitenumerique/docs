@@ -1,4 +1,4 @@
-import { CSSProperties, ComponentPropsWithRef, forwardRef } from 'react';
+import React, { CSSProperties, ComponentPropsWithRef, forwardRef } from 'react';
 import styled from 'styled-components';
 
 import { tokens } from '@/cunningham';
@@ -34,7 +34,9 @@ export const TextStyled = styled(Box)<TextProps>`
 
 const Text = forwardRef<HTMLElement, ComponentPropsWithRef<typeof TextStyled>>(
   (props, ref) => {
-    return <TextStyled ref={ref} as="span" {...props} />;
+    return (
+      <TextStyled ref={ref as React.Ref<HTMLDivElement>} as="span" {...props} />
+    );
   },
 );
 
