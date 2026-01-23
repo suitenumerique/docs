@@ -32,7 +32,6 @@
       "allowedVersions": "<6.0.0"
     },
     {
-
       "groupName": "allowed celery versions",
       "matchManagers": ["pep621"],
       "matchPackageNames": ["celery"],
@@ -50,6 +49,7 @@
         "next",
         "node",
         "node-fetch",
+        "react-resizable-panels",
         "workbox-webpack-plugin"
       ]
     }
