@@ -507,7 +507,9 @@ class Base(Configuration):
     FRONTEND_JS_URL = values.Value(
         None, environ_name="FRONTEND_JS_URL", environ_prefix=None
     )
-
+    FRONTEND_SILENT_LOGIN_ENABLED = values.BooleanValue(
+        default=False, environ_name="FRONTEND_SILENT_LOGIN_ENABLED", environ_prefix=None
+    )
     THEME_CUSTOMIZATION_FILE_PATH = values.Value(
         os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
         environ_name="THEME_CUSTOMIZATION_FILE_PATH",

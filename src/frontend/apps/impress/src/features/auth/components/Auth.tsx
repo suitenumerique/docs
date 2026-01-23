@@ -26,8 +26,18 @@ export const Auth = ({ children }: PropsWithChildren) => {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const { data: config } = useConfig();
   const shouldTrySilentLogin = useMemo(
-    () => !authenticated && !hasTrySilent() && !isLoading && !isRedirecting,
-    [authenticated, isLoading, isRedirecting],
+    () =>
+      !authenticated &&
+      !hasTrySilent() &&
+      !isLoading &&
+      !isRedirecting &&
+      config?.FRONTEND_SILENT_LOGIN_ENABLED,
+    [
+      authenticated,
+      isLoading,
+      isRedirecting,
+      config?.FRONTEND_SILENT_LOGIN_ENABLED,
+    ],
   );
   const shouldTryLogin =
     !authenticated && !isLoading && !isRedirecting && !pathAllowed;
