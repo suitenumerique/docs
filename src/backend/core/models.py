@@ -817,7 +817,7 @@ class Document(MP_Node, BaseModel):
     def send_email(self, subject, emails, context=None, language=None):
         """Generate and send email from a template."""
         context = context or {}
-        domain = Site.objects.get_current().domain
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
         language = language or get_language()
         context.update(
             {

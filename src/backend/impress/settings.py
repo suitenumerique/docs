@@ -459,6 +459,7 @@ class Base(Configuration):
     EMAIL_HOST_PASSWORD = SecretFileValue(None)
     EMAIL_LOGO_IMG = values.Value(None)
     EMAIL_PORT = values.PositiveIntegerValue(None)
+    EMAIL_URL_APP = values.Value(None)
     EMAIL_USE_TLS = values.BooleanValue(False)
     EMAIL_USE_SSL = values.BooleanValue(False)
     EMAIL_FROM = values.Value("from@example.com")
