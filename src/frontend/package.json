@@ -32,8 +32,8 @@
   },
   "resolutions": {
     "@tiptap/extensions": "3.14.0",
-    "@types/node": "24.10.4",
-    "@types/react": "19.2.7",
+    "@types/node": "24.10.9",
+    "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "docx": "9.5.0",
     "eslint": "9.39.2",
@@ -42,7 +42,7 @@
     "react-dom": "19.2.3",
     "typescript": "5.9.3",
     "wrap-ansi": "9.0.2",
-    "yjs": "13.6.28"
+    "yjs": "13.6.29"
   },
   "packageManager": "yarn@1.22.22"
 }

@@ -16,10 +16,10 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.45.0",
+    "@blocknote/server-util": "0.46.2",
     "@hocuspocus/server": "3.4.3",
-    "@sentry/node": "10.32.1",
-    "@sentry/profiling-node": "10.32.1",
+    "@sentry/node": "10.34.0",
+    "@sentry/profiling-node": "10.34.0",
     "@tiptap/extensions": "*",
     "axios": "1.13.2",
     "cors": "2.8.5",
@@ -30,7 +30,7 @@
     "yjs": "*"
   },
   "devDependencies": {
-    "@blocknote/core": "0.45.0",
+    "@blocknote/core": "0.46.2",
     "@hocuspocus/provider": "3.4.3",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.6",
@@ -41,13 +41,13 @@
     "cross-env": "10.1.0",
     "eslint-plugin-docs": "*",
     "nodemon": "3.1.11",
-    "supertest": "7.1.4",
+    "supertest": "7.2.2",
     "ts-node": "10.9.2",
     "tsc-alias": "1.8.16",
     "typescript": "*",
-    "vitest": "4.0.16",
+    "vitest": "4.0.17",
     "vitest-mock-extended": "3.1.0",
-    "ws": "8.18.3"
+    "ws": "8.19.0"
   },
   "packageManager": "yarn@1.22.22"
 }
