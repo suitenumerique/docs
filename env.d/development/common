@@ -48,7 +48,7 @@ LOGIN_REDIRECT_URL=http://localhost:3000
 LOGIN_REDIRECT_URL_FAILURE=http://localhost:3000
 LOGOUT_REDIRECT_URL=http://localhost:3000
 
-OIDC_REDIRECT_ALLOWED_HOSTS=["http://localhost:8083", "http://localhost:3000"]
+OIDC_REDIRECT_ALLOWED_HOSTS="localhost:8083,localhost:3000"
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
 # Store OIDC tokens in the session. Needed by search/ endpoint.

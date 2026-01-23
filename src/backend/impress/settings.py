@@ -549,6 +549,16 @@ class Base(Configuration):
     SESSION_COOKIE_NAME = "docs_sessionid"
 
     # OIDC - Authorization Code Flow
+    OIDC_AUTHENTICATE_CLASS = values.Value(
+        "lasuite.oidc_login.views.OIDCAuthenticationRequestView",
+        environ_name="OIDC_AUTHENTICATE_CLASS",
+        environ_prefix=None,
+    )
+    OIDC_CALLBACK_CLASS = values.Value(
+        "lasuite.oidc_login.views.OIDCAuthenticationCallbackView",
+        environ_name="OIDC_CALLBACK_CLASS",
+        environ_prefix=None,
+    )
     OIDC_CREATE_USER = values.BooleanValue(
         default=True,
         environ_name="OIDC_CREATE_USER",

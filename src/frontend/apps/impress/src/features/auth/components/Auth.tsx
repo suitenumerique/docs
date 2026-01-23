@@ -1,19 +1,37 @@
 import { useRouter } from 'next/router';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 
 import { Loading } from '@/components';
 import { useConfig } from '@/core';
 
 import { HOME_URL } from '../conf';
 import { useAuth } from '../hooks';
-import { getAuthUrl, gotoLogin } from '../utils';
+import {
+  getAuthUrl,
+  gotoLogin,
+  gotoSilentLogin,
+  hasTrySilent,
+  resetSilent,
+} from '../utils';
 
 export const Auth = ({ children }: PropsWithChildren) => {
-  const { isLoading, pathAllowed, isFetchedAfterMount, authenticated } =
-    useAuth();
-  const { replace, pathname } = useRouter();
-  const { data: config } = useConfig();
+  const {
+    isLoading: isAuthLoading,
+    pathAllowed,
+    isFetchedAfterMount,
+    authenticated,
+    fetchStatus,
+  } = useAuth();
+  const isLoading = fetchStatus !== 'idle' || isAuthLoading;
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const { data: config } = useConfig();
+  const shouldTrySilentLogin = useMemo(
+    () => !authenticated && !hasTrySilent() && !isLoading && !isRedirecting,
+    [authenticated, isLoading, isRedirecting],
+  );
+  const shouldTryLogin =
+    !authenticated && !isLoading && !isRedirecting && !pathAllowed;
+  const { replace, pathname } = useRouter();
 
   /**
    * If the user is authenticated and initially wanted to access a specific page, redirect him to that page now.
@@ -21,6 +39,10 @@ export const Auth = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!authenticated || isRedirecting) {
       return;
+    }
+
+    if (hasTrySilent()) {
+      resetSilent();
     }
 
     const authUrl = getAuthUrl();
@@ -34,7 +56,13 @@ export const Auth = ({ children }: PropsWithChildren) => {
    * If the user is not authenticated and not on a allowed pages
    */
   useEffect(() => {
-    if (isLoading || authenticated || pathAllowed || isRedirecting) {
+    if (shouldTrySilentLogin) {
+      setIsRedirecting(true);
+      gotoSilentLogin();
+      return;
+    }
+
+    if (!shouldTryLogin) {
       return;
     }
 
@@ -56,19 +84,17 @@ export const Auth = ({ children }: PropsWithChildren) => {
     setIsRedirecting(true);
     gotoLogin();
   }, [
-    authenticated,
-    pathAllowed,
     config?.FRONTEND_HOMEPAGE_FEATURE_ENABLED,
-    replace,
-    isLoading,
-    isRedirecting,
     pathname,
+    shouldTryLogin,
+    shouldTrySilentLogin,
   ]);
 
   const shouldShowLoader =
     (isLoading && !isFetchedAfterMount) ||
     isRedirecting ||
-    (!authenticated && !pathAllowed);
+    (!authenticated && !pathAllowed) ||
+    shouldTrySilentLogin;
 
   if (shouldShowLoader) {
     return <Loading $height="100vh" $width="100vw" />;
