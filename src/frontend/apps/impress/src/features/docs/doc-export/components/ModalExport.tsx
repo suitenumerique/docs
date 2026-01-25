@@ -40,6 +40,7 @@ enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
   ODT = 'odt',
+  PRINT = 'print',
 }
 
 interface ModalExportProps {
@@ -53,7 +54,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { editor } = useEditorStore();
   const [isExporting, setIsExporting] = useState(false);
   const [format, setFormat] = useState<DocDownloadFormat>(
-    DocDownloadFormat.PDF,
+    DocDownloadFormat.PRINT,
   );
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
@@ -65,6 +66,73 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     }
 
     setIsExporting(true);
+
+    // Handle print separately as it doesn't download a file
+    if (format === DocDownloadFormat.PRINT) {
+      // Add print-specific styles to hide non-content elements
+      const printStyles = document.createElement('style');
+      printStyles.id = 'print-only-content-styles';
+      printStyles.textContent = `
+        @media print {
+          /* Hide non-essential elements for printing */
+          .--docs--header,
+          .--docs--resizable-left-panel,
+          .--docs--doc-editor-header,
+          .--docs--doc-header,
+          .--docs--doc-toolbox,
+          div[data-is-empty-and-focused="true"] {
+            display: none !important;
+          }
+          
+          /* Show only the editor content */
+          .--docs--editor-container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          
+          .--docs--doc-editor {
+            max-width: 100% !important;
+            margin: 0 !important;
+          }
+          
+          .--docs--doc-editor-content {
+            padding: 0 !important;
+          }
+          
+          /* Remove page background for clean print */
+          body, .--docs--main-layout {
+            background: white !important;
+          }
+        }
+      `;
+      document.head.appendChild(printStyles);
+
+      // Small delay to ensure styles are applied
+      setTimeout(() => {
+        window.print();
+
+        // Clean up the styles after printing
+        const cleanup = () => {
+          const stylesElement = document.getElementById(
+            'print-only-content-styles',
+          );
+          if (stylesElement) {
+            stylesElement.remove();
+          }
+        };
+
+        // Listen for afterprint event to clean up
+        window.addEventListener('afterprint', cleanup, { once: true });
+
+        // Also clean up after a delay as fallback
+        setTimeout(cleanup, 1000);
+      }, 100);
+
+      setIsExporting(false);
+      onClose();
+      return;
+    }
 
     const filename = (doc.title || untitledDocument)
       .toLowerCase()
@@ -199,13 +267,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           </Button>
           <Button
             data-testid="doc-export-download-button"
-            aria-label={t('Download')}
+            aria-label={
+              format === DocDownloadFormat.PRINT ? t('Print') : t('Download')
+            }
             variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
           >
-            {t('Download')}
+            {format === DocDownloadFormat.PRINT ? t('Print') : t('Download')}
           </Button>
         </>
       }
@@ -225,7 +295,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             $align="flex-start"
             data-testid="modal-export-title"
           >
-            {t('Download')}
+            {t('Export')}
           </Text>
           <ButtonCloseModal
             aria-label={t('Close the download modal')}
@@ -243,7 +313,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       >
         <Text $variation="secondary" $size="sm" as="p">
           {t(
-            'Download your document in a .docx, .odt, .pdf or .html(zip) format.',
+            'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
           )}
         </Text>
         <Select
@@ -251,9 +321,10 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           fullWidth
           label={t('Format')}
           options={[
+            { label: t('Print'), value: DocDownloadFormat.PRINT },
+            { label: t('PDF'), value: DocDownloadFormat.PDF },
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
             { label: t('ODT'), value: DocDownloadFormat.ODT },
-            { label: t('PDF'), value: DocDownloadFormat.PDF },
             { label: t('HTML'), value: DocDownloadFormat.HTML },
           ]}
           value={format}
