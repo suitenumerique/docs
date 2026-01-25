@@ -90,7 +90,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           .--docs--doc-header,
           .--docs--doc-toolbox,
           .--docs--table-content,
-          div[data-is-empty-and-focused="true"] {
+          div[data-is-empty-and-focused="true"],
+          div[data-floating-ui-focusable] {
             display: none !important;
           }
           
@@ -113,11 +114,12 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           .--docs--doc-editor,
           .--docs--doc-editor-content {
             max-width: 100% !important;
+            width: 100% !important;
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
-            padding: 1cm !important;
+            padding: 0 !important;
             margin: 0 !important;
           }
           
@@ -139,6 +141,8 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
+            width: 100% !important;
+            max-width: 100% !important;
           }
           
           /* Prevent awkward page breaks */
@@ -146,11 +150,23 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             page-break-inside: avoid;
             break-inside: avoid;
           }
+
+          .--docs--main-editor {
+            width: 100% !important;
+            padding: 0.5cm !important;
+          }
           
-          /* Add print margins */
-          // @page {
-          //   margin: 1cm;
-          // }
+          /* Force print all colors and backgrounds */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          /* Add minimal print margins */
+          @page {
+            margin: 0.5cm;
+          }
         }
       `;
       document.head.appendChild(printStyles);
