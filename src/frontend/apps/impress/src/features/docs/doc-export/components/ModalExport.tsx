@@ -74,36 +74,83 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       printStyles.id = 'print-only-content-styles';
       printStyles.textContent = `
         @media print {
+          /* Reset body and html for proper pagination */
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
           /* Hide non-essential elements for printing */
           .--docs--header,
           .--docs--resizable-left-panel,
           .--docs--doc-editor-header,
           .--docs--doc-header,
           .--docs--doc-toolbox,
+          .--docs--table-content,
           div[data-is-empty-and-focused="true"] {
             display: none !important;
           }
           
-          /* Show only the editor content */
-          .--docs--editor-container {
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-          
-          .--docs--doc-editor {
-            max-width: 100% !important;
-            margin: 0 !important;
-          }
-          
-          .--docs--doc-editor-content {
-            padding: 0 !important;
-          }
-          
-          /* Remove page background for clean print */
-          body, .--docs--main-layout {
+          /* Reset all layout containers for print flow */
+          .--docs--main-layout,
+          .--docs--main-layout > *,
+          main[role="main"],
+          #mainContent {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
             background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
+          
+          /* Allow editor containers to flow across pages */
+          .--docs--editor-container,
+          .--docs--doc-editor,
+          .--docs--doc-editor-content {
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            padding: 1cm !important;
+            margin: 0 !important;
+          }
+          
+          /* Reset all Box components that might have height constraints */
+          .--docs--doc-editor > div,
+          .--docs--doc-editor-content > div {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          
+          /* Ensure BlockNote content flows properly */
+          .bn-editor, 
+          .bn-container,
+          .--docs--main-editor,
+          .bn-block-outer {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          
+          /* Prevent awkward page breaks */
+          .bn-block-content {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          
+          /* Add print margins */
+          // @page {
+          //   margin: 1cm;
+          // }
         }
       `;
       document.head.appendChild(printStyles);
