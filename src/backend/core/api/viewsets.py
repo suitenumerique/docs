@@ -1230,7 +1230,10 @@ class DocumentViewSet(
             },
         )
 
-        return self.get_paginated_response(serializer.data)
+        return drf_response.Response({
+            "count": len(serializer.data),
+            "results": serializer.data,
+        })
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
