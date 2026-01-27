@@ -20,12 +20,15 @@ and this project adheres to
 - ✨(frontend) Add stat for Crisp #1824
 - ✨(auth) add silent login #1690
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
+- ✨(frontend) activate Find search #1834
+- ✨ handle searching on subdocuments #1834
 
 ### Changed
 
 - ♿(frontend) improve accessibility:
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
 - ✨(backend) add field for button label in email template #1817
+- ✨(backend) improve fallback logic on search endpoint #1834
 
 ### Fixed
 
@@ -39,6 +42,8 @@ and this project adheres to
 ### Removed
 
 - 🔥(project) remove all code related to template #1780
+- 🔥(api) remove `documents/<document_id>/descendants/` endpoint #1834
+- 🔥(api) remove pagination on `documents/search/` endpoint #1834
 
 ### Security
 
