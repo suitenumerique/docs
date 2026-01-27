@@ -1,7 +1,7 @@
-import { useBlockNoteEditor, useComponentsContext } from '@blocknote/react';
+import { useBlockNoteEditor, useComponentsContext, useExtension } from '@blocknote/react';
 import {
+  AIExtension,
   AIMenu as AIMenuDefault,
-  getAIExtension,
   getDefaultAIMenuItems,
 } from '@blocknote/xl-ai';
 import '@blocknote/xl-ai/style.css';
@@ -19,6 +19,7 @@ import {
   DocsInlineContentSchema,
   DocsStyleSchema,
 } from '../../types';
+import { FormattingToolbarExtension } from '@blocknote/core/extensions';
 
 const AIMenuStyle = createGlobalStyle`
   #ai-suggestion-menu .bn-suggestion-menu-item-small .bn-mt-suggestion-menu-item-section[data-position=left] svg {
@@ -98,29 +99,31 @@ export function AIMenu() {
 }
 
 export const AIToolbarButton = () => {
-  const Components = useComponentsContext();
   const { t } = useTranslation();
+  const Components = useComponentsContext();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
     DocsInlineContentSchema,
     DocsStyleSchema
   >();
+  const ai = useExtension(AIExtension);
+  const formattingToolbar = useExtension(FormattingToolbarExtension);
 
   if (!editor.isEditable || !Components) {
     return null;
   }
 
-  const onClick = () => {
-    const aiExtension = getAIExtension(editor);
-    editor.formattingToolbar.closeMenu();
+   const onClick = () => {
     const selection = editor.getSelection();
     if (!selection) {
-      throw new Error('No selection');
+      throw new Error("No selection");
     }
 
     const position = selection.blocks[selection.blocks.length - 1].id;
-    aiExtension.openAIMenuAtBlock(position);
+
+    ai.openAIMenuAtBlock(position);
+    formattingToolbar.store.setState(false);
   };
 
   return (
@@ -131,7 +134,7 @@ export const AIToolbarButton = () => {
           transition: all 0.1s ease-in;
           &:hover,
           &:hover {
-            background-color: ${colorsTokens['greyscale-050']};
+            background-color: ${colorsTokens['gray-050']};
           }
           &:hover .--docs--icon-bg {
             background-color: #5858e1;
@@ -170,7 +173,7 @@ export const AIToolbarButton = () => {
         </Box>
       </Components.Generic.Toolbar.Button>
       <Box
-        $background={colorsTokens['greyscale-100']}
+        $background={colorsTokens['gray-100']}
         $width="1px"
         $height="70%"
         $margin={{ left: '2px' }}

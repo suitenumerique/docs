@@ -1633,7 +1633,7 @@ class DocumentViewSet(
         methods=["post"],
         name="Proxy AI requests to the AI provider",
         url_path="ai-proxy",
-        throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
+        # throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
     )
     def ai_proxy(self, request, *args, **kwargs):
         """
@@ -1647,23 +1647,27 @@ class DocumentViewSet(
         if not settings.AI_FEATURE_ENABLED:
             raise ValidationError("AI feature is not enabled.")
 
-        serializer = serializers.AIProxySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         ai_service = AIService()
 
         if settings.AI_STREAM:
-            return StreamingHttpResponse(
-                ai_service.stream(request.data),
-                content_type="text/event-stream",
-                status=drf.status.HTTP_200_OK,
+            stream_gen = ai_service.stream_proxy(
+                provider="albert",
+                url=settings.AI_BASE_URL.rstrip("/") + "/chat/completions",
+                method="POST",
+                headers={"Content-Type": "application/json"},
+                body=json.dumps(request.data, ensure_ascii=False).encode("utf-8"),
             )
 
-        ai_response = ai_service.proxy(request.data)
-        return drf.response.Response(
-            ai_response.model_dump(),
-            status=drf.status.HTTP_200_OK,
-        )
+            resp = StreamingHttpResponse(
+                streaming_content=stream_gen,
+                content_type="text/event-stream",
+                status=200,
+            )
+            resp["X-Accel-Buffering"] = "no"
+            resp["Cache-Control"] = "no-cache"
+            return resp
+
+
 
     def _reject_invalid_ips(self, ips):
         """

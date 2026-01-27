@@ -1,26 +1,24 @@
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { createAIExtension } from '@blocknote/xl-ai';
+import { AIExtension, ClientSideTransport } from '@blocknote/xl-ai';
 import { useMemo } from 'react';
 
 import { baseApiUrl, fetchAPI } from '@/api';
 import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
-
-import { usePromptAI } from './usePromptAI';
+import { createOpenAI } from "@ai-sdk/openai";
+//import { usePromptAI } from './usePromptAI';
 
 export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
   const conf = useConfig().data;
-  const promptBuilder = usePromptAI();
+  //const promptBuilder = usePromptAI();
 
   return useMemo(() => {
     if (!aiAllowed || !conf?.AI_MODEL) {
       return;
     }
 
-    const openai = createOpenAICompatible({
-      name: 'AI Proxy',
-      baseURL: `${baseApiUrl('1.0')}documents/${docId}/ai-proxy/`, // Necessary for initialization..
-      fetch: (input, init) => {
+    const aIprovider = createOpenAI({
+      baseURL: `${baseApiUrl("1.0")}documents/${docId}/ai-proxy/`,
+        fetch: (input, init) => {
         // Create a new headers object without the Authorization header
         const headers = new Headers(init?.headers);
         headers.delete('Authorization');
@@ -32,15 +30,13 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
       },
     });
 
-    const model = openai.chatModel(conf.AI_MODEL);
+    const model = aIprovider.chat(conf.AI_MODEL);
 
-    const extension = createAIExtension({
-      stream: conf.AI_STREAM,
-      model,
-      agentCursor: conf?.AI_BOT,
-      promptBuilder,
+    const extension = AIExtension({
+      agentCursor: conf.AI_BOT,
+      transport: new ClientSideTransport({ model }),
     });
 
     return extension;
-  }, [aiAllowed, conf, docId, promptBuilder]);
+  }, [aiAllowed, conf, docId]);
 };
