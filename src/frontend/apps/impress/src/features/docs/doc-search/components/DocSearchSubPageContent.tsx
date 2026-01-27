@@ -48,16 +48,6 @@ export const DocSearchSubPageContent = ({
 
     const subDocs = subDocsData?.results || [];
 
-    if (treeContext?.root) {
-      const isRootTitleIncludeSearch = treeContext.root?.title
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
-
-      if (isRootTitleIncludeSearch) {
-        subDocs.unshift(treeContext.root);
-      }
-    }
-
     setDocsData({
       groupName: subDocs.length > 0 ? t('Select a doc') : '',
       elements: search ? subDocs : [],
