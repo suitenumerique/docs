@@ -4,13 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
-import { Doc, useInfiniteSubDocs } from '@/docs/doc-management';
-
-import { DocSearchFiltersValues } from './DocSearchFilters';
+import { Doc } from '@/docs/doc-management';
+import { useInfiniteSearchDocs } from '@/docs/doc-management/api/useSearchDocs';
+import { DocSearchTarget } from '@/docs/doc-search';
 
 type DocSearchSubPageContentProps = {
   search: string;
-  filters: DocSearchFiltersValues;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
   renderElement: (doc: Doc) => React.ReactNode;
@@ -18,7 +17,6 @@ type DocSearchSubPageContentProps = {
 
 export const DocSearchSubPageContent = ({
   search,
-  filters,
   onSelect,
   onLoadingChange,
   renderElement,
@@ -32,17 +30,18 @@ export const DocSearchSubPageContent = ({
     isLoading,
     fetchNextPage: subDocsFetchNextPage,
     hasNextPage: subDocsHasNextPage,
-  } = useInfiniteSubDocs(
+  } = useInfiniteSearchDocs(
     {
+      q: search,
       page: 1,
-      title: search,
-      ...filters,
-      parent_id: treeContext?.root?.id ?? '',
+      target: DocSearchTarget.CURRENT,
+      parentPath: treeContext?.root?.path,
     },
     {
-      enabled: !!treeContext?.root?.id,
+      enabled: !!treeContext?.root?.path,
     },
   );
+
   const [docsData, setDocsData] = useState<QuickSearchData<Doc>>({
     groupName: '',
     elements: [],
@@ -57,16 +56,6 @@ export const DocSearchSubPageContent = ({
     }
 
     const subDocs = subDocsData?.pages.flatMap((page) => page.results) || [];
-
-    if (treeContext?.root) {
-      const isRootTitleIncludeSearch = treeContext.root?.title
-        ?.toLowerCase()
-        .includes(search.toLowerCase());
-
-      if (isRootTitleIncludeSearch) {
-        subDocs.unshift(treeContext.root);
-      }
-    }
 
     setDocsData({
       groupName: subDocs.length > 0 ? t('Select a doc') : '',
