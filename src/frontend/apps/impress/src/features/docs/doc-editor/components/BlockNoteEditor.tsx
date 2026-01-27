@@ -47,7 +47,6 @@ import {
   PdfBlock,
   UploadLoaderBlock,
 } from './custom-blocks';
-
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
@@ -202,8 +201,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       },
       extensions: [
         CommentsExtension({ threadStore, resolveUsers }),
-        aiExtension,
+        ...(aiExtension ? [aiExtension] : []),
       ],
+      visualMedia: {
+        image: {
+          maxWidth: 760,
+        },
+      },
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -335,7 +339,7 @@ export const BlockNoteReader = ({
         slashMenu={false}
         comments={false}
       >
-        <BlockNoteToolbar />
+        <BlockNoteToolbar aiAllowed={false} />
       </BlockNoteView>
     </Box>
   );

@@ -162,9 +162,6 @@ export const cssEditor = css`
     border-bottom: 2px solid var(--c--globals--colors--primary-300);
     color: var(--c--globals--colors--primary-700);
   }
-  [data-show-selection] {
-    background-color: var(--c--globals--colors--primary-300);
-  }
 
   /**
   * Divider

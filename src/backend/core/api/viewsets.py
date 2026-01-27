@@ -1651,7 +1651,6 @@ class DocumentViewSet(
 
         if settings.AI_STREAM:
             stream_gen = ai_service.stream_proxy(
-                provider="albert",
                 url=settings.AI_BASE_URL.rstrip("/") + "/chat/completions",
                 method="POST",
                 headers={"Content-Type": "application/json"},

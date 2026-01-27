@@ -1,4 +1,9 @@
-import { useBlockNoteEditor, useComponentsContext, useExtension } from '@blocknote/react';
+import { FormattingToolbarExtension } from '@blocknote/core/extensions';
+import {
+  useBlockNoteEditor,
+  useComponentsContext,
+  useExtension,
+} from '@blocknote/react';
 import {
   AIExtension,
   AIMenu as AIMenuDefault,
@@ -19,7 +24,6 @@ import {
   DocsInlineContentSchema,
   DocsStyleSchema,
 } from '../../types';
-import { FormattingToolbarExtension } from '@blocknote/core/extensions';
 
 const AIMenuStyle = createGlobalStyle`
   #ai-suggestion-menu .bn-suggestion-menu-item-small .bn-mt-suggestion-menu-item-section[data-position=left] svg {
@@ -114,10 +118,10 @@ export const AIToolbarButton = () => {
     return null;
   }
 
-   const onClick = () => {
+  const onClick = () => {
     const selection = editor.getSelection();
     if (!selection) {
-      throw new Error("No selection");
+      throw new Error('No selection');
     }
 
     const position = selection.blocks[selection.blocks.length - 1].id;
