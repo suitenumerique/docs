@@ -1,16 +1,14 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
-import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
-import { Doc, useInfiniteSubDocs } from '@/docs/doc-management';
-
-import { DocSearchFiltersValues } from './DocSearchFilters';
+import { Doc } from '@/docs/doc-management';
+import { useSearchDocs } from '@/docs/doc-management/api/searchDocs';
+import { DocSearchTarget } from '@/docs/doc-search';
 
 type DocSearchSubPageContentProps = {
   search: string;
-  filters: DocSearchFiltersValues;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
   renderElement: (doc: Doc) => React.ReactNode;
@@ -18,7 +16,6 @@ type DocSearchSubPageContentProps = {
 
 export const DocSearchSubPageContent = ({
   search,
-  filters,
   onSelect,
   onLoadingChange,
   renderElement,
@@ -30,19 +27,12 @@ export const DocSearchSubPageContent = ({
     isFetching,
     isRefetching,
     isLoading,
-    fetchNextPage: subDocsFetchNextPage,
-    hasNextPage: subDocsHasNextPage,
-  } = useInfiniteSubDocs(
-    {
-      page: 1,
-      title: search,
-      ...filters,
-      parent_id: treeContext?.root?.id ?? '',
-    },
-    {
-      enabled: !!treeContext?.root?.id,
-    },
-  );
+  } = useSearchDocs({
+    q: search,
+    target: DocSearchTarget.CURRENT,
+    parentPath: treeContext?.root?.path,
+  });
+
   const [docsData, setDocsData] = useState<QuickSearchData<Doc>>({
     groupName: '',
     elements: [],
@@ -56,7 +46,7 @@ export const DocSearchSubPageContent = ({
       return;
     }
 
-    const subDocs = subDocsData?.pages.flatMap((page) => page.results) || [];
+    const subDocs = subDocsData?.results || [];
 
     if (treeContext?.root) {
       const isRootTitleIncludeSearch = treeContext.root?.title
@@ -72,22 +62,8 @@ export const DocSearchSubPageContent = ({
       groupName: subDocs.length > 0 ? t('Select a doc') : '',
       elements: search ? subDocs : [],
       emptyString: search ? t('No document found') : t('Search by title'),
-      endActions: subDocsHasNextPage
-        ? [
-            {
-              content: <InView onChange={() => void subDocsFetchNextPage()} />,
-            },
-          ]
-        : [],
     });
-  }, [
-    loading,
-    search,
-    subDocsData?.pages,
-    subDocsFetchNextPage,
-    subDocsHasNextPage,
-    treeContext?.root,
-  ]);
+  }, [loading, search, subDocsData, subDocsData?.results, treeContext?.root]);
 
   useEffect(() => {
     onLoadingChange?.(loading);

@@ -6,25 +6,21 @@ import { useSearchDocs } from '@/docs/doc-management/api/searchDocs';
 
 import { Doc } from '../../doc-management';
 
-import { DocSearchFiltersValues } from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchContentProps = {
   search: string;
-  filters: DocSearchFiltersValues;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
 };
 
 export const DocSearchContent = ({
   search,
-  filters,
   onSelect,
   onLoadingChange,
 }: DocSearchContentProps) => {
   const { data, isFetching, isRefetching, isLoading } = useSearchDocs({
     q: search,
-    ...filters,
   });
 
   const loading = isFetching || isRefetching || isLoading;
