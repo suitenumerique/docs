@@ -185,7 +185,7 @@ class BaseDocumentIndexer(ABC):
         """
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def search(self, text, token, visited=(), nb_results=None):
+    def search(self, text, token, visited=(), nb_results=None, path=None):
         """
         Search for documents in Find app.
         Ensure the same default ordering as "Docs" list : -updated_at
@@ -201,6 +201,8 @@ class BaseDocumentIndexer(ABC):
             nb_results (int, optional):
                 The number of results to return.
                 Defaults to 50 if not specified.
+            path (str, optional):
+                The path to filter documents.
         """
         nb_results = nb_results or self.search_limit
         response = self.search_query(
@@ -211,6 +213,7 @@ class BaseDocumentIndexer(ABC):
                 "nb_results": nb_results,
                 "order_by": "updated_at",
                 "order_direction": "desc",
+                "path": path,
             },
             token=token,
         )

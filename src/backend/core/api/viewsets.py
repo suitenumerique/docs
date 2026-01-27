@@ -1203,29 +1203,27 @@ class DocumentViewSet(
             },
         )
 
-    def _search_fulltext(self, indexer, request, params):
+    def _search(self, indexer, request, params):
         """
-        Returns a queryset from the results the fulltext search of Find
+        Returns a list of documents matching the query according to the configured indexer.
         """
-        access_token = request.session.get("oidc_access_token")
-        user = request.user
         text = params.validated_data["q"]
+        path = params.validated_data["path"] if "path" in params.validated_data else None
         queryset = models.Document.objects.all()
 
-        # Retrieve the documents ids from Find.
+        # Retrieve the documents ids according to indexer.
         results = indexer.search(
             text=text,
-            token=access_token,
-            visited=get_visited_document_ids_of(queryset, user),
+            token=request.session.get("oidc_access_token"),
+            path=path,
+            visited=get_visited_document_ids_of(queryset, request.user),
         )
 
         docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
         ordered_docs = [docs_by_uuid[id] for id in results]
 
-        page = self.paginate_queryset(ordered_docs)
-
         serializer = self.get_serializer(
-            page if page else ordered_docs,
+             ordered_docs,
             many=True,
             context={
                 "request": request,
@@ -1252,9 +1250,8 @@ class DocumentViewSet(
         params.is_valid(raise_exception=True)
 
         indexer = get_document_indexer()
-
         if indexer:
-            return self._search_fulltext(indexer, request, params=params)
+            return self._search(indexer, request, params=params)
 
         # The indexer is not configured, we fallback on a simple icontains filter by the
         # model field 'title'.
