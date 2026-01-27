@@ -20,6 +20,7 @@ and this project adheres to
 - ✨(frontend) Add stat for Crisp #1824
 - ✨(auth) add silent login #1690
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
+- ✨ integrate Find search
 
 ### Changed
 
