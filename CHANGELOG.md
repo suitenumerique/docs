@@ -26,6 +26,7 @@ and this project adheres to
 - 🐛(frontend) add fallback for unsupported Blocknote languages #1810
 - 🐛(frontend) fix emojipicker closing in tree #1808
 - 🐛(frontend) display children in favorite #1782
+- 🐛(frontend) preserve typed text after @ on escape #1833
 
 ### Removed
 
