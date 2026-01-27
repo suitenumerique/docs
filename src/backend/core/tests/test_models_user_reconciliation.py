@@ -77,6 +77,30 @@ def test_user_reconciliation_csv_import_entry_is_created_grist_form(
 
 def test_incorrect_csv_format_handling():
     """Test that an incorrectly formatted CSV file is handled gracefully."""
+    example_csv_path = (
+        Path(__file__).parent / "data/example_reconciliation_missing_column.csv"
+    )
+    with open(example_csv_path, "rb") as f:
+        csv_file = ContentFile(
+            f.read(), name="example_reconciliation_missing_column.csv"
+        )
+    csv_import = models.UserReconciliationCsvImport(file=csv_file)
+    csv_import.save()
+
+    assert csv_import.status == "pending"
+
+    user_reconciliation_csv_import_job(csv_import.id)
+    csv_import.refresh_from_db()
+
+    assert (
+        "CSV is missing mandatory columns: active_email, inactive_email, id"
+        in csv_import.logs
+    )
+    assert csv_import.status == "error"
+
+
+def test_incorrect_email_format_handling():
+    """Test that an incorrectly formatted CSV file is handled gracefully."""
     example_csv_path = Path(__file__).parent / "data/example_reconciliation_error.csv"
     with open(example_csv_path, "rb") as f:
         csv_file = ContentFile(f.read(), name="example_reconciliation_error.csv")
@@ -88,8 +112,8 @@ def test_incorrect_csv_format_handling():
     user_reconciliation_csv_import_job(csv_import.id)
     csv_import.refresh_from_db()
 
-    assert "This field cannot be blank" in csv_import.logs
-    assert csv_import.status == "error"
+    assert "Invalid inactive email address on row 40" in csv_import.logs
+    assert csv_import.status == "done"
 
     # pylint: disable-next=no-member
     assert len(mail.outbox) == 1
@@ -97,7 +121,7 @@ def test_incorrect_csv_format_handling():
     # pylint: disable-next=no-member
     email = mail.outbox[0]
 
-    assert email.to == ["user.test40@example.com", ""]
+    assert email.to == ["user.test40@example.com"]
     email_content = " ".join(email.body.split())
 
     assert "Reconciliation of your Docs accounts not completed" in email_content
@@ -120,8 +144,11 @@ def test_incorrect_csv_data_handling_grist_form():
     user_reconciliation_csv_import_job(csv_import.id)
     csv_import.refresh_from_db()
 
-    assert "Active and inactive emails cannot be the same." in csv_import.logs
-    assert csv_import.status == "error"
+    assert (
+        "user.test20@example.com set as both active and inactive email"
+        in csv_import.logs
+    )
+    assert csv_import.status == "done"
 
 
 def test_job_creates_reconciliation_entries(import_example_csv_basic):
@@ -137,6 +164,37 @@ def test_job_creates_reconciliation_entries(import_example_csv_basic):
     assert "5 reconciliation entries created." in import_example_csv_basic.logs
 
     # Verify reconciliation entries were created
+    reconciliations = models.UserReconciliation.objects.all()
+    assert reconciliations.count() == 5
+
+
+def test_job_does_not_create_duplicated_reconciliation_entries(
+    import_example_csv_basic,
+):
+    """Test that the CSV import job doesn't create UserReconciliation entries
+    for source unique IDs that have already been processed."""
+
+    _already_created_entry = models.UserReconciliation.objects.create(
+        active_email="user.test40@example.com",
+        inactive_email="user.test41@example.com",
+        active_email_checked=0,
+        inactive_email_checked=0,
+        status="pending",
+        source_unique_id=1,
+    )
+
+    assert import_example_csv_basic.status == "pending"
+    user_reconciliation_csv_import_job(import_example_csv_basic.id)
+
+    # Verify the job status changed
+    import_example_csv_basic.refresh_from_db()
+    assert import_example_csv_basic.status == "done"
+    assert "Import completed successfully." in import_example_csv_basic.logs
+    assert "6 rows processed." in import_example_csv_basic.logs
+    assert "4 reconciliation entries created." in import_example_csv_basic.logs
+    assert "1 rows were already processed." in import_example_csv_basic.logs
+
+    # Verify the correct number of reconciliation entries were created
     reconciliations = models.UserReconciliation.objects.all()
     assert reconciliations.count() == 5
 
@@ -224,8 +282,8 @@ def test_user_reconciliation_is_created(user_reconciliation_users_and_docs):
         inactive_email=user_2.email,
         active_email_checked=False,
         inactive_email_checked=True,
-        active_confirmation_id=uuid.uuid4(),
-        inactive_confirmation_id=uuid.uuid4(),
+        active_email_confirmation_id=uuid.uuid4(),
+        inactive_email_confirmation_id=uuid.uuid4(),
         status="pending",
     )
 
@@ -243,8 +301,8 @@ def test_user_reconciliation_verification_emails_are_sent(
         inactive_email=user_2.email,
         active_email_checked=False,
         inactive_email_checked=False,
-        active_confirmation_id=uuid.uuid4(),
-        inactive_confirmation_id=uuid.uuid4(),
+        active_email_confirmation_id=uuid.uuid4(),
+        inactive_email_confirmation_id=uuid.uuid4(),
         status="pending",
     )
 
@@ -263,9 +321,12 @@ def test_user_reconciliation_verification_emails_are_sent(
         "You have requested a reconciliation of your user accounts on Docs."
         in email_1_content
     )
-    active_confirmation_id = rec.active_confirmation_id
-    inactive_confirmation_id = rec.inactive_confirmation_id
-    assert f"user_reconciliations/active/{active_confirmation_id}/" in email_1_content
+    active_email_confirmation_id = rec.active_email_confirmation_id
+    inactive_email_confirmation_id = rec.inactive_email_confirmation_id
+    assert (
+        f"user_reconciliations/active/{active_email_confirmation_id}/"
+        in email_1_content
+    )
 
     # pylint: disable-next=no-member
     email_2 = mail.outbox[1]
@@ -279,7 +340,8 @@ def test_user_reconciliation_verification_emails_are_sent(
     )
 
     assert (
-        f"user_reconciliations/inactive/{inactive_confirmation_id}/" in email_2_content
+        f"user_reconciliations/inactive/{inactive_email_confirmation_id}/"
+        in email_2_content
     )
 
 

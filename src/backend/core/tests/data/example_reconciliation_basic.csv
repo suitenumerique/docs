@@ -1,6 +1,6 @@
-active_email,inactive_email,active_email_checked,inactive_email_checked,status
-"user.test40@example.com","user.test41@example.com",0,0,pending
-"user.test42@example.com","user.test43@example.com",0,1,pending
-"user.test44@example.com","user.test45@example.com",1,0,pending
-"user.test46@example.com","user.test47@example.com",1,1,pending
-"user.test48@example.com","user.test49@example.com",1,1,pending
+active_email,inactive_email,active_email_checked,inactive_email_checked,status,id
+"user.test40@example.com","user.test41@example.com",0,0,pending,1
+"user.test42@example.com","user.test43@example.com",0,1,pending,2
+"user.test44@example.com","user.test45@example.com",1,0,pending,3
+"user.test46@example.com","user.test47@example.com",1,1,pending,4
+"user.test48@example.com","user.test49@example.com",1,1,pending,5

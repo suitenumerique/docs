@@ -23,76 +23,103 @@ def user_reconciliation_csv_import_job(job_id):
     Does some sanity checks on the data:
     - active_email and inactive_email must be valid email addresses
     - active_email and inactive_email cannot be the same
+
+    Rows with errors are logged in the job logs and skipped, but do not cause
+    the entire job to fail or prevent the next rows from being processed.
     """
     # Imports the CSV file, breaks it into UserReconciliation items
     job = UserReconciliationCsvImport.objects.get(id=job_id)
     job.status = "running"
     job.save()
 
+    rec_entries_created = 0
+    rows_with_errors = 0
+    already_processed_source_ids = 0
+
     try:
         with job.file.open(mode="r") as f:
             reader = csv.DictReader(f)
-            rec_entries_created = 0
+
+            if not {"active_email", "inactive_email", "id"}.issubset(reader.fieldnames):
+                raise KeyError(
+                    "CSV is missing mandatory columns: active_email, inactive_email, id"
+                )
+
             for row in reader:
-                status = row["status"]
+                source_unique_id = row["id"].strip()
 
-                if status == "pending":
-                    active_email_checked = row.get("active_email_checked", "0") == "1"
-                    inactive_email_checked = (
-                        row.get("inactive_email_checked", "0") == "1"
+                # Skip entries if they already exist with this source_unique_id
+                if UserReconciliation.objects.filter(
+                    source_unique_id=source_unique_id
+                ).exists():
+                    already_processed_source_ids += 1
+                    continue
+
+                active_email_checked = row.get("active_email_checked", "0") == "1"
+                inactive_email_checked = row.get("inactive_email_checked", "0") == "1"
+
+                active_email = row["active_email"]
+                inactive_emails = row["inactive_email"].split("|")
+                try:
+                    validate_email(active_email)
+                except ValidationError:
+                    job.send_reconciliation_error_email(
+                        recipient_email=inactive_emails[0], other_email=active_email
                     )
+                    job.logs += (
+                        f"Invalid active email address on row {source_unique_id}."
+                    )
+                    rows_with_errors += 1
+                    continue
 
-                    active_email = row["active_email"]
-                    inactive_emails = row["inactive_email"].split("|")
+                for inactive_email in inactive_emails:
                     try:
-                        validate_email(active_email)
-                    except ValidationError as e:
+                        validate_email(inactive_email)
+                    except (ValidationError, ValueError):
                         job.send_reconciliation_error_email(
-                            active_email, inactive_emails[0]
+                            recipient_email=active_email, other_email=inactive_email
                         )
-                        job.status = "error"
-                        job.logs = f"{e!s}\n{traceback.format_exc()}"
-
-                    for inactive_email in inactive_emails:
-                        try:
-                            validate_email(inactive_email)
-                        except ValidationError as e:
-                            job.send_reconciliation_error_email(
-                                active_email, inactive_email
-                            )
-                            job.status = "error"
-                            job.logs = f"{e!s}\n{traceback.format_exc()}"
-                        if inactive_email == active_email:
-                            raise ValueError(
-                                "Active and inactive emails cannot be the same."
-                            )
-
-                        rec_entry = UserReconciliation.objects.create(
-                            active_email=active_email,
-                            inactive_email=inactive_email,
-                            active_email_checked=active_email_checked,
-                            inactive_email_checked=inactive_email_checked,
-                            active_confirmation_id=uuid.uuid4(),
-                            inactive_confirmation_id=uuid.uuid4(),
-                            status="pending",
+                        job.logs += f"Invalid inactive email address on row {source_unique_id}.\n"
+                        rows_with_errors += 1
+                        continue
+                    if inactive_email == active_email:
+                        job.logs += (
+                            f"Error on row {source_unique_id}: "
+                            f"{active_email} set as both active and inactive email.\n"
                         )
-                        rec_entry.save()
-                        rec_entries_created += 1
+                        rows_with_errors += 1
+                        continue
+
+                    _rec_entry = UserReconciliation.objects.create(
+                        active_email=active_email,
+                        inactive_email=inactive_email,
+                        active_email_checked=active_email_checked,
+                        inactive_email_checked=inactive_email_checked,
+                        active_email_confirmation_id=uuid.uuid4(),
+                        inactive_email_confirmation_id=uuid.uuid4(),
+                        source_unique_id=source_unique_id,
+                        status="pending",
+                    )
+                    rec_entries_created += 1
 
         job.status = "done"
-        job.logs = f"""Import completed successfully. {reader.line_num} rows processed.
-        {rec_entries_created} reconciliation entries created."""
+        job.logs += (
+            f"Import completed successfully. {reader.line_num} rows processed."
+            f"{rec_entries_created} reconciliation entries created."
+            f" {already_processed_source_ids} rows were already processed."
+            f"{rows_with_errors} rows had errors."
+        )
     except (
         csv.Error,
         KeyError,
-        ValueError,
         ValidationError,
+        ValueError,
         IntegrityError,
         OSError,
         ClientError,
     ) as e:
         # Catch expected I/O/CSV/model errors and record traceback in logs for debugging
         job.status = "error"
-        job.logs = f"{e!s}\n{traceback.format_exc()}"
+        job.logs += f"{e!s}\n{traceback.format_exc()}"
     finally:
         job.save()

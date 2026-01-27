@@ -110,7 +110,7 @@ class UserAdmin(auth_admin.UserAdmin):
 class UserReconciliationCsvImportAdmin(admin.ModelAdmin):
     """Admin class for UserReconciliationCsvImport model."""
 
-    list_display = ("id", "created_at", "status")
+    list_display = ("id", "__str__", "created_at", "status")
 
     def save_model(self, request, obj, form, change):
         """Override save_model to trigger the import task on creation."""
@@ -167,7 +167,7 @@ def process_reconciliation(_modeladmin, _request, queryset):
 class UserReconciliationAdmin(admin.ModelAdmin):
     """Admin class for UserReconciliation model."""
 
-    list_display = ["id", "created_at", "status"]
+    list_display = ["id", "__str__", "created_at", "status"]
     actions = [process_reconciliation]
 
 

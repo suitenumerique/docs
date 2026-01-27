@@ -277,9 +277,9 @@ class ReconciliationConfirmView(APIView):
             )
 
         lookup = (
-            {"active_confirmation_id": uuid_obj}
+            {"active_email_confirmation_id": uuid_obj}
             if user_type == "active"
-            else {"inactive_confirmation_id": uuid_obj}
+            else {"inactive_email_confirmation_id": uuid_obj}
         )
 
         try:

@@ -318,11 +318,17 @@ class UserReconciliation(BaseModel):
         blank=True,
         related_name="inactive_user",
     )
-    active_confirmation_id = models.UUIDField(
+    active_email_confirmation_id = models.UUIDField(
         default=uuid.uuid4, unique=True, editable=False, null=True
     )
-    inactive_confirmation_id = models.UUIDField(
+    inactive_email_confirmation_id = models.UUIDField(
         default=uuid.uuid4, unique=True, editable=False, null=True
+    )
+    source_unique_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name=_("Unique ID in the source file"),
     )
 
     status = models.CharField(
@@ -356,11 +362,13 @@ class UserReconciliation(BaseModel):
             if self.active_user and self.inactive_user:
                 if not self.active_email_checked:
                     self.send_reconciliation_confirm_email(
-                        self.active_user, "active", self.active_confirmation_id
+                        self.active_user, "active", self.active_email_confirmation_id
                     )
                 if not self.inactive_email_checked:
                     self.send_reconciliation_confirm_email(
-                        self.inactive_user, "inactive", self.inactive_confirmation_id
+                        self.inactive_user,
+                        "inactive",
+                        self.inactive_email_confirmation_id,
                     )
                 self.status = "ready"
             else:
@@ -456,7 +464,7 @@ class UserReconciliationCsvImport(BaseModel):
     """Model to import reconciliations requests from an external source
     (eg, )"""
 
-    file = models.FileField(upload_to="imports/")
+    file = models.FileField(upload_to="imports/", verbose_name=_("CSV file"))
     status = models.CharField(
         max_length=20,
         choices=[
@@ -506,12 +514,14 @@ class UserReconciliationCsvImport(BaseModel):
             except smtplib.SMTPException as exception:
                 logger.error("invitation to %s was not sent: %s", emails, exception)
 
-    def send_reconciliation_error_email(self, email_1, email_2, language=None):
+    def send_reconciliation_error_email(
+        self, recipient_email, other_email, language=None
+    ):
         """Method allowing to send email for reconciliation requests with errors."""
         language = language or get_language()
         domain = Site.objects.get_current().domain
 
-        emails = [email_1, email_2]
+        emails = [recipient_email]
 
         with override(language):
             subject = _("Reconciliation of your Docs accounts not completed")
@@ -521,14 +531,14 @@ class UserReconciliationCsvImport(BaseModel):
                 "message": _(
                     """Reconciliation failed for the following email addresses:
 
-                            - {email1}
-                            - {email2}
+                            - {recipient_email}
+                            - {other_email}
 
                             Please check for typos.
 
                             You can submit another request with the valid email addresses.
                              """
-                ).format(email1=email_1, email2=email_2),
+                ).format(recipient_email=recipient_email, other_email=other_email),
                 "link": f"{domain}/",
                 "link_label": str(_("Click here")),
                 "button_label": str(_("Make a new request")),
