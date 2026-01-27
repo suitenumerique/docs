@@ -124,7 +124,6 @@ const DocSearchModalGlobal = ({
                 {target === DocSearchTarget.ALL && (
                   <DocSearchContent
                     search={search}
-                    filters={filters}
                     onSelect={handleSelect}
                     onLoadingChange={setLoading}
                   />
@@ -132,7 +131,6 @@ const DocSearchModalGlobal = ({
                 {isDocPage && target === DocSearchTarget.CURRENT && (
                   <DocSearchSubPageContent
                     search={search}
-                    filters={filters}
                     onSelect={handleSelect}
                     onLoadingChange={setLoading}
                     renderElement={(doc) => <DocSearchItem doc={doc} />}
