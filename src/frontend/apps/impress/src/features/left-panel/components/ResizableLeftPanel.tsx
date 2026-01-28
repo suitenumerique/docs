@@ -71,6 +71,7 @@ export const ResizableLeftPanel = ({
     <PanelGroup direction="horizontal">
       <Panel
         ref={ref}
+        className="--docs--resizable-left-panel"
         order={0}
         defaultSize={
           isDesktop

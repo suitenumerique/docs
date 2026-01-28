@@ -40,6 +40,7 @@ enum DocDownloadFormat {
   PDF = 'pdf',
   DOCX = 'docx',
   ODT = 'odt',
+  PRINT = 'print',
 }
 
 interface ModalExportProps {
@@ -53,7 +54,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { editor } = useEditorStore();
   const [isExporting, setIsExporting] = useState(false);
   const [format, setFormat] = useState<DocDownloadFormat>(
-    DocDownloadFormat.PDF,
+    DocDownloadFormat.PRINT,
   );
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
@@ -65,6 +66,136 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     }
 
     setIsExporting(true);
+
+    // Handle print separately as it doesn't download a file
+    if (format === DocDownloadFormat.PRINT) {
+      // Add print-specific styles to hide non-content elements
+      const printStyles = document.createElement('style');
+      printStyles.id = 'print-only-content-styles';
+      printStyles.textContent = `
+        @media print {
+          /* Reset body and html for proper pagination */
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
+          /* Hide non-essential elements for printing */
+          .--docs--header,
+          .--docs--resizable-left-panel,
+          .--docs--doc-editor-header,
+          .--docs--doc-header,
+          .--docs--doc-toolbox,
+          .--docs--table-content,
+          div[data-is-empty-and-focused="true"],
+          div[data-floating-ui-focusable] {
+            display: none !important;
+          }
+          
+          /* Reset all layout containers for print flow */
+          .--docs--main-layout,
+          .--docs--main-layout > *,
+          main[role="main"],
+          #mainContent {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          
+          /* Allow editor containers to flow across pages */
+          .--docs--editor-container,
+          .--docs--doc-editor,
+          .--docs--doc-editor-content {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          
+          /* Reset all Box components that might have height constraints */
+          .--docs--doc-editor > div,
+          .--docs--doc-editor-content > div {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          
+          /* Ensure BlockNote content flows properly */
+          .bn-editor, 
+          .bn-container,
+          .--docs--main-editor,
+          .bn-block-outer {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          /* Prevent awkward page breaks */
+          .bn-block-content {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          .--docs--main-editor {
+            width: 100% !important;
+            padding: 0.5cm !important;
+          }
+          
+          /* Force print all colors and backgrounds */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          /* Add minimal print margins */
+          @page {
+            margin: 0.5cm;
+          }
+        }
+      `;
+      document.head.appendChild(printStyles);
+
+      // Small delay to ensure styles are applied
+      setTimeout(() => {
+        window.print();
+
+        // Clean up the styles after printing
+        const cleanup = () => {
+          const stylesElement = document.getElementById(
+            'print-only-content-styles',
+          );
+          if (stylesElement) {
+            stylesElement.remove();
+          }
+        };
+
+        // Listen for afterprint event to clean up
+        window.addEventListener('afterprint', cleanup, { once: true });
+
+        // Also clean up after a delay as fallback
+        setTimeout(cleanup, 1000);
+      }, 100);
+
+      setIsExporting(false);
+      onClose();
+      return;
+    }
 
     const filename = (doc.title || untitledDocument)
       .toLowerCase()
@@ -199,13 +330,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           </Button>
           <Button
             data-testid="doc-export-download-button"
-            aria-label={t('Download')}
+            aria-label={
+              format === DocDownloadFormat.PRINT ? t('Print') : t('Download')
+            }
             variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
             disabled={isExporting}
           >
-            {t('Download')}
+            {format === DocDownloadFormat.PRINT ? t('Print') : t('Download')}
           </Button>
         </>
       }
@@ -225,7 +358,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             $align="flex-start"
             data-testid="modal-export-title"
           >
-            {t('Download')}
+            {t('Export')}
           </Text>
           <ButtonCloseModal
             aria-label={t('Close the download modal')}
@@ -243,7 +376,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       >
         <Text $variation="secondary" $size="sm" as="p">
           {t(
-            'Download your document in a .docx, .odt, .pdf or .html(zip) format.',
+            'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
           )}
         </Text>
         <Select
@@ -251,9 +384,10 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           fullWidth
           label={t('Format')}
           options={[
+            { label: t('Print'), value: DocDownloadFormat.PRINT },
+            { label: t('PDF'), value: DocDownloadFormat.PDF },
             { label: t('Docx'), value: DocDownloadFormat.DOCX },
             { label: t('ODT'), value: DocDownloadFormat.ODT },
-            { label: t('PDF'), value: DocDownloadFormat.PDF },
             { label: t('HTML'), value: DocDownloadFormat.HTML },
           ]}
           value={format}
