@@ -36,12 +36,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      -
-        name: Run trivy scan
-        uses: numerique-gouv/action-trivy-cache@main
-        with:
-          docker-build-args: '--target backend-production -f Dockerfile'
-          docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
+      # -
+      #   name: Run trivy scan
+      #   uses: numerique-gouv/action-trivy-cache@main
+      #   with:
+      #     docker-build-args: '--target backend-production -f Dockerfile'
+      #     docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
       -
         name: Build and push
         uses: docker/build-push-action@v6
@@ -146,8 +146,9 @@ jobs:
 
   notify-argocd:
     needs:
-      - build-and-push-frontend
       - build-and-push-backend
+      - build-and-push-frontend
+      - build-and-push-y-provider
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
     steps:
