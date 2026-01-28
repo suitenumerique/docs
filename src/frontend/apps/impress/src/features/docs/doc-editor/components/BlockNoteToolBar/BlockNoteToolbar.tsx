@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
+import { AIToolbarButton } from '../AI/';
 import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
@@ -69,6 +70,8 @@ export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
+        {conf?.AI_FEATURE_ENABLED && <AIToolbarButton />}
+
         <CommentToolbarButton />
 
         {toolbarItems}

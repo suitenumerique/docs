@@ -35,7 +35,26 @@ export const useSaveDoc = (
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      setIsLocalChange(transaction.local);
+      /**
+       * When the AI edit the doc transaction.local is false,
+       * so we check if the origin constructor to know where
+       * the transaction comes from.
+       * "PluginKey" constructor comes from the current user, but transaction.local is more reliable
+       * "HocuspocusProvider" constructor comes from other users from the collaboration server,
+       * it seems quite reliable too.
+       * The AI constructor name seems to not be reliable enough, but by deduction if it's not local
+       * and not from other users, it has to be from the AI.
+       *
+       * TODO: see if we can get the local changes from the AI
+       */
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const transactionOrigin = transaction?.origin?.constructor?.name;
+      const PROVIDER_ORIGIN_CONSTRUCTOR = 'HocuspocusProvider';
+
+      const isAIChange =
+        !transaction.local && transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR;
+
+      setIsLocalChange(transaction.local || isAIChange);
     };
 
     yDoc.on('update', onUpdate);
