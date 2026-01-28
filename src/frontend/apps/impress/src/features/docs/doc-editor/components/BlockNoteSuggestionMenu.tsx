@@ -8,8 +8,11 @@ import {
   useBlockNoteEditor,
   useDictionary,
 } from '@blocknote/react';
+import { getAISlashMenuItems } from '@blocknote/xl-ai';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useConfig } from '@/core';
 
 import {
   DocsBlockSchema,
@@ -39,6 +42,7 @@ export const BlockNoteSuggestionMenu = () => {
   const fileBlocksName = dictionaryDate.slash_menu.file.group;
 
   const getInterlinkingMenuItems = useGetInterlinkingMenuItems();
+  const { data: conf } = useConfig();
 
   const getSlashMenuItems = useMemo(() => {
     // We insert it after the "Code Block" item to have the interlinking block displayed after the basic blocks
@@ -50,6 +54,7 @@ export const BlockNoteSuggestionMenu = () => {
       getMultiColumnSlashMenuItems?.(editor) || [],
       getPdfReactSlashMenuItems(editor, t, fileBlocksName),
       getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
+      conf?.AI_FEATURE_ENABLED ? getAISlashMenuItems(editor) : [],
     );
 
     const index = combinedMenu.findIndex(
@@ -66,7 +71,14 @@ export const BlockNoteSuggestionMenu = () => {
 
     return async (query: string) =>
       Promise.resolve(filterSuggestionItems(newSlashMenuItems, query));
-  }, [basicBlocksName, editor, getInterlinkingMenuItems, t, fileBlocksName]);
+  }, [
+    editor,
+    t,
+    fileBlocksName,
+    basicBlocksName,
+    conf?.AI_FEATURE_ENABLED,
+    getInterlinkingMenuItems,
+  ]);
 
   return (
     <SuggestionMenuController

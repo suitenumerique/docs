@@ -52,7 +52,7 @@ export const DocEditorContainer = ({
         <Box
           $direction="row"
           $width="100%"
-          $css="overflow-x: clip; flex: 1;"
+          $css="flex: 1;"
           $position="relative"
           className="--docs--doc-editor-content"
         >

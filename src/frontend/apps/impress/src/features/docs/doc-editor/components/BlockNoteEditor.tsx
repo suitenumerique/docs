@@ -12,6 +12,9 @@ import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
+import { AIMenuController } from '@blocknote/xl-ai';
+import { en as aiEn } from '@blocknote/xl-ai/locales';
+import '@blocknote/xl-ai/style.css';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,6 +39,7 @@ import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
+import { AIMenu, useAI } from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { cssComments, useComments } from './comments/';
@@ -99,6 +103,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   }
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const aiExtension = useAI(doc.id);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -168,6 +173,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         ...(multiColumnLocales && {
           multi_column:
             multiColumnLocales[lang as keyof typeof multiColumnLocales],
+          ai: aiEn,
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
@@ -190,7 +196,15 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
         return defaultPasteHandler();
       },
-      extensions: [CommentsExtension({ threadStore, resolveUsers })],
+      extensions: [
+        CommentsExtension({ threadStore, resolveUsers }),
+        ...(aiExtension ? [aiExtension] : []),
+      ],
+      visualMedia: {
+        image: {
+          maxWidth: 760,
+        },
+      },
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -243,6 +257,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         comments={showComments}
         aria-label={t('Document editor')}
       >
+        {aiExtension && <AIMenuController aiMenu={AIMenu} />}
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
       </BlockNoteView>

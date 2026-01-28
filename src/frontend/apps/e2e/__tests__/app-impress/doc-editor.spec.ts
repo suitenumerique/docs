@@ -11,7 +11,12 @@ import {
   overrideConfig,
   verifyDocName,
 } from './utils-common';
-import { getEditor, openSuggestionMenu, writeInEditor } from './utils-editor';
+import {
+  getEditor,
+  mockAIResponse,
+  openSuggestionMenu,
+  writeInEditor,
+} from './utils-editor';
 import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import {
   createRootSubPage,
@@ -39,6 +44,7 @@ test.describe('Doc Editor', () => {
       .selectText();
 
     const toolbar = page.locator('.bn-formatting-toolbar');
+    await expect(toolbar.getByRole('button', { name: 'Ask AI' })).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="comment-toolbar-button"]'),
     ).toBeVisible();
@@ -63,9 +69,6 @@ test.describe('Doc Editor', () => {
     ).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="createLink"]'),
-    ).toBeVisible();
-    await expect(
-      toolbar.locator('button[data-test="ai-actions"]'),
     ).toBeVisible();
     await expect(
       toolbar.locator('button[data-test="convertMarkdown"]'),
@@ -93,13 +96,11 @@ test.describe('Doc Editor', () => {
 
     await expect(image).toHaveAttribute('role', 'presentation');
 
-    await image.dblclick();
+    await image.click();
 
+    await expect(toolbar.getByRole('button', { name: 'Ask AI' })).toBeHidden();
     await expect(
       toolbar.locator('button[data-test="comment-toolbar-button"]'),
-    ).toBeHidden();
-    await expect(
-      toolbar.locator('button[data-test="ai-actions"]'),
     ).toBeHidden();
     await expect(
       toolbar.locator('button[data-test="convertMarkdown"]'),
@@ -387,6 +388,156 @@ test.describe('Doc Editor', () => {
     await expect(image).toHaveAttribute('alt', '');
     await expect(image).toHaveAttribute('tabindex', '-1');
     await expect(image).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  test('it checks the AI feature and accepts changes', async ({
+    page,
+    browserName,
+  }) => {
+    await overrideConfig(page, {
+      AI_BOT: {
+        name: 'Albert AI',
+        color: '#8bc6ff',
+      },
+    });
+
+    await mockAIResponse(page);
+
+    await page.goto('/');
+
+    await createDoc(page, 'doc-ai', browserName, 1);
+
+    await openSuggestionMenu({ page });
+    await page.getByText('Ask AI').click();
+    await expect(
+      page.getByRole('option', { name: 'Continue Writing' }),
+    ).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Summarize' })).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    const editor = await writeInEditor({ page, text: 'Hello World' });
+    await editor.getByText('Hello World').selectText();
+
+    // Check from toolbar
+    await page.getByRole('button', { name: 'Ask AI' }).click();
+
+    await expect(
+      page.getByRole('option', { name: 'Improve Writing' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('option', { name: 'Fix Spelling' }),
+    ).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Translate' })).toBeVisible();
+
+    await page.getByRole('option', { name: 'Translate' }).click();
+    await page
+      .getByRole('textbox', { name: 'Ask anything...' })
+      .fill('Translate into french');
+    await page.getByRole('textbox', { name: 'Ask anything...' }).press('Enter');
+    await expect(editor.getByText('Albert AI')).toBeVisible();
+    await page
+      .locator('p.bn-mt-suggestion-menu-item-title')
+      .getByText('Accept')
+      .click();
+
+    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+
+    // Check Suggestion menu
+    await page.locator('.bn-block-outer').last().fill('/');
+    await expect(page.getByText('Write with AI')).toBeVisible();
+
+    // Reload the page to check that the AI change is still there
+    await page.goto(page.url());
+    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+  });
+
+  test('it reverts with the AI feature', async ({ page, browserName }) => {
+    await overrideConfig(page, {
+      AI_BOT: {
+        name: 'Albert AI',
+        color: '#8bc6ff',
+      },
+    });
+
+    await mockAIResponse(page);
+
+    await page.goto('/');
+
+    await createDoc(page, 'doc-ai', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'Hello World' });
+    await editor.getByText('Hello World').selectText();
+
+    // Check from toolbar
+    await page.getByRole('button', { name: 'Ask AI' }).click();
+
+    await page.getByRole('option', { name: 'Translate' }).click();
+    await page
+      .getByRole('textbox', { name: 'Ask anything...' })
+      .fill('Translate into french');
+    await page.getByRole('textbox', { name: 'Ask anything...' }).press('Enter');
+    await expect(editor.getByText('Albert AI')).toBeVisible();
+    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
+    await page
+      .locator('p.bn-mt-suggestion-menu-item-title')
+      .getByText('Revert')
+      .click();
+
+    await expect(editor.getByText('Hello World')).toBeVisible();
+  });
+
+  test('it checks the AI buttons feature', async ({ page, browserName }) => {
+    await page.route(/.*\/ai-translate\//, async (route) => {
+      const request = route.request();
+      if (request.method().includes('POST')) {
+        await route.fulfill({
+          json: {
+            answer: 'Bonjour le monde',
+          },
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await createDoc(page, 'doc-ai', browserName, 1);
+
+    await page.locator('.bn-block-outer').last().fill('Hello World');
+
+    const editor = page.locator('.ProseMirror');
+    await editor.getByText('Hello').selectText();
+
+    await page.getByRole('button', { name: 'AI' }).click();
+
+    await expect(
+      page.getByRole('menuitem', { name: 'Use as prompt' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Rephrase' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Summarize' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Correct' })).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Language' }),
+    ).toBeVisible();
+
+    await page.getByRole('menuitem', { name: 'Language' }).hover();
+    await expect(
+      page.getByRole('menuitem', { name: 'English', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'French', exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'German', exact: true }),
+    ).toBeVisible();
+
+    await page.getByRole('menuitem', { name: 'English', exact: true }).click();
+
+    await expect(editor.getByText('Bonjour le monde')).toBeVisible();
   });
 
   test('it checks the AI buttons', async ({ page, browserName }) => {

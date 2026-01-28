@@ -93,9 +93,7 @@ test.describe('Config', () => {
     expect(
       await page.locator('button[data-test="convertMarkdown"]').count(),
     ).toBe(1);
-    expect(await page.locator('button[data-test="ai-actions"]').count()).toBe(
-      0,
-    );
+    await expect(page.getByRole('button', { name: 'Ask AI' })).toBeHidden();
   });
 
   test('it checks that Crisp is trying to init from config endpoint', async ({
