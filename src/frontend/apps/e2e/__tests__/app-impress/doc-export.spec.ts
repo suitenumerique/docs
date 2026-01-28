@@ -397,7 +397,11 @@ export const comparePDFWithAssetFolder = async (download: Download) => {
 
     expect(genPage.width).toBe(refPage.width);
     expect(genPage.height).toBe(refPage.height);
-    expect(genPage.data).toStrictEqual(refPage.data);
+    try {
+      expect(genPage.data).toStrictEqual(refPage.data);
+    } catch {
+      throw new Error(`PDF page ${i + 1} screenshot does not match reference.`);
+    }
   }
 };
 

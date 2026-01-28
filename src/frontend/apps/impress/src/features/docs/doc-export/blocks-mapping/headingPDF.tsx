@@ -57,6 +57,7 @@ export const blockMappingHeadingPDF: DocsExporterPDF['mappings']['blockMapping']
         style={{
           fontSize: levelFontSizeEM * FONT_SIZE * PIXELS_PER_POINT,
           fontWeight: 700,
+          lineHeight: 1.25,
           marginTop: `${fontSizeEM * MERGE_RATIO}px`,
           marginBottom: `${fontSizeEM * MERGE_RATIO}px`,
         }}
