@@ -1203,13 +1203,15 @@ class DocumentViewSet(
             },
         )
 
-    def _search(self, indexer, request, params):
+    def _search_with_indexer(self, indexer, request, params):
         """
         Returns a list of documents matching the query according to the configured indexer.
         """
         text = params.validated_data["q"]
-        path = params.validated_data["path"] if "path" in params.validated_data else None
-        queryset = models.Document.objects.all()
+        path = (
+            params.validated_data["path"] if "path" in params.validated_data else None
+        )
+        queryset = self.get_queryset()
 
         # Retrieve the documents ids according to indexer.
         results = indexer.search(
@@ -1220,20 +1222,24 @@ class DocumentViewSet(
         )
 
         docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
-        ordered_docs = [docs_by_uuid[id] for id in results]
+        ordered_docs = [docs_by_uuid[id] for id in results if id in docs_by_uuid]
 
         serializer = self.get_serializer(
-             ordered_docs,
+            ordered_docs,
             many=True,
             context={
                 "request": request,
             },
         )
 
-        return drf_response.Response({
-            "count": len(serializer.data),
-            "results": serializer.data,
-        })
+        return drf_response.Response(
+            {
+                "count": len(serializer.data),
+                "next": None,
+                "previous": None,
+                "results": serializer.data,
+            }
+        )
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
@@ -1254,7 +1260,7 @@ class DocumentViewSet(
 
         indexer = get_document_indexer()
         if indexer:
-            return self._search(indexer, request, params=params)
+            return self._search_with_indexer(indexer, request, params=params)
 
         # The indexer is not configured, we fallback on a simple icontains filter by the
         # model field 'title'.

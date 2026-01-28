@@ -1,10 +1,11 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
+import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { Doc } from '@/docs/doc-management';
-import { useSearchDocs } from '@/docs/doc-management/api/searchDocs';
+import { useInfiniteSearchDocs } from '@/docs/doc-management/api/useSearchDocs';
 import { DocSearchTarget } from '@/docs/doc-search';
 
 type DocSearchSubPageContentProps = {
@@ -27,11 +28,19 @@ export const DocSearchSubPageContent = ({
     isFetching,
     isRefetching,
     isLoading,
-  } = useSearchDocs({
-    q: search,
-    target: DocSearchTarget.CURRENT,
-    parentPath: treeContext?.root?.path,
-  });
+    fetchNextPage: subDocsFetchNextPage,
+    hasNextPage: subDocsHasNextPage,
+  } = useInfiniteSearchDocs(
+    {
+      q: search,
+      page: 1,
+      target: DocSearchTarget.CURRENT,
+      parentPath: treeContext?.root?.path,
+    },
+    {
+      enabled: !!treeContext?.root?.path,
+    },
+  );
 
   const [docsData, setDocsData] = useState<QuickSearchData<Doc>>({
     groupName: '',
@@ -46,14 +55,38 @@ export const DocSearchSubPageContent = ({
       return;
     }
 
-    const subDocs = subDocsData?.results || [];
+    const subDocs = subDocsData?.pages.flatMap((page) => page.results) || [];
+
+    if (treeContext?.root) {
+      const isRootTitleIncludeSearch = treeContext.root?.title
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
+
+      if (isRootTitleIncludeSearch) {
+        subDocs.unshift(treeContext.root);
+      }
+    }
 
     setDocsData({
       groupName: subDocs.length > 0 ? t('Select a doc') : '',
       elements: search ? subDocs : [],
       emptyString: search ? t('No document found') : t('Search by title'),
+      endActions: subDocsHasNextPage
+        ? [
+            {
+              content: <InView onChange={() => void subDocsFetchNextPage()} />,
+            },
+          ]
+        : [],
     });
-  }, [loading, search, subDocsData, subDocsData?.results, treeContext?.root]);
+  }, [
+    loading,
+    search,
+    subDocsData?.pages,
+    subDocsFetchNextPage,
+    subDocsHasNextPage,
+    treeContext?.root,
+  ]);
 
   useEffect(() => {
     onLoadingChange?.(loading);
