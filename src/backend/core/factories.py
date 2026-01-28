@@ -53,15 +53,6 @@ class UserFactory(factory.django.DjangoModelFactory):
         if create and (extracted is True):
             UserDocumentAccessFactory(user=self, role="owner")
 
-    @factory.post_generation
-    def with_owned_template(self, create, extracted, **kwargs):
-        """
-        Create a template for which the user is owner to check
-        that there is no interference
-        """
-        if create and (extracted is True):
-            UserTemplateAccessFactory(user=self, role="owner")
-
 
 class ParentNodeFactory(factory.declarations.ParameteredAttribute):
     """Custom factory attribute for setting the parent node."""
@@ -199,50 +190,6 @@ class DocumentAskForAccessFactory(factory.django.DjangoModelFactory):
 
     document = factory.SubFactory(DocumentFactory)
     user = factory.SubFactory(UserFactory)
-    role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
-
-
-class TemplateFactory(factory.django.DjangoModelFactory):
-    """A factory to create templates"""
-
-    class Meta:
-        model = models.Template
-        django_get_or_create = ("title",)
-        skip_postgeneration_save = True
-
-    title = factory.Sequence(lambda n: f"template{n}")
-    is_public = factory.Faker("boolean")
-
-    @factory.post_generation
-    def users(self, create, extracted, **kwargs):
-        """Add users to template from a given list of users with or without roles."""
-        if create and extracted:
-            for item in extracted:
-                if isinstance(item, models.User):
-                    UserTemplateAccessFactory(template=self, user=item)
-                else:
-                    UserTemplateAccessFactory(template=self, user=item[0], role=item[1])
-
-
-class UserTemplateAccessFactory(factory.django.DjangoModelFactory):
-    """Create fake template user accesses for testing."""
-
-    class Meta:
-        model = models.TemplateAccess
-
-    template = factory.SubFactory(TemplateFactory)
-    user = factory.SubFactory(UserFactory)
-    role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
-
-
-class TeamTemplateAccessFactory(factory.django.DjangoModelFactory):
-    """Create fake template team accesses for testing."""
-
-    class Meta:
-        model = models.TemplateAccess
-
-    template = factory.SubFactory(TemplateFactory)
-    team = factory.Sequence(lambda n: f"team{n}")
     role = factory.fuzzy.FuzzyChoice([r[0] for r in models.RoleChoices.choices])
 
 

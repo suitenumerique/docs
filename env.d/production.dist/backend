@@ -24,7 +24,8 @@ DJANGO_EMAIL_FROM=<your email address>
 #DJANGO_EMAIL_USE_SSL=true # A flag to enable or disable SSL for email sending.
 
 DJANGO_EMAIL_BRAND_NAME="La Suite Numérique" 
-DJANGO_EMAIL_LOGO_IMG="https://${DOCS_HOST}/assets/logo-suite-numerique.png"  
+DJANGO_EMAIL_LOGO_IMG="https://${DOCS_HOST}/assets/logo-suite-numerique.png"
+DJANGO_EMAIL_URL_APP="https://${DOCS_HOST}"
 
 # Media
 AWS_S3_ENDPOINT_URL=https://${S3_HOST}

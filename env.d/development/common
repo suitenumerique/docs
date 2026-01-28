@@ -20,6 +20,7 @@ DJANGO_EMAIL_BRAND_NAME="La Suite Numérique"
 DJANGO_EMAIL_HOST="mailcatcher"
 DJANGO_EMAIL_LOGO_IMG="http://localhost:3000/assets/logo-suite-numerique.png"
 DJANGO_EMAIL_PORT=1025
+DJANGO_EMAIL_URL_APP="http://localhost:3000"
 
 # Backend url
 IMPRESS_BASE_URL="http://localhost:8072"
@@ -75,6 +76,8 @@ COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
 DJANGO_SERVER_TO_SERVER_API_TOKENS=server-api-token
 Y_PROVIDER_API_BASE_URL=http://y-provider-development:4444/api/
 Y_PROVIDER_API_KEY=yprovider-api-key
+
+DOCSPEC_API_URL=http://docspec:4000/conversion
 
 # Theme customization
 THEME_CUSTOMIZATION_CACHE_TIMEOUT=15

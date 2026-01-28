@@ -22,6 +22,29 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
     uploadLoader: blockMappingUploadLoaderDocx,
+    table: (block, exporter, nestedLevel, numberedListIndex, children) => {
+      /**
+       * Nan values are not supported, so we need to replace them with undefined
+       * to avoid issues during the export.
+       */
+      const { columnWidths } = block.content;
+      const hasNaN = columnWidths.some(
+        (width) => typeof width === 'number' && Number.isNaN(width),
+      );
+      if (hasNaN) {
+        block.content.columnWidths = columnWidths.map((width) =>
+          typeof width === 'number' && Number.isNaN(width) ? undefined : width,
+        );
+      }
+
+      return docxDefaultSchemaMappings.blockMapping.table(
+        block,
+        exporter,
+        nestedLevel,
+        numberedListIndex,
+        children,
+      );
+    },
   },
   inlineContentMapping: {
     ...docxDefaultSchemaMappings.inlineContentMapping,

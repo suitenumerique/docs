@@ -890,6 +890,9 @@ test.describe('Doc Editor', () => {
     await expect(interlinkChild.locator('svg').first()).toBeHidden();
     await interlinkChild.click();
 
+    // wait for navigation to complete
+    await page.waitForTimeout(1000);
+
     await verifyDocName(page, docChild2);
 
     await editor.click();

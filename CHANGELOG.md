@@ -9,12 +9,9 @@ and this project adheres to
 ### Added 
 
 - ✨(frontend) integrate configurable Waffle #1795
-
-### Fixed
-
-- ✅(e2e) fix e2e test for other browsers #1799
-- 🐛(frontend) add fallback for unsupported Blocknote languages #1810
-- 🐛(frontend) fix emojipicker closing in tree #1808
+- ✨ Import of documents #1609
+- 🚨(CI) gives warning if theme not updated #1811
+- 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
 
 ### Changed
 
@@ -22,10 +19,22 @@ and this project adheres to
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
 - ✨(backend) add field for button label in email template #1817
 
+### Fixed
+
+- ✅(e2e) fix e2e test for other browsers #1799
+- 🐛(export) fix export column NaN #1819
+- 🐛(frontend) add fallback for unsupported Blocknote languages #1810
+- 🐛(frontend) fix emojipicker closing in tree #1808
+- 🐛(frontend) display children in favorite #1782
+- 🐛(frontend) preserve typed text after @ on escape #1833
+
+### Removed
+
+- 🔥(project) remove all code related to template #1780
+
 ### Security
 
 - 🔒️(trivy) fix vulnerability about jaraco.context #1806
-
 
 ## [4.4.0] - 2026-01-13
 

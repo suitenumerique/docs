@@ -11,14 +11,6 @@ from core import models
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
 
 
-class TemplateAccessInline(admin.TabularInline):
-    """Inline admin class for template accesses."""
-
-    autocomplete_fields = ["user"]
-    model = models.TemplateAccess
-    extra = 0
-
-
 @admin.register(models.User)
 class UserAdmin(auth_admin.UserAdmin):
     """Admin class for the User model"""
@@ -71,7 +63,6 @@ class UserAdmin(auth_admin.UserAdmin):
             },
         ),
     )
-    inlines = (TemplateAccessInline,)
     list_display = (
         "id",
         "sub",
@@ -179,7 +170,7 @@ class TemplateAdmin(admin.ModelAdmin):
 
 
 class DocumentAccessInline(admin.TabularInline):
-    """Inline admin class for template accesses."""
+    """Inline admin class for document accesses."""
 
     autocomplete_fields = ["user"]
     model = models.DocumentAccess

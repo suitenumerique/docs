@@ -4,6 +4,7 @@
 import binascii
 import mimetypes
 from base64 import b64decode
+from os.path import splitext
 
 from django.conf import settings
 from django.db.models import Q
@@ -15,10 +16,11 @@ import magic
 from rest_framework import serializers
 
 from core import choices, enums, models, utils, validators
+from core.services import mime_types
 from core.services.ai_services import AI_ACTIONS
 from core.services.converter_services import (
     ConversionError,
-    YdocConverter,
+    Converter,
 )
 
 
@@ -57,30 +59,6 @@ class UserLightSerializer(UserSerializer):
         model = models.User
         fields = ["full_name", "short_name"]
         read_only_fields = ["full_name", "short_name"]
-
-
-class TemplateAccessSerializer(serializers.ModelSerializer):
-    """Serialize template accesses."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = models.TemplateAccess
-        resource_field_name = "template"
-        fields = ["id", "user", "team", "role", "abilities"]
-        read_only_fields = ["id", "abilities"]
-
-    def get_abilities(self, instance) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return instance.get_abilities(request.user)
-        return {}
-
-    def update(self, instance, validated_data):
-        """Make "user" field is readonly but only on update."""
-        validated_data.pop("user", None)
-        return super().update(instance, validated_data)
 
 
 class ListDocumentSerializer(serializers.ModelSerializer):
@@ -188,6 +166,9 @@ class DocumentSerializer(ListDocumentSerializer):
 
     content = serializers.CharField(required=False)
     websocket = serializers.BooleanField(required=False, write_only=True)
+    file = serializers.FileField(
+        required=False, write_only=True, allow_null=True, max_length=255
+    )
 
     class Meta:
         model = models.Document
@@ -204,6 +185,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "deleted_at",
             "depth",
             "excerpt",
+            "file",
             "is_favorite",
             "link_role",
             "link_reach",
@@ -272,6 +254,30 @@ class DocumentSerializer(ListDocumentSerializer):
             raise serializers.ValidationError("Invalid base64 content.") from err
 
         return value
+
+    def validate_file(self, file):
+        """Add file size and type constraints as defined in settings."""
+        if not file:
+            return None
+
+        # Validate file size
+        if file.size > settings.CONVERSION_FILE_MAX_SIZE:
+            max_size = settings.CONVERSION_FILE_MAX_SIZE // (1024 * 1024)
+            raise serializers.ValidationError(
+                f"File size exceeds the maximum limit of {max_size:d} MB."
+            )
+
+        _name, extension = splitext(file.name)
+
+        if extension.lower() not in settings.CONVERSION_FILE_EXTENSIONS_ALLOWED:
+            raise serializers.ValidationError(
+                (
+                    f"File extension {extension} is not allowed. Allowed extensions"
+                    f" are: {settings.CONVERSION_FILE_EXTENSIONS_ALLOWED}."
+                )
+            )
+
+        return file
 
     def save(self, **kwargs):
         """
@@ -461,7 +467,9 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
             language = user.language or language
 
         try:
-            document_content = YdocConverter().convert(validated_data["content"])
+            document_content = Converter().convert(
+                validated_data["content"], mime_types.MARKDOWN, mime_types.YJS
+            )
         except ConversionError as err:
             raise serializers.ValidationError(
                 {"content": ["Could not convert content"]}
@@ -658,52 +666,6 @@ class FileUploadSerializer(serializers.Serializer):
         attrs["content_type"] = self.context["content_type"]
         attrs["file_name"] = self.context["file_name"]
         return attrs
-
-
-class TemplateSerializer(serializers.ModelSerializer):
-    """Serialize templates."""
-
-    abilities = serializers.SerializerMethodField(read_only=True)
-    accesses = TemplateAccessSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = models.Template
-        fields = [
-            "id",
-            "title",
-            "accesses",
-            "abilities",
-            "css",
-            "code",
-            "is_public",
-        ]
-        read_only_fields = ["id", "accesses", "abilities"]
-
-    def get_abilities(self, document) -> dict:
-        """Return abilities of the logged-in user on the instance."""
-        request = self.context.get("request")
-        if request:
-            return document.get_abilities(request.user)
-        return {}
-
-
-# pylint: disable=abstract-method
-class DocumentGenerationSerializer(serializers.Serializer):
-    """Serializer to receive a request to generate a document on a template."""
-
-    body = serializers.CharField(label=_("Body"))
-    body_type = serializers.ChoiceField(
-        choices=["html", "markdown"],
-        label=_("Body type"),
-        required=False,
-        default="html",
-    )
-    format = serializers.ChoiceField(
-        choices=["pdf", "docx"],
-        label=_("Format"),
-        required=False,
-        default="pdf",
-    )
 
 
 class InvitationSerializer(serializers.ModelSerializer):

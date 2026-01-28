@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator, InfiniteScroll, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { useInfiniteDocs } from '@/docs/doc-management';
+import { useInfiniteDocsFavorite } from '@/docs/doc-management';
 
 import { LeftPanelFavoriteItem } from './LeftPanelFavoriteItem';
 
@@ -11,9 +11,8 @@ export const LeftPanelFavorites = () => {
 
   const { spacingsTokens } = useCunninghamTheme();
 
-  const docs = useInfiniteDocs({
+  const docs = useInfiniteDocsFavorite({
     page: 1,
-    is_favorite: true,
   });
 
   const favoriteDocs = docs.data?.pages.flatMap((page) => page.results) || [];

@@ -1024,6 +1024,39 @@ def test_models_documents__email_invitation__success():
     assert f"docs/{document.id}/" in email_content
 
 
+@pytest.mark.parametrize(
+    "email_url_app",
+    [
+        "https://test-example.com",  # Test with EMAIL_URL_APP set
+        None,  # Test fallback to Site domain
+    ],
+)
+def test_models_documents__email_invitation__url_app_param(email_url_app):
+    """
+    Test that email invitation uses EMAIL_URL_APP when set, or falls back to Site domain.
+    """
+    with override_settings(EMAIL_URL_APP=email_url_app):
+        document = factories.DocumentFactory()
+
+        sender = factories.UserFactory(
+            full_name="Test Sender", email="sender@example.com"
+        )
+        document.send_invitation_email(
+            "guest@example.com", models.RoleChoices.EDITOR, sender, "en"
+        )
+
+        # pylint: disable-next=no-member
+        email = mail.outbox[0]
+        email_content = " ".join(email.body.split())
+
+        # Determine expected domain
+        if email_url_app:
+            assert f"https://test-example.com/docs/{document.id}/" in email_content
+        else:
+            # Default Site domain is example.com
+            assert f"example.com/docs/{document.id}/" in email_content
+
+
 def test_models_documents__email_invitation__success_empty_title():
     """
     The email invitation is sent successfully.
