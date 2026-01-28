@@ -1,8 +1,9 @@
 import { t } from 'i18next';
 import { useEffect, useMemo } from 'react';
+import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
-import { useSearchDocs } from '@/docs/doc-management/api/searchDocs';
+import { useInfiniteSearchDocs } from '@/docs/doc-management/api/useSearchDocs';
 
 import { Doc } from '../../doc-management';
 
@@ -19,21 +20,36 @@ export const DocSearchContent = ({
   onSelect,
   onLoadingChange,
 }: DocSearchContentProps) => {
-  const { data, isFetching, isRefetching, isLoading } = useSearchDocs({
+  const {
+    data,
+    isFetching,
+    isRefetching,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteSearchDocs({
+    page: 1,
     q: search,
   });
 
   const loading = isFetching || isRefetching || isLoading;
 
   const docsData: QuickSearchData<Doc> = useMemo(() => {
-    const docs = data?.results || [];
+    const docs = data?.pages.flatMap((page) => page.results) || [];
 
     return {
       groupName: docs.length > 0 ? t('Select a document') : '',
       elements: search ? docs : [],
       emptyString: t('No document found'),
+      endActions: hasNextPage
+        ? [
+            {
+              content: <InView onChange={() => void fetchNextPage()} />,
+            },
+          ]
+        : [],
     };
-  }, [search, data?.results]);
+  }, [search, data?.pages, fetchNextPage, hasNextPage]);
 
   useEffect(() => {
     onLoadingChange?.(loading);

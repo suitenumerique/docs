@@ -472,8 +472,8 @@ class DocumentViewSet(
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title"]:
-            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+        field = "is_creator_me"
+        queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user)
 
@@ -963,6 +963,7 @@ class DocumentViewSet(
     )
     def descendants(self, request, *args, **kwargs):
         """Handle listing descendants of a document"""
+        # TODO: remove ? might be dead code
         document = self.get_object()
 
         queryset = document.get_descendants().filter(ancestors_deleted_at__isnull=True)
@@ -1188,9 +1189,9 @@ class DocumentViewSet(
         Returns a queryset filtered by the content of the document title
         """
         # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
-        queryset = self.get_queryset()
+        queryset = models.Document.objects.all()
         filterset = DocumentFilter({"title": text}, queryset=queryset)
-
+        # TODO: make sure parent in included when searching in sub-docs
         if not filterset.is_valid():
             raise drf.exceptions.ValidationError(filterset.errors)
 
@@ -1203,12 +1204,14 @@ class DocumentViewSet(
             },
         )
 
-    def _search(self, indexer, request, params):
+    def _search_with_indexer(self, indexer, request, params):
         """
         Returns a list of documents matching the query according to the configured indexer.
         """
         text = params.validated_data["q"]
-        path = params.validated_data["path"] if "path" in params.validated_data else None
+        path = (
+            params.validated_data["path"] if "path" in params.validated_data else None
+        )
         queryset = models.Document.objects.all()
 
         # Retrieve the documents ids according to indexer.
@@ -1220,20 +1223,24 @@ class DocumentViewSet(
         )
 
         docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
-        ordered_docs = [docs_by_uuid[id] for id in results]
+        ordered_docs = [docs_by_uuid[id] for id in results if id in docs_by_uuid]
 
         serializer = self.get_serializer(
-             ordered_docs,
+            ordered_docs,
             many=True,
             context={
                 "request": request,
             },
         )
 
-        return drf_response.Response({
-            "count": len(serializer.data),
-            "results": serializer.data,
-        })
+        return drf_response.Response(
+            {
+                "count": len(serializer.data),
+                "next": None,
+                "previous": None,
+                "results": serializer.data,
+            }
+        )
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
@@ -1254,7 +1261,7 @@ class DocumentViewSet(
 
         indexer = get_document_indexer()
         if indexer:
-            return self._search(indexer, request, params=params)
+            return self._search_with_indexer(indexer, request, params=params)
 
         # The indexer is not configured, we fallback on a simple icontains filter by the
         # model field 'title'.

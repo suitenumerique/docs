@@ -52,7 +52,7 @@ class DocumentFilter(django_filters.FilterSet):
         fields = ["title"]
 
 
-class ListDocumentFilter(DocumentFilter):
+class ListDocumentFilter(django_filters.FilterSet):
     """
     Custom filter for filtering documents.
     """
