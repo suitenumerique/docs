@@ -19,10 +19,12 @@
   },
   "dependencies": {
     "@ag-media/react-pdf-table": "2.0.3",
+    "@ai-sdk/openai-compatible": "0.2.14",
     "@blocknote/code-block": "0.46.2",
     "@blocknote/core": "0.46.2",
     "@blocknote/mantine": "0.46.2",
     "@blocknote/react": "0.46.2",
+    "@blocknote/xl-ai": "0.46.2",
     "@blocknote/xl-docx-exporter": "0.46.2",
     "@blocknote/xl-multi-column": "0.46.2",
     "@blocknote/xl-odt-exporter": "0.46.2",
@@ -44,6 +46,7 @@
     "@sentry/nextjs": "10.34.0",
     "@tanstack/react-query": "5.90.18",
     "@tiptap/extensions": "*",
+    "ai": "4.3.16",
     "canvg": "4.0.3",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
@@ -71,6 +74,7 @@
     "uuid": "13.0.0",
     "y-protocols": "1.0.7",
     "yjs": "*",
+    "zod": "3.25.28",
     "zustand": "5.0.10"
   },
   "devDependencies": {

@@ -35,7 +35,20 @@ export const useSaveDoc = (
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      setIsLocalChange(transaction.local);
+      /**
+       * When the AI edit the doc transaction.local is false,
+       * so we check if the origin constructor to know where
+       * the transaction comes from.
+       *
+       * TODO: see if we can get the local changes from the AI
+       */
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const transactionOrigin = transaction?.origin?.constructor?.name;
+      const AI_ORIGIN_CONSTRUCTOR = 'ao';
+
+      setIsLocalChange(
+        transaction.local || transactionOrigin === AI_ORIGIN_CONSTRUCTOR,
+      );
     };
 
     yDoc.on('update', onUpdate);
