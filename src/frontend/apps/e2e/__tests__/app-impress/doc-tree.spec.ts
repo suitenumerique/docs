@@ -27,47 +27,32 @@ test.describe('Doc Tree', () => {
     const docTree = page.getByTestId('doc-tree');
 
     // Create first sub page
-    const firstResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/documents/') &&
-        response.url().includes('/children/') &&
-        response.request().method() === 'POST',
-    );
-
     await clickOnAddRootSubPage(page);
-    const firstResponse = await firstResponsePromise;
-    expect(firstResponse.ok()).toBeTruthy();
-    await updateDocTitle(page, 'first');
-
-    const secondResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/documents/') &&
-        response.url().includes('/children/') &&
-        response.request().method() === 'POST',
-    );
+    await updateDocTitle(page, 'first move');
 
     // Create second sub page
     await clickOnAddRootSubPage(page);
-    const secondResponse = await secondResponsePromise;
-    expect(secondResponse.ok()).toBeTruthy();
-    await updateDocTitle(page, 'second');
+    await updateDocTitle(page, 'second move');
 
-    const secondSubPageJson = await secondResponse.json();
-    const firstSubPageJson = await firstResponse.json();
-
-    const firstSubPageItem = docTree
-      .getByTestId(`doc-sub-page-item-${firstSubPageJson.id}`)
-      .first();
-
-    const secondSubPageItem = docTree
-      .getByTestId(`doc-sub-page-item-${secondSubPageJson.id}`)
-      .first();
+    const firstSubPageItem = docTree.getByText('first move').first();
+    const secondSubPageItem = docTree.getByText('second move').first();
 
     // check that the sub pages are visible in the tree
     await expect(firstSubPageItem).toBeVisible();
     await expect(secondSubPageItem).toBeVisible();
 
-    // get the bounding boxes of the sub pages
+    // Check the position of the sub pages
+    const allSubPageItems = await docTree
+      .getByTestId(/^doc-sub-page-item/)
+      .all();
+
+    expect(allSubPageItems.length).toBe(2);
+
+    // Check that elements are in the correct order
+    await expect(allSubPageItems[0].getByText('first move')).toBeVisible();
+    await expect(allSubPageItems[1].getByText('second move')).toBeVisible();
+
+    // Will move the first sub page to the second position
     const firstSubPageBoundingBox = await firstSubPageItem.boundingBox();
     const secondSubPageBoundingBox = await secondSubPageItem.boundingBox();
 
@@ -75,10 +60,9 @@ test.describe('Doc Tree', () => {
     expect(secondSubPageBoundingBox).toBeDefined();
 
     if (!firstSubPageBoundingBox || !secondSubPageBoundingBox) {
-      throw new Error('Impossible de déterminer la position des éléments');
+      throw new Error('unable to determine the position of the elements');
     }
 
-    // move the first sub page to the second position
     await page.mouse.move(
       firstSubPageBoundingBox.x + firstSubPageBoundingBox.width / 2,
       firstSubPageBoundingBox.y + firstSubPageBoundingBox.height / 2,
@@ -105,24 +89,19 @@ test.describe('Doc Tree', () => {
     await expect(firstSubPageItem).toBeVisible();
     await expect(secondSubPageItem).toBeVisible();
 
-    // Check the position of the sub pages
-    const allSubPageItems = await docTree
+    // Check that elements are in the correct order
+    const allSubPageItemsAfterReload = await docTree
       .getByTestId(/^doc-sub-page-item/)
       .all();
 
-    expect(allSubPageItems.length).toBe(2);
+    expect(allSubPageItemsAfterReload.length).toBe(2);
 
-    // Check that the first element has the ID of the second sub page after the drag and drop
-    await expect(allSubPageItems[0]).toHaveAttribute(
-      'data-testid',
-      `doc-sub-page-item-${secondSubPageJson.id}`,
-    );
-
-    // Check that the second element has the ID of the first sub page after the drag and drop
-    await expect(allSubPageItems[1]).toHaveAttribute(
-      'data-testid',
-      `doc-sub-page-item-${firstSubPageJson.id}`,
-    );
+    await expect(
+      allSubPageItemsAfterReload[0].getByText('second move'),
+    ).toBeVisible();
+    await expect(
+      allSubPageItemsAfterReload[1].getByText('first move'),
+    ).toBeVisible();
   });
 
   test('it detaches a document', async ({ page, browserName }) => {

@@ -29,6 +29,10 @@ from sentry_sdk.integrations.logging import ignore_logger
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 
+KB = 1024
+MB = KB * KB
+GB = MB * KB
+
 
 def get_release():
     """
@@ -168,7 +172,7 @@ class Base(Configuration):
 
     # Document images
     DOCUMENT_IMAGE_MAX_SIZE = values.IntegerValue(
-        10 * (2**20),  # 10MB
+        10 * MB,  # 10MB
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
     )
@@ -406,16 +410,6 @@ class Base(Configuration):
                 environ_name="API_DOCUMENT_ACCESS_THROTTLE_RATE",
                 environ_prefix=None,
             ),
-            "template": values.Value(
-                default="30/minute",
-                environ_name="API_TEMPLATE_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
-            "template_access": values.Value(
-                default="30/minute",
-                environ_name="API_TEMPLATE_ACCESS_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
             "invitation": values.Value(
                 default="60/minute",
                 environ_name="API_INVITATION_THROTTLE_RATE",
@@ -465,6 +459,7 @@ class Base(Configuration):
     EMAIL_HOST_PASSWORD = SecretFileValue(None)
     EMAIL_LOGO_IMG = values.Value(None)
     EMAIL_PORT = values.PositiveIntegerValue(None)
+    EMAIL_URL_APP = values.Value(None)
     EMAIL_USE_TLS = values.BooleanValue(False)
     EMAIL_USE_SSL = values.BooleanValue(False)
     EMAIL_FROM = values.Value("from@example.com")
@@ -716,6 +711,22 @@ class Base(Configuration):
     )
     Y_PROVIDER_API_BASE_URL = values.Value(
         environ_name="Y_PROVIDER_API_BASE_URL",
+        environ_prefix=None,
+    )
+
+    # DocSpec API microservice
+    DOCSPEC_API_URL = values.Value(environ_name="DOCSPEC_API_URL", environ_prefix=None)
+
+    # Imported file settings
+    CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
+        20 * MB,  # 10MB
+        environ_name="CONVERSION_FILE_MAX_SIZE",
+        environ_prefix=None,
+    )
+
+    CONVERSION_FILE_EXTENSIONS_ALLOWED = values.ListValue(
+        default=[".docx", ".md"],
+        environ_name="CONVERSION_FILE_EXTENSIONS_ALLOWED",
         environ_prefix=None,
     )
 
@@ -1063,6 +1074,9 @@ class Production(Base):
 
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
+
+    # Conversion API: Always verify SSL in production
+    CONVERSION_API_SECURE = True
 
     CACHES = {
         "default": {

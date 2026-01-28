@@ -45,16 +45,18 @@ from rest_framework.views import APIView
 
 from core import authentication, choices, enums, models
 from core.api.filters import remove_accents
+from core.services import mime_types
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.converter_services import (
+    ConversionError,
+    Converter,
+)
 from core.services.converter_services import (
     ServiceUnavailableError as YProviderServiceUnavailableError,
 )
 from core.services.converter_services import (
     ValidationError as YProviderValidationError,
-)
-from core.services.converter_services import (
-    YdocConverter,
 )
 from core.services.search_indexers import (
     get_document_indexer,
@@ -582,6 +584,28 @@ class DocumentViewSet(
                 "IN SHARE ROW EXCLUSIVE MODE;"
             )
 
+        # Remove file from validated_data as it's not a model field
+        # Process it if present
+        uploaded_file = serializer.validated_data.pop("file", None)
+
+        # If a file is uploaded, convert it to Yjs format and set as content
+        if uploaded_file:
+            try:
+                file_content = uploaded_file.read()
+
+                converter = Converter()
+                converted_content = converter.convert(
+                    file_content,
+                    content_type=uploaded_file.content_type,
+                    accept=mime_types.YJS,
+                )
+                serializer.validated_data["content"] = converted_content
+                serializer.validated_data["title"] = uploaded_file.name
+            except ConversionError as err:
+                raise drf.exceptions.ValidationError(
+                    {"file": ["Could not convert file content"]}
+                ) from err
+
         obj = models.Document.add_root(
             creator=self.request.user,
             **serializer.validated_data,
@@ -683,12 +707,29 @@ class DocumentViewSet(
         """Get list of favorite documents for the current user."""
         user = request.user
 
+        queryset = self.get_queryset()
+
+        # Among the results, we may have documents that are ancestors/descendants
+        # of each other. In this case we want to keep only the highest ancestors.
+        root_paths = utils.filter_root_paths(
+            queryset.order_by("path").values_list("path", flat=True),
+            skip_sorting=True,
+        )
+
+        path_list = db.Q()
+        for path in root_paths:
+            path_list |= db.Q(path__startswith=path)
+
         favorite_documents_ids = models.DocumentFavorite.objects.filter(
             user=user
         ).values_list("document_id", flat=True)
 
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.queryset.filter(path_list)
         queryset = queryset.filter(id__in=favorite_documents_ids)
+        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate(
+            is_favorite=db.Value(True, output_field=db.BooleanField())
+        )
         return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(
@@ -1919,14 +1960,14 @@ class DocumentViewSet(
         if base64_content is not None:
             # Convert using the y-provider service
             try:
-                yprovider = YdocConverter()
+                yprovider = Converter()
                 result = yprovider.convert(
                     base64.b64decode(base64_content),
-                    "application/vnd.yjs.doc",
+                    mime_types.YJS,
                     {
-                        "markdown": "text/markdown",
-                        "html": "text/html",
-                        "json": "application/json",
+                        "markdown": mime_types.MARKDOWN,
+                        "html": mime_types.HTML,
+                        "json": mime_types.JSON,
                     }[content_format],
                 )
                 content = result
@@ -2147,64 +2188,6 @@ class DocumentAccessViewSet(
         )
 
 
-class TemplateViewSet(
-    drf.mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Template ViewSet"""
-
-    filter_backends = [drf.filters.OrderingFilter]
-    permission_classes = [
-        permissions.IsAuthenticatedOrSafe,
-        permissions.ResourceWithAccessPermission,
-    ]
-    throttle_scope = "template"
-    ordering = ["-created_at"]
-    ordering_fields = ["created_at", "updated_at", "title"]
-    serializer_class = serializers.TemplateSerializer
-    queryset = models.Template.objects.all()
-
-    def get_queryset(self):
-        """Custom queryset to get user related templates."""
-        queryset = super().get_queryset()
-        user = self.request.user
-
-        if not user.is_authenticated:
-            return queryset
-
-        user_roles_query = (
-            models.TemplateAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                template_id=db.OuterRef("pk"),
-            )
-            .values("template")
-            .annotate(roles_array=ArrayAgg("role"))
-            .values("roles_array")
-        )
-        return queryset.annotate(user_roles=db.Subquery(user_roles_query)).distinct()
-
-    def list(self, request, *args, **kwargs):
-        """Restrict templates returned by the list endpoint"""
-        queryset = self.filter_queryset(self.get_queryset())
-        user = self.request.user
-        if user.is_authenticated:
-            queryset = queryset.filter(
-                db.Q(accesses__user=user)
-                | db.Q(accesses__team__in=user.teams)
-                | db.Q(is_public=True)
-            )
-        else:
-            queryset = queryset.filter(is_public=True)
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return drf.response.Response(serializer.data)
-
-
 class InvitationViewset(
     drf.mixins.CreateModelMixin,
     drf.mixins.ListModelMixin,
@@ -2412,6 +2395,8 @@ class ConfigView(drf.views.APIView):
             "AI_FEATURE_ENABLED",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+            "CONVERSION_FILE_EXTENSIONS_ALLOWED",
+            "CONVERSION_FILE_MAX_SIZE",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",

@@ -168,6 +168,16 @@ Requires top level scope
 
 
 {{/*
+Full name for the docSpec
+
+Requires top level scope
+*/}}
+{{- define "impress.docSpec.fullname" -}}
+{{ include "impress.fullname" . }}-docspec
+{{- end }}
+
+
+{{/*
 Full name for the Celery Worker
 
 Requires top level scope

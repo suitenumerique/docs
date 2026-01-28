@@ -122,8 +122,8 @@ export const SearchPage = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      // Keep the trigger character ('@' or '/') in the editor when closing with Escape
-      closeSearch(trigger);
+      // Keep the trigger character and typed text in the editor when closing with Escape
+      closeSearch(`${trigger}${search}`);
     } else if (e.key === 'Backspace' && search.length === 0) {
       e.preventDefault();
       closeSearch('');

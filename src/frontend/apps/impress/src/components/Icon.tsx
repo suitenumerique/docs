@@ -1,21 +1,34 @@
 import clsx from 'clsx';
+import React from 'react';
 import { css } from 'styled-components';
 
 import { Text, TextType } from '@/components';
 
-type IconProps = TextType & {
+type IconBase = TextType & {
   disabled?: boolean;
+};
+
+type IconMaterialProps = IconBase & {
   iconName: string;
   variant?: 'filled' | 'outlined' | 'symbols-outlined';
+  icon?: never;
 };
+
+type IconSVGProps = IconBase & {
+  icon: React.ReactNode;
+  iconName?: never;
+  variant?: never;
+};
+
 export const Icon = ({
   className,
-  iconName,
   disabled,
+  iconName,
+  icon,
   variant = 'outlined',
   $theme = 'neutral',
   ...textProps
-}: IconProps) => {
+}: IconMaterialProps | IconSVGProps) => {
   const hasLabel = 'aria-label' in textProps || 'aria-labelledby' in textProps;
   const ariaHidden =
     'aria-hidden' in textProps ? textProps['aria-hidden'] : !hasLabel;
@@ -24,15 +37,15 @@ export const Icon = ({
     <Text
       aria-hidden={ariaHidden}
       className={clsx('--docs--icon-bg', className, {
-        'material-icons-filled': variant === 'filled',
-        'material-icons': variant === 'outlined',
-        'material-symbols-outlined': variant === 'symbols-outlined',
+        'material-icons-filled': variant === 'filled' && iconName,
+        'material-icons': variant === 'outlined' && iconName,
+        'material-symbols-outlined': variant === 'symbols-outlined' && iconName,
       })}
       $theme={disabled ? 'disabled' : $theme}
       aria-disabled={disabled}
       {...textProps}
     >
-      {iconName}
+      {iconName ?? icon}
     </Text>
   );
 };

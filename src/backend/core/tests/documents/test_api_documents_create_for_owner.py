@@ -16,6 +16,7 @@ from rest_framework.test import APIClient
 from core import factories
 from core.api.serializers import ServerCreateDocumentSerializer
 from core.models import Document, Invitation, User
+from core.services import mime_types
 from core.services.converter_services import ConversionError, YdocConverter
 
 pytestmark = pytest.mark.django_db
@@ -191,7 +192,9 @@ def test_api_documents_create_for_owner_existing(mock_convert_md):
 
     assert response.status_code == 201
 
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     document = Document.objects.get()
     assert response.json() == {"id": str(document.id)}
@@ -236,7 +239,9 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md):
 
     assert response.status_code == 201
 
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     document = Document.objects.get()
     assert response.json() == {"id": str(document.id)}
@@ -297,7 +302,9 @@ def test_api_documents_create_for_owner_existing_user_email_no_sub_with_fallback
 
     assert response.status_code == 201
 
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     document = Document.objects.get()
     assert response.json() == {"id": str(document.id)}
@@ -393,7 +400,9 @@ def test_api_documents_create_for_owner_new_user_no_sub_no_fallback_allow_duplic
         HTTP_AUTHORIZATION="Bearer DummyToken",
     )
     assert response.status_code == 201
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     document = Document.objects.get()
     assert response.json() == {"id": str(document.id)}
@@ -474,7 +483,9 @@ def test_api_documents_create_for_owner_with_default_language(
     )
     assert response.status_code == 201
 
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
     assert mock_send.call_args[0][3] == "de-de"
 
 
@@ -501,7 +512,9 @@ def test_api_documents_create_for_owner_with_custom_language(mock_convert_md):
 
     assert response.status_code == 201
 
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -537,7 +550,9 @@ def test_api_documents_create_for_owner_with_custom_subject_and_message(
 
     assert response.status_code == 201
 
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     assert len(mail.outbox) == 1
     email = mail.outbox[0]
@@ -571,7 +586,9 @@ def test_api_documents_create_for_owner_with_converter_exception(
         format="json",
         HTTP_AUTHORIZATION="Bearer DummyToken",
     )
-    mock_convert_md.assert_called_once_with("Document content")
+    mock_convert_md.assert_called_once_with(
+        "Document content", mime_types.MARKDOWN, mime_types.YJS
+    )
 
     assert response.status_code == 400
     assert response.json() == {"content": ["Could not convert content"]}

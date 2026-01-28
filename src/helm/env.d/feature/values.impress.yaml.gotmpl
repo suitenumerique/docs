@@ -28,6 +28,7 @@ backend:
     DJANGO_EMAIL_HOST: "mailcatcher"
     DJANGO_EMAIL_LOGO_IMG: https://{{ .Values.feature }}-docs.{{ .Values.domain }}/assets/logo-suite-numerique.png
     DJANGO_EMAIL_PORT: 1025
+    DJANGO_EMAIL_URL_APP: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     DJANGO_EMAIL_USE_SSL: False
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
@@ -68,7 +69,8 @@ backend:
     AWS_S3_SECRET_ACCESS_KEY: password
     AWS_STORAGE_BUCKET_NAME: docs-media-storage
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
-    Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
+    DOCSPEC_API_URL: http://impress-docs-docspec:4000/conversion
+    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
@@ -142,11 +144,26 @@ yProvider:
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
 
+docSpec:
+  enabled: true
+  replicas: 1
+
+  image:
+    repository: ghcr.io/docspecio/api
+    pullPolicy: IfNotPresent
+    tag: "2.6.3"
+
+  probes:
+    liveness:
+      path: /health
+    readiness:
+      path: /health
+
 ingress:
   enabled: true
   host: {{ .Values.feature }}-docs.{{ .Values.domain }}
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
     cert-manager.io/cluster-issuer: letsencrypt
 
 ingressCollaborationWS:
