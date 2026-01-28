@@ -35,7 +35,7 @@
     "@types/node": "24.10.4",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
-    "docx": "9.5.0",
+    "docx": "9.5.1",
     "eslint": "9.39.2",
     "prosemirror-view": "1.41.4",
     "react": "19.2.3",

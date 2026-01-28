@@ -13,6 +13,7 @@ and this project adheres to
 - 🚨(CI) gives warning if theme not updated #1811
 - ✨(auth) add silent login #1690
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
+- ✨(frontend) integrate new Blocknote AI feature #1016
 
 ### Changed
 

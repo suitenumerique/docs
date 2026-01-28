@@ -29,8 +29,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": False,
-            "ai_translate": False,
+            "ai_proxy": False,
             "attachment_upload": document.link_role == "editor",
             "can_edit": document.link_role == "editor",
             "children_create": False,
@@ -107,8 +106,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": False,
-            "ai_translate": False,
+            "ai_proxy": False,
             "attachment_upload": grand_parent.link_role == "editor",
             "can_edit": grand_parent.link_role == "editor",
             "children_create": False,
@@ -215,8 +213,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": document.link_role == "editor",
-            "ai_translate": document.link_role == "editor",
+            "ai_proxy": document.link_role == "editor",
             "attachment_upload": document.link_role == "editor",
             "can_edit": document.link_role == "editor",
             "children_create": document.link_role == "editor",
@@ -300,8 +297,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": grand_parent.link_role == "editor",
-            "ai_translate": grand_parent.link_role == "editor",
+            "ai_proxy": grand_parent.link_role == "editor",
             "attachment_upload": grand_parent.link_role == "editor",
             "can_edit": grand_parent.link_role == "editor",
             "children_create": grand_parent.link_role == "editor",
@@ -498,6 +494,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "abilities": {
             "accesses_manage": access.role in ["administrator", "owner"],
             "accesses_view": True,
+            "ai_proxy": access.role not in ["reader", "commenter"],
             "ai_transform": access.role not in ["reader", "commenter"],
             "ai_translate": access.role not in ["reader", "commenter"],
             "attachment_upload": access.role not in ["reader", "commenter"],

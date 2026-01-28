@@ -72,8 +72,7 @@ def test_api_documents_trashbin_format():
         "abilities": {
             "accesses_manage": False,
             "accesses_view": False,
-            "ai_transform": False,
-            "ai_translate": False,
+            "ai_proxy": False,
             "attachment_upload": False,
             "can_edit": False,
             "children_create": False,
