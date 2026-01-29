@@ -38,6 +38,10 @@ and this project adheres to
 
 - 🔒️(trivy) fix vulnerability about jaraco.context #1806
 
+### Changed
+
+- 🚸(backend) sort user search results by proximity with the active user #1802 
+
 ## [4.4.0] - 2026-01-13
 
 ### Added

@@ -2,6 +2,8 @@
 Test users API endpoints in the impress core app.
 """
 
+from django.utils import timezone
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -201,10 +203,85 @@ def test_api_users_list_query_accented_full_name():
     assert users == []
 
 
+def test_api_users_list_sorted_by_closest_match():
+    """
+    Authenticated users should be able to list users and the results should be
+    sorted by closest match to the query.
+
+    Sorting criteria are :
+    - Shared documents with the user (most recent first)
+    - Same full email domain (example.gouv.fr)
+    - Same partial email domain (gouv.fr)
+
+    Case in point: the logged-in user has recently shared documents
+    with pierre.dupont@beta.gouv.fr and less recently with pierre.durand@impots.gouv.fr.
+
+    Other users named Pierre also exist:
+    - pierre.thomas@example.com
+    - pierre.petit@anct.gouv.fr
+    - pierre.robert@culture.gouv.fr
+
+    The search results should be ordered as follows:
+
+    # Shared with first
+    - pierre.dupond@beta.gouv.fr # Most recent first
+    - pierre.durand@impots.gouv.fr
+    # Same full domain second
+    - pierre.petit@anct.gouv.fr
+    # Same partial domain third
+    - pierre.robert@culture.gouv.fr
+    # Others last
+    - paul.thomas@example.com
+    """
+
+    user = factories.UserFactory(
+        email="martin.bernard@anct.gouv.fr", full_name="Martin Bernard"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    pierre_1 = factories.UserFactory(email="pierre.dupont@beta.gouv.fr")
+    pierre_2 = factories.UserFactory(email="pierre.durand@impots.gouv.fr")
+    pierre_3 = factories.UserFactory(email="pierre.thomas@example.com")
+    pierre_4 = factories.UserFactory(email="pierre.petit@anct.gouv.fr")
+    pierre_5 = factories.UserFactory(email="pierre.robert@culture.gouv.fr")
+
+    document_1 = factories.DocumentFactory(creator=user)
+    document_2 = factories.DocumentFactory(creator=user)
+    factories.UserDocumentAccessFactory(user=user, document=document_1)
+    factories.UserDocumentAccessFactory(user=user, document=document_2)
+
+    now = timezone.now()
+    last_week = now - timezone.timedelta(days=7)
+    last_month = now - timezone.timedelta(days=30)
+
+    # The factory cannot set the created_at directly, so we force it after creation
+    p1_d1 = factories.UserDocumentAccessFactory(user=pierre_1, document=document_1)
+    p1_d1.created_at = last_week
+    p1_d1.save()
+
+    p2_d2 = factories.UserDocumentAccessFactory(user=pierre_2, document=document_2)
+    p2_d2.created_at = last_month
+    p2_d2.save()
+
+    response = client.get("/api/v1.0/users/?q=Pierre")
+    assert response.status_code == 200
+    user_ids = [user["email"] for user in response.json()]
+
+    assert user_ids == [
+        str(pierre_1.email),
+        str(pierre_2.email),
+        str(pierre_4.email),
+        str(pierre_5.email),
+        str(pierre_3.email),
+    ]
+
+
 def test_api_users_list_limit(settings):
     """
     Authenticated users should be able to list users and the number of results
-    should be limited to 10.
+    should be limited to API_USERS_LIST_LIMIT (by default 5).
     """
     user = factories.UserFactory()
 
