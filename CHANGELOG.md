@@ -6,12 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v4.5.0] - 2026-01-28
+
 ### Added 
 
 - ✨(frontend) integrate configurable Waffle #1795
 - ✨ Import of documents #1609
 - 🚨(CI) gives warning if theme not updated #1811
-- ✨(frontend) Add stat from Crisp #1824
+- ✨(frontend) Add stat for Crisp #1824
 - ✨(auth) add silent login #1690
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
 
@@ -1022,7 +1024,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.4.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.5.0...main
+[v4.5.0]: https://github.com/suitenumerique/docs/releases/v4.5.0
 [v4.4.0]: https://github.com/suitenumerique/docs/releases/v4.4.0
 [v4.3.0]: https://github.com/suitenumerique/docs/releases/v4.3.0
 [v4.2.0]: https://github.com/suitenumerique/docs/releases/v4.2.0
