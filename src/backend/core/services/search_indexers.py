@@ -185,7 +185,7 @@ class BaseDocumentIndexer(ABC):
         """
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def search(self, text, token, visited=(), nb_results=None, path=None):
+    def search(self, q, token, visited=(), nb_results=None, path=None):
         """
         Search for documents in Find app.
         Ensure the same default ordering as "Docs" list : -updated_at
@@ -193,7 +193,7 @@ class BaseDocumentIndexer(ABC):
         Returns ids of the documents
 
         Args:
-            text (str): Text search content.
+            q (str): Text search content.
             token (str): OIDC Authentication token.
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
@@ -205,9 +205,9 @@ class BaseDocumentIndexer(ABC):
                 The path to filter documents.
         """
         nb_results = nb_results or self.search_limit
-        response = self.search_query(
+        results = self.search_query(
             data={
-                "q": text,
+                "q": q,
                 "visited": visited,
                 "services": ["docs"],
                 "nb_results": nb_results,
@@ -218,7 +218,7 @@ class BaseDocumentIndexer(ABC):
             token=token,
         )
 
-        return [d["_id"] for d in response]
+        return results
 
     @abstractmethod
     def search_query(self, data, token) -> dict:
@@ -233,6 +233,51 @@ class SearchIndexer(BaseDocumentIndexer):
     """
     Document indexer that pushes documents to La Suite Find app.
     """
+
+    def search(self, q, token, visited=(), nb_results=None, path=None):
+        """format Find search results"""
+        search_results = super().search(q, token, visited, nb_results, path)
+        return [
+            {
+                "id": hit["_id"],
+                "title": self.get_title(hit["_source"]),
+                **hit["_source"],
+            }
+            for hit in search_results
+        ]
+
+    @staticmethod
+    def get_title(source):
+        """
+        Extract the title from a search result source dictionary.
+
+        Handles multiple cases:
+        - Localized title fields like "title.<some_extension>"
+        - Fallback to plain "title" field if localized version not found
+        - Returns empty string if no title field exists
+
+        Args:
+            source (dict): The _source dictionary from a search hit
+
+        Returns:
+            str: The extracted title or empty string if not found
+
+        Example:
+            >>> get_title({"title.fr": "Bonjour", "id": 1})
+            "Bonjour"
+            >>> get_title({"title": "Hello", "id": 1})
+            "Hello"
+            >>> get_title({"id": 1})
+            ""
+        """
+        titles = utils.get_value_by_pattern(source, r"^title\.")
+        if titles:
+            title = titles[0]
+        elif "title" in source:
+            title = source["title"]
+        else:
+            title = ""
+        return title
 
     def serialize_document(self, document, accesses):
         """
