@@ -10,6 +10,7 @@ import socket
 import uuid
 from collections import defaultdict
 from urllib.parse import unquote, urlencode, urlparse
+from urllib.request import Request
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -64,7 +65,7 @@ from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
-from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
+from .filters import DocumentFilter, ListDocumentFilter, SubDocumentFilter, UserSearchFilter
 from .throttling import (
     DocumentThrottle,
     UserListThrottleBurst,
@@ -459,21 +460,21 @@ class DocumentViewSet(
         It performs early filtering on model fields, annotates user roles, and removes
         descendant documents to keep only the highest ancestors readable by the current user.
         """
-        user = self.request.user
+        user = request.user
 
         # Not calling filter_queryset. We do our own cooking.
         queryset = self.get_queryset()
 
         filterset = ListDocumentFilter(
-            self.request.GET, queryset=queryset, request=self.request
+            request.GET, queryset=queryset, request=request
         )
         if not filterset.is_valid():
             raise drf.exceptions.ValidationError(filterset.errors)
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        field = "is_creator_me"
-        queryset = filterset.filters[field].filter(queryset, filter_data[field])
+        for field in ["is_creator_me", "title"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user)
 
@@ -961,27 +962,6 @@ class DocumentViewSet(
         methods=["get"],
         ordering=["path"],
     )
-    def descendants(self, request, *args, **kwargs):
-        """Handle listing descendants of a document"""
-        # TODO: remove ? might be dead code
-        document = self.get_object()
-
-        queryset = document.get_descendants().filter(ancestors_deleted_at__isnull=True)
-        queryset = self.filter_queryset(queryset)
-
-        filterset = DocumentFilter(request.GET, queryset=queryset)
-        if not filterset.is_valid():
-            raise drf.exceptions.ValidationError(filterset.errors)
-
-        queryset = filterset.qs
-
-        return self.get_response_for_queryset(queryset)
-
-    @drf.decorators.action(
-        detail=True,
-        methods=["get"],
-        ordering=["path"],
-    )
     def tree(self, request, pk, *args, **kwargs):
         """
         List ancestors tree above the document.
@@ -1184,25 +1164,30 @@ class DocumentViewSet(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
 
-    def _search_simple(self, request, text):
-        """
-        Returns a queryset filtered by the content of the document title
-        """
-        # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
-        queryset = models.Document.objects.all()
-        filterset = DocumentFilter({"title": text}, queryset=queryset)
-        # TODO: make sure parent in included when searching in sub-docs
-        if not filterset.is_valid():
-            raise drf.exceptions.ValidationError(filterset.errors)
 
-        queryset = filterset.filter_queryset(queryset)
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list.
 
-        return self.get_response_for_queryset(
-            queryset.order_by("-updated_at"),
-            context={
-                "request": request,
-            },
-        )
+        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
+        Depending of the configuration it can be:
+         - A fulltext search through the opensearch indexation app "find" if the backend is
+           enabled (see SEARCH_INDEXER_CLASS)
+         - A filtering by the model field 'title'.
+
+        The ordering is always by the most recent first.
+        """
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
+
+        indexer = get_document_indexer()
+        if indexer:
+            return self._search_with_indexer(indexer, request, params=params)
+
+        # The indexer is not configured, we fallback on title search
+        return self.title_search(request, params.validated_data, *args, **kwargs)
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
@@ -1231,30 +1216,28 @@ class DocumentViewSet(
             }
         )
 
-    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
-    @method_decorator(refresh_oidc_access_token)
-    def search(self, request, *args, **kwargs):
+    def title_search(self, request, validated_data, *args, **kwargs):
+        request.GET = request.GET.copy()
+        request.GET['title'] = validated_data['q']
+        if not "path" in validated_data or not validated_data["path"]:
+            return self.list(request, *args, **kwargs)
+        else:
+            return self._list_sub_docs(request)
+
+    def _list_sub_docs(self, request):
         """
-        Returns a DRF response containing the filtered, annotated and ordered document list.
-
-        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
-        Depending of the configuration it can be:
-         - A fulltext search through the opensearch indexation app "find" if the backend is
-           enabled (see SEARCH_INDEXER_CLASS)
-         - A filtering by the model field 'title'.
-
-        The ordering is always by the most recent first.
+        List all documents whose path starts with the provided path parameter.
+        Used internally by the search endpoint when path filtering is requested.
         """
-        params = serializers.SearchDocumentSerializer(data=request.query_params)
-        params.is_valid(raise_exception=True)
+        queryset = self.get_queryset()
 
-        indexer = get_document_indexer()
-        if indexer:
-            return self._search_with_indexer(indexer, request, params=params)
+        filterset = SubDocumentFilter(request.GET, queryset=queryset)
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
 
-        # The indexer is not configured, we fallback on a simple icontains filter by the
-        # model field 'title'.
-        return self._search_simple(request, text=params.validated_data["q"])
+        queryset = filterset.qs
+        return self.get_response_for_queryset(queryset)
+
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
