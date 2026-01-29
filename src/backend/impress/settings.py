@@ -1083,6 +1083,7 @@ class Production(Base):
     # Modern browsers require to have the `secure` attribute on cookies with `Samesite=none`
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    SESSION_CACHE_ALIAS = "session"
 
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
@@ -1090,11 +1091,12 @@ class Production(Base):
     # Conversion API: Always verify SSL in production
     CONVERSION_API_SECURE = True
 
+    # Cache
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": values.Value(
-                "redis://redis:6379/1",
+                "redis://redis:6379/0",
                 environ_name="REDIS_URL",
                 environ_prefix=None,
             ),
@@ -1108,9 +1110,25 @@ class Production(Base):
             },
             "KEY_PREFIX": values.Value(
                 "docs",
-                environ_name="CACHES_KEY_PREFIX",
+                environ_name="CACHES_DEFAULT_KEY_PREFIX",
                 environ_prefix=None,
             ),
+        },
+        "session": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": values.Value(
+                "redis://redis:6379/0",
+                environ_name="REDIS_URL",
+                environ_prefix=None,
+            ),
+            "TIMEOUT": values.IntegerValue(
+                30,  # timeout in seconds
+                environ_name="CACHES_SESSION_TIMEOUT",
+                environ_prefix=None,
+            ),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
         },
     }
 
