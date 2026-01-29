@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [labeled, opened]
 
-permissions: 
+permissions:
   pull-requests: write
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'preview')
     steps:
-      - uses: thollander/actions-comment-pull-request@v3
+      - uses: thollander/actions-comment-pull-request@65f9e5c9a1f2cd378bd74b2e057c9736982a8e74 # ratchet:thollander/actions-comment-pull-request@v3
         with:
           message: |
             :rocket: Preview will be available at [https://${{ github.event.pull_request.number }}-docs.ppr-docs.beta.numerique.gouv.fr/](https://${{ github.event.pull_request.number }}-docs.ppr-docs.beta.numerique.gouv.fr/)
