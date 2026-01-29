@@ -1,0 +1,6 @@
+# Test environment configuration for running tests without docker
+# Base configuration is loaded from 'common' file
+
+DJANGO_SETTINGS_MODULE=impress.settings
+DJANGO_CONFIGURATION=Test
+DB_PORT=15432
