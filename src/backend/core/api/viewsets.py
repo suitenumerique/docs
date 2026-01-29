@@ -1204,41 +1204,30 @@ class DocumentViewSet(
             },
         )
 
-    def _search_with_indexer(self, indexer, request, params):
+    @staticmethod
+    def _search_with_indexer(indexer, request, params):
         """
-        Returns a list of documents matching the query according to the configured indexer.
+        Returns a list of documents matching the query (q) according to the configured indexer.
         """
-        text = params.validated_data["q"]
-        path = (
-            params.validated_data["path"] if "path" in params.validated_data else None
-        )
         queryset = models.Document.objects.all()
 
-        # Retrieve the documents ids according to indexer.
         results = indexer.search(
-            text=text,
+            q=params.validated_data["q"],
             token=request.session.get("oidc_access_token"),
-            path=path,
+            path=(
+                params.validated_data["path"]
+                if "path" in params.validated_data
+                else None
+            ),
             visited=get_visited_document_ids_of(queryset, request.user),
-        )
-
-        docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
-        ordered_docs = [docs_by_uuid[id] for id in results if id in docs_by_uuid]
-
-        serializer = self.get_serializer(
-            ordered_docs,
-            many=True,
-            context={
-                "request": request,
-            },
         )
 
         return drf_response.Response(
             {
-                "count": len(serializer.data),
+                "count": len(results),
                 "next": None,
                 "previous": None,
-                "results": serializer.data,
+                "results": results,
             }
         )
 

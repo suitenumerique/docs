@@ -633,3 +633,51 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
 
     assert args[0] == indexer_settings.SEARCH_INDEXER_QUERY_URL
     assert kwargs.get("json")["nb_results"] == 109
+
+
+def test_search_indexer_get_title_with_localized_field():
+    """Test extracting title from localized title field."""
+    source = {"title.extension": "Bonjour", "id": 1, "content": "test"}
+    result = SearchIndexer.get_title(source)
+
+    assert result == "Bonjour"
+
+
+def test_search_indexer_get_title_with_multiple_localized_fields():
+    """Test that first matching localized title is returned."""
+    source = {"title.extension": "Bonjour", "title.en": "Hello", "id": 1}
+    result = SearchIndexer.get_title(source)
+
+    assert result in ["Bonjour", "Hello"]
+
+
+def test_search_indexer_get_title_fallback_to_plain_title():
+    """Test fallback to plain 'title' field when no localized field exists."""
+    source = {"title": "Hello World", "id": 1}
+    result = SearchIndexer.get_title(source)
+
+    assert result == "Hello World"
+
+
+def test_search_indexer_get_title_no_title_field():
+    """Test that empty string is returned when no title field exists."""
+    source = {"id": 1, "content": "test"}
+    result = SearchIndexer.get_title(source)
+
+    assert result == ""
+
+
+def test_search_indexer_get_title_with_empty_localized_title():
+    """Test that fallback works when localized title is empty."""
+    source = {"title.extension": "", "title": "Fallback Title", "id": 1}
+    result = SearchIndexer.get_title(source)
+
+    assert result == "Fallback Title"
+
+
+def test_search_indexer_get_title_with_multiple_extension():
+    """Test extracting title from title field with multiple extensions."""
+    source = {"title.extension_1.extension_2": "Bonjour", "id": 1, "content": "test"}
+    result = SearchIndexer.get_title(source)
+
+    assert result == "Bonjour"
