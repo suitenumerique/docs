@@ -79,6 +79,7 @@ and this project adheres to
 - 🥅(frontend) intercept 401 error on GET threads #1754
 - 🦺(frontend) check content type pdf on PdfBlock #1756
 - ✈️(frontend) pause Posthog when offline #1755
+- 📱(frontend) toolbar to the bottom when mobile #1774
 
 ### Fixed
 
