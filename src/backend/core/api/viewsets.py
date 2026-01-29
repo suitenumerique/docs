@@ -60,7 +60,7 @@ from core.services.search_indexers import (
     get_document_indexer,
     get_visited_document_ids_of,
 )
-from core.tasks.mail import send_ask_for_access_mail
+from core.tasks.mail import send_ask_for_access_mail, send_invitation_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -2101,10 +2101,11 @@ class DocumentAccessViewSet(
         access = serializer.save(document_id=self.kwargs["resource_id"])
 
         if access.user:
-            access.document.send_invitation_email(
+            send_invitation_mail.delay(
+                access.document.id,
                 access.user.email,
                 access.role,
-                self.request.user,
+                self.request.user.id,
                 access.user.language
                 or self.request.user.language
                 or settings.LANGUAGE_CODE,
@@ -2223,10 +2224,11 @@ class InvitationViewset(
         """Save invitation to a document then send an email to the invited user."""
         invitation = serializer.save()
 
-        invitation.document.send_invitation_email(
+        send_invitation_mail.delay(
+            invitation.document.id,
             invitation.email,
             invitation.role,
-            self.request.user,
+            self.request.user.id,
             self.request.user.language or settings.LANGUAGE_CODE,
         )
 
