@@ -52,6 +52,12 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - 
+        name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
 
   build-and-push-frontend:
     runs-on: ubuntu-latest
@@ -91,6 +97,12 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - 
+        name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
 
   build-and-push-y-provider:
     runs-on: ubuntu-latest
@@ -125,6 +137,12 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - 
+        name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
 
   notify-argocd:
     needs:

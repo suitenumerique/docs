@@ -7,6 +7,7 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
+import { connectOtherUserToDoc } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -72,6 +73,82 @@ test.describe('Doc Create', () => {
     await expect(
       page.locator('.c__tree-view--row-content').getByText('Untitled document'),
     ).toBeVisible();
+  });
+
+  test('it creates a doc with link "/doc/new/', async ({
+    page,
+    browserName,
+  }) => {
+    test.slow();
+
+    // Private doc creation
+    await page.goto('/docs/new/?title=My+private+doc+from+url');
+
+    await verifyDocName(page, 'My private doc from url');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      page.getByTestId('doc-visibility').getByText('Private').first(),
+    ).toBeVisible();
+
+    // Public editing doc creation
+    await page.goto(
+      '/docs/new/?title=My+public+doc+from+url&link-reach=public&link-role=editor',
+    );
+
+    await verifyDocName(page, 'My public doc from url');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      page.getByTestId('doc-visibility').getByText('Public').first(),
+    ).toBeVisible();
+
+    await expect(
+      page.getByTestId('doc-access-mode').getByText('Editing').first(),
+    ).toBeVisible();
+
+    // Authenticated reading doc creation
+    await page.goto(
+      '/docs/new/?title=My+authenticated+doc+from+url&link-reach=authenticated&link-role=reader',
+    );
+
+    await verifyDocName(page, 'My authenticated doc from url');
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      page.getByTestId('doc-visibility').getByText('Connected').first(),
+    ).toBeVisible();
+
+    await expect(
+      page.getByTestId('doc-access-mode').getByText('Reading').first(),
+    ).toBeVisible();
+
+    const { cleanup, otherPage, otherBrowserName } =
+      await connectOtherUserToDoc({
+        docUrl:
+          '/docs/new/?title=From+unlogged+doc+from+url&link-reach=authenticated&link-role=reader',
+        browserName,
+        withoutSignIn: true,
+      });
+
+    await keyCloakSignIn(otherPage, otherBrowserName, false);
+
+    await verifyDocName(otherPage, 'From unlogged doc from url');
+
+    await otherPage.getByRole('button', { name: 'Share' }).click();
+
+    await expect(
+      otherPage.getByTestId('doc-visibility').getByText('Connected').first(),
+    ).toBeVisible();
+
+    await expect(
+      otherPage.getByTestId('doc-access-mode').getByText('Reading').first(),
+    ).toBeVisible();
+
+    await cleanup();
   });
 });
 

@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getOtherBrowserName, verifyDocName } from './utils-common';
-import { writeInEditor } from './utils-editor';
+import {
+  closeHeaderMenu,
+  createDoc,
+  getOtherBrowserName,
+  verifyDocName,
+} from './utils-common';
+import { getEditor, writeInEditor } from './utils-editor';
 import {
   addNewMember,
   connectOtherUserToDoc,
@@ -43,6 +48,7 @@ test.describe('Doc Comments', () => {
     await thread.locator('[data-test="save"]').click();
     await expect(thread.getByText('This is a comment').first()).toBeHidden();
 
+    await editor.first().click();
     await editor.getByText('Hello').click();
 
     await thread.getByText('This is a comment').first().hover();
@@ -52,7 +58,7 @@ test.describe('Doc Comments', () => {
     await page.getByRole('button', { name: '👍' }).click();
 
     await expect(
-      thread.getByRole('img', { name: 'E2E Chromium' }).first(),
+      thread.getByRole('img', { name: `E2E ${browserName}` }).first(),
     ).toBeVisible();
     await expect(thread.getByText('This is a comment').first()).toBeVisible();
     await expect(thread.getByText(`E2E ${browserName}`).first()).toBeVisible();
@@ -116,8 +122,7 @@ test.describe('Doc Comments', () => {
     await createDoc(page, 'comment-interaction', browserName, 1);
 
     // Checks add react reaction
-    const editor = page.locator('.ProseMirror');
-    await editor.locator('.bn-block-outer').last().fill('Hello World');
+    const editor = await writeInEditor({ page, text: 'Hello' });
     await editor.getByText('Hello').selectText();
     await page.getByRole('button', { name: 'Comment' }).click();
 
@@ -131,6 +136,7 @@ test.describe('Doc Comments', () => {
       'background-color',
       'rgba(237, 180, 0, 0.4)',
     );
+    await editor.first().click();
     await editor.getByText('Hello').click();
 
     await thread.getByText('This is a comment').first().hover();
@@ -147,7 +153,7 @@ test.describe('Doc Comments', () => {
     await thread.getByRole('menuitem', { name: 'Edit comment' }).click();
     const commentEditor = thread.getByText('This is a comment').first();
     await commentEditor.fill('This is an edited comment');
-    const saveBtn = thread.getByRole('button', { name: 'Save' });
+    const saveBtn = thread.locator('button[data-test="save"]').first();
     await saveBtn.click();
     await expect(saveBtn).toBeHidden();
     await expect(
@@ -157,7 +163,8 @@ test.describe('Doc Comments', () => {
 
     // Add second comment
     await thread.getByRole('paragraph').last().fill('This is a second comment');
-    await thread.getByRole('button', { name: 'Save' }).click();
+    await saveBtn.click();
+    await expect(saveBtn).toBeHidden();
     await expect(
       thread.getByText('This is an edited comment').first(),
     ).toBeVisible();
@@ -181,6 +188,29 @@ test.describe('Doc Comments', () => {
       'background-color',
       'rgba(0, 0, 0, 0)',
     );
+
+    /* Delete the last comment remove the thread */
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Comment' }).click();
+
+    await thread.getByRole('paragraph').first().fill('This is a new comment');
+    await thread.locator('[data-test="save"]').click();
+
+    await expect(editor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgba(237, 180, 0, 0.4)',
+    );
+    await editor.first().click();
+    await editor.getByText('Hello').click();
+
+    await thread.getByText('This is a new comment').first().hover();
+    await thread.locator('[data-test="moreactions"]').first().click();
+    await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
+
+    await expect(editor.getByText('Hello')).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
   });
 
   test('it checks the comments abilities', async ({ page, browserName }) => {
@@ -190,6 +220,8 @@ test.describe('Doc Comments', () => {
 
     // We share the doc with another user
     const otherBrowserName = getOtherBrowserName(browserName);
+
+    const editor = await getEditor({ page });
 
     // Add a new member with editor role
     await page.getByRole('button', { name: 'Share' }).click();
@@ -214,7 +246,7 @@ test.describe('Doc Comments', () => {
       text: 'Hello, I can edit the document',
     });
     await expect(
-      otherEditor.getByText('Hello, I can edit the document'),
+      editor.getByText('Hello, I can edit the document'),
     ).toBeVisible();
     await otherEditor.getByText('Hello').selectText();
     await otherPage.getByRole('button', { name: 'Comment' }).click();
@@ -291,5 +323,83 @@ test.describe('Doc Comments', () => {
     await expect(otherThread.locator('[data-test="moreactions"]')).toBeHidden();
 
     await cleanup();
+  });
+
+  test('it checks comments pasting from another document', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'comment-doc-1', browserName, 1);
+
+    // We add a comment in the first document
+    const editor1 = await writeInEditor({ page, text: 'Document One' });
+    await editor1.getByText('Document One').selectText();
+    await page.getByRole('button', { name: 'Comment' }).click();
+
+    const thread1 = page.locator('.bn-thread');
+    await thread1.getByRole('paragraph').first().fill('Comment in Doc One');
+    await thread1.locator('[data-test="save"]').click();
+    await expect(thread1.getByText('Comment in Doc One').first()).toBeHidden();
+
+    await expect(editor1.getByText('Document One')).toHaveCSS(
+      'background-color',
+      'rgba(237, 180, 0, 0.4)',
+    );
+
+    await editor1.getByText('Document One').click();
+    // We copy the content including the comment from the first document
+    await editor1.getByText('Document One').selectText();
+    await page.keyboard.press('Control+C');
+
+    // We create a second document
+    await createDoc(page, 'comment-doc-2', browserName, 1);
+
+    // We paste the content into the second document
+    const editor2 = await writeInEditor({ page, text: '' });
+    await editor2.click();
+    await page.keyboard.press('Control+V');
+
+    await expect(editor2.getByText('Document One')).toHaveCSS(
+      'background-color',
+      'rgba(0, 0, 0, 0)',
+    );
+
+    await editor2.getByText('Document One').click();
+    await expect(page.locator('.bn-thread')).toBeHidden();
+  });
+});
+
+test.describe('Doc Comments mobile', () => {
+  test.use({ viewport: { width: 500, height: 1200 } });
+
+  test('Can comments on mobile', async ({ page, browserName }) => {
+    const [title] = await createDoc(
+      page,
+      'comment-mobile',
+      browserName,
+      1,
+      true,
+    );
+
+    await closeHeaderMenu(page);
+
+    await verifyDocName(page, title);
+
+    // Checks add react reaction
+    const editor = await writeInEditor({ page, text: 'Hello' });
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Comment' }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+    await expect(thread.getByText('This is a comment').first()).toBeHidden();
+    // Check toolbar is closed after adding a comment
+    await expect(page.getByRole('button', { name: 'Paragraph' })).toBeHidden();
+
+    await editor.first().click();
+    await editor.getByText('Hello').click();
+
+    await expect(thread.getByText('This is a comment').first()).toBeVisible();
   });
 });

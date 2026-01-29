@@ -1,11 +1,11 @@
-import { Button } from '@openfun/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import img403 from '@/assets/icons/icon-403.png';
+import error_img from '@/assets/icons/error-planetes.png';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { PageLayout } from '@/layouts';
 import { NextPageWithLayout } from '@/types/next';
@@ -32,32 +32,46 @@ const Page: NextPageWithLayout = () => {
       <Box
         $align="center"
         $margin="auto"
-        $gap="1rem"
+        $gap="md"
         $padding={{ bottom: '2rem' }}
       >
         <Text as="h1" $textAlign="center" className="sr-only">
           {t('Page Not Found - Error 404')} - {t('Docs')}
         </Text>
         <Image
-          src={img403}
+          src={error_img}
           alt=""
           width={300}
-          height={300}
           style={{
             maxWidth: '100%',
             height: 'auto',
           }}
         />
 
-        <Box $align="center" $gap="0.8rem">
-          <Text as="p" $textAlign="center" $maxWidth="350px" $theme="brand">
-            {t(
-              'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
-            )}
-          </Text>
+        <Text
+          as="p"
+          $textAlign="center"
+          $maxWidth="350px"
+          $theme="neutral"
+          $margin="0"
+        >
+          {t(
+            'It seems that the page you are looking for does not exist or cannot be displayed correctly.',
+          )}
+        </Text>
 
+        <Box $direction="row" $gap="sm">
           <StyledLink href="/">
-            <StyledButton icon={<Icon iconName="house" $color="white" />}>
+            <StyledButton
+              color="neutral"
+              icon={
+                <Icon
+                  iconName="house"
+                  variant="symbols-outlined"
+                  $withThemeInherited
+                />
+              }
+            >
               {t('Home')}
             </StyledButton>
           </StyledLink>

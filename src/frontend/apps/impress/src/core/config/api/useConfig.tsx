@@ -4,23 +4,28 @@ import { Resource } from 'i18next';
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
 import { FooterType } from '@/features/footer';
-import { HeaderType } from '@/features/header';
+import { HeaderType, WaffleType } from '@/features/header';
 import { PostHogConf } from '@/services';
 
 interface ThemeCustomization {
   footer?: FooterType;
   translations?: Resource;
   header?: HeaderType;
+  waffle?: WaffleType;
 }
 
 export interface ConfigResponse {
   AI_FEATURE_ENABLED?: boolean;
   COLLABORATION_WS_URL?: string;
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY?: boolean;
+  CONVERSION_FILE_EXTENSIONS_ALLOWED: string[];
+  CONVERSION_FILE_MAX_SIZE: number;
   CRISP_WEBSITE_ID?: string;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
   FRONTEND_HOMEPAGE_FEATURE_ENABLED?: boolean;
+  FRONTEND_JS_URL?: string;
+  FRONTEND_SILENT_LOGIN_ENABLED?: boolean;
   FRONTEND_THEME?: Theme;
   LANGUAGES: [string, string][];
   LANGUAGE_CODE: string;

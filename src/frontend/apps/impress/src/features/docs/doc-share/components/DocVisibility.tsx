@@ -1,3 +1,7 @@
+import {
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/cunningham-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -41,6 +45,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   const { isDesynchronized } = useDocUtils(doc);
   const { linkModeTranslations, linkReachChoices, linkReachTranslations } =
     useTranslatedShareSettings();
+  const { toast } = useToastProvider();
 
   const description =
     docLinkRole === LinkRole.READER
@@ -49,6 +54,15 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
 
   const { mutate: updateDocLink } = useUpdateDocLink({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+    onSuccess: () => {
+      toast(
+        t('The document visibility has been updated.'),
+        VariantType.SUCCESS,
+        {
+          duration: 2000,
+        },
+      );
+    },
   });
 
   const linkReachOptions: DropdownMenuOption[] = useMemo(() => {

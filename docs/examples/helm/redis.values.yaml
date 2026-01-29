@@ -1,4 +1,7 @@
-auth:
+redis:
+  enabled: true
+  name: redis
+  #serviceNameOverride: redis
+  image: redis:8.2-alpine
+  username: user
   password: pass
-architecture: standalone
-

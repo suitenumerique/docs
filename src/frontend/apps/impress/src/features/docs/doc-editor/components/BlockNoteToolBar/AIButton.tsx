@@ -9,7 +9,7 @@ import {
   Loader,
   VariantType,
   useToastProvider,
-} from '@openfun/cunningham-react';
+} from '@gouvfr-lasuite/cunningham-react';
 import { PropsWithChildren, ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -108,7 +108,7 @@ export function AIGroupButton() {
           data-test="ai-actions"
           label="AI"
           mainTooltip={t('AI Actions')}
-          icon={<Icon iconName="auto_awesome" $size="l" />}
+          icon={<Icon iconName="auto_awesome" $size="md" />}
         />
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown

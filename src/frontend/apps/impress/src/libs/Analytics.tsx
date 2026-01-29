@@ -8,8 +8,16 @@ type AnalyticEventUser = {
   id: string;
   email: string;
 };
+type AnalyticEventDoc = {
+  eventName: 'doc';
+  isPublic: boolean;
+  authenticated: boolean;
+};
 
-export type AnalyticEvent = AnalyticEventClick | AnalyticEventUser;
+export type AnalyticEvent =
+  | AnalyticEventClick
+  | AnalyticEventUser
+  | AnalyticEventDoc;
 
 export abstract class AbstractAnalytic {
   public constructor() {

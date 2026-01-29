@@ -1,6 +1,7 @@
 """
 Declare and configure the models for the impress core application
 """
+
 # pylint: disable=too-many-lines
 
 import hashlib
@@ -432,32 +433,35 @@ class Document(MP_Node, BaseModel):
     def save(self, *args, **kwargs):
         """Write content to object storage only if _content has changed."""
         super().save(*args, **kwargs)
-
         if self._content:
-            file_key = self.file_key
-            bytes_content = self._content.encode("utf-8")
+            self.save_content(self._content)
 
-            # Attempt to directly check if the object exists using the storage client.
-            try:
-                response = default_storage.connection.meta.client.head_object(
-                    Bucket=default_storage.bucket_name, Key=file_key
-                )
-            except ClientError as excpt:
-                # If the error is a 404, the object doesn't exist, so we should create it.
-                if excpt.response["Error"]["Code"] == "404":
-                    has_changed = True
-                else:
-                    raise
+    def save_content(self, content):
+        """Save content to object storage."""
+
+        file_key = self.file_key
+        bytes_content = content.encode("utf-8")
+
+        # Attempt to directly check if the object exists using the storage client.
+        try:
+            response = default_storage.connection.meta.client.head_object(
+                Bucket=default_storage.bucket_name, Key=file_key
+            )
+        except ClientError as excpt:
+            # If the error is a 404, the object doesn't exist, so we should create it.
+            if excpt.response["Error"]["Code"] == "404":
+                has_changed = True
             else:
-                # Compare the existing ETag with the MD5 hash of the new content.
-                has_changed = (
-                    response["ETag"].strip('"')
-                    != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
-                )
+                raise
+        else:
+            # Compare the existing ETag with the MD5 hash of the new content.
+            has_changed = (
+                response["ETag"].strip('"') != hashlib.md5(bytes_content).hexdigest()  # noqa: S324
+            )
 
-            if has_changed:
-                content_file = ContentFile(bytes_content)
-                default_storage.save(file_key, content_file)
+        if has_changed:
+            content_file = ContentFile(bytes_content)
+            default_storage.save(file_key, content_file)
 
     def is_leaf(self):
         """
@@ -813,7 +817,7 @@ class Document(MP_Node, BaseModel):
     def send_email(self, subject, emails, context=None, language=None):
         """Generate and send email from a template."""
         context = context or {}
-        domain = Site.objects.get_current().domain
+        domain = settings.EMAIL_URL_APP or Site.objects.get_current().domain
         language = language or get_language()
         context.update(
             {
@@ -821,7 +825,8 @@ class Document(MP_Node, BaseModel):
                 "document": self,
                 "domain": domain,
                 "link": f"{domain}/docs/{self.id}/",
-                "document_title": self.title or str(_("Untitled Document")),
+                "link_label": self.title or str(_("Untitled Document")),
+                "button_label": _("Open"),
                 "logo_img": settings.EMAIL_LOGO_IMG,
             }
         )
@@ -903,7 +908,8 @@ class Document(MP_Node, BaseModel):
 
         # Mark all descendants as soft deleted
         self.get_descendants().filter(ancestors_deleted_at__isnull=True).update(
-            ancestors_deleted_at=self.ancestors_deleted_at
+            ancestors_deleted_at=self.ancestors_deleted_at,
+            updated_at=self.updated_at,
         )
 
     @transaction.atomic
@@ -1422,163 +1428,6 @@ class Reaction(BaseModel):
     def __str__(self):
         """Return the string representation of the reaction."""
         return f"Reaction {self.emoji} on comment {self.comment.id}"
-
-
-class Template(BaseModel):
-    """HTML and CSS code used for formatting the print around the MarkDown body."""
-
-    title = models.CharField(_("title"), max_length=255)
-    description = models.TextField(_("description"), blank=True)
-    code = models.TextField(_("code"), blank=True)
-    css = models.TextField(_("css"), blank=True)
-    is_public = models.BooleanField(
-        _("public"),
-        default=False,
-        help_text=_("Whether this template is public for anyone to use."),
-    )
-
-    class Meta:
-        db_table = "impress_template"
-        ordering = ("title",)
-        verbose_name = _("Template")
-        verbose_name_plural = _("Templates")
-
-    def __str__(self):
-        return self.title
-
-    def get_role(self, user):
-        """Return the roles a user has on a resource as an iterable."""
-        if not user.is_authenticated:
-            return None
-
-        try:
-            roles = self.user_roles or []
-        except AttributeError:
-            try:
-                roles = self.accesses.filter(
-                    models.Q(user=user) | models.Q(team__in=user.teams),
-                ).values_list("role", flat=True)
-            except (models.ObjectDoesNotExist, IndexError):
-                roles = []
-
-        return RoleChoices.max(*roles)
-
-    def get_abilities(self, user):
-        """
-        Compute and return abilities for a given user on the template.
-        """
-        role = self.get_role(user)
-        is_owner_or_admin = role in PRIVILEGED_ROLES
-        can_get = self.is_public or bool(role)
-        can_update = is_owner_or_admin or role == RoleChoices.EDITOR
-
-        return {
-            "destroy": role == RoleChoices.OWNER,
-            "generate_document": can_get,
-            "accesses_manage": is_owner_or_admin,
-            "update": can_update,
-            "partial_update": can_update,
-            "retrieve": can_get,
-        }
-
-
-class TemplateAccess(BaseAccess):
-    """Relation model to give access to a template for a user or a team with a role."""
-
-    template = models.ForeignKey(
-        Template,
-        on_delete=models.CASCADE,
-        related_name="accesses",
-    )
-
-    class Meta:
-        db_table = "impress_template_access"
-        ordering = ("-created_at",)
-        verbose_name = _("Template/user relation")
-        verbose_name_plural = _("Template/user relations")
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "template"],
-                condition=models.Q(user__isnull=False),  # Exclude null users
-                name="unique_template_user",
-                violation_error_message=_("This user is already in this template."),
-            ),
-            models.UniqueConstraint(
-                fields=["team", "template"],
-                condition=models.Q(team__gt=""),  # Exclude empty string teams
-                name="unique_template_team",
-                violation_error_message=_("This team is already in this template."),
-            ),
-            models.CheckConstraint(
-                condition=models.Q(user__isnull=False, team="")
-                | models.Q(user__isnull=True, team__gt=""),
-                name="check_template_access_either_user_or_team",
-                violation_error_message=_("Either user or team must be set, not both."),
-            ),
-        ]
-
-    def __str__(self):
-        return f"{self.user!s} is {self.role:s} in template {self.template!s}"
-
-    def get_role(self, user):
-        """
-        Get the role a user has on a resource.
-        """
-        if not user.is_authenticated:
-            return None
-
-        try:
-            roles = self.user_roles or []
-        except AttributeError:
-            teams = user.teams
-            try:
-                roles = self.template.accesses.filter(
-                    models.Q(user=user) | models.Q(team__in=teams),
-                ).values_list("role", flat=True)
-            except (Template.DoesNotExist, IndexError):
-                roles = []
-
-        return RoleChoices.max(*roles)
-
-    def get_abilities(self, user):
-        """
-        Compute and return abilities for a given user on the template access.
-        """
-        role = self.get_role(user)
-        is_owner_or_admin = role in PRIVILEGED_ROLES
-
-        if self.role == RoleChoices.OWNER:
-            can_delete = (role == RoleChoices.OWNER) and self.template.accesses.filter(
-                role=RoleChoices.OWNER
-            ).count() > 1
-            set_role_to = (
-                [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                if can_delete
-                else []
-            )
-        else:
-            can_delete = is_owner_or_admin
-            set_role_to = []
-            if role == RoleChoices.OWNER:
-                set_role_to.append(RoleChoices.OWNER)
-            if is_owner_or_admin:
-                set_role_to.extend(
-                    [RoleChoices.ADMIN, RoleChoices.EDITOR, RoleChoices.READER]
-                )
-
-        # Remove the current role as we don't want to propose it as an option
-        try:
-            set_role_to.remove(self.role)
-        except ValueError:
-            pass
-
-        return {
-            "destroy": can_delete,
-            "update": bool(set_role_to),
-            "partial_update": bool(set_role_to),
-            "retrieve": bool(role),
-            "set_role_to": set_role_to,
-        }
 
 
 class Invitation(BaseModel):

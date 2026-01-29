@@ -1,8 +1,18 @@
 import { MouseEvent, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
 
-import { BoxButton, BoxButtonType, Text, TextType } from '@/components';
-import { EmojiPicker, emojidata } from '@/docs/doc-editor/';
+import {
+  Box,
+  BoxButton,
+  BoxButtonType,
+  EmojiPicker,
+  PICKER_HEIGHT,
+  Text,
+  TextType,
+  emojidata,
+} from '@/components';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
 
@@ -30,6 +40,7 @@ export const DocIcon = ({
   ...textProps
 }: DocIconProps) => {
   const { updateDocEmoji } = useDocTitleUpdate();
+  const { t } = useTranslation();
 
   const iconRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +54,14 @@ export const DocIcon = ({
     return defaultIcon;
   }
 
+  const emojiLabel = withEmojiPicker
+    ? emoji
+      ? t('Edit document emoji')
+      : t('Add emoji')
+    : emoji
+      ? t('Document emoji')
+      : undefined;
+
   const toggleEmojiPicker = (e: MouseEvent) => {
     if (withEmojiPicker) {
       e.stopPropagation();
@@ -50,9 +69,24 @@ export const DocIcon = ({
 
       if (!openEmojiPicker && iconRef.current) {
         const rect = iconRef.current.getBoundingClientRect();
+
+        const pickerHeight = PICKER_HEIGHT;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        // Position picker above if not enough space below and enough space above
+        const shouldPositionAbove =
+          spaceBelow < pickerHeight && spaceAbove >= pickerHeight;
+
+        // Offset to align the picker properly
+        const ROW_OFFSET_TOP = 55;
+        const ROW_OFFSET_BOTTOM = 10;
+
         setPickerPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
+          top: shouldPositionAbove
+            ? rect.top - pickerHeight + ROW_OFFSET_TOP
+            : rect.bottom + ROW_OFFSET_BOTTOM,
+          left: rect.left,
         });
       }
 
@@ -83,6 +117,8 @@ export const DocIcon = ({
         ref={iconRef}
         onClick={toggleEmojiPicker}
         color="tertiary-text"
+        aria-label={emojiLabel}
+        title={emojiLabel}
         {...buttonProps}
       >
         {!emoji ? (
@@ -102,13 +138,13 @@ export const DocIcon = ({
       </BoxButton>
       {openEmojiPicker &&
         createPortal(
-          <div
-            style={{
-              position: 'absolute',
-              top: pickerPosition.top,
-              left: pickerPosition.left,
-              zIndex: 1000,
-            }}
+          <Box
+            $position="fixed"
+            $css={css`
+              top: ${pickerPosition.top}px;
+              left: ${pickerPosition.left}px;
+              z-index: 1000;
+            `}
           >
             <EmojiPicker
               emojiData={emojidata}
@@ -116,7 +152,7 @@ export const DocIcon = ({
               onClickOutside={handleClickOutside}
               withOverlay={true}
             />
-          </div>,
+          </Box>,
           document.body,
         )}
     </>

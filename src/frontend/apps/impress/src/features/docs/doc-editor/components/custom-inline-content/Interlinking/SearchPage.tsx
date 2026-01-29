@@ -122,8 +122,8 @@ export const SearchPage = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      // Keep the trigger character ('@' or '/') in the editor when closing with Escape
-      closeSearch(trigger);
+      // Keep the trigger character and typed text in the editor when closing with Escape
+      closeSearch(`${trigger}${search}`);
     } else if (e.key === 'Backspace' && search.length === 0) {
       e.preventDefault();
       closeSearch('');
@@ -171,6 +171,7 @@ export const SearchPage = ({
         {trigger}
         <Box
           as="input"
+          name="doc-search-input"
           $padding={{ left: '3px' }}
           $css={inputStyle}
           ref={inputRef}
@@ -246,7 +247,6 @@ export const SearchPage = ({
                   {
                     type: 'interlinkingLinkInline',
                     props: {
-                      url: `/docs/${doc.id}`,
                       docId: doc.id,
                       title: doc.title || untitledDocument,
                     },

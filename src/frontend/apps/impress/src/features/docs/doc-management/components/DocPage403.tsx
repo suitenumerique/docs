@@ -1,4 +1,4 @@
-import { Button } from '@openfun/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { useEffect } from 'react';

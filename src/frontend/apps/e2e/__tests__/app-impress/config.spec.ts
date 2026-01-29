@@ -126,6 +126,20 @@ test.describe('Config', () => {
     ).toBeAttached();
   });
 
+  test('it checks FRONTEND_JS_URL config', async ({ page }) => {
+    await overrideConfig(page, {
+      FRONTEND_JS_URL: 'http://localhost:123465/js/script.js',
+    });
+
+    await page.goto('/');
+
+    await expect(
+      page
+        .locator('script[src="http://localhost:123465/js/script.js"]')
+        .first(),
+    ).toBeAttached();
+  });
+
   test('it checks theme_customization.translations config', async ({
     page,
   }) => {
@@ -145,10 +159,6 @@ test.describe('Config', () => {
 
     await expect(page.getByText('MyCustomDocs')).toBeAttached();
   });
-});
-
-test.describe('Config: Not logged', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('it checks the config api is called', async ({ page }) => {
     const responsePromise = page.waitForResponse(
@@ -168,6 +178,10 @@ test.describe('Config: Not logged', () => {
 
     expect(configApi).toStrictEqual(CONFIG_LEFT);
   });
+});
+
+test.describe('Config: Not logged', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('it checks that theme is configured from config endpoint', async ({
     page,

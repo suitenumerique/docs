@@ -1,4 +1,4 @@
-import { Tooltip, useModal } from '@openfun/cunningham-react';
+import { Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
 import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
-import { useDate } from '@/hook';
+import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';

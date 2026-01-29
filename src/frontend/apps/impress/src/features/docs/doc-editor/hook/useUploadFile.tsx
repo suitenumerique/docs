@@ -1,3 +1,4 @@
+import { Block } from '@blocknote/core';
 import { captureException } from '@sentry/nextjs';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { backendUrl } from '@/api';
 
 import { useCreateDocAttachment } from '../api';
+import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
 export const useUploadFile = (docId: string) => {
@@ -36,73 +38,102 @@ export const useUploadFile = (docId: string) => {
   };
 };
 
+/**
+ * When we upload a file it can takes some time to analyze it (e.g. virus scan).
+ * This hook listen to upload end and replace the uploaded block by a uploadLoader
+ * block to show analyzing status.
+ * The uploadLoader block will then handle the status display until the analysis is done
+ * then replaced by the final block (e.g. image, pdf, etc.).
+ * @param editor
+ */
 export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
-  const ANALYZE_URL = 'media-check';
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const unsubscribe = editor.onChange((_, context) => {
-      const blocksChanges = context.getChanges();
-
-      if (!blocksChanges.length) {
-        return;
-      }
-
-      const blockChanges = blocksChanges[0];
-
+  /**
+   * Replace the resource block by a uploadLoader block to show analyzing status
+   */
+  const replaceBlockWithUploadLoader = useCallback(
+    (block: Block) => {
       if (
-        blockChanges.source.type !== 'local' ||
-        blockChanges.type !== 'update' ||
-        !('url' in blockChanges.block.props) ||
-        ('url' in blockChanges.block.props &&
-          !blockChanges.block.props.url.includes(ANALYZE_URL))
+        !block ||
+        !('url' in block.props) ||
+        ('url' in block.props && !block.props.url.includes(ANALYZE_URL))
       ) {
         return;
       }
 
-      const blockUploadUrl = blockChanges.block.props.url;
-      const blockUploadType = blockChanges.block.type;
-      const blockUploadName = blockChanges.block.props.name;
+      const blockUploadUrl = block.props.url;
+      const blockUploadType = block.type;
+      const blockUploadName = block.props.name;
       const blockUploadShowPreview =
-        ('showPreview' in blockChanges.block.props &&
-          blockChanges.block.props.showPreview) ||
-        false;
+        ('showPreview' in block.props && block.props.showPreview) || false;
 
-      const timeoutId = setTimeout(() => {
-        // Replace the resource block by a uploadLoader block
-        // to show analyzing status
-        try {
-          editor.replaceBlocks(
-            [blockChanges.block.id],
-            [
-              {
-                type: 'uploadLoader',
-                props: {
-                  information: t('Analyzing file...'),
-                  type: 'loading',
-                  blockUploadName,
-                  blockUploadType,
-                  blockUploadUrl,
-                  blockUploadShowPreview,
-                },
+      try {
+        editor.replaceBlocks(
+          [block.id],
+          [
+            {
+              type: 'uploadLoader',
+              props: {
+                information: t('Analyzing file...'),
+                type: 'loading',
+                blockUploadName,
+                blockUploadType,
+                blockUploadUrl,
+                blockUploadShowPreview,
               },
-            ],
-          );
-        } catch (error) {
-          captureException(error, {
-            extra: { info: 'Error replacing block for upload loader' },
-          });
-        }
-      }, 250);
+            },
+          ],
+        );
+      } catch (error) {
+        captureException(error, {
+          extra: { info: 'Error replacing block for upload loader' },
+        });
+      }
+    },
+    [editor, t],
+  );
+
+  useEffect(() => {
+    // Check if editor and its view are mounted before accessing document
+    if (!editor?.document) {
+      return;
+    }
+
+    const imagesBlocks = editor.document.filter(
+      (block) =>
+        block.type === 'image' && block.props.url.includes(ANALYZE_URL),
+    );
+
+    imagesBlocks.forEach((block) => {
+      replaceBlockWithUploadLoader(block as Block);
+    });
+  }, [editor, replaceBlockWithUploadLoader]);
+
+  /**
+   * Handle upload end to replace the upload block by a uploadLoader
+   * block to show analyzing status
+   */
+  useEffect(() => {
+    // Check if editor and its view are mounted before setting up handlers
+    if (!editor) {
+      return;
+    }
+
+    editor.onUploadEnd((blockId) => {
+      if (!blockId) {
+        return;
+      }
+
+      const innerTimeoutId = setTimeout(() => {
+        const block = editor.getBlock({ id: blockId });
+
+        replaceBlockWithUploadLoader(block as Block);
+      }, 300);
 
       return () => {
-        clearTimeout(timeoutId);
-        unsubscribe();
+        clearTimeout(innerTimeoutId);
       };
     });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [editor, t]);
+  }, [editor, replaceBlockWithUploadLoader]);
 };

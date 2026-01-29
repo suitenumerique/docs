@@ -19,6 +19,8 @@ jobs:
   test-front:
     needs: install-dependencies
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,6 +43,8 @@ jobs:
   lint-front:
     runs-on: ubuntu-latest
     needs: install-dependencies
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,6 +89,9 @@ jobs:
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright chromium
 
+      - name: Free disk space before Docker
+        uses: ./.github/actions/free-disk-space
+
       - name: Start Docker services
         run: make bootstrap-e2e FLUSH_ARGS='--no-input'
 
@@ -123,6 +130,9 @@ jobs:
 
       - name: Install Playwright Browsers
         run: cd src/frontend/apps/e2e && yarn install --frozen-lockfile && yarn install-playwright firefox webkit chromium
+
+      - name: Free disk space before Docker
+        uses: ./.github/actions/free-disk-space
 
       - name: Start Docker services
         run: make bootstrap-e2e FLUSH_ARGS='--no-input'
@@ -187,3 +197,38 @@ jobs:
           strip-hash: "[-_.][a-f0-9]{8,}(?=\\.(?:js|css|html)$)"
           omit-unchanged: true
           install-script: "yarn install --frozen-lockfile"
+
+  uikit-theme-checker:
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: Restore the frontend cache
+        uses: actions/cache@v4
+        with:
+          path: "src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
+
+      - name: Build theme
+        run: cd src/frontend/apps/impress && yarn build-theme
+
+      - name: Ensure theme is up to date
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Error: build-theme produced git changes (tracked or untracked)."
+            echo "--- git status --porcelain ---"
+            git status --porcelain
+            echo "--- git diff ---"
+            git --no-pager diff
+            exit 1
+          fi

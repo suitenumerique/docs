@@ -171,19 +171,25 @@ const DocPage = ({ id }: DocProps) => {
     });
   }, [addTask, doc?.id, queryClient]);
 
-  if (isError && error) {
-    if ([404, 401].includes(error.status)) {
-      let replacePath = `/${error.status}`;
+  useEffect(() => {
+    if (!isError || !error?.status || ![404, 401].includes(error.status)) {
+      return;
+    }
 
-      if (error.status === 401) {
-        if (authenticated) {
-          queryClient.setQueryData([KEY_AUTH], null);
-        }
-        setAuthUrl();
+    let replacePath = `/${error.status}`;
+
+    if (error.status === 401) {
+      if (authenticated) {
+        queryClient.setQueryData([KEY_AUTH], null);
       }
+      setAuthUrl();
+    }
 
-      void replace(replacePath);
+    void replace(replacePath);
+  }, [isError, error?.status, replace, authenticated, queryClient]);
 
+  if (isError && error?.status) {
+    if ([404, 401].includes(error.status)) {
       return <Loading />;
     }
 

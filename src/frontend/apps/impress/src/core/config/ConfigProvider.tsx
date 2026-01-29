@@ -1,5 +1,6 @@
-import { Loader } from '@openfun/cunningham-react';
+import { Loader } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
+import Script from 'next/script';
 import { PropsWithChildren, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +12,7 @@ import {
   useSynchronizedLanguage,
 } from '@/features/language';
 import { useAnalytics } from '@/libs';
-import { CrispProvider, PostHogAnalytic } from '@/services';
+import { CrispAnalytic, PostHogAnalytic } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -72,6 +73,14 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     new PostHogAnalytic(conf.POSTHOG_KEY);
   }, [conf?.POSTHOG_KEY]);
 
+  useEffect(() => {
+    if (!conf?.CRISP_WEBSITE_ID) {
+      return;
+    }
+
+    new CrispAnalytic({ websiteId: conf.CRISP_WEBSITE_ID });
+  }, [conf?.CRISP_WEBSITE_ID]);
+
   if (!conf) {
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">
@@ -87,11 +96,10 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
           <link rel="stylesheet" href={conf?.FRONTEND_CSS_URL} />
         </Head>
       )}
-      <AnalyticsProvider>
-        <CrispProvider websiteId={conf?.CRISP_WEBSITE_ID}>
-          {children}
-        </CrispProvider>
-      </AnalyticsProvider>
+      {conf?.FRONTEND_JS_URL && (
+        <Script src={conf?.FRONTEND_JS_URL} strategy="afterInteractive" />
+      )}
+      <AnalyticsProvider>{children}</AnalyticsProvider>
     </>
   );
 };

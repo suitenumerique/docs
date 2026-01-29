@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useClipboard } from '@/hook';
+import { useClipboard } from '@/hooks';
 
 import { Doc } from '../types';
 

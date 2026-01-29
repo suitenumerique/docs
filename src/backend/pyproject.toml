@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impress"
-version = "3.10.0"
+version = "4.4.0"
 authors = [{ "name" = "DINUM", "email" = "dev@mail.numerique.gouv.fr" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -19,28 +19,28 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
 ]
-description = "An application to print markdown to pdf from a set of managed templates."
+description = "Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing."
 keywords = ["Django", "Contacts", "Templates", "RBAC"]
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "beautifulsoup4==4.14.2",
-    "boto3==1.40.74",
+    "beautifulsoup4==4.14.3",
+    "boto3==1.42.17",
     "Brotli==1.2.0",
     "celery[redis]==5.5.3",
     "django-configurations==2.5.1",
     "django-cors-headers==4.9.0",
-    "django-countries==8.1.0",
+    "django-countries==8.2.0",
     "django-csp==4.0",
     "django-filter==25.2",
-    "django-lasuite[all]==0.0.18",
+    "django-lasuite[all]==0.0.22",
     "django-parler==2.3",
     "django-redis==6.0.0",
     "django-storages[s3]==1.14.6",
     "django-timezone-field>=5.1",
-    "django==5.2.8",
-    "django-treebeard==4.7.1",
+    "django<6.0.0",
+    "django-treebeard==4.8.0",
     "djangorestframework==3.16.1",
     "drf_spectacular==0.29.0",
     "dockerflow==2024.4.2",
@@ -48,18 +48,19 @@ dependencies = [
     "factory_boy==3.3.3",
     "gunicorn==23.0.0",
     "jsonschema==4.25.1",
+    "langfuse==3.11.2",
     "lxml==6.0.2",
     "markdown==3.10",
-    "mozilla-django-oidc==4.0.1",
+    "mozilla-django-oidc==5.0.2",
     "nested-multipart-parser==1.6.0",
-    "openai==2.8.0",
-    "psycopg[binary]==3.2.12",
-    "pycrdt==0.12.43", 
+    "openai==2.14.0",
+    "psycopg[binary]==3.3.2",
+    "pycrdt==0.12.44", 
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "redis<6.0.0",
     "requests==2.32.5",
-    "sentry-sdk==2.44.0",
+    "sentry-sdk==2.48.0",
     "whitenoise==6.11.0",
 ]
 
@@ -73,20 +74,20 @@ dependencies = [
 dev = [
     "django-extensions==4.1",
     "django-test-migrations==1.5.0",
-    "drf-spectacular-sidecar==2025.10.1",
+    "drf-spectacular-sidecar==2025.12.1",
     "freezegun==1.5.5",
     "ipdb==0.13.13",
-    "ipython==9.7.0",
-    "pyfakefs==5.10.2",
+    "ipython==9.8.0",
+    "pyfakefs==6.0.0",
     "pylint-django==2.6.1",
     "pylint<4.0.0",
     "pytest-cov==7.0.0",
     "pytest-django==4.11.1",
-    "pytest==9.0.1",
+    "pytest==9.0.2",
     "pytest-icdiff==0.9",
     "pytest-xdist==3.8.0",
     "responses==0.25.8",
-    "ruff==0.14.5",
+    "ruff==0.14.10",
     "types-requests==2.32.4.20250913",
 ]
 

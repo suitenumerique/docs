@@ -1,4 +1,4 @@
-import { Modal, ModalSize } from '@openfun/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useState } from 'react';

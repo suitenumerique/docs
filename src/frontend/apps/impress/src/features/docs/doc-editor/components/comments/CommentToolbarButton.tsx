@@ -1,6 +1,14 @@
+/**
+ * This file is adapted from BlockNote's AddCommentButton component
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/react/src/components/FormattingToolbar/DefaultButtons/AddCommentButton.tsx
+ */
+
+import { CommentsExtension } from '@blocknote/core/comments';
+import { FormattingToolbarExtension } from '@blocknote/core/extensions';
 import {
   useBlockNoteEditor,
   useComponentsContext,
+  useExtension,
   useSelectedBlocks,
 } from '@blocknote/react';
 import { useMemo } from 'react';
@@ -22,6 +30,10 @@ export const CommentToolbarButton = () => {
   const { currentDoc } = useDocStore();
   const { t } = useTranslation();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const comments = useExtension('comments') as unknown as ReturnType<
+    ReturnType<typeof CommentsExtension>
+  >;
+  const { store } = useExtension(FormattingToolbarExtension);
 
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
@@ -35,7 +47,18 @@ export const CommentToolbarButton = () => {
     return !!selectedBlocks.find((block) => block.content !== undefined);
   }, [selectedBlocks]);
 
+  const focusOnInputThread = () => {
+    // Use setTimeout to ensure the DOM has been updated with the new comment
+    setTimeout(() => {
+      const threadElement = document.querySelector<HTMLElement>(
+        '.bn-thread .bn-editor',
+      );
+      threadElement?.focus();
+    }, 400);
+  };
+
   if (
+    !comments ||
     !show ||
     !editor.isEditable ||
     !Components ||
@@ -49,8 +72,9 @@ export const CommentToolbarButton = () => {
       <Components.Generic.Toolbar.Button
         className="bn-button"
         onClick={() => {
-          editor.comments?.startPendingComment();
-          editor.formattingToolbar.closeMenu();
+          comments.startPendingComment();
+          store.setState(false);
+          focusOnInputThread();
         }}
         aria-haspopup="dialog"
         data-test="comment-toolbar-button"

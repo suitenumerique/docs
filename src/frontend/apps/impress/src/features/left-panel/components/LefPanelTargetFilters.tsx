@@ -2,6 +2,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
+import AllDocs from '@/assets/icons/doc-all.svg';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { DocDefaultFilter } from '@/docs/doc-management';
@@ -21,22 +22,22 @@ export const LeftPanelTargetFilters = () => {
 
   const defaultQueries = [
     {
-      icon: 'apps',
+      icon: <Icon icon={<AllDocs width={24} height={24} />} />,
       label: t('All docs'),
       targetQuery: DocDefaultFilter.ALL_DOCS,
     },
     {
-      icon: 'lock',
+      icon: <Icon iconName="lock" />,
       label: t('My docs'),
       targetQuery: DocDefaultFilter.MY_DOCS,
     },
     {
-      icon: 'group',
+      icon: <Icon iconName="group" />,
       label: t('Shared with me'),
       targetQuery: DocDefaultFilter.SHARED_WITH_ME,
     },
     {
-      icon: 'delete',
+      icon: <Icon iconName="delete" />,
       label: t('Trashbin'),
       targetQuery: DocDefaultFilter.TRASHBIN,
     },
@@ -96,7 +97,7 @@ export const LeftPanelTargetFilters = () => {
               }
             `}
           >
-            <Icon iconName={query.icon} />
+            {query.icon}
             <Text $size="sm">{query.label}</Text>
           </StyledLink>
         );

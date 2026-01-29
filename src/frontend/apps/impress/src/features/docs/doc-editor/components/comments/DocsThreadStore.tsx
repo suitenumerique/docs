@@ -37,7 +37,8 @@ export class DocsThreadStore extends ThreadStore {
     if (docAuth.canSee) {
       this.awareness = awareness;
       this.awareness?.on('update', this.onAwarenessUpdate);
-      void this.refreshThreads();
+
+      this.refreshThreads();
     }
   }
 
@@ -98,9 +99,9 @@ export class DocsThreadStore extends ThreadStore {
 
       // If we know the threadId, schedule a targeted refresh. Otherwise, fall back to full refresh.
       if (ping.threadId) {
-        await this.refreshThread(ping.threadId);
+        void this.refreshThread(ping.threadId);
       } else {
-        await this.refreshThreads();
+        this.refreshThreads();
       }
     }
   };
@@ -115,6 +116,21 @@ export class DocsThreadStore extends ThreadStore {
       docId: this.docId,
       threadId,
     });
+  }
+
+  /**
+   * Scrolls to the bottom of a thread modal
+   * @param threadId
+   */
+  private scrollToBottomOfThread() {
+    // Use setTimeout to ensure the DOM has been updated with the new comment
+    setTimeout(() => {
+      const threadElement = document.querySelector('.bn-thread');
+      threadElement?.scrollBy({
+        top: threadElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    }, 200);
   }
 
   /**
@@ -185,7 +201,7 @@ export class DocsThreadStore extends ThreadStore {
     const { editor } = useEditorStore.getState();
 
     // Should not happen
-    if (!editor) {
+    if (!editor || !editor._tiptapEditor?.view?.dom) {
       console.warn('Editor to add thread not ready');
       return Promise.resolve();
     }
@@ -195,6 +211,17 @@ export class DocsThreadStore extends ThreadStore {
       .focus?.()
       .setMark?.('comment', { orphan: false, threadId })
       .run?.();
+
+    /**
+     * We have some issues with mobiles and the formatting toolbar reopening
+     * after adding a comment, so we restore the cursor position here.
+     * By restoring the cursor position at the head of the selection,
+     * it will automatically close the formatting toolbar.
+     */
+    const cursorPos = editor._tiptapEditor?.state.selection.head;
+    if (cursorPos !== undefined) {
+      editor._tiptapEditor?.commands.setTextSelection(cursorPos);
+    }
 
     return Promise.resolve();
   };
@@ -225,6 +252,7 @@ export class DocsThreadStore extends ThreadStore {
     this.upsertClientThreadData(threadData);
     this.notifySubscribers();
     this.ping(threadData.id);
+
     return threadData;
   };
 
@@ -265,7 +293,7 @@ export class DocsThreadStore extends ThreadStore {
         }),
       );
 
-      await this.refreshThreads();
+      this.refreshThreads();
       return;
     }
 
@@ -283,7 +311,17 @@ export class DocsThreadStore extends ThreadStore {
     this.notifySubscribers();
   }
 
-  public async refreshThreads(): Promise<void> {
+  public refreshThreads() {
+    this.initThreads().catch((e) => {
+      if (!(e instanceof APIError) || e.status !== 401) {
+        throw e;
+      }
+
+      return;
+    });
+  }
+
+  public async initThreads(): Promise<void> {
     const response = await fetchAPI(`documents/${this.docId}/threads/`, {
       method: 'GET',
     });
@@ -345,6 +383,10 @@ export class DocsThreadStore extends ThreadStore {
       await this.refreshThread(threadId);
     }
     this.ping(threadId);
+
+    // Auto-scroll to bottom of thread after adding comment
+    this.scrollToBottomOfThread();
+
     return serverCommentToClientComment(comment);
   };
 
@@ -405,10 +447,20 @@ export class DocsThreadStore extends ThreadStore {
     // Optimistically remove the comment locally if we have the thread
     const existing = this.threads.get(threadId);
     if (existing) {
+      const updatedComments = existing.comments.filter(
+        (c) => c.id !== commentId,
+      );
+
+      // If this was the last comment, delete the thread
+      if (updatedComments.length === 0) {
+        await this.deleteThread({ threadId });
+        return;
+      }
+
       const updated: ClientThreadData = {
         ...existing,
         updatedAt: new Date(),
-        comments: existing.comments.filter((c) => c.id !== commentId),
+        comments: updatedComments,
       };
       this.upsertClientThreadData(updated);
       this.notifySubscribers();
@@ -419,10 +471,6 @@ export class DocsThreadStore extends ThreadStore {
     this.ping(threadId);
   };
 
-  /**
-   * UI not implemented
-   * @param _options
-   */
   public deleteThread = async (_options: { threadId: string }) => {
     const response = await fetchAPI(
       `documents/${this.docId}/threads/${_options.threadId}/`,
@@ -459,7 +507,7 @@ export class DocsThreadStore extends ThreadStore {
       );
     }
 
-    await this.refreshThreads();
+    this.refreshThreads();
     this.ping(threadId);
   };
 

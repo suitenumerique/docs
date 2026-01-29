@@ -85,6 +85,25 @@ ingressCollaborationWS:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
     nginx.ingress.kubernetes.io/upstream-hash-by: $arg_room
 
+## @param ingressRedirects.enabled whether to enable the Ingress Redirects or not
+## @param ingressRedirects.className IngressClass to use for the Ingress Redirects
+## @param ingressRedirects.host Host for the Ingress Redirects
+ingressRedirects:
+  enabled: false
+  className: null
+  host: impress.example.com
+  ## @param ingressRedirects.tls.enabled Weather to enable TLS for the Ingress Redirects
+  ## @param ingressRedirects.tls.secretName Secret name for TLS config
+  ## @skip ingressRedirects.tls.additional
+  ## @extra ingressRedirects.tls.additional[].secretName Secret name for additional TLS config
+  ## @extra ingressRedirects.tls.additional[].hosts[] Hosts for additional TLS config
+  tls:
+    enabled: true
+    secretName: null
+    additional: []
+  ## @param ingressRedirects.rules Rules for the Ingress Redirects
+  rules: []
+
 ## @param ingressCollaborationApi.enabled whether to enable the Ingress or not
 ## @param ingressCollaborationApi.className IngressClass to use for the Ingress
 ## @param ingressCollaborationApi.host Host for the Ingress
@@ -208,7 +227,14 @@ backend:
     backoffLimit: 2
 
   ## @param backend.securityContext Configure backend Pod security context
-  securityContext: null
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param backend.envVars Configure backend container environment variables
   ## @extra backend.envVars.BY_VALUE Example environment variable by setting value directly
@@ -412,7 +438,14 @@ frontend:
   sidecars: []
 
   ## @param frontend.securityContext Configure frontend Pod security context
-  securityContext: null
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param frontend.envVars Configure frontend container environment variables
   ## @extra frontend.envVars.BY_VALUE Example environment variable by setting value directly
@@ -584,7 +617,14 @@ yProvider:
   sidecars: []
 
   ## @param yProvider.securityContext Configure yProvider Pod security context
-  securityContext: null
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
 
   ## @param yProvider.envVars Configure yProvider container environment variables
   ## @extra yProvider.envVars.BY_VALUE Example environment variable by setting value directly
@@ -661,3 +701,69 @@ yProvider:
 
   ## @param yProvider.serviceAccountName Optional service account name to use for yProvider pods
   serviceAccountName: null
+
+## @section docSpec
+docSpec:
+  ## @param docSpec.enabled Enable docSpec deployment
+  enabled: false
+
+  ## @param docSpec.image.repository Repository to use to pull docSpec container image
+  ## @param docSpec.image.tag docSpec container tag
+  ## @param docSpec.image.pullPolicy docSpec container image pull policy
+  image:
+    repository: ghcr.io/docspecio/api
+    pullPolicy: IfNotPresent
+    tag: "2.6.3"
+
+  ## @param docSpec.command Override the docSpec container command
+  command: []
+
+  ## @param docSpec.args Override the docSpec container args
+  args: []
+
+  ## @param docSpec.replicas Amount of docSpec replicas
+  replicas: 1
+
+  ## @param docSpec.securityContext Configure docSpec Pod security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - "ALL"
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  ## @param docSpec.envVars Configure docSpec container environment variables
+  envVars: {}
+
+  ## @param docSpec.service Configure docSpec service
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+
+  ## @param docSpec.probes Configure docSpec probes
+  probes:
+    liveness:
+      path: /health
+    readiness:
+      path: /health
+
+  ## @param docSpec.resources docSpec resources
+  resources: {}
+
+  ## @param docSpec.nodeSelector Node selector for the docSpec Pod
+  nodeSelector: {}
+
+  ## @param docSpec.tolerations Tolerations for the docSpec Pod
+  tolerations: []
+
+  ## @param docSpec.affinity Affinity for the docSpec Pod
+  affinity: {}
+
+  ## @param docSpec.extraVolumeMounts Additional volumes to mount on docSpec
+  extraVolumeMounts: []
+
+  ## @param docSpec.extraVolumes Additional volumes to mount on docSpec
+  extraVolumes: []

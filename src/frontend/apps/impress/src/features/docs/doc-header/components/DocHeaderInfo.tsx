@@ -3,15 +3,14 @@ import React from 'react';
 
 import { Text } from '@/components';
 import { useConfig } from '@/core';
-import { useDate } from '@/hook';
-import { useResponsiveStore } from '@/stores';
-
 import {
   Doc,
   Role,
   useIsCollaborativeEditable,
   useTrans,
-} from '../../doc-management';
+} from '@/docs/doc-management';
+import { useDate } from '@/hooks';
+import { useResponsiveStore } from '@/stores';
 
 interface DocHeaderInfoProps {
   doc: Doc;

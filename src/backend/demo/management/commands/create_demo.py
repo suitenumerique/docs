@@ -1,23 +1,27 @@
 # ruff: noqa: S311, S106
 """create_demo management command"""
 
+import base64
 import logging
 import math
 import random
 import time
 from collections import defaultdict
+from uuid import uuid4
 
 from django import db
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+import pycrdt
 from faker import Faker
 
 from core import models
 
 from demo import defaults
 
-fake = Faker()
+languages = [x for (x, y) in settings.LANGUAGES]
+fake = Faker(languages)
 
 logger = logging.getLogger("impress.commands.demo.create_demo")
 
@@ -25,6 +29,16 @@ logger = logging.getLogger("impress.commands.demo.create_demo")
 def random_true_with_probability(probability):
     """return True with the requested probability, False otherwise."""
     return random.random() < probability
+
+
+def get_ydoc_for_text(text):
+    """Return a ydoc from plain text for demo purposes."""
+    ydoc = pycrdt.Doc()
+    paragraph = pycrdt.XmlElement("p", {}, [pycrdt.XmlText(text)])
+    fragment = pycrdt.XmlFragment([paragraph])
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
+    return base64.b64encode(update).decode("utf-8")
 
 
 class BulkQueue:
@@ -48,7 +62,7 @@ class BulkQueue:
         self.queue[objects[0]._meta.model.__name__] = []  # noqa: SLF001
 
     def push(self, obj):
-        """Add a model instance to queue to that it gets created in bulk."""
+        """Add a model instance to queue so that it gets created in bulk."""
         objects = self.queue[obj._meta.model.__name__]  # noqa: SLF001
         objects.append(obj)
         if len(objects) > self.BATCH_SIZE:
@@ -127,7 +141,7 @@ def create_demo(stdout):
                     is_staff=False,
                     short_name=first_name,
                     full_name=f"{first_name:s} {random.choice(last_names):s}",
-                    language=random.choice(settings.LANGUAGES)[0],
+                    language=random.choice(languages),
                 )
             )
         queue.flush()
@@ -139,17 +153,19 @@ def create_demo(stdout):
             # pylint: disable=protected-access
             key = models.Document._int2str(i)  # noqa: SLF001
             padding = models.Document.alphabet[0] * (models.Document.steplen - len(key))
-            queue.push(
-                models.Document(
-                    depth=1,
-                    path=f"{padding}{key}",
-                    creator_id=random.choice(users_ids),
-                    title=fake.sentence(nb_words=4),
-                    link_reach=models.LinkReachChoices.AUTHENTICATED
-                    if random_true_with_probability(0.5)
-                    else random.choice(models.LinkReachChoices.values),
-                )
+            title = fake.sentence(nb_words=4)
+            document = models.Document(
+                id=uuid4(),
+                depth=1,
+                path=f"{padding}{key}",
+                creator_id=random.choice(users_ids),
+                title=title,
+                link_reach=models.LinkReachChoices.AUTHENTICATED
+                if random_true_with_probability(0.5)
+                else random.choice(models.LinkReachChoices.values),
             )
+            document.save_content(get_ydoc_for_text(f"Content for {title:s}"))
+            queue.push(document)
 
         queue.flush()
 
@@ -179,8 +195,7 @@ def create_demo(stdout):
                     is_superuser=False,
                     is_active=True,
                     is_staff=False,
-                    language=dev_user["language"]
-                    or random.choice(settings.LANGUAGES)[0],
+                    language=dev_user["language"] or random.choice(languages),
                 )
             )
 
@@ -199,29 +214,6 @@ def create_demo(stdout):
                     )
                 )
 
-        queue.flush()
-
-    with Timeit(stdout, "Creating Template"):
-        with open(
-            file="demo/data/template/code.txt", mode="r", encoding="utf-8"
-        ) as text_file:
-            code_data = text_file.read()
-
-        with open(
-            file="demo/data/template/css.txt", mode="r", encoding="utf-8"
-        ) as text_file:
-            css_data = text_file.read()
-
-        queue.push(
-            models.Template(
-                id="baca9e2a-59fb-42ef-b5c6-6f6b05637111",
-                title="Demo Template",
-                description="This is the demo template",
-                code=code_data,
-                css=css_data,
-                is_public=True,
-            )
-        )
         queue.flush()
 
 

@@ -1,5 +1,8 @@
 """Test on the CORS proxy API for documents."""
 
+import socket
+import unittest.mock
+
 import pytest
 import responses
 from requests.exceptions import RequestException
@@ -10,10 +13,16 @@ from core import factories
 pytestmark = pytest.mark.django_db
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
 @responses.activate
-def test_api_docs_cors_proxy_valid_url():
+def test_api_docs_cors_proxy_valid_url(mock_getaddrinfo):
     """Test the CORS proxy API for documents with a valid URL."""
     document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
 
     client = APIClient()
     url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
@@ -56,10 +65,16 @@ def test_api_docs_cors_proxy_without_url_query_string():
     assert response.json() == {"detail": "Missing 'url' query parameter"}
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
 @responses.activate
-def test_api_docs_cors_proxy_anonymous_document_not_public():
+def test_api_docs_cors_proxy_anonymous_document_not_public(mock_getaddrinfo):
     """Test the CORS proxy API for documents with an anonymous user and a non-public document."""
     document = factories.DocumentFactory(link_reach="authenticated")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
 
     client = APIClient()
     url_to_fetch = "https://external-url.com/assets/logo-gouv.png"
@@ -73,13 +88,21 @@ def test_api_docs_cors_proxy_anonymous_document_not_public():
     }
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
 @responses.activate
-def test_api_docs_cors_proxy_authenticated_user_accessing_protected_doc():
+def test_api_docs_cors_proxy_authenticated_user_accessing_protected_doc(
+    mock_getaddrinfo,
+):
     """
     Test the CORS proxy API for documents with an authenticated user accessing a protected
     document.
     """
     document = factories.DocumentFactory(link_reach="authenticated")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
 
     user = factories.UserFactory()
 
@@ -115,13 +138,21 @@ def test_api_docs_cors_proxy_authenticated_user_accessing_protected_doc():
     assert response.streaming_content
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
 @responses.activate
-def test_api_docs_cors_proxy_authenticated_not_accessing_restricted_doc():
+def test_api_docs_cors_proxy_authenticated_not_accessing_restricted_doc(
+    mock_getaddrinfo,
+):
     """
     Test the CORS proxy API for documents with an authenticated user not accessing a restricted
     document.
     """
     document = factories.DocumentFactory(link_reach="restricted")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
 
     user = factories.UserFactory()
 
@@ -138,10 +169,16 @@ def test_api_docs_cors_proxy_authenticated_not_accessing_restricted_doc():
     }
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
 @responses.activate
-def test_api_docs_cors_proxy_unsupported_media_type():
+def test_api_docs_cors_proxy_unsupported_media_type(mock_getaddrinfo):
     """Test the CORS proxy API for documents with an unsupported media type."""
     document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
 
     client = APIClient()
     url_to_fetch = "https://external-url.com/assets/index.html"
@@ -149,7 +186,55 @@ def test_api_docs_cors_proxy_unsupported_media_type():
     response = client.get(
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
-    assert response.status_code == 415
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid URL used."}
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_redirect(mock_getaddrinfo):
+    """Test the CORS proxy API for documents with a redirect."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/index.html"
+    responses.get(
+        url_to_fetch,
+        body=b"",
+        status=302,
+        headers={"Location": "https://external-url.com/other/assets/index.html"},
+    )
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid URL used."}
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_url_not_returning_200(mock_getaddrinfo):
+    """Test the CORS proxy API for documents with a URL that does not return 200."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://external-url.com/assets/index.html"
+    responses.get(url_to_fetch, body=b"", status=404)
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid URL used."}
 
 
 @pytest.mark.parametrize(
@@ -173,10 +258,16 @@ def test_api_docs_cors_proxy_invalid_url(url_to_fetch):
     assert response.json() == ["Enter a valid URL."]
 
 
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
 @responses.activate
-def test_api_docs_cors_proxy_request_failed():
+def test_api_docs_cors_proxy_request_failed(mock_getaddrinfo):
     """Test the CORS proxy API for documents with a request failed."""
     document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a public IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))
+    ]
 
     client = APIClient()
     url_to_fetch = "https://external-url.com/assets/index.html"
@@ -185,6 +276,164 @@ def test_api_docs_cors_proxy_request_failed():
         f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
     )
     assert response.status_code == 400
-    assert response.json() == {
-        "error": "Failed to fetch resource from https://external-url.com/assets/index.html"
-    }
+    assert response.json() == {"detail": "Invalid URL used."}
+
+
+@pytest.mark.parametrize(
+    "url_to_fetch",
+    [
+        "http://localhost/image.png",
+        "https://localhost/image.png",
+        "http://127.0.0.1/image.png",
+        "https://127.0.0.1/image.png",
+        "http://0.0.0.0/image.png",
+        "https://0.0.0.0/image.png",
+        "http://[::1]/image.png",
+        "https://[::1]/image.png",
+        "http://[0:0:0:0:0:0:0:1]/image.png",
+        "https://[0:0:0:0:0:0:0:1]/image.png",
+    ],
+)
+def test_api_docs_cors_proxy_blocks_localhost(url_to_fetch):
+    """Test that the CORS proxy API blocks localhost variations."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+
+
+@pytest.mark.parametrize(
+    "url_to_fetch",
+    [
+        "http://10.0.0.1/image.png",
+        "https://10.0.0.1/image.png",
+        "http://172.16.0.1/image.png",
+        "https://172.16.0.1/image.png",
+        "http://192.168.1.1/image.png",
+        "https://192.168.1.1/image.png",
+        "http://10.255.255.255/image.png",
+        "https://10.255.255.255/image.png",
+        "http://172.31.255.255/image.png",
+        "https://172.31.255.255/image.png",
+        "http://192.168.255.255/image.png",
+        "https://192.168.255.255/image.png",
+    ],
+)
+def test_api_docs_cors_proxy_blocks_private_ips(url_to_fetch):
+    """Test that the CORS proxy API blocks private IP addresses."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+
+
+@pytest.mark.parametrize(
+    "url_to_fetch",
+    [
+        "http://169.254.1.1/image.png",
+        "https://169.254.1.1/image.png",
+        "http://169.254.255.255/image.png",
+        "https://169.254.255.255/image.png",
+    ],
+)
+def test_api_docs_cors_proxy_blocks_link_local(url_to_fetch):
+    """Test that the CORS proxy API blocks link-local addresses."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    client = APIClient()
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_blocks_dns_rebinding_to_private_ip(mock_getaddrinfo):
+    """Test that the CORS proxy API blocks DNS rebinding attacks to private IPs."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return a private IP address
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("192.168.1.1", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://malicious-domain.com/image.png"
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+    mock_getaddrinfo.assert_called_once()
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+@responses.activate
+def test_api_docs_cors_proxy_blocks_dns_rebinding_to_localhost(mock_getaddrinfo):
+    """Test that the CORS proxy API blocks DNS rebinding attacks to localhost."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return localhost
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("127.0.0.1", 0))
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://malicious-domain.com/image.png"
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+    mock_getaddrinfo.assert_called_once()
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+def test_api_docs_cors_proxy_handles_dns_resolution_failure(mock_getaddrinfo):
+    """Test that the CORS proxy API handles DNS resolution failures gracefully."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to fail
+    mock_getaddrinfo.side_effect = socket.gaierror("Name or service not known")
+
+    client = APIClient()
+    url_to_fetch = "https://nonexistent-domain-12345.com/image.png"
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+    mock_getaddrinfo.assert_called_once()
+
+
+@unittest.mock.patch("core.api.viewsets.socket.getaddrinfo")
+def test_api_docs_cors_proxy_blocks_multiple_resolved_ips_if_any_private(
+    mock_getaddrinfo,
+):
+    """Test that the CORS proxy API blocks if any resolved IP is private."""
+    document = factories.DocumentFactory(link_reach="public")
+
+    # Mock DNS resolution to return both public and private IPs
+    mock_getaddrinfo.return_value = [
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0)),
+        (socket.AF_INET, socket.SOCK_STREAM, 0, "", ("192.168.1.1", 0)),
+    ]
+
+    client = APIClient()
+    url_to_fetch = "https://example.com/image.png"
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/cors-proxy/?url={url_to_fetch}"
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid URL used."
+    mock_getaddrinfo.assert_called_once()

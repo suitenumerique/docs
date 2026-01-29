@@ -2,6 +2,8 @@ import { Page, expect } from '@playwright/test';
 
 import {
   BrowserName,
+  closeHeaderMenu,
+  openHeaderMenu,
   randomName,
   updateDocTitle,
   verifyDocName,
@@ -15,10 +17,7 @@ export const createRootSubPage = async (
   isMobile = false,
 ) => {
   if (isMobile) {
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('menu')
-      .click();
+    await openHeaderMenu(page);
   }
 
   // Get response
@@ -29,10 +28,7 @@ export const createRootSubPage = async (
   const subPageJson = (await response.json()) as { id: string };
 
   if (isMobile) {
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('menu')
-      .click();
+    await openHeaderMenu(page);
   }
 
   // Get doc tree
@@ -44,13 +40,9 @@ export const createRootSubPage = async (
     .getByTestId(`doc-sub-page-item-${subPageJson.id}`)
     .first();
   await expect(subPageItem).toBeVisible();
-  await subPageItem.click();
 
   if (isMobile) {
-    await page
-      .getByRole('button', { name: 'Open the header menu' })
-      .getByText('close')
-      .click();
+    await closeHeaderMenu(page);
   }
 
   // Update sub page name

@@ -1,13 +1,13 @@
 import { DndContext, DragOverlay, Modifier } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
+import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
-import { useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
 import { AlertModal, Card, Text } from '@/components';
-import { Doc, KEY_LIST_DOC } from '@/docs/doc-management';
+import { Doc, KEY_LIST_DOC, useTrans } from '@/docs/doc-management';
 import {
   getDocAccesses,
   getDocInvitations,
@@ -60,6 +60,7 @@ export const DraggableDocGridContentList = ({
   const { mutate: handleDeleteInvitation } = useDeleteDocInvitation();
   const { mutate: handleDeleteAccess } = useDeleteDocAccess();
   const onDragData = useRef<DocDragEndData | null>(null);
+  const { untitledDocument } = useTrans();
 
   const handleMoveDoc = async () => {
     if (!onDragData.current) {
@@ -144,8 +145,8 @@ export const DraggableDocGridContentList = ({
       return t('You must be at least the administrator of the target document');
     }
 
-    return selectedDoc?.title || t('Unnamed document');
-  }, [canDrag, canDrop, selectedDoc, t]);
+    return selectedDoc?.title || untitledDocument;
+  }, [canDrag, canDrop, selectedDoc?.title, t, untitledDocument]);
 
   const cannotMoveDoc =
     !canDrag || (canDrop !== undefined && !canDrop) || isError;
@@ -193,17 +194,16 @@ export const DraggableDocGridContentList = ({
           {...modalConfirmation}
           title={t('Move document')}
           description={
-            <span
-              dangerouslySetInnerHTML={{
-                __html: t(
-                  'By moving this document to <strong>{{targetDocumentTitle}}</strong>, it will lose its current access rights and inherit the permissions of that document. <strong>This access change cannot be undone.</strong>',
-                  {
-                    targetDocumentTitle:
-                      onDragData.current?.target.title ?? t('Unnamed document'),
-                  },
-                ),
-              }}
-            />
+            <Text $display="inline">
+              <Trans
+                i18nKey="By moving this document to <strong>{{targetDocumentTitle}}</strong>, it will lose its current access rights and inherit the permissions of that document. <strong>This access change cannot be undone.</strong>"
+                values={{
+                  targetDocumentTitle:
+                    onDragData.current?.target.title ?? untitledDocument,
+                }}
+                components={{ strong: <strong /> }}
+              />
+            </Text>
           }
           confirmLabel={t('Move')}
           onConfirm={() => {

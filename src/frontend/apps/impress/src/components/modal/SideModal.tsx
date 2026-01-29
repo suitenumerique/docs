@@ -1,4 +1,4 @@
-import { Modal, ModalSize } from '@openfun/cunningham-react';
+import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import { ComponentPropsWithRef, PropsWithChildren } from 'react';
 import { createGlobalStyle } from 'styled-components';
 

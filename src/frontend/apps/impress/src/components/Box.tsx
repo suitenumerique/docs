@@ -1,9 +1,10 @@
-import { ComponentPropsWithRef, HTMLElementType } from 'react';
-import styled from 'styled-components';
-import { CSSProperties, RuleSet } from 'styled-components/dist/types';
+import { ComponentPropsWithRef, ElementType } from 'react';
+import styled, { CSSProperties, RuleSet } from 'styled-components';
 
 import {
   MarginPadding,
+  Spacings,
+  spacingValue,
   stylesMargin,
   stylesPadding,
 } from '@/utils/styleBuilder';
@@ -11,7 +12,7 @@ import {
 import { hideEffect, showEffect } from './Effect';
 
 export interface BoxProps {
-  as?: HTMLElementType;
+  as?: ElementType;
   $align?: CSSProperties['alignItems'];
   $background?: CSSProperties['background'];
   $border?: CSSProperties['border'];
@@ -22,7 +23,7 @@ export interface BoxProps {
   $display?: CSSProperties['display'];
   $effect?: 'show' | 'hide';
   $flex?: CSSProperties['flex'];
-  $gap?: CSSProperties['gap'];
+  $gap?: Spacings;
   $hasTransition?: boolean | 'slow';
   $height?: CSSProperties['height'];
   $justify?: CSSProperties['justifyContent'];
@@ -68,9 +69,9 @@ export const Box = styled('div')<BoxProps>`
   ${({ $cursor }) => $cursor && `cursor: ${$cursor};`}
   ${({ $direction }) => `flex-direction: ${$direction || 'column'};`}
   ${({ $display, as }) =>
-    `display: ${$display || (as?.match('span|input') ? 'inline-flex' : 'flex')};`}
+    `display: ${$display || (typeof as === 'string' && as.match('span|input') ? 'inline-flex' : 'flex')};`}
   ${({ $flex }) => $flex && `flex: ${$flex};`}
-  ${({ $gap }) => $gap && `gap: ${$gap};`}
+  ${({ $gap }) => $gap && `gap: ${spacingValue($gap)};`}
   ${({ $height }) => $height && `height: ${$height};`}
   ${({ $hasTransition }) =>
     $hasTransition && $hasTransition === 'slow'

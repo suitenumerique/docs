@@ -4,7 +4,6 @@ import {
   createDoc,
   expectLoginPage,
   keyCloakSignIn,
-  randomName,
   updateDocTitle,
   verifyDocName,
 } from './utils-common';
@@ -20,50 +19,6 @@ test.describe('Doc Tree', () => {
     await page.goto('/');
   });
 
-  test('create new sub pages', async ({ page, browserName }) => {
-    const [titleParent] = await createDoc(
-      page,
-      'doc-tree-content',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, titleParent);
-    const addButton = page.getByTestId('new-doc-button');
-    const docTree = page.getByTestId('doc-tree');
-
-    await expect(addButton).toBeVisible();
-
-    // Wait for and intercept the POST request to create a new page
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/documents/') &&
-        response.url().includes('/children/') &&
-        response.request().method() === 'POST',
-    );
-
-    await clickOnAddRootSubPage(page);
-    const response = await responsePromise;
-    expect(response.ok()).toBeTruthy();
-    const subPageJson = await response.json();
-
-    await expect(docTree).toBeVisible();
-    const subPageItem = docTree
-      .getByTestId(`doc-sub-page-item-${subPageJson.id}`)
-      .first();
-
-    await expect(subPageItem).toBeVisible();
-    await subPageItem.click();
-    await verifyDocName(page, '');
-    const input = page.getByRole('textbox', { name: 'Document title' });
-    await input.click();
-    const [randomDocName] = randomName('doc-tree-test', browserName, 1);
-    await input.fill(randomDocName);
-    await input.press('Enter');
-    await expect(subPageItem.getByText(randomDocName)).toBeVisible();
-    await page.reload();
-    await expect(subPageItem.getByText(randomDocName)).toBeVisible();
-  });
-
   test('check the reorder of sub pages', async ({ page, browserName }) => {
     await createDoc(page, 'doc-tree-content', browserName, 1);
     const addButton = page.getByTestId('new-doc-button');
@@ -72,47 +27,32 @@ test.describe('Doc Tree', () => {
     const docTree = page.getByTestId('doc-tree');
 
     // Create first sub page
-    const firstResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/documents/') &&
-        response.url().includes('/children/') &&
-        response.request().method() === 'POST',
-    );
-
     await clickOnAddRootSubPage(page);
-    const firstResponse = await firstResponsePromise;
-    expect(firstResponse.ok()).toBeTruthy();
-    await updateDocTitle(page, 'first');
-
-    const secondResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes('/documents/') &&
-        response.url().includes('/children/') &&
-        response.request().method() === 'POST',
-    );
+    await updateDocTitle(page, 'first move');
 
     // Create second sub page
     await clickOnAddRootSubPage(page);
-    const secondResponse = await secondResponsePromise;
-    expect(secondResponse.ok()).toBeTruthy();
-    await updateDocTitle(page, 'second');
+    await updateDocTitle(page, 'second move');
 
-    const secondSubPageJson = await secondResponse.json();
-    const firstSubPageJson = await firstResponse.json();
-
-    const firstSubPageItem = docTree
-      .getByTestId(`doc-sub-page-item-${firstSubPageJson.id}`)
-      .first();
-
-    const secondSubPageItem = docTree
-      .getByTestId(`doc-sub-page-item-${secondSubPageJson.id}`)
-      .first();
+    const firstSubPageItem = docTree.getByText('first move').first();
+    const secondSubPageItem = docTree.getByText('second move').first();
 
     // check that the sub pages are visible in the tree
     await expect(firstSubPageItem).toBeVisible();
     await expect(secondSubPageItem).toBeVisible();
 
-    // get the bounding boxes of the sub pages
+    // Check the position of the sub pages
+    const allSubPageItems = await docTree
+      .getByTestId(/^doc-sub-page-item/)
+      .all();
+
+    expect(allSubPageItems.length).toBe(2);
+
+    // Check that elements are in the correct order
+    await expect(allSubPageItems[0].getByText('first move')).toBeVisible();
+    await expect(allSubPageItems[1].getByText('second move')).toBeVisible();
+
+    // Will move the first sub page to the second position
     const firstSubPageBoundingBox = await firstSubPageItem.boundingBox();
     const secondSubPageBoundingBox = await secondSubPageItem.boundingBox();
 
@@ -120,10 +60,9 @@ test.describe('Doc Tree', () => {
     expect(secondSubPageBoundingBox).toBeDefined();
 
     if (!firstSubPageBoundingBox || !secondSubPageBoundingBox) {
-      throw new Error('Impossible de déterminer la position des éléments');
+      throw new Error('unable to determine the position of the elements');
     }
 
-    // move the first sub page to the second position
     await page.mouse.move(
       firstSubPageBoundingBox.x + firstSubPageBoundingBox.width / 2,
       firstSubPageBoundingBox.y + firstSubPageBoundingBox.height / 2,
@@ -150,24 +89,19 @@ test.describe('Doc Tree', () => {
     await expect(firstSubPageItem).toBeVisible();
     await expect(secondSubPageItem).toBeVisible();
 
-    // Check the position of the sub pages
-    const allSubPageItems = await docTree
+    // Check that elements are in the correct order
+    const allSubPageItemsAfterReload = await docTree
       .getByTestId(/^doc-sub-page-item/)
       .all();
 
-    expect(allSubPageItems.length).toBe(2);
+    expect(allSubPageItemsAfterReload.length).toBe(2);
 
-    // Check that the first element has the ID of the second sub page after the drag and drop
-    await expect(allSubPageItems[0]).toHaveAttribute(
-      'data-testid',
-      `doc-sub-page-item-${secondSubPageJson.id}`,
-    );
-
-    // Check that the second element has the ID of the first sub page after the drag and drop
-    await expect(allSubPageItems[1]).toHaveAttribute(
-      'data-testid',
-      `doc-sub-page-item-${firstSubPageJson.id}`,
-    );
+    await expect(
+      allSubPageItemsAfterReload[0].getByText('second move'),
+    ).toBeVisible();
+    await expect(
+      allSubPageItemsAfterReload[1].getByText('first move'),
+    ).toBeVisible();
   });
 
   test('it detaches a document', async ({ page, browserName }) => {
@@ -301,6 +235,40 @@ test.describe('Doc Tree', () => {
 
     // Now test keyboard navigation on sub-document
     await expect(docTree.getByText(docChild)).toBeVisible();
+  });
+
+  test('keyboard navigation with F2 focuses root actions button', async ({
+    page,
+    browserName,
+  }) => {
+    // Create a parent document to initialize the tree
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-keyboard-f2-root',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree).toBeVisible();
+
+    const rootItem = page.getByTestId('doc-tree-root-item');
+    await expect(rootItem).toBeVisible();
+
+    // Focus the root item
+    await rootItem.focus();
+    await expect(rootItem).toBeFocused();
+
+    // Press F2 → focus should move to the root actions \"More options\" button
+    await page.keyboard.press('F2');
+
+    const rootActions = rootItem.locator('.doc-tree-root-item-actions');
+    const rootMoreOptionsButton = rootActions.getByRole('button', {
+      name: /more options/i,
+    });
+
+    await expect(rootMoreOptionsButton).toBeFocused();
   });
 
   test('it updates the child icon from the tree', async ({

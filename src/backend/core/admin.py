@@ -9,14 +9,6 @@ from treebeard.admin import TreeAdmin
 from . import models
 
 
-class TemplateAccessInline(admin.TabularInline):
-    """Inline admin class for template accesses."""
-
-    autocomplete_fields = ["user"]
-    model = models.TemplateAccess
-    extra = 0
-
-
 @admin.register(models.User)
 class UserAdmin(auth_admin.UserAdmin):
     """Admin class for the User model"""
@@ -69,7 +61,6 @@ class UserAdmin(auth_admin.UserAdmin):
             },
         ),
     )
-    inlines = (TemplateAccessInline,)
     list_display = (
         "id",
         "sub",
@@ -104,15 +95,8 @@ class UserAdmin(auth_admin.UserAdmin):
     search_fields = ("id", "sub", "admin_email", "email", "full_name")
 
 
-@admin.register(models.Template)
-class TemplateAdmin(admin.ModelAdmin):
-    """Template admin interface declaration."""
-
-    inlines = (TemplateAccessInline,)
-
-
 class DocumentAccessInline(admin.TabularInline):
-    """Inline admin class for template accesses."""
+    """Inline admin class for document accesses."""
 
     autocomplete_fields = ["user"]
     model = models.DocumentAccess

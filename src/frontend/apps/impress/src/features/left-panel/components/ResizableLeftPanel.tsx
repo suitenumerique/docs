@@ -6,6 +6,8 @@ import {
   PanelResizeHandle,
 } from 'react-resizable-panels';
 
+import { useResponsiveStore } from '@/stores';
+
 // Convert a target pixel width to a percentage of the current viewport width.
 const pxToPercent = (px: number) => {
   return (px / window.innerWidth) * 100;
@@ -24,18 +26,27 @@ export const ResizableLeftPanel = ({
   minPanelSizePx = 300,
   maxPanelSizePx = 450,
 }: ResizableLeftPanelProps) => {
+  const { isDesktop } = useResponsiveStore();
   const ref = useRef<ImperativePanelHandle>(null);
   const savedWidthPxRef = useRef<number>(minPanelSizePx);
-
-  const [panelSizePercent, setPanelSizePercent] = useState(() =>
-    pxToPercent(minPanelSizePx),
-  );
 
   const minPanelSizePercent = pxToPercent(minPanelSizePx);
   const maxPanelSizePercent = Math.min(pxToPercent(maxPanelSizePx), 40);
 
+  const [panelSizePercent, setPanelSizePercent] = useState(() => {
+    const initialSize = pxToPercent(minPanelSizePx);
+    return Math.max(
+      minPanelSizePercent,
+      Math.min(initialSize, maxPanelSizePercent),
+    );
+  });
+
   // Keep pixel width constant on window resize
   useEffect(() => {
+    if (!isDesktop) {
+      return;
+    }
+
     const handleResize = () => {
       const newPercent = pxToPercent(savedWidthPxRef.current);
       setPanelSizePercent(newPercent);
@@ -48,7 +59,7 @@ export const ResizableLeftPanel = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isDesktop]);
 
   const handleResize = (sizePercent: number) => {
     const widthPx = (sizePercent / 100) * window.innerWidth;
@@ -57,29 +68,36 @@ export const ResizableLeftPanel = ({
   };
 
   return (
-    <>
-      <PanelGroup direction="horizontal">
-        <Panel
-          ref={ref}
-          order={0}
-          defaultSize={panelSizePercent}
-          minSize={minPanelSizePercent}
-          maxSize={maxPanelSizePercent}
-          onResize={handleResize}
-        >
-          {leftPanel}
-        </Panel>
-        <PanelResizeHandle
-          style={{
-            borderRightWidth: '1px',
-            borderRightStyle: 'solid',
-            borderRightColor: 'var(--c--contextuals--border--surface--primary)',
-            width: '1px',
-            cursor: 'col-resize',
-          }}
-        />
-        <Panel order={1}>{children}</Panel>
-      </PanelGroup>
-    </>
+    <PanelGroup direction="horizontal">
+      <Panel
+        ref={ref}
+        order={0}
+        defaultSize={
+          isDesktop
+            ? Math.max(
+                minPanelSizePercent,
+                Math.min(panelSizePercent, maxPanelSizePercent),
+              )
+            : 0
+        }
+        minSize={isDesktop ? minPanelSizePercent : 0}
+        maxSize={isDesktop ? maxPanelSizePercent : 0}
+        onResize={handleResize}
+      >
+        {leftPanel}
+      </Panel>
+      <PanelResizeHandle
+        style={{
+          borderRightWidth: '1px',
+          borderRightStyle: 'solid',
+          borderRightColor: 'var(--c--contextuals--border--surface--primary)',
+          width: '1px',
+          cursor: 'col-resize',
+        }}
+        disabled={!isDesktop}
+      />
+
+      <Panel order={1}>{children}</Panel>
+    </PanelGroup>
   );
 };

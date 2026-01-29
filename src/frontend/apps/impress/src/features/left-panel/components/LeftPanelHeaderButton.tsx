@@ -1,4 +1,4 @@
-import { Button } from '@openfun/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { useLeftPanelStore } from '../stores';
 export const LeftPanelHeaderButton = () => {
   const router = useRouter();
   const { t } = useTranslation();
-  const { togglePanel } = useLeftPanelStore();
+  const { closePanel } = useLeftPanelStore();
   const { setIsSkeletonVisible } = useSkeletonStore();
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -25,7 +25,7 @@ export const LeftPanelHeaderButton = () => {
         .then(() => {
           // The skeleton will be disabled by the [id] page once the data is loaded
           setIsNavigating(false);
-          togglePanel();
+          closePanel();
         })
         .catch(() => {
           // In case of navigation error, disable the skeleton

@@ -28,21 +28,24 @@ backend:
     DJANGO_EMAIL_HOST: "mailcatcher"
     DJANGO_EMAIL_LOGO_IMG: https://{{ .Values.feature }}-docs.{{ .Values.domain }}/assets/logo-suite-numerique.png
     DJANGO_EMAIL_PORT: 1025
+    DJANGO_EMAIL_URL_APP: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     DJANGO_EMAIL_USE_SSL: False
+    FRONTEND_SILENT_LOGIN_ENABLED: True
     LOGGING_LEVEL_HANDLERS_CONSOLE: ERROR
     LOGGING_LEVEL_LOGGERS_ROOT: INFO
     LOGGING_LEVEL_LOGGERS_APP: INFO
-    OIDC_USERINFO_SHORTNAME_FIELD: "given_name"
-    OIDC_USERINFO_FULLNAME_FIELDS: "given_name,usual_name"
+    OIDC_USERINFO_SHORTNAME_FIELD: "first_name"
+    OIDC_USERINFO_FULLNAME_FIELDS: "name"
     OIDC_OP_JWKS_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/certs
     OIDC_OP_AUTHORIZATION_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/auth
     OIDC_OP_TOKEN_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/token
     OIDC_OP_USER_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/userinfo
     OIDC_OP_LOGOUT_ENDPOINT: https://{{ .Values.feature }}-docs-keycloak.{{ .Values.domain }}/realms/docs/protocol/openid-connect/logout
+    OIDC_REDIRECT_ALLOWED_HOSTS: "{{ .Values.feature }}-docs.{{ .Values.domain }}"
     OIDC_RP_CLIENT_ID: docs
     OIDC_RP_CLIENT_SECRET: ThisIsAnExampleKeyForDevPurposeOnly
     OIDC_RP_SIGN_ALGO: RS256
-    OIDC_RP_SCOPES: "openid email"
+    OIDC_RP_SCOPES: "openid email profile"
     LOGIN_REDIRECT_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     LOGIN_REDIRECT_URL_FAILURE: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
     LOGOUT_REDIRECT_URL: https://{{ .Values.feature }}-docs.{{ .Values.domain }}
@@ -67,7 +70,8 @@ backend:
     AWS_S3_SECRET_ACCESS_KEY: password
     AWS_STORAGE_BUCKET_NAME: docs-media-storage
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
-    Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
+    DOCSPEC_API_URL: http://impress-docs-docspec:4000/conversion
+    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   migrate:
@@ -141,11 +145,26 @@ yProvider:
     COLLABORATION_SERVER_SECRET: my-secret
     Y_PROVIDER_API_KEY: my-secret
 
+docSpec:
+  enabled: true
+  replicas: 1
+
+  image:
+    repository: ghcr.io/docspecio/api
+    pullPolicy: IfNotPresent
+    tag: "2.6.3"
+
+  probes:
+    liveness:
+      path: /health
+    readiness:
+      path: /health
+
 ingress:
   enabled: true
   host: {{ .Values.feature }}-docs.{{ .Values.domain }}
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
     cert-manager.io/cluster-issuer: letsencrypt
 
 ingressCollaborationWS:

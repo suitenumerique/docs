@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
+import { useCunninghamTheme } from '@/cunningham';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
@@ -52,15 +53,57 @@ export function MainLayoutContent({
   enableResizablePanel = false,
 }: PropsWithChildren<MainLayoutContentProps>) {
   const { isDesktop } = useResponsiveStore();
+
+  if (enableResizablePanel) {
+    return (
+      <ResizableLeftPanel leftPanel={<LeftPanel />}>
+        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+      </ResizableLeftPanel>
+    );
+  }
+
+  if (!isDesktop) {
+    return (
+      <>
+        <LeftPanel />
+        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Box
+        $css={css`
+          width: 300px;
+          border-right: 1px solid
+            var(--c--contextuals--border--surface--primary);
+        `}
+      >
+        <LeftPanel />
+      </Box>
+      <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+    </>
+  );
+}
+
+const MainContent = ({
+  children,
+  backgroundColor,
+}: PropsWithChildren<MainLayoutContentProps>) => {
+  const { isDesktop } = useResponsiveStore();
+
   const { t } = useTranslation();
+  const { colorsTokens } = useCunninghamTheme();
   const currentBackgroundColor = !isDesktop ? 'white' : backgroundColor;
 
-  const mainContent = (
+  return (
     <Box
       as="main"
       role="main"
       aria-label={t('Main content')}
       id={MAIN_LAYOUT_ID}
+      tabIndex={-1}
       $align="center"
       $flex={1}
       $width="100%"
@@ -77,6 +120,10 @@ export function MainLayoutContent({
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
+        &:focus-visible {
+          outline: 3px solid ${colorsTokens['brand-400']};
+          outline-offset: -3px;
+        }
       `}
     >
       <Skeleton>
@@ -85,36 +132,4 @@ export function MainLayoutContent({
       {children}
     </Box>
   );
-
-  if (!isDesktop) {
-    return (
-      <>
-        <LeftPanel />
-        {mainContent}
-      </>
-    );
-  }
-
-  if (enableResizablePanel) {
-    return (
-      <ResizableLeftPanel leftPanel={<LeftPanel />}>
-        {mainContent}
-      </ResizableLeftPanel>
-    );
-  }
-
-  return (
-    <>
-      <Box
-        $css={css`
-          width: 300px;
-          border-right: 1px solid
-            var(--c--contextuals--border--surface--primary);
-        `}
-      >
-        <LeftPanel />
-      </Box>
-      {mainContent}
-    </>
-  );
-}
+};

@@ -1,9 +1,12 @@
 """API endpoints"""
+
 # pylint: disable=too-many-lines
 
 import base64
+import ipaddress
 import json
 import logging
+import socket
 import uuid
 from collections import defaultdict
 from urllib.parse import unquote, urlencode, urlparse
@@ -18,10 +21,11 @@ from django.core.validators import URLValidator
 from django.db import connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
-from django.db.models.functions import Left, Length
+from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
@@ -32,28 +36,40 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
+from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
 
 from core import authentication, choices, enums, models
+from core.api.filters import remove_accents
+from core.services import mime_types
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
+from core.services.converter_services import (
+    ConversionError,
+    Converter,
+)
 from core.services.converter_services import (
     ServiceUnavailableError as YProviderServiceUnavailableError,
 )
 from core.services.converter_services import (
     ValidationError as YProviderValidationError,
 )
-from core.services.converter_services import (
-    YdocConverter,
+from core.services.search_indexers import (
+    get_document_indexer,
+    get_visited_document_ids_of,
 )
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
 from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
-from .throttling import UserListThrottleBurst, UserListThrottleSustained
+from .throttling import (
+    DocumentThrottle,
+    UserListThrottleBurst,
+    UserListThrottleSustained,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -188,13 +204,15 @@ class UserViewSet(
             queryset = queryset.exclude(documentaccess__document_id=document_id)
 
         filter_data = filterset.form.cleaned_data
-        query = filter_data["q"]
+        query = remove_accents(filter_data["q"])
 
         # For emails, match emails by Levenstein distance to prevent typing errors
         if "@" in query:
             return (
                 queryset.annotate(
-                    distance=RawSQL("levenshtein(email::text, %s::text)", (query,))
+                    distance=RawSQL(
+                        "levenshtein(unaccent(email::text), %s::text)", (query,)
+                    )
                 )
                 .filter(distance__lte=3)
                 .order_by("distance", "email")[: settings.API_USERS_LIST_LIMIT]
@@ -203,11 +221,15 @@ class UserViewSet(
         # Use trigram similarity for non-email-like queries
         # For performance reasons we filter first by similarity, which relies on an
         # index, then only calculate precise similarity scores for sorting purposes
+
         return (
-            queryset.filter(email__trigram_word_similar=query)
-            .annotate(similarity=TrigramSimilarity("email", query))
+            queryset.annotate(
+                sim_email=TrigramSimilarity("email", query),
+                sim_name=TrigramSimilarity("full_name", query),
+            )
+            .annotate(similarity=Greatest("sim_email", "sim_name"))
             .filter(similarity__gt=0.2)
-            .order_by("-similarity", "email")[: settings.API_USERS_LIST_LIMIT]
+            .order_by("-similarity")[: settings.API_USERS_LIST_LIMIT]
         )
 
     @drf.decorators.action(
@@ -365,15 +387,18 @@ class DocumentViewSet(
     permission_classes = [
         permissions.DocumentPermission,
     ]
+    throttle_classes = [DocumentThrottle]
     throttle_scope = "document"
     queryset = models.Document.objects.select_related("creator").all()
     serializer_class = serializers.DocumentSerializer
     ai_translate_serializer_class = serializers.AITranslateSerializer
+    all_serializer_class = serializers.ListDocumentSerializer
     children_serializer_class = serializers.ListDocumentSerializer
     descendants_serializer_class = serializers.ListDocumentSerializer
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
+    search_serializer_class = serializers.ListDocumentSerializer
 
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
@@ -504,6 +529,28 @@ class DocumentViewSet(
                 "IN SHARE ROW EXCLUSIVE MODE;"
             )
 
+        # Remove file from validated_data as it's not a model field
+        # Process it if present
+        uploaded_file = serializer.validated_data.pop("file", None)
+
+        # If a file is uploaded, convert it to Yjs format and set as content
+        if uploaded_file:
+            try:
+                file_content = uploaded_file.read()
+
+                converter = Converter()
+                converted_content = converter.convert(
+                    file_content,
+                    content_type=uploaded_file.content_type,
+                    accept=mime_types.YJS,
+                )
+                serializer.validated_data["content"] = converted_content
+                serializer.validated_data["title"] = uploaded_file.name
+            except ConversionError as err:
+                raise drf.exceptions.ValidationError(
+                    {"file": ["Could not convert file content"]}
+                ) from err
+
         obj = models.Document.add_root(
             creator=self.request.user,
             **serializer.validated_data,
@@ -605,12 +652,29 @@ class DocumentViewSet(
         """Get list of favorite documents for the current user."""
         user = request.user
 
+        queryset = self.get_queryset()
+
+        # Among the results, we may have documents that are ancestors/descendants
+        # of each other. In this case we want to keep only the highest ancestors.
+        root_paths = utils.filter_root_paths(
+            queryset.order_by("path").values_list("path", flat=True),
+            skip_sorting=True,
+        )
+
+        path_list = db.Q()
+        for path in root_paths:
+            path_list |= db.Q(path__startswith=path)
+
         favorite_documents_ids = models.DocumentFavorite.objects.filter(
             user=user
         ).values_list("document_id", flat=True)
 
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.queryset.filter(path_list)
         queryset = queryset.filter(id__in=favorite_documents_ids)
+        queryset = queryset.annotate_user_roles(user)
+        queryset = queryset.annotate(
+            is_favorite=db.Value(True, output_field=db.BooleanField())
+        )
         return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(
@@ -839,6 +903,60 @@ class DocumentViewSet(
         )
 
     @drf.decorators.action(
+        detail=False,
+        methods=["get"],
+    )
+    def all(self, request, *args, **kwargs):
+        """
+        Returns all documents (including descendants) that the user has access to.
+
+        Unlike the list endpoint which only returns top-level documents, this endpoint
+        returns all documents including children, grandchildren, etc.
+        """
+        user = self.request.user
+
+        accessible_documents = self.get_queryset()
+        accessible_paths = list(accessible_documents.values_list("path", flat=True))
+
+        if not accessible_paths:
+            return self.get_response_for_queryset(self.queryset.none())
+
+        # Build query to include all descendants using path prefix matching
+        descendants_clause = db.Q()
+        for path in accessible_paths:
+            descendants_clause |= db.Q(path__startswith=path)
+
+        queryset = self.queryset.filter(
+            descendants_clause, ancestors_deleted_at__isnull=True
+        )
+
+        # Apply existing filters
+        filterset = ListDocumentFilter(
+            self.request.GET, queryset=queryset, request=self.request
+        )
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+        filter_data = filterset.form.cleaned_data
+
+        # Filter as early as possible on fields that are available on the model
+        for field in ["is_creator_me", "title"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+
+        queryset = queryset.annotate_user_roles(user)
+
+        # Annotate favorite status and filter if applicable as late as possible
+        queryset = queryset.annotate_is_favorite(user)
+        for field in ["is_favorite", "is_masked"]:
+            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+
+        # Apply ordering only now that everything is filtered and annotated
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
+        )
+
+        return self.get_response_for_queryset(queryset)
+
+    @drf.decorators.action(
         detail=True,
         methods=["get"],
         ordering=["path"],
@@ -1064,6 +1182,83 @@ class DocumentViewSet(
         return drf_response.Response(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
+
+    def _search_simple(self, request, text):
+        """
+        Returns a queryset filtered by the content of the document title
+        """
+        # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
+        queryset = self.get_queryset()
+        filterset = DocumentFilter({"title": text}, queryset=queryset)
+
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.filter_queryset(queryset)
+
+        return self.get_response_for_queryset(
+            queryset.order_by("-updated_at"),
+            context={
+                "request": request,
+            },
+        )
+
+    def _search_fulltext(self, indexer, request, params):
+        """
+        Returns a queryset from the results the fulltext search of Find
+        """
+        access_token = request.session.get("oidc_access_token")
+        user = request.user
+        text = params.validated_data["q"]
+        queryset = models.Document.objects.all()
+
+        # Retrieve the documents ids from Find.
+        results = indexer.search(
+            text=text,
+            token=access_token,
+            visited=get_visited_document_ids_of(queryset, user),
+        )
+
+        docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
+        ordered_docs = [docs_by_uuid[id] for id in results]
+
+        page = self.paginate_queryset(ordered_docs)
+
+        serializer = self.get_serializer(
+            page if page else ordered_docs,
+            many=True,
+            context={
+                "request": request,
+            },
+        )
+
+        return self.get_paginated_response(serializer.data)
+
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list.
+
+        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
+        Depending of the configuration it can be:
+         - A fulltext search through the opensearch indexation app "find" if the backend is
+           enabled (see SEARCH_INDEXER_CLASS)
+         - A filtering by the model field 'title'.
+
+        The ordering is always by the most recent first.
+        """
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
+
+        indexer = get_document_indexer()
+
+        if indexer:
+            return self._search_fulltext(indexer, request, params=params)
+
+        # The indexer is not configured, we fallback on a simple icontains filter by the
+        # model field 'title'.
+        return self._search_simple(request, text=params.validated_data["q"])
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
@@ -1503,6 +1698,101 @@ class DocumentViewSet(
 
         return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 
+    def _reject_invalid_ips(self, ips):
+        """
+        Check if an IP address is safe from SSRF attacks.
+
+        Raises:
+            drf.exceptions.ValidationError: If the IP is unsafe
+        """
+        for ip in ips:
+            # Block loopback addresses (check before private,
+            # as 127.0.0.1 might be considered private)
+            if ip.is_loopback:
+                raise drf.exceptions.ValidationError(
+                    "Access to loopback addresses is not allowed"
+                )
+
+            # Block link-local addresses (169.254.0.0/16) - check before private
+            if ip.is_link_local:
+                raise drf.exceptions.ValidationError(
+                    "Access to link-local addresses is not allowed"
+                )
+
+            # Block private IP ranges
+            if ip.is_private:
+                raise drf.exceptions.ValidationError(
+                    "Access to private IP addresses is not allowed"
+                )
+
+            # Block multicast addresses
+            if ip.is_multicast:
+                raise drf.exceptions.ValidationError(
+                    "Access to multicast addresses is not allowed"
+                )
+
+            # Block reserved addresses (including 0.0.0.0)
+            if ip.is_reserved:
+                raise drf.exceptions.ValidationError(
+                    "Access to reserved IP addresses is not allowed"
+                )
+
+    def _validate_url_against_ssrf(self, url):
+        """
+        Validate that a URL is safe from SSRF (Server-Side Request Forgery) attacks.
+
+        Blocks:
+        - localhost and its variations
+        - Private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+        - Link-local addresses (169.254.0.0/16)
+        - Loopback addresses
+
+        Raises:
+            drf.exceptions.ValidationError: If the URL is unsafe
+        """
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+
+        if not hostname:
+            raise drf.exceptions.ValidationError("Invalid hostname")
+
+        # Resolve hostname to IP address(es)
+        # Check all resolved IPs to prevent DNS rebinding attacks
+        try:
+            # Try to parse as IP address first (if hostname is already an IP)
+            try:
+                ip = ipaddress.ip_address(hostname)
+                resolved_ips = [ip]
+            except ValueError:
+                # Resolve hostname to IP addresses (supports both IPv4 and IPv6)
+                resolved_ips = []
+                try:
+                    # Get all address info (IPv4 and IPv6)
+                    addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC)
+                    for family, _, _, _, sockaddr in addr_info:
+                        if family == socket.AF_INET:
+                            # IPv4
+                            ip = ipaddress.ip_address(sockaddr[0])
+                            resolved_ips.append(ip)
+                        elif family == socket.AF_INET6:
+                            # IPv6
+                            ip = ipaddress.ip_address(sockaddr[0])
+                            resolved_ips.append(ip)
+                except (socket.gaierror, OSError) as e:
+                    raise drf.exceptions.ValidationError(
+                        f"Failed to resolve hostname: {str(e)}"
+                    ) from e
+
+                if not resolved_ips:
+                    raise drf.exceptions.ValidationError(
+                        "No IP addresses found for hostname"
+                    ) from None
+        except ValueError as e:
+            raise drf.exceptions.ValidationError(f"Invalid IP address: {str(e)}") from e
+
+        # Check all resolved IPs to ensure none are private/internal
+        self._reject_invalid_ips(resolved_ips)
+
     @drf.decorators.action(
         detail=True,
         methods=["get"],
@@ -1536,6 +1826,16 @@ class DocumentViewSet(
                 status=drf.status.HTTP_400_BAD_REQUEST,
             )
 
+        # Validate URL against SSRF attacks
+        try:
+            self._validate_url_against_ssrf(url)
+        except drf.exceptions.ValidationError as e:
+            logger.error("Potential SSRF attack detected: %s", e)
+            return drf.response.Response(
+                {"detail": "Invalid URL used."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             response = requests.get(
                 url,
@@ -1544,13 +1844,15 @@ class DocumentViewSet(
                     "User-Agent": request.headers.get("User-Agent", ""),
                     "Accept": request.headers.get("Accept", ""),
                 },
+                allow_redirects=False,
                 timeout=10,
             )
+            response.raise_for_status()
             content_type = response.headers.get("Content-Type", "")
 
             if not content_type.startswith("image/"):
                 return drf.response.Response(
-                    status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                    {"detail": "Invalid URL used."}, status=status.HTTP_400_BAD_REQUEST
                 )
 
             # Use StreamingHttpResponse with the response's iter_content to properly stream the data
@@ -1568,7 +1870,7 @@ class DocumentViewSet(
         except requests.RequestException as e:
             logger.exception(e)
             return drf.response.Response(
-                {"error": f"Failed to fetch resource from {url}"},
+                {"detail": "Invalid URL used."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1603,14 +1905,14 @@ class DocumentViewSet(
         if base64_content is not None:
             # Convert using the y-provider service
             try:
-                yprovider = YdocConverter()
+                yprovider = Converter()
                 result = yprovider.convert(
                     base64.b64decode(base64_content),
-                    "application/vnd.yjs.doc",
+                    mime_types.YJS,
                     {
-                        "markdown": "text/markdown",
-                        "html": "text/html",
-                        "json": "application/json",
+                        "markdown": mime_types.MARKDOWN,
+                        "html": mime_types.HTML,
+                        "json": mime_types.JSON,
                     }[content_format],
                 )
                 content = result
@@ -1831,64 +2133,6 @@ class DocumentAccessViewSet(
         )
 
 
-class TemplateViewSet(
-    drf.mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Template ViewSet"""
-
-    filter_backends = [drf.filters.OrderingFilter]
-    permission_classes = [
-        permissions.IsAuthenticatedOrSafe,
-        permissions.ResourceWithAccessPermission,
-    ]
-    throttle_scope = "template"
-    ordering = ["-created_at"]
-    ordering_fields = ["created_at", "updated_at", "title"]
-    serializer_class = serializers.TemplateSerializer
-    queryset = models.Template.objects.all()
-
-    def get_queryset(self):
-        """Custom queryset to get user related templates."""
-        queryset = super().get_queryset()
-        user = self.request.user
-
-        if not user.is_authenticated:
-            return queryset
-
-        user_roles_query = (
-            models.TemplateAccess.objects.filter(
-                db.Q(user=user) | db.Q(team__in=user.teams),
-                template_id=db.OuterRef("pk"),
-            )
-            .values("template")
-            .annotate(roles_array=ArrayAgg("role"))
-            .values("roles_array")
-        )
-        return queryset.annotate(user_roles=db.Subquery(user_roles_query)).distinct()
-
-    def list(self, request, *args, **kwargs):
-        """Restrict templates returned by the list endpoint"""
-        queryset = self.filter_queryset(self.get_queryset())
-        user = self.request.user
-        if user.is_authenticated:
-            queryset = queryset.filter(
-                db.Q(accesses__user=user)
-                | db.Q(accesses__team__in=user.teams)
-                | db.Q(is_public=True)
-            )
-        else:
-            queryset = queryset.filter(is_public=True)
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return drf.response.Response(serializer.data)
-
-
 class InvitationViewset(
     drf.mixins.CreateModelMixin,
     drf.mixins.ListModelMixin,
@@ -2096,10 +2340,14 @@ class ConfigView(drf.views.APIView):
             "AI_FEATURE_ENABLED",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
+            "CONVERSION_FILE_EXTENSIONS_ALLOWED",
+            "CONVERSION_FILE_MAX_SIZE",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
+            "FRONTEND_JS_URL",
+            "FRONTEND_SILENT_LOGIN_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",

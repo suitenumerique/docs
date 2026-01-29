@@ -1,5 +1,5 @@
+import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
-import { Button, useModal } from '@openfun/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -19,6 +19,7 @@ import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  KEY_LIST_FAVORITE_DOC,
   ModalRemoveDoc,
   getEmojiAndTitle,
   useCopyDocLink,
@@ -33,7 +34,6 @@ import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
 } from '@/docs/doc-versioning';
-import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
@@ -67,12 +67,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       void router.push(`/docs/${data.id}`);
     },
   });
-  const { isFeatureFlagActivated } = useAnalytics();
   const removeFavoriteDoc = useDeleteFavoriteDoc({
-    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
   const makeFavoriteDoc = useCreateFavoriteDoc({
-    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+    listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
 
   useEffect(() => {
@@ -155,14 +154,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       callback: () => {
         void copyCurrentEditorToClipboard('markdown');
       },
-    },
-    {
-      label: t('Copy as {{format}}', { format: 'HTML' }),
-      icon: 'content_copy',
-      callback: () => {
-        void copyCurrentEditorToClipboard('html');
-      },
-      show: isFeatureFlagActivated('CopyAsHTML'),
       showSeparator: true,
     },
     {

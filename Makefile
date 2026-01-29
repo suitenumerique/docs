@@ -213,6 +213,7 @@ logs: ## display app-dev logs (follow mode)
 .PHONY: logs
 
 run-backend: ## Start only the backend application and all needed services
+	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development
 	@$(COMPOSE) up --force-recreate -d nginx
@@ -246,6 +247,10 @@ demo: ## flush db then create a demo for load testing purpose
 	@$(MAKE) resetdb
 	@$(MANAGE) create_demo
 .PHONY: demo
+
+index: ## index all documents to remote search
+	@$(MANAGE) index
+.PHONY: index
 
 # Nota bene: Black should come after isort just in case they don't agree...
 lint: ## lint back-end python sources

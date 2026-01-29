@@ -1,2 +1,0 @@
-<img width="200" src="http://localhost:3000/assets/logo-gouv.png" />
-<br/>

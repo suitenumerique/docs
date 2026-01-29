@@ -1,4 +1,4 @@
-import { Tooltip } from '@openfun/cunningham-react';
+import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';

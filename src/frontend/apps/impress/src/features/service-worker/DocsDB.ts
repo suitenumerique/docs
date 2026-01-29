@@ -33,12 +33,21 @@ interface IDocsDB extends DBSchema {
 type TableName = 'doc-list' | 'doc-item' | 'doc-mutation';
 
 /**
- * IndexDB version must be a integer
- * @returns
+ * IndexDB prefers incremental versioning when upgrading the database,
+ * otherwise it may throw an error, and we need to destroy the database
+ * and recreate it.
+ * To calculate the version number, we use the following formula,
+ * assuring incremental versioning:
+ *   version = major * 1000000 + minor * 1000 + patch
+ * ex:
+ *  - version 1.2.3 => 1002003
+ *  - version 0.10.15 => 10015
+ *  - version 2.0.0 => 2000000
+ * @returns number
  */
-const getCurrentVersion = () => {
-  const [major, minor, patch] = pkg.version.split('.');
-  return parseFloat(`${major}${minor}${patch}`);
+export const getCurrentVersion = () => {
+  const [major, minor, patch] = pkg.version.split('.').map(Number);
+  return major * 1000000 + minor * 1000 + patch;
 };
 
 /**

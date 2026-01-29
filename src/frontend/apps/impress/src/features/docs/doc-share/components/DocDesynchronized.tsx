@@ -1,4 +1,8 @@
-import { Button } from '@openfun/cunningham-react';
+import {
+  Button,
+  VariantType,
+  useToastProvider,
+} from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Card, Text } from '@/components';
@@ -17,9 +21,15 @@ interface DocDesynchronizedProps {
 export const DocDesynchronized = ({ doc }: DocDesynchronizedProps) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
+  const { toast } = useToastProvider();
 
   const { mutate: updateDocLink } = useUpdateDocLink({
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC],
+    onSuccess: () => {
+      toast(t('The document visibility restored.'), VariantType.SUCCESS, {
+        duration: 2000,
+      });
+    },
   });
 
   return (

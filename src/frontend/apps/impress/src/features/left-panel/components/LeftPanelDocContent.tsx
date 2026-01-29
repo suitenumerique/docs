@@ -1,15 +1,13 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 
 import { Box } from '@/components';
-import { Doc, useDocStore } from '@/docs/doc-management';
+import { Doc } from '@/docs/doc-management';
 import { DocTree } from '@/docs/doc-tree/';
 
-export const LeftPanelDocContent = () => {
-  const { currentDoc } = useDocStore();
-
+export const LeftPanelDocContent = ({ doc }: { doc: Doc }) => {
   const tree = useTreeContext<Doc>();
 
-  if (!currentDoc || !tree) {
+  if (!tree) {
     return null;
   }
 
@@ -20,7 +18,7 @@ export const LeftPanelDocContent = () => {
       $css="width: 100%; overflow-y: auto; overflow-x: hidden;"
       className="--docs--left-panel-doc-content"
     >
-      <DocTree currentDoc={currentDoc} />
+      <DocTree currentDoc={doc} />
     </Box>
   );
 };

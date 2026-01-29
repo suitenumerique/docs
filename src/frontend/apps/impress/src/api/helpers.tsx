@@ -20,7 +20,7 @@ export type DefinedInitialDataInfiniteOptionsAPI<
   QueryKey,
   TPageParam
 >;
-
+export type UseInfiniteQueryResultAPI<Q> = InfiniteData<Q>;
 export type InfiniteQueryConfig<Q> = Omit<
   DefinedInitialDataInfiniteOptionsAPI<Q>,
   'queryKey' | 'initialData' | 'getNextPageParam' | 'initialPageParam'

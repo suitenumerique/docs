@@ -1,5 +1,5 @@
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
-import { Button } from '@openfun/cunningham-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';

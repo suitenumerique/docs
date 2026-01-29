@@ -6,6 +6,7 @@ import os
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 
+from lasuite.marketing.tasks import create_or_update_contact
 from lasuite.oidc_login.backends import (
     OIDCAuthenticationBackend as LaSuiteOIDCAuthenticationBackend,
 )
@@ -57,3 +58,22 @@ class OIDCAuthenticationBackend(LaSuiteOIDCAuthenticationBackend):
             return self.UserModel.objects.get_user_by_sub_or_email(sub, email)
         except DuplicateEmailError as err:
             raise SuspiciousOperation(err.message) from err
+
+    def post_get_or_create_user(self, user, claims, is_new_user):
+        """
+        Post-processing after user creation or retrieval.
+
+        Args:
+          user (User): The user instance.
+          claims (dict): The claims dictionary.
+          is_new_user (bool): Indicates if the user was newly created.
+
+        Returns:
+        - None
+
+        """
+
+        if is_new_user and settings.SIGNUP_NEW_USER_TO_MARKETING_EMAIL:
+            create_or_update_contact.delay(
+                email=user.email, attributes={"DOCS_SOURCE": ["SIGNIN"]}
+            )

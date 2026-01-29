@@ -29,6 +29,10 @@ from sentry_sdk.integrations.logging import ignore_logger
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.getenv("DATA_DIR", os.path.join("/", "data"))
 
+KB = 1024
+MB = KB * KB
+GB = MB * KB
+
 
 def get_release():
     """
@@ -99,6 +103,31 @@ class Base(Configuration):
     }
     DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
+    # Search
+    SEARCH_INDEXER_CLASS = values.Value(
+        default=None,
+        environ_name="SEARCH_INDEXER_CLASS",
+        environ_prefix=None,
+    )
+    SEARCH_INDEXER_BATCH_SIZE = values.IntegerValue(
+        default=100_000, environ_name="SEARCH_INDEXER_BATCH_SIZE", environ_prefix=None
+    )
+    SEARCH_INDEXER_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_URL", environ_prefix=None
+    )
+    SEARCH_INDEXER_COUNTDOWN = values.IntegerValue(
+        default=1, environ_name="SEARCH_INDEXER_COUNTDOWN", environ_prefix=None
+    )
+    SEARCH_INDEXER_SECRET = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_SECRET", environ_prefix=None
+    )
+    SEARCH_INDEXER_QUERY_URL = values.Value(
+        default=None, environ_name="SEARCH_INDEXER_QUERY_URL", environ_prefix=None
+    )
+    SEARCH_INDEXER_QUERY_LIMIT = values.PositiveIntegerValue(
+        default=50, environ_name="SEARCH_INDEXER_QUERY_LIMIT", environ_prefix=None
+    )
+
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(DATA_DIR, "static")
@@ -143,7 +172,7 @@ class Base(Configuration):
 
     # Document images
     DOCUMENT_IMAGE_MAX_SIZE = values.IntegerValue(
-        10 * (2**20),  # 10MB
+        10 * MB,  # 10MB
         environ_name="DOCUMENT_IMAGE_MAX_SIZE",
         environ_prefix=None,
     )
@@ -328,6 +357,7 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        "lasuite.marketing",
         "csp",
     ]
 
@@ -380,16 +410,6 @@ class Base(Configuration):
                 environ_name="API_DOCUMENT_ACCESS_THROTTLE_RATE",
                 environ_prefix=None,
             ),
-            "template": values.Value(
-                default="30/minute",
-                environ_name="API_TEMPLATE_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
-            "template_access": values.Value(
-                default="30/minute",
-                environ_name="API_TEMPLATE_ACCESS_THROTTLE_RATE",
-                environ_prefix=None,
-            ),
             "invitation": values.Value(
                 default="60/minute",
                 environ_name="API_INVITATION_THROTTLE_RATE",
@@ -427,7 +447,7 @@ class Base(Configuration):
         "REDOC_DIST": "SIDECAR",
     }
 
-    TRASHBIN_CUTOFF_DAYS = values.Value(
+    TRASHBIN_CUTOFF_DAYS = values.IntegerValue(
         30, environ_name="TRASHBIN_CUTOFF_DAYS", environ_prefix=None
     )
 
@@ -439,6 +459,7 @@ class Base(Configuration):
     EMAIL_HOST_PASSWORD = SecretFileValue(None)
     EMAIL_LOGO_IMG = values.Value(None)
     EMAIL_PORT = values.PositiveIntegerValue(None)
+    EMAIL_URL_APP = values.Value(None)
     EMAIL_USE_TLS = values.BooleanValue(False)
     EMAIL_USE_SSL = values.BooleanValue(False)
     EMAIL_FROM = values.Value("from@example.com")
@@ -483,7 +504,12 @@ class Base(Configuration):
     FRONTEND_CSS_URL = values.Value(
         None, environ_name="FRONTEND_CSS_URL", environ_prefix=None
     )
-
+    FRONTEND_JS_URL = values.Value(
+        None, environ_name="FRONTEND_JS_URL", environ_prefix=None
+    )
+    FRONTEND_SILENT_LOGIN_ENABLED = values.BooleanValue(
+        default=False, environ_name="FRONTEND_SILENT_LOGIN_ENABLED", environ_prefix=None
+    )
     THEME_CUSTOMIZATION_FILE_PATH = values.Value(
         os.path.join(BASE_DIR, "impress/configuration/theme/default.json"),
         environ_name="THEME_CUSTOMIZATION_FILE_PATH",
@@ -525,6 +551,16 @@ class Base(Configuration):
     SESSION_COOKIE_NAME = "docs_sessionid"
 
     # OIDC - Authorization Code Flow
+    OIDC_AUTHENTICATE_CLASS = values.Value(
+        "lasuite.oidc_login.views.OIDCAuthenticationRequestView",
+        environ_name="OIDC_AUTHENTICATE_CLASS",
+        environ_prefix=None,
+    )
+    OIDC_CALLBACK_CLASS = values.Value(
+        "lasuite.oidc_login.views.OIDCAuthenticationCallbackView",
+        environ_name="OIDC_CALLBACK_CLASS",
+        environ_prefix=None,
+    )
     OIDC_CREATE_USER = values.BooleanValue(
         default=True,
         environ_name="OIDC_CREATE_USER",
@@ -670,6 +706,16 @@ class Base(Configuration):
         "day": 200,
     }
 
+    LANGFUSE_SECRET_KEY = SecretFileValue(
+        None, environ_name="LANGFUSE_SECRET_KEY", environ_prefix=None
+    )
+    LANGFUSE_PUBLIC_KEY = values.Value(
+        None, environ_name="LANGFUSE_PUBLIC_KEY", environ_prefix=None
+    )
+    LANGFUSE_BASE_URL = values.Value(
+        None, environ_name="LANGFUSE_BASE_URL", environ_prefix=None
+    )
+
     # Y provider microservice
     Y_PROVIDER_API_KEY = SecretFileValue(
         environ_name="Y_PROVIDER_API_KEY",
@@ -677,6 +723,22 @@ class Base(Configuration):
     )
     Y_PROVIDER_API_BASE_URL = values.Value(
         environ_name="Y_PROVIDER_API_BASE_URL",
+        environ_prefix=None,
+    )
+
+    # DocSpec API microservice
+    DOCSPEC_API_URL = values.Value(environ_name="DOCSPEC_API_URL", environ_prefix=None)
+
+    # Imported file settings
+    CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
+        20 * MB,  # 10MB
+        environ_name="CONVERSION_FILE_MAX_SIZE",
+        environ_prefix=None,
+    )
+
+    CONVERSION_FILE_EXTENSIONS_ALLOWED = values.ListValue(
+        default=[".docx", ".md"],
+        environ_name="CONVERSION_FILE_EXTENSIONS_ALLOWED",
         environ_prefix=None,
     )
 
@@ -804,6 +866,30 @@ class Base(Configuration):
                 "prefetch-src": [NONE],
             },
             environ_name="CONTENT_SECURITY_POLICY_DIRECTIVES",
+            environ_prefix=None,
+        ),
+    }
+
+    # Marketing and communication settings
+    SIGNUP_NEW_USER_TO_MARKETING_EMAIL = values.BooleanValue(
+        False,
+        environ_name="SIGNUP_NEW_USER_TO_MARKETING_EMAIL",
+        environ_prefix=None,
+        help_text=(
+            "When enabled, new users are automatically added to mailing list "
+            "for product updates, marketing communications, and customized emails. "
+        ),
+    )
+
+    LASUITE_MARKETING = {
+        "BACKEND": values.Value(
+            "lasuite.marketing.backends.dummy.DummyBackend",
+            environ_name="LASUITE_MARKETING_BACKEND",
+            environ_prefix=None,
+        ),
+        "PARAMETERS": values.DictValue(
+            default={},
+            environ_name="LASUITE_MARKETING_PARAMETERS",
             environ_prefix=None,
         ),
     }
@@ -1000,6 +1086,9 @@ class Production(Base):
 
     # Privacy
     SECURE_REFERRER_POLICY = "same-origin"
+
+    # Conversion API: Always verify SSL in production
+    CONVERSION_API_SECURE = True
 
     CACHES = {
         "default": {

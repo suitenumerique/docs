@@ -5,6 +5,7 @@
  */
 export * from './api';
 export * from './utils';
+export * from './utils_html';
 
 import * as ModalExport from './components/ModalExport';
 

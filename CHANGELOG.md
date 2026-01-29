@@ -6,21 +6,147 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added 
+
+- ✨(frontend) integrate configurable Waffle #1795
+- ✨ Import of documents #1609
+- 🚨(CI) gives warning if theme not updated #1811
+- ✨(frontend) Add stat from Crisp #1824
+- ✨(auth) add silent login #1690
+- 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
+- ✨(backend) add field for button label in email template #1817
+
+### Fixed
+
+- ✅(e2e) fix e2e test for other browsers #1799
+- 🐛(export) fix export column NaN #1819
+- 🐛(frontend) add fallback for unsupported Blocknote languages #1810
+- 🐛(frontend) fix emojipicker closing in tree #1808
+- 🐛(frontend) display children in favorite #1782
+- 🐛(frontend) preserve typed text after @ on escape #1833
+
+### Removed
+
+- 🔥(project) remove all code related to template #1780
+
+### Security
+
+- 🔒️(trivy) fix vulnerability about jaraco.context #1806
+
+## [4.4.0] - 2026-01-13
+
+### Added
+
+- ✨(backend) add documents/all endpoint with descendants #1553
+- ✅(export) add PDF regression tests #1762
+- 📝(docs) Add language configuration documentation #1757
+- 🔒(helm) Set default security context #1750
+- ✨(backend) use langfuse to monitor AI actions #1776
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) make html export accessible to screen reader users #1743
+  - ♿(frontend) add missing label and fix Axes errors to improve a11y #1693
+
+### Fixed
+
+- ✅(backend) reduce flakiness on backend test #1769
+- 🐛(frontend) fix clickable main content regression #1773
+- 🐛(backend) fix TRASHBIN_CUTOFF_DAYS type error #1778
+- 💄(frontend) fix icon position in callout block #1779
+
+### Security
+
+- 🔒️(backend) validate more strictly url used by cors-proxy endpoint #1768
+- 🔒️(frontend) fix props vulnerability in Interlinking #1792
+
+## [4.3.0] - 2026-01-05
+
+### Added
+
+- ✨(helm) redirecting system #1697
+- 📱(frontend) add comments for smaller device #1737
+- ✨(project) add custom js support via config #1759
+
+### Changed
+
+- 🥅(frontend) intercept 401 error on GET threads #1754
+- 🦺(frontend) check content type pdf on PdfBlock #1756
+- ✈️(frontend) pause Posthog when offline #1755
+
+### Fixed
+
+- 🐛(frontend) fix tables deletion #1739
+- 🐛(frontend) fix children not display when first resize #1753
+
+## [4.2.0] - 2025-12-17
+
+### Added
+
+- ✨(backend) allow to create a new user in a marketing system #1707
+- ✨(backend) add async indexation of documents on save (or access save) #1276
+- ✨(backend) add debounce mechanism to limit indexation jobs #1276
+- ✨(api) add API route to search for indexed documents in Find #1276
+- 🥅(frontend) add boundary error page #1728
+
+### Changed
+
+- 🛂(backend) stop throttling collaboration servers #1730
+- 🚸(backend) use unaccented full name for user search #1637
+- 🌐(backend) internationalize demo #1644
+- ♿(frontend) improve accessibility:
+  - ♿️Improve keyboard accessibility for the document tree #1681
+
+### Fixed
+
+- 🐛(frontend) paste content with comments from another document #1732
+- 🐛(frontend) Select text + Go back one page crash the app #1733
+- 🐛(frontend) fix versioning conflict #1742
+
+## [4.1.0] - 2025-12-09
+
+### Added
+
+- ⚡️(frontend) export html #1669
+
+### Changed
+
+- ♿(frontend) improve accessibility:
+  - ♿(frontend) add skip to content button for keyboard accessibility #1624
+  - ♿(frontend) fix toggle panel button a11y labels #1634
+- 🔒️(frontend) remove dangerouslySetInnerHTML from codebase #1712
+- ⚡️(frontend) improve Comments feature #1687
+
+### Fixed
+
+- 🐛(nginx) fix / location to handle new static pages #1682
+- 🐛(frontend) rerendering during resize window #1715
+
+## [4.0.0] - 2025-12-01
+
 ### Added
 
 - ✨ Add comments feature to the editor #1330
 - ✨(backend) Comments on text editor #1330
+- ✨(frontend) link to create new doc #1574
 
 ### Changed
 
 - ⚡️(sw) stop to cache external resources likes videos #1655
-- 💥(frontend) upgrade to ui-kit v2
-
-### Fixed
-
+- 💥(frontend) upgrade to ui-kit v2 #1605
+- ⚡️(frontend) improve perf on upload and table of contents #1662
 - ♿(frontend) improve accessibility:
   - ♿(frontend) improve share modal button accessibility #1626
   - ♿(frontend) improve screen reader support in DocShare modal #1628
+
+### Fixed
+
 - 🐛(frontend) fix toolbar not activated when reader #1640
 - 🐛(frontend) preserve left panel width on window resize #1588
 - 🐛(frontend) prevent duplicate as first character in title #1595
@@ -896,7 +1022,12 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v3.10.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.4.0...main
+[v4.4.0]: https://github.com/suitenumerique/docs/releases/v4.4.0
+[v4.3.0]: https://github.com/suitenumerique/docs/releases/v4.3.0
+[v4.2.0]: https://github.com/suitenumerique/docs/releases/v4.2.0
+[v4.1.0]: https://github.com/suitenumerique/docs/releases/v4.1.0
+[v4.0.0]: https://github.com/suitenumerique/docs/releases/v4.0.0
 [v3.10.0]: https://github.com/suitenumerique/docs/releases/v3.10.0
 [v3.9.0]: https://github.com/suitenumerique/docs/releases/v3.9.0
 [v3.8.2]: https://github.com/suitenumerique/docs/releases/v3.8.2

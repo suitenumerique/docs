@@ -98,10 +98,10 @@ class CanCreateInvitationPermission(permissions.BasePermission):
 
 
 class ResourceWithAccessPermission(permissions.BasePermission):
-    """A permission class for templates and invitations."""
+    """A permission class for invitations."""
 
     def has_permission(self, request, view):
-        """check create permission for templates."""
+        """check create permission."""
         return request.user.is_authenticated or view.action != "create"
 
     def has_object_permission(self, request, view, obj):

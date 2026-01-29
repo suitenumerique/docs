@@ -5,7 +5,7 @@ import {
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -16,11 +16,9 @@ import {
   DocIcon,
   getEmojiAndTitle,
   useTrans,
-} from '@/features/docs/doc-management';
+} from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
-
-import { useKeyboardActivation } from '../hooks/useKeyboardActivation';
 
 import SubPageIcon from './../assets/sub-page-logo.svg';
 import { DocTreeItemActions } from './DocTreeItemActions';
@@ -46,7 +44,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const isSelectedNow = treeContext?.treeData.selectedNode?.id === doc.id;
-  const isActive = node.isFocused || menuOpen || isSelectedNow;
 
   const router = useRouter();
   const { togglePanel } = useLeftPanelStore();
@@ -92,20 +89,34 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
     }
   };
 
-  useKeyboardActivation(
-    ['Enter'],
-    isActive && !menuOpen,
-    handleActivate,
-    true,
-    '.c__tree-view',
-  );
-
   const docTitle = doc.title || untitledDocument;
   const hasChildren = (doc.children?.length || 0) > 0;
   const isExpanded = node.isOpen;
   const isSelected = isSelectedNow;
   const ariaLabel = docTitle;
   const isDisabled = !!doc.deleted_at;
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const buttonOptionRef = useRef<HTMLDivElement | null>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // F2: focus first action button
+    const shouldOpenActions = !menuOpen && node.isFocused;
+    if (e.key === 'F2' && shouldOpenActions) {
+      buttonOptionRef.current?.focus();
+      e.stopPropagation();
+      return;
+    }
+  };
+
+  const handleActionsOpenChange = (isOpen: boolean) => {
+    setMenuOpen(isOpen);
+
+    // When the menu closes (via Escape or activating an option),
+    // return focus to the tree item so focus is not lost.
+    if (!isOpen) {
+      node.focus();
+    }
+  };
 
   return (
     <Box
@@ -117,23 +128,36 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-selected={isSelected}
       aria-expanded={hasChildren ? isExpanded : undefined}
       aria-disabled={isDisabled}
+      onKeyDown={handleKeyDown}
       $css={css`
         background-color: var(--c--globals--colors--gray-000);
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
-          position: absolute;
           right: var(--c--globals--spacings--0);
         }
         .c__tree-view--node.isFocused {
           outline: none !important;
           box-shadow: 0 0 0 2px var(--c--globals--colors--brand-500) !important;
           border-radius: var(--c--globals--spacings--st);
+          .light-doc-item-actions {
+            display: flex;
+          }
+        }
+        /* Remove visual focus from the tree item when focus is on actions or emoji button */
+        &:has(.light-doc-item-actions *:focus, .--docs--doc-icon:focus-visible)
+          .c__tree-view--node.isFocused {
+          box-shadow: none !important;
         }
         &:hover {
           background-color: var(
             --c--contextuals--background--semantic--gray--tertiary
           );
           border-radius: var(--c--globals--spacings--st);
+          .light-doc-item-actions {
+            display: flex;
+          }
+        }
+        &:focus-within {
           .light-doc-item-actions {
             display: flex;
           }
@@ -148,12 +172,44 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           emoji={emoji}
           withEmojiPicker={doc.abilities.partial_update}
           defaultIcon={
-            <SubPageIcon color="var(--c--contextuals--content--semantic--info--tertiary)" />
+            <SubPageIcon
+              color="var(--c--contextuals--content--semantic--info--tertiary)"
+              style={{ flexShrink: 0 }}
+            />
           }
           $size="sm"
           docId={doc.id}
           title={doc.title}
+          buttonProps={{
+            $css: css`
+              &:focus-visible {
+                outline: 2px solid var(--c--globals--colors--brand-500);
+                outline-offset: var(--c--globals--spacings--4xs);
+              }
+            `,
+          }}
         />
+        <Box
+          $direction="row"
+          $align="center"
+          className="light-doc-item-actions actions"
+          role="toolbar"
+          aria-label={`${t('Actions for {{title}}', { title: docTitle })}`}
+          $css={css`
+            margin-left: auto;
+            order: 2;
+          `}
+        >
+          <DocTreeItemActions
+            doc={doc}
+            isOpen={menuOpen}
+            onOpenChange={handleActionsOpenChange}
+            parentId={node.data.parentKey}
+            onCreateSuccess={afterCreate}
+            actionsRef={actionsRef}
+            buttonOptionRef={buttonOptionRef}
+          />
+        </Box>
         <BoxButton
           onClick={(e) => {
             e.stopPropagation();
@@ -197,21 +253,6 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             )}
           </Box>
         </BoxButton>
-        <Box
-          $direction="row"
-          $align="center"
-          className="light-doc-item-actions"
-          role="toolbar"
-          aria-label={`${t('Actions for {{title}}', { title: docTitle })}`}
-        >
-          <DocTreeItemActions
-            doc={doc}
-            isOpen={menuOpen}
-            onOpenChange={setMenuOpen}
-            parentId={node.data.parentKey}
-            onCreateSuccess={afterCreate}
-          />
-        </Box>
       </TreeViewItem>
     </Box>
   );

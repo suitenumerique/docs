@@ -33,7 +33,7 @@ export function downloadFile(blob: Blob, filename: string) {
  */
 export async function convertSvgToPng(
   svgText: string,
-  width: number,
+  width?: number,
 ): Promise<{ png: string; width: number; height: number }> {
   // Create a canvas and render the SVG onto it
   const canvas = document.createElement('canvas');
@@ -51,26 +51,36 @@ export async function convertSvgToPng(
   const svgElement = svgDoc.documentElement;
 
   // Get viewBox or fallback to width/height attributes
-  let height;
+  let calculatedHeight: number | undefined;
   const svgWidth = svgElement.getAttribute?.('width');
   const svgHeight = svgElement.getAttribute?.('height');
   const viewBox = svgElement.getAttribute('viewBox')?.split(' ').map(Number);
 
   const originalWidth = svgWidth ? parseInt(svgWidth) : viewBox?.[2];
   const originalHeight = svgHeight ? parseInt(svgHeight) : viewBox?.[3];
-  if (originalWidth && originalHeight) {
-    const aspectRatio = originalHeight / originalWidth;
-    height = Math.round(width * aspectRatio);
-  }
 
   const svg = Canvg.fromString(ctx, svgText);
-  svg.resize(width, height, true);
+
+  const FALLBACK_WIDTH = 536;
+
+  // Resize if width provided, preserving aspect ratio
+  if (originalWidth && originalHeight && width) {
+    const aspectRatio = originalHeight / originalWidth;
+    calculatedHeight = Math.round(width * aspectRatio);
+    svg.resize(width, calculatedHeight, true);
+  } else if (!width && !originalWidth) {
+    svg.resize(FALLBACK_WIDTH, undefined, true);
+  }
+
   await svg.render();
+
+  const returnWidth = width || originalWidth || FALLBACK_WIDTH;
+  const returnHeight = calculatedHeight || returnWidth;
 
   return {
     png: canvas.toDataURL('image/png'),
-    width,
-    height: height || width,
+    width: returnWidth,
+    height: returnHeight,
   };
 }
 
