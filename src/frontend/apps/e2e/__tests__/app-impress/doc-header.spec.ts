@@ -7,7 +7,12 @@ import {
   mockedDocument,
   verifyDocName,
 } from './utils-common';
-import { mockedAccesses, mockedInvitations } from './utils-share';
+import {
+  connectOtherUserToDoc,
+  mockedAccesses,
+  mockedInvitations,
+  updateShareLink,
+} from './utils-share';
 import { createRootSubPage, getTreeRow } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
@@ -52,13 +57,54 @@ test.describe('Doc Header', () => {
     ).toBeVisible();
   });
 
-  test('it updates the title doc', async ({ page, browserName }) => {
-    await createDoc(page, 'doc-update', browserName, 1);
-    const docTitle = page.getByRole('textbox', { name: 'Document title' });
-    await expect(docTitle).toBeVisible();
-    await docTitle.fill('Hello World');
-    await docTitle.blur();
+  test('it updates the title doc and check the broadcast', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'doc-title-update',
+      browserName,
+      1,
+    );
+    await page.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(page, 'Public', 'Editing');
+
+    const docUrl = page.url();
+
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      docUrl,
+      browserName,
+      withoutSignIn: true,
+      docTitle,
+    });
+
+    // Wait for other page to sync
+    await page.waitForTimeout(1000);
+
+    await page.keyboard.press('Escape');
+    const elTitle = page.getByRole('textbox', { name: 'Document title' });
+    await expect(elTitle).toBeVisible();
+    await elTitle.fill('Hello World');
+    await elTitle.blur();
     await verifyDocName(page, 'Hello World');
+
+    // Wait for other page to sync
+    await page.waitForTimeout(1000);
+
+    // Check other user page
+    await verifyDocName(otherPage, 'Hello World');
+
+    const elTitleOther = otherPage.getByRole('textbox', {
+      name: 'Document title',
+    });
+    await elTitleOther.fill('Hello Other World');
+    await elTitleOther.blur();
+
+    // Check first user page
+    await verifyDocName(page, 'Hello Other World');
+
+    await cleanup();
   });
 
   test('it updates the title doc adding a leading emoji', async ({
