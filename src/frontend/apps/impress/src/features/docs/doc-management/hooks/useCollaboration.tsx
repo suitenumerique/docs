@@ -8,7 +8,7 @@ import { Base64 } from '../types';
 
 export const useCollaboration = (room?: string, initialContent?: Base64) => {
   const collaborationUrl = useCollaborationUrl(room);
-  const { setBroadcastProvider } = useBroadcastStore();
+  const { setBroadcastProvider, cleanupBroadcast } = useBroadcastStore();
   const { provider, createProvider, destroyProvider } = useProviderStore();
 
   useEffect(() => {
@@ -33,8 +33,9 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
   useEffect(() => {
     return () => {
       if (room) {
+        cleanupBroadcast();
         destroyProvider();
       }
     };
-  }, [destroyProvider, room]);
+  }, [destroyProvider, room, cleanupBroadcast]);
 };
