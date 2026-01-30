@@ -92,7 +92,7 @@ def _upload_attachment(user, doc: models.Document, arcname: str, data: bytes) ->
 
 
 @transaction.atomic
-def process_outline_zip(user, zip_bytes: bytes) -> list[str]:  # noqa: PLR0915
+def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
     """Process an Outline export zip and create Docs documents.
 
     This function runs within an atomic transaction, ensuring that either all documents
@@ -101,8 +101,12 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:  # noqa: PLR0915
     Returns the list of created document IDs (stringified UUIDs) corresponding to
     markdown-backed documents. Container folders used to rebuild hierarchy are not listed.
     """
-    archive = zipfile.ZipFile(io.BytesIO(zip_bytes))
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
+        return _process_archive(user, archive)
 
+
+def _process_archive(user, archive: zipfile.ZipFile) -> list[str]:  # noqa: PLR0915
+    """Process the opened archive and create documents."""
     # Basic Zip Slip protection: refuse paths that escape the archive root
     for name in archive.namelist():
         # Normalize to posix separators and check traversal
