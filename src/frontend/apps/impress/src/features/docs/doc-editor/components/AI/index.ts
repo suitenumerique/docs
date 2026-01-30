@@ -6,20 +6,23 @@
 import * as XLAI from '@blocknote/xl-ai';
 import * as localesAI from '@blocknote/xl-ai/locales';
 
-import * as AIUI from './AIUI';
+import * as AIMenu from './AIMenu';
+import * as AIToolbarButton from './AIToolbarButton';
 import * as useAI from './useAI';
 
 let modulesAI = undefined;
 if (process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false') {
   modulesAI = {
     ...XLAI,
-    ...AIUI,
+    ...AIToolbarButton,
+    ...AIMenu,
     localesAI: localesAI,
     ...useAI,
   };
 }
 
 type ModulesAI = typeof XLAI &
-  typeof AIUI & { localesAI: typeof localesAI } & typeof useAI;
+  typeof AIToolbarButton &
+  typeof AIMenu & { localesAI: typeof localesAI } & typeof useAI;
 
 export default modulesAI as ModulesAI;
