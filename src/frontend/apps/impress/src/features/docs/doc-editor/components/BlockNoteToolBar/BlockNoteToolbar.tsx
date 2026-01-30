@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
-import BlockNoteAI from '../AI/AIToolbarButton';
+import BlockNoteAI from '../AI/';
 import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
@@ -26,6 +26,7 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
   const { t } = useTranslation();
+  const { data: conf } = useConfig();
 
   const toolbarItems = useMemo(() => {
     let toolbarItems = getFormattingToolbarItems([
@@ -86,7 +87,7 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, aiAllowed]);
+  }, [toolbarItems, aiAllowed, conf?.AI_FEATURE_ENABLED]);
 
   return (
     <>

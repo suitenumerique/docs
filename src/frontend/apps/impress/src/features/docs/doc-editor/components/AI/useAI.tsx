@@ -1,15 +1,10 @@
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { createAIExtension, createBlockNoteAIClient } from '@blocknote/xl-ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { AIExtension, ClientSideTransport } from '@blocknote/xl-ai';
 import { useMemo } from 'react';
 
 import { baseApiUrl, fetchAPI } from '@/api';
 import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
-
-const client = createBlockNoteAIClient({
-  baseURL: ``,
-  apiKey: '',
-});
 
 /**
  * Custom implementation of the PromptBuilder that allows for using predefined prompts.
@@ -25,8 +20,9 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
       return null;
     }
 
-    const openai = createOpenAI({
-      ...client.getProviderSettings('openai'),
+    const aIprovider = createOpenAI({
+      apiKey: '',
+      baseURL: `${baseApiUrl('1.0')}documents/${docId}/ai-proxy/`,
       fetch: (input, init) => {
         // Create a new headers object without the Authorization header
         const headers = new Headers(init?.headers);
@@ -39,14 +35,13 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
       },
     });
 
-    const model = openai.chatModel(conf.AI_MODEL);
+    const model = aIprovider.chat(conf.AI_MODEL);
 
-    const extension = createAIExtension({
-      stream: false,
-      model,
-      agentCursor: conf?.AI_BOT,
+    const extension = AIExtension({
+      agentCursor: conf.AI_BOT,
+      transport: new ClientSideTransport({ model }),
     });
 
     return extension;
-  }, [aiAllowed, docId, conf?.AI_BOT, conf?.AI_MODEL]);
+  }, [aiAllowed, conf, docId]);
 };

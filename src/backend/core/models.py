@@ -784,6 +784,8 @@ class Document(MP_Node, BaseModel):
             "accesses_manage": is_owner_or_admin,
             "accesses_view": has_access_role,
             "ai_proxy": ai_access,
+            "ai_transform": ai_access,
+            "ai_translate": ai_access,
             "attachment_upload": can_update,
             "media_check": can_get,
             "can_edit": can_update,

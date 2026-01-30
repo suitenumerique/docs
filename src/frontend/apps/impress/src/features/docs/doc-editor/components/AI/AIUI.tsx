@@ -1,14 +1,26 @@
-import { useBlockNoteEditor, useComponentsContext } from '@blocknote/react';
+/**
+ * We override the default BlockNote AI Menu to customize the items shown to the user.
+ *
+ * See original implementation:
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-ai/src/components/AIMenu/AIMenu.tsx
+ * https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-ai/src/components/FormattingToolbar/AIToolbarButton.tsx
+ */
+import { FormattingToolbarExtension } from '@blocknote/core/extensions';
 import {
+  useBlockNoteEditor,
+  useComponentsContext,
+  useExtension,
+} from '@blocknote/react';
+import {
+  AIExtension,
   AIMenu as AIMenuDefault,
-  getAIExtension,
   getDefaultAIMenuItems,
 } from '@blocknote/xl-ai';
 import '@blocknote/xl-ai/style.css';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Icon, Text } from '@/components';
+import { Box, Icon } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 import IconAI from '../../assets/IconAI.svg';
@@ -98,45 +110,51 @@ export function AIMenu() {
 }
 
 export const AIToolbarButton = () => {
-  const Components = useComponentsContext();
   const { t } = useTranslation();
+  const Components = useComponentsContext();
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
     DocsInlineContentSchema,
     DocsStyleSchema
   >();
+  const ai = useExtension(AIExtension);
+  const formattingToolbar = useExtension(FormattingToolbarExtension);
 
   if (!editor.isEditable || !Components) {
     return null;
   }
 
   const onClick = () => {
-    const aiExtension = getAIExtension(editor);
-    editor.formattingToolbar.closeMenu();
     const selection = editor.getSelection();
     if (!selection) {
       throw new Error('No selection');
     }
 
     const position = selection.blocks[selection.blocks.length - 1].id;
-    aiExtension.openAIMenuAtBlock(position);
+
+    ai.openAIMenuAtBlock(position);
+    formattingToolbar.store.setState(false);
   };
 
   return (
     <Box
       $css={css`
         & > button.mantine-Button-root {
-          padding-inline: ${spacingsTokens['2xs']};
+          padding-inline: 0;
           transition: all 0.1s ease-in;
+          & .mantine-Button-label {
+            padding-inline: ${spacingsTokens['2xs']};
+          }
           &:hover,
           &:hover {
-            background-color: ${colorsTokens['greyscale-050']};
+            background-color: ${colorsTokens['gray-050']};
           }
           &:hover .--docs--icon-bg {
             background-color: #5858e1;
             border: 1px solid #8484f5;
             color: #ffffff;
+            box-shadow: 0 1px 4px 0 rgba(88, 88, 225, 0.25);
           }
         }
       `}
@@ -148,29 +166,30 @@ export const AIToolbarButton = () => {
         onClick={onClick}
       >
         <Box
+          as="span"
           $direction="row"
           $align="center"
           $gap={spacingsTokens['xs']}
           $padding={{ right: '2xs' }}
         >
-          <Text
+          <Icon
             className="--docs--icon-bg"
-            $theme="greyscale"
-            $variation="600"
             $css={css`
-              border: 1px solid var(--c--theme--colors--greyscale-100);
+              border: 1px solid var(--c--globals--colors--gray-100);
+              color: var(--c--globals--colors--gray-700);
               transition: all 0.1s ease-in;
+              box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.05);
             `}
             $radius="100%"
             $padding="0.15rem"
-          >
-            <IconAI width="16px" />
-          </Text>
+            $width="19px"
+            icon={<IconAI />}
+          />
           {t('Ask AI')}
         </Box>
       </Components.Generic.Toolbar.Button>
       <Box
-        $background={colorsTokens['greyscale-100']}
+        $background={colorsTokens['gray-100']}
         $width="1px"
         $height="70%"
         $margin={{ left: '2px' }}

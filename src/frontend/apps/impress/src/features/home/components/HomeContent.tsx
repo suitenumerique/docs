@@ -41,7 +41,7 @@ export function HomeContent() {
       aria-label={t('Main content')}
       $css={css`
         &:focus {
-          outline: 3px solid var(--c--theme--colors--primary-600);
+          outline: 3px solid var(--c--globals--colors--primary-600);
           outline-offset: -3px;
         }
         &:focus:not(:focus-visible) {

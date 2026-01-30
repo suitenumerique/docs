@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@ag-media/react-pdf-table": "2.0.3",
-    "@ai-sdk/openai-compatible": "0.2.14",
+    "@ai-sdk/openai": "3.0.19",
     "@blocknote/code-block": "0.46.2",
     "@blocknote/core": "0.46.2",
     "@blocknote/mantine": "0.46.2",
@@ -46,7 +46,7 @@
     "@sentry/nextjs": "10.34.0",
     "@tanstack/react-query": "5.90.18",
     "@tiptap/extensions": "*",
-    "ai": "4.3.16",
+    "ai": "6.0.49",
     "canvg": "4.0.3",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
