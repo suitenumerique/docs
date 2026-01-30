@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0025_outline_import_job'),
-        ('core', '0026_comments'),
+        ("core", "0025_outline_import_job"),
+        ("core", "0026_comments"),
     ]
 
-    operations = [
-    ]
+    operations = []

@@ -17,7 +17,9 @@ from core.services.outline_import import OutlineImportError
 pytestmark = pytest.mark.django_db
 
 
-def make_zip_with_markdown_and_image(md_path: str, md_content: str, img_path: str, img_bytes: bytes) -> bytes:
+def make_zip_with_markdown_and_image(
+    md_path: str, md_content: str, img_path: str, img_bytes: bytes
+) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode="w") as zf:
         zf.writestr(md_path, md_content)
@@ -33,15 +35,22 @@ def test_outline_import_upload_anonymous_forbidden():
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode="w"):
         pass
-    upload = SimpleUploadedFile(name="export.zip", content=buf.getvalue(), content_type="application/zip")
+    upload = SimpleUploadedFile(
+        name="export.zip", content=buf.getvalue(), content_type="application/zip"
+    )
 
-    response = client.post("/api/v1.0/imports/outline/upload", {"file": upload}, format="multipart")
+    response = client.post(
+        "/api/v1.0/imports/outline/upload", {"file": upload}, format="multipart"
+    )
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication credentials were not provided."
 
 
-@patch("core.services.converter_services.YdocConverter.convert", return_value="YmFzZTY0Y29udGVudA==")
+@patch(
+    "core.services.converter_services.YdocConverter.convert",
+    return_value="YmFzZTY0Y29udGVudA==",
+)
 def test_outline_import_upload_authenticated_success(mock_convert):
     """Authenticated users can upload an Outline export zip and create documents."""
     user = factories.UserFactory()
@@ -62,10 +71,14 @@ def test_outline_import_upload_authenticated_success(mock_convert):
         img_bytes=img,
     )
 
-    upload = SimpleUploadedFile(name="export.zip", content=zip_bytes, content_type="application/zip")
+    upload = SimpleUploadedFile(
+        name="export.zip", content=zip_bytes, content_type="application/zip"
+    )
 
     with patch.object(malware_detection, "analyse_file") as mock_analyse_file:
-        response = client.post("/api/v1.0/imports/outline/upload", {"file": upload}, format="multipart")
+        response = client.post(
+            "/api/v1.0/imports/outline/upload", {"file": upload}, format="multipart"
+        )
 
     assert response.status_code == 201
     data = response.json()
@@ -102,7 +115,9 @@ def test_outline_import_upload_invalid_zip_returns_validation_error():
 
 
 @patch("core.api.imports.process_outline_zip", side_effect=OutlineImportError("boom"))
-def test_outline_import_upload_outline_error_returns_validation_error(mock_process_outline):
+def test_outline_import_upload_outline_error_returns_validation_error(
+    mock_process_outline,
+):
     """Service-level Outline import errors are surfaced as validation errors."""
     user = factories.UserFactory()
     client = APIClient()
@@ -114,7 +129,9 @@ def test_outline_import_upload_outline_error_returns_validation_error(mock_proce
         img_path="",
         img_bytes=b"",
     )
-    upload = SimpleUploadedFile(name="export.zip", content=zip_bytes, content_type="application/zip")
+    upload = SimpleUploadedFile(
+        name="export.zip", content=zip_bytes, content_type="application/zip"
+    )
 
     response = client.post(
         "/api/v1.0/imports/outline/upload",

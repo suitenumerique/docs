@@ -21,19 +21,26 @@ def make_zip(entries: dict[str, bytes]) -> bytes:
     return buf.getvalue()
 
 
-@patch("core.services.converter_services.YdocConverter.convert", return_value="YmFzZTY0Y29udGVudA==")
+@patch(
+    "core.services.converter_services.YdocConverter.convert",
+    return_value="YmFzZTY0Y29udGVudA==",
+)
 @patch("core.services.outline_import.malware_detection.analyse_file")
-@patch("django.core.files.storage.default_storage.connection.meta.client.upload_fileobj")
+@patch(
+    "django.core.files.storage.default_storage.connection.meta.client.upload_fileobj"
+)
 def test_process_outline_zip_happy_path(mock_upload, mock_av, mock_convert):
     user = factories.UserFactory()
     md = b"# T1\n![img](image.png)"
     img = b"i-am-png"
-    zip_bytes = make_zip({
-        "dir/page.md": md,
-        "dir/image.png": img,
-        "__MACOSX/._noise": b"",
-        ".hidden/skip.md": b"# hidden",
-    })
+    zip_bytes = make_zip(
+        {
+            "dir/page.md": md,
+            "dir/image.png": img,
+            "__MACOSX/._noise": b"",
+            ".hidden/skip.md": b"# hidden",
+        }
+    )
 
     created = process_outline_zip(user, zip_bytes)
     assert len(created) == 1
@@ -44,9 +51,10 @@ def test_process_outline_zip_happy_path(mock_upload, mock_av, mock_convert):
 
 def test_process_outline_zip_zip_slip_rejected():
     user = factories.UserFactory()
-    zip_bytes = make_zip({
-        "../evil.md": b"# E",
-    })
+    zip_bytes = make_zip(
+        {
+            "../evil.md": b"# E",
+        }
+    )
     with pytest.raises(OutlineImportError):
         process_outline_zip(user, zip_bytes)
-

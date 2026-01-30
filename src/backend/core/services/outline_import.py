@@ -25,7 +25,9 @@ class OutlineImportError(Exception):
     """Raised when the Outline archive is invalid or unsafe."""
 
 
-def _ensure_dir_documents(user, dir_path: str, dir_docs: dict[str, models.Document]) -> models.Document | None:
+def _ensure_dir_documents(
+    user, dir_path: str, dir_docs: dict[str, models.Document]
+) -> models.Document | None:
     """Ensure each path segment in dir_path has a container document.
 
     Returns the deepest parent document or None when dir_path is empty.
@@ -154,7 +156,9 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
             raw_md = ""
 
         title_match = re.search(r"^#\s+(.+)$", raw_md, flags=re.MULTILINE)
-        title = title_match.group(1).strip() if title_match else file_name.rsplit(".", 1)[0]
+        title = (
+            title_match.group(1).strip() if title_match else file_name.rsplit(".", 1)[0]
+        )
 
         if parent_doc is None:
             doc = models.Document.add_root(
@@ -184,7 +188,9 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
             asset_rel = f"{dir_path}/{url}" if dir_path else url
             asset_rel = re.sub(r"/+", "/", asset_rel)
             # sanitize computed asset path
-            if asset_rel.startswith("/") or any(part == ".." for part in asset_rel.split("/")):
+            if asset_rel.startswith("/") or any(
+                part == ".." for part in asset_rel.split("/")
+            ):
                 return match.group(0)
             data = read_bytes(asset_rel)
             if data is None:
@@ -205,6 +211,7 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
         except Exception as e:  # noqa: BLE001
             # Keep doc without content on conversion error but continue import
             import logging
+
             logging.getLogger(__name__).warning(
                 "Failed to convert markdown for document %s: %s", doc.id, e
             )
