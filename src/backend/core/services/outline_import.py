@@ -3,22 +3,24 @@
 from __future__ import annotations
 
 import io
+import logging
 import posixpath
 import re
 import uuid
 import zipfile
 from typing import Iterable
 
-import magic
-
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import transaction
 
+import magic
 from lasuite.malware_detection import malware_detection
 
 from core import enums, models
 from core.services.converter_services import YdocConverter
+
+logger = logging.getLogger(__name__)
 
 
 class OutlineImportError(Exception):
@@ -90,7 +92,7 @@ def _upload_attachment(user, doc: models.Document, arcname: str, data: bytes) ->
 
 
 @transaction.atomic
-def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
+def process_outline_zip(user, zip_bytes: bytes) -> list[str]:  # noqa: PLR0915
     """Process an Outline export zip and create Docs documents.
 
     This function runs within an atomic transaction, ensuring that either all documents
@@ -181,11 +183,11 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
         if base_path in md_with_dirs:
             dir_docs[base_path] = doc
 
-        def replace_img_link(match: re.Match[str]) -> str:
+        def replace_img_link(match: re.Match[str], _dir=dir_path, _doc=doc) -> str:
             url = match.group(1)
             if url.startswith("http://") or url.startswith("https://"):
                 return match.group(0)
-            asset_rel = f"{dir_path}/{url}" if dir_path else url
+            asset_rel = f"{_dir}/{url}" if _dir else url
             asset_rel = re.sub(r"/+", "/", asset_rel)
             # sanitize computed asset path
             if asset_rel.startswith("/") or any(
@@ -195,7 +197,7 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
             data = read_bytes(asset_rel)
             if data is None:
                 return match.group(0)
-            media_url = _upload_attachment(user, doc, arcname=url, data=data)
+            media_url = _upload_attachment(user, _doc, arcname=url, data=data)
             return match.group(0).replace(url, media_url)
 
         rewritten_md = img_pattern.sub(replace_img_link, raw_md)
@@ -210,11 +212,7 @@ def process_outline_zip(user, zip_bytes: bytes) -> list[str]:
             doc.save()
         except Exception as e:  # noqa: BLE001
             # Keep doc without content on conversion error but continue import
-            import logging
-
-            logging.getLogger(__name__).warning(
-                "Failed to convert markdown for document %s: %s", doc.id, e
-            )
+            logger.warning("Failed to convert markdown for document %s: %s", doc.id, e)
 
         created_ids.append(str(doc.id))
 

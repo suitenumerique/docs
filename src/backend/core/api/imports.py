@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import uuid
 
-import rest_framework as drf
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.urls import reverse
 
+import rest_framework as drf
 from lasuite.malware_detection import malware_detection
 
 from core import models
 from core.api.serializers import OutlineImportSerializer
-
 
 # ---------- Outline (Zip Upload) ----------
 

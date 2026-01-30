@@ -64,7 +64,7 @@ def process_outline_import_task(job_id):
         try:
             default_storage.delete(job.zip_file_key)
             logger.debug("Deleted zip file from S3: %s", job.zip_file_key)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning("Failed to delete zip file %s: %s", job.zip_file_key, e)
 
     except Exception as e:

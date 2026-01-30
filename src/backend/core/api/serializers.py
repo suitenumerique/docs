@@ -2,7 +2,9 @@
 # pylint: disable=too-many-lines
 
 import binascii
+import io
 import mimetypes
+import zipfile
 from base64 import b64decode
 from os.path import splitext
 
@@ -990,9 +992,6 @@ class OutlineImportSerializer(serializers.Serializer):
 
         # Validate it's actually a valid zip file by attempting to open it
         try:
-            import io
-            import zipfile
-
             content = file.read()
             file.seek(0)  # Reset file pointer after reading
             zipfile.ZipFile(io.BytesIO(content))

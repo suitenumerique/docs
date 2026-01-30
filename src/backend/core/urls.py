@@ -6,9 +6,8 @@ from django.urls import include, path, re_path
 from lasuite.oidc_login.urls import urlpatterns as oidc_urls
 from rest_framework.routers import DefaultRouter
 
-from core.api import viewsets
+from core.api import import_viewsets, viewsets
 from core.api import imports as import_views
-from core.api import import_viewsets
 
 # - Main endpoints
 router = DefaultRouter()

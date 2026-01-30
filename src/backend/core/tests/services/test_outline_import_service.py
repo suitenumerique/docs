@@ -9,7 +9,6 @@ import pytest
 from core import factories
 from core.services.outline_import import OutlineImportError, process_outline_zip
 
-
 pytestmark = pytest.mark.django_db
 
 

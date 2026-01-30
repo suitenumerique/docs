@@ -1,4 +1,4 @@
-import { Alert, Button, Loader, VariantType } from '@openfun/cunningham-react';
+import { Alert, Button, Loader, VariantType } from '@gouvfr-lasuite/cunningham-react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ReactElement, useCallback, useRef, useState } from 'react';
@@ -31,23 +31,23 @@ const DropZone = styled(Box)<{ $isDragging: boolean; $hasFile: boolean }>`
   border: 2px dashed
     ${({ $isDragging, $hasFile, theme }) =>
       $isDragging
-        ? 'var(--c--theme--colors--primary-500)'
+        ? 'var(--c--theme--colors--brand-500)'
         : $hasFile
           ? 'var(--c--theme--colors--success-500)'
-          : 'var(--c--theme--colors--greyscale-300)'};
+          : 'var(--c--theme--colors--gray-300)'};
   border-radius: 8px;
   transition: all 0.2s ease;
   cursor: pointer;
 
   &:hover {
-    border-color: var(--c--theme--colors--primary-400);
-    background-color: var(--c--theme--colors--primary-100);
+    border-color: var(--c--theme--colors--brand-400);
+    background-color: var(--c--theme--colors--brand-100);
   }
 
   ${({ $isDragging }) =>
     $isDragging &&
     css`
-      background-color: var(--c--theme--colors--primary-100);
+      background-color: var(--c--theme--colors--brand-100);
     `}
 
   ${({ $hasFile }) =>
@@ -243,7 +243,7 @@ const Page: NextPageWithLayout = () => {
               <Icon
                 iconName="upload_file"
                 $size="2.5rem"
-                $color={colorsTokens['primary-500']}
+                $color={colorsTokens['brand-500']}
               />
               <Text as="h1" $size="1.5rem" $weight="bold" $textAlign="center">
                 {t('Import from Outline')}
@@ -251,7 +251,7 @@ const Page: NextPageWithLayout = () => {
               <Text
                 as="p"
                 $size="0.875rem"
-                $color={colorsTokens['greyscale-600']}
+                $color={colorsTokens['gray-600']}
                 $textAlign="center"
               >
                 {t('Upload your Outline export (.zip) to import your documents')}
@@ -291,7 +291,7 @@ const Page: NextPageWithLayout = () => {
                     $color={colorsTokens['success-500']}
                   />
                   <Text $weight="bold">{file.name}</Text>
-                  <Text $size="0.875rem" $color={colorsTokens['greyscale-600']}>
+                  <Text $size="0.875rem" $color={colorsTokens['gray-600']}>
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </Text>
                 </>
@@ -300,13 +300,13 @@ const Page: NextPageWithLayout = () => {
                   <Icon
                     iconName="cloud_upload"
                     $size="3rem"
-                    $color={colorsTokens['greyscale-400']}
+                    $color={colorsTokens['gray-400']}
                   />
                   <Text $weight="bold">{t('Drag and drop your file here')}</Text>
-                  <Text $size="0.875rem" $color={colorsTokens['greyscale-600']}>
+                  <Text $size="0.875rem" $color={colorsTokens['gray-600']}>
                     {t('or click to browse')}
                   </Text>
-                  <Text $size="0.75rem" $color={colorsTokens['greyscale-500']}>
+                  <Text $size="0.75rem" $color={colorsTokens['gray-500']}>
                     {t('Accepts .zip files only')}
                   </Text>
                 </>
