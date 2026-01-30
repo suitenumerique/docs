@@ -1683,8 +1683,6 @@ class DocumentViewSet(
             resp["Cache-Control"] = "no-cache"
             return resp
 
-
-
     @drf.decorators.action(
         detail=True,
         methods=["post"],

@@ -14,6 +14,7 @@ from core.services.ai_services import AIService
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture(autouse=True)
 def ai_settings(settings):
     """Fixture to set AI settings."""
@@ -21,6 +22,7 @@ def ai_settings(settings):
     settings.AI_BASE_URL = "http://example.com"
     settings.AI_API_KEY = "test-key"
     settings.AI_FEATURE_ENABLED = True
+
 
 @pytest.mark.parametrize(
     "setting_name, setting_value",

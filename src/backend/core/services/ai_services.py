@@ -1,22 +1,23 @@
 """AI services."""
+
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any, Dict, Generator
 
-import httpx
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from core import enums
+import httpx
 
-import logging
+from core import enums
 
 if settings.LANGFUSE_PUBLIC_KEY:
     from langfuse.openai import OpenAI
 else:
     from openai import OpenAI, OpenAIError
-    
+
 log = logging.getLogger(__name__)
 
 
@@ -146,7 +147,6 @@ class AIService:
         system_content = AI_TRANSLATE.format(language=language_display)
         return self.call_ai_api(system_content, text)
 
-
     def _filtered_headers(self, incoming_headers: Dict[str, str]) -> Dict[str, str]:
         hop_by_hop = {"host", "connection", "content-length", "accept-encoding"}
         out: Dict[str, str] = {}
@@ -189,11 +189,17 @@ class AIService:
 
         # Force tool call if tools exist
         if payload.get("tools"):
-            payload["tool_choice"] = {"type": "function", "function": {"name": "applyDocumentOperations"}}
+            payload["tool_choice"] = {
+                "type": "function",
+                "function": {"name": "applyDocumentOperations"},
+            }
 
         # Convert non-standard "required"
         if payload.get("tool_choice") == "required":
-            payload["tool_choice"] = {"type": "function", "function": {"name": "applyDocumentOperations"}}
+            payload["tool_choice"] = {
+                "type": "function",
+                "function": {"name": "applyDocumentOperations"},
+            }
 
         # Inject strict system prompt once
         msgs = payload.get("messages")
@@ -201,10 +207,16 @@ class AIService:
             need = True
             if msgs and isinstance(msgs[0], dict) and msgs[0].get("role") == "system":
                 c = msgs[0].get("content") or ""
-                if isinstance(c, str) and "applyDocumentOperations" in c and "blocks" in c:
+                if (
+                    isinstance(c, str)
+                    and "applyDocumentOperations" in c
+                    and "blocks" in c
+                ):
                     need = False
             if need:
-                payload["messages"] = [{"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT}] + msgs
+                payload["messages"] = [
+                    {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT}
+                ] + msgs
 
         return _drop_nones(payload)
 
@@ -214,7 +226,7 @@ class AIService:
             return body
         try:
             payload = json.loads(body.decode("utf-8"))
-        except Exception:
+        except json.JSONDecodeError:
             return body
         if isinstance(payload, dict):
             payload = self._harden_payload(payload)
@@ -234,7 +246,9 @@ class AIService:
 
         timeout = httpx.Timeout(connect=10.0, read=300.0, write=60.0, pool=10.0)
         with httpx.Client(timeout=timeout, follow_redirects=False) as client:
-            with client.stream(method.upper(), url, headers=req_headers, content=req_body) as r:
+            with client.stream(
+                method.upper(), url, headers=req_headers, content=req_body
+            ) as r:
                 for chunk in r.iter_bytes():
                     if chunk:
                         yield chunk
