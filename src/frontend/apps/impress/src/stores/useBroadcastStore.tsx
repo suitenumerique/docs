@@ -5,7 +5,9 @@ import { create } from 'zustand';
 interface BroadcastState {
   addTask: (taskLabel: string, action: () => void) => void;
   broadcast: (taskLabel: string) => void;
+  cleanupBroadcast: () => void;
   getBroadcastProvider: () => HocuspocusProvider | undefined;
+  handleProviderSync: () => void;
   provider?: HocuspocusProvider;
   setBroadcastProvider: (provider: HocuspocusProvider) => void;
   setTask: (
@@ -15,11 +17,12 @@ interface BroadcastState {
   ) => void;
   tasks: {
     [taskLabel: string]: {
-      task: Y.Array<string>;
+      action: () => void;
       observer: (
         event: Y.YArrayEvent<string>,
         transaction: Y.Transaction,
       ) => void;
+      task: Y.Array<string>;
     };
   };
 }
@@ -27,7 +30,22 @@ interface BroadcastState {
 export const useBroadcastStore = create<BroadcastState>((set, get) => ({
   provider: undefined,
   tasks: {},
-  setBroadcastProvider: (provider) => set({ provider }),
+  setBroadcastProvider: (provider) => {
+    // Clean up old provider listeners
+    const oldProvider = get().provider;
+    if (oldProvider) {
+      oldProvider.off('synced', get().handleProviderSync);
+    }
+
+    provider.on('synced', get().handleProviderSync);
+    set({ provider });
+  },
+  handleProviderSync: () => {
+    const tasks = get().tasks;
+    Object.entries(tasks).forEach(([taskLabel, { action }]) => {
+      get().addTask(taskLabel, action);
+    });
+  },
   getBroadcastProvider: () => {
     const provider = get().provider;
     if (!provider) {
@@ -43,20 +61,16 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
       return;
     }
 
-    const existingTask = get().tasks[taskLabel];
-    if (existingTask) {
-      existingTask.task.unobserve(existingTask.observer);
-      get().setTask(taskLabel, existingTask.task, action);
-      return;
-    }
-
     const task = provider.document.getArray<string>(taskLabel);
     get().setTask(taskLabel, task, action);
   },
   setTask: (taskLabel: string, task: Y.Array<string>, action: () => void) => {
     let isInitializing = true;
-    const observer = () => {
-      if (!isInitializing) {
+    const observer = (
+      _event: Y.YArrayEvent<string>,
+      transaction: Y.Transaction,
+    ) => {
+      if (!isInitializing && !transaction.local) {
         action();
       }
     };
@@ -73,16 +87,27 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
         [taskLabel]: {
           task,
           observer,
+          action,
         },
       },
     }));
   },
   broadcast: (taskLabel) => {
+    // Broadcast via Y.js provider (for users on the same document)
     const obTask = get().tasks?.[taskLabel];
-    if (!obTask || !obTask.task) {
-      console.warn(`Task ${taskLabel} is not defined`);
-      return;
+    if (obTask?.task) {
+      obTask.task.push([`broadcast: ${taskLabel}`]);
     }
-    obTask.task.push([`broadcast: ${taskLabel}`]);
+  },
+  cleanupBroadcast: () => {
+    const provider = get().provider;
+    if (provider) {
+      provider.off('synced', get().handleProviderSync);
+    }
+
+    // Unobserve all document-specific tasks
+    Object.values(get().tasks).forEach(({ task, observer }) => {
+      task.unobserve(observer);
+    });
   },
 }));
