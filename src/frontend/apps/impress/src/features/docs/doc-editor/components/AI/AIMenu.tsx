@@ -197,6 +197,11 @@ export const AIMenu = (props: AIMenuProps) => {
 
       return (
         <Button
+          onClick={async () => {
+            await ai.abort();
+            ai.rejectChanges();
+            ai.closeAIMenu();
+          }}
           size="small"
           variant="secondary"
           icon={
@@ -230,7 +235,7 @@ export const AIMenu = (props: AIMenuProps) => {
     }
 
     return undefined;
-  }, [Components, aiResponseStatus, t]);
+  }, [Components, ai, aiResponseStatus, t]);
 
   return (
     <Box className="--docs--ai-menu" $width="100%">
