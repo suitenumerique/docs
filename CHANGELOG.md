@@ -10,6 +10,7 @@ and this project adheres to
 
 - ✨(frontend) Can print a doc #1832
 - ✨(backend) manage reconciliation requests for user accounts #1878
+- 👷(CI) add GHCR workflow for forked repo testing #1851
 
 ### Changed
 

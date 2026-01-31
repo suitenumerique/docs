@@ -1,0 +1,157 @@
+name: Build and Push to GHCR
+run-name: Build and Push to GHCR
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+
+env:
+  DOCKER_USER: 1001:127
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == true
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      -
+        name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: backend-production
+          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
+
+  build-and-push-frontend:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == true
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      -
+        name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./src/frontend/Dockerfile
+          target: frontend-production
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+            PUBLISH_AS_MIT=false
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
+
+  build-and-push-y-provider:
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == true
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      -
+        name: Checkout repository
+        uses: actions/checkout@v4
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/y-provider
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      -
+        name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./src/frontend/servers/y-provider/Dockerfile
+          target: y-provider
+          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
