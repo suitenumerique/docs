@@ -229,9 +229,9 @@ class BaseDocumentIndexer(ABC):
         """
 
 
-class SearchIndexer(BaseDocumentIndexer):
+class FindDocumentIndexer(BaseDocumentIndexer):
     """
-    Document indexer that pushes documents to La Suite Find app.
+    Document indexer that indexes and searches documents to La Suite Find app.
     """
 
     def search(self, q, token, visited=(), nb_results=None, path=None):
