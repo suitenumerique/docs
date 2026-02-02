@@ -39,7 +39,7 @@ def indexer_settings_fixture(settings):
 
     get_document_indexer.cache_clear()
 
-    settings.SEARCH_INDEXER_CLASS = "core.services.search_indexers.SearchIndexer"
+    settings.SEARCH_INDEXER_CLASS = "core.services.search_indexers.FindDocumentIndexer"
     settings.SEARCH_INDEXER_SECRET = "ThisIsAKeyForTest"
     settings.SEARCH_INDEXER_URL = "http://localhost:8081/api/v1.0/documents/index/"
     settings.SEARCH_INDEXER_QUERY_URL = (
