@@ -58,7 +58,7 @@ export const DocEditorContainer = ({
           <Box $css="flex:1;" $position="relative" $width="100%">
             <Box
               $padding={{ top: 'md', bottom: '2rem' }}
-              $background="white"
+              $background="var(--c--contextuals--background--surface--primary)"
               className={clsx('--docs--editor-container', {
                 '--docs--doc-readonly': readOnly,
                 '--docs--doc-deleted': isDeletedDoc,

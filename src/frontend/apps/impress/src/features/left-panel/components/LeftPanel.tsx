@@ -43,7 +43,9 @@ export const LeftPanel = () => {
             height: calc(100vh - ${HEADER_HEIGHT}px);
             width: 100%;
             overflow: hidden;
-            background-color: var(--c--globals--colors--gray-000);
+            background-color: var(
+              --c--contextuals--background--surface--primary
+            );
           `}
           className="--docs--left-panel-desktop"
           as="nav"
@@ -72,7 +74,9 @@ export const LeftPanel = () => {
               border-right: 1px solid var(--c--globals--colors--gray-200);
               position: fixed;
               transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
-              background-color: var(--c--globals--colors--gray-000);
+              background-color: var(
+                --c--contextuals--background--surface--primary
+              );
               overflow-y: auto;
               overflow-x: hidden;
             `}
