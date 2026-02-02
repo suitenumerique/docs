@@ -16,7 +16,7 @@ export const userReconciliations = async ({
   reconciliationId,
 }: UserReconciliationProps): Promise<UserReconciliationResponse> => {
   const response = await fetchAPI(
-    `user_reconciliations/${type}/${reconciliationId}/`,
+    `user-reconciliations/${type}/${reconciliationId}/`,
   );
 
   if (!response.ok) {

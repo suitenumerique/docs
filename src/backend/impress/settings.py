@@ -869,6 +869,11 @@ class Base(Configuration):
         ),
     )
 
+    # User accounts management
+    USER_RECONCILIATION_FORM_URL = values.Value(
+        None, environ_name="USER_RECONCILIATION_FORM_URL", environ_prefix=None
+    )
+
     LASUITE_MARKETING = {
         "BACKEND": values.Value(
             "lasuite.marketing.backends.dummy.DummyBackend",

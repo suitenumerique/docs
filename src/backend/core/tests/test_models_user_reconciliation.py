@@ -324,7 +324,7 @@ def test_user_reconciliation_verification_emails_are_sent(
     active_email_confirmation_id = rec.active_email_confirmation_id
     inactive_email_confirmation_id = rec.inactive_email_confirmation_id
     assert (
-        f"user_reconciliations/active/{active_email_confirmation_id}/"
+        f"user-reconciliations/active/{active_email_confirmation_id}/"
         in email_1_content
     )
 
@@ -340,7 +340,7 @@ def test_user_reconciliation_verification_emails_are_sent(
     )
 
     assert (
-        f"user_reconciliations/inactive/{inactive_email_confirmation_id}/"
+        f"user-reconciliations/inactive/{inactive_email_confirmation_id}/"
         in email_2_content
     )
 

@@ -266,8 +266,8 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         )
 
         with override(language):
-            msg_html = render_to_string("mail/html/user_template.html", context)
-            msg_plain = render_to_string("mail/text/user_template.txt", context)
+            msg_html = render_to_string("mail/html/template.html", context)
+            msg_plain = render_to_string("mail/text/template.txt", context)
             subject = str(subject)  # Force translation
 
             try:
@@ -344,6 +344,7 @@ class UserReconciliation(BaseModel):
     logs = models.TextField(blank=True)
 
     class Meta:
+        db_table = "impress_user_reconciliation"
         verbose_name = _("user reconciliation")
         verbose_name_plural = _("user reconciliations")
         ordering = ["-created_at"]
@@ -423,18 +424,18 @@ class UserReconciliation(BaseModel):
         language = language or get_language()
         domain = Site.objects.get_current().domain
 
+        message = _(
+            """You have requested a reconciliation of your user accounts on Docs.
+            To confirm that you are the one who initiated the request
+            and that this email belongs to you:"""
+        )
+
         with override(language):
             subject = _("Confirm by clicking the link to start the reconciliation")
             context = {
                 "title": subject,
-                "message_bold": _(
-                    "You have requested a reconciliation of your user accounts on Docs."
-                ),
-                "message": _(
-                    """To confirm that you are the one who initiated the request
-                    and that this email belongs to you:"""
-                ),
-                "link": f"{domain}/user_reconciliations/{user_type}/{confirmation_id}/",
+                "message": message,
+                "link": f"{domain}/user-reconciliations/{user_type}/{confirmation_id}/",
                 "link_label": str(_("Click here")),
                 "button_label": str(_("Confirm")),
             }
@@ -446,12 +447,16 @@ class UserReconciliation(BaseModel):
         language = language or get_language()
         domain = Site.objects.get_current().domain
 
+        message = _(
+            """Your reconciliation request has been processed.
+            New documents are likely associated with your account:"""
+        )
+
         with override(language):
             subject = _("Your accounts have been merged")
             context = {
                 "title": subject,
-                "message_bold": _("Your reconciliation request has been processed."),
-                "message": _("New documents are likely associated with your account:"),
+                "message": message,
                 "link": f"{domain}/",
                 "link_label": str(_("Click here to see")),
                 "button_label": str(_("See my documents")),
@@ -478,6 +483,7 @@ class UserReconciliationCsvImport(BaseModel):
     logs = models.TextField(blank=True)
 
     class Meta:
+        db_table = "impress_user_reconciliation_csv_import"
         verbose_name = _("user reconciliation CSV import")
         verbose_name_plural = _("user reconciliation CSV imports")
 
@@ -498,8 +504,8 @@ class UserReconciliationCsvImport(BaseModel):
         )
 
         with override(language):
-            msg_html = render_to_string("mail/html/user_template.html", context)
-            msg_plain = render_to_string("mail/text/user_template.txt", context)
+            msg_html = render_to_string("mail/html/template.html", context)
+            msg_plain = render_to_string("mail/text/template.txt", context)
             subject = str(subject)  # Force translation
 
             try:
@@ -519,27 +525,23 @@ class UserReconciliationCsvImport(BaseModel):
     ):
         """Method allowing to send email for reconciliation requests with errors."""
         language = language or get_language()
-        domain = Site.objects.get_current().domain
 
         emails = [recipient_email]
+
+        message = _(
+            """Your request for reconciliation was unsuccessful.
+            Reconciliation failed for the following email addresses:
+            {recipient_email}, {other_email}.
+            Please check for typos.
+            You can submit another request with the valid email addresses."""
+        ).format(recipient_email=recipient_email, other_email=other_email)
 
         with override(language):
             subject = _("Reconciliation of your Docs accounts not completed")
             context = {
                 "title": subject,
-                "message_bold": _("Your request for reconciliation was unsuccessful."),
-                "message": _(
-                    """Reconciliation failed for the following email addresses:
-
-                            - {recipient_email}
-                            - {other_email}
-
-                            Please check for typos.
-
-                            You can submit another request with the valid email addresses.
-                             """
-                ).format(recipient_email=recipient_email, other_email=other_email),
-                "link": f"{domain}/",
+                "message": message,
+                "link": settings.USER_RECONCILIATION_FORM_URL,
                 "link_label": str(_("Click here")),
                 "button_label": str(_("Make a new request")),
             }

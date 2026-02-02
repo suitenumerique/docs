@@ -254,7 +254,7 @@ class UserViewSet(
 class ReconciliationConfirmView(APIView):
     """API endpoint to confirm user reconciliation emails.
 
-    GET /user_reconciliations/{user_type}/{confirmation_id}/
+    GET /user-reconciliations/{user_type}/{confirmation_id}/
     Marks `active_email_checked` or `inactive_email_checked` to True.
     """
 

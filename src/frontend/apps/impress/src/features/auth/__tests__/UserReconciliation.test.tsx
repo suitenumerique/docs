@@ -15,7 +15,7 @@ describe('UserReconciliation', () => {
   ['active', 'inactive'].forEach((type) => {
     test(`renders when reconciliation is a ${type} success`, async () => {
       fetchMock.get(
-        `http://test.jest/api/v1.0/user_reconciliations/${type}/123456/`,
+        `http://test.jest/api/v1.0/user-reconciliations/${type}/123456/`,
         { details: 'Success' },
       );
 
@@ -41,7 +41,7 @@ describe('UserReconciliation', () => {
 
   test('renders when reconciliation fails', async () => {
     fetchMock.get(
-      `http://test.jest/api/v1.0/user_reconciliations/active/invalid-id/`,
+      `http://test.jest/api/v1.0/user-reconciliations/active/invalid-id/`,
       {
         throws: new Error('invalid id'),
       },

@@ -61,7 +61,7 @@ urlpatterns = [
                     include(thread_related_router.urls),
                 ),
                 path(
-                    "user_reconciliations/<str:user_type>/<uuid:confirmation_id>/",
+                    "user-reconciliations/<str:user_type>/<uuid:confirmation_id>/",
                     ReconciliationConfirmView.as_view(),
                 ),
             ]

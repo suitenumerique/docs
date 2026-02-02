@@ -162,13 +162,6 @@ class UserReconciliationAdmin(admin.ModelAdmin):
     actions = [process_reconciliation]
 
 
-@admin.register(models.Template)
-class TemplateAdmin(admin.ModelAdmin):
-    """Template admin interface declaration."""
-
-    inlines = (TemplateAccessInline,)
-
-
 class DocumentAccessInline(admin.TabularInline):
     """Inline admin class for document accesses."""
 
