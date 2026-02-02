@@ -10,7 +10,7 @@ from django.test.utils import override_settings
 import pytest
 from openai import OpenAIError
 
-from core.services.ai_services import AIService
+from core.services.ai_services import BLOCKNOTE_TOOL_STRICT_PROMPT, AIService
 
 pytestmark = pytest.mark.django_db
 
@@ -125,7 +125,11 @@ def test_services_ai_proxy_success(mock_create):
     }
     assert response == expected_response
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "hello"}], stream=False
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "hello"},
+        ],
+        stream=False,
     )
 
 
@@ -182,5 +186,9 @@ def test_services_ai_proxy_with_stream(mock_create):
     }
     assert response == expected_response
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "hello"}], stream=True
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "hello"},
+        ],
+        stream=True,
     )
