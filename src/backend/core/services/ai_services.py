@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
+from openai import OpenAI as OpenAI_Client
 from openai import OpenAIError
 
 from core import enums
@@ -13,7 +14,7 @@ from core import enums
 if settings.LANGFUSE_PUBLIC_KEY:
     from langfuse.openai import OpenAI
 else:
-    from openai import OpenAI
+    OpenAI = OpenAI_Client
 
 log = logging.getLogger(__name__)
 
