@@ -21,6 +21,7 @@ import {
   useDocTitleUpdate,
 } from '@/docs/doc-management';
 import { useDuplicateDoc } from '@/docs/doc-management/api';
+import { useFocusMainContent } from '@/hooks';
 
 import { useDetachDoc } from '../api/useDetach';
 import MoveDocIcon from '../assets/doc-extract-bold.svg';
@@ -57,6 +58,8 @@ export const DocTreeItemActions = ({
   const { mutate: detachDoc } = useDetachDoc();
   const treeContext = useTreeContext<Doc | null>();
 
+  const focusMainContent = useFocusMainContent();
+
   // Keyboard navigation inside the actions toolbar (ArrowLeft / ArrowRight).
   useArrowRoving(targetActionsRef.current);
 
@@ -64,7 +67,11 @@ export const DocTreeItemActions = ({
     onSuccess: (duplicatedDoc) => {
       // Reset the tree context root will reset the full tree view.
       treeContext?.setRoot(null);
-      void router.push(`/docs/${duplicatedDoc.id}`);
+      void router.push(`/docs/${duplicatedDoc.id}`).then(() => {
+        requestAnimationFrame(() => {
+          focusMainContent();
+        });
+      });
     },
   });
 
@@ -87,6 +94,9 @@ export const DocTreeItemActions = ({
           if (treeContext.root) {
             treeContext.treeData.setSelectedNode(treeContext.root);
             void router.push(`/docs/${treeContext.root.id}`).then(() => {
+              requestAnimationFrame(() => {
+                focusMainContent();
+              });
               setTimeout(() => {
                 treeContext?.treeData.deleteNode(doc.id);
               }, 100);
@@ -162,9 +172,16 @@ export const DocTreeItemActions = ({
     const parentIdComputed = parentId || treeContext?.root?.id;
 
     if (isTopParent) {
-      void router.push(`/`);
+      void router.push(`/`).then(() => {
+        requestAnimationFrame(() => {
+          focusMainContent();
+        });
+      });
     } else if (parentIdComputed) {
       void router.push(`/docs/${parentIdComputed}`).then(() => {
+        requestAnimationFrame(() => {
+          focusMainContent();
+        });
         setTimeout(() => {
           treeContext?.treeData.deleteNode(doc.id);
         }, 100);
@@ -241,7 +258,10 @@ export const DocTreeItemActions = ({
       </Box>
       {deleteModal.isOpen && (
         <ModalRemoveDoc
-          onClose={deleteModal.onClose}
+          onClose={() => {
+            deleteModal.onClose();
+            targetButtonRef.current?.focus();
+          }}
           doc={doc}
           onSuccess={onSuccessDelete}
         />

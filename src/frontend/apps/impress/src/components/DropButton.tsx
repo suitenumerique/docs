@@ -1,6 +1,7 @@
 import {
   PropsWithChildren,
   ReactNode,
+  RefObject,
   useEffect,
   useRef,
   useState,
@@ -56,6 +57,7 @@ export interface DropButtonProps {
   onOpenChange?: (isOpen: boolean) => void;
   label?: string;
   testId?: string;
+  triggerRef?: RefObject<HTMLButtonElement | null>;
 }
 
 export const DropButton = ({
@@ -66,16 +68,26 @@ export const DropButton = ({
   children,
   label,
   testId,
+  triggerRef,
 }: PropsWithChildren<DropButtonProps>) => {
   const { themeTokens } = useCunninghamTheme();
   const font = themeTokens['font']?.['families']['base'];
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
 
-  const triggerRef = useRef(null);
+  const internalTriggerRef = useRef<HTMLButtonElement>(null);
+  const targetTriggerRef = triggerRef ?? internalTriggerRef;
+  const previousOpenRef = useRef(isOpen);
 
   useEffect(() => {
     setIsLocalOpen(isOpen);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (previousOpenRef.current && !isLocalOpen) {
+      targetTriggerRef.current?.focus();
+    }
+    previousOpenRef.current = isLocalOpen;
+  }, [isLocalOpen, targetTriggerRef]);
 
   const onOpenChangeHandler = (isOpen: boolean) => {
     setIsLocalOpen(isOpen);
@@ -85,7 +97,7 @@ export const DropButton = ({
   return (
     <>
       <StyledButton
-        ref={triggerRef}
+        ref={targetTriggerRef}
         onPress={() => onOpenChangeHandler(true)}
         aria-label={label}
         data-testid={testId}
@@ -99,7 +111,7 @@ export const DropButton = ({
       </StyledButton>
 
       <StyledPopover
-        triggerRef={triggerRef}
+        triggerRef={targetTriggerRef}
         isOpen={isLocalOpen}
         onOpenChange={onOpenChangeHandler}
         className="--docs--drop-button-popover"

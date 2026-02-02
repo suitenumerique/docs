@@ -2,7 +2,7 @@ import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -34,6 +34,7 @@ import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
 } from '@/docs/doc-versioning';
+import { useFocusMainContent } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
@@ -59,12 +60,20 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
+  const optionsTriggerRef = useRef<HTMLButtonElement>(null);
 
   const { isSmallMobile, isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
+
+  const focusMainContent = useFocusMainContent();
+
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: (data) => {
-      void router.push(`/docs/${data.id}`);
+      void router.push(`/docs/${data.id}`).then(() => {
+        requestAnimationFrame(() => {
+          focusMainContent();
+        });
+      });
     },
   });
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -220,6 +229,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         <DropdownMenu
           options={options}
           label={t('Open the document options')}
+          triggerRef={optionsTriggerRef}
           buttonCss={css`
             padding: ${spacingsTokens['xs']};
             ${isSmallMobile
@@ -245,7 +255,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       )}
       {isModalRemoveOpen && (
         <ModalRemoveDoc
-          onClose={() => setIsModalRemoveOpen(false)}
+          onClose={() => {
+            setIsModalRemoveOpen(false);
+            optionsTriggerRef.current?.focus();
+          }}
           doc={doc}
           onSuccess={() => {
             const isTopParent = doc.id === treeContext?.root?.id;
@@ -254,9 +267,16 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               treeContext?.root?.id;
 
             if (isTopParent) {
-              void router.push(`/`);
+              void router.push(`/`).then(() => {
+                requestAnimationFrame(() => {
+                  focusMainContent();
+                });
+              });
             } else if (parentId) {
               void router.push(`/docs/${parentId}`).then(() => {
+                requestAnimationFrame(() => {
+                  focusMainContent();
+                });
                 setTimeout(() => {
                   treeContext?.treeData.deleteNode(doc.id);
                 }, 100);
@@ -267,7 +287,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       )}
       {selectHistoryModal.isOpen && (
         <ModalSelectVersion
-          onClose={() => selectHistoryModal.close()}
+          onClose={() => {
+            selectHistoryModal.close();
+            optionsTriggerRef.current?.focus();
+          }}
           doc={doc}
         />
       )}

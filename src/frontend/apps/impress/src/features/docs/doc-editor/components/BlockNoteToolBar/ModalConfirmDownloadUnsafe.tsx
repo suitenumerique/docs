@@ -1,7 +1,14 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonElement,
+  Modal,
+  ModalSize,
+} from '@gouvfr-lasuite/cunningham-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
+import { useModalAutoFocus } from '@/hooks';
 
 interface ModalConfirmDownloadUnsafeProps {
   onClose: () => void;
@@ -13,6 +20,9 @@ export const ModalConfirmDownloadUnsafe = ({
   onClose,
 }: ModalConfirmDownloadUnsafeProps) => {
   const { t } = useTranslation();
+  const cancelButtonRef = useRef<ButtonElement>(null);
+
+  useModalAutoFocus(cancelButtonRef);
 
   return (
     <Modal
@@ -26,6 +36,7 @@ export const ModalConfirmDownloadUnsafe = ({
             aria-label={t('Cancel the download')}
             variant="secondary"
             onClick={() => onClose()}
+            ref={cancelButtonRef}
           >
             {t('Cancel')}
           </Button>

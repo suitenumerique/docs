@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️(frontend) keep focus after doc actions in menus #1857
+
 ## [v4.5.0] - 2026-01-28
 
 ### Added 

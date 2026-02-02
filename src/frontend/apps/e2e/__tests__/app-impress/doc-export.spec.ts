@@ -19,6 +19,22 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
+/**
+ * Helper function to select an option from the format combobox in the export modal.
+ * Handles the auto-focus delay and ensures the dropdown is properly opened.
+ */
+const selectExportFormat = async (page: Page, option: string) => {
+  const combo = page.getByRole('combobox', { name: 'Format' });
+  await expect(combo).toBeVisible();
+  // Wait a bit for auto-focus to complete, then focus the combobox explicitly
+  await page.waitForTimeout(150);
+  await combo.focus();
+  await combo.click();
+  const listbox = page.getByRole('listbox');
+  await expect(listbox).toBeVisible();
+  await page.getByRole('option', { name: option }).click();
+};
+
 test.describe('Doc Export', () => {
   test('it check if all elements are visible', async ({
     page,
@@ -59,8 +75,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page.getByRole('combobox', { name: 'Format' }).click();
-    await page.getByRole('option', { name: 'Docx' }).click();
+    await selectExportFormat(page, 'Docx');
 
     await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
 
@@ -89,8 +104,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page.getByRole('combobox', { name: 'Format' }).click();
-    await page.getByRole('option', { name: 'Odt' }).click();
+    await selectExportFormat(page, 'Odt');
 
     await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
 
@@ -145,8 +159,7 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await page.getByRole('combobox', { name: 'Format' }).click();
-    await page.getByRole('option', { name: 'HTML' }).click();
+    await selectExportFormat(page, 'HTML');
 
     await expect(page.getByTestId('doc-export-download-button')).toBeVisible();
 

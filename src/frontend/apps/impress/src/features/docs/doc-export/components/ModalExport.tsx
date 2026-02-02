@@ -3,6 +3,7 @@ import { ODTExporter } from '@blocknote/xl-odt-exporter';
 import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
+  ButtonElement,
   Loader,
   Modal,
   ModalSize,
@@ -14,7 +15,7 @@ import { DocumentProps, pdf } from '@react-pdf/renderer';
 import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
 import i18next from 'i18next';
 import JSZip from 'jszip';
-import { cloneElement, isValidElement, useState } from 'react';
+import { cloneElement, isValidElement, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -22,6 +23,7 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { useEditorStore } from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
+import { useModalAutoFocus } from '@/hooks';
 import { fallbackLng } from '@/i18n/config';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
@@ -51,12 +53,15 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const { editor } = useEditorStore();
+  const downloadButtonRef = useRef<ButtonElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [format, setFormat] = useState<DocDownloadFormat>(
     DocDownloadFormat.PDF,
   );
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
+
+  useModalAutoFocus(downloadButtonRef);
 
   async function onSubmit() {
     if (!editor) {
@@ -202,6 +207,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             aria-label={t('Download')}
             variant="primary"
             fullWidth
+            ref={downloadButtonRef}
             onClick={() => void onSubmit()}
             disabled={isExporting}
           >

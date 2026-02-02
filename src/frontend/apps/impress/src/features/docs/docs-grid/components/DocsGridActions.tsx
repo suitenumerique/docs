@@ -1,4 +1,5 @@
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -12,20 +13,33 @@ import {
   useDeleteFavoriteDoc,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { useFocusMainContent } from '@/hooks';
 
 interface DocsGridActionsProps {
   doc: Doc;
   openShareModal?: () => void;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export const DocsGridActions = ({
   doc,
   openShareModal,
+  triggerRef,
 }: DocsGridActionsProps) => {
   const { t } = useTranslation();
 
   const deleteModal = useModal();
-  const { mutate: duplicateDoc } = useDuplicateDoc();
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const focusMainContent = useFocusMainContent();
+
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: () => {
+      requestAnimationFrame(() => {
+        focusMainContent();
+      });
+    },
+  });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
@@ -90,6 +104,7 @@ export const DocsGridActions = ({
         options={options}
         label={menuLabel}
         aria-label={t('More options')}
+        triggerRef={triggerRef ?? menuTriggerRef}
         buttonCss={css`
           &:hover {
             background-color: unset;
@@ -112,7 +127,18 @@ export const DocsGridActions = ({
       </DropdownMenu>
 
       {deleteModal.isOpen && (
-        <ModalRemoveDoc onClose={deleteModal.onClose} doc={doc} />
+        <ModalRemoveDoc
+          onClose={() => {
+            deleteModal.onClose();
+            menuTriggerRef.current?.focus();
+          }}
+          doc={doc}
+          onSuccess={() => {
+            requestAnimationFrame(() => {
+              focusMainContent();
+            });
+          }}
+        />
       )}
     </>
   );

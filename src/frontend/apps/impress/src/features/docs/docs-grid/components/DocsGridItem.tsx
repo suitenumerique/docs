@@ -1,6 +1,6 @@
 import { Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
-import { KeyboardEvent } from 'react';
+import { KeyboardEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -33,6 +33,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
   const shareModal = useModal();
+  const shareTriggerRef = useRef<HTMLButtonElement>(null);
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
   const isShared = isPublic || isAuthenticated;
@@ -182,13 +183,23 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             {isInTrashbin ? (
               <DocsGridTrashbinActions doc={doc} />
             ) : (
-              <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+              <DocsGridActions
+                doc={doc}
+                openShareModal={handleShareClick}
+                triggerRef={shareTriggerRef}
+              />
             )}
           </Box>
         </Box>
       </Box>
       {shareModal.isOpen && (
-        <DocShareModal doc={doc} onClose={shareModal.close} />
+        <DocShareModal
+          doc={doc}
+          onClose={() => {
+            shareModal.close();
+            shareTriggerRef.current?.focus();
+          }}
+        />
       )}
     </>
   );

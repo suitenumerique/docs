@@ -1,11 +1,13 @@
 import {
   Button,
+  ButtonElement,
   Modal,
   ModalSize,
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
 import { useRouter } from 'next/router';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Text } from '@/components';
@@ -15,6 +17,7 @@ import {
   useProviderStore,
   useUpdateDoc,
 } from '@/docs/doc-management/';
+import { useModalAutoFocus } from '@/hooks';
 
 import { useDocVersion } from '../api';
 import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
@@ -41,6 +44,9 @@ export const ModalConfirmationVersion = ({
   const { toast } = useToastProvider();
   const { push } = useRouter();
   const { provider } = useProviderStore();
+  const cancelButtonRef = useRef<ButtonElement>(null);
+
+  useModalAutoFocus(cancelButtonRef);
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
@@ -77,6 +83,7 @@ export const ModalConfirmationVersion = ({
             variant="secondary"
             fullWidth
             onClick={() => onClose()}
+            ref={cancelButtonRef}
           >
             {t('Cancel')}
           </Button>
