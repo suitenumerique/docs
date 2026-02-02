@@ -70,7 +70,9 @@ export const LeftPanelTargetFilters = () => {
             href={href}
             aria-label={query.label}
             aria-current={isActive ? 'page' : undefined}
-            onClick={handleClick}
+            onClick={() => {
+              handleClick();
+            }}
             $css={css`
               display: flex;
               align-items: center;
