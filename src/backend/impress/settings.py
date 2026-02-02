@@ -169,6 +169,11 @@ class Base(Configuration):
         environ_name="AWS_STORAGE_BUCKET_NAME",
         environ_prefix=None,
     )
+    AWS_S3_SIGNATURE_VERSION = values.Value(
+        "s3v4",
+        environ_name="AWS_S3_SIGNATURE_VERSION",
+        environ_prefix=None,
+    )
 
     # Document images
     DOCUMENT_IMAGE_MAX_SIZE = values.IntegerValue(
