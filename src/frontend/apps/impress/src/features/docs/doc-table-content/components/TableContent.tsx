@@ -72,7 +72,7 @@ export const TableContent = () => {
           border: 1px solid ${colorsTokens['brand-100']};
           overflow: hidden;
           border-radius: ${spacingsTokens['3xs']};
-          background: ${colorsTokens['gray-000']};
+          background: var(--c--contextuals--background--surface--primary);
           ${isOpen &&
           css`
             display: flex;
