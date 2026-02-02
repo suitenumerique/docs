@@ -223,7 +223,7 @@ export const DocsGridItemDate = ({
   }
 
   return (
-    <StyledLink href={`/docs/${doc.id}`}>
+    <StyledLink href={`/docs/${doc.id}`} tabIndex={-1}>
       <Text
         $size="xs"
         $layer="background"

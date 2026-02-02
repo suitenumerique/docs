@@ -6,9 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️ (frontend) prevent dates from being focusable #1855
+
 ### Fixed
 
-🐛(frontend) fix broadcast store sync #1846
+- 🐛(frontend) fix broadcast store sync #1846
 
 ## [v4.5.0] - 2026-01-28
 
