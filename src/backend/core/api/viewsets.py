@@ -10,7 +10,6 @@ import socket
 import uuid
 from collections import defaultdict
 from urllib.parse import unquote, urlencode, urlparse
-from urllib.request import Request
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -65,7 +64,12 @@ from core.tasks.mail import send_ask_for_access_mail
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
-from .filters import DocumentFilter, ListDocumentFilter, SubDocumentFilter, UserSearchFilter
+from .filters import (
+    DocumentFilter,
+    ListDocumentFilter,
+    SubDocumentFilter,
+    UserSearchFilter,
+)
 from .throttling import (
     DocumentThrottle,
     UserListThrottleBurst,
@@ -465,9 +469,7 @@ class DocumentViewSet(
         # Not calling filter_queryset. We do our own cooking.
         queryset = self.get_queryset()
 
-        filterset = ListDocumentFilter(
-            request.GET, queryset=queryset, request=request
-        )
+        filterset = ListDocumentFilter(request.GET, queryset=queryset, request=request)
         if not filterset.is_valid():
             raise drf.exceptions.ValidationError(filterset.errors)
         filter_data = filterset.form.cleaned_data
@@ -1164,7 +1166,6 @@ class DocumentViewSet(
             {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
         )
 
-
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
     def search(self, request, *args, **kwargs):
@@ -1218,7 +1219,7 @@ class DocumentViewSet(
 
     def title_search(self, request, validated_data, *args, **kwargs):
         request.GET = request.GET.copy()
-        request.GET['title'] = validated_data['q']
+        request.GET["title"] = validated_data["q"]
         if not "path" in validated_data or not validated_data["path"]:
             return self.list(request, *args, **kwargs)
         else:
@@ -1237,7 +1238,6 @@ class DocumentViewSet(
 
         queryset = filterset.qs
         return self.get_response_for_queryset(queryset)
-
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
