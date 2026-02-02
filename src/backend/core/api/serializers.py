@@ -827,9 +827,7 @@ class AIProxySerializer(serializers.Serializer):
 
     messages = serializers.ListField(
         required=True,
-        child=serializers.DictField(
-            child=serializers.CharField(required=True),
-        ),
+        child=serializers.DictField(),
         allow_empty=False,
     )
     model = serializers.CharField(required=True)

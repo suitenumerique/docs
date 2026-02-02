@@ -13,7 +13,7 @@ export const CONFIG = {
   },
   AI_FEATURE_ENABLED: true,
   AI_MODEL: 'llama',
-  AI_STREAM: false,
+  AI_STREAM: true,
   API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',

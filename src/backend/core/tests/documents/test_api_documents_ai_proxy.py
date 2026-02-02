@@ -21,7 +21,7 @@ pytestmark = pytest.mark.django_db
 def ai_settings(settings):
     """Fixture to set AI settings."""
     settings.AI_MODEL = "llama"
-    settings.AI_BASE_URL = "http://example.com"
+    settings.AI_BASE_URL = "http://localhost-ai:12345/"
     settings.AI_API_KEY = "test-key"
     settings.AI_FEATURE_ENABLED = True
 
@@ -62,7 +62,7 @@ def test_api_documents_ai_proxy_anonymous_forbidden(reach, role):
     }
 
 
-@override_settings(AI_ALLOW_REACH_FROM="public")
+@override_settings(AI_ALLOW_REACH_FROM="public", AI_STREAM=False)
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_anonymous_success(mock_create):
     """
@@ -187,6 +187,7 @@ def test_api_documents_ai_proxy_authenticated_forbidden(reach, role):
         ("public", "editor"),
     ],
 )
+@override_settings(AI_STREAM=False)
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_authenticated_success(mock_create, reach, role):
     """
@@ -272,6 +273,7 @@ def test_api_documents_ai_proxy_reader(via, mock_user_teams):
 
 @pytest.mark.parametrize("role", ["editor", "administrator", "owner"])
 @pytest.mark.parametrize("via", VIA)
+@override_settings(AI_STREAM=False)
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_success(mock_create, via, role, mock_user_teams):
     """Users with sufficient permissions should be able to request AI proxy."""
@@ -501,6 +503,7 @@ def test_api_documents_ai_proxy_additional_parameters(mock_create):
     )
 
 
+@override_settings(AI_STREAM=False)
 @override_settings(AI_DOCUMENT_RATE_THROTTLE_RATES={"minute": 3, "hour": 6, "day": 10})
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_throttling_document(mock_create):
@@ -546,6 +549,7 @@ def test_api_documents_ai_proxy_throttling_document(mock_create):
     }
 
 
+@override_settings(AI_STREAM=False)
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_complex_conversation(mock_create):
     """AI proxy should handle complex conversations with multiple messages."""

@@ -1,11 +1,13 @@
 """AI services."""
 
+import json
 import logging
 from typing import Any, Dict, Generator
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
+from openai import OpenAI as OpenAI_Client
 from openai import OpenAIError
 
 from core import enums
@@ -13,7 +15,7 @@ from core import enums
 if settings.LANGFUSE_PUBLIC_KEY:
     from langfuse.openai import OpenAI
 else:
-    from openai import OpenAI
+    OpenAI = OpenAI_Client
 
 log = logging.getLogger(__name__)
 
@@ -192,8 +194,20 @@ class AIService:
 
     def stream(self, data: dict) -> Generator[str, None, None]:
         """Stream AI API requests to the configured AI provider."""
-        stream = self.proxy(data, stream=True)
-        for chunk in stream:
-            yield f"data: {chunk.model_dump_json()}\n\n"
+
+        try:
+            stream = self.proxy(data, stream=True)
+            for chunk in stream:
+                try:
+                    chunk_dict = (
+                        chunk.model_dump() if hasattr(chunk, "model_dump") else chunk
+                    )
+                    chunk_json = json.dumps(chunk_dict)
+                    yield f"data: {chunk_json}\n\n"
+                except (AttributeError, TypeError) as e:
+                    log.error("Error serializing chunk: %s, chunk: %s", e, chunk)
+                    continue
+        except (OpenAIError, RuntimeError, OSError, ValueError) as e:
+            log.error("Streaming error: %s", e)
 
         yield "data: [DONE]\n\n"
