@@ -2,12 +2,11 @@
 
 import json
 import logging
-from typing import Generator
+from typing import Any, Dict, Generator
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from openai import OpenAI as OpenAI_Client
 from openai import OpenAIError
 
 from core import enums
@@ -15,10 +14,41 @@ from core import enums
 if settings.LANGFUSE_PUBLIC_KEY:
     from langfuse.openai import OpenAI
 else:
-    OpenAI = OpenAI_Client
-    
+    from openai import OpenAI
+
 log = logging.getLogger(__name__)
 
+
+BLOCKNOTE_TOOL_STRICT_PROMPT = """
+You are editing a BlockNote document via the tool applyDocumentOperations.
+
+You MUST respond ONLY by calling applyDocumentOperations.
+The tool input MUST be valid JSON:
+{ "operations": [ ... ] }
+
+Each operation MUST include "type" and it MUST be one of:
+- "update" (requires: id, block)
+- "add"    (requires: referenceId, position, blocks)
+- "delete" (requires: id)
+
+VALID SHAPES (FOLLOW EXACTLY):
+
+Update:
+{ "type":"update", "id":"<id$>", "block":"<p>...</p>" }
+IMPORTANT: "block" MUST be a STRING containing a SINGLE valid HTML element.
+
+Add:
+{ "type":"add", "referenceId":"<id$>", "position":"before|after", "blocks":["<p>...</p>"] }
+IMPORTANT: "blocks" MUST be an ARRAY OF STRINGS.
+Each item MUST be a STRING containing a SINGLE valid HTML element.
+
+Delete:
+{ "type":"delete", "id":"<id$>" }
+
+IDs ALWAYS end with "$". Use ids EXACTLY as provided.
+
+Return ONLY the JSON tool input. No prose, no markdown.
+"""
 
 AI_ACTIONS = {
     "prompt": (
@@ -106,11 +136,58 @@ class AIService:
         system_content = AI_TRANSLATE.format(language=language_display)
         return self.call_ai_api(system_content, text)
 
+    def _normalize_tools(self, tools: list) -> list:
+        """
+        Normalize tool definitions to ensure they have required fields.
+        """
+        normalized = []
+        for tool in tools:
+            if isinstance(tool, dict) and tool.get("type") == "function":
+                fn = tool.get("function") or {}
+                if isinstance(fn, dict) and not fn.get("description"):
+                    fn["description"] = f"Tool {fn.get('name', 'unknown')}."
+                tool["function"] = fn
+            normalized.append(tool)
+        return normalized
+
+    def _harden_payload(
+        self, payload: Dict[str, Any], stream: bool = False
+    ) -> Dict[str, Any]:
+        """Harden the AI API payload to enforce compliance and tool usage."""
+        payload["stream"] = stream
+
+        # Remove stream_options if stream is False
+        if not stream and "stream_options" in payload:
+            payload.pop("stream_options")
+
+        # Tools normalization
+        if isinstance(payload.get("tools"), list):
+            payload["tools"] = self._normalize_tools(payload["tools"])
+
+        # Inject strict system prompt once
+        msgs = payload.get("messages")
+        if isinstance(msgs, list):
+            need = True
+            if msgs and isinstance(msgs[0], dict) and msgs[0].get("role") == "system":
+                c = msgs[0].get("content") or ""
+                if (
+                    isinstance(c, str)
+                    and "applyDocumentOperations" in c
+                    and "blocks" in c
+                ):
+                    need = False
+            if need:
+                payload["messages"] = [
+                    {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT}
+                ] + msgs
+
+        return payload
+
     def proxy(self, data: dict, stream: bool = False) -> Generator[str, None, None]:
         """Proxy AI API requests to the configured AI provider."""
-        data["stream"] = stream
+        payload = self._harden_payload(data, stream=stream)
         try:
-            return self.client.chat.completions.create(**data)
+            return self.client.chat.completions.create(**payload)
         except OpenAIError as e:
             raise RuntimeError(f"Failed to proxy AI request: {e}") from e
 

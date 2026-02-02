@@ -11,6 +11,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories
+from core.services.ai_services import BLOCKNOTE_TOOL_STRICT_PROMPT
 from core.tests.conftest import TEAM, USER, VIA
 
 pytestmark = pytest.mark.django_db
@@ -110,7 +111,10 @@ def test_api_documents_ai_proxy_anonymous_success(mock_create):
     )
 
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "Hello"}],
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "Hello"},
+        ],
         model="llama",
         stream=False,
     )
@@ -228,7 +232,10 @@ def test_api_documents_ai_proxy_authenticated_success(mock_create, reach, role):
     assert response_data["choices"][0]["message"]["content"] == "Hi there!"
 
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "Hello"}],
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "Hello"},
+        ],
         model="llama",
         stream=False,
     )
@@ -315,7 +322,10 @@ def test_api_documents_ai_proxy_success(mock_create, via, role, mock_user_teams)
     assert response_data["choices"][0]["message"]["content"] == "Success!"
 
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "Test message"}],
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "Test message"},
+        ],
         model="llama",
         stream=False,
     )
@@ -412,6 +422,7 @@ def test_api_documents_ai_proxy_invalid_message_format():
     }
 
 
+@override_settings(AI_STREAM=False)
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_stream_disabled(mock_create):
     """Stream should be automatically disabled in AI proxy requests."""
@@ -440,12 +451,16 @@ def test_api_documents_ai_proxy_stream_disabled(mock_create):
     assert response.status_code == 200
     # Verify that stream was set to False
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "Hello"}],
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "Hello"},
+        ],
         model="llama",
         stream=False,
     )
 
 
+@override_settings(AI_STREAM=False)
 @patch("openai.resources.chat.completions.Completions.create")
 def test_api_documents_ai_proxy_additional_parameters(mock_create):
     """AI proxy should pass through additional parameters to the AI service."""
@@ -476,7 +491,10 @@ def test_api_documents_ai_proxy_additional_parameters(mock_create):
     assert response.status_code == 200
     # Verify that additional parameters were passed through
     mock_create.assert_called_once_with(
-        messages=[{"role": "user", "content": "Hello"}],
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "Hello"},
+        ],
         model="llama",
         temperature=0.7,
         max_tokens=100,
@@ -561,6 +579,7 @@ def test_api_documents_ai_proxy_complex_conversation(mock_create):
     mock_create.return_value = mock_response
 
     complex_messages = [
+        {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
         {"role": "system", "content": "You are a helpful programming assistant."},
         {"role": "user", "content": "How do I write a for loop in Python?"},
         {
@@ -688,3 +707,93 @@ def test_api_documents_ai_proxy_ai_feature_disabled(settings):
 
     assert response.status_code == 400
     assert response.json() == ["AI feature is not enabled."]
+
+
+@override_settings(AI_STREAM=False)
+@patch("openai.resources.chat.completions.Completions.create")
+def test_api_documents_ai_proxy_harden_payload(mock_create):
+    """
+    AI proxy should harden the payload by default:
+    - it will remove stream_options if stream is False
+    - normalize tools by adding descriptions if missing
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    document = factories.DocumentFactory(link_reach="public", link_role="editor")
+
+    mock_response = MagicMock()
+    mock_response.model_dump.return_value = {
+        "id": "chatcmpl-789",
+        "object": "chat.completion",
+        "model": "llama",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "Success!"},
+                "finish_reason": "stop",
+            }
+        ],
+    }
+    mock_create.return_value = mock_response
+
+    url = f"/api/v1.0/documents/{document.id!s}/ai-proxy/"
+    response = client.post(
+        url,
+        {
+            "messages": [{"role": "user", "content": "Hello"}],
+            "model": "llama",
+            "stream": False,
+            "stream_options": {"include_usage": True},
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "applyDocumentOperations",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "operations": {"type": "array", "items": {"anyOf": []}}
+                            },
+                            "additionalProperties": False,
+                            "required": ["operations"],
+                        },
+                    },
+                }
+            ],
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    response_data = response.json()
+    assert response_data["id"] == "chatcmpl-789"
+    assert response_data["choices"][0]["message"]["content"] == "Success!"
+
+    mock_create.assert_called_once_with(
+        messages=[
+            {"role": "system", "content": BLOCKNOTE_TOOL_STRICT_PROMPT},
+            {"role": "user", "content": "Hello"},
+        ],
+        model="llama",
+        stream=False,
+        tools=[
+            {
+                "type": "function",
+                "function": {
+                    "name": "applyDocumentOperations",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "operations": {"type": "array", "items": {"anyOf": []}}
+                        },
+                        "additionalProperties": False,
+                        "required": ["operations"],
+                    },
+                    "description": "Tool applyDocumentOperations.",
+                },
+            }
+        ],
+    )
