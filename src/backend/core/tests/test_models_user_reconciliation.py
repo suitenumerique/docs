@@ -389,10 +389,10 @@ def test_user_reconciliation_only_starts_if_checks_are_made(
     assert (user_1.is_active, user_2.is_active) == users_active_before
 
 
-def test_process_documentaccess_reconciliation(
+def test_process_reconciliation_updates_accesses(
     user_reconciliation_users_and_docs,
 ):
-    """Use the fixture to verify accesses are consolidated on the active user."""
+    """Test that accesses are consolidated on the active user."""
     user_1, user_2, userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
 
     u1_2 = userdocs_u1[2]
@@ -456,3 +456,147 @@ def test_process_documentaccess_reconciliation(
     email_content = " ".join(email.body.split())
 
     assert "Your accounts have been merged" in email_content
+
+
+def test_process_reconciliation_updates_linktraces(
+    user_reconciliation_users_and_docs,
+):
+    """Test that linktraces are consolidated on the active user."""
+    user_1, user_2, userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
+
+    u1_2 = userdocs_u1[2]
+    u1_5 = userdocs_u1[5]
+    u2doc1 = userdocs_u2[1].document
+    u2doc5 = userdocs_u2[5].document
+
+    doc_both = u1_2.document
+    models.LinkTrace.objects.create(document=doc_both, user=user_1)
+    models.LinkTrace.objects.create(document=doc_both, user=user_2)
+
+    doc_inactive_only = userdocs_u2[4].document
+    models.LinkTrace.objects.create(
+        document=doc_inactive_only, user=user_2, is_masked=True
+    )
+
+    doc_active_only = userdocs_u1[4].document
+    models.LinkTrace.objects.create(document=doc_active_only, user=user_1)
+
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_user=user_1,
+        inactive_user=user_2,
+        active_email_checked=True,
+        inactive_email_checked=True,
+        status="ready",
+    )
+
+    qs = models.UserReconciliation.objects.filter(id=rec.id)
+    process_reconciliation(None, None, qs)
+
+    rec.refresh_from_db()
+    user_1.refresh_from_db()
+    user_2.refresh_from_db()
+    u1_2.refresh_from_db(
+        from_queryset=models.DocumentAccess.objects.select_for_update()
+    )
+    u1_5.refresh_from_db(
+        from_queryset=models.DocumentAccess.objects.select_for_update()
+    )
+
+    # Inactive user should have no linktraces
+    assert models.LinkTrace.objects.filter(user=user_2).count() == 0
+
+    # doc_both should have a single LinkTrace owned by the active user
+    assert (
+        models.LinkTrace.objects.filter(user=user_1, document=doc_both).exists() is True
+    )
+    assert models.LinkTrace.objects.filter(user=user_1, document=doc_both).count() == 1
+    assert (
+        models.LinkTrace.objects.filter(user=user_2, document=doc_both).exists()
+        is False
+    )
+
+    # doc_inactive_only should now be linked to active user and preserve is_masked
+    lt = models.LinkTrace.objects.filter(
+        user=user_1, document=doc_inactive_only
+    ).first()
+    assert lt is not None
+    assert lt.is_masked is True
+
+    # doc_active_only should still belong to active user
+    assert models.LinkTrace.objects.filter(
+        user=user_1, document=doc_active_only
+    ).exists()
+
+
+def test_process_reconciliation_updates_favorites(
+    user_reconciliation_users_and_docs,
+):
+    """Test that favorites are consolidated on the active user."""
+    user_1, user_2, userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
+
+    u1_2 = userdocs_u1[2]
+    u1_5 = userdocs_u1[5]
+    u2doc1 = userdocs_u2[1].document
+    u2doc5 = userdocs_u2[5].document
+
+    doc_both = u1_2.document
+    models.DocumentFavorite.objects.create(document=doc_both, user=user_1)
+    models.DocumentFavorite.objects.create(document=doc_both, user=user_2)
+
+    doc_inactive_only = userdocs_u2[4].document
+    models.DocumentFavorite.objects.create(document=doc_inactive_only, user=user_2)
+
+    doc_active_only = userdocs_u1[4].document
+    models.DocumentFavorite.objects.create(document=doc_active_only, user=user_1)
+
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_user=user_1,
+        inactive_user=user_2,
+        active_email_checked=True,
+        inactive_email_checked=True,
+        status="ready",
+    )
+
+    qs = models.UserReconciliation.objects.filter(id=rec.id)
+    process_reconciliation(None, None, qs)
+
+    rec.refresh_from_db()
+    user_1.refresh_from_db()
+    user_2.refresh_from_db()
+    u1_2.refresh_from_db(
+        from_queryset=models.DocumentAccess.objects.select_for_update()
+    )
+    u1_5.refresh_from_db(
+        from_queryset=models.DocumentAccess.objects.select_for_update()
+    )
+
+    # Inactive user should have no document favorites
+    assert models.DocumentFavorite.objects.filter(user=user_2).count() == 0
+
+    # doc_both should have a single DocumentFavorite owned by the active user
+    assert (
+        models.DocumentFavorite.objects.filter(user=user_1, document=doc_both).exists()
+        is True
+    )
+    assert (
+        models.DocumentFavorite.objects.filter(user=user_1, document=doc_both).count()
+        == 1
+    )
+    assert (
+        models.DocumentFavorite.objects.filter(user=user_2, document=doc_both).exists()
+        is False
+    )
+
+    # doc_inactive_only should now be linked to active user
+    df = models.DocumentFavorite.objects.filter(
+        user=user_1, document=doc_inactive_only
+    ).first()
+
+    # doc_active_only should still belong to active user
+    assert models.DocumentFavorite.objects.filter(
+        user=user_1, document=doc_active_only
+    ).exists()

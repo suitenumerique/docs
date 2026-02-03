@@ -383,8 +383,9 @@ class UserReconciliation(BaseModel):
         """
         Process the reconciliation request as a transaction.
 
-        Its action is threefold:
         - Transfer document accesses from inactive to active user, updating roles as needed.
+        - Transfer document favorites from inactive to active user.
+        - Transfer link traces from inactive to active user.
         - Activate the active user and deactivate the inactive user.
         - Update the reconciliation entry itself.
         """
@@ -393,6 +394,11 @@ class UserReconciliation(BaseModel):
         updated_accesses, removed_accesses = (
             self.prepare_documentaccess_reconciliation()
         )
+        updated_linktraces, removed_linktraces = self.prepare_linktrace_reconciliation()
+        update_favorites, removed_favorites = (
+            self.prepare_document_favorite_reconciliation()
+        )
+
         self.active_user.is_active = True
         self.inactive_user.is_active = False
 
@@ -400,8 +406,18 @@ class UserReconciliation(BaseModel):
         DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
 
         if removed_accesses:
-            ids_to_delete = [rd.id for rd in removed_accesses]
+            ids_to_delete = [entry.id for entry in removed_accesses]
             DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
+
+        DocumentFavorite.objects.bulk_update(update_favorites, ["user"])
+        if removed_favorites:
+            ids_to_delete = [entry.id for entry in removed_favorites]
+            DocumentFavorite.objects.filter(id__in=ids_to_delete).delete()
+
+        LinkTrace.objects.bulk_update(updated_linktraces, ["user"])
+        if removed_linktraces:
+            ids_to_delete = [entry.id for entry in removed_linktraces]
+            LinkTrace.objects.filter(id__in=ids_to_delete).delete()
 
         User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
 
@@ -423,9 +439,11 @@ class UserReconciliation(BaseModel):
         inactive_accesses = DocumentAccess.objects.filter(user=self.inactive_user)
 
         # Check documents where the active user already has access
-        documents_with_both_users = inactive_accesses.values_list("document", flat=True)
+        inactive_accesses_documents = inactive_accesses.values_list(
+            "document", flat=True
+        )
         existing_accesses = DocumentAccess.objects.filter(user=self.active_user).filter(
-            document__in=documents_with_both_users
+            document__in=inactive_accesses_documents
         )
         existing_roles_per_doc = dict(existing_accesses.values_list("document", "role"))
 
@@ -444,6 +462,50 @@ class UserReconciliation(BaseModel):
                 updated_accesses.append(entry)
 
         return updated_accesses, removed_accesses
+
+    def prepare_document_favorite_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring document favorites from the inactive user
+        to the active user.
+        """
+        updated_favorites = []
+        removed_favorites = []
+
+        existing_favorites = DocumentFavorite.objects.filter(user=self.active_user)
+        existing_favorite_doc_ids = set(
+            existing_favorites.values_list("document_id", flat=True)
+        )
+
+        inactive_favorites = DocumentFavorite.objects.filter(user=self.inactive_user)
+
+        for entry in inactive_favorites:
+            if entry.document_id in existing_favorite_doc_ids:
+                removed_favorites.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_favorites.append(entry)
+
+        return updated_favorites, removed_favorites
+
+    def prepare_linktrace_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring link traces from the inactive user
+        to the active user.
+        """
+        updated_linktraces = []
+        removed_linktraces = []
+
+        existing_linktraces = LinkTrace.objects.filter(user=self.active_user)
+        inactive_linktraces = LinkTrace.objects.filter(user=self.inactive_user)
+
+        for entry in inactive_linktraces:
+            if existing_linktraces.filter(document=entry.document).exists():
+                removed_linktraces.append(entry)
+            else:
+                entry.user = self.active_user
+                updated_linktraces.append(entry)
+
+        return updated_linktraces, removed_linktraces
 
     def send_reconciliation_confirm_email(
         self, user, user_type, confirmation_id, language=None
