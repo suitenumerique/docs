@@ -194,6 +194,25 @@ export const AIMenu = (props: AIMenuProps) => {
     return t('Ask anything...');
   }, [aiResponseStatus, t]);
 
+  const ariaLiveMessage = useMemo(() => {
+    if (aiResponseStatus === 'thinking') {
+      return t('AI is thinking');
+    }
+    if (aiResponseStatus === 'ai-writing') {
+      return t('AI is writing');
+    }
+    if (aiResponseStatus === 'user-reviewing') {
+      return t('AI response ready for review');
+    }
+    if (aiResponseStatus === 'error') {
+      return t('AI request failed');
+    }
+
+    return '';
+  }, [aiResponseStatus, t]);
+
+  const ariaLiveMode = aiResponseStatus === 'error' ? 'assertive' : 'polite';
+
   const IconInput = useMemo(() => {
     if (aiResponseStatus === 'thinking') {
       return <IconAI width="24px" isLoading />;
@@ -256,6 +275,9 @@ export const AIMenu = (props: AIMenuProps) => {
   return (
     <Box className="--docs--ai-menu" $width="100%" $maxWidth="500px">
       <AIMenuStyle />
+      <span className="sr-only" aria-live={ariaLiveMode} aria-atomic="true">
+        {ariaLiveMessage}
+      </span>
       <PromptSuggestionMenu
         onManualPromptSubmit={
           props.onManualPromptSubmit || onManualPromptSubmitDefault
