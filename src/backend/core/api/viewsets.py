@@ -67,7 +67,6 @@ from . import permissions, serializers, utils
 from .filters import (
     DocumentFilter,
     ListDocumentFilter,
-    SubDocumentFilter,
     UserSearchFilter,
 )
 from .throttling import (
@@ -1223,16 +1222,32 @@ class DocumentViewSet(
         if not "path" in validated_data or not validated_data["path"]:
             return self.list(request, *args, **kwargs)
         else:
-            return self._list_sub_docs(request)
+            return self._list_descendants(request)
 
-    def _list_sub_docs(self, request):
+    def _list_descendants(self, request):
         """
         List all documents whose path starts with the provided path parameter.
+        Includes the parent document itself.
         Used internally by the search endpoint when path filtering is requested.
         """
-        queryset = self.get_queryset()
+        # Get parent document without access filtering
+        parent_path = request.GET["path"]
+        try:
+            parent = models.Document.objects.get(path=parent_path)
+        except models.Document.DoesNotExist as exc:
+            raise drf.exceptions.NotFound("Document not found from path %s.", parent_path) from exc
+        
+        # Check object-level permissions using DocumentPermission logic
+        self.check_object_permissions(request, parent)
+        
+        # Get descendants and include the parent, ordered by path
+        queryset = parent.get_descendants(include_self=True).filter(
+            ancestors_deleted_at__isnull=True
+        ).order_by("path")
+        queryset = self.filter_queryset(queryset)
 
-        filterset = SubDocumentFilter(request.GET, queryset=queryset)
+        # filter by title
+        filterset = DocumentFilter(request.GET, queryset=queryset)
         if not filterset.is_valid():
             raise drf.exceptions.ValidationError(filterset.errors)
 
