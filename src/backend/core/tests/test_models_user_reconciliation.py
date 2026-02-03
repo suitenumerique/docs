@@ -466,8 +466,6 @@ def test_process_reconciliation_updates_linktraces(
 
     u1_2 = userdocs_u1[2]
     u1_5 = userdocs_u1[5]
-    u2doc1 = userdocs_u2[1].document
-    u2doc5 = userdocs_u2[5].document
 
     doc_both = u1_2.document
     models.LinkTrace.objects.create(document=doc_both, user=user_1)
@@ -530,6 +528,71 @@ def test_process_reconciliation_updates_linktraces(
     ).exists()
 
 
+def test_process_reconciliation_updates_threads_comments_reactions(
+    user_reconciliation_users_and_docs,
+):
+    """Test that threads, comments and reactions are transferred/deduplicated
+    on reconciliation."""
+    user_1, user_2, _userdocs_u1, userdocs_u2 = user_reconciliation_users_and_docs
+
+    # Use a document from the inactive user's set
+    document = userdocs_u2[0].document
+
+    # Thread and comment created by inactive user -> should be moved to active
+    thread = factories.ThreadFactory(document=document, creator=user_2)
+    comment = factories.CommentFactory(thread=thread, user=user_2)
+
+    # Reaction where only inactive user reacted -> should be moved to active user
+    reaction_inactive_only = factories.ReactionFactory(comment=comment, users=[user_2])
+
+    # Reaction where both users reacted -> inactive user's participation should be removed
+    thread2 = factories.ThreadFactory(document=document, creator=user_1)
+    comment2 = factories.CommentFactory(thread=thread2, user=user_1)
+    reaction_both = factories.ReactionFactory(comment=comment2, users=[user_1, user_2])
+
+    # Reaction where only active user reacted -> unchanged
+    thread3 = factories.ThreadFactory(document=document, creator=user_1)
+    comment3 = factories.CommentFactory(thread=thread3, user=user_1)
+    reaction_active_only = factories.ReactionFactory(comment=comment3, users=[user_1])
+
+    rec = models.UserReconciliation.objects.create(
+        active_email=user_1.email,
+        inactive_email=user_2.email,
+        active_user=user_1,
+        inactive_user=user_2,
+        active_email_checked=True,
+        inactive_email_checked=True,
+        status="ready",
+    )
+
+    qs = models.UserReconciliation.objects.filter(id=rec.id)
+    process_reconciliation(None, None, qs)
+
+    # Refresh objects
+    thread.refresh_from_db()
+    comment.refresh_from_db()
+    reaction_inactive_only.refresh_from_db()
+    reaction_both.refresh_from_db()
+    reaction_active_only.refresh_from_db()
+
+    # Thread and comment creator should now be the active user
+    assert thread.creator == user_1
+    assert comment.user == user_1
+
+    # reaction_inactive_only: inactive user's participation should be removed and
+    # active user's participation added
+    reaction_inactive_only.refresh_from_db()
+    assert not reaction_inactive_only.users.filter(pk=user_2.pk).exists()
+    assert reaction_inactive_only.users.filter(pk=user_1.pk).exists()
+
+    # reaction_both: should end up with only active user's participation
+    assert reaction_both.users.filter(pk=user_2.pk).exists() is False
+    assert reaction_both.users.filter(pk=user_1.pk).exists() is True
+
+    # reaction_active_only should still have active user's participation
+    assert reaction_active_only.users.filter(pk=user_1.pk).exists()
+
+
 def test_process_reconciliation_updates_favorites(
     user_reconciliation_users_and_docs,
 ):
@@ -538,8 +601,6 @@ def test_process_reconciliation_updates_favorites(
 
     u1_2 = userdocs_u1[2]
     u1_5 = userdocs_u1[5]
-    u2doc1 = userdocs_u2[1].document
-    u2doc5 = userdocs_u2[5].document
 
     doc_both = u1_2.document
     models.DocumentFavorite.objects.create(document=doc_both, user=user_1)
@@ -592,9 +653,15 @@ def test_process_reconciliation_updates_favorites(
     )
 
     # doc_inactive_only should now be linked to active user
-    df = models.DocumentFavorite.objects.filter(
+    assert (
+        models.DocumentFavorite.objects.filter(
+            user=user_2, document=doc_inactive_only
+        ).count()
+        == 0
+    )
+    assert models.DocumentFavorite.objects.filter(
         user=user_1, document=doc_inactive_only
-    ).first()
+    ).exists()
 
     # doc_active_only should still belong to active user
     assert models.DocumentFavorite.objects.filter(

@@ -386,6 +386,8 @@ class UserReconciliation(BaseModel):
         - Transfer document accesses from inactive to active user, updating roles as needed.
         - Transfer document favorites from inactive to active user.
         - Transfer link traces from inactive to active user.
+        - Transfer comment-related content from inactive to active user
+          (threads, comments and reactions)
         - Activate the active user and deactivate the inactive user.
         - Update the reconciliation entry itself.
         """
@@ -398,6 +400,9 @@ class UserReconciliation(BaseModel):
         update_favorites, removed_favorites = (
             self.prepare_document_favorite_reconciliation()
         )
+        updated_threads = self.prepare_thread_reconciliation()
+        updated_comments = self.prepare_comment_reconciliation()
+        updated_reactions, removed_reactions = self.prepare_reaction_reconciliation()
 
         self.active_user.is_active = True
         self.inactive_user.is_active = False
@@ -418,6 +423,28 @@ class UserReconciliation(BaseModel):
         if removed_linktraces:
             ids_to_delete = [entry.id for entry in removed_linktraces]
             LinkTrace.objects.filter(id__in=ids_to_delete).delete()
+
+        Thread.objects.bulk_update(updated_threads, ["creator"])
+        Comment.objects.bulk_update(updated_comments, ["user"])
+
+        # pylint: disable=C0103
+        ReactionThroughModel = Reaction.users.through
+        reactions_to_create = []
+        for updated_reaction in updated_reactions:
+            reactions_to_create.append(
+                ReactionThroughModel(
+                    user_id=self.active_user.pk, reaction_id=updated_reaction.pk
+                )
+            )
+
+        if reactions_to_create:
+            ReactionThroughModel.objects.bulk_create(reactions_to_create)
+
+        if removed_reactions:
+            ids_to_delete = [entry.id for entry in removed_reactions]
+            ReactionThroughModel.objects.filter(
+                reaction_id__in=ids_to_delete, user_id=self.inactive_user.pk
+            ).delete()
 
         User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
 
@@ -506,6 +533,48 @@ class UserReconciliation(BaseModel):
                 updated_linktraces.append(entry)
 
         return updated_linktraces, removed_linktraces
+
+    def prepare_thread_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring threads from the inactive user
+        to the active user.
+        """
+        updated_threads = []
+
+        inactive_threads = Thread.objects.filter(creator=self.inactive_user)
+
+        for entry in inactive_threads:
+            entry.creator = self.active_user
+            updated_threads.append(entry)
+
+        return updated_threads
+
+    def prepare_comment_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring comments from the inactive user
+        to the active user.
+        """
+        updated_comments = []
+
+        inactive_comments = Comment.objects.filter(user=self.inactive_user)
+
+        for entry in inactive_comments:
+            entry.user = self.active_user
+            updated_comments.append(entry)
+
+        return updated_comments
+
+    def prepare_reaction_reconciliation(self):
+        """
+        Prepare the reconciliation by creating missing reactions for the active user
+        (ie, the ones that exist for the inactive user but not the active user)
+        and then deleting all reactions of the inactive user.
+        """
+
+        inactive_reactions = Reaction.objects.filter(users=self.inactive_user)
+        updated_reactions = inactive_reactions.exclude(users=self.active_user)
+
+        return updated_reactions, inactive_reactions
 
     def send_reconciliation_confirm_email(
         self, user, user_type, confirmation_id, language=None

@@ -2,7 +2,6 @@
 
 from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
-from django.db import transaction
 from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 
@@ -119,7 +118,6 @@ def process_reconciliation(_modeladmin, _request, queryset):
     """
     Admin action to process selected user reconciliations.
     The action will process only entries that are ready and have both emails checked.
-
     """
     processable_entries = queryset.filter(
         status="ready", active_email_checked=True, inactive_email_checked=True
