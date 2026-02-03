@@ -2,6 +2,7 @@
 
 from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
+from django.db import transaction
 from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 
@@ -119,39 +120,13 @@ def process_reconciliation(_modeladmin, _request, queryset):
     Admin action to process selected user reconciliations.
     The action will process only entries that are ready and have both emails checked.
 
-    Its action is threefold:
-    - Transfer document accesses from inactive to active user, updating roles as needed.
-    - Activate the active user and deactivate the inactive user.
     """
     processable_entries = queryset.filter(
         status="ready", active_email_checked=True, inactive_email_checked=True
     )
 
-    # Prepare the bulk operations
-    updated_documentaccess = []
-    removed_documentaccess = []
-    update_users_active_status = []
-
     for entry in processable_entries:
-        new_updated_documentaccess, new_removed_documentaccess = (
-            entry.process_documentaccess_reconciliation()
-        )
-        updated_documentaccess += new_updated_documentaccess
-        removed_documentaccess += new_removed_documentaccess
-
-        entry.active_user.is_active = True
-        entry.inactive_user.is_active = False
-        update_users_active_status.append(entry.active_user)
-        update_users_active_status.append(entry.inactive_user)
-
-    # Actually perform the bulk operations
-    models.DocumentAccess.objects.bulk_update(updated_documentaccess, ["user", "role"])
-
-    if removed_documentaccess:
-        ids_to_delete = [rd.id for rd in removed_documentaccess]
-        models.DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
-
-    models.User.objects.bulk_update(update_users_active_status, ["is_active"])
+        entry.process_reconciliation_request()
 
 
 @admin.register(models.UserReconciliation)

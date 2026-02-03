@@ -378,9 +378,44 @@ class UserReconciliation(BaseModel):
 
         super().save(*args, **kwargs)
 
-    def process_documentaccess_reconciliation(self):
+    @transaction.atomic
+    def process_reconciliation_request(self):
         """
-        Process the reconciliation by transferring document accesses from the inactive user
+        Process the reconciliation request as a transaction.
+
+        Its action is threefold:
+        - Transfer document accesses from inactive to active user, updating roles as needed.
+        - Activate the active user and deactivate the inactive user.
+        - Update the reconciliation entry itself.
+        """
+
+        # Prepare the data to perform the reconciliation on
+        updated_accesses, removed_accesses = (
+            self.prepare_documentaccess_reconciliation()
+        )
+        self.active_user.is_active = True
+        self.inactive_user.is_active = False
+
+        # Actually perform the bulk operations
+        DocumentAccess.objects.bulk_update(updated_accesses, ["user", "role"])
+
+        if removed_accesses:
+            ids_to_delete = [rd.id for rd in removed_accesses]
+            DocumentAccess.objects.filter(id__in=ids_to_delete).delete()
+
+        User.objects.bulk_update([self.active_user, self.inactive_user], ["is_active"])
+
+        # Wrap up the reconciliation entry
+        self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
+            and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
+        self.status = "done"
+        self.save()
+
+        self.send_reconciliation_done_email()
+
+    def prepare_documentaccess_reconciliation(self):
+        """
+        Prepare the reconciliation by transferring document accesses from the inactive user
         to the active user.
         """
         updated_accesses = []
@@ -407,13 +442,6 @@ class UserReconciliation(BaseModel):
             else:
                 entry.user = self.active_user
                 updated_accesses.append(entry)
-
-        self.logs += f"""Requested update for {len(updated_accesses)} DocumentAccess items
-            and deletion for {len(removed_accesses)} DocumentAccess items.\n"""
-        self.status = "done"
-        self.send_reconciliation_done_email()
-
-        self.save()
 
         return updated_accesses, removed_accesses
 
