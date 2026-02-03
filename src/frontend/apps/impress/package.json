@@ -89,7 +89,7 @@
     "copy-webpack-plugin": "13.0.1",
     "cross-env": "10.1.0",
     "dotenv": "17.2.3",
-    "eslint-plugin-docs": "*",
+    "eslint-plugin-docs": "workspace:^",
     "fetch-mock": "9.11.0",
     "jsdom": "27.4.0",
     "node-fetch": "2.7.0",
@@ -103,5 +103,5 @@
     "webpack": "5.104.1",
     "workbox-webpack-plugin": "7.1.0"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@10.28.2"
 }

@@ -43,5 +43,10 @@
     "wrap-ansi": "9.0.2",
     "yjs": "13.6.29"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@10.28.2",
+  "dependencies": {
+    "@socialgouv/e2esdk-client": "link:../../../../../../Library/pnpm/global/5/node_modules/@socialgouv/e2esdk-client",
+    "@socialgouv/e2esdk-devtools": "link:../../../../../../Library/pnpm/global/5/node_modules/@socialgouv/e2esdk-devtools",
+    "@socialgouv/e2esdk-react": "link:../../../../../../Library/pnpm/global/5/node_modules/@socialgouv/e2esdk-react"
+  }
 }

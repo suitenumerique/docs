@@ -18,7 +18,7 @@
     "@playwright/test": "1.57.0",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.5",
-    "eslint-plugin-docs": "*",
+    "eslint-plugin-docs": "workspace:^",
     "typescript": "*"
   },
   "dependencies": {

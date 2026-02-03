@@ -50,7 +50,7 @@ const nextConfig = {
           {
             from: path.resolve(
               __dirname,
-              '../../node_modules/emoji-datasource-apple/img/apple/64',
+              './node_modules/emoji-datasource-apple/img/apple/64',
             ),
             to: path.resolve(__dirname, 'public/assets/fonts/emoji'),
             force: true,

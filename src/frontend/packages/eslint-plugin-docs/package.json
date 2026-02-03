@@ -33,5 +33,5 @@
     "eslint-plugin-testing-library": "7.15.4",
     "prettier": "3.8.0"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@10.28.2"
 }
