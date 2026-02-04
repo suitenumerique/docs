@@ -35,7 +35,7 @@ def test_api_documents_search_anonymous(indexer_settings):
     with mock.patch(
         "core.services.search_indexers.FindDocumentIndexer.search_query"
     ) as search_query:
-        q="alpha"
+        q = "alpha"
         response = APIClient().get("/api/v1.0/documents/search/", data={"q": q})
 
         assert search_query.call_count == 1

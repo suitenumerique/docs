@@ -241,9 +241,9 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         search_results = super().search(q, token, visited, nb_results, path)
         return [
             {
+                **hit["_source"],
                 "id": hit["_id"],
                 "title": self.get_title(hit["_source"]),
-                **hit["_source"],
             }
             for hit in search_results
         ]

@@ -27,7 +27,8 @@ def get_value_by_pattern(data, pattern):
         >>> get_value_by_pattern({"title.fr": "Bonjour", "title.en": "Hello"}, r"^title\\.")
         ["Bonjour", "Hello"]
     """
-    return [value for key, value in data.items() if re.compile(pattern).match(key)]
+    regex = re.compile(pattern)
+    return [value for key, value in data.items() if regex.match(key)]
 
 
 def get_ancestor_to_descendants_map(paths, steplen):

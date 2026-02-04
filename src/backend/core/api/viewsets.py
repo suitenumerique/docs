@@ -1187,7 +1187,7 @@ class DocumentViewSet(
             return self._search_with_indexer(indexer, request, params=params)
 
         # The indexer is not configured, we fallback on title search
-        return self.title_search(request, *args, **kwargs)
+        return self.title_search(request, params.validated_data, *args, **kwargs)
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
@@ -1217,13 +1217,13 @@ class DocumentViewSet(
             }
         )
 
-    def title_search(self, request, *args, **kwargs):
+    def title_search(self, request, validated_data, *args, **kwargs):
         """
         Fallback search by title when indexer is not configured.
         If path is provided, list descendants, otherwise list all documents.
         """
         request.GET = request.GET.copy()
-        request.GET["title"] = request.GET["q"]
+        request.GET["title"] = validated_data["q"]
         if not "path" in request.GET or not request.GET["path"]:
             return self.list(request, *args, **kwargs)
         return self._list_descendants(request)
