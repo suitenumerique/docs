@@ -130,7 +130,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       aria-disabled={isDisabled}
       onKeyDown={handleKeyDown}
       $css={css`
-        background-color: var(--c--globals--colors--gray-000);
+        background-color: var(--c--contextuals--background--surface--primary);
         .light-doc-item-actions {
           display: ${menuOpen || !isDesktop ? 'flex' : 'none'};
           right: var(--c--globals--spacings--0);

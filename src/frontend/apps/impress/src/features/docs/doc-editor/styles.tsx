@@ -7,8 +7,65 @@ export const cssEditor = css`
     height: 100%;
   }
 
+  /* Override BlockNote's default color tokens with Cunningham contextual tokens */
+  & > .bn-container {
+    /* Text colors - using high contrast neutral primary */
+    --bn-colors-editor-text: var(
+      --c--contextuals--content--semantic--neutral--primary
+    );
+    --bn-colors-menu-text: var(
+      --c--contextuals--content--semantic--neutral--primary
+    );
+    --bn-colors-tooltip-text: var(
+      --c--contextuals--content--semantic--neutral--primary
+    );
+    --bn-colors-hovered-text: var(
+      --c--contextuals--content--semantic--neutral--primary
+    );
+    --bn-colors-selected-text: var(
+      --c--contextuals--content--semantic--neutral--on-neutral
+    );
+    --bn-colors-disabled-text: var(
+      --c--contextuals--content--semantic--disabled--primary
+    );
+    --bn-colors-side-menu: var(
+      --c--contextuals--content--semantic--neutral--secondary
+    );
+    /* Background colors */
+    --bn-colors-editor-background: var(
+      --c--contextuals--background--surface--primary
+    );
+    --bn-colors-menu-background: var(
+      --c--contextuals--background--surface--primary
+    );
+    --bn-colors-tooltip-background: var(
+      --c--contextuals--background--surface--secondary
+    );
+    --bn-colors-hovered-background: var(
+      --c--contextuals--background--surface--secondary
+    );
+    --bn-colors-selected-background: var(
+      --c--contextuals--background--semantic--neutral--primary
+    );
+    --bn-colors-disabled-background: var(
+      --c--contextuals--background--surface--secondary
+    );
+    --bn-colors-side-menu-background: var(
+      --c--contextuals--background--surface--primary
+    );
+    /* Other UI colors */
+    --bn-colors-shadow: var(
+      --c--contextuals--border--semantic--neutral--tertiary
+    );
+    --bn-colors-border: var(--c--contextuals--border--surface--primary);
+  }
+
   & .bn-editor {
-    color: var(--c--globals--colors--gray-700);
+    color: color-mix(
+      in srgb,
+      var(--c--contextuals--content--semantic--neutral--primary) 39%,
+      var(--c--contextuals--content--semantic--neutral--secondary)
+    );
   }
 
   /**
@@ -127,7 +184,7 @@ export const cssEditor = css`
     font-size: 1.25rem;
   }
   a {
-    color: var(--c--globals--colors--gray-600);
+    color: var(--c--contextuals--content--semantic--neutral--secondary);
     cursor: pointer;
   }
   .bn-block-group
@@ -171,7 +228,9 @@ export const cssEditor = css`
   }
 
   & .bn-inline-content code {
-    background-color: gainsboro;
+    background-color: var(
+      --c--contextuals--background--palette--gray--tertiary
+    );
     padding: 2px;
     border-radius: 4px;
   }
