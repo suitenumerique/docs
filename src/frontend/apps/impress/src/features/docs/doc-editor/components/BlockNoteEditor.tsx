@@ -20,6 +20,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useProviderStore } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
@@ -36,6 +37,7 @@ import { cssEditor } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
+import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { cssComments, useComments } from './comments/';
@@ -45,6 +47,10 @@ import {
   PdfBlock,
   UploadLoaderBlock,
 } from './custom-blocks';
+const AIMenu = BlockNoteAI?.AIMenu;
+const AIMenuController = BlockNoteAI?.AIMenuController;
+const useAI = BlockNoteAI?.useAI;
+const localesAI = BlockNoteAI?.localesAI;
 import {
   InterlinkingLinkInlineContent,
   InterlinkingSearchInlineContent,
@@ -83,7 +89,6 @@ interface BlockNoteEditorProps {
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
-  const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
   const { isSynced: isConnectedToCollabServer } = useProviderStore();
   const refEditorContainer = useRef<HTMLDivElement>(null);
@@ -92,13 +97,16 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const showComments = canSeeComment;
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   let lang = i18n.resolvedLanguage;
   if (!lang || !(lang in locales)) {
     lang = 'en';
   }
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const conf = useConfig().data;
+  const aiAllowed = !!(conf?.AI_FEATURE_ENABLED && doc.abilities?.ai_proxy);
+  const aiExtension = useAI?.(doc.id, aiAllowed);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -168,6 +176,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         ...(multiColumnLocales && {
           multi_column:
             multiColumnLocales[lang as keyof typeof multiColumnLocales],
+          ai: localesAI?.[lang as keyof typeof localesAI],
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
@@ -190,7 +199,15 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
         return defaultPasteHandler();
       },
-      extensions: [CommentsExtension({ threadStore, resolveUsers })],
+      extensions: [
+        CommentsExtension({ threadStore, resolveUsers }),
+        ...(aiExtension ? [aiExtension] : []),
+      ],
+      visualMedia: {
+        image: {
+          maxWidth: 760,
+        },
+      },
       tables: {
         splitCells: true,
         cellBackgroundColor: true,
@@ -200,7 +217,15 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       uploadFile,
       schema: blockNoteSchema,
     },
-    [cursorName, lang, provider, uploadFile, threadStore, resolveUsers],
+    [
+      aiExtension,
+      cursorName,
+      lang,
+      provider,
+      uploadFile,
+      threadStore,
+      resolveUsers,
+    ],
   );
 
   useHeadings(editor);
@@ -243,8 +268,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         comments={showComments}
         aria-label={t('Document editor')}
       >
-        <BlockNoteSuggestionMenu />
-        <BlockNoteToolbar />
+        {aiAllowed && AIMenuController && AIMenu && (
+          <AIMenuController aiMenu={AIMenu} />
+        )}
+        <BlockNoteSuggestionMenu aiAllowed={aiAllowed} />
+        <BlockNoteToolbar aiAllowed={aiAllowed} />
       </BlockNoteView>
     </Box>
   );
@@ -311,7 +339,7 @@ export const BlockNoteReader = ({
         slashMenu={false}
         comments={false}
       >
-        <BlockNoteToolbar />
+        <BlockNoteToolbar aiAllowed={false} />
       </BlockNoteView>
     </Box>
   );

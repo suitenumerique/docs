@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added 
+
+- ✨(frontend) integrate new Blocknote AI feature #1016
+
 ### Fixed
 
 🐛(frontend) fix broadcast store sync #1846

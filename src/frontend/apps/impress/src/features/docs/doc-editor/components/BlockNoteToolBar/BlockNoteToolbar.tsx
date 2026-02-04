@@ -10,15 +10,18 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
+import BlockNoteAI from '../AI/';
+import { AIGroupButton } from '../AI/AIButtonMIT';
 import { CommentToolbarButton } from '../comments/CommentToolbarButton';
 import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
-import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
 
-export const BlockNoteToolbar = () => {
+const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
+
+export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
   const dict = useDictionary();
   const [confirmOpen, setIsConfirmOpen] = useState(false);
   const [onConfirm, setOnConfirm] = useState<() => void | Promise<void>>();
@@ -69,18 +72,22 @@ export const BlockNoteToolbar = () => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
+        {aiAllowed && AIToolbarButton && <AIToolbarButton />}
+
         <CommentToolbarButton />
 
         {toolbarItems}
 
-        {/* Extra button to do some AI powered actions */}
-        {conf?.AI_FEATURE_ENABLED && <AIGroupButton key="AIButton" />}
+        {/* Extra button to do some AI powered actions - only if AIToolbarButton is not available because of MIT license */}
+        {conf?.AI_FEATURE_ENABLED && !AIToolbarButton && (
+          <AIGroupButton key="AIButton" />
+        )}
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
+  }, [toolbarItems, aiAllowed, conf?.AI_FEATURE_ENABLED]);
 
   return (
     <>
