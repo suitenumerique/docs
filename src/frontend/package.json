@@ -31,12 +31,12 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/extensions": "3.14.0",
+    "@tiptap/extensions": "3.17.1",
     "@types/node": "24.10.9",
-    "@types/react": "19.2.8",
+    "@types/react": "19.2.9",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.2",
-    "prosemirror-view": "1.41.4",
+    "prosemirror-view": "1.41.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "typescript": "5.9.3",
