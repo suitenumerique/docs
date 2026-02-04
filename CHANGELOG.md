@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added 
+
+✨(frontend) Can print a doc #1832
+
 ### Fixed
 
 🐛(frontend) fix broadcast store sync #1846

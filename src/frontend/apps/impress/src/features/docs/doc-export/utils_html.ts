@@ -11,6 +11,12 @@ export const escapeHtml = (value: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+const moveChildNodes = (from: Element, to: Element) => {
+  while (from.firstChild) {
+    to.appendChild(from.firstChild);
+  }
+};
+
 /**
  * Derives a stable, readable filename for media exported in the HTML ZIP.
  *
@@ -138,7 +144,7 @@ export const improveHtmlAccessibility = (
     const rawLevel = Number(block.getAttribute('data-level')) || 1;
     const level = Math.min(Math.max(rawLevel, 1), 6);
     const heading = parsedDocument.createElement(`h${level}`);
-    heading.innerHTML = block.innerHTML;
+    moveChildNodes(block, heading);
     block.replaceWith(heading);
   });
 
@@ -252,7 +258,7 @@ export const improveHtmlAccessibility = (
 
     // Create list item and add content
     const li = parsedDocument.createElement('li');
-    li.innerHTML = listItem.innerHTML;
+    moveChildNodes(listItem, li);
     targetList.appendChild(li);
 
     // Remove original block-outer
@@ -265,7 +271,7 @@ export const improveHtmlAccessibility = (
   );
   quoteBlocks.forEach((block) => {
     const quote = parsedDocument.createElement('blockquote');
-    quote.innerHTML = block.innerHTML;
+    moveChildNodes(block, quote);
     block.replaceWith(quote);
   });
 
@@ -276,7 +282,7 @@ export const improveHtmlAccessibility = (
   calloutBlocks.forEach((block) => {
     const aside = parsedDocument.createElement('aside');
     aside.setAttribute('role', 'note');
-    aside.innerHTML = block.innerHTML;
+    moveChildNodes(block, aside);
     block.replaceWith(aside);
   });
 
@@ -303,7 +309,7 @@ export const improveHtmlAccessibility = (
     }
 
     const li = parsedDocument.createElement('li');
-    li.innerHTML = item.innerHTML;
+    moveChildNodes(item, li);
 
     // Ensure checkbox has an accessible state; fall back to aria-checked if missing.
     const checkbox = li.querySelector<HTMLInputElement>(
@@ -340,7 +346,7 @@ export const improveHtmlAccessibility = (
     });
 
     // Move content inside <code>.
-    code.innerHTML = block.innerHTML;
+    moveChildNodes(block, code);
     pre.appendChild(code);
     block.replaceWith(pre);
   });
