@@ -22,9 +22,9 @@ def get_value_by_pattern(data, pattern):
         list: List of values for all matching keys, empty list if no matches
 
     Example:
-        >>> get_value_by_pattern({"title.fr": "Bonjour", "id": 1}, r"^title\.")
+        >>> get_value_by_pattern({"title.fr": "Bonjour", "id": 1}, r"^title\\.")
         ["Bonjour"]
-        >>> get_value_by_pattern({"title.fr": "Bonjour", "title.en": "Hello"}, r"^title\.")
+        >>> get_value_by_pattern({"title.fr": "Bonjour", "title.en": "Hello"}, r"^title\\.")
         ["Bonjour", "Hello"]
     """
     return [value for key, value in data.items() if re.compile(pattern).match(key)]

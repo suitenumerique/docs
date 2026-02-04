@@ -147,8 +147,9 @@ $ make frontend-test
 $ make frontend-lint
 ```
 
-Backend tests can be run without docker by settings Path to ".env" file to 
-`env.d/development/common.test`
+Backend tests can be run without docker with the env files
+`env.d/development/common` and `env.d/development/common.test`.
+`common.test` must overwrite some variables in `common`.
 
 **Adding content**
 

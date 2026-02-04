@@ -130,35 +130,6 @@ class ListDocumentFilter(DocumentFilter):
         return queryset_method(link_traces__user=user, link_traces__is_masked=True)
 
 
-class SubDocumentFilter(DocumentFilter):
-    """
-    Custom filter for filtering sub-documents by path and title.
-    Used when searching within a specific document subtree.
-    the parent document can be matched.
-
-    Example:
-        - /api/v1.0/documents/search/?path=0001&q=test
-            → Filters documents where path starts with "0001" and title contains "test"
-    """
-
-    path = django_filters.CharFilter(
-        required=True, method="filter_by_path", label=_("Path")
-    )
-
-    class Meta:
-        model = models.Document
-        fields = ["path", "title"]
-
-    # pylint: disable=unused-argument
-    def filter_by_path(self, queryset, name, value):
-        """
-        Filter documents whose path starts with the provided path.
-        """
-        return queryset.filter(
-            path__startswith=value, ancestors_deleted_at__isnull=True
-        )
-
-
 class UserSearchFilter(django_filters.FilterSet):
     """
     Custom filter for searching users.

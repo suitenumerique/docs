@@ -1187,7 +1187,7 @@ class DocumentViewSet(
             return self._search_with_indexer(indexer, request, params=params)
 
         # The indexer is not configured, we fallback on title search
-        return self.title_search(request, params.validated_data, *args, **kwargs)
+        return self.title_search(request, *args, **kwargs)
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
@@ -1195,9 +1195,10 @@ class DocumentViewSet(
         Returns a list of documents matching the query (q) according to the configured indexer.
         """
         queryset = models.Document.objects.all()
+        user_query = params.validated_data["q"]
 
         results = indexer.search(
-            q=params.validated_data["q"],
+            q=user_query if user_query != "" else "*",
             token=request.session.get("oidc_access_token"),
             path=(
                 params.validated_data["path"]
@@ -1216,13 +1217,16 @@ class DocumentViewSet(
             }
         )
 
-    def title_search(self, request, validated_data, *args, **kwargs):
+    def title_search(self, request, *args, **kwargs):
+        """
+        Fallback search by title when indexer is not configured.
+        If path is provided, list descendants, otherwise list all documents.
+        """
         request.GET = request.GET.copy()
-        request.GET["title"] = validated_data["q"]
-        if not "path" in validated_data or not validated_data["path"]:
+        request.GET["title"] = request.GET["q"]
+        if not "path" in request.GET or not request.GET["path"]:
             return self.list(request, *args, **kwargs)
-        else:
-            return self._list_descendants(request)
+        return self._list_descendants(request)
 
     def _list_descendants(self, request):
         """
@@ -1235,15 +1239,17 @@ class DocumentViewSet(
         try:
             parent = models.Document.objects.get(path=parent_path)
         except models.Document.DoesNotExist as exc:
-            raise drf.exceptions.NotFound("Document not found from path %s.", parent_path) from exc
-        
+            raise drf.exceptions.NotFound("Document not found from path.") from exc
+
         # Check object-level permissions using DocumentPermission logic
         self.check_object_permissions(request, parent)
-        
+
         # Get descendants and include the parent, ordered by path
-        queryset = parent.get_descendants(include_self=True).filter(
-            ancestors_deleted_at__isnull=True
-        ).order_by("path")
+        queryset = (
+            parent.get_descendants(include_self=True)
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
         queryset = self.filter_queryset(queryset)
 
         # filter by title

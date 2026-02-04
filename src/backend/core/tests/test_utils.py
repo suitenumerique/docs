@@ -107,7 +107,7 @@ def test_utils_get_value_by_pattern_matching_key():
     data = {"title.extension": "Bonjour", "id": 1, "content": "test"}
     result = utils.get_value_by_pattern(data, r"^title\.")
 
-    assert result == ["Bonjour"]
+    assert set(result) == {"Bonjour"}
 
 
 def test_utils_get_value_by_pattern_multiple_matches():
@@ -115,7 +115,18 @@ def test_utils_get_value_by_pattern_multiple_matches():
     data = {"title.extension_1": "Bonjour", "title.extension_2": "Hello", "id": 1}
     result = utils.get_value_by_pattern(data, r"^title\.")
 
-    assert set(result) == {"Bonjour", "Hello"}
+    assert set(result) == {
+        "Bonjour",
+        "Hello",
+    }
+
+
+def test_utils_get_value_by_pattern_multiple_extensions():
+    """Test that all matching keys are returned."""
+    data = {"title.extension_1.extension_2": "Bonjour", "id": 1}
+    result = utils.get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {"Bonjour"}
 
 
 def test_utils_get_value_by_pattern_no_match():
