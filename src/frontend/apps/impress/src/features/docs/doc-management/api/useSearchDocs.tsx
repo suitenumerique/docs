@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI, useAPIInfiniteQuery } from '@/api';
-import { DocsResponse, KEY_LIST_DOC } from '@/docs/doc-management';
 import { DocSearchTarget } from '@/docs/doc-search';
+
+import { DocsResponse, KEY_LIST_DOC } from './useDocs';
 
 export type SearchDocsParams = {
   page: number;
@@ -19,18 +20,13 @@ const constructParams = ({
 }: SearchDocsParams): URLSearchParams => {
   const searchParams = new URLSearchParams();
 
-  if (q.length > 0) {
-    searchParams.set('q', q);
-  } else {
-    searchParams.set('q', '*');
-  }
+  searchParams.set('q', q);
   if (target === DocSearchTarget.CURRENT && parentPath) {
     searchParams.set('path', parentPath);
   }
   if (page) {
     searchParams.set('page', page.toString());
   }
-
   return searchParams;
 };
 
