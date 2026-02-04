@@ -6,9 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added 
+
+✨(frontend) Can print a doc #1832
+
 ### Changed
 
 - ♿️(frontend) Focus main container after navigation #1854
+
 
 ### Fixed
 

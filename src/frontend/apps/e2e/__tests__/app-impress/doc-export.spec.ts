@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { Download, Page, expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
@@ -33,7 +33,9 @@ test.describe('Doc Export', () => {
 
     await expect(page.getByTestId('modal-export-title')).toBeVisible();
     await expect(
-      page.getByText(/Download your document in a \.docx, \.odt.*format\./i),
+      page.getByText(
+        'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
+      ),
     ).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Format' })).toBeVisible();
     await expect(
@@ -306,6 +308,50 @@ test.describe('Doc Export', () => {
     expect(pdfString).toContain('/Lang (fr)');
   });
 
+  test('it exports the doc to PDF with PRINT feature and checks regressions', async ({
+    page,
+    browserName,
+  }) => {
+    await overrideDocContent({ page, browserName });
+
+    await page
+      .getByRole('button', {
+        name: 'Export the document',
+      })
+      .click();
+
+    await page.getByRole('combobox', { name: 'Format' }).click();
+    await page.getByRole('option', { name: 'Print' }).click();
+
+    await page.getByRole('button', { name: 'Print' }).click();
+
+    await expect(page.locator('#print-only-content-styles')).toBeAttached();
+
+    await page.emulateMedia({ media: 'print' });
+
+    const pdfBuffer = await page.pdf({
+      printBackground: true,
+      preferCSSPageSize: true,
+      format: 'A4',
+      scale: 1,
+    });
+
+    // If we need to update the PDF regression fixture, uncomment the line below
+    // await savePDFToAssetFolder(
+    //   pdfBuffer,
+    //   'doc-export-PDF-browser-regressions.pdf',
+    // );
+
+    // Assert the generated PDF matches the initial PDF regression fixture
+    await comparePDFWithAssetFolder(
+      pdfBuffer,
+      'doc-export-PDF-browser-regressions.pdf',
+      false,
+    );
+
+    await expect(page.locator('#print-only-content-styles')).not.toBeAttached();
+  });
+
   test('it exports the doc to PDF and checks regressions', async ({
     page,
     browserName,
@@ -325,10 +371,6 @@ test.describe('Doc Export', () => {
       })
       .click();
 
-    await expect(
-      page.getByTestId('doc-open-modal-download-button'),
-    ).toBeVisible();
-
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDoc}.pdf`);
     });
@@ -339,28 +381,29 @@ test.describe('Doc Export', () => {
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
     // If we need to update the PDF regression fixture, uncomment the line below
-    //await savePDFToAssetFolder(download);
+    const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+    //await savePDFToAssetFolder(pdfBuffer, 'doc-export-regressions.pdf');
 
     // Assert the generated PDF matches "assets/doc-export-regressions.pdf"
-    await comparePDFWithAssetFolder(download);
+    await comparePDFWithAssetFolder(pdfBuffer, 'doc-export-regressions.pdf');
   });
 });
 
-export const savePDFToAssetFolder = async (download: Download) => {
-  const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-  const pdfPath = path.join(__dirname, 'assets', `doc-export-regressions.pdf`);
+export const savePDFToAssetFolder = async (
+  pdfBuffer: Buffer,
+  filename: string,
+) => {
+  const pdfPath = path.join(__dirname, 'assets', filename);
   fs.writeFileSync(pdfPath, pdfBuffer);
 };
 
-export const comparePDFWithAssetFolder = async (download: Download) => {
-  const pdfBuffer = await cs.toBuffer(await download.createReadStream());
-
+export const comparePDFWithAssetFolder = async (
+  pdfBuffer: Buffer,
+  filename: string,
+  compareTextContent = true,
+) => {
   // Load reference PDF for comparison
-  const referencePdfPath = path.join(
-    __dirname,
-    'assets',
-    'doc-export-regressions.pdf',
-  );
+  const referencePdfPath = path.join(__dirname, 'assets', filename);
 
   const referencePdfBuffer = fs.readFileSync(referencePdfPath);
 
@@ -387,8 +430,16 @@ export const comparePDFWithAssetFolder = async (download: Download) => {
   // Compare page count
   expect(generatedInfo.total).toBe(referenceInfo.total);
 
-  // Compare text content
-  expect(generatedText.text).toBe(referenceText.text);
+  /* 
+    Compare text content
+    We make this optional because text extraction from PDFs can vary
+    slightly between environments and PDF versions, leading to false negatives.
+    Particularly with emojis which can be represented differently when 
+    exporting or parsing the PDF.
+  */
+  if (compareTextContent) {
+    expect(generatedText.text).toBe(referenceText.text);
+  }
 
   // Compare screenshots page by page
   for (let i = 0; i < generatedScreenshot.pages.length; i++) {
