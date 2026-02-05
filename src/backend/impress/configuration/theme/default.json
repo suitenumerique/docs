@@ -158,5 +158,9 @@
       "href": "/assets/favicon-dark.png",
       "type": "image/png"
     }
+  },
+  "onboarding": {
+    "enabled": true,
+    "learn_more_url": ""
   }
 }

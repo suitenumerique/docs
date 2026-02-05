@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a is_first_connection flag to the User model #1938
+- ✨(frontend) add onboarding modal with help menu button #1868
 
 ### Changed
 
