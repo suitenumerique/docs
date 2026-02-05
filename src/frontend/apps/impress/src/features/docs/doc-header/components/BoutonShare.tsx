@@ -1,6 +1,6 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Button, ButtonElement } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
-import { useMemo } from 'react';
+import { RefObject, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -13,6 +13,7 @@ interface BoutonShareProps {
   isDisabled?: boolean;
   isHidden?: boolean;
   open: () => void;
+  buttonRef?: RefObject<ButtonElement | null>;
 }
 
 export const BoutonShare = ({
@@ -21,6 +22,7 @@ export const BoutonShare = ({
   isDisabled,
   isHidden,
   open,
+  buttonRef,
 }: BoutonShareProps) => {
   const { t } = useTranslation();
   const treeContext = useTreeContext<Doc>();
@@ -53,6 +55,7 @@ export const BoutonShare = ({
         `}
       >
         <Button
+          ref={buttonRef}
           aria-label={t('Share button')}
           variant="secondary"
           icon={
@@ -75,6 +78,7 @@ export const BoutonShare = ({
 
   return (
     <Button
+      ref={buttonRef}
       color="brand"
       variant="tertiary"
       onClick={open}
