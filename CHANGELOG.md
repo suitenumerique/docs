@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️(frontend) Focus main container after navigation #1854
+
 ### Fixed
 
 🐛(frontend) fix broadcast store sync #1846

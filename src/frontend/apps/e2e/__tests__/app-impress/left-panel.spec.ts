@@ -18,6 +18,20 @@ test.describe('Left panel desktop', () => {
     await expect(page.getByTestId('home-button')).toBeVisible();
   });
 
+  test('focuses main content after switching the docs filter', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    const myDocsLink = page.getByRole('link', { name: 'My docs' });
+    await myDocsLink.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/target=my_docs/);
+
+    const mainContent = page.locator('main#mainContent');
+    await expect(mainContent).toBeFocused();
+  });
+
   test('checks resize handle is present and functional on document page', async ({
     page,
     browserName,

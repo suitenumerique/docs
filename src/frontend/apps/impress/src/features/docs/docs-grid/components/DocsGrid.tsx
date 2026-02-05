@@ -237,7 +237,7 @@ const DocGridTitleBar = ({
     >
       <Box $direction="row" $gap="xs" $align="center">
         {icon}
-        <Text as="h2" $size="h4" $margin="none">
+        <Text as="h2" $size="h4" $margin="none" tabIndex={-1}>
           {title}
         </Text>
       </Box>
