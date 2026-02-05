@@ -1,5 +1,5 @@
 """
-Unit tests for the Document model
+Unit tests for FindDocumentIndexer
 """
 # pylint: disable=too-many-lines
 
@@ -12,7 +12,7 @@ from django.db import transaction
 import pytest
 
 from core import factories, models
-from core.services.search_indexers import SearchIndexer
+from core.services.search_indexers import FindDocumentIndexer
 
 pytestmark = pytest.mark.django_db
 
@@ -30,7 +30,7 @@ def reset_throttle():
     reset_batch_indexer_throttle()
 
 
-@mock.patch.object(SearchIndexer, "push")
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer(mock_push):
@@ -41,7 +41,7 @@ def test_models_documents_post_save_indexer(mock_push):
     accesses = {}
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     assert len(data) == 1
 
@@ -64,14 +64,14 @@ def test_models_documents_post_save_indexer_no_batches(indexer_settings):
     """Test indexation task on doculment creation, no throttle"""
     indexer_settings.SEARCH_INDEXER_COUNTDOWN = 0
 
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         with transaction.atomic():
             doc1, doc2, doc3 = factories.DocumentFactory.create_batch(3)
 
     accesses = {}
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     # 3 calls
     assert len(data) == 3
@@ -91,7 +91,7 @@ def test_models_documents_post_save_indexer_no_batches(indexer_settings):
     assert cache.get("file-batch-indexer-throttle") is None
 
 
-@mock.patch.object(SearchIndexer, "push")
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_not_configured(mock_push, indexer_settings):
     """Task should not start an indexation when disabled"""
@@ -106,7 +106,7 @@ def test_models_documents_post_save_indexer_not_configured(mock_push, indexer_se
     assert mock_push.assert_not_called
 
 
-@mock.patch.object(SearchIndexer, "push")
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_wrongly_configured(
     mock_push, indexer_settings
@@ -123,7 +123,7 @@ def test_models_documents_post_save_indexer_wrongly_configured(
     assert mock_push.assert_not_called
 
 
-@mock.patch.object(SearchIndexer, "push")
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_with_accesses(mock_push):
@@ -145,7 +145,7 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push):
 
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     assert len(data) == 1
     assert sorted(data[0], key=itemgetter("id")) == sorted(
@@ -158,7 +158,7 @@ def test_models_documents_post_save_indexer_with_accesses(mock_push):
     )
 
 
-@mock.patch.object(SearchIndexer, "push")
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_deleted(mock_push):
@@ -207,7 +207,7 @@ def test_models_documents_post_save_indexer_deleted(mock_push):
 
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     assert len(data) == 2
 
@@ -244,14 +244,14 @@ def test_models_documents_indexer_hard_deleted():
         factories.UserDocumentAccessFactory(document=doc, user=user)
 
     # Call task on deleted document.
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         doc.delete()
 
     # Hard delete document are not re-indexed.
     assert mock_push.assert_not_called
 
 
-@mock.patch.object(SearchIndexer, "push")
+@mock.patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 @pytest.mark.django_db(transaction=True)
 def test_models_documents_post_save_indexer_restored(mock_push):
@@ -308,7 +308,7 @@ def test_models_documents_post_save_indexer_restored(mock_push):
 
     data = [call.args[0] for call in mock_push.call_args_list]
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     # All docs are re-indexed
     assert len(data) == 2
@@ -337,16 +337,16 @@ def test_models_documents_post_save_indexer_restored(mock_push):
 @pytest.mark.usefixtures("indexer_settings")
 def test_models_documents_post_save_indexer_throttle():
     """Test indexation task skipping on document update"""
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
     user = factories.UserFactory()
 
-    with mock.patch.object(SearchIndexer, "push"):
+    with mock.patch.object(FindDocumentIndexer, "push"):
         with transaction.atomic():
             docs = factories.DocumentFactory.create_batch(5, users=(user,))
 
     accesses = {str(item.path): {"users": [user.sub]} for item in docs}
 
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         # Simulate 1 running task
         cache.set("document-batch-indexer-throttle", 1)
 
@@ -359,7 +359,7 @@ def test_models_documents_post_save_indexer_throttle():
 
         assert [call.args[0] for call in mock_push.call_args_list] == []
 
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         # No waiting task
         cache.delete("document-batch-indexer-throttle")
 
@@ -389,7 +389,7 @@ def test_models_documents_access_post_save_indexer():
     """Test indexation task on DocumentAccess update"""
     users = factories.UserFactory.create_batch(3)
 
-    with mock.patch.object(SearchIndexer, "push"):
+    with mock.patch.object(FindDocumentIndexer, "push"):
         with transaction.atomic():
             doc = factories.DocumentFactory(users=users)
             doc_accesses = models.DocumentAccess.objects.filter(document=doc).order_by(
@@ -398,7 +398,7 @@ def test_models_documents_access_post_save_indexer():
 
     reset_batch_indexer_throttle()
 
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         with transaction.atomic():
             for doc_access in doc_accesses:
                 doc_access.save()
@@ -426,7 +426,7 @@ def test_models_items_access_post_save_indexer_no_throttle(indexer_settings):
 
     reset_batch_indexer_throttle()
 
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         with transaction.atomic():
             for doc_access in doc_accesses:
                 doc_access.save()
@@ -439,3 +439,70 @@ def test_models_items_access_post_save_indexer_no_throttle(indexer_settings):
         assert [len(d) for d in data] == [1] * 3
         # the same document is indexed 3 times
         assert [d[0]["id"] for d in data] == [str(doc.pk)] * 3
+
+
+@mock.patch.object(FindDocumentIndexer, "search_query")
+@pytest.mark.usefixtures("indexer_settings")
+def test_find_document_indexer_search(mock_search_query):
+    """Test search function of FindDocumentIndexer returns formatted results"""
+
+    # Mock API response from Find
+    hits = [
+        {
+            "_id": "doc-123",
+            "_source": {
+                "title": "Test Document",
+                "content": "This is test content",
+                "updated_at": "2024-01-01T00:00:00Z",
+                "path": "/some/path/doc-123",
+            },
+        },
+        {
+            "_id": "doc-456",
+            "_source": {
+                "title.fr": "Document de test",
+                "content": "Contenu de test",
+                "updated_at": "2024-01-02T00:00:00Z",
+            },
+        },
+    ]
+    mock_search_query.return_value = hits
+
+    q = "test"
+    token = "fake-token"
+    nb_results = 10
+    path = "/some/path/"
+    visited = ["doc-123"]
+    results = FindDocumentIndexer().search(
+        q=q, token=token, nb_results=nb_results, path=path, visited=visited
+    )
+
+    mock_search_query.assert_called_once()
+    call_args = mock_search_query.call_args
+    assert call_args[1]["data"] == {
+        "q": q,
+        "visited": visited,
+        "services": ["docs"],
+        "nb_results": nb_results,
+        "order_by": "updated_at",
+        "order_direction": "desc",
+        "path": path,
+    }
+
+    assert len(results) == 2
+    assert results == [
+        {
+            "id": hits[0]["_id"],
+            "title": hits[0]["_source"]["title"],
+            "content": hits[0]["_source"]["content"],
+            "updated_at": hits[0]["_source"]["updated_at"],
+            "path": hits[0]["_source"]["path"],
+        },
+        {
+            "id": hits[1]["_id"],
+            "title": hits[1]["_source"]["title.fr"],
+            "title.fr": hits[1]["_source"]["title.fr"],  # <- Find response artefact
+            "content": hits[1]["_source"]["content"],
+            "updated_at": hits[1]["_source"]["updated_at"],
+        },
+    ]

@@ -3,24 +3,31 @@ import { useEffect, useMemo } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
+import { useInfiniteSearchDocs } from '@/docs/doc-management/api/useSearchDocs';
+import { DocSearchTarget } from '@/docs/doc-search';
 
-import { Doc, useInfiniteDocs } from '../../doc-management';
+import { Doc } from '../../doc-management';
 
-import { DocSearchFiltersValues } from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchContentProps = {
   search: string;
-  filters: DocSearchFiltersValues;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
+  renderElement?: (doc: Doc) => React.ReactNode;
+  target?: DocSearchTarget;
+  parentPath?: string;
+  emptySearchText?: string;
 };
 
 export const DocSearchContent = ({
   search,
-  filters,
   onSelect,
   onLoadingChange,
+  renderElement = (doc) => <DocSearchItem doc={doc} />,
+  target,
+  parentPath,
+  emptySearchText,
 }: DocSearchContentProps) => {
   const {
     data,
@@ -29,21 +36,29 @@ export const DocSearchContent = ({
     isLoading,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteDocs({
-    page: 1,
-    title: search,
-    ...filters,
-  });
+  } = useInfiniteSearchDocs(
+    {
+      q: search,
+      page: 1,
+      target,
+      parentPath,
+    },
+    {
+      enabled: target !== DocSearchTarget.CURRENT || !!parentPath,
+    },
+  );
 
   const loading = isFetching || isRefetching || isLoading;
 
   const docsData: QuickSearchData<Doc> = useMemo(() => {
     const docs = data?.pages.flatMap((page) => page.results) || [];
+    const defaultEmptyText = emptySearchText || t('No document found');
+    const emptyText = search ? defaultEmptyText : t('Search by title');
 
     return {
       groupName: docs.length > 0 ? t('Select a document') : '',
       elements: search ? docs : [],
-      emptyString: t('No document found'),
+      emptyString: target ? emptyText : defaultEmptyText,
       endActions: hasNextPage
         ? [
             {
@@ -52,7 +67,14 @@ export const DocSearchContent = ({
           ]
         : [],
     };
-  }, [search, data?.pages, fetchNextPage, hasNextPage]);
+  }, [
+    search,
+    data?.pages,
+    fetchNextPage,
+    hasNextPage,
+    emptySearchText,
+    target,
+  ]);
 
   useEffect(() => {
     onLoadingChange?.(loading);
@@ -62,7 +84,7 @@ export const DocSearchContent = ({
     <QuickSearchGroup
       onSelect={onSelect}
       group={docsData}
-      renderElement={(doc) => <DocSearchItem doc={doc} />}
+      renderElement={renderElement}
     />
   );
 };
