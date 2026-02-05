@@ -14,6 +14,7 @@ import { useLeftPanelStore } from '../stores';
 
 import { LeftPanelContent } from './LeftPanelContent';
 import { LeftPanelHeader } from './LeftPanelHeader';
+import { LeftPanelHelpMenu } from './LeftPanelHelpMenu';
 
 const MobileLeftPanelStyle = createGlobalStyle`
   body {
@@ -57,6 +58,14 @@ export const LeftPanel = () => {
             <LeftPanelHeader />
           </Box>
           <LeftPanelContent />
+          <SeparatedSection showSeparator={false}>
+            <Box
+              $padding={{ horizontal: 'sm', vertical: 'xs' }}
+              $justify="flex-start"
+            >
+              <LeftPanelHelpMenu />
+            </Box>
+          </SeparatedSection>
         </Box>
       )}
 
@@ -91,6 +100,14 @@ export const LeftPanel = () => {
             >
               <LeftPanelHeader />
               <LeftPanelContent />
+              <SeparatedSection showSeparator={false}>
+                <Box
+                  $padding={{ horizontal: 'sm', vertical: 'xs' }}
+                  $justify="flex-start"
+                >
+                  <LeftPanelHelpMenu />
+                </Box>
+              </SeparatedSection>
               <SeparatedSection showSeparator={false}>
                 <Box
                   $justify="center"

@@ -23,6 +23,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix broadcast store sync #1846
+- ✨(frontend) add onboarding modal with help menu button #1868
 
 ## [v4.5.0] - 2026-01-28
 
