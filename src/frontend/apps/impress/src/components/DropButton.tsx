@@ -1,6 +1,7 @@
 import {
   PropsWithChildren,
   ReactNode,
+  RefObject,
   useEffect,
   useRef,
   useState,
@@ -9,6 +10,7 @@ import { Button, Popover } from 'react-aria-components';
 import styled, { css } from 'styled-components';
 
 import { useCunninghamTheme } from '@/cunningham';
+import { useRestoreFocus } from '@/hooks';
 
 import { BoxProps } from './Box';
 
@@ -56,6 +58,8 @@ export interface DropButtonProps {
   onOpenChange?: (isOpen: boolean) => void;
   label?: string;
   testId?: string;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
+  restoreFocusOnClose?: boolean;
 }
 
 export const DropButton = ({
@@ -66,12 +70,16 @@ export const DropButton = ({
   children,
   label,
   testId,
+  buttonRef,
+  restoreFocusOnClose = true,
 }: PropsWithChildren<DropButtonProps>) => {
   const { themeTokens } = useCunninghamTheme();
+  const restoreFocus = useRestoreFocus();
   const font = themeTokens['font']?.['families']['base'];
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
 
-  const triggerRef = useRef(null);
+  const internalTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const triggerRef = buttonRef ?? internalTriggerRef;
 
   useEffect(() => {
     setIsLocalOpen(isOpen);
@@ -80,6 +88,9 @@ export const DropButton = ({
   const onOpenChangeHandler = (isOpen: boolean) => {
     setIsLocalOpen(isOpen);
     onOpenChange?.(isOpen);
+    if (!isOpen && restoreFocusOnClose) {
+      restoreFocus(triggerRef);
+    }
   };
 
   return (

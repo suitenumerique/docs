@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️(frontend) restore focus to triggers after closing menus and modals #1863
+
 ### Fixed
 
 🐛(frontend) fix broadcast store sync #1846

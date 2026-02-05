@@ -9,10 +9,11 @@ import {
 import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, BoxButton, EmojiPicker, Icon, emojidata } from '@/components';
+import { useRestoreFocus } from '@/hooks';
 
 import { DocsBlockNoteEditor } from '../../types';
 
@@ -54,6 +55,8 @@ const CalloutComponent = ({
 }: CalloutComponentProps) => {
   const [openEmojiPicker, setOpenEmojiPicker] = useState(false);
   const isEditable = editor.isEditable;
+  const emojiButtonRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocus = useRestoreFocus();
 
   const toggleEmojiPicker = (e: React.MouseEvent) => {
     if (!isEditable) {
@@ -64,11 +67,15 @@ const CalloutComponent = ({
     setOpenEmojiPicker(!openEmojiPicker);
   };
 
-  const onClickOutside = () => setOpenEmojiPicker(false);
+  const onClickOutside = () => {
+    setOpenEmojiPicker(false);
+    restoreFocus(emojiButtonRef);
+  };
 
   const onEmojiSelect = ({ native }: { native: string }) => {
     editor.updateBlock(block, { props: { emoji: native } });
     setOpenEmojiPicker(false);
+    restoreFocus(emojiButtonRef);
   };
 
   // Temporary: sets a yellow background color to a callout block when added by
@@ -103,6 +110,7 @@ const CalloutComponent = ({
         <BoxButton
           contentEditable={false}
           onClick={toggleEmojiPicker}
+          ref={emojiButtonRef}
           $css={css`
             font-size: 1.125rem;
             cursor: ${isEditable ? 'pointer' : 'default'};
