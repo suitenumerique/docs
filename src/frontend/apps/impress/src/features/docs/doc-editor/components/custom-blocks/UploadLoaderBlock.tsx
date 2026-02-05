@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 
 import { Box, Text } from '@/components';
 import { useMediaUrl } from '@/core';
+import { isSafeUrl } from '@/utils/url';
 
 import { loopCheckDocMediaStatus } from '../../api';
 import Loader from '../../assets/loader.svg';
@@ -67,7 +68,7 @@ const UploadLoaderBlockComponent = ({
       block.props.type === 'loading' &&
       isEditable;
 
-    if (!shouldCheckStatus) {
+    if (!shouldCheckStatus || !isSafeUrl(block.props.blockUploadUrl)) {
       return;
     }
 

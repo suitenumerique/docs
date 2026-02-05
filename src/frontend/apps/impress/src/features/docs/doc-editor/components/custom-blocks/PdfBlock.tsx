@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
 import { Box, Icon, Loading } from '@/components';
+import { isSafeUrl } from '@/utils/url';
 
 import Warning from '../../assets/warning.svg';
 import { ANALYZE_URL } from '../../conf';
@@ -87,7 +88,7 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   }, [lang, t]);
 
   useEffect(() => {
-    if (!pdfUrl || pdfUrl.includes(ANALYZE_URL)) {
+    if (!pdfUrl || pdfUrl.includes(ANALYZE_URL) || !isSafeUrl(pdfUrl)) {
       return;
     }
 
@@ -115,7 +116,8 @@ const PdfBlockComponent = ({ editor, block }: PdfBlockComponentProps) => {
   }, [pdfUrl]);
 
   const isInvalidPDF =
-    !isPDFContentLoading && isPDFContent !== null && !isPDFContent;
+    (!isPDFContentLoading && isPDFContent !== null && !isPDFContent) ||
+    !isSafeUrl(pdfUrl);
 
   if (isInvalidPDF) {
     return (

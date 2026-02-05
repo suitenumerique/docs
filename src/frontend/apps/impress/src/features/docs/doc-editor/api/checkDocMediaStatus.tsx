@@ -1,5 +1,8 @@
 import { APIError, errorCauses } from '@/api';
 import { sleep } from '@/utils';
+import { isSafeUrl } from '@/utils/url';
+
+import { ANALYZE_URL } from '../conf';
 
 interface CheckDocMediaStatusResponse {
   file?: string;
@@ -13,6 +16,10 @@ interface CheckDocMediaStatus {
 export const checkDocMediaStatus = async ({
   urlMedia,
 }: CheckDocMediaStatus): Promise<CheckDocMediaStatusResponse> => {
+  if (!isSafeUrl(urlMedia) || !urlMedia.includes(ANALYZE_URL)) {
+    throw new APIError('Url invalid', { status: 400 });
+  }
+
   const response = await fetch(urlMedia, {
     credentials: 'include',
   });
