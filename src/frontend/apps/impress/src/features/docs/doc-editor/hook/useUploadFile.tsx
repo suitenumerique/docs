@@ -4,6 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { backendUrl } from '@/api';
+import { isSafeUrl } from '@/utils/url';
 
 import { useCreateDocAttachment } from '../api';
 import { ANALYZE_URL } from '../conf';
@@ -57,7 +58,8 @@ export const useUploadStatus = (editor: DocsBlockNoteEditor) => {
       if (
         !block ||
         !('url' in block.props) ||
-        ('url' in block.props && !block.props.url.includes(ANALYZE_URL))
+        ('url' in block.props && !block.props.url.includes(ANALYZE_URL)) ||
+        !isSafeUrl(block.props.url)
       ) {
         return;
       }

@@ -1,5 +1,7 @@
 import JSZip from 'jszip';
 
+import { isSafeUrl } from '@/utils/url';
+
 import { exportResolveFileUrl } from './api';
 
 // Escape user-provided text  before injecting it into the exported HTML document.
@@ -414,7 +416,7 @@ export const addMediaFilesToZip = async (
         url = null;
       }
 
-      if (!url || url.origin !== mediaUrl) {
+      if (!url || url.origin !== mediaUrl || !isSafeUrl(url.href)) {
         return;
       }
 
