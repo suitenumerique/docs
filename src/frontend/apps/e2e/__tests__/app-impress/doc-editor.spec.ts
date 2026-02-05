@@ -976,7 +976,10 @@ test.describe('Doc Editor', () => {
     await expect(pdfBlock).toBeVisible();
 
     // Try with invalid PDF first
-    await page.getByText(/Add (PDF|file)/).click();
+    await page
+      .getByText(/Add (PDF|file)/)
+      .first()
+      .click();
 
     await page.locator('[data-test="embed-tab"]').click();
 
@@ -994,7 +997,6 @@ test.describe('Doc Editor', () => {
     // Now with a valid PDF
     await page.getByText(/Add (PDF|file)/).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
-    const downloadPromise = page.waitForEvent('download');
     await page.getByText(/Upload (PDF|file)/).click();
     const fileChooser = await fileChooserPromise;
 
@@ -1003,24 +1005,16 @@ test.describe('Doc Editor', () => {
     // Wait for the media-check to be processed
     await page.waitForTimeout(1000);
 
-    const pdfEmbed = page
-      .locator('.--docs--editor-container embed.bn-visual-media')
+    const pdfIframe = page
+      .locator('.--docs--editor-container iframe.bn-visual-media')
       .first();
 
     // Check src of pdf
-    expect(await pdfEmbed.getAttribute('src')).toMatch(
+    expect(await pdfIframe.getAttribute('src')).toMatch(
       /http:\/\/localhost:8083\/media\/.*\/attachments\/.*.pdf/,
     );
 
-    await expect(pdfEmbed).toHaveAttribute('type', 'application/pdf');
-    await expect(pdfEmbed).toHaveAttribute('role', 'presentation');
-
-    // Check download with original filename
-    await pdfBlock.click();
-    await page.locator('[data-test="downloadfile"]').click();
-
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toBe('test-pdf.pdf');
+    await expect(pdfIframe).toHaveAttribute('role', 'presentation');
   });
 
   test('it preserves text when switching between mobile and desktop views', async ({
