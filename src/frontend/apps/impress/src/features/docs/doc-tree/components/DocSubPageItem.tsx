@@ -99,11 +99,17 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const buttonOptionRef = useRef<HTMLDivElement | null>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement | null;
+    const isInActions = !!target?.closest('.light-doc-item-actions');
+    const isOnEmojiButton = !!target?.closest('.--docs--doc-icon');
+
     // F2: focus first action button
-    const shouldOpenActions = !menuOpen && node.isFocused;
+    const shouldOpenActions =
+      !menuOpen && !isInActions && (node.isFocused || isOnEmojiButton);
     if (e.key === 'F2' && shouldOpenActions) {
       buttonOptionRef.current?.focus();
       e.stopPropagation();
+      e.preventDefault();
       return;
     }
   };

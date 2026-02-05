@@ -3,6 +3,7 @@ import {
   Fragment,
   PropsWithChildren,
   ReactNode,
+  RefObject,
   useCallback,
   useEffect,
   useRef,
@@ -41,6 +42,8 @@ export type DropdownMenuProps = {
   selectedValues?: string[];
   afterOpenChange?: (isOpen: boolean) => void;
   testId?: string;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
+  restoreFocusOnClose?: boolean;
 };
 
 export const DropdownMenu = ({
@@ -56,6 +59,8 @@ export const DropdownMenu = ({
   afterOpenChange,
   selectedValues,
   testId,
+  buttonRef,
+  restoreFocusOnClose = true,
 }: PropsWithChildren<DropdownMenuProps>) => {
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
   const keyboardAction = useKeyboardAction();
@@ -114,6 +119,8 @@ export const DropdownMenu = ({
       label={label}
       buttonCss={buttonCss}
       testId={testId}
+      buttonRef={buttonRef}
+      restoreFocusOnClose={restoreFocusOnClose}
       button={
         showArrow ? (
           <Box

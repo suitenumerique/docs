@@ -1,8 +1,12 @@
-import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonElement,
+  useModal,
+} from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -34,6 +38,7 @@ import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
 } from '@/docs/doc-versioning';
+import { useRestoreFocus } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
@@ -59,6 +64,14 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
+  const optionsButtonRef = useRef<HTMLButtonElement | null>(null);
+  const shareButtonRef = useRef<ButtonElement | null>(null);
+  const exportButtonRef = useRef<ButtonElement | null>(null);
+  const shareTriggerRef = useRef<HTMLElement | null>(null);
+  const exportTriggerRef = useRef<HTMLElement | null>(null);
+  const historyTriggerRef = useRef<HTMLElement | null>(null);
+  const removeTriggerRef = useRef<HTMLElement | null>(null);
+  const restoreFocus = useRestoreFocus();
 
   const { isSmallMobile, isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
@@ -92,13 +105,17 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     {
       label: t('Share'),
       icon: 'group',
-      callback: modalShare.open,
+      callback: () => {
+        shareTriggerRef.current = optionsButtonRef.current;
+        modalShare.open();
+      },
       show: isSmallMobile,
     },
     {
       label: t('Export'),
       icon: 'download',
       callback: () => {
+        exportTriggerRef.current = optionsButtonRef.current;
         setIsModalExportOpen(true);
       },
       show: !!ModalExport && isSmallMobile,
@@ -120,6 +137,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       icon: 'history',
       disabled: !doc.abilities.versions_list,
       callback: () => {
+        historyTriggerRef.current = optionsButtonRef.current;
         selectHistoryModal.open();
       },
       show: !isMobile,
@@ -174,6 +192,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       icon: 'delete',
       disabled: !doc.abilities.destroy,
       callback: () => {
+        removeTriggerRef.current = optionsButtonRef.current;
         setIsModalRemoveOpen(true);
       },
     },
@@ -198,19 +217,25 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       >
         <BoutonShare
           doc={doc}
-          open={modalShare.open}
+          open={() => {
+            shareTriggerRef.current = shareButtonRef.current;
+            modalShare.open();
+          }}
           isHidden={isSmallMobile}
           displayNbAccess={doc.abilities.accesses_view}
+          buttonRef={shareButtonRef}
         />
 
         {!isSmallMobile && ModalExport && (
           <Button
+            ref={exportButtonRef}
             data-testid="doc-open-modal-download-button"
             variant="tertiary"
             icon={
               <Icon iconName="download" $color="inherit" aria-hidden={true} />
             }
             onClick={() => {
+              exportTriggerRef.current = exportButtonRef.current;
               setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
@@ -220,6 +245,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         <DropdownMenu
           options={options}
           label={t('Open the document options')}
+          buttonRef={optionsButtonRef}
           buttonCss={css`
             padding: ${spacingsTokens['xs']};
             ${isSmallMobile
@@ -235,17 +261,37 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
       {modalShare.isOpen && (
         <DocShareModal
-          onClose={() => modalShare.close()}
+          onClose={() => {
+            modalShare.close();
+            restoreFocus(
+              shareTriggerRef.current ??
+                shareButtonRef.current ??
+                optionsButtonRef.current,
+            );
+          }}
           doc={doc}
           isRootDoc={treeContext?.root?.id === doc.id}
         />
       )}
       {isModalExportOpen && ModalExport && (
-        <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
+        <ModalExport
+          onClose={() => {
+            setIsModalExportOpen(false);
+            restoreFocus(
+              exportTriggerRef.current ??
+                exportButtonRef.current ??
+                optionsButtonRef.current,
+            );
+          }}
+          doc={doc}
+        />
       )}
       {isModalRemoveOpen && (
         <ModalRemoveDoc
-          onClose={() => setIsModalRemoveOpen(false)}
+          onClose={() => {
+            setIsModalRemoveOpen(false);
+            restoreFocus(removeTriggerRef.current ?? optionsButtonRef.current);
+          }}
           doc={doc}
           onSuccess={() => {
             const isTopParent = doc.id === treeContext?.root?.id;
@@ -267,7 +313,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       )}
       {selectHistoryModal.isOpen && (
         <ModalSelectVersion
-          onClose={() => selectHistoryModal.close()}
+          onClose={() => {
+            selectHistoryModal.close();
+            restoreFocus(historyTriggerRef.current ?? optionsButtonRef.current);
+          }}
           doc={doc}
         />
       )}
