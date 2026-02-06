@@ -76,7 +76,7 @@ export const Header = () => {
                 {...icon}
               />
             )}
-            <Title headingLevel="h1" aria-hidden="true" />
+            {icon?.withTitle && <Title headingLevel="h1" aria-hidden="true" />}
           </Box>
         </StyledLink>
         {!isDesktop ? (
