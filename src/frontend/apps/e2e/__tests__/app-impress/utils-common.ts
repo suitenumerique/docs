@@ -1,4 +1,7 @@
-import { Locator, Page, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+import { Locator, Page, TestInfo, expect } from '@playwright/test';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
@@ -387,4 +390,31 @@ export const clickInGridMenu = async (
     .getByRole('button', { name: /Open the menu of actions for the document/ })
     .click();
   await page.getByRole('menuitem', { name: textButton }).click();
+};
+
+export const writeReport = async (
+  testInfo: TestInfo,
+  filename: string,
+  attachName: string,
+  buffer: Buffer,
+  contentType: string,
+) => {
+  const REPORT_DIRNAME = 'extra-report';
+  const REPORT_NAME = 'test-results';
+  const outDir = testInfo
+    ? path.join(testInfo.outputDir, REPORT_DIRNAME, path.parse(filename).name)
+    : path.join(
+        process.cwd(),
+        REPORT_NAME,
+        REPORT_DIRNAME,
+        path.parse(filename).name,
+      );
+
+  fs.mkdirSync(outDir, { recursive: true });
+  const pathToFile = path.join(outDir, filename);
+  fs.writeFileSync(pathToFile, buffer);
+  await testInfo.attach(attachName, {
+    path: pathToFile,
+    contentType: contentType,
+  });
 };
