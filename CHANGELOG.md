@@ -10,6 +10,10 @@ and this project adheres to
 
 🐛(frontend) fix broadcast store sync #1846
 
+### Changed
+
+- 📝(docs) improve README and add documentation hub #1870
+
 ## [v4.5.0] - 2026-01-28
 
 ### Added 
