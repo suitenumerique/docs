@@ -292,16 +292,25 @@ test.describe('Doc Tree', () => {
     const selectedSubDoc = await getTreeRow(page, docChild);
     await expect(selectedSubDoc).toHaveAttribute('aria-selected', 'true');
 
-    const resizeHandle = page.locator('[data-panel-resize-handle-id]').first();
-    await expect(resizeHandle).toBeVisible();
-
     await selectedSubDoc.focus();
     await expect(selectedSubDoc).toBeFocused();
 
     await page.keyboard.press('Tab');
-    await expect(resizeHandle).toBeFocused();
+
+    await expect(page.getByLabel('Open onboarding menu')).toBeFocused();
+
+    await page.keyboard.press('Tab');
+
+    await expect(
+      page.locator('[data-panel-resize-handle-id]').first(),
+    ).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
+
+    await expect(page.getByLabel('Open onboarding menu')).toBeFocused();
+
+    await page.keyboard.press('Shift+Tab');
+
     await expect(selectedSubDoc).toBeFocused();
   });
 
