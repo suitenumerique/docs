@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Resource } from 'i18next';
+import { LinkHTMLAttributes } from 'react';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
@@ -8,7 +9,12 @@ import { HeaderType, WaffleType } from '@/features/header';
 import { PostHogConf } from '@/services';
 
 interface ThemeCustomization {
+  favicon?: {
+    light: LinkHTMLAttributes<HTMLLinkElement>;
+    dark: LinkHTMLAttributes<HTMLLinkElement>;
+  };
   footer?: FooterType;
+  'home-proconnect'?: boolean;
   translations?: Resource;
   header?: HeaderType;
   waffle?: WaffleType;
