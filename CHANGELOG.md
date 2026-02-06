@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 📝(docs) improve README and add documentation hub #1870
+
 ## [v4.6.0] - 2026-03-03
 
 ### Added
