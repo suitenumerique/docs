@@ -140,26 +140,6 @@ test.describe('Config', () => {
     ).toBeAttached();
   });
 
-  test('it checks theme_customization.translations config', async ({
-    page,
-  }) => {
-    await overrideConfig(page, {
-      theme_customization: {
-        translations: {
-          en: {
-            translation: {
-              Docs: 'MyCustomDocs',
-            },
-          },
-        },
-      },
-    });
-
-    await page.goto('/');
-
-    await expect(page.getByText('MyCustomDocs')).toBeAttached();
-  });
-
   test('it checks the config api is called', async ({ page }) => {
     const responsePromise = page.waitForResponse(
       (response) =>
@@ -172,11 +152,7 @@ test.describe('Config', () => {
     expect(response.ok()).toBeTruthy();
 
     const json = (await response.json()) as typeof CONFIG;
-    const { theme_customization, ...configApi } = json;
-    expect(theme_customization).toBeDefined();
-    const { theme_customization: _, ...CONFIG_LEFT } = CONFIG;
-
-    expect(configApi).toStrictEqual(CONFIG_LEFT);
+    expect(json).toStrictEqual(CONFIG);
   });
 });
 
@@ -186,14 +162,24 @@ test.describe('Config: Not logged', () => {
   test('it checks that theme is configured from config endpoint', async ({
     page,
   }) => {
+    await page.goto('/');
+
+    await expect(
+      page.getByText('Collaborative writing, Simplified.'),
+    ).toHaveCSS('font-family', /Roboto/i, {
+      timeout: 10000,
+    });
+
     await overrideConfig(page, {
       FRONTEND_THEME: 'dsfr',
     });
 
     await page.goto('/');
 
-    const header = page.locator('header').first();
-    // alt 'Gouvernement Logo' comes from the theme
-    await expect(header.getByAltText('Gouvernement Logo')).toBeVisible();
+    await expect(
+      page.getByText('Collaborative writing, Simplified.'),
+    ).toHaveCSS('font-family', /Marianne/i, {
+      timeout: 10000,
+    });
   });
 });

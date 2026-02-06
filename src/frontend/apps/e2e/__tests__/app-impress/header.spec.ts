@@ -36,8 +36,17 @@ test.describe('Header', () => {
         header: {
           logo: {
             src: '/assets/logo-gouv.svg',
-            width: '220px',
+            style: { width: '220px', height: 'auto' },
             alt: 'Gouvernement Logo',
+          },
+          icon: {
+            src: '/assets/icon-docs.svg',
+            style: {
+              width: '32px',
+              height: 'auto',
+            },
+            alt: '',
+            'data-testid': 'custom-testid-docs',
           },
         },
       },
@@ -46,7 +55,7 @@ test.describe('Header', () => {
 
     const header = page.locator('header').first();
 
-    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
+    await expect(header.getByTestId('custom-testid-docs')).toBeVisible();
     await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
       'font-family',
       /Marianne/i,

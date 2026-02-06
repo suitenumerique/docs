@@ -56,14 +56,13 @@ test.describe('Footer', () => {
 
   test('checks the footer is correctly overrided', async ({ page }) => {
     await overrideConfig(page, {
-      FRONTEND_THEME: 'dsfr',
       theme_customization: {
         footer: {
           default: {
             logo: {
               src: '/assets/logo-gouv.svg',
-              width: '220px',
               alt: 'Gouvernement Logo',
+              style: { width: '220px', height: 'auto' },
             },
             externalLinks: [
               {

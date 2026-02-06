@@ -15,13 +15,11 @@ import { getHeaderHeight } from './HomeHeader';
 
 export default function HomeBanner() {
   const { t } = useTranslation();
-  const { componentTokens, spacingsTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isMobile, isSmallMobile } = useResponsiveStore();
-  const withProConnect = componentTokens['home-proconnect'];
   const { data: config } = useConfig();
-
-  const icon =
-    config?.theme_customization?.header?.icon || componentTokens.icon;
+  const withProConnect = config?.theme_customization?.home?.['with-proconnect'];
+  const icon = config?.theme_customization?.home?.['icon-banner'];
 
   return (
     <Box
@@ -50,18 +48,19 @@ export default function HomeBanner() {
           $align="center"
           $gap={spacingsTokens['sm']}
         >
-          <Image
-            data-testid="header-icon-docs"
-            src={icon.src || ''}
-            alt=""
-            width={0}
-            height={0}
-            style={{
-              width: '64px',
-              height: 'auto',
-            }}
-            priority
-          />
+          {icon?.src && (
+            <Image
+              data-testid="header-icon-docs"
+              width={0}
+              height={0}
+              style={{
+                width: '64px',
+                height: 'auto',
+              }}
+              priority
+              {...icon}
+            />
+          )}
           <Text
             as="h2"
             $size={!isMobile ? 'xs-alt' : '2.3rem'}

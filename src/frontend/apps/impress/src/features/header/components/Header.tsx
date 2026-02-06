@@ -18,11 +18,10 @@ import { Waffle } from './Waffle';
 export const Header = () => {
   const { t } = useTranslation();
   const { data: config } = useConfig();
-  const { spacingsTokens, componentTokens } = useCunninghamTheme();
+  const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
-  const icon =
-    config?.theme_customization?.header?.icon || componentTokens.icon;
+  const icon = config?.theme_customization?.header?.icon;
 
   return (
     <>
@@ -68,18 +67,15 @@ export const Header = () => {
             $height="fit-content"
             $margin={{ top: 'auto' }}
           >
-            <Image
-              data-testid="header-icon-docs"
-              src={icon.src || ''}
-              alt=""
-              width={0}
-              height={0}
-              style={{
-                width: icon.width,
-                height: icon.height,
-              }}
-              priority
-            />
+            {icon && (
+              <Image
+                data-testid="header-icon-docs"
+                width={0}
+                height={0}
+                priority
+                {...icon}
+              />
+            )}
             <Title headingLevel="h1" aria-hidden="true" />
           </Box>
         </StyledLink>

@@ -3,6 +3,8 @@ import path from 'path';
 
 import { Locator, Page, TestInfo, expect } from '@playwright/test';
 
+import theme_customization from '../../../../../backend/impress/configuration/theme/default.json';
+
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
@@ -32,7 +34,7 @@ export const CONFIG = {
   POSTHOG_KEY: {},
   SENTRY_DSN: null,
   TRASHBIN_CUTOFF_DAYS: 30,
-  theme_customization: {},
+  theme_customization,
 } as const;
 
 export const overrideConfig = async (

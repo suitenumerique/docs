@@ -15,13 +15,12 @@ export const getHeaderHeight = (isSmallMobile: boolean) =>
   isSmallMobile ? HEADER_HEIGHT_MOBILE : HEADER_HEIGHT;
 
 export const HomeHeader = () => {
-  const { spacingsTokens, componentTokens } = useCunninghamTheme();
-  const logo = componentTokens.logo;
+  const { spacingsTokens } = useCunninghamTheme();
   const { isSmallMobile } = useResponsiveStore();
   const { data: config } = useConfig();
 
-  const icon =
-    config?.theme_customization?.header?.icon || componentTokens.icon;
+  const icon = config?.theme_customization?.header?.icon;
+  const logo = config?.theme_customization?.header?.logo;
 
   return (
     <Box
@@ -49,11 +48,10 @@ export const HomeHeader = () => {
         {!isSmallMobile && logo?.src && (
           <Image
             priority
-            src={logo.src}
-            alt={logo.alt}
             width={0}
             height={0}
-            style={{ width: logo.widthHeader, height: 'auto' }}
+            style={{ width: logo.width, height: 'auto' }}
+            {...logo}
           />
         )}
         <Box
@@ -63,18 +61,19 @@ export const HomeHeader = () => {
           $position="relative"
           $height="fit-content"
         >
-          <Image
-            data-testid="header-icon-docs"
-            src={icon.src || ''}
-            alt=""
-            width={0}
-            height={0}
-            style={{
-              width: icon.width,
-              height: icon.height,
-            }}
-            priority
-          />
+          {icon && (
+            <Image
+              data-testid="header-icon-docs"
+              width={0}
+              height={0}
+              style={{
+                width: icon.width,
+                height: icon.height,
+              }}
+              priority
+              {...icon}
+            />
+          )}
           <Title />
         </Box>
       </Box>

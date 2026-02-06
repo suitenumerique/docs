@@ -13,6 +13,32 @@ test.describe('Language', () => {
     await page.goto('/');
   });
 
+  test('it checks theme_customization.translations config', async ({
+    page,
+  }) => {
+    await overrideConfig(page, {
+      theme_customization: {
+        translations: {
+          en: {
+            translation: {
+              Docs: 'MyCustomDocs',
+            },
+          },
+        },
+        header: {
+          logo: {},
+          icon: {
+            withTitle: true,
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+
+    await expect(page.getByText('MyCustomDocs')).toBeAttached();
+  });
+
   test('checks language switching', async ({ page }) => {
     const header = page.locator('header').first();
     const languagePicker = header.locator('.--docs--language-picker-text');

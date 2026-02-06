@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Resource } from 'i18next';
+import Image from 'next/image';
+import { LinkHTMLAttributes } from 'react';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
@@ -7,8 +9,18 @@ import { FooterType } from '@/features/footer';
 import { HeaderType, WaffleType } from '@/features/header';
 import { PostHogConf } from '@/services';
 
+type Imagetype = React.ComponentProps<typeof Image>;
+
 interface ThemeCustomization {
+  favicon?: {
+    light: LinkHTMLAttributes<HTMLLinkElement>;
+    dark: LinkHTMLAttributes<HTMLLinkElement>;
+  };
   footer?: FooterType;
+  home: {
+    'with-proconnect'?: boolean;
+    'icon-banner'?: Imagetype;
+  };
   translations?: Resource;
   header?: HeaderType;
   waffle?: WaffleType;
