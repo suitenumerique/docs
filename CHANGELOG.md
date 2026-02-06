@@ -37,6 +37,10 @@ and this project adheres to
 - 🐛(y-provider) use CONVERSION_FILE_MAX_SIZE settings #1913
 - 🐛(frontend) fix callout block spacing for old browsers #1914
 
+### Changed
+
+- 📝(docs) improve README and add documentation hub #1870
+
 ## [v4.5.0] - 2026-01-28
 
 ### Added
