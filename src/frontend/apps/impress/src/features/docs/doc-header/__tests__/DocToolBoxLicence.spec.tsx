@@ -46,7 +46,9 @@ describe('DocToolBox - Licence', () => {
     // Wait for the export modal to be visible, then assert on its content text.
     await screen.findByTestId('modal-export-title');
     expect(
-      screen.getByText(/Download your document in a .docx, .odt.*format\./i),
+      screen.getByText(
+        'Export your document to print or download in .docx, .odt, .pdf or .html(zip) format.',
+      ),
     ).toBeInTheDocument();
   }, 10000);
 

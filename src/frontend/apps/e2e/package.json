@@ -22,8 +22,11 @@
     "typescript": "*"
   },
   "dependencies": {
+    "@types/pngjs": "6.0.5",
     "convert-stream": "1.0.2",
-    "pdf-parse": "2.4.5"
+    "pdf-parse": "2.4.5",
+    "pixelmatch": "7.1.0",
+    "pngjs": "7.0.0"
   },
   "packageManager": "yarn@1.22.22"
 }
