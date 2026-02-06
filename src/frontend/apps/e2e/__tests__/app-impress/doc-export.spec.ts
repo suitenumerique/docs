@@ -1,19 +1,18 @@
-import fs from 'fs';
 import path from 'path';
 
-import { Page, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import cs from 'convert-stream';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
 
 import {
-  BrowserName,
   TestLanguage,
   createDoc,
   verifyDocName,
   waitForLanguageSwitch,
 } from './utils-common';
 import { openSuggestionMenu, writeInEditor } from './utils-editor';
+import { comparePDFWithAssetFolder, overrideDocContent } from './utils-export';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -311,7 +310,14 @@ test.describe('Doc Export', () => {
   test('it exports the doc to PDF with PRINT feature and checks regressions', async ({
     page,
     browserName,
-  }) => {
+  }, testInfo) => {
+    // PDF Binary comparison is different depending on the browser used
+    // We only run this test on Chromium to avoid having to maintain
+    // multiple sets of PDF fixtures
+    if (browserName !== 'chromium') {
+      test.skip();
+    }
+
     await overrideDocContent({ page, browserName });
 
     await page
@@ -343,11 +349,13 @@ test.describe('Doc Export', () => {
     // );
 
     // Assert the generated PDF matches the initial PDF regression fixture
-    await comparePDFWithAssetFolder(
-      pdfBuffer,
-      'doc-export-PDF-browser-regressions.pdf',
-      false,
-    );
+    await comparePDFWithAssetFolder({
+      originPdfBuffer: pdfBuffer,
+      filename: 'doc-export-PDF-browser-regressions.pdf',
+      compareTextContent: false,
+      comparePixel: false,
+      testInfo,
+    });
 
     await expect(page.locator('#print-only-content-styles')).not.toBeAttached();
   });
@@ -355,7 +363,7 @@ test.describe('Doc Export', () => {
   test('it exports the doc to PDF and checks regressions', async ({
     page,
     browserName,
-  }) => {
+  }, testInfo) => {
     // PDF Binary comparison is different depending on the browser used
     // We only run this test on Chromium to avoid having to maintain
     // multiple sets of PDF fixtures
@@ -380,161 +388,16 @@ test.describe('Doc Export', () => {
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toBe(`${randomDoc}.pdf`);
 
-    // If we need to update the PDF regression fixture, uncomment the line below
     const pdfBuffer = await cs.toBuffer(await download.createReadStream());
+
+    // If we need to update the PDF regression fixture, uncomment the line below
     //await savePDFToAssetFolder(pdfBuffer, 'doc-export-regressions.pdf');
 
     // Assert the generated PDF matches "assets/doc-export-regressions.pdf"
-    await comparePDFWithAssetFolder(pdfBuffer, 'doc-export-regressions.pdf');
+    await comparePDFWithAssetFolder({
+      originPdfBuffer: pdfBuffer,
+      filename: 'doc-export-regressions.pdf',
+      testInfo,
+    });
   });
 });
-
-export const savePDFToAssetFolder = async (
-  pdfBuffer: Buffer,
-  filename: string,
-) => {
-  const pdfPath = path.join(__dirname, 'assets', filename);
-  fs.writeFileSync(pdfPath, pdfBuffer);
-};
-
-export const comparePDFWithAssetFolder = async (
-  pdfBuffer: Buffer,
-  filename: string,
-  compareTextContent = true,
-) => {
-  // Load reference PDF for comparison
-  const referencePdfPath = path.join(__dirname, 'assets', filename);
-
-  const referencePdfBuffer = fs.readFileSync(referencePdfPath);
-
-  // Parse both PDFs
-  const generatedPdf = new PDFParse({ data: pdfBuffer });
-  const referencePdf = new PDFParse({ data: referencePdfBuffer });
-
-  const [generatedInfo, referenceInfo] = await Promise.all([
-    generatedPdf.getInfo(),
-    referencePdf.getInfo(),
-  ]);
-
-  const [generatedScreenshot, referenceScreenshot] = await Promise.all([
-    generatedPdf.getScreenshot(),
-    referencePdf.getScreenshot(),
-  ]);
-  generatedScreenshot.pages[0].data;
-
-  const [generatedText, referenceText] = await Promise.all([
-    generatedPdf.getText(),
-    referencePdf.getText(),
-  ]);
-
-  // Compare page count
-  expect(generatedInfo.total).toBe(referenceInfo.total);
-
-  /* 
-    Compare text content
-    We make this optional because text extraction from PDFs can vary
-    slightly between environments and PDF versions, leading to false negatives.
-    Particularly with emojis which can be represented differently when 
-    exporting or parsing the PDF.
-  */
-  if (compareTextContent) {
-    expect(generatedText.text).toBe(referenceText.text);
-  }
-
-  // Compare screenshots page by page
-  for (let i = 0; i < generatedScreenshot.pages.length; i++) {
-    const genPage = generatedScreenshot.pages[i];
-    const refPage = referenceScreenshot.pages[i];
-
-    expect(genPage.width).toBe(refPage.width);
-    expect(genPage.height).toBe(refPage.height);
-    try {
-      expect(genPage.data).toStrictEqual(refPage.data);
-    } catch {
-      throw new Error(`PDF page ${i + 1} screenshot does not match reference.`);
-    }
-  }
-};
-
-/**
- * Override the document content API response to use a test content
- * This test content contains many blocks to facilitate testing
- * @param page
- */
-export const overrideDocContent = async ({
-  page,
-  browserName,
-}: {
-  page: Page;
-  browserName: BrowserName;
-}) => {
-  // Override content prop with assets/base-content-test-pdf.txt
-  await page.route(/\**\/documents\/\**/, async (route) => {
-    const request = route.request();
-    if (
-      request.method().includes('GET') &&
-      !request.url().includes('page=') &&
-      !request.url().includes('versions') &&
-      !request.url().includes('accesses') &&
-      !request.url().includes('invitations')
-    ) {
-      const response = await route.fetch();
-      const json = await response.json();
-      json.content = fs.readFileSync(
-        path.join(__dirname, 'assets/base-content-test-pdf.txt'),
-        'utf-8',
-      );
-      void route.fulfill({
-        response,
-        body: JSON.stringify(json),
-      });
-    } else {
-      await route.continue();
-    }
-  });
-
-  const [randomDoc] = await createDoc(
-    page,
-    'doc-export-override-content',
-    browserName,
-    1,
-  );
-
-  await verifyDocName(page, randomDoc);
-
-  await page.waitForTimeout(1000);
-
-  // Add Image SVG
-  await page.keyboard.press('Enter');
-  const { suggestionMenu } = await openSuggestionMenu({ page });
-  await suggestionMenu.getByText('Resizable image with caption').click();
-  const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.getByText('Upload image').click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles(path.join(__dirname, 'assets/test.svg'));
-  const image = page
-    .locator('.--docs--editor-container img.bn-visual-media[src$=".svg"]')
-    .first();
-  await expect(image).toBeVisible();
-  await page.keyboard.press('Enter');
-
-  await page.waitForTimeout(1000);
-
-  // Add Image PNG
-  await openSuggestionMenu({ page });
-  await suggestionMenu.getByText('Resizable image with caption').click();
-  const fileChooserPNGPromise = page.waitForEvent('filechooser');
-  await page.getByText('Upload image').click();
-  const fileChooserPNG = await fileChooserPNGPromise;
-  await fileChooserPNG.setFiles(
-    path.join(__dirname, 'assets/logo-suite-numerique.png'),
-  );
-  const imagePng = page
-    .locator('.--docs--editor-container img.bn-visual-media[src$=".png"]')
-    .first();
-  await expect(imagePng).toBeVisible();
-
-  await page.waitForTimeout(1000);
-
-  return randomDoc;
-};
