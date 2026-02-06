@@ -22,7 +22,7 @@ const BlueStripe = styled.div`
 export const Footer = () => {
   const { data: config } = useConfig();
   const footerJson = config?.theme_customization?.footer;
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const resolvedLanguage = i18n.resolvedLanguage;
   const [content, setContent] = useState<ContentType>();
 
@@ -82,16 +82,9 @@ export const Footer = () => {
                   $height="fit-content"
                 >
                   {logo?.src && (
-                    <Image
-                      priority
-                      src={logo.src}
-                      alt={logo?.alt || t('Logo')}
-                      width={0}
-                      height={0}
-                      style={{ width: logo?.width || 'auto', height: 'auto' }}
-                    />
+                    <Image priority width={0} height={0} {...logo} />
                   )}
-                  {logo.withTitle && (
+                  {logo?.withTitle && (
                     <Box $css="zoom:1.4;">
                       <Title />
                     </Box>

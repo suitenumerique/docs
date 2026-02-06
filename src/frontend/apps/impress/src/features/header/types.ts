@@ -1,7 +1,8 @@
+import Image from 'next/image';
+
+type Imagetype = React.ComponentProps<typeof Image>;
+
 export interface HeaderType {
-  icon?: {
-    src?: string;
-    width?: string;
-    height?: string;
-  };
+  logo?: Imagetype;
+  icon?: Imagetype;
 }

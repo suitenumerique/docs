@@ -676,13 +676,6 @@ export const tokens = {
           warning: { 'background-color': '#F1E0D3', color: '#AD3300' },
           info: { 'background-color': '#D5E4F3', color: '#005BC0' },
         },
-        logo: { src: '', alt: '', widthHeader: '', widthFooter: '' },
-        'home-proconnect': false,
-        icon: { src: '/assets/icon-docs.svg', width: '32px', height: 'auto' },
-        favicon: {
-          'png-light': '/assets/favicon-light.png',
-          'png-dark': '/assets/favicon-dark.png',
-        },
       },
     },
     dark: {
@@ -1965,23 +1958,6 @@ export const tokens = {
           success: { 'background-color': '#CFE4D4', color: '#016D31' },
           warning: { 'background-color': '#F1E0D3', color: '#AD3300' },
           info: { 'background-color': '#D5E4F3', color: '#005BC0' },
-        },
-        logo: {
-          src: '/assets/logo-gouv.svg',
-          alt: 'Gouvernement Logo',
-          widthHeader: '110px',
-          widthFooter: '220px',
-        },
-        'home-proconnect': true,
-        icon: {
-          src: '/assets/icon-docs-dsfr.svg',
-          width: '32px',
-          height: 'auto',
-        },
-        favicon: {
-          'png-light': '/assets/favicon-dsfr.png',
-          'png-dark': '/assets/favicon-dark-dsfr.png',
-          ico: '/assets/favicon-dsfr.ico',
         },
       },
     },
