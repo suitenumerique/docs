@@ -38,10 +38,10 @@ items:
                   imagePullPolicy: {{ ($.Values.backend.image | default dict).pullPolicy | default $.Values.image.pullPolicy }}
                   args:
                     {{- toYaml .command | nindent 22 }}
+                  {{- if $envVars}}
                   env:
-                    {{- if $envVars}}
                     {{- $envVars | indent 22 }}
-                    {{- end }}
+                  {{- end }}
                   {{- with $.Values.backend.securityContext }}
                   securityContext:
                     {{- toYaml . | nindent 22 }}
