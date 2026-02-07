@@ -42,6 +42,10 @@ items:
                   env:
                     {{- $envVars | indent 22 }}
                   {{- end }}
+                  {{- if .Values.backend.envFrom }}
+                  envFrom:
+                    {{- toYaml .Values.backend.envFrom | nindent 22 }}
+                  {{- end }}
                   {{- with $.Values.backend.securityContext }}
                   securityContext:
                     {{- toYaml . | nindent 22 }}
