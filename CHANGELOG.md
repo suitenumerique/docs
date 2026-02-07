@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(helm) allow all keys in configMap as env var #1872
+
 ### Changed
 
 - 📝(docs) improve README and add documentation hub #1870

@@ -52,6 +52,10 @@ spec:
           env:
             {{- $envVars | indent 12 }}
           {{- end }}
+          {{- if .Values.backend.envFrom }}
+          envFrom:
+            {{- toYaml .Values.backend.envFrom | nindent 12 }}
+          {{- end }}
           {{- with .Values.backend.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
