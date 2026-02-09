@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
 import { Box, Loading } from '@/components';
-import { DocHeader } from '@/docs/doc-header/';
+import { DocHeader, FloatingBar } from '@/docs/doc-header/';
 import {
   Doc,
   LinkReach,
@@ -35,6 +35,7 @@ export const DocEditorContainer = ({
 
   return (
     <>
+      {isDesktop && <FloatingBar />}
       <Box
         $maxWidth="868px"
         $width="100%"

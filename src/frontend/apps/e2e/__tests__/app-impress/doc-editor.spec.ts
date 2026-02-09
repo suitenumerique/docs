@@ -410,7 +410,7 @@ test.describe('Doc Editor', () => {
     const editor = page.locator('.ProseMirror');
     await editor.getByText('Hello').selectText();
 
-    await page.getByRole('button', { name: 'AI' }).click();
+    await page.getByRole('button', { name: 'AI', exact: true }).click();
 
     await expect(
       page.getByRole('menuitem', { name: 'Use as prompt' }),
@@ -494,11 +494,13 @@ test.describe('Doc Editor', () => {
       await editor.getByText('Hello').selectText();
 
       if (!ai_transform && !ai_translate) {
-        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
+        await expect(
+          page.getByRole('button', { name: 'AI', exact: true }),
+        ).toBeHidden();
         return;
       }
 
-      await page.getByRole('button', { name: 'AI' }).click();
+      await page.getByRole('button', { name: 'AI', exact: true }).click();
 
       if (ai_transform) {
         await expect(

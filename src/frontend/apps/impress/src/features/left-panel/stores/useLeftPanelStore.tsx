@@ -2,21 +2,30 @@ import { create } from 'zustand';
 
 interface LeftPanelState {
   isPanelOpen: boolean;
+  isPanelOpenMobile: boolean;
   togglePanel: (value?: boolean) => void;
   closePanel: () => void;
 }
 
 export const useLeftPanelStore = create<LeftPanelState>((set, get) => ({
-  isPanelOpen: false,
+  isPanelOpen: true,
+  isPanelOpenMobile: false,
   togglePanel: (value?: boolean) => {
-    const sanitizedValue =
-      value !== undefined && typeof value === 'boolean'
-        ? value
-        : !get().isPanelOpen;
-
-    set({ isPanelOpen: sanitizedValue });
+    if (value === true) {
+      set({ isPanelOpen: true });
+      return;
+    }
+    if (value === false) {
+      set({ isPanelOpen: false, isPanelOpenMobile: false });
+      return;
+    }
+    const { isPanelOpen, isPanelOpenMobile } = get();
+    set({
+      isPanelOpen: !isPanelOpen,
+      isPanelOpenMobile: !isPanelOpenMobile,
+    });
   },
   closePanel: () => {
-    set({ isPanelOpen: false });
+    set({ isPanelOpen: false, isPanelOpenMobile: false });
   },
 }));

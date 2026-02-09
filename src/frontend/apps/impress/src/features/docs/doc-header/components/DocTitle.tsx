@@ -18,6 +18,8 @@ import {
 import SimpleFileIcon from '@/features/docs/doc-management/assets/simple-document.svg';
 import { useResponsiveStore } from '@/stores';
 
+export const CLASS_DOC_TITLE = '--docs--doc-title';
+
 interface DocTitleProps {
   doc: Doc;
 }
@@ -39,13 +41,15 @@ export const DocTitleText = () => {
   const { untitledDocument } = useTrans();
 
   return (
-    <Text
-      as="h2"
-      $margin={{ all: 'none', left: 'none' }}
-      $size={isMobile ? 'h4' : 'h2'}
-    >
-      {currentDoc?.title || untitledDocument}
-    </Text>
+    <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
+      <Text
+        as="h2"
+        $margin={{ all: 'none', left: 'none' }}
+        $size={isMobile ? 'h4' : 'h2'}
+      >
+        {currentDoc?.title || untitledDocument}
+      </Text>
+    </Box>
   );
 };
 
@@ -65,6 +69,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
       placement="top"
     >
       <Box
+        className={CLASS_DOC_TITLE}
         $css={css`
           padding: 4px;
           padding-top: 3px;

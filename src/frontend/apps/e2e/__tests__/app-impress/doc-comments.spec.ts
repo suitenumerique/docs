@@ -41,7 +41,7 @@ test.describe('Doc Comments', () => {
     // We add a comment with the first user
     const editor = await writeInEditor({ page, text: 'Hello World' });
     await editor.getByText('Hello').selectText();
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByRole('button', { name: 'Comment', exact: true }).click();
 
     const thread = page.locator('.bn-thread');
     await thread.getByRole('paragraph').first().fill('This is a comment');
@@ -124,7 +124,7 @@ test.describe('Doc Comments', () => {
     // Checks add react reaction
     const editor = await writeInEditor({ page, text: 'Hello' });
     await editor.getByText('Hello').selectText();
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByRole('button', { name: 'Comment', exact: true }).click();
 
     const thread = page.locator('.bn-thread');
     await thread.getByRole('paragraph').first().fill('This is a comment');
@@ -191,7 +191,7 @@ test.describe('Doc Comments', () => {
 
     /* Delete the last comment remove the thread */
     await editor.getByText('Hello').selectText();
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByRole('button', { name: 'Comment', exact: true }).click();
 
     await thread.getByRole('paragraph').first().fill('This is a new comment');
     await thread.locator('[data-test="save"]').click();
@@ -249,7 +249,9 @@ test.describe('Doc Comments', () => {
       editor.getByText('Hello, I can edit the document'),
     ).toBeVisible();
     await otherEditor.getByText('Hello').selectText();
-    await otherPage.getByRole('button', { name: 'Comment' }).click();
+    await otherPage
+      .getByRole('button', { name: 'Comment', exact: true })
+      .click();
     const otherThread = otherPage.locator('.bn-thread');
     await otherThread
       .getByRole('paragraph')
@@ -280,7 +282,7 @@ test.describe('Doc Comments', () => {
     await expect(otherThread).toBeHidden();
     await otherEditor.getByText('Hello').selectText();
     await expect(
-      otherPage.getByRole('button', { name: 'Comment' }),
+      otherPage.getByRole('button', { name: 'Comment', exact: true }),
     ).toBeHidden();
 
     await otherPage.reload();
@@ -334,7 +336,7 @@ test.describe('Doc Comments', () => {
     // We add a comment in the first document
     const editor1 = await writeInEditor({ page, text: 'Document One' });
     await editor1.getByText('Document One').selectText();
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByRole('button', { name: 'Comment', exact: true }).click();
 
     const thread1 = page.locator('.bn-thread');
     await thread1.getByRole('paragraph').first().fill('Comment in Doc One');
@@ -388,7 +390,7 @@ test.describe('Doc Comments mobile', () => {
     // Checks add react reaction
     const editor = await writeInEditor({ page, text: 'Hello' });
     await editor.getByText('Hello').selectText();
-    await page.getByRole('button', { name: 'Comment' }).click();
+    await page.getByRole('button', { name: 'Comment', exact: true }).click();
 
     const thread = page.locator('.bn-thread');
     await thread.getByRole('paragraph').first().fill('This is a comment');

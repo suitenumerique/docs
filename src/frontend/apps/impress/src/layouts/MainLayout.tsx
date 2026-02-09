@@ -120,9 +120,13 @@ const MainContent = ({
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
-        &:focus-visible {
-          outline: 3px solid ${colorsTokens['brand-400']};
-          outline-offset: -3px;
+        &:focus-visible::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border: 3px solid ${colorsTokens['brand-400']};
+          pointer-events: none;
+          z-index: 2001;
         }
       `}
     >

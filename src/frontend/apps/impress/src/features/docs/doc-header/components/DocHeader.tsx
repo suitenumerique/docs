@@ -35,7 +35,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
     <>
       <Box
         $width="100%"
-        $padding={{ top: isDesktop ? '50px' : 'md' }}
+        $padding={{ top: isDesktop ? '0' : 'md' }}
         $gap={spacingsTokens['base']}
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"

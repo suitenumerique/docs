@@ -26,13 +26,14 @@ export const LeftPanel = () => {
   const { t } = useTranslation();
 
   const { spacingsTokens } = useCunninghamTheme();
-  const { togglePanel, isPanelOpen } = useLeftPanelStore();
+  const { togglePanel, isPanelOpen, isPanelOpenMobile } = useLeftPanelStore();
+  const isPanelOpenState = isDesktop ? isPanelOpen : isPanelOpenMobile;
 
   const pathname = usePathname();
 
   useEffect(() => {
-    togglePanel(false);
-  }, [pathname, togglePanel]);
+    togglePanel(isDesktop);
+  }, [pathname, isDesktop, togglePanel]);
 
   return (
     <>
@@ -62,7 +63,7 @@ export const LeftPanel = () => {
 
       {!isDesktop && (
         <>
-          {isPanelOpen && <MobileLeftPanelStyle />}
+          {isPanelOpenState && <MobileLeftPanelStyle />}
           <Box
             $hasTransition
             $css={css`
@@ -71,7 +72,7 @@ export const LeftPanel = () => {
               height: calc(100dvh - 52px);
               border-right: 1px solid var(--c--globals--colors--gray-200);
               position: fixed;
-              transform: translateX(${isPanelOpen ? '0' : '-100dvw'});
+              transform: translateX(${isPanelOpenState ? '0' : '-100dvw'});
               background-color: var(--c--globals--colors--gray-000);
               overflow-y: auto;
               overflow-x: hidden;

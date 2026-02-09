@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components';
 import { useCreateDoc } from '@/features/docs/doc-management';
 import { useSkeletonStore } from '@/features/skeletons';
+import { useResponsiveStore } from '@/stores';
 
 import { useLeftPanelStore } from '../stores';
 
@@ -13,6 +14,7 @@ export const LeftPanelHeaderButton = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { closePanel } = useLeftPanelStore();
+  const { isDesktop } = useResponsiveStore();
   const { setIsSkeletonVisible } = useSkeletonStore();
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -25,7 +27,9 @@ export const LeftPanelHeaderButton = () => {
         .then(() => {
           // The skeleton will be disabled by the [id] page once the data is loaded
           setIsNavigating(false);
-          closePanel();
+          if (!isDesktop) {
+            closePanel();
+          }
         })
         .catch(() => {
           // In case of navigation error, disable the skeleton

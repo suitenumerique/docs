@@ -7,6 +7,7 @@ import {
   mockedDocument,
   verifyDocName,
 } from './utils-common';
+import { writeInEditor } from './utils-editor';
 import {
   connectOtherUserToDoc,
   mockedAccesses,
@@ -20,6 +21,43 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Header', () => {
+  test('toggles panel collapse from floating bar button', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'doc-floating-bar',
+      browserName,
+      1,
+    );
+
+    const collapseButton = page.getByTestId('floating-bar-toggle-left-panel');
+    await expect(collapseButton).toBeVisible();
+
+    // Panel open
+    await expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
+    await expect(collapseButton.getByText(docTitle)).toBeHidden();
+
+    // Collapse panel
+    await collapseButton.click();
+    await expect(collapseButton).toHaveAttribute('aria-expanded', 'false');
+    await expect(collapseButton.getByText(docTitle)).toBeHidden();
+
+    // When the title is not visible in the viewport, the button should show the title
+    const editor = await writeInEditor({ page, text: 'Lorem ipsum' });
+    for (let i = 0; i < 25; i++) {
+      await editor.press('Enter');
+    }
+    await writeInEditor({ page, text: 'Lorem ipsum 2' });
+    await expect(collapseButton.getByText(docTitle)).toBeVisible();
+
+    // Expand panel and check the title is hidden again
+    await collapseButton.click();
+    await expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
+    await expect(collapseButton.getByText(docTitle)).toBeHidden();
+  });
+
   test('it checks the element are correctly displayed', async ({
     page,
     browserName,
