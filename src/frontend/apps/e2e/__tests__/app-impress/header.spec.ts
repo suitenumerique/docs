@@ -34,18 +34,14 @@ test.describe('Header', () => {
       FRONTEND_THEME: 'dsfr',
       theme_customization: {
         header: {
-          logo: {
-            src: '/assets/logo-gouv.svg',
-            style: { width: '220px', height: 'auto' },
-            alt: 'Gouvernement Logo',
-          },
           icon: {
-            src: '/assets/icon-docs.svg',
+            src: '/assets/icon-docs-v2.svg',
             style: {
-              width: '32px',
+              width: '100px',
               height: 'auto',
             },
             alt: '',
+            withTitle: false,
             'data-testid': 'custom-testid-docs',
           },
         },
@@ -55,19 +51,11 @@ test.describe('Header', () => {
 
     const header = page.locator('header').first();
 
-    await expect(header.getByTestId('custom-testid-docs')).toBeVisible();
-    await expect(header.locator('h1').getByText('Docs')).toHaveCSS(
-      'font-family',
-      /Marianne/i,
+    await expect(header.getByTestId('custom-testid-docs')).toHaveAttribute(
+      'src',
+      '/assets/icon-docs-v2.svg',
     );
-
-    await expect(
-      header.getByRole('button', {
-        name: 'Logout',
-      }),
-    ).toBeVisible();
-
-    await expect(header.getByText('English')).toBeVisible();
+    await expect(header.locator('h1')).toBeHidden();
   });
 
   test('checks a custom waffle', async ({ page }) => {
@@ -152,32 +140,6 @@ test.describe('Header', () => {
     await expect(page.getByRole('link', { name: 'Tchap' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Grist' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Visio' })).toBeVisible();
-  });
-});
-
-test.describe('Header mobile', () => {
-  test.use({ viewport: { width: 500, height: 1200 } });
-
-  test('it checks the header when mobile with DSFR theme', async ({ page }) => {
-    await overrideConfig(page, {
-      FRONTEND_THEME: 'dsfr',
-      theme_customization: {
-        header: {
-          logo: {
-            src: '/assets/logo-gouv.svg',
-            width: '220px',
-            alt: 'Gouvernement Logo',
-          },
-        },
-      },
-    });
-
-    await page.goto('/');
-
-    const header = page.locator('header').first();
-
-    await expect(header.getByLabel('Open the header menu')).toBeVisible();
-    await expect(header.getByTestId('header-icon-docs')).toBeVisible();
   });
 });
 

@@ -145,7 +145,8 @@
         "width": "32px",
         "height": "auto"
       },
-      "alt": ""
+      "alt": "",
+      "withTitle": true
     }
   },
   "favicon": {

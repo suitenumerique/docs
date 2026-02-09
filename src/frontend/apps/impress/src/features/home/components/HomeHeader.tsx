@@ -71,10 +71,10 @@ export const HomeHeader = () => {
                 height: icon.height,
               }}
               priority
-              {...icon}
+              {...(({ withTitle: _, ...rest }) => rest)(icon)}
             />
           )}
-          <Title />
+          {icon?.withTitle && <Title />}
         </Box>
       </Box>
       {!isSmallMobile && (

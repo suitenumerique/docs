@@ -91,21 +91,44 @@ test.describe('Home page', () => {
             ],
           },
         },
+        header: {
+          logo: {
+            src: '/assets/logo-gouv.svg',
+            alt: 'Gouvernement Logo',
+            style: { width: '110px', height: 'auto' },
+          },
+          icon: {
+            src: '/assets/icon-docs-v2.svg',
+            style: {
+              width: '100px',
+              height: 'auto',
+            },
+            alt: '',
+            withTitle: false,
+          },
+        },
+        home: {
+          'with-proconnect': true,
+          'icon-banner': {
+            src: '/assets/icon-docs.svg',
+            style: {
+              width: '64px',
+              height: 'auto',
+            },
+            alt: '',
+          },
+        },
       },
     });
 
     await page.goto('/docs/');
 
-    // Wait for the page to be fully loaded and responsive store to be initialized
-    await page.waitForLoadState('domcontentloaded');
-
-    // Wait a bit more for the responsive store to be initialized
-    await page.waitForTimeout(500);
-
     // Check header content
     const header = page.locator('header').first();
     const footer = page.locator('footer').first();
-    await expect(header).toBeVisible();
+    await expect(header).toBeVisible({
+      timeout: 10000,
+    });
 
     // Check for language picker - it should be visible on desktop
     // Use a more flexible selector that works with both Header and HomeHeader
@@ -118,7 +141,6 @@ test.describe('Home page', () => {
       header.getByRole('img', { name: 'Gouvernement Logo' }),
     ).toBeVisible();
     await expect(header.getByTestId('header-icon-docs')).toBeVisible();
-    await expect(header.getByRole('heading', { name: 'Docs' })).toBeVisible();
 
     // Check the titles
     const h2 = page.locator('h2');

@@ -73,10 +73,10 @@ export const Header = () => {
                 width={0}
                 height={0}
                 priority
-                {...icon}
+                {...(({ withTitle: _, ...rest }) => rest)(icon)}
               />
             )}
-            <Title headingLevel="h1" aria-hidden="true" />
+            {icon?.withTitle && <Title headingLevel="h1" aria-hidden="true" />}
           </Box>
         </StyledLink>
         {!isDesktop ? (
