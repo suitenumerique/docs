@@ -54,13 +54,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const { replace } = useRouter();
   useRouteChangeCompleteFocus();
 
-  const initializeResizeListener = useResponsiveStore(
-    (state) => state.initializeResizeListener,
-  );
+  const { initializeResizeListener, initializeInputDetection } =
+    useResponsiveStore();
 
   useEffect(() => {
     return initializeResizeListener();
   }, [initializeResizeListener]);
+
+  useEffect(() => {
+    return initializeInputDetection();
+  }, [initializeInputDetection]);
 
   /**
    * Update the global router replace function

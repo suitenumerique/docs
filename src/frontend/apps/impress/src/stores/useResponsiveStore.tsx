@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export type ScreenSize = 'small-mobile' | 'mobile' | 'tablet' | 'desktop';
+export type InputMethod = 'touch' | 'mouse' | 'unknown';
 
 export interface UseResponsiveStore {
   isMobile: boolean;
@@ -10,7 +11,11 @@ export interface UseResponsiveStore {
   screenWidth: number;
   setScreenSize: (size: ScreenSize) => void;
   isDesktop: boolean;
+  isTouchCapable: boolean;
+  isInputTouch: boolean;
+  inputMethod: InputMethod;
   initializeResizeListener: () => () => void;
+  initializeInputDetection: () => () => void;
 }
 
 const initialState = {
@@ -20,6 +25,9 @@ const initialState = {
   isDesktop: false,
   screenSize: 'desktop' as ScreenSize,
   screenWidth: 0,
+  isTouchCapable: false,
+  isInputTouch: false,
+  inputMethod: 'unknown' as InputMethod,
 };
 
 export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
@@ -29,6 +37,9 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
   isTablet: initialState.isTablet,
   screenSize: initialState.screenSize,
   screenWidth: initialState.screenWidth,
+  isTouchCapable: initialState.isTouchCapable,
+  isInputTouch: initialState.isInputTouch,
+  inputMethod: initialState.inputMethod,
   setScreenSize: (size: ScreenSize) => set(() => ({ screenSize: size })),
   initializeResizeListener: () => {
     const resizeHandler = () => {
@@ -82,6 +93,34 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
 
     return () => {
       window.removeEventListener('resize', debouncedResizeHandler);
+    };
+  },
+  initializeInputDetection: () => {
+    // Detect if device has touch capability
+    const isTouchCapable =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      // @ts-ignore - for older browsers
+      navigator.msMaxTouchPoints > 0;
+
+    set({ isTouchCapable });
+
+    // Track actual input method being used
+    const handleTouchStart = () => {
+      set({ inputMethod: 'touch', isInputTouch: true });
+    };
+
+    const handleMouseMove = () => {
+      set({ inputMethod: 'mouse', isInputTouch: false });
+    };
+
+    // Listen for first interaction to determine input method
+    window.addEventListener('touchstart', handleTouchStart, { once: false });
+    window.addEventListener('mousemove', handleMouseMove, { once: false });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   },
 }));
