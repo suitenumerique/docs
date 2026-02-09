@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(frontend) add floating bar with leftpanel collapse button #1876
 - ✨(frontend) Can print a doc #1832
 - ✨(backend) manage reconciliation requests for user accounts #1878
 

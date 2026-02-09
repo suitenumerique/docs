@@ -31,8 +31,11 @@ export const LeftPanel = () => {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (isDesktop) {
+      return;
+    }
     togglePanel(false);
-  }, [pathname, togglePanel]);
+  }, [pathname, isDesktop, togglePanel]);
 
   return (
     <>

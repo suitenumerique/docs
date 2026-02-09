@@ -7,7 +7,7 @@ interface LeftPanelState {
 }
 
 export const useLeftPanelStore = create<LeftPanelState>((set, get) => ({
-  isPanelOpen: false,
+  isPanelOpen: true,
   togglePanel: (value?: boolean) => {
     const sanitizedValue =
       value !== undefined && typeof value === 'boolean'
