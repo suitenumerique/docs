@@ -3,9 +3,14 @@
 import base64
 import uuid
 
-import pycrdt
+from django.core.cache import cache
 
-from core import utils
+import pycrdt
+import pytest
+
+from core import factories, utils
+
+pytestmark = pytest.mark.django_db
 
 # This base64 string is an example of what is saved in the database.
 # This base64 is generated from the blocknote editor, it contains
@@ -102,16 +107,101 @@ def test_utils_get_ancestor_to_descendants_map_multiple_paths():
     }
 
 
-def test_utils_extract_email_domain_parts_when_email_is_valid():
-    """Test extraction of email domain parts."""
-    email = "firstname.lastname@numerique.gouv.fr"
-    full_domain, partial_domain = utils.extract_email_domain_parts(email)
-    assert full_domain == "numerique.gouv.fr"
-    assert partial_domain == "gouv.fr"
+def test_utils_users_sharing_documents_with_cache_miss():
+    """Test cache miss: should query database and cache result."""
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    user3 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+    doc2 = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(user=user1, document=doc1)
+    factories.UserDocumentAccessFactory(user=user2, document=doc1)
+    factories.UserDocumentAccessFactory(user=user3, document=doc2)
+
+    cache_key = f"users_sharing_documents_with_{user1.id}"
+    cache.delete(cache_key)
+
+    result = utils.users_sharing_documents_with(user1)
+
+    assert user2.id in result
+
+    cached_data = cache.get(cache_key)
+    assert cached_data == result
 
 
-def test_utils_extract_email_domain_parts_when_email_is_empty():
-    empty_email = ""
-    full_domain, partial_domain = utils.extract_email_domain_parts(empty_email)
-    assert full_domain == ""
-    assert partial_domain == ""
+def test_utils_users_sharing_documents_with_cache_hit():
+    """Test cache hit: should return cached data without querying database."""
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+
+    factories.UserDocumentAccessFactory(user=user1, document=doc1)
+    factories.UserDocumentAccessFactory(user=user2, document=doc1)
+
+    cache_key = f"users_sharing_documents_with_{user1.id}"
+
+    test_cached_data = {user2.id: "2025-02-10"}
+    cache.set(cache_key, test_cached_data, 86400)
+
+    result = utils.users_sharing_documents_with(user1)
+    assert result == test_cached_data
+
+
+def test_utils_users_sharing_documents_with_cache_invalidation_on_create():
+    """Test that cache is invalidated when a DocumentAccess is created."""
+    # Create test data
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+
+    # Pre-populate cache
+    cache_key = f"users_sharing_documents_with_{user1.id}"
+    cache.set(cache_key, {}, 86400)
+
+    # Verify cache exists
+    assert cache.get(cache_key) is not None
+
+    # Create new DocumentAccess
+    factories.UserDocumentAccessFactory(user=user2, document=doc1)
+
+    # Cache should still exist (only created for user2 who was added)
+    # But if we create access for user1 being shared with, cache should be cleared
+    cache.set(cache_key, {"test": "data"}, 86400)
+    factories.UserDocumentAccessFactory(user=user1, document=doc1)
+
+    # Cache for user1 should be invalidated (cleared)
+    assert cache.get(cache_key) is None
+
+
+def test_utils_users_sharing_documents_with_cache_invalidation_on_delete():
+    """Test that cache is invalidated when a DocumentAccess is deleted."""
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    doc1 = factories.DocumentFactory()
+
+    doc_access = factories.UserDocumentAccessFactory(user=user1, document=doc1)
+
+    cache_key = f"users_sharing_documents_with_{user1.id}"
+    cache.set(cache_key, {user2.id: "2025-02-10"}, 86400)
+
+    assert cache.get(cache_key) is not None
+
+    doc_access.delete()
+
+    assert cache.get(cache_key) is None
+
+
+def test_utils_users_sharing_documents_with_empty_result():
+    """Test when user is not sharing any documents."""
+    user1 = factories.UserFactory()
+
+    cache_key = f"users_sharing_documents_with_{user1.id}"
+    cache.delete(cache_key)
+
+    result = utils.users_sharing_documents_with(user1)
+
+    assert result == {}
+
+    cached_data = cache.get(cache_key)
+    assert cached_data == {}

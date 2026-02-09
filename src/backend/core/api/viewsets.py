@@ -37,6 +37,7 @@ from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
 from lasuite.oidc_login.decorators import refresh_oidc_access_token
+from lasuite.tools.email import get_domain_from_email
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -63,7 +64,6 @@ from core.services.search_indexers import (
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils import (
     extract_attachments,
-    extract_email_domain_parts,
     filter_descendants,
     users_sharing_documents_with,
 )
@@ -227,16 +227,16 @@ class UserViewSet(
         # For performance reasons we filter first by similarity, which relies on an
         # index, then only calculate precise similarity scores for sorting purposes.
         #
-        # Additionally we reorder results to prefer users "closer" to the current
-        # user: users they recently shared documents with, same full domain, same
-        # partial domain (e.g. both end with "gouv.fr"). To achieve that without
-        # complex SQL we build a proximity score in Python and returnthe top N results.
+        # Additionally results are reordered to prefer users "closer" to the current
+        # user: users they recently shared documents with, then same email domain.
+        # To achieve that without complex SQL, we build a proximity score in Python
+        # and return the top N results.
+        # For security results, users that match neither of these proximity criteria
+        # are not returned at all, to prevent email enumeration.
         current_user = self.request.user
         shared_map = users_sharing_documents_with(current_user)
 
-        user_full_domain, user_partial_domain = extract_email_domain_parts(
-            current_user.email or ""
-        )
+        user_email_domain = get_domain_from_email(current_user.email) or ""
 
         candidates = list(
             queryset.annotate(
@@ -247,6 +247,18 @@ class UserViewSet(
             .filter(similarity__gt=0.2)
             .order_by("-similarity")
         )
+
+        # Keep only users that either share documents with the current user
+        # or have an email with the same domain as the current user.
+        filtered_candidates = []
+        for u in candidates:
+            candidate_domain = get_domain_from_email(u.email) or ""
+            if shared_map.get(u.id) or (
+                user_email_domain and candidate_domain == user_email_domain
+            ):
+                filtered_candidates.append(u)
+
+        candidates = filtered_candidates
 
         # Build ordering key for each candidate
         def _sort_key(u):
@@ -261,20 +273,12 @@ class UserViewSet(
                 shared_score = 0
 
             # domain proximity
-            candidate_full_domain, candidate_partial_domain = (
-                extract_email_domain_parts(u.email or "")
-            )
+            candidate_email_domain = get_domain_from_email(u.email) or ""
 
             same_full_domain = (
                 1
-                if candidate_full_domain and candidate_full_domain == user_full_domain
-                else 0
-            )
-
-            same_partial_domain = (
-                1
-                if candidate_partial_domain
-                and candidate_partial_domain == user_partial_domain
+                if candidate_email_domain
+                and candidate_email_domain == user_email_domain
                 else 0
             )
 
@@ -285,7 +289,6 @@ class UserViewSet(
                 is_shared,
                 shared_score,
                 same_full_domain,
-                same_partial_domain,
                 sim,
             )
 
@@ -2278,7 +2281,8 @@ class InvitationViewset(
                 )
                 # Abilities are computed based on logged-in user's role and
                 # the user role on each document access
-                .annotate(user_roles=db.Subquery(user_roles_query)).distinct()
+                .annotate(user_roles=db.Subquery(user_roles_query))
+                .distinct()
             )
         return queryset
 

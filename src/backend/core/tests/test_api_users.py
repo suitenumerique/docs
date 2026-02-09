@@ -123,12 +123,12 @@ def test_api_users_list_query_full_name():
     Authenticated users should be able to list users and filter by full name.
     Only results with a Trigram similarity greater than 0.2 with the query should be returned.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
 
     client = APIClient()
     client.force_login(user)
 
-    dave = factories.UserFactory(email="contact@work.com", full_name="David Bowman")
+    dave = factories.UserFactory(email="contact@example.com", full_name="David Bowman")
 
     response = client.get(
         "/api/v1.0/users/?q=David",
@@ -168,13 +168,13 @@ def test_api_users_list_query_accented_full_name():
     Authenticated users should be able to list users and filter by full name with accents.
     Only results with a Trigram similarity greater than 0.2 with the query should be returned.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
 
     client = APIClient()
     client.force_login(user)
 
     fred = factories.UserFactory(
-        email="contact@work.com", full_name="Frédérique Lefèvre"
+        email="contact@example.com", full_name="Frédérique Lefèvre"
     )
 
     response = client.get("/api/v1.0/users/?q=Frédérique")
@@ -211,9 +211,10 @@ def test_api_users_list_sorted_by_closest_match():
     Sorting criteria are :
     - Shared documents with the user (most recent first)
     - Same full email domain (example.gouv.fr)
-    - Same partial email domain (gouv.fr)
 
-    Case in point: the logged-in user has recently shared documents
+    Addresses that match neither criteria should be excluded from the results.
+
+        Case in point: the logged-in user has recently shared documents
     with pierre.dupont@beta.gouv.fr and less recently with pierre.durand@impots.gouv.fr.
 
     Other users named Pierre also exist:
@@ -228,10 +229,6 @@ def test_api_users_list_sorted_by_closest_match():
     - pierre.durand@impots.gouv.fr
     # Same full domain second
     - pierre.petit@anct.gouv.fr
-    # Same partial domain third
-    - pierre.robert@culture.gouv.fr
-    # Others last
-    - paul.thomas@example.com
     """
 
     user = factories.UserFactory(
@@ -243,9 +240,9 @@ def test_api_users_list_sorted_by_closest_match():
 
     pierre_1 = factories.UserFactory(email="pierre.dupont@beta.gouv.fr")
     pierre_2 = factories.UserFactory(email="pierre.durand@impots.gouv.fr")
-    pierre_3 = factories.UserFactory(email="pierre.thomas@example.com")
+    _pierre_3 = factories.UserFactory(email="pierre.thomas@example.com")
     pierre_4 = factories.UserFactory(email="pierre.petit@anct.gouv.fr")
-    pierre_5 = factories.UserFactory(email="pierre.robert@culture.gouv.fr")
+    _pierre_5 = factories.UserFactory(email="pierre.robert@culture.gouv.fr")
 
     document_1 = factories.DocumentFactory(creator=user)
     document_2 = factories.DocumentFactory(creator=user)
@@ -273,8 +270,6 @@ def test_api_users_list_sorted_by_closest_match():
         str(pierre_1.email),
         str(pierre_2.email),
         str(pierre_4.email),
-        str(pierre_5.email),
-        str(pierre_3.email),
     ]
 
 
@@ -283,7 +278,7 @@ def test_api_users_list_limit(settings):
     Authenticated users should be able to list users and the number of results
     should be limited to API_USERS_LIST_LIMIT (by default 5).
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
 
     client = APIClient()
     client.force_login(user)
@@ -433,7 +428,7 @@ def test_api_users_list_query_long_queries():
 
 def test_api_users_list_query_inactive():
     """Inactive users should not be listed."""
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
     client = APIClient()
     client.force_login(user)
 

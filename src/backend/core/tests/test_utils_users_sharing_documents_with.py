@@ -1,3 +1,5 @@
+"""Tests for utils.users_sharing_documents_with function."""
+
 from django.utils import timezone
 
 import pytest
