@@ -72,7 +72,7 @@ For some advanced features (ex: Export as PDF) Docs relies on XL packages from B
 
 ### Test it
 
-You can test Docs on your browser by visiting this [demo document](https://impress-preprod.beta.numerique.gouv.fr/docs/6ee5aac4-4fb9-457d-95bf-bb56c2467713/)
+You can test Docs on your browser by visiting this [demo document](https://docs.la-suite.eu/docs/9137bbb5-3e8a-4ff7-8a36-fcc4e8bd57f4/)
 
 ### Run Docs locally
 
