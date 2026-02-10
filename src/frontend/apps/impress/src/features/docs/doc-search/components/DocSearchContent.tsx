@@ -1,10 +1,11 @@
 import { t } from 'i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { Box } from '@/components/';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useInfiniteSearchDocs } from '@/docs/doc-management/api/useSearchDocs';
+import { DocSearchTarget } from '@/docs/doc-search';
 
 import { Doc } from '../../doc-management';
 
@@ -17,6 +18,8 @@ type DocSearchContentProps = {
   isSearchNotMandatory?: boolean;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
+  target?: DocSearchTarget;
+  parentPath?: string;
   renderSearchElement?: (doc: Doc) => React.ReactNode;
 };
 
@@ -27,6 +30,8 @@ export const DocSearchContent = ({
   onSelect,
   onLoadingChange,
   renderSearchElement,
+  target,
+  parentPath,
   isSearchNotMandatory,
 }: DocSearchContentProps) => {
   const {
@@ -36,10 +41,17 @@ export const DocSearchContent = ({
     isLoading,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteSearchDocs({
-    page: 1,
-    q: search,
-  });
+  } = useInfiniteSearchDocs(
+    {
+      q: search,
+      page: 1,
+      target,
+      parentPath,
+    },
+    {
+      enabled: target !== DocSearchTarget.CURRENT || !!parentPath,
+    },
+  );
 
   const loading = isFetching || isRefetching || isLoading;
   const [docsData, setDocsData] = useState<QuickSearchData<Doc>>({
@@ -85,6 +97,8 @@ export const DocSearchContent = ({
     groupName,
     isSearchNotMandatory,
     loading,
+    hasNextPage,
+    fetchNextPage,
   ]);
 
   useEffect(() => {
