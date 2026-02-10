@@ -59,10 +59,7 @@ export const LeftPanel = () => {
           </Box>
           <LeftPanelContent />
           <SeparatedSection showSeparator={false}>
-            <Box
-              $padding={{ horizontal: 'sm', vertical: 'xs' }}
-              $justify="flex-start"
-            >
+            <Box $padding={{ horizontal: 'sm' }} $justify="flex-start">
               <LeftPanelHelpMenu />
             </Box>
           </SeparatedSection>
