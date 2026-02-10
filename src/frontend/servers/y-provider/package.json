@@ -21,7 +21,7 @@
     "@sentry/node": "10.34.0",
     "@sentry/profiling-node": "10.34.0",
     "@tiptap/extensions": "*",
-    "axios": "1.13.2",
+    "axios": "1.13.5",
     "cors": "2.8.5",
     "express": "5.2.1",
     "express-ws": "5.0.2",
