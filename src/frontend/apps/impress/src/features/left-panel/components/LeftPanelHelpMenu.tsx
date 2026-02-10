@@ -32,7 +32,7 @@ export const LeftPanelHelpMenu = () => {
       <Box
         $css={css`
           .c__dropdown-menu-trigger {
-            display: flex;
+            width: fit-content;
             justify-content: flex-start;
           }
         `}
