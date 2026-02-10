@@ -180,8 +180,8 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
             options={linkReachOptions}
           >
             <Box
-              $theme={canManage ? 'brand' : 'gray'}
-              $variation={canManage ? 'tertiary' : 'primary'}
+              $theme={canManage ? 'brand' : 'neutral'}
+              $variation="tertiary"
               $direction="row"
               $align="center"
               $gap={spacingsTokens['3xs']}
@@ -229,7 +229,11 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               }
               label={t('Document access mode')}
             >
-              <Text $weight="initial" $theme="brand" $variation="tertiary">
+              <Text
+                $weight="initial"
+                $theme={!canManage ? 'neutral' : 'brand'}
+                $variation={!canManage ? 'secondary' : 'tertiary'}
+              >
                 {linkModeTranslations[docLinkRole]}
               </Text>
             </DropdownMenu>

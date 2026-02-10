@@ -9,7 +9,7 @@ import { createReactBlockSpec } from '@blocknote/react';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useMediaUrl } from '@/core';
 import { isSafeUrl } from '@/utils/url';
 
@@ -126,7 +126,11 @@ const UploadLoaderBlockComponent = ({
       {block.props.type === 'warning' ? (
         <Warning />
       ) : (
-        <Loader style={{ animation: 'spin 1.5s linear infinite' }} />
+        <Icon
+          $theme="brand"
+          $layer="border"
+          icon={<Loader style={{ animation: 'spin 1.5s linear infinite' }} />}
+        />
       )}
       <Text>{block.props.information}</Text>
     </Box>

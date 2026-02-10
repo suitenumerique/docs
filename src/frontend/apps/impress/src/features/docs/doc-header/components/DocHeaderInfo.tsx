@@ -49,7 +49,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
           $variation="tertiary"
           $size="s"
           $weight="bold"
-          $theme={isEditable ? 'gray' : 'warning'}
+          $theme={isEditable ? 'neutral' : 'warning'}
         >
           {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
           &nbsp;·&nbsp;

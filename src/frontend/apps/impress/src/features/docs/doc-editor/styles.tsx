@@ -7,17 +7,16 @@ export const cssEditor = css`
     height: 100%;
   }
 
-  & .bn-editor {
-    color: var(--c--globals--colors--gray-700);
-  }
-
   /**
-  * WCAG Accessibility contrast fixes for BlockNote editor
+  * Token Mantime
   */
-  .bn-block-content[data-is-empty-and-focused][data-content-type='paragraph']
-    .bn-inline-content:has(> .ProseMirror-trailingBreak:only-child)::before {
-    color: #767676 !important;
-    font-weight: 400;
+  & > .bn-container {
+    --bn-colors-editor-text: var(
+      --c--contextuals--content--semantic--neutral--primary
+    );
+    --bn-colors-side-menu: var(
+      --c--contextuals--content--semantic--neutral--tertiary
+    );
   }
 
   /**
@@ -97,7 +96,9 @@ export const cssEditor = css`
     height: 38px;
   }
   .bn-side-menu .mantine-UnstyledButton-root svg {
-    color: #767676 !important;
+    color: var(
+      --c--contextuals--content--semantic--neutral--tertiary
+    ) !important;
   }
 
   /**
@@ -158,6 +159,41 @@ export const cssEditor = css`
     border: 1px solid #d3d2cf;
   }
 
+  /**
+  * Checklist items
+  */
+  .bn-block-content[data-content-type='checkListItem'] > div > input {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid
+      var(--c--contextuals--content--semantic--neutral--tertiary);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    align-self: center;
+    margin-top: 2px;
+  }
+  .bn-block-content[data-content-type='checkListItem'] > div > input:checked {
+    background-color: var(--c--contextuals--content--semantic--brand--tertiary);
+    border-color: var(--c--contextuals--content--semantic--brand--tertiary);
+  }
+  .bn-block-content[data-content-type='checkListItem']
+    > div
+    > input:checked::after {
+    content: 'check';
+    font-family: 'Material Symbols Outlined Variable', sans-serif;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--c--contextuals--content--semantic--overlay--primary);
+    font-size: 18px;
+  }
+
+  /**
+    * Ensure consistent spacing between headings and paragraphs
+   */
   & .bn-block-outer:not(:first-child) {
     &:has(h1) {
       margin-top: 32px;
