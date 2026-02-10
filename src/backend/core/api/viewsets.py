@@ -1188,7 +1188,7 @@ class DocumentViewSet(
         Returns a queryset filtered by the content of the document title
         """
         # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
-        queryset = self.get_queryset()
+        queryset = models.Document.objects.all()
         filterset = DocumentFilter({"title": text}, queryset=queryset)
 
         if not filterset.is_valid():
@@ -1203,36 +1203,32 @@ class DocumentViewSet(
             },
         )
 
-    def _search_fulltext(self, indexer, request, params):
+    @staticmethod
+    def _search_with_indexer(indexer, request, params):
         """
-        Returns a queryset from the results the fulltext search of Find
+        Returns a list of documents matching the query (q) according to the configured indexer.
         """
-        access_token = request.session.get("oidc_access_token")
-        user = request.user
-        text = params.validated_data["q"]
         queryset = models.Document.objects.all()
 
-        # Retrieve the documents ids from Find.
         results = indexer.search(
-            text=text,
-            token=access_token,
-            visited=get_visited_document_ids_of(queryset, user),
+            q=params.validated_data["q"],
+            token=request.session.get("oidc_access_token"),
+            path=(
+                params.validated_data["path"]
+                if "path" in params.validated_data
+                else None
+            ),
+            visited=get_visited_document_ids_of(queryset, request.user),
         )
 
-        docs_by_uuid = {str(d.pk): d for d in queryset.filter(pk__in=results)}
-        ordered_docs = [docs_by_uuid[id] for id in results]
-
-        page = self.paginate_queryset(ordered_docs)
-
-        serializer = self.get_serializer(
-            page if page else ordered_docs,
-            many=True,
-            context={
-                "request": request,
-            },
+        return drf_response.Response(
+            {
+                "count": len(results),
+                "next": None,
+                "previous": None,
+                "results": results,
+            }
         )
-
-        return self.get_paginated_response(serializer.data)
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
     @method_decorator(refresh_oidc_access_token)
@@ -1252,9 +1248,8 @@ class DocumentViewSet(
         params.is_valid(raise_exception=True)
 
         indexer = get_document_indexer()
-
         if indexer:
-            return self._search_fulltext(indexer, request, params=params)
+            return self._search_with_indexer(indexer, request, params=params)
 
         # The indexer is not configured, we fallback on a simple icontains filter by the
         # model field 'title'.
