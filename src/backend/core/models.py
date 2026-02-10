@@ -118,11 +118,11 @@ class UserManager(auth_models.UserManager):
 
             if settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION:
                 try:
-                    return self.get(email=email)
+                    return self.get(email__iexact=email)
                 except self.model.DoesNotExist:
                     pass
             elif (
-                self.filter(email=email).exists()
+                self.filter(email__iexact=email).exists()
                 and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
             ):
                 raise DuplicateEmailError(
@@ -1905,7 +1905,7 @@ class Invitation(BaseModel):
 
         # Check if an identity already exists for the provided email
         if (
-            User.objects.filter(email=self.email).exists()
+            User.objects.filter(email__iexact=self.email).exists()
             and not settings.OIDC_ALLOW_DUPLICATE_EMAILS
         ):
             raise ValidationError(

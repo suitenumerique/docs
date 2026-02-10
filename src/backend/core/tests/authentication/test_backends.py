@@ -68,6 +68,30 @@ def test_authentication_getter_existing_user_via_email(
     assert user == db_user
 
 
+def test_authentication_getter_existing_user_via_email_case_insensitive(
+    django_assert_num_queries, monkeypatch
+):
+    """
+    If an existing user doesn't match the sub but matches the email with different case,
+    the user should be returned (case-insensitive email matching).
+    """
+
+    klass = OIDCAuthenticationBackend()
+    db_user = UserFactory(email="john.doe@example.com")
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": "JOHN.DOE@EXAMPLE.COM"}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    with django_assert_num_queries(4):  # user by sub, user by mail, update sub
+        user = klass.get_or_create_user(
+            access_token="test-token", id_token=None, payload=None
+        )
+
+    assert user == db_user
+
+
 def test_authentication_getter_email_none(monkeypatch):
     """
     If no user is found with the sub and no email is provided, a new user should be created.
@@ -141,6 +165,39 @@ def test_authentication_getter_existing_user_no_fallback_to_email_no_duplicate(
 
     def get_userinfo_mocked(*args):
         return {"sub": "123", "email": db_user.email}
+
+    monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
+
+    with pytest.raises(
+        SuspiciousOperation,
+        match=(
+            "We couldn't find a user with this sub but the email is already associated "
+            "with a registered user."
+        ),
+    ):
+        klass.get_or_create_user(access_token="test-token", id_token=None, payload=None)
+
+    # Since the sub doesn't match, it should not create a new user
+    assert models.User.objects.count() == 1
+
+
+def test_authentication_getter_existing_user_no_fallback_to_email_no_duplicate_case_insensitive(
+    settings, monkeypatch
+):
+    """
+    When the "OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION" setting is set to False,
+    the system should detect duplicate emails even with different case.
+    """
+
+    klass = OIDCAuthenticationBackend()
+    _db_user = UserFactory(email="john.doe@example.com")
+
+    # Set the setting to False
+    settings.OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION = False
+    settings.OIDC_ALLOW_DUPLICATE_EMAILS = False
+
+    def get_userinfo_mocked(*args):
+        return {"sub": "123", "email": "JOHN.DOE@EXAMPLE.COM"}
 
     monkeypatch.setattr(OIDCAuthenticationBackend, "get_userinfo", get_userinfo_mocked)
 
