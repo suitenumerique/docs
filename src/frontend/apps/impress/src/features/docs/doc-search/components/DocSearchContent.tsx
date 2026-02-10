@@ -1,11 +1,14 @@
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { InView } from 'react-intersection-observer';
 
 import { Box } from '@/components/';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
-import { Doc, useInfiniteDocs } from '@/docs/doc-management';
+import { useSearchDocs } from '@/docs/doc-management/api/searchDocs';
 
+import { Doc } from '../../doc-management';
+
+import { DocSearchFiltersValues } from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchContentProps = {
@@ -27,16 +30,8 @@ export const DocSearchContent = ({
   renderSearchElement,
   isSearchNotMandatory,
 }: DocSearchContentProps) => {
-  const {
-    data,
-    isFetching,
-    isRefetching,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteDocs({
-    page: 1,
-    ...(search ? { title: search } : {}),
+  const { data, isFetching, isRefetching, isLoading } = useSearchDocs({
+    q: search,
   });
 
   const loading = isFetching || isRefetching || isLoading;
@@ -79,8 +74,6 @@ export const DocSearchContent = ({
   }, [
     search,
     data?.pages,
-    fetchNextPage,
-    hasNextPage,
     filterResults,
     groupName,
     isSearchNotMandatory,
