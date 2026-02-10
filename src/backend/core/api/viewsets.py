@@ -41,6 +41,7 @@ from lasuite.tools.email import get_domain_from_email
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 
 from core import authentication, choices, enums, models
 from core.api.filters import remove_accents
@@ -314,6 +315,59 @@ class UserViewSet(
         return drf.response.Response(
             self.serializer_class(request.user, context=context).data
         )
+
+
+class ReconciliationConfirmView(APIView):
+    """API endpoint to confirm user reconciliation emails.
+
+    GET /user-reconciliations/{user_type}/{confirmation_id}/
+    Marks `active_email_checked` or `inactive_email_checked` to True.
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_type, confirmation_id):
+        """
+        Check the confirmation ID and mark the corresponding email as checked.
+        """
+        try:
+            # validate UUID
+            uuid_obj = uuid.UUID(str(confirmation_id))
+        except ValueError:
+            return drf_response.Response(
+                {"detail": "Badly formatted confirmation id"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if user_type not in ("active", "inactive"):
+            return drf_response.Response(
+                {"detail": "Invalid user_type"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        lookup = (
+            {"active_email_confirmation_id": uuid_obj}
+            if user_type == "active"
+            else {"inactive_email_confirmation_id": uuid_obj}
+        )
+
+        try:
+            rec = models.UserReconciliation.objects.get(**lookup)
+        except models.UserReconciliation.DoesNotExist:
+            return drf_response.Response(
+                {"detail": "Reconciliation entry not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        field_name = (
+            "active_email_checked"
+            if user_type == "active"
+            else "inactive_email_checked"
+        )
+        if not getattr(rec, field_name):
+            setattr(rec, field_name, True)
+            rec.save()
+
+        return drf_response.Response({"detail": "Confirmation received"})
 
 
 class ResourceAccessViewsetMixin:

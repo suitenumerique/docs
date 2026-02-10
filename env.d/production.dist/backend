@@ -53,6 +53,9 @@ LOGOUT_REDIRECT_URL=https://${DOCS_HOST}
 
 OIDC_REDIRECT_ALLOWED_HOSTS=["https://${DOCS_HOST}"]
 
+# User reconciliation
+#USER_RECONCILIATION_FORM_URL=https://${DOCS_HOST}
+
 # AI
 #AI_FEATURE_ENABLED=true # is false by default
 #AI_BASE_URL=https://openaiendpoint.com

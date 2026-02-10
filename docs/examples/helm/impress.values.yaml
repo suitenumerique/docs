@@ -67,6 +67,7 @@ backend:
     AWS_S3_SECRET_ACCESS_KEY: password
     AWS_STORAGE_BUCKET_NAME: docs-media-storage
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
+    USER_RECONCILIATION_FORM_URL: https://docs.127.0.0.1.nip.io
     Y_PROVIDER_API_BASE_URL: http://impress-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"

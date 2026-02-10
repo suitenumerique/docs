@@ -880,6 +880,11 @@ class Base(Configuration):
         ),
     }
 
+    # User accounts management
+    USER_RECONCILIATION_FORM_URL = values.Value(
+        None, environ_name="USER_RECONCILIATION_FORM_URL", environ_prefix=None
+    )
+
     # Marketing and communication settings
     SIGNUP_NEW_USER_TO_MARKETING_EMAIL = values.BooleanValue(
         False,

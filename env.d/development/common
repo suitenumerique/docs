@@ -59,6 +59,9 @@ OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 # To create one, use the bin/fernetkey command.
 # OIDC_STORE_REFRESH_TOKEN_KEY="your-32-byte-encryption-key=="
 
+# User reconciliation
+USER_RECONCILIATION_FORM_URL=http://localhost:3000
+
 # AI
 AI_FEATURE_ENABLED=true
 AI_BASE_URL=https://openaiendpoint.com
