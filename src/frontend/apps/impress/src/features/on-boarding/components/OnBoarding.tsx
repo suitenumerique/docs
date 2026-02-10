@@ -1,4 +1,5 @@
 import {
+  ModalSize,
   OnboardingModal,
   type OnboardingModalProps,
 } from '@gouvfr-lasuite/ui-kit';
@@ -12,6 +13,7 @@ export interface OnBoardingProps {
   onComplete?: () => void;
   onSkip?: () => void;
   footerLink?: OnboardingModalProps['footerLink'];
+  size?: ModalSize;
 }
 
 export const OnBoarding = ({
@@ -20,6 +22,7 @@ export const OnBoarding = ({
   onComplete,
   onSkip,
   footerLink,
+  size,
 }: OnBoardingProps) => {
   const { t } = useTranslation();
 
@@ -29,6 +32,7 @@ export const OnBoarding = ({
   return (
     <OnboardingModal
       isOpen={isOpen}
+      size={size}
       appName={t('Discover Docs')}
       mainTitle={t('Learn the core principles')}
       steps={steps}
