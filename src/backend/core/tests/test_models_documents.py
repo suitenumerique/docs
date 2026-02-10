@@ -189,6 +189,7 @@ def test_models_documents_get_abilities_forbidden(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": False,
     }
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
@@ -255,6 +256,7 @@ def test_models_documents_get_abilities_reader(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": True,
     }
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
@@ -326,6 +328,7 @@ def test_models_documents_get_abilities_commenter(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": True,
     }
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
@@ -394,6 +397,7 @@ def test_models_documents_get_abilities_editor(
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": True,
     }
     nb_queries = 1 if is_authenticated else 0
     with django_assert_num_queries(nb_queries):
@@ -451,6 +455,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "versions_destroy": True,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
@@ -494,6 +499,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "versions_destroy": False,
         "versions_list": False,
         "versions_retrieve": False,
+        "search": False,
     }
 
 
@@ -541,6 +547,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "versions_destroy": True,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
@@ -598,6 +605,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
     with django_assert_num_queries(1):
         assert document.get_abilities(user) == expected_abilities
@@ -663,6 +671,7 @@ def test_models_documents_get_abilities_reader_user(
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
 
     with override_settings(AI_ALLOW_REACH_FROM=ai_access_setting):
@@ -729,6 +738,7 @@ def test_models_documents_get_abilities_commenter_user(
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
 
     with override_settings(AI_ALLOW_REACH_FROM=ai_access_setting):
@@ -791,6 +801,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "versions_destroy": False,
         "versions_list": True,
         "versions_retrieve": True,
+        "search": True,
     }
 
 

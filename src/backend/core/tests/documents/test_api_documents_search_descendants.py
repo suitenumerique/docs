@@ -286,9 +286,9 @@ def test_api_documents_descendants_list_anonymous_restricted_or_authenticated(re
         "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json() == {
-        "detail": "You do not have permission to search within this document."
+        "detail": "Authentication credentials were not provided."
     }
 
 
@@ -528,7 +528,7 @@ def test_api_documents_descendants_list_authenticated_unrelated_restricted():
 
     assert response.status_code == 403
     assert response.json() == {
-        "detail": "You do not have permission to search within this document."
+        "detail": "You do not have permission to perform this action."
     }
 
 
@@ -767,7 +767,7 @@ def test_api_documents_descendants_list_authenticated_related_child():
     )
     assert response.status_code == 403
     assert response.json() == {
-        "detail": "You do not have permission to search within this document."
+        "detail": "You do not have permission to perform this action."
     }
 
 
@@ -795,7 +795,7 @@ def test_api_documents_descendants_list_authenticated_related_team_none(
 
     assert response.status_code == 403
     assert response.json() == {
-        "detail": "You do not have permission to search within this document."
+        "detail": "You do not have permission to perform this action."
     }
 
 
