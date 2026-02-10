@@ -44,6 +44,7 @@
     "@sentry/nextjs": "10.34.0",
     "@tanstack/react-query": "5.90.18",
     "@tiptap/extensions": "*",
+    "@y/websocket-server": "^0.1.1",
     "canvg": "4.0.3",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
@@ -54,6 +55,7 @@
     "i18next": "25.7.4",
     "i18next-browser-languagedetector": "8.2.0",
     "idb": "8.0.3",
+    "js-base64": "^3.7.8",
     "lodash": "4.17.23",
     "luxon": "3.7.2",
     "next": "15.5.9",
@@ -70,6 +72,7 @@
     "use-debounce": "10.1.0",
     "uuid": "13.0.0",
     "y-protocols": "1.0.7",
+    "y-websocket": "^3.0.0",
     "yjs": "*",
     "zustand": "5.0.10"
   },

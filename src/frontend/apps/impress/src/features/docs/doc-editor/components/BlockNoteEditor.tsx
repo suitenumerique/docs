@@ -13,6 +13,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { WebsocketProvider } from 'y-websocket';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -77,7 +78,8 @@ export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
 
 interface BlockNoteEditorProps {
   doc: Doc;
-  provider: HocuspocusProvider;
+  // provider: HocuspocusProvider;
+  provider: WebsocketProvider;
 }
 
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
@@ -91,7 +93,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   // Determine if comments should be visible in the UI
   const showComments = canSeeComment;
 
-  useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
+  // useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
+  useSaveDoc(doc.id, provider.doc, isConnectedToCollabServer);
   const { i18n } = useTranslation();
   let lang = i18n.resolvedLanguage;
   if (!lang || !(lang in locales)) {
@@ -120,7 +123,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     {
       collaboration: {
         provider: provider as { awareness?: Awareness | undefined },
-        fragment: provider.document.getXmlFragment('document-store'),
+        // fragment: provider.document.getXmlFragment('document-store'),
+        fragment: provider.doc.getXmlFragment('document-store'),
         user: {
           name: cursorName,
           color: randomColor(),

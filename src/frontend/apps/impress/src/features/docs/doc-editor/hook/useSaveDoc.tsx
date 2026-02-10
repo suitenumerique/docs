@@ -8,7 +8,7 @@ import { isFirefox } from '@/utils/userAgent';
 
 import { toBase64 } from '../utils';
 
-const SAVE_INTERVAL = 60000;
+const SAVE_INTERVAL = 100 * 60000;
 
 export const useSaveDoc = (
   docId: string,
@@ -35,6 +35,16 @@ export const useSaveDoc = (
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
+      console.log(333333);
+      if (transaction.local) {
+        console.log('LOCAL');
+      } else {
+        console.log('REMOTE');
+      }
+      // console.log(transaction);
+
+      // transaction.
+
       setIsLocalChange(transaction.local);
     };
 
@@ -49,6 +59,10 @@ export const useSaveDoc = (
     if (!isLocalChange) {
       return false;
     }
+
+    console.log('--------');
+    console.log(111111);
+    console.log(yDoc);
 
     updateDoc({
       id: docId,

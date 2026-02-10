@@ -16,6 +16,8 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
       return;
     }
 
+    console.log(222);
+
     const newProvider = createProvider(collaborationUrl, room, initialContent);
     setBroadcastProvider(newProvider);
   }, [

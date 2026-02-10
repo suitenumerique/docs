@@ -1,4 +1,5 @@
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
@@ -6,10 +7,13 @@ interface BroadcastState {
   addTask: (taskLabel: string, action: () => void) => void;
   broadcast: (taskLabel: string) => void;
   cleanupBroadcast: () => void;
-  getBroadcastProvider: () => HocuspocusProvider | undefined;
+  // getBroadcastProvider: () => HocuspocusProvider | undefined;
+  getBroadcastProvider: () => WebsocketProvider | undefined;
   handleProviderSync: () => void;
-  provider?: HocuspocusProvider;
-  setBroadcastProvider: (provider: HocuspocusProvider) => void;
+  // provider?: HocuspocusProvider;
+  provider?: WebsocketProvider;
+  // setBroadcastProvider: (provider: HocuspocusProvider) => void;
+  setBroadcastProvider: (provider: WebsocketProvider) => void;
   setTask: (
     taskLabel: string,
     task: Y.Array<string>,
@@ -34,10 +38,12 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
     // Clean up old provider listeners
     const oldProvider = get().provider;
     if (oldProvider) {
-      oldProvider.off('synced', get().handleProviderSync);
+      // oldProvider.off('synced', get().handleProviderSync);
+      oldProvider.off('sync', get().handleProviderSync);
     }
 
-    provider.on('synced', get().handleProviderSync);
+    // provider.on('synced', get().handleProviderSync);
+    provider.on('sync', get().handleProviderSync);
     set({ provider });
   },
   handleProviderSync: () => {
@@ -61,7 +67,8 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
       return;
     }
 
-    const task = provider.document.getArray<string>(taskLabel);
+    // const task = provider.document.getArray<string>(taskLabel);
+    const task = provider.doc.getArray<string>(taskLabel);
     get().setTask(taskLabel, task, action);
   },
   setTask: (taskLabel: string, task: Y.Array<string>, action: () => void) => {
@@ -102,7 +109,8 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
   cleanupBroadcast: () => {
     const provider = get().provider;
     if (provider) {
-      provider.off('synced', get().handleProviderSync);
+      // provider.off('synced', get().handleProviderSync);
+      provider.off('sync', get().handleProviderSync);
     }
 
     // Unobserve all document-specific tasks

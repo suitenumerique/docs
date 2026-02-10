@@ -122,7 +122,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     });
   }, [authenticated, hasTracked, isPublicDoc, trackEvent]);
 
-  if (!isProviderReady || provider?.configuration.name !== doc.id) {
+  if (!isProviderReady || provider?.roomname !== doc.id) {
     return <Loading />;
   }
 
@@ -134,9 +134,10 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
         docEditor={
           readOnly ? (
             <BlockNoteReader
-              initialContent={provider.document.getXmlFragment(
-                'document-store',
-              )}
+              // initialContent={provider.document.getXmlFragment(
+              //   'document-store',
+              // )}
+              initialContent={provider.doc.getXmlFragment('document-store')}
               docId={doc.id}
             />
           ) : (

@@ -21,12 +21,14 @@
     "@sentry/node": "10.34.0",
     "@sentry/profiling-node": "10.34.0",
     "@tiptap/extensions": "*",
+    "@y/websocket-server": "^0.1.1",
     "axios": "1.13.2",
     "cors": "2.8.5",
     "express": "5.2.1",
     "express-ws": "5.0.2",
     "uuid": "13.0.0",
     "y-protocols": "1.0.7",
+    "y-websocket": "^3.0.0",
     "yjs": "*"
   },
   "devDependencies": {

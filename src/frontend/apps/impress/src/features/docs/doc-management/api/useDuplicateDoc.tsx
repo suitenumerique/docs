@@ -72,12 +72,14 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
       const canSave =
         variables.canSave &&
         provider &&
-        provider.document.guid === variables.docId;
+        // provider.document.guid === variables.docId;
+        provider.doc.guid === variables.docId;
 
       if (canSave) {
         await updateDoc({
           id: variables.docId,
-          content: toBase64(Y.encodeStateAsUpdate(provider.document)),
+          // content: toBase64(Y.encodeStateAsUpdate(provider.document)),
+          content: toBase64(Y.encodeStateAsUpdate(provider.doc)),
         });
       }
 
