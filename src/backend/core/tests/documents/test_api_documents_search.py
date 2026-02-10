@@ -85,29 +85,93 @@ def test_api_documents_search_endpoint_is_none(indexer_settings):
         "next": None,
         "previous": None,
     }
-    assert len(results) == 1
-    assert results[0] == {
-        "id": str(document.id),
-        "abilities": document.get_abilities(user),
-        "ancestors_link_reach": None,
-        "ancestors_link_role": None,
-        "computed_link_reach": document.computed_link_reach,
-        "computed_link_role": document.computed_link_role,
-        "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
-        "creator": str(document.creator.id),
-        "depth": 1,
-        "excerpt": document.excerpt,
-        "link_reach": document.link_reach,
-        "link_role": document.link_role,
-        "nb_accesses_ancestors": 1,
-        "nb_accesses_direct": 1,
-        "numchild": 0,
-        "path": document.path,
-        "title": document.title,
-        "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
-        "deleted_at": None,
-        "user_role": access.role,
+    mock_list.return_value = drf_response.Response(mocked_response)
+
+    q = "alpha"
+    response = client.get("/api/v1.0/documents/search/", data={"q": q})
+
+    assert mock_list.call_count == 1
+    assert mock_list.call_args[0][0].GET.get("q") == q
+    assert response.json() == mocked_response
+
+
+@mock.patch("core.api.viewsets.DocumentViewSet._list_descendants")
+def test_api_documents_search_fallback_on_search_list_sub_docs(
+    mock_list_descendants, indexer_settings
+):
+    """
+    When indexer is not configured and path parameter is provided,
+    should call _list_descendants() method
+    """
+    indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
+    assert get_document_indexer() is not None
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(title="parent", users=[user])
+
+    mocked_response = {
+        "count": 0,
+        "next": None,
+        "previous": None,
+        "results": [{"title": "mocked _list_descendants result"}],
     }
+    mock_list_descendants.return_value = drf_response.Response(mocked_response)
+
+    q = "alpha"
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": q, "path": parent.path}
+    )
+
+    assert mock_list_descendants.call_count == 1
+    assert mock_list_descendants.call_args[0][0].GET.get("q") == q
+    assert mock_list_descendants.call_args[0][0].GET.get("path") == parent.path
+    assert response.json() == mocked_response
+
+
+@mock.patch("core.api.viewsets.DocumentViewSet._title_search")
+def test_api_documents_search_indexer_crashes(mock_title_search, indexer_settings):
+    """
+    When indexer is configured but crashes -> falls back on title_search
+    """
+    # indexer is properly configured
+    indexer_settings.SEARCH_URL = None
+    assert get_document_indexer() is None
+    # but returns an error when the query is sent
+    responses.add(
+        responses.POST,
+        "http://find/api/v1.0/search",
+        json=[{"error": "Some indexer error"}],
+        status=404,
+    )
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    mocked_response = {
+        "count": 0,
+        "next": None,
+        "previous": None,
+        "results": [{"title": "mocked title_search result"}],
+    }
+    mock_title_search.return_value = drf_response.Response(mocked_response)
+
+    parent = factories.DocumentFactory(title="parent", users=[user])
+    q = "alpha"
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": "alpha", "path": parent.path}
+    )
+
+    # the search endpoint did not crash
+    assert response.status_code == 200
+    # fallback on title_search
+    assert mock_title_search.call_count == 1
+    assert mock_title_search.call_args[0][0].GET.get("q") == q
+    assert mock_title_search.call_args[0][0].GET.get("path") == parent.path
+    assert response.json() == mocked_response
 
 
 @responses.activate
