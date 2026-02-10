@@ -19,6 +19,23 @@ export const useOnboardingSteps = () => {
   const { i18n, t } = useTranslation();
   const isFrLanguage = i18n.resolvedLanguage === 'fr';
 
+  const step1Title = t('Compose your doc easily');
+  const step1Description = t(
+    'Move, duplicate, and transform your texts, headings, lists, images without breaking your layout.',
+  );
+  const step2Title = t('Format your content with the toolbar');
+  const step2Description = t(
+    'Apply styles, structure, and emphasis in one click—keep documents clean, consistent, and easy to scan.',
+  );
+  const step3Title = t('Share and collaborate with ease');
+  const step3Description = t(
+    'Decide exactly who can view, comment, edit—or simply use shareable links.',
+  );
+  const step4Title = t('Draw inspiration from the content library');
+  const step4Description = t(
+    'Start from ready-made templates for common use cases, then customize them to match your workflow in minutes.',
+  );
+
   return useMemo<OnboardingStep[]>(
     () => [
       {
@@ -27,14 +44,9 @@ export const useOnboardingSteps = () => {
             <DragIndicatorIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Onboarding step 1 title'),
-        description: t('Onboarding step 1 description'),
-        content: (
-          <OnboardingStepImage
-            src={Step1Image.src}
-            alt={t('Onboarding step 1 title')}
-          />
-        ),
+        title: step1Title,
+        description: step1Description,
+        content: <OnboardingStepImage src={Step1Image.src} alt={step1Title} />,
       },
       {
         icon: (
@@ -42,14 +54,9 @@ export const useOnboardingSteps = () => {
             <FormatTextIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Onboarding step 2 title'),
-        description: t('Onboarding step 2 description'),
-        content: (
-          <OnboardingStepImage
-            src={Step2Image.src}
-            alt={t('Onboarding step 2 title')}
-          />
-        ),
+        title: step2Title,
+        description: step2Description,
+        content: <OnboardingStepImage src={Step2Image.src} alt={step2Title} />,
       },
       {
         icon: (
@@ -57,12 +64,12 @@ export const useOnboardingSteps = () => {
             <FileShareIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Onboarding step 3 title'),
-        description: t('Onboarding step 3 description'),
+        title: step3Title,
+        description: step3Description,
         content: (
           <OnboardingStepImage
             src={isFrLanguage ? Step3FrImage.src : Step3EnImage.src}
-            alt={t('Onboarding step 3 title')}
+            alt={step3Title}
           />
         ),
       },
@@ -72,16 +79,26 @@ export const useOnboardingSteps = () => {
             <StackTemplateIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
-        title: t('Onboarding step 4 title'),
-        description: t('Onboarding step 4 description'),
+        title: step4Title,
+        description: step4Description,
         content: (
           <OnboardingStepImage
             src={isFrLanguage ? Step4FrImage.src : Step4EnImage.src}
-            alt={t('Onboarding step 4 title')}
+            alt={step4Title}
           />
         ),
       },
     ],
-    [isFrLanguage, t],
+    [
+      isFrLanguage,
+      step1Description,
+      step1Title,
+      step2Description,
+      step2Title,
+      step3Description,
+      step3Title,
+      step4Description,
+      step4Title,
+    ],
   );
 };
