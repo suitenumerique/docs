@@ -100,3 +100,38 @@ def test_utils_get_ancestor_to_descendants_map_multiple_paths():
         "000100020005": {"000100020005"},
         "00010003": {"00010003"},
     }
+
+
+def test_utils_get_value_by_pattern_matching_key():
+    """Test extracting value from a dictionary with a matching key pattern."""
+    data = {"title.extension": "Bonjour", "id": 1, "content": "test"}
+    result = utils.get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {"Bonjour"}
+
+
+def test_utils_get_value_by_pattern_multiple_matches():
+    """Test that all matching keys are returned."""
+    data = {"title.extension_1": "Bonjour", "title.extension_2": "Hello", "id": 1}
+    result = utils.get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {
+        "Bonjour",
+        "Hello",
+    }
+
+
+def test_utils_get_value_by_pattern_multiple_extensions():
+    """Test that all matching keys are returned."""
+    data = {"title.extension_1.extension_2": "Bonjour", "id": 1}
+    result = utils.get_value_by_pattern(data, r"^title\.")
+
+    assert set(result) == {"Bonjour"}
+
+
+def test_utils_get_value_by_pattern_no_match():
+    """Test that empty list is returned when no key matches the pattern."""
+    data = {"name": "Test", "id": 1}
+    result = utils.get_value_by_pattern(data, r"^title\.")
+
+    assert result == []

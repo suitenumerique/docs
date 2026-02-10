@@ -8,7 +8,6 @@ from functools import cache
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Subquery
 from django.utils.module_loading import import_string
 
 import requests
@@ -193,7 +192,7 @@ class BaseDocumentIndexer(ABC):
         Returns ids of the documents
 
         Args:
-            q (str): Text search content.
+            q (str): user query.
             token (str): OIDC Authentication token.
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
@@ -202,7 +201,7 @@ class BaseDocumentIndexer(ABC):
                 The number of results to return.
                 Defaults to 50 if not specified.
             path (str, optional):
-                The path to filter documents.
+                The parent path to search descendants of.
         """
         nb_results = nb_results or self.search_limit
         results = self.search_query(
@@ -229,10 +228,56 @@ class BaseDocumentIndexer(ABC):
         """
 
 
-class SearchIndexer(BaseDocumentIndexer):
+class FindDocumentIndexer(BaseDocumentIndexer):
     """
-    Document indexer that pushes documents to La Suite Find app.
+    Document indexer that indexes and searches documents with La Suite Find app.
     """
+
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def search(self, q, token, visited=(), nb_results=None, path=None):
+        """format Find search results"""
+        search_results = super().search(q, token, visited, nb_results, path)
+        return [
+            {
+                **hit["_source"],
+                "id": hit["_id"],
+                "title": self.get_title(hit["_source"]),
+            }
+            for hit in search_results
+        ]
+
+    @staticmethod
+    def get_title(source):
+        """
+        Find returns the titles with an extension depending on the language.
+        This function extracts the title in a generic way.
+
+        Handles multiple cases:
+        - Localized title fields like "title.<some_extension>"
+        - Fallback to plain "title" field if localized version not found
+        - Returns empty string if no title field exists
+
+        Args:
+            source (dict): The _source dictionary from a search hit
+
+        Returns:
+            str: The extracted title or empty string if not found
+
+        Example:
+            >>> get_title({"title.fr": "Bonjour", "id": 1})
+            "Bonjour"
+            >>> get_title({"title": "Hello", "id": 1})
+            "Hello"
+            >>> get_title({"id": 1})
+            ""
+        """
+        titles = utils.get_value_by_pattern(source, r"^title\.")
+        for title in titles:
+            if title:
+                return title
+        if "title" in source:
+            return source["title"]
+        return ""
 
     def serialize_document(self, document, accesses):
         """
