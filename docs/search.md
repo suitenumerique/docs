@@ -15,7 +15,7 @@ See [how-to-use-indexer.md](how-to-use-indexer.md) for details.
 
 ## Configure settings of Docs
 
-Add those Django settings the Docs application to enable the feature.
+Add those Django settings to the Docs application to enable the feature.
 
 ```shell
 SEARCH_INDEXER_CLASS="core.services.search_indexers.FindDocumentIndexer"
