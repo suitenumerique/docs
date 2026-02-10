@@ -185,7 +185,7 @@ class BaseDocumentIndexer(ABC):
         """
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def search(self, text, token, visited=(), nb_results=None):
+    def search(self, q, token, visited=(), nb_results=None, path=None):
         """
         Search for documents in Find app.
         Ensure the same default ordering as "Docs" list : -updated_at
@@ -193,7 +193,7 @@ class BaseDocumentIndexer(ABC):
         Returns ids of the documents
 
         Args:
-            text (str): Text search content.
+            q (str): Text search content.
             token (str): OIDC Authentication token.
             visited (list, optional):
                 List of ids of active public documents with LinkTrace
@@ -201,21 +201,24 @@ class BaseDocumentIndexer(ABC):
             nb_results (int, optional):
                 The number of results to return.
                 Defaults to 50 if not specified.
+            path (str, optional):
+                The path to filter documents.
         """
         nb_results = nb_results or self.search_limit
-        response = self.search_query(
+        results = self.search_query(
             data={
-                "q": text,
+                "q": q,
                 "visited": visited,
                 "services": ["docs"],
                 "nb_results": nb_results,
                 "order_by": "updated_at",
                 "order_direction": "desc",
+                "path": path,
             },
             token=token,
         )
 
-        return [d["_id"] for d in response]
+        return results
 
     @abstractmethod
     def search_query(self, data, token) -> dict:
