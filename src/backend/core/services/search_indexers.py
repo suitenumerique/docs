@@ -8,7 +8,6 @@ from functools import cache
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Subquery
 from django.utils.module_loading import import_string
 
 import requests
@@ -78,7 +77,9 @@ def get_visited_document_ids_of(queryset, user):
     if isinstance(user, AnonymousUser):
         return []
 
-    qs = models.LinkTrace.objects.filter(user=user)
+    visited_ids = models.LinkTrace.objects.filter(user=user).values_list(
+        "document_id", flat=True
+    )
 
     docs = (
         queryset.exclude(accesses__user=user)
@@ -86,7 +87,7 @@ def get_visited_document_ids_of(queryset, user):
             deleted_at__isnull=True,
             ancestors_deleted_at__isnull=True,
         )
-        .filter(pk__in=Subquery(qs.values("document_id")))
+        .filter(pk__in=visited_ids)
         .order_by("pk")
         .distinct("pk")
     )
