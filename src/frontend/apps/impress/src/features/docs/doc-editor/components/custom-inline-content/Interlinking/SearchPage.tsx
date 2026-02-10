@@ -3,6 +3,7 @@ import {
   StyleSchema,
 } from '@blocknote/core';
 import { useBlockNoteEditor } from '@blocknote/react';
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import type { KeyboardEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,15 +24,16 @@ import {
   DocsInlineContentSchema,
   DocsStyleSchema,
 } from '@/docs/doc-editor';
-import FoundPageIcon from '@/docs/doc-editor/assets/doc-found.svg';
 import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
 import {
+  Doc,
   getEmojiAndTitle,
   useCreateChildDocTree,
   useDocStore,
   useTrans,
 } from '@/docs/doc-management';
-import { DocSearchSubPageContent, DocSearchTarget } from '@/docs/doc-search';
+import { DocSearchTarget } from '@/docs/doc-search';
+import { DocSearchContent } from '@/docs/doc-search/components/DocSearchContent';
 import { useResponsiveStore } from '@/stores';
 
 const inputStyle = css`
@@ -68,6 +70,10 @@ type SearchPageProps = {
   contentRef: (node: HTMLElement | null) => void;
 };
 
+function FoundPageIcon(props: { width: string; style: { maxHeight: string } }) {
+  return null;
+}
+
 export const SearchPage = ({
   contentRef,
   trigger,
@@ -87,7 +93,7 @@ export const SearchPage = ({
   const { isDesktop } = useResponsiveStore();
   const { untitledDocument } = useTrans();
   const isEditable = editor.isEditable;
-
+  const treeContext = useTreeContext<Doc>();
   /**
    * createReactInlineContentSpec add automatically the focus after
    * the inline content, so we need to set the focus on the input
@@ -226,14 +232,15 @@ export const SearchPage = ({
             `}
             $margin={{ top: '0.5rem' }}
           >
-            <DocSearchSubPageContent
+            <DocSearchContent
+              groupName={t('Select a document')}
               search={search}
-              filters={{ target: DocSearchTarget.CURRENT }}
+              target={DocSearchTarget.CURRENT}
+              parentPath={treeContext?.root?.path}
               onSelect={(doc) => {
                 if (!isEditable) {
                   return;
                 }
-
                 updateInlineContent({
                   type: 'interlinkingSearchInline',
                   props: {
@@ -256,7 +263,7 @@ export const SearchPage = ({
 
                 editor.focus();
               }}
-              renderElement={(doc) => {
+              renderSearchElement={(doc) => {
                 const { emoji, titleWithoutEmoji } = getEmojiAndTitle(
                   doc.title || untitledDocument,
                 );
