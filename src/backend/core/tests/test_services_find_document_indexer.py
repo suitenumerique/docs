@@ -1,5 +1,5 @@
 """
-Unit tests for the Document model
+Unit tests for FindDocumentIndexer
 """
 # pylint: disable=too-many-lines
 
@@ -439,3 +439,70 @@ def test_models_items_access_post_save_indexer_no_throttle(indexer_settings):
         assert [len(d) for d in data] == [1] * 3
         # the same document is indexed 3 times
         assert [d[0]["id"] for d in data] == [str(doc.pk)] * 3
+
+
+@mock.patch.object(FindDocumentIndexer, "search_query")
+@pytest.mark.usefixtures("indexer_settings")
+def test_find_document_indexer_search(mock_search_query):
+    """Test search function of FindDocumentIndexer returns formatted results"""
+
+    # Mock API response from Find
+    hits = [
+        {
+            "_id": "doc-123",
+            "_source": {
+                "title": "Test Document",
+                "content": "This is test content",
+                "updated_at": "2024-01-01T00:00:00Z",
+                "path": "/some/path/doc-123",
+            },
+        },
+        {
+            "_id": "doc-456",
+            "_source": {
+                "title.fr": "Document de test",
+                "content": "Contenu de test",
+                "updated_at": "2024-01-02T00:00:00Z",
+            },
+        },
+    ]
+    mock_search_query.return_value = hits
+
+    q = "test"
+    token = "fake-token"
+    nb_results = 10
+    path = "/some/path/"
+    visited = ["doc-123"]
+    results = FindDocumentIndexer().search(
+        q=q, token=token, nb_results=nb_results, path=path, visited=visited
+    )
+
+    mock_search_query.assert_called_once()
+    call_args = mock_search_query.call_args
+    assert call_args[1]["data"] == {
+        "q": q,
+        "visited": visited,
+        "services": ["docs"],
+        "nb_results": nb_results,
+        "order_by": "updated_at",
+        "order_direction": "desc",
+        "path": path,
+    }
+
+    assert len(results) == 2
+    assert results == [
+        {
+            "id": hits[0]["_id"],
+            "title": hits[0]["_source"]["title"],
+            "content": hits[0]["_source"]["content"],
+            "updated_at": hits[0]["_source"]["updated_at"],
+            "path": hits[0]["_source"]["path"],
+        },
+        {
+            "id": hits[1]["_id"],
+            "title": hits[1]["_source"]["title.fr"],
+            "title.fr": hits[1]["_source"]["title.fr"],  # <- Find response artefact
+            "content": hits[1]["_source"]["content"],
+            "updated_at": hits[1]["_source"]["updated_at"],
+        },
+    ]
