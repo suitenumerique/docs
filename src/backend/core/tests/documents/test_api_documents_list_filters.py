@@ -16,7 +16,16 @@ fake = Faker()
 pytestmark = pytest.mark.django_db
 
 
-def test_api_documents_list_filter_and_access_rights():
+@pytest.mark.parametrize(
+    "title_search_field",
+    # for integration with indexer search we must have
+    # the same filtering behaviour with "q" and "title" parameters
+    [
+        ("title"),
+        ("q"),
+    ],
+)
+def test_api_documents_list_filter_and_access_rights(title_search_field):
     """Filtering on querystring parameters should respect access rights."""
     user = factories.UserFactory()
     client = APIClient()
@@ -76,7 +85,7 @@ def test_api_documents_list_filter_and_access_rights():
 
     filters = {
         "link_reach": random.choice([None, *models.LinkReachChoices.values]),
-        "title": random.choice([None, *word_list]),
+        title_search_field: random.choice([None, *word_list]),
         "favorite": random.choice([None, True, False]),
         "creator": random.choice([None, user, other_user]),
         "ordering": random.choice(

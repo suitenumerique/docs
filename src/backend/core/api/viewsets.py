@@ -72,7 +72,11 @@ from core.utils import (
 )
 
 from . import permissions, serializers, utils
-from .filters import DocumentFilter, ListDocumentFilter, UserSearchFilter
+from .filters import (
+    DocumentFilter,
+    ListDocumentFilter,
+    UserSearchFilter,
+)
 from .throttling import (
     DocumentThrottle,
     UserListThrottleBurst,
@@ -604,20 +608,18 @@ class DocumentViewSet(
         It performs early filtering on model fields, annotates user roles, and removes
         descendant documents to keep only the highest ancestors readable by the current user.
         """
-        user = self.request.user
+        user = request.user
 
         # Not calling filter_queryset. We do our own cooking.
         queryset = self.get_queryset()
 
-        filterset = ListDocumentFilter(
-            self.request.GET, queryset=queryset, request=self.request
-        )
+        filterset = ListDocumentFilter(request.GET, queryset=queryset, request=request)
         if not filterset.is_valid():
             raise drf.exceptions.ValidationError(filterset.errors)
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title"]:
+        for field in ["is_creator_me", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user)
@@ -1084,7 +1086,7 @@ class DocumentViewSet(
         filter_data = filterset.form.cleaned_data
 
         # Filter as early as possible on fields that are available on the model
-        for field in ["is_creator_me", "title"]:
+        for field in ["is_creator_me", "title", "q"]:
             queryset = filterset.filters[field].filter(queryset, filter_data[field])
 
         queryset = queryset.annotate_user_roles(user)
@@ -1107,7 +1109,11 @@ class DocumentViewSet(
         ordering=["path"],
     )
     def descendants(self, request, *args, **kwargs):
-        """Handle listing descendants of a document"""
+        """Deprecated endpoint to list descendants of a document."""
+        logger.warning(
+            "The 'descendants' endpoint is deprecated and will be removed in a future release. "
+            "The search endpoint should be used for all document retrieval use cases."
+        )
         document = self.get_object()
 
         queryset = document.get_descendants().filter(ancestors_deleted_at__isnull=True)
@@ -1397,25 +1403,25 @@ class DocumentViewSet(
 
         return duplicated_document
 
-    def _search_simple(self, request, text):
+    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
+    @method_decorator(refresh_oidc_access_token)
+    def search(self, request, *args, **kwargs):
         """
-        Returns a queryset filtered by the content of the document title
+        Returns an ordered list of documents best matching the search query parameter 'q'.
+
+        It depends on a search configurable Search Indexer. If no Search Indexer is configured
+        or if it is not reachable, the function falls back to a basic title search.
         """
-        # As the 'list' view we get a prefiltered queryset (deleted docs are excluded)
-        queryset = models.Document.objects.all()
-        filterset = DocumentFilter({"title": text}, queryset=queryset)
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
 
-        if not filterset.is_valid():
-            raise drf.exceptions.ValidationError(filterset.errors)
-
-        queryset = filterset.filter_queryset(queryset)
-
-        return self.get_response_for_queryset(
-            queryset.order_by("-updated_at"),
-            context={
-                "request": request,
-            },
-        )
+        indexer = get_document_indexer()
+        if indexer:
+            return self._search_with_indexer(indexer, request, params=params)
+        except requests.exceptions.RequestException as e:
+            logger.error("Error while searching documents with indexer: %s", e)
+            # fallback on title search if the indexer is not reached
+            return self._title_search(request, params.validated_data, *args, **kwargs)
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
@@ -1444,25 +1450,52 @@ class DocumentViewSet(
             }
         )
 
-    @drf.decorators.action(detail=False, methods=["get"], url_path="search")
-    @method_decorator(refresh_oidc_access_token)
-    def search(self, request, *args, **kwargs):
+    def title_search(self, request, validated_data, *args, **kwargs):
         """
-        Returns an ordered list of documents best matching the search query parameter 'q'.
-
-        It depends on a search configurable Search Indexer. If no Search Indexer is configured or if it
-        is not reachable, the function falls back to a basic title search.
+        Fallback search method when no indexer is configured.
+        Only searches in the title field of documents.
         """
-        params = serializers.SearchDocumentSerializer(data=request.query_params)
-        params.is_valid(raise_exception=True)
+        if not validated_data.get("path"):
+            return self.list(request, *args, **kwargs)
 
-        indexer = get_document_indexer()
-        if indexer:
-            return self._search_with_indexer(indexer, request, params=params)
+        return self._list_descendants(request, validated_data)
 
-        # The indexer is not configured, we fallback on a simple icontains filter by the
-        # model field 'title'.
-        return self._search_simple(request, text=params.validated_data["q"])
+    def _list_descendants(self, request, validated_data):
+        """
+        List all documents whose path starts with the provided path parameter.
+        Includes the parent document itself.
+        Used internally by the search endpoint when path filtering is requested.
+        """
+        # Get parent document without access filtering
+        parent_path = validated_data["path"]
+        try:
+            parent = models.Document.objects.annotate_user_roles(request.user).get(
+                path=parent_path
+            )
+        except models.Document.DoesNotExist as exc:
+            raise drf.exceptions.NotFound("Document not found from path.") from exc
+
+        abilities = parent.get_abilities(request.user)
+        if not abilities.get("search"):
+            raise drf.exceptions.PermissionDenied(
+                "You do not have permission to search within this document."
+            )
+
+        # Get descendants and include the parent, ordered by path
+        queryset = (
+            parent.get_descendants(include_self=True)
+            .filter(ancestors_deleted_at__isnull=True)
+            .order_by("path")
+        )
+        queryset = self.filter_queryset(queryset)
+
+        # filter by title
+        filterset = DocumentFilter(request.GET, queryset=queryset)
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.qs
+        return self.get_response_for_queryset(queryset)
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
