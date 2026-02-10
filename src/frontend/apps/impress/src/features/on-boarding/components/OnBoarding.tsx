@@ -1,74 +1,41 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, OnboardingModal } from '@gouvfr-lasuite/ui-kit';
-import { useCallback, useState } from 'react';
+import {
+  OnboardingModal,
+  type OnboardingModalProps,
+} from '@gouvfr-lasuite/ui-kit';
 import { useTranslation } from 'react-i18next';
-import { css } from 'styled-components';
 
-import { Box, Icon } from '@/components';
-
-import { useOnboardingMenuOptions } from '../hooks/useOnboardingMenuOptions';
 import { useOnboardingSteps } from '../hooks/useOnboardingSteps';
 
-export const OnBoarding = () => {
+export interface OnBoardingProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onComplete?: () => void;
+  onSkip?: () => void;
+  footerLink?: OnboardingModalProps['footerLink'];
+}
+
+export const OnBoarding = ({
+  isOpen,
+  onClose,
+  onComplete,
+  onSkip,
+  footerLink,
+}: OnBoardingProps) => {
   const { t } = useTranslation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-  }, []);
-
-  const toggleMenu = () => {
-    setIsMenuOpen((open) => !open);
-  };
 
   const steps = useOnboardingSteps();
-  const options = useOnboardingMenuOptions({ onOpenOnboarding: openModal });
+  const complete = onComplete ?? onClose;
 
   return (
-    <>
-      <Box
-        $css={css`
-          .c__dropdown-menu-trigger {
-            display: flex;
-            justify-content: flex-start;
-          }
-        `}
-      >
-        <DropdownMenu
-          options={options}
-          isOpen={isMenuOpen}
-          onOpenChange={setIsMenuOpen}
-        >
-          <Button
-            aria-label={t('Open onboarding menu')}
-            color="neutral"
-            variant="tertiary"
-            iconPosition="left"
-            icon={
-              <Icon
-                $withThemeInherited
-                iconName="help_outline"
-                aria-hidden="true"
-              />
-            }
-            onClick={toggleMenu}
-          />
-        </DropdownMenu>
-      </Box>
-
-      <OnboardingModal
-        isOpen={isModalOpen}
-        appName={t('Discover Docs')}
-        mainTitle={t('Learn the core principles')}
-        steps={steps}
-        onClose={closeModal}
-        onComplete={closeModal}
-      />
-    </>
+    <OnboardingModal
+      isOpen={isOpen}
+      appName={t('Discover Docs')}
+      mainTitle={t('Learn the core principles')}
+      steps={steps}
+      footerLink={footerLink}
+      onSkip={onSkip}
+      onClose={onClose}
+      onComplete={complete}
+    />
   );
 };
