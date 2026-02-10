@@ -1,4 +1,5 @@
 import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { TreeContextType, useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -8,45 +9,40 @@ import { useDebouncedCallback } from 'use-debounce';
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useDocUtils } from '@/docs/doc-management';
+import {
+  DocSearchFilters,
+  DocSearchFiltersValues,
+  DocSearchTarget,
+} from '@/docs/doc-search';
 import { useResponsiveStore } from '@/stores';
 
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
 import { DocSearchContent } from './DocSearchContent';
-import {
-  DocSearchFilters,
-  DocSearchFiltersValues,
-  DocSearchTarget,
-} from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
-import { DocSearchSubPageContent } from './DocSearchSubPageContent';
 
 type DocSearchModalGlobalProps = {
   onClose: () => void;
   isOpen: boolean;
   showFilters?: boolean;
   defaultFilters?: DocSearchFiltersValues;
+  treeContext?: TreeContextType<Doc> | null;
 };
 
 const DocSearchModalGlobal = ({
   showFilters = false,
   defaultFilters,
+  treeContext,
   ...modalProps
 }: DocSearchModalGlobalProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-
   const router = useRouter();
-  const isDocPage = router.pathname === '/docs/[id]';
-
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<DocSearchFiltersValues>(
     defaultFilters ?? {},
   );
-
-  const target = filters.target ?? DocSearchTarget.ALL;
   const { isDesktop } = useResponsiveStore();
-
   const handleInputSearch = useDebouncedCallback(setSearch, 300);
 
   const handleSelect = (doc: Doc) => {
@@ -120,23 +116,22 @@ const DocSearchModalGlobal = ({
               </Box>
             )}
             {search && (
-              <>
-                {target === DocSearchTarget.ALL && (
-                  <DocSearchContent
-                    search={search}
-                    onSelect={handleSelect}
-                    onLoadingChange={setLoading}
-                  />
-                )}
-                {isDocPage && target === DocSearchTarget.CURRENT && (
-                  <DocSearchSubPageContent
-                    search={search}
-                    onSelect={handleSelect}
-                    onLoadingChange={setLoading}
-                    renderElement={(doc) => <DocSearchItem doc={doc} />}
-                  />
-                )}
-              </>
+              <DocSearchContent
+                search={search}
+                onSelect={handleSelect}
+                onLoadingChange={setLoading}
+                renderElement={(doc) => <DocSearchItem doc={doc} />}
+                target={
+                  filters.target === DocSearchTarget.CURRENT
+                    ? DocSearchTarget.CURRENT
+                    : DocSearchTarget.ALL
+                }
+                parentPath={
+                  filters.target === DocSearchTarget.CURRENT
+                    ? treeContext?.root?.path
+                    : undefined
+                }
+              />
             )}
           </Box>
         </QuickSearch>
@@ -155,6 +150,7 @@ const DocSearchModalDetail = ({
 }: DocSearchModalDetailProps) => {
   const { hasChildren, isChild } = useDocUtils(doc);
   const isWithChildren = isChild || hasChildren;
+  const treeContext = useTreeContext<Doc>();
 
   let defaultFilters = DocSearchTarget.ALL;
   let showFilters = false;
@@ -168,6 +164,7 @@ const DocSearchModalDetail = ({
       {...modalProps}
       showFilters={showFilters}
       defaultFilters={{ target: defaultFilters }}
+      treeContext={treeContext}
     />
   );
 };
