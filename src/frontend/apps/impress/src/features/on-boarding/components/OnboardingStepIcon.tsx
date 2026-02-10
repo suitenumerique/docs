@@ -1,18 +1,29 @@
-import { PropsWithChildren } from 'react';
+import { CSSProperties, PropsWithChildren } from 'react';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+import { tokens, useCunninghamTheme } from '@/cunningham';
+
+type ColorToken = keyof typeof tokens.themes.default.globals.colors;
 
 export interface OnboardingStepIconProps {
   size?: string;
+  colorToken?: ColorToken;
+  color?: CSSProperties['color'];
 }
 
 export const OnboardingStepIcon = ({
   size = '32px',
+  colorToken = 'gray-550',
+  color: colorCss,
   children,
 }: PropsWithChildren<OnboardingStepIconProps>) => {
   const { colorsTokens } = useCunninghamTheme();
+  const color =
+    colorCss ??
+    colorsTokens[colorToken] ??
+    colorsTokens['gray-550'] ??
+    'currentColor';
 
   return (
     <Box
@@ -23,7 +34,7 @@ export const OnboardingStepIcon = ({
         display: flex;
         align-items: center;
         justify-content: center;
-        color: ${colorsTokens['gray-550']};
+        color: ${color};
 
         svg {
           width: 24px;

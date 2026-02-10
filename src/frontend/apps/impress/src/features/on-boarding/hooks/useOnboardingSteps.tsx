@@ -2,6 +2,8 @@ import { type OnboardingStep } from '@gouvfr-lasuite/ui-kit';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useCunninghamTheme } from '@/cunningham';
+
 import DragIndicatorIcon from '../assets/drag_indicator.svg';
 import FileShareIcon from '../assets/file-share.svg';
 import FormatTextIcon from '../assets/format-text.svg';
@@ -17,7 +19,11 @@ import { OnboardingStepImage } from '../components/OnboardingStepImage';
 
 export const useOnboardingSteps = () => {
   const { i18n, t } = useTranslation();
+  const { contextualTokens, colorsTokens } = useCunninghamTheme();
   const isFrLanguage = i18n.resolvedLanguage === 'fr';
+  const activeColor =
+    contextualTokens.content.semantic.brand.tertiary ??
+    colorsTokens['brand-600'];
 
   const step1Title = t('Compose your doc easily');
   const step1Description = t(
@@ -44,6 +50,11 @@ export const useOnboardingSteps = () => {
             <DragIndicatorIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
+        activeIcon: (
+          <OnboardingStepIcon color={activeColor}>
+            <DragIndicatorIcon aria-hidden="true" />
+          </OnboardingStepIcon>
+        ),
         title: step1Title,
         description: step1Description,
         content: <OnboardingStepImage src={Step1Image.src} alt={step1Title} />,
@@ -54,6 +65,11 @@ export const useOnboardingSteps = () => {
             <FormatTextIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
+        activeIcon: (
+          <OnboardingStepIcon color={activeColor}>
+            <FormatTextIcon aria-hidden="true" />
+          </OnboardingStepIcon>
+        ),
         title: step2Title,
         description: step2Description,
         content: <OnboardingStepImage src={Step2Image.src} alt={step2Title} />,
@@ -61,6 +77,11 @@ export const useOnboardingSteps = () => {
       {
         icon: (
           <OnboardingStepIcon>
+            <FileShareIcon aria-hidden="true" />
+          </OnboardingStepIcon>
+        ),
+        activeIcon: (
+          <OnboardingStepIcon color={activeColor}>
             <FileShareIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
@@ -79,6 +100,11 @@ export const useOnboardingSteps = () => {
             <StackTemplateIcon aria-hidden="true" />
           </OnboardingStepIcon>
         ),
+        activeIcon: (
+          <OnboardingStepIcon color={activeColor}>
+            <StackTemplateIcon aria-hidden="true" />
+          </OnboardingStepIcon>
+        ),
         title: step4Title,
         description: step4Description,
         content: (
@@ -90,6 +116,7 @@ export const useOnboardingSteps = () => {
       },
     ],
     [
+      activeColor,
       isFrLanguage,
       step1Description,
       step1Title,

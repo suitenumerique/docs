@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 
 import WandAndStarsIcon from '../assets/wand-and-stars.svg';
 
-export interface UseOnboardingMenuOptionsParams {
+export interface UseHelpMenuOptionsParams {
   onOpenOnboarding: () => void;
 }
 
-export const useOnboardingMenuOptions = ({
+export const useHelpMenuOptions = ({
   onOpenOnboarding,
-}: UseOnboardingMenuOptionsParams) => {
+}: UseHelpMenuOptionsParams) => {
   const { t } = useTranslation();
 
   return useMemo<DropdownMenuOption[]>(

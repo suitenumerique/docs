@@ -1,12 +1,12 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu } from '@gouvfr-lasuite/ui-kit';
+import { DropdownMenu, ModalSize } from '@gouvfr-lasuite/ui-kit';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon } from '@/components';
+import { useHelpMenuOptions } from '@/features/left-panel/hooks/useHelpMenuOptions';
 import { OnBoarding } from '@/features/on-boarding/components/OnBoarding';
-import { useOnboardingMenuOptions } from '@/features/on-boarding/hooks/useOnboardingMenuOptions';
 
 export const LeftPanelHelpMenu = () => {
   const { t } = useTranslation();
@@ -25,7 +25,11 @@ export const LeftPanelHelpMenu = () => {
     setIsMenuOpen((open) => !open);
   }, []);
 
-  const options = useOnboardingMenuOptions({ onOpenOnboarding: openModal });
+  const options = useHelpMenuOptions({ onOpenOnboarding: openModal });
+  const footerLink = {
+    label: t('Learn more docs features'),
+    href: 'https://github.com/suitenumerique/docs/tree/main/docs',
+  };
 
   return (
     <>
@@ -62,7 +66,13 @@ export const LeftPanelHelpMenu = () => {
         </DropdownMenu>
       </Box>
 
-      <OnBoarding isOpen={isModalOpen} onClose={closeModal} />
+      <OnBoarding
+        isOpen={isModalOpen}
+        size={ModalSize.LARGE}
+        onClose={closeModal}
+        onSkip={closeModal}
+        footerLink={footerLink}
+      />
     </>
   );
 };
