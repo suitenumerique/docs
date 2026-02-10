@@ -463,7 +463,6 @@ def test_find_document_indexer_search(mock_search_query):
                 "title.fr": "Document de test",
                 "content": "Contenu de test",
                 "updated_at": "2024-01-02T00:00:00Z",
-                "path": "/some/path/doc-456",
             },
         },
     ]
@@ -491,7 +490,19 @@ def test_find_document_indexer_search(mock_search_query):
     }
 
     assert len(results) == 2
-    assert results[0]["id"] == hits[0]["_id"]
-    assert results[0]["title"] == hits[0]["_source"]["title"]
-    assert results[1]["id"] == hits[1]["_id"]
-    assert results[1]["title"] == hits[1]["_source"]["title.fr"]
+    assert results == [
+        {
+            "id": hits[0]["_id"],
+            "title": hits[0]["_source"]["title"],
+            "content": hits[0]["_source"]["content"],
+            "updated_at": hits[0]["_source"]["updated_at"],
+            "path": hits[0]["_source"]["path"],
+        },
+        {
+            "id": hits[1]["_id"],
+            "title": hits[1]["_source"]["title.fr"],
+            "title.fr": hits[1]["_source"]["title.fr"],  # <- Find response artefact
+            "content": hits[1]["_source"]["content"],
+            "updated_at": hits[1]["_source"]["updated_at"],
+        },
+    ]
