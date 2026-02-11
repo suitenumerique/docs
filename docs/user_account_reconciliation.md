@@ -5,6 +5,8 @@ It is possible to merge user accounts based on their email addresses.
 Docs does not have an internal process to requests, but it allows the import of a CSV from an external form
 (e.g. made with Grist) in the Django admin panel (in "Core" > "User reconciliation CSV imports" > "Add user reconciliation")
 
+## CSV file format
+
 The CSV must contain the following mandatory columns:
 
 - `active_email`: the email of the user that will remain active after the process.
@@ -17,3 +19,12 @@ If present, it allows to indicate that the source form has a way to validate tha
 Once the CSV file is processed, this will create entries in "Core" > "User reconciliations" and send verification emails to validate that the user making the request actually controls the email addresses (unless `active_email_checked` and `inactive_email_checked` were set to `1` in the CSV)
 
 In "Core" > "User reconciliations", an admin can then select all rows they wish to process and check the action "Process selected user reconciliations". Only rows that have the status `ready` and for which both emails have been validated will be processed.
+
+## Settings
+
+If there is a problem with the reconciliation attempt (e.g., one of the addresses given by the user does not match an existing account), the email signaling the error can give back the link to the reconciliation form. This is configured through the following environment variable:
+
+```env
+USER_RECONCILIATION_FORM_URL=<url used in the email for reconciliation with errors to allow a new requests>
+# e.g. "https://yourgristinstance.tld/xxxx/UserReconciliationForm"
+```

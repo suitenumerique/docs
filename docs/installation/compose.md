@@ -143,15 +143,6 @@ AI_API_KEY=<API key>
 AI_MODEL=<model used> e.g. llama
 ```
 
-### User reconciliation
-
-You can [merge user accounts](../user_account_reconciliation.md) through a third party form (e.g. managed through Grist)
-
-```env
-USER_RECONCILIATION_FORM_URL=<url used in the email for reconciliation with errors to allow a new requests>
-# e.g. "https://yourgristinstance.tld/xxxx/UserReconciliationForm"
-```
-
 ### Frontend theme
 
 You can [customize your Docs instance](../theming.md) with your own theme and custom css.
