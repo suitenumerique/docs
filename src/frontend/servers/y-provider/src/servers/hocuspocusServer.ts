@@ -16,9 +16,6 @@ export const hocuspocusServer = new Server({
     context,
     request,
   }) {
-    console.log(222222);
-    console.log('new CONNECTION');
-
     const roomParam = requestParameters.get('room');
 
     if (documentName !== roomParam) {
