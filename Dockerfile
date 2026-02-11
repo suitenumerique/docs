@@ -36,7 +36,7 @@ COPY ./src/mail /mail/app
 WORKDIR /mail/app
 
 RUN yarn install --frozen-lockfile && \
-    yarn build
+  yarn build
 
 
 # ---- static link collector ----
@@ -58,7 +58,7 @@ WORKDIR /app
 
 # collectstatic
 RUN DJANGO_CONFIGURATION=Build \
-    python manage.py collectstatic --noinput
+  python manage.py collectstatic --noinput
 
 # Replace duplicated file by a symlink to decrease the overall size of the
 # final image
@@ -81,7 +81,7 @@ RUN apk add --no-cache \
   pango \
   shared-mime-info
 
-RUN wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types -O /etc/mime.types
+RUN wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
 # Copy entrypoint
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
@@ -98,9 +98,9 @@ COPY --from=back-builder /install /usr/local
 # when python is upgraded and the path to the certificate changes.
 # The space between print and the ( is intended otherwise the git lint is failing
 RUN mkdir /cert && \
-    path=`python -c 'import certifi;print (certifi.where())'` && \
-    mv $path /cert/ && \
-    ln -s /cert/cacert.pem $path
+  path=`python -c 'import certifi;print (certifi.where())'` && \
+  mv $path /cert/ && \
+  ln -s /cert/cacert.pem $path
 
 # Copy impress application (see .dockerignore)
 COPY ./src/backend /app/
@@ -109,7 +109,7 @@ WORKDIR /app
 
 # Generate compiled translation messages
 RUN DJANGO_CONFIGURATION=Build \
-    python manage.py compilemessages
+  python manage.py compilemessages
 
 
 # We wrap commands run in this container by the following entrypoint that
@@ -138,7 +138,7 @@ USER ${DOCKER_USER}
 # Target database host (e.g. database engine following docker compose services
 # name) & port
 ENV DB_HOST=postgresql \
-    DB_PORT=5432
+  DB_PORT=5432
 
 # Run django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
