@@ -2,7 +2,6 @@
 Test users API endpoints in the impress core app.
 """
 
-from xmlrpc import client
 from django.test import override_settings
 from django.utils import timezone
 
@@ -400,7 +399,8 @@ def test_api_users_list_query_short_queries_default_length():
 @override_settings(API_USERS_SEARCH_QUERY_MIN_LENGTH=5)
 def test_api_users_list_query_short_queries_custom_length():
     """
-    Queries shorter than API_USERS_SEARCH_QUERY_MIN_LENGTH should return a 400 error with a validation message.
+    Queries shorter than API_USERS_SEARCH_QUERY_MIN_LENGTH
+    should return a 400 error with a validation message.
     """
     user = factories.UserFactory(email="paul@example.com", full_name="Paul")
     client = APIClient()

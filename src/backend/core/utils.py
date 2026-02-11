@@ -106,13 +106,18 @@ def extract_attachments(content):
     return re.findall(enums.MEDIA_STORAGE_URL_EXTRACT, xml_content)
 
 
+def get_users_sharing_documents_with_cache_key(user):
+    """Generate a unique cache key for each user."""
+    return f"users_sharing_documents_with_{user.id}"
+
+
 def users_sharing_documents_with(user):
     """
     Returns a map of users sharing documents with the given user,
     sorted by last shared date.
     """
     start_time = time.time()
-    cache_key = f"users_sharing_documents_with_{user.id}"
+    cache_key = get_users_sharing_documents_with_cache_key(user)
     cached_result = cache.get(cache_key)
 
     if cached_result is not None:
