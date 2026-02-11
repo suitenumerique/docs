@@ -842,6 +842,11 @@ class Base(Configuration):
         environ_name="API_USERS_LIST_LIMIT",
         environ_prefix=None,
     )
+    API_USERS_SEARCH_QUERY_MIN_LENGTH = values.PositiveIntegerValue(
+        default=3,
+        environ_name="API_USERS_SEARCH_QUERY_MIN_LENGTH",
+        environ_prefix=None,
+    )
 
     # Content Security Policy
     # See https://content-security-policy.com/ for more information.

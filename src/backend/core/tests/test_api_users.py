@@ -2,6 +2,8 @@
 Test users API endpoints in the impress core app.
 """
 
+from django.utils import timezone
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -121,12 +123,12 @@ def test_api_users_list_query_full_name():
     Authenticated users should be able to list users and filter by full name.
     Only results with a Trigram similarity greater than 0.2 with the query should be returned.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
 
     client = APIClient()
     client.force_login(user)
 
-    dave = factories.UserFactory(email="contact@work.com", full_name="David Bowman")
+    dave = factories.UserFactory(email="contact@example.com", full_name="David Bowman")
 
     response = client.get(
         "/api/v1.0/users/?q=David",
@@ -166,13 +168,13 @@ def test_api_users_list_query_accented_full_name():
     Authenticated users should be able to list users and filter by full name with accents.
     Only results with a Trigram similarity greater than 0.2 with the query should be returned.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
 
     client = APIClient()
     client.force_login(user)
 
     fred = factories.UserFactory(
-        email="contact@work.com", full_name="Frédérique Lefèvre"
+        email="contact@example.com", full_name="Frédérique Lefèvre"
     )
 
     response = client.get("/api/v1.0/users/?q=Frédérique")
@@ -201,12 +203,82 @@ def test_api_users_list_query_accented_full_name():
     assert users == []
 
 
+def test_api_users_list_sorted_by_closest_match():
+    """
+    Authenticated users should be able to list users and the results should be
+    sorted by closest match to the query.
+
+    Sorting criteria are :
+    - Shared documents with the user (most recent first)
+    - Same full email domain (example.gouv.fr)
+
+    Addresses that match neither criteria should be excluded from the results.
+
+        Case in point: the logged-in user has recently shared documents
+    with pierre.dupont@beta.gouv.fr and less recently with pierre.durand@impots.gouv.fr.
+
+    Other users named Pierre also exist:
+    - pierre.thomas@example.com
+    - pierre.petit@anct.gouv.fr
+    - pierre.robert@culture.gouv.fr
+
+    The search results should be ordered as follows:
+
+    # Shared with first
+    - pierre.dupond@beta.gouv.fr # Most recent first
+    - pierre.durand@impots.gouv.fr
+    # Same full domain second
+    - pierre.petit@anct.gouv.fr
+    """
+
+    user = factories.UserFactory(
+        email="martin.bernard@anct.gouv.fr", full_name="Martin Bernard"
+    )
+
+    client = APIClient()
+    client.force_login(user)
+
+    pierre_1 = factories.UserFactory(email="pierre.dupont@beta.gouv.fr")
+    pierre_2 = factories.UserFactory(email="pierre.durand@impots.gouv.fr")
+    _pierre_3 = factories.UserFactory(email="pierre.thomas@example.com")
+    pierre_4 = factories.UserFactory(email="pierre.petit@anct.gouv.fr")
+    _pierre_5 = factories.UserFactory(email="pierre.robert@culture.gouv.fr")
+
+    document_1 = factories.DocumentFactory(creator=user)
+    document_2 = factories.DocumentFactory(creator=user)
+    factories.UserDocumentAccessFactory(user=user, document=document_1)
+    factories.UserDocumentAccessFactory(user=user, document=document_2)
+
+    now = timezone.now()
+    last_week = now - timezone.timedelta(days=7)
+    last_month = now - timezone.timedelta(days=30)
+
+    # The factory cannot set the created_at directly, so we force it after creation
+    p1_d1 = factories.UserDocumentAccessFactory(user=pierre_1, document=document_1)
+    p1_d1.created_at = last_week
+    p1_d1.save()
+
+    p2_d2 = factories.UserDocumentAccessFactory(user=pierre_2, document=document_2)
+    p2_d2.created_at = last_month
+    p2_d2.save()
+
+    response = client.get("/api/v1.0/users/?q=Pierre")
+    assert response.status_code == 200
+    user_ids = [user["email"] for user in response.json()]
+
+    assert user_ids == [
+        str(pierre_1.email),
+        str(pierre_2.email),
+        str(pierre_4.email),
+    ]
+
+
 def test_api_users_list_limit(settings):
     """
     Authenticated users should be able to list users and the number of results
-    should be limited to 10.
+    should be limited to API_USERS_LIST_LIMIT (by default 5).
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
 
     client = APIClient()
     client.force_login(user)
@@ -309,28 +381,16 @@ def test_api_users_list_query_email_exclude_doc_user():
 
 def test_api_users_list_query_short_queries():
     """
-    Queries shorter than 5 characters should return an empty result set.
+    If API_USERS_SEARCH_QUERY_MIN_LENGTH is not set, the default minimum length should be 3.
     """
     user = factories.UserFactory(email="paul@example.com", full_name="Paul")
     client = APIClient()
     client.force_login(user)
 
-    factories.UserFactory(email="john.doe@example.com")
-    factories.UserFactory(email="john.lennon@example.com")
+    factories.UserFactory(email="john.doe@example.com", full_name="John Doe")
+    factories.UserFactory(email="john.lennon@example.com", full_name="John Lennon")
 
-    response = client.get("/api/v1.0/users/?q=jo")
-    assert response.status_code == 400
-    assert response.json() == {
-        "q": ["Ensure this value has at least 5 characters (it has 2)."]
-    }
-
-    response = client.get("/api/v1.0/users/?q=john")
-    assert response.status_code == 400
-    assert response.json() == {
-        "q": ["Ensure this value has at least 5 characters (it has 4)."]
-    }
-
-    response = client.get("/api/v1.0/users/?q=john.")
+    response = client.get("/api/v1.0/users/?q=joh")
     assert response.status_code == 200
     assert len(response.json()) == 2
 
@@ -356,7 +416,7 @@ def test_api_users_list_query_long_queries():
 
 def test_api_users_list_query_inactive():
     """Inactive users should not be listed."""
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com")
     client = APIClient()
     client.force_login(user)
 

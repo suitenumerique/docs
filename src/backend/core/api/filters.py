@@ -2,6 +2,7 @@
 
 import unicodedata
 
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 import django_filters
@@ -135,4 +136,6 @@ class UserSearchFilter(django_filters.FilterSet):
     Custom filter for searching users.
     """
 
-    q = django_filters.CharFilter(min_length=5, max_length=254)
+    q = django_filters.CharFilter(
+        min_length=settings.API_USERS_SEARCH_QUERY_MIN_LENGTH, max_length=254
+    )
