@@ -11,6 +11,7 @@ import {
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
+import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
@@ -57,6 +58,9 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const { data: config } = useConfig();
+  const API_USERS_SEARCH_QUERY_MIN_LENGTH =
+    config?.API_USERS_SEARCH_QUERY_MIN_LENGTH || 5;
 
   const { isDesktop } = useResponsiveStore();
 
@@ -83,7 +87,6 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const canViewAccesses = doc.abilities.accesses_view;
   const showMemberSection = inputValue === '' && selectedUsers.length === 0;
   const showFooter = selectedUsers.length === 0 && !inputValue;
-  const MIN_CHARACTERS_FOR_SEARCH = 4;
 
   const onSelect = (user: User) => {
     setSelectedUsers((prev) => [...prev, user]);
@@ -111,7 +114,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const searchUsersQuery = useUsers(
     { query: userQuery, docId: doc.id },
     {
-      enabled: userQuery?.length > MIN_CHARACTERS_FOR_SEARCH,
+      enabled: userQuery?.length >= API_USERS_SEARCH_QUERY_MIN_LENGTH,
       queryKey: [KEY_LIST_USER, { query: userQuery }],
     },
   );

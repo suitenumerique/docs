@@ -8,6 +8,7 @@ export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
 
 export const CONFIG = {
   AI_FEATURE_ENABLED: true,
+  API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY: true,

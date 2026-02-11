@@ -20,6 +20,7 @@ pytestmark = pytest.mark.django_db
 
 @override_settings(
     AI_FEATURE_ENABLED=False,
+    API_USERS_SEARCH_QUERY_MIN_LENGTH=6,
     COLLABORATION_WS_URL="http://testcollab/",
     COLLABORATION_WS_NOT_CONNECTED_READY_ONLY=True,
     CRISP_WEBSITE_ID="123",
@@ -44,6 +45,7 @@ def test_api_config(is_authenticated):
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
         "AI_FEATURE_ENABLED": False,
+        "API_USERS_SEARCH_QUERY_MIN_LENGTH": 6,
         "COLLABORATION_WS_URL": "http://testcollab/",
         "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY": True,
         "CONVERSION_FILE_EXTENSIONS_ALLOWED": [".docx", ".md"],

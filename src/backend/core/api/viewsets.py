@@ -2405,6 +2405,7 @@ class ConfigView(drf.views.APIView):
         """
         array_settings = [
             "AI_FEATURE_ENABLED",
+            "API_USERS_SEARCH_QUERY_MIN_LENGTH",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
             "CONVERSION_FILE_EXTENSIONS_ALLOWED",
