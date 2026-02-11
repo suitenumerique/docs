@@ -1,7 +1,8 @@
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Y from 'yjs';
 
+import { encryptContent } from '@/docs/doc-collaboration/encryption';
 import { useUpdateDoc } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { isFirefox } from '@/utils/userAgent';
@@ -14,6 +15,10 @@ export const useSaveDoc = (
   docId: string,
   yDoc: Y.Doc,
   isConnectedToCollabServer: boolean,
+  isEncrypted: boolean,
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null,
 ) => {
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
@@ -35,16 +40,6 @@ export const useSaveDoc = (
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      console.log(333333);
-      if (transaction.local) {
-        console.log('LOCAL');
-      } else {
-        console.log('REMOTE');
-      }
-      // console.log(transaction);
-
-      // transaction.
-
       setIsLocalChange(transaction.local);
     };
 
@@ -58,20 +53,42 @@ export const useSaveDoc = (
   const saveDoc = useCallback(() => {
     if (!isLocalChange) {
       return false;
+    } else if (isEncrypted && !documentEncryptionSettings) {
+      // If the symmetric key is not yet ready we just ignore saving (either it needs onboarding or just a few seconds)
+      return false;
     }
 
-    console.log('--------');
-    console.log(111111);
-    console.log(yDoc);
+    let state = Y.encodeStateAsUpdate(yDoc);
+    let contentPromise: Promise<typeof state>;
 
-    updateDoc({
-      id: docId,
-      content: toBase64(Y.encodeStateAsUpdate(yDoc)),
-      websocket: isConnectedToCollabServer,
+    if (isEncrypted) {
+      contentPromise = encryptContent(
+        new Uint8Array(state),
+        documentEncryptionSettings!.documentSymmetricKey,
+      );
+    } else {
+      contentPromise = Promise.resolve(state);
+    }
+
+    contentPromise.then((docState) => {
+      updateDoc({
+        id: docId,
+        content: toBase64(docState),
+        contentEncrypted: isEncrypted,
+        websocket: isConnectedToCollabServer,
+      });
     });
 
     return true;
-  }, [isLocalChange, updateDoc, docId, yDoc, isConnectedToCollabServer]);
+  }, [
+    isLocalChange,
+    updateDoc,
+    docId,
+    yDoc,
+    isConnectedToCollabServer,
+    isEncrypted,
+    documentEncryptionSettings,
+  ]);
 
   const router = useRouter();
 

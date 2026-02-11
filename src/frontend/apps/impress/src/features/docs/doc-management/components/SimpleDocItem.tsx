@@ -7,6 +7,7 @@ import { useDate } from '@/hooks/useDate';
 import { useResponsiveStore } from '@/stores';
 
 import ChildDocument from '../assets/child-document.svg';
+import EncryptedDocumentIcon from '../assets/encrypted-document.svg';
 import PinnedDocumentIcon from '../assets/pinned-document.svg';
 import SimpleFileIcon from '../assets/simple-document.svg';
 import { useDocUtils, useTrans } from '../hooks';
@@ -25,12 +26,14 @@ const ItemTextCss = css`
 type SimpleDocItemProps = {
   doc: Doc;
   isPinned?: boolean;
+  isEncrypted?: boolean;
   showAccesses?: boolean;
 };
 
 export const SimpleDocItem = ({
   doc,
   isPinned = false,
+  isEncrypted = false,
   showAccesses = false,
 }: SimpleDocItemProps) => {
   const { t } = useTranslation();
@@ -65,6 +68,12 @@ export const SimpleDocItem = ({
           <PinnedDocumentIcon
             aria-hidden="true"
             data-testid="doc-pinned-icon"
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
+          />
+        ) : isEncrypted ? (
+          <EncryptedDocumentIcon
+            aria-hidden="true"
+            data-testid="doc-encryption-icon"
             color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         ) : isChild ? (

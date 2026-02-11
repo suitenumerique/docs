@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 
 import { hocuspocusServer } from '@/servers';
 import { logger } from '@/utils';
-import { closeConn, getYDoc } from '@/servers/standard/utils';
 
 type ResetConnectionsRequestQuery = {
   room?: string;
@@ -22,17 +21,19 @@ export const collaborationResetConnectionsHandler = (
     return;
   }
 
+  res.status(500).json({ error: 'not implemented yet' });
+
+  hocuspocusServer;
+
   /**
    * If no user ID is provided, close all connections in the room
    */
   if (!userId) {
     // hocuspocusServer.hocuspocus.closeConnections(room);
-
-    const doc = getYDoc(room);
-
-    if (doc) {
-      doc.conns.forEach((_, conn) => closeConn(doc, conn));
-    }
+    // const doc = getYDoc(room);
+    // if (doc) {
+    //   doc.conns.forEach((_, conn) => closeConn(doc, conn));
+    // }
   } else {
     /**
      * Close connections for the user in the room
@@ -48,17 +49,15 @@ export const collaborationResetConnectionsHandler = (
     //     }
     //   });
     // });
-
-    const doc = getYDoc(room);
-
-    if (doc) {
-      doc.conns.forEach((clientIds, conn) => {
-        // TODO: with this current implementation there is no logic about user ID but only also "clientID"
-        // ... it should be adapted first as for hocuspocus before having this metadata
-        // closeConn(doc, conn)
-      });
-    }
+    // const doc = getYDoc(room);
+    // if (doc) {
+    //   doc.conns.forEach((clientIds, conn) => {
+    //     // TODO: with this current implementation there is no logic about user ID but only also "clientID"
+    //     // ... it should be adapted first as for hocuspocus before having this metadata
+    //     // closeConn(doc, conn)
+    //   });
+    // }
   }
 
-  res.status(200).json({ message: 'Connections reset' });
+  // res.status(200).json({ message: 'Connections reset' });
 };

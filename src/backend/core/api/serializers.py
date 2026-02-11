@@ -32,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "email", "full_name", "short_name", "language"]
+        fields = ["id", "email", "full_name", "short_name", "encryption_public_key", "language"]
         read_only_fields = ["id", "email", "full_name", "short_name"]
 
     def get_full_name(self, instance):
@@ -65,17 +65,23 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     """Serialize documents with limited fields for display in lists."""
 
     is_favorite = serializers.BooleanField(read_only=True)
+    is_encrypted = serializers.BooleanField(read_only=True)
     nb_accesses_ancestors = serializers.IntegerField(read_only=True)
     nb_accesses_direct = serializers.IntegerField(read_only=True)
     user_role = serializers.SerializerMethodField(read_only=True)
     abilities = serializers.SerializerMethodField(read_only=True)
     deleted_at = serializers.SerializerMethodField(read_only=True)
+    accesses_public_keys_per_user = serializers.SerializerMethodField(read_only=True)
+    encrypted_document_symmetric_key_for_user = serializers.SerializerMethodField(
+        read_only=True
+    )
 
     class Meta:
         model = models.Document
         fields = [
             "id",
             "abilities",
+            "accesses_public_keys_per_user",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
@@ -84,8 +90,10 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "creator",
             "deleted_at",
             "depth",
+            "encrypted_document_symmetric_key_for_user",
             "excerpt",
             "is_favorite",
+            "is_encrypted",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -99,6 +107,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "abilities",
+            "accesses_public_keys_per_user",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
@@ -107,8 +116,10 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "creator",
             "deleted_at",
             "depth",
+            "encrypted_document_symmetric_key_for_user",
             "excerpt",
             "is_favorite",
+            "is_encrypted",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -151,6 +162,28 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         """Return the deleted_at of the current document."""
         return instance.ancestors_deleted_at
 
+    def get_accesses_public_keys_per_user(self, instance):
+        """Return public keys of users with access, only for encrypted documents."""
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        return instance.accesses_public_keys_per_user
+
+    def get_encrypted_document_symmetric_key_for_user(self, instance):
+        """Return the encrypted symmetric key for the current user."""
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        if not instance.is_encrypted:
+            return None
+        try:
+            access = models.DocumentAccess.objects.get(
+                document=instance, user=request.user
+            )
+            return access.encrypted_document_symmetric_key_for_user
+        except models.DocumentAccess.DoesNotExist:
+            return None
+
 
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
@@ -165,6 +198,7 @@ class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
     content = serializers.CharField(required=False)
+    contentEncrypted = serializers.BooleanField(required=False, write_only=True)
     websocket = serializers.BooleanField(required=False, write_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
@@ -175,18 +209,22 @@ class DocumentSerializer(ListDocumentSerializer):
         fields = [
             "id",
             "abilities",
+            "accesses_public_keys_per_user",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
             "computed_link_role",
             "content",
+            "contentEncrypted",
             "created_at",
             "creator",
             "deleted_at",
             "depth",
             "excerpt",
+            "encrypted_document_symmetric_key_for_user",
             "file",
             "is_favorite",
+            "is_encrypted",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -209,7 +247,9 @@ class DocumentSerializer(ListDocumentSerializer):
             "creator",
             "deleted_at",
             "depth",
+            "encrypted_document_symmetric_key_for_user",
             "is_favorite",
+            "is_encrypted",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -227,6 +267,11 @@ class DocumentSerializer(ListDocumentSerializer):
         request = self.context.get("request")
         if request and request.method == "POST":
             fields["id"].read_only = False
+
+        # if user is not authenticated remove public keys information since he can still retrieve the document
+        if request and not request.user.is_authenticated:
+            fields.pop("accesses_public_keys_per_user", None)
+            fields.pop("encrypted_document_symmetric_key_for_user", None)
 
         return fields
 
@@ -343,6 +388,9 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     abilities = serializers.SerializerMethodField(read_only=True)
     max_ancestors_role = serializers.SerializerMethodField(read_only=True)
     max_role = serializers.SerializerMethodField(read_only=True)
+    encrypted_document_symmetric_key_for_user = serializers.CharField(
+        required=False, allow_blank=True, write_only=True
+    )
 
     class Meta:
         model = models.DocumentAccess
@@ -357,6 +405,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "encrypted_document_symmetric_key_for_user",
         ]
         read_only_fields = [
             "id",
@@ -365,6 +414,29 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "max_ancestors_role",
             "max_role",
         ]
+
+    def get_fields(self):
+        """Dynamically control field availability and requirements based on document encryption status."""
+        fields = super().get_fields()
+        
+        # Get the document from context (if available)
+        document = None
+        if "view" in self.context and hasattr(self.context["view"], "document"):
+            document = self.context["view"].document
+        
+        # Get the encrypted_document_symmetric_key_for_user field
+        key_field = fields.get("encrypted_document_symmetric_key_for_user")
+        
+        if key_field:
+            # If document is encrypted, make the field required
+            if document and getattr(document, "is_encrypted", False):
+                key_field.required = True
+                key_field.allow_blank = False
+            # If document is not encrypted, remove the field entirely
+            elif document and not getattr(document, "is_encrypted", False):
+                fields.pop("encrypted_document_symmetric_key_for_user", None)
+        
+        return fields
 
     def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""
@@ -854,6 +926,49 @@ class MoveDocumentSerializer(serializers.Serializer):
         choices=enums.MoveNodePositionChoices.choices,
         default=enums.MoveNodePositionChoices.LAST_CHILD,
     )
+
+
+class EncryptDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for encrypting a document.
+
+    Fields:
+        - content (CharField): The encrypted content of the document.
+          This field is required.
+        - encryptedSymmetricKeyPerUser (DictField): Mapping of user IDs to their encrypted symmetric keys.
+          This field is required.
+
+    Example:
+        Input payload for encrypting a document:
+        {
+            "content": "<encrypted_content>",
+            "encryptedSymmetricKeyPerUser": {
+                "user1_id": "encrypted_key_1",
+                "user2_id": "encrypted_key_2"
+            }
+        }
+    """
+
+    content = serializers.CharField(required=True)
+    encryptedSymmetricKeyPerUser = serializers.DictField(child=serializers.CharField(), required=True)
+
+
+class RemoveEncryptionSerializer(serializers.Serializer):
+    """
+    Serializer for removing encryption from a document.
+
+    Fields:
+        - content (CharField): The decrypted content of the document.
+          This field is required.
+
+    Example:
+        Input payload for removing encryption from a document:
+        {
+            "content": "<decrypted_content>"
+        }
+    """
+
+    content = serializers.CharField(required=True)
 
 
 class ReactionSerializer(serializers.ModelSerializer):

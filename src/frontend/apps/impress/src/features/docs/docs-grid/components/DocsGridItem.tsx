@@ -96,7 +96,11 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
               $padding={{ right: isDesktop ? 'md' : '3xs' }}
               $maxWidth="100%"
             >
-              <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
+              <SimpleDocItem
+                isPinned={doc.is_favorite}
+                isEncrypted={doc.is_encrypted}
+                doc={doc}
+              />
               {isShared && (
                 <Box
                   $padding={{ top: !isDesktop ? '4xs' : undefined }}

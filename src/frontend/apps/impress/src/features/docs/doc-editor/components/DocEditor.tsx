@@ -76,9 +76,21 @@ export const DocEditorContainer = ({
 
 interface DocEditorProps {
   doc: Doc;
+  encryptionSettings: {
+    userId: string;
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null;
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null;
 }
 
-export const DocEditor = ({ doc }: DocEditorProps) => {
+export const DocEditor = ({
+  doc,
+  encryptionSettings,
+  documentEncryptionSettings,
+}: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
@@ -122,7 +134,7 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     });
   }, [authenticated, hasTracked, isPublicDoc, trackEvent]);
 
-  if (!isProviderReady || provider?.roomname !== doc.id) {
+  if (!isProviderReady || provider?.configuration.name !== doc.id) {
     return <Loading />;
   }
 
@@ -130,18 +142,27 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     <>
       {isDesktop && <TableContent />}
       <DocEditorContainer
-        docHeader={<DocHeader doc={doc} />}
+        docHeader={
+          <DocHeader
+            doc={doc}
+            encryptionSettings={encryptionSettings}
+            documentEncryptionSettings={documentEncryptionSettings}
+          />
+        }
         docEditor={
           readOnly ? (
             <BlockNoteReader
-              // initialContent={provider.document.getXmlFragment(
-              //   'document-store',
-              // )}
-              initialContent={provider.doc.getXmlFragment('document-store')}
+              initialContent={provider.document.getXmlFragment(
+                'document-store',
+              )}
               docId={doc.id}
             />
           ) : (
-            <BlockNoteEditor doc={doc} provider={provider} />
+            <BlockNoteEditor
+              doc={doc}
+              provider={provider}
+              documentEncryptionSettings={documentEncryptionSettings}
+            />
           )
         }
         isDeletedDoc={isDeletedDoc}

@@ -21,11 +21,13 @@ type Props = {
   doc?: Doc;
   access: Access;
   isInherited?: boolean;
+  suffix?: string;
 };
 export const DocShareMemberItem = ({
   doc,
   access,
   isInherited = false,
+  suffix,
 }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
@@ -69,6 +71,7 @@ export const DocShareMemberItem = ({
       <SearchUserRow
         alwaysShowRight={true}
         user={access.user}
+        suffix={suffix}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
@@ -93,10 +96,12 @@ export const DocShareMemberItem = ({
 
 interface QuickSearchGroupMemberProps {
   doc: Doc;
+  keyMismatchUserIds?: Set<string>;
 }
 
 export const QuickSearchGroupMember = ({
   doc,
+  keyMismatchUserIds,
 }: QuickSearchGroupMemberProps) => {
   const { t } = useTranslation();
   const membersQuery = useDocAccesses({
@@ -125,7 +130,15 @@ export const QuickSearchGroupMember = ({
       <QuickSearchGroup
         group={membersData}
         renderElement={(access) => (
-          <DocShareMemberItem doc={doc} access={access} />
+          <DocShareMemberItem
+            doc={doc}
+            access={access}
+            suffix={
+              keyMismatchUserIds?.has(access.user.id)
+                ? t('DIFFERENT PUBLIC KEY')
+                : undefined
+            }
+          />
         )}
       />
     </Box>

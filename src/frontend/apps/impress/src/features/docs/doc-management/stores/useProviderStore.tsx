@@ -1,35 +1,22 @@
 import { CloseEvent } from '@hocuspocus/common';
-import {
-  ConstructableOutgoingMessage,
-  HocuspocusProvider,
-  MessageType,
-  OutgoingMessageArguments,
-  WebSocketStatus,
-} from '@hocuspocus/provider';
-import { WebsocketProvider } from 'y-websocket';
-// import { MessageSender } from '@hocuspocus/provider/src/MessageSender';
-// import {
-//   MessageSender
-// } from '@hocuspocus/provider/default';
-import { fromUint8Array, toUint8Array } from 'js-base64';
-import * as decoding from 'lib0/decoding';
-import type { Data, MessageEvent } from 'ws';
+import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
-import { Base64 } from '@/docs/doc-management';
-import { IncomingMessage } from '@/docs/doc-management/stores/IncomingMessage';
+import { createAdaptedEncryptedWebsocketClass } from '@/docs/doc-collaboration/encryptedWebsocket';
+import { RelayProvider } from '@/docs/doc-collaboration/relayProvider';
+
+export type SwitchableProvider = RelayProvider | HocuspocusProvider;
 
 export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
-    initialDoc?: Base64,
-  ) => WebsocketProvider;
-  // ) => HocuspocusProvider;
+    initialDocState?: Buffer<ArrayBuffer>,
+    symmetricKey?: CryptoKey,
+  ) => SwitchableProvider;
   destroyProvider: () => void;
-  // provider: HocuspocusProvider | undefined;
-  provider: WebsocketProvider | undefined;
+  provider: SwitchableProvider | undefined;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
@@ -45,145 +32,136 @@ const defaultValues = {
   hasLostConnection: false,
 };
 
-type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
-
-class CustomProvider extends WebsocketProvider {}
-
-// class CustomProvider extends HocuspocusProvider {
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   send(
-//     message: ConstructableOutgoingMessage,
-//     args: Partial<OutgoingMessageArguments>,
-//   ) {
-//     // if (!this._isAttached) return;
-//     // const messageSender = new MessageSender(message, args);
-//     // this.emit('outgoingMessage', { message: messageSender.message });
-//     // messageSender.send(this.configuration.websocketProvider);
-
-//     console.log('-----');
-//     if (message.name === 'UpdateMessage') {
-//       console.log(8888);
-//       console.log(args.update);
-//       if (args.update) {
-//         console.log('.......');
-//         console.log(typeof args.update);
-//         console.log('.......');
-
-//         // const base64EncodedUpdateAsString = fromUint8Array(args.update);
-
-//         // const encoder = new TextEncoder();
-//         // const base64EncodedUpdateAsUint8Array = encoder.encode(
-//         //   base64EncodedUpdateAsString,
-//         // );
-
-//         // args.update = base64EncodedUpdateAsUint8Array;
-
-//         const decodedUpdate = Y.decodeUpdate(args.update);
-
-//         for (const struct of decodedUpdate.structs) {
-//           if (struct instanceof Y.Item) {
-//             if (struct.content instanceof Y.ContentString) {
-//               console.log('----');
-//               console.log(struct.content.str);
-//               console.log(struct.content.getContent());
-//               console.log(struct.content.getRef());
-//             }
-
-//             // TODO: check for other Y.ContentXXXX...? Maybe it could be image binary or something else
-//             // ... is it enough to encrypt only this and not the whole "update"? So the server can read it if needed
-
-//             // console.log('----');
-//             // console.log(struct);
-//           }
-//         }
-
-//         // Y.write;
-
-//         //       const doc = new Y.Doc();
-//         // Y.applyUpdate(doc, args.update);
-//         // const result = doc.toJSON();
-
-//         // const decoder = decoding.createDecoder(args.update);
-//         // const result = decoding.readVarString(decoder);
-
-//         // console.log(fromUint8Array(args.update));
-//         // console.log(result);
-//       }
-//     } else {
-//       // console.log(777777);
-//       // console.log(message.name);
-//       // console.log(args);
-//     }
-
-//     // const msg = new message();
-//     // msg.get(args);
-
-//     // msg.
-
-//     console.log('-----');
-
-//     super.send(message, args);
-//   }
-
-//   // onMessage(event: MessageEvent) {
-//   //   // const message = new IncomingMessage(event.data);
-//   //   // const documentName = message.readVarString();
-//   //   // message.writeVarString(documentName);
-//   //   // this.emit('message', { event, message: new IncomingMessage(event.data) });
-//   //   // new MessageReceiver(message).apply(this, true);
-
-//   //   const message = new IncomingMessage(event.data);
-
-//   //   const type = message.readVarUint();
-
-//   //   if (type === MessageType.Sync) {
-//   //     console.warn('THOMAS');
-
-//   //     const base64EncodedUpdateAsUint8Array = event.data as Uint8Array;
-
-//   //     const decoder = new TextDecoder();
-//   //     const base64EncodedUpdateAsString = decoder.decode(
-//   //       base64EncodedUpdateAsUint8Array,
-//   //     );
-
-//   //     event.data = toUint8Array(base64EncodedUpdateAsString) as Data;
-//   //   }
-
-//   //   // this.emit('message', { event, message: new IncomingMessage(event.data) });
-//   //   // new MessageReceiver(message).apply(this, true);
-
-//   //   console.log('-----');
-//   //   console.log(99999);
-//   //   console.log(event);
-
-//   //   super.onMessage(event);
-//   // }
-// }
-
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, initialDoc) => {
+  createProvider: (wsUrl, storeId, initialDocState, encryptionSymmetricKey) => {
+    const isEncrypted = !!encryptionSymmetricKey;
+
     const doc = new Y.Doc({
       guid: storeId,
     });
 
-    if (initialDoc) {
-      Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
+    if (initialDocState) {
+      Y.applyUpdate(doc, initialDocState);
     }
 
-    //
-    // TODO: should implement features for authentication (listening on message with custom payload?)
-    // same for previous "onSynced"
-    //
+    let provider: SwitchableProvider;
 
-    const provider = new CustomProvider(wsUrl, storeId, doc);
+    if (isEncrypted) {
+      //
+      // TODO: should implement features for authentication (listening on message with custom payload?)
+      // same for previous "onSynced"
+      //
 
-    provider.on('connection-close', (event) => {
-      if (event) {
-        if (event.wasClean) {
+      const AdaptedEncryptedWebSocket = createAdaptedEncryptedWebsocketClass({
+        encryptionKey: encryptionSymmetricKey,
+        decryptionKey: encryptionSymmetricKey,
+      });
+
+      provider = new RelayProvider(wsUrl, storeId, doc, {
+        WebSocketPolyfill: AdaptedEncryptedWebSocket,
+        // For simplicity we always use websocket server even if there is local tabs,
+        // otherwise the question would be do we need to encrypt also for local tabs through BroadcastChannel or not
+        disableBc: true,
+      });
+
+      provider.on('connection-close', (event) => {
+        if (event) {
+          if (event.wasClean) {
+            // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
+            void provider.connect();
+          } else if (event.code === 1000) {
+            /**
+             * Handle the "Reset Connection" event from the server
+             * This is triggered when the server wants to reset the connection
+             * for clients in the room.
+             * A disconnect is made automatically but it takes time to be triggered,
+             * so we force the disconnection here.
+             */
+            provider.disconnect();
+          }
+        }
+      });
+
+      provider.on('status', (event) => {
+        set((state) => {
+          const nextConnected = event.status === 'connected';
+
+          /**
+           * status === 'connected' does not mean we are totally connected
+           * because authentication can still be in progress and failed
+           * So we only update isConnected when we loose the connection
+           */
+          const connected =
+            event.status !== 'connected'
+              ? {
+                  isConnected: false,
+                }
+              : undefined;
+
+          return {
+            ...connected,
+            isReady: state.isReady || event.status === 'disconnected',
+            hasLostConnection:
+              state.isConnected && !nextConnected
+                ? true
+                : state.hasLostConnection,
+          };
+        });
+      });
+
+      provider.on('sync', (state) => {
+        set({ isSynced: state, isReady: true });
+      });
+    } else {
+      provider = new HocuspocusProvider({
+        url: wsUrl,
+        name: storeId,
+        document: doc,
+        onDisconnect(data) {
+          type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
+
           // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
-          void provider.connect();
-        } else if (event.code === 1000) {
+          if ((data.event as ExtendedCloseEvent).wasClean) {
+            void provider.connect();
+          }
+        },
+        onAuthenticationFailed() {
+          set({ isReady: true, isConnected: false });
+        },
+        onAuthenticated() {
+          set({ isReady: true, isConnected: true });
+        },
+        onStatus: ({ status }) => {
+          set((state) => {
+            const nextConnected = status === WebSocketStatus.Connected;
+
+            /**
+             * status === WebSocketStatus.Connected does not mean we are totally connected
+             * because authentication can still be in progress and failed
+             * So we only update isConnected when we loose the connection
+             */
+            const connected =
+              status !== WebSocketStatus.Connected
+                ? {
+                    isConnected: false,
+                  }
+                : undefined;
+
+            return {
+              ...connected,
+              isReady: state.isReady || status === WebSocketStatus.Disconnected,
+              hasLostConnection:
+                state.isConnected && !nextConnected
+                  ? true
+                  : state.hasLostConnection,
+            };
+          });
+        },
+        onSynced: ({ state }) => {
+          set({ isSynced: state, isReady: true });
+        },
+        onClose(data) {
           /**
            * Handle the "Reset Connection" event from the server
            * This is triggered when the server wants to reset the connection
@@ -191,110 +169,12 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
            * A disconnect is made automatically but it takes time to be triggered,
            * so we force the disconnection here.
            */
-          provider.disconnect();
-        }
-      }
-    });
-
-    provider.on('status', (event) => {
-      set((state) => {
-        const nextConnected = event.status === 'connected';
-
-        /**
-         * status === 'connected' does not mean we are totally connected
-         * because authentication can still be in progress and failed
-         * So we only update isConnected when we loose the connection
-         */
-        const connected =
-          event.status !== 'connected'
-            ? {
-                isConnected: false,
-              }
-            : undefined;
-
-        return {
-          ...connected,
-          isReady: state.isReady || event.status === 'disconnected',
-          hasLostConnection:
-            state.isConnected && !nextConnected
-              ? true
-              : state.hasLostConnection,
-        };
+          if (data.event.code === 1000) {
+            provider.disconnect();
+          }
+        },
       });
-    });
-
-    provider.on('sync', (state) => {
-      set({ isSynced: state, isReady: true });
-    });
-
-    // const provider = new CustomProvider({
-    //   url: wsUrl,
-    //   name: storeId,
-    //   document: doc,
-    //   onDisconnect(data) {
-    //     // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
-    //     if ((data.event as ExtendedCloseEvent).wasClean) {
-    //       void provider.connect();
-    //     }
-    //   },
-    //   onMessage(data) {
-    //     console.log('-----');
-    //     console.log(44444);
-    //     console.log(data);
-    //   },
-    //   // onOutgoingMessage(data) {
-    //   //   console.log('-----');
-    //   //   console.log(555);
-    //   //   console.log(data);
-    //   // },
-    //   onAuthenticationFailed() {
-    //     set({ isReady: true, isConnected: false });
-    //   },
-    //   onAuthenticated() {
-    //     set({ isReady: true, isConnected: true });
-    //   },
-    //   onStatus: ({ status }) => {
-    //     set((state) => {
-    //       const nextConnected = status === WebSocketStatus.Connected;
-
-    //       /**
-    //        * status === WebSocketStatus.Connected does not mean we are totally connected
-    //        * because authentication can still be in progress and failed
-    //        * So we only update isConnected when we loose the connection
-    //        */
-    //       const connected =
-    //         status !== WebSocketStatus.Connected
-    //           ? {
-    //               isConnected: false,
-    //             }
-    //           : undefined;
-
-    //       return {
-    //         ...connected,
-    //         isReady: state.isReady || status === WebSocketStatus.Disconnected,
-    //         hasLostConnection:
-    //           state.isConnected && !nextConnected
-    //             ? true
-    //             : state.hasLostConnection,
-    //       };
-    //     });
-    //   },
-    //   onSynced: ({ state }) => {
-    //     set({ isSynced: state, isReady: true });
-    //   },
-    //   onClose(data) {
-    //     /**
-    //      * Handle the "Reset Connection" event from the server
-    //      * This is triggered when the server wants to reset the connection
-    //      * for clients in the room.
-    //      * A disconnect is made automatically but it takes time to be triggered,
-    //      * so we force the disconnection here.
-    //      */
-    //     if (data.event.code === 1000) {
-    //       provider.disconnect();
-    //     }
-    //   },
-    // });
+    }
 
     set({
       provider,

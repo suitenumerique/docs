@@ -221,6 +221,7 @@ export const DocTreeItemActions = ({
 
               createChildDoc({
                 parentId: doc.id,
+                isEncrypted: false,
               });
             }}
             $theme="brand"

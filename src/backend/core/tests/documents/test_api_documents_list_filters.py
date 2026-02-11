@@ -312,6 +312,69 @@ def test_api_documents_list_filter_is_favorite_invalid():
     assert len(results) == 5
 
 
+# Filters: is_encrypted
+
+
+def test_api_documents_list_filter_is_encrypted_true():
+    """
+    Authenticated users should be able to filter encrypted documents.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.DocumentFactory.create_batch(3, users=[user])
+    factories.DocumentFactory.create_batch(2, users=[user])
+
+    response = client.get("/api/v1.0/documents/?is_encrypted=true")
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 3
+
+    # Ensure all results are encrypted
+    for result in results:
+        assert result["is_encrypted"] is True
+
+
+def test_api_documents_list_filter_is_encrypted_false():
+    """
+    Authenticated users should be able to filter documents not encrypted.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.DocumentFactory.create_batch(3, users=[user])
+    factories.DocumentFactory.create_batch(2, users=[user])
+
+    response = client.get("/api/v1.0/documents/?is_encrypted=false")
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 2
+
+    # Ensure all results are not encrypted
+    for result in results:
+        assert result["is_encrypted"] is False
+
+
+def test_api_documents_list_filter_is_encrypted_invalid():
+    """Filtering with an invalid `is_encrypted` value should do nothing."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    factories.DocumentFactory.create_batch(3, users=[user])
+    factories.DocumentFactory.create_batch(2, users=[user])
+
+    response = client.get("/api/v1.0/documents/?is_encrypted=invalid")
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 5
+
+
 # Filters: is_masked
 
 

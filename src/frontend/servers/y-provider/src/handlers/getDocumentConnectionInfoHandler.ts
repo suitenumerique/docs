@@ -27,22 +27,27 @@ export const getDocumentConnectionInfoHandler = (
 
   logger('Getting document connection info for room:', room);
 
-  const roomInfo = hocuspocusServer.hocuspocus.documents.get(room);
+  res.status(500).json({ error: 'not implemented yet' });
 
-  if (!roomInfo) {
-    logger('Room not found:', room);
-    res.status(404).json({ error: 'Room not found' });
-    return;
-  }
-  const connections = roomInfo
-    .getConnections()
-    .filter((connection) => connection.readOnly === false);
+  hocuspocusServer;
+  sessionKey;
 
-  res.status(200).json({
-    count: connections.length,
-    exists: connections.some(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      (connection) => connection.context.sessionKey === sessionKey,
-    ),
-  });
+  // const roomInfo = hocuspocusServer.hocuspocus.documents.get(room);
+
+  // if (!roomInfo) {
+  //   logger('Room not found:', room);
+  //   res.status(404).json({ error: 'Room not found' });
+  //   return;
+  // }
+  // const connections = roomInfo
+  //   .getConnections()
+  //   .filter((connection) => connection.readOnly === false);
+
+  // res.status(200).json({
+  //   count: connections.length,
+  //   exists: connections.some(
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  //     (connection) => connection.context.sessionKey === sessionKey,
+  //   ),
+  // });
 };

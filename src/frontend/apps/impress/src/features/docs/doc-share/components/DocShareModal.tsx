@@ -11,6 +11,7 @@ import {
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
+import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
 import { Doc } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
@@ -49,16 +50,31 @@ const ShareModalStyle = createGlobalStyle`
 
 type Props = {
   doc: Doc;
+  documentEncryptionSettings?: {
+    documentSymmetricKey: CryptoKey;
+  } | null;
   isRootDoc?: boolean;
   onClose: () => void;
 };
 
-export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
+export const DocShareModal = ({
+  doc,
+  documentEncryptionSettings,
+  onClose,
+  isRootDoc = true,
+}: Props) => {
   const { t } = useTranslation();
   const selectedUsersRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   const { isDesktop } = useResponsiveStore();
+  const { mismatches: keyMismatches } = usePublicKeyRegistry(
+    doc.accesses_public_keys_per_user,
+  );
+  const keyMismatchUserIds = useMemo(
+    () => new Set(keyMismatches.map((m) => m.userId)),
+    [keyMismatches],
+  );
 
   /**
    * The modal content height is calculated based on the viewport height.
@@ -237,6 +253,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                 <Box $padding={{ horizontal: 'base' }} $margin={{ top: '12x' }}>
                   <DocShareAddMemberList
                     doc={doc}
+                    documentEncryptionSettings={documentEncryptionSettings ?? null}
                     selectedUsers={selectedUsers}
                     onRemoveUser={onRemoveUser}
                     afterInvite={() => {
@@ -301,7 +318,10 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                     <Box $padding={{ horizontal: 'base' }}>
                       <QuickSearchGroupAccessRequest doc={doc} />
                       <QuickSearchGroupInvitation doc={doc} />
-                      <QuickSearchGroupMember doc={doc} />
+                      <QuickSearchGroupMember
+                        doc={doc}
+                        keyMismatchUserIds={keyMismatchUserIds}
+                      />
                     </Box>
                   )}
 
@@ -310,6 +330,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                       searchUsersRawData={searchUsersQuery.data}
                       onSelect={onSelect}
                       userQuery={userQuery}
+                      isEncrypted={doc.is_encrypted}
                     />
                   )}
                 </QuickSearch>
@@ -330,12 +351,14 @@ interface QuickSearchInviteInputSectionProps {
   onSelect: (usr: User) => void;
   searchUsersRawData: User[] | undefined;
   userQuery: string;
+  isEncrypted: boolean;
 }
 
 const QuickSearchInviteInputSection = ({
   onSelect,
   searchUsersRawData,
   userQuery,
+  isEncrypted,
 }: QuickSearchInviteInputSectionProps) => {
   const { t } = useTranslation();
 
@@ -347,6 +370,7 @@ const QuickSearchInviteInputSection = ({
       full_name: '',
       email: userQuery,
       short_name: '',
+      encryption_public_key: null,
       language: '',
     };
 
@@ -377,7 +401,16 @@ const QuickSearchInviteInputSection = ({
       <QuickSearchGroup
         group={searchUserData}
         onSelect={onSelect}
-        renderElement={(user) => <DocShareModalInviteUserRow user={user} />}
+        renderElement={(user) => (
+          <DocShareModalInviteUserRow
+            user={user}
+            suffix={
+              isEncrypted && !user.encryption_public_key
+                ? t('NO PUBLIC KEY')
+                : undefined
+            }
+          />
+        )}
       />
     </Box>
   );

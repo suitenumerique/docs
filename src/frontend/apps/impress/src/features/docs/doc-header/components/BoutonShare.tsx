@@ -10,6 +10,7 @@ import { Doc } from '@/docs/doc-management';
 interface BoutonShareProps {
   displayNbAccess: boolean;
   doc: Doc;
+  hasKeyWarning?: boolean;
   isDisabled?: boolean;
   isHidden?: boolean;
   open: () => void;
@@ -18,6 +19,7 @@ interface BoutonShareProps {
 export const BoutonShare = ({
   displayNbAccess,
   doc,
+  hasKeyWarning,
   isDisabled,
   isHidden,
   open,
@@ -41,9 +43,21 @@ export const BoutonShare = ({
     return null;
   }
 
+  const warningIcon = hasKeyWarning ? (
+    <Icon
+      iconName="warning"
+      $color="var(--c--theme--colors--warning-600)"
+      $size="sm"
+      aria-label={t('Public key mismatch detected')}
+    />
+  ) : null;
+
   if (hasAccesses) {
     return (
       <Box
+        $direction="row"
+        $align="center"
+        $gap="4px"
         $css={css`
           .c__button--medium {
             height: var(--c--globals--spacings--lg);
@@ -52,6 +66,7 @@ export const BoutonShare = ({
           }
         `}
       >
+        {warningIcon}
         <Button
           aria-label={t('Share button')}
           variant="secondary"
@@ -74,14 +89,17 @@ export const BoutonShare = ({
   }
 
   return (
-    <Button
-      color="brand"
-      variant="tertiary"
-      onClick={open}
-      size="medium"
-      disabled={isDisabled}
-    >
-      {t('Share')}
-    </Button>
+    <Box $direction="row" $align="center" $gap="4px">
+      {warningIcon}
+      <Button
+        color="brand"
+        variant="tertiary"
+        onClick={open}
+        size="medium"
+        disabled={isDisabled}
+      >
+        {t('Share')}
+      </Button>
+    </Box>
   );
 };

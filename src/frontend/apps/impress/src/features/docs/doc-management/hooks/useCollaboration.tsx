@@ -1,25 +1,87 @@
 import { useEffect } from 'react';
 
 import { useCollaborationUrl } from '@/core/config';
+import { decryptContent } from '@/docs/doc-collaboration/encryption';
+import { Base64, useProviderStore } from '@/docs/doc-management';
+import { useAuth } from '@/features/auth';
 import { useBroadcastStore } from '@/stores';
 
-import { useProviderStore } from '../stores/useProviderStore';
-import { Base64 } from '../types';
-
-export const useCollaboration = (room?: string, initialContent?: Base64) => {
+export const useCollaboration = (
+  room: string | undefined,
+  initialContent: Base64 | undefined,
+  isEncrypted: boolean | undefined,
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null,
+) => {
   const collaborationUrl = useCollaborationUrl(room);
   const { setBroadcastProvider, cleanupBroadcast } = useBroadcastStore();
+  const { user } = useAuth();
   const { provider, createProvider, destroyProvider } = useProviderStore();
 
   useEffect(() => {
-    if (!room || !collaborationUrl || provider) {
+    if (
+      !room ||
+      !collaborationUrl ||
+      !user ||
+      isEncrypted === undefined ||
+      (isEncrypted === true && !documentEncryptionSettings) ||
+      provider
+    ) {
+      // TODO: make sure the logout would invalide this provider, also a change of local keys (after import...)
       return;
     }
 
-    console.log(222);
+    // since that's initially binary it has been wrapped as base64 first
+    let initialDocState = initialContent
+      ? Buffer.from(initialContent, 'base64')
+      : undefined;
 
-    const newProvider = createProvider(collaborationUrl, room, initialContent);
-    setBroadcastProvider(newProvider);
+    // if the document is marked as encrypted we need an extra decoding to retrieve the Yjs state
+    // note: we hack a bit due to decryption being async
+    let contentPromise: Promise<
+      [typeof initialDocState, CryptoKey | undefined]
+    >;
+
+    if (isEncrypted) {
+      contentPromise = (async () => {
+        if (!documentEncryptionSettings) {
+          throw new Error(
+            `"documentEncryptionSettings" must be filled since document is encrypted`,
+          );
+        }
+
+        if (initialDocState) {
+          return [
+            Buffer.from(
+              await decryptContent(
+                initialDocState,
+                documentEncryptionSettings.documentSymmetricKey,
+              ),
+            ),
+            documentEncryptionSettings.documentSymmetricKey,
+          ];
+        } else {
+          return [
+            initialDocState,
+            documentEncryptionSettings.documentSymmetricKey,
+          ];
+        }
+      })();
+    } else {
+      contentPromise = Promise.resolve([initialDocState, undefined]);
+    }
+
+    contentPromise.then(([initialDocState, symmetricKey]) => {
+      const newProvider = createProvider(
+        collaborationUrl,
+        room,
+        initialDocState,
+        symmetricKey,
+      );
+
+      setBroadcastProvider(newProvider);
+    });
   }, [
     provider,
     collaborationUrl,
@@ -27,6 +89,9 @@ export const useCollaboration = (room?: string, initialContent?: Base64) => {
     initialContent,
     createProvider,
     setBroadcastProvider,
+    user,
+    isEncrypted,
+    documentEncryptionSettings,
   ]);
 
   /**

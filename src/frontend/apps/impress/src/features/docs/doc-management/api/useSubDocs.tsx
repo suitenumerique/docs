@@ -18,6 +18,7 @@ export type SubDocsParams = {
   is_creator_me?: boolean;
   title?: string;
   is_favorite?: boolean;
+  is_encrypted?: boolean;
   parent_id: string;
 };
 

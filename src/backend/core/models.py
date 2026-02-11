@@ -186,6 +186,12 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         default=False,
         help_text=_("Whether the user can log into this admin site."),
     )
+    encryption_public_key = models.TextField(
+        _("encryption public key"),
+        null=True,
+        blank=True,
+        help_text=_("Public key for end-to-end encryption."),
+    )
     is_active = models.BooleanField(
         _("active"),
         default=True,
@@ -279,6 +285,12 @@ class BaseAccess(BaseModel):
     role = models.CharField(
         max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
     )
+    encrypted_document_symmetric_key_for_user = models.TextField(
+        _("encrypted document symmetric key"),
+        null=True,
+        blank=True,
+        help_text=_("Encrypted symmetric key for this document, specific to this user."),
+    )
 
     class Meta:
         abstract = True
@@ -361,6 +373,7 @@ class Document(MP_Node, BaseModel):
 
     title = models.CharField(_("title"), max_length=255, null=True, blank=True)
     excerpt = models.TextField(_("excerpt"), max_length=300, null=True, blank=True)
+    is_encrypted = models.BooleanField(default=False)
     link_reach = models.CharField(
         max_length=20,
         choices=LinkReachChoices.choices,
@@ -718,6 +731,29 @@ class Document(MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
+    @property
+    def accesses_public_keys_per_user(self):
+        """
+        Return public keys of users with access to this document.
+        Returns a dictionary mapping user IDs to their encryption public keys.
+        Available for all documents so that encryption can be initiated
+        on non-encrypted documents too.
+        """
+        # Get all users with direct access to this document
+        users_with_access = (
+            DocumentAccess.objects
+            .filter(document=self, user__isnull=False)
+            .select_related('user')
+            .values_list('user_id', 'user__encryption_public_key')
+        )
+
+        # Convert to dictionary: {user_id: public_key}
+        return {
+            str(user_id): public_key
+            for user_id, public_key in users_with_access
+            if public_key  # Only include users with public keys
+        }
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document.
@@ -797,12 +833,14 @@ class Document(MP_Node, BaseModel):
             "descendants": can_get,
             "destroy": can_destroy,
             "duplicate": can_get and user.is_authenticated,
+            "encrypt": is_owner_or_admin,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
             "mask": can_get and user.is_authenticated,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
+            "remove_encryption": is_owner_or_admin,
             "restore": is_owner,
             "retrieve": retrieve,
             "media_auth": can_get,

@@ -175,6 +175,7 @@ export class ApiPlugin implements WorkboxPlugin {
       deleted_at: null,
       depth: 1,
       is_favorite: false,
+      is_encrypted: false,
       nb_accesses_direct: 1,
       nb_accesses_ancestors: 1,
       numchild: 0,

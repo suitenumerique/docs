@@ -20,7 +20,9 @@ import {
   KEY_DOC,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
+  ModalEncryptDoc,
   ModalRemoveDoc,
+  ModalRemoveDocEncryption,
   getEmojiAndTitle,
   useCopyDocLink,
   useCreateFavoriteDoc,
@@ -29,6 +31,7 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
 import { DocShareModal } from '@/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
@@ -44,9 +47,21 @@ const ModalExport = Export?.ModalExport;
 
 interface DocToolBoxProps {
   doc: Doc;
+  encryptionSettings: {
+    userId: string;
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null;
+  documentEncryptionSettings?: {
+    documentSymmetricKey: CryptoKey;
+  } | null;
 }
 
-export const DocToolBox = ({ doc }: DocToolBoxProps) => {
+export const DocToolBox = ({
+  doc,
+  encryptionSettings,
+  documentEncryptionSettings,
+}: DocToolBoxProps) => {
   const { t } = useTranslation();
   const treeContext = useTreeContext<Doc>();
   const queryClient = useQueryClient();
@@ -57,8 +72,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
+  const [isModalEncryptOpen, setIsModalEncryptOpen] = useState(false);
+  const [isModalRemoveEncryptionOpen, setIsModalRemoveEncryptionOpen] =
+    useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
+
+  const { hasMismatches: hasKeyWarnings } = usePublicKeyRegistry(
+    doc.accesses_public_keys_per_user,
+  );
 
   const { isSmallMobile, isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
@@ -123,6 +145,26 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         selectHistoryModal.open();
       },
       show: !isMobile,
+      showSeparator: isTopRoot ? true : false,
+    },
+    {
+      label: t('Encrypt document'),
+      icon: 'https',
+      disabled: !doc.abilities.accesses_manage,
+      callback: () => {
+        setIsModalEncryptOpen(true);
+      },
+      show: !doc.is_encrypted && doc.abilities.update,
+      showSeparator: isTopRoot ? true : false,
+    },
+    {
+      label: t('Remove document encryption'),
+      icon: 'no_encryption',
+      disabled: !doc.abilities.accesses_manage,
+      callback: () => {
+        setIsModalRemoveEncryptionOpen(true);
+      },
+      show: doc.is_encrypted && doc.abilities.update,
       showSeparator: isTopRoot ? true : false,
     },
     {
@@ -196,11 +238,19 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         $margin={{ left: 'auto' }}
         $gap={spacingsTokens['2xs']}
       >
+        {doc.is_encrypted && (
+          <>
+            [chiffrement activé]
+            {/* TODO */}
+          </>
+        )}
+
         <BoutonShare
           doc={doc}
           open={modalShare.open}
           isHidden={isSmallMobile}
           displayNbAccess={doc.abilities.accesses_view}
+          hasKeyWarning={hasKeyWarnings}
         />
 
         {!isSmallMobile && ModalExport && (
@@ -217,6 +267,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             aria-label={t('Export the document')}
           />
         )}
+
         <DropdownMenu
           options={options}
           label={t('Open the document options')}
@@ -237,6 +288,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         <DocShareModal
           onClose={() => modalShare.close()}
           doc={doc}
+          documentEncryptionSettings={documentEncryptionSettings}
           isRootDoc={treeContext?.root?.id === doc.id}
         />
       )}
@@ -262,6 +314,31 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                 }, 100);
               });
             }
+          }}
+        />
+      )}
+      {isModalEncryptOpen && (
+        <ModalEncryptDoc
+          doc={doc}
+          encryptionSettings={encryptionSettings}
+          onClose={() => setIsModalEncryptOpen(false)}
+          onSuccess={() => {
+            //
+            // TODO: probably it should make an hard refresh to get the setup
+            // but it should before register content in database with accesses, and broadcast the information through websocket
+            //
+          }}
+        />
+      )}
+      {isModalRemoveEncryptionOpen && (
+        <ModalRemoveDocEncryption
+          doc={doc}
+          onClose={() => setIsModalRemoveEncryptionOpen(false)}
+          onSuccess={() => {
+            //
+            // TODO: probably it should make an hard refresh to get the setup
+            // but it should before register content in database with clean accesses, and broadcast the information through websocket
+            //
           }}
         />
       )}

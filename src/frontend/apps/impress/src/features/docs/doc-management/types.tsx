@@ -60,6 +60,7 @@ export interface Doc {
   depth: number;
   path: string;
   is_favorite: boolean;
+  is_encrypted: boolean;
   link_reach: LinkReach;
   link_role?: LinkRole;
   nb_accesses_direct: number;
@@ -71,6 +72,8 @@ export interface Doc {
   numchild: number;
   updated_at: string;
   user_role: Role;
+  encrypted_document_symmetric_key_for_user?: string;
+  accesses_public_keys_per_user?: Record<string, string>;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;

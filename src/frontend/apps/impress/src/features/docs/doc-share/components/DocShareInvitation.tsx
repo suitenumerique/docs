@@ -34,6 +34,7 @@ export const DocShareInvitationItem = ({
     full_name: invitation.email,
     email: invitation.email,
     short_name: invitation.email,
+    encryption_public_key: null,
     language: 'en-us',
   };
 
@@ -91,9 +92,11 @@ export const DocShareInvitationItem = ({
 
 type DocShareModalInviteUserRowProps = {
   user: User;
+  suffix?: string;
 };
 export const DocShareModalInviteUserRow = ({
   user,
+  suffix,
 }: DocShareModalInviteUserRowProps) => {
   const { t } = useTranslation();
   return (
@@ -104,6 +107,7 @@ export const DocShareModalInviteUserRow = ({
     >
       <SearchUserRow
         user={user}
+        suffix={suffix}
         right={
           <BoxButton
             className="right-hover"

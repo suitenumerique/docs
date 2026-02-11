@@ -12,6 +12,7 @@ import { KEY_CAN_EDIT } from './useDocCanEdit';
 
 export type UpdateDocParams = Pick<Doc, 'id'> &
   Partial<Pick<Doc, 'content' | 'title'>> & {
+    contentEncrypted?: boolean;
     websocket?: boolean;
   };
 

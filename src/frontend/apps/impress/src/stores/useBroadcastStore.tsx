@@ -1,19 +1,16 @@
-import { HocuspocusProvider } from '@hocuspocus/provider';
-import { WebsocketProvider } from 'y-websocket';
 import * as Y from 'yjs';
 import { create } from 'zustand';
+
+import { SwitchableProvider } from '@/features/docs/doc-management/stores/useProviderStore';
 
 interface BroadcastState {
   addTask: (taskLabel: string, action: () => void) => void;
   broadcast: (taskLabel: string) => void;
   cleanupBroadcast: () => void;
-  // getBroadcastProvider: () => HocuspocusProvider | undefined;
-  getBroadcastProvider: () => WebsocketProvider | undefined;
+  getBroadcastProvider: () => SwitchableProvider | undefined;
   handleProviderSync: () => void;
-  // provider?: HocuspocusProvider;
-  provider?: WebsocketProvider;
-  // setBroadcastProvider: (provider: HocuspocusProvider) => void;
-  setBroadcastProvider: (provider: WebsocketProvider) => void;
+  provider?: SwitchableProvider;
+  setBroadcastProvider: (provider: SwitchableProvider) => void;
   setTask: (
     taskLabel: string,
     task: Y.Array<string>,
@@ -67,8 +64,7 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
       return;
     }
 
-    // const task = provider.document.getArray<string>(taskLabel);
-    const task = provider.doc.getArray<string>(taskLabel);
+    const task = provider.document.getArray<string>(taskLabel);
     get().setTask(taskLabel, task, action);
   },
   setTask: (taskLabel: string, task: Y.Array<string>, action: () => void) => {

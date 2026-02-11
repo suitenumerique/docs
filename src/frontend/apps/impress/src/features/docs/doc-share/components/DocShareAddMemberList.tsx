@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { APIError } from '@/api';
 import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { encryptSymmetricKey } from '@/docs/doc-collaboration';
+import { toBase64 } from '@/docs/doc-editor';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 
@@ -25,6 +27,9 @@ type APIErrorUser = APIError<{
 
 type Props = {
   doc: Doc;
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null;
   selectedUsers: User[];
   onRemoveUser?: (user: User) => void;
   onSubmit?: (selectedUsers: User[], role: Role) => void;
@@ -32,6 +37,7 @@ type Props = {
 };
 export const DocShareAddMemberList = ({
   doc,
+  documentEncryptionSettings,
   selectedUsers,
   onRemoveUser,
   afterInvite,
@@ -79,7 +85,8 @@ export const DocShareAddMemberList = ({
 
   const onInvite = async () => {
     setIsLoading(true);
-    const promises = selectedUsers.map((user) => {
+
+    const promises = selectedUsers.map(async (user) => {
       const isInvitationMode = user.id === user.email;
 
       const payload = {
@@ -87,15 +94,47 @@ export const DocShareAddMemberList = ({
         docId: doc.id,
       };
 
-      return isInvitationMode
-        ? createInvitation({
-            ...payload,
-            email: user.email.toLowerCase(),
-          })
-        : createDocAccess({
-            ...payload,
-            memberId: user.id,
-          });
+      if (isInvitationMode) {
+        return createInvitation({
+          ...payload,
+          email: user.email.toLowerCase(),
+        });
+      }
+
+      // For encrypted docs, encrypt the symmetric key with the user's public key
+      let memberEncryptedSymmetricKey: string | null = null;
+
+      if (
+        doc.is_encrypted &&
+        documentEncryptionSettings &&
+        user.encryption_public_key
+      ) {
+        const publicKeyBuffer = Uint8Array.from(
+          atob(user.encryption_public_key),
+          (c) => c.charCodeAt(0),
+        ).buffer;
+
+        const importedPublicKey = await crypto.subtle.importKey(
+          'spki',
+          publicKeyBuffer,
+          { name: 'RSA-OAEP', hash: 'SHA-256' },
+          true,
+          ['encrypt'],
+        );
+
+        const encryptedKey = await encryptSymmetricKey(
+          documentEncryptionSettings.documentSymmetricKey,
+          importedPublicKey,
+        );
+
+        memberEncryptedSymmetricKey = toBase64(new Uint8Array(encryptedKey));
+      }
+
+      return createDocAccess({
+        ...payload,
+        memberId: user.id,
+        memberEncryptedSymmetricKey,
+      });
     });
 
     const settledPromises = await Promise.allSettled(promises);

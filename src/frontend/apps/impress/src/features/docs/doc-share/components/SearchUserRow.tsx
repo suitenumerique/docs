@@ -11,6 +11,7 @@ type Props = {
   alwaysShowRight?: boolean;
   right?: QuickSearchItemContentProps['right'];
   isInvitation?: boolean;
+  suffix?: string;
 };
 
 export const SearchUserRow = ({
@@ -18,6 +19,7 @@ export const SearchUserRow = ({
   right,
   alwaysShowRight = false,
   isInvitation = false,
+  suffix,
 }: Props) => {
   const hasFullName = !!user.full_name;
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
@@ -38,9 +40,16 @@ export const SearchUserRow = ({
             background={isInvitation ? colorsTokens['gray-400'] : undefined}
           />
           <Box $direction="column">
-            <Text $size="sm" $weight="500">
-              {hasFullName ? user.full_name : user.email}
-            </Text>
+            <Box $direction="row" $align="center" $gap={spacingsTokens['3xs']}>
+              <Text $size="sm" $weight="500">
+                {hasFullName ? user.full_name : user.email}
+              </Text>
+              {suffix && (
+                <Text $size="xs" $weight="600" $color={colorsTokens['warning-600']}>
+                  {suffix}
+                </Text>
+              )}
+            </Box>
             {hasFullName && (
               <Text $size="xs" $margin={{ top: '-2px' }} $variation="secondary">
                 {user.email}

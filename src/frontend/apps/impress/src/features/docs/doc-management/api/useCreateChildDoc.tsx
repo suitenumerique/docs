@@ -8,16 +8,19 @@ import { KEY_LIST_DOC } from './useDocs';
 
 export type CreateChildDocParam = Pick<Doc, 'title'> & {
   parentId: string;
+  isEncrypted: boolean;
 };
 
 export const createChildDoc = async ({
   title,
   parentId,
+  isEncrypted = false,
 }: CreateChildDocParam): Promise<Doc> => {
   const response = await fetchAPI(`documents/${parentId}/children/`, {
     method: 'POST',
     body: JSON.stringify({
       title,
+      is_encrypted: isEncrypted,
     }),
   });
 
