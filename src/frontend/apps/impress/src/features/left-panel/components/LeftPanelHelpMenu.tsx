@@ -28,7 +28,7 @@ export const LeftPanelHelpMenu = () => {
   const options = useHelpMenuOptions({ onOpenOnboarding: openModal });
   const footerLink = {
     label: t('Learn more docs features'),
-    href: 'https://github.com/suitenumerique/docs/tree/main/docs',
+    href: '',
   };
 
   return (
