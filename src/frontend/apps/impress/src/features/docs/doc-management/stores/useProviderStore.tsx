@@ -6,7 +6,7 @@ import {
   OutgoingMessageArguments,
   WebSocketStatus,
 } from '@hocuspocus/provider';
-import { WebsocketProvider } from 'y-websocket';
+import { messageSync, WebsocketProvider } from 'y-websocket';
 // import { MessageSender } from '@hocuspocus/provider/src/MessageSender';
 // import {
 //   MessageSender
@@ -177,6 +177,86 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     //
 
     const provider = new CustomProvider(wsUrl, storeId, doc);
+
+    // To avoid hardcoding the whole provider for overrides, we just patch the needed methods (they cannot be extended)
+    const originalUpdateHandler = provider._updateHandler.bind(provider);
+
+    console.warn('CUSTOM PROVIDER SET UP');
+    console.warn('CUSTOM PROVIDER SET UP');
+    console.warn('CUSTOM PROVIDER SET UP');
+
+    provider._updateHandler = (update, origin) => {
+      if (origin !== provider) {
+        console.warn('---');
+        console.warn('UP');
+        console.warn(update);
+
+        const base64EncodedUpdateAsString = fromUint8Array(update);
+
+        const encoder = new TextEncoder();
+        const base64EncodedUpdateAsUint8Array = encoder.encode(
+          base64EncodedUpdateAsString,
+        );
+
+        const encryptedUpdate = base64EncodedUpdateAsUint8Array;
+
+        originalUpdateHandler(encryptedUpdate, origin);
+      }
+    };
+
+    // TODO:
+    // TODO:
+    // TODO: override onmessage for websocket... more complicated since on setupWS
+    // TODO: maybe it should be hardcoded since we will have to add logic about userId & so on for authentication? (maybe we can hack this too by extending?)
+    // TODO:
+
+    const originalSyncMessageHandler =
+      provider.messageHandlers[messageSync].bind(provider);
+
+    provider.messageHandlers[messageSync] = (
+      encoder,
+      decoder,
+      provider,
+      emitSynced,
+      _messageType,
+    ) => {
+      const base64EncodedUpdateAsUint8Array =
+        decoding.readVarUint8Array(decoder);
+
+      const newDecoder = decoding.createDecoder(
+        base64EncodedUpdateAsUint8Array,
+      );
+
+      // console.warn('---');
+      // console.warn('DOWN');
+      // console.warn(base64EncodedUpdateAsUint8Array);
+
+      // const tmpDecoder = new TextDecoder();
+      // const base64EncodedUpdateAsString = tmpDecoder.decode(
+      //   base64EncodedUpdateAsUint8Array,
+      // );
+
+      // const updateAsUint8Array = toUint8Array(base64EncodedUpdateAsString);
+
+      // console.warn('---');
+      // console.warn('DOWN DECODED');
+      // console.warn(updateAsUint8Array);
+
+      // // New decoder for the original function to work properly
+      // const newDecoder = decoding.createDecoder(updateAsUint8Array);
+
+      // TODO:
+      // TODO: do I need to modify the encoder?
+      // TODO:
+
+      originalSyncMessageHandler(
+        encoder,
+        newDecoder,
+        provider,
+        emitSynced,
+        _messageType,
+      );
+    };
 
     provider.on('connection-close', (event) => {
       if (event) {
