@@ -6,12 +6,18 @@ from django.urls import include, path, re_path
 from lasuite.oidc_login.urls import urlpatterns as oidc_urls
 from rest_framework.routers import DefaultRouter
 
-from core.api import viewsets
+from core.api import import_viewsets, viewsets
+from core.api import imports as import_views
 
 # - Main endpoints
 router = DefaultRouter()
 router.register("documents", viewsets.DocumentViewSet, basename="documents")
 router.register("users", viewsets.UserViewSet, basename="users")
+router.register(
+    "imports/outline/jobs",
+    import_viewsets.OutlineImportJobViewSet,
+    basename="outline-import-job",
+)
 
 # - Routes nested under a document
 document_related_router = DefaultRouter()
@@ -58,6 +64,11 @@ urlpatterns = [
                 re_path(
                     r"^documents/(?P<resource_id>[0-9a-z-]*)/threads/(?P<thread_id>[0-9a-z-]*)/",
                     include(thread_related_router.urls),
+                ),
+                path(
+                    "imports/outline/upload/",
+                    import_views.OutlineImportUploadView.as_view(),
+                    name="outline-import-upload",
                 ),
             ]
         ),
