@@ -6,19 +6,22 @@ import {
   OutgoingMessageArguments,
   WebSocketStatus,
 } from '@hocuspocus/provider';
-import { messageSync, WebsocketProvider } from 'y-websocket';
+// import { messageSync, WebsocketProvider } from 'y-websocket';
+import { messageSync, WebsocketProvider } from './y-websocket.cjs';
 // import { MessageSender } from '@hocuspocus/provider/src/MessageSender';
 // import {
 //   MessageSender
 // } from '@hocuspocus/provider/default';
 import { fromUint8Array, toUint8Array } from 'js-base64';
 import * as decoding from 'lib0/decoding';
+// import { WebSocket } from 'ws';
 import type { Data, MessageEvent } from 'ws';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
 import { Base64 } from '@/docs/doc-management';
 import { IncomingMessage } from '@/docs/doc-management/stores/IncomingMessage';
+import { ClientRequestArgs } from 'node:http';
 
 export interface UseCollaborationStore {
   createProvider: (
@@ -46,6 +49,137 @@ const defaultValues = {
 };
 
 type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
+
+function encrypt(data: Uint8Array): Uint8Array {
+  console.log(888888);
+  console.warn('ENCRYPTING');
+  console.warn('ENCRYPTING');
+
+  // return data;
+  // return new TextEncoder().encode(data);
+
+  const key = 42;
+  const encrypted = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) encrypted[i] = data[i] ^ key;
+  return encrypted;
+}
+
+function decrypt(data: Uint8Array): Uint8Array {
+  console.log(9999);
+  console.warn('DECRYPTING');
+
+  // return data;
+  // return new TextDecoder().decode(data);
+
+  const key = 42;
+  const decrypted = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) decrypted[i] = data[i] ^ key;
+  return decrypted;
+}
+
+class EncryptedWebSocket extends WebSocket {
+  constructor(address: string | URL, protocols?: string | string[]) {
+    super(address, protocols);
+
+    const originalAddEventListener = this.addEventListener.bind(this);
+
+    this.addEventListener = function <K extends keyof WebSocketEventMap>(
+      type: K,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions,
+    ): void {
+      if (type === 'message') {
+        const wrappedListener: typeof listener = (event) => {
+          const messageEvent = event as any;
+
+          console.warn('-------');
+          console.log(messageEvent.data instanceof Uint8Array); // true/false
+          console.log(messageEvent.data instanceof ArrayBuffer); // true/false
+          console.log(messageEvent.data instanceof Blob); // true/false
+          console.warn('-------');
+          if (!(messageEvent.data instanceof ArrayBuffer)) {
+            throw new Error(
+              `the data over the wire should always be ArrayBuffer since defined on the websocket property "binaryType"`,
+            );
+          }
+
+          const manageableData = new Uint8Array(messageEvent.data);
+          const decryptedData = decrypt(manageableData);
+
+          console.error('--------');
+          console.error('WRAPPER WORKING');
+
+          if (typeof listener === 'function') {
+            listener.call(this, { ...event, data: decryptedData });
+          } else {
+            listener.handleEvent.call(this, {
+              ...event,
+              data: decryptedData,
+            });
+          }
+        };
+
+        originalAddEventListener('message', wrappedListener, options);
+      } else {
+        originalAddEventListener(type, listener, options);
+      }
+    };
+
+    // In case it's added directly with `onmessage` and since we cannot override the setter of `onmessage`
+    // tweak a bit to intercept when setting it
+    // const base = Object.getPrototypeOf(this) as WebSocket;
+    // const baseDesc = Object.getOwnPropertyDescriptor(base, 'onmessage')!;
+
+    let explicitlySetListener:
+      | ((this: WebSocket, handlerEvent: MessageEvent) => any)
+      | null;
+    null;
+
+    Object.defineProperty(this, 'onmessage', {
+      configurable: true,
+      enumerable: true,
+      get() {
+        console.log('GETTING ONMESSAGE');
+
+        return explicitlySetListener;
+      },
+      set(handler: ((handlerEvent: MessageEvent) => any) | null) {
+        explicitlySetListener = null;
+
+        throw new Error(
+          `"onmessage" should not be set by "y-websocket", instead it should be patched to use "addEventListener" since we want to extend it to decrypt messages but "defineProperty" is not working on the instance, probably it should be done on the prototype but it would mess with other WebSocket usage`,
+        );
+
+        // if (!handler) {
+        //   explicitlySetListener = null;
+        //   return;
+        // }
+
+        // explicitlySetListener = function (
+        //   this: WebSocket,
+        //   event: MessageEvent,
+        // ) {
+        //   if (!(event.data instanceof ArrayBuffer)) {
+        //     throw new Error(
+        //       `the data over the wire should always be ArrayBuffer since defined on the websocket property "binaryType"`,
+        //     );
+        //   }
+
+        //   const manageableData = new Uint8Array(event.data);
+
+        //   return handler.call(this, { ...event, data: decrypt(manageableData) });
+        // };
+      },
+    });
+  }
+
+  send(message: Uint8Array) {
+    console.log(5555);
+    console.warn('SEND');
+
+    return super.send(encrypt(message));
+  }
+}
 
 class CustomProvider extends WebsocketProvider {}
 
@@ -176,33 +310,54 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     // same for previous "onSynced"
     //
 
-    const provider = new CustomProvider(wsUrl, storeId, doc);
+    const provider = new CustomProvider(wsUrl, storeId, doc, {
+      WebSocketPolyfill: EncryptedWebSocket,
+      // For simplicity we always use websocket server even if there is local tabs,
+      // otherwise the question would be do we need to encrypt also for local tabs through BroadcastChannel or not
+      disableBc: true,
+    });
 
-    // To avoid hardcoding the whole provider for overrides, we just patch the needed methods (they cannot be extended)
-    const originalUpdateHandler = provider._updateHandler.bind(provider);
+    // // To avoid hardcoding the whole provider for overrides, we just patch the needed methods (they cannot be extended)
+    // const originalUpdateHandler = provider._updateHandler.bind(provider);
 
     console.warn('CUSTOM PROVIDER SET UP');
     console.warn('CUSTOM PROVIDER SET UP');
     console.warn('CUSTOM PROVIDER SET UP');
 
-    provider._updateHandler = (update, origin) => {
-      if (origin !== provider) {
-        console.warn('---');
-        console.warn('UP');
-        console.warn(update);
+    // TODO:
+    // TODO:
+    // TODO:
+    // TODO: provider._updateHandler is not used... why?
+    // TODO:
+    // TODO: ===> il faut override .send() :/ donc hardcoder ou pas ?
+    // TODO:
 
-        const base64EncodedUpdateAsString = fromUint8Array(update);
+    // xxx;
 
-        const encoder = new TextEncoder();
-        const base64EncodedUpdateAsUint8Array = encoder.encode(
-          base64EncodedUpdateAsString,
-        );
+    // WebSocketPolyfill; // ===> can be augmented directly, by default "WebSocket"
+    // but it should not encrypt things about authentication that needs to be checked by the server?
+    // but this should be done on headers when establishing the connection, no? so no care about content being encrypted
 
-        const encryptedUpdate = base64EncodedUpdateAsUint8Array;
+    // provider._updateHandler = (update, origin) => {
+    //   console.warn('LOOOOL');
 
-        originalUpdateHandler(encryptedUpdate, origin);
-      }
-    };
+    //   if (origin !== provider) {
+    //     console.warn('---');
+    //     console.warn('UP');
+    //     console.warn(update);
+
+    //     const base64EncodedUpdateAsString = fromUint8Array(update);
+
+    //     const encoder = new TextEncoder();
+    //     const base64EncodedUpdateAsUint8Array = encoder.encode(
+    //       base64EncodedUpdateAsString,
+    //     );
+
+    //     const encryptedUpdate = base64EncodedUpdateAsUint8Array;
+
+    //     originalUpdateHandler(encryptedUpdate, origin);
+    //   }
+    // };
 
     // TODO:
     // TODO:
@@ -210,53 +365,53 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     // TODO: maybe it should be hardcoded since we will have to add logic about userId & so on for authentication? (maybe we can hack this too by extending?)
     // TODO:
 
-    const originalSyncMessageHandler =
-      provider.messageHandlers[messageSync].bind(provider);
+    // const originalSyncMessageHandler =
+    //   provider.messageHandlers[messageSync].bind(provider);
 
-    provider.messageHandlers[messageSync] = (
-      encoder,
-      decoder,
-      provider,
-      emitSynced,
-      _messageType,
-    ) => {
-      const base64EncodedUpdateAsUint8Array =
-        decoding.readVarUint8Array(decoder);
+    // provider.messageHandlers[messageSync] = (
+    //   encoder,
+    //   decoder,
+    //   provider,
+    //   emitSynced,
+    //   _messageType,
+    // ) => {
+    //   const base64EncodedUpdateAsUint8Array =
+    //     decoding.readVarUint8Array(decoder);
 
-      const newDecoder = decoding.createDecoder(
-        base64EncodedUpdateAsUint8Array,
-      );
+    //   const newDecoder = decoding.createDecoder(
+    //     base64EncodedUpdateAsUint8Array,
+    //   );
 
-      // console.warn('---');
-      // console.warn('DOWN');
-      // console.warn(base64EncodedUpdateAsUint8Array);
+    //   // console.warn('---');
+    //   // console.warn('DOWN');
+    //   // console.warn(base64EncodedUpdateAsUint8Array);
 
-      // const tmpDecoder = new TextDecoder();
-      // const base64EncodedUpdateAsString = tmpDecoder.decode(
-      //   base64EncodedUpdateAsUint8Array,
-      // );
+    //   // const tmpDecoder = new TextDecoder();
+    //   // const base64EncodedUpdateAsString = tmpDecoder.decode(
+    //   //   base64EncodedUpdateAsUint8Array,
+    //   // );
 
-      // const updateAsUint8Array = toUint8Array(base64EncodedUpdateAsString);
+    //   // const updateAsUint8Array = toUint8Array(base64EncodedUpdateAsString);
 
-      // console.warn('---');
-      // console.warn('DOWN DECODED');
-      // console.warn(updateAsUint8Array);
+    //   // console.warn('---');
+    //   // console.warn('DOWN DECODED');
+    //   // console.warn(updateAsUint8Array);
 
-      // // New decoder for the original function to work properly
-      // const newDecoder = decoding.createDecoder(updateAsUint8Array);
+    //   // // New decoder for the original function to work properly
+    //   // const newDecoder = decoding.createDecoder(updateAsUint8Array);
 
-      // TODO:
-      // TODO: do I need to modify the encoder?
-      // TODO:
+    //   // TODO:
+    //   // TODO: do I need to modify the encoder?
+    //   // TODO:
 
-      originalSyncMessageHandler(
-        encoder,
-        newDecoder,
-        provider,
-        emitSynced,
-        _messageType,
-      );
-    };
+    //   originalSyncMessageHandler(
+    //     encoder,
+    //     newDecoder,
+    //     provider,
+    //     emitSynced,
+    //     _messageType,
+    //   );
+    // };
 
     provider.on('connection-close', (event) => {
       if (event) {

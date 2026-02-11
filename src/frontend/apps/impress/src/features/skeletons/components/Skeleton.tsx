@@ -24,17 +24,19 @@ export const Skeleton = ({ children }: PropsWithChildren) => {
   const timeoutVisibleRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (isSkeletonVisible) {
-      setIsVisible(true);
-      setIsFadingOut(false);
-    } else {
-      setIsFadingOut(true);
-      if (!timeoutVisibleRef.current) {
-        timeoutVisibleRef.current = setTimeout(() => {
-          setIsVisible(false);
-        }, FADE_DURATION_MS * 2);
-      }
-    }
+    setIsVisible(false);
+
+    // if (isSkeletonVisible) {
+    //   setIsVisible(true);
+    //   setIsFadingOut(false);
+    // } else {
+    //   setIsFadingOut(true);
+    //   if (!timeoutVisibleRef.current) {
+    //     timeoutVisibleRef.current = setTimeout(() => {
+    //       setIsVisible(false);
+    //     }, FADE_DURATION_MS * 2);
+    //   }
+    // }
 
     return () => {
       if (timeoutVisibleRef.current) {
