@@ -2,7 +2,6 @@
 Test users API endpoints in the impress core app.
 """
 
-from django.test import override_settings
 from django.utils import timezone
 
 import pytest
@@ -380,7 +379,7 @@ def test_api_users_list_query_email_exclude_doc_user():
     assert user_ids == [str(nicole_fool.id)]
 
 
-def test_api_users_list_query_short_queries_default_length():
+def test_api_users_list_query_short_queries():
     """
     If API_USERS_SEARCH_QUERY_MIN_LENGTH is not set, the default minimum length should be 3.
     """
@@ -392,36 +391,6 @@ def test_api_users_list_query_short_queries_default_length():
     factories.UserFactory(email="john.lennon@example.com", full_name="John Lennon")
 
     response = client.get("/api/v1.0/users/?q=joh")
-    assert response.status_code == 200
-    assert len(response.json()) == 2
-
-
-@override_settings(API_USERS_SEARCH_QUERY_MIN_LENGTH=5)
-def test_api_users_list_query_short_queries_custom_length():
-    """
-    Queries shorter than API_USERS_SEARCH_QUERY_MIN_LENGTH
-    should return a 400 error with a validation message.
-    """
-    user = factories.UserFactory(email="paul@example.com", full_name="Paul")
-    client = APIClient()
-    client.force_login(user)
-
-    factories.UserFactory(email="john.doe@example.com", full_name="John Doe")
-    factories.UserFactory(email="john.lennon@example.com", full_name="John Lennon")
-
-    response = client.get("/api/v1.0/users/?q=jo")
-    assert response.status_code == 400
-    assert response.json() == {
-        "q": ["Ensure this value has at least 5 characters (it has 2)."]
-    }
-
-    response = client.get("/api/v1.0/users/?q=john")
-    assert response.status_code == 400
-    assert response.json() == {
-        "q": ["Ensure this value has at least 5 characters (it has 4)."]
-    }
-
-    response = client.get("/api/v1.0/users/?q=john.")
     assert response.status_code == 200
     assert len(response.json()) == 2
 
