@@ -58,7 +58,11 @@ export const Heading = ({
         });
       }}
       $radius="var(--c--globals--spacings--st)"
-      $background={isActive ? `${colorsTokens['gray-100']}` : 'none'}
+      $background={
+        isActive
+          ? 'var(--c--contextuals--background--semantic--neutral--secondary)'
+          : 'none'
+      }
       $css={css`
         text-align: left;
         &:focus-visible {
