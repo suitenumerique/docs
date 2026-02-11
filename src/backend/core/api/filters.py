@@ -135,4 +135,4 @@ class UserSearchFilter(django_filters.FilterSet):
     Custom filter for searching users.
     """
 
-    q = django_filters.CharFilter(min_length=5, max_length=254)
+    q = django_filters.CharFilter(min_length=3, max_length=254)
