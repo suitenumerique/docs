@@ -15,7 +15,6 @@ export type DocsParams = {
   page: number;
   ordering?: DocsOrdering;
   is_creator_me?: boolean;
-  title?: string;
   is_favorite?: boolean;
 };
 
@@ -30,9 +29,6 @@ export const constructParams = (params: DocsParams): URLSearchParams => {
   }
   if (params.is_creator_me !== undefined) {
     searchParams.set('is_creator_me', params.is_creator_me.toString());
-  }
-  if (params.title && params.title.length > 0) {
-    searchParams.set('title', params.title);
   }
   if (params.is_favorite !== undefined) {
     searchParams.set('is_favorite', params.is_favorite.toString());

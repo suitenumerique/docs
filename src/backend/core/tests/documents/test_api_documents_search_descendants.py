@@ -1,5 +1,6 @@
 """
-Tests for Documents API endpoint in impress's core app: descendants
+Tests for search API endpoint in impress's core app when indexer is not
+available and a path param is given.
 """
 
 import random
@@ -10,26 +11,61 @@ import pytest
 from rest_framework.test import APIClient
 
 from core import factories
+from core.api.filters import remove_accents
 
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def disable_indexer(indexer_settings):
+    """Disable search indexer for all tests in this file."""
+    indexer_settings.SEARCH_INDEXER_CLASS = None
+
+
 def test_api_documents_descendants_list_anonymous_public_standalone():
     """Anonymous users should be allowed to retrieve the descendants of a public document."""
-    document = factories.DocumentFactory(link_reach="public")
-    child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
-    grand_child = factories.DocumentFactory(parent=child1)
+    document = factories.DocumentFactory(link_reach="public", title="doc parent")
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, title="doc child"
+    )
+    grand_child = factories.DocumentFactory(parent=child1, title="doc grand child")
 
     factories.UserDocumentAccessFactory(document=child1)
 
-    response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/descendants/")
+    response = APIClient().get(
+        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+    )
 
     assert response.status_code == 200
     assert response.json() == {
-        "count": 3,
+        "count": 4,
         "next": None,
         "previous": None,
         "results": [
+            {
+                # the search should include the parent document itself
+                "abilities": document.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": None,
+                "ancestors_link_role": None,
+                "computed_link_reach": "public",
+                "computed_link_role": document.computed_link_role,
+                "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(document.creator.id),
+                "deleted_at": None,
+                "depth": 1,
+                "excerpt": document.excerpt,
+                "id": str(document.id),
+                "is_favorite": False,
+                "link_reach": document.link_reach,
+                "link_role": document.link_role,
+                "numchild": 2,
+                "nb_accesses_ancestors": 0,
+                "nb_accesses_direct": 0,
+                "path": document.path,
+                "title": document.title,
+                "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": None,
+            },
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
                 "ancestors_link_reach": "public",
@@ -110,26 +146,60 @@ def test_api_documents_descendants_list_anonymous_public_parent():
     Anonymous users should be allowed to retrieve the descendants of a document who
     has a public ancestor.
     """
-    grand_parent = factories.DocumentFactory(link_reach="public")
+    grand_parent = factories.DocumentFactory(
+        link_reach="public", title="grand parent doc"
+    )
     parent = factories.DocumentFactory(
-        parent=grand_parent, link_reach=random.choice(["authenticated", "restricted"])
+        parent=grand_parent,
+        link_reach=random.choice(["authenticated", "restricted"]),
+        title="parent doc",
     )
     document = factories.DocumentFactory(
-        link_reach=random.choice(["authenticated", "restricted"]), parent=parent
+        link_reach=random.choice(["authenticated", "restricted"]),
+        parent=parent,
+        title="document",
     )
-    child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
-    grand_child = factories.DocumentFactory(parent=child1)
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, title="child doc"
+    )
+    grand_child = factories.DocumentFactory(parent=child1, title="grand child doc")
 
     factories.UserDocumentAccessFactory(document=child1)
 
-    response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/descendants/")
+    response = APIClient().get(
+        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+    )
 
     assert response.status_code == 200
     assert response.json() == {
-        "count": 3,
+        "count": 4,
         "next": None,
         "previous": None,
         "results": [
+            {
+                # the search should include the parent document itself
+                "abilities": document.get_abilities(AnonymousUser()),
+                "ancestors_link_reach": "public",
+                "ancestors_link_role": grand_parent.link_role,
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
+                "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(document.creator.id),
+                "deleted_at": None,
+                "depth": 3,
+                "excerpt": document.excerpt,
+                "id": str(document.id),
+                "is_favorite": False,
+                "link_reach": document.link_reach,
+                "link_role": document.link_role,
+                "numchild": 2,
+                "nb_accesses_ancestors": 0,
+                "nb_accesses_direct": 0,
+                "path": document.path,
+                "title": document.title,
+                "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": None,
+            },
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
                 "ancestors_link_reach": "public",
@@ -208,11 +278,13 @@ def test_api_documents_descendants_list_anonymous_restricted_or_authenticated(re
     """
     Anonymous users should not be able to retrieve descendants of a document that is not public.
     """
-    document = factories.DocumentFactory(link_reach=reach)
-    child = factories.DocumentFactory(parent=document)
-    _grand_child = factories.DocumentFactory(parent=child)
+    document = factories.DocumentFactory(title="parent", link_reach=reach)
+    child = factories.DocumentFactory(title="child", parent=document)
+    _grand_child = factories.DocumentFactory(title="grand child", parent=child)
 
-    response = APIClient().get(f"/api/v1.0/documents/{document.id!s}/descendants/")
+    response = APIClient().get(
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+    )
 
     assert response.status_code == 401
     assert response.json() == {
@@ -232,17 +304,18 @@ def test_api_documents_descendants_list_authenticated_unrelated_public_or_authen
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach=reach)
+    document = factories.DocumentFactory(link_reach=reach, title="parent")
     child1, child2 = factories.DocumentFactory.create_batch(
-        2, parent=document, link_reach="restricted"
+        2, parent=document, link_reach="restricted", title="child"
     )
-    grand_child = factories.DocumentFactory(parent=child1)
+    grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     factories.UserDocumentAccessFactory(document=child1)
 
     response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/descendants/",
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
     )
+
     assert response.status_code == 200
     assert response.json() == {
         "count": 3,
@@ -335,17 +408,23 @@ def test_api_documents_descendants_list_authenticated_public_or_authenticated_pa
     client = APIClient()
     client.force_login(user)
 
-    grand_parent = factories.DocumentFactory(link_reach=reach)
-    parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
-    document = factories.DocumentFactory(link_reach="restricted", parent=parent)
-    child1, child2 = factories.DocumentFactory.create_batch(
-        2, parent=document, link_reach="restricted"
+    grand_parent = factories.DocumentFactory(link_reach=reach, title="grand parent")
+    parent = factories.DocumentFactory(
+        parent=grand_parent, link_reach="restricted", title="parent"
     )
-    grand_child = factories.DocumentFactory(parent=child1)
+    document = factories.DocumentFactory(
+        link_reach="restricted", parent=parent, title="document"
+    )
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, link_reach="restricted", title="child"
+    )
+    grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     factories.UserDocumentAccessFactory(document=child1)
 
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/descendants/")
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+    )
 
     assert response.status_code == 200
     assert response.json() == {
@@ -435,15 +514,18 @@ def test_api_documents_descendants_list_authenticated_unrelated_restricted():
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach="restricted")
-    child1, _child2 = factories.DocumentFactory.create_batch(2, parent=document)
-    _grand_child = factories.DocumentFactory(parent=child1)
+    document = factories.DocumentFactory(link_reach="restricted", title="parent")
+    child1, _child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, title="child"
+    )
+    _grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     factories.UserDocumentAccessFactory(document=child1)
 
     response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/descendants/",
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
     )
+
     assert response.status_code == 403
     assert response.json() == {
         "detail": "You do not have permission to perform this action."
@@ -460,17 +542,19 @@ def test_api_documents_descendants_list_authenticated_related_direct():
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory()
+    document = factories.DocumentFactory(title="parent")
     access = factories.UserDocumentAccessFactory(document=document, user=user)
     factories.UserDocumentAccessFactory(document=document)
 
-    child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, title="child"
+    )
     factories.UserDocumentAccessFactory(document=child1)
 
-    grand_child = factories.DocumentFactory(parent=child1)
+    grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/descendants/",
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -561,21 +645,27 @@ def test_api_documents_descendants_list_authenticated_related_parent():
     client = APIClient()
     client.force_login(user)
 
-    grand_parent = factories.DocumentFactory(link_reach="restricted")
+    grand_parent = factories.DocumentFactory(link_reach="restricted", title="parent")
     grand_parent_access = factories.UserDocumentAccessFactory(
         document=grand_parent, user=user
     )
 
-    parent = factories.DocumentFactory(parent=grand_parent, link_reach="restricted")
-    document = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    parent = factories.DocumentFactory(
+        parent=grand_parent, link_reach="restricted", title="parent"
+    )
+    document = factories.DocumentFactory(
+        parent=parent, link_reach="restricted", title="document"
+    )
 
-    child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, title="child"
+    )
     factories.UserDocumentAccessFactory(document=child1)
 
-    grand_child = factories.DocumentFactory(parent=child1)
+    grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/descendants/",
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
     )
     assert response.status_code == 200
     assert response.json() == {
@@ -673,7 +763,7 @@ def test_api_documents_descendants_list_authenticated_related_child():
     factories.UserDocumentAccessFactory(document=document)
 
     response = client.get(
-        f"/api/v1.0/documents/{document.id!s}/descendants/",
+        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
     )
     assert response.status_code == 403
     assert response.json() == {
@@ -694,12 +784,15 @@ def test_api_documents_descendants_list_authenticated_related_team_none(
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach="restricted")
-    factories.DocumentFactory.create_batch(2, parent=document)
+    document = factories.DocumentFactory(link_reach="restricted", title="document")
+    factories.DocumentFactory.create_batch(2, parent=document, title="child")
 
     factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/descendants/")
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": "doc", "path": document.path}
+    )
+
     assert response.status_code == 403
     assert response.json() == {
         "detail": "You do not have permission to perform this action."
@@ -719,13 +812,17 @@ def test_api_documents_descendants_list_authenticated_related_team_members(
     client = APIClient()
     client.force_login(user)
 
-    document = factories.DocumentFactory(link_reach="restricted")
-    child1, child2 = factories.DocumentFactory.create_batch(2, parent=document)
-    grand_child = factories.DocumentFactory(parent=child1)
+    document = factories.DocumentFactory(link_reach="restricted", title="parent")
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=document, title="child"
+    )
+    grand_child = factories.DocumentFactory(parent=child1, title="grand child")
 
     access = factories.TeamDocumentAccessFactory(document=document, team="myteam")
 
-    response = client.get(f"/api/v1.0/documents/{document.id!s}/descendants/")
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": "child", "path": document.path}
+    )
 
     # pylint: disable=R0801
     assert response.status_code == 200
@@ -805,3 +902,53 @@ def test_api_documents_descendants_list_authenticated_related_team_members(
             },
         ],
     }
+
+
+@pytest.mark.parametrize(
+    "query,nb_results",
+    [
+        ("", 7),  # Empty string
+        ("Project Alpha", 1),  # Exact match
+        ("project", 2),  # Partial match (case-insensitive)
+        ("Guide", 2),  # Word match within a title
+        ("Special", 0),  # No match (nonexistent keyword)
+        ("2024", 2),  # Match by numeric keyword
+        ("velo", 1),  # Accent-insensitive match (velo vs vélo)
+        ("bêta", 1),  # Accent-insensitive match (bêta vs beta)
+    ],
+)
+def test_api_documents_descendants_search_on_title(query, nb_results):
+    """Authenticated users should be able to search documents by their unaccented title."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(users=[user])
+
+    # Create documents with predefined titles
+    titles = [
+        "Project Alpha Documentation",
+        "Project Beta Overview",
+        "User Guide",
+        "Financial Report 2024",
+        "Annual Review 2024",
+        "Guide du vélo urbain",  # <-- Title with accent for accent-insensitive test
+    ]
+    for title in titles:
+        factories.DocumentFactory(title=title, parent=parent)
+
+    # Perform the search query
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": query, "path": parent.path}
+    )
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == nb_results
+
+    # Ensure all results contain the query in their title
+    for result in results:
+        assert (
+            remove_accents(query).lower().strip()
+            in remove_accents(result["title"]).lower()
+        )
