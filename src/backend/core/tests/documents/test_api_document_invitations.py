@@ -596,6 +596,38 @@ def test_api_document_invitations_create_cannot_invite_existing_users():
     }
 
 
+def test_api_item_invitations_create_cannot_invite_existing_users_case_insensitive():
+    """
+    It should not be possible to invite already existing users, even with different email case.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(users=[(user, "owner")])
+    existing_user = factories.UserFactory()
+
+    # Build an invitation to the email of an existing identity with different case
+    invitation_values = {
+        "email": existing_user.email.upper(),
+        "role": random.choice(models.RoleChoices.values),
+    }
+
+    client = APIClient()
+    client.force_login(user)
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/invitations/",
+        invitation_values,
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "email": ["This email is already associated to a registered user."]
+    }
+
+
 def test_api_document_invitations_create_lower_email():
     """
     No matter the case, the email should be converted to lowercase.
