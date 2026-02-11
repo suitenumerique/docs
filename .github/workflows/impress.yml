@@ -202,7 +202,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext pandoc shared-mime-info
-          sudo wget https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types -O /etc/mime.types
+          sudo wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
       - name: Generate a MO file from strings extracted from the project
         run: python manage.py compilemessages
