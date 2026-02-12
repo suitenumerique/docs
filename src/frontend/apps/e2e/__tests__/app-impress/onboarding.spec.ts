@@ -27,7 +27,36 @@ test.describe('Onboarding modal', () => {
       '0',
     );
 
-    await page.keyboard.press('Escape');
+    await page.getByTestId('onboarding-step-2').click();
+    await expect(page.getByTestId('onboarding-step-2')).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
+
+    await page.getByTestId('onboarding-step-3').click();
+    await expect(page.getByTestId('onboarding-step-3')).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
+
+    const learnMoreLink = page.getByRole('link', {
+      name: 'Learn more docs features',
+    });
+    await expect(learnMoreLink).toBeVisible();
+    await learnMoreLink.click();
+
+    await page.getByRole('button', { name: /understood|compris/i }).click();
+    await expect(modal).toBeHidden();
+  });
+
+  test('closes modal with Skip button', async ({ page }) => {
+    await page.getByRole('button', { name: 'Open onboarding menu' }).click();
+    await page.getByRole('menuitem', { name: 'Onboarding' }).click();
+
+    const modal = page.getByTestId('onboarding-modal');
+    await expect(modal).toBeVisible();
+
+    await page.getByRole('button', { name: /skip/i }).click();
     await expect(modal).toBeHidden();
   });
 });
