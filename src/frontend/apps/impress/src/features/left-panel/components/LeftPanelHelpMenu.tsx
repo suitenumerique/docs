@@ -1,5 +1,5 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { DropdownMenu, ModalSize } from '@gouvfr-lasuite/ui-kit';
+import { DropdownMenu } from '@gouvfr-lasuite/ui-kit';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -36,10 +36,6 @@ export const LeftPanelHelpMenu = () => {
     ],
     [openModal, t],
   );
-  const footerLink = {
-    label: t('Learn more docs features'),
-    href: '',
-  };
 
   return (
     <>
@@ -78,10 +74,12 @@ export const LeftPanelHelpMenu = () => {
 
       <OnBoarding
         isOpen={isModalOpen}
-        size={ModalSize.LARGE}
         onClose={closeModal}
         onSkip={closeModal}
-        footerLink={footerLink}
+        footerLink={{
+          label: t('Learn more docs features'),
+          href: '',
+        }}
       />
     </>
   );
