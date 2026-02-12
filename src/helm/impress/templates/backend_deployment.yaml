@@ -135,6 +135,9 @@ spec:
           {{- if .existingClaim }}
           persistentVolumeClaim:
             claimName: {{ .existingClaim }}
+          {{- else if .secret }}
+          secret:
+            {{ toYaml .secret | nindent 12 }}
           {{- else if .hostPath }}
           hostPath:
             {{ toYaml .hostPath | nindent 12 }}
