@@ -20,18 +20,21 @@ interface CreateDocAccessParams {
   role: Role;
   docId: Doc['id'];
   memberId: User['id'];
+  memberEncryptedSymmetricKey: string | null;
 }
 
 export const createDocAccess = async ({
   memberId,
   role,
   docId,
+  memberEncryptedSymmetricKey,
 }: CreateDocAccessParams): Promise<Access> => {
   const response = await fetchAPI(`documents/${docId}/accesses/`, {
     method: 'POST',
     body: JSON.stringify({
       user_id: memberId,
       role,
+      encrypted_document_symmetric_key: memberEncryptedSymmetricKey,
     }),
   });
 

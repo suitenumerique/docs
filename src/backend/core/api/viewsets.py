@@ -354,6 +354,19 @@ class DocumentViewSet(
         Returns: JSON response with the translated text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
+    12. **Encrypt**: Encrypt a document.
+        Example: POST /documents/{id}/encrypt/
+        Expected data:
+        - content (str): The encrypted content.
+        - encryptedSymmetricKeyPerUser (dict): Mapping of user IDs to encrypted symmetric keys.
+        Returns: JSON response with the updated document.
+
+    13. **Remove Encryption**: Remove encryption from a document.
+        Example: POST /documents/{id}/remove-encryption/
+        Expected data:
+        - content (str): The decrypted content.
+        Returns: JSON response with the updated document.
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -372,6 +385,11 @@ class DocumentViewSet(
         Example:
         - GET /api/v1.0/documents/?is_creator_me=true&is_favorite=true
         - GET /api/v1.0/documents/?is_creator_me=false&title=hello&is_encrypted=false
+
+    ### Encryption Management:
+        The encryption status of documents can be managed using the dedicated endpoints:
+        - POST /documents/{id}/encrypt/ - Set is_encrypted to true
+        - POST /documents/{id}/remove-encryption/ - Set is_encrypted to false
 
     ### Annotations:
     1. **is_favorite**: Indicates whether the document is marked as favorite by the current user.
@@ -1939,6 +1957,155 @@ class DocumentViewSet(
             }
         )
 
+    def perform_update(self, serializer):
+        """
+        Perform update with safety check for encryption state changes.
+
+        If contentEncrypted parameter is provided, it must match the current
+        is_encrypted state to prevent accidental content overrides during
+        encryption state transitions.
+        """
+        document = self.get_object()
+
+        # Prevent direct changes to is_encrypted field via PATCH
+        # (encryption state should only be changed via /encrypt/ or /remove-encryption/ endpoints)
+        if 'is_encrypted' in serializer.validated_data:
+            raise drf.exceptions.ValidationError({
+                'is_encrypted':
+                'Cannot modify is_encrypted directly. '
+                'Use the /encrypt/ or /remove-encryption/ endpoints to manage encryption.'
+            })
+
+        # Check if contentEncrypted parameter was provided
+        content_encrypted = serializer.validated_data.get('contentEncrypted')
+
+        if content_encrypted is not None:
+            # Get the current document instance
+            document = self.get_object()
+
+            # Safety check: contentEncrypted must match current is_encrypted state
+            if content_encrypted != document.is_encrypted:
+                raise drf.exceptions.ValidationError({
+                    'contentEncrypted':
+                    f'contentEncrypted must match current encryption state. '
+                    f'Current: is_encrypted={document.is_encrypted}, '
+                    f'Provided: contentEncrypted={content_encrypted}'
+                })
+
+        # Proceed with normal update
+        return super().perform_update(serializer)
+
+    @transaction.atomic
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        name="Encrypt a document",
+        url_path="encrypt",
+    )
+    def encrypt(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/encrypt
+        with expected data:
+        - content: str (encrypted content)
+        - encryptedSymmetricKeyPerUser: dict (user_id -> encrypted_key)
+        Updates the document's content and marks it as encrypted.
+        """
+        document = self.get_object()
+
+        serializer = serializers.EncryptDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        content = serializer.validated_data["content"]
+        encryptedSymmetricKeyPerUser = serializer.validated_data["encryptedSymmetricKeyPerUser"]
+
+        # Prevent encryption if there are pending invitations
+        if document.invitations.exists():
+            raise drf.exceptions.ValidationError({
+                'non_field_errors':
+                'Cannot encrypt a document with pending invitations. '
+                'Please resolve all invitations before encrypting.'
+            })
+
+        # Validate that we have keys for all users with access to this document
+        # Get all user IDs that have access to this document
+        document_accesses = models.DocumentAccess.objects.filter(document=document, user__isnull=False)
+        users_with_access = {str(access.user_id) for access in document_accesses}
+
+        # Check that encryptedSymmetricKeyPerUser contains all required users
+        provided_user_ids = set(encryptedSymmetricKeyPerUser.keys())
+        missing_users = users_with_access - provided_user_ids
+
+        if missing_users:
+            raise drf.exceptions.ValidationError({
+                'encryptedSymmetricKeyPerUser':
+                f'Missing encrypted keys for users with document access: {missing_users}. '
+                f'All users must have encrypted symmetric keys when encrypting a document.'
+            })
+
+        # Check for extra users that don't have access
+        extra_users = provided_user_ids - users_with_access
+        if extra_users:
+            raise drf.exceptions.ValidationError({
+                'encryptedSymmetricKeyPerUser':
+                f'Encrypted keys provided for users without document access: {extra_users}. '
+                f'Only users with access should have encrypted symmetric keys.'
+            })
+
+        # Update the document content and encryption status
+        document.content = content  # This will be cached and saved to object storage
+        document.is_encrypted = True
+        document.save()
+
+        # Store the encrypted symmetric keys in DocumentAccess for each user
+        for user_id, encrypted_key in encryptedSymmetricKeyPerUser.items():
+            try:
+                # Find the DocumentAccess record for this user and document
+                access = models.DocumentAccess.objects.get(document=document, user_id=user_id)
+                access.encrypted_document_symmetric_key_for_user = encrypted_key
+                access.save()
+            except models.DocumentAccess.DoesNotExist:
+                # This should not happen due to our validation above, but keep as safety
+                pass
+
+        # Return the updated document
+        serializer = self.get_serializer(document)
+        return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
+
+    @transaction.atomic
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        name="Remove encryption from a document",
+        url_path="remove-encryption",
+    )
+    def remove_encryption(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/remove-encryption
+        with expected data:
+        - content: str (decrypted content)
+        Updates the document's content and marks it as not encrypted.
+        """
+        document = self.get_object()
+
+        serializer = serializers.RemoveEncryptionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        content = serializer.validated_data["content"]
+
+        # Update the document content and encryption status
+        document.content = content  # This will be cached and saved to object storage
+        document.is_encrypted = False
+        document.save()
+
+        # Clean up any stored encrypted keys
+        models.DocumentAccess.objects.filter(document=document).update(
+            encrypted_document_symmetric_key_for_user=None
+        )
+
+        # Return the updated document
+        serializer = self.get_serializer(document)
+        return drf.response.Response(serializer.data, status=drf.status.HTTP_200_OK)
+
 
 class DocumentAccessViewSet(
     ResourceAccessViewsetMixin,
@@ -2100,6 +2267,14 @@ class DocumentAccessViewSet(
                 "Only owners of a document can assign other users as owners."
             )
 
+        # Prevent providing encrypted_document_symmetric_key_for_user during creation
+        # This field should be null initially and set via the encryption workflow
+        if 'encrypted_document_symmetric_key_for_user' in serializer.validated_data and not self.document.is_encrypted:
+            raise drf.exceptions.ValidationError({
+                'encrypted_document_symmetric_key_for_user':
+                'This field can only be used when the document is encrypted.'
+            })
+
         access = serializer.save(document_id=self.kwargs["resource_id"])
 
         if access.user:
@@ -2114,6 +2289,14 @@ class DocumentAccessViewSet(
 
     def perform_update(self, serializer):
         """Update an access to the document and notify the collaboration server."""
+        # Prevent direct modification of encrypted_document_symmetric_key_for_user
+        # This field should only be managed at access creation or when rotating the document key
+        if 'encrypted_document_symmetric_key_for_user' in serializer.validated_data:
+            raise drf.exceptions.ValidationError({
+                'encrypted_document_symmetric_key_for_user':
+                'This field cannot be modified directly.'
+            })
+
         access = serializer.save()
 
         access_user_id = None
@@ -2223,6 +2406,15 @@ class InvitationViewset(
 
     def perform_create(self, serializer):
         """Save invitation to a document then send an email to the invited user."""
+        # Prevent invitation creation for encrypted documents
+        document = models.Document.objects.get(pk=self.kwargs["resource_id"])
+        if document.is_encrypted:
+            raise drf.exceptions.ValidationError({
+                'non_field_errors': 
+                'Cannot create invitations for encrypted documents. '
+                'All invitations must be resolved before encrypting a document.'
+            })
+        
         invitation = serializer.save()
 
         invitation.document.send_invitation_email(
@@ -2231,6 +2423,19 @@ class InvitationViewset(
             self.request.user,
             self.request.user.language or settings.LANGUAGE_CODE,
         )
+
+    def perform_update(self, serializer):
+        """Update an invitation to a document."""
+        # Prevent invitation updates for encrypted documents
+        document = models.Document.objects.get(pk=self.kwargs["resource_id"])
+        if document.is_encrypted:
+            raise drf.exceptions.ValidationError({
+                'non_field_errors': 
+                'Cannot update invitations for encrypted documents. '
+                'All invitations must be resolved before encrypting a document.'
+            })
+        
+        return super().perform_update(serializer)
 
 
 class DocumentAskForAccessViewSet(

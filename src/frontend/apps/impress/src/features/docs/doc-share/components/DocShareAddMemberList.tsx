@@ -95,6 +95,9 @@ export const DocShareAddMemberList = ({
         : createDocAccess({
             ...payload,
             memberId: user.id,
+            memberEncryptedSymmetricKey: doc.is_encrypted
+              ? 'TODO: must be generated'
+              : null,
           });
     });
 

@@ -168,6 +168,7 @@ class DocumentSerializer(ListDocumentSerializer):
     """Serialize documents with all fields for display in detail views."""
 
     content = serializers.CharField(required=False)
+    contentEncrypted = serializers.BooleanField(required=False, write_only=True)
     websocket = serializers.BooleanField(required=False, write_only=True)
     file = serializers.FileField(
         required=False, write_only=True, allow_null=True, max_length=255
@@ -178,6 +179,7 @@ class DocumentSerializer(ListDocumentSerializer):
         fields = [
             "id",
             "abilities",
+            "accesses_public_keys_per_user",
             "ancestors_link_reach",
             "ancestors_link_role",
             "computed_link_reach",
@@ -369,6 +371,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "encrypted_document_symmetric_key_for_user",
         ]
 
     def get_abilities(self, instance) -> dict:
@@ -859,6 +862,49 @@ class MoveDocumentSerializer(serializers.Serializer):
         choices=enums.MoveNodePositionChoices.choices,
         default=enums.MoveNodePositionChoices.LAST_CHILD,
     )
+
+
+class EncryptDocumentSerializer(serializers.Serializer):
+    """
+    Serializer for encrypting a document.
+
+    Fields:
+        - content (CharField): The encrypted content of the document.
+          This field is required.
+        - encryptedSymmetricKeyPerUser (DictField): Mapping of user IDs to their encrypted symmetric keys.
+          This field is required.
+
+    Example:
+        Input payload for encrypting a document:
+        {
+            "content": "<encrypted_content>",
+            "encryptedSymmetricKeyPerUser": {
+                "user1_id": "encrypted_key_1",
+                "user2_id": "encrypted_key_2"
+            }
+        }
+    """
+
+    content = serializers.CharField(required=True)
+    encryptedSymmetricKeyPerUser = serializers.DictField(child=serializers.CharField(), required=True)
+
+
+class RemoveEncryptionSerializer(serializers.Serializer):
+    """
+    Serializer for removing encryption from a document.
+
+    Fields:
+        - content (CharField): The decrypted content of the document.
+          This field is required.
+
+    Example:
+        Input payload for removing encryption from a document:
+        {
+            "content": "<decrypted_content>"
+        }
+    """
+
+    content = serializers.CharField(required=True)
 
 
 class ReactionSerializer(serializers.ModelSerializer):

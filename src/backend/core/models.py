@@ -186,6 +186,12 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         default=False,
         help_text=_("Whether the user can log into this admin site."),
     )
+    encryption_public_key = models.TextField(
+        _("encryption public key"),
+        null=True,
+        blank=True,
+        help_text=_("Public key for end-to-end encryption."),
+    )
     is_active = models.BooleanField(
         _("active"),
         default=True,
@@ -278,6 +284,12 @@ class BaseAccess(BaseModel):
     team = models.CharField(max_length=100, blank=True)
     role = models.CharField(
         max_length=20, choices=RoleChoices.choices, default=RoleChoices.READER
+    )
+    encrypted_document_symmetric_key_for_user = models.TextField(
+        _("encrypted document symmetric key"),
+        null=True,
+        blank=True,
+        help_text=_("Encrypted symmetric key for this document, specific to this user."),
     )
 
     class Meta:
@@ -718,6 +730,31 @@ class Document(MP_Node, BaseModel):
     def computed_link_role(self):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
+
+    @property
+    def accesses_public_keys_per_user(self):
+        """
+        Return public keys of users with access to this document.
+        Returns a dictionary mapping user IDs to their encryption public keys.
+        Only available when document is encrypted.
+        """
+        if not self.is_encrypted:
+            return None
+
+        # Get all users with direct access to this document
+        users_with_access = (
+            models.DocumentAccess.objects
+            .filter(document=self, user__isnull=False)
+            .select_related('user')
+            .values_list('user_id', 'user__encryption_public_key')
+        )
+
+        # Convert to dictionary: {user_id: public_key}
+        return {
+            str(user_id): public_key
+            for user_id, public_key in users_with_access
+            if public_key  # Only include users with public keys
+        }
 
     def get_abilities(self, user):
         """
