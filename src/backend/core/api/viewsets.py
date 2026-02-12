@@ -1397,12 +1397,19 @@ class DocumentViewSet(
         params.is_valid(raise_exception=True)
 
         indexer = get_document_indexer()
-        if indexer:
+        if indexer is None:
+            # fallback on title search if the indexer is not configured
+            return self._title_search(request, params.validated_data, *args, **kwargs)
+
+        try:
             return self._search_with_indexer(indexer, request, params=params)
         except requests.exceptions.RequestException as e:
             logger.error("Error while searching documents with indexer: %s", e)
             # fallback on title search if the indexer is not reached
-            return self._title_search(request, params.validated_data, *args, **kwargs)
+            return self._title_search(
+                request, params.validated_data, *args, **kwargs
+            )
+
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
@@ -1431,7 +1438,7 @@ class DocumentViewSet(
             }
         )
 
-    def title_search(self, request, validated_data, *args, **kwargs):
+    def _title_search(self, request, validated_data, *args, **kwargs):
         """
         Fallback search method when no indexer is configured.
         Only searches in the title field of documents.
