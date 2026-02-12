@@ -475,6 +475,9 @@ class DocumentViewSet(
         Returns: JSON response with the translated text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
+    12. **AI Proxy**: Proxy an AI request to an external AI service.
+        Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -1766,6 +1769,43 @@ class DocumentViewSet(
     @drf.decorators.action(
         detail=True,
         methods=["post"],
+        name="Proxy AI requests to the AI provider",
+        url_path="ai-proxy",
+        throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
+    )
+    def ai_proxy(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/ai-proxy
+        Proxy AI requests to the configured AI provider.
+        This endpoint forwards requests to the AI provider and returns the complete response.
+        """
+        # Check permissions first
+        self.get_object()
+
+        if not settings.AI_FEATURE_ENABLED:
+            raise ValidationError("AI feature is not enabled.")
+
+        serializer = serializers.AIProxySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ai_service = AIService()
+
+        if settings.AI_STREAM:
+            return StreamingHttpResponse(
+                ai_service.stream(request.data),
+                content_type="text/event-stream",
+                status=drf.status.HTTP_200_OK,
+            )
+
+        ai_response = ai_service.proxy(request.data)
+        return drf.response.Response(
+            ai_response.model_dump(),
+            status=drf.status.HTTP_200_OK,
+        )
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
         name="Apply a transformation action on a piece of text with AI",
         url_path="ai-transform",
         throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
@@ -2458,7 +2498,10 @@ class ConfigView(drf.views.APIView):
             Return a dictionary of public settings.
         """
         array_settings = [
+            "AI_BOT",
             "AI_FEATURE_ENABLED",
+            "AI_MODEL",
+            "AI_STREAM",
             "API_USERS_SEARCH_QUERY_MIN_LENGTH",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",

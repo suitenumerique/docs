@@ -1,6 +1,11 @@
 import { css } from 'styled-components';
 
 export const cssEditor = css`
+  .mantine-Menu-itemLabel,
+  .mantine-Button-label {
+    font-family: var(--c--components--button--font-family);
+  }
+
   &,
   & > .bn-container,
   & .ProseMirror {
@@ -147,6 +152,16 @@ export const cssEditor = css`
   blockquote {
     border-left: 4px solid var(--c--globals--colors--gray-300);
     font-style: italic;
+  }
+
+  /**
+    * AI
+    */
+  ins,
+  [data-type='modification'] {
+    background: var(--c--globals--colors--brand-100);
+    border-bottom: 2px solid var(--c--globals--colors--brand-300);
+    color: var(--c--globals--colors--brand-700);
   }
 
   /**

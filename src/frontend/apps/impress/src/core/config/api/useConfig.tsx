@@ -27,7 +27,10 @@ interface ThemeCustomization {
 }
 
 export interface ConfigResponse {
+  AI_BOT: { name: string; color: string };
   AI_FEATURE_ENABLED?: boolean;
+  AI_MODEL?: string;
+  AI_STREAM: boolean;
   API_USERS_SEARCH_QUERY_MIN_LENGTH?: number;
   COLLABORATION_WS_URL?: string;
   COLLABORATION_WS_NOT_CONNECTED_READY_ONLY?: boolean;
