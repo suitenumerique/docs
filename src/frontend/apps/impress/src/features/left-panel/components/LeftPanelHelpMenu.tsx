@@ -53,9 +53,9 @@ export const LeftPanelHelpMenu = () => {
           onOpenChange={setIsMenuOpen}
         >
           <Box $direction="row" $align="center">
-            <span className="sr-only">{t('Open onboarding menu')}</span>
+            <span className="sr-only">{t('Open help menu')}</span>
             <Button
-              aria-label={t('Open onboarding menu')}
+              aria-label={t('Open help menu')}
               color="neutral"
               variant="tertiary"
               iconPosition="left"
