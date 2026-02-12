@@ -7,13 +7,15 @@ import { Box, Icon, StyledLink, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { DocDefaultFilter } from '@/docs/doc-management';
 import { useLeftPanelStore } from '@/features/left-panel';
+import { useResponsiveStore } from '@/stores';
 
 export const LeftPanelTargetFilters = () => {
   const { t } = useTranslation();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { togglePanel } = useLeftPanelStore();
+  const { isDesktop } = useResponsiveStore();
+  const { closePanel } = useLeftPanelStore();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
 
   const target =
@@ -49,8 +51,10 @@ export const LeftPanelTargetFilters = () => {
     return `${pathname}?${params.toString()}`;
   };
 
-  const handleClick = () => {
-    togglePanel();
+  const handleFilterClick = () => {
+    if (!isDesktop) {
+      closePanel();
+    }
   };
 
   return (
@@ -70,9 +74,7 @@ export const LeftPanelTargetFilters = () => {
             href={href}
             aria-label={query.label}
             aria-current={isActive ? 'page' : undefined}
-            onClick={() => {
-              handleClick();
-            }}
+            onClick={handleFilterClick}
             $css={css`
               display: flex;
               align-items: center;

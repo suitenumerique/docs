@@ -61,7 +61,7 @@ export const TableContent = () => {
         $width={!isOpen ? '40px' : '200px'}
         $height={!isOpen ? '40px' : 'auto'}
         $maxHeight="calc(50vh - 60px)"
-        $zIndex={1000}
+        $zIndex={2000}
         $align="center"
         $padding={isOpen ? 'xs' : '0'}
         $justify="center"

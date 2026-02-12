@@ -12,6 +12,7 @@ import {
 } from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
 import { useAuth } from '@/features/auth/';
+import { FloatingBar } from '@/features/floating-bar';
 import { useSkeletonStore } from '@/features/skeletons';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
@@ -35,6 +36,7 @@ export const DocEditorContainer = ({
 
   return (
     <>
+      {isDesktop && <FloatingBar />}
       <Box
         $maxWidth="868px"
         $width="100%"

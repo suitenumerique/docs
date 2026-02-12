@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator } from '@/components';
@@ -8,6 +9,8 @@ import {
   getDocLinkReach,
   useIsCollaborativeEditable,
 } from '@/docs/doc-management';
+import { useFloatingBarStore } from '@/features/floating-bar';
+import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useResponsiveStore } from '@/stores';
 
 import { AlertNetwork } from './AlertNetwork';
@@ -23,19 +26,49 @@ interface DocHeaderProps {
 }
 
 export const DocHeader = ({ doc }: DocHeaderProps) => {
+  const headerRef = useRef<HTMLDivElement>(null);
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
+  const { setIsDocHeaderVisible } = useFloatingBarStore();
   const { isEditable } = useIsCollaborativeEditable(doc);
   const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
   const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
   const isDeletedDoc = !!doc.deleted_at;
 
+  useEffect(() => {
+    const mainContent = document.getElementById(MAIN_LAYOUT_ID);
+    const header = headerRef.current;
+
+    if (!mainContent || !header) {
+      setIsDocHeaderVisible(false);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsDocHeaderVisible(entry.isIntersecting);
+      },
+      {
+        root: mainContent,
+        threshold: 0.05,
+      },
+    );
+
+    observer.observe(header);
+
+    return () => {
+      observer.disconnect();
+      setIsDocHeaderVisible(true);
+    };
+  }, [doc.id, setIsDocHeaderVisible]);
+
   return (
     <>
       <Box
+        ref={headerRef}
         $width="100%"
-        $padding={{ top: isDesktop ? '50px' : 'md' }}
+        $padding={{ top: isDesktop ? '0' : 'md' }}
         $gap={spacingsTokens['base']}
         aria-label={t('It is the card information about the document.')}
         className="--docs--doc-header"

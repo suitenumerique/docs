@@ -1,4 +1,5 @@
-import { PropsWithChildren } from 'react';
+import { useRouter } from 'next/router';
+import { PropsWithChildren, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -6,7 +7,11 @@ import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
-import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
+import {
+  LeftPanel,
+  ResizableLeftPanel,
+  useLeftPanelStore,
+} from '@/features/left-panel';
 import { DocEditorSkeleton, Skeleton } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
@@ -52,7 +57,16 @@ export function MainLayoutContent({
   backgroundColor,
   enableResizablePanel = false,
 }: PropsWithChildren<MainLayoutContentProps>) {
+  const router = useRouter();
   const { isDesktop } = useResponsiveStore();
+  const { togglePanel } = useLeftPanelStore();
+
+  useEffect(() => {
+    if (!enableResizablePanel || !isDesktop) {
+      return;
+    }
+    togglePanel(true);
+  }, [enableResizablePanel, isDesktop, router.asPath, togglePanel]);
 
   if (enableResizablePanel) {
     return (
@@ -120,9 +134,13 @@ const MainContent = ({
       $css={css`
         overflow-y: auto;
         overflow-x: clip;
-        &:focus-visible {
-          outline: 3px solid ${colorsTokens['brand-400']};
-          outline-offset: -3px;
+        &:focus-visible::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border: 3px solid ${colorsTokens['brand-400']};
+          pointer-events: none;
+          z-index: 2001;
         }
       `}
     >

@@ -24,6 +24,45 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Doc Editor', () => {
+  test('shows floating bar and collapse button on desktop', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-floating-bar', browserName, 1);
+
+    await expect(page.getByTestId('floating-bar')).toBeVisible();
+
+    const collapseButton = page.getByTestId('floating-bar-toggle-left-panel');
+    await expect(collapseButton).toBeVisible();
+  });
+
+  test('toggles panel collapse from floating bar button', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-floating-bar', browserName, 1);
+
+    const collapseButton = page.getByTestId('floating-bar-toggle-left-panel');
+    await expect(collapseButton).toBeVisible();
+    const initialExpanded = await collapseButton.getAttribute('aria-expanded');
+    expect(
+      initialExpanded === 'true' || initialExpanded === 'false',
+    ).toBeTruthy();
+    const isInitiallyExpanded = initialExpanded === 'true';
+
+    await collapseButton.click();
+    await expect(collapseButton).toHaveAttribute(
+      'aria-expanded',
+      isInitiallyExpanded ? 'false' : 'true',
+    );
+
+    await collapseButton.click();
+    await expect(collapseButton).toHaveAttribute(
+      'aria-expanded',
+      isInitiallyExpanded ? 'true' : 'false',
+    );
+  });
+
   test('it checks toolbar buttons are displayed', async ({
     page,
     browserName,
@@ -410,7 +449,7 @@ test.describe('Doc Editor', () => {
     const editor = page.locator('.ProseMirror');
     await editor.getByText('Hello').selectText();
 
-    await page.getByRole('button', { name: 'AI' }).click();
+    await page.getByRole('button', { name: 'AI', exact: true }).click();
 
     await expect(
       page.getByRole('menuitem', { name: 'Use as prompt' }),
@@ -494,11 +533,13 @@ test.describe('Doc Editor', () => {
       await editor.getByText('Hello').selectText();
 
       if (!ai_transform && !ai_translate) {
-        await expect(page.getByRole('button', { name: 'AI' })).toBeHidden();
+        await expect(
+          page.getByRole('button', { name: 'AI', exact: true }),
+        ).toBeHidden();
         return;
       }
 
-      await page.getByRole('button', { name: 'AI' }).click();
+      await page.getByRole('button', { name: 'AI', exact: true }).click();
 
       if (ai_transform) {
         await expect(
