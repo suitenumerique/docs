@@ -60,6 +60,7 @@ export interface Doc {
   depth: number;
   path: string;
   is_favorite: boolean;
+  is_encrypted: boolean;
   link_reach: LinkReach;
   link_role?: LinkRole;
   nb_accesses_direct: number;

@@ -43,6 +43,15 @@ export async function handleRelayServerConnection(
   });
 
   ws.on('message', (data) => {
+    if (data.toString() === 'ongoingDecryption') {
+      //
+      // TODO: here or inside an equivalent listener "onMessage" to catch an event "ongoingEncryption"
+      // so we can close all connections properly and clear data. It needs to check this information from the backend first with "fetchDocument"
+      // this should be propagated to all subscribers so they can also prepare to refresh their page
+      //
+      return;
+    }
+
     // Relay blindly since this server is a passthrough due to encryption
     for (const peer of Array.from(room)) {
       if (peer !== ws) {
@@ -53,6 +62,10 @@ export async function handleRelayServerConnection(
 
   // Sending a ping signal, and expecting a response before the next iteration
   let pongReceived = true;
+
+  ws.on('pong', () => {
+    pongReceived = true;
+  });
 
   const pingInterval = setInterval(() => {
     if (!pongReceived) {

@@ -73,6 +73,7 @@ def test_api_documents_list_format():
         "depth": 1,
         "excerpt": document.excerpt,
         "is_favorite": True,
+        "is_encrypted": document.is_encrypted,
         "link_reach": document.link_reach,
         "link_role": document.link_role,
         "nb_accesses_ancestors": 3,

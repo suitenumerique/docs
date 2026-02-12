@@ -20,6 +20,7 @@ interface Doc {
   content: Base64;
   creator: string;
   is_favorite: boolean;
+  is_encrypted: boolean;
   link_reach: 'restricted' | 'public' | 'authenticated';
   link_role: 'reader' | 'editor';
   nb_accesses_ancestors: number;

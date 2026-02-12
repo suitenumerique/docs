@@ -126,6 +126,16 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       showSeparator: isTopRoot ? true : false,
     },
     {
+      label: t('Encrypt document'),
+      icon: 'https',
+      disabled: !doc.abilities.accesses_manage,
+      callback: () => {
+        console.warn('TODO');
+      },
+      show: !doc.is_encrypted && doc.abilities.update,
+      showSeparator: isTopRoot ? true : false,
+    },
+    {
       label: t('Remove emoji'),
       icon: 'emoji_emotions',
       callback: () => {
