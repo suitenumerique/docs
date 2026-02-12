@@ -12,19 +12,18 @@ import {
   useDeleteFavoriteDoc,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
 
 interface DocsGridActionsProps {
   doc: Doc;
-  openShareModal?: () => void;
 }
 
-export const DocsGridActions = ({
-  doc,
-  openShareModal,
-}: DocsGridActionsProps) => {
+export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const { t } = useTranslation();
 
   const deleteModal = useModal();
+  const shareModal = useModal();
+
   const { mutate: duplicateDoc } = useDuplicateDoc();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -52,7 +51,7 @@ export const DocsGridActions = ({
       label: t('Share'),
       icon: 'group',
       callback: () => {
-        openShareModal?.();
+        shareModal.open();
       },
 
       testId: `docs-grid-actions-share-${doc.id}`,
@@ -113,6 +112,9 @@ export const DocsGridActions = ({
 
       {deleteModal.isOpen && (
         <ModalRemoveDoc onClose={deleteModal.onClose} doc={doc} />
+      )}
+      {shareModal.isOpen && (
+        <DocShareModal doc={doc} onClose={shareModal.close} />
       )}
     </>
   );
