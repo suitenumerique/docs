@@ -3,7 +3,6 @@ import {
   OnboardingModal,
   type OnboardingModalProps,
 } from '@gouvfr-lasuite/ui-kit';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
@@ -71,20 +70,8 @@ export const OnBoarding = ({
 }: OnBoardingProps) => {
   const { t } = useTranslation();
 
-  const { steps, imageSources } = useOnboardingSteps();
+  const { steps } = useOnboardingSteps();
   const complete = onComplete ?? onClose;
-
-  // Preload onboarding images when the modal opens to avoid step-switch flickering.
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    imageSources.forEach((source) => {
-      const preloadedImage = new Image();
-      preloadedImage.src = source;
-    });
-  }, [imageSources, isOpen]);
 
   return (
     <>

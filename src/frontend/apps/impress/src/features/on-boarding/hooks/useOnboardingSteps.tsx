@@ -13,7 +13,6 @@ import { OnboardingStepImage } from '../components/OnboardingStepImage';
 
 export interface OnboardingStepsData {
   steps: OnboardingStep[];
-  imageSources: string[];
 }
 
 export const useOnboardingSteps = () => {
@@ -25,24 +24,6 @@ export const useOnboardingSteps = () => {
 
   return useMemo<OnboardingStepsData>(
     () => ({
-      imageSources: [
-        t('src_img_onboarding_step_1', {
-          desc: 'URL of onboarding step 1 preview image',
-          defaultValue: '/assets/on-boarding/step_1_EN.gif',
-        }),
-        t('src_img_onboarding_step_2', {
-          desc: 'URL of onboarding step 2 preview image',
-          defaultValue: '/assets/on-boarding/step_2_EN.gif',
-        }),
-        t('src_img_onboarding_step_3', {
-          desc: 'URL of onboarding step 3 preview image',
-          defaultValue: '/assets/on-boarding/step_3_EN.png',
-        }),
-        t('src_img_onboarding_step_4', {
-          desc: 'URL of onboarding step 4 preview image',
-          defaultValue: '/assets/on-boarding/step_4_EN.png',
-        }),
-      ],
       steps: [
         {
           icon: (
