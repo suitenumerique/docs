@@ -1,8 +1,8 @@
-import { createOpenAI } from '@ai-sdk/openai';
-import { AIExtension, ClientSideTransport } from '@blocknote/xl-ai';
+import { AIExtension } from '@blocknote/xl-ai';
+import { DefaultChatTransport } from 'ai';
 import { useMemo } from 'react';
 
-import { baseApiUrl, fetchAPI } from '@/api';
+import { fetchAPI } from '@/api';
 import { useConfig } from '@/core';
 import { Doc } from '@/docs/doc-management';
 
@@ -20,34 +20,36 @@ export const useAI = (docId: Doc['id'], aiAllowed: boolean) => {
       return null;
     }
 
-    const aIprovider = createOpenAI({
-      apiKey: '',
-      baseURL: `${baseApiUrl('1.0')}documents/${docId}/ai-proxy/`,
-      fetch: (input, init) => {
-        // Create a new headers object without the Authorization header
-        const headers = new Headers(init?.headers);
-        headers.delete('Authorization');
-
-        return fetchAPI(`documents/${docId}/ai-proxy/`, {
-          ...init,
-          headers,
-        });
-      },
-    });
-
-    const model = aIprovider.chat(conf.AI_MODEL);
+    //const model = aIprovider.chat(conf.AI_MODEL);
 
     const extension = AIExtension({
-      agentCursor: conf.AI_BOT,
-      transport: new ClientSideTransport({
-        model,
-        stream: conf.AI_STREAM,
-        _additionalOptions: {
-          temperature: 0,
+      transport: new DefaultChatTransport({
+        // URL to your backend API, see example source in `packages/xl-ai-server/src/routes/regular.ts`
+        fetch: (input, init) => {
+          // Create a new headers object without the Authorization header
+          const headers = new Headers(init?.headers);
+          headers.delete('Authorization');
+
+          return fetchAPI(`documents/${docId}/ai-proxy/`, {
+            ...init,
+            headers,
+          });
         },
       }),
+      agentCursor: conf.AI_BOT,
     });
 
+    // const extension = AIExtension({
+    //   agentCursor: conf.AI_BOT,
+    //   transport: new ClientSideTransport({
+    //     model,
+    //     stream: conf.AI_STREAM,
+    //     _additionalOptions: {
+    //       temperature: 0,
+    //     },
+    //   }),
+    // });
+
     return extension;
-  }, [aiAllowed, conf?.AI_MODEL, conf?.AI_BOT, conf?.AI_STREAM, docId]);
+  }, [aiAllowed, conf?.AI_MODEL, conf?.AI_BOT, docId]);
 };
