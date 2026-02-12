@@ -1,12 +1,13 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { DropdownMenu, ModalSize } from '@gouvfr-lasuite/ui-kit';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box, Icon } from '@/components';
-import { useHelpMenuOptions } from '@/features/left-panel/hooks/useHelpMenuOptions';
 import { OnBoarding } from '@/features/on-boarding/components/OnBoarding';
+
+import WandAndStarsIcon from '../assets/wand-and-stars.svg';
 
 export const LeftPanelHelpMenu = () => {
   const { t } = useTranslation();
@@ -25,7 +26,16 @@ export const LeftPanelHelpMenu = () => {
     setIsMenuOpen((open) => !open);
   }, []);
 
-  const options = useHelpMenuOptions({ onOpenOnboarding: openModal });
+  const options = useMemo(
+    () => [
+      {
+        label: t('Onboarding'),
+        icon: <WandAndStarsIcon aria-hidden="true" />,
+        callback: openModal,
+      },
+    ],
+    [openModal, t],
+  );
   const footerLink = {
     label: t('Learn more docs features'),
     href: '',
