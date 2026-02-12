@@ -124,6 +124,49 @@ def test_api_documents_search_fallback_on_search_list_sub_docs(
     assert response.json() == mocked_response
 
 
+@mock.patch("core.api.viewsets.DocumentViewSet._title_search")
+def test_api_documents_search_indexer_crashes(mock_title_search, indexer_settings):
+    """
+    When indexer is configured but crashes -> falls back on title_search
+    """
+    # indexer is properly configured
+    indexer_settings.SEARCH_INDEXER_QUERY_URL = None
+    assert get_document_indexer() is None
+    # but returns an error when the query is sent
+    responses.add(
+        responses.POST,
+        "http://find/api/v1.0/search",
+        json=[{"error": "Some indexer error"}],
+        status=404,
+    )
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    mocked_response = {
+        "count": 0,
+        "next": None,
+        "previous": None,
+        "results": [{"title": "mocked title_search result"}],
+    }
+    mock_title_search.return_value = drf_response.Response(mocked_response)
+
+    parent = factories.DocumentFactory(title="parent", users=[user])
+    q = "alpha"
+    response = client.get(
+        "/api/v1.0/documents/search/", data={"q": "alpha", "path": parent.path}
+    )
+
+    # the search endpoint did not crash
+    assert response.status_code == 200
+    # fallback on title_search
+    assert mock_title_search.call_count == 1
+    assert mock_title_search.call_args[0][0].GET.get("q") == q
+    assert mock_title_search.call_args[0][0].GET.get("path") == parent.path
+    assert response.json() == mocked_response
+
+
 @responses.activate
 def test_api_documents_search_invalid_params(indexer_settings):
     """Validate the format of documents as returned by the search view."""
