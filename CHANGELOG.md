@@ -6,23 +6,22 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Added 
+### Added
 
-✨(frontend) Can print a doc #1832
+- ✨(frontend) Can print a doc #1832
+- ✨(frontend) add onboarding modal with help menu button #1868
 
 ### Changed
 
 - ♿️(frontend) Focus main container after navigation #1854
 
-
 ### Fixed
 
 - 🐛(frontend) fix broadcast store sync #1846
-- ✨(frontend) add onboarding modal with help menu button #1868
 
 ## [v4.5.0] - 2026-01-28
 
-### Added 
+### Added
 
 - ✨(frontend) integrate configurable Waffle #1795
 - ✨ Import of documents #1609
