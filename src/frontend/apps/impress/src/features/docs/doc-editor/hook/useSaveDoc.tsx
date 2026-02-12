@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
 import * as Y from 'yjs';
 
+import { encrypt } from '@/docs/doc-collaboration/encryption';
 import { useUpdateDoc } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { isFirefox } from '@/utils/userAgent';
@@ -14,6 +15,7 @@ export const useSaveDoc = (
   docId: string,
   yDoc: Y.Doc,
   isConnectedToCollabServer: boolean,
+  isEncrypted: boolean,
 ) => {
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
@@ -35,16 +37,6 @@ export const useSaveDoc = (
       _updatedDoc: Y.Doc,
       transaction: Y.Transaction,
     ) => {
-      console.log(333333);
-      if (transaction.local) {
-        console.log('LOCAL');
-      } else {
-        console.log('REMOTE');
-      }
-      // console.log(transaction);
-
-      // transaction.
-
       setIsLocalChange(transaction.local);
     };
 
@@ -60,18 +52,28 @@ export const useSaveDoc = (
       return false;
     }
 
-    console.log('--------');
-    console.log(111111);
-    console.log(yDoc);
+    let state = Y.encodeStateAsUpdate(yDoc);
+
+    if (isEncrypted) {
+      state = encrypt(state);
+    }
 
     updateDoc({
       id: docId,
-      content: toBase64(Y.encodeStateAsUpdate(yDoc)),
+      content: toBase64(state),
+      contentEncrypted: isEncrypted,
       websocket: isConnectedToCollabServer,
     });
 
     return true;
-  }, [isLocalChange, updateDoc, docId, yDoc, isConnectedToCollabServer]);
+  }, [
+    isLocalChange,
+    updateDoc,
+    docId,
+    yDoc,
+    isConnectedToCollabServer,
+    isEncrypted,
+  ]);
 
   const router = useRouter();
 

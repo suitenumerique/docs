@@ -43,7 +43,7 @@ describe('useSaveDoc', () => {
 
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
 
-    renderHook(() => useSaveDoc(docId, yDoc, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true, false), {
       wrapper: AppWrapper,
     });
 
@@ -75,7 +75,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true, false), {
       wrapper: AppWrapper,
     });
 
@@ -112,7 +112,7 @@ describe('useSaveDoc', () => {
       }),
     });
 
-    renderHook(() => useSaveDoc(docId, yDoc, true), {
+    renderHook(() => useSaveDoc(docId, yDoc, true, false), {
       wrapper: AppWrapper,
     });
 
@@ -132,7 +132,7 @@ describe('useSaveDoc', () => {
     const docId = 'test-doc-id';
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
-    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true), {
+    const { unmount } = renderHook(() => useSaveDoc(docId, yDoc, true, false), {
       wrapper: AppWrapper,
     });
 

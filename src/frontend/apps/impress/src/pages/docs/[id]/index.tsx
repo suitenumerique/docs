@@ -92,7 +92,7 @@ const DocPage = ({ id }: DocProps) => {
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
   const { replace } = useRouter();
-  useCollaboration(doc?.id, doc?.content);
+  useCollaboration(doc?.id, doc?.content, doc?.is_encrypted);
   const { t } = useTranslation();
   const { authenticated } = useAuth();
   const { untitledDocument } = useTrans();

@@ -20,7 +20,9 @@ import {
   KEY_DOC,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
+  ModalEncryptDoc,
   ModalRemoveDoc,
+  ModalRemoveDocEncryption,
   getEmojiAndTitle,
   useCopyDocLink,
   useCreateFavoriteDoc,
@@ -57,6 +59,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
+  const [isModalEncryptOpen, setIsModalEncryptOpen] = useState(false);
+  const [isModalRemoveEncryptionOpen, setIsModalRemoveEncryptionOpen] =
+    useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
@@ -130,9 +135,19 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       icon: 'https',
       disabled: !doc.abilities.accesses_manage,
       callback: () => {
-        console.warn('TODO');
+        setIsModalEncryptOpen(true);
       },
       show: !doc.is_encrypted && doc.abilities.update,
+      showSeparator: isTopRoot ? true : false,
+    },
+    {
+      label: t('Remove document encryption'),
+      icon: 'no_encryption',
+      disabled: !doc.abilities.accesses_manage,
+      callback: () => {
+        setIsModalRemoveEncryptionOpen(true);
+      },
+      show: doc.is_encrypted && doc.abilities.update,
       showSeparator: isTopRoot ? true : false,
     },
     {
@@ -206,6 +221,13 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         $margin={{ left: 'auto' }}
         $gap={spacingsTokens['2xs']}
       >
+        {doc.is_encrypted && (
+          <>
+            [chiffrement activé]
+            {/* TODO */}
+          </>
+        )}
+
         <BoutonShare
           doc={doc}
           open={modalShare.open}
@@ -227,6 +249,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             aria-label={t('Export the document')}
           />
         )}
+
         <DropdownMenu
           options={options}
           label={t('Open the document options')}
@@ -272,6 +295,30 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
                 }, 100);
               });
             }
+          }}
+        />
+      )}
+      {isModalEncryptOpen && (
+        <ModalEncryptDoc
+          onClose={() => setIsModalEncryptOpen(false)}
+          doc={doc}
+          onSuccess={() => {
+            //
+            // TODO: probably it should make an hard refresh to get the setup
+            // but it should before register content in database with accesses, and broadcast the information through websocket
+            //
+          }}
+        />
+      )}
+      {isModalRemoveEncryptionOpen && (
+        <ModalRemoveDocEncryption
+          onClose={() => setIsModalRemoveEncryptionOpen(false)}
+          doc={doc}
+          onSuccess={() => {
+            //
+            // TODO: probably it should make an hard refresh to get the setup
+            // but it should before register content in database with clean accesses, and broadcast the information through websocket
+            //
           }}
         />
       )}

@@ -5,7 +5,6 @@ import { create } from 'zustand';
 
 import { EncryptedWebSocket } from '@/docs/doc-collaboration/encryptedWebsocket';
 import { RelayProvider } from '@/docs/doc-collaboration/relayProvider';
-import { Base64 } from '@/docs/doc-management';
 
 export type SwitchableProvider = RelayProvider | HocuspocusProvider;
 
@@ -13,7 +12,8 @@ export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
-    initialDoc?: Base64,
+    isEncrypted: boolean,
+    initialDocState?: Buffer<ArrayBuffer>,
   ) => SwitchableProvider;
   destroyProvider: () => void;
   provider: SwitchableProvider | undefined;
@@ -34,26 +34,16 @@ const defaultValues = {
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, initialDoc) => {
+  createProvider: (wsUrl, storeId, isEncrypted, initialDocState) => {
     const doc = new Y.Doc({
       guid: storeId,
     });
 
-    //
-    // TODO: a switch between e2ee or normal should notify everyone to reload the page, can this be done with Yjs protocol? And it needs a specific websocket message?
-    //
-
-    if (initialDoc) {
-      //
-      // TODO: add decryption logic here with symmetric key
-      //
-
-      Y.applyUpdate(doc, Buffer.from(initialDoc, 'base64'));
+    if (initialDocState) {
+      Y.applyUpdate(doc, initialDocState);
     }
 
     let provider: SwitchableProvider;
-
-    const isEncrypted = true;
 
     if (isEncrypted) {
       //

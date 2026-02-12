@@ -92,6 +92,7 @@ export const ModalConfirmationVersion = ({
               updateDoc({
                 id: docId,
                 content: version.content,
+                contentEncrypted: false, // TODO: this modal should not be reachable when encrypted?
               });
 
               onClose();

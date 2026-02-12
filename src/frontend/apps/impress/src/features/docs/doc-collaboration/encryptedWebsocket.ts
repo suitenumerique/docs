@@ -1,22 +1,6 @@
 import type { MessageEvent } from 'ws';
 
-function encrypt(data: Uint8Array): Uint8Array {
-  const key = 42;
-  const encrypted = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    encrypted[i] = data[i] ^ key;
-  }
-  return encrypted;
-}
-
-function decrypt(data: Uint8Array): Uint8Array {
-  const key = 42;
-  const decrypted = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    decrypted[i] = data[i] ^ key;
-  }
-  return decrypted;
-}
+import { decrypt, encrypt } from '@/docs/doc-collaboration/encryption';
 
 export class EncryptedWebSocket extends WebSocket {
   constructor(address: string | URL, protocols?: string | string[]) {
@@ -46,9 +30,6 @@ export class EncryptedWebSocket extends WebSocket {
             messageEvent.data as ArrayBufferLike,
           );
           const decryptedData = decrypt(manageableData);
-
-          console.error('--------');
-          console.error('WRAPPER WORKING');
 
           if (typeof listener === 'function') {
             listener.call(this, { ...event, data: decryptedData });

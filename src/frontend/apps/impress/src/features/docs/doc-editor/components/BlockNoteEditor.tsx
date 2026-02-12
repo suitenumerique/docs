@@ -94,7 +94,12 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   // Determine if comments should be visible in the UI
   const showComments = canSeeComment;
 
-  useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
+  useSaveDoc(
+    doc.id,
+    provider.document,
+    isConnectedToCollabServer,
+    doc.is_encrypted,
+  );
   const { i18n } = useTranslation();
   let lang = i18n.resolvedLanguage;
   if (!lang || !(lang in locales)) {
