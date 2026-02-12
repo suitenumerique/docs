@@ -1,0 +1,22 @@
+diff --git a/node_modules/y-websocket/dist/y-websocket.cjs b/node_modules/y-websocket/dist/y-websocket.cjs
+index 8eeeff7..5ee5b2c 100644
+--- a/node_modules/y-websocket/dist/y-websocket.cjs
++++ b/node_modules/y-websocket/dist/y-websocket.cjs
+@@ -209,13 +209,15 @@ const setupWS = (provider) => {
+     provider.wsconnected = false;
+     provider.synced = false;
+ 
+-    websocket.onmessage = (event) => {
++    // Cannot directly use `onmessage` as we need to wrap the listener with custom logic for encryption
++    websocket.addEventListener('message', (event) => {
+       provider.wsLastMessageReceived = time__namespace.getUnixTime();
+       const encoder = readMessage(provider, new Uint8Array(event.data), true);
+       if (encoding__namespace.length(encoder) > 1) {
+         websocket.send(encoding__namespace.toUint8Array(encoder));
+       }
+-    };
++    });
++
+     websocket.onerror = (event) => {
+       provider.emit('connection-error', [event, provider]);
+     };

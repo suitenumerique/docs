@@ -28,7 +28,8 @@
     "i18n:deploy": "yarn I18N run format-deploy && yarn APP_IMPRESS prettier",
     "i18n:test": "yarn I18N run test",
     "test": "yarn server:test && yarn app:test",
-    "server:test": "yarn COLLABORATION_SERVER run test"
+    "server:test": "yarn COLLABORATION_SERVER run test",
+    "patch-package": "patch-package"
   },
   "resolutions": {
     "@tiptap/extensions": "3.14.0",
@@ -43,5 +44,8 @@
     "wrap-ansi": "9.0.2",
     "yjs": "13.6.29"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "dependencies": {
+    "patch-package": "^8.0.1"
+  }
 }

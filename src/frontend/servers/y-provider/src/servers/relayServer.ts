@@ -1,0 +1,85 @@
+import { Mutex } from 'async-mutex';
+import * as ws from 'ws';
+
+const rooms = new Map<string, Set<ws.WebSocket>>();
+const roomsMutex = new Mutex();
+
+function sendMessage(ws: ws.WebSocket, data: ws.RawData) {
+  if (ws.readyState === ws.OPEN || ws.readyState === ws.CONNECTING) {
+    ws.send(data, {}, (error) => {
+      if (error) {
+        ws.close();
+      }
+    });
+  } else {
+    ws.close();
+  }
+}
+
+export async function handleRelayServerConnection(
+  ws: ws.WebSocket,
+  roomId: string,
+) {
+  ws.binaryType = 'arraybuffer'; // Same configuration in the client provider
+
+  const roomsMutexRelease = await roomsMutex.acquire();
+
+  let room = rooms.get(roomId);
+
+  try {
+    if (!room) {
+      const roomConnections = new Set<ws.WebSocket>();
+
+      rooms.set(roomId, roomConnections);
+
+      room = roomConnections;
+    }
+  } finally {
+    roomsMutexRelease();
+  }
+
+  ws.on('error', () => {
+    ws.close();
+  });
+
+  ws.on('message', (data) => {
+    // Relay blindly since this server is a passthrough due to encryption
+    for (const peer of Array.from(room)) {
+      if (peer !== ws) {
+        sendMessage(peer, data);
+      }
+    }
+  });
+
+  // Sending a ping signal, and expecting a response before the next iteration
+  let pongReceived = true;
+
+  const pingInterval = setInterval(() => {
+    if (!pongReceived) {
+      ws.close();
+    } else {
+      pongReceived = false;
+
+      ws.ping();
+    }
+  }, 30 * 1000);
+
+  ws.on('close', async () => {
+    clearInterval(pingInterval);
+    ws.removeAllListeners();
+
+    const roomsMutexRelease = await roomsMutex.acquire();
+
+    try {
+      room.delete(ws);
+
+      if (room.size === 0) {
+        rooms.delete(roomId);
+      }
+    } finally {
+      roomsMutexRelease();
+    }
+  });
+
+  room.add(ws);
+}

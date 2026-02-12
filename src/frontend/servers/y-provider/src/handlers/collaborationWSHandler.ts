@@ -1,86 +1,91 @@
 import { Request } from 'express';
+import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 import * as ws from 'ws';
 
+import { fetchCurrentUser, fetchDocument } from '@/api/collaborationBackend';
 import { hocuspocusServer } from '@/servers/hocuspocusServer';
-import { setupWSConnection } from '@/servers/standard/utils';
+import { logger } from '@/utils';
+import { handleRelayServerConnection } from '@/servers/relayServer';
 
-const rooms = new Map<string, Set<ws.WebSocket>>();
+class WSProtocolError extends Error {
+  constructor(
+    public code: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'WSProtocolError';
+  }
+}
 
-export const collaborationWSHandler = (ws: ws.WebSocket, req: Request) => {
+export const collaborationWSHandler = async (
+  ws: ws.WebSocket,
+  req: Request,
+) => {
   try {
-    // hocuspocusServer.hocuspocus.handleConnection(ws, req);
-
-    // setupWSConnection(ws, req, {
-    //   gc: true,
-    // })
-
     const roomId = new URL(req.url, 'ws://x').searchParams.get('room');
 
-    console.log('aaaaaaa');
-    console.log('aaaaaaa');
-    console.log(roomId);
-
     if (!roomId) {
-      throw 111;
+      throw new WSProtocolError(1007, 'room parameter must be provided');
+    } else if (!uuidValidate(roomId) || uuidVersion(roomId) !== 4) {
+      logger('Room name is not a valid uuid:', roomId);
+
+      throw new WSProtocolError(1008, 'unauthorized');
     }
 
-    let room = rooms.get(roomId);
-    if (!room) {
-      const roomConnections = new Set<ws.WebSocket>();
+    const document = await fetchDocument(roomId, req.headers);
 
-      rooms.set(roomId, roomConnections);
+    if (!document.abilities.retrieve) {
+      logger('onConnect: Unauthorized to retrieve this document', roomId);
 
-      room = roomConnections;
+      throw new WSProtocolError(1008, 'unauthorized');
     }
 
-    room.add(ws);
+    const canEdit = document.abilities.update;
 
-    ws.on('message', (data) => {
-      console.log('bbbbbbb');
+    const session = req.headers['cookie']
+      ?.split('; ')
+      .find((cookie) => cookie.startsWith('docs_sessionid='));
+    let sessionKey: string | null = null;
 
-      // TODO:
-      // TODO:
-      // TODO: validate the message format... to avoid non-sense to go here? other provider servers
-      // TODO: were using patching on Y.Doc, so spread modifications were always valid
-      // TODO:
-      // TODO: should not encrypt awareness? or maybe it should...
-      // TODO:
-      // TODO:
-      // TODO:
-      // TODO: in the client messages should also be encoded at readMessage/bc.publish?
-      // TODO:
-      // TODO:
-      // TODO: IL faudrait regarder les custom providers des autres projets E2EE pour voir ce qui a marché ou non...
-      // TODO:
-      // TODO:
+    if (session) {
+      sessionKey = session.split('=')[1];
+    }
 
-      // relay blindly (encrypted frames only)
-      const roomConnections = rooms.get(roomId);
+    logger('Connection established on room:', roomId, 'canEdit:', canEdit);
 
-      if (roomConnections) {
-        for (const peer of Array.from(roomConnections)) {
-          if (peer !== ws && peer.readyState === ws.OPEN) {
-            peer.send(data);
-          }
-        }
-      }
-    });
+    /*
+     * Getting the user to retrieve more information
+     * but it's acceptable the request fails because non-encrypted files may be public
+     */
+    let userId: string | null = null;
 
-    ws.on('close', () => {
-      console.log('ccccc');
+    try {
+      const user = await fetchCurrentUser(req.headers);
 
-      const roomConnections = rooms.get(roomId);
+      userId = user.id;
+    } catch {
+      /* silent since optional */
+    }
 
-      if (roomConnections) {
-        roomConnections.delete(ws);
-
-        if (roomConnections.size === 0) {
-          rooms.delete(roomId);
-        }
-      }
-    });
+    // Since for "end-to-end encryption" the server cannot maintains its own state for the document
+    // we use a different strategy with a relay server
+    if (document.is_encrypted) {
+      await handleRelayServerConnection(ws, roomId);
+    } else {
+      hocuspocusServer.hocuspocus.handleConnection(ws, req, {
+        roomId: roomId,
+        readOnly: !canEdit,
+        ...(sessionKey ? { sessionKey: sessionKey } : {}),
+        ...(userId ? { userId: userId } : {}),
+      });
+    }
   } catch (error) {
     console.error('Failed to handle WebSocket connection:', error);
-    ws.close();
+
+    if (error instanceof WSProtocolError) {
+      ws.close(error.code, error.message);
+    } else {
+      ws.close(1011, 'internal error');
+    }
   }
 };

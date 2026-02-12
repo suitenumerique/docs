@@ -1,7 +1,5 @@
 import { Server } from '@hocuspocus/server';
-import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 
-import { fetchCurrentUser, fetchDocument } from '@/api/collaborationBackend';
 import { logger } from '@/utils';
 
 export const hocuspocusServer = new Server({
@@ -9,16 +7,17 @@ export const hocuspocusServer = new Server({
   timeout: 30000,
   quiet: true,
   async onConnect({
-    requestHeaders,
     connectionConfig,
     documentName,
     requestParameters,
     context,
     request,
   }) {
-    const roomParam = requestParameters.get('room');
+    // `documentName` is read from the initial message from within the Yjs protocol
+    // so just to avoid any risk we make sure comparing with explicit ID from the URL
 
-    if (documentName !== roomParam) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (!context.roomId || documentName !== context.roomId) {
       logger(
         'Invalid room name - Probable hacking attempt:',
         documentName,
@@ -30,63 +29,18 @@ export const hocuspocusServer = new Server({
       return Promise.reject(new Error('Wrong room name: Unauthorized'));
     }
 
-    if (!uuidValidate(documentName) || uuidVersion(documentName) !== 4) {
-      logger('Room name is not a valid uuid:', documentName);
-
-      return Promise.reject(new Error('Wrong room name: Unauthorized'));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (typeof context.readOnly !== 'boolean') {
+      return Promise.reject(
+        new Error(
+          'Wrong hocuspocus init: readOnly property should be set in the connection handler',
+        ),
+      );
     }
 
-    let canEdit = false;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    connectionConfig.readOnly = context.readOnly;
 
-    try {
-      const document = await fetchDocument(documentName, requestHeaders);
-
-      if (!document.abilities.retrieve) {
-        logger(
-          'onConnect: Unauthorized to retrieve this document',
-          documentName,
-        );
-        return Promise.reject(new Error('Wrong abilities:Unauthorized'));
-      }
-
-      canEdit = document.abilities.update;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        logger('onConnect: backend error', error.message);
-      }
-
-      return Promise.reject(new Error('Backend error: Unauthorized'));
-    }
-
-    connectionConfig.readOnly = !canEdit;
-
-    const session = requestHeaders['cookie']
-      ?.split('; ')
-      .find((cookie) => cookie.startsWith('docs_sessionid='));
-    if (session) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      context.sessionKey = session.split('=')[1];
-    }
-
-    /*
-     * Unauthenticated users can be allowed to connect
-     * so we flag only authenticated users
-     */
-    try {
-      const user = await fetchCurrentUser(requestHeaders);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      context.userId = user.id;
-    } catch {
-      /* empty */
-    }
-
-    logger(
-      'Connection established on room:',
-      documentName,
-      'canEdit:',
-      canEdit,
-    );
     return Promise.resolve();
   },
 });
