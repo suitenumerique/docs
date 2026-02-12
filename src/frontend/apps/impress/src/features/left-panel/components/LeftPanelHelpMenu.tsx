@@ -4,9 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Icon } from '@/components';
+import { Box } from '@/components';
 import { OnBoarding } from '@/features/on-boarding/components/OnBoarding';
 
+import HelpOutlineIcon from '../assets/help-outline.svg';
 import WandAndStarsIcon from '../assets/wand-and-stars.svg';
 
 export const LeftPanelHelpMenu = () => {
@@ -53,19 +54,12 @@ export const LeftPanelHelpMenu = () => {
           onOpenChange={setIsMenuOpen}
         >
           <Box $direction="row" $align="center">
-            <span className="sr-only">{t('Open help menu')}</span>
             <Button
               aria-label={t('Open help menu')}
               color="neutral"
               variant="tertiary"
               iconPosition="left"
-              icon={
-                <Icon
-                  $withThemeInherited
-                  iconName="help_outline"
-                  aria-hidden="true"
-                />
-              }
+              icon={<HelpOutlineIcon aria-hidden="true" />}
               onClick={toggleMenu}
             />
           </Box>
@@ -78,7 +72,7 @@ export const LeftPanelHelpMenu = () => {
         onSkip={closeModal}
         footerLink={{
           label: t('Learn more docs features'),
-          href: '',
+          href: 'https://docs.numerique.gouv.fr/docs/335e43b5-9e16-4798-a0b4-912e44c7135e/',
         }}
       />
     </>
