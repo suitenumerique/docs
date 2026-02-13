@@ -14,10 +14,7 @@ import { useImport } from '../../docs-import/hooks/useImport';
 import { useInfiniteDocsTrashbin } from '../api';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
-import {
-  DocGridContentList,
-  DraggableDocGridContentList,
-} from './DocGridContentList';
+import { DocGridContentList } from './DocGridContentList';
 import { DocsGridLoader } from './DocsGridLoader';
 
 type DocsGridProps = {
@@ -153,11 +150,7 @@ export const DocsGrid = ({
                 </Box>
               </Box>
               <Box role="rowgroup">
-                {isDesktop ? (
-                  <DraggableDocGridContentList docs={docs} />
-                ) : (
-                  <DocGridContentList docs={docs} />
-                )}
+                <DocGridContentList docs={docs} />
               </Box>
             </Box>
             {hasNextPage && !loading && (
