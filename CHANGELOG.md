@@ -23,6 +23,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix broadcast store sync #1846
+- 🐛(helm) use celery resources instead of backend resources
 
 ## [v4.5.0] - 2026-01-28
 
