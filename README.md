@@ -68,7 +68,6 @@ Docs is an open-source alternative to tools like Notion or Google Docs, focused 
 
 - Import to `.docx` and `.md`
 - Export to `.docx`, `.odt`, `.pdf`
-- Customizable templates
 
 ## Try Docs
 
