@@ -73,7 +73,7 @@ spec:
           startupProbe:
             {{- include "impress.probes.abstract" (merge .Values.backend.celery.probes.startup (dict "targetPort" .Values.backend.service.targetPort )) | nindent 12 }}
           {{- end }}
-          {{- with .Values.backend.resources }}
+          {{- with .Values.backend.celery.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
