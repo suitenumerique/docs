@@ -55,12 +55,13 @@ dependencies = [
     "nested-multipart-parser==1.6.0",
     "openai==2.14.0",
     "psycopg[binary]==3.3.2",
-    "pycrdt==0.12.44", 
+    "pycrdt==0.12.44",
     "PyJWT==2.10.1",
     "python-magic==0.4.27",
     "redis<6.0.0",
     "requests==2.32.5",
     "sentry-sdk==2.48.0",
+    "uvicorn==0.40.0",
     "whitenoise==6.11.0",
 ]
 

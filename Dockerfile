@@ -151,7 +151,7 @@ RUN rm -rf /var/cache/apk/*
 
 ARG IMPRESS_STATIC_ROOT=/data/static
 
-# Gunicorn
+# Gunicorn - not used by default but configuration file is provided
 RUN mkdir -p /usr/local/etc/gunicorn
 COPY docker/files/usr/local/etc/gunicorn/impress.py /usr/local/etc/gunicorn/impress.py
 
@@ -165,5 +165,18 @@ COPY --from=link-collector ${IMPRESS_STATIC_ROOT} ${IMPRESS_STATIC_ROOT}
 # Copy impress mails
 COPY --from=mail-builder /mail/backend/core/templates/mail /app/core/templates/mail
 
-# The default command runs gunicorn WSGI server in impress's main module
-CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/impress.py", "impress.wsgi:application"]
+# The default command runs uvicorn ASGI server in dics's main module
+# WEB_CONCURRENCY: number of workers to run <=> --workers=4
+ENV WEB_CONCURRENCY=4
+CMD [\
+  "uvicorn",\
+  "--app-dir=/app",\
+  "--host=0.0.0.0",\
+  "--timeout-graceful-shutdown=300",\
+  "--limit-max-requests=20000",\
+  "--lifespan=off",\
+  "impress.asgi:application"\
+  ]
+
+# To run using gunicorn WSGI server use this instead:
+#CMD ["gunicorn", "-c", "/usr/local/etc/gunicorn/conversations.py", "impress.wsgi:application"]

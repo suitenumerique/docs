@@ -91,11 +91,14 @@ backend:
     restartPolicy: Never
 
   command:
-    - "gunicorn"
-    - "-c"
-    - "/usr/local/etc/gunicorn/impress.py"
-    - "impress.wsgi:application"
-    - "--reload"
+    - uvicorn
+    - --app-dir=/app
+    - --host=0.0.0.0
+    - --timeout-graceful-shutdown=300
+    - --limit-max-requests=20000
+    - --lifespan=off
+    - --reload
+    - "impress.asgi:application"
 
   createsuperuser:
     command:
@@ -144,6 +147,9 @@ frontend:
     repository: localhost:5001/impress-frontend
     pullPolicy: Always
     tag: "latest"
+
+  securityContext:
+    runAsNonRoot: false
 
 yProvider:
   replicas: 1
