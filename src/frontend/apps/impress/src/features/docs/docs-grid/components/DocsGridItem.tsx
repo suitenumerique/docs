@@ -1,4 +1,4 @@
-import { Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
+import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
 import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,7 @@ import { css } from 'styled-components';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
-import { DocShareModal } from '@/docs/doc-share';
+import { Doc, LinkReach, SimpleDocItem, useTrans } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
@@ -27,19 +26,15 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const searchParams = useSearchParams();
   const target = searchParams.get('target');
   const isInTrashbin = target === 'trashbin';
+  const { untitledDocument } = useTrans();
 
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
-  const shareModal = useModal();
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
   const isShared = isPublic || isAuthenticated;
-
-  const handleShareClick = () => {
-    shareModal.open();
-  };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -68,7 +63,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
         `}
         className="--docs--doc-grid-item"
         aria-label={t('Open document: {{title}}', {
-          title: doc.title || t('Untitled document'),
+          title: doc.title || untitledDocument,
         })}
       >
         <Box
@@ -173,23 +168,16 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
 
           <Box $direction="row" $align="center" $gap={spacingsTokens.lg}>
             {isDesktop && (
-              <DocsGridItemSharedButton
-                doc={doc}
-                handleClick={handleShareClick}
-                disabled={isInTrashbin}
-              />
+              <DocsGridItemSharedButton doc={doc} disabled={isInTrashbin} />
             )}
             {isInTrashbin ? (
               <DocsGridTrashbinActions doc={doc} />
             ) : (
-              <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+              <DocsGridActions doc={doc} />
             )}
           </Box>
         </Box>
       </Box>
-      {shareModal.isOpen && (
-        <DocShareModal doc={doc} onClose={shareModal.close} />
-      )}
     </>
   );
 };

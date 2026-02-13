@@ -1,37 +1,21 @@
-import {
-  Button,
-  Tooltip as TooltipBase,
-} from '@gouvfr-lasuite/cunningham-react';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InView } from 'react-intersection-observer';
-import styled, { css } from 'styled-components';
+import { css } from 'styled-components';
 
 import AllDocs from '@/assets/icons/doc-all.svg';
 import { Box, Card, Icon, Text } from '@/components';
 import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
+import { ButtonImport } from '../../docs-import/components/ButtonImport';
+import { useImport } from '../../docs-import/hooks/useImport';
 import { useInfiniteDocsTrashbin } from '../api';
-import { useImport } from '../hooks/useImport';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
-import {
-  DocGridContentList,
-  DraggableDocGridContentList,
-} from './DocGridContentList';
+import { DocGridContentList } from './DocGridContentList';
 import { DocsGridLoader } from './DocsGridLoader';
-
-const Tooltip = styled(TooltipBase)`
-  & {
-    max-width: 200px;
-
-    .c__tooltip__content {
-      max-width: 200px;
-      width: max-content;
-    }
-  }
-`;
 
 type DocsGridProps = {
   target?: DocDefaultFilter;
@@ -166,11 +150,7 @@ export const DocsGrid = ({
                 </Box>
               </Box>
               <Box role="rowgroup">
-                {isDesktop ? (
-                  <DraggableDocGridContentList docs={docs} />
-                ) : (
-                  <DocGridContentList docs={docs} />
-                )}
+                <DocGridContentList docs={docs} />
               </Box>
             </Box>
             {hasNextPage && !loading && (
@@ -241,27 +221,7 @@ const DocGridTitleBar = ({
           {title}
         </Text>
       </Box>
-      {withUpload && (
-        <Tooltip
-          content={
-            <Text $textAlign="center" $theme="neutral" $variation="tertiary">
-              {t('Import Docx or Markdown files')}
-            </Text>
-          }
-        >
-          <Button
-            color="brand"
-            variant="tertiary"
-            onClick={(e) => {
-              e.stopPropagation();
-              onUploadClick();
-            }}
-            aria-label={t('Open the upload dialog')}
-          >
-            <Icon iconName="upload_file" $withThemeInherited />
-          </Button>
-        </Tooltip>
-      )}
+      {withUpload && <ButtonImport onUploadClick={onUploadClick} />}
     </Box>
   );
 };

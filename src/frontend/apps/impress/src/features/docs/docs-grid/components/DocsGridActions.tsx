@@ -11,20 +11,24 @@ import {
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
   useDuplicateDoc,
+  useTrans,
 } from '@/docs/doc-management';
+import { DocShareModal } from '@/docs/doc-share';
+
+import { DocImportModal } from '../../docs-import/components/DocImportModal';
 
 interface DocsGridActionsProps {
   doc: Doc;
-  openShareModal?: () => void;
 }
 
-export const DocsGridActions = ({
-  doc,
-  openShareModal,
-}: DocsGridActionsProps) => {
+export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const { t } = useTranslation();
 
   const deleteModal = useModal();
+  const shareModal = useModal();
+  const importModal = useModal();
+  const { untitledDocument } = useTrans();
+
   const { mutate: duplicateDoc } = useDuplicateDoc();
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
@@ -52,10 +56,18 @@ export const DocsGridActions = ({
       label: t('Share'),
       icon: 'group',
       callback: () => {
-        openShareModal?.();
+        shareModal.open();
       },
 
       testId: `docs-grid-actions-share-${doc.id}`,
+    },
+    {
+      label: t('Move into a doc'),
+      icon: 'copy_all',
+      callback: () => {
+        importModal.open();
+      },
+      testId: `docs-grid-actions-import-${doc.id}`,
     },
     {
       label: t('Duplicate'),
@@ -79,7 +91,7 @@ export const DocsGridActions = ({
     },
   ];
 
-  const documentTitle = doc.title || t('Untitled document');
+  const documentTitle = doc.title || untitledDocument;
   const menuLabel = t('Open the menu of actions for the document: {{title}}', {
     title: documentTitle,
   });
@@ -113,6 +125,16 @@ export const DocsGridActions = ({
 
       {deleteModal.isOpen && (
         <ModalRemoveDoc onClose={deleteModal.onClose} doc={doc} />
+      )}
+      {shareModal.isOpen && (
+        <DocShareModal doc={doc} onClose={shareModal.close} />
+      )}
+      {importModal.isOpen && (
+        <DocImportModal
+          doc={doc}
+          onClose={importModal.close}
+          isOpen={importModal.isOpen}
+        />
       )}
     </>
   );
