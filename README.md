@@ -62,11 +62,11 @@ Docs is an open-source alternative to tools like Notion or Google Docs, focused 
 ### Knowledge management
 
 - Subpages & hierarchy
-- Organized team spaces
 - Searchable content
 
-### Export & interoperability
+### Export/Import & interoperability
 
+- Import to `.docx` and `.md`
 - Export to `.docx`, `.odt`, `.pdf`
 - Customizable templates
 
@@ -77,7 +77,7 @@ Experience Docs instantly - no installation required.
 - 🔗 [Open a live demo document][demo]
 - 🌍 [Browse public instances][instances]
 
-[demo]: https://impress-preprod.beta.numerique.gouv.fr/docs/6ee5aac4-4fb9-457d-95bf-bb56c2467713/
+[demo]: https://docs.la-suite.eu/docs/9137bbb5-3e8a-4ff7-8a36-fcc4e8bd57f4/
 [instances]: /docs/instances.md
 
 ## Self-hosting
@@ -212,7 +212,7 @@ This project is community-driven and PRs are welcome.
 
 Curious where Docs is headed?
 
-Explore upcoming features, priorities and long-term direction on our [public roadmap](https://github.com/orgs/numerique-gouv/projects/13/views/11).
+Explore upcoming features, priorities and long-term direction on our [public roadmap](https://docs.numerique.gouv.fr/docs/d1d3788e-c619-41ff-abe8-2d079da2f084/).
 
 ## License 📝
 
@@ -224,7 +224,7 @@ While Docs is a public-driven initiative, our license choice is an invitation fo
 
 ### Stack
 
-Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction), and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
+Docs is built on top of [Django Rest Framework](https://www.django-rest-framework.org/), [Next.js](https://nextjs.org/), [ProseMirror](https://prosemirror.net/), [BlockNote.js](https://www.blocknotejs.org/), [HocusPocus](https://tiptap.dev/docs/hocuspocus/introduction), and [Yjs](https://yjs.dev/). We thank the contributors of all these projects for their awesome work!
 
 We are proud sponsors of [BlockNotejs](https://www.blocknotejs.org/) and [Yjs](https://yjs.dev/).
 

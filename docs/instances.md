@@ -7,27 +7,23 @@ If you run a public instance and would like it listed here, feel free to open a 
 
 ---
 
-## 🇫🇷 France
+## 🏛️ Public Organizations
 
-### docs.numerique.gouv.fr  
+### docs.numerique.gouv.fr
 
 **Organization:** DINUM  
 **Audience:** French public agents working for central administration and extended public sphere  
 **Access:** ProConnect account required  
 <https://docs.numerique.gouv.fr/>
 
-### docs.suite.anct.gouv.fr  
+### docs.suite.anct.gouv.fr
 
 **Organization:** ANCT  
 **Audience:** French public agents working for territorial administration and extended public sphere  
 **Access:** ProConnect account required  
 <https://docs.suite.anct.gouv.fr/>
 
----
-
-## 🇪🇺 Europe
-
-### notes.demo.opendesk.eu  
+### notes.demo.opendesk.eu
 
 **Organization:** ZenDiS  
 **Type:** OpenDesk demo instance  
@@ -36,26 +32,36 @@ If you run a public instance and would like it listed here, feel free to open a 
 
 ---
 
-## 🌍 International
+## 🏢 Private Sector
 
-### notes.liiib.re  
+### docs.demo.mosacloud.eu
+
+**Organization:** mosa.cloud  
+**Type:** Demo instance  
+<https://docs.demo.mosacloud.eu/>
+
+### notes.liiib.re
 
 **Organization:** lasuite.coop  
 **Access:** Public demo  
 **Notes:** Content and accounts reset monthly  
 <https://notes.liiib.re/>
 
-### docs.federated.nexus  
+### notes.lasuite.coop
+
+**Organization:** lasuite.coop  
+**Access:** Public  
+<https://notes.lasuite.coop/>
+
+---
+
+## 🤝 NGOs
+
+### docs.federated.nexus
 
 **Organization:** federated.nexus  
 **Access:** Public with account registration  
 <https://docs.federated.nexus/>
-
-### docs.demo.mosacloud.eu  
-
-**Organization:** mosa.cloud  
-**Type:** Demo instance  
-<https://docs.demo.mosacloud.eu/>
 
 ---
 

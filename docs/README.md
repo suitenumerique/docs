@@ -13,7 +13,9 @@ Use the section below to quickly find what you are looking for.
   - [System requirements](system-requirements.md)
   - [Installation overview](installation/README.md)
   - [Docker Compose deployment](installation/compose.md)
+    - [Docker Compose examples](examples/compose/)
   - [Kubernetes deployment](installation/kubernetes.md)
+    - [Helm values examples](examples/helm/)
 
 - Configuration
   - [Environment variables](env.md)
@@ -29,10 +31,6 @@ Use the section below to quickly find what you are looking for.
   - [Public instances](instances.md)
   - [Releases & upgrades](release.md)
   - [Troubleshooting](troubleshoot.md)
-
-- Examples
-  - [Docker Compose examples](examples/compose/)
-  - [Helm values examples](examples/helm/)
 
 - Project & product
   - [Roadmap](roadmap.md)
