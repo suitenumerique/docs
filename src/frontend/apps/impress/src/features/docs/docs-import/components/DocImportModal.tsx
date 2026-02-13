@@ -62,7 +62,7 @@ export const DocImportModal = ({
               aria-label={t('Cancel the move')}
               variant="secondary"
               fullWidth
-              //onClick={() => onClose()}
+              onClick={onClose}
             >
               {t('Cancel')}
             </Button>
@@ -115,6 +115,10 @@ export const DocImportModal = ({
           $direction="column"
           $justify="space-between"
           className="--docs--doc-move-modal"
+          onKeyDown={(e) => {
+            // Prevent keyboard events from bubbling to parent components (e.g., drag and drop)
+            e.stopPropagation();
+          }}
         >
           <QuickSearch
             placeholder={t('Search for a doc')}

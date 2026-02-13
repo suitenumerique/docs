@@ -12,7 +12,7 @@ import { css } from 'styled-components';
 
 import { Box, Overlayer, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, SimpleDocItem } from '@/docs/doc-management';
+import { Doc, SimpleDocItem, useTrans } from '@/docs/doc-management';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
 import { useMoveDoc } from '../api/useMove';
