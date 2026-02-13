@@ -24,6 +24,7 @@ and this project adheres to
 
 - 🐛(frontend) fix broadcast store sync #1846
 - 🐛(helm) use celery resources instead of backend resources
+- 🐛(helm) reverse liveness and readiness for backend deployment
 
 ## [v4.5.0] - 2026-01-28
 
