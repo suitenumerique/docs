@@ -11,8 +11,11 @@ import {
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
   useDuplicateDoc,
+  useTrans,
 } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
+
+import { DocImportModal } from '../../docs-import/components/DocImportModal';
 
 interface DocsGridActionsProps {
   doc: Doc;
@@ -23,6 +26,8 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
 
   const deleteModal = useModal();
   const shareModal = useModal();
+  const importModal = useModal();
+  const { untitledDocument } = useTrans();
 
   const { mutate: duplicateDoc } = useDuplicateDoc();
 
@@ -57,6 +62,14 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
       testId: `docs-grid-actions-share-${doc.id}`,
     },
     {
+      label: t('Move into a doc'),
+      icon: 'copy_all',
+      callback: () => {
+        importModal.open();
+      },
+      testId: `docs-grid-actions-import-${doc.id}`,
+    },
+    {
       label: t('Duplicate'),
       icon: 'content_copy',
       disabled: !doc.abilities.duplicate,
@@ -78,7 +91,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
   ];
 
-  const documentTitle = doc.title || t('Untitled document');
+  const documentTitle = doc.title || untitledDocument;
   const menuLabel = t('Open the menu of actions for the document: {{title}}', {
     title: documentTitle,
   });
@@ -115,6 +128,13 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
       )}
       {shareModal.isOpen && (
         <DocShareModal doc={doc} onClose={shareModal.close} />
+      )}
+      {importModal.isOpen && (
+        <DocImportModal
+          doc={doc}
+          onClose={importModal.close}
+          isOpen={importModal.isOpen}
+        />
       )}
     </>
   );

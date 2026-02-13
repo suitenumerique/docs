@@ -7,7 +7,7 @@ import { css } from 'styled-components';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
+import { Doc, LinkReach, SimpleDocItem, useTrans } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
@@ -26,6 +26,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const searchParams = useSearchParams();
   const target = searchParams.get('target');
   const isInTrashbin = target === 'trashbin';
+  const { untitledDocument } = useTrans();
 
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
@@ -62,7 +63,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
         `}
         className="--docs--doc-grid-item"
         aria-label={t('Open document: {{title}}', {
-          title: doc.title || t('Untitled document'),
+          title: doc.title || untitledDocument,
         })}
       >
         <Box
