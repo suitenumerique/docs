@@ -72,6 +72,7 @@ export interface Doc {
   numchild: number;
   updated_at: string;
   user_role: Role;
+  accesses_public_keys_per_user?: Record<string, string>;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;

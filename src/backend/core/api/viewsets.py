@@ -2267,13 +2267,15 @@ class DocumentAccessViewSet(
                 "Only owners of a document can assign other users as owners."
             )
 
-        # Prevent providing encrypted_document_symmetric_key_for_user during creation
-        # This field should be null initially and set via the encryption workflow
-        if 'encrypted_document_symmetric_key_for_user' in serializer.validated_data and not self.document.is_encrypted:
-            raise drf.exceptions.ValidationError({
-                'encrypted_document_symmetric_key_for_user':
-                'This field can only be used when the document is encrypted.'
-            })
+        # Handle encrypted_document_symmetric_key_for_user during creation
+        if 'encrypted_document_symmetric_key_for_user' in serializer.validated_data:
+            if not self.document.is_encrypted:
+                raise drf.exceptions.ValidationError({
+                    'encrypted_document_symmetric_key_for_user':
+                    'This field can only be provided when the document is encrypted.'
+                })
+            # For encrypted documents, allow the key to be provided
+            # The key will be stored directly in the DocumentAccess record
 
         access = serializer.save(document_id=self.kwargs["resource_id"])
 

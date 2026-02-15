@@ -1,8 +1,14 @@
 import type { MessageEvent } from 'ws';
 
-import { decrypt, encrypt } from '@/docs/doc-collaboration/encryption';
+import {
+  decryptContent,
+  encryptContent,
+} from '@/docs/doc-collaboration/encryption';
 
 export class EncryptedWebSocket extends WebSocket {
+  protected readonly encryptionKey!: CryptoKey;
+  protected readonly decryptionKey!: CryptoKey;
+
   constructor(address: string | URL, protocols?: string | string[]) {
     super(address, protocols);
 
@@ -14,7 +20,7 @@ export class EncryptedWebSocket extends WebSocket {
       options?: boolean | AddEventListenerOptions,
     ): void {
       if (type === 'message') {
-        const wrappedListener: typeof listener = (event) => {
+        const wrappedListener: typeof listener = async (event) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const messageEvent = event as any;
 
@@ -25,11 +31,15 @@ export class EncryptedWebSocket extends WebSocket {
             );
           }
 
-          const manageableData = new Uint8Array<ArrayBufferLike>(
+          const manageableData = new Uint8Array<ArrayBuffer>(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            messageEvent.data as ArrayBufferLike,
+            messageEvent.data as ArrayBuffer,
           );
-          const decryptedData = decrypt(manageableData);
+
+          const decryptedData = await decryptContent(
+            manageableData,
+            this.decryptionKey,
+          );
 
           if (typeof listener === 'function') {
             listener.call(this, { ...event, data: decryptedData });
@@ -95,7 +105,31 @@ export class EncryptedWebSocket extends WebSocket {
     });
   }
 
-  send(message: Uint8Array) {
-    return super.send(encrypt(message));
+  send(message: Uint8Array<ArrayBuffer>) {
+    // TODO: we use the polyfilled websocket parameter for `y-websocket` to bring our own encryption logic over the network
+    // that's great but encryption is preferable with async processes, we cannot just switch to async since
+    // it's used into the Yjs websocket provider.
+    //
+    // try like this since no return value is expected from here, but it will mess in case of error (unhandled exception...)
+    // if it does not fit our need, we will have to rewrite the Yjs websocket package to have the best async logic set up
+    encryptContent(message, this.encryptionKey)
+      .then((encryptedMessage) => {
+        super.send(encryptedMessage);
+      })
+      .catch((error) => {
+        console.error(error);
+
+        return Promise.reject(error);
+      });
   }
+}
+
+export function createAdaptedEncryptedWebsocketClass(options: {
+  encryptionKey: CryptoKey;
+  decryptionKey: CryptoKey;
+}) {
+  return class extends EncryptedWebSocket {
+    protected readonly encryptionKey = options.encryptionKey;
+    protected readonly decryptionKey = options.decryptionKey;
+  };
 }

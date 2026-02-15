@@ -235,6 +235,11 @@ class DocumentSerializer(ListDocumentSerializer):
         if request and request.method == "POST":
             fields["id"].read_only = False
 
+        # Remove accesses_public_keys_per_user field if document is not encrypted
+        instance = self.context.get("instance")
+        if instance and not getattr(instance, "is_encrypted", True):
+            fields.pop("accesses_public_keys_per_user", None)
+
         return fields
 
     def validate_id(self, value):

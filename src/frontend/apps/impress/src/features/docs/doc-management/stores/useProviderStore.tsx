@@ -3,7 +3,7 @@ import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
-import { EncryptedWebSocket } from '@/docs/doc-collaboration/encryptedWebsocket';
+import { createAdaptedEncryptedWebsocketClass } from '@/docs/doc-collaboration/encryptedWebsocket';
 import { RelayProvider } from '@/docs/doc-collaboration/relayProvider';
 
 export type SwitchableProvider = RelayProvider | HocuspocusProvider;
@@ -12,8 +12,10 @@ export interface UseCollaborationStore {
   createProvider: (
     providerUrl: string,
     storeId: string,
-    isEncrypted: boolean,
     initialDocState?: Buffer<ArrayBuffer>,
+    encryption?: {
+      symmetricKey: CryptoKey;
+    },
   ) => SwitchableProvider;
   destroyProvider: () => void;
   provider: SwitchableProvider | undefined;
@@ -34,7 +36,9 @@ const defaultValues = {
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, isEncrypted, initialDocState) => {
+  createProvider: (wsUrl, storeId, initialDocState, encryption) => {
+    const isEncrypted = !!encryption;
+
     const doc = new Y.Doc({
       guid: storeId,
     });
@@ -51,8 +55,13 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       // same for previous "onSynced"
       //
 
+      const AdaptedEncryptedWebSocket = createAdaptedEncryptedWebsocketClass({
+        encryptionKey: encryption.symmetricKey,
+        decryptionKey: encryption.symmetricKey,
+      });
+
       provider = new RelayProvider(wsUrl, storeId, doc, {
-        WebSocketPolyfill: EncryptedWebSocket,
+        WebSocketPolyfill: AdaptedEncryptedWebSocket,
         // For simplicity we always use websocket server even if there is local tabs,
         // otherwise the question would be do we need to encrypt also for local tabs through BroadcastChannel or not
         disableBc: true,

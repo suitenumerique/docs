@@ -5,11 +5,17 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
+import { openDB } from 'idb';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
-import { encrypt } from '@/docs/doc-collaboration/encryption';
+import {
+  encryptContent,
+  generateSymmetricKey,
+  generateUserKeyPair,
+  prepareEncryptedSymmetricKeysForUsers,
+} from '@/docs/doc-collaboration';
 import { toBase64 } from '@/features/docs/doc-editor';
 import {
   Doc,
@@ -59,20 +65,60 @@ export const ModalEncryptDoc = ({
     onClose();
   };
 
-  const handleEncrypt = () => {
+  const handleEncrypt = async () => {
     if (!provider) {
       return;
     }
 
+    const userId = 'xxx';
+
+    const encryptionDatabase = await openDB('encryption');
+    const userPrivateKey = await encryptionDatabase.get(
+      'privateKey',
+      `user:${userId}`,
+    );
+
+    // Perform the onboarding if that's the first time using encryption on this device
+    if (!userPrivateKey) {
+      // TODO: trigger the onboarding, either by creating or retrieving a key from another device
+      // TODO: probably the logic should be at a device key level, not user one?
+
+      const userKeyPair = await generateUserKeyPair();
+
+      // TODO: it should use transaction
+      // encryptionDatabase.transaction
+      await encryptionDatabase.put(
+        'privateKey',
+        userKeyPair.privateKey,
+        `user:${userId}`,
+      );
+      await encryptionDatabase.put(
+        'publicKey',
+        userKeyPair.publicKey,
+        `user:${userId}`,
+      );
+    }
+
+    const documentSymmetricKey = await generateSymmetricKey();
+
     const state = Y.encodeStateAsUpdate(provider.document);
-    const encryptedContent = encrypt(state);
+    const encryptedContent = await encryptContent(state, documentSymmetricKey);
+
+    // Prepare encrypted symmetric keys for all users with access
+    const encryptedSymmetricKeyPerUser = prepareEncryptedSymmetricKeysForUsers(
+      documentSymmetricKey,
+      doc.accesses_public_keys_per_user,
+    );
+
+    // TODO:
+    // TODO: if none it should at least make it for the current user
+    // TODO: so it makes sense `accesses_public_keys_per_user` is always passed?
+    // TODO:
 
     encryptDoc({
       docId: doc.id,
       content: toBase64(encryptedContent),
-      encryptedSymmetricKeyPerUser: {
-        // TODO: list of current users
-      },
+      encryptedSymmetricKeyPerUser,
     });
   };
 
