@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# shellcheck source=bin/_config.sh
-source "$(dirname "${BASH_SOURCE[0]}")/_config.sh"
-
-_dc_run app-dev python -c 'from cryptography.fernet import Fernet;import sys; sys.stdout.write("\n" + Fernet.generate_key().decode() + "\n");'
