@@ -20,9 +20,14 @@ import { DocToolBox } from './DocToolBox';
 
 interface DocHeaderProps {
   doc: Doc;
+  encryptionSettings: {
+    userId: string;
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null;
 }
 
-export const DocHeader = ({ doc }: DocHeaderProps) => {
+export const DocHeader = ({ doc, encryptionSettings }: DocHeaderProps) => {
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
@@ -65,7 +70,9 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
                 <DocHeaderInfo doc={doc} />
               </Box>
             </Box>
-            {!isDeletedDoc && <DocToolBox doc={doc} />}
+            {!isDeletedDoc && (
+              <DocToolBox doc={doc} encryptionSettings={encryptionSettings} />
+            )}
             {isDeletedDoc && (
               <BoutonShare
                 doc={doc}

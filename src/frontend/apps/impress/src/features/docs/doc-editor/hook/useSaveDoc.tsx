@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Y from 'yjs';
 
-import { encrypt } from '@/docs/doc-collaboration/encryption';
+import { encryptContent } from '@/docs/doc-collaboration/encryption';
 import { useUpdateDoc } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { isFirefox } from '@/utils/userAgent';
@@ -16,6 +16,9 @@ export const useSaveDoc = (
   yDoc: Y.Doc,
   isConnectedToCollabServer: boolean,
   isEncrypted: boolean,
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null,
 ) => {
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
@@ -50,19 +53,30 @@ export const useSaveDoc = (
   const saveDoc = useCallback(() => {
     if (!isLocalChange) {
       return false;
+    } else if (isEncrypted && !documentEncryptionSettings) {
+      // If the symmetric key is not yet ready we just ignore saving (either it needs onboarding or just a few seconds)
+      return false;
     }
 
     let state = Y.encodeStateAsUpdate(yDoc);
+    let contentPromise: Promise<typeof state>;
 
     if (isEncrypted) {
-      state = encrypt(state);
+      contentPromise = encryptContent(
+        new Uint8Array(state),
+        documentEncryptionSettings!.documentSymmetricKey,
+      );
+    } else {
+      contentPromise = Promise.resolve(state);
     }
 
-    updateDoc({
-      id: docId,
-      content: toBase64(state),
-      contentEncrypted: isEncrypted,
-      websocket: isConnectedToCollabServer,
+    contentPromise.then((docState) => {
+      updateDoc({
+        id: docId,
+        content: toBase64(docState),
+        contentEncrypted: isEncrypted,
+        websocket: isConnectedToCollabServer,
+      });
     });
 
     return true;
@@ -73,6 +87,7 @@ export const useSaveDoc = (
     yDoc,
     isConnectedToCollabServer,
     isEncrypted,
+    documentEncryptionSettings,
   ]);
 
   const router = useRouter();

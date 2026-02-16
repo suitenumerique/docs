@@ -75,11 +75,15 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
         provider.document.guid === variables.docId;
 
       if (canSave) {
-        await updateDoc({
-          id: variables.docId,
-          content: toBase64(Y.encodeStateAsUpdate(provider.document)),
-          contentEncrypted: false, // TODO: duplication should not be possible when encrypted?
-        });
+        const state = Y.encodeStateAsUpdate(provider.document);
+
+        if (state) {
+          await updateDoc({
+            id: variables.docId,
+            content: toBase64(state),
+            contentEncrypted: false, // TODO: duplication should not be possible when encrypted?
+          });
+        }
       }
 
       return await duplicateDoc(variables);

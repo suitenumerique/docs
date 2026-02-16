@@ -19,7 +19,10 @@ import {
   useTrans,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
-import { useEncryption } from '@/features/docs/doc-collaboration';
+import {
+  useDocumentEncryption,
+  useEncryption,
+} from '@/features/docs/doc-collaboration';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -98,6 +101,12 @@ const DocPage = ({ id }: DocProps) => {
     user?.id,
     needsEncryption,
   );
+  const { documentEncryptionLoading, documentEncryptionSettings } =
+    useDocumentEncryption(
+      encryptionLoading,
+      encryptionSettings,
+      doc?.encrypted_document_symmetric_key_for_user,
+    );
   const { setCurrentDoc } = useDocStore();
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
@@ -106,8 +115,7 @@ const DocPage = ({ id }: DocProps) => {
     doc?.id,
     doc?.content,
     doc?.is_encrypted,
-    doc?.encrypted_document_symmetric_key_for_user,
-    encryptionSettings,
+    documentEncryptionSettings,
   );
   const { t } = useTranslation();
   const { untitledDocument } = useTrans();
@@ -116,7 +124,13 @@ const DocPage = ({ id }: DocProps) => {
    * Show skeleton when loading a document
    */
   useEffect(() => {
-    if (!doc && encryptionLoading && !isError && !isSkeletonVisible) {
+    if (
+      !doc &&
+      encryptionLoading &&
+      documentEncryptionLoading &&
+      !isError &&
+      !isSkeletonVisible
+    ) {
       setIsSkeletonVisible(true);
     }
 
@@ -126,6 +140,7 @@ const DocPage = ({ id }: DocProps) => {
   }, [
     doc,
     encryptionLoading,
+    documentEncryptionLoading,
     isError,
     isSkeletonVisible,
     setIsSkeletonVisible,
@@ -232,7 +247,7 @@ const DocPage = ({ id }: DocProps) => {
     );
   }
 
-  if (!doc || encryptionLoading) {
+  if (!doc || encryptionLoading || documentEncryptionLoading) {
     return <Loading />;
   }
 
@@ -248,7 +263,11 @@ const DocPage = ({ id }: DocProps) => {
           key="title"
         />
       </Head>
-      <DocEditor doc={doc} encryptionSettings={encryptionSettings} />
+      <DocEditor
+        doc={doc}
+        encryptionSettings={encryptionSettings}
+        documentEncryptionSettings={documentEncryptionSettings}
+      />
     </>
   );
 };

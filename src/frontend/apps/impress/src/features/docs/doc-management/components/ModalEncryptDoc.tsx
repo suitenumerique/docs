@@ -16,7 +16,7 @@ import {
   generateUserKeyPair,
   prepareEncryptedSymmetricKeysForUsers,
 } from '@/docs/doc-collaboration';
-import { toBase64 } from '@/features/docs/doc-editor';
+import { useAuth } from '@/features/auth';
 import {
   Doc,
   KEY_DOC,
@@ -28,18 +28,25 @@ import { useKeyboardAction } from '@/hooks';
 
 interface ModalEncryptDocProps {
   doc: Doc;
+  encryptionSettings: {
+    userId: string;
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null;
   onClose: () => void;
   onSuccess?: (doc: Doc) => void;
 }
 
 export const ModalEncryptDoc = ({
   doc,
+  encryptionSettings,
   onClose,
   onSuccess,
 }: ModalEncryptDocProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
   const { provider } = useProviderStore();
+  const { user } = useAuth();
 
   const {
     mutate: encryptDoc,
@@ -66,53 +73,74 @@ export const ModalEncryptDoc = ({
   };
 
   const handleEncrypt = async () => {
-    if (!provider) {
+    if (!provider || !user) {
       return;
     }
 
-    const userId = 'xxx';
-
-    // TODO:
-    // TODO: reuse encryption settings instead
-    // TODO:
-
-    const encryptionDatabase = await openDB('encryption');
-    const userPrivateKey = await encryptionDatabase.get(
-      'privateKey',
-      `user:${userId}`,
-    );
-
     // Perform the onboarding if that's the first time using encryption on this device
-    if (!userPrivateKey) {
+    if (!encryptionSettings) {
       // TODO: trigger the onboarding, either by creating or retrieving a key from another device
       // TODO: probably the logic should be at a device key level, not user one?
 
       const userKeyPair = await generateUserKeyPair();
+
+      const encryptionDatabase = await openDB('encryption');
 
       // TODO: it should use transaction
       // encryptionDatabase.transaction
       await encryptionDatabase.put(
         'privateKey',
         userKeyPair.privateKey,
-        `user:${userId}`,
+        `user:${user.id}`,
       );
       await encryptionDatabase.put(
         'publicKey',
         userKeyPair.publicKey,
-        `user:${userId}`,
+        `user:${user.id}`,
       );
+
+      // TODO:
+      // TODO: it should call an endpoint to update the user
+      // TODO:
+
+      // TODO: should check encryptionSettings will update, otherwise hard refresh is needed
+      window.location.reload();
+
+      return;
     }
 
     const documentSymmetricKey = await generateSymmetricKey();
 
     const state = Y.encodeStateAsUpdate(provider.document);
-    const encryptedContent = await encryptContent(state, documentSymmetricKey);
+    const encryptedContent = await encryptContent(
+      new Uint8Array(state),
+      documentSymmetricKey,
+    );
+
+    // Their public key are base64 encoded, decoding the whole
+    const usersPublicKeys: Record<string, ArrayBuffer> = {};
+
+    if (doc.accesses_public_keys_per_user) {
+      // TODO:
+      // TODO: should throw if missing public keys according to current accesses
+      // TODO:
+
+      for (const [userId, publicKey] of Object.entries(
+        doc.accesses_public_keys_per_user,
+      )) {
+        usersPublicKeys[userId] = Buffer.from(publicKey, 'base64').buffer;
+      }
+    } else {
+      // if it has been not provided it's weird because it should only happen for people not authenticated
+      throw new Error(`"accesses_public_keys_per_user" should be provided`);
+    }
 
     // Prepare encrypted symmetric keys for all users with access
-    const encryptedSymmetricKeyPerUser = prepareEncryptedSymmetricKeysForUsers(
-      documentSymmetricKey,
-      doc.accesses_public_keys_per_user,
-    );
+    const encryptedSymmetricKeyPerUser =
+      await prepareEncryptedSymmetricKeysForUsers(
+        documentSymmetricKey,
+        usersPublicKeys,
+      );
 
     // TODO:
     // TODO: if none it should at least make it for the current user
@@ -121,7 +149,7 @@ export const ModalEncryptDoc = ({
 
     encryptDoc({
       docId: doc.id,
-      content: toBase64(encryptedContent),
+      content: encryptedContent,
       encryptedSymmetricKeyPerUser,
     });
   };

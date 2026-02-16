@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
-import { toBase64 } from '@/features/docs/doc-editor';
 import {
   Doc,
   KEY_DOC,
@@ -71,7 +70,7 @@ export const ModalRemoveDocEncryption = ({
 
     removeDocEncryption({
       docId: doc.id,
-      content: toBase64(state),
+      content: state,
     });
   };
 

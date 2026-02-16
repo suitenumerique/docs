@@ -81,9 +81,16 @@ export const blockNoteSchema = (withMultiColumn?.(baseBlockNoteSchema) ||
 interface BlockNoteEditorProps {
   doc: Doc;
   provider: SwitchableProvider;
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null;
 }
 
-export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
+export const BlockNoteEditor = ({
+  doc,
+  provider,
+  documentEncryptionSettings,
+}: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
@@ -99,6 +106,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     provider.document,
     isConnectedToCollabServer,
     doc.is_encrypted,
+    documentEncryptionSettings,
   );
   const { i18n } = useTranslation();
   let lang = i18n.resolvedLanguage;

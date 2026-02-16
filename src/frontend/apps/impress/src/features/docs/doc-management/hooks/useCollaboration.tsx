@@ -1,11 +1,7 @@
-import { openDB } from 'idb';
 import { useEffect } from 'react';
 
 import { useCollaborationUrl } from '@/core/config';
-import {
-  decryptContent,
-  decryptSymmetricKey,
-} from '@/docs/doc-collaboration/encryption';
+import { decryptContent } from '@/docs/doc-collaboration/encryption';
 import { Base64, useProviderStore } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 import { useBroadcastStore } from '@/stores';
@@ -14,10 +10,8 @@ export const useCollaboration = (
   room: string | undefined,
   initialContent: Base64 | undefined,
   isEncrypted: boolean | undefined,
-  userEncryptedSymmetricKey: string | undefined,
-  encryptionSettings: {
-    userPrivateKey: CryptoKey;
-    userPublicKey: CryptoKey;
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
   } | null,
 ) => {
   const collaborationUrl = useCollaborationUrl(room);
@@ -31,9 +25,7 @@ export const useCollaboration = (
       !collaborationUrl ||
       !user ||
       isEncrypted === undefined ||
-      (isEncrypted === true &&
-        !userEncryptedSymmetricKey &&
-        !encryptionSettings) ||
+      (isEncrypted === true && !documentEncryptionSettings) ||
       provider
     ) {
       // TODO: make sure the logout would invalide this provider, also a change of local keys (after import...)
@@ -53,24 +45,27 @@ export const useCollaboration = (
 
     if (isEncrypted) {
       contentPromise = (async () => {
-        if (!userEncryptedSymmetricKey) {
+        if (!documentEncryptionSettings) {
           throw new Error(
-            `"encrypted_document_symmetric_key_for_user" must be provided since document is encrypted`,
+            `"documentEncryptionSettings" must be filled since document is encrypted`,
           );
         }
 
-        const symmetricKey = await decryptSymmetricKey(
-          userEncryptedSymmetricKey,
-          encryptionSettings!.userPrivateKey,
-        );
-
         if (initialDocState) {
           return [
-            Buffer.from(await decryptContent(initialDocState, symmetricKey)),
-            symmetricKey,
+            Buffer.from(
+              await decryptContent(
+                initialDocState,
+                documentEncryptionSettings.documentSymmetricKey,
+              ),
+            ),
+            documentEncryptionSettings.documentSymmetricKey,
           ];
         } else {
-          return [initialDocState, symmetricKey];
+          return [
+            initialDocState,
+            documentEncryptionSettings.documentSymmetricKey,
+          ];
         }
       })();
     } else {

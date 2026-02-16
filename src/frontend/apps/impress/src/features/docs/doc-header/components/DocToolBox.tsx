@@ -46,9 +46,14 @@ const ModalExport = Export?.ModalExport;
 
 interface DocToolBoxProps {
   doc: Doc;
+  encryptionSettings: {
+    userId: string;
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null;
 }
 
-export const DocToolBox = ({ doc }: DocToolBoxProps) => {
+export const DocToolBox = ({ doc, encryptionSettings }: DocToolBoxProps) => {
   const { t } = useTranslation();
   const treeContext = useTreeContext<Doc>();
   const queryClient = useQueryClient();
@@ -300,8 +305,9 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       )}
       {isModalEncryptOpen && (
         <ModalEncryptDoc
-          onClose={() => setIsModalEncryptOpen(false)}
           doc={doc}
+          encryptionSettings={encryptionSettings}
+          onClose={() => setIsModalEncryptOpen(false)}
           onSuccess={() => {
             //
             // TODO: probably it should make an hard refresh to get the setup
@@ -312,8 +318,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       )}
       {isModalRemoveEncryptionOpen && (
         <ModalRemoveDocEncryption
-          onClose={() => setIsModalRemoveEncryptionOpen(false)}
           doc={doc}
+          onClose={() => setIsModalRemoveEncryptionOpen(false)}
           onSuccess={() => {
             //
             // TODO: probably it should make an hard refresh to get the setup

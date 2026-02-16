@@ -1,9 +1,10 @@
-import { Doc } from '@/features/docs/doc-management/types';
+const userKeyPairAlgorithm = 'RSA-OAEP';
+const documentSymmetricKeyAlgorithm = 'AES-GCM';
 
 export async function generateUserKeyPair(): Promise<CryptoKeyPair> {
   return await crypto.subtle.generateKey(
     {
-      name: 'RSA-OAEP',
+      name: userKeyPairAlgorithm,
       modulusLength: 4096,
       publicExponent: new Uint8Array([1, 0, 1]),
       hash: 'SHA-256',
@@ -13,10 +14,10 @@ export async function generateUserKeyPair(): Promise<CryptoKeyPair> {
   );
 }
 
-// Generate a symmetric key for document encryption
+// generate a symmetric key for document encryption
 export async function generateSymmetricKey(): Promise<CryptoKey> {
   return await crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
+    { name: documentSymmetricKeyAlgorithm, length: 256 },
     true,
     ['encrypt', 'decrypt'],
   );
@@ -32,34 +33,41 @@ export async function encryptSymmetricKey(
   // TODO:
   // TODO: should use something better than RSA-OAEP, but maybe WebCrypto is not enough (use downloaded library? "libsodium-wrappers" or so)
   // TODO:
-  return await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, raw);
+  return await crypto.subtle.encrypt(
+    { name: userKeyPairAlgorithm },
+    publicKey,
+    raw,
+  );
 }
 
-// Decrypt a symmetric key with the local private key
+// decrypt a symmetric key with the local private key
 export async function decryptSymmetricKey(
   encryptedSymmetricKey: ArrayBuffer,
   privateKey: CryptoKey,
 ): Promise<CryptoKey> {
   const raw = await crypto.subtle.decrypt(
-    { name: 'RSA-OAEP' },
+    { name: userKeyPairAlgorithm },
     privateKey,
     encryptedSymmetricKey,
   );
 
-  return await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, true, [
-    'encrypt',
-    'decrypt',
-  ]);
+  return await crypto.subtle.importKey(
+    'raw',
+    raw,
+    { name: documentSymmetricKeyAlgorithm },
+    true,
+    ['encrypt', 'decrypt'],
+  );
 }
 
-// Encrypt content with a symmetric key
+// encrypt content with a symmetric key
 export async function encryptContent(
   content: Uint8Array<ArrayBuffer>,
   symmetricKey: CryptoKey,
 ): Promise<Uint8Array<ArrayBuffer>> {
   const arrayBuffer = await crypto.subtle.encrypt(
     {
-      name: 'AES-GCM',
+      name: documentSymmetricKeyAlgorithm,
     },
     symmetricKey,
     content,
@@ -68,14 +76,14 @@ export async function encryptContent(
   return new Uint8Array(arrayBuffer);
 }
 
-// Decrypt content with a symmetric key
+// decrypt content with a symmetric key
 export async function decryptContent(
   encryptedContent: Uint8Array<ArrayBuffer>,
   symmetricKey: CryptoKey,
 ): Promise<Uint8Array<ArrayBufferLike>> {
   const arrayBuffer = await crypto.subtle.decrypt(
     {
-      name: 'AES-GCM',
+      name: documentSymmetricKeyAlgorithm,
     },
     symmetricKey,
     encryptedContent,
@@ -84,46 +92,24 @@ export async function decryptContent(
   return new Uint8Array(arrayBuffer);
 }
 
-/**
- * Get the symmetric key for a document
- * If the document is encrypted and we have access, decrypt the symmetric key
- */
-export function getDocumentSymmetricKey(doc: Doc): string | null {
-  if (!doc.is_encrypted) {
-    return null;
-  }
+// prepare encrypted symmetric keys for all users with access to a document
+export async function prepareEncryptedSymmetricKeysForUsers(
+  symmetricKey: CryptoKey,
+  accessesPublicKeysPerUser: Record<string, ArrayBuffer>,
+): Promise<Record<string, ArrayBuffer>> {
+  const result: Record<string, ArrayBuffer> = {};
 
-  // For now, use the hardcoded private key to decrypt
-  // In production, this should use the user's actual private key
-  if (doc.accesses_public_keys_per_user) {
-    const currentUserId = 'current-user-id'; // TODO: Get actual current user ID
-    const encryptedSymmetricKey =
-      doc.accesses_public_keys_per_user[currentUserId];
-
-    if (encryptedSymmetricKey) {
-      return decryptSymmetricKey(encryptedSymmetricKey);
-    }
-  }
-
-  return null;
-}
-
-/**
- * Prepare encrypted symmetric keys for all users with access to a document
- */
-export function prepareEncryptedSymmetricKeysForUsers(
-  symmetricKey: string,
-  accessesPublicKeysPerUser?: Record<string, string>,
-): Record<string, string> {
-  const result: Record<string, string> = {};
-
-  if (!accessesPublicKeysPerUser) {
-    return result;
-  }
-
-  // Encrypt the symmetric key for each user's public key
+  // encrypt the symmetric key for each user's public key
   for (const [userId, publicKey] of Object.entries(accessesPublicKeysPerUser)) {
-    result[userId] = encryptSymmetricKey(symmetricKey, publicKey);
+    const usablePublicKey = await crypto.subtle.importKey(
+      'raw',
+      publicKey,
+      { name: userKeyPairAlgorithm },
+      true,
+      ['encrypt', 'decrypt'],
+    );
+
+    result[userId] = await encryptSymmetricKey(symmetricKey, usablePublicKey);
   }
 
   return result;

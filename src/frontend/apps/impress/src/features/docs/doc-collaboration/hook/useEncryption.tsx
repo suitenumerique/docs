@@ -7,12 +7,14 @@ export function useEncryption(
 ): {
   encryptionLoading: boolean;
   encryptionSettings: {
+    userId: string;
     userPrivateKey: CryptoKey;
     userPublicKey: CryptoKey;
   } | null;
 } {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<{
+    userId: string;
     userPrivateKey: CryptoKey;
     userPublicKey: CryptoKey;
   } | null>(null);
@@ -26,9 +28,7 @@ export function useEncryption(
         setLoading(true);
         setSettings(null);
         return;
-      }
-
-      if (enableEncryption === false) {
+      } else if (enableEncryption === false) {
         setLoading(false);
         setSettings(null);
         return;
@@ -59,7 +59,11 @@ export function useEncryption(
         }
 
         if (!cancelled) {
-          setSettings({ userPrivateKey, userPublicKey });
+          setSettings({
+            userId: userId,
+            userPrivateKey: userPrivateKey,
+            userPublicKey: userPublicKey,
+          });
         }
       } catch (err) {
         console.error(err);

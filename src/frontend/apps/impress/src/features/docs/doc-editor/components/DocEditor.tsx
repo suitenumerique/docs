@@ -76,9 +76,21 @@ export const DocEditorContainer = ({
 
 interface DocEditorProps {
   doc: Doc;
+  encryptionSettings: {
+    userId: string;
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null;
+  documentEncryptionSettings: {
+    documentSymmetricKey: CryptoKey;
+  } | null;
 }
 
-export const DocEditor = ({ doc }: DocEditorProps) => {
+export const DocEditor = ({
+  doc,
+  encryptionSettings,
+  documentEncryptionSettings,
+}: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
   const { provider, isReady } = useProviderStore();
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
@@ -130,7 +142,9 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     <>
       {isDesktop && <TableContent />}
       <DocEditorContainer
-        docHeader={<DocHeader doc={doc} />}
+        docHeader={
+          <DocHeader doc={doc} encryptionSettings={encryptionSettings} />
+        }
         docEditor={
           readOnly ? (
             <BlockNoteReader
@@ -140,7 +154,11 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
               docId={doc.id}
             />
           ) : (
-            <BlockNoteEditor doc={doc} provider={provider} />
+            <BlockNoteEditor
+              doc={doc}
+              provider={provider}
+              documentEncryptionSettings={documentEncryptionSettings}
+            />
           )
         }
         isDeletedDoc={isDeletedDoc}

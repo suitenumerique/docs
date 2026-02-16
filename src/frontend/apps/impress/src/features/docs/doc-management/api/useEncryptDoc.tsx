@@ -5,22 +5,33 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/docs/doc-management/types';
+import { toBase64 } from '@/features/docs/doc-editor';
 
 interface EncryptDocProps {
   docId: string;
-  content: Doc['content'];
-  encryptedSymmetricKeyPerUser: Record<string, string>;
+  content: Uint8Array<ArrayBufferLike>;
+  encryptedSymmetricKeyPerUser: Record<string, ArrayBuffer>;
 }
 
 export const encryptDoc = async ({
   docId,
   ...params
 }: EncryptDocProps): Promise<void> => {
+  const base64EncryptedSymmetricKeyPerUser: Record<string, string> = {};
+
+  for (const [userId, encryptedSymmetricKey] of Object.entries(
+    params.encryptedSymmetricKeyPerUser,
+  )) {
+    base64EncryptedSymmetricKeyPerUser[userId] = toBase64(
+      new Uint8Array(encryptedSymmetricKey),
+    );
+  }
+
   const response = await fetchAPI(`documents/${docId}/encrypt`, {
     method: 'PATCH',
     body: JSON.stringify({
       ...params,
+      content: toBase64(params.content),
     }),
   });
 

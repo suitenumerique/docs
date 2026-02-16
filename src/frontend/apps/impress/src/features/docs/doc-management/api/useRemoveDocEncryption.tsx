@@ -5,11 +5,11 @@ import {
 } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Doc } from '@/docs/doc-management/types';
+import { toBase64 } from '@/features/docs/doc-editor';
 
 interface RemoveDocEncryptionProps {
   docId: string;
-  content: Doc['content'];
+  content: Uint8Array<ArrayBufferLike>;
 }
 
 export const removeDocEncryption = async ({
@@ -20,6 +20,7 @@ export const removeDocEncryption = async ({
     method: 'PATCH',
     body: JSON.stringify({
       ...params,
+      content: toBase64(params.content),
     }),
   });
 
