@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
+import { useConfig } from '@/core/config/api';
 import { OnBoarding } from '@/features/on-boarding/components/OnBoarding';
 
 import HelpOutlineIcon from '../assets/help-outline.svg';
@@ -12,6 +13,7 @@ import WandAndStarsIcon from '../assets/wand-and-stars.svg';
 
 export const LeftPanelHelpMenu = () => {
   const { t } = useTranslation();
+  const { data: config } = useConfig();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -37,6 +39,8 @@ export const LeftPanelHelpMenu = () => {
     ],
     [openModal, t],
   );
+  const learnMoreUrl =
+    config?.theme_customization?.onboarding?.learn_more_url?.trim();
 
   return (
     <>
@@ -70,10 +74,14 @@ export const LeftPanelHelpMenu = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
         onSkip={closeModal}
-        footerLink={{
-          label: t('Learn more docs features'),
-          href: 'https://docs.numerique.gouv.fr/docs/335e43b5-9e16-4798-a0b4-912e44c7135e/',
-        }}
+        footerLink={
+          learnMoreUrl
+            ? {
+                label: t('Learn more docs features'),
+                href: learnMoreUrl,
+              }
+            : undefined
+        }
       />
     </>
   );
