@@ -79,10 +79,16 @@ create-env-local-files:
 	@touch env.d/development/kc_postgresql.local
 .PHONY: create-env-local-files
 
+generate-secret-keys:
+generate-secret-keys: ## generate secret keys to be stored in common.local
+	@bin/generate-oidc-store-refresh-token-key.sh
+.PHONY: generate-secret-keys
+
 pre-bootstrap: \
 	data/media \
 	data/static \
-	create-env-local-files
+	create-env-local-files \
+	generate-secret-keys
 .PHONY: pre-bootstrap
 
 post-bootstrap: \
