@@ -65,7 +65,6 @@ export const OnBoarding = ({
   onComplete,
   onSkip,
   footerLink,
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- ModalSize from ui-kit
   size = ModalSize.LARGE,
 }: OnBoardingProps) => {
   const { t } = useTranslation();

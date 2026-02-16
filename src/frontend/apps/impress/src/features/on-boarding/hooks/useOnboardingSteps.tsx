@@ -1,4 +1,5 @@
 import { type OnboardingStep } from '@gouvfr-lasuite/ui-kit';
+import Image from 'next/image';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,7 +10,6 @@ import FileShareIcon from '../assets/file-share.svg';
 import FormatTextIcon from '../assets/format-text.svg';
 import StackTemplateIcon from '../assets/stack-template.svg';
 import { OnboardingStepIcon } from '../components/OnboardingStepIcon';
-import { OnboardingStepImage } from '../components/OnboardingStepImage';
 
 export interface OnboardingStepsData {
   steps: OnboardingStep[];
@@ -41,12 +41,16 @@ export const useOnboardingSteps = () => {
             'Move, duplicate, and transform your texts, headings, lists, images without breaking your layout.',
           ),
           content: (
-            <OnboardingStepImage
+            <Image
               src={t('src_img_onboarding_step_1', {
                 desc: 'URL of onboarding step 1 preview image',
                 defaultValue: '/assets/on-boarding/step_1_EN.gif',
               })}
               alt={t('Compose your doc easily')}
+              width={350}
+              height={350}
+              priority
+              unoptimized
             />
           ),
         },
@@ -66,12 +70,16 @@ export const useOnboardingSteps = () => {
             'Apply styles, structure, and emphasis in one click—keep documents clean, consistent, and easy to scan.',
           ),
           content: (
-            <OnboardingStepImage
+            <Image
               src={t('src_img_onboarding_step_2', {
                 desc: 'URL of onboarding step 2 preview image',
                 defaultValue: '/assets/on-boarding/step_2_EN.gif',
               })}
               alt={t('Format your content with the toolbar')}
+              width={350}
+              height={350}
+              priority
+              unoptimized
             />
           ),
         },
@@ -91,12 +99,16 @@ export const useOnboardingSteps = () => {
             'Decide exactly who can view, comment, edit—or simply use shareable links.',
           ),
           content: (
-            <OnboardingStepImage
+            <Image
               src={t('src_img_onboarding_step_3', {
                 desc: 'URL of onboarding step 3 preview image',
                 defaultValue: '/assets/on-boarding/step_3_EN.png',
               })}
               alt={t('Share and collaborate with ease')}
+              width={350}
+              height={350}
+              priority
+              unoptimized
             />
           ),
         },
@@ -116,12 +128,16 @@ export const useOnboardingSteps = () => {
             'Start from ready-made templates for common use cases, then customize them to match your workflow in minutes.',
           ),
           content: (
-            <OnboardingStepImage
+            <Image
               src={t('src_img_onboarding_step_4', {
                 desc: 'URL of onboarding step 4 preview image',
                 defaultValue: '/assets/on-boarding/step_4_EN.png',
               })}
               alt={t('Draw inspiration from the content library')}
+              width={350}
+              height={350}
+              priority
+              unoptimized
             />
           ),
         },
