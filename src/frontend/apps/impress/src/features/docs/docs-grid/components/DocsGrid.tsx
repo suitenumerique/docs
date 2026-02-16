@@ -10,6 +10,8 @@ import styled, { css } from 'styled-components';
 import AllDocs from '@/assets/icons/doc-all.svg';
 import { Box, Card, Icon, Text } from '@/components';
 import { DocDefaultFilter, useInfiniteDocs } from '@/docs/doc-management';
+import { useAuth } from '@/features/auth';
+import { useEncryption } from '@/features/docs/doc-collaboration';
 import { useResponsiveStore } from '@/stores';
 
 import { useInfiniteDocsTrashbin } from '../api';
@@ -79,7 +81,20 @@ export const DocsGrid = ({
     });
   }, [data?.pages]);
 
-  const loading = isFetching || isLoading;
+  const { user } = useAuth();
+  const needsEncryption = useMemo(
+    () => docs.some((doc) => doc.is_encrypted),
+    [docs],
+  );
+  const { encryptionLoading, encryptionSettings } = useEncryption(
+    user?.id,
+    needsEncryption,
+  );
+  // TODO:
+  // TODO: from here `encryptionSettings` should be used in case of adjusting accesses on a document
+  // TODO:
+
+  const loading = isFetching || isLoading || encryptionLoading;
   const hasDocs = data?.pages.some((page) => page.results.length > 0);
   const loadMore = (inView: boolean) => {
     if (!inView || loading) {

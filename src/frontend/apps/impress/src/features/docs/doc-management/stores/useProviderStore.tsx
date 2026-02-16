@@ -13,9 +13,7 @@ export interface UseCollaborationStore {
     providerUrl: string,
     storeId: string,
     initialDocState?: Buffer<ArrayBuffer>,
-    encryption?: {
-      symmetricKey: CryptoKey;
-    },
+    symmetricKey?: CryptoKey,
   ) => SwitchableProvider;
   destroyProvider: () => void;
   provider: SwitchableProvider | undefined;
@@ -36,8 +34,8 @@ const defaultValues = {
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
-  createProvider: (wsUrl, storeId, initialDocState, encryption) => {
-    const isEncrypted = !!encryption;
+  createProvider: (wsUrl, storeId, initialDocState, encryptionSymmetricKey) => {
+    const isEncrypted = !!encryptionSymmetricKey;
 
     const doc = new Y.Doc({
       guid: storeId,
@@ -56,8 +54,8 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       //
 
       const AdaptedEncryptedWebSocket = createAdaptedEncryptedWebsocketClass({
-        encryptionKey: encryption.symmetricKey,
-        decryptionKey: encryption.symmetricKey,
+        encryptionKey: encryptionSymmetricKey,
+        decryptionKey: encryptionSymmetricKey,
       });
 
       provider = new RelayProvider(wsUrl, storeId, doc, {

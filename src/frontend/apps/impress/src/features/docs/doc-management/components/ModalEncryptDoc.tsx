@@ -72,6 +72,10 @@ export const ModalEncryptDoc = ({
 
     const userId = 'xxx';
 
+    // TODO:
+    // TODO: reuse encryption settings instead
+    // TODO:
+
     const encryptionDatabase = await openDB('encryption');
     const userPrivateKey = await encryptionDatabase.get(
       'privateKey',

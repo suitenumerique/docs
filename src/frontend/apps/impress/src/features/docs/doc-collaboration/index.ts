@@ -6,4 +6,4 @@ export {
   prepareEncryptedSymmetricKeysForUsers,
   encryptSymmetricKey,
 } from './encryption';
-export { useDocumentSymmetricKey } from './hooks/useDocumentSymmetricKey';
+export { useEncryption } from './hook/useEncryption';

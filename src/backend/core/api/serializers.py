@@ -235,9 +235,8 @@ class DocumentSerializer(ListDocumentSerializer):
         if request and request.method == "POST":
             fields["id"].read_only = False
 
-        # Remove accesses_public_keys_per_user field if document is not encrypted
-        instance = self.context.get("instance")
-        if instance and not getattr(instance, "is_encrypted", True):
+        # if user is not authenticated remove public keys information since he can still retrieve the document
+        if request and not request.user.is_authenticated:
             fields.pop("accesses_public_keys_per_user", None)
 
         return fields
@@ -355,6 +354,9 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     abilities = serializers.SerializerMethodField(read_only=True)
     max_ancestors_role = serializers.SerializerMethodField(read_only=True)
     max_role = serializers.SerializerMethodField(read_only=True)
+    encrypted_document_symmetric_key_for_user = serializers.CharField(
+        required=False, allow_blank=True, write_only=True
+    )
 
     class Meta:
         model = models.DocumentAccess
@@ -369,6 +371,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "encrypted_document_symmetric_key_for_user",
         ]
         read_only_fields = [
             "id",
@@ -376,8 +379,30 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
-            "encrypted_document_symmetric_key_for_user",
         ]
+
+    def get_fields(self):
+        """Dynamically control field availability and requirements based on document encryption status."""
+        fields = super().get_fields()
+        
+        # Get the document from context (if available)
+        document = None
+        if "view" in self.context and hasattr(self.context["view"], "document"):
+            document = self.context["view"].document
+        
+        # Get the encrypted_document_symmetric_key_for_user field
+        key_field = fields.get("encrypted_document_symmetric_key_for_user")
+        
+        if key_field:
+            # If document is encrypted, make the field required
+            if document and getattr(document, "is_encrypted", False):
+                key_field.required = True
+                key_field.allow_blank = False
+            # If document is not encrypted, remove the field entirely
+            elif document and not getattr(document, "is_encrypted", False):
+                fields.pop("encrypted_document_symmetric_key_for_user", None)
+        
+        return fields
 
     def get_abilities(self, instance) -> dict:
         """Return abilities of the logged-in user on the instance."""

@@ -123,7 +123,7 @@ export function prepareEncryptedSymmetricKeysForUsers(
 
   // Encrypt the symmetric key for each user's public key
   for (const [userId, publicKey] of Object.entries(accessesPublicKeysPerUser)) {
-    result[userId] = encryptSymmetricKeyWithPublicKey(symmetricKey, publicKey);
+    result[userId] = encryptSymmetricKey(symmetricKey, publicKey);
   }
 
   return result;

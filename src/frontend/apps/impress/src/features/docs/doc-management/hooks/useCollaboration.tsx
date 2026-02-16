@@ -2,15 +2,23 @@ import { openDB } from 'idb';
 import { useEffect } from 'react';
 
 import { useCollaborationUrl } from '@/core/config';
-import { decryptContent } from '@/docs/doc-collaboration/encryption';
+import {
+  decryptContent,
+  decryptSymmetricKey,
+} from '@/docs/doc-collaboration/encryption';
 import { Base64, useProviderStore } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 import { useBroadcastStore } from '@/stores';
 
 export const useCollaboration = (
-  room?: string,
-  initialContent?: Base64,
-  isEncrypted?: boolean,
+  room: string | undefined,
+  initialContent: Base64 | undefined,
+  isEncrypted: boolean | undefined,
+  userEncryptedSymmetricKey: string | undefined,
+  encryptionSettings: {
+    userPrivateKey: CryptoKey;
+    userPublicKey: CryptoKey;
+  } | null,
 ) => {
   const collaborationUrl = useCollaborationUrl(room);
   const { setBroadcastProvider, cleanupBroadcast } = useBroadcastStore();
@@ -23,6 +31,9 @@ export const useCollaboration = (
       !collaborationUrl ||
       !user ||
       isEncrypted === undefined ||
+      (isEncrypted === true &&
+        !userEncryptedSymmetricKey &&
+        !encryptionSettings) ||
       provider
     ) {
       // TODO: make sure the logout would invalide this provider, also a change of local keys (after import...)
@@ -37,65 +48,41 @@ export const useCollaboration = (
     // if the document is marked as encrypted we need an extra decoding to retrieve the Yjs state
     // note: we hack a bit due to decryption being async
     let contentPromise: Promise<
-      [
-        typeof initialDocState,
-        (
-          | {
-              symmetricKey: CryptoKey;
-            }
-          | undefined
-        ),
-      ]
+      [typeof initialDocState, CryptoKey | undefined]
     >;
 
     if (isEncrypted) {
       contentPromise = (async () => {
-        // We must first retrieve user keys locally to decode the document symmetric key
-        const encryptionDatabase = await openDB('encryption');
-
-        const userPrivateKey = await encryptionDatabase.get(
-          'privateKey',
-          `user:${user.id}`,
-        );
-
-        if (!userPrivateKey) {
+        if (!userEncryptedSymmetricKey) {
           throw new Error(
-            'should display specific components about not having encryption set up locally, probably show an onboarding cta, and probably this should be retrieve at a higher component level',
+            `"encrypted_document_symmetric_key_for_user" must be provided since document is encrypted`,
           );
         }
 
-        // TODO:
-        // TODO: should retrieve doc access encrypted symkey for this user
-        // TODO: from the use of `useCollaboration(doc?.id, doc?.content, doc?.is_encrypted);`
-        // TODO:
-        const encryptionSettings = {
-          symmetricKey: xxx,
-        };
+        const symmetricKey = await decryptSymmetricKey(
+          userEncryptedSymmetricKey,
+          encryptionSettings!.userPrivateKey,
+        );
 
         if (initialDocState) {
           return [
-            Buffer.from(
-              await decryptContent(
-                initialDocState,
-                encryptionSettings.symmetricKey,
-              ),
-            ),
-            encryptionSettings,
+            Buffer.from(await decryptContent(initialDocState, symmetricKey)),
+            symmetricKey,
           ];
         } else {
-          return [initialDocState, encryptionSettings];
+          return [initialDocState, symmetricKey];
         }
       })();
     } else {
       contentPromise = Promise.resolve([initialDocState, undefined]);
     }
 
-    contentPromise.then(([initialDocState, encryptionSettings]) => {
+    contentPromise.then(([initialDocState, symmetricKey]) => {
       const newProvider = createProvider(
         collaborationUrl,
         room,
         initialDocState,
-        encryptionSettings,
+        symmetricKey,
       );
 
       setBroadcastProvider(newProvider);

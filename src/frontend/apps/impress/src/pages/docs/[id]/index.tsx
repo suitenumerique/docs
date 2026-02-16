@@ -2,7 +2,7 @@ import { TreeProvider } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Loading, TextErrors } from '@/components';
@@ -19,6 +19,7 @@ import {
   useTrans,
 } from '@/docs/doc-management/';
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
+import { useEncryption } from '@/features/docs/doc-collaboration';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { useSkeletonStore } from '@/features/skeletons';
 import { MainLayout } from '@/layouts';
@@ -87,28 +88,48 @@ const DocPage = ({ id }: DocProps) => {
     },
   );
 
+  const { authenticated, user } = useAuth();
   const [doc, setDoc] = useState<Doc>();
+  const needsEncryption = useMemo(
+    () => doc?.is_encrypted ?? false,
+    [doc?.is_encrypted],
+  );
+  const { encryptionLoading, encryptionSettings } = useEncryption(
+    user?.id,
+    needsEncryption,
+  );
   const { setCurrentDoc } = useDocStore();
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
   const { replace } = useRouter();
-  useCollaboration(doc?.id, doc?.content, doc?.is_encrypted);
+  useCollaboration(
+    doc?.id,
+    doc?.content,
+    doc?.is_encrypted,
+    doc?.encrypted_document_symmetric_key_for_user,
+    encryptionSettings,
+  );
   const { t } = useTranslation();
-  const { authenticated } = useAuth();
   const { untitledDocument } = useTrans();
 
   /**
    * Show skeleton when loading a document
    */
   useEffect(() => {
-    if (!doc && !isError && !isSkeletonVisible) {
+    if (!doc && encryptionLoading && !isError && !isSkeletonVisible) {
       setIsSkeletonVisible(true);
     }
 
     if (isError) {
       setIsSkeletonVisible(false);
     }
-  }, [doc, isError, isSkeletonVisible, setIsSkeletonVisible]);
+  }, [
+    doc,
+    encryptionLoading,
+    isError,
+    isSkeletonVisible,
+    setIsSkeletonVisible,
+  ]);
 
   /**
    * Scroll to top when navigating to a new document
@@ -211,7 +232,7 @@ const DocPage = ({ id }: DocProps) => {
     );
   }
 
-  if (!doc) {
+  if (!doc || encryptionLoading) {
     return <Loading />;
   }
 
@@ -227,7 +248,7 @@ const DocPage = ({ id }: DocProps) => {
           key="title"
         />
       </Head>
-      <DocEditor doc={doc} />
+      <DocEditor doc={doc} encryptionSettings={encryptionSettings} />
     </>
   );
 };

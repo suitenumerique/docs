@@ -11,10 +11,7 @@ import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, Role } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { 
-  encryptSymmetricKeyWithPublicKey,
-  useDocumentSymmetricKey 
-} from '@/docs/doc-collaboration';
+import { encryptSymmetricKey } from '@/docs/doc-collaboration';
 
 import { useCreateDocAccess, useCreateDocInvitation } from '../api';
 import { OptionType } from '../types';
@@ -49,7 +46,6 @@ export const DocShareAddMemberList = ({
   const canShare = doc.abilities.accesses_manage;
   const { mutateAsync: createInvitation } = useCreateDocInvitation();
   const { mutateAsync: createDocAccess } = useCreateDocAccess();
-  const symmetricKey = useDocumentSymmetricKey(doc);
 
   const onError = (dataError: APIErrorUser) => {
     let messageError =
@@ -100,12 +96,17 @@ export const DocShareAddMemberList = ({
         : createDocAccess({
             ...payload,
             memberId: user.id,
-            memberEncryptedSymmetricKey: doc.is_encrypted && doc.accesses_public_keys_per_user && symmetricKey
-              ? encryptSymmetricKeyWithPublicKey(
-                  symmetricKey,
-                  doc.accesses_public_keys_per_user[user.id] || user.id
-                )
-              : null,
+            memberEncryptedSymmetricKey:
+              doc.is_encrypted && doc.accesses_public_keys_per_user
+                ? encryptSymmetricKey(
+                    symmetricKey,
+                    // TODO:
+                    // TODO: this cannot be true, the public key must be retrieved from the search endpoint
+                    // TODO: and once committed it should probably register it locally
+                    // TODO:
+                    doc.accesses_public_keys_per_user[user.id] || user.id,
+                  )
+                : null,
           });
     });
 
