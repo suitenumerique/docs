@@ -11,7 +11,7 @@ from django.db import transaction
 import pytest
 
 from core import factories
-from core.services.search_indexers import SearchIndexer
+from core.services.search_indexers import FindDocumentIndexer
 
 
 @pytest.mark.django_db
@@ -19,7 +19,7 @@ from core.services.search_indexers import SearchIndexer
 def test_index():
     """Test the command `index` that run the Find app indexer for all the available documents."""
     user = factories.UserFactory()
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     with transaction.atomic():
         doc = factories.DocumentFactory()
@@ -36,7 +36,7 @@ def test_index():
         str(no_title_doc.path): {"users": [user.sub]},
     }
 
-    with mock.patch.object(SearchIndexer, "push") as mock_push:
+    with mock.patch.object(FindDocumentIndexer, "push") as mock_push:
         call_command("index")
 
         push_call_args = [call.args[0] for call in mock_push.call_args_list]

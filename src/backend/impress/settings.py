@@ -112,8 +112,8 @@ class Base(Configuration):
     SEARCH_INDEXER_BATCH_SIZE = values.IntegerValue(
         default=100_000, environ_name="SEARCH_INDEXER_BATCH_SIZE", environ_prefix=None
     )
-    SEARCH_INDEXER_URL = values.Value(
-        default=None, environ_name="SEARCH_INDEXER_URL", environ_prefix=None
+    INDEXING_URL = values.Value(
+        default=None, environ_name="INDEXING_URL", environ_prefix=None
     )
     SEARCH_INDEXER_COUNTDOWN = values.IntegerValue(
         default=1, environ_name="SEARCH_INDEXER_COUNTDOWN", environ_prefix=None
@@ -121,8 +121,8 @@ class Base(Configuration):
     SEARCH_INDEXER_SECRET = values.Value(
         default=None, environ_name="SEARCH_INDEXER_SECRET", environ_prefix=None
     )
-    SEARCH_INDEXER_QUERY_URL = values.Value(
-        default=None, environ_name="SEARCH_INDEXER_QUERY_URL", environ_prefix=None
+    SEARCH_URL = values.Value(
+        default=None, environ_name="SEARCH_URL", environ_prefix=None
     )
     SEARCH_INDEXER_QUERY_LIMIT = values.PositiveIntegerValue(
         default=50, environ_name="SEARCH_INDEXER_QUERY_LIMIT", environ_prefix=None

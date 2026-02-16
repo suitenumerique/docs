@@ -15,7 +15,7 @@ from requests import HTTPError
 from core import factories, models, utils
 from core.services.search_indexers import (
     BaseDocumentIndexer,
-    SearchIndexer,
+    FindDocumentIndexer,
     get_document_indexer,
     get_visited_document_ids_of,
 )
@@ -78,41 +78,41 @@ def test_services_search_indexer_is_configured(indexer_settings):
 
     # Valid class
     indexer_settings.SEARCH_INDEXER_CLASS = (
-        "core.services.search_indexers.SearchIndexer"
+        "core.services.search_indexers.FindDocumentIndexer"
     )
 
     get_document_indexer.cache_clear()
     assert get_document_indexer() is not None
 
-    indexer_settings.SEARCH_INDEXER_URL = ""
+    indexer_settings.INDEXING_URL = ""
 
     # Invalid url
     get_document_indexer.cache_clear()
     assert not get_document_indexer()
 
 
-def test_services_search_indexer_url_is_none(indexer_settings):
+def test_services_indexing_url_is_none(indexer_settings):
     """
-    Indexer should raise RuntimeError if SEARCH_INDEXER_URL is None or empty.
+    Indexer should raise RuntimeError if INDEXING_URL is None or empty.
     """
-    indexer_settings.SEARCH_INDEXER_URL = None
+    indexer_settings.INDEXING_URL = None
 
     with pytest.raises(ImproperlyConfigured) as exc_info:
-        SearchIndexer()
+        FindDocumentIndexer()
 
-    assert "SEARCH_INDEXER_URL must be set in Django settings." in str(exc_info.value)
+    assert "INDEXING_URL must be set in Django settings." in str(exc_info.value)
 
 
-def test_services_search_indexer_url_is_empty(indexer_settings):
+def test_services_indexing_url_is_empty(indexer_settings):
     """
-    Indexer should raise RuntimeError if SEARCH_INDEXER_URL is empty string.
+    Indexer should raise RuntimeError if INDEXING_URL is empty string.
     """
-    indexer_settings.SEARCH_INDEXER_URL = ""
+    indexer_settings.INDEXING_URL = ""
 
     with pytest.raises(ImproperlyConfigured) as exc_info:
-        SearchIndexer()
+        FindDocumentIndexer()
 
-    assert "SEARCH_INDEXER_URL must be set in Django settings." in str(exc_info.value)
+    assert "INDEXING_URL must be set in Django settings." in str(exc_info.value)
 
 
 def test_services_search_indexer_secret_is_none(indexer_settings):
@@ -122,7 +122,7 @@ def test_services_search_indexer_secret_is_none(indexer_settings):
     indexer_settings.SEARCH_INDEXER_SECRET = None
 
     with pytest.raises(ImproperlyConfigured) as exc_info:
-        SearchIndexer()
+        FindDocumentIndexer()
 
     assert "SEARCH_INDEXER_SECRET must be set in Django settings." in str(
         exc_info.value
@@ -136,39 +136,35 @@ def test_services_search_indexer_secret_is_empty(indexer_settings):
     indexer_settings.SEARCH_INDEXER_SECRET = ""
 
     with pytest.raises(ImproperlyConfigured) as exc_info:
-        SearchIndexer()
+        FindDocumentIndexer()
 
     assert "SEARCH_INDEXER_SECRET must be set in Django settings." in str(
         exc_info.value
     )
 
 
-def test_services_search_endpoint_is_none(indexer_settings):
+def test_services_search_url_is_none(indexer_settings):
     """
-    Indexer should raise RuntimeError if SEARCH_INDEXER_QUERY_URL is None.
+    Indexer should raise RuntimeError if SEARCH_URL is None.
     """
-    indexer_settings.SEARCH_INDEXER_QUERY_URL = None
+    indexer_settings.SEARCH_URL = None
 
     with pytest.raises(ImproperlyConfigured) as exc_info:
-        SearchIndexer()
+        FindDocumentIndexer()
 
-    assert "SEARCH_INDEXER_QUERY_URL must be set in Django settings." in str(
-        exc_info.value
-    )
+    assert "SEARCH_URL must be set in Django settings." in str(exc_info.value)
 
 
-def test_services_search_endpoint_is_empty(indexer_settings):
+def test_services_search_url_is_empty(indexer_settings):
     """
-    Indexer should raise RuntimeError if SEARCH_INDEXER_QUERY_URL is empty.
+    Indexer should raise RuntimeError if SEARCH_URL is empty.
     """
-    indexer_settings.SEARCH_INDEXER_QUERY_URL = ""
+    indexer_settings.SEARCH_URL = ""
 
     with pytest.raises(ImproperlyConfigured) as exc_info:
-        SearchIndexer()
+        FindDocumentIndexer()
 
-    assert "SEARCH_INDEXER_QUERY_URL must be set in Django settings." in str(
-        exc_info.value
-    )
+    assert "SEARCH_URL must be set in Django settings." in str(exc_info.value)
 
 
 @pytest.mark.usefixtures("indexer_settings")
@@ -192,7 +188,7 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
         }
     }
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
     result = indexer.serialize_document(document, accesses)
 
     assert set(result.pop("users")) == {str(user_a.sub), str(user_b.sub)}
@@ -221,7 +217,7 @@ def test_services_search_indexers_serialize_document_deleted():
     parent.soft_delete()
     document.refresh_from_db()
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
     result = indexer.serialize_document(document, {})
 
     assert result["is_active"] is False
@@ -232,7 +228,7 @@ def test_services_search_indexers_serialize_document_empty():
     """Empty documents returns empty content in the serialized json."""
     document = factories.DocumentFactory(content="", title=None)
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
     result = indexer.serialize_document(document, {})
 
     assert result["content"] == ""
@@ -246,7 +242,7 @@ def test_services_search_indexers_index_errors(indexer_settings):
     """
     factories.DocumentFactory()
 
-    indexer_settings.SEARCH_INDEXER_URL = "http://app-find/api/v1.0/documents/index/"
+    indexer_settings.INDEXING_URL = "http://app-find/api/v1.0/documents/index/"
 
     responses.add(
         responses.POST,
@@ -256,10 +252,10 @@ def test_services_search_indexers_index_errors(indexer_settings):
     )
 
     with pytest.raises(HTTPError):
-        SearchIndexer().index()
+        FindDocumentIndexer().index()
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 def test_services_search_indexers_batches_pass_only_batch_accesses(
     mock_push, indexer_settings
 ):
@@ -276,7 +272,7 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
         access = factories.UserDocumentAccessFactory(document=document)
         expected_user_subs[str(document.id)] = str(access.user.sub)
 
-    assert SearchIndexer().index() == 5
+    assert FindDocumentIndexer().index() == 5
 
     # Should be 3 batches: 2 + 2 + 1
     assert mock_push.call_count == 3
@@ -299,7 +295,7 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
     assert seen_doc_ids == {str(d.id) for d in documents}
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_batch_size_argument(mock_push):
     """
@@ -314,7 +310,7 @@ def test_services_search_indexers_batch_size_argument(mock_push):
         access = factories.UserDocumentAccessFactory(document=document)
         expected_user_subs[str(document.id)] = str(access.user.sub)
 
-    assert SearchIndexer().index(batch_size=2) == 5
+    assert FindDocumentIndexer().index(batch_size=2) == 5
 
     # Should be 3 batches: 2 + 2 + 1
     assert mock_push.call_count == 3
@@ -337,7 +333,7 @@ def test_services_search_indexers_batch_size_argument(mock_push):
     assert seen_doc_ids == {str(d.id) for d in documents}
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ignore_empty_documents(mock_push):
     """
@@ -349,7 +345,7 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
     empty_title = factories.DocumentFactory(title="")
     empty_content = factories.DocumentFactory(content="")
 
-    assert SearchIndexer().index() == 3
+    assert FindDocumentIndexer().index() == 3
 
     assert mock_push.call_count == 1
 
@@ -365,7 +361,7 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
     }
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings):
     """
     Documents indexing batch can be empty if all the docs are empty.
@@ -377,14 +373,14 @@ def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings
     # Only empty docs
     factories.DocumentFactory.create_batch(5, content="", title="")
 
-    assert SearchIndexer().index() == 1
+    assert FindDocumentIndexer().index() == 1
     assert mock_push.call_count == 1
 
     results = [doc["id"] for doc in mock_push.call_args[0][0]]
     assert results == [str(document.id)]
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_link_reach(mock_push):
     """Document accesses and reach should take into account ancestors link reaches."""
@@ -395,7 +391,7 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, link_reach="public")
     document = factories.DocumentFactory(parent=parent, link_reach="restricted")
 
-    assert SearchIndexer().index() == 4
+    assert FindDocumentIndexer().index() == 4
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 4
@@ -405,7 +401,7 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
     assert results[str(document.id)]["reach"] == "public"
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_users(mock_push):
     """Document accesses and reach should include users from ancestors."""
@@ -415,7 +411,7 @@ def test_services_search_indexers_ancestors_users(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, users=[user_p])
     document = factories.DocumentFactory(parent=parent, users=[user_d])
 
-    assert SearchIndexer().index() == 3
+    assert FindDocumentIndexer().index() == 3
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
@@ -428,7 +424,7 @@ def test_services_search_indexers_ancestors_users(mock_push):
     }
 
 
-@patch.object(SearchIndexer, "push")
+@patch.object(FindDocumentIndexer, "push")
 @pytest.mark.usefixtures("indexer_settings")
 def test_services_search_indexers_ancestors_teams(mock_push):
     """Document accesses and reach should include teams from ancestors."""
@@ -436,7 +432,7 @@ def test_services_search_indexers_ancestors_teams(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, teams=["team_p"])
     document = factories.DocumentFactory(parent=parent, teams=["team_d"])
 
-    assert SearchIndexer().index() == 3
+    assert FindDocumentIndexer().index() == 3
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
@@ -451,9 +447,9 @@ def test_push_uses_correct_url_and_data(mock_post, indexer_settings):
     push() should call requests.post with the correct URL from settings
     the timeout set to 10 seconds and the data as JSON.
     """
-    indexer_settings.SEARCH_INDEXER_URL = "http://example.com/index"
+    indexer_settings.INDEXING_URL = "http://example.com/index"
 
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
     sample_data = [{"id": "123", "title": "Test"}]
 
     mock_response = mock_post.return_value
@@ -464,7 +460,7 @@ def test_push_uses_correct_url_and_data(mock_post, indexer_settings):
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
 
-    assert args[0] == indexer_settings.SEARCH_INDEXER_URL
+    assert args[0] == indexer_settings.INDEXING_URL
     assert kwargs.get("json") == sample_data
     assert kwargs.get("timeout") == 10
 
@@ -542,9 +538,7 @@ def test_services_search_indexers_search_errors(indexer_settings):
     """
     factories.DocumentFactory()
 
-    indexer_settings.SEARCH_INDEXER_QUERY_URL = (
-        "http://app-find/api/v1.0/documents/search/"
-    )
+    indexer_settings.SEARCH_URL = "http://app-find/api/v1.0/documents/search/"
 
     responses.add(
         responses.POST,
@@ -554,17 +548,17 @@ def test_services_search_indexers_search_errors(indexer_settings):
     )
 
     with pytest.raises(HTTPError):
-        SearchIndexer().search("alpha", token="mytoken")
+        FindDocumentIndexer().search("alpha", token="mytoken")
 
 
 @patch("requests.post")
 def test_services_search_indexers_search(mock_post, indexer_settings):
     """
-    search() should call requests.post to SEARCH_INDEXER_QUERY_URL with the
+    search() should call requests.post to SEARCH_URL with the
     document ids from linktraces.
     """
     user = factories.UserFactory()
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     mock_response = mock_post.return_value
     mock_response.raise_for_status.return_value = None  # No error
@@ -582,7 +576,7 @@ def test_services_search_indexers_search(mock_post, indexer_settings):
 
     args, kwargs = mock_post.call_args
 
-    assert args[0] == indexer_settings.SEARCH_INDEXER_QUERY_URL
+    assert args[0] == indexer_settings.SEARCH_URL
 
     query_data = kwargs.get("json")
     assert query_data["q"] == "alpha"
@@ -605,7 +599,7 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
     indexer_settings.SEARCH_INDEXER_QUERY_LIMIT = 25
 
     user = factories.UserFactory()
-    indexer = SearchIndexer()
+    indexer = FindDocumentIndexer()
 
     mock_response = mock_post.return_value
     mock_response.raise_for_status.return_value = None  # No error
@@ -623,7 +617,7 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
 
     args, kwargs = mock_post.call_args
 
-    assert args[0] == indexer_settings.SEARCH_INDEXER_QUERY_URL
+    assert args[0] == indexer_settings.SEARCH_URL
     assert kwargs.get("json")["nb_results"] == 25
 
     # The argument overrides the setting value
@@ -631,14 +625,14 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
 
     args, kwargs = mock_post.call_args
 
-    assert args[0] == indexer_settings.SEARCH_INDEXER_QUERY_URL
+    assert args[0] == indexer_settings.SEARCH_URL
     assert kwargs.get("json")["nb_results"] == 109
 
 
 def test_search_indexer_get_title_with_localized_field():
     """Test extracting title from localized title field."""
     source = {"title.extension": "Bonjour", "id": 1, "content": "test"}
-    result = SearchIndexer.get_title(source)
+    result = FindDocumentIndexer.get_title(source)
 
     assert result == "Bonjour"
 
@@ -646,7 +640,7 @@ def test_search_indexer_get_title_with_localized_field():
 def test_search_indexer_get_title_with_multiple_localized_fields():
     """Test that first matching localized title is returned."""
     source = {"title.extension": "Bonjour", "title.en": "Hello", "id": 1}
-    result = SearchIndexer.get_title(source)
+    result = FindDocumentIndexer.get_title(source)
 
     assert result in ["Bonjour", "Hello"]
 
@@ -654,7 +648,7 @@ def test_search_indexer_get_title_with_multiple_localized_fields():
 def test_search_indexer_get_title_fallback_to_plain_title():
     """Test fallback to plain 'title' field when no localized field exists."""
     source = {"title": "Hello World", "id": 1}
-    result = SearchIndexer.get_title(source)
+    result = FindDocumentIndexer.get_title(source)
 
     assert result == "Hello World"
 
@@ -662,7 +656,7 @@ def test_search_indexer_get_title_fallback_to_plain_title():
 def test_search_indexer_get_title_no_title_field():
     """Test that empty string is returned when no title field exists."""
     source = {"id": 1, "content": "test"}
-    result = SearchIndexer.get_title(source)
+    result = FindDocumentIndexer.get_title(source)
 
     assert result == ""
 
@@ -670,7 +664,7 @@ def test_search_indexer_get_title_no_title_field():
 def test_search_indexer_get_title_with_empty_localized_title():
     """Test that fallback works when localized title is empty."""
     source = {"title.extension": "", "title": "Fallback Title", "id": 1}
-    result = SearchIndexer.get_title(source)
+    result = FindDocumentIndexer.get_title(source)
 
     assert result == "Fallback Title"
 
@@ -678,6 +672,6 @@ def test_search_indexer_get_title_with_empty_localized_title():
 def test_search_indexer_get_title_with_multiple_extension():
     """Test extracting title from title field with multiple extensions."""
     source = {"title.extension_1.extension_2": "Bonjour", "id": 1, "content": "test"}
-    result = SearchIndexer.get_title(source)
+    result = FindDocumentIndexer.get_title(source)
 
     assert result == "Bonjour"
