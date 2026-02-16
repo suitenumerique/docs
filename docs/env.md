@@ -7,7 +7,7 @@ Here we describe all environment variables that can be set for the docs applicat
 These are the environment variables you can set for the `impress-backend` container.
 
 | Option                                          | Description                                                                                                                                                                | default                                                                 |
-|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | AI_ALLOW_REACH_FROM                             | Users that can use AI must be this level. options are "public", "authenticated", "restricted"                                                                              | authenticated                                                           |
 | AI_API_KEY                                      | AI key to be used for AI Base url                                                                                                                                          |                                                                         |
 | AI_BASE_URL                                     | OpenAI compatible AI base url                                                                                                                                              |                                                                         |
@@ -17,7 +17,7 @@ These are the environment variables you can set for the `impress-backend` contai
 | API_USERS_LIST_LIMIT                            | Limit on API users                                                                                                                                                         | 5                                                                       |
 | API_USERS_LIST_THROTTLE_RATE_BURST              | Throttle rate for api on burst                                                                                                                                             | 30/minute                                                               |
 | API_USERS_LIST_THROTTLE_RATE_SUSTAINED          | Throttle rate for api                                                                                                                                                      | 180/hour                                                                |
-| API_USERS_SEARCH_QUERY_MIN_LENGTH          | Minimum characters to insert to search a user                                                                                                                                                      | 3                                                                |
+| API_USERS_SEARCH_QUERY_MIN_LENGTH               | Minimum characters to insert to search a user                                                                                                                              | 3                                                                       |
 | AWS_S3_ACCESS_KEY_ID                            | Access id for s3 endpoint                                                                                                                                                  |                                                                         |
 | AWS_S3_ENDPOINT_URL                             | S3 endpoint                                                                                                                                                                |                                                                         |
 | AWS_S3_REGION_NAME                              | Region name for s3 endpoint                                                                                                                                                |                                                                         |
@@ -35,7 +35,7 @@ These are the environment variables you can set for the `impress-backend` contai
 | CONVERSION_API_SECURE                           | Require secure conversion api                                                                                                                                              | false                                                                   |
 | CONVERSION_API_TIMEOUT                          | Conversion api timeout                                                                                                                                                     | 30                                                                      |
 | CONVERSION_FILE_MAX_SIZE                        | The file max size allowed when uploaded to convert it                                                                                                                      | 20971520 (20MB)                                                         |
-| CONVERSION_FILE_EXTENSIONS_ALLOWED              | Extension list managed by the conversion service                                                                                                                           | [".docx", ".md"]
+| CONVERSION_FILE_EXTENSIONS_ALLOWED              | Extension list managed by the conversion service                                                                                                                           | [".docx", ".md"]                                                        |
 | CRISP_WEBSITE_ID                                | Crisp website id for support                                                                                                                                               |                                                                         |
 | DB_ENGINE                                       | Engine to use for database connections                                                                                                                                     | django.db.backends.postgresql_psycopg2                                  |
 | DB_HOST                                         | Host of the database                                                                                                                                                       | localhost                                                               |
@@ -58,22 +58,22 @@ These are the environment variables you can set for the `impress-backend` contai
 | DJANGO_EMAIL_HOST_USER                          | User to authenticate with on the email host                                                                                                                                |                                                                         |
 | DJANGO_EMAIL_LOGO_IMG                           | Logo for the email                                                                                                                                                         |                                                                         |
 | DJANGO_EMAIL_PORT                               | Port used to connect to email host                                                                                                                                         |                                                                         |
-| DJANGO_EMAIL_URL_APP                            | Url used in the email to go to the app                                                                                                                                         |                                                                         |
+| DJANGO_EMAIL_URL_APP                            | Url used in the email to go to the app                                                                                                                                     |                                                                         |
 | DJANGO_EMAIL_USE_SSL                            | Use ssl for email host connection                                                                                                                                          | false                                                                   |
 | DJANGO_EMAIL_USE_TLS                            | Use tls for email host connection                                                                                                                                          | false                                                                   |
 | DJANGO_SECRET_KEY                               | Secret key                                                                                                                                                                 |                                                                         |
 | DJANGO_SERVER_TO_SERVER_API_TOKENS              |                                                                                                                                                                            | []                                                                      |
-| DOCSPEC_API_URL                               | URL to endpoint of DocSpec conversion API    |            |
+| DOCSPEC_API_URL                                 | URL to endpoint of DocSpec conversion API                                                                                                                                  |                                                                         |
 | DOCUMENT_IMAGE_MAX_SIZE                         | Maximum size of document in bytes                                                                                                                                          | 10485760                                                                |
 | FRONTEND_CSS_URL                                | To add a external css file to the app                                                                                                                                      |                                                                         |
-| FRONTEND_JS_URL                                | To add a external js file to the app                                                                                                                                      |                                                                         |
+| FRONTEND_JS_URL                                 | To add a external js file to the app                                                                                                                                       |                                                                         |
 | FRONTEND_HOMEPAGE_FEATURE_ENABLED               | Frontend feature flag to display the homepage                                                                                                                              | false                                                                   |
 | FRONTEND_THEME                                  | Frontend theme to use                                                                                                                                                      |                                                                         |
 | LANGUAGE_CODE                                   | Default language                                                                                                                                                           | en-us                                                                   |
 | LANGFUSE_SECRET_KEY                             | The Langfuse secret key used by the sdk                                                                                                                                    | None                                                                    |
 | LANGFUSE_PUBLIC_KEY                             | The Langfuse public key used by the sdk                                                                                                                                    | None                                                                    |
 | LANGFUSE_BASE_URL                               | The Langfuse base url used by the sdk                                                                                                                                      | None                                                                    |
-| LASUITE_MARKETING_BACKEND                       | Backend used when SIGNUP_NEW_USER_TO_MARKETING_EMAIL is True. See https://github.com/suitenumerique/django-lasuite/blob/main/documentation/how-to-use-marketing-backend.md | lasuite.marketing.backends.dummy.DummyBackend                           |   
+| LASUITE_MARKETING_BACKEND                       | Backend used when SIGNUP_NEW_USER_TO_MARKETING_EMAIL is True. See https://github.com/suitenumerique/django-lasuite/blob/main/documentation/how-to-use-marketing-backend.md | lasuite.marketing.backends.dummy.DummyBackend                           |
 | LASUITE_MARKETING_PARAMETERS                    | The parameters to configure LASUITE_MARKETING_BACKEND. See https://github.com/suitenumerique/django-lasuite/blob/main/documentation/how-to-use-marketing-backend.md        | {}                                                                      |
 | LOGGING_LEVEL_LOGGERS_APP                       | Application logging level. options are "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"                                                                                        | INFO                                                                    |
 | LOGGING_LEVEL_LOGGERS_ROOT                      | Default logging level. options are "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"                                                                                            | INFO                                                                    |
@@ -120,10 +120,11 @@ These are the environment variables you can set for the `impress-backend` contai
 | THEME_CUSTOMIZATION_FILE_PATH                   | Full path to the file customizing the theme. An example is provided in src/backend/impress/configuration/theme/default.json                                                | BASE_DIR/impress/configuration/theme/default.json                       |
 | TRASHBIN_CUTOFF_DAYS                            | Trashbin cutoff                                                                                                                                                            | 30                                                                      |
 | USER_OIDC_ESSENTIAL_CLAIMS                      | Essential claims in OIDC token                                                                                                                                             | []                                                                      |
+| USER_ONBOARDING_DOCUMENTS                       | A list of documents IDs for which a read-only access will be created for new s                                                                                             | []                                                                      |
+| USER_ONBOARDING_SANDBOX_DOCUMENT                | ID of a template sandbox document that will be duplicated for new users                                                                                                    |                                                                         |
 | USER_RECONCILIATION_FORM_URL                    | URL of a third-party form for user reconciliation requests                                                                                                                 |                                                                         |
 | Y_PROVIDER_API_BASE_URL                         | Y Provider url                                                                                                                                                             |                                                                         |
 | Y_PROVIDER_API_KEY                              | Y provider API key                                                                                                                                                         |                                                                         |
-
 
 ## impress-frontend image
 
@@ -135,29 +136,30 @@ If you want to build the Docker image, this variable is used as an argument in t
 
 Example:
 
-```
+```bash
 docker build -f src/frontend/Dockerfile --target frontend-production --build-arg PUBLISH_AS_MIT=false docs-frontend:latest
-``` 
+```
 
 If you want to build the front-end application using the yarn build command, you can edit the file `src/frontend/apps/impress/.env` with the `NODE_ENV=production` environment variable and modify it. Alternatively, you can use the listed environment variables with the prefix `NEXT_PUBLIC_` (for example, `NEXT_PUBLIC_PUBLISH_AS_MIT=false`).
 
 Example:
 
-```
+```bash
 cd src/frontend/apps/impress
 NODE_ENV=production NEXT_PUBLIC_PUBLISH_AS_MIT=false yarn build
 ```
 
-| Option                                          | Description                                                                                   | default                                                 |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| API_ORIGIN                                      | backend domain - it uses the current domain if not initialized                                |                                                         |
-| SW_DEACTIVATED                                  | To not install the service worker                                                             |                                                         |
-| PUBLISH_AS_MIT                                  | Removes packages whose licences are incompatible with the MIT licence (see  below)                                               | true                                                    |
+| Option         | Description                                                                        | default |
+| -------------- | ---------------------------------------------------------------------------------- | ------- |
+| API_ORIGIN     | backend domain - it uses the current domain if not initialized                     |         |
+| SW_DEACTIVATED | To not install the service worker                                                  |         |
+| PUBLISH_AS_MIT | Removes packages whose licences are incompatible with the MIT licence (see  below) | true    |
 
 Packages with licences incompatible with the MIT licence:
-* `xl-docx-exporter`: [GPL](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE), 
-* `xl-pdf-exporter`: [GPL](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE), 
-* `xl-multi-column`: [GPL](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-multi-column/LICENSE). 
+
+* `xl-docx-exporter`: [GPL](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE),
+* `xl-pdf-exporter`: [GPL](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-pdf-exporter/LICENSE),
+* `xl-multi-column`: [GPL](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-multi-column/LICENSE).
 
 In `.env.development`, `PUBLISH_AS_MIT` is set to `false`, allowing developers to test Docs with all its features.
 

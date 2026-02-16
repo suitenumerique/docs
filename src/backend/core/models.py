@@ -209,13 +209,75 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
 
     def save(self, *args, **kwargs):
         """
-        If it's a new user, give its user access to the documents to which s.he was invited.
+        If it's a new user, give its user access to the documents they were invited to.
         """
         is_adding = self._state.adding
         super().save(*args, **kwargs)
 
         if is_adding:
+            self._handle_onboarding_documents_access()
+            self._duplicate_onboarding_sandbox_document()
             self._convert_valid_invitations()
+
+    def _handle_onboarding_documents_access(self):
+        """
+        If the user is new and there are documents configured to be given to new users,
+        give access to these documents and pin them as favorites for the user.
+        """
+        if settings.USER_ONBOARDING_DOCUMENTS:
+            onboarding_document_ids = set(settings.USER_ONBOARDING_DOCUMENTS)
+            onboarding_accesses = []
+            favorite_documents = []
+            for document_id in onboarding_document_ids:
+                try:
+                    document = Document.objects.get(id=document_id)
+                except Document.DoesNotExist:
+                    logger.warning(
+                        "Onboarding document with id %s does not exist. Skipping.",
+                        document_id,
+                    )
+                    continue
+
+                onboarding_accesses.append(
+                    DocumentAccess(
+                        user=self, document=document, role=RoleChoices.READER
+                    )
+                )
+                favorite_documents.append(
+                    DocumentFavorite(user=self, document_id=document_id)
+                )
+
+            DocumentAccess.objects.bulk_create(onboarding_accesses)
+            DocumentFavorite.objects.bulk_create(favorite_documents)
+
+    def _duplicate_onboarding_sandbox_document(self):
+        """
+        If the user is new and there is a sandbox document configured,
+        duplicate the sandbox document for the user
+        """
+        if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
+            sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
+            try:
+                template_document = Document.objects.get(id=sandbox_id)
+
+                sandbox_document = template_document.add_sibling(
+                    "right",
+                    title=template_document.title,
+                    content=template_document.content,
+                    attachments=template_document.attachments,
+                    duplicated_from=template_document,
+                    creator=self,
+                )
+
+                DocumentAccess.objects.create(
+                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+                )
+
+            except Document.DoesNotExist:
+                logger.warning(
+                    "Onboarding sandbox document with id %s does not exist. Skipping.",
+                    sandbox_id,
+                )
 
     def _convert_valid_invitations(self):
         """

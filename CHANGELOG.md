@@ -15,6 +15,7 @@ and this project adheres to
 - ✨(backend) manage reconciliation requests for user accounts #1878
 - 👷(CI) add GHCR workflow for forked repo testing #1851
 - ✨(backend) allow the duplication of subpages #1893
+- ✨(backend) Onboarding docs for new users #1891
 
 ### Changed
 
