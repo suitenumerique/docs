@@ -5,13 +5,13 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches:
-      - 'main'
-      - 'ci/trivy-fails'
+      - "main"
+      - "ci/trivy-fails"
 
 env:
   DOCKER_USER: 1001:127
@@ -20,40 +20,34 @@ jobs:
   build-and-push-backend:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-      -
-        name: Docker meta
+      - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: lasuite/impress-backend
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      -
-        name: Run trivy scan
+      - name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
-          docker-build-args: '--target backend-production -f Dockerfile'
-          docker-image-name: 'docker.io/lasuite/impress-backend:${{ github.sha }}'
-      -
-        name: Build and push
+          docker-build-args: "--target backend-production -f Dockerfile"
+          docker-image-name: "docker.io/lasuite/impress-backend:${{ github.sha }}"
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           target: backend-production
-          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+          build-args: DOCKER_USER=${{ env.DOCKER_USER }}
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - 
-        name: Cleanup Docker after build
+      - name: Cleanup Docker after build
         if: always()
         run: |
           docker system prune -af
@@ -62,43 +56,37 @@ jobs:
   build-and-push-frontend:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-      -
-        name: Docker meta
+      - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: lasuite/impress-frontend
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      -
-        name: Run trivy scan
+      - name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
-          docker-build-args: '-f src/frontend/Dockerfile --target frontend-production'
-          docker-image-name: 'docker.io/lasuite/impress-frontend:${{ github.sha }}'
-      -
-        name: Build and push
+          docker-build-args: "-f src/frontend/Dockerfile --target frontend-production"
+          docker-image-name: "docker.io/lasuite/impress-frontend:${{ github.sha }}"
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./src/frontend/Dockerfile
           target: frontend-production
           build-args: |
-            DOCKER_USER=${{ env.DOCKER_USER }}:-1000
+            DOCKER_USER=${{ env.DOCKER_USER }}
             PUBLISH_AS_MIT=false
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - 
-        name: Cleanup Docker after build
+      - name: Cleanup Docker after build
         if: always()
         run: |
           docker system prune -af
@@ -107,27 +95,22 @@ jobs:
   build-and-push-y-provider:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-      -
-        name: Docker meta
+      - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: lasuite/impress-y-provider
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
-      -
-        name: Run trivy scan
+      - name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
         with:
-          docker-build-args: '-f src/frontend/servers/y-provider/Dockerfile --target y-provider'
-          docker-image-name: 'docker.io/lasuite/impress-y-provider:${{ github.sha }}'
-      -
-        name: Build and push
+          docker-build-args: "-f src/frontend/servers/y-provider/Dockerfile --target y-provider"
+          docker-image-name: "docker.io/lasuite/impress-y-provider:${{ github.sha }}"
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -137,8 +120,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - 
-        name: Cleanup Docker after build
+      - name: Cleanup Docker after build
         if: always()
         run: |
           docker system prune -af
