@@ -55,10 +55,6 @@ OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 OIDC_STORE_ACCESS_TOKEN=True
 OIDC_STORE_REFRESH_TOKEN=True # Store the encrypted refresh token in the session.
 
-# Must be a valid Fernet key (32 url-safe base64-encoded bytes)
-# To create one, use the bin/fernetkey command.
-# OIDC_STORE_REFRESH_TOKEN_KEY="your-32-byte-encryption-key=="
-
 # AI
 AI_FEATURE_ENABLED=true
 AI_BASE_URL=https://openaiendpoint.com
