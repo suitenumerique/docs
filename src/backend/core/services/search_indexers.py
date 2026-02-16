@@ -8,6 +8,7 @@ from functools import cache
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Subquery
 from django.utils.module_loading import import_string
 
 import requests
@@ -106,15 +107,13 @@ class BaseDocumentIndexer(ABC):
         Initialize the indexer.
         """
         self.batch_size = settings.SEARCH_INDEXER_BATCH_SIZE
-        self.indexer_url = settings.SEARCH_INDEXER_URL
+        self.indexer_url = settings.INDEXING_URL
         self.indexer_secret = settings.SEARCH_INDEXER_SECRET
-        self.search_url = settings.SEARCH_INDEXER_QUERY_URL
+        self.search_url = settings.SEARCH_URL
         self.search_limit = settings.SEARCH_INDEXER_QUERY_LIMIT
 
         if not self.indexer_url:
-            raise ImproperlyConfigured(
-                "SEARCH_INDEXER_URL must be set in Django settings."
-            )
+            raise ImproperlyConfigured("INDEXING_URL must be set in Django settings.")
 
         if not self.indexer_secret:
             raise ImproperlyConfigured(
@@ -122,9 +121,7 @@ class BaseDocumentIndexer(ABC):
             )
 
         if not self.search_url:
-            raise ImproperlyConfigured(
-                "SEARCH_INDEXER_QUERY_URL must be set in Django settings."
-            )
+            raise ImproperlyConfigured("SEARCH_URL must be set in Django settings.")
 
     def index(self, queryset=None, batch_size=None):
         """
