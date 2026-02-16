@@ -38,4 +38,4 @@ OIDC_STORE_REFRESH_TOKEN_KEY="<your-32-byte-encryption-key==>"
 ```
 
 `OIDC_STORE_REFRESH_TOKEN_KEY` must be a valid Fernet key (32 url-safe base64-encoded bytes).
-To create one, use the `bin/fernetkey` command.
+To create one, use the `bin/generate-oidc-store-refresh-token-key.sh` command.
