@@ -21,7 +21,7 @@ from pydantic_ai.tools import ToolDefinition
 from pydantic_ai.toolsets.external import ExternalToolset
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
-from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
+from pydantic_ai.ui.vercel_ai.request_types import RequestData, TextUIPart, UIMessage
 from rest_framework.request import Request
 
 from core import enums
@@ -32,6 +32,37 @@ else:
     from openai import OpenAI
 
 log = logging.getLogger(__name__)
+
+BLOCKNOTE_TOOL_STRICT_PROMPT = """
+You are editing a BlockNote document via the tool applyDocumentOperations.
+
+You MUST respond ONLY by calling applyDocumentOperations.
+The tool input MUST be valid JSON:
+{ "operations": [ ... ] }
+
+Each operation MUST include "type" and it MUST be one of:
+- "update" (requires: id, block)
+- "add"    (requires: referenceId, position, blocks)
+- "delete" (requires: id)
+
+VALID SHAPES (FOLLOW EXACTLY):
+
+Update:
+{ "type":"update", "id":"<id$>", "block":"<p>...</p>" }
+IMPORTANT: "block" MUST be a STRING containing a SINGLE valid HTML element.
+
+Add:
+{ "type":"add", "referenceId":"<id$>", "position":"before|after", "blocks":["<p>...</p>"] }
+IMPORTANT: "blocks" MUST be an ARRAY OF STRINGS.
+Each item MUST be a STRING containing a SINGLE valid HTML element.
+
+Delete:
+{ "type":"delete", "id":"<id$>" }
+
+IDs ALWAYS end with "$". Use ids EXACTLY as provided.
+
+Return ONLY the JSON tool input. No prose, no markdown.
+"""
 
 AI_ACTIONS = {
     "prompt": (
@@ -261,6 +292,29 @@ class AIService:
         ]
         return ExternalToolset(tool_defs)
 
+    def _harden_messages(
+        self, run_input: RequestData, tool_definitions: Dict[str, Any]
+    ):
+        """
+        Harden messages if applyDocumentOperations tool is used.
+        We would like the system_prompt property in the Agent initialization
+        but for UI adapter, like vercel, the agent is ignoring it
+        see https://github.com/pydantic/pydantic-ai/issues/3315
+
+        We have to inject it in the run_input.messages if needed.
+        """
+        for name, _defn in tool_definitions.items():
+            if name == "applyDocumentOperations":
+                run_input.messages.insert(
+                    0,
+                    UIMessage(
+                        id="system-force-tool-usage",
+                        role="system",
+                        parts=[TextUIPart(text=BLOCKNOTE_TOOL_STRICT_PROMPT)],
+                    ),
+                )
+                return
+
     def _build_async_stream(self, request: Request) -> AsyncIterator[str]:
         """Build the async stream from the AI provider."""
         instrument_enabled = settings.LANGFUSE_PUBLIC_KEY is not None
@@ -294,6 +348,9 @@ class AIService:
         toolset = (
             self.tool_definitions_to_toolset(raw_tool_defs) if raw_tool_defs else None
         )
+
+        if raw_tool_defs:
+            self._harden_messages(run_input, raw_tool_defs)
 
         adapter = VercelAIAdapter(
             agent=agent,

@@ -14,6 +14,7 @@ from openai import OpenAIError
 from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
 
 from core.services.ai_services import (
+    BLOCKNOTE_TOOL_STRICT_PROMPT,
     AIService,
     convert_async_generator_to_sync,
 )
@@ -509,6 +510,49 @@ def test_services_ai_build_async_stream_with_tool_definitions(mock_adapter_cls):
     call_kwargs = mock_adapter_instance.run_stream.call_args[1]
     assert call_kwargs["toolsets"] is not None
     assert len(call_kwargs["toolsets"]) == 1
+
+
+@patch("core.services.ai_services.VercelAIAdapter")
+def test_services_ai_build_async_stream_with_tool_definitions_required_system_prompt(
+    mock_adapter_cls,
+):
+    """The presence of the applyDocumentOperations tool must force the addition
+    of a system prompt"""
+
+    async def mock_encode():
+        yield "event-data"
+
+    mock_run_input = MagicMock()
+    mock_run_input.model_extra = {
+        "toolDefinitions": {
+            "applyDocumentOperations": {
+                "description": "A tool",
+                "inputSchema": {"type": "object"},
+            }
+        }
+    }
+    mock_run_input.messages = []
+    mock_adapter_cls.build_run_input.return_value = mock_run_input
+
+    mock_adapter_instance = MagicMock()
+    mock_adapter_instance.run_stream.return_value = MagicMock()
+    mock_adapter_instance.encode_stream.return_value = mock_encode()
+    mock_adapter_cls.return_value = mock_adapter_instance
+
+    service = AIService()
+    request = MagicMock()
+    request.META = {}
+    request.raw_body = b"{}"
+
+    service._build_async_stream(request)
+    # run_stream should have been called with a toolset
+    call_kwargs = mock_adapter_instance.run_stream.call_args[1]
+    assert call_kwargs["toolsets"] is not None
+    assert len(call_kwargs["toolsets"]) == 1
+    assert len(mock_run_input.messages) == 1
+    assert mock_run_input.messages[0].id == "system-force-tool-usage"
+    assert mock_run_input.messages[0].role == "system"
+    assert mock_run_input.messages[0].parts[0].text == BLOCKNOTE_TOOL_STRICT_PROMPT
 
 
 @patch("core.services.ai_services.Agent")
