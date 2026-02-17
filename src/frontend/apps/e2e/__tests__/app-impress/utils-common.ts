@@ -14,7 +14,6 @@ export const CONFIG = {
     color: '#8bc6ff',
   },
   AI_FEATURE_ENABLED: true,
-  AI_STREAM: true,
   API_USERS_SEARCH_QUERY_MIN_LENGTH: 3,
   CRISP_WEBSITE_ID: null,
   COLLABORATION_WS_URL: 'ws://localhost:4444/collaboration/ws/',
