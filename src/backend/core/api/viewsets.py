@@ -38,6 +38,7 @@ from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
 from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from lasuite.tools.email import get_domain_from_email
+from pydantic import ValidationError as PydanticValidationError
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -1854,22 +1855,24 @@ class DocumentViewSet(
         if not settings.AI_FEATURE_ENABLED:
             raise ValidationError("AI feature is not enabled.")
 
-        serializer = serializers.AIProxySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         ai_service = AIService()
 
-        if settings.AI_STREAM:
-            return StreamingHttpResponse(
-                ai_service.stream(request.data),
-                content_type="text/event-stream",
-                status=drf.status.HTTP_200_OK,
+        try:
+            stream = ai_service.stream(request)
+        except PydanticValidationError as err:
+            logger.info("pydantic validation error: %s", err)
+            return drf.response.Response(
+                {"detail": "Invalid submitted payload"},
+                status=drf.status.HTTP_400_BAD_REQUEST,
             )
 
-        ai_response = ai_service.proxy(request.data)
-        return drf.response.Response(
-            ai_response.model_dump(),
-            status=drf.status.HTTP_200_OK,
+        return StreamingHttpResponse(
+            stream,
+            content_type="text/event-stream",
+            headers={
+                "x-vercel-ai-data-stream": "v1",  # This header is used for Vercel AI streaming,
+                "X-Accel-Buffering": "no",  # Prevent nginx buffering
+            },
         )
 
     @drf.decorators.action(

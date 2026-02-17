@@ -19,3 +19,21 @@ class ForceSessionMiddleware:
 
         response = self.get_response(request)
         return response
+
+
+class SaveRawBodyMiddleware:
+    """
+    Save the raw request body to use it later.
+    """
+
+    def __init__(self, get_response):
+        """Initialize the middleware."""
+        self.get_response = get_response
+
+    def __call__(self, request):
+        """Save the raw request body in the request to use it later."""
+        if request.path.endswith(("/ai-proxy/", "/ai-proxy")):
+            request.raw_body = request.body
+
+        response = self.get_response(request)
+        return response

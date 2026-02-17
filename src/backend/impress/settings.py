@@ -326,6 +326,7 @@ class Base(Configuration):
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "core.middleware.ForceSessionMiddleware",
+        "core.middleware.SaveRawBodyMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
         "csp.middleware.CSPMiddleware",
@@ -715,6 +716,9 @@ class Base(Configuration):
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
     AI_STREAM = values.BooleanValue(
         default=True, environ_name="AI_STREAM", environ_prefix=None
+    )
+    AI_VERCEL_SDK_VERSION = values.IntegerValue(
+        6, environ_name="AI_VERCEL_SDK_VERSION", environ_prefix=None
     )
     AI_USER_RATE_THROTTLE_RATES = {
         "minute": 3,
