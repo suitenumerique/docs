@@ -318,3 +318,424 @@ def test_api_documents_duplicate_reader_non_root_document():
     assert duplicated_document.is_root()
     assert duplicated_document.accesses.count() == 1
     assert duplicated_document.accesses.get(user=user).role == "owner"
+
+
+def test_api_documents_duplicate_with_descendants_simple():
+    """
+    Duplicating a document with descendants flag should recursively duplicate all children.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create document tree
+    root = factories.DocumentFactory(
+        users=[(user, "owner")],
+        title="Root Document",
+    )
+    child1 = factories.DocumentFactory(
+        parent=root,
+        title="Child 1",
+    )
+    child2 = factories.DocumentFactory(
+        parent=root,
+        title="Child 2",
+    )
+
+    initial_count = models.Document.objects.count()
+    assert initial_count == 3
+
+    # Duplicate with descendants
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        {"with_descendants": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # Check that all documents were duplicated (6 total: 3 original + 3 duplicated)
+    assert models.Document.objects.count() == 6
+
+    # Check root duplication
+    assert duplicated_root.title == "Copy of Root Document"
+    assert duplicated_root.creator == user
+    assert duplicated_root.duplicated_from == root
+    assert duplicated_root.get_children().count() == 2
+
+    # Check children duplication
+    duplicated_children = duplicated_root.get_children().order_by("title")
+    assert duplicated_children.count() == 2
+
+    duplicated_child1 = duplicated_children.first()
+    assert duplicated_child1.title == "Copy of Child 1"
+    assert duplicated_child1.creator == user
+    assert duplicated_child1.duplicated_from == child1
+    assert duplicated_child1.get_parent() == duplicated_root
+
+    duplicated_child2 = duplicated_children.last()
+    assert duplicated_child2.title == "Copy of Child 2"
+    assert duplicated_child2.creator == user
+    assert duplicated_child2.duplicated_from == child2
+    assert duplicated_child2.get_parent() == duplicated_root
+
+
+def test_api_documents_duplicate_with_descendants_multi_level():
+    """
+    Duplicating should recursively handle multiple levels of nesting.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(
+        users=[(user, "owner")],
+        title="Level 0",
+    )
+    child = factories.DocumentFactory(
+        parent=root,
+        title="Level 1",
+    )
+    grandchild = factories.DocumentFactory(
+        parent=child,
+        title="Level 2",
+    )
+    great_grandchild = factories.DocumentFactory(
+        parent=grandchild,
+        title="Level 3",
+    )
+
+    initial_count = models.Document.objects.count()
+    assert initial_count == 4
+
+    # Duplicate with descendants
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        {"with_descendants": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # Check that all documents were duplicated
+    assert models.Document.objects.count() == 8
+
+    # Verify the tree structure
+    assert duplicated_root.depth == root.depth
+    dup_children = duplicated_root.get_children()
+    assert dup_children.count() == 1
+
+    dup_child = dup_children.first()
+    assert dup_child.title == "Copy of Level 1"
+    assert dup_child.duplicated_from == child
+    dup_grandchildren = dup_child.get_children()
+    assert dup_grandchildren.count() == 1
+
+    dup_grandchild = dup_grandchildren.first()
+    assert dup_grandchild.title == "Copy of Level 2"
+    assert dup_grandchild.duplicated_from == grandchild
+    dup_great_grandchildren = dup_grandchild.get_children()
+    assert dup_great_grandchildren.count() == 1
+
+    dup_great_grandchild = dup_great_grandchildren.first()
+    assert dup_great_grandchild.title == "Copy of Level 3"
+    assert dup_great_grandchild.duplicated_from == great_grandchild
+
+
+def test_api_documents_duplicate_with_descendants_and_attachments():
+    """
+    Duplicating with descendants should properly handle attachments in all children.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create documents with attachments
+    root_id = uuid.uuid4()
+    child_id = uuid.uuid4()
+    image_key_root, image_url_root = get_image_refs(root_id)
+    image_key_child, image_url_child = get_image_refs(child_id)
+
+    # Create root document with attachment
+    ydoc = pycrdt.Doc()
+    fragment = pycrdt.XmlFragment(
+        [
+            pycrdt.XmlElement("img", {"src": image_url_root}),
+        ]
+    )
+    ydoc["document-store"] = fragment
+    update = ydoc.get_update()
+    root_content = base64.b64encode(update).decode("utf-8")
+
+    root = factories.DocumentFactory(
+        id=root_id,
+        users=[(user, "owner")],
+        title="Root with Image",
+        content=root_content,
+        attachments=[image_key_root],
+    )
+
+    # Create child with different attachment
+    ydoc_child = pycrdt.Doc()
+    fragment_child = pycrdt.XmlFragment(
+        [
+            pycrdt.XmlElement("img", {"src": image_url_child}),
+        ]
+    )
+    ydoc_child["document-store"] = fragment_child
+    update_child = ydoc_child.get_update()
+    child_content = base64.b64encode(update_child).decode("utf-8")
+
+    child = factories.DocumentFactory(
+        id=child_id,
+        parent=root,
+        title="Child with Image",
+        content=child_content,
+        attachments=[image_key_child],
+    )
+
+    # Duplicate with descendants
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        {"with_descendants": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # Check root attachments
+    assert duplicated_root.attachments == [image_key_root]
+    assert duplicated_root.content == root_content
+
+    # Check child attachments
+    dup_children = duplicated_root.get_children()
+    assert dup_children.count() == 1
+    dup_child = dup_children.first()
+    assert dup_child.attachments == [image_key_child]
+    assert dup_child.content == child_content
+
+
+def test_api_documents_duplicate_with_descendants_and_accesses():
+    """
+    Duplicating with descendants and accesses should propagate accesses to all children.
+    """
+    user = factories.UserFactory()
+    other_user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create document tree with accesses
+    root = factories.DocumentFactory(
+        users=[(user, "owner"), (other_user, "editor")],
+        title="Root",
+    )
+    child = factories.DocumentFactory(
+        parent=root,
+        title="Child",
+    )
+    factories.UserDocumentAccessFactory(document=child, user=other_user, role="reader")
+
+    # Duplicate with descendants and accesses
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        {"with_descendants": True, "with_accesses": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # Check root accesses (should be duplicated)
+    root_accesses = duplicated_root.accesses.order_by("user_id")
+    assert root_accesses.count() == 2
+    assert root_accesses.get(user=user).role == "owner"
+    assert root_accesses.get(user=other_user).role == "editor"
+
+    # Check child accesses (should be duplicated)
+    dup_children = duplicated_root.get_children()
+    dup_child = dup_children.first()
+    child_accesses = dup_child.accesses.order_by("user_id")
+    assert child_accesses.count() == 1
+    assert child_accesses.get(user=other_user).role == "reader"
+
+
+@pytest.mark.parametrize("role", ["editor", "reader"])
+def test_api_documents_duplicate_with_descendants_non_root_document_becomes_root(role):
+    """
+    When duplicating a non-root document with descendants as a reader/editor,
+    it should become a root document and still duplicate its children.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    parent = factories.DocumentFactory(users=[(user, "owner")])
+    child = factories.DocumentFactory(
+        parent=parent,
+        users=[(user, role)],
+        title="Sub Document",
+    )
+    grandchild = factories.DocumentFactory(
+        parent=child,
+        title="Grandchild",
+    )
+
+    assert child.is_child_of(parent)
+
+    # Duplicate the child (non-root) with descendants
+    response = client.post(
+        f"/api/v1.0/documents/{child.id!s}/duplicate/",
+        {"with_descendants": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_child = models.Document.objects.get(id=response.json()["id"])
+
+    assert duplicated_child.title == "Copy of Sub Document"
+
+    dup_grandchildren = duplicated_child.get_children()
+    assert dup_grandchildren.count() == 1
+    dup_grandchild = dup_grandchildren.first()
+    assert dup_grandchild.title == "Copy of Grandchild"
+    assert dup_grandchild.duplicated_from == grandchild
+
+
+def test_api_documents_duplicate_without_descendants_should_not_duplicate_children():
+    """
+    When with_descendants is not set or False, children should not be duplicated.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create document tree
+    root = factories.DocumentFactory(
+        users=[(user, "owner")],
+        title="Root",
+    )
+    child = factories.DocumentFactory(
+        parent=root,
+        title="Child",
+    )
+
+    initial_count = models.Document.objects.count()
+    assert initial_count == 2
+
+    # Duplicate without descendants (default behavior)
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # Only root should be duplicated, not children
+    assert models.Document.objects.count() == 3
+    assert duplicated_root.get_children().count() == 0
+
+
+def test_api_documents_duplicate_with_descendants_preserves_link_configuration():
+    """
+    Duplicating with descendants should preserve link configuration (link_reach, link_role)
+    for all children when with_accesses is True.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create document tree with specific link configurations
+    root = factories.DocumentFactory(
+        users=[(user, "owner")],
+        title="Root",
+        link_reach="public",
+        link_role="reader",
+    )
+    child = factories.DocumentFactory(
+        parent=root,
+        title="Child",
+        link_reach="restricted",
+        link_role="editor",
+    )
+
+    # Duplicate with descendants and accesses
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        {"with_descendants": True, "with_accesses": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # Check root link configuration
+    assert duplicated_root.link_reach == root.link_reach
+    assert duplicated_root.link_role == root.link_role
+
+    # Check child link configuration
+    dup_children = duplicated_root.get_children()
+    dup_child = dup_children.first()
+    assert dup_child.link_reach == child.link_reach
+    assert dup_child.link_role == child.link_role
+
+
+def test_api_documents_duplicate_with_descendants_complex_tree():
+    """
+    Test duplication of a complex tree structure with multiple branches.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    # Create a complex tree:
+    #     root
+    #    /    \
+    #   c1     c2
+    #  /  \     \
+    # gc1 gc2   gc3
+    root = factories.DocumentFactory(
+        users=[(user, "owner")],
+        title="Root",
+    )
+    child1 = factories.DocumentFactory(parent=root, title="Child 1")
+    child2 = factories.DocumentFactory(parent=root, title="Child 2")
+    _grandchild1 = factories.DocumentFactory(parent=child1, title="GrandChild 1")
+    _grandchild2 = factories.DocumentFactory(parent=child1, title="GrandChild 2")
+    _grandchild3 = factories.DocumentFactory(parent=child2, title="GrandChild 3")
+
+    initial_count = models.Document.objects.count()
+    assert initial_count == 6
+
+    # Duplicate with descendants
+    response = client.post(
+        f"/api/v1.0/documents/{root.id!s}/duplicate/",
+        {"with_descendants": True},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    duplicated_root = models.Document.objects.get(id=response.json()["id"])
+
+    # All documents should be duplicated
+    assert models.Document.objects.count() == 12
+
+    # Check structure is preserved
+    dup_children = duplicated_root.get_children().order_by("title")
+    assert dup_children.count() == 2
+
+    dup_child1 = dup_children.first()
+    assert dup_child1.title == "Copy of Child 1"
+    dup_grandchildren1 = dup_child1.get_children().order_by("title")
+    assert dup_grandchildren1.count() == 2
+    assert dup_grandchildren1.first().title == "Copy of GrandChild 1"
+    assert dup_grandchildren1.last().title == "Copy of GrandChild 2"
+
+    dup_child2 = dup_children.last()
+    assert dup_child2.title == "Copy of Child 2"
+    dup_grandchildren2 = dup_child2.get_children()
+    assert dup_grandchildren2.count() == 1
+    assert dup_grandchildren2.first().title == "Copy of GrandChild 3"

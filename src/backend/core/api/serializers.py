@@ -591,10 +591,13 @@ class LinkDocumentSerializer(serializers.ModelSerializer):
 class DocumentDuplicationSerializer(serializers.Serializer):
     """
     Serializer for duplicating a document.
-    Allows specifying whether to keep access permissions.
+    Allows specifying whether to keep access permissions,
+    and whether to duplicate descendant documents as well
+    (deep copy) or not (shallow copy).
     """
 
     with_accesses = serializers.BooleanField(default=False)
+    with_descendants = serializers.BooleanField(default=False)
 
     def create(self, validated_data):
         """

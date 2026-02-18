@@ -1208,11 +1208,7 @@ class DocumentViewSet(
     @transaction.atomic
     def duplicate(self, request, *args, **kwargs):
         """
-        Duplicate a document and store the links to attached files in the duplicated
-        document to allow cross-access.
-
-        Optionally duplicates accesses if `with_accesses` is set to true
-        in the payload.
+        Duplicate a document, alongside its descendants if requested.
         """
         # Get document while checking permissions
         document_to_duplicate = self.get_object()
@@ -1221,8 +1217,43 @@ class DocumentViewSet(
             data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
+        user = request.user
+
+        duplicated_document = self._duplicate_document(
+            document_to_duplicate=document_to_duplicate,
+            serializer=serializer,
+            user=user,
+        )
+
+        return drf_response.Response(
+            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        )
+
+    def _duplicate_document(
+        self,
+        document_to_duplicate,
+        serializer,
+        user,
+        new_parent=None,
+    ):
+        """
+        Duplicate a document and store the links to attached files in the duplicated
+        document to allow cross-access.
+
+        Optionally duplicates accesses if `with_accesses` is set to true
+        in the payload.
+
+        Optionally duplicates sub-documents if `with_descendants` is set to true in
+        the payload. In this case, the whole subtree of the document will be duplicated,
+        and the links to attached files will be stored in all duplicated documents.
+
+        The `with_accesses` option will also be applied to all duplicated documents
+        if `with_descendants` is set to true.
+        """
         with_accesses = serializer.validated_data.get("with_accesses", False)
-        user_role = document_to_duplicate.get_role(request.user)
+        with_descendants = serializer.validated_data.get("with_descendants", False)
+
+        user_role = document_to_duplicate.get_role(user)
         is_owner_or_admin = user_role in models.PRIVILEGED_ROLES
 
         base64_yjs_content = document_to_duplicate.content
@@ -1241,11 +1272,41 @@ class DocumentViewSet(
             extracted_attachments & set(document_to_duplicate.attachments)
         )
         title = capfirst(_("copy of {title}").format(title=document_to_duplicate.title))
-        if not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
+        # If parent_duplicate is provided we must add the duplicated document as a child
+        if new_parent is not None:
+            duplicated_document = new_parent.add_child(
+                title=title,
+                content=base64_yjs_content,
+                attachments=attachments,
+                duplicated_from=document_to_duplicate,
+                creator=user,
+                **link_kwargs,
+            )
+
+            # Handle access duplication for this child
+            if with_accesses and is_owner_or_admin:
+                original_accesses = models.DocumentAccess.objects.filter(
+                    document=document_to_duplicate
+                ).exclude(user=user)
+
+                accesses_to_create = [
+                    models.DocumentAccess(
+                        document=duplicated_document,
+                        user_id=access.user_id,
+                        team=access.team,
+                        role=access.role,
+                    )
+                    for access in original_accesses
+                ]
+
+                if accesses_to_create:
+                    models.DocumentAccess.objects.bulk_create(accesses_to_create)
+
+        elif not document_to_duplicate.is_root() and choices.RoleChoices.get_priority(
             user_role
         ) < choices.RoleChoices.get_priority(models.RoleChoices.EDITOR):
             duplicated_document = models.Document.add_root(
-                creator=self.request.user,
+                creator=user,
                 title=title,
                 content=base64_yjs_content,
                 attachments=attachments,
@@ -1254,55 +1315,63 @@ class DocumentViewSet(
             )
             models.DocumentAccess.objects.create(
                 document=duplicated_document,
-                user=self.request.user,
+                user=user,
                 role=models.RoleChoices.OWNER,
             )
-            return drf_response.Response(
-                {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
+        else:
+            duplicated_document = document_to_duplicate.add_sibling(
+                "right",
+                title=title,
+                content=base64_yjs_content,
+                attachments=attachments,
+                duplicated_from=document_to_duplicate,
+                creator=user,
+                **link_kwargs,
             )
 
-        duplicated_document = document_to_duplicate.add_sibling(
-            "right",
-            title=title,
-            content=base64_yjs_content,
-            attachments=attachments,
-            duplicated_from=document_to_duplicate,
-            creator=request.user,
-            **link_kwargs,
-        )
-
-        # Always add the logged-in user as OWNER for root documents
-        if document_to_duplicate.is_root():
-            accesses_to_create = [
-                models.DocumentAccess(
-                    document=duplicated_document,
-                    user=request.user,
-                    role=models.RoleChoices.OWNER,
-                )
-            ]
-
-            # If accesses should be duplicated, add other users' accesses as per original document
-            if with_accesses and is_owner_or_admin:
-                original_accesses = models.DocumentAccess.objects.filter(
-                    document=document_to_duplicate
-                ).exclude(user=request.user)
-
-                accesses_to_create.extend(
+            # Always add the logged-in user as OWNER for root documents
+            if document_to_duplicate.is_root():
+                accesses_to_create = [
                     models.DocumentAccess(
                         document=duplicated_document,
-                        user_id=access.user_id,
-                        team=access.team,
-                        role=access.role,
+                        user=user,
+                        role=models.RoleChoices.OWNER,
                     )
-                    for access in original_accesses
+                ]
+
+                # If accesses should be duplicated,
+                # add other users' accesses as per original document
+                if with_accesses and is_owner_or_admin:
+                    original_accesses = models.DocumentAccess.objects.filter(
+                        document=document_to_duplicate
+                    ).exclude(user=user)
+
+                    accesses_to_create.extend(
+                        models.DocumentAccess(
+                            document=duplicated_document,
+                            user_id=access.user_id,
+                            team=access.team,
+                            role=access.role,
+                        )
+                        for access in original_accesses
+                    )
+
+                # Bulk create all the duplicated accesses
+                models.DocumentAccess.objects.bulk_create(accesses_to_create)
+
+        if with_descendants:
+            for child in document_to_duplicate.get_children().filter(
+                ancestors_deleted_at__isnull=True
+            ):
+                # When duplicating descendants, attach duplicates under the duplicated_document
+                self._duplicate_document(
+                    document_to_duplicate=child,
+                    serializer=serializer,
+                    user=user,
+                    new_parent=duplicated_document,
                 )
 
-            # Bulk create all the duplicated accesses
-            models.DocumentAccess.objects.bulk_create(accesses_to_create)
-
-        return drf_response.Response(
-            {"id": str(duplicated_document.id)}, status=status.HTTP_201_CREATED
-        )
+        return duplicated_document
 
     def _search_simple(self, request, text):
         """
