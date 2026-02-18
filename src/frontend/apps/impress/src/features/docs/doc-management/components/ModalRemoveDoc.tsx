@@ -7,13 +7,13 @@ import {
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
 import { useRouter } from 'next/router';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { useConfig } from '@/core';
 import { KEY_LIST_DOC_TRASHBIN } from '@/docs/docs-grid';
-import { useKeyboardAction } from '@/hooks';
+import { useFocusOnMount, useKeyboardAction } from '@/hooks';
 
 import { KEY_LIST_DOC } from '../api/useDocs';
 import { useRemoveDoc } from '../api/useRemoveDoc';
@@ -61,17 +61,7 @@ export const ModalRemoveDoc = ({
     },
   });
 
-  useEffect(() => {
-    const TIMEOUT_MODAL_MOUNTING = 100;
-    const timeoutId = setTimeout(() => {
-      const buttonElement = cancelButtonRef.current;
-      if (buttonElement) {
-        buttonElement.focus();
-      }
-    }, TIMEOUT_MODAL_MOUNTING);
-
-    return () => clearTimeout(timeoutId);
-  }, []);
+  useFocusOnMount(cancelButtonRef);
 
   const keyboardAction = useKeyboardAction();
 

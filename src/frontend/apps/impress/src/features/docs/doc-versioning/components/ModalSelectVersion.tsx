@@ -1,15 +1,17 @@
 import {
   Button,
+  ButtonElement,
   Modal,
   ModalSize,
   useModal,
 } from '@gouvfr-lasuite/cunningham-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { Doc } from '@/docs/doc-management';
+import { useFocusOnMount } from '@/hooks';
 
 import { Versions } from '../types';
 
@@ -39,10 +41,13 @@ export const ModalSelectVersion = ({
   doc,
 }: ModalSelectVersionProps) => {
   const { t } = useTranslation();
+  const closeButtonRef = useRef<ButtonElement>(null);
   const [selectedVersionId, setSelectedVersionId] =
     useState<Versions['version_id']>();
   const canRestore = doc.abilities.partial_update;
   const restoreModal = useModal();
+
+  useFocusOnMount(closeButtonRef);
 
   return (
     <>
@@ -131,6 +136,7 @@ export const ModalSelectVersion = ({
                   {t('History')}
                 </Text>
                 <ButtonCloseModal
+                  ref={closeButtonRef}
                   aria-label={t('Close the version history modal')}
                   onClick={onClose}
                   size="nano"
