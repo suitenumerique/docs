@@ -1021,7 +1021,10 @@ def test_models_documents__email_invitation__success():
         f"Test Sender (sender@example.com) invited you with the role &quot;editor&quot; "
         f"on the following document: {document.title}" in email_content
     )
-    assert f"docs/{document.id}/" in email_content
+    assert (
+        f"docs/{document.id}/?utm_source=docssharelink&amp;utm_campaign={document.id}"
+        in email_content
+    )
 
 
 @pytest.mark.parametrize(
@@ -1051,10 +1054,18 @@ def test_models_documents__email_invitation__url_app_param(email_url_app):
 
         # Determine expected domain
         if email_url_app:
-            assert f"https://test-example.com/docs/{document.id}/" in email_content
+            expected_url = (
+                f"https://test-example.com/docs/{document.id}/"
+                f"?utm_source=docssharelink&amp;utm_campaign={document.id}"
+            )
+            assert expected_url in email_content
         else:
             # Default Site domain is example.com
-            assert f"example.com/docs/{document.id}/" in email_content
+            expected_url = (
+                f"example.com/docs/{document.id}/"
+                f"?utm_source=docssharelink&amp;utm_campaign={document.id}"
+            )
+            assert expected_url in email_content
 
 
 def test_models_documents__email_invitation__success_empty_title():
@@ -1085,7 +1096,10 @@ def test_models_documents__email_invitation__success_empty_title():
         "Test Sender (sender@example.com) invited you with the role &quot;editor&quot; "
         "on the following document: Untitled Document" in email_content
     )
-    assert f"docs/{document.id}/" in email_content
+    assert (
+        f"docs/{document.id}/?utm_source=docssharelink&amp;utm_campaign={document.id}"
+        in email_content
+    )
 
 
 def test_models_documents__email_invitation__success_fr():
@@ -1120,7 +1134,10 @@ def test_models_documents__email_invitation__success_fr():
         f"Test Sender2 (sender2@example.com) vous a invité avec le rôle &quot;propriétaire&quot; "
         f"sur le document suivant : {document.title}" in email_content
     )
-    assert f"docs/{document.id}/" in email_content
+    assert (
+        f"docs/{document.id}/?utm_source=docssharelink&amp;utm_campaign={document.id}"
+        in email_content
+    )
 
 
 @mock.patch(

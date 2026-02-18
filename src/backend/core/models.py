@@ -1260,7 +1260,7 @@ class Document(MP_Node, BaseModel):
                 "brandname": settings.EMAIL_BRAND_NAME,
                 "document": self,
                 "domain": domain,
-                "link": f"{domain}/docs/{self.id}/",
+                "link": f"{domain}/docs/{self.id}/?utm_source=docssharelink&utm_campaign={self.id}",
                 "link_label": self.title or str(_("Untitled Document")),
                 "button_label": _("Open"),
                 "logo_img": settings.EMAIL_LOGO_IMG,
