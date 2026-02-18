@@ -18,10 +18,10 @@ type LeftPanelFavoriteItemProps = {
 
 export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
-  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
   const shareTriggerRef = useRef<HTMLElement | null>(null);
   const restoreFocus = useRestoreFocus();
+  const { colorsTokens, spacingsTokens } = useCunninghamTheme();
+  const { isDesktop } = useResponsiveStore();
 
   return (
     <Box

@@ -1,8 +1,4 @@
-import {
-  ButtonElement,
-  Tooltip,
-  useModal,
-} from '@gouvfr-lasuite/cunningham-react';
+import { ButtonElement, Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
 import { KeyboardEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,10 +43,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const handleShareClick = (trigger?: HTMLElement | null) => {
     shareTriggerRef.current = trigger ?? null;
     shareModal.open();
-  };
-
-  const focusShareTrigger = () => {
-    restoreFocus(shareTriggerRef.current ?? shareButtonRef.current);
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -197,9 +189,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             ) : (
               <DocsGridActions
                 doc={doc}
-                openShareModal={(trigger: HTMLElement | null) =>
-                  handleShareClick(trigger)
-                }
+                openShareModal={(trigger) => handleShareClick(trigger)}
               />
             )}
           </Box>
@@ -210,7 +200,9 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           doc={doc}
           onClose={() => {
             shareModal.close();
-            focusShareTrigger();
+            restoreFocus(
+              shareTriggerRef.current ?? shareButtonRef.current,
+            );
           }}
         />
       )}

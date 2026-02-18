@@ -60,10 +60,7 @@ export const DocsGridActions = ({
     {
       label: t('Share'),
       icon: 'group',
-      callback: () => {
-        openShareModal?.(menuButtonRef.current);
-      },
-
+      callback: () => openShareModal?.(menuButtonRef.current),
       testId: `docs-grid-actions-share-${doc.id}`,
     },
     {

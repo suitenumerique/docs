@@ -64,9 +64,7 @@ const CalloutComponent = ({
     setOpenEmojiPicker(!openEmojiPicker);
   };
 
-  const onClickOutside = () => {
-    setOpenEmojiPicker(false);
-  };
+  const onClickOutside = () => setOpenEmojiPicker(false);
 
   const onEmojiSelect = ({ native }: { native: string }) => {
     editor.updateBlock(block, { props: { emoji: native } });
