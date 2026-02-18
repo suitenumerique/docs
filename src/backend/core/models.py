@@ -260,24 +260,25 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
             try:
                 template_document = Document.objects.get(id=sandbox_id)
 
-                sandbox_document = template_document.add_sibling(
-                    "right",
-                    title=template_document.title,
-                    content=template_document.content,
-                    attachments=template_document.attachments,
-                    duplicated_from=template_document,
-                    creator=self,
-                )
-
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
-                )
-
             except Document.DoesNotExist:
                 logger.warning(
                     "Onboarding sandbox document with id %s does not exist. Skipping.",
                     sandbox_id,
                 )
+                return
+
+            sandbox_document = template_document.add_sibling(
+                "right",
+                title=template_document.title,
+                content=template_document.content,
+                attachments=template_document.attachments,
+                duplicated_from=template_document,
+                creator=self,
+            )
+
+            DocumentAccess.objects.create(
+                user=self, document=sandbox_document, role=RoleChoices.OWNER
+            )
 
     def _convert_valid_invitations(self):
         """
