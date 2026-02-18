@@ -22,34 +22,44 @@ services:
     ports:
       - "1081:1080"
 
-  minio:
+  rustfs:
     user: ${DOCKER_USER:-1000}
-    image: minio/minio
+    image: rustfs/rustfs:latest
     environment:
-      - MINIO_ROOT_USER=impress
-      - MINIO_ROOT_PASSWORD=password
+      - RUSTFS_ACCESS_KEY=rustfsadmin
+      - RUSTFS_SECRET_KEY=rustfsadmin
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_ADDRESS=0.0.0.0:9000
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+      - RUSTFS_CORS_ALLOWED_ORIGINS=*
+      - RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS=*
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - "9000:9000"
+      - "9001:9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 1s
-      timeout: 20s
-      retries: 300
-    entrypoint: ""
-    command: minio server --console-address :9001 /data
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "curl -f http://127.0.0.1:9000/health && curl -f http://127.0.0.1:9001/rustfs/console/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       - ./data/media:/data
 
   createbuckets:
     image: minio/mc
     depends_on:
-      minio:
+      rustfs:
         condition: service_healthy
         restart: true
     entrypoint: >
       sh -c "
-      /usr/bin/mc alias set impress http://minio:9000 impress password && \
+      /usr/bin/mc alias set impress http://rustfs:9000 rustfsadmin rustfsadmin && \
       /usr/bin/mc mb impress/impress-media-storage && \
       /usr/bin/mc version enable impress/impress-media-storage && \
       exit 0;"
@@ -81,16 +91,16 @@ services:
       - ./src/backend:/app
       - ./data/static:/data/static
     depends_on:
-        postgresql:
-            condition: service_healthy
-            restart: true
-        mailcatcher:
-          condition: service_started
-        redis:
-          condition: service_started
-        createbuckets:
-          condition: service_started
-  
+      postgresql:
+        condition: service_healthy
+        restart: true
+      mailcatcher:
+        condition: service_started
+      redis:
+        condition: service_started
+      createbuckets:
+        condition: service_started
+
   celery-dev:
     user: ${DOCKER_USER:-1000}
     image: impress:backend-development
@@ -131,7 +141,7 @@ services:
 
   frontend-development:
     user: "${DOCKER_USER:-1000}"
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/Dockerfile
       target: impress-dev
@@ -161,13 +171,13 @@ services:
     image: node:22
     user: "${DOCKER_USER:-1000}"
     environment:
-      HOME: /tmp 
+      HOME: /tmp
     volumes:
       - ".:/app"
 
   y-provider-development:
     user: ${DOCKER_USER:-1000}
-    build: 
+    build:
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
       target: y-provider-development
@@ -209,7 +219,11 @@ services:
       - --health-enabled=true
       - --metrics-enabled=true
     healthcheck:
-      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/localhost/9000; echo -e "GET /health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep "HTTP/1.1 200 OK" <&3']
+      test:
+        [
+          "CMD-SHELL",
+          'exec 3<>/dev/tcp/localhost/9000; echo -e "GET /health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep "HTTP/1.1 200 OK" <&3',
+        ]
       start_period: 5s
       interval: 1s
       timeout: 2s
@@ -223,7 +237,7 @@ services:
       KC_DB_PASSWORD: pass
       KC_DB_USERNAME: impress
       KC_DB_SCHEMA: public
-      PROXY_ADDRESS_FORWARDING: 'true'
+      PROXY_ADDRESS_FORWARDING: "true"
     ports:
       - "8080:8080"
     depends_on:
