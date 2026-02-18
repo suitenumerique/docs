@@ -57,12 +57,13 @@ export const LeftPanel = () => {
           >
             <LeftPanelHeader />
           </Box>
-          <LeftPanelContent />
+          {/* Not validated yet */}
+          {/* <LeftPanelContent />
           <SeparatedSection showSeparator={false}>
             <Box $padding={{ horizontal: 'sm' }} $justify="flex-start">
               <LeftPanelHelpMenu />
             </Box>
-          </SeparatedSection>
+          </SeparatedSection> */}
         </Box>
       )}
 
