@@ -494,7 +494,7 @@ def test_get_visited_document_ids_of():
     factories.UserDocumentAccessFactory(user=user, document=doc2)
 
     # The second document have an access for the user
-    assert get_visited_document_ids_of(queryset, user) == [str(doc1.pk)]
+    assert get_visited_document_ids_of(queryset, user) == (str(doc1.pk),)
 
 
 @pytest.mark.usefixtures("indexer_settings")
@@ -528,7 +528,7 @@ def test_get_visited_document_ids_of_deleted():
     doc_deleted.soft_delete()
 
     # Only the first document is not deleted
-    assert get_visited_document_ids_of(queryset, user) == [str(doc.pk)]
+    assert get_visited_document_ids_of(queryset, user) == (str(doc.pk),)
 
 
 @responses.activate
@@ -548,7 +548,7 @@ def test_services_search_indexers_search_errors(indexer_settings):
     )
 
     with pytest.raises(HTTPError):
-        FindDocumentIndexer().search("alpha", token="mytoken")
+        FindDocumentIndexer().search(q="alpha", token="mytoken")
 
 
 @patch("requests.post")
@@ -572,7 +572,7 @@ def test_services_search_indexers_search(mock_post, indexer_settings):
 
     visited = get_visited_document_ids_of(models.Document.objects.all(), user)
 
-    indexer.search("alpha", visited=visited, token="mytoken")
+    indexer.search(q="alpha", visited=visited, token="mytoken")
 
     args, kwargs = mock_post.call_args
 
@@ -613,7 +613,7 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
 
     visited = get_visited_document_ids_of(models.Document.objects.all(), user)
 
-    indexer.search("alpha", visited=visited, token="mytoken")
+    indexer.search(q="alpha", visited=visited, token="mytoken")
 
     args, kwargs = mock_post.call_args
 
@@ -621,7 +621,7 @@ def test_services_search_indexers_search_nb_results(mock_post, indexer_settings)
     assert kwargs.get("json")["nb_results"] == 25
 
     # The argument overrides the setting value
-    indexer.search("alpha", visited=visited, token="mytoken", nb_results=109)
+    indexer.search(q="alpha", visited=visited, token="mytoken", nb_results=109)
 
     args, kwargs = mock_post.call_args
 

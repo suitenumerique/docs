@@ -13,6 +13,7 @@ from django.utils.module_loading import import_string
 import requests
 
 from core import models, utils
+from core.enums import SearchType
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def get_batch_accesses_by_users_and_teams(paths):
     return dict(access_by_document_path)
 
 
-def get_visited_document_ids_of(queryset, user):
+def get_visited_document_ids_of(queryset, user) -> tuple[str, ...]:
     """
     Returns the ids of the documents that have a linktrace to the user and NOT owned.
     It will be use to limit the opensearch responses to the public documents already
@@ -92,7 +93,7 @@ def get_visited_document_ids_of(queryset, user):
         .distinct("pk")
     )
 
-    return [str(id) for id in docs.values_list("pk", flat=True)]
+    return tuple(str(id) for id in docs.values_list("pk", flat=True))
 
 
 class BaseDocumentIndexer(ABC):
@@ -181,8 +182,16 @@ class BaseDocumentIndexer(ABC):
         Must be implemented by subclasses.
         """
 
-    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def search(self, q, token, visited=(), nb_results=None, path=None):
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def search(  # noqa : PLR0913
+        self,
+        q: str,
+        token: str,
+        visited: tuple[str, ...] = (),
+        nb_results: int = None,
+        path: str = None,
+        search_type: SearchType = None,
+    ):
         """
         Search for documents in Find app.
         Ensure the same default ordering as "Docs" list : -updated_at
@@ -200,6 +209,8 @@ class BaseDocumentIndexer(ABC):
                 Defaults to 50 if not specified.
             path (str, optional):
                 The parent path to search descendants of.
+            search_type:
+                hybrid or full-text search
         """
         nb_results = nb_results or self.search_limit
         results = self.search_query(
@@ -211,6 +222,7 @@ class BaseDocumentIndexer(ABC):
                 "order_by": "updated_at",
                 "order_direction": "desc",
                 "path": path,
+                "search_type": search_type,
             },
             token=token,
         )
@@ -231,10 +243,29 @@ class FindDocumentIndexer(BaseDocumentIndexer):
     Document indexer that indexes and searches documents with La Suite Find app.
     """
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    def search(self, q, token, visited=(), nb_results=None, path=None):
+    # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def search(  # noqa : PLR0913
+        self,
+        q: str,
+        token: str,
+        visited: tuple[()] = (),
+        nb_results: int = None,
+        path: str = None,
+        search_type: SearchType = None,
+    ):
         """format Find search results"""
-        search_results = super().search(q, token, visited, nb_results, path)
+        search_results = (
+            super()
+            .search(
+                q=q,
+                token=token,
+                visited=visited,
+                nb_results=nb_results,
+                path=path,
+                search_type=search_type,
+            )
+            .get("results", [])
+        )
         return [
             {
                 **hit["_source"],
