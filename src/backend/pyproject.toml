@@ -42,6 +42,7 @@ dependencies = [
     "django<6.0.0",
     "django-treebeard==4.8.0",
     "djangorestframework==3.16.1",
+    "django-waffle==5.0.0",
     "drf_spectacular==0.29.0",
     "dockerflow==2024.4.2",
     "easy_thumbnails==2.10.1",

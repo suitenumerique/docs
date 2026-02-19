@@ -329,6 +329,7 @@ class Base(Configuration):
         "django.contrib.messages.middleware.MessageMiddleware",
         "dockerflow.django.middleware.DockerflowMiddleware",
         "csp.middleware.CSPMiddleware",
+        "waffle.middleware.WaffleMiddleware",
     ]
 
     AUTHENTICATION_BACKENDS = [
@@ -350,6 +351,7 @@ class Base(Configuration):
         "parler",
         "treebeard",
         "easy_thumbnails",
+        "waffle",
         # Django
         "django.contrib.admin",
         "django.contrib.auth",
