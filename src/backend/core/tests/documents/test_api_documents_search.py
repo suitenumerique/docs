@@ -9,12 +9,21 @@ import responses
 from faker import Faker
 from rest_framework import response as drf_response
 from rest_framework.test import APIClient
+from waffle.testutils import override_flag
 
 from core import factories
+from core.enums import FeatureFlag, SearchType
 from core.services.search_indexers import get_document_indexer
 
 fake = Faker()
 pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture(autouse=True)
+def enable_flag_find_hybrid_search():
+    """Enable flag_find_hybrid_search for all tests in this module."""
+    with override_flag(FeatureFlag.FLAG_FIND_HYBRID_SEARCH, active=True):
+        yield
 
 
 @mock.patch("core.services.search_indexers.FindDocumentIndexer.search_query")
@@ -46,6 +55,7 @@ def test_api_documents_search_anonymous(search_query, indexer_settings):
             "order_by": "updated_at",
             "order_direction": "desc",
             "path": None,
+            "search_type": SearchType.HYBRID,
         },
         "token": None,
     }
