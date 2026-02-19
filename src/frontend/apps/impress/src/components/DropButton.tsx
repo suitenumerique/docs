@@ -13,7 +13,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { BoxProps } from './Box';
 
 const StyledPopover = styled(Popover)`
-  background-color: white;
+  background-color: var(--c--contextuals--background--surface--primary);
   border-radius: var(--c--globals--spacings--st);
   box-shadow: 0 0 6px 0 rgba(0, 0, 145, 0.1);
   border: 1px solid var(--c--contextuals--border--surface--primary);
