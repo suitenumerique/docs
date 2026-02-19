@@ -28,6 +28,10 @@ and this project adheres to
 - 🐛(helm) use celery resources instead of backend resources
 - 🐛(helm) reverse liveness and readiness for backend deployment
 
+### Security
+
+- 🔒️(secu) fix CVE-2026-26996 with minimatch #1900
+
 ## [v4.5.0] - 2026-01-28
 
 ### Added
