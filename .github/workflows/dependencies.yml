@@ -20,16 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Restore the frontend cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: front-node_modules
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
       - name: Setup Node.js
         if: steps.front-node_modules.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ inputs.node_version }}
       - name: Install dependencies
@@ -37,7 +37,7 @@ jobs:
         run: cd src/frontend/ && yarn install --frozen-lockfile
       - name: Cache install frontend
         if: steps.front-node_modules.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -50,10 +50,10 @@ jobs:
         working-directory: src/mail
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Restore the mail templates
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: mail-templates
         with:
           path: "src/backend/core/templates/mail"
@@ -61,7 +61,7 @@ jobs:
 
       - name: Setup Node.js
         if: steps.mail-templates.outputs.cache-hit != 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ inputs.node_version }}
 
@@ -79,7 +79,7 @@ jobs:
 
       - name: Cache mail templates
         if: steps.mail-templates.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: "src/backend/core/templates/mail"
           key: mail-templates-${{ hashFiles('src/mail/mjml') }}

@@ -20,7 +20,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Create empty source files
         run: |
           touch src/backend/locale/django.pot
@@ -48,7 +48,7 @@ jobs:
           CROWDIN_BASE_PATH: "../src/"
       # frontend i18n
       - name: Restore the frontend cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
