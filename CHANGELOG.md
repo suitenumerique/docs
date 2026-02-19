@@ -22,6 +22,7 @@ and this project adheres to
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
 - ✨(frontend) activate Find search #1834
 - ✨ handle searching on subdocuments #1834
+- ✨(backend) add search feature flags #1897
 
 ### Changed
 

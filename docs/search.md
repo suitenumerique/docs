@@ -39,3 +39,14 @@ OIDC_STORE_REFRESH_TOKEN_KEY="<your-32-byte-encryption-key==>"
 
 `OIDC_STORE_REFRESH_TOKEN_KEY` must be a valid Fernet key (32 url-safe base64-encoded bytes).
 To create one, use the `bin/generate-oidc-store-refresh-token-key.sh` command.
+
+## Feature flags
+
+The Find search integration is controlled by two feature flags:
+- `flag_find_hybrid_search`
+- `flag_find_full_text_search`
+
+If a user has both flags activated the most advanced search is used (hybrid > full text > title).
+A user with no flag will default to the basic title search.
+
+Feature flags can be activated through the admin interface. 
