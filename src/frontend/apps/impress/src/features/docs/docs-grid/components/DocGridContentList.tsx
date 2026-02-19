@@ -3,7 +3,7 @@ import { getEventCoordinates } from '@dnd-kit/utilities';
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { AlertModal, Card, Text } from '@/components';
@@ -15,6 +15,7 @@ import {
   useDeleteDocInvitation,
 } from '@/docs/doc-share';
 import { useMoveDoc } from '@/docs/doc-tree';
+import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { DocDragEndData, useDragAndDrop } from '../hooks/useDragAndDrop';
 
@@ -151,9 +152,24 @@ export const DraggableDocGridContentList = ({
   const cannotMoveDoc =
     !canDrag || (canDrop !== undefined && !canDrop) || isError;
 
-  if (docs.length === 0) {
-    return null;
-  }
+  const [isDraggableDisabled, setIsDraggableDisabled] = useState(false);
+
+  useEffect(() => {
+    const checkModal = () => {
+      const modalOpen = document.querySelector('[role="dialog"]');
+      setIsDraggableDisabled(!!modalOpen);
+    };
+
+    checkModal();
+
+    const observer = new MutationObserver(checkModal);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
@@ -170,6 +186,7 @@ export const DraggableDocGridContentList = ({
             dragMode={!!selectedDoc}
             canDrag={!!canDrag}
             updateCanDrop={updateCanDrop}
+            disabled={isDraggableDisabled}
           />
         ))}
         <DragOverlay dropAnimation={null}>
@@ -216,6 +233,7 @@ export const DraggableDocGridContentList = ({
 };
 
 interface DraggableDocGridItemProps {
+  disabled: boolean;
   doc: Doc;
   dragMode: boolean;
   canDrag: boolean;
@@ -223,6 +241,7 @@ interface DraggableDocGridItemProps {
 }
 
 export const DraggableDocGridItem = ({
+  disabled,
   doc,
   dragMode,
   canDrag,
@@ -238,7 +257,7 @@ export const DraggableDocGridItem = ({
       id={doc.id}
       data={doc}
     >
-      <Draggable id={doc.id} data={doc}>
+      <Draggable id={doc.id} data={doc} disabled={disabled}>
         <DocsGridItem dragMode={dragMode} doc={doc} />
       </Draggable>
     </Droppable>
@@ -246,8 +265,14 @@ export const DraggableDocGridItem = ({
 };
 
 export const DocGridContentList = ({ docs }: DocGridContentListProps) => {
+  const { isDesktop } = useResponsiveStore();
+
   if (docs.length === 0) {
     return null;
+  }
+
+  if (isDesktop) {
+    return <DraggableDocGridContentList docs={docs} />;
   }
 
   return docs.map((doc) => (

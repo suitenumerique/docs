@@ -16,10 +16,7 @@ import { useInfiniteDocsTrashbin } from '../api';
 import { useImport } from '../hooks/useImport';
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
 
-import {
-  DocGridContentList,
-  DraggableDocGridContentList,
-} from './DocGridContentList';
+import { DocGridContentList } from './DocGridContentList';
 import { DocsGridLoader } from './DocsGridLoader';
 
 const Tooltip = styled(TooltipBase)`
@@ -166,11 +163,7 @@ export const DocsGrid = ({
                 </Box>
               </Box>
               <Box role="rowgroup">
-                {isDesktop ? (
-                  <DraggableDocGridContentList docs={docs} />
-                ) : (
-                  <DocGridContentList docs={docs} />
-                )}
+                <DocGridContentList docs={docs} />
               </Box>
             </Box>
             {hasNextPage && !loading && (

@@ -1,15 +1,17 @@
 import { Data, useDraggable } from '@dnd-kit/core';
+import { PropsWithChildren } from 'react';
 
 type DraggableProps<T> = {
   id: string;
   data?: Data<T>;
-  children: React.ReactNode;
+  disabled?: boolean;
 };
 
-export const Draggable = <T,>(props: DraggableProps<T>) => {
+export const Draggable = <T,>(props: PropsWithChildren<DraggableProps<T>>) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
     data: props.data,
+    disabled: props.disabled,
   });
 
   return (
