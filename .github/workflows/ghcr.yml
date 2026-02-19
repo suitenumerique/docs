@@ -23,6 +23,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -45,6 +49,7 @@ jobs:
         with:
           context: .
           target: backend-production
+          platforms: linux/amd64,linux/arm64
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -64,6 +69,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -87,6 +96,7 @@ jobs:
           context: .
           file: ./src/frontend/Dockerfile
           target: frontend-production
+          platforms: linux/amd64,linux/arm64
           build-args: |
             DOCKER_USER=${{ env.DOCKER_USER }}
             PUBLISH_AS_MIT=false
@@ -108,6 +118,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -131,6 +145,7 @@ jobs:
           context: .
           file: ./src/frontend/servers/y-provider/Dockerfile
           target: y-provider
+          platforms: linux/amd64,linux/arm64
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
           push: true
           tags: ${{ steps.meta.outputs.tags }}
