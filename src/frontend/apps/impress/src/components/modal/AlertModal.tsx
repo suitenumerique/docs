@@ -1,4 +1,10 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonProps,
+  Modal,
+  ModalProps,
+  ModalSize,
+} from '@gouvfr-lasuite/cunningham-react';
 import { ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,10 +16,11 @@ export type AlertModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  themeCTA?: ButtonProps['color'];
   title: string;
   cancelLabel?: string;
   confirmLabel?: string;
-};
+} & Partial<ModalProps>;
 
 export const AlertModal = ({
   cancelLabel,
@@ -23,6 +30,8 @@ export const AlertModal = ({
   onClose,
   onConfirm,
   title,
+  themeCTA,
+  ...props
 }: AlertModalProps) => {
   const { t } = useTranslation();
 
@@ -71,13 +80,14 @@ export const AlertModal = ({
           </Button>
           <Button
             aria-label={confirmLabel ?? t('Confirm')}
-            color="error"
+            color={themeCTA ?? 'error'}
             onClick={onConfirm}
           >
             {confirmLabel ?? t('Confirm')}
           </Button>
         </Box>
       }
+      {...props}
     >
       <Box className="--docs--alert-modal">
         <Box>

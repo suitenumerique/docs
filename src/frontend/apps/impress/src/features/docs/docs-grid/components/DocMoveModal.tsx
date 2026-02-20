@@ -16,6 +16,7 @@ import { QuickSearch } from '@/components/quick-search';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent, DocSearchTarget } from '@/docs/doc-search';
 import EmptySearchIcon from '@/docs/doc-search/assets/illustration-docs-empty.png';
+import { AlertModalRequestAccess } from '@/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
 import { DocsGridItemDate, DocsGridItemTitle } from './DocsGridItem';
@@ -75,6 +76,7 @@ export const DocMoveModal = ({
   const docTitle = doc.title || untitledDocument;
   const docTargetTitle = docSelected?.title || untitledDocument;
   const modalConfirmation = useModal();
+  const modalRequest = useModal();
   const { mutate: moveDoc } = useMoveDoc(true);
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
@@ -114,6 +116,11 @@ export const DocMoveModal = ({
               variant="primary"
               fullWidth
               onClick={() => {
+                if (!docSelected?.abilities.move) {
+                  modalRequest.open();
+                  return;
+                }
+
                 if (doc.nb_accesses_direct > 1) {
                   modalConfirmation.open();
                   return;
@@ -212,9 +219,7 @@ export const DocMoveModal = ({
                   <DocSearchContent
                     search={search}
                     filters={{ target: DocSearchTarget.ALL }}
-                    filterResults={(docResults) =>
-                      docResults.id !== doc.id && docResults.abilities.move
-                    }
+                    filterResults={(docResults) => docResults.id !== doc.id}
                     onSelect={handleSelect}
                     onLoadingChange={setLoading}
                     renderSearchElement={(docSearch) => {
@@ -275,6 +280,19 @@ export const DocMoveModal = ({
           onClose={modalConfirmation.onClose}
           onConfirm={handleMoveDoc}
           targetDocumentTitle={docTargetTitle}
+        />
+      )}
+      {modalRequest.isOpen && docSelected?.id && (
+        <AlertModalRequestAccess
+          docId={docSelected.id}
+          isOpen={modalRequest.isOpen}
+          onClose={modalRequest.onClose}
+          onConfirm={() => {
+            modalRequest.onClose();
+            onClose();
+          }}
+          targetDocumentTitle={docTargetTitle}
+          title={t('Move document')}
         />
       )}
     </>

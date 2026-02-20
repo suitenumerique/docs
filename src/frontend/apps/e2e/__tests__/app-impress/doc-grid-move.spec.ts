@@ -8,7 +8,12 @@ import {
   toggleHeaderMenu,
   verifyDocName,
 } from './utils-common';
-import { addNewMember } from './utils-share';
+import { writeInEditor } from './utils-editor';
+import {
+  addNewMember,
+  connectOtherUserToDoc,
+  updateShareLink,
+} from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc grid move', () => {
@@ -241,6 +246,137 @@ test.describe('Doc grid move', () => {
 
     const docTree = page.getByTestId('doc-tree');
     await expect(docTree.getByText(titleDoc1)).toBeVisible();
+  });
+
+  test('it proposes an access request when moving a doc without sufficient permissions', async ({
+    page,
+    browserName,
+  }) => {
+    test.slow();
+    await page.goto('/');
+
+    const [titleDoc1] = await createDoc(page, 'Move doc', browserName, 1);
+
+    const { otherPage, cleanup } = await connectOtherUserToDoc({
+      docUrl: '/',
+      browserName,
+    });
+
+    // Another user creates a doc
+    const [titleDoc2] = await createDoc(otherPage, 'Drop doc', browserName, 1);
+    await writeInEditor({
+      page: otherPage,
+      text: 'Hello world',
+    });
+    // Make it public
+    await otherPage.getByRole('button', { name: 'Share' }).click();
+    await updateShareLink(otherPage, 'Public');
+    await otherPage
+      .getByRole('dialog')
+      .getByRole('button', { name: 'close' })
+      .click();
+    const otherPageUrl = otherPage.url();
+
+    // The first user visit the doc to have it in his grid list
+    await page.goto(otherPageUrl);
+    await expect(page.getByText('Hello world')).toBeVisible();
+
+    await page.waitForTimeout(1000);
+
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid.getByText(titleDoc1)).toBeVisible();
+    await expect(docsGrid.getByText(titleDoc2)).toBeVisible();
+
+    const row = await getGridRow(page, titleDoc1);
+    await row.getByText(`more_horiz`).click();
+
+    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+
+    await expect(
+      page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
+    ).toBeVisible();
+
+    const input = page.getByRole('combobox', { name: 'Quick search input' });
+    await input.click();
+    await input.fill(titleDoc2);
+
+    await expect(page.getByRole('option').getByText(titleDoc2)).toBeVisible();
+
+    // Select the first result
+    await page.keyboard.press('Enter');
+    // The CTA should get the focus
+    await page.keyboard.press('Tab');
+    // Validate the move action
+    await page.keyboard.press('Enter');
+
+    // Request access modal should be visible
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByText(
+          'You need edit access to the destination. Request access, then try again.',
+        ),
+    ).toBeVisible();
+
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Request access', exact: true })
+      .first()
+      .click();
+
+    // The other user should receive the access request and be able to approve it
+    await otherPage.getByRole('button', { name: 'Share' }).click();
+    await expect(otherPage.getByText('Access Requests')).toBeVisible();
+    await expect(otherPage.getByText(`E2E ${browserName}`)).toBeVisible();
+
+    const emailRequest = `user.test@${browserName}.test`;
+    await expect(otherPage.getByText(emailRequest)).toBeVisible();
+    const container = otherPage.getByTestId(
+      `doc-share-access-request-row-${emailRequest}`,
+    );
+    await container.getByTestId('doc-role-dropdown').click();
+    await otherPage.getByRole('menuitem', { name: 'Administrator' }).click();
+    await container.getByRole('button', { name: 'Approve' }).click();
+
+    await expect(otherPage.getByText('Access Requests')).toBeHidden();
+    await expect(otherPage.getByText('Share with 2 users')).toBeVisible();
+    await expect(otherPage.getByText(`E2E ${browserName}`)).toBeVisible();
+
+    // The first user should now be able to move the doc
+    await page.reload();
+    await row.getByText(`more_horiz`).click();
+
+    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+
+    await expect(
+      page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
+    ).toBeVisible();
+
+    await input.click();
+    await input.fill(titleDoc2);
+
+    await expect(page.getByRole('option').getByText(titleDoc2)).toBeVisible();
+
+    // Select the first result
+    await page.keyboard.press('Enter');
+    // The CTA should get the focus
+    await page.keyboard.press('Tab');
+    // Validate the move action
+    await page.keyboard.press('Enter');
+
+    await expect(docsGrid.getByText(titleDoc1)).toBeHidden();
+    await docsGrid
+      .getByRole('link', { name: `Open document ${titleDoc2}` })
+      .click();
+
+    await verifyDocName(page, titleDoc2);
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText(titleDoc1)).toBeVisible();
+
+    await cleanup();
   });
 });
 
