@@ -7,7 +7,7 @@ import { css } from 'styled-components';
 import { Box, Icon, StyledLink, Text } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
+import { Doc, LinkReach, SimpleDocItem, useTrans } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
@@ -26,14 +26,12 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const searchParams = useSearchParams();
   const target = searchParams.get('target');
   const isInTrashbin = target === 'trashbin';
+  const { untitledDocument } = useTrans();
 
   const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
-  const isPublic = doc.link_reach === LinkReach.PUBLIC;
-  const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
-  const isShared = isPublic || isAuthenticated;
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -62,7 +60,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
         `}
         className="--docs--doc-grid-item"
         aria-label={t('Open document: {{title}}', {
-          title: doc.title || t('Untitled document'),
+          title: doc.title || untitledDocument,
         })}
       >
         <Box
@@ -82,72 +80,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             href={`/docs/${doc.id}`}
             onKeyDown={handleKeyDown}
           >
-            <Box
-              data-testid={`docs-grid-name-${doc.id}`}
-              $direction="row"
-              $align="center"
-              $gap={spacingsTokens.xs}
-              $padding={{ right: isDesktop ? 'md' : '3xs' }}
-              $maxWidth="100%"
-            >
-              <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
-              {isShared && (
-                <Box
-                  $padding={{ top: !isDesktop ? '4xs' : undefined }}
-                  $css={
-                    !isDesktop
-                      ? css`
-                          align-self: flex-start;
-                        `
-                      : undefined
-                  }
-                >
-                  {dragMode && (
-                    <>
-                      <Icon
-                        $layer="background"
-                        $theme="neutral"
-                        $variation="primary"
-                        $size="14px"
-                        iconName={isPublic ? 'public' : 'vpn_lock'}
-                      />
-                      <span className="sr-only">
-                        {isPublic
-                          ? t('Accessible to anyone')
-                          : t('Accessible to authenticated users')}
-                      </span>
-                    </>
-                  )}
-                  {!dragMode && (
-                    <Tooltip
-                      content={
-                        <Text $textAlign="center">
-                          {isPublic
-                            ? t('Accessible to anyone')
-                            : t('Accessible to authenticated users')}
-                        </Text>
-                      }
-                      placement="top"
-                    >
-                      <div>
-                        <Icon
-                          $layer="background"
-                          $theme="neutral"
-                          $variation="primary"
-                          $size="sm"
-                          iconName={isPublic ? 'public' : 'vpn_lock'}
-                        />
-                        <span className="sr-only">
-                          {isPublic
-                            ? t('Accessible to anyone')
-                            : t('Accessible to authenticated users')}
-                        </span>
-                      </div>
-                    </Tooltip>
-                  )}
-                </Box>
-              )}
-            </Box>
+            <DocsGridItemTitle doc={doc} withTooltip={!dragMode} />
           </StyledLink>
         </Box>
 
@@ -159,11 +92,13 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           $gap="32px"
           role="gridcell"
         >
-          <DocsGridItemDate
-            doc={doc}
-            isDesktop={isDesktop}
-            isInTrashbin={isInTrashbin}
-          />
+          <StyledLink href={`/docs/${doc.id}`} tabIndex={-1}>
+            <DocsGridItemDate
+              doc={doc}
+              isDesktop={isDesktop}
+              isInTrashbin={isInTrashbin}
+            />
+          </StyledLink>
 
           <Box $direction="row" $align="center" $gap={spacingsTokens.lg}>
             {isDesktop && (
@@ -177,6 +112,86 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           </Box>
         </Box>
       </Box>
+    </>
+  );
+};
+
+export const DocsGridItemTitle = ({
+  doc,
+  withTooltip,
+}: {
+  doc: Doc;
+  withTooltip: boolean;
+}) => {
+  const { t } = useTranslation();
+  const { isDesktop } = useResponsiveStore();
+  const { spacingsTokens } = useCunninghamTheme();
+  const isPublic = doc.link_reach === LinkReach.PUBLIC;
+  const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
+  const isShared = isPublic || isAuthenticated;
+
+  return (
+    <Box
+      data-testid={`docs-grid-name-${doc.id}`}
+      $direction="row"
+      $align="center"
+      $gap={spacingsTokens.xs}
+      $padding={{ right: isDesktop ? 'md' : '3xs' }}
+      $maxWidth="100%"
+    >
+      <SimpleDocItem isPinned={doc.is_favorite} doc={doc} />
+      {isShared && (
+        <Box
+          $padding={{ top: !isDesktop ? '4xs' : undefined }}
+          $css={
+            !isDesktop
+              ? css`
+                  align-self: flex-start;
+                `
+              : undefined
+          }
+        >
+          {withTooltip ? (
+            <Tooltip
+              content={
+                <Text $textAlign="center">
+                  {isPublic
+                    ? t('Accessible to anyone')
+                    : t('Accessible to authenticated users')}
+                </Text>
+              }
+              placement="top"
+            >
+              <Box>
+                <IconPublic isPublic={isPublic} />
+              </Box>
+            </Tooltip>
+          ) : (
+            <IconPublic isPublic={isPublic} />
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+const IconPublic = ({ isPublic }: { isPublic: boolean }) => {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <Icon
+        $layer="background"
+        $theme="neutral"
+        $variation="primary"
+        $size="sm"
+        iconName={isPublic ? 'public' : 'vpn_lock'}
+      />
+      <span className="sr-only">
+        {isPublic
+          ? t('Accessible to anyone')
+          : t('Accessible to authenticated users')}
+      </span>
     </>
   );
 };
@@ -210,15 +225,8 @@ export const DocsGridItemDate = ({
   }
 
   return (
-    <StyledLink href={`/docs/${doc.id}`} tabIndex={-1}>
-      <Text
-        $size="xs"
-        $layer="background"
-        $theme="neutral"
-        $variation="primary"
-      >
-        {dateToDisplay}
-      </Text>
-    </StyledLink>
+    <Text $size="xs" $layer="background" $theme="neutral" $variation="primary">
+      {dateToDisplay}
+    </Text>
   );
 };

@@ -22,7 +22,7 @@ export const QuickSearchStyle = createGlobalStyle`
       padding: var(--c--globals--spacings--xs);
       background: white;
       outline: none;
-      color: var(--c--globals--colors--gray-1000);
+      color: var(--c--contextuals--content--semantic--neutral--primary);
       border-radius: var(--c--globals--spacings--0);
 
       &::placeholder {

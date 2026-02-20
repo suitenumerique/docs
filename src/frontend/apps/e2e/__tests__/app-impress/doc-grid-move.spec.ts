@@ -1,10 +1,19 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, mockedListDocs, toggleHeaderMenu } from './utils-common';
+import {
+  createDoc,
+  getGridRow,
+  mockedListDocs,
+  toggleHeaderMenu,
+  verifyDocName,
+} from './utils-common';
 import { createRootSubPage } from './utils-sub-pages';
 
-test.describe('Doc grid dnd', () => {
-  test('it creates a doc', async ({ page, browserName }) => {
+test.describe('Doc grid move', () => {
+  test('it checks drag and drop functionality', async ({
+    page,
+    browserName,
+  }) => {
     await page.goto('/');
     const header = page.locator('header').first();
     await createDoc(page, 'Draggable doc', browserName, 1);
@@ -29,7 +38,7 @@ test.describe('Doc grid dnd', () => {
     await expect(draggableElement).toBeVisible();
     await expect(dropZone).toBeVisible();
 
-    // Obtenir les positions des éléments
+    // Get the position of the elements
     const draggableBoundingBox = await draggableElement.boundingBox();
     const dropZoneBoundingBox = await dropZone.boundingBox();
 
@@ -46,7 +55,7 @@ test.describe('Doc grid dnd', () => {
     );
     await page.mouse.down();
 
-    // Déplacer vers la zone cible
+    // Move to the target zone
     await page.mouse.move(
       dropZoneBoundingBox.x + dropZoneBoundingBox.width / 2,
       dropZoneBoundingBox.y + dropZoneBoundingBox.height / 2,
@@ -160,6 +169,55 @@ test.describe('Doc grid dnd', () => {
     );
 
     await page.mouse.up();
+  });
+
+  test('it moves a doc from the doc search modal', async ({
+    page,
+    browserName,
+  }) => {
+    await page.goto('/');
+
+    const [titleDoc1] = await createDoc(page, 'Draggable doc', browserName, 1);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const [titleDoc2] = await createDoc(page, 'Droppable doc', browserName, 1);
+    await page.getByRole('button', { name: 'Back to homepage' }).click();
+
+    const docsGrid = page.getByTestId('docs-grid');
+    await expect(docsGrid.getByText(titleDoc1)).toBeVisible();
+    await expect(docsGrid.getByText(titleDoc2)).toBeVisible();
+
+    const row = await getGridRow(page, titleDoc1);
+    await row.getByText(`more_horiz`).click();
+
+    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+
+    await expect(
+      page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
+    ).toBeVisible();
+
+    const input = page.getByRole('combobox', { name: 'Quick search input' });
+    await input.click();
+    await input.fill(titleDoc2);
+
+    await expect(page.getByRole('option').getByText(titleDoc2)).toBeVisible();
+
+    // Select the first result
+    await page.keyboard.press('Enter');
+    // The CTA should get the focus
+    await page.keyboard.press('Tab');
+    // Validate the move action
+    await page.keyboard.press('Enter');
+
+    await expect(docsGrid.getByText(titleDoc1)).toBeHidden();
+    await docsGrid
+      .getByRole('link', { name: `Open document ${titleDoc2}` })
+      .click();
+
+    await verifyDocName(page, titleDoc2);
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText(titleDoc1)).toBeVisible();
   });
 });
 

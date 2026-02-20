@@ -15,6 +15,7 @@ export type QuickSearchAction = {
 
 export type QuickSearchData<T> = {
   groupName: string;
+  groupKey?: string;
   elements: T[];
   emptyString?: string;
   startActions?: QuickSearchAction[];
@@ -30,13 +31,13 @@ export type QuickSearchProps = {
   loading?: boolean;
   label?: string;
   placeholder?: string;
+  groupKey?: string;
 };
 
 export const QuickSearch = ({
   onFilter,
   inputContent,
   inputValue,
-  loading,
   showInput = true,
   label,
   placeholder,
@@ -72,10 +73,10 @@ export const QuickSearch = ({
           tabIndex={-1}
           value={selectedValue}
           onValueChange={handleValueChange}
+          disablePointerSelection
         >
           {showInput && (
             <QuickSearchInput
-              loading={loading}
               withSeparator={hasChildrens(children)}
               inputValue={inputValue}
               onFilter={onFilter}

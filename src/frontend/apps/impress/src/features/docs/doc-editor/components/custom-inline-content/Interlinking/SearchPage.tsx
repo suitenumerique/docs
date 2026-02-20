@@ -181,6 +181,7 @@ export const SearchPage = ({
             setSearch(value);
           }}
           onKeyDown={handleKeyDown}
+          autoComplete="off"
         />
       </Box>
       <Box

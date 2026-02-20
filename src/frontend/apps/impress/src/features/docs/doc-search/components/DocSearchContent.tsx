@@ -12,15 +12,19 @@ import { DocSearchItem } from './DocSearchItem';
 type DocSearchContentProps = {
   search: string;
   filters: DocSearchFiltersValues;
+  filterResults?: (doc: Doc) => boolean;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
+  renderSearchElement?: (doc: Doc) => React.ReactNode;
 };
 
 export const DocSearchContent = ({
   search,
   filters,
+  filterResults,
   onSelect,
   onLoadingChange,
+  renderSearchElement,
 }: DocSearchContentProps) => {
   const {
     data,
@@ -38,10 +42,15 @@ export const DocSearchContent = ({
   const loading = isFetching || isRefetching || isLoading;
 
   const docsData: QuickSearchData<Doc> = useMemo(() => {
-    const docs = data?.pages.flatMap((page) => page.results) || [];
+    let docs = data?.pages.flatMap((page) => page.results) || [];
+
+    if (filterResults) {
+      docs = docs.filter(filterResults);
+    }
 
     return {
       groupName: docs.length > 0 ? t('Select a document') : '',
+      groupKey: 'docs',
       elements: search ? docs : [],
       emptyString: t('No document found'),
       endActions: hasNextPage
@@ -52,7 +61,7 @@ export const DocSearchContent = ({
           ]
         : [],
     };
-  }, [search, data?.pages, fetchNextPage, hasNextPage]);
+  }, [search, data?.pages, fetchNextPage, hasNextPage, filterResults]);
 
   useEffect(() => {
     onLoadingChange?.(loading);
@@ -62,7 +71,9 @@ export const DocSearchContent = ({
     <QuickSearchGroup
       onSelect={onSelect}
       group={docsData}
-      renderElement={(doc) => <DocSearchItem doc={doc} />}
+      renderElement={
+        renderSearchElement ?? ((doc) => <DocSearchItem doc={doc} />)
+      }
     />
   );
 };

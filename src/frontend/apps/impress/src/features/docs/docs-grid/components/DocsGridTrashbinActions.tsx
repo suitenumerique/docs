@@ -6,7 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
-import { Doc, KEY_LIST_DOC, useRestoreDoc } from '@/docs/doc-management';
+import {
+  Doc,
+  KEY_LIST_DOC,
+  useRestoreDoc,
+  useTrans,
+} from '@/docs/doc-management';
 
 import { KEY_LIST_DOC_TRASHBIN } from '../api';
 
@@ -18,6 +23,7 @@ export const DocsGridTrashbinActions = ({
   doc,
 }: DocsGridTrashbinActionsProps) => {
   const { t } = useTranslation();
+  const { untitledDocument } = useTrans();
   const { toast } = useToastProvider();
   const { mutate: restoreDoc, error } = useRestoreDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_DOC_TRASHBIN],
@@ -61,7 +67,7 @@ export const DocsGridTrashbinActions = ({
     },
   ];
 
-  const documentTitle = doc.title || t('Untitled document');
+  const documentTitle = doc.title || untitledDocument;
   const menuLabel = t('Open the menu of actions for the document: {{title}}', {
     title: documentTitle,
   });

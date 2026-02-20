@@ -18,7 +18,9 @@ describe('DocsGridItemDate', () => {
   it('should not render date when not on desktop', () => {
     render(
       <DocsGridItemDate
-        doc={{} as Doc}
+        doc={
+          { updated_at: DateTime.now().minus({ minutes: 1 }).toISO() } as Doc
+        }
         isDesktop={false}
         isInTrashbin={false}
       />,
@@ -27,7 +29,7 @@ describe('DocsGridItemDate', () => {
       },
     );
 
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByText('1 minute ago')).not.toBeInTheDocument();
   });
 
   [
@@ -66,7 +68,6 @@ describe('DocsGridItemDate', () => {
         { wrapper: AppWrapper },
       );
 
-      expect(screen.getByRole('link')).toBeInTheDocument();
       expect(screen.getByText(rendered)).toBeInTheDocument();
     });
   });
@@ -87,7 +88,6 @@ describe('DocsGridItemDate', () => {
       { wrapper: AppWrapper },
     );
 
-    expect(screen.getByRole('link')).toBeInTheDocument();
     expect(screen.getByText('il y a 5 jours')).toBeInTheDocument();
 
     await i18next.changeLanguage('en');
@@ -134,7 +134,6 @@ describe('DocsGridItemDate', () => {
         { wrapper: AppWrapper },
       );
 
-      expect(screen.getByRole('link')).toBeInTheDocument();
       await waitFor(
         () => {
           expect(screen.getByText(rendered)).toBeInTheDocument();

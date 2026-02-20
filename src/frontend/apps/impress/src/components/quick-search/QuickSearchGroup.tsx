@@ -28,7 +28,7 @@ export const QuickSearchGroup = <T,>({
         {group.startActions?.map((action, index) => {
           return (
             <QuickSearchItem
-              key={`${group.groupName}-action-${index}`}
+              key={`${group.groupKey ?? group.groupName}-start-actions-${index}`}
               onSelect={action.onSelect}
             >
               {action.content}
@@ -38,8 +38,8 @@ export const QuickSearchGroup = <T,>({
         {group.elements.map((groupElement, index) => {
           return (
             <QuickSearchItem
-              id={`${group.groupName}-element-${index}`}
-              key={`${group.groupName}-element-${index}`}
+              id={`${group.groupKey ?? group.groupName}-element-${index}`}
+              key={`${group.groupKey ?? group.groupName}-element-${index}`}
               onSelect={() => {
                 onSelect?.(groupElement);
               }}
@@ -51,7 +51,7 @@ export const QuickSearchGroup = <T,>({
         {group.endActions?.map((action, index) => {
           return (
             <QuickSearchItem
-              key={`${group.groupName}-action-${index}`}
+              key={`${group.groupKey ?? group.groupName}-end-actions-${index}`}
               onSelect={action.onSelect}
             >
               {action.content}
