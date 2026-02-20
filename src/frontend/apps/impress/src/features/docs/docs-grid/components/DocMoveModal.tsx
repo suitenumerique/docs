@@ -1,4 +1,9 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  Modal,
+  ModalSize,
+  useModal,
+} from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -14,6 +19,7 @@ import EmptySearchIcon from '@/docs/doc-search/assets/illustration-docs-empty.pn
 import { useResponsiveStore } from '@/stores';
 
 import { DocsGridItemDate, DocsGridItemTitle } from './DocsGridItem';
+import { ModalConfirmationMoveDoc } from './ModalConfimationMoveDoc';
 
 export const DocMoveModalStyle = createGlobalStyle`
   .c__modal--full .c__modal__scroller {
@@ -67,6 +73,8 @@ export const DocMoveModal = ({
   const [docSelected, setDocSelected] = useState<Doc>();
   const { untitledDocument } = useTrans();
   const docTitle = doc.title || untitledDocument;
+  const docTargetTitle = docSelected?.title || untitledDocument;
+  const modalConfirmation = useModal();
   const { mutate: moveDoc } = useMoveDoc(true);
   const [search, setSearch] = useState('');
   const { isDesktop } = useResponsiveStore();
@@ -77,6 +85,7 @@ export const DocMoveModal = ({
   };
 
   const handleMoveDoc = () => {
+    modalConfirmation.onClose();
     if (!docSelected?.id) {
       return;
     }
@@ -105,6 +114,11 @@ export const DocMoveModal = ({
               variant="primary"
               fullWidth
               onClick={() => {
+                if (doc.nb_accesses_direct > 1) {
+                  modalConfirmation.open();
+                  return;
+                }
+
                 handleMoveDoc();
               }}
               disabled={!docSelected}
@@ -255,6 +269,14 @@ export const DocMoveModal = ({
           </QuickSearch>
         </Box>
       </Modal>
+      {modalConfirmation.isOpen && (
+        <ModalConfirmationMoveDoc
+          isOpen={modalConfirmation.isOpen}
+          onClose={modalConfirmation.onClose}
+          onConfirm={handleMoveDoc}
+          targetDocumentTitle={docTargetTitle}
+        />
+      )}
     </>
   );
 };

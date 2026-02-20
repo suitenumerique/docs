@@ -2,19 +2,11 @@ import { DndContext, DragOverlay, Modifier } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
-import { AlertModal, Card, Text } from '@/components';
-import { Doc, KEY_LIST_DOC, useTrans } from '@/docs/doc-management';
-import {
-  getDocAccesses,
-  getDocInvitations,
-  useDeleteDocAccess,
-  useDeleteDocInvitation,
-} from '@/docs/doc-share';
-import { useMoveDoc } from '@/docs/doc-tree';
+import { Card, Text } from '@/components';
+import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores/useResponsiveStore';
 
 import { DocDragEndData, useDragAndDrop } from '../hooks/useDragAndDrop';
@@ -22,6 +14,7 @@ import { DocDragEndData, useDragAndDrop } from '../hooks/useDragAndDrop';
 import { DocsGridItem } from './DocsGridItem';
 import { Draggable } from './Draggable';
 import { Droppable } from './Droppable';
+import { ModalConfirmationMoveDoc } from './ModalConfimationMoveDoc';
 
 const snapToTopLeft: Modifier = ({
   activatorEvent,
@@ -55,11 +48,8 @@ type DocGridContentListProps = {
 export const DraggableDocGridContentList = ({
   docs,
 }: DocGridContentListProps) => {
-  const { mutateAsync: handleMove, isError } = useMoveDoc();
-  const queryClient = useQueryClient();
+  const { mutateAsync: handleMove, isError } = useMoveDoc(true);
   const modalConfirmation = useModal();
-  const { mutate: handleDeleteInvitation } = useDeleteDocInvitation();
-  const { mutate: handleDeleteAccess } = useDeleteDocAccess();
   const onDragData = useRef<DocDragEndData | null>(null);
   const { untitledDocument } = useTrans();
 
@@ -82,35 +72,6 @@ export const DraggableDocGridContentList = ({
         targetDocumentId,
         position: TreeViewMoveModeEnum.FIRST_CHILD,
       });
-
-      void queryClient.invalidateQueries({
-        queryKey: [KEY_LIST_DOC],
-      });
-      const accesses = await getDocAccesses({
-        docId: sourceDocumentId,
-      });
-
-      const invitationsResponse = await getDocInvitations({
-        docId: sourceDocumentId,
-        page: 1,
-      });
-
-      const invitations = invitationsResponse.results;
-
-      await Promise.all([
-        ...invitations.map((invitation) =>
-          handleDeleteInvitation({
-            docId: sourceDocumentId,
-            invitationId: invitation.id,
-          }),
-        ),
-        ...accesses.map((access) =>
-          handleDeleteAccess({
-            docId: sourceDocumentId,
-            accessId: access.id,
-          }),
-        ),
-      ]);
     } finally {
       onDragData.current = null;
     }
@@ -207,25 +168,13 @@ export const DraggableDocGridContentList = ({
         </DragOverlay>
       </DndContext>
       {modalConfirmation.isOpen && (
-        <AlertModal
-          {...modalConfirmation}
-          title={t('Move document')}
-          description={
-            <Text $display="inline">
-              <Trans
-                i18nKey="By moving this document to <strong>{{targetDocumentTitle}}</strong>, it will lose its current access rights and inherit the permissions of that document. <strong>This access change cannot be undone.</strong>"
-                values={{
-                  targetDocumentTitle:
-                    onDragData.current?.target.title ?? untitledDocument,
-                }}
-                components={{ strong: <strong /> }}
-              />
-            </Text>
+        <ModalConfirmationMoveDoc
+          isOpen={modalConfirmation.isOpen}
+          onClose={modalConfirmation.onClose}
+          onConfirm={handleMoveDoc}
+          targetDocumentTitle={
+            onDragData.current?.target.title || untitledDocument
           }
-          confirmLabel={t('Move')}
-          onConfirm={() => {
-            void handleMoveDoc();
-          }}
         />
       )}
     </>

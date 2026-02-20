@@ -3,10 +3,12 @@ import { expect, test } from '@playwright/test';
 import {
   createDoc,
   getGridRow,
+  getOtherBrowserName,
   mockedListDocs,
   toggleHeaderMenu,
   verifyDocName,
 } from './utils-common';
+import { addNewMember } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Doc grid move', () => {
@@ -178,6 +180,15 @@ test.describe('Doc grid move', () => {
     await page.goto('/');
 
     const [titleDoc1] = await createDoc(page, 'Draggable doc', browserName, 1);
+
+    const otherBrowserName = getOtherBrowserName(browserName);
+    await page.getByRole('button', { name: 'Share' }).click();
+    await addNewMember(page, 0, 'Administrator', otherBrowserName);
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'close' })
+      .click();
+
     await page.getByRole('button', { name: 'Back to homepage' }).click();
 
     const [titleDoc2] = await createDoc(page, 'Droppable doc', browserName, 1);
@@ -208,6 +219,18 @@ test.describe('Doc grid move', () => {
     await page.keyboard.press('Tab');
     // Validate the move action
     await page.keyboard.press('Enter');
+
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByText('it will lose its current access rights'),
+    ).toBeVisible();
+
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Move', exact: true })
+      .first()
+      .click();
 
     await expect(docsGrid.getByText(titleDoc1)).toBeHidden();
     await docsGrid

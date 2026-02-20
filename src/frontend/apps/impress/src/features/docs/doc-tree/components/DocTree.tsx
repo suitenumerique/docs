@@ -12,10 +12,14 @@ import { css } from 'styled-components';
 
 import { Box, Overlayer, StyledLink } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { Doc, SimpleDocItem } from '@/docs/doc-management';
+import {
+  Doc,
+  SimpleDocItem,
+  useMoveDoc,
+  useTrans,
+} from '@/docs/doc-management';
 
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
-import { useMoveDoc } from '../api/useMove';
 import { findIndexInTree } from '../utils';
 
 import { DocSubPageItem } from './DocSubPageItem';
@@ -28,6 +32,7 @@ type DocTreeProps = {
 export const DocTree = ({ currentDoc }: DocTreeProps) => {
   const { spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsive();
+  const { untitledDocument } = useTrans();
   const [treeRoot, setTreeRoot] = useState<HTMLElement | null>(null);
   const treeContext = useTreeContext<Doc | null>();
   const router = useRouter();
@@ -265,7 +270,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
           ref={rootItemRef}
           data-testid="doc-tree-root-item"
           role="treeitem"
-          aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || t('Untitled document') })}`}
+          aria-label={`${t('Root document {{title}}', { title: treeContext.root?.title || untitledDocument })}`}
           aria-selected={rootIsSelected}
           tabIndex={0}
           onFocus={handleRootFocus}
@@ -325,7 +330,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
               );
               router.push(`/docs/${treeContext?.root?.id}`);
             }}
-            aria-label={`${t('Open root document')}: ${treeContext.root?.title || t('Untitled document')}`}
+            aria-label={`${t('Open root document')}: ${treeContext.root?.title || untitledDocument}`}
             tabIndex={-1} // avoid double tabstop
           >
             <Box $direction="row" $align="center" $width="100%">

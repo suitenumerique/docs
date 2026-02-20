@@ -7,6 +7,7 @@ export * from './useDocOptions';
 export * from './useDocs';
 export * from './useDocsFavorite';
 export * from './useDuplicateDoc';
+export * from './useMoveDoc';
 export * from './useRestoreDoc';
 export * from './useSubDocs';
 export * from './useUpdateDoc';
