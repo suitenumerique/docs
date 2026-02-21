@@ -16,6 +16,9 @@ interface ThemeCustomization {
     light: LinkHTMLAttributes<HTMLLinkElement>;
     dark: LinkHTMLAttributes<HTMLLinkElement>;
   };
+  onboarding?: {
+    learn_more_url?: string;
+  };
   footer?: FooterType;
   home: {
     'with-proconnect'?: boolean;

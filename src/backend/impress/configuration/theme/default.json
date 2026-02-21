@@ -1,4 +1,7 @@
 {
+  "onboarding": {
+    "learn_more_url": ""
+  },
   "footer": {
     "default": {
       "logo": {
