@@ -18,20 +18,20 @@
   },
   "dependencies": {
     "@next/eslint-plugin-next": "15.5.9",
-    "@tanstack/eslint-plugin-query": "5.91.2",
-    "@typescript-eslint/eslint-plugin": "8.53.0",
-    "@typescript-eslint/parser": "8.53.0",
-    "@vitest/eslint-plugin": "1.6.6",
+    "@tanstack/eslint-plugin-query": "5.91.4",
+    "@typescript-eslint/eslint-plugin": "8.55.0",
+    "@typescript-eslint/parser": "8.55.0",
+    "@vitest/eslint-plugin": "1.6.9",
     "eslint-config-next": "15.5.9",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-jest": "29.12.1",
+    "eslint-plugin-jest": "29.15.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
-    "eslint-plugin-playwright": "2.5.0",
+    "eslint-plugin-playwright": "2.5.1",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-testing-library": "7.15.4",
-    "prettier": "3.8.0"
+    "prettier": "3.8.1"
   },
   "packageManager": "yarn@1.22.22"
 }

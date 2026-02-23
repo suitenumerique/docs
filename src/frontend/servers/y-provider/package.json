@@ -16,13 +16,13 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@blocknote/server-util": "0.46.2",
-    "@hocuspocus/server": "3.4.3",
-    "@sentry/node": "10.34.0",
-    "@sentry/profiling-node": "10.34.0",
+    "@blocknote/server-util": "0.47.0",
+    "@hocuspocus/server": "3.4.4",
+    "@sentry/node": "10.38.0",
+    "@sentry/profiling-node": "10.38.0",
     "@tiptap/extensions": "*",
     "axios": "1.13.5",
-    "cors": "2.8.5",
+    "cors": "2.8.6",
     "express": "5.2.1",
     "express-ws": "5.0.2",
     "uuid": "13.0.0",
@@ -30,8 +30,8 @@
     "yjs": "*"
   },
   "devDependencies": {
-    "@blocknote/core": "0.46.2",
-    "@hocuspocus/provider": "3.4.3",
+    "@blocknote/core": "0.47.0",
+    "@hocuspocus/provider": "3.4.4",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.6",
     "@types/express-ws": "3.0.6",
@@ -45,7 +45,7 @@
     "ts-node": "10.9.2",
     "tsc-alias": "1.8.16",
     "typescript": "*",
-    "vitest": "4.0.17",
+    "vitest": "4.0.18",
     "vitest-mock-extended": "3.1.0",
     "ws": "8.19.0"
   },
