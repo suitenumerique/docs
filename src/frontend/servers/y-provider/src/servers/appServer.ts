@@ -1,6 +1,3 @@
-// eslint-disable-next-line import/order
-import '../services/sentry';
-
 import * as Sentry from '@sentry/node';
 import express from 'express';
 import expressWebsockets from 'express-ws';
@@ -15,6 +12,8 @@ import {
 import { corsMiddleware, httpSecurity, wsSecurity } from '@/middlewares';
 import { routes } from '@/routes';
 import { logger } from '@/utils';
+
+import '../services/sentry';
 
 /**
  * init the collaboration server.

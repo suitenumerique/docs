@@ -14,15 +14,17 @@
     "lint": "eslint"
   },
   "peerDependencies": {
-    "eslint": ">=9.0.0"
+    "eslint": ">=10.0.1"
   },
   "dependencies": {
-    "@next/eslint-plugin-next": "15.5.9",
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "15.5.10",
     "@tanstack/eslint-plugin-query": "5.91.4",
-    "@typescript-eslint/eslint-plugin": "8.55.0",
-    "@typescript-eslint/parser": "8.55.0",
+    "@typescript-eslint/eslint-plugin": "8.56.0",
+    "@typescript-eslint/parser": "8.56.0",
+    "@typescript-eslint/utils": "8.56.0",
     "@vitest/eslint-plugin": "1.6.9",
-    "eslint-config-next": "15.5.9",
+    "eslint-config-next": "15.5.10",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest": "29.15.0",

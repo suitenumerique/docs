@@ -299,7 +299,7 @@ export const improveHtmlAccessibility = (
     }
 
     let previousSibling = item.previousElementSibling;
-    let listContainer: HTMLElement | null = null;
+    let listContainer: HTMLElement | null;
 
     if (previousSibling?.tagName.toLowerCase() === 'ul') {
       listContainer = previousSibling as HTMLElement;
@@ -409,7 +409,7 @@ export const addMediaFilesToZip = async (
 
       // Only download same-origin resources (internal media like /media/...).
       // External URLs keep their original src and are not included in the ZIP
-      let url: URL | null = null;
+      let url: URL | null;
       try {
         url = new URL(src, mediaUrl);
       } catch {

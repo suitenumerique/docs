@@ -264,7 +264,7 @@ test.describe('Documents Grid', () => {
   test('checks all the elements are visible', async ({ page }) => {
     void page.goto('/');
 
-    let docs: SmallDoc[] = [];
+    let docs: SmallDoc[];
     const response = await page.waitForResponse(
       (response) =>
         response.url().endsWith('documents/?page=1') &&
@@ -290,7 +290,7 @@ test.describe('Documents Grid', () => {
   });
 
   test('checks the infinite scroll', async ({ page }) => {
-    let docs: SmallDoc[] = [];
+    let docs: SmallDoc[];
     const responsePromisePage1 = page.waitForResponse((response) => {
       return (
         response.url().endsWith(`/documents/?page=1`) &&

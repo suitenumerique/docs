@@ -130,7 +130,7 @@ export const convertHandler = async (
         DefaultInlineContentSchema,
         DefaultStyleSchema
       >[]
-    | null = null;
+    | null;
   try {
     try {
       blocks = await reader.read(req.body);
