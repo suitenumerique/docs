@@ -225,8 +225,16 @@ class DocumentSerializer(ListDocumentSerializer):
         fields = super().get_fields()
 
         request = self.context.get("request")
-        if request and request.method == "POST":
-            fields["id"].read_only = False
+        if request:
+            if request.method == "POST":
+                fields["id"].read_only = False
+            if (
+                serializers.BooleanField().to_internal_value(
+                    request.query_params.get("without_content", False)
+                )
+                is True
+            ):
+                del fields["content"]
 
         return fields
 

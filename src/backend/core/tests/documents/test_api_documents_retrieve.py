@@ -1057,3 +1057,48 @@ def test_api_documents_retrieve_permanently_deleted_related(role, depth):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Not found."}
+
+
+def test_api_documents_retrieve_without_content():
+    """
+    Test retrieve using without_content query string should remove the content in the response
+    """
+
+    user = factories.UserFactory()
+
+    document = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+
+    client = APIClient()
+    client.force_login(user)
+
+    with mock.patch("core.models.Document.content") as mock_document_content:
+        response = client.get(
+            f"/api/v1.0/documents/{document.id!s}/?without_content=true"
+        )
+
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert "content" not in payload
+    mock_document_content.assert_not_called()
+
+
+def test_api_documents_retrieve_without_content_invalid_value():
+    """
+    Test retrieve using without_content query string but an invalid value
+    should return a 400
+    """
+
+    user = factories.UserFactory()
+
+    document = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.get(
+        f"/api/v1.0/documents/{document.id!s}/?without_content=invalid-value"
+    )
+    assert response.status_code == 400
+
+    assert response.json() == ["Must be a valid boolean."]

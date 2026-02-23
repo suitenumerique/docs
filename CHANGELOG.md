@@ -14,6 +14,7 @@ and this project adheres to
 - ✨(frontend) Can print a doc #1832
 - ✨(backend) manage reconciliation requests for user accounts #1878
 - 👷(CI) add GHCR workflow for forked repo testing #1851
+- ⚡️(backend) remove content from Document serializer when asked #1910
 - ✨(backend) allow the duplication of subpages #1893
 - ✨(backend) Onboarding docs for new users #1891
 - 🩺(trivy) add trivyignore file and add minimatch CVE #1915
