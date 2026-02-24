@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node';
 import express from 'express';
 import expressWebsockets from 'express-ws';
 
+import { CONVERSION_FILE_MAX_SIZE } from '@/env';
 import {
   collaborationResetConnectionsHandler,
   collaborationWSHandler,
@@ -55,7 +56,7 @@ export const initApp = () => {
     routes.CONVERT,
     httpSecurity,
     express.raw({
-      limit: '500kb',
+      limit: CONVERSION_FILE_MAX_SIZE,
       type: '*/*',
     }),
     convertHandler,

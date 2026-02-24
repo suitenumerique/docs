@@ -736,7 +736,7 @@ class Base(Configuration):
 
     # Imported file settings
     CONVERSION_FILE_MAX_SIZE = values.IntegerValue(
-        20 * MB,  # 10MB
+        20 * MB,
         environ_name="CONVERSION_FILE_MAX_SIZE",
         environ_prefix=None,
     )
