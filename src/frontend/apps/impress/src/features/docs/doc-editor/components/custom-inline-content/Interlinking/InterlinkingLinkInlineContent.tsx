@@ -95,7 +95,7 @@ export const LinkSelected = ({
   isEditable,
   updateInlineContent,
 }: LinkSelectedProps) => {
-  const { data: doc } = useDoc({ id: docId });
+  const { data: doc } = useDoc({ id: docId, withoutContent: true });
 
   /**
    * Update the content title if the referenced doc title changes

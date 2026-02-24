@@ -19,10 +19,13 @@ describe('CollaborationBackend', () => {
     const { fetchDocument } = await import('@/api/collaborationBackend');
     const documentId = 'test-document-123';
 
-    await fetchDocument(documentId, { cookie: 'test-cookie' });
+    await fetchDocument(
+      { name: documentId, withoutContent: true },
+      { cookie: 'test-cookie' },
+    );
 
     expect(axiosGetSpy).toHaveBeenCalledWith(
-      `http://app-dev:8000/api/v1.0/documents/${documentId}/`,
+      `http://app-dev:8000/api/v1.0/documents/${documentId}/?without_content=true`,
       expect.objectContaining({
         headers: expect.objectContaining({
           'X-Y-Provider-Key': 'test-yprovider-key',

@@ -53,7 +53,7 @@ export interface Doc {
   title?: string;
   children?: Doc[];
   childrenCount?: number;
-  content: Base64;
+  content?: Base64;
   created_at: string;
   creator: string;
   deleted_at: string | null;

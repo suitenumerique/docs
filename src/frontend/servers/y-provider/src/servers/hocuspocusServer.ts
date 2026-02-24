@@ -39,7 +39,10 @@ export const hocuspocusServer = new Server({
     let canEdit;
 
     try {
-      const document = await fetchDocument(documentName, requestHeaders);
+      const document = await fetchDocument(
+        { name: documentName, withoutContent: true },
+        requestHeaders,
+      );
 
       if (!document.abilities.retrieve) {
         logger(

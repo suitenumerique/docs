@@ -228,7 +228,7 @@ describe('Server Tests', () => {
         wsHocus.stopConnectionAttempt();
         expect(data.reason).toBe('permission-denied');
         expect(fetchDocumentMock).toHaveBeenCalledExactlyOnceWith(
-          room,
+          { name: room, withoutContent: true },
           expect.any(Object),
         );
         wsHocus.webSocket?.close();
@@ -273,7 +273,7 @@ describe('Server Tests', () => {
         wsHocus.stopConnectionAttempt();
         expect(data.reason).toBe('permission-denied');
         expect(fetchDocumentMock).toHaveBeenCalledExactlyOnceWith(
-          room,
+          { name: room, withoutContent: true },
           expect.any(Object),
         );
         wsHocus.webSocket?.close();
@@ -322,7 +322,7 @@ describe('Server Tests', () => {
               wsHocus.destroy();
 
               expect(fetchDocumentMock).toHaveBeenCalledWith(
-                room,
+                { name: room, withoutContent: true },
                 expect.any(Object),
               );
 
@@ -371,7 +371,7 @@ describe('Server Tests', () => {
         wsHocus.destroy();
 
         expect(fetchDocumentMock).toHaveBeenCalledWith(
-          room,
+          { name: room, withoutContent: true },
           expect.any(Object),
         );
 
