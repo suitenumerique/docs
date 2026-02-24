@@ -21,6 +21,9 @@ const CalloutBlockStyle = createGlobalStyle`
     padding: var(--c--globals--spacings--3xs) var(--c--globals--spacings--3xs);
     border-radius: var(--c--globals--spacings--3xs);
   }
+  .bn-block-content[data-content-type="callout"] .inline-content {
+    white-space: pre-wrap;
+  }
 `;
 
 type CreateCalloutBlockConfig = BlockConfig<
