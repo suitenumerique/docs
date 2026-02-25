@@ -16,6 +16,9 @@ on:
 env:
   DOCKER_USER: 1001:127
 
+permissions:
+  contents: read
+
 jobs:
   build-and-push-backend:
     runs-on: ubuntu-latest
@@ -42,6 +45,7 @@ jobs:
         with:
           docker-build-args: "--target backend-production -f Dockerfile"
           docker-image-name: "docker.io/lasuite/impress-backend:${{ github.sha }}"
+          trivyignores: ./.github/.trivyignore
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -83,6 +87,7 @@ jobs:
         with:
           docker-build-args: "-f src/frontend/Dockerfile --target frontend-production"
           docker-image-name: "docker.io/lasuite/impress-frontend:${{ github.sha }}"
+          trivyignores: ./.github/.trivyignore
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -124,6 +129,7 @@ jobs:
         with:
           docker-build-args: "-f src/frontend/servers/y-provider/Dockerfile --target y-provider"
           docker-image-name: "docker.io/lasuite/impress-y-provider:${{ github.sha }}"
+          trivyignores: ./.github/.trivyignore
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
