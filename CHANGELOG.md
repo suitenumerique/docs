@@ -25,6 +25,7 @@ and this project adheres to
 - 💄(frontend) align colors and logo with ui-kit v2 #1869
 - 🚸(backend) sort user search results by proximity with the active user #1802
 - 🚸(oidc) ignore case when fallback on email #1880
+- ⚡️(CI) optimize Docker Hub workflow #1919
 
 ### Fixed
 

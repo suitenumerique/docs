@@ -11,10 +11,10 @@ on:
   pull_request:
     branches:
       - "main"
-      - "ci/trivy-fails"
 
 env:
   DOCKER_USER: 1001:127
+  SHOULD_PUSH: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
 
 permissions:
   contents: read
@@ -26,8 +26,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Set up QEMU
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Docker meta
         id: meta
@@ -35,7 +37,7 @@ jobs:
         with:
           images: lasuite/impress-backend
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
@@ -47,13 +49,14 @@ jobs:
           docker-image-name: "docker.io/lasuite/impress-backend:${{ github.sha }}"
           trivyignores: ./.github/.trivyignore
       - name: Build and push
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
           target: backend-production
           platforms: linux/amd64,linux/arm64
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}
-          push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - name: Cleanup Docker after build
@@ -68,8 +71,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Set up QEMU
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Docker meta
         id: meta
@@ -77,7 +82,7 @@ jobs:
         with:
           images: lasuite/impress-frontend
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
@@ -89,6 +94,7 @@ jobs:
           docker-image-name: "docker.io/lasuite/impress-frontend:${{ github.sha }}"
           trivyignores: ./.github/.trivyignore
       - name: Build and push
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -98,7 +104,7 @@ jobs:
           build-args: |
             DOCKER_USER=${{ env.DOCKER_USER }}
             PUBLISH_AS_MIT=false
-          push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - name: Cleanup Docker after build
@@ -113,8 +119,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Set up QEMU
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/setup-buildx-action@v3
       - name: Docker meta
         id: meta
@@ -122,7 +130,7 @@ jobs:
         with:
           images: lasuite/impress-y-provider
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview')
+        if: env.SHOULD_PUSH == 'true'
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
       - name: Run trivy scan
         uses: numerique-gouv/action-trivy-cache@main
@@ -131,6 +139,7 @@ jobs:
           docker-image-name: "docker.io/lasuite/impress-y-provider:${{ github.sha }}"
           trivyignores: ./.github/.trivyignore
       - name: Build and push
+        if: env.SHOULD_PUSH == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -138,7 +147,7 @@ jobs:
           target: y-provider
           platforms: linux/amd64,linux/arm64
           build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - name: Cleanup Docker after build
