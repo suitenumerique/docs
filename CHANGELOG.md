@@ -19,6 +19,7 @@ and this project adheres to
 - ✨(backend) allow the duplication of subpages #1893
 - ✨(backend) Onboarding docs for new users #1891
 - 🩺(trivy) add trivyignore file and add minimatch CVE #1915
+- 🚩 Add feature flags for the AI feature #1922
 
 ### Changed
 

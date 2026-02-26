@@ -24,7 +24,9 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, useProviderStore } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
+import { useAnalytics } from '@/libs/Analytics';
 
+import { AI_FEATURE_FLAG } from '../conf';
 import {
   useHeadings,
   useSaveDoc,
@@ -105,9 +107,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
   const conf = useConfig().data;
+  const { isFeatureFlagActivated } = useAnalytics();
   const aiBlockNoteAllowed = !!(
     conf?.AI_FEATURE_ENABLED &&
     conf?.AI_FEATURE_BLOCKNOTE_ENABLED &&
+    isFeatureFlagActivated(AI_FEATURE_FLAG) &&
     doc.abilities?.ai_proxy
   );
   const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
