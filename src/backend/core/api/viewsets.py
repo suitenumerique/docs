@@ -430,7 +430,7 @@ class DocumentViewSet(
 
     ### Additional Actions:
     1. **Trashbin**: List soft deleted documents for a document owner
-        Example: GET /documents/{id}/trashbin/
+        Example: GET /documents/trashbin/
 
     2. **Children**: List or create child documents.
         Example: GET, POST /documents/{id}/children/
@@ -444,7 +444,7 @@ class DocumentViewSet(
     5. **Favorite**: Get list of favorite documents for a user. Mark or unmark
         a document as favorite.
         Examples:
-        - GET /documents/favorite/
+        - GET /documents/favorite_list/
         - POST, DELETE /documents/{id}/favorite/
 
     6. **Create for Owner**: Create a document via server-to-server on behalf of a user.

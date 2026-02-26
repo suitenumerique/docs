@@ -156,6 +156,10 @@ endif
 	@echo ""
 .PHONY: post-beautiful-bootstrap
 
+create-docker-network: ## create the docker network if it doesn't exist
+	@docker network create lasuite-network || true
+.PHONY: create-docker-network
+
 bootstrap: ## Prepare the project for local development
 bootstrap: \
 	pre-beautiful-bootstrap \
@@ -213,6 +217,7 @@ logs: ## display app-dev logs (follow mode)
 .PHONY: logs
 
 run-backend: ## Start only the backend application and all needed services
+	@$(MAKE) create-docker-network
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development

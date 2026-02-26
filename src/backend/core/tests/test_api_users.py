@@ -48,7 +48,7 @@ def test_api_users_list_query_email():
     Only results with a Levenstein distance less than 3 with the query should be returned.
     We want to match by Levenstein distance because we want to prevent typing errors.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com", full_name="Example User")
 
     client = APIClient()
     client.force_login(user)
@@ -83,7 +83,7 @@ def test_api_users_list_query_email_with_internationalized_domain_names():
     Authenticated users should be able to list users and filter by email.
     It should work even if the email address contains an internationalized domain name.
     """
-    user = factories.UserFactory()
+    user = factories.UserFactory(email="user@example.com", full_name="Example User")
 
     client = APIClient()
     client.force_login(user)
@@ -123,7 +123,7 @@ def test_api_users_list_query_full_name():
     Authenticated users should be able to list users and filter by full name.
     Only results with a Trigram similarity greater than 0.2 with the query should be returned.
     """
-    user = factories.UserFactory(email="user@example.com")
+    user = factories.UserFactory(email="user@example.com", full_name="Example User")
 
     client = APIClient()
     client.force_login(user)
@@ -168,7 +168,7 @@ def test_api_users_list_query_accented_full_name():
     Authenticated users should be able to list users and filter by full name with accents.
     Only results with a Trigram similarity greater than 0.2 with the query should be returned.
     """
-    user = factories.UserFactory(email="user@example.com")
+    user = factories.UserFactory(email="user@example.com", full_name="Example User")
 
     client = APIClient()
     client.force_login(user)

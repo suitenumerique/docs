@@ -16,6 +16,7 @@ and this project adheres to
 - 👷(CI) add GHCR workflow for forked repo testing #1851
 - ✨(backend) allow the duplication of subpages #1893
 - ✨(backend) Onboarding docs for new users #1891
+- ✨(backend) add resource server api
 
 ### Changed
 
