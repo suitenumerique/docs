@@ -35,6 +35,7 @@ and this project adheres to
 
 - ✨(backend) add a is_first_connection flag to the User model #1938
 - ✨(frontend) add onboarding modal with help menu button #1868
+- ✨(backend) add resource server api #1923
 
 ### Changed
 

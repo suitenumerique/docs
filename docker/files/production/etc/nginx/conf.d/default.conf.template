@@ -47,6 +47,10 @@ server {
         try_files $uri @proxy_to_docs_backend;
     }
 
+    location /external_api {
+        try_files $uri @proxy_to_docs_backend;
+    }
+
     location /static {
         try_files $uri @proxy_to_docs_backend;
     }
