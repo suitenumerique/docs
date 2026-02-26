@@ -1852,7 +1852,7 @@ class DocumentViewSet(
         # Check permissions first
         self.get_object()
 
-        if not settings.AI_FEATURE_ENABLED:
+        if not settings.AI_FEATURE_ENABLED or not settings.AI_FEATURE_BLOCKNOTE_ENABLED:
             raise ValidationError("AI feature is not enabled.")
 
         ai_service = AIService()
@@ -2572,6 +2572,8 @@ class ConfigView(drf.views.APIView):
         array_settings = [
             "AI_BOT",
             "AI_FEATURE_ENABLED",
+            "AI_FEATURE_BLOCKNOTE_ENABLED",
+            "AI_FEATURE_LEGACY_ENABLED",
             "API_USERS_SEARCH_QUERY_MIN_LENGTH",
             "COLLABORATION_WS_URL",
             "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",

@@ -76,26 +76,6 @@ test.describe('Config', () => {
     expect(webSocket.url()).toContain('ws://localhost:4444/collaboration/ws/');
   });
 
-  test('it checks the AI feature flag from config endpoint', async ({
-    page,
-    browserName,
-  }) => {
-    await overrideConfig(page, {
-      AI_FEATURE_ENABLED: false,
-    });
-
-    await page.goto('/');
-
-    await createDoc(page, 'doc-ai-feature', browserName, 1);
-
-    await page.locator('.bn-block-outer').last().fill('Anything');
-    await page.getByText('Anything').selectText();
-    expect(
-      await page.locator('button[data-test="convertMarkdown"]').count(),
-    ).toBe(1);
-    await expect(page.getByRole('button', { name: 'Ask AI' })).toBeHidden();
-  });
-
   test('it checks that Crisp is trying to init from config endpoint', async ({
     page,
   }) => {

@@ -105,8 +105,12 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
   const conf = useConfig().data;
-  const aiAllowed = !!(conf?.AI_FEATURE_ENABLED && doc.abilities?.ai_proxy);
-  const aiExtension = useAI?.(doc.id, aiAllowed);
+  const aiBlockNoteAllowed = !!(
+    conf?.AI_FEATURE_ENABLED &&
+    conf?.AI_FEATURE_BLOCKNOTE_ENABLED &&
+    doc.abilities?.ai_proxy
+  );
+  const aiExtension = useAI?.(doc.id, aiBlockNoteAllowed);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -268,11 +272,11 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         comments={showComments}
         aria-label={t('Document editor')}
       >
-        {aiAllowed && AIMenuController && AIMenu && (
+        {aiBlockNoteAllowed && AIMenuController && AIMenu && (
           <AIMenuController aiMenu={AIMenu} />
         )}
-        <BlockNoteSuggestionMenu aiAllowed={aiAllowed} />
-        <BlockNoteToolbar aiAllowed={aiAllowed} />
+        <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
+        <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
       </BlockNoteView>
     </Box>
   );

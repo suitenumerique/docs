@@ -79,7 +79,7 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
         {toolbarItems}
 
         {/* Extra button to do some AI powered actions - only if AIToolbarButton is not available because of MIT license */}
-        {conf?.AI_FEATURE_ENABLED && !AIToolbarButton && (
+        {conf?.AI_FEATURE_ENABLED && conf?.AI_FEATURE_LEGACY_ENABLED && (
           <AIGroupButton key="AIButton" />
         )}
 
@@ -87,7 +87,12 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
         <MarkdownButton key="customButton" />
       </FormattingToolbar>
     );
-  }, [toolbarItems, aiAllowed, conf?.AI_FEATURE_ENABLED]);
+  }, [
+    toolbarItems,
+    aiAllowed,
+    conf?.AI_FEATURE_ENABLED,
+    conf?.AI_FEATURE_LEGACY_ENABLED,
+  ]);
 
   return (
     <>

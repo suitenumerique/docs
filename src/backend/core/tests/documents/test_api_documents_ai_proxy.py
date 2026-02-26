@@ -23,6 +23,8 @@ def ai_settings(settings):
     settings.AI_BASE_URL = "http://localhost-ai:12345/"
     settings.AI_API_KEY = "test-key"
     settings.AI_FEATURE_ENABLED = True
+    settings.AI_FEATURE_BLOCKNOTE_ENABLED = True
+    settings.AI_FEATURE_LEGACY_ENABLED = True
     settings.LANGFUSE_PUBLIC_KEY = None
     settings.AI_VERCEL_SDK_VERSION = 6
 
@@ -239,9 +241,12 @@ def test_api_documents_ai_proxy_success(mock_stream, via, role, mock_user_teams)
     mock_stream.assert_called_once()
 
 
-def test_api_documents_ai_proxy_ai_feature_disabled(settings):
+@pytest.mark.parametrize(
+    "setting_to_disable", ["AI_FEATURE_ENABLED", "AI_FEATURE_BLOCKNOTE_ENABLED"]
+)
+def test_api_documents_ai_proxy_ai_feature_disabled(settings, setting_to_disable):
     """When AI_FEATURE_ENABLED is False, the endpoint returns 400."""
-    settings.AI_FEATURE_ENABLED = False
+    setattr(settings, setting_to_disable, False)
 
     user = factories.UserFactory()
 

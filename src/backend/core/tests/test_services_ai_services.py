@@ -29,6 +29,8 @@ def ai_settings(settings):
     settings.AI_BASE_URL = "http://example.com"
     settings.AI_API_KEY = "test-key"
     settings.AI_FEATURE_ENABLED = True
+    settings.AI_FEATURE_BLOCKNOTE_ENABLED = True
+    settings.AI_FEATURE_LEGACY_ENABLED = True
     settings.LANGFUSE_PUBLIC_KEY = None
     settings.AI_VERCEL_SDK_VERSION = 6
 

@@ -710,8 +710,21 @@ class Base(Configuration):
         "hour": 100,
         "day": 500,
     }
+    # Master settings to enable AI features, if you set it to False,
+    # all AI features will be disabled even if the other settings are enabled.
     AI_FEATURE_ENABLED = values.BooleanValue(
         default=False, environ_name="AI_FEATURE_ENABLED", environ_prefix=None
+    )
+    # Far better UI but more flaky for the moment
+    # ⚠️ AGPL license, be sure to comply with the Blocknote license
+    # if you enable it (https://www.blocknotejs.org/)
+    AI_FEATURE_BLOCKNOTE_ENABLED = values.BooleanValue(
+        default=False, environ_name="AI_FEATURE_BLOCKNOTE_ENABLED", environ_prefix=None
+    )
+    # UI with less features but more stable
+    # MIT friendly license, you can enable it without worrying about the license
+    AI_FEATURE_LEGACY_ENABLED = values.BooleanValue(
+        default=True, environ_name="AI_FEATURE_LEGACY_ENABLED", environ_prefix=None
     )
     AI_MODEL = values.Value(None, environ_name="AI_MODEL", environ_prefix=None)
     AI_VERCEL_SDK_VERSION = values.IntegerValue(

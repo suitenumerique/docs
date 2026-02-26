@@ -138,6 +138,8 @@ AI is disabled by default. To enable it, the following environment variables mus
 
 ```env
 AI_FEATURE_ENABLED=true # is false by default
+AI_FEATURE_BLOCKNOTE_ENABLED=true # is false by default
+AI_FEATURE_LEGACY_ENABLED=true # is true by default, AI_FEATURE_ENABLED must be set to true to enable it 
 AI_BASE_URL=https://openaiendpoint.com
 AI_API_KEY=<API key>
 AI_MODEL=<model used> e.g. llama
