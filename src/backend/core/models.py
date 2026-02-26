@@ -812,6 +812,7 @@ class Document(MP_Node, BaseModel):
             "versions_destroy": is_owner_or_admin,
             "versions_list": has_access_role,
             "versions_retrieve": has_access_role,
+            "search": can_get,
         }
 
     def send_email(self, subject, emails, context=None, language=None):
