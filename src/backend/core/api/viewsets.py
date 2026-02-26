@@ -1706,13 +1706,18 @@ class DocumentViewSet(
         to let this request go through (by returning a 200 code) or if we block it (by returning
         a 403 error). Note that we return 403 errors without any further details for security
         reasons.
+
+        Traefik and other ingresses that aren't nginx don't send HTTP_X_ORIGINAL_URL but all 
+        should send the standard X-Forwarded-* headers, fallback to that when HTTP_X_ORIGINAL_URL
+        is not found.
         """
         # Extract the original URL from the request header
         original_url = request.META.get("HTTP_X_ORIGINAL_URL")
         if not original_url:
-            logger.debug("Missing HTTP_X_ORIGINAL_URL header in subrequest")
-            raise drf.exceptions.PermissionDenied()
-
+            if not request.META.get("HTTP_X_FORWARDED_URI"):
+                logger.debug("Missing HTTP_X_ORIGINAL_URL header and HTTP_X_FORWARDED_URI http header.")
+                raise drf.exceptions.PermissionDenied()
+            original_url = request.META.get("HTTP_X_FORWARDED_PROTO") + "://" + request.META.get("HTTP_X_FORWARDED_HOST") + request.META.get("HTTP_X_FORWARDED_URI")
         logger.debug("Original url: '%s'", original_url)
         return urlparse(original_url)
 
