@@ -84,7 +84,7 @@ def test_api_documents_search_fall_back_on_search_list(mock_list, indexer_settin
     response = client.get("/api/v1.0/documents/search/", data={"q": q})
 
     assert mock_list.call_count == 1
-    assert mock_list.call_args[0][0].GET.get("title") == q
+    assert mock_list.call_args[0][0].GET.get("q") == q
     assert response.json() == mocked_response
 
 
@@ -119,7 +119,7 @@ def test_api_documents_search_fallback_on_search_list_sub_docs(
     )
 
     assert mock_list_descendants.call_count == 1
-    assert mock_list_descendants.call_args[0][0].GET.get("title") == q
+    assert mock_list_descendants.call_args[0][0].GET.get("q") == q
     assert mock_list_descendants.call_args[0][0].GET.get("path") == parent.path
     assert response.json() == mocked_response
 

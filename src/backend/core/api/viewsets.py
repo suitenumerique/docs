@@ -963,6 +963,17 @@ class DocumentViewSet(
         methods=["get"],
         ordering=["path"],
     )
+    def descendants(self, request, *args, **kwargs):
+        """deprecated enpoint, returns warning"""
+        return drf.response.Response(
+            {"detail": "This endpoint is deprecated, please use the search endpopint."}
+        )
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["get"],
+        ordering=["path"],
+    )
     def tree(self, request, pk, *args, **kwargs):
         """
         List ancestors tree above the document.
@@ -1171,8 +1182,8 @@ class DocumentViewSet(
         """
         Returns an ordered list of documents best matching the search query parameter 'q'.
 
-        It depends on a search configurable Search Indexer. If no Search Indexer is configured or if it
-        is not reachable, the function falls back to a basic title search.
+        It depends on a search configurable Search Indexer. If no Search Indexer is configured
+        or if it is not reachable, the function falls back to a basic title search.
         """
         params = serializers.SearchDocumentSerializer(data=request.query_params)
         params.is_valid(raise_exception=True)
@@ -1187,10 +1198,7 @@ class DocumentViewSet(
         except requests.exceptions.RequestException as e:
             logger.error("Error while searching documents with indexer: %s", e)
             # fallback on title search if the indexer is not reached
-            return self._title_search(
-                request, params.validated_data, *args, **kwargs
-            )
-
+            return self._title_search(request, params.validated_data, *args, **kwargs)
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
@@ -1224,29 +1232,29 @@ class DocumentViewSet(
         Fallback search method when no indexer is configured.
         Only searches in the title field of documents.
         """
-        request.GET = request.GET.copy()
-        request.GET["title"] = validated_data["q"]
-
-        if "path" not in validated_data or not validated_data["path"]:
+        if not validated_data.get("path"):
             return self.list(request, *args, **kwargs)
 
-        return self._list_descendants(request)
+        return self._list_descendants(request, validated_data)
 
-    def _list_descendants(self, request):
+    def _list_descendants(self, request, validated_data):
         """
         List all documents whose path starts with the provided path parameter.
         Includes the parent document itself.
         Used internally by the search endpoint when path filtering is requested.
         """
         # Get parent document without access filtering
-        parent_path = request.GET["path"]
+        parent_path = validated_data["path"]
         try:
             parent = models.Document.objects.get(path=parent_path)
         except models.Document.DoesNotExist as exc:
             raise drf.exceptions.NotFound("Document not found from path.") from exc
 
-        # Check object-level permissions using DocumentPermission logic
-        self.check_object_permissions(request, parent)
+        abilities = parent.get_abilities(request.user)
+        if not abilities.get("search"):
+            raise drf.exceptions.PermissionDenied(
+                "You do not have permission to search within this document."
+            )
 
         # Get descendants and include the parent, ordered by path
         queryset = (

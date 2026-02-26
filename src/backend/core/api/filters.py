@@ -46,10 +46,13 @@ class DocumentFilter(django_filters.FilterSet):
     title = AccentInsensitiveCharFilter(
         field_name="title", lookup_expr="unaccent__icontains", label=_("Title")
     )
+    q = AccentInsensitiveCharFilter(
+        field_name="title", lookup_expr="unaccent__icontains", label=_("Search")
+    )
 
     class Meta:
         model = models.Document
-        fields = ["title"]
+        fields = ["title", "q"]
 
 
 class ListDocumentFilter(DocumentFilter):
