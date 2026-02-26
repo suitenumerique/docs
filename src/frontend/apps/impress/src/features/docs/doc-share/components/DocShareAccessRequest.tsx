@@ -18,7 +18,7 @@ import {
 } from '@/components';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
 import { useCunninghamTheme } from '@/cunningham';
-import { AccessRequest, Doc } from '@/docs/doc-management/';
+import { AccessRequest, Doc, Role } from '@/docs/doc-management/';
 import { useAuth } from '@/features/auth';
 
 import {
@@ -216,7 +216,7 @@ export const ButtonAccessRequest = ({
 
   return (
     <Button
-      onClick={() => createRequest({ docId })}
+      onClick={() => createRequest({ docId, role: Role.EDITOR })}
       disabled={hasRequested}
       {...buttonProps}
     >
