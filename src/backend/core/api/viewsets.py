@@ -2514,6 +2514,12 @@ class DocumentAskForAccessViewSet(
         """Create a document ask for access resource."""
         document = self.get_document_or_404()
 
+        if document.get_role(request.user) in models.PRIVILEGED_ROLES:
+            return drf.response.Response(
+                {"detail": "You already have privileged access to this document."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = serializers.DocumentAskForAccessCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

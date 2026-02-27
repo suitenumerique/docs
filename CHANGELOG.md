@@ -32,7 +32,7 @@ and this project adheres to
 - ⚡️(CI) optimize Docker Hub workflow #1919
 
 ### Fixed
-
+- 🐛 (backend) prevent privileged users from requesting access #1898
 - 🐛(frontend) fix broadcast store sync #1846
 - 🐛(helm) use celery resources instead of backend resources
 - 🐛(helm) reverse liveness and readiness for backend deployment
