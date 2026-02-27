@@ -6,9 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v4.6.0] - 2026-02-27
+
 ### Added
 
-- ✨(frontend) integrate new Blocknote AI feature #1016
+- ✨(frontend) integrate new Blocknote AI feature #1847
 - 👷(docker) add arm64 platform support for image builds
 - ✨(tracking) add UTM parameters to shared document links
 - ✨(frontend) add floating bar with leftpanel collapse button #1876
@@ -25,7 +27,7 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) prevent dates from being focusable #1855
-- ♿️(frontend) Focus main container after navigation #1854
+- ♿️(frontend) Focus main container after navigation #1864
 - 💄(frontend) align colors and logo with ui-kit v2 #1869
 - 🚸(backend) sort user search results by proximity with the active user #1802
 - 🚸(oidc) ignore case when fallback on email #1880
@@ -34,8 +36,8 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) fix broadcast store sync #1846
-- 🐛(helm) use celery resources instead of backend resources
-- 🐛(helm) reverse liveness and readiness for backend deployment
+- 🐛(helm) use celery resources instead of backend resources #1887
+- 🐛(helm) reverse liveness and readiness for backend deployment #1887
 - 🐛(y-provider) use CONVERSION_FILE_MAX_SIZE settings #1913
 - 🐛(frontend) fix callout block spacing for old browsers #1914
 
@@ -1057,7 +1059,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.5.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.6.0...main
+[v4.6.0]: https://github.com/suitenumerique/docs/releases/v4.6.0
 [v4.5.0]: https://github.com/suitenumerique/docs/releases/v4.5.0
 [v4.4.0]: https://github.com/suitenumerique/docs/releases/v4.4.0
 [v4.3.0]: https://github.com/suitenumerique/docs/releases/v4.3.0
