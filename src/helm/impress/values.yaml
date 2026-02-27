@@ -243,6 +243,14 @@ backend:
   envVars:
     <<: *commonEnvVars
 
+  ## @skip backend.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
+
   ## @param backend.podAnnotations Annotations to add to the backend Pod
   podAnnotations: {}
 
@@ -471,6 +479,14 @@ frontend:
   envVars:
     <<: *commonEnvVars
 
+  ## @skip frontend.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
+
   ## @param frontend.podAnnotations Annotations to add to the frontend Pod
   podAnnotations: {}
 
@@ -648,6 +664,14 @@ yProvider:
   envVars:
     <<: *commonEnvVars
 
+  ## @skip yProvider.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
+
   ## @param yProvider.podAnnotations Annotations to add to the yProvider Pod
   podAnnotations: {}
 
@@ -748,6 +772,14 @@ docSpec:
 
   ## @param docSpec.envVars Configure docSpec container environment variables
   envVars: {}
+
+  ## @skip docSpec.envFrom List of environment variables taken from Secrets or configMaps
+  envFrom: []
+  # envFrom:
+  #   - secret:
+  #       name: super-secret-user-credentials
+  #   - configMapRef:
+  #       name: my-environment-variables
 
   ## @param docSpec.service Configure docSpec service
   service:

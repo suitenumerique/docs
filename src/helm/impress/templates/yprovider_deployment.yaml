@@ -49,10 +49,14 @@ spec:
           args:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if $envVars}}
           env:
-            {{- if $envVars}}
             {{- $envVars | indent 12 }}
-            {{- end }}
+          {{- end }}
+          {{- if .Values.yProvider.envFrom }}
+          envFrom:
+            {{- toYaml .Values.yProvider.envFrom | nindent 12 }}
+          {{- end }}
           {{- with .Values.yProvider.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
