@@ -1,4 +1,5 @@
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -12,10 +13,12 @@ import {
   useDeleteFavoriteDoc,
   useDuplicateDoc,
 } from '@/docs/doc-management';
+import { useRestoreFocus } from '@/hooks';
+import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
 interface DocsGridActionsProps {
   doc: Doc;
-  openShareModal?: () => void;
+  openShareModal?: (trigger: HTMLElement | null) => void;
 }
 
 export const DocsGridActions = ({
@@ -23,9 +26,15 @@ export const DocsGridActions = ({
   openShareModal,
 }: DocsGridActionsProps) => {
   const { t } = useTranslation();
-
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const restoreFocus = useRestoreFocus();
   const deleteModal = useModal();
-  const { mutate: duplicateDoc } = useDuplicateDoc();
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: () => {
+      const mainContent = document.getElementById(MAIN_LAYOUT_ID);
+      restoreFocus(mainContent);
+    },
+  });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
@@ -51,10 +60,7 @@ export const DocsGridActions = ({
     {
       label: t('Share'),
       icon: 'group',
-      callback: () => {
-        openShareModal?.();
-      },
-
+      callback: () => openShareModal?.(menuButtonRef.current),
       testId: `docs-grid-actions-share-${doc.id}`,
     },
     {
@@ -89,6 +95,7 @@ export const DocsGridActions = ({
       <DropdownMenu
         options={options}
         label={menuLabel}
+        buttonRef={menuButtonRef}
         aria-label={t('More options')}
         buttonCss={css`
           &:hover {
@@ -112,7 +119,13 @@ export const DocsGridActions = ({
       </DropdownMenu>
 
       {deleteModal.isOpen && (
-        <ModalRemoveDoc onClose={deleteModal.onClose} doc={doc} />
+        <ModalRemoveDoc
+          onClose={() => {
+            deleteModal.onClose();
+            restoreFocus(menuButtonRef);
+          }}
+          doc={doc}
+        />
       )}
     </>
   );

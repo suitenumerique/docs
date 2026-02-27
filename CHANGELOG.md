@@ -25,6 +25,7 @@ and this project adheres to
 
 - ♿️(frontend) prevent dates from being focusable #1855
 - ♿️(frontend) Focus main container after navigation #1854
+- ♿️(frontend) restore focus to triggers after closing menus and modals #1863
 - 💄(frontend) align colors and logo with ui-kit v2 #1869
 - 🚸(backend) sort user search results by proximity with the active user #1802
 - 🚸(oidc) ignore case when fallback on email #1880

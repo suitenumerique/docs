@@ -1,6 +1,7 @@
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
 import { DateTime } from 'luxon';
+import { useRef } from 'react';
 import { css } from 'styled-components';
 
 import { Box, StyledLink } from '@/components';
@@ -8,6 +9,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { Doc, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
 import { DocsGridActions } from '@/docs/docs-grid';
+import { useRestoreFocus } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 type LeftPanelFavoriteItemProps = {
@@ -16,6 +18,8 @@ type LeftPanelFavoriteItemProps = {
 
 export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const shareModal = useModal();
+  const shareTriggerRef = useRef<HTMLElement | null>(null);
+  const restoreFocus = useRestoreFocus();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
   const { isDesktop } = useResponsiveStore();
 
@@ -61,10 +65,22 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         <SimpleDocItem showAccesses doc={doc} />
       </StyledLink>
       <Box className="pinned-actions" $align="center">
-        <DocsGridActions doc={doc} openShareModal={shareModal.open} />
+        <DocsGridActions
+          doc={doc}
+          openShareModal={(trigger) => {
+            shareTriggerRef.current = trigger;
+            shareModal.open();
+          }}
+        />
       </Box>
       {shareModal.isOpen && (
-        <DocShareModal doc={doc} onClose={shareModal.close} />
+        <DocShareModal
+          doc={doc}
+          onClose={() => {
+            shareModal.close();
+            restoreFocus(shareTriggerRef);
+          }}
+        />
       )}
     </Box>
   );

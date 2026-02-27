@@ -1,6 +1,7 @@
 import {
   PropsWithChildren,
   ReactNode,
+  RefObject,
   useEffect,
   useRef,
   useState,
@@ -56,6 +57,7 @@ export interface DropButtonProps {
   onOpenChange?: (isOpen: boolean) => void;
   label?: string;
   testId?: string;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
 }
 
 export const DropButton = ({
@@ -66,12 +68,14 @@ export const DropButton = ({
   children,
   label,
   testId,
+  buttonRef,
 }: PropsWithChildren<DropButtonProps>) => {
   const { themeTokens } = useCunninghamTheme();
   const font = themeTokens['font']?.['families']['base'];
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
 
-  const triggerRef = useRef(null);
+  const internalTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const triggerRef = buttonRef ?? internalTriggerRef;
 
   useEffect(() => {
     setIsLocalOpen(isOpen);

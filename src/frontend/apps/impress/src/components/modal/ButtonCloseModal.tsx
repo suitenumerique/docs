@@ -1,11 +1,12 @@
 import { Button, type ButtonProps } from '@gouvfr-lasuite/cunningham-react';
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 import { Icon } from '@/components';
 
-export const ButtonCloseModal = (props: ButtonProps) => {
-  return (
+export const ButtonCloseModal = forwardRef<HTMLButtonElement, ButtonProps>(
+  (props, ref) => (
     <Button
+      ref={ref}
       type="button"
       size="small"
       color="brand"
@@ -19,5 +20,6 @@ export const ButtonCloseModal = (props: ButtonProps) => {
       }
       {...props}
     />
-  );
-};
+  ),
+);
+ButtonCloseModal.displayName = 'ButtonCloseModal';

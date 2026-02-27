@@ -1,6 +1,6 @@
-import { Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
+import { ButtonElement, Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
-import { KeyboardEvent } from 'react';
+import { KeyboardEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -9,7 +9,7 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc, LinkReach, SimpleDocItem } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
-import { useDate } from '@/hooks';
+import { useDate, useRestoreFocus } from '@/hooks';
 import { useResponsiveStore } from '@/stores';
 
 import { useResponsiveDocGrid } from '../hooks/useResponsiveDocGrid';
@@ -33,11 +33,15 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
   const shareModal = useModal();
+  const shareTriggerRef = useRef<HTMLElement | null>(null);
+  const shareButtonRef = useRef<ButtonElement | null>(null);
+  const restoreFocus = useRestoreFocus();
   const isPublic = doc.link_reach === LinkReach.PUBLIC;
   const isAuthenticated = doc.link_reach === LinkReach.AUTHENTICATED;
   const isShared = isPublic || isAuthenticated;
 
-  const handleShareClick = () => {
+  const handleShareClick = (trigger?: HTMLElement | null) => {
+    shareTriggerRef.current = trigger ?? null;
     shareModal.open();
   };
 
@@ -175,20 +179,32 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             {isDesktop && (
               <DocsGridItemSharedButton
                 doc={doc}
-                handleClick={handleShareClick}
+                handleClick={() => handleShareClick(shareButtonRef.current)}
                 disabled={isInTrashbin}
+                buttonRef={shareButtonRef}
               />
             )}
             {isInTrashbin ? (
               <DocsGridTrashbinActions doc={doc} />
             ) : (
-              <DocsGridActions doc={doc} openShareModal={handleShareClick} />
+              <DocsGridActions
+                doc={doc}
+                openShareModal={(trigger) => handleShareClick(trigger)}
+              />
             )}
           </Box>
         </Box>
       </Box>
       {shareModal.isOpen && (
-        <DocShareModal doc={doc} onClose={shareModal.close} />
+        <DocShareModal
+          doc={doc}
+          onClose={() => {
+            shareModal.close();
+            restoreFocus(
+              shareTriggerRef.current ?? shareButtonRef.current,
+            );
+          }}
+        />
       )}
     </>
   );

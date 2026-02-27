@@ -1,6 +1,13 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
-import { ReactNode } from 'react';
+import {
+  Button,
+  ButtonElement,
+  Modal,
+  ModalSize,
+} from '@gouvfr-lasuite/cunningham-react';
+import { ReactNode, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { useFocusOnMount } from '@/hooks';
 
 import { Box } from '../Box';
 import { Text } from '../Text';
@@ -25,6 +32,9 @@ export const AlertModal = ({
   title,
 }: AlertModalProps) => {
   const { t } = useTranslation();
+  const cancelButtonRef = useRef<ButtonElement>(null);
+  useFocusOnMount(cancelButtonRef, 100, isOpen);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -45,6 +55,7 @@ export const AlertModal = ({
       rightActions={
         <>
           <Button
+            ref={cancelButtonRef}
             aria-label={`${t('Cancel')} - ${title}`}
             variant="secondary"
             fullWidth

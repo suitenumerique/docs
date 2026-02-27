@@ -1,4 +1,9 @@
-import { Button, Tooltip } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonElement,
+  Tooltip,
+} from '@gouvfr-lasuite/cunningham-react';
+import { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
@@ -8,11 +13,13 @@ type Props = {
   doc: Doc;
   handleClick: () => void;
   disabled: boolean;
+  buttonRef?: RefObject<ButtonElement | null>;
 };
 export const DocsGridItemSharedButton = ({
   doc,
   handleClick,
   disabled,
+  buttonRef,
 }: Props) => {
   const { t } = useTranslation();
   const sharedCount = doc.nb_accesses_direct;
@@ -36,6 +43,7 @@ export const DocsGridItemSharedButton = ({
         className="--docs--doc-grid-item-shared-button"
         aria-label={t('Open the sharing settings for the document')}
         data-testid={`docs-grid-item-shared-button-${doc.id}`}
+        ref={buttonRef}
         style={{
           padding: `0 var(--c--globals--spacings--xxxs) 0 var(--c--globals--spacings--xxxs)`,
         }}

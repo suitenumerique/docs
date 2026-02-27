@@ -1,10 +1,16 @@
-import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonElement,
+  Modal,
+  ModalSize,
+} from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box, BoxButton, Card, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { useFocusOnMount } from '@/hooks';
 
 export const AlertNetwork = () => {
   const { t } = useTranslation();
@@ -68,6 +74,9 @@ interface AlertNetworkModalProps {
 }
 
 export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
+  const okButtonRef = useRef<ButtonElement>(null);
+  useFocusOnMount(okButtonRef);
+
   return (
     <Modal
       isOpen
@@ -75,7 +84,12 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
       onClose={() => onClose()}
       rightActions={
         <>
-          <Button aria-label={t('OK')} onClick={onClose} color="error">
+          <Button
+            ref={okButtonRef}
+            aria-label={t('OK')}
+            onClick={onClose}
+            color="error"
+          >
             {t('I understand')}
           </Button>
         </>
