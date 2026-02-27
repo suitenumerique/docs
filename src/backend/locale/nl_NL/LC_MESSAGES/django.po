@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-26 09:13+0000\n"
-"PO-Revision-Date: 2026-02-27 08:24\n"
+"PO-Revision-Date: 2026-02-27 10:21\n"
 "Last-Translator: \n"
 "Language-Team: Dutch\n"
 "Language: nl_NL\n"
@@ -516,7 +516,7 @@ msgstr "Deze email is al geassocieerd met een geregistreerde gebruiker."
 
 #: build/lib/impress/settings.py:702 impress/settings.py:702
 msgid "Docs AI"
-msgstr ""
+msgstr "Docs AI"
 
 #: core/templates/mail/html/template.html:153
 #: core/templates/mail/text/template.txt:3
