@@ -27,6 +27,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
+from django.utils.http import content_disposition_header
 from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -1661,11 +1662,11 @@ class DocumentViewSet(
             or serializer.validated_data["is_unsafe"]
         ):
             extra_args.update(
-                {"ContentDisposition": f'attachment; filename="{file_name:s}"'}
+                {"ContentDisposition": content_disposition_header(as_attachment=True, filename=file_name)}
             )
         else:
             extra_args.update(
-                {"ContentDisposition": f'inline; filename="{file_name:s}"'}
+                {"ContentDisposition": content_disposition_header(as_attachment=False, filename=file_name)}
             )
 
         file = serializer.validated_data["file"]
