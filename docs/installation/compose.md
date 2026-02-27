@@ -161,9 +161,9 @@ FRONTEND_CSS_URL=https://storage.yourdomain.tld/themes/custom.css # custom css
 > [!WARNING]
 > In a production environment, configure SSL/TLS termination to run your instance on https.
 
-If you have your own certificates and proxy setup, you can skip this part.
+If you have your own certificates and proxy setup, you can skip this part. Docs is listening in the frontend container on port 8083 and further proxies requests to other containers as needed.
 
-You can follow our [nginx proxy example](../examples/compose/nginx-proxy/README.md) with automatic generation and renewal of certificate with Let's Encrypt. 
+You can follow our [nginx proxy example](../examples/compose/nginx-proxy/README.md) with automatic generation and renewal of certificate with Let's Encrypt. The environment variables below are used by nginx-proxy as labels to automatically configure a proxy and don't affect the frontend service. 
 
 You will need to uncomment the environment and network sections in compose file and update it with your values.
 
