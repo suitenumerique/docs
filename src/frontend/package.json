@@ -31,7 +31,7 @@
     "server:test": "yarn COLLABORATION_SERVER run test"
   },
   "resolutions": {
-    "@tiptap/extensions": "3.19.0",
+    "@tiptap/extensions": "3.20.0",
     "@types/node": "24.10.13",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
@@ -41,7 +41,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "typescript": "5.9.3",
-    "wrap-ansi": "9.0.2",
+    "wrap-ansi": "10.0.0",
     "yjs": "13.6.29"
   },
   "packageManager": "yarn@1.22.22"
