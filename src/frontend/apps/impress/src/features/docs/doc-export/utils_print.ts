@@ -16,6 +16,7 @@ const PRINT_ONLY_CONTENT_CSS = `
 
   /* Hide non-essential elements for printing */
   .--docs--header,
+  .--docs--floating-bar,
   .--docs--resizable-left-panel,
   .--docs--doc-editor-header,
   .--docs--doc-header,

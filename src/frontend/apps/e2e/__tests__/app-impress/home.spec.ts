@@ -98,7 +98,7 @@ test.describe('Home page', () => {
             style: { width: '110px', height: 'auto' },
           },
           icon: {
-            src: '/assets/icon-docs-v2.svg',
+            src: '/assets/icon-docs-dsfr-v2.png',
             style: {
               width: '100px',
               height: 'auto',

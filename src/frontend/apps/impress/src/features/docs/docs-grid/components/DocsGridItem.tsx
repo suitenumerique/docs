@@ -225,7 +225,13 @@ export const DocsGridItemDate = ({
   }
 
   return (
-    <Text $size="xs" $layer="background" $theme="neutral" $variation="primary">
+    <Text
+      $size="xs"
+      $layer="background"
+      $theme="neutral"
+      $variation="primary"
+      $shrink="0"
+    >
       {dateToDisplay}
     </Text>
   );

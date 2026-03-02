@@ -39,7 +39,12 @@ export const DocsGrid = ({
 }: DocsGridProps) => {
   const { t } = useTranslation();
   const [isDragOver, setIsDragOver] = useState(false);
-  const { getRootProps, getInputProps, open } = useImport({
+  const {
+    getRootProps,
+    getInputProps,
+    open,
+    isPending: isImportPending,
+  } = useImport({
     onDragOver: (dragOver: boolean) => {
       setIsDragOver(dragOver);
     },
@@ -94,7 +99,7 @@ export const DocsGrid = ({
       $align="center"
       className="--docs--doc-grid"
     >
-      <DocsGridLoader isLoading={isRefetching || loading} />
+      <DocsGridLoader isLoading={isRefetching || loading || isImportPending} />
       <Card
         data-testid="docs-grid"
         $height="100%"
