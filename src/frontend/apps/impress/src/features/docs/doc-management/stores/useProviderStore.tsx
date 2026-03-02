@@ -56,6 +56,11 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       const AdaptedEncryptedWebSocket = createAdaptedEncryptedWebsocketClass({
         encryptionKey: encryptionSymmetricKey,
         decryptionKey: encryptionSymmetricKey,
+        onSystemMessage: (message) => {
+          if (message === 'system:authenticated') {
+            set({ isReady: true, isConnected: true });
+          }
+        },
       });
 
       provider = new RelayProvider(wsUrl, storeId, doc, {

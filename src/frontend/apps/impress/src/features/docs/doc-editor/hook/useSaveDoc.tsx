@@ -9,7 +9,7 @@ import { isFirefox } from '@/utils/userAgent';
 
 import { toBase64 } from '../utils';
 
-const SAVE_INTERVAL = 100 * 60000;
+const SAVE_INTERVAL = 60000;
 
 export const useSaveDoc = (
   docId: string,

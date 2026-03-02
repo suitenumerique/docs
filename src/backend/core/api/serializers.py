@@ -330,7 +330,15 @@ class DocumentSerializer(ListDocumentSerializer):
         "attachments" field for access control.
         """
         content = self.validated_data.get("content", "")
-        extracted_attachments = set(utils.extract_attachments(content))
+
+        # Encrypted content cannot be parsed as a Yjs update
+        # TODO: for now skip attachment extraction for encrypted documents but we should have them
+        is_encrypted = self.validated_data.get(
+            "is_encrypted", self.instance and self.instance.is_encrypted
+        )
+        extracted_attachments = (
+            set() if is_encrypted else set(utils.extract_attachments(content))
+        )
 
         existing_attachments = (
             set(self.instance.attachments or []) if self.instance else set()
@@ -418,15 +426,15 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     def get_fields(self):
         """Dynamically control field availability and requirements based on document encryption status."""
         fields = super().get_fields()
-        
+
         # Get the document from context (if available)
         document = None
         if "view" in self.context and hasattr(self.context["view"], "document"):
             document = self.context["view"].document
-        
+
         # Get the encrypted_document_symmetric_key_for_user field
         key_field = fields.get("encrypted_document_symmetric_key_for_user")
-        
+
         if key_field:
             # If document is encrypted, make the field required
             if document and getattr(document, "is_encrypted", False):
@@ -435,7 +443,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             # If document is not encrypted, remove the field entirely
             elif document and not getattr(document, "is_encrypted", False):
                 fields.pop("encrypted_document_symmetric_key_for_user", None)
-        
+
         return fields
 
     def get_abilities(self, instance) -> dict:

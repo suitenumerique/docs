@@ -84,6 +84,9 @@ export const collaborationWSHandler = async (
     // Since for "end-to-end encryption" the server cannot maintains its own state for the document
     // we use a different strategy with a relay server
     if (document.is_encrypted) {
+      // mimick the Hocuspocus protocol to properly hide the frontend loader
+      ws.send('system:authenticated');
+
       await handleRelayServerConnection(ws, roomId);
     } else {
       hocuspocusServer.hocuspocus.handleConnection(ws, req, {

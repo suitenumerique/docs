@@ -8,6 +8,7 @@ import {
 export class EncryptedWebSocket extends WebSocket {
   protected readonly encryptionKey!: CryptoKey;
   protected readonly decryptionKey!: CryptoKey;
+  protected readonly onSystemMessage?: (message: string) => void;
 
   constructor(address: string | URL, protocols?: string | string[]) {
     super(address, protocols);
@@ -23,6 +24,15 @@ export class EncryptedWebSocket extends WebSocket {
         const wrappedListener: typeof listener = async (event) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const messageEvent = event as any;
+
+          // some messages are here to help adjusting the interface or even reloading it
+          // in case it there is an ongoing decryption, or symmetric key rotation...
+          // those messages must be parsable so they are not encrypted
+          if (typeof messageEvent.data === 'string') {
+            this.onSystemMessage?.(messageEvent.data as string);
+
+            return;
+          }
 
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (!(messageEvent.data instanceof ArrayBuffer)) {
@@ -127,9 +137,11 @@ export class EncryptedWebSocket extends WebSocket {
 export function createAdaptedEncryptedWebsocketClass(options: {
   encryptionKey: CryptoKey;
   decryptionKey: CryptoKey;
+  onSystemMessage?: (message: string) => void;
 }) {
   return class extends EncryptedWebSocket {
     protected readonly encryptionKey = options.encryptionKey;
     protected readonly decryptionKey = options.decryptionKey;
+    protected readonly onSystemMessage = options.onSystemMessage;
   };
 }
