@@ -29,8 +29,8 @@ jobs:
       image_name: lasuite/impress-backend
       context: .
       target: backend-production
-      should_push: ${{ env.SHOULD_PUSH }}
-      docker_user: ${{ env.DOCKER_USER }}
+      should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      docker_user: 1001:127
 
   build-and-push-frontend:
     runs-on: ubuntu-latest
