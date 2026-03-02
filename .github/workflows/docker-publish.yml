@@ -93,7 +93,8 @@ jobs:
           push: inputs.should_push
           tags: ${{ steps.platform-tags.outputs.amd64 }}
           labels: ${{ steps.meta.outputs.labels }}
-      - name: Build and pount (arm64)
+      - name: Build and push (arm64)
+        uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
           target: ${{ inputs.target }}
