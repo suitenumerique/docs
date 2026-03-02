@@ -460,6 +460,7 @@ def test_api_users_retrieve_me_authenticated():
         "full_name": user.full_name,
         "language": user.language,
         "short_name": user.short_name,
+        "is_first_connection": True,
     }
 
 
@@ -489,7 +490,35 @@ def test_api_users_retrieve_me_authenticated_empty_name():
         "full_name": "test_foo",
         "language": user.language,
         "short_name": "test_foo",
+        "is_first_connection": True,
     }
+
+
+def test_api_users_retrieve_me_onboarding():
+    """
+    On first connection of a new user, the "is_first_connection" flag should be True.
+
+    The frontend can use this flag to trigger specific behavior for first time users,
+    e.g. showing an onboarding message, and update the flag to False after onboarding is done.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    # First request: flag should be True
+    first_response = client.get("/api/v1.0/users/me/")
+    assert first_response.status_code == 200
+    assert first_response.json()["is_first_connection"] is True
+
+    update_response = client.post("/api/v1.0/users/onboarding-done/")
+
+    assert update_response.status_code == 200
+
+    # Second request: flag should be False
+    second_response = client.get("/api/v1.0/users/me/")
+    assert second_response.status_code == 200
+    assert second_response.json()["is_first_connection"] is False
 
 
 def test_api_users_retrieve_anonymous():

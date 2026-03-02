@@ -318,6 +318,25 @@ class UserViewSet(
             self.serializer_class(request.user, context=context).data
         )
 
+    @drf.decorators.action(
+        detail=False,
+        methods=["post"],
+        url_path="onboarding-done",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def onboarding_done(self, request):
+        """
+        Allows the frontend to mark the first connection as done for the current user,
+        e.g. after showing an onboarding message.
+        """
+        if request.user.is_first_connection:
+            request.user.is_first_connection = False
+            request.user.save(update_fields=["is_first_connection", "updated_at"])
+
+        return drf.response.Response(
+            {"detail": "Onboarding marked as done."}, status=status.HTTP_200_OK
+        )
+
 
 class ReconciliationConfirmView(APIView):
     """API endpoint to confirm user reconciliation emails.
@@ -2224,6 +2243,7 @@ class DocumentAccessViewSet(
         "user__full_name",
         "user__email",
         "user__language",
+        "user__is_first_connection",
         "document__id",
         "document__path",
         "document__depth",
