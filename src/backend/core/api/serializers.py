@@ -32,8 +32,21 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ["id", "email", "full_name", "short_name", "language"]
-        read_only_fields = ["id", "email", "full_name", "short_name"]
+        fields = [
+            "id",
+            "email",
+            "full_name",
+            "short_name",
+            "language",
+            "is_first_connection",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "full_name",
+            "short_name",
+            "is_first_connection",
+        ]
 
     def get_full_name(self, instance):
         """Return the full name of the user."""

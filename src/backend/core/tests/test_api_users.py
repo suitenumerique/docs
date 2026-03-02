@@ -460,6 +460,7 @@ def test_api_users_retrieve_me_authenticated():
         "full_name": user.full_name,
         "language": user.language,
         "short_name": user.short_name,
+        "is_first_connection": True,
     }
 
 
@@ -489,7 +490,28 @@ def test_api_users_retrieve_me_authenticated_empty_name():
         "full_name": "test_foo",
         "language": user.language,
         "short_name": "test_foo",
+        "is_first_connection": True,
     }
+
+
+def test_api_users_retrieve_me_second_request():
+    """
+    On a second request, the is_first_connection flag should return False.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+
+    # First request: flag should be True
+    response = client.get("/api/v1.0/users/me/")
+    assert response.status_code == 200
+    assert response.json()["is_first_connection"] is True
+
+    # Second request: flag should be False
+    response = client.get("/api/v1.0/users/me/")
+    assert response.status_code == 200
+    assert response.json()["is_first_connection"] is False
 
 
 def test_api_users_retrieve_anonymous():

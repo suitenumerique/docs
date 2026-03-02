@@ -313,9 +313,17 @@ class UserViewSet(
         Return information on currently logged user
         """
         context = {"request": request}
-        return drf.response.Response(
+        response = drf.response.Response(
             self.serializer_class(request.user, context=context).data
         )
+
+        # On first connection, update the user to set `is_first_connection` to False.
+        # This allows to trigger some specific behavior on the frontend for first time users.
+        if request.user.is_first_connection:
+            request.user.is_first_connection = False
+            request.user.save(update_fields=["is_first_connection"])
+
+        return response
 
 
 class ReconciliationConfirmView(APIView):
@@ -2215,6 +2223,7 @@ class DocumentAccessViewSet(
         "user__full_name",
         "user__email",
         "user__language",
+        "user__is_first_connection",
         "document__id",
         "document__path",
         "document__depth",

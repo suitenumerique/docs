@@ -193,6 +193,11 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
             "Unselect this instead of deleting accounts."
         ),
     )
+    is_first_connection = models.BooleanField(
+        _("first connection completed"),
+        default=True,
+        help_text=_("Whether the user has completed the first connection process."),
+    )
 
     objects = UserManager()
 
