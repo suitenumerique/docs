@@ -29,8 +29,8 @@ jobs:
       image_name: lasuite/impress-backend
       context: .
       target: backend-production
-      should_push: env.SHOULD_PUSH
-      docker_user: env.DOCKER_USER
+      should_push: ${{ env.SHOULD_PUSH }}
+      docker_user: ${{ env.DOCKER_USER }}
 
   build-and-push-frontend:
     runs-on: ubuntu-latest
