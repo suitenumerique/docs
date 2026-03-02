@@ -1,3 +1,5 @@
+ARG FRONTEND_IMAGE=frontend-build-output
+
 FROM node:24-alpine AS frontend-deps
 
 # Upgrade system packages to install security updates
@@ -32,7 +34,7 @@ EXPOSE 3000
 
 CMD [ "yarn", "dev"]
 
-# Tilt will rebuild impress target so, we dissociate impress and impress-builder 
+# Tilt will rebuild impress target so, we dissociate impress and impress-builder
 # to avoid rebuilding the app at every changes.
 FROM impress AS impress-builder
 
@@ -49,6 +51,14 @@ ENV NEXT_PUBLIC_PUBLISH_AS_MIT=${PUBLISH_AS_MIT}
 
 RUN yarn build
 
+# Normalize output path to /app (matches the runtime-prod layout)
+FROM scratch AS frontend-build-output
+COPY --from=impress-builder /home/frontend/apps/impress/out /app
+
+# When FRONTEND_IMAGE is set to an external image, BuildKit skips
+# frontend-deps,impress-builder, and frontend-build-output entirely
+FROM ${FRONTEND_IMAGE} AS frontend-source
+
 # ---- Front-end image ----
 FROM nginxinc/nginx-unprivileged:alpine3.22 AS frontend-production
 
@@ -62,9 +72,7 @@ RUN apk update && \
 ARG DOCKER_USER
 USER ${DOCKER_USER}
 
-COPY --from=impress-builder \
-    /home/frontend/apps/impress/out \
-    /usr/share/nginx/html
+COPY --from=frontend-source /app /app
 
 COPY ./src/frontend/apps/impress/conf/default.conf /etc/nginx/conf.d
 COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint

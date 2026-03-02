@@ -12,6 +12,10 @@ description: Build and push a container image based on the input arguments provi
         type: string
         required: true
         description: The path to the context to start `docker build` into.
+      file:
+        type: string
+        required: true
+        description: The path to the Dockerfile
       target:
         type: string
         required: false
@@ -72,20 +76,23 @@ jobs:
             echo "amd64_first=$FIRST_AMD64_TAG"
           } >> "$GITHUB_OUTPUT"
       # - name: Run trivy scan
-      #   if: vars.TRIVY_SCAN_ENABLED
+      #   if: ${{ vars.TRIVY_SCAN_ENABLED }} == 'true'
       #   uses: numerique-gouv/action-trivy-cache@main
       #   with:
-      #     docker-build-args: "--target backend-production -f Dockerfile"
+      #     docker-build-args: "--target ${{ inputs.target }} -f ${{ inputs.file }}"
       #     docker-image-name: "docker.io/${{ inputs.image_name }}:${{ github.sha }}"
       #     trivyignores: ./.github/.trivyignore
       - name: Build and push (amd64)
+        if: ${{ inputs.should_push }}||${{ vars.TRIVY_SCAN_ENABLED }} != 'true'
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
+          file: ${{ inputs.file }}
           target: ${{ inputs.target }}
           platforms: linux/amd64
           build-args: |
             DOCKER_USER=${{ inputs.docker_user }}
+            PUBLISH_AS_MIT=false
           push: ${{ inputs.should_push }}
           provenance: false
           tags: ${{ steps.platform-tags.outputs.amd64 }}
@@ -95,10 +102,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
+          file: ${{ inputs.file }}
           target: ${{ inputs.target }}
           platforms: linux/arm64
           build-args: |
             DOCKER_USER=${{ inputs.docker_user }}
+            PUBLISH_AS_MIT=false
             ${{ inputs.arm64_reuse_amd64_build_arg && format('{0}={1}', inputs.arm64_reuse_amd64_build_arg, steps.platform-tags.outputs.amd64_first) || '' }}
           push: ${{ inputs.should_push }}
           provenance: false

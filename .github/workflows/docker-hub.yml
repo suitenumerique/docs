@@ -28,100 +28,37 @@ jobs:
     with:
       image_name: lasuite/impress-backend
       context: .
+      file: Dockerfile
       target: backend-production
       should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
       docker_user: 1001:127
 
   build-and-push-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up QEMU
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/setup-buildx-action@v3
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: lasuite/impress-frontend
-      - name: Login to DockerHub
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      # - name: Run trivy scan
-      #   uses: numerique-gouv/action-trivy-cache@main
-      #   with:
-      #     docker-build-args: "-f src/frontend/Dockerfile --target frontend-production"
-      #     docker-image-name: "docker.io/lasuite/impress-frontend:${{ github.sha }}"
-      #     trivyignores: ./.github/.trivyignore
-      - name: Build and push
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./src/frontend/Dockerfile
-          target: frontend-production
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            DOCKER_USER=${{ env.DOCKER_USER }}
-            PUBLISH_AS_MIT=false
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      - name: Cleanup Docker after build
-        if: always()
-        run: |
-          docker system prune -af
-          docker volume prune -f
+    uses: ./.github/workflows/docker-publish.yml
+    permissions:
+      contents: read
+    secrets: inherit
+    with:
+      image_name: lasuite/impress-frontend
+      context: .
+      file: src/frontend/Dockerfile
+      target: frontend-production
+      arm64_reuse_amd64_build_arg: "FRONTEND_IMAGE"
+      should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      docker_user: 1001:127
 
   build-and-push-y-provider:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up QEMU
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/setup-buildx-action@v3
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: lasuite/impress-y-provider
-      - name: Login to DockerHub
-        if: env.SHOULD_PUSH == 'true'
-        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USER }}" --password-stdin
-      # - name: Run trivy scan
-      #   uses: numerique-gouv/action-trivy-cache@main
-      #   with:
-      #     docker-build-args: "-f src/frontend/servers/y-provider/Dockerfile --target y-provider"
-      #     docker-image-name: "docker.io/lasuite/impress-y-provider:${{ github.sha }}"
-      #     trivyignores: ./.github/.trivyignore
-      - name: Build and push
-        if: env.SHOULD_PUSH == 'true'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./src/frontend/servers/y-provider/Dockerfile
-          target: y-provider
-          platforms: linux/amd64,linux/arm64
-          build-args: DOCKER_USER=${{ env.DOCKER_USER }}:-1000
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      - name: Cleanup Docker after build
-        if: always()
-        run: |
-          docker system prune -af
-          docker volume prune -f
+    uses: ./.github/workflows/docker-publish.yml
+    permissions:
+      contents: read
+    secrets: inherit
+    with:
+      image_name: lasuite/impress-y-provider
+      context: .
+      file: src/frontend/servers/y-provider/Dockerfile
+      target: y-provider
+      should_push: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'preview') }}
+      docker_user: 1001:127
 
   notify-argocd:
     needs:
