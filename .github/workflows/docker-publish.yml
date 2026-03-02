@@ -1,0 +1,111 @@
+name: Build and Push Container Image
+description: Build and push a container image based on the input arguments provided
+
+"on":
+  workflow_call:
+    inputs:
+      image_name:
+        type: string
+        required: true
+        description: The suffix for the image name, without the registry and without the repository path.
+      context:
+        type: string
+        required: true
+        description: The path to the context to start `docker build` into.
+      target:
+        type: string
+        required: false
+        default: ""
+        description: The Dockerfile target stage to build the image for.
+      should_push:
+        type: boolean
+        required: false
+        default: false
+        description: if the image should be pushed on the docker registry
+      docker_user:
+        type: string
+        required: false
+        default: ""
+        description: The docker_user ARGUMENT to pass to the build step
+      arm64_reuse_amd64_build_arg:
+        type: string
+        required: false
+        default: ""
+        description: "Build arg name to pass first amd64 tag to arm64 build (skips arch-independent build steps)"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      content: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to DockerHub
+        if: inputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ inputs.image_name }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - name: Generate platform-specific tags
+        id: platform-tags
+        run: |
+          AMD64_TAGS=$(echo "${{ steps.meta.outputs.tags }}" | sed 's/$/-amd64/')
+          ARM64_TAGS=$(echo "${{ steps.meta.outputs.tags }}" | sed 's/$/-arm64/')
+          FIRST_AMD64_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -1)-amd64
+          {
+            echo "amd64<<EOF"
+            echo "$AMD64_TAGS"
+            echo "EOF"
+            echo "arm64<<EOF"
+            echo "$ARM64_TAGS"
+            echo "EOF"
+            echo "amd64_first=$FIRST_AMD64_TAG"
+          } >> "$GITHUB_OUTPUT"
+      # - name: Run trivy scan
+      #   if: vars.TRIVY_SCAN_ENABLED
+      #   uses: numerique-gouv/action-trivy-cache@main
+      #   with:
+      #     docker-build-args: "--target backend-production -f Dockerfile"
+      #     docker-image-name: "docker.io/${{ inputs.image_name }}:${{ github.sha }}"
+      #     trivyignores: ./.github/.trivyignore
+      - name: Build and push (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          target: ${{ inputs.target }}
+          platforms: linux/amd64
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}
+          push: inputs.should_push
+          tags: ${{ steps.platform-tags.outputs.amd64 }}
+          labels: ${{ steps.meta.outputs.labels }}
+      - name: Build and pount (arm64)
+        with:
+          context: ${{ inputs.context }}
+          target: ${{ inputs.target }}
+          platforms: linux/arm64
+          build-args: |
+            DOCKER_USER=${{ env.DOCKER_USER }}
+            ${{ inputs.arm64_reuse_amd64_build_arg && format('{0}={1}', inputs.arm64_reuse_amd64_build_arg, steps.platform-tags.outputs.amd64_first) || '' }}
+          push: inputs.should_push
+          tags: ${{ steps.platform-tags.outputs.arm64 }}
+          labels: ${{ steps.meta.outputs.labels }}
+      - name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
