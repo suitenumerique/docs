@@ -37,7 +37,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      content: read
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
