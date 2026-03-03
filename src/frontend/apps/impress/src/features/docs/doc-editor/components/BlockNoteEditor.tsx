@@ -12,7 +12,7 @@ import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 import type { Awareness } from 'y-protocols/awareness';
@@ -20,6 +20,7 @@ import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { decryptContent } from '@/docs/doc-collaboration/encryption';
 import {
   Doc,
   SwitchableProvider,
@@ -114,7 +115,63 @@ export const BlockNoteEditor = ({
     lang = 'en';
   }
 
-  const { uploadFile, errorAttachment } = useUploadFile(doc.id);
+  const symmetricKey = documentEncryptionSettings?.documentSymmetricKey;
+  const { uploadFile, errorAttachment } = useUploadFile(doc.id, symmetricKey);
+
+  // Cache for decrypted blob URLs (URL → blob URL), persists across renders
+  const blobUrlCacheRef = useRef<Map<string, string>>(new Map());
+
+  const resolveFileUrl = useCallback(
+    async (url: string): Promise<string> => {
+      if (!symmetricKey) {
+        return url;
+      }
+
+      const cached = blobUrlCacheRef.current.get(url);
+      if (cached) {
+        return cached;
+      }
+
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch encrypted attachment: ${response.status}`,
+        );
+      }
+
+      const encryptedBytes = new Uint8Array(await response.arrayBuffer());
+      const decryptedBytes = await decryptContent(encryptedBytes, symmetricKey);
+
+      const ext = url.split('.').pop()?.toLowerCase() || '';
+      const mimeMap: Record<string, string> = {
+        png: 'image/png',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        gif: 'image/gif',
+        webp: 'image/webp',
+        svg: 'image/svg+xml',
+        pdf: 'application/pdf',
+      };
+      const mime = mimeMap[ext] || 'application/octet-stream';
+
+      const blob = new Blob([decryptedBytes], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlCacheRef.current.set(url, blobUrl);
+
+      return blobUrl;
+    },
+    [symmetricKey],
+  );
+
+  // Revoke blob URLs on unmount or when symmetric key changes
+  useEffect(() => {
+    return () => {
+      blobUrlCacheRef.current.forEach((blobUrl) =>
+        URL.revokeObjectURL(blobUrl),
+      );
+      blobUrlCacheRef.current.clear();
+    };
+  }, [symmetricKey]);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -214,9 +271,10 @@ export const BlockNoteEditor = ({
         headers: true,
       },
       uploadFile,
+      resolveFileUrl: symmetricKey ? resolveFileUrl : undefined,
       schema: blockNoteSchema,
     },
-    [cursorName, lang, provider, uploadFile, threadStore, resolveUsers],
+    [cursorName, lang, provider, uploadFile, resolveFileUrl, symmetricKey, threadStore, resolveUsers],
   );
 
   useHeadings(editor);

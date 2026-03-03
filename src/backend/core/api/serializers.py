@@ -696,6 +696,7 @@ class FileUploadSerializer(serializers.Serializer):
     """Receive file upload requests."""
 
     file = serializers.FileField()
+    is_encrypted = serializers.BooleanField(default=False, required=False)
 
     def validate_file(self, file):
         """Add file size and type constraints as defined in settings."""
@@ -705,6 +706,22 @@ class FileUploadSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 f"File size exceeds the maximum limit of {max_size:d} MB."
             )
+
+        # For encrypted files, the content is ciphertext so MIME detection
+        # is not possible. Trust the original filename extension.
+        if self.initial_data.get("is_encrypted") in ("true", "True", True):
+            extension = (
+                file.name.rpartition(".")[-1] if "." in file.name else None
+            )
+            if extension is None or len(extension) > 5:
+                raise serializers.ValidationError(
+                    "Could not determine file extension."
+                )
+            self.context["expected_extension"] = extension
+            self.context["content_type"] = "application/octet-stream"
+            self.context["is_unsafe"] = False
+            self.context["file_name"] = file.name
+            return file
 
         extension = file.name.rpartition(".")[-1] if "." in file.name else None
 

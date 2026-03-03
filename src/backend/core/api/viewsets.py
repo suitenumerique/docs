@@ -1480,18 +1480,39 @@ class DocumentViewSet(
         serializer = serializers.FileUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        is_file_encrypted = serializer.validated_data.get("is_encrypted", False)
+
+        # Encrypted attachments are only allowed on encrypted documents
+        if is_file_encrypted and not document.is_encrypted:
+            raise drf.exceptions.ValidationError({
+                "is_encrypted":
+                "Cannot upload encrypted attachments to a non-encrypted document."
+            })
+
         # Generate a generic yet unique filename to store the image in object storage
         file_id = uuid.uuid4()
         ext = serializer.validated_data["expected_extension"]
+
+        # For encrypted files, set status to READY immediately since the server
+        # cannot inspect ciphertext for malware scanning.
+        initial_status = (
+            enums.DocumentAttachmentStatus.READY
+            if is_file_encrypted
+            else enums.DocumentAttachmentStatus.PROCESSING
+        )
 
         # Prepare metadata for storage
         extra_args = {
             "Metadata": {
                 "owner": str(request.user.id),
-                "status": enums.DocumentAttachmentStatus.PROCESSING,
+                "status": initial_status,
             },
             "ContentType": serializer.validated_data["content_type"],
         }
+
+        if is_file_encrypted:
+            extra_args["Metadata"]["is_encrypted"] = "true"
+
         file_unsafe = ""
         if serializer.validated_data["is_unsafe"]:
             extra_args["Metadata"]["is_unsafe"] = "true"
@@ -1521,7 +1542,9 @@ class DocumentViewSet(
         document.attachments.append(key)
         document.save()
 
-        malware_detection.analyse_file(key, document_id=document.id)
+        # Only run malware scan for unencrypted files
+        if not is_file_encrypted:
+            malware_detection.analyse_file(key, document_id=document.id)
 
         url = reverse(
             "documents-media-check",

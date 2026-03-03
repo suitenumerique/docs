@@ -4,12 +4,16 @@ import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { backendUrl } from '@/api';
+import { encryptContent } from '@/docs/doc-collaboration/encryption';
 
 import { useCreateDocAttachment } from '../api';
 import { ANALYZE_URL } from '../conf';
 import { DocsBlockNoteEditor } from '../types';
 
-export const useUploadFile = (docId: string) => {
+export const useUploadFile = (
+  docId: string,
+  symmetricKey?: CryptoKey,
+) => {
   const {
     mutateAsync: createDocAttachment,
     isError: isErrorAttachment,
@@ -19,7 +23,21 @@ export const useUploadFile = (docId: string) => {
   const uploadFile = useCallback(
     async (file: File) => {
       const body = new FormData();
-      body.append('file', file);
+
+      if (symmetricKey) {
+        const arrayBuffer = await file.arrayBuffer();
+        const encryptedBytes = await encryptContent(
+          new Uint8Array(arrayBuffer),
+          symmetricKey,
+        );
+        const encryptedFile = new File([encryptedBytes], file.name, {
+          type: 'application/octet-stream',
+        });
+        body.append('file', encryptedFile);
+        body.append('is_encrypted', 'true');
+      } else {
+        body.append('file', file);
+      }
 
       const ret = await createDocAttachment({
         docId,
@@ -28,7 +46,7 @@ export const useUploadFile = (docId: string) => {
 
       return `${backendUrl()}${ret.file}`;
     },
-    [createDocAttachment, docId],
+    [createDocAttachment, docId, symmetricKey],
   );
 
   return {

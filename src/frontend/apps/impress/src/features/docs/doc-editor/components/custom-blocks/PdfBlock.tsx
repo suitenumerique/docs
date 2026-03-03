@@ -13,11 +13,11 @@ import {
   createReactBlockSpec,
 } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, Icon, Loading } from '@/components';
+import { Box, Button, Icon, Loading } from '@/components';
 
 import { ANALYZE_URL } from '../../conf';
 import { DocsBlockNoteEditor } from '../../types';
@@ -70,6 +70,9 @@ const PdfBlockComponent = ({
   const [isPDFContent, setIsPDFContent] = useState<boolean | null>(null);
   const [isPDFContentLoading, setIsPDFContentLoading] =
     useState<boolean>(false);
+  const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | null>(null);
+
+  const isEncrypted = !!editor.resolveFileUrl;
 
   useEffect(() => {
     if (lang && locales[lang as keyof typeof locales]) {
@@ -86,8 +89,9 @@ const PdfBlockComponent = ({
     }
   }, [lang, t]);
 
+  // For non-encrypted docs, validate PDF content on mount (existing behavior)
   useEffect(() => {
-    if (!pdfUrl || pdfUrl.includes(ANALYZE_URL)) {
+    if (isEncrypted || !pdfUrl || pdfUrl.includes(ANALYZE_URL)) {
       return;
     }
 
@@ -101,6 +105,7 @@ const PdfBlockComponent = ({
 
         if (response.ok && contentType?.includes('application/pdf')) {
           setIsPDFContent(true);
+          setResolvedPdfUrl(pdfUrl);
         } else {
           setIsPDFContent(false);
         }
@@ -112,12 +117,63 @@ const PdfBlockComponent = ({
     };
 
     void validatePDFContent();
-  }, [pdfUrl]);
+  }, [pdfUrl, isEncrypted]);
+
+  // For encrypted docs, decrypt only when user clicks
+  const handleDecryptPdf = useCallback(async () => {
+    if (!editor.resolveFileUrl || !pdfUrl) {
+      return;
+    }
+
+    setIsPDFContentLoading(true);
+    try {
+      const blobUrl = await editor.resolveFileUrl(pdfUrl);
+      setResolvedPdfUrl(blobUrl);
+      setIsPDFContent(true);
+    } catch {
+      setIsPDFContent(false);
+    } finally {
+      setIsPDFContentLoading(false);
+    }
+  }, [editor, pdfUrl]);
+
+  const showEncryptedPlaceholder =
+    isEncrypted &&
+    isPDFContent === null &&
+    pdfUrl &&
+    !pdfUrl.includes(ANALYZE_URL);
 
   return (
     <Box ref={contentRef} className="bn-file-block-content-wrapper">
       <PDFBlockStyle />
-      {isPDFContentLoading && <Loading />}
+      {!isEncrypted && isPDFContentLoading && <Loading />}
+      {showEncryptedPlaceholder && (
+        <Box
+          $align="center"
+          $justify="center"
+          $color="#666"
+          $background="#f5f5f5"
+          $border="1px solid #ddd"
+          $height="300px"
+          $css={css`
+            text-align: center;
+            cursor: ${isPDFContentLoading ? 'wait' : 'pointer'};
+          `}
+          contentEditable={false}
+          onClick={() => !isPDFContentLoading && void handleDecryptPdf()}
+        >
+          {isPDFContentLoading ? (
+            <Loading />
+          ) : (
+            <>
+              <Icon iconName="lock" $size="24px" />
+              <Box $margin={{ top: 'small' }}>
+                {t('Click to decrypt and view PDF')}
+              </Box>
+            </>
+          )}
+        </Box>
+      )}
       {!isPDFContentLoading && isPDFContent !== null && !isPDFContent && (
         <Box
           $align="center"
@@ -142,7 +198,7 @@ const PdfBlockComponent = ({
         block={block as unknown as FileBlockBlock}
         editor={editor as unknown as FileBlockEditor}
       >
-        {!isPDFContentLoading && isPDFContent && (
+        {!isPDFContentLoading && isPDFContent && resolvedPdfUrl && (
           <Box
             as="embed"
             className="bn-visual-media"
@@ -150,7 +206,7 @@ const PdfBlockComponent = ({
             $width="100%"
             $height="450px"
             type="application/pdf"
-            src={pdfUrl}
+            src={resolvedPdfUrl}
             aria-label={block.props.name || t('PDF document')}
             contentEditable={false}
             draggable={false}

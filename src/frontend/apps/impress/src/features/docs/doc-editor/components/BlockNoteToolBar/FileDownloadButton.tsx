@@ -92,13 +92,22 @@ export const FileDownloadButton = ({
         return;
       }
 
+      const fetchAndDownload = async (fileName: string) => {
+        if (editor.resolveFileUrl) {
+          // Encrypted: decrypt via resolveFileUrl then download the blob
+          const blobUrl = await editor.resolveFileUrl(url);
+          const blob = await fetch(blobUrl).then((r) => r.blob());
+          downloadFile(blob, fileName);
+        } else {
+          const blob = (await exportResolveFileUrl(url)) as Blob;
+          downloadFile(blob, fileName);
+        }
+      };
+
       if (!url.includes('-unsafe')) {
-        const blob = (await exportResolveFileUrl(url)) as Blob;
-        downloadFile(blob, name || url.split('/').pop() || 'file');
+        await fetchAndDownload(name || url.split('/').pop() || 'file');
       } else {
         const onConfirm = async () => {
-          const blob = (await exportResolveFileUrl(url)) as Blob;
-
           const baseName = name || url.split('/').pop() || 'file';
 
           const regFindLastDot = /(\.[^/.]+)$/;
@@ -106,7 +115,7 @@ export const FileDownloadButton = ({
             ? baseName.replace(regFindLastDot, '-unsafe$1')
             : baseName + '-unsafe';
 
-          downloadFile(blob, unsafeName);
+          await fetchAndDownload(unsafeName);
         };
 
         open(onConfirm);
