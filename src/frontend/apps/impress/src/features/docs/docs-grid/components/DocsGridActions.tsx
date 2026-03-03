@@ -2,6 +2,12 @@ import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
+import ContentCopySVG from '@/assets/icons/ui-kit/content_copy.svg';
+import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
+import DocMoveInSVG from '@/assets/icons/ui-kit/doc-move-in.svg';
+import GroupSVG from '@/assets/icons/ui-kit/group.svg';
+import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
+import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
 import { DropdownMenu, DropdownMenuOption, Icon } from '@/components';
 import {
   Doc,
@@ -41,7 +47,11 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const options: DropdownMenuOption[] = [
     {
       label: doc.is_favorite ? t('Unpin') : t('Pin'),
-      icon: 'push_pin',
+      icon: doc.is_favorite ? (
+        <KeepOffSVG width={24} height={24} />
+      ) : (
+        <KeepSVG width={24} height={24} />
+      ),
       callback: () => {
         if (doc.is_favorite) {
           removeFavoriteDoc.mutate({ id: doc.id });
@@ -54,7 +64,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Share'),
-      icon: 'group',
+      icon: <GroupSVG width={24} height={24} />,
       callback: () => {
         shareModal.open();
       },
@@ -63,7 +73,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Move into a doc'),
-      icon: 'copy_all',
+      icon: <DocMoveInSVG width={24} height={24} />,
       callback: () => {
         importModal.open();
       },
@@ -72,7 +82,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Duplicate'),
-      icon: 'content_copy',
+      icon: <ContentCopySVG width={24} height={24} />,
       disabled: !doc.abilities.duplicate,
       callback: () => {
         duplicateDoc({
@@ -85,7 +95,7 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
     },
     {
       label: t('Delete'),
-      icon: 'delete',
+      icon: <DeleteSVG width={24} height={24} />,
       callback: () => deleteModal.open(),
       disabled: !doc.abilities.destroy,
       testId: `docs-grid-actions-remove-${doc.id}`,

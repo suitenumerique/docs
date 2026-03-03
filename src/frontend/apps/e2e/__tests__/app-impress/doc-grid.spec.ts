@@ -115,7 +115,7 @@ test.describe('Document grid item options', () => {
 
     // Pin
     await row.getByText(`more_horiz`).click();
-    await page.getByText('push_pin').click();
+    await page.getByRole('menuitem', { name: 'Pin' }).click();
 
     // Check is pinned
     await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();

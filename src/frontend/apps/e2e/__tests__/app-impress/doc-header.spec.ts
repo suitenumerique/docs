@@ -543,7 +543,7 @@ test.describe('Doc Header', () => {
       .click();
 
     // Pin
-    await page.getByText('push_pin').click();
+    await page.getByRole('menuitem', { name: 'Pin' }).click();
     await page
       .getByRole('button', { name: 'Open the document options' })
       .click();
@@ -564,11 +564,11 @@ test.describe('Doc Header', () => {
       .click();
 
     // Unpin
-    await page.getByText('Unpin').click();
+    await page.getByRole('menuitem', { name: 'Unpin' }).click();
     await page
       .getByRole('button', { name: 'Open the document options' })
       .click();
-    await expect(page.getByText('push_pin')).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Pin' })).toBeVisible();
 
     await page.goto('/');
 
