@@ -976,6 +976,14 @@ class EncryptDocumentSerializer(serializers.Serializer):
 
     content = serializers.CharField(required=True)
     encryptedSymmetricKeyPerUser = serializers.DictField(child=serializers.CharField(), required=True)
+    attachmentKeyMapping = serializers.DictField(
+        child=serializers.CharField(),
+        required=False,
+        default=dict,
+        help_text="Mapping of original attachment key to new encrypted attachment key. "
+        "During encryption, existing attachments are uploaded encrypted under new keys. "
+        "This mapping tells the backend to copy each new key over the original and clean up.",
+    )
 
 
 class RemoveEncryptionSerializer(serializers.Serializer):

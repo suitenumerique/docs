@@ -11,6 +11,7 @@ interface EncryptDocProps {
   docId: string;
   content: Uint8Array<ArrayBufferLike>;
   encryptedSymmetricKeyPerUser: Record<string, ArrayBuffer>;
+  attachmentKeyMapping?: Record<string, string>;
 }
 
 export const encryptDoc = async ({
@@ -33,6 +34,7 @@ export const encryptDoc = async ({
       ...params,
       content: toBase64(params.content),
       encryptedSymmetricKeyPerUser: base64EncryptedSymmetricKeyPerUser,
+      attachmentKeyMapping: params.attachmentKeyMapping || {},
     }),
   });
 

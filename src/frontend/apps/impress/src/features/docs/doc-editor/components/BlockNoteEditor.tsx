@@ -154,7 +154,7 @@ export const BlockNoteEditor = ({
       };
       const mime = mimeMap[ext] || 'application/octet-stream';
 
-      const blob = new Blob([decryptedBytes], { type: mime });
+      const blob = new Blob([decryptedBytes as BlobPart], { type: mime });
       const blobUrl = URL.createObjectURL(blob);
       blobUrlCacheRef.current.set(url, blobUrl);
 

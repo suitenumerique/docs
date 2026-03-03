@@ -1,5 +1,6 @@
 import {
   Button,
+  Loader,
   Modal,
   ModalSize,
   VariantType,
@@ -7,6 +8,9 @@ import {
 } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
+
+import { backendUrl } from '@/api';
+import { useState } from 'react';
 
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { useUserUpdate } from '@/core/api/useUserUpdate';
@@ -17,6 +21,7 @@ import {
   getEncryptionDB,
   prepareEncryptedSymmetricKeysForUsers,
 } from '@/docs/doc-collaboration';
+import { createDocAttachment } from '@/docs/doc-editor/api';
 import { toBase64 } from '@/docs/doc-editor';
 import { useAuth } from '@/features/auth';
 import {
@@ -27,6 +32,158 @@ import {
   useProviderStore,
 } from '@/features/docs/doc-management';
 import { useKeyboardAction } from '@/hooks';
+import { Spinner } from '@gouvfr-lasuite/ui-kit';
+
+function traverseYDoc(
+  node: Y.XmlElement | Y.XmlFragment,
+  callback: (el: Y.XmlElement) => void,
+) {
+  if (node instanceof Y.XmlElement) {
+    callback(node);
+  }
+
+  node.toArray().forEach((child) => {
+    if (child instanceof Y.XmlElement || child instanceof Y.XmlFragment) {
+      traverseYDoc(child, callback);
+    }
+  });
+}
+
+const UUID =
+  '[\\da-fA-F]{8}-[\\da-fA-F]{4}-[\\da-fA-F]{4}-[\\da-fA-F]{4}-[\\da-fA-F]{12}';
+const ATTACHMENT_KEY_REGEX = new RegExp(
+  `^/media/(${UUID}/attachments/${UUID}(?:-unsafe)?\\.[a-zA-Z0-9]{1,10})$`,
+);
+
+type ExtractedKeyMetadata = {
+  mediaUrl: string;
+  name?: string;
+  nodes: Y.XmlElement[];
+};
+
+// extract unique attachment keys from the Yjs document
+const extractAttachmentKeysAndMetadata = (
+  yDoc: Y.Doc,
+): Map<string, ExtractedKeyMetadata> => {
+  const fragment = yDoc.getXmlFragment('document-store');
+
+  // for each key keep track of nodes
+  const keysAndMetadata = new Map<string, ExtractedKeyMetadata>();
+
+  yDoc.transact(() => {
+    traverseYDoc(fragment, (node) => {
+      const urlAttributeValue = node.getAttribute('url');
+
+      if (urlAttributeValue) {
+        // url should always be valid
+        const url = new URL(urlAttributeValue);
+
+        // applying the test only on the pathname since hostname can vary
+        const match = ATTACHMENT_KEY_REGEX.exec(url.pathname);
+
+        if (match) {
+          const key = match[1];
+          const keyMetadata = keysAndMetadata.get(key);
+
+          if (keyMetadata) {
+            keyMetadata.nodes.push(node);
+          } else {
+            // avoid any unexpected parts
+            url.search = '';
+            url.hash = '';
+
+            keysAndMetadata.set(key, {
+              mediaUrl: url.toString(),
+              name: node.getAttribute('name'),
+              nodes: [node],
+            });
+          }
+        }
+      }
+    });
+  });
+
+  return keysAndMetadata;
+};
+
+/**
+ * encrypt existing unencrypted attachments and return:
+ * - a modified Yjs state with URLs pointing to new encrypted files
+ * - a mapping of old S3 keys to new ones (for backend cleanup)
+ *
+ * originals are never modified so if the process fails midway the document
+ * still works with its original unencrypted attachments.
+ */
+const encryptRemoteAttachments = async (
+  yDoc: Y.Doc,
+  docId: string,
+  symmetricKey: CryptoKey,
+): Promise<Record<string, string>> => {
+  const attachmentKeysAndMetadata = extractAttachmentKeysAndMetadata(yDoc);
+
+  // if no attachment it's straightforward
+  if (attachmentKeysAndMetadata.size === 0) {
+    return {};
+  }
+
+  // otherwise upload encrypted copies as new attachments and collect the mapping
+  const attachmentKeyMapping: Record<string, string> = {};
+
+  for (const [oldAttachmentKey, oldAttachmentMetadata] of Array.from(
+    attachmentKeysAndMetadata.entries(),
+  )) {
+    const response = await fetch(oldAttachmentMetadata.mediaUrl, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error('attachment cannot be fetch');
+    }
+
+    const fileBytes = new Uint8Array(await response.arrayBuffer());
+    const encryptedBytes = await encryptContent(fileBytes, symmetricKey);
+
+    const fileName = oldAttachmentMetadata.name ?? 'file'; // since encrypted we could not reuse the file name that can be stored as clear text
+    const encryptedFile = new File([encryptedBytes], fileName, {
+      type: 'application/octet-stream',
+    });
+
+    const body = new FormData();
+    body.append('file', encryptedFile);
+    body.append('is_encrypted', 'true');
+
+    const result = await createDocAttachment({ docId, body });
+
+    // result.file is like "/api/v1.0/documents/{id}/media-check/?key={newKey}"
+    const newKey = new URL(
+      result.file,
+      window.location.origin,
+    ).searchParams.get('key');
+
+    if (!newKey) {
+      throw new Error('file key must be provided once uploaded');
+    }
+
+    attachmentKeyMapping[oldAttachmentKey] = newKey;
+  }
+
+  // once uploaded, we can update all nodes referencing attachments with their new key
+  yDoc.transact(() => {
+    for (const [oldAttachmentKey, oldAttachmentMetadata] of Array.from(
+      attachmentKeysAndMetadata.entries(),
+    )) {
+      const newMediaUrl = oldAttachmentMetadata.mediaUrl.replace(
+        oldAttachmentKey,
+        attachmentKeyMapping[oldAttachmentKey],
+      );
+
+      for (const node of oldAttachmentMetadata.nodes) {
+        node.setAttribute('url', newMediaUrl);
+      }
+    }
+  });
+
+  return attachmentKeyMapping;
+};
 
 interface ModalEncryptDocProps {
   doc: Doc;
@@ -51,129 +208,156 @@ export const ModalEncryptDoc = ({
   const { user } = useAuth();
   const { mutateAsync: updateUser } = useUserUpdate();
 
+  const [isPending, setIsPending] = useState(false);
+
   const {
-    mutate: encryptDoc,
+    mutateAsync: encryptDoc,
     isError,
     error,
   } = useEncryptDoc({
     listInvalidQueries: [KEY_DOC, KEY_LIST_DOC],
-    options: {
-      onSuccess: () => {
-        onSuccess && onSuccess(doc);
-        onClose();
-
-        toast(t('The document has been encrypted.'), VariantType.SUCCESS, {
-          duration: 4000,
-        });
-      },
-    },
   });
 
   const keyboardAction = useKeyboardAction();
 
   const handleClose = () => {
+    if (isPending) {
+      return;
+    }
     onClose();
   };
 
   const handleEncrypt = async () => {
-    if (!provider || !user) {
+    if (!provider || !user || isPending) {
       return;
     }
 
-    let currentUserPublicKeyFromThisOnboardingSession: ArrayBuffer | null =
-      null;
+    setIsPending(true);
 
-    // Perform the onboarding if that's the first time using encryption on this device
-    if (!encryptionSettings) {
-      // TODO: trigger the onboarding, either by creating or retrieving a key from another device
-      // TODO: probably the logic should be at a device key level, not user one?
+    try {
+      let currentUserPublicKeyFromThisOnboardingSession: ArrayBuffer | null =
+        null;
 
-      const userKeyPair = await generateUserKeyPair();
+      // Perform the onboarding if that's the first time using encryption on this device
+      if (!encryptionSettings) {
+        // TODO: trigger the onboarding, either by creating or retrieving a key from another device
+        // TODO: probably the logic should be at a device key level, not user one?
 
-      const encryptionDatabase = await getEncryptionDB();
+        const userKeyPair = await generateUserKeyPair();
 
-      // TODO: it should use transaction
-      // encryptionDatabase.transaction
-      await encryptionDatabase.put(
-        'privateKey',
-        userKeyPair.privateKey,
-        `user:${user.id}`,
+        const encryptionDatabase = await getEncryptionDB();
+
+        // TODO: it should use transaction
+        // encryptionDatabase.transaction
+        await encryptionDatabase.put(
+          'privateKey',
+          userKeyPair.privateKey,
+          `user:${user.id}`,
+        );
+        await encryptionDatabase.put(
+          'publicKey',
+          userKeyPair.publicKey,
+          `user:${user.id}`,
+        );
+
+        const rawPublicKey = await crypto.subtle.exportKey(
+          'spki',
+          userKeyPair.publicKey,
+        );
+
+        // TODO: it should throw if the backend has already a public key (so the user can with concious forget the old one (but here he did the onboarding already so... it was probably a new device))
+        await updateUser({
+          id: user.id,
+          encryption_public_key: toBase64(new Uint8Array(rawPublicKey)),
+        });
+
+        currentUserPublicKeyFromThisOnboardingSession = rawPublicKey;
+
+        // TODO: should check encryptionSettings will update, otherwise hard refresh is needed
+        window.location.reload();
+
+        return;
+      }
+
+      const documentSymmetricKey = await generateSymmetricKey();
+
+      // Their public key are base64 encoded, decoding the whole
+      const usersPublicKeys: Record<string, ArrayBuffer> = {};
+
+      if (doc.accesses_public_keys_per_user) {
+        // TODO:
+        // TODO: should throw if missing public keys according to current accesses
+        // TODO:
+
+        for (const [userId, publicKey] of Object.entries(
+          doc.accesses_public_keys_per_user,
+        )) {
+          usersPublicKeys[userId] = Buffer.from(publicKey, 'base64').buffer;
+        }
+
+        // if the onboarding has been done directly in this encryption flow, the backend has not yet told the frontend
+        // about the current user key, so just patching the mapping with this new public key
+        if (currentUserPublicKeyFromThisOnboardingSession) {
+          usersPublicKeys[user.id] =
+            currentUserPublicKeyFromThisOnboardingSession;
+        }
+      } else {
+        // if it has been not provided it's weird because it should only happen for people not authenticated
+        throw new Error(`"accesses_public_keys_per_user" should be provided`);
+      }
+
+      // Prepare encrypted symmetric keys for all users with access
+      const encryptedSymmetricKeyPerUser =
+        await prepareEncryptedSymmetricKeysForUsers(
+          documentSymmetricKey,
+          usersPublicKeys,
+        );
+
+      // clone the Yjs document since performing changes during encryption that require backend confirmation
+      // once successfully done it can be used locally
+      const ongoingDoc = new Y.Doc();
+      Y.applyUpdate(ongoingDoc, Y.encodeStateAsUpdate(provider.document));
+
+      // encrypt existing attachments
+      const attachmentKeyMapping = await encryptRemoteAttachments(
+        ongoingDoc,
+        doc.id,
+        documentSymmetricKey,
       );
-      await encryptionDatabase.put(
-        'publicKey',
-        userKeyPair.publicKey,
-        `user:${user.id}`,
+
+      const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
+
+      const encryptedContent = await encryptContent(
+        new Uint8Array(ongoingDocState),
+        documentSymmetricKey,
       );
 
-      const rawPublicKey = await crypto.subtle.exportKey(
-        'spki',
-        userKeyPair.publicKey,
-      );
+      // TODO:
+      // TODO: if none it should at least make it for the current user
+      // TODO: so it makes sense `accesses_public_keys_per_user` is always passed?
+      // TODO:
 
-      // TODO: it should throw if the backend has already a public key (so the user can with concious forget the old one (but here he did the onboarding already so... it was probably a new device))
-      await updateUser({
-        id: user.id,
-        encryption_public_key: toBase64(new Uint8Array(rawPublicKey)),
+      await encryptDoc({
+        docId: doc.id,
+        content: encryptedContent,
+        encryptedSymmetricKeyPerUser,
+        attachmentKeyMapping,
       });
 
-      currentUserPublicKeyFromThisOnboardingSession = rawPublicKey;
+      // since the encrypted state has been committed with success with can apply it locally with adjusted encrypted attachments
+      Y.applyUpdate(provider!.document, Y.encodeStateAsUpdate(ongoingDoc));
 
-      // TODO: should check encryptionSettings will update, otherwise hard refresh is needed
-      window.location.reload();
+      onSuccess?.(doc);
+      onClose();
 
-      return;
+      toast(t('The document has been encrypted.'), VariantType.SUCCESS, {
+        duration: 4000,
+      });
+
+      ongoingDoc.destroy();
+    } finally {
+      setIsPending(false);
     }
-
-    const documentSymmetricKey = await generateSymmetricKey();
-
-    const state = Y.encodeStateAsUpdate(provider.document);
-    const encryptedContent = await encryptContent(
-      new Uint8Array(state),
-      documentSymmetricKey,
-    );
-
-    // Their public key are base64 encoded, decoding the whole
-    const usersPublicKeys: Record<string, ArrayBuffer> = {};
-
-    if (doc.accesses_public_keys_per_user) {
-      // TODO:
-      // TODO: should throw if missing public keys according to current accesses
-      // TODO:
-
-      for (const [userId, publicKey] of Object.entries(
-        doc.accesses_public_keys_per_user,
-      )) {
-        usersPublicKeys[userId] = Buffer.from(publicKey, 'base64').buffer;
-      }
-
-      // if the onboarding has been done directly in this encryption flow, the backend has not yet told the frontend
-      // about the current user key, so just patching the mapping with this new public key
-      if (currentUserPublicKeyFromThisOnboardingSession) {
-        usersPublicKeys[user.id] =
-          currentUserPublicKeyFromThisOnboardingSession;
-      }
-    } else {
-      // if it has been not provided it's weird because it should only happen for people not authenticated
-      throw new Error(`"accesses_public_keys_per_user" should be provided`);
-    }
-
-    // Prepare encrypted symmetric keys for all users with access
-    const encryptedSymmetricKeyPerUser =
-      await prepareEncryptedSymmetricKeysForUsers(
-        documentSymmetricKey,
-        usersPublicKeys,
-      );
-
-    // TODO:
-    // TODO: if none it should at least make it for the current user
-    // TODO: so it makes sense `accesses_public_keys_per_user` is always passed?
-    // TODO:
-
-    encryptDoc({
-      docId: doc.id,
-      content: encryptedContent,
-      encryptedSymmetricKeyPerUser,
-    });
   };
 
   const handleCloseKeyDown = keyboardAction(handleClose);
@@ -182,7 +366,7 @@ export const ModalEncryptDoc = ({
   return (
     <Modal
       isOpen
-      closeOnClickOutside
+      closeOnClickOutside={!isPending}
       hideCloseButton
       onClose={handleClose}
       aria-describedby="modal-encrypt-doc-title"
@@ -193,6 +377,7 @@ export const ModalEncryptDoc = ({
             fullWidth
             onClick={handleClose}
             onKeyDown={handleCloseKeyDown}
+            disabled={isPending}
           >
             {t('Cancel')}
           </Button>
@@ -201,6 +386,14 @@ export const ModalEncryptDoc = ({
             fullWidth
             onClick={handleEncrypt}
             onKeyDown={handleEncryptKeyDown}
+            disabled={isPending}
+            icon={
+              isPending ? (
+                <div>
+                  <Spinner size="sm" />
+                </div>
+              ) : undefined
+            }
           >
             {t('Confirm')}
           </Button>
@@ -227,6 +420,7 @@ export const ModalEncryptDoc = ({
             aria-label={t('Close the encrypt modal')}
             onClick={handleClose}
             onKeyDown={handleCloseKeyDown}
+            disabled={isPending}
           />
         </Box>
       }

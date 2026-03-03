@@ -1480,18 +1480,9 @@ class DocumentViewSet(
         serializer = serializers.FileUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        # Normally encrypted attachments would be only allowed on encrypted documents and vice-versa
+        # but since during encryption/decryption we upload all attachments before the switch, we cannot enforce this rule
         is_file_encrypted = serializer.validated_data.get("is_encrypted", False)
-
-        # Encrypted attachments are only allowed on encrypted documents
-        if is_file_encrypted and not document.is_encrypted:
-            raise drf.exceptions.ValidationError({
-                "is_encrypted":
-                "Cannot upload encrypted attachments to a non-encrypted document."
-            })
-
-        # Generate a generic yet unique filename to store the image in object storage
-        file_id = uuid.uuid4()
-        ext = serializer.validated_data["expected_extension"]
 
         # For encrypted files, set status to READY immediately since the server
         # cannot inspect ciphertext for malware scanning.
@@ -1512,6 +1503,10 @@ class DocumentViewSet(
 
         if is_file_encrypted:
             extra_args["Metadata"]["is_encrypted"] = "true"
+
+        # Generate a generic yet unique filename to store the image in object storage
+        file_id = uuid.uuid4()
+        ext = serializer.validated_data["expected_extension"]
 
         file_unsafe = ""
         if serializer.validated_data["is_unsafe"]:
@@ -2058,6 +2053,7 @@ class DocumentViewSet(
 
         content = serializer.validated_data["content"]
         encryptedSymmetricKeyPerUser = serializer.validated_data["encryptedSymmetricKeyPerUser"]
+        attachment_key_mapping = serializer.validated_data.get("attachmentKeyMapping", {})
 
         # Prevent encryption if there are pending invitations
         if document.invitations.exists():
@@ -2092,10 +2088,33 @@ class DocumentViewSet(
                 f'Only users with access should have encrypted symmetric keys.'
             })
 
+        # Remove old unencrypted attachment keys from the allowed list.
+        # The frontend uploaded encrypted copies under new keys and updated the
+        # Yjs content to reference them.
+        if attachment_key_mapping:
+            old_keys = set(attachment_key_mapping.keys())
+            document.attachments = [
+                k for k in (document.attachments or []) if k not in old_keys
+            ]
+
         # Update the document content and encryption status
         document.content = content  # This will be cached and saved to object storage
         document.is_encrypted = True
         document.save()
+
+        # Clean up old S3 objects only after the DB transaction has committed,
+        # so a deletion failure can never affect the encrypt operation.
+        if attachment_key_mapping:
+            def _cleanup_old_attachments():
+                s3_client = default_storage.connection.meta.client
+                bucket_name = default_storage.bucket_name
+                for old_key in attachment_key_mapping:
+                    try:
+                        s3_client.delete_object(Bucket=bucket_name, Key=old_key)
+                    except ClientError:
+                        logger.warning("Failed to delete old attachment %s", old_key)
+
+            transaction.on_commit(_cleanup_old_attachments)
 
         # Store the encrypted symmetric keys in DocumentAccess for each user
         for user_id, encrypted_key in encryptedSymmetricKeyPerUser.items():
