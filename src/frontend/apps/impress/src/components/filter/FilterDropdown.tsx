@@ -46,7 +46,7 @@ export const FilterDropdown = ({
         $direction="row"
         $align="center"
       >
-        <Text $weight={400} $variation="tertiary" $theme="neutral">
+        <Text $weight={400} $variation="tertiary" $theme="neutral" $size="sm">
           {selectedOption?.label ?? options[0].label}
         </Text>
         <Icon
