@@ -1002,6 +1002,14 @@ class RemoveEncryptionSerializer(serializers.Serializer):
     """
 
     content = serializers.CharField(required=True)
+    attachmentKeyMapping = serializers.DictField(
+        child=serializers.CharField(),
+        required=False,
+        default=dict,
+        help_text="Mapping of old encrypted attachment key to new decrypted attachment key. "
+        "During decryption, encrypted attachments are re-uploaded decrypted under new keys. "
+        "This mapping tells the backend to remove the old keys and clean up.",
+    )
 
 
 class ReactionSerializer(serializers.ModelSerializer):

@@ -10,6 +10,7 @@ import { toBase64 } from '@/features/docs/doc-editor';
 interface RemoveDocEncryptionProps {
   docId: string;
   content: Uint8Array<ArrayBufferLike>;
+  attachmentKeyMapping?: Record<string, string>;
 }
 
 export const removeDocEncryption = async ({
@@ -21,6 +22,7 @@ export const removeDocEncryption = async ({
     body: JSON.stringify({
       ...params,
       content: toBase64(params.content),
+      attachmentKeyMapping: params.attachmentKeyMapping || {},
     }),
   });
 

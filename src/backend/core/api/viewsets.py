@@ -2151,6 +2151,16 @@ class DocumentViewSet(
         serializer.is_valid(raise_exception=True)
 
         content = serializer.validated_data["content"]
+        attachment_key_mapping = serializer.validated_data.get("attachmentKeyMapping", {})
+
+        # Remove old encrypted attachment keys from the allowed list.
+        # The frontend uploaded decrypted copies under new keys and updated
+        # the Yjs content to reference them.
+        if attachment_key_mapping:
+            old_keys = set(attachment_key_mapping.keys())
+            document.attachments = [
+                k for k in (document.attachments or []) if k not in old_keys
+            ]
 
         # Update the document content and encryption status
         document.content = content  # This will be cached and saved to object storage
@@ -2161,6 +2171,19 @@ class DocumentViewSet(
         models.DocumentAccess.objects.filter(document=document).update(
             encrypted_document_symmetric_key_for_user=None
         )
+
+        # Clean up old S3 objects only after the DB transaction has committed
+        if attachment_key_mapping:
+            def _cleanup_old_attachments():
+                s3_client = default_storage.connection.meta.client
+                bucket_name = default_storage.bucket_name
+                for old_key in attachment_key_mapping:
+                    try:
+                        s3_client.delete_object(Bucket=bucket_name, Key=old_key)
+                    except ClientError:
+                        logger.warning("Failed to delete old attachment %s", old_key)
+
+            transaction.on_commit(_cleanup_old_attachments)
 
         # Return the updated document
         serializer = self.get_serializer(document)

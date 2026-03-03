@@ -330,9 +330,11 @@ export const DocToolBox = ({
           }}
         />
       )}
-      {isModalRemoveEncryptionOpen && (
+      {isModalRemoveEncryptionOpen &&
+        documentEncryptionSettings?.documentSymmetricKey && (
         <ModalRemoveDocEncryption
           doc={doc}
+          symmetricKey={documentEncryptionSettings.documentSymmetricKey}
           onClose={() => setIsModalRemoveEncryptionOpen(false)}
           onSuccess={() => {
             //

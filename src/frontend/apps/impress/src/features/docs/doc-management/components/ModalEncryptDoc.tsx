@@ -28,83 +28,12 @@ import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  extractAttachmentKeysAndMetadata,
   useEncryptDoc,
   useProviderStore,
 } from '@/features/docs/doc-management';
 import { useKeyboardAction } from '@/hooks';
 import { Spinner } from '@gouvfr-lasuite/ui-kit';
-
-function traverseYDoc(
-  node: Y.XmlElement | Y.XmlFragment,
-  callback: (el: Y.XmlElement) => void,
-) {
-  if (node instanceof Y.XmlElement) {
-    callback(node);
-  }
-
-  node.toArray().forEach((child) => {
-    if (child instanceof Y.XmlElement || child instanceof Y.XmlFragment) {
-      traverseYDoc(child, callback);
-    }
-  });
-}
-
-const UUID =
-  '[\\da-fA-F]{8}-[\\da-fA-F]{4}-[\\da-fA-F]{4}-[\\da-fA-F]{4}-[\\da-fA-F]{12}';
-const ATTACHMENT_KEY_REGEX = new RegExp(
-  `^/media/(${UUID}/attachments/${UUID}(?:-unsafe)?\\.[a-zA-Z0-9]{1,10})$`,
-);
-
-type ExtractedKeyMetadata = {
-  mediaUrl: string;
-  name?: string;
-  nodes: Y.XmlElement[];
-};
-
-// extract unique attachment keys from the Yjs document
-const extractAttachmentKeysAndMetadata = (
-  yDoc: Y.Doc,
-): Map<string, ExtractedKeyMetadata> => {
-  const fragment = yDoc.getXmlFragment('document-store');
-
-  // for each key keep track of nodes
-  const keysAndMetadata = new Map<string, ExtractedKeyMetadata>();
-
-  yDoc.transact(() => {
-    traverseYDoc(fragment, (node) => {
-      const urlAttributeValue = node.getAttribute('url');
-
-      if (urlAttributeValue) {
-        // url should always be valid
-        const url = new URL(urlAttributeValue);
-
-        // applying the test only on the pathname since hostname can vary
-        const match = ATTACHMENT_KEY_REGEX.exec(url.pathname);
-
-        if (match) {
-          const key = match[1];
-          const keyMetadata = keysAndMetadata.get(key);
-
-          if (keyMetadata) {
-            keyMetadata.nodes.push(node);
-          } else {
-            // avoid any unexpected parts
-            url.search = '';
-            url.hash = '';
-
-            keysAndMetadata.set(key, {
-              mediaUrl: url.toString(),
-              name: node.getAttribute('name'),
-              nodes: [node],
-            });
-          }
-        }
-      }
-    });
-  });
-
-  return keysAndMetadata;
-};
 
 /**
  * encrypt existing unencrypted attachments and return:

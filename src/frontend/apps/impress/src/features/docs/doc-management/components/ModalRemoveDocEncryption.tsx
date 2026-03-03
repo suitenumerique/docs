@@ -5,27 +5,108 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
+import { Spinner } from '@gouvfr-lasuite/ui-kit';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
+import { backendUrl } from '@/api';
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
+import { decryptContent } from '@/docs/doc-collaboration';
+import { createDocAttachment } from '@/docs/doc-editor/api';
 import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  extractAttachmentKeysAndMetadata,
   useRemoveDocEncryption,
   useProviderStore,
 } from '@/features/docs/doc-management';
 import { useKeyboardAction } from '@/hooks';
 
+/**
+ * Decrypt existing encrypted attachments and return:
+ * - a mapping of old S3 keys to new ones (for backend cleanup)
+ *
+ * The yDoc nodes are updated in place with the new URLs.
+ * Originals are never modified so if the process fails midway the document
+ * still works with its original encrypted attachments.
+ */
+const decryptRemoteAttachments = async (
+  yDoc: Y.Doc,
+  docId: string,
+  symmetricKey: CryptoKey,
+): Promise<Record<string, string>> => {
+  const attachmentKeysAndMetadata = extractAttachmentKeysAndMetadata(yDoc);
+
+  if (attachmentKeysAndMetadata.size === 0) {
+    return {};
+  }
+
+  const attachmentKeyMapping: Record<string, string> = {};
+
+  for (const [oldAttachmentKey, oldAttachmentMetadata] of Array.from(
+    attachmentKeysAndMetadata.entries(),
+  )) {
+    const response = await fetch(oldAttachmentMetadata.mediaUrl, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error('attachment cannot be fetched');
+    }
+
+    const encryptedBytes = new Uint8Array(await response.arrayBuffer());
+    const decryptedBytes = await decryptContent(encryptedBytes, symmetricKey);
+
+    const fileName = oldAttachmentMetadata.name ?? 'file';
+    const decryptedFile = new File([decryptedBytes as BlobPart], fileName);
+
+    const body = new FormData();
+    body.append('file', decryptedFile);
+
+    const result = await createDocAttachment({ docId, body });
+
+    const newKey = new URL(
+      result.file,
+      window.location.origin,
+    ).searchParams.get('key');
+
+    if (!newKey) {
+      throw new Error('file key must be provided once uploaded');
+    }
+
+    attachmentKeyMapping[oldAttachmentKey] = newKey;
+  }
+
+  // once uploaded, update all nodes referencing attachments with their new key
+  yDoc.transact(() => {
+    for (const [oldAttachmentKey, oldAttachmentMetadata] of Array.from(
+      attachmentKeysAndMetadata.entries(),
+    )) {
+      const newMediaUrl = oldAttachmentMetadata.mediaUrl.replace(
+        oldAttachmentKey,
+        attachmentKeyMapping[oldAttachmentKey],
+      );
+
+      for (const node of oldAttachmentMetadata.nodes) {
+        node.setAttribute('url', newMediaUrl);
+      }
+    }
+  });
+
+  return attachmentKeyMapping;
+};
+
 interface ModalRemoveDocEncryptionProps {
   doc: Doc;
+  symmetricKey: CryptoKey;
   onClose: () => void;
   onSuccess?: (doc: Doc) => void;
 }
 
 export const ModalRemoveDocEncryption = ({
   doc,
+  symmetricKey,
   onClose,
   onSuccess,
 }: ModalRemoveDocEncryptionProps) => {
@@ -33,54 +114,82 @@ export const ModalRemoveDocEncryption = ({
   const { toast } = useToastProvider();
   const { provider } = useProviderStore();
 
+  const [isPending, setIsPending] = useState(false);
+
   const {
-    mutate: removeDocEncryption,
+    mutateAsync: removeDocEncryption,
     isError,
     error,
   } = useRemoveDocEncryption({
     listInvalidQueries: [KEY_DOC, KEY_LIST_DOC],
-    options: {
-      onSuccess: () => {
-        onSuccess && onSuccess(doc);
-        onClose();
-
-        toast(
-          t('The document encryption has been removed.'),
-          VariantType.SUCCESS,
-          {
-            duration: 4000,
-          },
-        );
-      },
-    },
   });
 
   const keyboardAction = useKeyboardAction();
 
   const handleClose = () => {
+    if (isPending) {
+      return;
+    }
     onClose();
   };
 
-  const handleRemoveEncryption = () => {
-    if (!provider) {
+  const handleRemoveEncryption = async () => {
+    if (!provider || isPending) {
       return;
     }
 
-    const state = Y.encodeStateAsUpdate(provider.document);
+    setIsPending(true);
 
-    removeDocEncryption({
-      docId: doc.id,
-      content: state,
-    });
+    try {
+      // clone the Yjs document since performing changes during decryption
+      // that require backend confirmation
+      const ongoingDoc = new Y.Doc();
+      Y.applyUpdate(ongoingDoc, Y.encodeStateAsUpdate(provider.document));
+
+      // decrypt existing encrypted attachments
+      const attachmentKeyMapping = await decryptRemoteAttachments(
+        ongoingDoc,
+        doc.id,
+        symmetricKey,
+      );
+
+      const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
+
+      await removeDocEncryption({
+        docId: doc.id,
+        content: ongoingDocState,
+        attachmentKeyMapping,
+      });
+
+      // apply the URL changes from the cloned doc to the live document
+      Y.applyUpdate(provider!.document, Y.encodeStateAsUpdate(ongoingDoc));
+
+      onSuccess?.(doc);
+      onClose();
+
+      toast(
+        t('The document encryption has been removed.'),
+        VariantType.SUCCESS,
+        {
+          duration: 4000,
+        },
+      );
+
+      ongoingDoc.destroy();
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleCloseKeyDown = keyboardAction(handleClose);
-  const handleRemoveEncryptionKeyDown = keyboardAction(handleRemoveEncryption);
+  const handleRemoveEncryptionKeyDown = keyboardAction(
+    handleRemoveEncryption,
+  );
 
   return (
     <Modal
       isOpen
-      closeOnClickOutside
+      closeOnClickOutside={!isPending}
       hideCloseButton
       onClose={handleClose}
       aria-describedby="modal-remove-doc-encryption-title"
@@ -91,6 +200,7 @@ export const ModalRemoveDocEncryption = ({
             fullWidth
             onClick={handleClose}
             onKeyDown={handleCloseKeyDown}
+            disabled={isPending}
           >
             {t('Cancel')}
           </Button>
@@ -99,6 +209,14 @@ export const ModalRemoveDocEncryption = ({
             fullWidth
             onClick={handleRemoveEncryption}
             onKeyDown={handleRemoveEncryptionKeyDown}
+            disabled={isPending}
+            icon={
+              isPending ? (
+                <div>
+                  <Spinner size="sm" />
+                </div>
+              ) : undefined
+            }
           >
             {t('Confirm')}
           </Button>
@@ -125,6 +243,7 @@ export const ModalRemoveDocEncryption = ({
             aria-label={t('Close the encryption removal modal')}
             onClick={handleClose}
             onKeyDown={handleCloseKeyDown}
+            disabled={isPending}
           />
         </Box>
       }
