@@ -24,6 +24,7 @@ import {
   DocsInlineContentSchema,
   DocsStyleSchema,
 } from '../../types';
+import { useEncryption } from '../EncryptionProvider';
 
 export const FileDownloadButton = ({
   open,
@@ -32,6 +33,7 @@ export const FileDownloadButton = ({
 }) => {
   const dict = useDictionary();
   const Components = useComponentsContext();
+  const { isEncrypted, decryptFileUrl } = useEncryption();
 
   const editor = useBlockNoteEditor<
     DocsBlockSchema,
@@ -75,27 +77,22 @@ export const FileDownloadButton = ({
       /**
        * If not hosted on our domain, means not a file uploaded by the user,
        * we do what Blocknote was doing initially.
+       *
+       * For this case, no need of adding decryption logic
        */
       if (!url.includes(window.location.hostname) && !url.includes('base64')) {
-        if (!editor.resolveFileUrl) {
-          if (!isSafeUrl(url)) {
-            return;
-          }
-
-          window.open(url, '_blank', 'noopener,noreferrer');
-        } else {
-          void editor
-            .resolveFileUrl(url)
-            .then((downloadUrl) => window.open(downloadUrl));
+        if (!isSafeUrl(url)) {
+          return;
         }
+
+        window.open(url, '_blank', 'noopener,noreferrer');
 
         return;
       }
 
       const fetchAndDownload = async (fileName: string) => {
-        if (editor.resolveFileUrl) {
-          // Encrypted: decrypt via resolveFileUrl then download the blob
-          const blobUrl = await editor.resolveFileUrl(url);
+        if (isEncrypted) {
+          const blobUrl = await decryptFileUrl(url);
           const blob = await fetch(blobUrl).then((r) => r.blob());
           downloadFile(blob, fileName);
         } else {
@@ -121,7 +118,7 @@ export const FileDownloadButton = ({
         open(onConfirm);
       }
     }
-  }, [editor, fileBlock, open]);
+  }, [editor, fileBlock, open, isEncrypted, decryptFileUrl]);
 
   if (!fileBlock || fileBlock.props.url === '' || !Components) {
     return null;

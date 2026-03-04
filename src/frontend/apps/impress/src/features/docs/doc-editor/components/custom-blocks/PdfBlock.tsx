@@ -21,6 +21,8 @@ import { Box, Icon, Loading } from '@/components';
 
 import { ANALYZE_URL } from '../../conf';
 import { DocsBlockNoteEditor } from '../../types';
+import { EncryptedMediaPlaceholder } from '../EncryptedMediaPlaceholder';
+import { useEncryption } from '../EncryptionProvider';
 
 const PDFBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="pdf"] .bn-file-block-content-wrapper[style*="fit-content"] {
@@ -67,12 +69,12 @@ const PdfBlockComponent = ({
   const pdfUrl = block.props.url;
   const { i18n, t } = useTranslation();
   const lang = i18n.resolvedLanguage;
+  const { isEncrypted, decryptFileUrl } = useEncryption();
+
   const [isPDFContent, setIsPDFContent] = useState<boolean | null>(null);
   const [isPDFContentLoading, setIsPDFContentLoading] =
     useState<boolean>(false);
   const [resolvedPdfUrl, setResolvedPdfUrl] = useState<string | null>(null);
-
-  const isEncrypted = !!editor.resolveFileUrl;
 
   useEffect(() => {
     if (lang && locales[lang as keyof typeof locales]) {
@@ -89,7 +91,7 @@ const PdfBlockComponent = ({
     }
   }, [lang, t]);
 
-  // For non-encrypted docs, validate PDF content on mount (existing behavior)
+  // For non-encrypted docs, validate PDF content on mount
   useEffect(() => {
     if (isEncrypted || !pdfUrl || pdfUrl.includes(ANALYZE_URL)) {
       return;
@@ -119,15 +121,14 @@ const PdfBlockComponent = ({
     void validatePDFContent();
   }, [pdfUrl, isEncrypted]);
 
-  // For encrypted docs, decrypt only when user clicks
   const handleDecryptPdf = useCallback(async () => {
-    if (!editor.resolveFileUrl || !pdfUrl) {
+    if (!pdfUrl) {
       return;
     }
 
     setIsPDFContentLoading(true);
     try {
-      const blobUrl = await editor.resolveFileUrl(pdfUrl);
+      const blobUrl = await decryptFileUrl(pdfUrl);
       setResolvedPdfUrl(blobUrl);
       setIsPDFContent(true);
     } catch {
@@ -135,7 +136,7 @@ const PdfBlockComponent = ({
     } finally {
       setIsPDFContentLoading(false);
     }
-  }, [editor, pdfUrl]);
+  }, [pdfUrl, decryptFileUrl]);
 
   const showEncryptedPlaceholder =
     isEncrypted &&
@@ -148,31 +149,14 @@ const PdfBlockComponent = ({
       <PDFBlockStyle />
       {!isEncrypted && isPDFContentLoading && <Loading />}
       {showEncryptedPlaceholder && (
-        <Box
-          $align="center"
-          $justify="center"
-          $color="#666"
-          $background="#f5f5f5"
-          $border="1px solid #ddd"
-          $height="300px"
-          $css={css`
-            text-align: center;
-            cursor: ${isPDFContentLoading ? 'wait' : 'pointer'};
-          `}
-          contentEditable={false}
-          onClick={() => !isPDFContentLoading && void handleDecryptPdf()}
-        >
-          {isPDFContentLoading ? (
-            <Loading />
-          ) : (
-            <>
-              <Icon iconName="lock" $size="24px" />
-              <Box $margin={{ top: 'small' }}>
-                {t('Click to decrypt and view PDF')}
-              </Box>
-            </>
-          )}
-        </Box>
+        <EncryptedMediaPlaceholder
+          label={t('Click to decrypt and view PDF')}
+          errorLabel={t('Invalid or missing PDF file.')}
+          minHeight="300px"
+          isLoading={isPDFContentLoading}
+          hasError={false}
+          onDecrypt={() => void handleDecryptPdf()}
+        />
       )}
       {!isPDFContentLoading && isPDFContent !== null && !isPDFContent && (
         <Box

@@ -12,7 +12,7 @@ import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 import type { Awareness } from 'y-protocols/awareness';
@@ -20,7 +20,6 @@ import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { decryptContent } from '@/docs/doc-collaboration/encryption';
 import {
   Doc,
   SwitchableProvider,
@@ -41,13 +40,16 @@ import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
+import { EncryptionProvider } from './EncryptionProvider';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { cssComments, useComments } from './comments/';
 import {
   AccessibleImageBlock,
+  AudioBlock,
   CalloutBlock,
   PdfBlock,
   UploadLoaderBlock,
+  VideoBlock,
 } from './custom-blocks';
 import {
   InterlinkingLinkInlineContent,
@@ -62,11 +64,13 @@ const baseBlockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      audio: AudioBlock(),
       callout: CalloutBlock(),
       codeBlock: createCodeBlockSpec(codeBlockOptions),
       image: AccessibleImageBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
+      video: VideoBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
@@ -117,61 +121,6 @@ export const BlockNoteEditor = ({
 
   const symmetricKey = documentEncryptionSettings?.documentSymmetricKey;
   const { uploadFile, errorAttachment } = useUploadFile(doc.id, symmetricKey);
-
-  // Cache for decrypted blob URLs (URL → blob URL), persists across renders
-  const blobUrlCacheRef = useRef<Map<string, string>>(new Map());
-
-  const resolveFileUrl = useCallback(
-    async (url: string): Promise<string> => {
-      if (!symmetricKey) {
-        return url;
-      }
-
-      const cached = blobUrlCacheRef.current.get(url);
-      if (cached) {
-        return cached;
-      }
-
-      const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch encrypted attachment: ${response.status}`,
-        );
-      }
-
-      const encryptedBytes = new Uint8Array(await response.arrayBuffer());
-      const decryptedBytes = await decryptContent(encryptedBytes, symmetricKey);
-
-      const ext = url.split('.').pop()?.toLowerCase() || '';
-      const mimeMap: Record<string, string> = {
-        png: 'image/png',
-        jpg: 'image/jpeg',
-        jpeg: 'image/jpeg',
-        gif: 'image/gif',
-        webp: 'image/webp',
-        svg: 'image/svg+xml',
-        pdf: 'application/pdf',
-      };
-      const mime = mimeMap[ext] || 'application/octet-stream';
-
-      const blob = new Blob([decryptedBytes as BlobPart], { type: mime });
-      const blobUrl = URL.createObjectURL(blob);
-      blobUrlCacheRef.current.set(url, blobUrl);
-
-      return blobUrl;
-    },
-    [symmetricKey],
-  );
-
-  // Revoke blob URLs on unmount or when symmetric key changes
-  useEffect(() => {
-    return () => {
-      blobUrlCacheRef.current.forEach((blobUrl) =>
-        URL.revokeObjectURL(blobUrl),
-      );
-      blobUrlCacheRef.current.clear();
-    };
-  }, [symmetricKey]);
 
   const collabName = user?.full_name || user?.email;
   const cursorName = collabName || t('Anonymous');
@@ -271,10 +220,17 @@ export const BlockNoteEditor = ({
         headers: true,
       },
       uploadFile,
-      resolveFileUrl: symmetricKey ? resolveFileUrl : undefined,
       schema: blockNoteSchema,
     },
-    [cursorName, lang, provider, uploadFile, resolveFileUrl, symmetricKey, threadStore, resolveUsers],
+    [
+      cursorName,
+      lang,
+      provider,
+      uploadFile,
+      symmetricKey,
+      threadStore,
+      resolveUsers,
+    ],
   );
 
   useHeadings(editor);
@@ -292,35 +248,37 @@ export const BlockNoteEditor = ({
   }, [setEditor, editor]);
 
   return (
-    <Box
-      ref={refEditorContainer}
-      $css={css`
-        ${cssEditor};
-        ${cssComments(showComments, currentUserAvatarUrl)}
-      `}
-    >
-      {errorAttachment && (
-        <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
-          <TextErrors
-            causes={errorAttachment.cause}
-            canClose
-            $textAlign="left"
-          />
-        </Box>
-      )}
-      <BlockNoteView
-        className="--docs--main-editor"
-        editor={editor}
-        formattingToolbar={false}
-        slashMenu={false}
-        theme="light"
-        comments={showComments}
-        aria-label={t('Document editor')}
+    <EncryptionProvider symmetricKey={symmetricKey}>
+      <Box
+        ref={refEditorContainer}
+        $css={css`
+          ${cssEditor};
+          ${cssComments(showComments, currentUserAvatarUrl)}
+        `}
       >
-        <BlockNoteSuggestionMenu />
-        <BlockNoteToolbar />
-      </BlockNoteView>
-    </Box>
+        {errorAttachment && (
+          <Box $margin={{ bottom: 'big', top: 'none', horizontal: 'large' }}>
+            <TextErrors
+              causes={errorAttachment.cause}
+              canClose
+              $textAlign="left"
+            />
+          </Box>
+        )}
+        <BlockNoteView
+          className="--docs--main-editor"
+          editor={editor}
+          formattingToolbar={false}
+          slashMenu={false}
+          theme="light"
+          comments={showComments}
+          aria-label={t('Document editor')}
+        >
+          <BlockNoteSuggestionMenu />
+          <BlockNoteToolbar />
+        </BlockNoteView>
+      </Box>
+    </EncryptionProvider>
   );
 };
 
