@@ -21,6 +21,7 @@ and this project adheres to
 - ✨(backend) Onboarding docs for new users #1891
 - 🩺(trivy) add trivyignore file and add minimatch CVE #1915
 - 🚩 Add feature flags for the AI feature #1922
+- ✨(backend) add resource server api #1923
 
 ### Changed
 

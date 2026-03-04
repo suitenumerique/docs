@@ -431,36 +431,45 @@ class DocumentViewSet(
 
     ### Additional Actions:
     1. **Trashbin**: List soft deleted documents for a document owner
-        Example: GET /documents/{id}/trashbin/
+        Example: GET /documents/trashbin/
 
-    2. **Children**: List or create child documents.
+    2. **Restore**: Restore a soft deleted document.
+        Example: POST /documents/{id}/restore/
+
+    3. **Move**: Move a document to another parent document.
+        Example: POST /documents/{id}/move/
+
+    4. **Duplicate**: Duplicate a document.
+        Example: POST /documents/{id}/duplicate/
+
+    5. **Children**: List or create child documents.
         Example: GET, POST /documents/{id}/children/
 
-    3. **Versions List**: Retrieve version history of a document.
+    6. **Versions List**: Retrieve version history of a document.
         Example: GET /documents/{id}/versions/
 
-    4. **Version Detail**: Get or delete a specific document version.
+    7. **Version Detail**: Get or delete a specific document version.
         Example: GET, DELETE /documents/{id}/versions/{version_id}/
 
-    5. **Favorite**: Get list of favorite documents for a user. Mark or unmark
+    8. **Favorite**: Get list of favorite documents for a user. Mark or unmark
         a document as favorite.
         Examples:
-        - GET /documents/favorite/
+        - GET /documents/favorite_list/
         - POST, DELETE /documents/{id}/favorite/
 
-    6. **Create for Owner**: Create a document via server-to-server on behalf of a user.
+    9. **Create for Owner**: Create a document via server-to-server on behalf of a user.
         Example: POST /documents/create-for-owner/
 
-    7. **Link Configuration**: Update document link configuration.
+    10. **Link Configuration**: Update document link configuration.
         Example: PUT /documents/{id}/link-configuration/
 
-    8. **Attachment Upload**: Upload a file attachment for the document.
+    11. **Attachment Upload**: Upload a file attachment for the document.
         Example: POST /documents/{id}/attachment-upload/
 
-    9. **Media Auth**: Authorize access to document media.
+    12. **Media Auth**: Authorize access to document media.
         Example: GET /documents/media-auth/
 
-    10. **AI Transform**: Apply a transformation action on a piece of text with AI.
+    13. **AI Transform**: Apply a transformation action on a piece of text with AI.
         Example: POST /documents/{id}/ai-transform/
         Expected data:
         - text (str): The input text.
@@ -468,7 +477,7 @@ class DocumentViewSet(
         Returns: JSON response with the processed text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    11. **AI Translate**: Translate a piece of text with AI.
+    14. **AI Translate**: Translate a piece of text with AI.
         Example: POST /documents/{id}/ai-translate/
         Expected data:
         - text (str): The input text.
@@ -476,7 +485,7 @@ class DocumentViewSet(
         Returns: JSON response with the translated text.
         Throttled by: AIDocumentRateThrottle, AIUserRateThrottle.
 
-    12. **AI Proxy**: Proxy an AI request to an external AI service.
+    15. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
     ### Ordering: created_at, updated_at, is_favorite, title
