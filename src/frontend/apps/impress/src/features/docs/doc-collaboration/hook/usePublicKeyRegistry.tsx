@@ -22,6 +22,7 @@ export interface PublicKeyMismatch {
  */
 export function usePublicKeyRegistry(
   accessesPublicKeysPerUser: Record<string, string> | undefined,
+  currentUserId?: string,
 ) {
   const [mismatches, setMismatches] = useState<PublicKeyMismatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,13 @@ export function usePublicKeyRegistry(
         for (const [userId, currentKey] of Object.entries(
           accessesPublicKeysPerUser!,
         )) {
+          // Skip the current user — they know about their own key changes
+          if (currentUserId && userId === currentUserId) {
+            // Still store the key so it stays up to date locally
+            await db.put(STORE_KNOWN_PUBLIC_KEYS, currentKey, `user:${userId}`);
+            continue;
+          }
+
           const knownKey: string | undefined = await db.get(
             STORE_KNOWN_PUBLIC_KEYS,
             `user:${userId}`,
@@ -74,7 +82,7 @@ export function usePublicKeyRegistry(
     return () => {
       cancelled = true;
     };
-  }, [accessesPublicKeysPerUser]);
+  }, [accessesPublicKeysPerUser, currentUserId]);
 
   const acceptNewKey = useCallback(
     async (userId: string) => {

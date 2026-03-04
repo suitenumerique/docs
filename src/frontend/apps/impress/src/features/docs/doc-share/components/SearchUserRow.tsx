@@ -82,7 +82,9 @@ export const SearchUserRow = ({
               </Text>
             )}
             {fingerprint && (
-              <Badge style={{ gap: '0.3rem', margin: '5px 0' }}>
+              <Badge
+                style={{ width: 'fit-content', gap: '0.3rem', margin: '5px 0' }}
+              >
                 <Text
                   $size="xs"
                   $weight="600"

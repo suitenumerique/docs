@@ -80,6 +80,7 @@ export const DocToolBox = ({
 
   const { hasMismatches: hasKeyWarnings } = usePublicKeyRegistry(
     doc.accesses_public_keys_per_user,
+    encryptionSettings?.userId,
   );
 
   const { isSmallMobile, isMobile } = useResponsiveStore();
@@ -239,10 +240,25 @@ export const DocToolBox = ({
         $gap={spacingsTokens['2xs']}
       >
         {doc.is_encrypted && (
-          <>
-            [chiffrement activé]
-            {/* TODO */}
-          </>
+          <Box
+            $direction="row"
+            $align="center"
+            $gap="5px"
+            $css={css`
+              margin-right: 5px;
+            `}
+          >
+            <Icon
+              iconName="lock"
+              $size="md"
+              $color={colorsTokens['success-600']}
+            />
+            <span
+              style={{ fontSize: '0.8rem', color: colorsTokens['success-600'] }}
+            >
+              {t('Encrypted')}
+            </span>
+          </Box>
         )}
 
         <BoutonShare
@@ -332,18 +348,18 @@ export const DocToolBox = ({
       )}
       {isModalRemoveEncryptionOpen &&
         documentEncryptionSettings?.documentSymmetricKey && (
-        <ModalRemoveDocEncryption
-          doc={doc}
-          symmetricKey={documentEncryptionSettings.documentSymmetricKey}
-          onClose={() => setIsModalRemoveEncryptionOpen(false)}
-          onSuccess={() => {
-            //
-            // TODO: probably it should make an hard refresh to get the setup
-            // but it should before register content in database with clean accesses, and broadcast the information through websocket
-            //
-          }}
-        />
-      )}
+          <ModalRemoveDocEncryption
+            doc={doc}
+            symmetricKey={documentEncryptionSettings.documentSymmetricKey}
+            onClose={() => setIsModalRemoveEncryptionOpen(false)}
+            onSuccess={() => {
+              //
+              // TODO: probably it should make an hard refresh to get the setup
+              // but it should before register content in database with clean accesses, and broadcast the information through websocket
+              //
+            }}
+          />
+        )}
       {selectHistoryModal.isOpen && (
         <ModalSelectVersion
           onClose={() => selectHistoryModal.close()}

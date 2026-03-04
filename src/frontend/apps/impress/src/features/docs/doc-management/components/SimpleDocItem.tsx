@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
+import { Box, Icon, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useDate } from '@/hooks/useDate';
 import { useResponsiveStore } from '@/stores';
@@ -59,21 +59,22 @@ export const SimpleDocItem = ({
         $css={css`
           background-color: transparent;
           filter: drop-shadow(0px 2px 2px rgba(0, 0, 0, 0.05));
+          position: relative;
         `}
         $padding={`${spacingsTokens['3xs']} 0`}
         data-testid={isPinned ? `doc-pinned-${doc.id}` : undefined}
         aria-hidden="true"
       >
-        {isPinned ? (
-          <PinnedDocumentIcon
-            aria-hidden="true"
-            data-testid="doc-pinned-icon"
-            color="var(--c--contextuals--content--semantic--info--tertiary)"
-          />
-        ) : isEncrypted ? (
+        {isEncrypted ? (
           <EncryptedDocumentIcon
             aria-hidden="true"
             data-testid="doc-encryption-icon"
+            color="var(--c--contextuals--content--semantic--info--tertiary)"
+          />
+        ) : isPinned ? (
+          <PinnedDocumentIcon
+            aria-hidden="true"
+            data-testid="doc-pinned-icon"
             color="var(--c--contextuals--content--semantic--info--tertiary)"
           />
         ) : isChild ? (
@@ -89,6 +90,18 @@ export const SimpleDocItem = ({
             aria-hidden="true"
             data-testid="doc-simple-icon"
             color="var(--c--contextuals--content--semantic--info--tertiary)"
+          />
+        )}
+        {isPinned && isEncrypted && (
+          <Icon
+            iconName="push_pin"
+            $size="12px"
+            $color="var(--c--contextuals--content--semantic--info--tertiary)"
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: -4,
+            }}
           />
         )}
       </Box>

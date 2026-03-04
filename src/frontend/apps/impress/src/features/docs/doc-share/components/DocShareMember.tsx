@@ -148,7 +148,11 @@ export const QuickSearchGroupMember = ({
             <DocShareMemberItem
               doc={doc}
               access={access}
-              suffix={hasMismatch ? t('DIFFERENT PUBLIC KEY') : undefined}
+              suffix={
+                hasMismatch
+                  ? t('DIFFERENT PUBLIC KEY, PLEASE VERIFY')
+                  : undefined
+              }
               onSuffixClick={
                 hasMismatch
                   ? () => setMismatchUserId(access.user.id)

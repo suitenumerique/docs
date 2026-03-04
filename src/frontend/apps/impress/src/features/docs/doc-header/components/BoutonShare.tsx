@@ -43,15 +43,6 @@ export const BoutonShare = ({
     return null;
   }
 
-  const warningIcon = hasKeyWarning ? (
-    <Icon
-      iconName="warning"
-      $color="var(--c--theme--colors--warning-600)"
-      $size="sm"
-      aria-label={t('Public key mismatch detected')}
-    />
-  ) : null;
-
   if (hasAccesses) {
     return (
       <Box
@@ -66,13 +57,13 @@ export const BoutonShare = ({
           }
         `}
       >
-        {warningIcon}
         <Button
           aria-label={t('Share button')}
           variant="secondary"
+          color={hasKeyWarning ? 'warning' : undefined}
           icon={
             <Icon
-              iconName="group"
+              iconName={hasKeyWarning ? 'warning' : 'group'}
               $color="inherit"
               variant="filled"
               disabled={isDisabled}
@@ -89,17 +80,17 @@ export const BoutonShare = ({
   }
 
   return (
-    <Box $direction="row" $align="center" $gap="4px">
-      {warningIcon}
-      <Button
-        color="brand"
-        variant="tertiary"
-        onClick={open}
-        size="medium"
-        disabled={isDisabled}
-      >
-        {t('Share')}
-      </Button>
-    </Box>
+    <Button
+      color={hasKeyWarning ? 'warning' : 'brand'}
+      variant="tertiary"
+      icon={
+        hasKeyWarning ? <Icon iconName="warning" $color="inherit" /> : undefined
+      }
+      onClick={open}
+      size="medium"
+      disabled={isDisabled}
+    >
+      {t('Share')}
+    </Button>
   );
 };

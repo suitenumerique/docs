@@ -1,8 +1,4 @@
-import {
-  Button,
-  Modal,
-  ModalSize,
-} from '@gouvfr-lasuite/cunningham-react';
+import { Button, Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +20,7 @@ import {
 import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
 import type { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
 import { Doc } from '@/docs/doc-management';
-import { User } from '@/features/auth';
+import { User, useAuth } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
 import { isValidEmail } from '@/utils';
 
@@ -80,8 +76,10 @@ export const DocShareModal = ({
   const queryClient = useQueryClient();
 
   const { isDesktop } = useResponsiveStore();
+  const { user } = useAuth();
   const { mismatches: keyMismatches, acceptNewKey } = usePublicKeyRegistry(
     doc.accesses_public_keys_per_user,
+    user?.id,
   );
   const keyMismatchUserIds = useMemo(
     () => new Set(keyMismatches.map((m) => m.userId)),
@@ -448,10 +446,10 @@ const QuickSearchInviteInputSection = ({
   const getUserSuffix = useCallback(
     (user: User): string | undefined => {
       if (keyMismatchUserIds?.has(user.id)) {
-        return t('DIFFERENT PUBLIC KEY');
+        return t('DIFFERENT PUBLIC KEY, PLEASE VERIFY');
       }
       if (isEncrypted && !user.encryption_public_key) {
-        return t(`(chiffrement non activé)`);
+        return t(`(encryption not enabled)`);
       }
       return undefined;
     },
@@ -526,25 +524,28 @@ const QuickSearchInviteInputSection = ({
           </Box>
         </Modal>
       )}
-      {mismatchUser && (() => {
-        const mismatch = keyMismatches?.find((m) => m.userId === mismatchUser.id);
-        return (
-          <ModalKeyMismatch
-            onClose={() => setMismatchUser(null)}
-            onAcceptKey={
-              acceptNewKey
-                ? () => {
-                    void acceptNewKey(mismatchUser.id).then(() => {
-                      onSelect(mismatchUser);
-                    });
-                  }
-                : undefined
-            }
-            knownKey={mismatch?.knownKey}
-            currentKey={mismatch?.currentKey}
-          />
-        );
-      })()}
+      {mismatchUser &&
+        (() => {
+          const mismatch = keyMismatches?.find(
+            (m) => m.userId === mismatchUser.id,
+          );
+          return (
+            <ModalKeyMismatch
+              onClose={() => setMismatchUser(null)}
+              onAcceptKey={
+                acceptNewKey
+                  ? () => {
+                      void acceptNewKey(mismatchUser.id).then(() => {
+                        onSelect(mismatchUser);
+                      });
+                    }
+                  : undefined
+              }
+              knownKey={mismatch?.knownKey}
+              currentKey={mismatch?.currentKey}
+            />
+          );
+        })()}
     </Box>
   );
 };
