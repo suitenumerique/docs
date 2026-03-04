@@ -5,7 +5,9 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Box, Icon, Loading, TextErrors } from '@/components';
+import { Button } from '@gouvfr-lasuite/cunningham-react';
+
+import { Box, Icon, Loading, StyledLink, Text, TextErrors } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
 import {
@@ -93,14 +95,18 @@ const DocPage = ({ id }: DocProps) => {
 
   const { authenticated, user } = useAuth();
   const [doc, setDoc] = useState<Doc>();
-  const { encryptionLoading, encryptionSettings } = useEncryption(user?.id);
-  const { documentEncryptionLoading, documentEncryptionSettings } =
-    useDocumentEncryption(
-      encryptionLoading,
-      encryptionSettings,
-      doc?.is_encrypted,
-      doc?.encrypted_document_symmetric_key_for_user,
-    );
+  const { encryptionLoading, encryptionSettings, encryptionError } =
+    useEncryption(user?.id);
+  const {
+    documentEncryptionLoading,
+    documentEncryptionSettings,
+    documentEncryptionError,
+  } = useDocumentEncryption(
+    encryptionLoading,
+    encryptionSettings,
+    doc?.is_encrypted,
+    doc?.encrypted_document_symmetric_key_for_user,
+  );
   const { setCurrentDoc } = useDocStore();
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
@@ -243,6 +249,98 @@ const DocPage = ({ id }: DocProps) => {
 
   if (!doc || encryptionLoading || documentEncryptionLoading) {
     return <Loading />;
+  }
+
+  if (doc.is_encrypted && (encryptionError || documentEncryptionError)) {
+    return (
+      <Box $align="center" $margin="auto" $gap="md" $padding="2rem">
+        <Icon iconName="lock" $size="3rem" $theme="warning" />
+        <Text as="h2" $textAlign="center" $margin="0">
+          {t('Encryption keys unavailable')}
+        </Text>
+        <Box $maxWidth="500px" $gap="sm">
+          <Text $variation="secondary" $textAlign="center">
+            {t(
+              'This is an encrypted document, but your current device does not have the required encryption keys to decrypt it.',
+            )}
+          </Text>
+
+          {(encryptionError === 'missing_private_key' ||
+            encryptionError === 'missing_public_key') && (
+            <Text $variation="secondary" $textAlign="center">
+              {t(
+                'This usually happens when you switch to a new device or browser without restoring your encryption backup.',
+              )}
+            </Text>
+          )}
+
+          {documentEncryptionError === 'missing_symmetric_key' && (
+            <Text $variation="secondary" $textAlign="center">
+              {t(
+                'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
+              )}
+            </Text>
+          )}
+
+          {documentEncryptionError === 'decryption_failed' && (
+            <Text $variation="secondary" $textAlign="center">
+              {t(
+                'Your encryption keys could not decrypt this document. This may happen if your keys were recreated. Ask the document owner to share it with you again.',
+              )}
+            </Text>
+          )}
+        </Box>
+
+        {(encryptionError === 'missing_private_key' ||
+          encryptionError === 'missing_public_key') && (
+          <Box $gap="xs" $maxWidth="500px">
+            <Box
+              $padding="sm"
+              $background="#f0f7ff"
+              $border="1px solid #c5ddf5"
+              $radius="4px"
+              $gap="xs"
+            >
+              <Text $weight="600" $size="sm">
+                {t('Restore from backup (recommended)')}
+              </Text>
+              <Text $size="sm" $variation="secondary">
+                {t(
+                  'If you have previously exported your encryption backup, you can restore it in your account settings to regain access to all your encrypted documents.',
+                )}
+              </Text>
+            </Box>
+            <Box
+              $padding="sm"
+              $background="#fff8f0"
+              $border="1px solid #f5dfc5"
+              $radius="4px"
+              $gap="xs"
+            >
+              <Text $weight="600" $size="sm">
+                {t('Recreate encryption keys (not recommended)')}
+              </Text>
+              <Text $size="sm" $variation="secondary">
+                {t(
+                  'Creating new encryption keys means you will lose access to all previously encrypted documents. Document owners will need to share them with you again.',
+                )}
+              </Text>
+            </Box>
+          </Box>
+        )}
+
+        <StyledLink href="/">
+          <Button
+            color="neutral"
+            icon={
+              <Icon iconName="home" $withThemeInherited />
+            }
+          >
+            {t('Back to home')}
+          </Button>
+        </StyledLink>
+      </Box>
+    );
   }
 
   return (

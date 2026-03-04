@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { getEncryptionDB } from '../encryptionDB';
 
+export type EncryptionError =
+  | 'missing_private_key'
+  | 'missing_public_key'
+  | null;
+
 export function useEncryption(userId?: string): {
   encryptionLoading: boolean;
   encryptionSettings: {
@@ -9,6 +14,7 @@ export function useEncryption(userId?: string): {
     userPrivateKey: CryptoKey;
     userPublicKey: CryptoKey;
   } | null;
+  encryptionError: EncryptionError;
 } {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<{
@@ -16,6 +22,7 @@ export function useEncryption(userId?: string): {
     userPrivateKey: CryptoKey;
     userPublicKey: CryptoKey;
   } | null>(null);
+  const [error, setError] = useState<EncryptionError>(null);
 
   const enableEncryption: boolean = true; // TODO: this could be toggled for instances not needing encryption to save some requests
 
@@ -27,15 +34,18 @@ export function useEncryption(userId?: string): {
       if (!userId) {
         setLoading(true);
         setSettings(null);
+        setError(null);
         return;
       } else if (enableEncryption === false) {
         setLoading(false);
         setSettings(null);
+        setError(null);
         return;
       }
 
       try {
         setLoading(true);
+        setError(null);
 
         // We must first retrieve user keys locally
         const encryptionDatabase = await getEncryptionDB();
@@ -46,7 +56,11 @@ export function useEncryption(userId?: string): {
         );
 
         if (!userPrivateKey) {
-          throw new Error('user has no local private key (needs onboarding)');
+          if (!cancelled) {
+            setError('missing_private_key');
+            setSettings(null);
+          }
+          return;
         }
 
         const userPublicKey = await encryptionDatabase.get(
@@ -55,7 +69,11 @@ export function useEncryption(userId?: string): {
         );
 
         if (!userPublicKey) {
-          throw new Error('user is missing his public key');
+          if (!cancelled) {
+            setError('missing_public_key');
+            setSettings(null);
+          }
+          return;
         }
 
         if (!cancelled) {
@@ -68,18 +86,13 @@ export function useEncryption(userId?: string): {
       } catch (err) {
         console.error(err);
 
-        //
-        // TODO: this should display a global error since if encryption needed it should able
-        // to retrieve information (except if onboarding needed, but still...)
-        //
-        // maybe this should be a return value so the parent knows where to set the CTA
-        //
-
         if (!cancelled) {
           setSettings(null);
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -90,5 +103,9 @@ export function useEncryption(userId?: string): {
     };
   }, [userId, enableEncryption]);
 
-  return { encryptionLoading: loading, encryptionSettings: settings };
+  return {
+    encryptionLoading: loading,
+    encryptionSettings: settings,
+    encryptionError: error,
+  };
 }

@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 
 import { decryptSymmetricKey } from '@/docs/doc-collaboration/encryption';
-import assert from 'assert';
+
+export type DocumentEncryptionError =
+  | 'missing_symmetric_key'
+  | 'decryption_failed'
+  | null;
 
 export function useDocumentEncryption(
   encryptionLoading: boolean,
@@ -17,11 +21,13 @@ export function useDocumentEncryption(
   documentEncryptionSettings: {
     documentSymmetricKey: CryptoKey;
   } | null;
+  documentEncryptionError: DocumentEncryptionError;
 } {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<{
     documentSymmetricKey: CryptoKey;
   } | null>(null);
+  const [error, setError] = useState<DocumentEncryptionError>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,24 +41,27 @@ export function useDocumentEncryption(
       } else if (encryptionLoading || isDocumentEncrypted === undefined) {
         setLoading(true);
         setSettings(null);
+        setError(null);
         return;
       } else if (isDocumentEncrypted === false) {
         setLoading(false);
         setSettings(null);
+        setError(null);
         return;
       }
 
-      // TODO:
-      // TODO: if encrypted but there is no encrypted symmetric key for this user, we should display an error
-      // TODO: (maybe reuse the catch handler below?)
-      // TODO:
-      assert(
-        userEncryptedSymmetricKey,
-        'document encrypted symmetric key must exist',
-      );
+      if (!userEncryptedSymmetricKey) {
+        if (!cancelled) {
+          setError('missing_symmetric_key');
+          setSettings(null);
+          setLoading(false);
+        }
+        return;
+      }
 
       try {
         setLoading(true);
+        setError(null);
 
         const userEncryptedSymmetricKeyArrayBuffer = Buffer.from(
           userEncryptedSymmetricKey,
@@ -70,18 +79,14 @@ export function useDocumentEncryption(
       } catch (err) {
         console.error(err);
 
-        //
-        // TODO: this should display a global error since if encryption needed it should able
-        // to retrieve information (except if onboarding needed, but still...)
-        //
-        // maybe this should be a return value so the parent knows where to set the CTA
-        //
-
         if (!cancelled) {
+          setError('decryption_failed');
           setSettings(null);
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
@@ -95,5 +100,6 @@ export function useDocumentEncryption(
   return {
     documentEncryptionLoading: loading,
     documentEncryptionSettings: settings,
+    documentEncryptionError: error,
   };
 }
