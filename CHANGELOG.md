@@ -21,6 +21,7 @@ and this project adheres to
 - ✨(backend) Onboarding docs for new users #1891
 - 🩺(trivy) add trivyignore file and add minimatch CVE #1915
 - 🚩 Add feature flags for the AI feature #1922
+- ✨(backend) add a is_first_connection flag to the User model#1938
 
 ### Changed
 
