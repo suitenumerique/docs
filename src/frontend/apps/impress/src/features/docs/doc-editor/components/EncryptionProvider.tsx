@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 
 import { decryptContent } from '@/docs/doc-collaboration/encryption';
@@ -37,11 +38,23 @@ const MIME_MAP: Record<string, string> = {
 interface EncryptionContextValue {
   isEncrypted: boolean;
   decryptFileUrl: (url: string) => Promise<string>;
+  revealAllCounter: number;
+  requestRevealAll: () => void;
+  pendingPlaceholders: number;
+  registerPlaceholder: () => void;
+  unregisterPlaceholder: () => void;
 }
+
+const noop = () => {};
 
 const DEFAULT_VALUE: EncryptionContextValue = {
   isEncrypted: false,
   decryptFileUrl: async (url: string) => url,
+  revealAllCounter: 0,
+  requestRevealAll: noop,
+  pendingPlaceholders: 0,
+  registerPlaceholder: noop,
+  unregisterPlaceholder: noop,
 };
 
 const EncryptionContext = createContext<EncryptionContextValue>(DEFAULT_VALUE);
@@ -56,6 +69,20 @@ export const EncryptionProvider = ({
   children,
 }: EncryptionProviderProps) => {
   const blobUrlCacheRef = useRef<Map<string, string>>(new Map());
+  const [revealAllCounter, setRevealAllCounter] = useState(0);
+  const [pendingPlaceholders, setPendingPlaceholders] = useState(0);
+
+  const requestRevealAll = useCallback(() => {
+    setRevealAllCounter((c) => c + 1);
+  }, []);
+
+  const registerPlaceholder = useCallback(() => {
+    setPendingPlaceholders((c) => c + 1);
+  }, []);
+
+  const unregisterPlaceholder = useCallback(() => {
+    setPendingPlaceholders((c) => Math.max(0, c - 1));
+  }, []);
 
   const decryptFileUrl = useCallback(
     async (url: string): Promise<string> => {
@@ -103,8 +130,21 @@ export const EncryptionProvider = ({
     () => ({
       isEncrypted: !!symmetricKey,
       decryptFileUrl,
+      revealAllCounter,
+      requestRevealAll,
+      pendingPlaceholders,
+      registerPlaceholder,
+      unregisterPlaceholder,
     }),
-    [symmetricKey, decryptFileUrl],
+    [
+      symmetricKey,
+      decryptFileUrl,
+      revealAllCounter,
+      requestRevealAll,
+      pendingPlaceholders,
+      registerPlaceholder,
+      unregisterPlaceholder,
+    ],
   );
 
   return (

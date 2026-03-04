@@ -40,6 +40,7 @@ import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
+import { EncryptedDocBanner } from './EncryptedDocBanner';
 import { EncryptionProvider } from './EncryptionProvider';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import { cssComments, useComments } from './comments/';
@@ -249,6 +250,7 @@ export const BlockNoteEditor = ({
 
   return (
     <EncryptionProvider symmetricKey={symmetricKey}>
+      <EncryptedDocBanner />
       <Box
         ref={refEditorContainer}
         $css={css`
