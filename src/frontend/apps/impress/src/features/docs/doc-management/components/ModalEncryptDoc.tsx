@@ -6,13 +6,14 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { backendUrl } from '@/api';
 import { useState } from 'react';
 
-import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
+import { Box, ButtonCloseModal, Icon, Text, TextErrors } from '@/components';
 import { useUserUpdate } from '@/core/api/useUserUpdate';
 import {
   encryptContent,
@@ -28,10 +29,14 @@ import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
+  LinkReach,
   extractAttachmentKeysAndMetadata,
+  getDocLinkReach,
   useEncryptDoc,
   useProviderStore,
 } from '@/features/docs/doc-management';
+import { useDocAccesses } from '@/features/docs/doc-share/api/useDocAccesses';
+import { useDocInvitations } from '@/features/docs/doc-share/api/useDocInvitations';
 import { useKeyboardAction } from '@/hooks';
 import { Spinner } from '@gouvfr-lasuite/ui-kit';
 
@@ -147,7 +152,33 @@ export const ModalEncryptDoc = ({
     listInvalidQueries: [KEY_DOC, KEY_LIST_DOC],
   });
 
+  const { data: invitationsData } = useDocInvitations({
+    docId: doc.id,
+    page: 1,
+  });
+
+  const { data: accesses } = useDocAccesses({ docId: doc.id });
+
   const keyboardAction = useKeyboardAction();
+
+  const effectiveReach = getDocLinkReach(doc);
+  const isRestricted = effectiveReach === LinkReach.RESTRICTED;
+  const hasPendingInvitations = !!invitationsData && invitationsData.count > 0;
+
+  const membersWithoutKey = useMemo(() => {
+    if (!accesses || !doc.accesses_public_keys_per_user) {
+      return [];
+    }
+
+    const publicKeysMap = doc.accesses_public_keys_per_user;
+
+    return accesses.filter(
+      (access) => access.user && !publicKeysMap[access.user.id],
+    );
+  }, [accesses, doc.accesses_public_keys_per_user]);
+
+  const canEncrypt =
+    isRestricted && !hasPendingInvitations && membersWithoutKey.length === 0;
 
   const handleClose = () => {
     if (isPending) {
@@ -157,7 +188,7 @@ export const ModalEncryptDoc = ({
   };
 
   const handleEncrypt = async () => {
-    if (!provider || !user || isPending) {
+    if (!provider || !user || isPending || !canEncrypt) {
       return;
     }
 
@@ -315,7 +346,7 @@ export const ModalEncryptDoc = ({
             fullWidth
             onClick={handleEncrypt}
             onKeyDown={handleEncryptKeyDown}
-            disabled={isPending}
+            disabled={isPending || !canEncrypt}
             icon={
               isPending ? (
                 <div>
@@ -354,24 +385,99 @@ export const ModalEncryptDoc = ({
         </Box>
       }
     >
-      <Box className="--docs--modal-encrypt-doc">
+      <Box className="--docs--modal-encrypt-doc" $gap="sm">
         {!isError && (
-          <Text
-            $size="sm"
-            $variation="secondary"
-            $display="inline-block"
-            as="p"
-          >
-            <br />
-            TODO: warning about encryption
-            <br />
-            TODO: accesses for users without public key will be lost (list them)
-            <br />
-            TODO: if no public key for current user, provide an onboarding
-            <br />
-            TODO: if document public, tell it needs first to be private (add
-            backend check too)
-          </Text>
+          <Box $gap="sm">
+            <Text $size="sm" $variation="secondary">
+              {t(
+                'Encrypting a document ensures that only authorized members can read its content. Before proceeding, the following conditions must be met:',
+              )}
+            </Text>
+
+            {/* TODO: warning about encryption */}
+            {/* TODO: if no public key for current user, provide an onboarding */}
+
+            <Box $gap="xs">
+              <Box $direction="row" $align="center" $gap="xs">
+                <Icon
+                  iconName={isRestricted ? 'check_circle' : 'cancel'}
+                  $size="sm"
+                  $theme={isRestricted ? 'success' : 'danger'}
+                />
+                <Text $size="sm" $weight={isRestricted ? '400' : '600'}>
+                  {isRestricted
+                    ? t('Document access is private')
+                    : t(
+                        'Document must be set to private (currently {{reach}})',
+                        {
+                          reach:
+                            effectiveReach === LinkReach.PUBLIC
+                              ? t('public')
+                              : t('connected'),
+                        },
+                      )}
+                </Text>
+              </Box>
+
+              <Box $direction="row" $align="center" $gap="xs">
+                <Icon
+                  iconName={!hasPendingInvitations ? 'check_circle' : 'cancel'}
+                  $size="sm"
+                  $theme={!hasPendingInvitations ? 'success' : 'danger'}
+                />
+                <Text
+                  $size="sm"
+                  $weight={!hasPendingInvitations ? '400' : '600'}
+                >
+                  {!hasPendingInvitations
+                    ? t('No pending invitations')
+                    : t('Pending invitations must be resolved first')}
+                </Text>
+              </Box>
+
+              <Box $gap="3xs">
+                <Box $direction="row" $align="center" $gap="xs">
+                  <Icon
+                    iconName={
+                      membersWithoutKey.length === 0 ? 'check_circle' : 'cancel'
+                    }
+                    $size="sm"
+                    $theme={
+                      membersWithoutKey.length === 0 ? 'success' : 'danger'
+                    }
+                  />
+                  <Text
+                    $size="sm"
+                    $weight={membersWithoutKey.length === 0 ? '400' : '600'}
+                  >
+                    {membersWithoutKey.length === 0
+                      ? t('All members have encryption enabled')
+                      : t(
+                          '{{count}} member(s) have not enabled encryption yet',
+                          { count: membersWithoutKey.length },
+                        )}
+                  </Text>
+                </Box>
+                {membersWithoutKey.length > 0 && (
+                  <Box $margin={{ left: 'sm' }} $gap="3xs">
+                    {membersWithoutKey.map((access) => (
+                      <Text key={access.id} $size="xs" $variation="secondary">
+                        {access.user.full_name || access.user.email}
+                      </Text>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            {!canEncrypt && (
+              <Text $size="xs" $variation="secondary">
+                {t(
+                  'Please resolve the issues above before encrypting the document.',
+                )}
+              </Text>
+            )}
+          </Box>
         )}
 
         {isError && <TextErrors causes={error.cause} />}

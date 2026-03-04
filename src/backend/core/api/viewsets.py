@@ -2055,6 +2055,14 @@ class DocumentViewSet(
         encryptedSymmetricKeyPerUser = serializer.validated_data["encryptedSymmetricKeyPerUser"]
         attachment_key_mapping = serializer.validated_data.get("attachmentKeyMapping", {})
 
+        # Prevent encryption if the document is not restricted (private)
+        if document.computed_link_reach != models.LinkReachChoices.RESTRICTED:
+            raise drf.exceptions.ValidationError({
+                'non_field_errors':
+                'Cannot encrypt a document that is not private. '
+                'Please set the document access to "Restricted" before encrypting.'
+            })
+
         # Prevent encryption if there are pending invitations
         if document.invitations.exists():
             raise drf.exceptions.ValidationError({
@@ -2063,9 +2071,25 @@ class DocumentViewSet(
                 'Please resolve all invitations before encrypting.'
             })
 
-        # Validate that we have keys for all users with access to this document
-        # Get all user IDs that have access to this document
-        document_accesses = models.DocumentAccess.objects.filter(document=document, user__isnull=False)
+        # Validate that all users with access have an encryption public key
+        document_accesses = models.DocumentAccess.objects.filter(
+            document=document, user__isnull=False
+        ).select_related('user')
+
+        users_without_public_key = [
+            access.user.email or str(access.user_id)
+            for access in document_accesses
+            if not access.user.encryption_public_key
+        ]
+        if users_without_public_key:
+            raise drf.exceptions.ValidationError({
+                'non_field_errors':
+                'Cannot encrypt a document when some members have not enabled '
+                'encryption: ' + ', '.join(users_without_public_key) + '. '
+                'All members must enable encryption in their account settings first.'
+            })
+
+        # Validate that we have encrypted symmetric keys for all users with access
         users_with_access = {str(access.user_id) for access in document_accesses}
 
         # Check that encryptedSymmetricKeyPerUser contains all required users
