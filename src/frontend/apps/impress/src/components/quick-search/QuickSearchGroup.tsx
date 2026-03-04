@@ -18,7 +18,7 @@ export const QuickSearchGroup = <T,>({
   renderElement,
 }: Props<T>) => {
   return (
-    <Box $margin={{ top: 'sm' }}>
+    <Box>
       <Command.Group
         key={group.groupName}
         heading={group.groupName}

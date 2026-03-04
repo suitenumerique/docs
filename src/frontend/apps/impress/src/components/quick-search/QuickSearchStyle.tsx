@@ -19,7 +19,6 @@ export const QuickSearchStyle = createGlobalStyle`
       border: none;
       width: 100%;
       font-size: 17px;
-      padding: var(--c--globals--spacings--xs);
       background: white;
       outline: none;
       color: var(--c--contextuals--content--semantic--neutral--primary);

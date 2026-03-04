@@ -32,7 +32,10 @@ test.describe('Doc Header', () => {
       1,
     );
 
-    const collapseButton = page.getByTestId('floating-bar-toggle-left-panel');
+    const cardCollapse = page.locator('.--docs--left-panel-collapse-button');
+    const collapseButton = cardCollapse.getByTestId(
+      'floating-bar-toggle-left-panel',
+    );
     await expect(collapseButton).toBeVisible();
 
     // Panel open
@@ -42,7 +45,7 @@ test.describe('Doc Header', () => {
     // Collapse panel
     await collapseButton.click();
     await expect(collapseButton).toHaveAttribute('aria-expanded', 'false');
-    await expect(collapseButton.getByText(docTitle)).toBeHidden();
+    await expect(cardCollapse.getByText(docTitle)).toBeHidden();
 
     // When the title is not visible in the viewport, the button should show the title
     const editor = await writeInEditor({ page, text: 'Lorem ipsum' });
@@ -50,12 +53,12 @@ test.describe('Doc Header', () => {
       await editor.press('Enter');
     }
     await writeInEditor({ page, text: 'Lorem ipsum 2' });
-    await expect(collapseButton.getByText(docTitle)).toBeVisible();
+    await expect(cardCollapse.getByText(docTitle)).toBeVisible();
 
     // Expand panel and check the title is hidden again
     await collapseButton.click();
     await expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
-    await expect(collapseButton.getByText(docTitle)).toBeHidden();
+    await expect(cardCollapse.getByText(docTitle)).toBeHidden();
   });
 
   test('it checks the element are correctly displayed', async ({

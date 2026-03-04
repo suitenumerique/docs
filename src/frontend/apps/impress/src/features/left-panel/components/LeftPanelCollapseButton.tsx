@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, Text } from '@/components';
+import { Card, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { CLASS_DOC_TITLE } from '@/docs/doc-header/components/DocTitle';
 import { getEmojiAndTitle, useDocStore, useTrans } from '@/docs/doc-management';
@@ -58,15 +58,14 @@ export const LeftPanelCollapseButton = () => {
     : t('Show the side panel for {{title}}', { title: docTitle });
 
   return (
-    <Box
+    <Card
+      className="--docs--left-panel-collapse-button"
+      $direction="row"
       $css={css`
-        display: inline-flex;
         padding: var(--c--globals--spacings--xxxs);
         align-items: center;
         gap: var(--c--globals--spacings--xxxs);
         border-radius: var(--c--globals--spacings--xs);
-        border: 1px solid var(--c--contextuals--border--surface--primary);
-        background: var(--c--contextuals--background--surface--primary);
         box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
       `}
     >
@@ -79,13 +78,12 @@ export const LeftPanelCollapseButton = () => {
         variant="tertiary"
         icon={<LeftPanelIcon width={24} height={24} aria-hidden="true" />}
         data-testid="floating-bar-toggle-left-panel"
-      >
-        {shouldShowButtonTitle ? (
-          <Text $size="sm" $weight={700} $color={colorsTokens['gray-1000']}>
-            {buttonTitle}
-          </Text>
-        ) : undefined}
-      </Button>
-    </Box>
+      ></Button>
+      {shouldShowButtonTitle && (
+        <Text $size="sm" $weight={700} $color={colorsTokens['gray-1000']}>
+          {buttonTitle}
+        </Text>
+      )}
+    </Card>
   );
 };

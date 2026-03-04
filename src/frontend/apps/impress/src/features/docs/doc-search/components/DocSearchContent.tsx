@@ -1,30 +1,31 @@
 import { t } from 'i18next';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { InView } from 'react-intersection-observer';
 
+import { Box } from '@/components/';
 import { QuickSearchData, QuickSearchGroup } from '@/components/quick-search';
+import { Doc, useInfiniteDocs } from '@/docs/doc-management';
 
-import { Doc, useInfiniteDocs } from '../../doc-management';
-
-import { DocSearchFiltersValues } from './DocSearchFilters';
 import { DocSearchItem } from './DocSearchItem';
 
 type DocSearchContentProps = {
+  groupName: string;
   search: string;
-  filters: DocSearchFiltersValues;
   filterResults?: (doc: Doc) => boolean;
+  isSearchNotMandatory?: boolean;
   onSelect: (doc: Doc) => void;
   onLoadingChange?: (loading: boolean) => void;
   renderSearchElement?: (doc: Doc) => React.ReactNode;
 };
 
 export const DocSearchContent = ({
+  groupName,
   search,
-  filters,
   filterResults,
   onSelect,
   onLoadingChange,
   renderSearchElement,
+  isSearchNotMandatory,
 }: DocSearchContentProps) => {
   const {
     data,
@@ -35,33 +36,56 @@ export const DocSearchContent = ({
     hasNextPage,
   } = useInfiniteDocs({
     page: 1,
-    title: search,
-    ...filters,
+    ...(search ? { title: search } : {}),
   });
 
   const loading = isFetching || isRefetching || isLoading;
+  const [docsData, setDocsData] = useState<QuickSearchData<Doc>>({
+    groupName: '',
+    groupKey: 'docs',
+    elements: [],
+    emptyString: t('Loading documents...'),
+    endActions: [],
+  });
 
-  const docsData: QuickSearchData<Doc> = useMemo(() => {
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
     let docs = data?.pages.flatMap((page) => page.results) || [];
 
     if (filterResults) {
       docs = docs.filter(filterResults);
     }
 
-    return {
-      groupName: docs.length > 0 ? t('Select a document') : '',
+    setDocsData({
+      groupName: docs.length > 0 ? groupName : '',
       groupKey: 'docs',
-      elements: search ? docs : [],
+      elements: search || isSearchNotMandatory ? docs : [],
       emptyString: t('No document found'),
       endActions: hasNextPage
         ? [
             {
-              content: <InView onChange={() => void fetchNextPage()} />,
+              content: (
+                <Box $minHeight="1px">
+                  <InView onChange={() => void fetchNextPage()} />
+                </Box>
+              ),
             },
           ]
         : [],
-    };
-  }, [search, data?.pages, fetchNextPage, hasNextPage, filterResults]);
+    });
+  }, [
+    search,
+    data?.pages,
+    fetchNextPage,
+    hasNextPage,
+    filterResults,
+    groupName,
+    isSearchNotMandatory,
+    loading,
+  ]);
 
   useEffect(() => {
     onLoadingChange?.(loading);

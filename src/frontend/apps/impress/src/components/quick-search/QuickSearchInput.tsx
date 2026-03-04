@@ -14,7 +14,6 @@ type QuickSearchInputProps = {
   placeholder?: string;
   withSeparator?: boolean;
   listId?: string;
-  onUserInteract?: () => void;
   isExpanded?: boolean;
 };
 export const QuickSearchInput = ({
@@ -24,8 +23,6 @@ export const QuickSearchInput = ({
   children,
   withSeparator: separator = true,
   listId,
-  onUserInteract,
-  isExpanded,
 }: PropsWithChildren<QuickSearchInputProps>) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
@@ -46,19 +43,13 @@ export const QuickSearchInput = ({
         $align="center"
         className="quick-search-input"
         $gap={spacingsTokens['2xs']}
-        $padding={{ horizontal: 'base', vertical: 'sm' }}
+        $padding={{ horizontal: 'base', vertical: 'xxs' }}
       >
         <Icon iconName="search" $variation="secondary" aria-hidden="true" />
         <Command.Input
           autoFocus={true}
           aria-label={t('Quick search input')}
-          aria-expanded={isExpanded}
           aria-controls={listId}
-          onClick={(e) => {
-            e.stopPropagation();
-            onUserInteract?.();
-          }}
-          onKeyDown={() => onUserInteract?.()}
           value={inputValue}
           role="combobox"
           placeholder={placeholder ?? t('Search')}
@@ -67,7 +58,7 @@ export const QuickSearchInput = ({
           data-testid="quick-search-input"
         />
       </Box>
-      {separator && <HorizontalSeparator $withPadding={false} />}
+      {separator && <HorizontalSeparator $margin={{ top: 'base' }} />}
     </>
   );
 };

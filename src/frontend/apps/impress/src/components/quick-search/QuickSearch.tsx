@@ -45,22 +45,13 @@ export const QuickSearch = ({
 }: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const listId = useId();
-  const NO_SELECTION_VALUE = '__none__';
-  const [userInteracted, setUserInteracted] = useState(false);
-  const [selectedValue, setSelectedValue] = useState(NO_SELECTION_VALUE);
-  const isExpanded = userInteracted;
-
-  const handleValueChange = (val: string) => {
-    if (userInteracted) {
-      setSelectedValue(val);
-    }
-  };
-
-  const handleUserInteract = () => {
-    if (!userInteracted) {
-      setUserInteracted(true);
-    }
-  };
+  /**
+   * Hack to prevent cmdk from auto-selecting the first element on open
+   *
+   * TODO: Find a clean solution to prevent cmdk from auto-selecting
+   * the first element on open
+   */
+  const [selectedValue, _] = useState('__none__');
 
   return (
     <>
@@ -71,9 +62,8 @@ export const QuickSearch = ({
           shouldFilter={false}
           ref={ref}
           tabIndex={-1}
-          value={selectedValue}
-          onValueChange={handleValueChange}
           disablePointerSelection
+          value={selectedValue}
         >
           {showInput && (
             <QuickSearchInput
@@ -82,8 +72,6 @@ export const QuickSearch = ({
               onFilter={onFilter}
               placeholder={placeholder}
               listId={listId}
-              isExpanded={isExpanded}
-              onUserInteract={handleUserInteract}
             >
               {inputContent}
             </QuickSearchInput>
