@@ -75,7 +75,12 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
       onClose={() => onClose()}
       rightActions={
         <>
-          <Button aria-label={t('OK')} onClick={onClose} color="error">
+          <Button
+            aria-label={t('OK')}
+            onClick={onClose}
+            color="error"
+            autoFocus
+          >
             {t('I understand')}
           </Button>
         </>

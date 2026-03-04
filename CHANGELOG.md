@@ -37,6 +37,7 @@ and this project adheres to
 - 🚸(backend) sort user search results by proximity with the active user #1802
 - 🚸(oidc) ignore case when fallback on email #1880
 - ⚡️(CI) optimize Docker Hub workflow #1919
+- ♿️(frontend) add focus on open to modals #1948
 
 ### Fixed
 

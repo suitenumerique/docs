@@ -132,6 +132,7 @@ export const ModalSelectVersion = ({
                 </Text>
                 <ButtonCloseModal
                   aria-label={t('Close the version history modal')}
+                  autoFocus
                   onClick={onClose}
                   size="nano"
                 />

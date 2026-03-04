@@ -24,6 +24,7 @@ export const ModalConfirmDownloadUnsafe = ({
         <>
           <Button
             aria-label={t('Cancel the download')}
+            autoFocus
             variant="secondary"
             onClick={() => onClose()}
           >

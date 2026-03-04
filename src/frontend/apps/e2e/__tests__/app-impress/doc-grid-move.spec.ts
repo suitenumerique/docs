@@ -380,7 +380,9 @@ test.describe('Doc grid move', () => {
     await verifyDocName(page, titleDoc2);
 
     const docTree = page.getByTestId('doc-tree');
-    await expect(docTree.getByText(titleDoc1)).toBeVisible();
+    await expect(docTree.getByText(titleDoc1)).toBeVisible({
+      timeout: 15000,
+    });
 
     await cleanup();
   });

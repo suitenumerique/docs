@@ -76,6 +76,7 @@ export const ModalConfirmationVersion = ({
             aria-label={`${t('Cancel')} - ${t('Warning')}`}
             variant="secondary"
             fullWidth
+            autoFocus
             onClick={() => onClose()}
           >
             {t('Cancel')}

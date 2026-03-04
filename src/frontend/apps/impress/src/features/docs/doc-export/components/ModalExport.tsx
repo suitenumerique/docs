@@ -203,6 +203,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             aria-label={t('Cancel the download')}
             variant="secondary"
             fullWidth
+            autoFocus
             onClick={() => onClose()}
           >
             {t('Cancel')}

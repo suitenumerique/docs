@@ -38,6 +38,7 @@ export const ModalRemoveDoc = ({
   const { push } = useRouter();
   const { hasChildren } = useDocUtils(doc);
   const cancelButtonRef = useRef<ButtonElement>(null);
+
   const {
     mutate: removeDoc,
     isError,
@@ -60,17 +61,14 @@ export const ModalRemoveDoc = ({
       },
     },
   });
-
+  // react-aria Popover restores focus to its trigger asynchronously
+  // when closing, which races with autoFocus when the modal is opened
+  // from a dropdown. This ensures focus wins after that restoration.
   useEffect(() => {
-    const TIMEOUT_MODAL_MOUNTING = 100;
-    const timeoutId = setTimeout(() => {
-      const buttonElement = cancelButtonRef.current;
-      if (buttonElement) {
-        buttonElement.focus();
-      }
-    }, TIMEOUT_MODAL_MOUNTING);
-
-    return () => clearTimeout(timeoutId);
+    const id = requestAnimationFrame(() => {
+      cancelButtonRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
 
   const keyboardAction = useKeyboardAction();
@@ -100,6 +98,7 @@ export const ModalRemoveDoc = ({
             aria-label={t('Cancel the deletion')}
             variant="secondary"
             fullWidth
+            autoFocus
             onClick={handleClose}
             onKeyDown={handleCloseKeyDown}
           >
