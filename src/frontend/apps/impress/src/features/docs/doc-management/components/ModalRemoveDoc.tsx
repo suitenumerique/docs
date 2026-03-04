@@ -118,12 +118,7 @@ export const ModalRemoveDoc = ({
       }
       size={ModalSize.MEDIUM}
       title={
-        <Box
-          $direction="row"
-          $justify="space-between"
-          $align="center"
-          $width="100%"
-        >
+        <>
           <Text
             $size="h6"
             as="h1"
@@ -133,12 +128,14 @@ export const ModalRemoveDoc = ({
           >
             {t('Delete a doc')}
           </Text>
-          <ButtonCloseModal
-            aria-label={t('Close the delete modal')}
-            onClick={handleClose}
-            onKeyDown={handleCloseKeyDown}
-          />
-        </Box>
+          <Box $position="absolute" $css="top: 4px; right: 4px;">
+            <ButtonCloseModal
+              aria-label={t('Close the delete modal')}
+              onClick={handleClose}
+              onKeyDown={handleCloseKeyDown}
+            />
+          </Box>
+        </>
       }
     >
       <Box className="--docs--modal-remove-doc">

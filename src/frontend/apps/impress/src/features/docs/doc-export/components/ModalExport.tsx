@@ -223,12 +223,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       }
       size={ModalSize.MEDIUM}
       title={
-        <Box
-          $direction="row"
-          $justify="space-between"
-          $align="center"
-          $width="100%"
-        >
+        <>
           <Text
             as="h1"
             $margin="0"
@@ -239,12 +234,14 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           >
             {t('Export')}
           </Text>
-          <ButtonCloseModal
-            aria-label={t('Close the download modal')}
-            onClick={() => onClose()}
-            disabled={isExporting}
-          />
-        </Box>
+          <Box $position="absolute" $css="top: 4px; right: 4px;">
+            <ButtonCloseModal
+              aria-label={t('Close the download modal')}
+              onClick={() => onClose()}
+              disabled={isExporting}
+            />
+          </Box>
+        </>
       }
     >
       <Box

@@ -64,6 +64,18 @@
   z-index: 1000;
 }
 
+.c__modal__scroller {
+  padding: var(--c--globals--font--sizes--md);
+}
+
+.c__modal__title {
+  padding: 0;
+}
+
+.c__modal__footer {
+  background-color: transparent;
+}
+
 /**
  * Tooltip
 */

@@ -8,13 +8,14 @@ export const ButtonCloseModal = (props: ButtonProps) => {
     <Button
       type="button"
       size="small"
-      color="brand"
+      color="neutral"
       variant="tertiary"
       icon={
         <Icon
-          $withThemeInherited
           iconName="close"
           className="material-icons-filled"
+          $size="24px!important"
+          $color="var(--c--contextuals--content--semantic--neutral--secondary)"
         />
       }
       {...props}

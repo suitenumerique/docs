@@ -71,6 +71,7 @@ const DocSearchModalGlobal = ({
         $direction="column"
         $justify="space-between"
         className="--docs--doc-search-modal"
+        $padding={{ vertical: 'base' }}
       >
         <Text
           as="h1"
@@ -80,7 +81,7 @@ const DocSearchModalGlobal = ({
         >
           {t('Search docs')}
         </Text>
-        <Box $position="absolute" $css="top: 12px; right: 12px;">
+        <Box $position="absolute" $css="top: 4px; right: 4px;">
           <ButtonCloseModal
             aria-label={t('Close the search modal')}
             onClick={modalProps.onClose}
@@ -95,7 +96,7 @@ const DocSearchModalGlobal = ({
           onFilter={handleInputSearch}
         >
           <Box
-            $padding={{ horizontal: '10px' }}
+            $padding={{ horizontal: '10px', vertical: 'base' }}
             $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}
           >
             {showFilters && (
@@ -123,8 +124,8 @@ const DocSearchModalGlobal = ({
               <>
                 {target === DocSearchTarget.ALL && (
                   <DocSearchContent
+                    groupName={t('Select a document')}
                     search={search}
-                    filters={filters}
                     onSelect={handleSelect}
                     onLoadingChange={setLoading}
                   />
