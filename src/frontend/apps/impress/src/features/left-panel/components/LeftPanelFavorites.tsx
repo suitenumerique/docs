@@ -27,7 +27,7 @@ export const LeftPanelFavorites = () => {
       aria-labelledby="pinned-docs-title"
       className="--docs--left-panel-favorites"
     >
-      <HorizontalSeparator $withPadding={false} />
+      <HorizontalSeparator $margin="none" />
       <Box
         $justify="center"
         $padding={{ horizontal: 'sm', top: 'sm' }}

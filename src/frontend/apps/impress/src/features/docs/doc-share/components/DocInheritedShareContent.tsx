@@ -33,7 +33,7 @@ export const DocInheritedShareContent = ({
       $padding={{ top: spacingsTokens.sm }}
       className="--docs--doc-inherited-share-content"
     >
-      <HorizontalSeparator $withPadding={false} />
+      <HorizontalSeparator $margin="none" />
       <Box
         $gap={spacingsTokens.sm}
         $padding={{

@@ -25,10 +25,10 @@ export const DocShareModalFooter = ({
       `}
       className="--docs--doc-share-modal-footer"
     >
-      <HorizontalSeparator $withPadding={true} customPadding="12px" />
+      <HorizontalSeparator $margin={{ vertical: 'sm' }} />
 
       <DocVisibility doc={doc} />
-      <HorizontalSeparator customPadding="12px" />
+      <HorizontalSeparator $margin={{ vertical: 'sm' }} />
 
       <Box
         $direction="row"

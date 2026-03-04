@@ -250,7 +250,9 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                   />
                 </Box>
               )}
-              {!canViewAccesses && <HorizontalSeparator customPadding="12px" />}
+              {!canViewAccesses && (
+                <HorizontalSeparator $margin={{ vertical: 'sm' }} />
+              )}
             </Box>
 
             <Box data-testid="doc-share-quick-search">

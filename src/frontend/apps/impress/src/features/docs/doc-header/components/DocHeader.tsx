@@ -76,7 +76,7 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
             )}
           </Box>
         </Box>
-        <HorizontalSeparator $withPadding={false} />
+        <HorizontalSeparator $margin="none" />
       </Box>
     </>
   );

@@ -1,4 +1,3 @@
-import { HorizontalSeparator } from '@gouvfr-lasuite/ui-kit';
 import {
   Fragment,
   PropsWithChildren,
@@ -10,7 +9,15 @@ import {
 } from 'react';
 import { css } from 'styled-components';
 
-import { Box, BoxButton, BoxProps, DropButton, Icon, Text } from '@/components';
+import {
+  Box,
+  BoxButton,
+  BoxProps,
+  DropButton,
+  HorizontalSeparator,
+  Icon,
+  Text,
+} from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useKeyboardAction } from '@/hooks';
 
@@ -266,9 +273,7 @@ export const DropdownMenu = ({
                   />
                 )}
               </BoxButton>
-              {option.showSeparator && (
-                <HorizontalSeparator withPadding={false} />
-              )}
+              {option.showSeparator && <HorizontalSeparator $margin="none" />}
             </Fragment>
           );
         })}
