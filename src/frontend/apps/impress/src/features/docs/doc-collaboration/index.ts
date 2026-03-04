@@ -1,4 +1,5 @@
 export {
+  computeKeyFingerprint,
   decryptContent,
   encryptContent,
   generateSymmetricKey,
@@ -9,4 +10,5 @@ export {
 export { getEncryptionDB } from './encryptionDB';
 export { useDocumentEncryption } from './hook/useDocumentEncryption';
 export { useEncryption } from './hook/useEncryption';
+export { useKeyFingerprint } from './hook/useKeyFingerprint';
 export { usePublicKeyRegistry } from './hook/usePublicKeyRegistry';

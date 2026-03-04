@@ -1,17 +1,28 @@
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  Modal,
+  ModalSize,
+} from '@gouvfr-lasuite/cunningham-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Box, ButtonCloseModal, HorizontalSeparator, Text } from '@/components';
+import {
+  Box,
+  ButtonCloseModal,
+  HorizontalSeparator,
+  Icon,
+  Text,
+} from '@/components';
 import {
   QuickSearch,
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
 import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
+import type { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
 import { Doc } from '@/docs/doc-management';
 import { User } from '@/features/auth';
 import { useResponsiveStore } from '@/stores';
@@ -38,6 +49,7 @@ import {
 } from './DocShareInvitation';
 import { QuickSearchGroupMember } from './DocShareMember';
 import { DocShareModalFooter } from './DocShareModalFooter';
+import { ModalKeyMismatch } from './ModalKeyMismatch';
 
 const ShareModalStyle = createGlobalStyle`
   .--docs--doc-share-modal [cmdk-item] {
@@ -68,7 +80,7 @@ export const DocShareModal = ({
   const queryClient = useQueryClient();
 
   const { isDesktop } = useResponsiveStore();
-  const { mismatches: keyMismatches } = usePublicKeyRegistry(
+  const { mismatches: keyMismatches, acceptNewKey } = usePublicKeyRegistry(
     doc.accesses_public_keys_per_user,
   );
   const keyMismatchUserIds = useMemo(
@@ -253,7 +265,9 @@ export const DocShareModal = ({
                 <Box $padding={{ horizontal: 'base' }} $margin={{ top: '12x' }}>
                   <DocShareAddMemberList
                     doc={doc}
-                    documentEncryptionSettings={documentEncryptionSettings ?? null}
+                    documentEncryptionSettings={
+                      documentEncryptionSettings ?? null
+                    }
                     selectedUsers={selectedUsers}
                     onRemoveUser={onRemoveUser}
                     afterInvite={() => {
@@ -321,6 +335,8 @@ export const DocShareModal = ({
                       <QuickSearchGroupMember
                         doc={doc}
                         keyMismatchUserIds={keyMismatchUserIds}
+                        keyMismatches={keyMismatches}
+                        acceptNewKey={acceptNewKey}
                       />
                     </Box>
                   )}
@@ -331,6 +347,9 @@ export const DocShareModal = ({
                       onSelect={onSelect}
                       userQuery={userQuery}
                       isEncrypted={doc.is_encrypted}
+                      keyMismatchUserIds={keyMismatchUserIds}
+                      keyMismatches={keyMismatches}
+                      acceptNewKey={acceptNewKey}
                     />
                   )}
                 </QuickSearch>
@@ -352,6 +371,9 @@ interface QuickSearchInviteInputSectionProps {
   searchUsersRawData: User[] | undefined;
   userQuery: string;
   isEncrypted: boolean;
+  keyMismatchUserIds?: Set<string>;
+  keyMismatches?: PublicKeyMismatch[];
+  acceptNewKey?: (userId: string) => Promise<void>;
 }
 
 const QuickSearchInviteInputSection = ({
@@ -359,8 +381,37 @@ const QuickSearchInviteInputSection = ({
   searchUsersRawData,
   userQuery,
   isEncrypted,
+  keyMismatchUserIds,
+  keyMismatches,
+  acceptNewKey,
 }: QuickSearchInviteInputSectionProps) => {
   const { t } = useTranslation();
+  const [showNoKeyModal, setShowNoKeyModal] = useState(false);
+  const [mismatchUser, setMismatchUser] = useState<User | null>(null);
+
+  const showEncryptedInviteWarning = useMemo(() => {
+    const users = searchUsersRawData || [];
+    const isEmail = isValidEmail(userQuery);
+    const hasEmailInUsers = users.some(
+      (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
+    );
+    return isEncrypted && isEmail && !hasEmailInUsers;
+  }, [searchUsersRawData, userQuery, isEncrypted]);
+
+  const handleSelect = useCallback(
+    (user: User) => {
+      if (isEncrypted && !user.encryption_public_key) {
+        setShowNoKeyModal(true);
+        return;
+      }
+      if (keyMismatchUserIds?.has(user.id)) {
+        setMismatchUser(user);
+        return;
+      }
+      onSelect(user);
+    },
+    [isEncrypted, keyMismatchUserIds, onSelect],
+  );
 
   const searchUserData: QuickSearchData<User> = useMemo(() => {
     const users = searchUsersRawData || [];
@@ -378,20 +429,34 @@ const QuickSearchInviteInputSection = ({
       (user) => user.email.toLowerCase() === userQuery.toLowerCase(),
     );
 
+    const showInviteByEmail = isEmail && !hasEmailInUsers && !isEncrypted;
+
     return {
       groupName: t('Search user result'),
       elements: users,
-      endActions:
-        isEmail && !hasEmailInUsers
-          ? [
-              {
-                content: <DocShareModalInviteUserRow user={newUser} />,
-                onSelect: () => void onSelect(newUser),
-              },
-            ]
-          : undefined,
+      endActions: showInviteByEmail
+        ? [
+            {
+              content: <DocShareModalInviteUserRow user={newUser} />,
+              onSelect: () => void handleSelect(newUser),
+            },
+          ]
+        : undefined,
     };
-  }, [onSelect, searchUsersRawData, t, userQuery]);
+  }, [handleSelect, searchUsersRawData, t, userQuery, isEncrypted]);
+
+  const getUserSuffix = useCallback(
+    (user: User): string | undefined => {
+      if (keyMismatchUserIds?.has(user.id)) {
+        return t('DIFFERENT PUBLIC KEY');
+      }
+      if (isEncrypted && !user.encryption_public_key) {
+        return t(`(chiffrement non activé)`);
+      }
+      return undefined;
+    },
+    [isEncrypted, keyMismatchUserIds, t],
+  );
 
   return (
     <Box
@@ -400,18 +465,86 @@ const QuickSearchInviteInputSection = ({
     >
       <QuickSearchGroup
         group={searchUserData}
-        onSelect={onSelect}
+        onSelect={handleSelect}
         renderElement={(user) => (
           <DocShareModalInviteUserRow
             user={user}
-            suffix={
-              isEncrypted && !user.encryption_public_key
-                ? t('NO PUBLIC KEY')
-                : undefined
+            suffix={getUserSuffix(user)}
+            fingerprintKey={
+              isEncrypted ? user.encryption_public_key : undefined
             }
           />
         )}
       />
+      {showEncryptedInviteWarning && (
+        <Text
+          $variation="secondary"
+          $size="sm"
+          $padding={{ horizontal: 'xs', top: '3xs' }}
+        >
+          {t(
+            'Only registered users with encryption enabled can be added to encrypted documents.',
+          )}
+        </Text>
+      )}
+      {showNoKeyModal && (
+        <Modal
+          isOpen
+          closeOnClickOutside
+          onClose={() => setShowNoKeyModal(false)}
+          size={ModalSize.SMALL}
+          rightActions={
+            <Button onClick={() => setShowNoKeyModal(false)}>
+              {t('Understood')}
+            </Button>
+          }
+          title={
+            <Text
+              as="h1"
+              $gap="0.7rem"
+              $size="h6"
+              $align="flex-start"
+              $direction="row"
+              $margin="0"
+            >
+              <Icon iconName="lock" />
+              {t('Encryption required')}
+            </Text>
+          }
+        >
+          <Box $direction="column" $gap="0.35rem" $margin={{ top: 'sm' }}>
+            <Text $variation="secondary">
+              {t(
+                'This user has not enabled encryption on their account yet. It is not possible to share encrypted content with them.',
+              )}
+            </Text>
+            <Text $variation="secondary">
+              {t(
+                'Please ask them to enable encryption in their account settings first.',
+              )}
+            </Text>
+          </Box>
+        </Modal>
+      )}
+      {mismatchUser && (() => {
+        const mismatch = keyMismatches?.find((m) => m.userId === mismatchUser.id);
+        return (
+          <ModalKeyMismatch
+            onClose={() => setMismatchUser(null)}
+            onAcceptKey={
+              acceptNewKey
+                ? () => {
+                    void acceptNewKey(mismatchUser.id).then(() => {
+                      onSelect(mismatchUser);
+                    });
+                  }
+                : undefined
+            }
+            knownKey={mismatch?.knownKey}
+            currentKey={mismatch?.currentKey}
+          />
+        );
+      })()}
     </Box>
   );
 };

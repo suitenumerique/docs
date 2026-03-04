@@ -78,6 +78,10 @@ export const DocShareAddMemberList = ({
       });
     }
 
+    if (dataError.cause?.[0] && dataError.message === dataError.cause[0]) {
+      messageError = dataError.cause[0];
+    }
+
     toast(messageError, VariantType.ERROR, {
       duration: 4000,
     });
@@ -95,6 +99,24 @@ export const DocShareAddMemberList = ({
       };
 
       if (isInvitationMode) {
+        if (doc.is_encrypted) {
+          throw Object.assign(
+            new Error(
+              t(
+                'Only registered users with encryption enabled can be added to encrypted documents.',
+              ),
+            ),
+            {
+              cause: [
+                t(
+                  'Only registered users with encryption enabled can be added to encrypted documents.',
+                ),
+              ],
+              data: { value: user.email, type: OptionType.INVITATION },
+            },
+          ) as APIErrorUser;
+        }
+
         return createInvitation({
           ...payload,
           email: user.email.toLowerCase(),

@@ -2,19 +2,21 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box } from '@/components';
 import { QuickSearchData } from '@/components/quick-search';
 import { QuickSearchGroup } from '@/components/quick-search/QuickSearchGroup';
 import { useCunninghamTheme } from '@/cunningham';
+import { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
 import { Access, Doc, Role } from '@/docs/doc-management/';
 
 import { useDocAccesses, useUpdateDocAccess } from '../api';
 import { useWhoAmI } from '../hooks/';
 
 import { DocRoleDropdown } from './DocRoleDropdown';
+import { ModalKeyMismatch } from './ModalKeyMismatch';
 import { SearchUserRow } from './SearchUserRow';
 
 type Props = {
@@ -22,12 +24,16 @@ type Props = {
   access: Access;
   isInherited?: boolean;
   suffix?: string;
+  onSuffixClick?: () => void;
+  fingerprintKey?: string | null;
 };
 export const DocShareMemberItem = ({
   doc,
   access,
   isInherited = false,
   suffix,
+  onSuffixClick,
+  fingerprintKey,
 }: Props) => {
   const { t } = useTranslation();
   const { isLastOwner } = useWhoAmI(access);
@@ -72,6 +78,8 @@ export const DocShareMemberItem = ({
         alwaysShowRight={true}
         user={access.user}
         suffix={suffix}
+        onSuffixClick={onSuffixClick}
+        fingerprintKey={fingerprintKey}
         right={
           <Box $direction="row" $align="center" $gap={spacingsTokens['2xs']}>
             <DocRoleDropdown
@@ -97,13 +105,18 @@ export const DocShareMemberItem = ({
 interface QuickSearchGroupMemberProps {
   doc: Doc;
   keyMismatchUserIds?: Set<string>;
+  keyMismatches?: PublicKeyMismatch[];
+  acceptNewKey?: (userId: string) => Promise<void>;
 }
 
 export const QuickSearchGroupMember = ({
   doc,
   keyMismatchUserIds,
+  keyMismatches,
+  acceptNewKey,
 }: QuickSearchGroupMemberProps) => {
   const { t } = useTranslation();
+  const [mismatchUserId, setMismatchUserId] = useState<string | null>(null);
   const membersQuery = useDocAccesses({
     docId: doc.id,
   });
@@ -129,18 +142,46 @@ export const QuickSearchGroupMember = ({
     <Box aria-label={t('List members card')} $padding={{ bottom: '3xs' }}>
       <QuickSearchGroup
         group={membersData}
-        renderElement={(access) => (
-          <DocShareMemberItem
-            doc={doc}
-            access={access}
-            suffix={
-              keyMismatchUserIds?.has(access.user.id)
-                ? t('DIFFERENT PUBLIC KEY')
-                : undefined
-            }
-          />
-        )}
+        renderElement={(access) => {
+          const hasMismatch = keyMismatchUserIds?.has(access.user.id);
+          return (
+            <DocShareMemberItem
+              doc={doc}
+              access={access}
+              suffix={hasMismatch ? t('DIFFERENT PUBLIC KEY') : undefined}
+              onSuffixClick={
+                hasMismatch
+                  ? () => setMismatchUserId(access.user.id)
+                  : undefined
+              }
+              fingerprintKey={
+                doc.is_encrypted
+                  ? (doc.accesses_public_keys_per_user?.[access.user.id] ??
+                    access.user.encryption_public_key)
+                  : undefined
+              }
+            />
+          );
+        }}
       />
+      {mismatchUserId &&
+        (() => {
+          const mismatch = keyMismatches?.find(
+            (m) => m.userId === mismatchUserId,
+          );
+          return (
+            <ModalKeyMismatch
+              onClose={() => setMismatchUserId(null)}
+              onAcceptKey={
+                acceptNewKey
+                  ? () => void acceptNewKey(mismatchUserId)
+                  : undefined
+              }
+              knownKey={mismatch?.knownKey}
+              currentKey={mismatch?.currentKey}
+            />
+          );
+        })()}
     </Box>
   );
 };

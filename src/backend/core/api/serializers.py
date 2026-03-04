@@ -57,8 +57,8 @@ class UserLightSerializer(UserSerializer):
 
     class Meta:
         model = models.User
-        fields = ["full_name", "short_name"]
-        read_only_fields = ["full_name", "short_name"]
+        fields = ["id", "full_name", "short_name"]
+        read_only_fields = ["id", "full_name", "short_name"]
 
 
 class ListDocumentSerializer(serializers.ModelSerializer):

@@ -93,10 +93,12 @@ export const DocShareInvitationItem = ({
 type DocShareModalInviteUserRowProps = {
   user: User;
   suffix?: string;
+  fingerprintKey?: string | null;
 };
 export const DocShareModalInviteUserRow = ({
   user,
   suffix,
+  fingerprintKey,
 }: DocShareModalInviteUserRowProps) => {
   const { t } = useTranslation();
   return (
@@ -108,6 +110,7 @@ export const DocShareModalInviteUserRow = ({
       <SearchUserRow
         user={user}
         suffix={suffix}
+        fingerprintKey={fingerprintKey}
         right={
           <BoxButton
             className="right-hover"

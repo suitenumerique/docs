@@ -101,6 +101,25 @@ export async function decryptContent(
   return new Uint8Array(arrayBuffer);
 }
 
+/**
+ * Compute a SHA-256 fingerprint of a base64-encoded public key.
+ * Returns a formatted hex string like "A1B2 C3D4 E5F6 7890".
+ */
+export async function computeKeyFingerprint(
+  base64Key: string,
+): Promise<string> {
+  const raw = Uint8Array.from(atob(base64Key), (c) => c.charCodeAt(0));
+  const hash = await crypto.subtle.digest('SHA-256', raw);
+  const hex = Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return hex
+    .slice(0, 16)
+    .replace(/(.{4})/g, '$1 ')
+    .trim()
+    .toUpperCase();
+}
+
 // prepare encrypted symmetric keys for all users with access to a document
 export async function prepareEncryptedSymmetricKeysForUsers(
   symmetricKey: CryptoKey,
