@@ -18,10 +18,9 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) analytic feature flags problem #1953
-
-### Fixed
-
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
+- 🐛(frontend) fix zIndex table of content #1949
+
 
 ## [v4.6.0] - 2026-03-03
 
