@@ -87,7 +87,7 @@ export const collaborationWSHandler = async (
       // mimick the Hocuspocus protocol to properly hide the frontend loader
       ws.send('system:authenticated');
 
-      await handleRelayServerConnection(ws, roomId);
+      await handleRelayServerConnection(ws, roomId, userId);
     } else {
       hocuspocusServer.hocuspocus.handleConnection(ws, req, {
         roomId: roomId,

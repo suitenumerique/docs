@@ -15,6 +15,7 @@ console.error = vi.fn();
 
 import { COLLABORATION_SERVER_ORIGIN as origin } from '@/env';
 import { hocuspocusServer, initApp } from '@/servers';
+import { handleRelayServerConnection, getRelayRoom } from '@/servers/relayServer';
 
 const apiEndpoint = '/collaboration/api/get-connections/';
 
@@ -201,6 +202,42 @@ describe('Server Tests', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       count: 3,
+      exists: false,
+    });
+  });
+
+  test('GET /collaboration/api/get-connections?room=[ROOM_ID] returns connection info for encrypted relay room', async () => {
+    const roomId = 'relay-test-room';
+
+    // Create a mock WebSocket that the relay server can register
+    const mockWs = {
+      binaryType: 'nodebuffer',
+      readyState: 1, // OPEN
+      on: vi.fn(),
+      off: vi.fn(),
+      send: vi.fn(),
+      close: vi.fn(),
+      ping: vi.fn(),
+      removeAllListeners: vi.fn(),
+    };
+
+    // Register the mock connection in the relay server
+    await handleRelayServerConnection(mockWs as any, roomId);
+
+    const room = getRelayRoom(roomId);
+    expect(room).toBeDefined();
+    expect(room!.size).toBe(1);
+
+    const app = initApp();
+
+    const response = await request(app)
+      .get(`${apiEndpoint}?room=${roomId}&sessionKey=any-session-key`)
+      .set('Origin', origin)
+      .set('Authorization', 'test-secret-api-key');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      count: 1,
       exists: false,
     });
   });

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 
 import { hocuspocusServer } from '@/servers';
+import { getRelayRoom } from '@/servers/relayServer';
 import { logger } from '@/utils';
 
 type getDocumentConnectionInfoRequestQuery = {
@@ -17,37 +18,52 @@ export const getDocumentConnectionInfoHandler = (
 
   if (!room) {
     res.status(400).json({ error: 'Room name not provided' });
+
     return;
   }
 
   if (!req.query.sessionKey) {
     res.status(400).json({ error: 'Session key not provided' });
+
     return;
   }
 
   logger('Getting document connection info for room:', room);
 
-  res.status(500).json({ error: 'not implemented yet' });
+  // we avoid database call since a document could be being encrypted or not, so looking in both lists
+  // so check hocuspocus first (non-encrypted documents)
+  const hocuspocusRoom = hocuspocusServer.hocuspocus.documents.get(room);
 
-  hocuspocusServer;
-  sessionKey;
+  if (hocuspocusRoom) {
+    const connections = hocuspocusRoom
+      .getConnections()
+      .filter((connection) => connection.readOnly === false);
 
-  // const roomInfo = hocuspocusServer.hocuspocus.documents.get(room);
+    res.status(200).json({
+      count: connections.length,
+      exists: connections.some(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (connection) => connection.context.sessionKey === sessionKey,
+      ),
+    });
 
-  // if (!roomInfo) {
-  //   logger('Room not found:', room);
-  //   res.status(404).json({ error: 'Room not found' });
-  //   return;
-  // }
-  // const connections = roomInfo
-  //   .getConnections()
-  //   .filter((connection) => connection.readOnly === false);
+    return;
+  }
 
-  // res.status(200).json({
-  //   count: connections.length,
-  //   exists: connections.some(
-  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  //     (connection) => connection.context.sessionKey === sessionKey,
-  //   ),
-  // });
+  const relayRoom = getRelayRoom(room);
+
+  if (relayRoom) {
+    // the relay server is a blind passthrough, there is no readOnly distinction
+    // or session key tracking, so we report all connections and cannot confirm session existence
+    res.status(200).json({
+      count: relayRoom.size,
+      exists: false,
+    });
+
+    return;
+  }
+
+  logger('Room not found:', room);
+
+  res.status(404).json({ error: 'Room not found' });
 };

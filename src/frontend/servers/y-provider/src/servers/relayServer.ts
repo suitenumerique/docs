@@ -3,6 +3,7 @@ import * as ws from 'ws';
 
 const rooms = new Map<string, Set<ws.WebSocket>>();
 const roomsMutex = new Mutex();
+const connectionMeta = new Map<ws.WebSocket, { userId: string | null }>();
 
 function sendMessage(ws: ws.WebSocket, data: ws.RawData) {
   if (ws.readyState === ws.OPEN || ws.readyState === ws.CONNECTING) {
@@ -16,9 +17,39 @@ function sendMessage(ws: ws.WebSocket, data: ws.RawData) {
   }
 }
 
+export function getRelayRoom(roomId: string): Set<ws.WebSocket> | undefined {
+  return rooms.get(roomId);
+}
+
+export function closeRelayConnections(
+  roomId: string,
+  userId?: string,
+): void {
+  const room = rooms.get(roomId);
+
+  if (!room) {
+    return;
+  }
+
+  if (!userId) {
+    for (const peer of Array.from(room)) {
+      peer.close();
+    }
+  } else {
+    for (const peer of Array.from(room)) {
+      const meta = connectionMeta.get(peer);
+
+      if (meta?.userId === userId) {
+        peer.close();
+      }
+    }
+  }
+}
+
 export async function handleRelayServerConnection(
   ws: ws.WebSocket,
   roomId: string,
+  userId?: string | null,
 ) {
   ws.binaryType = 'arraybuffer'; // Same configuration in the client provider
 
@@ -37,6 +68,8 @@ export async function handleRelayServerConnection(
   } finally {
     roomsMutexRelease();
   }
+
+  connectionMeta.set(ws, { userId: userId ?? null });
 
   ws.on('error', () => {
     ws.close();
@@ -80,6 +113,7 @@ export async function handleRelayServerConnection(
   ws.on('close', async () => {
     clearInterval(pingInterval);
     ws.removeAllListeners();
+    connectionMeta.delete(ws);
 
     const roomsMutexRelease = await roomsMutex.acquire();
 
