@@ -239,6 +239,18 @@ def test_services_search_indexers_serialize_document_empty():
     assert result["title"] == ""
 
 
+@pytest.mark.usefixtures("indexer_settings")
+def test_services_search_indexers_serialize_document_encrypted():
+    """Encrypted documents should have empty content to avoid indexing ciphertext."""
+    document = factories.DocumentFactory(is_encrypted=True)
+
+    indexer = SearchIndexer()
+    result = indexer.serialize_document(document, {})
+
+    assert result["content"] == ""
+    assert result["size"] == 0
+
+
 @responses.activate
 def test_services_search_indexers_index_errors(indexer_settings):
     """

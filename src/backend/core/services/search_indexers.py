@@ -244,7 +244,12 @@ class SearchIndexer(BaseDocumentIndexer):
         """
         doc_path = document.path
         doc_content = document.content
-        text_content = utils.base64_yjs_to_text(doc_content) if doc_content else ""
+
+        # Encrypted content is ciphertext and it should never be indexed for search
+        if document.is_encrypted:
+            text_content = ""
+        else:
+            text_content = utils.base64_yjs_to_text(doc_content) if doc_content else ""
 
         return {
             "id": str(document.id),
