@@ -87,7 +87,7 @@ const DocSearchModalGlobal = ({
         $direction="column"
         $justify="space-between"
         className="--docs--doc-search-modal"
-        $padding={{ vertical: 'base' }}
+        $padding={{ bottom: 'base' }}
       >
         <QuickSearch
           placeholder={t('Type the name of a document')}
