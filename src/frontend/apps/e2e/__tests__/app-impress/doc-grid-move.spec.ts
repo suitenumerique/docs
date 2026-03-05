@@ -216,7 +216,9 @@ test.describe('Doc grid move', () => {
     await input.click();
     await input.fill(titleDoc2);
 
-    await expect(page.getByRole('option').getByText(titleDoc2)).toBeVisible();
+    await expect(
+      page.getByRole('option').first().getByText(titleDoc2),
+    ).toBeVisible();
 
     // Select the first result
     await page.keyboard.press('Enter');
@@ -359,7 +361,9 @@ test.describe('Doc grid move', () => {
     await input.click();
     await input.fill(titleDoc2);
 
-    await expect(page.getByRole('option').getByText(titleDoc2)).toBeVisible();
+    await expect(
+      page.getByRole('option').first().getByText(titleDoc2),
+    ).toBeVisible();
 
     // Select the first result
     await page.keyboard.press('Enter');
