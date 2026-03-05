@@ -250,15 +250,21 @@ export const DropdownMenu = ({
                   {option.icon && typeof option.icon === 'string' && (
                     <Icon
                       $size="20px"
-                      $theme="gray"
+                      $theme="neutral"
                       $variation={isDisabled ? 'tertiary' : 'primary'}
                       iconName={option.icon}
                       aria-hidden="true"
                     />
                   )}
-                  {option.icon &&
-                    typeof option.icon !== 'string' &&
-                    option.icon}
+
+                  {option.icon && typeof option.icon !== 'string' && (
+                    <Box
+                      $theme="neutral"
+                      $variation={isDisabled ? 'tertiary' : 'primary'}
+                    >
+                      {option.icon}
+                    </Box>
+                  )}
                   <Text $variation={isDisabled ? 'tertiary' : 'primary'}>
                     {option.label}
                   </Text>

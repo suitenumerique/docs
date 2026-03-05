@@ -19,6 +19,10 @@ and this project adheres to
 
 - 🐛(frontend) analytic feature flags problem #1953
 
+### Fixed
+
+- 🐛(frontend) fix disabled color on icon Dropdown #1950
+
 ## [v4.6.0] - 2026-03-03
 
 ### Added
