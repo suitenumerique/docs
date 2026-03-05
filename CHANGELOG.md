@@ -23,6 +23,11 @@ and this project adheres to
 
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
 
+### Fixed
+
+- 🐛(frontend) fix zIndex table of content #1949
+
+
 ## [v4.6.0] - 2026-03-03
 
 ### Added
