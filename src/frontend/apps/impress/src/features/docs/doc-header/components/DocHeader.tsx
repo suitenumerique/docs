@@ -20,11 +20,6 @@ import { DocToolBox } from './DocToolBox';
 
 interface DocHeaderProps {
   doc: Doc;
-  encryptionSettings: {
-    userId: string;
-    userPrivateKey: CryptoKey;
-    userPublicKey: CryptoKey;
-  } | null;
   documentEncryptionSettings?: {
     documentSymmetricKey: CryptoKey;
   } | null;
@@ -32,7 +27,6 @@ interface DocHeaderProps {
 
 export const DocHeader = ({
   doc,
-  encryptionSettings,
   documentEncryptionSettings,
 }: DocHeaderProps) => {
   const { spacingsTokens } = useCunninghamTheme();
@@ -80,7 +74,6 @@ export const DocHeader = ({
             {!isDeletedDoc && (
               <DocToolBox
                 doc={doc}
-                encryptionSettings={encryptionSettings}
                 documentEncryptionSettings={documentEncryptionSettings}
               />
             )}

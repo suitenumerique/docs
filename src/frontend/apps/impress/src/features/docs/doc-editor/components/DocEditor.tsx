@@ -76,11 +76,6 @@ export const DocEditorContainer = ({
 
 interface DocEditorProps {
   doc: Doc;
-  encryptionSettings: {
-    userId: string;
-    userPrivateKey: CryptoKey;
-    userPublicKey: CryptoKey;
-  } | null;
   documentEncryptionSettings: {
     documentSymmetricKey: CryptoKey;
   } | null;
@@ -88,7 +83,6 @@ interface DocEditorProps {
 
 export const DocEditor = ({
   doc,
-  encryptionSettings,
   documentEncryptionSettings,
 }: DocEditorProps) => {
   const { isDesktop } = useResponsiveStore();
@@ -145,7 +139,6 @@ export const DocEditor = ({
         docHeader={
           <DocHeader
             doc={doc}
-            encryptionSettings={encryptionSettings}
             documentEncryptionSettings={documentEncryptionSettings}
           />
         }

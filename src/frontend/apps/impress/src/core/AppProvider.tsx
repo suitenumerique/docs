@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 
 import { useCunninghamTheme } from '@/cunningham';
 import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
+import { UserEncryptionProvider } from '@/features/docs/doc-collaboration';
 import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';
@@ -74,7 +75,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <CunninghamProvider theme={theme}>
         <ConfigProvider>
-          <Auth>{children}</Auth>
+          <Auth>
+            <UserEncryptionProvider>{children}</UserEncryptionProvider>
+          </Auth>
         </ConfigProvider>
       </CunninghamProvider>
     </QueryClientProvider>

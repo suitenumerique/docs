@@ -1385,6 +1385,14 @@ class DocumentViewSet(
         # Check permissions first
         document = self.get_object()
 
+        if document.is_encrypted:
+            raise drf.exceptions.ValidationError(
+                {
+                    "detail": "Visibility cannot be changed for encrypted documents. "
+                    "Encrypted documents must remain restricted.",
+                }
+            )
+
         # Deserialize and validate the data
         serializer = serializers.LinkDocumentSerializer(
             document, data=request.data, partial=True

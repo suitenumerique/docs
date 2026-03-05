@@ -2,18 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { decryptSymmetricKey } from '@/docs/doc-collaboration/encryption';
 
+import { useUserEncryption } from '../UserEncryptionProvider';
+
 export type DocumentEncryptionError =
   | 'missing_symmetric_key'
   | 'decryption_failed'
   | null;
 
 export function useDocumentEncryption(
-  encryptionLoading: boolean,
-  encryptionSettings: {
-    userId: string;
-    userPrivateKey: CryptoKey;
-    userPublicKey: CryptoKey;
-  } | null,
   isDocumentEncrypted: boolean | undefined,
   userEncryptedSymmetricKey: string | undefined,
 ): {
@@ -23,6 +19,7 @@ export function useDocumentEncryption(
   } | null;
   documentEncryptionError: DocumentEncryptionError;
 } {
+  const { encryptionLoading, encryptionSettings } = useUserEncryption();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<{
     documentSymmetricKey: CryptoKey;

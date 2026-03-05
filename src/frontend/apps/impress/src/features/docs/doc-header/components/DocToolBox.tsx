@@ -31,7 +31,10 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
-import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
+import {
+  usePublicKeyRegistry,
+  useUserEncryption,
+} from '@/docs/doc-collaboration';
 import { DocShareModal } from '@/docs/doc-share';
 import {
   KEY_LIST_DOC_VERSIONS,
@@ -47,11 +50,6 @@ const ModalExport = Export?.ModalExport;
 
 interface DocToolBoxProps {
   doc: Doc;
-  encryptionSettings: {
-    userId: string;
-    userPrivateKey: CryptoKey;
-    userPublicKey: CryptoKey;
-  } | null;
   documentEncryptionSettings?: {
     documentSymmetricKey: CryptoKey;
   } | null;
@@ -59,7 +57,6 @@ interface DocToolBoxProps {
 
 export const DocToolBox = ({
   doc,
-  encryptionSettings,
   documentEncryptionSettings,
 }: DocToolBoxProps) => {
   const { t } = useTranslation();
@@ -69,6 +66,7 @@ export const DocToolBox = ({
   const { isChild, isTopRoot } = useDocUtils(doc);
 
   const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { encryptionSettings } = useUserEncryption();
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
@@ -336,7 +334,6 @@ export const DocToolBox = ({
       {isModalEncryptOpen && (
         <ModalEncryptDoc
           doc={doc}
-          encryptionSettings={encryptionSettings}
           onClose={() => setIsModalEncryptOpen(false)}
           onSuccess={() => {
             //

@@ -37,7 +37,7 @@ describe('DocToolBox - Licence', () => {
 
     const { DocToolBox } = await import('../components/DocToolBox');
 
-    render(<DocToolBox doc={doc as any} encryptionSettings={null} />, {
+    render(<DocToolBox doc={doc as any} />, {
       wrapper: AppWrapper,
     });
     const optionsButton = await screen.findByLabelText('Export the document');
@@ -55,7 +55,7 @@ describe('DocToolBox - Licence', () => {
 
     const { DocToolBox } = await import('../components/DocToolBox');
 
-    render(<DocToolBox doc={doc as any} encryptionSettings={null} />, {
+    render(<DocToolBox doc={doc as any} />, {
       wrapper: AppWrapper,
     });
 

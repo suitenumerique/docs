@@ -21,6 +21,7 @@ import {
   generateUserKeyPair,
   getEncryptionDB,
   prepareEncryptedSymmetricKeysForUsers,
+  useUserEncryption,
 } from '@/docs/doc-collaboration';
 import { createDocAttachment } from '@/docs/doc-editor/api';
 import { toBase64 } from '@/docs/doc-editor';
@@ -121,18 +122,12 @@ const encryptRemoteAttachments = async (
 
 interface ModalEncryptDocProps {
   doc: Doc;
-  encryptionSettings: {
-    userId: string;
-    userPrivateKey: CryptoKey;
-    userPublicKey: CryptoKey;
-  } | null;
   onClose: () => void;
   onSuccess?: (doc: Doc) => void;
 }
 
 export const ModalEncryptDoc = ({
   doc,
-  encryptionSettings,
   onClose,
   onSuccess,
 }: ModalEncryptDocProps) => {
@@ -140,6 +135,7 @@ export const ModalEncryptDoc = ({
   const { toast } = useToastProvider();
   const { provider } = useProviderStore();
   const { user } = useAuth();
+  const { encryptionSettings } = useUserEncryption();
   const { mutateAsync: updateUser } = useUserUpdate();
 
   const [isPending, setIsPending] = useState(false);

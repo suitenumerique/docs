@@ -10,6 +10,7 @@ import {
   ButtonCloseModal,
   HorizontalSeparator,
   Icon,
+  Loading,
   Text,
 } from '@/components';
 import {
@@ -17,7 +18,11 @@ import {
   QuickSearchData,
   QuickSearchGroup,
 } from '@/components/quick-search/';
-import { usePublicKeyRegistry } from '@/docs/doc-collaboration';
+import {
+  useDocumentEncryption,
+  usePublicKeyRegistry,
+  useUserEncryption,
+} from '@/docs/doc-collaboration';
 import type { PublicKeyMismatch } from '@/docs/doc-collaboration/hook/usePublicKeyRegistry';
 import { Doc } from '@/docs/doc-management';
 import { User, useAuth } from '@/features/auth';
@@ -77,6 +82,28 @@ export const DocShareModal = ({
 
   const { isDesktop } = useResponsiveStore();
   const { user } = useAuth();
+
+  // When document encryption settings exist they should be passed as prop, on it will use this fallback
+  // that's because in some cases we want them to only be computed at this step (to avoid computing just when listed in a list)
+  const needsDerivation = !documentEncryptionSettings;
+  const { encryptionLoading, encryptionError } = useUserEncryption();
+  const {
+    documentEncryptionLoading,
+    documentEncryptionSettings: derivedEncryptionSettings,
+    documentEncryptionError,
+  } = useDocumentEncryption(
+    needsDerivation ? doc.is_encrypted : undefined,
+    needsDerivation ? doc.encrypted_document_symmetric_key_for_user : undefined,
+  );
+  const effectiveEncryptionSettings =
+    documentEncryptionSettings ?? derivedEncryptionSettings ?? null;
+  const isEncryptionDeriving =
+    needsDerivation && (encryptionLoading || documentEncryptionLoading);
+  const derivedEncryptionError =
+    needsDerivation && doc.is_encrypted
+      ? encryptionError || documentEncryptionError
+      : null;
+
   const { mismatches: keyMismatches, acceptNewKey } = usePublicKeyRegistry(
     doc.accesses_public_keys_per_user,
     user?.id,
@@ -240,125 +267,168 @@ export const DocShareModal = ({
         >
           {liveAnnouncement}
         </div>
-        <Box
-          $height="auto"
-          $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
-          $overflow="hidden"
-          className="--docs--doc-share-modal noPadding "
-          $justify="space-between"
-          role="dialog"
-          aria-label={t('Share modal content')}
-        >
+        {isEncryptionDeriving && <Loading />}
+        {!isEncryptionDeriving && derivedEncryptionError && (
+          <Box $align="center" $gap="sm" $padding="lg">
+            <Icon iconName="lock" $size="2rem" $theme="warning" />
+            <Text as="h3" $textAlign="center" $margin="0">
+              {t('Encryption keys unavailable')}
+            </Text>
+            <Text $variation="secondary" $textAlign="center" $size="sm">
+              {t(
+                'This is an encrypted document, but your current device does not have the required encryption keys to decrypt it.',
+              )}
+            </Text>
+            {(encryptionError === 'missing_private_key' ||
+              encryptionError === 'missing_public_key') && (
+              <Text $variation="secondary" $textAlign="center" $size="sm">
+                {t(
+                  'This usually happens when you switch to a new device or browser without restoring your encryption backup.',
+                )}
+              </Text>
+            )}
+            {documentEncryptionError === 'missing_symmetric_key' && (
+              <Text $variation="secondary" $textAlign="center" $size="sm">
+                {t(
+                  'You do not have access to this encrypted document. Ask the document owner to share it with you again.',
+                )}
+              </Text>
+            )}
+            {documentEncryptionError === 'decryption_failed' && (
+              <Text $variation="secondary" $textAlign="center" $size="sm">
+                {t(
+                  'Your encryption keys could not decrypt this document. This may happen if your keys were recreated. Ask the document owner to share it with you again.',
+                )}
+              </Text>
+            )}
+          </Box>
+        )}
+        {!isEncryptionDeriving && !derivedEncryptionError && (
           <Box
-            $flex={1}
-            $css={css`
-              [cmdk-list] {
-                overflow-y: auto;
-                height: ${listHeight};
-              }
-            `}
+            $height="auto"
+            $maxHeight={canViewAccesses ? modalContentHeight : 'none'}
+            $overflow="hidden"
+            className="--docs--doc-share-modal noPadding "
+            $justify="space-between"
+            role="dialog"
+            aria-label={t('Share modal content')}
           >
-            <Box ref={selectedUsersRef}>
-              {canShare && selectedUsers.length > 0 && (
-                <Box $padding={{ horizontal: 'base' }} $margin={{ top: '12x' }}>
-                  <DocShareAddMemberList
-                    doc={doc}
-                    documentEncryptionSettings={
-                      documentEncryptionSettings ?? null
-                    }
-                    selectedUsers={selectedUsers}
-                    onRemoveUser={onRemoveUser}
-                    afterInvite={() => {
-                      setUserQuery('');
-                      setInputValue('');
-                      setSelectedUsers([]);
-                    }}
-                  />
-                </Box>
-              )}
-              {!canViewAccesses && <HorizontalSeparator customPadding="12px" />}
-            </Box>
-
-            <Box data-testid="doc-share-quick-search">
-              {!canViewAccesses && (
-                <Box
-                  $height={listHeight}
-                  $align="center"
-                  $justify="center"
-                  $gap="1rem"
-                >
-                  <Text
-                    $maxWidth="320px"
-                    $textAlign="center"
-                    $variation="secondary"
-                    $size="sm"
-                    as="p"
+            <Box
+              $flex={1}
+              $css={css`
+                [cmdk-list] {
+                  overflow-y: auto;
+                  height: ${listHeight};
+                }
+              `}
+            >
+              <Box ref={selectedUsersRef}>
+                {canShare && selectedUsers.length > 0 && (
+                  <Box
+                    $padding={{ horizontal: 'base' }}
+                    $margin={{ top: '12x' }}
                   >
-                    {t(
-                      'You can view this document but need additional access to see its members or modify settings.',
-                    )}
-                  </Text>
-                  <ButtonAccessRequest
-                    docId={doc.id}
-                    variant="secondary"
-                    size="small"
-                  />
-                </Box>
-              )}
-              {canViewAccesses && (
-                <QuickSearch
-                  label={t('Search results')}
-                  onFilter={(str) => {
-                    setInputValue(str);
-                    onFilter(str);
-                  }}
-                  inputValue={inputValue}
-                  showInput={canShare}
-                  loading={searchUsersQuery.isLoading}
-                  placeholder={t('Type a name or email')}
-                >
-                  {showInheritedShareContent && (
-                    <DocInheritedShareContent
-                      rawAccesses={
-                        membersQuery?.filter(
-                          (access) => access.document.id !== doc.id,
-                        ) ?? []
-                      }
+                    <DocShareAddMemberList
+                      doc={doc}
+                      documentEncryptionSettings={effectiveEncryptionSettings}
+                      selectedUsers={selectedUsers}
+                      onRemoveUser={onRemoveUser}
+                      afterInvite={() => {
+                        setUserQuery('');
+                        setInputValue('');
+                        setSelectedUsers([]);
+                      }}
                     />
-                  )}
-                  {showMemberSection && isRootDoc && (
-                    <Box $padding={{ horizontal: 'base' }}>
-                      <QuickSearchGroupAccessRequest doc={doc} />
-                      <QuickSearchGroupInvitation doc={doc} />
-                      <QuickSearchGroupMember
-                        doc={doc}
+                  </Box>
+                )}
+                {!canViewAccesses && (
+                  <HorizontalSeparator customPadding="12px" />
+                )}
+              </Box>
+
+              <Box data-testid="doc-share-quick-search">
+                {!canViewAccesses && (
+                  <Box
+                    $height={listHeight}
+                    $align="center"
+                    $justify="center"
+                    $gap="1rem"
+                  >
+                    <Text
+                      $maxWidth="320px"
+                      $textAlign="center"
+                      $variation="secondary"
+                      $size="sm"
+                      as="p"
+                    >
+                      {t(
+                        'You can view this document but need additional access to see its members or modify settings.',
+                      )}
+                    </Text>
+                    <ButtonAccessRequest
+                      docId={doc.id}
+                      variant="secondary"
+                      size="small"
+                    />
+                  </Box>
+                )}
+                {canViewAccesses && (
+                  <QuickSearch
+                    label={t('Search results')}
+                    onFilter={(str) => {
+                      setInputValue(str);
+                      onFilter(str);
+                    }}
+                    inputValue={inputValue}
+                    showInput={canShare}
+                    loading={searchUsersQuery.isLoading}
+                    placeholder={t('Type a name or email')}
+                  >
+                    {showInheritedShareContent && (
+                      <DocInheritedShareContent
+                        rawAccesses={
+                          membersQuery?.filter(
+                            (access) => access.document.id !== doc.id,
+                          ) ?? []
+                        }
+                      />
+                    )}
+                    {showMemberSection && isRootDoc && (
+                      <Box $padding={{ horizontal: 'base' }}>
+                        <QuickSearchGroupAccessRequest doc={doc} />
+                        <QuickSearchGroupInvitation doc={doc} />
+                        <QuickSearchGroupMember
+                          doc={doc}
+                          keyMismatchUserIds={keyMismatchUserIds}
+                          keyMismatches={keyMismatches}
+                          acceptNewKey={acceptNewKey}
+                        />
+                      </Box>
+                    )}
+
+                    {!showMemberSection && canShare && (
+                      <QuickSearchInviteInputSection
+                        searchUsersRawData={searchUsersQuery.data}
+                        onSelect={onSelect}
+                        userQuery={userQuery}
+                        isEncrypted={doc.is_encrypted}
                         keyMismatchUserIds={keyMismatchUserIds}
                         keyMismatches={keyMismatches}
                         acceptNewKey={acceptNewKey}
                       />
-                    </Box>
-                  )}
+                    )}
+                  </QuickSearch>
+                )}
+              </Box>
+            </Box>
 
-                  {!showMemberSection && canShare && (
-                    <QuickSearchInviteInputSection
-                      searchUsersRawData={searchUsersQuery.data}
-                      onSelect={onSelect}
-                      userQuery={userQuery}
-                      isEncrypted={doc.is_encrypted}
-                      keyMismatchUserIds={keyMismatchUserIds}
-                      keyMismatches={keyMismatches}
-                      acceptNewKey={acceptNewKey}
-                    />
-                  )}
-                </QuickSearch>
+            <Box ref={handleRef}>
+              {showFooter && (
+                <DocShareModalFooter doc={doc} onClose={onClose} />
               )}
             </Box>
           </Box>
-
-          <Box ref={handleRef}>
-            {showFooter && <DocShareModalFooter doc={doc} onClose={onClose} />}
-          </Box>
-        </Box>
+        )}
       </Modal>
     </>
   );

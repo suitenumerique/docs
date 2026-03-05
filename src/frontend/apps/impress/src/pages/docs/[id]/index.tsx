@@ -23,7 +23,7 @@ import {
 import { KEY_AUTH, setAuthUrl, useAuth } from '@/features/auth';
 import {
   useDocumentEncryption,
-  useEncryption,
+  useUserEncryption,
 } from '@/features/docs/doc-collaboration';
 import { getDocChildren, subPageToTree } from '@/features/docs/doc-tree/';
 import { useSkeletonStore } from '@/features/skeletons';
@@ -93,17 +93,14 @@ const DocPage = ({ id }: DocProps) => {
     },
   );
 
-  const { authenticated, user } = useAuth();
+  const { authenticated } = useAuth();
   const [doc, setDoc] = useState<Doc>();
-  const { encryptionLoading, encryptionSettings, encryptionError } =
-    useEncryption(user?.id);
+  const { encryptionLoading, encryptionError } = useUserEncryption();
   const {
     documentEncryptionLoading,
     documentEncryptionSettings,
     documentEncryptionError,
   } = useDocumentEncryption(
-    encryptionLoading,
-    encryptionSettings,
     doc?.is_encrypted,
     doc?.encrypted_document_symmetric_key_for_user,
   );
@@ -357,7 +354,6 @@ const DocPage = ({ id }: DocProps) => {
       </Head>
       <DocEditor
         doc={doc}
-        encryptionSettings={encryptionSettings}
         documentEncryptionSettings={documentEncryptionSettings}
       />
     </>

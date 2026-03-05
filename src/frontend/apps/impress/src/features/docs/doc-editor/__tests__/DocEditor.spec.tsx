@@ -78,7 +78,7 @@ describe('DocEditor', () => {
       },
     } as any;
 
-    const { rerender } = render(<DocEditor doc={doc} encryptionSettings={null} documentEncryptionSettings={null} />, {
+    const { rerender } = render(<DocEditor doc={doc} documentEncryptionSettings={null} />, {
       wrapper: AppWrapper,
     });
 
@@ -90,7 +90,7 @@ describe('DocEditor', () => {
 
     // Rerender with same doc to check that event is not tracked again
     rerender(
-      <DocEditor doc={{ ...doc, computed_link_reach: LinkReach.RESTRICTED }} encryptionSettings={null} documentEncryptionSettings={null} />,
+      <DocEditor doc={{ ...doc, computed_link_reach: LinkReach.RESTRICTED }} documentEncryptionSettings={null} />,
     );
 
     expect(TrackEventMock).toHaveBeenNthCalledWith(1, {
@@ -107,7 +107,6 @@ describe('DocEditor', () => {
           id: 'test-doc-id-2',
           computed_link_reach: LinkReach.RESTRICTED,
         }}
-        encryptionSettings={null}
         documentEncryptionSettings={null}
       />,
     );

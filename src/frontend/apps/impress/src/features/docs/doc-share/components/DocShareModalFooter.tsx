@@ -27,8 +27,12 @@ export const DocShareModalFooter = ({
     >
       <HorizontalSeparator $withPadding={true} customPadding="12px" />
 
-      <DocVisibility doc={doc} />
-      <HorizontalSeparator customPadding="12px" />
+      {!doc.is_encrypted && (
+        <>
+          <DocVisibility doc={doc} />
+          <HorizontalSeparator customPadding="12px" />
+        </>
+      )}
 
       <Box
         $direction="row"
