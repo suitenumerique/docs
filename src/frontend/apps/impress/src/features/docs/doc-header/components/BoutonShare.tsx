@@ -6,6 +6,7 @@ import { css } from 'styled-components';
 
 import { Box, Icon } from '@/components';
 import { Doc } from '@/docs/doc-management';
+import { useFocusStore } from '@/stores';
 
 interface BoutonShareProps {
   displayNbAccess: boolean;
@@ -23,6 +24,7 @@ export const BoutonShare = ({
   open,
 }: BoutonShareProps) => {
   const { t } = useTranslation();
+  const addLastFocus = useFocusStore((state) => state.addLastFocus);
   const treeContext = useTreeContext<Doc>();
 
   /**
@@ -63,7 +65,10 @@ export const BoutonShare = ({
               disabled={isDisabled}
             />
           }
-          onClick={open}
+          onClick={(e) => {
+            addLastFocus(e.currentTarget as HTMLElement);
+            open();
+          }}
           size="medium"
           disabled={isDisabled}
         >
@@ -77,7 +82,10 @@ export const BoutonShare = ({
     <Button
       color="brand"
       variant="tertiary"
-      onClick={open}
+      onClick={(e) => {
+        addLastFocus(e.currentTarget as HTMLElement);
+        open();
+      }}
       size="medium"
       disabled={isDisabled}
     >

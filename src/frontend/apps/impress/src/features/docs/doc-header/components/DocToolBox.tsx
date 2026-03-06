@@ -44,7 +44,7 @@ import {
   KEY_LIST_DOC_VERSIONS,
   ModalSelectVersion,
 } from '@/docs/doc-versioning';
-import { useResponsiveStore } from '@/stores';
+import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
 
@@ -70,6 +70,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
+  const { addLastFocus, restoreFocus } = useFocusStore();
   const { isSmallMobile, isMobile } = useResponsiveStore();
   const copyDocLink = useCopyDocLink(doc.id);
   const { mutate: duplicateDoc } = useDuplicateDoc({
@@ -224,7 +225,8 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             icon={
               <Icon iconName="download" $color="inherit" aria-hidden={true} />
             }
-            onClick={() => {
+            onClick={(e) => {
+              addLastFocus(e.currentTarget as HTMLElement);
               setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}
@@ -249,17 +251,29 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
       {modalShare.isOpen && (
         <DocShareModal
-          onClose={() => modalShare.close()}
+          onClose={() => {
+            modalShare.close();
+            restoreFocus();
+          }}
           doc={doc}
           isRootDoc={treeContext?.root?.id === doc.id}
         />
       )}
       {isModalExportOpen && ModalExport && (
-        <ModalExport onClose={() => setIsModalExportOpen(false)} doc={doc} />
+        <ModalExport
+          onClose={() => {
+            setIsModalExportOpen(false);
+            restoreFocus();
+          }}
+          doc={doc}
+        />
       )}
       {isModalRemoveOpen && (
         <ModalRemoveDoc
-          onClose={() => setIsModalRemoveOpen(false)}
+          onClose={() => {
+            setIsModalRemoveOpen(false);
+            restoreFocus();
+          }}
           doc={doc}
           onSuccess={() => {
             const isTopParent = doc.id === treeContext?.root?.id;
@@ -281,7 +295,10 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       )}
       {selectHistoryModal.isOpen && (
         <ModalSelectVersion
-          onClose={() => selectHistoryModal.close()}
+          onClose={() => {
+            selectHistoryModal.close();
+            restoreFocus();
+          }}
           doc={doc}
         />
       )}
