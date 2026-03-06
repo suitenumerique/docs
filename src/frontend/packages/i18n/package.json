@@ -19,7 +19,7 @@
     "@types/node": "*",
     "eslint-plugin-docs": "*",
     "eslint-plugin-import": "2.32.0",
-    "i18next-parser": "9.3.0",
+    "i18next-parser": "9.4.0",
     "jest": "30.2.0",
     "ts-jest": "29.4.6",
     "typescript": "*",
