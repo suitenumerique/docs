@@ -6,16 +6,14 @@ import {
   PanelResizeHandle,
 } from 'react-resizable-panels';
 
-import { useLeftPanelStore } from '@/features/left-panel/stores';
 import { useResponsiveStore } from '@/stores';
+
+import { useLeftPanelStore } from '../stores';
 
 // Convert a target pixel width to a percentage of the current viewport width.
 const pxToPercent = (px: number) => {
   return (px / window.innerWidth) * 100;
 };
-
-const PANEL_TOGGLE_TRANSITION =
-  'flex-grow 180ms var(--c--globals--transitions--ease-out), flex-basis 180ms var(--c--globals--transitions--ease-out)';
 
 type ResizableLeftPanelProps = {
   leftPanel: React.ReactNode;
@@ -34,70 +32,58 @@ export const ResizableLeftPanel = ({
   const { isPanelOpen } = useLeftPanelStore();
   const ref = useRef<ImperativePanelHandle>(null);
   const savedWidthPxRef = useRef<number>(minPanelSizePx);
-  const previousPanelOpenRef = useRef<boolean>(isPanelOpen);
-  const [isToggleAnimating, setIsToggleAnimating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const minPanelSizePercent = pxToPercent(minPanelSizePx);
   const maxPanelSizePercent = Math.min(pxToPercent(maxPanelSizePx), 40);
+
+  const [panelSizePercent, setPanelSizePercent] = useState(() => {
+    const initialSize = pxToPercent(minPanelSizePx);
+    return Math.max(
+      minPanelSizePercent,
+      Math.min(initialSize, maxPanelSizePercent),
+    );
+  });
+
+  /**
+   * When the panel is toggled open/closed, we want
+   * to either expand/collapse
+   */
   useEffect(() => {
-    const syncPanelState = () => {
-      if (!ref.current || !isDesktop) {
-        return;
-      }
-
-      if (!isPanelOpen) {
-        ref.current.collapse();
-        return;
-      }
-
-      const restoredSizePercent = Math.max(
-        minPanelSizePercent,
-        Math.min(pxToPercent(savedWidthPxRef.current), maxPanelSizePercent),
-      );
-
-      ref.current.expand();
-      ref.current.resize(restoredSizePercent);
-    };
-
-    const hasPanelToggleChanged = previousPanelOpenRef.current !== isPanelOpen;
-    previousPanelOpenRef.current = isPanelOpen;
-
-    if (hasPanelToggleChanged) {
-      setIsToggleAnimating(true);
-      const animationFrameId = requestAnimationFrame(() => {
-        syncPanelState();
-      });
-      const timeoutId = setTimeout(() => {
-        setIsToggleAnimating(false);
-      }, 180);
-
-      return () => {
-        window.cancelAnimationFrame(animationFrameId);
-        window.clearTimeout(timeoutId);
-      };
+    if (!ref.current || !isDesktop) {
+      return;
     }
+    if (isPanelOpen) {
+      ref.current.expand();
+    } else {
+      ref.current.collapse();
+    }
+  }, [isPanelOpen, isDesktop]);
 
-    syncPanelState();
-
-    if (!isDesktop || !isPanelOpen) {
+  // Keep pixel width constant on window resize
+  useEffect(() => {
+    if (!isDesktop) {
       return;
     }
 
     const handleResize = () => {
-      syncPanelState();
+      const newPercent = pxToPercent(savedWidthPxRef.current);
+      setPanelSizePercent(newPercent);
+      if (ref.current) {
+        ref.current.resize?.(newPercent - (ref.current.getSize() || 0));
+      }
     };
 
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [isDesktop, isPanelOpen, minPanelSizePercent, maxPanelSizePercent]);
+  }, [isDesktop]);
 
   const handleResize = (sizePercent: number) => {
-    if (isDesktop && sizePercent > 0) {
-      const widthPx = (sizePercent / 100) * window.innerWidth;
-      savedWidthPxRef.current = widthPx;
-    }
+    const widthPx = (sizePercent / 100) * window.innerWidth;
+    savedWidthPxRef.current = widthPx;
+    setPanelSizePercent(sizePercent);
   };
 
   return (
@@ -105,21 +91,19 @@ export const ResizableLeftPanel = ({
       <Panel
         ref={ref}
         className="--docs--resizable-left-panel"
-        order={0}
-        collapsible
+        collapsible={!isPanelOpen}
         collapsedSize={0}
         style={{
-          overflow: 'hidden',
-          transition: isToggleAnimating ? PANEL_TOGGLE_TRANSITION : 'none',
+          transition: isDragging
+            ? 'none'
+            : 'flex var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out)',
         }}
+        order={0}
         defaultSize={
           isDesktop
             ? Math.max(
                 minPanelSizePercent,
-                Math.min(
-                  pxToPercent(savedWidthPxRef.current),
-                  maxPanelSizePercent,
-                ),
+                Math.min(panelSizePercent, maxPanelSizePercent),
               )
             : 0
         }
@@ -129,25 +113,20 @@ export const ResizableLeftPanel = ({
       >
         {leftPanel}
       </Panel>
-      <PanelResizeHandle
-        style={{
-          borderRightWidth: '1px',
-          borderRightStyle: 'solid',
-          borderRightColor: 'var(--c--contextuals--border--surface--primary)',
-          width: '1px',
-          cursor: 'col-resize',
-        }}
-        disabled={!isDesktop || !isPanelOpen}
-      />
-
-      <Panel
-        order={1}
-        style={{
-          transition: isToggleAnimating ? PANEL_TOGGLE_TRANSITION : 'none',
-        }}
-      >
-        {children}
-      </Panel>
+      {isPanelOpen && (
+        <PanelResizeHandle
+          style={{
+            borderRightWidth: '1px',
+            borderRightStyle: 'solid',
+            borderRightColor: 'var(--c--contextuals--border--surface--primary)',
+            width: '1px',
+            cursor: 'col-resize',
+          }}
+          onDragging={setIsDragging}
+          disabled={!isDesktop}
+        />
+      )}
+      <Panel order={1}>{children}</Panel>
     </PanelGroup>
   );
 };

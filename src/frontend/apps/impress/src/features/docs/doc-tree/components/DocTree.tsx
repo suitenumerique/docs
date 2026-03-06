@@ -287,6 +287,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             padding: ${spacingsTokens['2xs']};
             border-radius: var(--c--globals--spacings--st);
             width: 100%;
+            min-width: 200px;
             background-color: ${rootIsSelected || rootActionsOpen
               ? 'var(--c--contextuals--background--semantic--contextual--primary)'
               : 'transparent'};
