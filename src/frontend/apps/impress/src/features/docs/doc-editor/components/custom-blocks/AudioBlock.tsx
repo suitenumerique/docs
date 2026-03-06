@@ -94,6 +94,9 @@ const AudioToExternalHTML = ({
 export const AudioBlock = createReactBlockSpec(
   createAudioBlockConfig,
   (config) => ({
+    meta: {
+      fileBlockAccept: ['audio/*'],
+    },
     render: (props) => <AudioBlockComponent {...(props as any)} />,
     parse: audioParse(config),
     toExternalHTML: (props) => <AudioToExternalHTML {...(props as any)} />,

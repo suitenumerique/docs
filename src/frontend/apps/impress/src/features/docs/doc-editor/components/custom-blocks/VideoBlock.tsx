@@ -97,8 +97,12 @@ const VideoToExternalHTML = ({
 export const VideoBlock = createReactBlockSpec(
   createVideoBlockConfig,
   (config) => ({
+    meta: {
+      fileBlockAccept: ['video/*'],
+    },
     render: (props) => <VideoBlockComponent {...(props as any)} />,
     parse: videoParse(config),
     toExternalHTML: (props) => <VideoToExternalHTML {...(props as any)} />,
+    runsBefore: ['file'],
   }),
 );
