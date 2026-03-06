@@ -20,6 +20,8 @@ import {
   useTrans,
 } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
+import { MAIN_LAYOUT_ID } from '@/layouts/conf';
+import { useFocusStore } from '@/stores';
 
 import { DocMoveModal } from './DocMoveModal';
 
@@ -29,13 +31,21 @@ interface DocsGridActionsProps {
 
 export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
   const { t } = useTranslation();
+  const restoreFocus = useFocusStore((state) => state.restoreFocus);
 
   const deleteModal = useModal();
   const shareModal = useModal();
   const importModal = useModal();
   const { untitledDocument } = useTrans();
 
-  const { mutate: duplicateDoc } = useDuplicateDoc();
+  const { mutate: duplicateDoc } = useDuplicateDoc({
+    onSuccess: () => {
+      const mainContent = document.getElementById(MAIN_LAYOUT_ID);
+      if (mainContent) {
+        requestAnimationFrame(() => mainContent.focus());
+      }
+    },
+  });
 
   const removeFavoriteDoc = useDeleteFavoriteDoc({
     listInvalidQueries: [KEY_LIST_DOC, KEY_LIST_FAVORITE_DOC],
@@ -135,15 +145,30 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
       </DropdownMenu>
 
       {deleteModal.isOpen && (
-        <ModalRemoveDoc onClose={deleteModal.onClose} doc={doc} />
+        <ModalRemoveDoc
+          onClose={() => {
+            deleteModal.onClose();
+            restoreFocus();
+          }}
+          doc={doc}
+        />
       )}
       {shareModal.isOpen && (
-        <DocShareModal doc={doc} onClose={shareModal.close} />
+        <DocShareModal
+          doc={doc}
+          onClose={() => {
+            shareModal.close();
+            restoreFocus();
+          }}
+        />
       )}
       {importModal.isOpen && (
         <DocMoveModal
           doc={doc}
-          onClose={importModal.close}
+          onClose={() => {
+            importModal.close();
+            restoreFocus();
+          }}
           isOpen={importModal.isOpen}
         />
       )}

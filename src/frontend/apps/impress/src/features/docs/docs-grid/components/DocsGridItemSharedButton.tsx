@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Box, Icon, Text } from '@/components';
 import { Doc } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
+import { useFocusStore } from '@/stores';
 
 type Props = {
   doc: Doc;
@@ -14,6 +15,7 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
   const sharedCount = doc.nb_accesses_direct;
   const isShared = sharedCount - 1 > 0;
   const shareModal = useModal();
+  const { addLastFocus, restoreFocus } = useFocusStore();
 
   if (!isShared) {
     return <Box $minWidth="50px">&nbsp;</Box>;
@@ -40,6 +42,7 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
+            addLastFocus(event.currentTarget as HTMLElement);
             shareModal.open();
           }}
           color="brand"
@@ -60,7 +63,13 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
         </Button>
       </Tooltip>
       {shareModal.isOpen && (
-        <DocShareModal doc={doc} onClose={shareModal.close} />
+        <DocShareModal
+          doc={doc}
+          onClose={() => {
+            shareModal.close();
+            restoreFocus();
+          }}
+        />
       )}
     </>
   );
