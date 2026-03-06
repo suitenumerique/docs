@@ -21,10 +21,7 @@ export function getRelayRoom(roomId: string): Set<ws.WebSocket> | undefined {
   return rooms.get(roomId);
 }
 
-export function closeRelayConnections(
-  roomId: string,
-  userId?: string,
-): void {
+export function closeRelayConnections(roomId: string, userId?: string): void {
   const room = rooms.get(roomId);
 
   if (!room) {
@@ -76,16 +73,10 @@ export async function handleRelayServerConnection(
   });
 
   ws.on('message', (data) => {
-    if (data.toString() === 'ongoingDecryption') {
-      //
-      // TODO: here or inside an equivalent listener "onMessage" to catch an event "ongoingEncryption"
-      // so we can close all connections properly and clear data. It needs to check this information from the backend first with "fetchDocument"
-      // this should be propagated to all subscribers so they can also prepare to refresh their page
-      //
-      return;
-    }
-
-    // Relay blindly since this server is a passthrough due to encryption
+    // relay to all other peers in the room (passthrough due to encryption)
+    // it will also broadcast events about encryption transition, note that we don't close connections
+    // for this from the server because the clients could retrieve connecting immediately, it's better letting
+    // all clients reacting properly so they switch to the right provider
     for (const peer of Array.from(room)) {
       if (peer !== ws) {
         sendMessage(peer, data);

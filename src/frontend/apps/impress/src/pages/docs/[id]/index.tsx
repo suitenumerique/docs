@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@gouvfr-lasuite/cunningham-react';
+import { Spinner } from '@gouvfr-lasuite/ui-kit';
 
 import { Box, Icon, Loading, StyledLink, Text, TextErrors } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
@@ -70,7 +71,13 @@ interface DocProps {
 }
 
 const DocPage = ({ id }: DocProps) => {
-  const { hasLostConnection, resetLostConnection } = useProviderStore();
+  const {
+    hasLostConnection,
+    resetLostConnection,
+    encryptionTransition,
+    clearEncryptionTransition,
+    provider,
+  } = useProviderStore();
   const { isSkeletonVisible, setIsSkeletonVisible } = useSkeletonStore();
   const {
     data: docQuery,
@@ -172,6 +179,39 @@ const DocPage = ({ id }: DocProps) => {
       resetLostConnection();
     }
   }, [hasLostConnection, doc?.id, queryClient, resetLostConnection]);
+
+  // when encryption transition destroys the provider, that's the signal to refetch the document
+  useEffect(() => {
+    if (encryptionTransition && !provider && doc?.id) {
+      void queryClient.invalidateQueries({
+        queryKey: [KEY_DOC, { id: doc.id }],
+      });
+    }
+  }, [encryptionTransition, provider, doc?.id, queryClient]);
+
+  // clear transition state once the doc has been refetched with updated state
+  // and encryption settings are resolved (derived or cleared), unblocking useCollaboration()
+  useEffect(() => {
+    if (!encryptionTransition || provider) {
+      return;
+    }
+
+    // this boolean check ensure the new document data has been properly fetch compared to the old data
+    const docUpdated =
+      encryptionTransition === 'encrypting'
+        ? doc?.is_encrypted === true
+        : doc?.is_encrypted === false;
+
+    if (docUpdated && !documentEncryptionLoading) {
+      clearEncryptionTransition();
+    }
+  }, [
+    encryptionTransition,
+    provider,
+    doc?.is_encrypted,
+    documentEncryptionLoading,
+    clearEncryptionTransition,
+  ]);
 
   useEffect(() => {
     if (!docQuery || isFetching) {
@@ -329,13 +369,30 @@ const DocPage = ({ id }: DocProps) => {
         <StyledLink href="/">
           <Button
             color="neutral"
-            icon={
-              <Icon iconName="home" $withThemeInherited />
-            }
+            icon={<Icon iconName="home" $withThemeInherited />}
           >
             {t('Back to home')}
           </Button>
         </StyledLink>
+      </Box>
+    );
+  }
+
+  if (encryptionTransition) {
+    return (
+      <Box
+        $align="center"
+        $justify="center"
+        $height="100%"
+        $width="100%"
+        $gap="md"
+      >
+        <Spinner />
+        <Text $textAlign="center" $variation="secondary">
+          {encryptionTransition === 'encrypting'
+            ? t('Document encryption in progress, please wait...')
+            : t('Removing document encryption, please wait...')}
+        </Text>
       </Box>
     );
   }

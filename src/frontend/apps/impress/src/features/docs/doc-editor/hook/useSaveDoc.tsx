@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Y from 'yjs';
 
 import { encryptContent } from '@/docs/doc-collaboration/encryption';
-import { useUpdateDoc } from '@/docs/doc-management/';
+import { useUpdateDoc, useProviderStore } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { isFirefox } from '@/utils/userAgent';
 
@@ -20,6 +20,7 @@ export const useSaveDoc = (
     documentSymmetricKey: CryptoKey;
   } | null,
 ) => {
+  const { encryptionTransition } = useProviderStore();
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
@@ -53,6 +54,8 @@ export const useSaveDoc = (
   const saveDoc = useCallback(() => {
     if (!isLocalChange) {
       return false;
+    } else if (encryptionTransition) {
+      return false;
     } else if (isEncrypted && !documentEncryptionSettings) {
       // If the symmetric key is not yet ready we just ignore saving (either it needs onboarding or just a few seconds)
       return false;
@@ -82,6 +85,7 @@ export const useSaveDoc = (
     return true;
   }, [
     isLocalChange,
+    encryptionTransition,
     updateDoc,
     docId,
     yDoc,

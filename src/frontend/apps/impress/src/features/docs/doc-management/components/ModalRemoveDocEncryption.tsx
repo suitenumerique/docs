@@ -16,6 +16,7 @@ import { decryptContent } from '@/docs/doc-collaboration';
 import { createDocAttachment } from '@/docs/doc-editor/api';
 import {
   Doc,
+  EncryptionTransitionEvent,
   KEY_DOC,
   KEY_LIST_DOC,
   extractAttachmentKeysAndMetadata,
@@ -101,18 +102,17 @@ interface ModalRemoveDocEncryptionProps {
   doc: Doc;
   symmetricKey: CryptoKey;
   onClose: () => void;
-  onSuccess?: (doc: Doc) => void;
 }
 
 export const ModalRemoveDocEncryption = ({
   doc,
   symmetricKey,
   onClose,
-  onSuccess,
 }: ModalRemoveDocEncryptionProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
-  const { provider } = useProviderStore();
+  const { provider, notifyOthers, startEncryptionTransition } =
+    useProviderStore();
 
   const [isPending, setIsPending] = useState(false);
 
@@ -141,6 +141,8 @@ export const ModalRemoveDocEncryption = ({
     setIsPending(true);
 
     try {
+      notifyOthers(EncryptionTransitionEvent.REMOVE_ENCRYPTION_STARTED);
+
       // clone the Yjs document since performing changes during decryption
       // that require backend confirmation
       const ongoingDoc = new Y.Doc();
@@ -155,36 +157,40 @@ export const ModalRemoveDocEncryption = ({
 
       const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
 
+      // we have no need of patching back the current Yjs document with modifications
+      // since a removing encryption success will refetch data from the backend
+      ongoingDoc.destroy();
+
       await removeDocEncryption({
         docId: doc.id,
         content: ongoingDocState,
         attachmentKeyMapping,
       });
 
-      // apply the URL changes from the cloned doc to the live document
-      Y.applyUpdate(provider!.document, Y.encodeStateAsUpdate(ongoingDoc));
-
-      onSuccess?.(doc);
-      onClose();
-
       toast(
         t('The document encryption has been removed.'),
         VariantType.SUCCESS,
-        {
-          duration: 4000,
-        },
+        { duration: 4000 },
       );
 
-      ongoingDoc.destroy();
+      // notify other users before destroying the provider since websocket connection needed
+      notifyOthers(EncryptionTransitionEvent.REMOVE_ENCRYPTION_SUCCEEDED);
+
+      // trigger the provider switch (relay → hocuspocus):
+      startEncryptionTransition('removing-encryption');
+
+      onClose();
+    } catch (error) {
+      notifyOthers(EncryptionTransitionEvent.REMOVE_ENCRYPTION_CANCELED);
+
+      throw error;
     } finally {
       setIsPending(false);
     }
   };
 
   const handleCloseKeyDown = keyboardAction(handleClose);
-  const handleRemoveEncryptionKeyDown = keyboardAction(
-    handleRemoveEncryption,
-  );
+  const handleRemoveEncryptionKeyDown = keyboardAction(handleRemoveEncryption);
 
   return (
     <Modal

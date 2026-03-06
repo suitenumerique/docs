@@ -28,6 +28,7 @@ import { toBase64 } from '@/docs/doc-editor';
 import { useAuth } from '@/features/auth';
 import {
   Doc,
+  EncryptionTransitionEvent,
   KEY_DOC,
   KEY_LIST_DOC,
   LinkReach,
@@ -123,17 +124,13 @@ const encryptRemoteAttachments = async (
 interface ModalEncryptDocProps {
   doc: Doc;
   onClose: () => void;
-  onSuccess?: (doc: Doc) => void;
 }
 
-export const ModalEncryptDoc = ({
-  doc,
-  onClose,
-  onSuccess,
-}: ModalEncryptDocProps) => {
+export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
   const { t } = useTranslation();
   const { toast } = useToastProvider();
-  const { provider } = useProviderStore();
+  const { provider, notifyOthers, startEncryptionTransition } =
+    useProviderStore();
   const { user } = useAuth();
   const { encryptionSettings } = useUserEncryption();
   const { mutateAsync: updateUser } = useUserUpdate();
@@ -235,6 +232,8 @@ export const ModalEncryptDoc = ({
         return;
       }
 
+      notifyOthers(EncryptionTransitionEvent.ENCRYPTION_STARTED);
+
       const documentSymmetricKey = await generateSymmetricKey();
 
       // Their public key are base64 encoded, decoding the whole
@@ -283,6 +282,10 @@ export const ModalEncryptDoc = ({
 
       const ongoingDocState = Y.encodeStateAsUpdate(ongoingDoc);
 
+      // we have no need of patching back the current Yjs document with modifications
+      // since an encryption success will refetch data from the backend
+      ongoingDoc.destroy();
+
       const encryptedContent = await encryptContent(
         new Uint8Array(ongoingDocState),
         documentSymmetricKey,
@@ -300,17 +303,21 @@ export const ModalEncryptDoc = ({
         attachmentKeyMapping,
       });
 
-      // since the encrypted state has been committed with success with can apply it locally with adjusted encrypted attachments
-      Y.applyUpdate(provider!.document, Y.encodeStateAsUpdate(ongoingDoc));
-
-      onSuccess?.(doc);
-      onClose();
-
       toast(t('The document has been encrypted.'), VariantType.SUCCESS, {
         duration: 4000,
       });
 
-      ongoingDoc.destroy();
+      // notify other users before destroying the provider since websocket connection needed
+      notifyOthers(EncryptionTransitionEvent.ENCRYPTION_SUCCEEDED);
+
+      // trigger the provider switch (hocuspocus → relay)
+      startEncryptionTransition('encrypting');
+
+      onClose();
+    } catch (error) {
+      notifyOthers(EncryptionTransitionEvent.ENCRYPTION_CANCELED);
+
+      throw error;
     } finally {
       setIsPending(false);
     }

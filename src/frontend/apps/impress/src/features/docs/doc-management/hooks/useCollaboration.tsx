@@ -17,7 +17,8 @@ export const useCollaboration = (
   const collaborationUrl = useCollaborationUrl(room);
   const { setBroadcastProvider, cleanupBroadcast } = useBroadcastStore();
   const { user } = useAuth();
-  const { provider, createProvider, destroyProvider } = useProviderStore();
+  const { provider, createProvider, destroyProvider, encryptionTransition } =
+    useProviderStore();
 
   useEffect(() => {
     if (
@@ -26,7 +27,8 @@ export const useCollaboration = (
       !user ||
       isEncrypted === undefined ||
       (isEncrypted === true && !documentEncryptionSettings) ||
-      provider
+      provider ||
+      encryptionTransition
     ) {
       // TODO: make sure the logout would invalide this provider, also a change of local keys (after import...)
       return;
@@ -92,6 +94,7 @@ export const useCollaboration = (
     user,
     isEncrypted,
     documentEncryptionSettings,
+    encryptionTransition,
   ]);
 
   /**

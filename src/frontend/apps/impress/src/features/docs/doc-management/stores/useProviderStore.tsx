@@ -3,10 +3,24 @@ import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import { create } from 'zustand';
 
-import { createAdaptedEncryptedWebsocketClass } from '@/docs/doc-collaboration/encryptedWebsocket';
+import {
+  EncryptedWebSocket,
+  createAdaptedEncryptedWebsocketClass,
+} from '@/docs/doc-collaboration/encryptedWebsocket';
 import { RelayProvider } from '@/docs/doc-collaboration/relayProvider';
 
+export enum EncryptionTransitionEvent {
+  ENCRYPTION_STARTED = 'system:encryption-started',
+  ENCRYPTION_SUCCEEDED = 'system:encryption-succeeded',
+  ENCRYPTION_CANCELED = 'system:encryption-canceled',
+  REMOVE_ENCRYPTION_STARTED = 'system:remove-encryption-started',
+  REMOVE_ENCRYPTION_SUCCEEDED = 'system:remove-encryption-succeeded',
+  REMOVE_ENCRYPTION_CANCELED = 'system:remove-encryption-canceled',
+}
+
 export type SwitchableProvider = RelayProvider | HocuspocusProvider;
+
+export type EncryptionTransitionType = 'encrypting' | 'removing-encryption';
 
 export interface UseCollaborationStore {
   createProvider: (
@@ -16,11 +30,15 @@ export interface UseCollaborationStore {
     symmetricKey?: CryptoKey,
   ) => SwitchableProvider;
   destroyProvider: () => void;
+  notifyOthers: (event: EncryptionTransitionEvent) => void;
+  startEncryptionTransition: (type: EncryptionTransitionType) => void;
+  clearEncryptionTransition: () => void;
   provider: SwitchableProvider | undefined;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
   hasLostConnection: boolean;
+  encryptionTransition: EncryptionTransitionType | null;
   resetLostConnection: () => void;
 }
 
@@ -30,7 +48,33 @@ const defaultValues = {
   isReady: false,
   isSynced: false,
   hasLostConnection: false,
+  encryptionTransition: null,
 };
+
+function handleEncryptionSystemMessage(
+  message: string,
+  set: (partial: Partial<UseCollaborationStore>) => void,
+  get: () => UseCollaborationStore,
+) {
+  switch (message) {
+    case EncryptionTransitionEvent.ENCRYPTION_STARTED:
+      set({ encryptionTransition: 'encrypting' });
+      break;
+    case EncryptionTransitionEvent.REMOVE_ENCRYPTION_STARTED:
+      set({ encryptionTransition: 'removing-encryption' });
+      break;
+    case EncryptionTransitionEvent.ENCRYPTION_SUCCEEDED:
+      get().startEncryptionTransition('encrypting');
+      break;
+    case EncryptionTransitionEvent.REMOVE_ENCRYPTION_SUCCEEDED:
+      get().startEncryptionTransition('removing-encryption');
+      break;
+    case EncryptionTransitionEvent.ENCRYPTION_CANCELED:
+    case EncryptionTransitionEvent.REMOVE_ENCRYPTION_CANCELED:
+      set({ encryptionTransition: null });
+      break;
+  }
+}
 
 export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
   ...defaultValues,
@@ -59,6 +103,8 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
         onSystemMessage: (message) => {
           if (message === 'system:authenticated') {
             set({ isReady: true, isConnected: true });
+          } else {
+            handleEncryptionSystemMessage(message, set, get);
           }
         },
       });
@@ -163,6 +209,9 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
             };
           });
         },
+        onStateless: ({ payload }) => {
+          handleEncryptionSystemMessage(payload, set, get);
+        },
         onSynced: ({ state }) => {
           set({ isSynced: state, isReady: true });
         },
@@ -186,6 +235,44 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     });
 
     return provider;
+  },
+  startEncryptionTransition: (type: EncryptionTransitionType) => {
+    const provider = get().provider;
+
+    // switching between hocuspocus and relay servers, we have to properly close the current one
+    if (provider) {
+      provider.destroy();
+    }
+
+    // set the right data so the page component has the indication it needs to fetch again document data
+    set({
+      encryptionTransition: type,
+      provider: undefined,
+      isConnected: false,
+      isReady: false,
+      isSynced: false,
+      hasLostConnection: false,
+    });
+  },
+  clearEncryptionTransition: () => {
+    set({ encryptionTransition: null });
+  },
+  notifyOthers: (event: EncryptionTransitionEvent) => {
+    const provider = get().provider;
+
+    if (!provider) {
+      return;
+    }
+
+    if (provider instanceof HocuspocusProvider) {
+      provider.sendStateless(event);
+    } else if (provider instanceof RelayProvider) {
+      const ws = provider.ws as EncryptedWebSocket | null;
+
+      if (ws) {
+        ws.sendSystemMessage(event);
+      }
+    }
   },
   destroyProvider: () => {
     const provider = get().provider;

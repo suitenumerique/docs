@@ -43,11 +43,13 @@ export const hocuspocusServer = new Server({
 
     return Promise.resolve();
   },
-  async beforeHandleMessage(data) {
-    //
-    // TODO: here or inside an equivalent listener "onMessage" to catch an event "ongoingEncryption"
-    // so we can close all connections properly and clear data. It needs to check this information from the backend first with "fetchDocument"
-    // this should be propagated to all subscribers so they can also prepare to refresh their page
-    //
+  async onStateless({ payload, document, connection }) {
+    // some interaction may require notifying other users so they adjust their UI, only let broadcast those events
+    if (payload.startsWith('system:')) {
+      // originator should manage it by himself
+      document.broadcastStateless(payload, (conn) => {
+        return conn !== connection;
+      });
+    }
   },
 });

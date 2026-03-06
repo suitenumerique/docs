@@ -335,12 +335,6 @@ export const DocToolBox = ({
         <ModalEncryptDoc
           doc={doc}
           onClose={() => setIsModalEncryptOpen(false)}
-          onSuccess={() => {
-            //
-            // TODO: probably it should make an hard refresh to get the setup
-            // but it should before register content in database with accesses, and broadcast the information through websocket
-            //
-          }}
         />
       )}
       {isModalRemoveEncryptionOpen &&
@@ -349,12 +343,6 @@ export const DocToolBox = ({
             doc={doc}
             symmetricKey={documentEncryptionSettings.documentSymmetricKey}
             onClose={() => setIsModalRemoveEncryptionOpen(false)}
-            onSuccess={() => {
-              //
-              // TODO: probably it should make an hard refresh to get the setup
-              // but it should before register content in database with clean accesses, and broadcast the information through websocket
-              //
-            }}
           />
         )}
       {selectHistoryModal.isOpen && (

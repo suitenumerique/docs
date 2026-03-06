@@ -115,6 +115,11 @@ export class EncryptedWebSocket extends WebSocket {
     });
   }
 
+  // allow sending raw message without encryption so they can be read
+  sendSystemMessage(message: string) {
+    super.send(message);
+  }
+
   send(message: Uint8Array<ArrayBuffer>) {
     // TODO: we use the polyfilled websocket parameter for `y-websocket` to bring our own encryption logic over the network
     // that's great but encryption is preferable with async processes, we cannot just switch to async since
