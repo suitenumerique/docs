@@ -9,6 +9,7 @@ and this project adheres to
 ### Changed
 
 - 📝(docs) improve README and add documentation hub #1870
+- ♿️(frontend) restore focus to triggers after closing menus and modals #1863
 
 ## [v4.6.0] - 2026-03-03
 

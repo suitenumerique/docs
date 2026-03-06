@@ -13,6 +13,7 @@ import {
   TextType,
   emojidata,
 } from '@/components';
+import { useFocusStore } from '@/stores';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
 
@@ -41,6 +42,7 @@ export const DocIcon = ({
 }: DocIconProps) => {
   const { updateDocEmoji } = useDocTitleUpdate();
   const { t } = useTranslation();
+  const { addLastFocus, restoreFocus } = useFocusStore();
 
   const iconRef = useRef<HTMLDivElement>(null);
 
@@ -90,12 +92,16 @@ export const DocIcon = ({
         });
       }
 
+      if (!openEmojiPicker) {
+        addLastFocus(iconRef.current);
+      }
       setOpenEmojiPicker(!openEmojiPicker);
     }
   };
 
   const handleEmojiSelect = ({ native }: { native: string }) => {
     setOpenEmojiPicker(false);
+    restoreFocus();
 
     // Update document emoji if docId is provided
     if (docId && title !== undefined) {
@@ -108,6 +114,7 @@ export const DocIcon = ({
 
   const handleClickOutside = () => {
     setOpenEmojiPicker(false);
+    restoreFocus();
   };
 
   return (
