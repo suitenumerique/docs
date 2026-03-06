@@ -53,7 +53,7 @@ and this project adheres to
 - ♿️(frontend) add focus on open to modals #1948
 
 ### Fixed
-
+- 🐛 (backend) prevent privileged users from requesting access #1898
 - 🐛(frontend) fix broadcast store sync #1846
 - 🐛(helm) use celery resources instead of backend resources #1887
 - 🐛(helm) reverse liveness and readiness for backend deployment #1887
