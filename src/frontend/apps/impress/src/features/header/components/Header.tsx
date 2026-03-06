@@ -11,9 +11,9 @@ import { useResponsiveStore } from '@/stores';
 
 import { HEADER_HEIGHT } from '../conf';
 
-import { ButtonTogglePanel } from './ButtonTogglePanel';
 import { Title } from './Title';
 import { Waffle } from './Waffle';
+import { LeftPanelToggleMobile } from '@/features/left-panel';
 
 export const Header = () => {
   const { t } = useTranslation();
@@ -46,7 +46,7 @@ export const Header = () => {
             var(--c--contextuals--border--surface--primary);
         `}
       >
-        {!isDesktop && <ButtonTogglePanel />}
+        {!isDesktop && <LeftPanelToggleMobile />}
         <StyledLink
           href="/"
           data-testid="header-logo-link"

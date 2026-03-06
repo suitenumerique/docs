@@ -1,5 +1,3 @@
-import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
@@ -26,14 +24,8 @@ export const LeftPanel = () => {
   const { t } = useTranslation();
 
   const { spacingsTokens } = useCunninghamTheme();
-  const { togglePanel, isPanelOpen, isPanelOpenMobile } = useLeftPanelStore();
+  const { isPanelOpen, isPanelOpenMobile } = useLeftPanelStore();
   const isPanelOpenState = isDesktop ? isPanelOpen : isPanelOpenMobile;
-
-  const pathname = usePathname();
-
-  useEffect(() => {
-    togglePanel(isDesktop);
-  }, [pathname, isDesktop, togglePanel]);
 
   return (
     <>

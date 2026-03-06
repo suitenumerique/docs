@@ -71,7 +71,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             allChildren as TreeViewDataType<Doc>[],
           );
           treeContext?.treeData.setSelectedNode(createdDoc);
-          togglePanel();
+          togglePanel({ type: 'mobile' });
         })
         .catch(console.error);
     } else {
@@ -85,7 +85,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
       node.open();
       router.push(`/docs/${createdDoc.id}`);
       treeContext?.treeData.setSelectedNode(newDoc);
-      togglePanel();
+      togglePanel({ type: 'mobile' });
     }
   };
 
