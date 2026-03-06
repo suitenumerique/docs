@@ -3,9 +3,9 @@ import Image from 'next/image';
 import { Box } from '@/components';
 import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
-import { ButtonTogglePanel, Title } from '@/features/header/';
-import { Waffle } from '@/features/header/components/Waffle';
+import { Title, Waffle } from '@/features/header';
 import { LanguagePicker } from '@/features/language';
+import { LeftPanelToggleMobile } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
 export const HEADER_HEIGHT = 91;
@@ -42,7 +42,7 @@ export const HomeHeader = () => {
       >
         {isSmallMobile && (
           <Box $position="absolute" $css="left: 1rem;">
-            <ButtonTogglePanel />
+            <LeftPanelToggleMobile />
           </Box>
         )}
         {!isSmallMobile && logo?.src && (

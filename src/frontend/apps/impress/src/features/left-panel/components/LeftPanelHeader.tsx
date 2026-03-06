@@ -38,7 +38,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
 
   const goToHome = () => {
     void router.push('/');
-    togglePanel();
+    togglePanel({ type: 'mobile' });
   };
 
   return (
