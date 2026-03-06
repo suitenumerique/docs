@@ -31,7 +31,7 @@ export const FloatingBar = () => {
       margin-left: calc(-${base});
       margin-right: calc(-${base});
       margin-top: calc(-${base});
-      z-index: 1000;
+      z-index: 100;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
