@@ -97,16 +97,24 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   // Handle keyboard navigation for root item
   const handleRootKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // F2: focus first action button
-      if (e.key === 'F2' && !rootActionsOpen) {
-        e.preventDefault();
-        rootButtonOptionRef.current?.focus();
+      const target = e.target as HTMLElement | null;
+      const isInActions = !!target?.closest('.doc-tree-root-item-actions');
+      const isOnEmojiButton = !!target?.closest('.--docs--doc-icon');
+      const isOnRootItem = target === e.currentTarget;
+
+      if (e.key === 'F2' && !rootActionsOpen && !isInActions) {
+        if (
+          isOnEmojiButton ||
+          isOnRootItem ||
+          target?.classList.contains('c__tree-view--node')
+        ) {
+          e.preventDefault();
+          rootButtonOptionRef.current?.focus();
+        }
         return;
       }
 
-      // Ignore if focus is in actions
-      const target = e.target as HTMLElement | null;
-      if (target?.closest('.doc-tree-root-item-actions')) {
+      if (isInActions) {
         return;
       }
 
