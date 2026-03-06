@@ -69,7 +69,7 @@ export const DocSearchSubPageContent = ({
     }
 
     setDocsData({
-      groupName: subDocs.length > 0 ? t('Select a doc') : '',
+      groupName: subDocs.length > 0 ? t('Select a document') : '',
       elements: search ? subDocs : [],
       emptyString: search ? t('No document found') : t('Search by title'),
       endActions: subDocsHasNextPage
