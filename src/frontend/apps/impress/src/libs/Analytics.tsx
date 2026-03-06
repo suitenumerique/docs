@@ -56,16 +56,18 @@ export class Analytics {
   /**
    * Check if a feature flag is activated
    *
-   * Feature flags are activated if at least one analytic is activated
-   * because we don't want to hide feature if the user does not
-   * use analytics (AB testing, etc)
+   * A feature flag is considered active only if ALL analytics agree it is.
+   * This ensures that if one analytic explicitly disables a flag,
+   * it takes precedence over analytics that do not manage flags.
+   * If no analytics are registered, default to true so features are not hidden
+   * when analytics are not configured.
    */
   public static isFeatureFlagActivated(flagName: string): boolean {
     if (!Analytics.analytics.length) {
       return true;
     }
 
-    return Analytics.analytics.some((analytic) =>
+    return Analytics.analytics.every((analytic) =>
       analytic.isFeatureFlagActivated(flagName),
     );
   }
