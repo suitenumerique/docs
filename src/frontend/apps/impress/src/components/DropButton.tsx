@@ -9,6 +9,7 @@ import { Button, Popover } from 'react-aria-components';
 import styled, { css } from 'styled-components';
 
 import { useCunninghamTheme } from '@/cunningham';
+import { useFocusStore } from '@/stores';
 
 import { BoxProps } from './Box';
 
@@ -70,8 +71,9 @@ export const DropButton = ({
   const { themeTokens } = useCunninghamTheme();
   const font = themeTokens['font']?.['families']['base'];
   const [isLocalOpen, setIsLocalOpen] = useState(isOpen);
+  const addLastFocus = useFocusStore((state) => state.addLastFocus);
 
-  const triggerRef = useRef(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setIsLocalOpen(isOpen);
@@ -86,7 +88,10 @@ export const DropButton = ({
     <>
       <StyledButton
         ref={triggerRef}
-        onPress={() => onOpenChangeHandler(true)}
+        onPress={() => {
+          addLastFocus(triggerRef.current);
+          onOpenChangeHandler(true);
+        }}
         aria-label={label}
         data-testid={testId}
         $css={css`
