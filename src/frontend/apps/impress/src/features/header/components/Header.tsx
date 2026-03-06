@@ -7,11 +7,11 @@ import { useConfig } from '@/core/config';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
 import { LanguagePicker } from '@/features/language';
+import { LeftPanelToggleMobile } from '@/features/left-panel';
 import { useResponsiveStore } from '@/stores';
 
 import { HEADER_HEIGHT } from '../conf';
 
-import { ButtonTogglePanel } from './ButtonTogglePanel';
 import { Title } from './Title';
 import { Waffle } from './Waffle';
 
@@ -46,7 +46,7 @@ export const Header = () => {
             var(--c--contextuals--border--surface--primary);
         `}
       >
-        {!isDesktop && <ButtonTogglePanel />}
+        {!isDesktop && <LeftPanelToggleMobile />}
         <StyledLink
           href="/"
           data-testid="header-logo-link"

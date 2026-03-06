@@ -18,6 +18,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(frontend) analytic feature flags problem #1953
+- 🐛(frontend) fix home collapsing panel #1954
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
 - 🐛(frontend) fix zIndex table of content #1949
 

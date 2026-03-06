@@ -71,7 +71,7 @@ export const LeftPanelCollapseButton = () => {
     >
       <Button
         size="small"
-        onClick={() => togglePanel()}
+        onClick={() => togglePanel({ type: 'desktop' })}
         aria-label={ariaLabel}
         aria-expanded={isPanelOpen}
         color="neutral"
