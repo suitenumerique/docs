@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(helm) allow all keys in configMap as env var #1872
+- ✨(frontend) Optionally include title in export #1837
 
 ### Changed
 

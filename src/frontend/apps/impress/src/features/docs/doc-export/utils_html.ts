@@ -128,10 +128,7 @@ export const generateHtmlDocument = (
  * - We work directly on the parsed Document so modifications are reflected before we zip files.
  * - We keep the editor inner structure but upgrade the key block types to native elements.
  */
-export const improveHtmlAccessibility = (
-  parsedDocument: Document,
-  documentTitle: string,
-) => {
+export const improveHtmlAccessibility = (parsedDocument: Document) => {
   const body = parsedDocument.body;
   if (!body) {
     return;
@@ -362,11 +359,8 @@ export const improveHtmlAccessibility = (
 
   // 8) Wrap content in an article with a title landmark if none exists
   const existingH1 = body.querySelector('h1');
-  if (!existingH1) {
-    const titleHeading = parsedDocument.createElement('h1');
-    titleHeading.id = 'doc-title';
-    titleHeading.textContent = documentTitle;
-    body.insertBefore(titleHeading, body.firstChild);
+  if (existingH1) {
+    existingH1.id = 'doc-title';
   }
 
   // If there is no article, group the body content inside one for better semantics.
@@ -374,7 +368,9 @@ export const improveHtmlAccessibility = (
   if (!hasArticle) {
     const article = parsedDocument.createElement('article');
     article.setAttribute('role', 'document');
-    article.setAttribute('aria-labelledby', 'doc-title');
+    if (existingH1) {
+      article.setAttribute('aria-labelledby', 'doc-title');
+    }
     while (body.firstChild) {
       article.appendChild(body.firstChild);
     }

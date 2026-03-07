@@ -1,8 +1,10 @@
+import { SpecificBlock } from '@blocknote/core';
 import { DOCXExporter } from '@blocknote/xl-docx-exporter';
 import { ODTExporter } from '@blocknote/xl-odt-exporter';
 import { PDFExporter } from '@blocknote/xl-pdf-exporter';
 import {
   Button,
+  Checkbox,
   Loader,
   Modal,
   ModalSize,
@@ -20,9 +22,15 @@ import { css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { useMediaUrl } from '@/core';
-import { useEditorStore } from '@/docs/doc-editor';
+import {
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+  useEditorStore,
+} from '@/docs/doc-editor';
 import { Doc, useTrans } from '@/docs/doc-management';
 import { fallbackLng } from '@/i18n/config';
+import { safeLocalStorage } from '@/utils/storages';
 
 import { exportCorsResolveFileUrl } from '../api/exportResolveFileUrl';
 import { docxDocsSchemaMappings } from '../mappingDocx';
@@ -57,6 +65,18 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const [format, setFormat] = useState<DocDownloadFormat>(
     DocDownloadFormat.PDF,
   );
+  const documentHasH1 =
+    editor?.document.some(
+      (block) => block.type === 'heading' && block.props.level === 1,
+    ) ?? false;
+
+  const [withTitle, setWithTitle] = useState(() => {
+    const stored = safeLocalStorage.getItem(`export-with-title-${doc.id}`);
+    if (stored === null) {
+      return !documentHasH1;
+    }
+    return stored !== 'false';
+  });
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
 
@@ -84,7 +104,27 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
     const documentTitle = doc.title || untitledDocument;
 
-    const exportDocument = editor.document;
+    const titleBlock: SpecificBlock<
+      DocsBlockSchema,
+      'heading',
+      DocsInlineContentSchema,
+      DocsStyleSchema
+    > = {
+      id: crypto.randomUUID(),
+      type: 'heading',
+      props: {
+        level: 1,
+        textColor: 'default',
+        backgroundColor: 'default',
+        textAlignment: 'left',
+      },
+      content: [{ type: 'text', text: documentTitle, styles: {} }],
+      children: [],
+    };
+
+    const exportDocument = withTitle
+      ? [titleBlock, ...editor.document]
+      : editor.document;
     let blobExport: Blob;
     if (format === DocDownloadFormat.PDF) {
       const exporter = new PDFExporter(editor.schema, pdfDocsSchemaMappings, {
@@ -135,7 +175,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       blobExport = await exporter.toODTDocument(exportDocument);
     } else if (format === DocDownloadFormat.HTML) {
       // Use BlockNote "full HTML" export so that we stay closer to the editor rendering.
-      const fullHtml = await editor.blocksToFullHTML();
+      const fullHtml = await editor.blocksToFullHTML(exportDocument);
 
       // Parse HTML and fetch media so that we can package a fully offline HTML document in a ZIP.
       const domParser = new DOMParser();
@@ -143,7 +183,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
 
       const zip = new JSZip();
 
-      improveHtmlAccessibility(parsedDocument, documentTitle);
+      improveHtmlAccessibility(parsedDocument);
       await addMediaFilesToZip(parsedDocument, zip, mediaUrl);
 
       const lang = i18next.language || fallbackLng;
@@ -272,6 +312,20 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
             setFormat(options.target.value as DocDownloadFormat)
           }
         />
+
+        {format !== DocDownloadFormat.PRINT && (
+          <Checkbox
+            label={t('Include document title')}
+            checked={withTitle}
+            onChange={(e) => {
+              setWithTitle(e.target.checked);
+              safeLocalStorage.setItem(
+                `export-with-title-${doc.id}`,
+                String(e.target.checked),
+              );
+            }}
+          />
+        )}
 
         {isExporting && (
           <Box
