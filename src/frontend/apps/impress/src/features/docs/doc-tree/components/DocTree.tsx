@@ -305,8 +305,8 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
             }
 
             .doc-tree-root-item-actions {
-              display: flex;
               opacity: ${rootActionsOpen ? '1' : '0'};
+              display: ${rootActionsOpen ? 'flex' : 'none'};
 
               &:has(.isOpen) {
                 opacity: 1;
