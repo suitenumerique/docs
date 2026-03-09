@@ -29,7 +29,7 @@ export const CommentToolbarButton = () => {
   const Components = useComponentsContext();
   const { currentDoc } = useDocStore();
   const { t } = useTranslation();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
+  const { colorsTokens } = useCunninghamTheme();
   const comments = useExtension('comments') as unknown as ReturnType<
     ReturnType<typeof CommentsExtension>
   >;
@@ -78,22 +78,16 @@ export const CommentToolbarButton = () => {
         }}
         aria-haspopup="dialog"
         data-test="comment-toolbar-button"
+        aria-label={t('Add comment')}
+        mainTooltip={t('Add comment')}
       >
-        <Box
-          $direction="row"
-          $align="center"
-          $gap={spacingsTokens['xs']}
-          $padding={{ right: '2xs' }}
-        >
-          <Icon
-            iconName="comment"
-            className="--docs--icon-bg"
-            $theme="gray"
-            $padding="0.15rem"
-            $size="md"
-          />
-          {t('Comment')}
-        </Box>
+        <Icon
+          iconName="comment"
+          className="--docs--icon-bg"
+          $theme="gray"
+          $padding="0.15rem"
+          $size="md"
+        />
       </Components.Generic.Toolbar.Button>
       <Box
         $background={colorsTokens['gray-100']}

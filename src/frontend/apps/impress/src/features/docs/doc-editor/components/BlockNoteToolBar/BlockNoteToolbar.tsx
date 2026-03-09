@@ -72,11 +72,11 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
   const formattingToolbar = useCallback(() => {
     return (
       <FormattingToolbar>
-        {aiAllowed && AIToolbarButton && <AIToolbarButton />}
+        {toolbarItems}
 
         <CommentToolbarButton />
 
-        {toolbarItems}
+        {aiAllowed && AIToolbarButton && <AIToolbarButton />}
 
         {/* Extra button to do some AI powered actions - only if AIToolbarButton is not available because of MIT license */}
         {conf?.AI_FEATURE_ENABLED && conf?.AI_FEATURE_LEGACY_ENABLED && (
