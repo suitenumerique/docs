@@ -8,7 +8,7 @@ import {
 } from '@blocknote/core';
 import { CommentsExtension } from '@blocknote/core/comments';
 import '@blocknote/core/fonts/inter.css';
-import * as locales from '@blocknote/core/locales';
+import * as localesBN from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -26,7 +26,7 @@ import { Doc, useProviderStore } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
 import { useAnalytics } from '@/libs/Analytics';
 
-import { AI_FEATURE_FLAG } from '../conf';
+import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
 import {
   useHeadings,
   useSaveDoc,
@@ -52,14 +52,14 @@ import {
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
 const useAI = BlockNoteAI?.useAI;
-const localesAI = BlockNoteAI?.localesAI;
+const localesBNAI = BlockNoteAI?.localesAI;
 import {
   InterlinkingLinkInlineContent,
   InterlinkingSearchInlineContent,
 } from './custom-inline-content';
 import XLMultiColumn from './xl-multi-column';
 
-const multiColumnLocales = XLMultiColumn?.locales;
+const localesBNMultiColumn = XLMultiColumn?.locales;
 const withMultiColumn = XLMultiColumn?.withMultiColumn;
 
 const baseBlockNoteSchema = withPageBreak(
@@ -100,10 +100,20 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   useSaveDoc(doc.id, provider.document, isConnectedToCollabServer);
   const { i18n, t } = useTranslation();
-  let lang = i18n.resolvedLanguage;
-  if (!lang || !(lang in locales)) {
-    lang = 'en';
-  }
+  const langLocalesBN =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBN)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  const langLocalesBNMultiColumn =
+    !i18n.resolvedLanguage ||
+    !localesBNMultiColumn ||
+    !(i18n.resolvedLanguage in localesBNMultiColumn)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
+  const langLocalesBNAI =
+    !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBNAI)
+      ? DEFAULT_LOCALE
+      : i18n.resolvedLanguage;
 
   const { uploadFile, errorAttachment } = useUploadFile(doc.id);
   const conf = useConfig().data;
@@ -180,11 +190,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
       dictionary: {
-        ...locales[lang as keyof typeof locales],
-        ...(multiColumnLocales && {
+        ...localesBN[langLocalesBN as keyof typeof localesBN],
+        ...(localesBNMultiColumn && {
           multi_column:
-            multiColumnLocales[lang as keyof typeof multiColumnLocales],
-          ai: localesAI?.[lang as keyof typeof localesAI],
+            localesBNMultiColumn[
+              langLocalesBNMultiColumn as keyof typeof localesBNMultiColumn
+            ],
+          ai: localesBNAI?.[langLocalesBNAI as keyof typeof localesBNAI],
         }),
       },
       pasteHandler: ({ event, defaultPasteHandler }) => {
@@ -228,7 +240,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     [
       aiExtension,
       cursorName,
-      lang,
+      langLocalesBN,
+      langLocalesBNMultiColumn,
+      langLocalesBNAI,
       provider,
       uploadFile,
       threadStore,

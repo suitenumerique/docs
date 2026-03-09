@@ -21,6 +21,7 @@ and this project adheres to
 - 🐛(frontend) fix home collapsing panel #1954
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
 - 🐛(frontend) fix zIndex table of content #1949
+- 🐛(frontend) fix bug when language not supported by BN #1949
 
 
 ## [v4.6.0] - 2026-03-03
