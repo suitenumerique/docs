@@ -38,6 +38,12 @@
       "allowedVersions": "<5.6.0"
     },
     {
+      "groupName": "allowed pydantic-ai-slim versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["pydantic-ai-slim"],
+      "allowedVersions": "<1.59.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
