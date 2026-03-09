@@ -40,14 +40,22 @@ const AIMenuStyle = createGlobalStyle`
     height: 18px;
     width: 18px;
   }
-  .--docs--ai-menu input[name="ai-prompt"]{
-    padding-inline-start: 3rem;
-  }
-  .--docs--ai-menu .mantine-TextInput-section[data-position="left"] {
-    margin-inline: 0.75rem;
-  }
-  .--docs--ai-menu .mantine-TextInput-section[data-position="right"] {
-    inset-inline-end: 2rem;
+  .--docs--ai-menu {
+    input[name="ai-prompt"]{
+      padding-inline-start: 3rem;
+    }
+    .mantine-TextInput-wrapper {
+      display: flex
+    }
+    .mantine-TextInput-section[data-position="left"] {
+      margin-inline: 0.75rem;
+    }
+    .mantine-TextInput-section[data-position="right"] {
+      inset-inline-end: var(--c--globals--spacings--sm);
+      position: relative;
+      flex-shrink: 0;
+      width: auto;
+    }
   }
 `;
 
