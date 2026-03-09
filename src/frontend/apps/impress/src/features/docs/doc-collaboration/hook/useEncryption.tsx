@@ -7,7 +7,10 @@ export type EncryptionError =
   | 'missing_public_key'
   | null;
 
-export function useEncryption(userId?: string): {
+export function useEncryption(
+  userId?: string,
+  refreshTrigger?: number,
+): {
   encryptionLoading: boolean;
   encryptionSettings: {
     userId: string;
@@ -83,8 +86,8 @@ export function useEncryption(userId?: string): {
             userPublicKey: userPublicKey,
           });
         }
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
 
         if (!cancelled) {
           setSettings(null);
@@ -101,7 +104,7 @@ export function useEncryption(userId?: string): {
     return () => {
       cancelled = true;
     };
-  }, [userId, enableEncryption]);
+  }, [userId, enableEncryption, refreshTrigger]);
 
   return {
     encryptionLoading: loading,

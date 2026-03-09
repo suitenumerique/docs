@@ -10,7 +10,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
-import { backendUrl } from '@/api';
 import { Box, ButtonCloseModal, Text, TextErrors } from '@/components';
 import { decryptContent } from '@/docs/doc-collaboration';
 import { createDocAttachment } from '@/docs/doc-editor/api';
@@ -254,16 +253,12 @@ export const ModalRemoveDocEncryption = ({
         </Box>
       }
     >
-      <Box className="--docs--modal-remove-doc-encryption">
+      <Box className="--docs--modal-remove-doc-encryption" $gap="sm">
         {!isError && (
-          <Text
-            $size="sm"
-            $variation="secondary"
-            $display="inline-block"
-            as="p"
-          >
-            <br />
-            TODO: warning about removing encryption
+          <Text $size="sm" $variation="secondary">
+            {t(
+              'Removing encryption will decrypt the document and make it accessible without encryption keys. The document content will be stored in plain text on the server.',
+            )}
           </Text>
         )}
 

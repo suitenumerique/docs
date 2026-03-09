@@ -2,17 +2,16 @@ import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box, BoxButton } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
+import { BoxButton } from '@/components';
 
 import ProConnectImg from '../assets/button-proconnect.svg';
 import { useAuth } from '../hooks';
-import { gotoLogin, gotoLogout } from '../utils';
+import { gotoLogin } from '../utils';
+import { AccountMenu } from './AccountMenu';
 
 export const ButtonLogin = () => {
   const { t } = useTranslation();
   const { authenticated } = useAuth();
-  const { colorsTokens } = useCunninghamTheme();
 
   if (!authenticated) {
     return (
@@ -28,26 +27,7 @@ export const ButtonLogin = () => {
     );
   }
 
-  return (
-    <Box
-      $css={css`
-        .--docs--button-logout:focus-visible {
-          box-shadow: 0 0 0 2px ${colorsTokens['brand-400']} !important;
-          border-radius: var(--c--globals--spacings--st);
-        }
-      `}
-    >
-      <Button
-        onClick={gotoLogout}
-        color="brand"
-        variant="tertiary"
-        aria-label={t('Logout')}
-        className="--docs--button-logout"
-      >
-        {t('Logout')}
-      </Button>
-    </Box>
-  );
+  return <AccountMenu />;
 };
 
 export const ProConnectButton = () => {

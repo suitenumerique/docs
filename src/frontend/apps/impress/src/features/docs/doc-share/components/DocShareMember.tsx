@@ -144,15 +144,23 @@ export const QuickSearchGroupMember = ({
         group={membersData}
         renderElement={(access) => {
           const hasMismatch = keyMismatchUserIds?.has(access.user.id);
+          const hasNoEncryptionKey =
+            doc.is_encrypted && !access.user.encryption_public_key;
+
+          let suffix: string | undefined;
+          if (hasMismatch) {
+            suffix = t('DIFFERENT PUBLIC KEY, PLEASE VERIFY');
+          } else if (hasNoEncryptionKey) {
+            suffix = t(
+              'ENCRYPTION DISABLED - consider removing this member since unable to read the document',
+            );
+          }
+
           return (
             <DocShareMemberItem
               doc={doc}
               access={access}
-              suffix={
-                hasMismatch
-                  ? t('DIFFERENT PUBLIC KEY, PLEASE VERIFY')
-                  : undefined
-              }
+              suffix={suffix}
               onSuffixClick={
                 hasMismatch
                   ? () => setMismatchUserId(access.user.id)

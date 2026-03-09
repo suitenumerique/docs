@@ -1,5 +1,5 @@
-const userKeyPairAlgorithm = 'RSA-OAEP';
-const documentSymmetricKeyAlgorithm = 'AES-GCM';
+export const userKeyPairAlgorithm = 'RSA-OAEP';
+export const documentSymmetricKeyAlgorithm = 'AES-GCM';
 
 export async function generateUserKeyPair(): Promise<CryptoKeyPair> {
   return await crypto.subtle.generateKey(
@@ -79,6 +79,7 @@ export async function encryptContent(
   const result = new Uint8Array(iv.length + ciphertext.byteLength);
   result.set(iv);
   result.set(new Uint8Array(ciphertext), iv.length);
+
   return result;
 }
 
@@ -113,6 +114,7 @@ export async function computeKeyFingerprint(
   const hex = Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
+
   return hex
     .slice(0, 16)
     .replace(/(.{4})/g, '$1 ')

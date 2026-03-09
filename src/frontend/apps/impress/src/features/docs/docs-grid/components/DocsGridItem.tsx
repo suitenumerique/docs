@@ -37,7 +37,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const shareModal = useModal();
   const { user } = useAuth();
   const { hasMismatches: hasKeyWarning } = usePublicKeyRegistry(
-    doc.accesses_public_keys_per_user,
+    doc.is_encrypted ? doc.accesses_public_keys_per_user : undefined,
     user?.id,
   );
   const isPublic = doc.link_reach === LinkReach.PUBLIC;

@@ -105,7 +105,7 @@ export const DocShareModal = ({
       : null;
 
   const { mismatches: keyMismatches, acceptNewKey } = usePublicKeyRegistry(
-    doc.accesses_public_keys_per_user,
+    doc.is_encrypted ? doc.accesses_public_keys_per_user : undefined,
     user?.id,
   );
   const keyMismatchUserIds = useMemo(
@@ -283,7 +283,7 @@ export const DocShareModal = ({
               encryptionError === 'missing_public_key') && (
               <Text $variation="secondary" $textAlign="center" $size="sm">
                 {t(
-                  'This usually happens when you switch to a new device or browser without restoring your encryption backup.',
+                  'This usually happens when you switch to a new device or browser without restoring your encryption backup, please go to your "Encryption Settings" to fix it.',
                 )}
               </Text>
             )}

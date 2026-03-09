@@ -77,7 +77,7 @@ export const DocToolBox = ({
   const modalShare = useModal();
 
   const { hasMismatches: hasKeyWarnings } = usePublicKeyRegistry(
-    doc.accesses_public_keys_per_user,
+    doc.is_encrypted ? doc.accesses_public_keys_per_user : undefined,
     encryptionSettings?.userId,
   );
 

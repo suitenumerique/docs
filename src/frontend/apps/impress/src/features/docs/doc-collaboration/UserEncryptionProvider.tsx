@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 import { useAuth } from '@/features/auth';
 
@@ -12,12 +12,14 @@ interface UserEncryptionContextValue {
     userPublicKey: CryptoKey;
   } | null;
   encryptionError: EncryptionError;
+  refreshEncryption: () => void;
 }
 
 const UserEncryptionContext = createContext<UserEncryptionContextValue>({
   encryptionLoading: true,
   encryptionSettings: null,
   encryptionError: null,
+  refreshEncryption: () => {},
 });
 
 export const UserEncryptionProvider = ({
@@ -26,10 +28,17 @@ export const UserEncryptionProvider = ({
   children: React.ReactNode;
 }) => {
   const { user } = useAuth();
-  const value = useEncryption(user?.id);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const encryptionValue = useEncryption(user?.id, refreshTrigger);
+
+  const refreshEncryption = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   return (
-    <UserEncryptionContext.Provider value={value}>
+    <UserEncryptionContext.Provider
+      value={{ ...encryptionValue, refreshEncryption }}
+    >
       {children}
     </UserEncryptionContext.Provider>
   );

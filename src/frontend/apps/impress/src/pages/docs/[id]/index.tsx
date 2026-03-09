@@ -306,7 +306,7 @@ const DocPage = ({ id }: DocProps) => {
             encryptionError === 'missing_public_key') && (
             <Text $variation="secondary" $textAlign="center">
               {t(
-                'This usually happens when you switch to a new device or browser without restoring your encryption backup.',
+                'This usually happens when you switch to a new device or browser without restoring your encryption backup, please go to your "Encryption Settings" to fix it.',
               )}
             </Text>
           )}

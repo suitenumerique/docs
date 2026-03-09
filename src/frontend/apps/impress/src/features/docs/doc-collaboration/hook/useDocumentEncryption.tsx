@@ -73,8 +73,8 @@ export function useDocumentEncryption(
         if (!cancelled) {
           setSettings({ documentSymmetricKey: symmetricKey });
         }
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
 
         if (!cancelled) {
           setError('decryption_failed');

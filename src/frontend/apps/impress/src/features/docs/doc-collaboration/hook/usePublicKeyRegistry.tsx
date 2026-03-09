@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import {
-  STORE_KNOWN_PUBLIC_KEYS,
-  getEncryptionDB,
-} from '../encryptionDB';
+import { STORE_KNOWN_PUBLIC_KEYS, getEncryptionDB } from '../encryptionDB';
 
 export interface PublicKeyMismatch {
   userId: string;
   knownKey: string;
   currentKey: string;
+}
+
+// module-level listener set to keep all hook instances in sync
+const registryListeners = new Set<() => void>();
+
+function notifyRegistryUpdated() {
+  registryListeners.forEach((fn) => fn());
 }
 
 /**
@@ -19,6 +23,8 @@ export interface PublicKeyMismatch {
  *   flagged as a mismatch.
  * - The caller can accept a new key via `acceptNewKey(userId)`, which updates
  *   the locally stored key.
+ *
+ * All instances stay in sync via a module-level listener set.
  */
 export function usePublicKeyRegistry(
   accessesPublicKeysPerUser: Record<string, string> | undefined,
@@ -26,6 +32,18 @@ export function usePublicKeyRegistry(
 ) {
   const [mismatches, setMismatches] = useState<PublicKeyMismatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // listen for updates from other hook instances
+  useEffect(() => {
+    const handler = () => setRefreshTrigger((prev) => prev + 1);
+
+    registryListeners.add(handler);
+
+    return () => {
+      registryListeners.delete(handler);
+    };
+  }, []);
 
   useEffect(() => {
     if (!accessesPublicKeysPerUser) {
@@ -67,8 +85,8 @@ export function usePublicKeyRegistry(
         if (!cancelled) {
           setMismatches(newMismatches);
         }
-      } catch (err) {
-        console.error('usePublicKeyRegistry: failed to check keys', err);
+      } catch (error) {
+        console.error('usePublicKeyRegistry: failed to check keys', error);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -82,7 +100,7 @@ export function usePublicKeyRegistry(
     return () => {
       cancelled = true;
     };
-  }, [accessesPublicKeysPerUser, currentUserId]);
+  }, [accessesPublicKeysPerUser, currentUserId, refreshTrigger]);
 
   const acceptNewKey = useCallback(
     async (userId: string) => {
@@ -99,6 +117,9 @@ export function usePublicKeyRegistry(
       );
 
       setMismatches((prev) => prev.filter((m) => m.userId !== userId));
+
+      // notify other instances to re-check
+      notifyRegistryUpdated();
     },
     [mismatches],
   );

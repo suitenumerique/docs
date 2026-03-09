@@ -1,30 +1,23 @@
 import {
+  Alert,
   Button,
-  Loader,
   Modal,
   ModalSize,
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
-import { backendUrl } from '@/api';
-import { useState } from 'react';
-
 import { Box, ButtonCloseModal, Icon, Text, TextErrors } from '@/components';
-import { useUserUpdate } from '@/core/api/useUserUpdate';
 import {
   encryptContent,
   generateSymmetricKey,
-  generateUserKeyPair,
-  getEncryptionDB,
   prepareEncryptedSymmetricKeysForUsers,
   useUserEncryption,
 } from '@/docs/doc-collaboration';
 import { createDocAttachment } from '@/docs/doc-editor/api';
-import { toBase64 } from '@/docs/doc-editor';
 import { useAuth } from '@/features/auth';
 import {
   Doc,
@@ -133,7 +126,6 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
     useProviderStore();
   const { user } = useAuth();
   const { encryptionSettings } = useUserEncryption();
-  const { mutateAsync: updateUser } = useUserUpdate();
 
   const [isPending, setIsPending] = useState(false);
 
@@ -170,8 +162,13 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
     );
   }, [accesses, doc.accesses_public_keys_per_user]);
 
+  const hasEncryptionKeys = !!encryptionSettings;
+
   const canEncrypt =
-    isRestricted && !hasPendingInvitations && membersWithoutKey.length === 0;
+    hasEncryptionKeys &&
+    isRestricted &&
+    !hasPendingInvitations &&
+    membersWithoutKey.length === 0;
 
   const handleClose = () => {
     if (isPending) {
@@ -181,57 +178,13 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
   };
 
   const handleEncrypt = async () => {
-    if (!provider || !user || isPending || !canEncrypt) {
+    if (!provider || !user || isPending || !canEncrypt || !encryptionSettings) {
       return;
     }
 
     setIsPending(true);
 
     try {
-      let currentUserPublicKeyFromThisOnboardingSession: ArrayBuffer | null =
-        null;
-
-      // Perform the onboarding if that's the first time using encryption on this device
-      if (!encryptionSettings) {
-        // TODO: trigger the onboarding, either by creating or retrieving a key from another device
-        // TODO: probably the logic should be at a device key level, not user one?
-
-        const userKeyPair = await generateUserKeyPair();
-
-        const encryptionDatabase = await getEncryptionDB();
-
-        // TODO: it should use transaction
-        // encryptionDatabase.transaction
-        await encryptionDatabase.put(
-          'privateKey',
-          userKeyPair.privateKey,
-          `user:${user.id}`,
-        );
-        await encryptionDatabase.put(
-          'publicKey',
-          userKeyPair.publicKey,
-          `user:${user.id}`,
-        );
-
-        const rawPublicKey = await crypto.subtle.exportKey(
-          'spki',
-          userKeyPair.publicKey,
-        );
-
-        // TODO: it should throw if the backend has already a public key (so the user can with concious forget the old one (but here he did the onboarding already so... it was probably a new device))
-        await updateUser({
-          id: user.id,
-          encryption_public_key: toBase64(new Uint8Array(rawPublicKey)),
-        });
-
-        currentUserPublicKeyFromThisOnboardingSession = rawPublicKey;
-
-        // TODO: should check encryptionSettings will update, otherwise hard refresh is needed
-        window.location.reload();
-
-        return;
-      }
-
       notifyOthers(EncryptionTransitionEvent.ENCRYPTION_STARTED);
 
       const documentSymmetricKey = await generateSymmetricKey();
@@ -248,13 +201,6 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
           doc.accesses_public_keys_per_user,
         )) {
           usersPublicKeys[userId] = Buffer.from(publicKey, 'base64').buffer;
-        }
-
-        // if the onboarding has been done directly in this encryption flow, the backend has not yet told the frontend
-        // about the current user key, so just patching the mapping with this new public key
-        if (currentUserPublicKeyFromThisOnboardingSession) {
-          usersPublicKeys[user.id] =
-            currentUserPublicKeyFromThisOnboardingSession;
         }
       } else {
         // if it has been not provided it's weird because it should only happen for people not authenticated
@@ -391,23 +337,51 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
       <Box className="--docs--modal-encrypt-doc" $gap="sm">
         {!isError && (
           <Box $gap="sm">
-            <Text $size="sm" $variation="secondary">
-              {t(
-                'Encrypting a document ensures that only authorized members can read its content. Before proceeding, the following conditions must be met:',
-              )}
-            </Text>
+            <Alert type={VariantType.WARNING}>
+              <Box $gap="xs">
+                <Text $size="sm">
+                  {t(
+                    'Encrypting a document ensures that only authorized members can read its content. Keep in mind before proceeding any access will then require its user to do the encryption onboarding, with the complication of ensuring keys backups.',
+                  )}
+                </Text>
+              </Box>
+            </Alert>
 
-            {/* TODO: warning about encryption */}
-            {/* TODO: if no public key for current user, provide an onboarding */}
+            <Text $size="sm" $variation="secondary">
+              {t('Here the conditions that must be met:')}
+            </Text>
 
             <Box $gap="xs">
               <Box $direction="row" $align="center" $gap="xs">
                 <Icon
+                  iconName={hasEncryptionKeys ? 'check_circle' : 'cancel'}
+                  $size="sm"
+                  $theme={hasEncryptionKeys ? 'success' : 'error'}
+                />
+                <Text
+                  $size="sm"
+                  $weight={hasEncryptionKeys ? '400' : '600'}
+                  $theme={hasEncryptionKeys ? undefined : 'error'}
+                >
+                  {hasEncryptionKeys
+                    ? t('Encryption is enabled on your account')
+                    : t(
+                        'You must enable encryption from your account menu first',
+                      )}
+                </Text>
+              </Box>
+
+              <Box $direction="row" $align="center" $gap="xs">
+                <Icon
                   iconName={isRestricted ? 'check_circle' : 'cancel'}
                   $size="sm"
-                  $theme={isRestricted ? 'success' : 'danger'}
+                  $theme={isRestricted ? 'success' : 'error'}
                 />
-                <Text $size="sm" $weight={isRestricted ? '400' : '600'}>
+                <Text
+                  $size="sm"
+                  $weight={isRestricted ? '400' : '600'}
+                  $theme={isRestricted ? undefined : 'error'}
+                >
                   {isRestricted
                     ? t('Document access is private')
                     : t(
@@ -426,11 +400,12 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
                 <Icon
                   iconName={!hasPendingInvitations ? 'check_circle' : 'cancel'}
                   $size="sm"
-                  $theme={!hasPendingInvitations ? 'success' : 'danger'}
+                  $theme={!hasPendingInvitations ? 'success' : 'error'}
                 />
                 <Text
                   $size="sm"
                   $weight={!hasPendingInvitations ? '400' : '600'}
+                  $theme={!hasPendingInvitations ? undefined : 'error'}
                 >
                   {!hasPendingInvitations
                     ? t('No pending invitations')
@@ -446,12 +421,15 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
                     }
                     $size="sm"
                     $theme={
-                      membersWithoutKey.length === 0 ? 'success' : 'danger'
+                      membersWithoutKey.length === 0 ? 'success' : 'error'
                     }
                   />
                   <Text
                     $size="sm"
                     $weight={membersWithoutKey.length === 0 ? '400' : '600'}
+                    $theme={
+                      membersWithoutKey.length === 0 ? undefined : 'error'
+                    }
                   >
                     {membersWithoutKey.length === 0
                       ? t('All members have encryption enabled')
@@ -472,14 +450,6 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
                 )}
               </Box>
             </Box>
-
-            {!canEncrypt && (
-              <Text $size="xs" $variation="secondary">
-                {t(
-                  'Please resolve the issues above before encrypting the document.',
-                )}
-              </Text>
-            )}
           </Box>
         )}
 
