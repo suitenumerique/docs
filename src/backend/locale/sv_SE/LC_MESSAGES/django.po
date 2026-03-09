@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-26 09:13+0000\n"
-"PO-Revision-Date: 2026-02-27 08:24\n"
+"POT-Creation-Date: 2026-03-06 09:37+0000\n"
+"PO-Revision-Date: 2026-03-09 14:02\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
 "Language: sv_SE\n"
@@ -75,7 +75,7 @@ msgstr ""
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr ""
 
-#: build/lib/core/api/viewsets.py:1278 core/api/viewsets.py:1278
+#: build/lib/core/api/viewsets.py:1279 core/api/viewsets.py:1279
 #, python-brace-format
 msgid "copy of {title}"
 msgstr ""

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-26 09:13+0000\n"
-"PO-Revision-Date: 2026-02-27 08:24\n"
+"POT-Creation-Date: 2026-03-06 09:37+0000\n"
+"PO-Revision-Date: 2026-03-09 14:02\n"
 "Last-Translator: \n"
 "Language-Team: Dutch\n"
 "Language: nl_NL\n"
@@ -75,7 +75,7 @@ msgstr "Dit veld is verplicht."
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr "Link bereik '%(link_reach)s' is niet toegestaan op basis van bovenliggende documentconfiguratie."
 
-#: build/lib/core/api/viewsets.py:1278 core/api/viewsets.py:1278
+#: build/lib/core/api/viewsets.py:1279 core/api/viewsets.py:1279
 #, python-brace-format
 msgid "copy of {title}"
 msgstr "kopie van {title}"
@@ -516,7 +516,7 @@ msgstr "Deze email is al geassocieerd met een geregistreerde gebruiker."
 
 #: build/lib/impress/settings.py:702 impress/settings.py:702
 msgid "Docs AI"
-msgstr ""
+msgstr "Docs AI"
 
 #: core/templates/mail/html/template.html:153
 #: core/templates/mail/text/template.txt:3
