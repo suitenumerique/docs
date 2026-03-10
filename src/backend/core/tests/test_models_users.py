@@ -3,6 +3,7 @@ Unit tests for the User model
 """
 
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -184,15 +185,12 @@ def test_models_users_handle_onboarding_documents_access_duplicate_prevention():
     assert link_traces.count() == 1
 
 
-def test_models_users_handle_onboarding_documents_on_restricted_document_is_not_allowed(
-    settings,
-):
+def test_models_users_handle_onboarding_documents_on_restricted_document_is_not_allowed():
     """Onboarding document can be used when restricted"""
 
     document = factories.DocumentFactory(link_reach=models.LinkReachChoices.RESTRICTED)
-    settings.USER_ONBOARDING_DOCUMENTS = [str(document.id)]
-
-    user = factories.UserFactory()
+    with override_settings(USER_ONBOARDING_DOCUMENTS=[str(document.id)]):
+        user = factories.UserFactory()
 
     assert not models.LinkTrace.objects.filter(user=user, document=document).exists()
 
@@ -304,3 +302,30 @@ def test_models_users_duplicate_onboarding_sandbox_document_integration_with_oth
         document=sandbox_doc, user=user, role=models.RoleChoices.OWNER
     ).exists()
     assert models.LinkTrace.objects.filter(document=onboarding_doc, user=user).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_models_users_duplicate_onboarding_sandbox_race_condition():
+    """
+    It should be possible to create several documents at the same time
+    without causing any race conditions or data integrity issues.
+    """
+
+    def create_user():
+        return factories.UserFactory()
+
+    template_document = factories.DocumentFactory(title="Getting started with Docs")
+    with (
+        override_settings(
+            USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id),
+        ),
+        ThreadPoolExecutor(max_workers=2) as executor,
+    ):
+        future1 = executor.submit(create_user)
+        future2 = executor.submit(create_user)
+
+        user1 = future1.result()
+        user2 = future2.result()
+
+        assert isinstance(user1, models.User)
+        assert isinstance(user2, models.User)
