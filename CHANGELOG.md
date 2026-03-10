@@ -15,6 +15,7 @@ and this project adheres to
 - 📝(docs) improve README and add documentation hub #1870
 - ♿️(frontend) restore focus to triggers after closing menus and modals #1863
 - 🚸(frontend) change position elements toolbar #1957
+- 💄(frontend) improve comments highlights #1924
 
 ### Fixed
 
@@ -23,7 +24,6 @@ and this project adheres to
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
 - 🐛(frontend) fix zIndex table of content #1949
 - 🐛(frontend) fix bug when language not supported by BN #1957
-
 
 ## [v4.6.0] - 2026-03-03
 
@@ -55,6 +55,7 @@ and this project adheres to
 - ♿️(frontend) add focus on open to modals #1948
 
 ### Fixed
+
 - 🐛 (backend) prevent privileged users from requesting access #1898
 - 🐛(frontend) fix broadcast store sync #1846
 - 🐛(helm) use celery resources instead of backend resources #1887

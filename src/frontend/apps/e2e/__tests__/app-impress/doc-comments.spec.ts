@@ -118,6 +118,50 @@ test.describe('Doc Comments', () => {
     await cleanup();
   });
 
+  test('it checks the comments style changes on interactions', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'comment-interaction', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'Hello' });
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Comment', exact: true }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+    await expect(thread.getByText('This is a comment').first()).toBeHidden();
+
+    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
+
+    // Base style
+    const mark = editor.getByText('Hello');
+    let bg = await mark.evaluate(
+      (el) => window.getComputedStyle(el, '::before').backgroundColor,
+    );
+    let opacity = await mark.evaluate(
+      (el) => window.getComputedStyle(el, '::before').opacity,
+    );
+
+    expect(bg).toBe('rgb(225, 212, 183)');
+    expect(opacity).toBe('0.7');
+
+    // Colors update on hover
+    await mark.hover();
+    opacity = await mark.evaluate(
+      (el) => window.getComputedStyle(el, '::before').opacity,
+    );
+    expect(opacity).toBe('1');
+
+    // Colors update on click
+    await mark.click();
+    opacity = await mark.evaluate(
+      (el) => window.getComputedStyle(el, '::before').opacity,
+    );
+    expect(opacity).toBe('1');
+  });
+
   test('it checks the comments interactions', async ({ page, browserName }) => {
     await createDoc(page, 'comment-interaction', browserName, 1);
 
@@ -130,12 +174,8 @@ test.describe('Doc Comments', () => {
     await thread.getByRole('paragraph').first().fill('This is a comment');
     await thread.locator('[data-test="save"]').click();
     await expect(thread.getByText('This is a comment').first()).toBeHidden();
+    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
 
-    // Check background color changed
-    await expect(editor.getByText('Hello')).toHaveCSS(
-      'background-color',
-      'rgba(237, 180, 0, 0.4)',
-    );
     await editor.first().click();
     await editor.getByText('Hello').click();
 
@@ -184,6 +224,7 @@ test.describe('Doc Comments', () => {
     await thread.getByText('This is an edited comment').first().hover();
     await thread.locator('[data-test="resolve"]').click();
     await expect(thread).toBeHidden();
+
     await expect(editor.getByText('Hello')).toHaveCSS(
       'background-color',
       'rgba(0, 0, 0, 0)',
@@ -195,11 +236,8 @@ test.describe('Doc Comments', () => {
 
     await thread.getByRole('paragraph').first().fill('This is a new comment');
     await thread.locator('[data-test="save"]').click();
+    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
 
-    await expect(editor.getByText('Hello')).toHaveCSS(
-      'background-color',
-      'rgba(237, 180, 0, 0.4)',
-    );
     await editor.first().click();
     await editor.getByText('Hello').click();
 
@@ -207,10 +245,7 @@ test.describe('Doc Comments', () => {
     await thread.locator('[data-test="moreactions"]').first().click();
     await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
 
-    await expect(editor.getByText('Hello')).toHaveCSS(
-      'background-color',
-      'rgba(0, 0, 0, 0)',
-    );
+    await expect(editor.getByText('Hello')).not.toHaveClass('bn-thread-mark');
   });
 
   test('it checks the comments abilities', async ({ page, browserName }) => {

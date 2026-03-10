@@ -8,10 +8,40 @@ export const cssComments = (
   & .--docs--main-editor .ProseMirror {
     // Comments marks in the editor
     .bn-editor {
-      .bn-thread-mark:not([data-orphan='true']),
-      .bn-thread-mark-selected:not([data-orphan='true']) {
-        background: ${canSeeComment ? '#EDB40066' : 'transparent'};
-        color: var(--c--globals--colors--gray-700);
+      .bn-thread-mark,
+      .bn-thread-mark-selected {
+        background-color: transparent;
+      }
+
+      .bn-thread-mark:not([data-orphan='true']) {
+        position: relative;
+      }
+
+      .bn-thread-mark:not([data-orphan='true'])::before {
+        display: ${canSeeComment ? 'inline' : 'none'};
+        position: absolute;
+        content: '';
+
+        mix-blend-mode: multiply;
+        pointer-events: none;
+        z-index: 1;
+
+        top: 0;
+        left: -2px;
+        width: calc(100% + 4px);
+        height: calc(100% + 2px);
+
+        background: var(--c--globals--colors--yellow-150);
+        border-bottom: 2px solid var(--c--globals--colors--yellow-350);
+        border-radius: var(--c--globals--spacing--3xs);
+        opacity: 0.7;
+      }
+
+      .bn-thread-mark:not([data-orphan='true']):hover::before,
+      .bn-thread-mark:not([data-orphan='true']):has(
+          .bn-thread-mark-selected
+        )::before {
+        opacity: 1;
       }
 
       [data-show-selection] {
