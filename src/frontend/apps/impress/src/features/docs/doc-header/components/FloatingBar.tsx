@@ -31,7 +31,7 @@ export const FloatingBar = () => {
       margin-left: calc(-${base});
       margin-right: calc(-${base});
       margin-top: calc(-${base});
-      z-index: 10;
+      z-index: 21; // Under editor select box but above other elements (e.g., doc title, suggestion menu)
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;

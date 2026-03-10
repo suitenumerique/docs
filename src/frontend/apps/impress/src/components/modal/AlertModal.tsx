@@ -52,6 +52,7 @@ export const AlertModal = ({
 
   return (
     <Modal
+      closeOnClickOutside
       isOpen={isOpen}
       size={ModalSize.MEDIUM}
       onClose={onClose}

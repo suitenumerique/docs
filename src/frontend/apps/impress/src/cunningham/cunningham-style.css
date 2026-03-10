@@ -76,6 +76,18 @@
   background-color: transparent;
 }
 
+.c__modal__close .c__button {
+  right: 0;
+  top: 0;
+  position: relative;
+}
+
+.c__modal__close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
 /**
  * Tooltip
 */

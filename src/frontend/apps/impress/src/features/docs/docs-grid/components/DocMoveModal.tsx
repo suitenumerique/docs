@@ -167,9 +167,13 @@ export const DocMoveModal = ({
                 $weight="normal"
                 $textAlign="left"
               >
-                <Trans t={t}>
-                  Choose the new location for <strong>{docTitle}</strong>.
-                </Trans>
+                <Trans
+                  i18nKey="Choose the new location for <strong>{{title}}</strong>."
+                  values={{
+                    title: docTitle,
+                  }}
+                  components={{ strong: <strong /> }}
+                />
               </Text>
             </Box>
             <HorizontalSeparator />
