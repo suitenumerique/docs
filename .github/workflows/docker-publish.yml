@@ -66,6 +66,7 @@ jobs:
           AMD64_TAGS=$(echo "${{ steps.meta.outputs.tags }}" | sed 's/$/-amd64/')
           ARM64_TAGS=$(echo "${{ steps.meta.outputs.tags }}" | sed 's/$/-arm64/')
           FIRST_AMD64_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -1)-amd64
+          FIRST_ARM64_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -1)-arm64
           {
             echo "amd64<<EOF"
             echo "$AMD64_TAGS"
@@ -74,6 +75,7 @@ jobs:
             echo "$ARM64_TAGS"
             echo "EOF"
             echo "amd64_first=$FIRST_AMD64_TAG"
+            echo "arm64_first=$FIRST_ARM64_TAG"
           } >> "$GITHUB_OUTPUT"
       # - name: Run trivy scan
       #   if: ${{ vars.TRIVY_SCAN_ENABLED }} == 'true'
@@ -83,7 +85,9 @@ jobs:
       #     docker-image-name: "docker.io/${{ inputs.image_name }}:${{ github.sha }}"
       #     trivyignores: ./.github/.trivyignore
       - name: Build and push (amd64)
-        if: ${{ inputs.should_push }}||${{ vars.TRIVY_SCAN_ENABLED }} != 'true'
+        id: build-amd64
+        continue-on-error: true
+        if: ${{ inputs.should_push || vars.TRIVY_SCAN_ENABLED != 'true' }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
@@ -97,7 +101,18 @@ jobs:
           provenance: false
           tags: ${{ steps.platform-tags.outputs.amd64 }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Handle immutable tag error (amd64)
+        if: steps.build-amd64.outcome == 'failure'
+        run: |
+          if docker buildx imagetools inspect "${{ steps.platform-tags.outputs.amd64_first }}" > /dev/null 2>&1; then
+            echo "AMD64 tag already exists in immutable registry, treating as success"
+          else
+            echo "AMD64 build failed"
+            exit 1
+          fi
       - name: Build and push (arm64)
+        id: build-arm64
+        continue-on-error: true
         if: ${{ inputs.should_push }}
         uses: docker/build-push-action@v6
         with:
@@ -113,6 +128,15 @@ jobs:
           provenance: false
           tags: ${{ steps.platform-tags.outputs.arm64 }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Handle immutable tag error (arm64)
+        if: steps.build-arm64.outcome == 'failure'
+        run: |
+          if docker buildx imagetools inspect "${{ steps.platform-tags.outputs.arm64_first }}" > /dev/null 2>&1; then
+            echo "ARM64 tag already exists in immutable registry, treating as success"
+          else
+            echo "ARM64 build failed"
+            exit 1
+          fi
       - name: Create multi-arch manifests
         if: ${{ inputs.should_push }}
         id: create-manifest
