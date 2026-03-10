@@ -238,16 +238,20 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     )
                     continue
 
-                onboarding_accesses.append(
-                    DocumentAccess(
-                        user=self, document=document, role=RoleChoices.READER
+                if document.link_reach == LinkReachChoices.RESTRICTED:
+                    logger.warning(
+                        "Onboarding on a restricted document is not allowed. Must be public or "
+                        "connected. Restricted document: %s",
+                        document_id,
                     )
-                )
+                    continue
+
+                onboarding_accesses.append(LinkTrace(user=self, document=document))
                 favorite_documents.append(
                     DocumentFavorite(user=self, document_id=document_id)
                 )
 
-            DocumentAccess.objects.bulk_create(onboarding_accesses)
+            LinkTrace.objects.bulk_create(onboarding_accesses)
             DocumentFavorite.objects.bulk_create(favorite_documents)
 
     def _duplicate_onboarding_sandbox_document(self):

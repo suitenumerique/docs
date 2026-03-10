@@ -89,24 +89,19 @@ def test_models_users_handle_onboarding_documents_access_empty_setting():
     assert models.DocumentAccess.objects.filter(user=user).count() == 0
 
 
-def test_models_users_handle_onboarding_documents_access_with_single_document():
+def test_models_users_handle_onboarding_document_link_trace_with_single_document():
     """
     When USER_ONBOARDING_DOCUMENTS has a valid document ID,
-    an access should be created for the new user with the READER role.
+    a LinkTrace should be created for the new user.
 
     The document should be pinned as a favorite for the user.
     """
-    document = factories.DocumentFactory()
+    document = factories.DocumentFactory(link_reach=models.LinkReachChoices.PUBLIC)
 
     with override_settings(USER_ONBOARDING_DOCUMENTS=[str(document.id)]):
         user = factories.UserFactory()
 
-    assert (
-        models.DocumentAccess.objects.filter(user=user, document=document).count() == 1
-    )
-
-    access = models.DocumentAccess.objects.get(user=user, document=document)
-    assert access.role == models.RoleChoices.READER
+    assert models.LinkTrace.objects.filter(user=user, document=document).count() == 1
 
     user_favorites = models.DocumentFavorite.objects.filter(user=user)
     assert user_favorites.count() == 1
@@ -121,9 +116,15 @@ def test_models_users_handle_onboarding_documents_access_with_multiple_documents
     All accesses should have the READER role.
     All documents should be pinned as favorites for the user.
     """
-    document1 = factories.DocumentFactory(title="Document 1")
-    document2 = factories.DocumentFactory(title="Document 2")
-    document3 = factories.DocumentFactory(title="Document 3")
+    document1 = factories.DocumentFactory(
+        title="Document 1", link_reach=models.LinkReachChoices.PUBLIC
+    )
+    document2 = factories.DocumentFactory(
+        title="Document 2", link_reach=models.LinkReachChoices.AUTHENTICATED
+    )
+    document3 = factories.DocumentFactory(
+        title="Document 3", link_reach=models.LinkReachChoices.PUBLIC
+    )
 
     with override_settings(
         USER_ONBOARDING_DOCUMENTS=[
@@ -134,15 +135,12 @@ def test_models_users_handle_onboarding_documents_access_with_multiple_documents
     ):
         user = factories.UserFactory()
 
-    user_accesses = models.DocumentAccess.objects.filter(user=user)
-    assert user_accesses.count() == 3
+    link_traces = models.LinkTrace.objects.filter(user=user)
+    assert link_traces.count() == 3
 
-    assert models.DocumentAccess.objects.filter(user=user, document=document1).exists()
-    assert models.DocumentAccess.objects.filter(user=user, document=document2).exists()
-    assert models.DocumentAccess.objects.filter(user=user, document=document3).exists()
-
-    for access in user_accesses:
-        assert access.role == models.RoleChoices.READER
+    assert models.LinkTrace.objects.filter(user=user, document=document1).exists()
+    assert models.LinkTrace.objects.filter(user=user, document=document2).exists()
+    assert models.LinkTrace.objects.filter(user=user, document=document3).exists()
 
     user_favorites = models.DocumentFavorite.objects.filter(user=user)
     assert user_favorites.count() == 3
@@ -166,7 +164,7 @@ def test_models_users_handle_onboarding_documents_access_with_invalid_document_i
             call_args = mock_logger.warning.call_args
             assert "Onboarding document with id" in call_args[0][0]
 
-    assert models.DocumentAccess.objects.filter(user=user).count() == 0
+    assert models.LinkTrace.objects.filter(user=user).count() == 0
 
 
 def test_models_users_handle_onboarding_documents_access_duplicate_prevention():
@@ -174,16 +172,29 @@ def test_models_users_handle_onboarding_documents_access_duplicate_prevention():
     If the same document is listed multiple times in USER_ONBOARDING_DOCUMENTS,
     it should only create one access (or handle duplicates gracefully).
     """
-    document = factories.DocumentFactory()
+    document = factories.DocumentFactory(link_reach=models.LinkReachChoices.PUBLIC)
 
     with override_settings(
         USER_ONBOARDING_DOCUMENTS=[str(document.id), str(document.id)]
     ):
         user = factories.UserFactory()
 
-    user_accesses = models.DocumentAccess.objects.filter(user=user, document=document)
+    link_traces = models.LinkTrace.objects.filter(user=user, document=document)
 
-    assert user_accesses.count() >= 1
+    assert link_traces.count() == 1
+
+
+def test_models_users_handle_onboarding_documents_on_restricted_document_is_not_allowed(
+    settings,
+):
+    """Onboarding document can be used when restricted"""
+
+    document = factories.DocumentFactory(link_reach=models.LinkReachChoices.RESTRICTED)
+    settings.USER_ONBOARDING_DOCUMENTS = [str(document.id)]
+
+    user = factories.UserFactory()
+
+    assert not models.LinkTrace.objects.filter(user=user, document=document).exists()
 
 
 @override_settings(USER_ONBOARDING_SANDBOX_DOCUMENT=None)
@@ -272,7 +283,9 @@ def test_models_users_duplicate_onboarding_sandbox_document_integration_with_oth
     Verify that sandbox creation works alongside other onboarding methods.
     """
     template_document = factories.DocumentFactory(title="Getting started with Docs")
-    onboarding_doc = factories.DocumentFactory(title="Onboarding Document")
+    onboarding_doc = factories.DocumentFactory(
+        title="Onboarding Document", link_reach=models.LinkReachChoices.AUTHENTICATED
+    )
 
     with override_settings(
         USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id),
@@ -284,11 +297,10 @@ def test_models_users_duplicate_onboarding_sandbox_document_integration_with_oth
         creator=user, title="Getting started with Docs"
     ).first()
 
-    user_accesses = models.DocumentAccess.objects.filter(user=user)
-    assert user_accesses.count() == 2
+    assert models.DocumentAccess.objects.filter(user=user).count() == 1
+    assert models.LinkTrace.objects.filter(user=user).count() == 1
 
-    sandbox_access = user_accesses.get(document=sandbox_doc)
-    onboarding_access = user_accesses.get(document=onboarding_doc)
-
-    assert sandbox_access.role == models.RoleChoices.OWNER
-    assert onboarding_access.role == models.RoleChoices.READER
+    assert models.DocumentAccess.objects.filter(
+        document=sandbox_doc, user=user, role=models.RoleChoices.OWNER
+    ).exists()
+    assert models.LinkTrace.objects.filter(document=onboarding_doc, user=user).exists()

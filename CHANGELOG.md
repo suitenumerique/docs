@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🐛(backend) create a link_trace record for onboarded documents
+
 ## [v4.7.0] - 2026-03-09
 
 ### Added
