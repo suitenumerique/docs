@@ -19,7 +19,7 @@ from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
-from django.db import models, transaction
+from django.db import connection, models, transaction
 from django.db.models.functions import Left, Length
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -265,28 +265,38 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
         duplicate the sandbox document for the user
         """
         if settings.USER_ONBOARDING_SANDBOX_DOCUMENT:
-            sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
-            try:
-                template_document = Document.objects.get(id=sandbox_id)
-            except Document.DoesNotExist:
-                logger.warning(
-                    "Onboarding sandbox document with id %s does not exist. Skipping.",
-                    sandbox_id,
+            # transaction.atomic is used in a context manager to avoid a transaction if
+            # the settings USER_ONBOARDING_SANDBOX_DOCUMENT is unused
+            with transaction.atomic():
+                # locks the table to ensure safe concurrent access
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        f'LOCK TABLE "{Document._meta.db_table}" '  # noqa: SLF001
+                        "IN SHARE ROW EXCLUSIVE MODE;"
+                    )
+
+                sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
+                try:
+                    template_document = Document.objects.get(id=sandbox_id)
+                except Document.DoesNotExist:
+                    logger.warning(
+                        "Onboarding sandbox document with id %s does not exist. Skipping.",
+                        sandbox_id,
+                    )
+                    return
+
+                sandbox_document = template_document.add_sibling(
+                    "right",
+                    title=template_document.title,
+                    content=template_document.content,
+                    attachments=template_document.attachments,
+                    duplicated_from=template_document,
+                    creator=self,
                 )
-                return
 
-            sandbox_document = template_document.add_sibling(
-                "right",
-                title=template_document.title,
-                content=template_document.content,
-                attachments=template_document.attachments,
-                duplicated_from=template_document,
-                creator=self,
-            )
-
-            DocumentAccess.objects.create(
-                user=self, document=sandbox_document, role=RoleChoices.OWNER
-            )
+                DocumentAccess.objects.create(
+                    user=self, document=sandbox_document, role=RoleChoices.OWNER
+                )
 
     def _convert_valid_invitations(self):
         """

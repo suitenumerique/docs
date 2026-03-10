@@ -114,7 +114,7 @@ def test_models_invitations_new_user_convert_invitations_to_accesses():
     ).exists()  # the other invitation remains
 
 
-def test_models_invitationd_new_user_filter_expired_invitations():
+def test_models_invitations_new_user_filter_expired_invitations():
     """
     Upon creating a new identity, valid invitations should be converted into accesses
     and expired invitations should remain unchanged.
@@ -145,7 +145,7 @@ def test_models_invitationd_new_user_filter_expired_invitations():
 
 
 @pytest.mark.parametrize("num_invitations, num_queries", [(0, 3), (1, 7), (20, 7)])
-def test_models_invitationd_new_userd_user_creation_constant_num_queries(
+def test_models_invitations_new_userd_user_creation_constant_num_queries(
     django_assert_num_queries, num_invitations, num_queries
 ):
     """

@@ -16,6 +16,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(backend) create a link_trace record for on-boarding documents
+- 🐛(backend) manage race condition when creating sandbox document
 
 ## [v4.7.0] - 2026-03-09
 
