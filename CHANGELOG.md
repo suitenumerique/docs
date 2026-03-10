@@ -13,6 +13,10 @@ and this project adheres to
 
 - ♿(frontend) localize LaGaufre label fallback in Docs #1979
 
+### Fixed
+
+- 🐛(backend) create a link_trace record for on-boarding documents
+
 ## [v4.7.0] - 2026-03-09
 
 ### Added

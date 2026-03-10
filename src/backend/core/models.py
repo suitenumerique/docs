@@ -227,11 +227,11 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
     def _handle_onboarding_documents_access(self):
         """
         If the user is new and there are documents configured to be given to new users,
-        give access to these documents and pin them as favorites for the user.
+        create link traces to these documents and pin them as favorites for the user.
         """
         if settings.USER_ONBOARDING_DOCUMENTS:
             onboarding_document_ids = set(settings.USER_ONBOARDING_DOCUMENTS)
-            onboarding_accesses = []
+            onboarding_link_traces = []
             favorite_documents = []
             for document_id in onboarding_document_ids:
                 try:
@@ -243,16 +243,20 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     )
                     continue
 
-                onboarding_accesses.append(
-                    DocumentAccess(
-                        user=self, document=document, role=RoleChoices.READER
+                if document.link_reach == LinkReachChoices.RESTRICTED:
+                    logger.warning(
+                        "Onboarding on a restricted document is not allowed. Must be public or "
+                        "connected. Restricted document: %s",
+                        document_id,
                     )
-                )
+                    continue
+
+                onboarding_link_traces.append(LinkTrace(user=self, document=document))
                 favorite_documents.append(
                     DocumentFavorite(user=self, document_id=document_id)
                 )
 
-            DocumentAccess.objects.bulk_create(onboarding_accesses)
+            LinkTrace.objects.bulk_create(onboarding_link_traces)
             DocumentFavorite.objects.bulk_create(favorite_documents)
 
     def _duplicate_onboarding_sandbox_document(self):
@@ -264,7 +268,6 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
             sandbox_id = settings.USER_ONBOARDING_SANDBOX_DOCUMENT
             try:
                 template_document = Document.objects.get(id=sandbox_id)
-
             except Document.DoesNotExist:
                 logger.warning(
                     "Onboarding sandbox document with id %s does not exist. Skipping.",
