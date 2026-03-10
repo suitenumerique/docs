@@ -44,6 +44,12 @@
       "allowedVersions": "<1.59.0"
     },
     {
+      "groupName": "allowed langfuse versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["langfuse"],
+      "allowedVersions": "<3.12.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
