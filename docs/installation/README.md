@@ -13,7 +13,7 @@ Please follow the instructions [here](/docs/installation/compose.md).
 ⚠️ Please keep in mind that we do not use it ourselves in production. Let us know in the issues if you run into troubles, we'll try to help.
 
 ## Other ways to install Docs
-Community members have contributed several other ways to install Docs. While we owe them a big thanks 🙏, please keep in mind we (Docs maintainers) can't provide support on these installation methods as we don't use them ourselves and there are two many options out there for us to keep track of. Of course you can contact the contributors and the broader community for assistance.
+Community members have contributed several other ways to install Docs. While we owe them a big thanks 🙏, please keep in mind we (Docs maintainers) can't provide support on these installation methods as we don't use them ourselves and there are too many options out there for us to keep track of. Of course you can contact the contributors and the broader community for assistance.
 
 Here is the list of other methods in alphabetical order:
 - Coop-Cloud: [code](https://git.coopcloud.tech/coop-cloud/lasuite-docs)

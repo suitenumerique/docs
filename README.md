@@ -51,7 +51,7 @@ Docs is an open-source alternative to tools like Notion or Google Docs, focused 
 - Slash commands & block system
 - Beautiful formatting
 - Offline editing
-- Optional AI writing helpers (rewirite, summarize, translate, fix typos)
+- Optional AI writing helpers (rewrite, summarize, translate, fix typos)
 
 ### Collaboration
 
@@ -120,7 +120,7 @@ docker -v
 docker compose version
 ```
 
-> If you encounounter permission errors, you may need to use `sudo`, or add your user to the `docker` group.
+> If you encounter permission errors, you may need to use `sudo`, or add your user to the `docker` group.
 
 ### Bootstrap the project
 
@@ -130,9 +130,9 @@ The easiest way to start is using GNU Make:
 make bootstrap FLUSH_ARGS='--no-input'
 ```
 
-This builds the `app-dev` and `fronted-dev` containers, installs dependencies, runs database migrations, and compiles translations.
+This builds the `app-dev` and `frontend-dev` containers, installs dependencies, runs database migrations, and compiles translations.
 
-It is recommend to run this command after pulling new code.
+It is recommended to run this command after pulling new code.
 
 Start services:
 

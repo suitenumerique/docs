@@ -304,7 +304,7 @@ and this project adheres to
 - ♻️(frontend) Refactor Auth component for improved redirection logic #1461
 - ♻️(frontend) replace Arial font-family with token font #1411
 - ♿(frontend) improve accessibility:
-  - ♿(frontend) enable enter key to open documentss #1354
+  - ♿(frontend) enable enter key to open documents #1354
   - ♿(frontend) improve modal a11y: structure, labels, title #1349
   - ♿improve NVDA navigation in DocShareModal #1396
   - ♿ improve accessibility by adding landmark roles to layout #1394
@@ -512,10 +512,10 @@ and this project adheres to
 
 - ✨(backend) add endpoint checking media status #984
 - ✨(backend) allow setting session cookie age via env var #977
-- ✨(backend) allow theme customnization using a configuration file #948
+- ✨(backend) allow theme customization using a configuration file #948
 - ✨(frontend) Add a custom callout block to the editor #892
 - 🚩(frontend) version MIT only #911
-- ✨(backend) integrate maleware_detection from django-lasuite #936
+- ✨(backend) integrate malware_detection from django-lasuite #936
 - 🏗️(frontend) Footer configurable #959
 - 🩺(CI) add lint spell mistakes #954
 - ✨(frontend) create generic theme #792
