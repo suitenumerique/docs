@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add a is_first_connection flag to the User model#1938
+
 ## [v4.7.0] - 2026-03-09
 
 ### Added

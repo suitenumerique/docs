@@ -245,15 +245,18 @@ def test_api_document_accesses_list_authenticated_related_privileged(
                     "path": access.document.path,
                     "depth": access.document.depth,
                 },
-                "user": {
-                    "id": str(access.user.id),
-                    "email": access.user.email,
-                    "language": access.user.language,
-                    "full_name": access.user.full_name,
-                    "short_name": access.user.short_name,
-                }
-                if access.user
-                else None,
+                "user": (
+                    {
+                        "id": str(access.user.id),
+                        "email": access.user.email,
+                        "language": access.user.language,
+                        "full_name": access.user.full_name,
+                        "short_name": access.user.short_name,
+                        "is_first_connection": access.user.is_first_connection,
+                    }
+                    if access.user
+                    else None
+                ),
                 "max_ancestors_role": None,
                 "max_role": access.role,
                 "team": access.team,

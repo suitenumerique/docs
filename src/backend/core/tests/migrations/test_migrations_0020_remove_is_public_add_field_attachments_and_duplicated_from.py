@@ -7,8 +7,6 @@ from django.core.files.storage import default_storage
 import pycrdt
 import pytest
 
-from core import models
-
 
 @pytest.mark.django_db
 def test_populate_attachments_on_all_documents(migrator):
