@@ -9,9 +9,11 @@ and this project adheres to
 ### Added
 
 - ✨(backend) add a is_first_connection flag to the User model #1938
+
 ### Changed
 
 - ♿(frontend) localize LaGaufre label fallback in Docs #1979
+- ✨(backend) add a migration cleaning on-boarding document accesses
 
 ### Fixed
 
