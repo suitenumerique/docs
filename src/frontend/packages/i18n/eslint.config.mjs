@@ -8,12 +8,6 @@ const eslintConfig = defineConfig([
       docs: docsPlugin,
     },
     extends: ['docs/next', 'docs/test'],
-    languageOptions: {
-      parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-        project: ['./tsconfig.json'],
-      },
-    },
   },
 ]);
 

@@ -3,16 +3,13 @@ import docsPlugin from 'eslint-plugin-docs';
 
 const eslintConfig = defineConfig([
   {
+    ignores: ['.next/**', 'out/**', 'public/service-worker.js'],
+  },
+  {
     plugins: {
       docs: docsPlugin,
     },
     extends: ['docs/next'],
-    languageOptions: {
-      parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-        project: ['./tsconfig.json'],
-      },
-    },
     settings: {
       next: {
         rootDir: import.meta.dirname,
