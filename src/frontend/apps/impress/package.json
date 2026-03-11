@@ -93,7 +93,6 @@
     "@types/react": "*",
     "@types/react-dom": "*",
     "@vitejs/plugin-react": "5.1.4",
-    "copy-webpack-plugin": "13.0.1",
     "cross-env": "10.1.0",
     "dotenv": "17.3.1",
     "eslint-plugin-docs": "*",

@@ -1,7 +1,5 @@
 const crypto = require('crypto');
-const path = require('path');
 
-const CopyPlugin = require('copy-webpack-plugin');
 const { InjectManifest } = require('workbox-webpack-plugin');
 
 const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
@@ -52,22 +50,6 @@ const nextConfig = {
         resourceQuery: { not: [...fileLoaderRule.resourceQuery.not, /url/] }, // exclude if *.svg?url
         use: ['@svgr/webpack'],
       },
-    );
-
-    // Copy necessary fonts from node_modules to public directory during build or dev
-    config.plugins.push(
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.resolve(
-              __dirname,
-              '../../node_modules/emoji-datasource-apple/img/apple/64',
-            ),
-            to: path.resolve(__dirname, 'public/assets/fonts/emoji'),
-            force: true,
-          },
-        ],
-      }),
     );
 
     if (!isServer && process.env.NEXT_PUBLIC_SW_DEACTIVATED !== 'true') {
