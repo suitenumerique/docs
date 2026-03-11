@@ -1,7 +1,10 @@
 import { useRouter } from 'next/router';
 import { useEffect, useRef } from 'react';
 
-import { MAIN_LAYOUT_ID } from '@/layouts/conf';
+import {
+  focusMainContentStart,
+  getMainContentFocusTarget,
+} from '@/layouts/conf';
 
 export const useRouteChangeCompleteFocus = () => {
   const router = useRouter();
@@ -25,27 +28,24 @@ export const useRouteChangeCompleteFocus = () => {
       lastCompletedPathRef.current = normalizedUrl;
 
       requestAnimationFrame(() => {
-        const mainContent =
-          document.getElementById(MAIN_LAYOUT_ID) ??
-          document.getElementsByTagName('main')[0];
+        const focusTarget = getMainContentFocusTarget();
 
-        if (!mainContent) {
+        if (!focusTarget) {
           return;
         }
 
-        const firstHeading = mainContent.querySelector('h1, h2, h3');
         const prefersReducedMotion = window.matchMedia(
           '(prefers-reduced-motion: reduce)',
         ).matches;
 
         if (isKeyboardNavigationRef.current) {
-          (mainContent as HTMLElement | null)?.focus({ preventScroll: true });
+          focusMainContentStart({ preventScroll: true });
           isKeyboardNavigationRef.current = false;
         }
         if (router.pathname === '/docs/[id]') {
           return;
         }
-        (firstHeading ?? mainContent)?.scrollIntoView({
+        focusTarget.scrollIntoView({
           behavior: prefersReducedMotion ? 'auto' : 'smooth',
           block: 'start',
         });

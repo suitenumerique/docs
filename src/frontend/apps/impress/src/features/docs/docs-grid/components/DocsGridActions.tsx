@@ -20,7 +20,7 @@ import {
   useTrans,
 } from '@/docs/doc-management';
 import { DocShareModal } from '@/docs/doc-share';
-import { MAIN_LAYOUT_ID } from '@/layouts/conf';
+import { focusMainContentStart } from '@/layouts/conf';
 import { useFocusStore } from '@/stores';
 
 import { DocMoveModal } from './DocMoveModal';
@@ -40,10 +40,9 @@ export const DocsGridActions = ({ doc }: DocsGridActionsProps) => {
 
   const { mutate: duplicateDoc } = useDuplicateDoc({
     onSuccess: () => {
-      const mainContent = document.getElementById(MAIN_LAYOUT_ID);
-      if (mainContent) {
-        requestAnimationFrame(() => mainContent.focus());
-      }
+      requestAnimationFrame(() => {
+        focusMainContentStart({ preventScroll: true });
+      });
     },
   });
 

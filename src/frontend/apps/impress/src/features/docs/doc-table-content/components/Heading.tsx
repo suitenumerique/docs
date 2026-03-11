@@ -51,11 +51,13 @@ export const Heading = ({
 
         editor.setTextCursorPosition(headingId, 'end');
 
-        document.querySelector(`[data-id="${headingId}"]`)?.scrollIntoView({
-          behavior: 'smooth',
-          inline: 'start',
-          block: 'start',
-        });
+        document
+          .querySelector<HTMLElement>(`[data-id="${headingId}"]`)
+          ?.scrollIntoView({
+            behavior: 'smooth',
+            inline: 'start',
+            block: 'start',
+          });
       }}
       $radius="var(--c--globals--spacings--st)"
       $background={
