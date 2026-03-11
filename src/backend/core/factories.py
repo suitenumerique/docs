@@ -235,6 +235,11 @@ class ReactionFactory(factory.django.DjangoModelFactory):
     comment = factory.SubFactory(CommentFactory)
     emoji = "test"
 
+    @classmethod
+    def generate_emojis(cls, n=10):
+        """Generate a list of n unique emojis."""
+        return [fake.unique.emoji() for _ in range(n)]
+
     @factory.post_generation
     def users(self, create, extracted, **kwargs):
         """Add users to reaction from a given list of users or create one if not provided."""

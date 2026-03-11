@@ -6,6 +6,7 @@ export class DocsThreadStoreAuth extends ThreadStoreAuth {
   constructor(
     private readonly userId: string,
     public canSee: boolean,
+    private readonly maxReactions: number = 10,
   ) {
     super();
   }
@@ -68,13 +69,27 @@ export class DocsThreadStoreAuth extends ThreadStoreAuth {
     }
 
     if (!emoji) {
-      return true;
+      return comment.reactions.length < this.maxReactions;
     }
 
-    return !comment.reactions.some(
+    const hasReactedWithEmoji = comment.reactions.some(
       (reaction) =>
         reaction.emoji === emoji && reaction.userIds.includes(this.userId),
     );
+
+    if (hasReactedWithEmoji) {
+      return false;
+    }
+
+    const reactionExists = comment.reactions.some(
+      (reaction) => reaction.emoji === emoji,
+    );
+
+    if (reactionExists) {
+      return true;
+    }
+
+    return comment.reactions.length < this.maxReactions;
   }
 
   canDeleteReaction(comment: ClientCommentData, emoji?: string): boolean {

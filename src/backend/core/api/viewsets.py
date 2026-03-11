@@ -2625,6 +2625,7 @@ class ConfigView(drf.views.APIView):
             "POSTHOG_KEY",
             "LANGUAGES",
             "LANGUAGE_CODE",
+            "REACTIONS_MAX_PER_COMMENT",
             "SENTRY_DSN",
             "TRASHBIN_CUTOFF_DAYS",
         ]
@@ -2742,7 +2743,9 @@ class CommentViewSet(
     permission_classes = [permissions.CommentPermission]
     pagination_class = Pagination
     serializer_class = serializers.CommentSerializer
-    queryset = models.Comment.objects.select_related("user").all()
+    queryset = models.Comment.objects.select_related("user").prefetch_related(
+        "reactions__users"
+    ).all()
 
     def get_queryset(self):
         """Override to filter on related resource."""
@@ -2776,9 +2779,29 @@ class CommentViewSet(
         serializer.is_valid(raise_exception=True)
 
         if request.method == "POST":
+            emoji = serializer.validated_data["emoji"]
+
+            if (
+                not models.Reaction.objects.filter(
+                    comment=comment, emoji=emoji
+                ).exists()
+                and comment.reactions.count() >= settings.REACTIONS_MAX_PER_COMMENT
+            ):
+                return drf.response.Response(
+                    {
+                        "emoji": [
+                            _(
+                                "A comment can have a maximum of %(max)d distinct reactions."
+                            )
+                            % {"max": settings.REACTIONS_MAX_PER_COMMENT}
+                        ]
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             reaction, created = models.Reaction.objects.get_or_create(
                 comment=comment,
-                emoji=serializer.validated_data["emoji"],
+                emoji=emoji,
             )
             if not created and reaction.users.filter(id=request.user.id).exists():
                 return drf.response.Response(
