@@ -95,8 +95,8 @@ Thank you for your contributions! 👍
 
 ## Contribute to BlockNote
 We use [BlockNote](https://www.blocknotejs.org/) for the text editing features of Docs. 
-If you find and issue with the editor you can [report it](https://github.com/TypeCellOS/BlockNote/issues) directly on their repository.
+If you find an issue with the editor you can [report it](https://github.com/TypeCellOS/BlockNote/issues) directly on their repository.
 
 Please consider contributing to BlockNotejs, as a library, it's useful to many projects not just Docs.
 
-The project is licended with Mozilla Public License Version 2.0 but be aware that [XL packages](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE) are dual licenced with GNU AFFERO GENERAL PUBLIC LICENCE Version 3 and proprietary licence if you are [sponsor](https://www.blocknotejs.org/pricing).
+The project is licensed with Mozilla Public License Version 2.0 but be aware that [XL packages](https://github.com/TypeCellOS/BlockNote/blob/main/packages/xl-docx-exporter/LICENSE) are dual licensed with GNU AFFERO GENERAL PUBLIC LICENSE Version 3 and proprietary license if you are a [sponsor](https://www.blocknotejs.org/pricing).

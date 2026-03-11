@@ -37,7 +37,7 @@ ingress:
   ## @param ingress.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingress.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingress.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingress.tls.secretName Secret name for TLS config
   ## @skip ingress.tls.additional
   ## @extra ingress.tls.additional[].secretName Secret name for additional TLS config
@@ -62,7 +62,7 @@ ingressCollaborationWS:
   ## @param ingressCollaborationWS.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingressCollaborationWS.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressCollaborationWS.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressCollaborationWS.tls.secretName Secret name for TLS config
   ## @skip ingressCollaborationWS.tls.additional
   ## @extra ingressCollaborationWS.tls.additional[].secretName Secret name for additional TLS config
@@ -92,7 +92,7 @@ ingressRedirects:
   enabled: false
   className: null
   host: impress.example.com
-  ## @param ingressRedirects.tls.enabled Weather to enable TLS for the Ingress Redirects
+  ## @param ingressRedirects.tls.enabled Whether to enable TLS for the Ingress Redirects
   ## @param ingressRedirects.tls.secretName Secret name for TLS config
   ## @skip ingressRedirects.tls.additional
   ## @extra ingressRedirects.tls.additional[].secretName Secret name for additional TLS config
@@ -116,7 +116,7 @@ ingressCollaborationApi:
   ## @param ingressCollaborationApi.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingressCollaborationApi.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressCollaborationApi.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressCollaborationApi.tls.secretName Secret name for TLS config
   ## @skip ingressCollaborationApi.tls.additional
   ## @extra ingressCollaborationApi.tls.additional[].secretName Secret name for additional TLS config
@@ -145,7 +145,7 @@ ingressAdmin:
   ## @param ingressAdmin.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingressAdmin.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressAdmin.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressAdmin.tls.secretName Secret name for TLS config
   ## @skip ingressAdmin.tls.additional
   ## @extra ingressAdmin.tls.additional[].secretName Secret name for additional TLS config
@@ -167,7 +167,7 @@ ingressMedia:
   ## @param ingressMedia.hosts Additional host to configure for the Ingress
   hosts: []
   #  - chart-example.local
-  ## @param ingressMedia.tls.enabled Weather to enable TLS for the Ingress
+  ## @param ingressMedia.tls.enabled Whether to enable TLS for the Ingress
   ## @param ingressMedia.tls.secretName Secret name for TLS config
   ## @skip ingressMedia.tls.additional
   ## @extra ingressMedia.tls.additional[].secretName Secret name for additional TLS config
@@ -453,7 +453,7 @@ frontend:
   ## @param frontend.replicas Amount of frontend replicas
   replicas: 3
 
-  ## @param frontend.shareProcessNamespace Enable share process namefrontend between containers
+  ## @param frontend.shareProcessNamespace Enable share process namespace between containers
   shareProcessNamespace: false
 
   ## @param frontend.sidecars Add sidecars containers to frontend deployment

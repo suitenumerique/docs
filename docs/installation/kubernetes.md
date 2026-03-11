@@ -250,4 +250,4 @@ minio-dev-backend-minio-api       <none>   docs-minio.127.0.0.1.nip.io          
 minio-dev-backend-minio-console   <none>   docs-minio-console.127.0.0.1.nip.io   localhost   80, 443   8m48s
 ```
 
-You can use Docs at https://docs.127.0.0.1.nip.io. The provisionning user in keycloak is docs/docs.
+You can use Docs at https://docs.127.0.0.1.nip.io. The provisioning user in keycloak is docs/docs.
