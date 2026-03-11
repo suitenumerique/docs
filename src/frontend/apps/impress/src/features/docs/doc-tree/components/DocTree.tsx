@@ -19,6 +19,7 @@ import {
   useTrans,
 } from '@/docs/doc-management';
 
+import { CLASS_DOC_TITLE } from '../../doc-header';
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
 import { findIndexInTree } from '../utils';
 
@@ -120,11 +121,21 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
 
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        selectRoot();
-        navigateToRoot();
+        if (currentDoc.id === treeContext?.root?.id) {
+          document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
+        } else {
+          selectRoot();
+          navigateToRoot();
+        }
       }
     },
-    [selectRoot, navigateToRoot, rootActionsOpen],
+    [
+      selectRoot,
+      navigateToRoot,
+      rootActionsOpen,
+      currentDoc.id,
+      treeContext?.root?.id,
+    ],
   );
 
   // Handle menu open/close for root item - mirrors DocSubPageItem behavior
@@ -142,6 +153,13 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   }, []);
 
   const handleRowKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      rootItemRef.current?.focus();
+      return;
+    }
+
     if (e.key !== 'Enter') {
       return;
     }
@@ -154,6 +172,13 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
         target.classList.contains('c__tree-view--node')
       )
     ) {
+      return;
+    }
+
+    const treeItem = e.currentTarget.querySelector('[role="treeitem"]');
+    if (treeItem?.getAttribute('aria-selected') === 'true') {
+      e.preventDefault();
+      document.querySelector<HTMLElement>(`.${CLASS_DOC_TITLE}`)?.focus();
       return;
     }
 

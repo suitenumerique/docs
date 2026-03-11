@@ -186,6 +186,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
           docId={doc.id}
           title={doc.title}
           buttonProps={{
+            tabIndex: -1,
             $css: css`
               &:focus-visible {
                 outline: 2px solid var(--c--globals--colors--brand-500);
@@ -220,6 +221,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
             e.stopPropagation();
             handleActivate();
           }}
+          tabIndex={-1}
           $width="100%"
           $direction="row"
           $gap={spacingsTokens['xs']}

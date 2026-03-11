@@ -159,7 +159,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
 
   return (
     <Box
-      className="--docs--doc-title"
+      className={CLASS_DOC_TITLE}
       $direction="row"
       $align="center"
       $gap="4px"

@@ -271,6 +271,40 @@ test.describe('Doc Tree', () => {
     await expect(rootMoreOptionsButton).toBeFocused();
   });
 
+  test('Shift+Tab from resize handle returns focus to selected sub-doc', async ({
+    page,
+    browserName,
+  }) => {
+    const [docParent] = await createDoc(
+      page,
+      'doc-tree-shift-tab',
+      browserName,
+      1,
+    );
+    await verifyDocName(page, docParent);
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'doc-tree-shift-tab-child',
+    );
+
+    const selectedSubDoc = await getTreeRow(page, docChild);
+    await expect(selectedSubDoc).toHaveAttribute('aria-selected', 'true');
+
+    const resizeHandle = page.locator('[data-panel-resize-handle-id]').first();
+    await expect(resizeHandle).toBeVisible();
+
+    await selectedSubDoc.focus();
+    await expect(selectedSubDoc).toBeFocused();
+
+    await page.keyboard.press('Tab');
+    await expect(resizeHandle).toBeFocused();
+
+    await page.keyboard.press('Shift+Tab');
+    await expect(selectedSubDoc).toBeFocused();
+  });
+
   test('it updates the child icon from the tree', async ({
     page,
     browserName,
