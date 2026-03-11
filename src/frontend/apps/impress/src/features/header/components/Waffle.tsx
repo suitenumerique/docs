@@ -1,5 +1,6 @@
 import { LaGaufreV2, LaGaufreV2Props } from '@gouvfr-lasuite/ui-kit';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
@@ -27,6 +28,7 @@ const LaGaufreV2Fixed = LaGaufreV2 as React.ComponentType<WaffleType>;
 
 export const Waffle = () => {
   const { data: conf } = useConfig();
+  const { t } = useTranslation();
 
   const waffleConfig = conf?.theme_customization?.waffle;
 
@@ -42,7 +44,10 @@ export const Waffle = () => {
         }
       `}
     >
-      <LaGaufreV2Fixed {...waffleConfig} />
+      <LaGaufreV2Fixed
+        {...waffleConfig}
+        label={waffleConfig.label ?? t('Digital LaSuite services')}
+      />
     </Box>
   );
 };
