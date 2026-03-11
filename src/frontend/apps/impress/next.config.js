@@ -21,6 +21,17 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
   },
+  /**
+   * In dev mode, Next.js doesn't use Webpack, but Turbopack.
+   */
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
   webpack(config, { isServer }) {
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>

@@ -20,6 +20,11 @@ and this project adheres to
 - 🐛(backend) create a link_trace record for on-boarding documents
 - 🐛(backend) manage race condition when creating sandbox document
 
+### Changed
+
+⬆️(frontend) upgrade Next.js to v16 #1980
+
+
 ## [v4.7.0] - 2026-03-09
 
 ### Added

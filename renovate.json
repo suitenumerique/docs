@@ -54,10 +54,7 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
-        "@next/eslint-plugin-next",
-        "eslint-config-next",
         "fetch-mock",
-        "next",
         "node",
         "node-fetch",
         "react-resizable-panels",
