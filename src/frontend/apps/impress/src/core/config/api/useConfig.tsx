@@ -60,6 +60,7 @@ export interface ConfigResponse {
   POSTHOG_HOST?: PostHogConf['host'];
   RELEASE_VERSION: string;
   SENTRY_DSN?: string;
+  REACTIONS_MAX_PER_COMMENT: number;
   TRASHBIN_CUTOFF_DAYS?: number;
   theme_customization?: ThemeCustomization;
 }

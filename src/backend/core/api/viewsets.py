@@ -3234,9 +3234,11 @@ class CommentViewSet(
     permission_classes = [permissions.CommentPermission]
     pagination_class = Pagination
     serializer_class = serializers.CommentSerializer
-    queryset = models.Comment.objects.select_related("user").prefetch_related(
-        "reactions__users"
-    ).all()
+    queryset = (
+        models.Comment.objects.select_related("user")
+        .prefetch_related("reactions__users")
+        .all()
+    )
 
     def get_queryset(self):
         """Override to filter on related resource."""
