@@ -80,6 +80,7 @@ def test_api_config(is_authenticated):
         "MEDIA_BASE_URL": "http://testserver/",
         "POSTHOG_KEY": "132456",
         "POSTHOG_HOST": "https://eu.i.posthog-test.com",
+        "REACTIONS_MAX_PER_COMMENT": 15,
         "RELEASE_VERSION": "1.0.0",
         "SENTRY_DSN": "https://sentry.test/123",
         "TRASHBIN_CUTOFF_DAYS": 30,

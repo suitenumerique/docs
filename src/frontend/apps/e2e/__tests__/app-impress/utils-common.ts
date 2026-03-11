@@ -42,6 +42,7 @@ export const CONFIG = {
   LANGUAGE_CODE: 'en-us',
   POSTHOG_HOST: 'https://eu.i.posthog.com',
   POSTHOG_KEY: null,
+  REACTIONS_MAX_PER_COMMENT: 15,
   RELEASE_VERSION: packageJsonVersion,
   SENTRY_DSN: null,
   TRASHBIN_CUTOFF_DAYS: 30,
