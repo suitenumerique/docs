@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add management command cleaning onboarding document accesses
+
 ### Fixed
 
 - 🐛(backend) create a link_trace record for onboarded documents
