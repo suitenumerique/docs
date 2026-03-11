@@ -6,7 +6,7 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { MAIN_LAYOUT_ID } from '@/layouts/conf';
+import { focusMainContentStart } from '@/layouts/utils';
 
 export const SkipToContent = () => {
   const { t } = useTranslation();
@@ -35,10 +35,10 @@ export const SkipToContent = () => {
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const mainContent = document.getElementById(MAIN_LAYOUT_ID);
-    if (mainContent) {
-      mainContent.focus();
-      mainContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const focusTarget = focusMainContentStart();
+
+    if (focusTarget instanceof HTMLElement) {
+      focusTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 

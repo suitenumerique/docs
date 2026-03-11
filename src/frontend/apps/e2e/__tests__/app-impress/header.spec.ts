@@ -191,7 +191,7 @@ test.describe('Header: Override configuration', () => {
 });
 
 test.describe('Header: Skip to Content', () => {
-  test('it displays skip link on first TAB and focuses main content on click', async ({
+  test('it displays skip link on first TAB and focuses page heading on click', async ({
     page,
   }) => {
     await page.goto('/');
@@ -206,10 +206,12 @@ test.describe('Header: Skip to Content', () => {
     // The skip button should be visible and focused
     await expect(skipButton).toBeFocused();
     await expect(skipButton).toBeVisible();
-
-    // Clicking moves focus to the main content
+    // Clicking moves focus to the page heading
     await skipButton.click();
-    const mainContent = page.locator('main#mainContent');
-    await expect(mainContent).toBeFocused();
+    const pageHeading = page.getByRole('heading', {
+      name: 'All docs',
+      level: 2,
+    });
+    await expect(pageHeading).toBeFocused();
   });
 });

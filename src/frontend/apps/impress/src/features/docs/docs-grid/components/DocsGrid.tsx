@@ -116,7 +116,9 @@ export const DocsGrid = ({
         $padding={{
           bottom: 'md',
         }}
-        {...(withUpload ? getRootProps({ className: 'dropzone' }) : {})}
+        {...(withUpload
+          ? getRootProps({ className: 'dropzone', tabIndex: -1 })
+          : {})}
       >
         {withUpload && <input {...getInputProps()} />}
         <DocGridTitleBar
