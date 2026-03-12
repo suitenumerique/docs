@@ -45,6 +45,22 @@ export const ResizableLeftPanel = ({
     );
   });
 
+  const [isMounting, setIsMounting] = useState(false);
+
+  /**
+   * To avoid flickering animation on initial load
+   */
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsMounting(true);
+    }, 500);
+
+    return () => {
+      clearTimeout(timeout);
+      setIsMounting(false);
+    };
+  }, []);
+
   /**
    * When the panel is toggled open/closed, we want
    * to either expand/collapse
@@ -94,9 +110,10 @@ export const ResizableLeftPanel = ({
         collapsible={!isPanelOpen}
         collapsedSize={0}
         style={{
-          transition: isDragging
-            ? 'none'
-            : 'flex var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out)',
+          transition:
+            isDragging || !isMounting
+              ? 'none'
+              : 'flex var(--c--globals--transitions--duration) var(--c--globals--transitions--ease-out)',
         }}
         order={0}
         defaultSize={
