@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) support creating subdoc from file #1987
+
+
 ## [v5.1.0] - 2026-05-11
 
 ### Added
