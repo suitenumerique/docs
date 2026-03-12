@@ -676,10 +676,13 @@ class DocumentViewSet(
 
         return drf.response.Response(serializer.data)
 
-    def perform_create(self, serializer):
-        """Set the current user as creator and owner of the newly created object."""
-        # Remove file from validated_data as it's not a model field
-        # Process it if present
+    def _apply_uploaded_file_conversion(self, serializer):
+        """
+        Check if a file has been uploaded with a doc or a children is created.
+        If a file is present and the conversion upload enabled, the file is converted
+        using the converter service and the validated_data in the serializer are filled
+        with the converted file and the file name.
+        """
         uploaded_file = serializer.validated_data.pop("file", None)
 
         if uploaded_file and not settings.CONVERSION_UPLOAD_ENABLED:
@@ -706,6 +709,11 @@ class DocumentViewSet(
                 raise drf.exceptions.ValidationError(
                     {"file": ["Could not convert file content"]}
                 ) from err
+
+    def perform_create(self, serializer):
+        """Set the current user as creator and owner of the newly created object."""
+
+        self._apply_uploaded_file_conversion(serializer)
 
         obj = create_tree_node_with_retry(
             lambda: models.Document.add_root(
@@ -1015,6 +1023,8 @@ class DocumentViewSet(
                 data=request.data, context=self.get_serializer_context()
             )
             serializer.is_valid(raise_exception=True)
+
+            self._apply_uploaded_file_conversion(serializer)
 
             child_document = create_tree_node_with_retry(
                 lambda: document.add_child(

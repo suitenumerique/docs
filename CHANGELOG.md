@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- ✨(backend) support creating subdoc from file #1987
 - ⚡️(frontend) add skeleton on content loading #2254
 - ⚡️(frontend) close websocket connection when user change tab #2264
 
