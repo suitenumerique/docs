@@ -8,6 +8,7 @@ and this project adheres to
 
 ### Added
 
+- 🐛(backend) support creating subdoc from file
 - ✨(frontend) integrate new Blocknote AI feature #1016
 - 👷(docker) add arm64 platform support for image builds
 - ✨(tracking) add UTM parameters to shared document links

@@ -982,6 +982,25 @@ class DocumentViewSet(
             )
             serializer.is_valid(raise_exception=True)
 
+            # If a file was uploaded, convert its content to YJS format and use it as the document content.
+            uploaded_file = serializer.validated_data.pop("file", None)
+
+            if uploaded_file:
+                try:
+                    file_content = uploaded_file.read()
+                    converter = Converter()
+                    converted_content = converter.convert(
+                        file_content,
+                        content_type=uploaded_file.content_type,
+                        accept=mime_types.YJS,
+                    )
+                    serializer.validated_data["content"] = converted_content
+                    serializer.validated_data["title"] = uploaded_file.name
+                except ConversionError as err:
+                    raise drf.exceptions.ValidationError(
+                        {"file": ["Could not convert file content"]}
+                    ) from err
+
             with transaction.atomic():
                 # "select_for_update" locks the table to ensure safe concurrent access
                 locked_parent = models.Document.objects.select_for_update().get(
