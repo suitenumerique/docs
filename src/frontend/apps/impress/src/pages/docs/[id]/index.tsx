@@ -157,11 +157,16 @@ const DocPage = ({ id }: DocProps) => {
     setCurrentDoc(docQuery);
   }, [docQuery, setCurrentDoc, isFetching]);
 
+  /**
+   * Reset state when unmounting the component to avoid
+   * showing stale data when navigating to another document
+   */
   useEffect(() => {
     return () => {
       setCurrentDoc(undefined);
+      setIsSkeletonVisible(false);
     };
-  }, [setCurrentDoc]);
+  }, [setCurrentDoc, setIsSkeletonVisible]);
 
   /**
    * We add a broadcast task to reset the query cache
