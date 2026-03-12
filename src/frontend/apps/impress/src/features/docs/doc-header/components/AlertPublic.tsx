@@ -9,7 +9,7 @@ export const AlertPublic = ({ isPublicDoc }: { isPublicDoc: boolean }) => {
 
   return (
     <Card
-      aria-label={t('Public document')}
+      role="presentation"
       $radius={spacingsTokens['3xs']}
       $direction="row"
       $padding="xs"

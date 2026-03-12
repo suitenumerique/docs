@@ -25,6 +25,10 @@ and this project adheres to
 ⬆️(frontend) upgrade Next.js to v16 #1980
 
 
+### Changed
+
+- ♿️(frontend) fix aria-label and landmark on document banner state #1986
+
 ## [v4.7.0] - 2026-03-09
 
 ### Added
@@ -46,7 +50,6 @@ and this project adheres to
 - 🐛(frontend) fix zIndex table of content #1949
 - 🐛(frontend) fix bug when language not supported by BN #1957
 - 🐛 (backend) prevent privileged users from requesting access #1898
-
 
 ## [v4.6.0] - 2026-03-03
 
