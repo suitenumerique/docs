@@ -23,6 +23,7 @@ and this project adheres to
 - 🐛(backend) create a link_trace record for on-boarding documents
 - 🐛(backend) manage race condition when creating sandbox document
 - ♿️(frontend) improve doc tree keyboard navigation #1981
+- 🔧(helm) allow specific env var for the backend and celery deploy
 
 ## [v4.7.0] - 2026-03-09
 

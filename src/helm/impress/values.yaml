@@ -243,13 +243,20 @@ backend:
   envVars:
     <<: *commonEnvVars
 
-  ## @skip backend.envFrom List of environment variables taken from Secrets or configMaps
+  ## @skip backend.envFrom List of environment variables taken from Secrets or configMaps, common to backend and celery worker
   envFrom: []
   # envFrom:
   #   - secret:
   #       name: super-secret-user-credentials
   #   - configMapRef:
   #       name: my-environment-variables
+
+  ## @extra backend.django.envVars Backend web deployment specific environment variables (not shared with celery worker)
+  ## @skip backend.django.envVars
+  ## @skip backend.django.envFrom List of environment variables taken from Secrets or configMaps, specific to the backend web deployment
+  django:
+    envVars: {}
+    envFrom: []
 
   ## @param backend.podAnnotations Annotations to add to the backend Pod
   podAnnotations: {}
@@ -396,6 +403,9 @@ backend:
   ## @param backend.celery.probes.readiness.exec.command Override the celery container readiness probe command
   ## @param backend.celery.probes.readiness.initialDelaySeconds Initial delay for the celery container readiness probe
   ## @param backend.celery.probes.readiness.timeoutSeconds Timeout for the celery container readiness probe
+  ## @extra backend.celery.envVars Celery worker specific environment variables (not shared with the backend web deployment)
+  ## @skip backend.celery.envVars
+  ## @skip backend.celery.envFrom List of environment variables taken from Secrets or configMaps, specific to celery worker
   celery:
     replicas: 1
     command: []
@@ -410,6 +420,8 @@ backend:
         "-n",
         "impress@%h",
       ]
+    envVars: {}
+    envFrom: []
     resources: {}
     probes:
       liveness:
