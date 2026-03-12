@@ -1,4 +1,4 @@
-{{- $envVars := include "impress.common.env" (list . .Values.backend) -}}
+{{- $envVars := include "impress.backend.celery.env" (list . .Values.backend) -}}
 {{- $fullName := include "impress.celery.worker.fullname" . -}}
 {{- $component := "celery-worker" -}}
 apiVersion: apps/v1
@@ -53,9 +53,10 @@ spec:
           env:
             {{- $envVars | indent 12 }}
           {{- end }}
-          {{- if .Values.backend.envFrom }}
+          {{- $envFrom := concat (.Values.backend.envFrom | default list) (.Values.backend.celery.envFrom | default list) }}
+          {{- if $envFrom }}
           envFrom:
-            {{- toYaml .Values.backend.envFrom | nindent 12 }}
+            {{- toYaml $envFrom | nindent 12 }}
           {{- end }}
           {{- with .Values.backend.securityContext }}
           securityContext:

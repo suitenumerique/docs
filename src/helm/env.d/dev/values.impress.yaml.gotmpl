@@ -74,6 +74,12 @@ backend:
     Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
+  django:
+    envVars:
+      WEB_CONCURRENCY: 1
+      DB_PSYCOPG_POOL_MIN_SIZE: 10
+
+
   migrate:
     command:
       - "/bin/sh"

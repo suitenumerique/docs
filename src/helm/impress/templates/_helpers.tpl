@@ -91,6 +91,26 @@ impress env vars
 {{- end }}
 
 {{/*
+impress backend django env vars - combines common backend.envVars with backend.django.envVars
+*/}}
+{{- define "impress.backend.django.env" -}}
+{{- $topLevelScope := index . 0 -}}
+{{- $workerScope := index . 1 -}}
+{{- include "impress.env.transformDict" $workerScope.envVars -}}
+{{- include "impress.env.transformDict" (($workerScope.django | default dict).envVars | default dict) -}}
+{{- end }}
+
+{{/*
+impress celery env vars - combines common backend.envVars with backend.celery.envVars
+*/}}
+{{- define "impress.backend.celery.env" -}}
+{{- $topLevelScope := index . 0 -}}
+{{- $workerScope := index . 1 -}}
+{{- include "impress.env.transformDict" $workerScope.envVars -}}
+{{- include "impress.env.transformDict" ($workerScope.celery.envVars | default dict) -}}
+{{- end }}
+
+{{/*
 Common labels
 
 Requires array with top level scope and component name
