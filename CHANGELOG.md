@@ -14,20 +14,14 @@ and this project adheres to
 
 - ♿(frontend) localize LaGaufre label fallback in Docs #1979
 - ✨(backend) add a migration cleaning on-boarding document accesses
+- ⬆️(frontend) upgrade Next.js to v16 #1980
+- ♿️(frontend) fix aria-label and landmark on document banner state #1986
+- 🌐(i18n) add "new window" translation key for waffle aria-label #1984
 
 ### Fixed
 
 - 🐛(backend) create a link_trace record for on-boarding documents
 - 🐛(backend) manage race condition when creating sandbox document
-
-### Changed
-
-⬆️(frontend) upgrade Next.js to v16 #1980
-
-
-### Changed
-
-- ♿️(frontend) fix aria-label and landmark on document banner state #1986
 
 ## [v4.7.0] - 2026-03-09
 

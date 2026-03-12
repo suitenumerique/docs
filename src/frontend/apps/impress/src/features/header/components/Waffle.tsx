@@ -27,8 +27,8 @@ export type WaffleType = Omit<
 const LaGaufreV2Fixed = LaGaufreV2 as React.ComponentType<WaffleType>;
 
 export const Waffle = () => {
-  const { data: conf } = useConfig();
   const { t } = useTranslation();
+  const { data: conf } = useConfig();
 
   const waffleConfig = conf?.theme_customization?.waffle;
 
@@ -47,6 +47,7 @@ export const Waffle = () => {
       <LaGaufreV2Fixed
         {...waffleConfig}
         label={waffleConfig.label ?? t('Digital LaSuite services')}
+        newWindowLabelSuffix={t('new window')}
       />
     </Box>
   );
