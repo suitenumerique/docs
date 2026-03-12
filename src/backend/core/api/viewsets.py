@@ -1406,10 +1406,7 @@ class DocumentViewSet(
         except requests.exceptions.RequestException as e:
             logger.error("Error while searching documents with indexer: %s", e)
             # fallback on title search if the indexer is not reached
-            return self._title_search(
-                request, params.validated_data, *args, **kwargs
-            )
-
+            return self._title_search(request, params.validated_data, *args, **kwargs)
 
     @staticmethod
     def _search_with_indexer(indexer, request, params):
