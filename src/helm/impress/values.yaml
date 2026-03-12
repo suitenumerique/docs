@@ -188,9 +188,9 @@ ingressMedia:
     nginx.ingress.kubernetes.io/configuration-snippet: |
       add_header Content-Security-Policy "default-src 'none'" always;
 
-## @param serviceMedia.host
-## @param serviceMedia.port
-## @param serviceMedia.annotations
+## @param serviceMedia.host Hostname of the media storage backend (S3/MinIO) used by the media ingress
+## @param serviceMedia.port Port of the media storage backend
+## @param serviceMedia.annotations Annotations to add to the media ExternalName Service
 serviceMedia:
   host: minio.impress.svc.cluster.local
   port: 9000
@@ -223,7 +223,10 @@ backend:
     ttlSecondsAfterFinished: 30
     backoffLimit: 2
 
-  ## @param backend.securityContext Configure backend Pod security context
+  ## @param backend.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the backend container
+  ## @param backend.securityContext.capabilities.drop List of capabilities to drop for the backend container
+  ## @param backend.securityContext.runAsNonRoot Whether to run the backend container as a non-root user
+  ## @param backend.securityContext.seccompProfile.type Seccomp profile type for the backend container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -337,15 +340,15 @@ backend:
   ## @param backend.probes.liveness.path [nullable] Configure path for backend HTTP liveness probe
   ## @param backend.probes.liveness.targetPort [nullable] Configure port for backend HTTP liveness probe
   ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure initial delay for backend liveness probe
-  ## @param backend.probes.liveness.initialDelaySeconds [nullable] Configure timeout for backend liveness probe
-  ## @param backend.probes.startup.path [nullable] Configure path for backend HTTP startup probe
-  ## @param backend.probes.startup.targetPort [nullable] Configure port for backend HTTP startup probe
-  ## @param backend.probes.startup.initialDelaySeconds [nullable] Configure initial delay for backend startup probe
-  ## @param backend.probes.startup.initialDelaySeconds [nullable] Configure timeout for backend startup probe
+  ## @param backend.probes.liveness.timeoutSeconds [nullable] Configure timeout for backend liveness probe
+  ## @extra backend.probes.startup.path [nullable] Configure path for backend HTTP startup probe
+  ## @extra backend.probes.startup.targetPort [nullable] Configure port for backend HTTP startup probe
+  ## @extra backend.probes.startup.initialDelaySeconds [nullable] Configure initial delay for backend startup probe
+  ## @extra backend.probes.startup.timeoutSeconds [nullable] Configure timeout for backend startup probe
   ## @param backend.probes.readiness.path [nullable] Configure path for backend HTTP readiness probe
   ## @param backend.probes.readiness.targetPort [nullable] Configure port for backend HTTP readiness probe
   ## @param backend.probes.readiness.initialDelaySeconds [nullable] Configure initial delay for backend readiness probe
-  ## @param backend.probes.readiness.initialDelaySeconds [nullable] Configure timeout for backend readiness probe
+  ## @param backend.probes.readiness.timeoutSeconds [nullable] Configure timeout for backend readiness probe
   probes:
     liveness:
       path: /__lbheartbeat__
@@ -471,7 +474,10 @@ frontend:
   ## @param frontend.sidecars Add sidecars containers to frontend deployment
   sidecars: []
 
-  ## @param frontend.securityContext Configure frontend Pod security context
+  ## @param frontend.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the frontend container
+  ## @param frontend.securityContext.capabilities.drop List of capabilities to drop for the frontend container
+  ## @param frontend.securityContext.runAsNonRoot Whether to run the frontend container as a non-root user
+  ## @param frontend.securityContext.seccompProfile.type Seccomp profile type for the frontend container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -656,7 +662,10 @@ yProvider:
   ## @param yProvider.sidecars Add sidecars containers to yProvider deployment
   sidecars: []
 
-  ## @param yProvider.securityContext Configure yProvider Pod security context
+  ## @param yProvider.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the yProvider container
+  ## @param yProvider.securityContext.capabilities.drop List of capabilities to drop for the yProvider container
+  ## @param yProvider.securityContext.runAsNonRoot Whether to run the yProvider container as a non-root user
+  ## @param yProvider.securityContext.seccompProfile.type Seccomp profile type for the yProvider container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -700,22 +709,20 @@ yProvider:
     targetPort: 4444
     annotations: {}
 
-  ## @extra yProvider.probes.liveness.path Configure path for yProvider HTTP liveness probe
+  ## @param yProvider.probes.liveness.path Configure path for yProvider HTTP liveness probe
+  ## @param yProvider.probes.liveness.initialDelaySeconds Configure initial delay for yProvider liveness probe
   ## @extra yProvider.probes.liveness.targetPort Configure port for yProvider HTTP liveness probe
-  ## @extra yProvider.probes.liveness.initialDelaySeconds Configure initial delay for yProvider liveness probe
-  ## @extra yProvider.probes.liveness.initialDelaySeconds Configure timeout for yProvider liveness probe
+  ## @extra yProvider.probes.liveness.timeoutSeconds Configure timeout for yProvider liveness probe
   ## @extra yProvider.probes.startup.path Configure path for yProvider HTTP startup probe
   ## @extra yProvider.probes.startup.targetPort Configure port for yProvider HTTP startup probe
   ## @extra yProvider.probes.startup.initialDelaySeconds Configure initial delay for yProvider startup probe
-  ## @extra yProvider.probes.startup.initialDelaySeconds Configure timeout for yProvider startup probe
+  ## @extra yProvider.probes.startup.timeoutSeconds Configure timeout for yProvider startup probe
   ## @extra yProvider.probes.readiness.path Configure path for yProvider HTTP readiness probe
   ## @extra yProvider.probes.readiness.targetPort Configure port for yProvider HTTP readiness probe
   ## @extra yProvider.probes.readiness.initialDelaySeconds Configure initial delay for yProvider readiness probe
-  ## @extra yProvider.probes.readiness.initialDelaySeconds Configure timeout for yProvider readiness probe
+  ## @extra yProvider.probes.readiness.timeoutSeconds Configure timeout for yProvider readiness probe
   probes:
     liveness:
-      ## @param yProvider.probes.liveness.path
-      ## @param yProvider.probes.liveness.initialDelaySeconds
       path: /ping
       initialDelaySeconds: 10
 
@@ -772,7 +779,10 @@ docSpec:
   ## @param docSpec.replicas Amount of docSpec replicas
   replicas: 1
 
-  ## @param docSpec.securityContext Configure docSpec Pod security context
+  ## @param docSpec.securityContext.allowPrivilegeEscalation Whether to allow privilege escalation for the docSpec container
+  ## @param docSpec.securityContext.capabilities.drop List of capabilities to drop for the docSpec container
+  ## @param docSpec.securityContext.runAsNonRoot Whether to run the docSpec container as a non-root user
+  ## @param docSpec.securityContext.seccompProfile.type Seccomp profile type for the docSpec container
   securityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -793,13 +803,16 @@ docSpec:
   #   - configMapRef:
   #       name: my-environment-variables
 
-  ## @param docSpec.service Configure docSpec service
+  ## @param docSpec.service.type docSpec Service type
+  ## @param docSpec.service.port docSpec Service listening port
+  ## @param docSpec.service.targetPort docSpec container listening port
   service:
     type: ClusterIP
     port: 4000
     targetPort: 4000
 
-  ## @param docSpec.probes Configure docSpec probes
+  ## @param docSpec.probes.liveness.path Configure path for docSpec HTTP liveness probe
+  ## @param docSpec.probes.readiness.path Configure path for docSpec HTTP readiness probe
   probes:
     liveness:
       path: /health
