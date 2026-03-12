@@ -110,6 +110,11 @@ class Base(Configuration):
                         environ_name="DB_PSYCOPG_POOL_MAX_SIZE",
                         environ_prefix=None,
                     ),
+                    "timeout": values.IntegerValue(
+                        3,
+                        environ_name="DB_PSYCOPG_POOL_TIMEOUT",
+                        environ_prefix=None,
+                    ),
                 }
             },
         }
