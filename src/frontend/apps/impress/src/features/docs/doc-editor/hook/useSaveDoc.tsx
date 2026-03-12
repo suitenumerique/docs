@@ -4,9 +4,8 @@ import * as Y from 'yjs';
 
 import { useUpdateDoc } from '@/docs/doc-management/';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
+import { toBase64 } from '@/utils/string';
 import { isFirefox } from '@/utils/userAgent';
-
-import { toBase64 } from '../utils';
 
 const SAVE_INTERVAL = 60000;
 

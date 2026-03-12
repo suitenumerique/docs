@@ -11,8 +11,8 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { toBase64 } from '@/docs/doc-editor';
-import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
+import { toBase64 } from '@/utils/string';
 
 import { useProviderStore } from '../stores';
 import { Doc } from '../types';

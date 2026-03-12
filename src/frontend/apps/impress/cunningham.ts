@@ -18,6 +18,12 @@ const themeWhiteLabelLight = getUIKitThemesFromGlobals(whiteLabelGlobals, {
         '3xs': '0.25rem',
         '2xs': '0.375rem',
       },
+      font: {
+        families: {
+          base: 'Inter Variable, Roboto Flex Variable, sans-serif',
+          accent: 'Inter Variable, Roboto Flex Variable, sans-serif',
+        },
+      },
     },
   },
 });
@@ -33,8 +39,8 @@ const themesDSFRLight = getUIKitThemesFromGlobals(dsfrGlobals, {
     globals: {
       font: {
         families: {
-          base: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
-          accent: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
+          base: 'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
+          accent: 'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
         },
       },
     },

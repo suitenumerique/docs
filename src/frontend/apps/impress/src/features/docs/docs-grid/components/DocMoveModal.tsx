@@ -5,6 +5,7 @@ import {
   useModal,
 } from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
@@ -14,11 +15,25 @@ import { Box, ButtonCloseModal, HorizontalSeparator, Text } from '@/components';
 import { QuickSearch } from '@/components/quick-search';
 import { Doc, useMoveDoc, useTrans } from '@/docs/doc-management';
 import { DocSearchContent } from '@/docs/doc-search';
-import { AlertModalRequestAccess } from '@/docs/doc-share';
 import { useResponsiveStore } from '@/stores';
 
 import { DocsGridItemDate, DocsGridItemTitle } from './DocsGridItem';
-import { ModalConfirmationMoveDoc } from './ModalConfimationMoveDoc';
+
+const AlertModalRequestAccess = dynamic(
+  () =>
+    import('@/docs/doc-share/components/AlertModalRequestAccess').then(
+      (mod) => ({ default: mod.AlertModalRequestAccess }),
+    ),
+  { ssr: false },
+);
+
+const ModalConfirmationMoveDoc = dynamic(
+  () =>
+    import('./ModalConfimationMoveDoc').then((mod) => ({
+      default: mod.ModalConfirmationMoveDoc,
+    })),
+  { ssr: false },
+);
 
 export const DocMoveModalStyle = createGlobalStyle`
   .c__modal--full .c__modal__scroller {

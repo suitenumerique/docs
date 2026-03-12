@@ -9,7 +9,7 @@ import {
   Role,
 } from '@/docs/doc-management';
 import { User } from '@/features/auth';
-import { useBroadcastStore } from '@/stores';
+import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
 import { OptionType } from '../types';
 

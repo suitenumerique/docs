@@ -2,6 +2,7 @@ import { DndContext, DragOverlay, Modifier } from '@dnd-kit/core';
 import { getEventCoordinates } from '@dnd-kit/utilities';
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
 import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,7 +15,14 @@ import { DocDragEndData, useDragAndDrop } from '../hooks/useDragAndDrop';
 import { DocsGridItem } from './DocsGridItem';
 import { Draggable } from './Draggable';
 import { Droppable } from './Droppable';
-import { ModalConfirmationMoveDoc } from './ModalConfimationMoveDoc';
+
+const ModalConfirmationMoveDoc = dynamic(
+  () =>
+    import('./ModalConfimationMoveDoc').then((mod) => ({
+      default: mod.ModalConfirmationMoveDoc,
+    })),
+  { ssr: false },
+);
 
 const snapToTopLeft: Modifier = ({
   activatorEvent,

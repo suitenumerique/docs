@@ -11,8 +11,8 @@ import {
   PICKER_HEIGHT,
   Text,
   TextType,
-  emojidata,
 } from '@/components';
+import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 import { useFocusStore } from '@/stores';
 
 import { useDocTitleUpdate } from '../hooks/useDocTitleUpdate';
@@ -154,7 +154,7 @@ export const DocIcon = ({
             `}
           >
             <EmojiPicker
-              emojiData={emojidata}
+              emojiData={getEmojidata()}
               onEmojiSelect={handleEmojiSelect}
               onClickOutside={handleClickOutside}
               withOverlay={true}

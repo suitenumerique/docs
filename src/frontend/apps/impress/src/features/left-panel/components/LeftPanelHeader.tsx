@@ -1,17 +1,25 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
 import { t } from 'i18next';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { PropsWithChildren, useCallback, useState } from 'react';
 
 import { Box, Icon, SeparatedSection } from '@/components';
 import { useDocStore } from '@/docs/doc-management';
-import { DocSearchModal } from '@/docs/doc-search/';
 import { useAuth } from '@/features/auth';
 import { useCmdK } from '@/hooks/useCmdK';
 
 import { useLeftPanelStore } from '../stores';
 
 import { LeftPanelHeaderButton } from './LeftPanelHeaderButton';
+
+const DocSearchModal = dynamic(
+  () =>
+    import('@/docs/doc-search/components/DocSearchModal').then((mod) => ({
+      default: mod.DocSearchModal,
+    })),
+  { ssr: false },
+);
 
 export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
   const { currentDoc } = useDocStore();

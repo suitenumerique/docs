@@ -12,7 +12,6 @@ import {
   useSynchronizedLanguage,
 } from '@/features/language';
 import { useAnalytics } from '@/libs';
-import { CrispAnalytic, PostHogAnalytic } from '@/services';
 import { useSentryStore } from '@/stores/useSentryStore';
 
 import { useConfig } from './api/useConfig';
@@ -71,7 +70,9 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
       return;
     }
 
-    new PostHogAnalytic(conf.POSTHOG_KEY);
+    void import('@/services').then(({ PostHogAnalytic }) => {
+      new PostHogAnalytic(conf.POSTHOG_KEY);
+    });
   }, [conf?.POSTHOG_KEY]);
 
   useEffect(() => {
@@ -79,7 +80,9 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
       return;
     }
 
-    new CrispAnalytic({ websiteId: conf.CRISP_WEBSITE_ID });
+    void import('@/services').then(({ CrispAnalytic }) => {
+      new CrispAnalytic({ websiteId: conf.CRISP_WEBSITE_ID });
+    });
   }, [conf?.CRISP_WEBSITE_ID]);
 
   if (!conf) {

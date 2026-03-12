@@ -375,8 +375,8 @@ export const tokens = {
             black: 900,
           },
           families: {
-            base: 'Hanken Grotesk, Inter, Roboto Flex Variable, sans-serif',
-            accent: 'Hanken Grotesk, Inter, Roboto Flex Variable, sans-serif',
+            base: 'Inter Variable, Roboto Flex Variable, sans-serif',
+            accent: 'Inter Variable, Roboto Flex Variable, sans-serif',
           },
         },
         spacings: {
@@ -1336,8 +1336,9 @@ export const tokens = {
           },
           weights: { thin: 100, extrabold: 800, black: 900 },
           families: {
-            accent: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
-            base: 'Marianne, Inter, Roboto Flex Variable, sans-serif',
+            accent:
+              'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
+            base: 'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
           },
         },
         spacings: {

@@ -4,6 +4,7 @@ import {
   ModalSize,
   useModal,
 } from '@gouvfr-lasuite/cunningham-react';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
@@ -14,8 +15,15 @@ import { Doc } from '@/docs/doc-management';
 import { Versions } from '../types';
 
 import { DocVersionEditor } from './DocVersionEditor';
-import { ModalConfirmationVersion } from './ModalConfirmationVersion';
 import { VersionList } from './VersionList';
+
+const ModalConfirmationVersion = dynamic(
+  () =>
+    import('./ModalConfirmationVersion').then((mod) => ({
+      default: mod.ModalConfirmationVersion,
+    })),
+  { ssr: false },
+);
 
 const NoPaddingStyle = createGlobalStyle`
   .c__modal__scroller:has(.noPadding) {

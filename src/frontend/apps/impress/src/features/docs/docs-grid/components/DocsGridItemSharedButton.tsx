@@ -1,10 +1,18 @@
 import { Button, Tooltip, useModal } from '@gouvfr-lasuite/cunningham-react';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 
 import { Box, Icon, Text } from '@/components';
 import { Doc } from '@/docs/doc-management';
-import { DocShareModal } from '@/docs/doc-share';
 import { useFocusStore } from '@/stores';
+
+const DocShareModal = dynamic(
+  () =>
+    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
+      default: mod.DocShareModal,
+    })),
+  { ssr: false },
+);
 
 type Props = {
   doc: Doc;

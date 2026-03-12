@@ -8,13 +8,14 @@ import {
 } from '@blocknote/core';
 import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core/extensions';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, BoxButton, EmojiPicker, Icon, emojidata } from '@/components';
+import { Box, BoxButton, EmojiPicker, Icon } from '@/components';
+import { getEmojidata } from '@/components/Emoji/initEmojiCallout';
 
-import { DocsBlockNoteEditor } from '../../types';
+import type { DocsBlockNoteEditor } from '../../types';
 
 const CalloutBlockStyle = createGlobalStyle`
   .bn-block-content[data-content-type="callout"][data-background-color] {
@@ -125,7 +126,7 @@ const CalloutComponent = ({
 
         {openEmojiPicker && (
           <EmojiPicker
-            emojiData={emojidata}
+            emojiData={getEmojidata()}
             onClickOutside={onClickOutside}
             onEmojiSelect={onEmojiSelect}
             withOverlay={true}

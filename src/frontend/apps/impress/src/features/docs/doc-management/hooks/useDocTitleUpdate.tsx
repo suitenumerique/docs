@@ -1,7 +1,7 @@
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { useCallback } from 'react';
 
-import { useBroadcastStore } from '@/stores';
+import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
 import { KEY_DOC, KEY_LIST_DOC, useUpdateDoc } from '../api';
 import { Doc } from '../types';

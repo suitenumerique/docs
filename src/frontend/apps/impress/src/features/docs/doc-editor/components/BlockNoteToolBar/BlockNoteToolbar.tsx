@@ -5,6 +5,7 @@ import {
   getFormattingToolbarItems,
   useDictionary,
 } from '@blocknote/react';
+import dynamic from 'next/dynamic';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,7 +18,14 @@ import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
-import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
+
+const ModalConfirmDownloadUnsafe = dynamic(
+  () =>
+    import('./ModalConfirmDownloadUnsafe').then((mod) => ({
+      default: mod.ModalConfirmDownloadUnsafe,
+    })),
+  { ssr: false },
+);
 
 const AIToolbarButton = BlockNoteAI?.AIToolbarButton;
 

@@ -1,4 +1,5 @@
 import { useModal } from '@gouvfr-lasuite/cunningham-react';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -13,17 +14,31 @@ import {
   Doc,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
-  ModalRemoveDoc,
   useCreateFavoriteDoc,
   useDeleteFavoriteDoc,
   useDuplicateDoc,
   useTrans,
 } from '@/docs/doc-management';
-import { DocShareModal } from '@/docs/doc-share';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { useFocusStore } from '@/stores';
 
 import { DocMoveModal } from './DocMoveModal';
+
+const DocShareModal = dynamic(
+  () =>
+    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
+      default: mod.DocShareModal,
+    })),
+  { ssr: false },
+);
+
+const ModalRemoveDoc = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ModalRemoveDoc').then((mod) => ({
+      default: mod.ModalRemoveDoc,
+    })),
+  { ssr: false },
+);
 
 interface DocsGridActionsProps {
   doc: Doc;

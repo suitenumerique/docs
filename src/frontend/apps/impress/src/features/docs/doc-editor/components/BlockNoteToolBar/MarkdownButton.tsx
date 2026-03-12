@@ -3,7 +3,6 @@ import {
   useComponentsContext,
   useSelectedBlocks,
 } from '@blocknote/react';
-import { forEach, isArray } from 'lodash';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -19,7 +18,7 @@ type Block = {
 function isBlock(block: Block): block is Block {
   return (
     block.content &&
-    isArray(block.content) &&
+    Array.isArray(block.content) &&
     block.content.length > 0 &&
     typeof block.type !== 'undefined'
   );
@@ -54,7 +53,7 @@ export function MarkdownButton() {
       blocks = [editor.getTextCursorPosition().block];
     }
 
-    forEach(blocks, async (block) => {
+    blocks.forEach(async (block) => {
       if (!isBlock(block as unknown as Block)) {
         return;
       }

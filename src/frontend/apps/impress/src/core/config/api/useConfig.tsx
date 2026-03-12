@@ -7,7 +7,7 @@ import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
 import { FooterType } from '@/features/footer';
 import { HeaderType, WaffleType } from '@/features/header';
-import { PostHogConf } from '@/services';
+import type { PostHogConf } from '@/services';
 
 type Imagetype = React.ComponentProps<typeof Image>;
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { useCollaborationUrl } from '@/core/config';
-import { useBroadcastStore } from '@/stores';
+import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
 import { useProviderStore } from '../stores/useProviderStore';
 import { Base64 } from '../types';

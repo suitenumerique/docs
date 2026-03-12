@@ -363,9 +363,9 @@
   --c--globals--font--weights--extrabold: 800;
   --c--globals--font--weights--black: 900;
   --c--globals--font--families--base:
-    hanken grotesk, inter, roboto flex variable, sans-serif;
+    inter variable, roboto flex variable, sans-serif;
   --c--globals--font--families--accent:
-    hanken grotesk, inter, roboto flex variable, sans-serif;
+    inter variable, roboto flex variable, sans-serif;
   --c--globals--spacings--0: 0;
   --c--globals--spacings--l: 3rem;
   --c--globals--spacings--b: 1.625rem;
@@ -1733,9 +1733,9 @@
   --c--globals--font--weights--extrabold: 800;
   --c--globals--font--weights--black: 900;
   --c--globals--font--families--accent:
-    marianne, inter, roboto flex variable, sans-serif;
+    marianne, inter variable, roboto flex variable, sans-serif;
   --c--globals--font--families--base:
-    marianne, inter, roboto flex variable, sans-serif;
+    marianne, inter variable, roboto flex variable, sans-serif;
   --c--globals--spacings--0: 0;
   --c--globals--spacings--none: 0;
   --c--globals--spacings--auto: auto;

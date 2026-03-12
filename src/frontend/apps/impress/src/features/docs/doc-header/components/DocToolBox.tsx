@@ -1,6 +1,7 @@
 import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
 import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import { useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,13 +25,11 @@ import {
   IconOptions,
 } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import Export from '@/docs/doc-export/';
 import {
   Doc,
   KEY_DOC,
   KEY_LIST_DOC,
   KEY_LIST_FAVORITE_DOC,
-  ModalRemoveDoc,
   getEmojiAndTitle,
   useCopyDocLink,
   useCreateFavoriteDoc,
@@ -39,18 +38,47 @@ import {
   useDocUtils,
   useDuplicateDoc,
 } from '@/docs/doc-management';
-import { DocShareModal } from '@/docs/doc-share';
-import {
-  KEY_LIST_DOC_VERSIONS,
-  ModalSelectVersion,
-} from '@/docs/doc-versioning';
+import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning';
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
 
 import { BoutonShare } from './BoutonShare';
 
-const ModalExport = Export?.ModalExport;
+const DocShareModal = dynamic(
+  () =>
+    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
+      default: mod.DocShareModal,
+    })),
+  { ssr: false },
+);
+
+const ModalRemoveDoc = dynamic(
+  () =>
+    import('@/docs/doc-management/components/ModalRemoveDoc').then((mod) => ({
+      default: mod.ModalRemoveDoc,
+    })),
+  { ssr: false },
+);
+
+const ModalSelectVersion = dynamic(
+  () =>
+    import('@/docs/doc-versioning/components/ModalSelectVersion').then(
+      (mod) => ({ default: mod.ModalSelectVersion }),
+    ),
+  { ssr: false },
+);
+
+const ModalExport =
+  process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false'
+    ? dynamic(
+        () =>
+          import('@/docs/doc-export/components/ModalExport').then((mod) => ({
+            default: mod.ModalExport,
+          })),
+        { ssr: false },
+      )
+    : null;
 
 interface DocToolBoxProps {
   doc: Doc;

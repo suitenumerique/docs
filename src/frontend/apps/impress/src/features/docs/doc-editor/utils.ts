@@ -22,6 +22,3 @@ function hslToHex(h: number, s: number, l: number) {
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 }
-
-export const toBase64 = (str: Uint8Array) =>
-  Buffer.from(str).toString('base64');

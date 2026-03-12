@@ -15,6 +15,12 @@ const nextConfig = {
     // Enables the styled-components SWC transform
     styledComponents: true,
   },
+  experimental: {
+    // Tree-shake barrel files for these packages so webpack only bundles the
+    // symbols that are actually imported, reducing chunk sizes noticeably for
+    // Mantine and the Cunningham design system.
+    optimizePackageImports: ['@mantine/core', '@mantine/hooks', 'lodash'],
+  },
   generateBuildId: () => buildId,
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,

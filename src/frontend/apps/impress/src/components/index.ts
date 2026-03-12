@@ -4,7 +4,6 @@ export * from './Card';
 export * from './DropButton';
 export * from './dropdown-menu/DropdownMenu';
 export * from './Emoji/EmojiPicker';
-export { default as emojidata } from './Emoji/initEmojiCallout';
 export * from './quick-search';
 export * from './Icon';
 export * from './InfiniteScroll';

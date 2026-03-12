@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 
 import { Box, Text } from '@/components';
@@ -6,7 +7,13 @@ import { Doc } from '@/docs/doc-management';
 
 import { Versions } from '../types';
 
-import { ModalConfirmationVersion } from './ModalConfirmationVersion';
+const ModalConfirmationVersion = dynamic(
+  () =>
+    import('./ModalConfirmationVersion').then((mod) => ({
+      default: mod.ModalConfirmationVersion,
+    })),
+  { ssr: false },
+);
 
 interface VersionItemProps {
   docId: Doc['id'];
