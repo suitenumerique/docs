@@ -106,9 +106,11 @@ test.describe('Help feature', () => {
       // switch to french
       await waitForLanguageSwitch(page, TestLanguage.French);
 
-      await page.getByRole('button', { name: 'Open onboarding menu' }).click();
+      await page
+        .getByRole('button', { name: "Ouvrir le menu d'embarquement" })
+        .click();
 
-      await page.getByRole('menuitem', { name: 'Onboarding' }).click();
+      await page.getByRole('menuitem', { name: 'Premiers pas' }).click();
 
       const modal = page.getByLabel('Apprenez les principes fondamentaux');
 

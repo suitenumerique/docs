@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v4.8.0] - 2026-03-13
+
 ### Added
 
 - ✨(backend) add a is_first_connection flag to the User model #1938
@@ -14,15 +16,15 @@ and this project adheres to
 ### Changed
 
 - ♿(frontend) localize LaGaufre label fallback in Docs #1979
-- ✨(backend) add a migration cleaning on-boarding document accesses
+- ✨(backend) add a migration cleaning on-boarding document accesses #1971
 - ⬆️(frontend) upgrade Next.js to v16 #1980
 - ♿️(frontend) fix aria-label and landmark on document banner state #1986
 - 🌐(i18n) add "new window" translation key for waffle aria-label #1984
 
 ### Fixed
 
-- 🐛(backend) create a link_trace record for on-boarding documents
-- 🐛(backend) manage race condition when creating sandbox document
+- 🐛(backend) create a link_trace record for on-boarding documents #1971
+- 🐛(backend) manage race condition when creating sandbox document #1971
 - 🐛(frontend) fix flickering left panel #1989
 - ♿️(frontend) improve doc tree keyboard navigation #1981
 
@@ -1102,7 +1104,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.7.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.8.0...main
+[v4.8.0]: https://github.com/suitenumerique/docs/releases/v4.8.0
 [v4.7.0]: https://github.com/suitenumerique/docs/releases/v4.7.0
 [v4.6.0]: https://github.com/suitenumerique/docs/releases/v4.6.0
 [v4.5.0]: https://github.com/suitenumerique/docs/releases/v4.5.0
