@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import { overrideConfig } from './utils-common';
+import {
+  TestLanguage,
+  overrideConfig,
+  waitForLanguageSwitch,
+} from './utils-common';
 
 test.describe('Help feature', () => {
   test.beforeEach(async ({ page }) => {
@@ -96,6 +100,31 @@ test.describe('Help feature', () => {
 
       await page.getByRole('button', { name: /skip/i }).click();
       await expect(modal).toBeHidden();
+    });
+
+    test('Modal onboarding translated correctly', async ({ page }) => {
+      // switch to french
+      await waitForLanguageSwitch(page, TestLanguage.French);
+
+      await page.getByRole('button', { name: 'Open onboarding menu' }).click();
+
+      await page.getByRole('menuitem', { name: 'Onboarding' }).click();
+
+      const modal = page.getByLabel('Apprenez les principes fondamentaux');
+
+      await expect(modal.getByText('Découvrez Docs')).toBeVisible();
+      await expect(
+        modal.getByText(/Rédigez votre document facilement/).first(),
+      ).toBeVisible();
+      await expect(
+        modal.getByText(/Déplacez, dupliquez/).first(),
+      ).toBeVisible();
+      await expect(
+        modal.getByRole('button', { name: /Passer/i }),
+      ).toBeVisible();
+      await expect(
+        modal.getByRole('button', { name: /Suivant/i }),
+      ).toBeVisible();
     });
   });
 });

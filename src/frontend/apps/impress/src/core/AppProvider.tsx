@@ -1,4 +1,3 @@
-import { CunninghamProvider } from '@gouvfr-lasuite/cunningham-react';
 import {
   MutationCache,
   QueryClient,
@@ -7,12 +6,12 @@ import {
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-import { useCunninghamTheme } from '@/cunningham';
 import { Auth, KEY_AUTH, setAuthUrl } from '@/features/auth';
 import { useRouteChangeCompleteFocus } from '@/hooks/useRouteChangeCompleteFocus';
 import { useResponsiveStore } from '@/stores/';
 
 import { ConfigProvider } from './config/';
+import { ThemeProvider } from './config/ThemeProvider';
 
 export const DEFAULT_QUERY_RETRY = 1;
 
@@ -50,7 +49,6 @@ const queryClient = new QueryClient({
 });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { theme } = useCunninghamTheme();
   const { replace } = useRouter();
   useRouteChangeCompleteFocus();
 
@@ -74,11 +72,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CunninghamProvider theme={theme}>
+      <ThemeProvider>
         <ConfigProvider>
           <Auth>{children}</Auth>
         </ConfigProvider>
-      </CunninghamProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
