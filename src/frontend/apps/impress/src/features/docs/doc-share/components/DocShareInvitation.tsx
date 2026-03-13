@@ -35,6 +35,7 @@ export const DocShareInvitationItem = ({
     email: invitation.email,
     short_name: invitation.email,
     language: 'en-us',
+    is_first_connection: false,
   };
 
   const { toast } = useToastProvider();

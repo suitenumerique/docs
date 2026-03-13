@@ -8,6 +8,7 @@
  */
 export interface User {
   id: string;
+  is_first_connection: boolean;
   email: string;
   full_name: string;
   short_name: string;

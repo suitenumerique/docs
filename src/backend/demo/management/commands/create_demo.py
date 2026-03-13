@@ -138,6 +138,7 @@ def create_demo(stdout):
                     password="!",
                     is_superuser=False,
                     is_active=True,
+                    is_first_connection=False,
                     is_staff=False,
                     short_name=first_name,
                     full_name=f"{first_name:s} {random.choice(last_names):s}",
@@ -194,6 +195,7 @@ def create_demo(stdout):
                     password="!",
                     is_superuser=False,
                     is_active=True,
+                    is_first_connection=False,
                     is_staff=False,
                     language=dev_user["language"] or random.choice(languages),
                 )

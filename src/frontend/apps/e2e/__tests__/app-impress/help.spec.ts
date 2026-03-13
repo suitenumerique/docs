@@ -81,7 +81,7 @@ test.describe('Help feature', () => {
       );
       await learnMoreLink.click();
 
-      await page.getByRole('button', { name: /understood|compris/i }).click();
+      await page.getByRole('button', { name: /understood/i }).click();
       await expect(modal).toBeHidden();
     });
 
@@ -125,6 +125,53 @@ test.describe('Help feature', () => {
       await expect(
         modal.getByRole('button', { name: /Suivant/i }),
       ).toBeVisible();
+    });
+
+    test('Modal is displayed automatically on first connection', async ({
+      page,
+      browserName,
+    }) => {
+      await expect(page.getByRole('button', { name: 'New doc' })).toBeVisible();
+      await expect(page.getByTestId('onboarding-modal')).toBeHidden();
+
+      await page.route(/.*\/api\/v1.0\/users\/me\//, async (route) => {
+        const request = route.request();
+        if (request.method().includes('GET')) {
+          await route.fulfill({
+            json: {
+              id: 'f2bfcf0b-e4b9-4153-b2e5-0d2a9a5a0a5b',
+              email: `user.test@${browserName.toLowerCase()}.test`,
+              full_name: `E2E ${browserName}`,
+              short_name: 'E2E',
+              language: 'en-us',
+              is_first_connection: true,
+            },
+          });
+        } else {
+          await route.continue();
+        }
+      });
+
+      let onboardingDoneCalled = false;
+      await page.route(
+        /.*\/api\/v1.0\/users\/onboarding-done\//,
+        async (route) => {
+          const request = route.request();
+          if (request.method().includes('POST')) {
+            onboardingDoneCalled = true;
+            await route.continue();
+          }
+        },
+      );
+
+      await page.goto('/');
+
+      await expect(page.getByTestId('onboarding-modal')).toBeVisible();
+
+      await page.getByRole('button', { name: /skip/i }).click();
+
+      await expect(page.getByTestId('onboarding-modal')).toBeHidden();
+      expect(onboardingDoneCalled).toBeTruthy();
     });
   });
 });

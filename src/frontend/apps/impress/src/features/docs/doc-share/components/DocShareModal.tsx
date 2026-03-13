@@ -353,6 +353,7 @@ const QuickSearchInviteInputSection = ({
       email: userQuery,
       short_name: '',
       language: '',
+      is_first_connection: false,
     };
 
     const hasEmailInUsers = users.some(

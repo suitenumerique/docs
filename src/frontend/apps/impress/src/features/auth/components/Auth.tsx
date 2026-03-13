@@ -14,6 +14,8 @@ import {
   resetSilent,
 } from '../utils';
 
+import { FirstConnection } from './FirstConnection';
+
 export const Auth = ({ children }: PropsWithChildren) => {
   const {
     isLoading: isAuthLoading,
@@ -21,6 +23,7 @@ export const Auth = ({ children }: PropsWithChildren) => {
     isFetchedAfterMount,
     authenticated,
     fetchStatus,
+    user,
   } = useAuth();
   const isLoading = fetchStatus !== 'idle' || isAuthLoading;
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -110,5 +113,10 @@ export const Auth = ({ children }: PropsWithChildren) => {
     return <Loading $height="100vh" $width="100vw" />;
   }
 
-  return children;
+  return (
+    <>
+      {children}
+      {user && user.is_first_connection && <FirstConnection />}
+    </>
+  );
 };
