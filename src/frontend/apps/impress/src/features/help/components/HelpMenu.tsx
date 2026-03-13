@@ -1,4 +1,8 @@
-import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonProps,
+  useModal,
+} from '@gouvfr-lasuite/cunningham-react';
 import { DropdownMenu } from '@gouvfr-lasuite/ui-kit';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +16,11 @@ import WandAndStarsIcon from '../assets/wand-and-stars.svg';
 
 import { OnBoarding } from './OnBoarding';
 
-export const HelpMenu = () => {
+export const HelpMenu = ({
+  colorButton,
+}: {
+  colorButton?: ButtonProps['color'];
+}) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const modalOnbording = useModal();
@@ -53,7 +61,7 @@ export const HelpMenu = () => {
           <Box $direction="row" $align="center">
             <Button
               aria-label={t('Open onboarding menu')}
-              color="neutral"
+              color={colorButton || 'neutral'}
               variant="tertiary"
               iconPosition="left"
               icon={<HelpOutlineIcon aria-hidden="true" />}

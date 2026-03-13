@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, SeparatedSection } from '@/components';
+import { Box, HorizontalSeparator, SeparatedSection } from '@/components';
 import { useConfig } from '@/core/config/api/useConfig';
 import { useCunninghamTheme } from '@/cunningham';
 import { ButtonLogin } from '@/features/auth';
@@ -74,6 +74,7 @@ export const LeftPanel = () => {
       {isPanelOpenState && <MobileLeftPanelStyle />}
       <Box
         $hasTransition
+        $height="100vh"
         $css={css`
           z-index: 999;
           width: 100dvw;
@@ -97,25 +98,26 @@ export const LeftPanel = () => {
             align-items: center;
             gap: ${spacingsTokens['base']};
           `}
+          $height="inherit"
         >
           <LeftPanelHeader />
           <LeftPanelContent />
-          {showHelpMenu && (
+          <Box $width="100%">
+            <HorizontalSeparator $margin="none" />
             <SeparatedSection showSeparator={false}>
               <Box
-                $padding={{ horizontal: 'sm', vertical: 'xs' }}
-                $justify="flex-start"
+                $justify="end"
+                $align="center"
+                $gap={spacingsTokens['xs']}
+                $direction="row"
+                $padding={{ horizontal: 'sm' }}
               >
-                <HelpMenu />
+                <HelpMenu colorButton="brand" />
+                <ButtonLogin />
+                <LanguagePicker />
               </Box>
             </SeparatedSection>
-          )}
-          <SeparatedSection showSeparator={false}>
-            <Box $justify="center" $align="center" $gap={spacingsTokens['sm']}>
-              <ButtonLogin />
-              <LanguagePicker />
-            </Box>
-          </SeparatedSection>
+          </Box>
         </Box>
       </Box>
     </>

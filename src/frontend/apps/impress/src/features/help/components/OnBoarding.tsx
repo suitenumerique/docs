@@ -50,6 +50,20 @@ const OnBoardingStyle = createGlobalStyle`
     background-color: var(--c--contextuals--border--surface--primary);
   }
 
+  @media (max-width: 768px) {
+    .c__modal__scroller {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+
+      & .c__onboarding-modal__body{
+        justify-content: center;
+      }
+      & .c__onboarding-modal__content {
+        height:auto;
+      }
+    }
+  }
 `;
 
 type OnBoardingProps = {
