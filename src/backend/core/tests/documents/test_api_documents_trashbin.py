@@ -101,6 +101,7 @@ def test_api_documents_trashbin_format():
             "partial_update": False,
             "restore": True,
             "retrieve": True,
+            "search": False,
             "tree": True,
             "update": False,
             "versions_destroy": False,

@@ -47,10 +47,13 @@ class DocumentFilter(django_filters.FilterSet):
     title = AccentInsensitiveCharFilter(
         field_name="title", lookup_expr="unaccent__icontains", label=_("Title")
     )
+    q = AccentInsensitiveCharFilter(
+        field_name="title", lookup_expr="unaccent__icontains", label=_("Search")
+    )
 
     class Meta:
         model = models.Document
-        fields = ["title"]
+        fields = ["title", "q"]
 
 
 class ListDocumentFilter(DocumentFilter):
@@ -70,7 +73,7 @@ class ListDocumentFilter(DocumentFilter):
 
     class Meta:
         model = models.Document
-        fields = ["is_creator_me", "is_favorite", "title"]
+        fields = ["is_creator_me", "is_favorite", "title", "q"]
 
     # pylint: disable=unused-argument
     def filter_is_creator_me(self, queryset, name, value):
