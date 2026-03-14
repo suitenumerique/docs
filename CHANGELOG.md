@@ -41,6 +41,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(backend) enforce emoji validation for reactions #1965
 - 🐛(frontend) analytic feature flags problem #1953
 - 🐛(frontend) fix home collapsing panel #1954
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
