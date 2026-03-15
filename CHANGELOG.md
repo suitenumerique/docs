@@ -25,6 +25,7 @@ and this project adheres to
 - 🐛(backend) manage race condition when creating sandbox document
 - 🐛(frontend) fix flickering left panel #1989
 - ♿️(frontend) improve doc tree keyboard navigation #1981
+- 🔧(helm) allow specific env var for the backend and celery deploy
 
 ## [v4.7.0] - 2026-03-09
 

@@ -99,6 +99,24 @@ class Base(Configuration):
                 "localhost", environ_name="DB_HOST", environ_prefix=None
             ),
             "PORT": values.Value(5432, environ_name="DB_PORT", environ_prefix=None),
+            "OPTIONS": {
+                # https://www.psycopg.org/psycopg3/docs/api/pool.html#psycopg_pool.ConnectionPool
+                "pool": {
+                    "min_size": values.IntegerValue(
+                        4, environ_name="DB_PSYCOPG_POOL_MIN_SIZE", environ_prefix=None
+                    ),
+                    "max_size": values.IntegerValue(
+                        None,
+                        environ_name="DB_PSYCOPG_POOL_MAX_SIZE",
+                        environ_prefix=None,
+                    ),
+                    "timeout": values.IntegerValue(
+                        3,
+                        environ_name="DB_PSYCOPG_POOL_TIMEOUT",
+                        environ_prefix=None,
+                    ),
+                }
+            },
         }
     }
     DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
