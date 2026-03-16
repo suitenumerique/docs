@@ -1,6 +1,9 @@
 """Test for the document favorite_list endpoint."""
 
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from core import factories, models
@@ -104,6 +107,15 @@ def test_api_document_favorite_list_with_favorite_children():
     other_root = factories.DocumentFactory(creator=user, users=[user])
     factories.DocumentFactory.create_batch(2, parent=other_root)
 
+    now = timezone.now()
+
+    models.Document.objects.filter(pk=children[0].pk).update(
+        updated_at=now + timedelta(seconds=2)
+    )
+    models.Document.objects.filter(pk=children[1].pk).update(
+        updated_at=now + timedelta(seconds=3)
+    )
+
     response = client.get("/api/v1.0/documents/favorite_list/")
 
     assert response.status_code == 200
@@ -111,6 +123,6 @@ def test_api_document_favorite_list_with_favorite_children():
 
     content = response.json()["results"]
 
-    assert content[0]["id"] == str(children[0].id)
-    assert content[1]["id"] == str(children[1].id)
+    assert content[0]["id"] == str(children[1].id)
+    assert content[1]["id"] == str(children[0].id)
     assert content[2]["id"] == str(access.document.id)
