@@ -35,6 +35,7 @@ and this project adheres to
 - ⬆️(frontend) upgrade Next.js to v16 #1980
 - ♿️(frontend) fix aria-label and landmark on document banner state #1986
 - 🌐(i18n) add "new window" translation key for waffle aria-label #1984
+- ♿️(frontend) ensure doc title is h1 for accessibility #2006
 
 ### Fixed
 
