@@ -12,6 +12,15 @@ entries:
     version: 4.8.0
   - apiVersion: v2
     appVersion: latest
+    created: "2026-03-16T21:23:18.918377343Z"
+    digest: 1b23f5160a96272890937ca53373ee454d6307d09d0127601dc85b69f0d79d15
+    name: docs
+    type: application
+    urls:
+    - https://suitenumerique.github.io/docs/docs-4.8.0-psycopgpool.tgz
+    version: 4.8.0-psycopgpool
+  - apiVersion: v2
+    appVersion: latest
     created: "2026-03-09T14:03:55.523801532Z"
     digest: b0cb69f209fa194cf3309ebf1725a19491ba2f167cdaa702f101f0ebd43d1922
     name: docs
@@ -496,4 +505,4 @@ entries:
     urls:
     - https://suitenumerique.github.io/docs/docs-0.0.1.tgz
     version: 0.0.1
-generated: "2026-03-13T16:53:27.405816896Z"
+generated: "2026-03-16T21:23:18.916448661Z"
