@@ -8,11 +8,12 @@ and this project adheres to
 
 ### Fixed
 
-- 🙈(docker) add **/.next to .dockerignore #2034
+- 🙈(docker) add \*\*/.next to .dockerignore #2034
 
 ### Changed
 
 - ♿️(frontend) ensure doc title is h1 for accessibility #2006
+- ♿️(frontend) fix share modal heading hierarchy #2007
 
 ## [v4.8.1] - 2026-03-17
 

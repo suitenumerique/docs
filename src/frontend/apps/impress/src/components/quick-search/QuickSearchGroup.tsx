@@ -19,9 +19,11 @@ export const QuickSearchGroup = <T,>({
 }: Props<T>) => {
   return (
     <Box>
+      <Text as="h2" $weight="700" $size="sm" $margin="none">
+        {group.groupName}
+      </Text>
       <Command.Group
         key={group.groupName}
-        heading={group.groupName}
         forceMount={false}
         contentEditable={false}
       >

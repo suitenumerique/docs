@@ -137,7 +137,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
       $gap={spacingsTokens['base']}
       className="--docs--doc-visibility"
     >
-      <Text $weight="700" $size="sm">
+      <Text as="h2" $weight="700" $size="sm" $margin="none">
         {t('Link settings')}
       </Text>
       {isDesynchronized && <DocDesynchronized doc={doc} />}

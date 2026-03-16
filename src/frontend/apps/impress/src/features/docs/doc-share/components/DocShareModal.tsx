@@ -183,7 +183,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         isOpen
         closeOnClickOutside
         data-testid="doc-share-modal"
-        aria-labelledby="doc-share-modal-title"
+        aria-label={t('Share the document')}
         size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
         aria-modal="true"
         onClose={onClose}
@@ -223,8 +223,6 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
           $overflow="hidden"
           className="--docs--doc-share-modal noPadding "
           $justify="space-between"
-          role="dialog"
-          aria-label={t('Share modal content')}
         >
           <Box
             $flex={1}

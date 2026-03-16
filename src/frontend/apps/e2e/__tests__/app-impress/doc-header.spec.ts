@@ -285,7 +285,7 @@ test.describe('Doc Header', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     const shareModal = page.getByRole('dialog', {
-      name: 'Share modal content',
+      name: 'Share the document',
     });
     await expect(shareModal).toBeVisible();
     await expect(page.getByText('Share the document')).toBeVisible();
@@ -364,7 +364,7 @@ test.describe('Doc Header', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     const shareModal = page.getByRole('dialog', {
-      name: 'Share modal content',
+      name: 'Share the document',
     });
     await expect(shareModal).toBeVisible();
     await expect(page.getByText('Share the document')).toBeVisible();
@@ -435,7 +435,9 @@ test.describe('Doc Header', () => {
 
     await page.getByRole('button', { name: 'Share' }).click();
 
-    const shareModal = page.getByLabel('Share modal');
+    const shareModal = page.getByRole('dialog', {
+      name: 'Share the document',
+    });
     await expect(page.getByText('Share the document')).toBeVisible();
 
     await expect(page.getByPlaceholder('Type a name or email')).toBeHidden();
@@ -705,10 +707,12 @@ test.describe('Documents Header mobile', () => {
     await page.getByRole('menuitem', { name: 'Share' }).click();
 
     const shareModal = page.getByRole('dialog', {
-      name: 'Share modal content',
+      name: 'Share the document',
     });
     await expect(shareModal).toBeVisible();
     await page.getByRole('button', { name: 'close' }).click();
-    await expect(page.getByLabel('Share modal')).toBeHidden();
+    await expect(
+      page.getByRole('dialog', { name: 'Share the document' }),
+    ).toBeHidden();
   });
 });
