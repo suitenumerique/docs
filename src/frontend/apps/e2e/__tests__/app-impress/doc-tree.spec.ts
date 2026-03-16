@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import {
   createDoc,
   expectLoginPage,
+  getMenuItem,
   keyCloakSignIn,
   updateDocTitle,
   verifyDocName,
@@ -162,7 +163,7 @@ test.describe('Doc Tree', () => {
     );
     const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await currentUserRole.click();
-    await page.getByRole('menuitem', { name: 'Administrator' }).click();
+    await getMenuItem(page, 'Administrator').click();
     await list.click();
 
     await page.getByRole('button', { name: 'Ok' }).click();
@@ -192,9 +193,10 @@ test.describe('Doc Tree', () => {
     const menu = child.getByText(`more_horiz`);
     await menu.click();
 
-    await expect(
-      page.getByRole('menuitem', { name: 'Move to my docs' }),
-    ).toHaveAttribute('aria-disabled', 'true');
+    await expect(getMenuItem(page, 'Move to my docs')).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   test('keyboard navigation with Enter key opens documents', async ({
@@ -338,9 +340,7 @@ test.describe('Doc Tree', () => {
     await row.hover();
     const menu = row.getByText(`more_horiz`);
     await menu.click();
-    await expect(
-      page.getByRole('menuitem', { name: 'Remove emoji' }),
-    ).toBeHidden();
+    await expect(getMenuItem(page, 'Remove emoji')).toBeHidden();
 
     // Close the menu
     await page.keyboard.press('Escape');
@@ -360,7 +360,7 @@ test.describe('Doc Tree', () => {
     // Now remove the emoji using the new action
     await row.hover();
     await menu.click();
-    await page.getByRole('menuitem', { name: 'Remove emoji' }).click();
+    await getMenuItem(page, 'Remove emoji').click();
 
     await expect(row.getByText('😀')).toBeHidden();
     await expect(titleEmojiPicker).toBeHidden();
@@ -390,11 +390,7 @@ test.describe('Doc Tree: Inheritance', () => {
     const selectVisibility = page.getByTestId('doc-visibility');
     await selectVisibility.click();
 
-    await page
-      .getByRole('menuitem', {
-        name: 'Public',
-      })
-      .click();
+    await getMenuItem(page, 'Public').click();
 
     await expect(
       page.getByText('The document visibility has been updated.'),

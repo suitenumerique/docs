@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './utils-common';
+import { createDoc, getMenuItem, verifyDocName } from './utils-common';
 import { updateShareLink } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
@@ -53,19 +53,17 @@ test.describe('Inherited share accesses', () => {
     await expect(docVisibilityCard.getByText('Reading')).toBeVisible();
 
     await docVisibilityCard.getByText('Reading').click();
-    await page.getByRole('menuitem', { name: 'Editing' }).click();
+    await getMenuItem(page, 'Editing').click();
 
     await expect(docVisibilityCard.getByText('Reading')).toBeHidden();
     await expect(docVisibilityCard.getByText('Editing')).toBeVisible();
 
     // Verify inherited link
     await docVisibilityCard.getByText('Connected').click();
-    await expect(
-      page.getByRole('menuitem', { name: 'Private' }),
-    ).toBeDisabled();
+    await expect(getMenuItem(page, 'Private')).toBeDisabled();
 
     // Update child link
-    await page.getByRole('menuitem', { name: 'Public' }).click();
+    await getMenuItem(page, 'Public').click();
 
     await expect(docVisibilityCard.getByText('Connected')).toBeHidden();
     await expect(

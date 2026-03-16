@@ -3,6 +3,16 @@ import path from 'path';
 
 import { Locator, Page, TestInfo, expect } from '@playwright/test';
 
+/** Returns a locator for a menu item (handles both menuitem and menuitemradio roles) */
+export const getMenuItem = (
+  context: Page | Locator,
+  name: string,
+  options?: { exact?: boolean },
+): Locator =>
+  context
+    .getByRole('menuitem', { name, exact: options?.exact })
+    .or(context.getByRole('menuitemradio', { name, exact: options?.exact }));
+
 import theme_customization from '../../../../../backend/impress/configuration/theme/default.json';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -382,12 +392,12 @@ export async function waitForLanguageSwitch(
 
   await languagePicker.click();
 
-  await page.getByRole('menuitem', { name: lang.label }).click();
+  await getMenuItem(page, lang.label).click();
 }
 
 export const clickInEditorMenu = async (page: Page, textButton: string) => {
   await page.getByRole('button', { name: 'Open the document options' }).click();
-  await page.getByRole('menuitem', { name: textButton }).click();
+  await getMenuItem(page, textButton).click();
 };
 
 export const clickInGridMenu = async (
@@ -398,7 +408,7 @@ export const clickInGridMenu = async (
   await row
     .getByRole('button', { name: /Open the menu of actions for the document/ })
     .click();
-  await page.getByRole('menuitem', { name: textButton }).click();
+  await getMenuItem(page, textButton).click();
 };
 
 export const writeReport = async (

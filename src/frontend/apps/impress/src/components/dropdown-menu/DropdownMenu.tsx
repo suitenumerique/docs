@@ -110,6 +110,10 @@ export const DropdownMenu = ({
     [onOpenChange],
   );
 
+  const hasSelectable =
+    selectedValues !== undefined ||
+    options.some((option) => option.isSelected !== undefined);
+
   if (disabled) {
     return children;
   }
@@ -172,6 +176,11 @@ export const DropdownMenu = ({
           }
           const isDisabled = option.disabled !== undefined && option.disabled;
           const isFocused = index === focusedIndex;
+          const ariaChecked = hasSelectable
+            ? option.isSelected ||
+              selectedValues?.includes(option.value ?? '') ||
+              false
+            : undefined;
 
           return (
             <Fragment key={option.label}>
@@ -179,7 +188,8 @@ export const DropdownMenu = ({
                 ref={(el) => {
                   menuItemRefs.current[index] = el;
                 }}
-                role="menuitem"
+                role={hasSelectable ? 'menuitemradio' : 'menuitem'}
+                aria-checked={ariaChecked}
                 data-testid={option.testId}
                 $direction="row"
                 disabled={isDisabled}

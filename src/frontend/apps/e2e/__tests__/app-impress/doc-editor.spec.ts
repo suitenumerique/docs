@@ -5,6 +5,7 @@ import cs from 'convert-stream';
 
 import {
   createDoc,
+  getMenuItem,
   goToGridDoc,
   overrideConfig,
   verifyDocName,
@@ -147,7 +148,7 @@ test.describe('Doc Editor', () => {
     const wsClosePromise = webSocket.waitForEvent('close');
 
     await selectVisibility.click();
-    await page.getByRole('menuitem', { name: 'Connected' }).click();
+    await getMenuItem(page, 'Connected').click();
 
     // Assert that the doc reconnects to the ws
     const wsClose = await wsClosePromise;
@@ -608,7 +609,7 @@ test.describe('Doc Editor', () => {
     await page.getByRole('button', { name: 'Share' }).click();
 
     await page.getByTestId('doc-access-mode').click();
-    await page.getByRole('menuitem', { name: 'Reading' }).click();
+    await getMenuItem(page, 'Reading').click();
 
     // Close the modal
     await page.getByRole('button', { name: 'close' }).first().click();

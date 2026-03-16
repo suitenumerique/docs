@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import {
   createDoc,
   getGridRow,
+  getMenuItem,
   getOtherBrowserName,
   mockedListDocs,
   toggleHeaderMenu,
@@ -206,7 +207,7 @@ test.describe('Doc grid move', () => {
     const row = await getGridRow(page, titleDoc1);
     await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+    await getMenuItem(page, 'Move into a doc').click();
 
     await expect(
       page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
@@ -294,7 +295,7 @@ test.describe('Doc grid move', () => {
     const row = await getGridRow(page, titleDoc1);
     await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+    await getMenuItem(page, 'Move into a doc').click();
 
     await expect(
       page.getByRole('dialog').getByRole('heading', { name: 'Move' }),
@@ -341,7 +342,7 @@ test.describe('Doc grid move', () => {
       `doc-share-access-request-row-${emailRequest}`,
     );
     await container.getByTestId('doc-role-dropdown').click();
-    await otherPage.getByRole('menuitem', { name: 'Administrator' }).click();
+    await getMenuItem(otherPage, 'Administrator').click();
     await container.getByRole('button', { name: 'Approve' }).click();
 
     await expect(otherPage.getByText('Access Requests')).toBeHidden();
@@ -352,7 +353,7 @@ test.describe('Doc grid move', () => {
     await page.reload();
     await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Move into a doc' }).click();
+    await getMenuItem(page, 'Move into a doc').click();
 
     await expect(
       page.getByRole('dialog').getByRole('heading', { name: 'Move' }),

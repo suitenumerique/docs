@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import {
   closeHeaderMenu,
   createDoc,
+  getMenuItem,
   getOtherBrowserName,
   verifyDocName,
 } from './utils-common';
@@ -150,7 +151,7 @@ test.describe('Doc Comments', () => {
     // Edit Comment
     await thread.getByText('This is a comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
-    await thread.getByRole('menuitem', { name: 'Edit comment' }).click();
+    await getMenuItem(thread, 'Edit comment').click();
     const commentEditor = thread.getByText('This is a comment').first();
     await commentEditor.fill('This is an edited comment');
     const saveBtn = thread.locator('button[data-test="save"]').first();
@@ -175,7 +176,7 @@ test.describe('Doc Comments', () => {
     // Delete second comment
     await thread.getByText('This is a second comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
-    await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
+    await getMenuItem(thread, 'Delete comment').click();
     await expect(
       thread.getByText('This is a second comment').first(),
     ).toBeHidden();
@@ -205,7 +206,7 @@ test.describe('Doc Comments', () => {
 
     await thread.getByText('This is a new comment').first().hover();
     await thread.locator('[data-test="moreactions"]').first().click();
-    await thread.getByRole('menuitem', { name: 'Delete comment' }).click();
+    await getMenuItem(thread, 'Delete comment').click();
 
     await expect(editor.getByText('Hello')).toHaveCSS(
       'background-color',

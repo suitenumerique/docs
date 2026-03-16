@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import {
   TestLanguage,
+  getMenuItem,
   overrideConfig,
   waitForLanguageSwitch,
 } from './utils-common';
@@ -44,7 +45,7 @@ test.describe('Help feature', () => {
 
       await page.getByRole('button', { name: 'Open onboarding menu' }).click();
 
-      await page.getByRole('menuitem', { name: 'Onboarding' }).click();
+      await getMenuItem(page, 'Onboarding').click();
 
       const modal = page.getByTestId('onboarding-modal');
       await expect(modal).toBeVisible();
@@ -87,7 +88,7 @@ test.describe('Help feature', () => {
 
     test('closes modal with Skip button', async ({ page }) => {
       await page.getByRole('button', { name: 'Open onboarding menu' }).click();
-      await page.getByRole('menuitem', { name: 'Onboarding' }).click();
+      await getMenuItem(page, 'Onboarding').click();
 
       const modal = page.getByTestId('onboarding-modal');
       await expect(modal).toBeVisible();
@@ -110,7 +111,7 @@ test.describe('Help feature', () => {
         .getByRole('button', { name: "Ouvrir le menu d'embarquement" })
         .click();
 
-      await page.getByRole('menuitem', { name: 'Premiers pas' }).click();
+      await getMenuItem(page, 'Premiers pas').click();
 
       const modal = page.getByLabel('Apprenez les principes fondamentaux');
 

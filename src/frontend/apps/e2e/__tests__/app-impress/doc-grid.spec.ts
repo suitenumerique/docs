@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getGridRow, verifyDocName } from './utils-common';
+import {
+  createDoc,
+  getGridRow,
+  getMenuItem,
+  verifyDocName,
+} from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
 
 type SmallDoc = {
@@ -99,7 +104,7 @@ test.describe('Document grid item options', () => {
     const row = await getGridRow(page, docTitle);
     await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Share' }).click();
+    await getMenuItem(page, 'Share').click();
 
     await expect(
       page.getByRole('dialog').getByText('Share the document'),
@@ -115,7 +120,7 @@ test.describe('Document grid item options', () => {
 
     // Pin
     await row.getByText(`more_horiz`).click();
-    await page.getByRole('menuitem', { name: 'Pin' }).click();
+    await getMenuItem(page, 'Pin').click();
 
     // Check is pinned
     await expect(row.getByTestId('doc-pinned-icon')).toBeVisible();
@@ -142,7 +147,7 @@ test.describe('Document grid item options', () => {
     const row = await getGridRow(page, docTitle);
     await row.getByText(`more_horiz`).click();
 
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await getMenuItem(page, 'Delete').click();
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),

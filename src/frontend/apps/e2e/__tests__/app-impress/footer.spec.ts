@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { overrideConfig } from './utils-common';
+import { getMenuItem, overrideConfig } from './utils-common';
 
 test.describe('Footer', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -47,7 +47,7 @@ test.describe('Footer', () => {
     // Check the translation
     const header = page.locator('header').first();
     await header.getByRole('button').getByText('English').click();
-    await page.getByRole('menuitem', { name: 'Français' }).click();
+    await getMenuItem(page, 'Français').click();
 
     await expect(
       page.locator('footer').getByText('Mentions légales'),
@@ -131,7 +131,7 @@ test.describe('Footer', () => {
     // Check the translation
     const header = page.locator('header').first();
     await header.getByRole('button').getByText('English').click();
-    await page.getByRole('menuitem', { name: 'Français' }).click();
+    await getMenuItem(page, 'Français').click();
 
     await expect(
       page

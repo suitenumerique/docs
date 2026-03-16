@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './utils-common';
+import { createDoc, getMenuItem, verifyDocName } from './utils-common';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.beforeEach(async ({ page }) => {
@@ -136,13 +136,9 @@ test.describe('Document search', () => {
 
     await filters.click();
     await filters.getByRole('button', { name: 'Current doc' }).click();
-    await expect(
-      page.getByRole('menuitem', { name: 'All docs' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('menuitem', { name: 'Current doc' }),
-    ).toBeVisible();
-    await page.getByRole('menuitem', { name: 'All docs' }).click();
+    await expect(getMenuItem(page, 'All docs')).toBeVisible();
+    await expect(getMenuItem(page, 'Current doc')).toBeVisible();
+    await getMenuItem(page, 'All docs').click();
 
     await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
   });

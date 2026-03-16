@@ -2,6 +2,7 @@ import { Page, chromium, expect } from '@playwright/test';
 
 import {
   BrowserName,
+  getMenuItem,
   getOtherBrowserName,
   keyCloakSignIn,
   verifyDocName,
@@ -39,7 +40,7 @@ export const addNewMember = async (
 
   // Choose a role
   await page.getByTestId('doc-role-dropdown').click();
-  await page.getByRole('menuitem', { name: role }).click();
+  await getMenuItem(page, role).click();
   await page.getByTestId('doc-share-invite-button').click();
 
   return users[index].email;
@@ -51,7 +52,7 @@ export const updateShareLink = async (
   linkRole?: LinkRole | null,
 ) => {
   await page.getByTestId('doc-visibility').click();
-  await page.getByRole('menuitem', { name: linkReach }).click();
+  await getMenuItem(page, linkReach).click();
 
   const visibilityUpdatedText = page
     .getByText('The document visibility has been updated')
@@ -61,7 +62,7 @@ export const updateShareLink = async (
 
   if (linkRole) {
     await page.getByTestId('doc-access-mode').click();
-    await page.getByRole('menuitem', { name: linkRole }).click();
+    await getMenuItem(page, linkRole).click();
     await expect(visibilityUpdatedText).toBeVisible();
   }
 };
@@ -76,7 +77,7 @@ export const updateRoleUser = async (
   const currentUser = list.getByTestId(`doc-share-member-row-${email}`);
   const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
   await currentUserRole.click();
-  await page.getByRole('menuitem', { name: role }).click();
+  await getMenuItem(page, role).click();
   await list.click();
 };
 
