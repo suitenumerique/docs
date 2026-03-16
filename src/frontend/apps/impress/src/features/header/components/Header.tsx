@@ -76,7 +76,10 @@ export const Header = () => {
                 {...(({ withTitle: _, ...rest }) => rest)(icon)}
               />
             )}
-            {icon?.withTitle && <Title headingLevel="h1" aria-hidden="true" />}
+            <Title
+              headingLevel="h1"
+              className={icon?.withTitle ? undefined : 'sr-only'}
+            />
           </Box>
         </StyledLink>
         {!isDesktop ? (

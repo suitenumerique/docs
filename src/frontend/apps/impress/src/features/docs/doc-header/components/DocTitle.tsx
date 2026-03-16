@@ -43,7 +43,7 @@ export const DocTitleText = () => {
   return (
     <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
       <Text
-        as="h1"
+        as="h2"
         $margin={{ all: 'none', left: 'none' }}
         $size={isMobile ? 'h4' : 'h2'}
       >
@@ -168,39 +168,37 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
 
       <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
-        <Box as="h1" $margin="none">
-          <Box
-            as="span"
-            role="textbox"
-            className="--docs--doc-title-input"
-            contentEditable
-            defaultValue={titleDisplay || undefined}
-            onKeyDownCapture={handleKeyDown}
-            suppressContentEditableWarning={true}
-            aria-label={`${t('Document title')}`}
-            aria-multiline={false}
-            onBlurCapture={(event) =>
-              handleTitleSubmit(event.target.textContent || '')
+        <Box
+          as="span"
+          role="textbox"
+          className="--docs--doc-title-input"
+          contentEditable
+          defaultValue={titleDisplay || undefined}
+          onKeyDownCapture={handleKeyDown}
+          suppressContentEditableWarning={true}
+          aria-label={`${t('Document title')}`}
+          aria-multiline={false}
+          onBlurCapture={(event) =>
+            handleTitleSubmit(event.target.textContent || '')
+          }
+          $padding={{ right: 'big' }}
+          $css={css`
+            &[contenteditable='true']:empty:not(:focus):before {
+              content: '${untitledDocument}';
+              color: var(
+                --c--contextuals--content--semantic--neutral--tertiary
+              );
+              pointer-events: none;
+              font-style: italic;
             }
-            $padding={{ right: 'big' }}
-            $css={css`
-              &[contenteditable='true']:empty:not(:focus):before {
-                content: '${untitledDocument}';
-                color: var(
-                  --c--contextuals--content--semantic--neutral--tertiary
-                );
-                pointer-events: none;
-                font-style: italic;
-              }
-              font-size: ${isDesktop
-                ? css`var(--c--globals--font--sizes--h2)`
-                : css`var(--c--globals--font--sizes--sm)`};
-              font-weight: 700;
-              outline: none;
-            `}
-          >
-            {titleDisplay}
-          </Box>
+            font-size: ${isDesktop
+              ? css`var(--c--globals--font--sizes--h2)`
+              : css`var(--c--globals--font--sizes--sm)`};
+            font-weight: 700;
+            outline: none;
+          `}
+        >
+          {titleDisplay}
         </Box>
       </Tooltip>
     </Box>

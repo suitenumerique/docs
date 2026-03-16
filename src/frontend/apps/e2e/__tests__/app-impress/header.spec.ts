@@ -55,7 +55,8 @@ test.describe('Header', () => {
       'src',
       '/assets/icon-docs-v2.svg',
     );
-    await expect(header.locator('h1')).toBeHidden();
+    // With withTitle: false, the h1 is kept for accessibility but visually hidden via sr-only
+    await expect(header.locator('h1').getByText('Docs')).toHaveClass(/sr-only/);
   });
 
   test('checks a custom waffle', async ({ page }) => {

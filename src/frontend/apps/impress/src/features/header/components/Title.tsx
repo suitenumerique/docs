@@ -4,14 +4,18 @@ import { Text } from '@/components/';
 
 type TitleSemanticsProps = {
   headingLevel?: 'h1' | 'h2' | 'h3';
+  className?: string;
 };
 
-export const Title = ({ headingLevel = 'h2' }: TitleSemanticsProps) => {
+export const Title = ({
+  headingLevel = 'h2',
+  className,
+}: TitleSemanticsProps) => {
   const { t } = useTranslation();
 
   return (
     <Text
-      className="--docs--title"
+      className={`--docs--title${className ? ` ${className}` : ''}`}
       $direction="row"
       $align="center"
       $margin="none"
