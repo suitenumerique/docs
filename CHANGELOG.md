@@ -11,6 +11,7 @@ and this project adheres to
 - 💫(frontend) fix the help button to the bottom in tree #2073
 - ♿️(frontend) improve version history list accessibility #2033
 - ♿️(frontend) fix more options menu feedback for screen readers #2071
+- ♿(frontend) focus skip link on headings and skip grid dropzone #1983
 
 ## [v4.8.2] - 2026-03-19
 
@@ -68,7 +69,6 @@ and this project adheres to
 - ⬆️(frontend) upgrade Next.js to v16 #1980
 - ♿️(frontend) fix aria-label and landmark on document banner state #1986
 - 🌐(i18n) add "new window" translation key for waffle aria-label #1984
-- ♿(frontend) focus skip link on headings and skip grid dropzone #1983
 
 ### Fixed
 

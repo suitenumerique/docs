@@ -196,18 +196,18 @@ test.describe('Header: Skip to Content', () => {
   }) => {
     await page.goto('/');
 
-    // Wait for skip button to be mounted (client-side only component)
-    const skipButton = page.getByRole('button', { name: 'Go to content' });
-    await skipButton.waitFor({ state: 'attached' });
+    // Wait for skip link to be mounted (client-side only component)
+    const skipLink = page.getByRole('link', { name: 'Go to content' });
+    await skipLink.waitFor({ state: 'attached' });
 
-    // First TAB shows the skip button
+    // First TAB shows the skip link
     await page.keyboard.press('Tab');
 
-    // The skip button should be visible and focused
-    await expect(skipButton).toBeFocused();
-    await expect(skipButton).toBeVisible();
+    // The skip link should be visible and focused
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
     // Clicking moves focus to the page heading
-    await skipButton.click();
+    await skipLink.click();
     const pageHeading = page.getByRole('heading', {
       name: 'All docs',
       level: 2,
