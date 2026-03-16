@@ -55,7 +55,9 @@ export const BoutonShare = ({
         `}
       >
         <Button
-          aria-label={t('Share button')}
+          aria-label={t('Share button, shared with {{count}} users', {
+            count: doc.nb_accesses_direct,
+          })}
           variant="secondary"
           icon={
             <Icon

@@ -9,11 +9,12 @@ and this project adheres to
 ### Changed
 
 - ♿️(frontend) ensure doc title is h1 for accessibility #2006
+- ♿️(frontend) add nb accesses in share button aria-label #2017
 
 ### Fixed
 
 - 🐛(frontend) fix image resizing when caption #2045
-- 🙈(docker) add **/.next to .dockerignore #2034
+- 🙈(docker) add \*\*/.next to .dockerignore #2034
 - ♿️(frontend) fix share modal heading hierarchy #2007
 - ♿️(frontend) fix Copy link toast accessibility for screen readers #2029
 - ♿️(frontend) fix modal aria-label and name #2014
