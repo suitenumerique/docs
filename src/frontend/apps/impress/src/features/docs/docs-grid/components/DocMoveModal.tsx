@@ -196,7 +196,6 @@ export const DocMoveModal = ({
         }
       >
         <Box
-          aria-label={t('Move modal')}
           $direction="column"
           $justify="space-between"
           className="--docs--doc-move-modal"

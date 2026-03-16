@@ -90,7 +90,7 @@ export const ModalRemoveDoc = ({
       closeOnClickOutside
       hideCloseButton
       onClose={handleClose}
-      aria-describedby="modal-remove-doc-title"
+      aria-label={t('Delete a doc')}
       rightActions={
         <>
           <Button

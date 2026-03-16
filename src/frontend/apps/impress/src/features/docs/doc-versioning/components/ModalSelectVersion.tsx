@@ -60,11 +60,10 @@ export const ModalSelectVersion = ({
         closeOnClickOutside={true}
         size={ModalSize.EXTRA_LARGE}
         onClose={onClose}
-        aria-describedby="modal-select-version-title"
+        aria-label={t('Version history')}
       >
         <NoPaddingStyle />
         <Box
-          aria-label="version history modal"
           className="--docs--modal-select-version noPadding"
           $direction="row"
           $height="100%"

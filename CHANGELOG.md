@@ -16,6 +16,7 @@ and this project adheres to
 - 🙈(docker) add **/.next to .dockerignore #2034
 - ♿️(frontend) fix share modal heading hierarchy #2007
 - ♿️(frontend) fix Copy link toast accessibility for screen readers #2029
+- ♿️(frontend) fix modal aria-label and name #2014
 
 ## [v4.8.1] - 2026-03-17
 

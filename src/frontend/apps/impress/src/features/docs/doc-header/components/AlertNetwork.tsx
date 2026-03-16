@@ -73,6 +73,7 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
+      aria-label={t("Why you can't edit the document?")}
       rightActions={
         <>
           <Button
@@ -92,11 +93,7 @@ export const AlertNetworkModal = ({ onClose }: AlertNetworkModalProps) => {
         </Text>
       }
     >
-      <Box
-        aria-label={t('Content modal to explain why the user cannot edit')}
-        className="--docs--modal-alert-network"
-        $margin={{ top: 'md' }}
-      >
+      <Box className="--docs--modal-alert-network" $margin={{ top: 'md' }}>
         <Text $size="sm" $variation="secondary">
           {t(
             'Others are editing this document. Unfortunately your network blocks WebSockets, the technology enabling real-time co-editing.',

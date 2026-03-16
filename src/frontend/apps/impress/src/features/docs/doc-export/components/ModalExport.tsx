@@ -196,6 +196,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
       closeOnClickOutside
       onClose={() => onClose()}
       hideCloseButton
+      aria-label={t('Export')}
       aria-describedby="modal-export-title"
       rightActions={
         <>
@@ -247,7 +248,6 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
     >
       <Box
         $margin={{ bottom: 'xl' }}
-        aria-label={t('Content modal to export the document')}
         $gap="1rem"
         className="--docs--modal-export-content"
       >

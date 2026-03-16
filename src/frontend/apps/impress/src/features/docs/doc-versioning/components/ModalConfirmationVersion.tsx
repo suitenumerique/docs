@@ -69,7 +69,7 @@ export const ModalConfirmationVersion = ({
       isOpen
       closeOnClickOutside
       onClose={() => onClose()}
-      aria-describedby="modal-confirmation-version-title"
+      aria-label={t('Warning')}
       rightActions={
         <>
           <Button

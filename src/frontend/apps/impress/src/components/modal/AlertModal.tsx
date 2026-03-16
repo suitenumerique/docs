@@ -56,7 +56,7 @@ export const AlertModal = ({
       isOpen={isOpen}
       size={ModalSize.MEDIUM}
       onClose={onClose}
-      aria-describedby="alert-modal-title"
+      aria-label={title}
       title={
         <Text
           $size="h6"
