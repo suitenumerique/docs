@@ -107,11 +107,7 @@ const DocSearchModalGlobal = ({
                 $align="center"
                 $justify="center"
               >
-                <Image
-                  width={320}
-                  src={EmptySearchIcon}
-                  alt={t('No active search')}
-                />
+                <Image width={320} src={EmptySearchIcon} alt="" />
               </Box>
             )}
             {search && (
