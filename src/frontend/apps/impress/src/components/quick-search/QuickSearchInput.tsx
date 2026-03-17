@@ -43,7 +43,7 @@ export const QuickSearchInput = ({
         $align="center"
         className="quick-search-input"
         $gap={spacingsTokens['2xs']}
-        $padding={{ horizontal: 'base', vertical: 'xxs' }}
+        $padding={{ horizontal: 'base', vertical: 'xs' }}
       >
         <Icon iconName="search" $variation="secondary" aria-hidden="true" />
         <Command.Input
@@ -58,7 +58,7 @@ export const QuickSearchInput = ({
           data-testid="quick-search-input"
         />
       </Box>
-      {separator && <HorizontalSeparator $margin={{ top: 'base' }} />}
+      {separator && <HorizontalSeparator $margin={{ top: '2xs' }} />}
     </>
   );
 };

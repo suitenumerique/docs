@@ -60,37 +60,36 @@ const DocSearchModalGlobal = ({
       size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
       hideCloseButton
       aria-describedby="doc-search-modal-title"
+      title={
+        <>
+          <Text as="h2" $margin="0" $size="s" $align="flex-start">
+            {t('Search for a document')}
+          </Text>
+          <Box $position="absolute" $css="top: 4px; right: 4px;">
+            <ButtonCloseModal
+              aria-label={t('Close the search modal')}
+              onClick={modalProps.onClose}
+              size="small"
+              color="brand"
+              variant="tertiary"
+            />
+          </Box>
+        </>
+      }
     >
       <Box
         $direction="column"
         $justify="space-between"
         className="--docs--doc-search-modal"
-        $padding={{ vertical: 'base' }}
+        $padding={{ bottom: 'base' }}
       >
-        <Text
-          as="h1"
-          $margin="0"
-          id="doc-search-modal-title"
-          className="sr-only"
-        >
-          {t('Search docs')}
-        </Text>
-        <Box $position="absolute" $css="top: 4px; right: 4px;">
-          <ButtonCloseModal
-            aria-label={t('Close the search modal')}
-            onClick={modalProps.onClose}
-            size="small"
-            color="brand"
-            variant="tertiary"
-          />
-        </Box>
         <QuickSearch
           placeholder={t('Type the name of a document')}
           loading={loading}
           onFilter={handleInputSearch}
         >
           <Box
-            $padding={{ horizontal: '10px', vertical: 'base' }}
+            $padding={{ horizontal: 'sm', vertical: 'base' }}
             $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}
           >
             {showFilters && (
