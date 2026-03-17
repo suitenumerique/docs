@@ -85,6 +85,7 @@ const DocSearchModalGlobal = ({
           />
         </Box>
         <QuickSearch
+          label={t('Search documents')}
           placeholder={t('Type the name of a document')}
           loading={loading}
           onFilter={handleInputSearch}
