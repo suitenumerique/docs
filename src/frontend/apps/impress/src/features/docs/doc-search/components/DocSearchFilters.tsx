@@ -58,7 +58,13 @@ export const DocSearchFilters = ({
         />
       </Box>
       {hasFilters && (
-        <Button color="brand" variant="tertiary" size="small" onClick={onReset}>
+        <Button
+          color="brand"
+          variant="tertiary"
+          size="small"
+          onClick={onReset}
+          aria-label={t('Reset search filters')}
+        >
           {t('Reset')}
         </Button>
       )}
