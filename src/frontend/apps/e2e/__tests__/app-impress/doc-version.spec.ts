@@ -25,7 +25,7 @@ test.describe('Doc Version', () => {
     await expect(page.getByText('History', { exact: true })).toBeVisible();
 
     const modal = page.getByRole('dialog', { name: 'Version history' });
-    const panel = modal.getByLabel('version list');
+    const panel = modal.getByLabel('Version list');
     await expect(panel).toBeVisible();
     await expect(modal.getByText('No versions')).toBeVisible();
 
@@ -155,11 +155,11 @@ test.describe('Doc Version', () => {
     await getMenuItem(page, 'Version history').click();
 
     const modal = page.getByRole('dialog', { name: 'Version history' });
-    const panel = modal.getByLabel('version list');
+    const panel = modal.getByLabel('Version list');
     await expect(panel).toBeVisible();
 
     await expect(page.getByText('History', { exact: true })).toBeVisible();
-    await panel.getByRole('button', { name: 'version item' }).click();
+    await panel.locator('.version-item').first().click();
 
     await expect(modal.getByText('World')).toBeHidden();
 

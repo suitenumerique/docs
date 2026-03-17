@@ -3,14 +3,7 @@ import { DateTime } from 'luxon';
 import { useTranslation } from 'react-i18next';
 
 import { APIError } from '@/api';
-import {
-  Box,
-  BoxButton,
-  Icon,
-  InfiniteScroll,
-  Text,
-  TextErrors,
-} from '@/components';
+import { Box, Icon, InfiniteScroll, Text, TextErrors } from '@/components';
 import { Doc } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
 
@@ -49,23 +42,24 @@ const VersionListState = ({
 
   return (
     <Box $gap="10px" $padding="xs">
-      {versions?.map((version) => (
-        <BoxButton
-          aria-label="version item"
-          className="version-item"
-          key={version.version_id}
-          onClick={() => {
-            onSelectVersion?.(version.version_id);
-          }}
-        >
-          <VersionItem
-            versionId={version.version_id}
-            text={formatDate(version.last_modified, DateTime.DATETIME_MED)}
-            docId={doc.id}
-            isActive={version.version_id === selectedVersionId}
-          />
-        </BoxButton>
-      ))}
+      {versions?.map((version) => {
+        const formattedDate = formatDate(
+          version.last_modified,
+          DateTime.DATETIME_MED,
+        );
+        const isSelected = version.version_id === selectedVersionId;
+        return (
+          <Box as="li" key={version.version_id} $css="list-style: none;">
+            <VersionItem
+              versionId={version.version_id}
+              text={formattedDate}
+              docId={doc.id}
+              isActive={isSelected}
+              onSelect={() => onSelectVersion?.(version.version_id)}
+            />
+          </Box>
+        );
+      })}
       {error && (
         <Box
           $justify="center"
@@ -97,6 +91,7 @@ export const VersionList = ({
   selectedVersionId,
 }: VersionListProps) => {
   const { t } = useTranslation();
+  const { formatDate } = useDate();
 
   const {
     data,
@@ -112,6 +107,12 @@ export const VersionList = ({
   const versions = data?.pages.reduce((acc, page) => {
     return acc.concat(page.versions);
   }, [] as Versions[]);
+  const selectedVersion = versions?.find(
+    (version) => version.version_id === selectedVersionId,
+  );
+  const selectedVersionDate = selectedVersion
+    ? formatDate(selectedVersion.last_modified, DateTime.DATETIME_MED)
+    : null;
 
   return (
     <Box
@@ -127,7 +128,7 @@ export const VersionList = ({
         as="ul"
         $padding="none"
         $margin={{ top: 'none' }}
-        role="listbox"
+        role="list"
       >
         {versions?.length === 0 && (
           <Box $align="center" $margin="large">
@@ -145,6 +146,11 @@ export const VersionList = ({
           selectedVersionId={selectedVersionId}
         />
       </InfiniteScroll>
+      <Text className="sr-only" aria-live="polite">
+        {selectedVersionDate
+          ? t('Selected version {{date}}', { date: selectedVersionDate })
+          : ''}
+      </Text>
     </Box>
   );
 };

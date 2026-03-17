@@ -9,6 +9,7 @@ and this project adheres to
 ### Changed
 
 - 💫(frontend) fix the help button to the bottom in tree #2073
+- ♿️(frontend) improve version history list accessibility #2033
 
 ## [v4.8.2] - 2026-03-19
 

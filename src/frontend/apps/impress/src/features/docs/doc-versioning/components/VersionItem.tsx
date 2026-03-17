@@ -1,7 +1,8 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Box, Text } from '@/components';
+import { Box, BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc } from '@/docs/doc-management';
 
@@ -18,54 +19,69 @@ const ModalConfirmationVersion = dynamic(
 interface VersionItemProps {
   docId: Doc['id'];
   text: string;
-
   versionId?: Versions['version_id'];
   isActive: boolean;
+  onSelect?: () => void;
 }
 
 export const VersionItem = ({
   docId,
   versionId,
   text,
-
   isActive,
+  onSelect,
 }: VersionItemProps) => {
+  const { t } = useTranslation();
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
 
   const [isModalVersionOpen, setIsModalVersionOpen] = useState(false);
 
   return (
     <>
-      <Box
+      <BoxButton
+        aria-label={t('Restore version of {{date}}', { date: text })}
+        aria-pressed={isActive}
         $width="100%"
-        as="li"
-        $background={isActive ? colorsTokens['gray-100'] : 'transparent'}
-        $radius={spacingsTokens['3xs']}
         $css={`
-          cursor: pointer;
-
-          &:hover {
-            background: ${colorsTokens['gray-100']};
+          &:focus-visible {
+            background: var(--c--globals--colors--gray-100);
+            border-radius: var(--c--globals--spacings--st);
           }
         `}
-        $hasTransition
-        $minWidth="13rem"
-        className="--docs--version-item"
+        className="version-item"
+        onClick={onSelect}
       >
         <Box
-          $padding={{ vertical: '0.7rem', horizontal: 'small' }}
-          $align="center"
-          $direction="row"
-          $justify="space-between"
           $width="100%"
+          as="span"
+          $background={isActive ? colorsTokens['gray-100'] : 'transparent'}
+          $radius={spacingsTokens['3xs']}
+          $css={`
+            cursor: pointer;
+
+            &:hover {
+              background: ${colorsTokens['gray-100']};
+            }
+          `}
+          $hasTransition
+          $minWidth="13rem"
+          className="--docs--version-item"
         >
-          <Box $direction="row" $gap="0.5rem" $align="center">
-            <Text $weight="bold" $size="sm">
-              {text}
-            </Text>
+          <Box
+            $padding={{ vertical: '0.7rem', horizontal: 'small' }}
+            $align="center"
+            $direction="row"
+            $justify="space-between"
+            $width="100%"
+          >
+            <Box $direction="row" $gap="0.5rem" $align="center">
+              <Text $weight="bold" $size="sm">
+                {text}
+              </Text>
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </BoxButton>
       {isModalVersionOpen && versionId && (
         <ModalConfirmationVersion
           onClose={() => setIsModalVersionOpen(false)}
