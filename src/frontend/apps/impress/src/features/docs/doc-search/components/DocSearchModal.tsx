@@ -64,6 +64,7 @@ const DocSearchModalGlobal = ({
       aria-describedby="doc-search-modal-title"
     >
       <Box
+        aria-label={t('Search modal')}
         $direction="column"
         $justify="space-between"
         className="--docs--doc-search-modal"

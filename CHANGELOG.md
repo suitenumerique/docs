@@ -12,6 +12,7 @@ and this project adheres to
 - ♿️(frontend) improve version history list accessibility #2033
 - ♿️(frontend) fix more options menu feedback for screen readers #2071
 - ♿(frontend) focus skip link on headings and skip grid dropzone #1983
+- ♿️(frontend) fix search modal accessibility issues #2054
 
 ## [v4.8.2] - 2026-03-19
 

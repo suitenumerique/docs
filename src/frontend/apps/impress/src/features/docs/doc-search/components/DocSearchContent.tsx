@@ -1,3 +1,4 @@
+import { announce } from '@react-aria/live-announcer';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { InView } from 'react-intersection-observer';
@@ -73,10 +74,12 @@ export const DocSearchContent = ({
       docs = docs.filter(filterResults);
     }
 
+    const elements = search || isSearchNotMandatory ? docs : [];
+
     setDocsData({
       groupName: docs.length > 0 ? groupName : '',
       groupKey: 'docs',
-      elements: search || isSearchNotMandatory ? docs : [],
+      elements,
       emptyString: t('No document found'),
       endActions: hasNextPage
         ? [
@@ -90,6 +93,13 @@ export const DocSearchContent = ({
           ]
         : [],
     });
+
+    if (search) {
+      announce(
+        t('{{count}} result(s) available', { count: elements.length }),
+        'polite',
+      );
+    }
   }, [
     search,
     data?.pages,
