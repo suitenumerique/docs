@@ -330,6 +330,7 @@ def test_api_documents_update_authenticated_no_websocket(settings):
     ws_resp = responses.get(endpoint_url, json={"count": 0, "exists": False})
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
+    old_path = document.path
 
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
@@ -338,6 +339,8 @@ def test_api_documents_update_authenticated_no_websocket(settings):
     )
     assert response.status_code == 200
 
+    document.refresh_from_db()
+    assert document.path == old_path
     assert cache.get(f"docs:no-websocket:{document.id}") == session_key
     assert ws_resp.call_count == 1
 
@@ -446,6 +449,7 @@ def test_api_documents_update_user_connected_to_websocket(settings):
     ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": True})
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
+    old_path = document.path
 
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
@@ -453,6 +457,9 @@ def test_api_documents_update_user_connected_to_websocket(settings):
         format="json",
     )
     assert response.status_code == 200
+
+    document.refresh_from_db()
+    assert document.path == old_path
     assert cache.get(f"docs:no-websocket:{document.id}") is None
     assert ws_resp.call_count == 1
 
@@ -486,6 +493,7 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
     ws_resp = responses.get(endpoint_url, status=500)
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
+    old_path = document.path
 
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
@@ -494,6 +502,8 @@ def test_api_documents_update_websocket_server_unreachable_fallback_to_no_websoc
     )
     assert response.status_code == 200
 
+    document.refresh_from_db()
+    assert document.path == old_path
     assert cache.get(f"docs:no-websocket:{document.id}") == session_key
     assert ws_resp.call_count == 1
 
@@ -605,6 +615,7 @@ def test_api_documents_update_force_websocket_param_to_true(settings):
     ws_resp = responses.get(endpoint_url, status=500)
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
+    old_path = document.path
 
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
@@ -613,6 +624,8 @@ def test_api_documents_update_force_websocket_param_to_true(settings):
     )
     assert response.status_code == 200
 
+    document.refresh_from_db()
+    assert document.path == old_path
     assert cache.get(f"docs:no-websocket:{document.id}") is None
     assert ws_resp.call_count == 0
 
@@ -643,6 +656,7 @@ def test_api_documents_update_feature_flag_disabled(settings):
     ws_resp = responses.get(endpoint_url, status=500)
 
     assert cache.get(f"docs:no-websocket:{document.id}") is None
+    old_path = document.path
 
     response = client.put(
         f"/api/v1.0/documents/{document.id!s}/",
@@ -651,6 +665,8 @@ def test_api_documents_update_feature_flag_disabled(settings):
     )
     assert response.status_code == 200
 
+    document.refresh_from_db()
+    assert document.path == old_path
     assert cache.get(f"docs:no-websocket:{document.id}") is None
     assert ws_resp.call_count == 0
 
