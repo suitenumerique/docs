@@ -99,24 +99,7 @@ class Base(Configuration):
                 "localhost", environ_name="DB_HOST", environ_prefix=None
             ),
             "PORT": values.Value(5432, environ_name="DB_PORT", environ_prefix=None),
-            "OPTIONS": {
-                # https://www.psycopg.org/psycopg3/docs/api/pool.html#psycopg_pool.ConnectionPool
-                "pool": {
-                    "min_size": values.IntegerValue(
-                        4, environ_name="DB_PSYCOPG_POOL_MIN_SIZE", environ_prefix=None
-                    ),
-                    "max_size": values.IntegerValue(
-                        None,
-                        environ_name="DB_PSYCOPG_POOL_MAX_SIZE",
-                        environ_prefix=None,
-                    ),
-                    "timeout": values.IntegerValue(
-                        3,
-                        environ_name="DB_PSYCOPG_POOL_TIMEOUT",
-                        environ_prefix=None,
-                    ),
-                }
-            },
+            # Psycopg pool can be configured in the post_setup method
         }
     }
     DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -1015,6 +998,36 @@ class Base(Configuration):
             raise ValueError(
                 "Both OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION and "
                 "OIDC_ALLOW_DUPLICATE_EMAILS cannot be set to True simultaneously. "
+            )
+
+        psycopg_pool_enabled = values.BooleanValue(
+            False, environ_name="DB_PSYCOPG_POOL_ENABLED", environ_prefix=""
+        )
+
+        if psycopg_pool_enabled:
+            cls.DATABASES["default"].update(
+                {
+                    "OPTIONS": {
+                        # https://www.psycopg.org/psycopg3/docs/api/pool.html#psycopg_pool.ConnectionPool
+                        "pool": {
+                            "min_size": values.IntegerValue(
+                                4,
+                                environ_name="DB_PSYCOPG_POOL_MIN_SIZE",
+                                environ_prefix=None,
+                            ),
+                            "max_size": values.IntegerValue(
+                                None,
+                                environ_name="DB_PSYCOPG_POOL_MAX_SIZE",
+                                environ_prefix=None,
+                            ),
+                            "timeout": values.IntegerValue(
+                                3,
+                                environ_name="DB_PSYCOPG_POOL_TIMEOUT",
+                                environ_prefix=None,
+                            ),
+                        }
+                    },
+                }
             )
 
 

@@ -6,11 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
-## [v4.8.0] - 2026-03-13
+### Added
+
+- 🔧(backend) add DB_PSYCOPG_POOL_ENABLED settings
 
 ### Changed
 
 - ⬇️(backend) downgrade django-treebeard to version < 5.0.0
+
+## [v4.8.0] - 2026-03-13
 
 ### Added
 
