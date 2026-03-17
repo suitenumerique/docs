@@ -173,6 +173,11 @@ make frontend-test
 make frontend-lint
 ```
 
+Backend tests can be run without docker. This is useful to configure PyCharm or VSCode to do it. 
+Removing docker for testing requires to overwrite some URL and port values that are different in and out of 
+Docker. `env.d/development/common` contains all variables, some of them having to be overwritten by those in
+`env.d/development/common.test`.
+
 ### Demo content
 
 Create a basic demo site:
