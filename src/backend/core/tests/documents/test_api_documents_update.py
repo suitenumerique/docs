@@ -4,6 +4,7 @@ Tests for Documents API endpoint in impress's core app: update
 # pylint: disable=too-many-lines
 
 import random
+from unittest.mock import patch
 
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
@@ -1429,3 +1430,47 @@ def test_api_documents_patch_invalid_content():
     )
     assert response.status_code == 400
     assert response.json() == {"content": ["Invalid base64 content."]}
+
+
+@responses.activate
+def test_api_documents_patch_empty_body(settings):
+    """
+    Test when data is empty the document should not be updated.
+    The `updated_at` property should not change asserting that no update in the database is made.
+    """
+    user = factories.UserFactory()
+
+    client = APIClient()
+    client.force_login(user)
+    session_key = client.session.session_key
+
+    document = factories.DocumentFactory(users=[(user, "owner")], creator=user)
+    document_updated_at = document.updated_at
+
+    settings.COLLABORATION_API_URL = "http://example.com/"
+    settings.COLLABORATION_SERVER_SECRET = "secret-token"
+    settings.COLLABORATION_WS_NOT_CONNECTED_READY_ONLY = True
+    endpoint_url = (
+        f"{settings.COLLABORATION_API_URL}get-connections/"
+        f"?room={document.id}&sessionKey={session_key}"
+    )
+    ws_resp = responses.get(endpoint_url, json={"count": 3, "exists": True})
+
+    assert cache.get(f"docs:no-websocket:{document.id}") is None
+
+    old_document_values = serializers.DocumentSerializer(instance=document).data
+
+    with patch("core.models.Document.save") as mock_document_save:
+        response = client.patch(
+            f"/api/v1.0/documents/{document.id!s}/",
+            content_type="application/json",
+        )
+    mock_document_save.assert_not_called()
+    assert response.status_code == 200
+
+    document = models.Document.objects.get(id=document.id)
+    new_document_values = serializers.DocumentSerializer(instance=document).data
+    assert new_document_values == old_document_values
+    assert document_updated_at == document.updated_at
+    assert cache.get(f"docs:no-websocket:{document.id}") is None
+    assert ws_resp.call_count == 1

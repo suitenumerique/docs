@@ -300,6 +300,15 @@ class DocumentSerializer(ListDocumentSerializer):
 
         return file
 
+    def update(self, instance, validated_data):
+        """
+        When no data is sent on the update, skip making the update in the database and return
+        directly the instance unchanged.
+        """
+        if not validated_data:
+            return instance  # No data provided, skip the update
+        return super().update(instance, validated_data)
+
     def save(self, **kwargs):
         """
         Process the content field to extract attachment keys and update the document's

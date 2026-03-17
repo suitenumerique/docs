@@ -16,14 +16,13 @@ and this project adheres to
 - ♿️(frontend) add sr-only format to export download button #2088
 - ♿️(frontend) announce formatting shortcuts for screen readers #2070
 - ✨(frontend) add markdown copy icon for Copy as Markdown option #2096
+- ♻️(backend) skip saving in database a document when payload is empty #2062
 
 ### Fixed
 
 - ♿️(frontend) fix aria-labels for table of contents #2065
-
-### Fixed
-
 - 🐛(backend) allow using search endpoint without refresh token enabled #2097
+
 
 ## [v4.8.2] - 2026-03-19
 
