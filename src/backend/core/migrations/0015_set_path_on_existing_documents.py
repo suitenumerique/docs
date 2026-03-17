@@ -22,7 +22,7 @@ def set_path_on_existing_documents(apps, schema_editor):
 
     # Iterate over all existing documents and make them root nodes
     documents = Document.objects.order_by("created_at").values_list("id", flat=True)
-    numconv = NumConv(ALPHABET)
+    numconv = NumConv(len(ALPHABET), ALPHABET)
 
     updates = []
     for i, pk in enumerate(documents):
