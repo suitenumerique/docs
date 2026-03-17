@@ -57,30 +57,22 @@ export const accessibleImageRender =
       imgSelector?.removeAttribute('aria-hidden');
       imgSelector?.setAttribute('tabindex', '0');
 
-      const figureElement = document.createElement('figure');
+      const originalCaption = dom.querySelector('.bn-file-caption');
 
-      // Copy all attributes from the original div
-      figureElement.className = dom.className;
-      const styleAttr = dom.getAttribute('style');
-      if (styleAttr) {
-        figureElement.setAttribute('style', styleAttr);
-      }
-      figureElement.style.setProperty('margin', '0');
+      if (imgSelector?.parentNode && originalCaption) {
+        const figureElement = document.createElement('figure');
+        figureElement.style.setProperty('margin', '0');
 
-      Array.from(dom.children).forEach((child) => {
-        figureElement.appendChild(child.cloneNode(true));
-      });
+        // Wrap only the img inside figure, preserving the rest of the dom tree
+        imgSelector.parentNode.insertBefore(figureElement, imgSelector);
+        figureElement.appendChild(imgSelector);
 
-      // Replace the <p> caption with <figcaption>
-      const figcaptionElement = document.createElement('figcaption');
-      const originalCaption = figureElement.querySelector('.bn-file-caption');
-      if (originalCaption) {
+        // Replace the <p> caption with <figcaption> inside the figure
+        const figcaptionElement = document.createElement('figcaption');
         figcaptionElement.className = originalCaption.className;
         figcaptionElement.textContent = originalCaption.textContent;
-        originalCaption.parentNode?.replaceChild(
-          figcaptionElement,
-          originalCaption,
-        );
+        figureElement.appendChild(figcaptionElement);
+        originalCaption.parentNode?.removeChild(originalCaption);
 
         // Add explicit role and aria-label for better screen reader support
         figureElement.setAttribute('role', 'img');
@@ -90,10 +82,9 @@ export const accessibleImageRender =
         );
       }
 
-      // Return the figure element as the new dom
       return {
         ...imageRenderComputed,
-        dom: figureElement,
+        dom,
       };
     };
 

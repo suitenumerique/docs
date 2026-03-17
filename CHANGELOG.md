@@ -6,13 +6,14 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Fixed
-
-- 🙈(docker) add \*\*/.next to .dockerignore #2034
-
 ### Changed
 
 - ♿️(frontend) ensure doc title is h1 for accessibility #2006
+
+### Fixed
+
+- 🐛(frontend) fix image resizing when caption #2045
+- 🙈(docker) add **/.next to .dockerignore #2034
 - ♿️(frontend) fix share modal heading hierarchy #2007
 - ♿️(frontend) fix Copy link toast accessibility for screen readers #2029
 
