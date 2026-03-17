@@ -34,4 +34,4 @@ db.sqlite3
 
 # Frontend
 node_modules
-.next
+**/.next

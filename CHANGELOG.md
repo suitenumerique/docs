@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- 🙈(docker) add **/.next to .dockerignore #2034
+
+
 ## [v4.8.1] - 2026-03-17
 
 ### Added
