@@ -54,7 +54,7 @@ dependencies = [
     "mozilla-django-oidc==5.0.2",
     "nested-multipart-parser==1.6.0",
     "openai==2.24.0",
-    "psycopg[binary]==3.3.3",
+    "psycopg[binary,pool]==3.3.3",
     "pycrdt==0.12.47",
     "pydantic==2.12.5",
     "pydantic-ai-slim[openai,logfire,web]==1.58.0",
