@@ -32,6 +32,7 @@ export type QuickSearchProps = {
   label?: string;
   placeholder?: string;
   groupKey?: string;
+  isExpanded?: boolean;
 };
 
 export const QuickSearch = ({
@@ -41,6 +42,7 @@ export const QuickSearch = ({
   showInput = true,
   label,
   placeholder,
+  isExpanded,
   children,
 }: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -72,6 +74,7 @@ export const QuickSearch = ({
               onFilter={onFilter}
               placeholder={placeholder}
               listId={listId}
+              isExpanded={isExpanded}
             >
               {inputContent}
             </QuickSearchInput>

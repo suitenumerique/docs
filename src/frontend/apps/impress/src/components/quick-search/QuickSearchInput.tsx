@@ -1,5 +1,5 @@
 import { Command } from 'cmdk';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { HorizontalSeparator } from '@/components';
@@ -23,9 +23,18 @@ export const QuickSearchInput = ({
   children,
   withSeparator: separator = true,
   listId,
+  isExpanded,
 }: PropsWithChildren<QuickSearchInputProps>) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.setAttribute(
+      'aria-expanded',
+      String(isExpanded ?? false),
+    );
+  }, [isExpanded]);
 
   if (children) {
     return (
@@ -47,6 +56,7 @@ export const QuickSearchInput = ({
       >
         <Icon iconName="search" $variation="secondary" aria-hidden="true" />
         <Command.Input
+          ref={inputRef}
           autoFocus={true}
           aria-label={t('Quick search input')}
           aria-controls={listId}

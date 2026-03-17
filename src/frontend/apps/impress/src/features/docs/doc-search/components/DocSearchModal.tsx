@@ -89,6 +89,7 @@ const DocSearchModalGlobal = ({
           placeholder={t('Type the name of a document')}
           loading={loading}
           onFilter={handleInputSearch}
+          isExpanded={search.length > 0}
         >
           <Box
             $padding={{ horizontal: '10px', vertical: 'base' }}
