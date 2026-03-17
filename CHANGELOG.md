@@ -6,13 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v4.8.1] - 2026-03-17
+
 ### Added
 
-- 🔧(backend) add DB_PSYCOPG_POOL_ENABLED settings
+- 🔧(backend) add DB_PSYCOPG_POOL_ENABLED settings #2035
 
 ### Changed
 
-- ⬇️(backend) downgrade django-treebeard to version < 5.0.0
+- ⬇️(backend) downgrade django-treebeard to version < 5.0.0 #2036
 
 ## [v4.8.0] - 2026-03-13
 
@@ -1113,7 +1115,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.8.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.8.1...main
+[v4.8.1]: https://github.com/suitenumerique/docs/releases/v4.8.1
 [v4.8.0]: https://github.com/suitenumerique/docs/releases/v4.8.0
 [v4.7.0]: https://github.com/suitenumerique/docs/releases/v4.7.0
 [v4.6.0]: https://github.com/suitenumerique/docs/releases/v4.6.0
