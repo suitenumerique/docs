@@ -46,6 +46,7 @@
     "@hocuspocus/provider": "3.4.4",
     "@mantine/core": "8.3.14",
     "@mantine/hooks": "8.3.14",
+    "@react-aria/live-announcer": "3.4.4",
     "@react-pdf/renderer": "4.3.1",
     "@sentry/nextjs": "10.38.0",
     "@tanstack/react-query": "5.90.21",

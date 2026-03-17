@@ -1,4 +1,5 @@
 import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
+import { announce } from '@react-aria/live-announcer';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -80,7 +81,6 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [userQuery, setUserQuery] = useState('');
   const [inputValue, setInputValue] = useState('');
-  const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
   const [listHeight, setListHeight] = useState<string>('400px');
   const canShare = doc.abilities.accesses_manage && isRootDoc;
@@ -93,18 +93,16 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
     setUserQuery('');
     setInputValue('');
 
-    // Announce to screen readers
     const userName = user.full_name || user.email;
-    setLiveAnnouncement(
+    announce(
       t(
         '{{name}} added to invite list. Add more members or press Tab to select role and invite.',
         {
           name: userName,
         },
       ),
+      'polite',
     );
-    // Clear announcement after it's been read
-    setTimeout(() => setLiveAnnouncement(''), 100);
   };
 
   const { data: membersQuery } = useDocAccesses({
@@ -132,14 +130,13 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
       const newArray = [...prevState];
       newArray.splice(index, 1);
 
-      // Announce to screen readers
       const userName = row.full_name || row.email;
-      setLiveAnnouncement(
+      announce(
         t('{{name}} removed from invite list', {
           name: userName,
         }),
+        'polite',
       );
-      setTimeout(() => setLiveAnnouncement(''), 100);
 
       return newArray;
     });
@@ -208,15 +205,6 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
         hideCloseButton
       >
         <ShareModalStyle />
-        {/* Screen reader announcements */}
-        <div
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          className="sr-only"
-        >
-          {liveAnnouncement}
-        </div>
         <Box
           $height="auto"
           $maxHeight={canViewAccesses ? modalContentHeight : 'none'}

@@ -14,6 +14,7 @@ and this project adheres to
 
 - ♿️(frontend) ensure doc title is h1 for accessibility #2006
 - ♿️(frontend) fix share modal heading hierarchy #2007
+- ♿️(frontend) fix Copy link toast accessibility for screen readers #2029
 
 ## [v4.8.1] - 2026-03-17
 

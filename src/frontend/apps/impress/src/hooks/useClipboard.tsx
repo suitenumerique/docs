@@ -2,6 +2,7 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
+import { announce } from '@react-aria/live-announcer';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,22 +15,18 @@ export const useClipboard = () => {
       navigator.clipboard
         .writeText(text)
         .then(() => {
-          toast(
-            successMessage ?? t('Copied to clipboard'),
-            VariantType.SUCCESS,
-            {
-              duration: 3000,
-            },
-          );
+          const message = successMessage ?? t('Copied to clipboard');
+          toast(message, VariantType.SUCCESS, {
+            duration: 3000,
+          });
+          announce(message, 'polite');
         })
         .catch(() => {
-          toast(
-            errorMessage ?? t('Failed to copy to clipboard'),
-            VariantType.ERROR,
-            {
-              duration: 3000,
-            },
-          );
+          const message = errorMessage ?? t('Failed to copy to clipboard');
+          toast(message, VariantType.ERROR, {
+            duration: 3000,
+          });
+          announce(message, 'assertive');
         });
     },
     [t, toast],
