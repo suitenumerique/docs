@@ -19,6 +19,7 @@ and this project adheres to
 - ♿️(frontend) fix Copy link toast accessibility for screen readers #2029
 - ♿️(frontend) fix modal aria-label and name #2014
 - ♿️(frontend) fix language dropdown ARIA for screen readers #2020
+- ♿️(frontend) fix waffle aria-label spacing for new-window links #2030
 
 ## [v4.8.1] - 2026-03-17
 

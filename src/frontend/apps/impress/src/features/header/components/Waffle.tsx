@@ -47,7 +47,7 @@ export const Waffle = () => {
       <LaGaufreV2Fixed
         {...waffleConfig}
         label={waffleConfig.label ?? t('Digital LaSuite services')}
-        newWindowLabelSuffix={t('new window')}
+        newWindowLabelSuffix={` (${t('new window')})`}
       />
     </Box>
   );
