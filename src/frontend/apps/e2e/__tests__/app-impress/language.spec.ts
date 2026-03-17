@@ -75,7 +75,9 @@ test.describe('Language', () => {
 
     await expect(page.locator('[role="menu"]')).toBeVisible();
 
-    const menuItems = page.locator('[role="menuitem"], [role="menuitemradio"]');
+    const menuItems = page.locator(
+      '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
+    );
     await expect(menuItems.first()).toBeVisible();
 
     await menuItems.first().click();
