@@ -14,7 +14,7 @@ import {
   DocSearchFiltersValues,
   DocSearchTarget,
 } from '@/docs/doc-search';
-import { useResponsiveStore } from '@/stores';
+import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
@@ -36,6 +36,7 @@ const DocSearchModalGlobal = ({
 }: DocSearchModalGlobalProps) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const restoreFocus = useFocusStore((state) => state.restoreFocus);
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<DocSearchFiltersValues>(
@@ -51,6 +52,7 @@ const DocSearchModalGlobal = ({
 
   const handleResetFilters = () => {
     setFilters({});
+    restoreFocus();
   };
 
   return (
@@ -89,19 +91,22 @@ const DocSearchModalGlobal = ({
           placeholder={t('Type the name of a document')}
           loading={loading}
           onFilter={handleInputSearch}
-          isExpanded={search.length > 0}
+          beforeList={
+            showFilters ? (
+              <Box $padding={{ horizontal: '10px' }}>
+                <DocSearchFilters
+                  values={filters}
+                  onValuesChange={setFilters}
+                  onReset={handleResetFilters}
+                />
+              </Box>
+            ) : undefined
+          }
         >
           <Box
             $padding={{ horizontal: '10px', vertical: 'base' }}
             $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}
           >
-            {showFilters && (
-              <DocSearchFilters
-                values={filters}
-                onValuesChange={setFilters}
-                onReset={handleResetFilters}
-              />
-            )}
             {search.length === 0 && (
               <Box
                 $direction="column"

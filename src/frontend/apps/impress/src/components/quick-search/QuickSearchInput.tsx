@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { HorizontalSeparator } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
+import { useFocusStore } from '@/stores';
 
 import { Box } from '../Box';
 import { Icon } from '../Icon';
@@ -14,7 +15,6 @@ type QuickSearchInputProps = {
   placeholder?: string;
   withSeparator?: boolean;
   listId?: string;
-  isExpanded?: boolean;
 };
 export const QuickSearchInput = ({
   inputValue,
@@ -23,18 +23,15 @@ export const QuickSearchInput = ({
   children,
   withSeparator: separator = true,
   listId,
-  isExpanded,
 }: PropsWithChildren<QuickSearchInputProps>) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
   const inputRef = useRef<HTMLInputElement>(null);
+  const addLastFocus = useFocusStore((state) => state.addLastFocus);
 
   useEffect(() => {
-    inputRef.current?.setAttribute(
-      'aria-expanded',
-      String(isExpanded ?? false),
-    );
-  }, [isExpanded]);
+    addLastFocus(inputRef.current);
+  }, [addLastFocus]);
 
   if (children) {
     return (

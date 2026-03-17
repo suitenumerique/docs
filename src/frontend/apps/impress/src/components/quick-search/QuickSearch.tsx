@@ -32,7 +32,7 @@ export type QuickSearchProps = {
   label?: string;
   placeholder?: string;
   groupKey?: string;
-  isExpanded?: boolean;
+  beforeList?: ReactNode;
 };
 
 export const QuickSearch = ({
@@ -42,7 +42,7 @@ export const QuickSearch = ({
   showInput = true,
   label,
   placeholder,
-  isExpanded,
+  beforeList,
   children,
 }: PropsWithChildren<QuickSearchProps>) => {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -74,11 +74,11 @@ export const QuickSearch = ({
               onFilter={onFilter}
               placeholder={placeholder}
               listId={listId}
-              isExpanded={isExpanded}
             >
               {inputContent}
             </QuickSearchInput>
           )}
+          {beforeList}
           <Command.List id={listId} aria-label={label} role="listbox">
             <Box>{children}</Box>
           </Command.List>
