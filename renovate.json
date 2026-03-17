@@ -50,6 +50,12 @@
       "allowedVersions": "<3.12.0"
     },
     {
+      "groupName": "allowed django-treebeard versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["django-treebeard"],
+      "allowedVersions": "<5.0.0"
+    },
+    {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],

@@ -8,6 +8,10 @@ and this project adheres to
 
 ## [v4.8.0] - 2026-03-13
 
+### Changed
+
+- ⬇️(backend) downgrade django-treebeard to version < 5.0.0
+
 ### Added
 
 - ✨(backend) add a is_first_connection flag to the User model #1938
