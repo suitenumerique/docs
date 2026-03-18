@@ -16,6 +16,10 @@ and this project adheres to
 - ♿️(frontend) add sr-only format to export download button #2088
 - ♿️(frontend) announce formatting shortcuts for screen readers #2070
 
+### Fixed
+
+- ♿️(frontend) fix aria-labels for table of contents #2065
+
 ## [v4.8.2] - 2026-03-19
 
 ### Added

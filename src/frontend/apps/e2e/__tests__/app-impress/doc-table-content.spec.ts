@@ -19,7 +19,9 @@ test.describe('Doc Table Content', () => {
 
     await page.locator('.ProseMirror').click();
 
-    await expect(page.getByRole('button', { name: 'Summary' })).toBeHidden();
+    await expect(
+      page.getByRole('button', { name: 'Show the table of contents' }),
+    ).toBeHidden();
 
     await page.keyboard.type('# Level 1\n## Level 2\n### Level 3');
 

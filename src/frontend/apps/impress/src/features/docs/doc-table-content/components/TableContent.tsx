@@ -91,7 +91,7 @@ export const TableContent = () => {
             $height="100%"
             $justify="center"
             $align="center"
-            aria-label={t('Summary')}
+            aria-label={t('Show the table of contents')}
             aria-expanded={isOpen}
             aria-controls="toc-list"
             $css={css`
@@ -218,8 +218,8 @@ const TableContentOpened = ({
           onClick={onClose}
           $justify="center"
           $align="center"
-          aria-label={t('Summary')}
-          aria-expanded="true"
+          aria-label={t('Hide the table of contents')}
+          aria-expanded={true}
           aria-controls="toc-list"
           $css={css`
             transition: none !important;
