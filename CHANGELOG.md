@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- 🚸(frontend) hint min char search users #2064
+
 ### Changed
 
 - ♿️(frontend) improve version history list accessibility #2033

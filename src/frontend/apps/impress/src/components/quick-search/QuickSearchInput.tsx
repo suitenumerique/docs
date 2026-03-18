@@ -48,7 +48,7 @@ export const QuickSearchInput = ({
         $direction="row"
         $align="center"
         className="quick-search-input"
-        $gap={spacingsTokens['2xs']}
+        $gap={spacingsTokens['xxs']}
         $padding={{ horizontal: 'base', vertical: 'xxs' }}
       >
         <Icon iconName="search" $variation="secondary" aria-hidden="true" />
@@ -62,6 +62,7 @@ export const QuickSearchInput = ({
           placeholder={placeholder ?? t('Search')}
           onValueChange={onFilter}
           maxLength={254}
+          minLength={6}
           data-testid="quick-search-input"
         />
       </Box>
