@@ -1,69 +1,12 @@
-import { css, keyframes } from 'styled-components';
-
-import { Box, BoxType } from '@/components';
+import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useResponsiveStore } from '@/stores';
 
-const shimmer = keyframes`
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-`;
-
-type SkeletonLineProps = Partial<BoxType>;
-
-type SkeletonCircleProps = Partial<BoxType>;
+import { SkeletonCircle, SkeletonLine } from './SkeletionUI';
 
 export const DocEditorSkeleton = () => {
   const { isDesktop } = useResponsiveStore();
-  const { spacingsTokens, colorsTokens } = useCunninghamTheme();
-
-  const SkeletonLine = ({ $css, ...props }: SkeletonLineProps) => {
-    return (
-      <Box
-        $width="100%"
-        $height="16px"
-        $css={css`
-          background: linear-gradient(
-            90deg,
-            ${colorsTokens['black-050']} 0%,
-            ${colorsTokens['black-100']} 50%,
-            ${colorsTokens['black-050']} 100%
-          );
-          background-size: 1000px 100%;
-          animation: ${shimmer} 2s infinite linear;
-          border-radius: 4px;
-          ${$css}
-        `}
-        {...props}
-      />
-    );
-  };
-
-  const SkeletonCircle = ({ $css, ...props }: SkeletonCircleProps) => {
-    return (
-      <Box
-        $width="32px"
-        $height="32px"
-        $css={css`
-          background: linear-gradient(
-            90deg,
-            ${colorsTokens['black-050']} 0%,
-            ${colorsTokens['black-100']} 50%,
-            ${colorsTokens['black-050']} 100%
-          );
-          background-size: 1000px 100%;
-          animation: ${shimmer} 2s infinite linear;
-          border-radius: 50%;
-          ${$css}
-        `}
-        {...props}
-      />
-    );
-  };
+  const { spacingsTokens } = useCunninghamTheme();
 
   return (
     <>

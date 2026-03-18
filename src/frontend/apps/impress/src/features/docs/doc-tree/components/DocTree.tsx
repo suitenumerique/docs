@@ -18,6 +18,7 @@ import {
   useMoveDoc,
   useTrans,
 } from '@/docs/doc-management';
+import { TreeSkeleton } from '@/features/skeletons/components/TreeSkeleton';
 
 import { CLASS_DOC_TITLE } from '../../doc-header';
 import { KEY_DOC_TREE, useDocTree } from '../api/useDocTree';
@@ -257,7 +258,7 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
   }, [currentDoc, treeContext]);
 
   if (!treeContext || !treeContext.root) {
-    return null;
+    return <TreeSkeleton />;
   }
 
   return (

@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 💫(frontend) fix the help button to the bottom in tree #2073
+
 ## [v4.8.2] - 2026-03-19
 
 ### Changed
