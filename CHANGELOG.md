@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(backend) add a public_search API view to the Document viewset #2068
+
 ### Changed
 
 - ♿️(frontend) improve version history list accessibility #2033

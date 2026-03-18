@@ -1019,6 +1019,22 @@ class Document(MP_Node, BaseModel):
 
         self._content = content
 
+    def get_highest_public_ancestor(self):
+        """
+        Get the highest ancestor of the document that has a public link reach.
+        If the document itself has a public link reach, it will be returned.
+        If there is no public ancestor, None will be returned.
+        """
+        if self.link_reach == LinkReachChoices.PUBLIC:
+            return self
+
+        return (
+            self.get_ancestors()
+            .filter(link_reach=LinkReachChoices.PUBLIC)
+            .order_by("-path")
+            .first()
+        )
+
     def get_content_response(self, version_id=""):
         """Get the content in a specific version of the document"""
         params = {
@@ -1284,6 +1300,8 @@ class Document(MP_Node, BaseModel):
             else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
         ) and not is_deleted
 
+        is_public = link_reach == LinkReachChoices.PUBLIC
+
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
         ai_access = any(
             [
@@ -1320,6 +1338,7 @@ class Document(MP_Node, BaseModel):
             "mask": can_get and user.is_authenticated,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
+            "public_search": is_public and not is_deleted,
             "restore": is_owner,
             "retrieve": retrieve,
             "media_auth": can_get,

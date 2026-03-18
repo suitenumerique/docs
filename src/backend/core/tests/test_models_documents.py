@@ -182,6 +182,7 @@ def test_models_documents_get_abilities_forbidden(
             "restricted": None,
         },
         "partial_update": False,
+        "public_search": document.computed_link_reach == "public",
         "restore": False,
         "retrieve": False,
         "tree": False,
@@ -249,6 +250,7 @@ def test_models_documents_get_abilities_reader(
         "media_check": True,
         "move": False,
         "partial_update": False,
+        "public_search": reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -321,6 +323,7 @@ def test_models_documents_get_abilities_commenter(
         "media_check": True,
         "move": False,
         "partial_update": False,
+        "public_search": reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -390,6 +393,7 @@ def test_models_documents_get_abilities_editor(
         "media_check": True,
         "move": False,
         "partial_update": True,
+        "public_search": reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -448,6 +452,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "media_check": True,
         "move": True,
         "partial_update": True,
+        "public_search": document.computed_link_reach == "public",
         "restore": True,
         "retrieve": True,
         "tree": True,
@@ -492,6 +497,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "media_check": False,
         "move": False,
         "partial_update": False,
+        "public_search": document.computed_link_reach == "public",
         "restore": True,
         "retrieve": True,
         "tree": True,
@@ -540,6 +546,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "media_check": True,
         "move": True,
         "partial_update": True,
+        "public_search": document.computed_link_reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -598,6 +605,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "media_check": True,
         "move": False,
         "partial_update": True,
+        "public_search": document.computed_link_reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -664,6 +672,7 @@ def test_models_documents_get_abilities_reader_user(
         "media_check": True,
         "move": False,
         "partial_update": access_from_link,
+        "public_search": document.computed_link_reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -731,6 +740,7 @@ def test_models_documents_get_abilities_commenter_user(
         "media_check": True,
         "move": False,
         "partial_update": access_from_link,
+        "public_search": document.computed_link_reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -794,6 +804,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "media_check": True,
         "move": False,
         "partial_update": False,
+        "public_search": access.document.computed_link_reach == "public",
         "restore": False,
         "retrieve": True,
         "tree": True,
@@ -1691,3 +1702,74 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
                 {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
             ],
         }
+
+
+# get_highest_public_ancestor method
+
+
+def test_models_documents_get_highest_public_ancestor_root_public():
+    """A root document with public link reach should return itself."""
+    document = factories.DocumentFactory(link_reach="public")
+    assert document.get_highest_public_ancestor() == document
+
+
+def test_models_documents_get_highest_public_ancestor_root_restricted():
+    """A root document with restricted link reach should return None."""
+    document = factories.DocumentFactory(link_reach="restricted")
+    assert document.get_highest_public_ancestor() is None
+
+
+def test_models_documents_get_highest_public_ancestor_root_authenticated():
+    """A root document with authenticated link reach should return None."""
+    document = factories.DocumentFactory(link_reach="authenticated")
+    assert document.get_highest_public_ancestor() is None
+
+
+def test_models_documents_get_highest_public_ancestor_child_is_public():
+    """A child document that is itself public should return itself, not the parent."""
+    parent = factories.DocumentFactory(link_reach="restricted")
+    child = factories.DocumentFactory(parent=parent, link_reach="public")
+    assert child.get_highest_public_ancestor() == child
+
+
+def test_models_documents_get_highest_public_ancestor_parent_is_public():
+    """A child with restricted reach whose parent is public should return the parent."""
+    parent = factories.DocumentFactory(link_reach="public")
+    child = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    assert child.get_highest_public_ancestor() == parent
+
+
+def test_models_documents_get_highest_public_ancestor_neither_public():
+    """A child with restricted reach and a restricted parent should return None."""
+    parent = factories.DocumentFactory(link_reach="restricted")
+    child = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    assert child.get_highest_public_ancestor() is None
+
+
+def test_models_documents_get_highest_public_ancestor_grandparent_is_public():
+    """
+    Returns the highest public ancestor (grandparent) when only the grandparent is public.
+    """
+    grandparent = factories.DocumentFactory(link_reach="public")
+    parent = factories.DocumentFactory(parent=grandparent, link_reach="restricted")
+    child = factories.DocumentFactory(parent=parent, link_reach="restricted")
+    assert child.get_highest_public_ancestor() == grandparent
+
+
+def test_models_documents_get_highest_public_ancestor_deep_tree_only_middle_public():
+    """
+    When only a middle ancestor is public, it is returned as the highest public ancestor.
+    """
+    root_doc = factories.DocumentFactory(link_reach="restricted")
+    middle = factories.DocumentFactory(parent=root_doc, link_reach="public")
+    child = factories.DocumentFactory(parent=middle, link_reach="restricted")
+    grandchild = factories.DocumentFactory(parent=child, link_reach="restricted")
+    assert grandchild.get_highest_public_ancestor() == middle
+
+
+def test_models_documents_get_highest_public_ancestor_all_restricted_deep():
+    """A deeply nested document with no public ancestor should return None."""
+    root_doc = factories.DocumentFactory(link_reach="restricted")
+    child = factories.DocumentFactory(parent=root_doc, link_reach="restricted")
+    grandchild = factories.DocumentFactory(parent=child, link_reach="restricted")
+    assert grandchild.get_highest_public_ancestor() is None
