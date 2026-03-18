@@ -1,4 +1,6 @@
+import { announce } from '@react-aria/live-announcer';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
@@ -29,6 +31,8 @@ export function useDeleteFavoriteDoc({
   listInvalidQueries,
 }: DeleteFavoriteDocProps) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
   return useMutation<void, APIError, DeleteFavoriteDocParams>({
     mutationFn: deleteFavoriteDoc,
     onSuccess: () => {
@@ -37,7 +41,15 @@ export function useDeleteFavoriteDoc({
           queryKey: [queryKey],
         });
       });
+
+      const message = t('Document unpinned successfully!');
+      announce(message, 'polite');
+
       onSuccess?.();
+    },
+    onError: () => {
+      const message = t('Failed to unpin the document.');
+      announce(message, 'assertive');
     },
   });
 }

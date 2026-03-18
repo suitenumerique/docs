@@ -474,7 +474,9 @@ test.describe('Doc Header', () => {
     // Copy content to clipboard
     await page.getByLabel('Open the document options').click();
     await getMenuItem(page, 'Copy as Markdown').click();
-    await expect(page.getByText('Copied to clipboard')).toBeVisible();
+    await expect(
+      page.getByText('Copied as Markdown to clipboard'),
+    ).toBeVisible();
 
     // Test that clipboard is in Markdown format
     const handle = await page.evaluateHandle(() =>

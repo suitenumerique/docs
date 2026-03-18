@@ -10,6 +10,7 @@ and this project adheres to
 
 - 💫(frontend) fix the help button to the bottom in tree #2073
 - ♿️(frontend) improve version history list accessibility #2033
+- ♿️(frontend) fix more options menu feedback for screen readers #2071
 
 ## [v4.8.2] - 2026-03-19
 

@@ -13,7 +13,8 @@ export const useCopyCurrentEditorToClipboard = () => {
 
   return async (asFormat: 'html' | 'markdown') => {
     if (!editor) {
-      toast(t('Editor unavailable'), VariantType.ERROR, { duration: 3000 });
+      const message = t('Editor unavailable');
+      toast(message, VariantType.ERROR, { duration: 3000 });
       return;
     }
 
@@ -23,10 +24,20 @@ export const useCopyCurrentEditorToClipboard = () => {
           ? await editor.blocksToHTMLLossy()
           : await editor.blocksToMarkdownLossy();
       await navigator.clipboard.writeText(editorContentFormatted);
-      toast(t('Copied to clipboard'), VariantType.SUCCESS, { duration: 3000 });
+      const successMessage =
+        asFormat === 'markdown'
+          ? t('Copied as Markdown to clipboard')
+          : t('Copied to clipboard');
+
+      toast(successMessage, VariantType.SUCCESS, { duration: 3000 });
     } catch (error) {
       console.error(error);
-      toast(t('Failed to copy to clipboard'), VariantType.ERROR, {
+      const errorMessage =
+        asFormat === 'markdown'
+          ? t('Failed to copy as Markdown to clipboard')
+          : t('Failed to copy to clipboard');
+
+      toast(errorMessage, VariantType.ERROR, {
         duration: 3000,
       });
     }

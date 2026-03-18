@@ -1,4 +1,6 @@
+import { announce } from '@react-aria/live-announcer';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 
@@ -29,6 +31,8 @@ export function useCreateFavoriteDoc({
   listInvalidQueries,
 }: CreateFavoriteDocProps) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
   return useMutation<void, APIError, CreateFavoriteDocParams>({
     mutationFn: createFavoriteDoc,
     onSuccess: () => {
@@ -37,7 +41,15 @@ export function useCreateFavoriteDoc({
           queryKey: [queryKey],
         });
       });
+
+      const message = t('Document pinned successfully!');
+      announce(message, 'polite');
+
       onSuccess?.();
+    },
+    onError: () => {
+      const message = t('Failed to pin the document.');
+      announce(message, 'assertive');
     },
   });
 }

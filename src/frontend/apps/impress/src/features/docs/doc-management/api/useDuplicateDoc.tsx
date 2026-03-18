@@ -88,14 +88,16 @@ export function useDuplicateDoc(options?: DuplicateDocOptions) {
         queryKey: [KEY_LIST_DOC],
       });
 
-      toast(t('Document duplicated successfully!'), VariantType.SUCCESS, {
+      const message = t('Document duplicated successfully!');
+      toast(message, VariantType.SUCCESS, {
         duration: 3000,
       });
 
       void options?.onSuccess?.(data, variables, onMutateResult, context);
     },
     onError: (error, variables, onMutateResult, context) => {
-      toast(t('Failed to duplicate the document...'), VariantType.ERROR, {
+      const message = t('Failed to duplicate the document...');
+      toast(message, VariantType.ERROR, {
         duration: 3000,
       });
 
