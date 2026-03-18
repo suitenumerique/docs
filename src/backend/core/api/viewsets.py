@@ -33,6 +33,7 @@ from django.utils.translation import gettext_lazy as _
 
 import requests
 import rest_framework as drf
+import waffle
 from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
@@ -71,6 +72,7 @@ from core.utils import (
     users_sharing_documents_with,
 )
 
+from ..enums import FeatureFlag, SearchType
 from . import permissions, serializers, utils
 from .filters import (
     DocumentFilter,
@@ -1414,6 +1416,10 @@ class DocumentViewSet(
         """
         params = serializers.SearchDocumentSerializer(data=request.query_params)
         params.is_valid(raise_exception=True)
+        search_type = self._get_search_type()
+
+        if search_type == SearchType.TITLE:
+            return self._title_search(request, params.validated_data, *args, **kwargs)
 
         indexer = get_document_indexer()
         if indexer is None:
@@ -1421,14 +1427,29 @@ class DocumentViewSet(
             return self._title_search(request, params.validated_data, *args, **kwargs)
 
         try:
-            return self._search_with_indexer(indexer, request, params=params)
+            return self._search_with_indexer(
+                indexer, request, params=params, search_type=search_type
+            )
         except requests.exceptions.RequestException as e:
             logger.error("Error while searching documents with indexer: %s", e)
             # fallback on title search if the indexer is not reached
             return self._title_search(request, params.validated_data, *args, **kwargs)
 
+    def _get_search_type(self) -> SearchType:
+        """
+        Returns the search type to use for the search endpoint based on feature flags.
+        If a user has both flags activated the most advanced search is used
+        (HYBRID > FULL_TEXT > TITLE).
+        A user with no flag will default to the basic title search.
+        """
+        if waffle.flag_is_active(self.request, FeatureFlag.FLAG_FIND_HYBRID_SEARCH):
+            return SearchType.HYBRID
+        if waffle.flag_is_active(self.request, FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH):
+            return SearchType.FULL_TEXT
+        return SearchType.TITLE
+
     @staticmethod
-    def _search_with_indexer(indexer, request, params):
+    def _search_with_indexer(indexer, request, params, search_type):
         """
         Returns a list of documents matching the query (q) according to the configured indexer.
         """
@@ -1436,6 +1457,7 @@ class DocumentViewSet(
 
         results = indexer.search(
             q=params.validated_data["q"],
+            search_type=search_type,
             token=request.session.get("oidc_access_token"),
             path=(
                 params.validated_data["path"]
