@@ -89,7 +89,10 @@ def test_api_document_favorite_list_authenticated_with_favorite():
 
 
 def test_api_document_favorite_list_with_favorite_children():
-    """Authenticated users should receive their favorite documents, including children."""
+    """
+    Authenticated users should receive their favorite documents including children
+    sorted by last updated_at timestamp.
+    """
 
     user = factories.UserFactory()
     client = APIClient()
