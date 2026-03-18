@@ -163,7 +163,7 @@ test.describe('Doc Version', () => {
 
     await expect(modal.getByText('World')).toBeHidden();
 
-    await page.getByRole('button', { name: 'Restore' }).click();
+    await page.getByRole('button', { name: 'Restore', exact: true }).click();
     await expect(page.getByText('Your current document will')).toBeVisible();
     await page.getByText('If a member is editing, his').click();
 

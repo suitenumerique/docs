@@ -118,7 +118,7 @@ export const ModalSelectVersion = ({
             `}
           >
             <Box
-              aria-label="version list"
+              aria-label={t('Version list')}
               $css={css`
                 overflow-y: auto;
                 flex: 1;
