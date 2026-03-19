@@ -21,6 +21,7 @@ and this project adheres to
 - ♿️(frontend) fix language dropdown ARIA for screen readers #2020
 - ♿️(frontend) fix waffle aria-label spacing for new-window links #2030
 - 🐛(backend) stop using add_sibling method to create sandbox document
+- 🐛(backend) duplicate a document as last-sibling
 
 ## [v4.8.1] - 2026-03-17
 

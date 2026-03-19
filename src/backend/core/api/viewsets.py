@@ -1361,7 +1361,7 @@ class DocumentViewSet(
             )
         else:
             duplicated_document = document_to_duplicate.add_sibling(
-                "right",
+                "last-sibling",
                 title=title,
                 content=base64_yjs_content,
                 attachments=attachments,

@@ -123,7 +123,7 @@ def test_api_documents_duplicate_success(index):
         image_refs[0][0]
     ]  # Only the first image key
     assert duplicated_document.get_parent() == document.get_parent()
-    assert duplicated_document.path == document.get_next_sibling().path
+    assert duplicated_document.path == document.get_last_sibling().path
 
     # Check that accesses were not duplicated.
     # The user who did the duplicate is forced as owner
@@ -180,12 +180,19 @@ def test_api_documents_duplicate_with_accesses_admin(role):
     client = APIClient()
     client.force_login(user)
 
+    documents_before = factories.DocumentFactory.create_batch(20)
     document = factories.DocumentFactory(
         users=[(user, role)],
         title="document with accesses",
     )
     user_access = factories.UserDocumentAccessFactory(document=document)
     team_access = factories.TeamDocumentAccessFactory(document=document)
+
+    documents_after = factories.DocumentFactory.create_batch(20)
+
+    all_documents = documents_before + [document] + documents_after
+
+    paths = {document.pk: document.path for document in all_documents}
 
     # Duplicate the document via the API endpoint requesting to duplicate accesses
     response = client.post(
@@ -211,6 +218,10 @@ def test_api_documents_duplicate_with_accesses_admin(role):
     assert duplicated_accesses.get(user=user).role == "owner"
     assert duplicated_accesses.get(user=user_access.user).role == user_access.role
     assert duplicated_accesses.get(team=team_access.team).role == team_access.role
+
+    for document in all_documents:
+        document.refresh_from_db()
+        assert document.path == paths[document.id]
 
 
 @pytest.mark.parametrize("role", ["editor", "reader"])
