@@ -12,10 +12,18 @@ and this project adheres to
 
 ## [v4.8.2] - 2026-03-19
 
+### Added
+
+- ✨(backend) add resource server api #1923
+- ✨(frontend) activate Find search #1834
+- ✨ handle searching on subdocuments #1834
+- ✨(backend) add search feature flags #1897
+
 ### Changed
 
 - ♿️(frontend) ensure doc title is h1 for accessibility #2006
 - ♿️(frontend) add nb accesses in share button aria-label #2017
+- ✨(backend) improve fallback logic on search endpoint #1834
 
 ### Fixed
 
@@ -28,6 +36,11 @@ and this project adheres to
 - ♿️(frontend) fix waffle aria-label spacing for new-window links #2030
 - 🐛(backend) stop using add_sibling method to create sandbox document #2084
 - 🐛(backend) duplicate a document as last-sibling #2084
+
+### Removed
+
+- 🔥(api) remove `documents/<document_id>/descendants/` endpoint #1834
+- 🔥(api) remove pagination on `documents/search/` endpoint #1834
 
 ## [v4.8.1] - 2026-03-17
 
@@ -45,7 +58,6 @@ and this project adheres to
 
 - ✨(backend) add a is_first_connection flag to the User model #1938
 - ✨(frontend) add onboarding modal with help menu button #1868
-- ✨(backend) add resource server api #1923
 
 ### Changed
 
@@ -131,16 +143,12 @@ and this project adheres to
 - ✨(frontend) Add stat for Crisp #1824
 - ✨(auth) add silent login #1690
 - 🔧(project) add DJANGO_EMAIL_URL_APP environment variable #1825
-- ✨(frontend) activate Find search #1834
-- ✨ handle searching on subdocuments #1834
-- ✨(backend) add search feature flags #1897
 
 ### Changed
 
 - ♿(frontend) improve accessibility:
   - ♿️(frontend) fix subdoc opening and emoji pick focus #1745
 - ✨(backend) add field for button label in email template #1817
-- ✨(backend) improve fallback logic on search endpoint #1834
 
 ### Fixed
 
