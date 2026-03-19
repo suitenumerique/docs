@@ -7,6 +7,8 @@ from django.core.cache import cache
 
 import pytest
 import responses
+from cryptography.fernet import Fernet
+from lasuite.oidc_login.backends import get_cipher_suite
 
 from core import factories
 from core.tests.utils.urls import reload_urls
@@ -143,3 +145,28 @@ def user_token():
     A fixture to create a user token for testing.
     """
     return build_authorization_bearer("some_token")
+
+
+@pytest.fixture(name="oidc_settings")
+def fixture_oidc_settings(settings):
+    """Fixture to configure OIDC settings for the tests."""
+    settings.OIDC_OP_TOKEN_ENDPOINT = "https://auth.example.com/token"
+    settings.OIDC_OP_AUTHORIZATION_ENDPOINT = "https://auth.example.com/authorize"
+    settings.OIDC_RP_CLIENT_ID = "client_id"
+    settings.OIDC_RP_CLIENT_SECRET = "client_secret"
+    settings.OIDC_AUTHENTICATION_CALLBACK_URL = "oidc_authentication_callback"
+    settings.OIDC_RP_SCOPES = "openid email"
+    settings.OIDC_USE_NONCE = True
+    settings.OIDC_STATE_SIZE = 32
+    settings.OIDC_NONCE_SIZE = 32
+    settings.OIDC_VERIFY_SSL = True
+    settings.OIDC_TOKEN_USE_BASIC_AUTH = False
+    settings.OIDC_STORE_ACCESS_TOKEN = True
+    settings.OIDC_STORE_REFRESH_TOKEN = True
+    settings.OIDC_STORE_REFRESH_TOKEN_KEY = Fernet.generate_key()
+
+    get_cipher_suite.cache_clear()
+
+    yield settings
+
+    get_cipher_suite.cache_clear()

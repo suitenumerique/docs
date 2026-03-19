@@ -2,7 +2,9 @@
 Tests for Documents API endpoint in impress's core app: search
 """
 
+import re
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 import responses
@@ -12,7 +14,7 @@ from rest_framework.test import APIClient
 from waffle.testutils import override_flag
 
 from core import factories
-from core.enums import FeatureFlag, SearchType
+from core.enums import FeatureFlag
 from core.services.search_indexers import get_document_indexer
 
 fake = Faker()
@@ -26,47 +28,29 @@ def enable_flag_find_hybrid_search():
         yield
 
 
-@mock.patch("core.services.search_indexers.FindDocumentIndexer.search_query")
+@mock.patch("core.api.viewsets.DocumentViewSet.list")
 @responses.activate
-def test_api_documents_search_anonymous(search_query, indexer_settings):
+def test_api_documents_search_anonymous(mock_list, indexer_settings):
     """
-    Anonymous users should be allowed to search documents with Find.
+    Anonymous users should not be allowed to search documents with Find.
+    they should fall back on title search.
     """
     indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
 
-    # mock Find response
-    responses.add(
-        responses.POST,
-        "http://find/api/v1.0/search",
-        json=[],
-        status=200,
-    )
+    mocked_response = {
+        "count": 0,
+        "next": None,
+        "previous": None,
+        "results": [{"title": "mocked list result"}],
+    }
+    mock_list.return_value = drf_response.Response(mocked_response)
 
     q = "alpha"
     response = APIClient().get("/api/v1.0/documents/search/", data={"q": q})
 
-    assert search_query.call_count == 1
-    assert search_query.call_args[1] == {
-        "data": {
-            "q": q,
-            "visited": [],
-            "services": ["docs"],
-            "nb_results": 50,
-            "order_by": "updated_at",
-            "order_direction": "desc",
-            "path": None,
-            "search_type": SearchType.HYBRID,
-        },
-        "token": None,
-    }
-
-    assert response.status_code == 200
-    assert response.json() == {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [],
-    }
+    assert mock_list.call_count == 1
+    assert mock_list.call_args[0][0].GET.get("q") == q
+    assert response.json() == mocked_response
 
 
 @mock.patch("core.api.viewsets.DocumentViewSet.list")
@@ -194,8 +178,13 @@ def test_api_documents_search_invalid_params(indexer_settings):
 
 
 @responses.activate
-def test_api_documents_search_success(indexer_settings):
+@patch("core.api.viewsets.refresh_access_token")
+def test_api_documents_search_success(
+    mocked_refresh_access_token, indexer_settings, oidc_settings, settings
+):  # pylint: disable=unused-argument
     """Validate the format of documents as returned by the search view."""
+    mocked_refresh_access_token.side_effect = lambda session: session
+
     indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
     assert get_document_indexer() is not None
 
@@ -204,7 +193,7 @@ def test_api_documents_search_success(indexer_settings):
     # Find response
     responses.add(
         responses.POST,
-        "http://find/api/v1.0/search",
+        indexer_settings.SEARCH_URL,
         json=[
             {
                 "_id": str(document["id"]),
@@ -213,7 +202,11 @@ def test_api_documents_search_success(indexer_settings):
         ],
         status=200,
     )
-    response = APIClient().get("/api/v1.0/documents/search/", data={"q": "alpha"})
+
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+    response = client.get("/api/v1.0/documents/search/", data={"q": "alpha"})
 
     assert response.status_code == 200
     content = response.json()

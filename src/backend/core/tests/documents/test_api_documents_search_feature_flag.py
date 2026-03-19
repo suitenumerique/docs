@@ -4,6 +4,7 @@ Tests for Find search feature flags
 
 from unittest import mock
 
+from django.contrib.sessions.backends.cache import SessionStore
 from django.http import HttpResponse
 
 import pytest
@@ -11,6 +12,7 @@ import responses
 from rest_framework.test import APIClient
 from waffle.testutils import override_flag
 
+from core import factories
 from core.enums import FeatureFlag, SearchType
 from core.services.search_indexers import get_document_indexer
 
@@ -18,6 +20,7 @@ pytestmark = pytest.mark.django_db
 
 
 @responses.activate
+@mock.patch("core.api.viewsets.refresh_access_token")
 @mock.patch("core.api.viewsets.DocumentViewSet._title_search")
 @mock.patch("core.api.viewsets.DocumentViewSet._search_with_indexer")
 @pytest.mark.parametrize(
@@ -44,12 +47,14 @@ pytestmark = pytest.mark.django_db
 def test_api_documents_search_success(  # noqa : PLR0913
     mock_search_with_indexer,
     mock_title_search,
+    mocked_refresh_access_token,
     activated_flags,
     expected_search_type,
     expected_search_with_indexer_called,
     expected_title_search_called,
     indexer_settings,
-):
+    oidc_settings,
+):  # pylint: disable=unused-argument
     """
     Test that the API endpoint for searching documents returns a successful response
     with the expected search type according to the activated feature flags,
@@ -59,7 +64,11 @@ def test_api_documents_search_success(  # noqa : PLR0913
 
     mock_search_with_indexer.return_value = HttpResponse()
     mock_title_search.return_value = HttpResponse()
+    mocked_refresh_access_token.side_effect = lambda session: session
 
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
     with override_flag(
         FeatureFlag.FLAG_FIND_HYBRID_SEARCH,
         active=FeatureFlag.FLAG_FIND_HYBRID_SEARCH in activated_flags,
@@ -68,9 +77,7 @@ def test_api_documents_search_success(  # noqa : PLR0913
             FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH,
             active=FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH in activated_flags,
         ):
-            response = APIClient().get(
-                "/api/v1.0/documents/search/", data={"q": "alpha"}
-            )
+            response = client.get("/api/v1.0/documents/search/", data={"q": "alpha"})
 
     assert response.status_code == 200
 

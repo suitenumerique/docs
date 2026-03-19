@@ -25,7 +25,6 @@ from django.db.models.functions import Greatest, Left, Length
 from django.http import Http404, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.http import content_disposition_header
 from django.utils.text import capfirst, slugify
@@ -38,11 +37,11 @@ from botocore.exceptions import ClientError
 from csp.constants import NONE
 from csp.decorators import csp_update
 from lasuite.malware_detection import malware_detection
-from lasuite.oidc_login.decorators import refresh_oidc_access_token
 from lasuite.tools.email import get_domain_from_email
 from pydantic import ValidationError as PydanticValidationError
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
@@ -84,6 +83,7 @@ from .throttling import (
     UserListThrottleBurst,
     UserListThrottleSustained,
 )
+from .utils import refresh_access_token
 
 logger = logging.getLogger(__name__)
 
@@ -1415,7 +1415,6 @@ class DocumentViewSet(
         return duplicated_document
 
     @drf.decorators.action(detail=False, methods=["get"], url_path="search")
-    @method_decorator(refresh_oidc_access_token)
     def search(self, request, *args, **kwargs):
         """
         Returns an ordered list of documents best matching the search query parameter 'q'.
@@ -1430,6 +1429,15 @@ class DocumentViewSet(
         if search_type == SearchType.TITLE:
             return self._title_search(request, params.validated_data, *args, **kwargs)
 
+        try:
+            request.session = refresh_access_token(request.session)
+        except AuthenticationFailed:
+            logging.warning(
+                "User unauthenticated or error while refreshing token, "
+                "falling back to title search."
+            )
+            return self._title_search(request, params.validated_data, *args, **kwargs)
+
         indexer = get_document_indexer()
         if indexer is None:
             # fallback on title search if the indexer is not configured
@@ -1440,7 +1448,10 @@ class DocumentViewSet(
                 indexer, request, params=params, search_type=search_type
             )
         except requests.exceptions.RequestException as e:
-            logger.error("Error while searching documents with indexer: %s", e)
+            logger.error(
+                "Error while searching documents with indexer \n%s \nfall back on title search",
+                e,
+            )
             # fallback on title search if the indexer is not reached
             return self._title_search(request, params.validated_data, *args, **kwargs)
 

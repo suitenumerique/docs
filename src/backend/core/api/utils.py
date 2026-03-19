@@ -8,6 +8,9 @@ from django.core.cache import cache
 from django.core.files.storage import default_storage
 
 import botocore
+import requests
+from lasuite.oidc_login.backends import get_oidc_refresh_token, store_tokens
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.throttling import BaseThrottle
 
 
@@ -179,3 +182,31 @@ class AIUserRateThrottle(AIBaseRateThrottle):
             if x_forwarded_for
             else request.META.get("REMOTE_ADDR")
         )
+
+
+def refresh_access_token(session):
+    """Refresh the OIDC access token using the refresh token."""
+    refresh_token = get_oidc_refresh_token(session)
+    if not refresh_token:
+        raise AuthenticationFailed({"error": "Refresh token is missing from session"})
+
+    response = requests.post(
+        settings.OIDC_OP_TOKEN_ENDPOINT,
+        data={
+            "grant_type": "refresh_token",
+            "client_id": settings.OIDC_RP_CLIENT_ID,
+            "client_secret": settings.OIDC_RP_CLIENT_SECRET,
+            "refresh_token": refresh_token,
+        },
+        timeout=5,
+    )
+    response.raise_for_status()
+    token_info = response.json()
+
+    store_tokens(
+        session,
+        access_token=token_info.get("access_token"),
+        id_token=None,
+        refresh_token=token_info.get("refresh_token"),
+    )
+    return session
