@@ -816,7 +816,7 @@ class DocumentViewSet(
 
         queryset = self.queryset.filter(path_list)
         queryset = queryset.filter(id__in=favorite_documents_ids)
-        queryset = queryset.filter(deleted_at__isnull=True)
+        queryset = queryset.filter(ancestors_deleted_at__isnull=True)
         queryset = queryset.annotate_user_roles(user)
         queryset = queryset.annotate(
             is_favorite=db.Value(True, output_field=db.BooleanField())
