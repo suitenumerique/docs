@@ -27,7 +27,7 @@ test.describe('Help feature', () => {
       await expect(page.getByRole('button', { name: 'New doc' })).toBeVisible();
 
       await expect(
-        page.getByRole('button', { name: 'Open onboarding menu' }),
+        page.getByRole('button', { name: 'Open help menu' }),
       ).toBeHidden();
     });
 
@@ -43,7 +43,7 @@ test.describe('Help feature', () => {
         },
       });
 
-      await page.getByRole('button', { name: 'Open onboarding menu' }).click();
+      await page.getByRole('button', { name: 'Open help menu' }).click();
 
       await getMenuItem(page, 'Onboarding').click();
 
@@ -87,7 +87,7 @@ test.describe('Help feature', () => {
     });
 
     test('closes modal with Skip button', async ({ page }) => {
-      await page.getByRole('button', { name: 'Open onboarding menu' }).click();
+      await page.getByRole('button', { name: 'Open help menu' }).click();
       await getMenuItem(page, 'Onboarding').click();
 
       const modal = page.getByTestId('onboarding-modal');
@@ -107,9 +107,7 @@ test.describe('Help feature', () => {
       // switch to french
       await waitForLanguageSwitch(page, TestLanguage.French);
 
-      await page
-        .getByRole('button', { name: "Ouvrir le menu d'embarquement" })
-        .click();
+      await page.getByRole('button', { name: "Ouvrir le menu d'aide" }).click();
 
       await getMenuItem(page, 'Premiers pas').click();
 

@@ -60,7 +60,7 @@ export const HelpMenu = ({
         >
           <Box $direction="row" $align="center">
             <Button
-              aria-label={t('Open onboarding menu')}
+              aria-label={t('Open help menu')}
               color={colorButton || 'neutral'}
               variant="tertiary"
               iconPosition="left"

@@ -299,7 +299,7 @@ test.describe('Doc Tree', () => {
 
     await page.keyboard.press('Tab');
 
-    await expect(page.getByLabel('Open onboarding menu')).toBeFocused();
+    await expect(page.getByLabel('Open help menu')).toBeFocused();
 
     await page.keyboard.press('Tab');
 
@@ -309,7 +309,7 @@ test.describe('Doc Tree', () => {
 
     await page.keyboard.press('Shift+Tab');
 
-    await expect(page.getByLabel('Open onboarding menu')).toBeFocused();
+    await expect(page.getByLabel('Open help menu')).toBeFocused();
 
     await page.keyboard.press('Shift+Tab');
 
