@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v4.8.2] - 2026-03-19
+
 ### Changed
 
 - ♿️(frontend) ensure doc title is h1 for accessibility #2006
@@ -20,8 +22,8 @@ and this project adheres to
 - ♿️(frontend) fix modal aria-label and name #2014
 - ♿️(frontend) fix language dropdown ARIA for screen readers #2020
 - ♿️(frontend) fix waffle aria-label spacing for new-window links #2030
-- 🐛(backend) stop using add_sibling method to create sandbox document
-- 🐛(backend) duplicate a document as last-sibling
+- 🐛(backend) stop using add_sibling method to create sandbox document #2084
+- 🐛(backend) duplicate a document as last-sibling #2084
 
 ## [v4.8.1] - 2026-03-17
 
@@ -1139,7 +1141,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.8.1...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v4.8.2...main
+[v4.8.2]: https://github.com/suitenumerique/docs/releases/v4.8.2
 [v4.8.1]: https://github.com/suitenumerique/docs/releases/v4.8.1
 [v4.8.0]: https://github.com/suitenumerique/docs/releases/v4.8.0
 [v4.7.0]: https://github.com/suitenumerique/docs/releases/v4.7.0
