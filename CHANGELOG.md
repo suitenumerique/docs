@@ -23,6 +23,7 @@ and this project adheres to
 - ♿️(frontend) fix aria-labels for table of contents #2065
 - 🐛(backend) allow using search endpoint without refresh token enabled #2097
 - 🐛(frontend) fix close panel when click on subdoc
+- 🐛(frontend) fix leftpanel button in doc version #9238
 
 ## [v4.8.2] - 2026-03-19
 

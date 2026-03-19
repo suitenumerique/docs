@@ -18,8 +18,46 @@ export const LeftPanelCollapseButton = () => {
   const { isPanelOpen, togglePanel } = useLeftPanelStore();
   const { currentDoc } = useDocStore();
   const [isDocTitleVisible, setIsDocTitleVisible] = useState(true);
+  const [isDocTitleInDom, setIsDocTitleInDom] = useState(true);
 
+  /**
+   * CLASS_DOC_TITLE is not every time in the DOM when
+   * this component is rendered, we need to observe the DOM
+   * to know when it is added, then we can observe
+   * its visibility.
+   */
   useEffect(() => {
+    setIsDocTitleInDom(false);
+
+    const docTitleEl = document.querySelector(`.${CLASS_DOC_TITLE}`);
+    if (docTitleEl) {
+      setIsDocTitleInDom(true);
+      return;
+    }
+
+    const mutationObserver = new MutationObserver(() => {
+      if (document.querySelector(`.${CLASS_DOC_TITLE}`)) {
+        mutationObserver.disconnect();
+        setIsDocTitleInDom(true);
+      }
+    });
+
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mutationObserver.disconnect();
+    };
+  }, [currentDoc?.id]);
+
+  /**
+   * When the doc title is in the DOM, we observe its
+   * visibility to show or hide the collapse button accordingly
+   */
+  useEffect(() => {
+    if (!isDocTitleInDom) {
+      return;
+    }
+
     const mainContent = document.getElementById(MAIN_LAYOUT_ID);
     const docTitleEl = document.querySelector(`.${CLASS_DOC_TITLE}`);
 
@@ -43,7 +81,7 @@ export const LeftPanelCollapseButton = () => {
       observer.disconnect();
       setIsDocTitleVisible(true);
     };
-  }, [currentDoc?.id]);
+  }, [isDocTitleInDom]);
 
   const { untitledDocument } = useTrans();
 
