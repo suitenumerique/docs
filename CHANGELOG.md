@@ -13,6 +13,7 @@ and this project adheres to
 - ♿️(frontend) fix more options menu feedback for screen readers #2071
 - ♿(frontend) focus skip link on headings and skip grid dropzone #1983
 - ♿️(frontend) fix search modal accessibility issues #2054
+- ♿️(frontend) add sr-only format to export download button #2088
 
 ## [v4.8.2] - 2026-03-19
 

@@ -60,6 +60,23 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
   const { untitledDocument } = useTrans();
   const mediaUrl = useMediaUrl();
 
+  const formatOptions = [
+    { label: t('PDF'), value: DocDownloadFormat.PDF },
+    { label: t('Docx'), value: DocDownloadFormat.DOCX },
+    { label: t('ODT'), value: DocDownloadFormat.ODT },
+    { label: t('HTML'), value: DocDownloadFormat.HTML },
+    { label: t('Print'), value: DocDownloadFormat.PRINT },
+  ];
+
+  const formatLabels = Object.fromEntries(
+    formatOptions.map((opt) => [opt.value, opt.label]),
+  );
+
+  const downloadButtonAriaLabel =
+    format === DocDownloadFormat.PRINT
+      ? t('Print')
+      : t('Download {{format}}', { format: formatLabels[format] });
+
   async function onSubmit() {
     if (!editor) {
       toast(t('The export failed'), VariantType.ERROR);
@@ -211,9 +228,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           </Button>
           <Button
             data-testid="doc-export-download-button"
-            aria-label={
-              format === DocDownloadFormat.PRINT ? t('Print') : t('Download')
-            }
+            aria-label={downloadButtonAriaLabel}
             variant="primary"
             fullWidth
             onClick={() => void onSubmit()}
@@ -260,13 +275,7 @@ export const ModalExport = ({ onClose, doc }: ModalExportProps) => {
           clearable={false}
           fullWidth
           label={t('Format')}
-          options={[
-            { label: t('PDF'), value: DocDownloadFormat.PDF },
-            { label: t('Docx'), value: DocDownloadFormat.DOCX },
-            { label: t('ODT'), value: DocDownloadFormat.ODT },
-            { label: t('HTML'), value: DocDownloadFormat.HTML },
-            { label: t('Print'), value: DocDownloadFormat.PRINT },
-          ]}
+          options={formatOptions}
           value={format}
           onChange={(options) =>
             setFormat(options.target.value as DocDownloadFormat)
