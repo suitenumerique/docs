@@ -285,8 +285,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     )
                     return
 
-                sandbox_document = template_document.add_sibling(
-                    "right",
+                sandbox_document = Document.add_root(
                     title=template_document.title,
                     content=template_document.content,
                     attachments=template_document.attachments,

@@ -216,7 +216,13 @@ def test_models_users_duplicate_onboarding_sandbox_document_creates_sandbox():
     When USER_ONBOARDING_SANDBOX_DOCUMENT is set with a valid template document,
     a new sandbox document should be created for the user with OWNER access.
     """
+    documents_before = factories.DocumentFactory.create_batch(20)
     template_document = factories.DocumentFactory(title="Getting started with Docs")
+    documents_after = factories.DocumentFactory.create_batch(20)
+
+    all_documents = documents_before + [template_document] + documents_after
+
+    paths = {document.pk: document.path for document in all_documents}
 
     with override_settings(USER_ONBOARDING_SANDBOX_DOCUMENT=str(template_document.id)):
         user = factories.UserFactory()
@@ -232,6 +238,10 @@ def test_models_users_duplicate_onboarding_sandbox_document_creates_sandbox():
 
     access = models.DocumentAccess.objects.get(user=user, document=sandbox_doc)
     assert access.role == models.RoleChoices.OWNER
+
+    for document in all_documents:
+        document.refresh_from_db()
+        assert document.path == paths[document.id]
 
 
 def test_models_users_duplicate_onboarding_sandbox_document_with_invalid_template_id():

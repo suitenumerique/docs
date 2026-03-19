@@ -20,6 +20,7 @@ and this project adheres to
 - ♿️(frontend) fix modal aria-label and name #2014
 - ♿️(frontend) fix language dropdown ARIA for screen readers #2020
 - ♿️(frontend) fix waffle aria-label spacing for new-window links #2030
+- 🐛(backend) stop using add_sibling method to create sandbox document
 
 ## [v4.8.1] - 2026-03-17
 
