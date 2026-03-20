@@ -1,3 +1,4 @@
+import { announce } from '@react-aria/live-announcer';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -17,23 +18,35 @@ export const LanguagePicker = () => {
   const { changeLanguageSynchronized } = useSynchronizedLanguage();
   const language = i18n.language;
 
+  const toLangTag = (locale: string) => locale.replace('_', '-');
+
   // Compute options for dropdown
   const optionsPicker = useMemo(() => {
     const backendOptions = conf?.LANGUAGES ?? [[language, language]];
     return backendOptions.map(([backendLocale, backendLabel]) => {
       return {
         label: backendLabel,
+        lang: toLangTag(backendLocale),
+        value: backendLocale,
         isSelected: getMatchingLocales([backendLocale], [language]).length > 0,
-        callback: () => changeLanguageSynchronized(backendLocale, user),
+        callback: async () => {
+          await changeLanguageSynchronized(backendLocale, user);
+          announce(
+            t('Language changed to {{language}}', {
+              language: backendLabel,
+              defaultValue: `Language changed to ${backendLabel}`,
+            }),
+            'polite',
+          );
+        },
       };
     });
-  }, [changeLanguageSynchronized, conf?.LANGUAGES, language, user]);
+  }, [changeLanguageSynchronized, conf?.LANGUAGES, language, t, user]);
 
   // Extract current language label for display
-  const currentLanguageLabel =
-    conf?.LANGUAGES.find(
-      ([code]) => getMatchingLocales([code], [language]).length > 0,
-    )?.[1] || language;
+  const [currentLanguageCode, currentLanguageLabel] = conf?.LANGUAGES.find(
+    ([code]) => getMatchingLocales([code], [language]).length > 0,
+  ) ?? [language, language];
 
   return (
     <DropdownMenu
@@ -65,7 +78,9 @@ export const LanguagePicker = () => {
         $align="center"
       >
         <Icon iconName="translate" $color="inherit" $size="xl" />
-        {currentLanguageLabel}
+        <span lang={toLangTag(currentLanguageCode)}>
+          {currentLanguageLabel}
+        </span>
       </Box>
     </DropdownMenu>
   );

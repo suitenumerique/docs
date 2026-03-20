@@ -3,7 +3,7 @@ import path from 'path';
 
 import { Locator, Page, TestInfo, expect } from '@playwright/test';
 
-/** Returns a locator for a menu item (handles both menuitem and menuitemradio roles) */
+/** Returns a locator for a menu item (handles menuitem, menuitemradio and menuitemcheckbox roles) */
 export const getMenuItem = (
   context: Page | Locator,
   name: string,
@@ -11,7 +11,8 @@ export const getMenuItem = (
 ): Locator =>
   context
     .getByRole('menuitem', { name, exact: options?.exact })
-    .or(context.getByRole('menuitemradio', { name, exact: options?.exact }));
+    .or(context.getByRole('menuitemradio', { name, exact: options?.exact }))
+    .or(context.getByRole('menuitemcheckbox', { name, exact: options?.exact }));
 
 import theme_customization from '../../../../../backend/impress/configuration/theme/default.json';
 

@@ -58,7 +58,7 @@ describe('<DropdownMenu />', () => {
     expect(radios[2]).toHaveAttribute('aria-checked', 'false');
   });
 
-  test('renders menuitemradio role with aria-checked when selectedValues is provided', async () => {
+  test('renders menuitemcheckbox role with aria-checked when selectedValues is provided', async () => {
     const optionsWithValues: DropdownMenuOption[] = [
       { label: 'English', value: 'en', callback: vi.fn() },
       { label: 'Français', value: 'fr', callback: vi.fn() },
@@ -77,12 +77,12 @@ describe('<DropdownMenu />', () => {
       { wrapper: AppWrapper },
     );
 
-    const radios = screen.getAllByRole('menuitemradio');
-    expect(radios).toHaveLength(3);
+    const checkboxes = screen.getAllByRole('menuitemcheckbox');
+    expect(checkboxes).toHaveLength(3);
 
-    expect(radios[0]).toHaveAttribute('aria-checked', 'false');
-    expect(radios[1]).toHaveAttribute('aria-checked', 'true');
-    expect(radios[2]).toHaveAttribute('aria-checked', 'false');
+    expect(checkboxes[0]).toHaveAttribute('aria-checked', 'false');
+    expect(checkboxes[1]).toHaveAttribute('aria-checked', 'true');
+    expect(checkboxes[2]).toHaveAttribute('aria-checked', 'false');
   });
 
   test('trigger button has aria-haspopup and aria-expanded', async () => {

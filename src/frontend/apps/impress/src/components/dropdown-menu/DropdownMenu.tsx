@@ -26,6 +26,7 @@ import { useDropdownKeyboardNav } from './hook/useDropdownKeyboardNav';
 export type DropdownMenuOption = {
   icon?: ReactNode;
   label: string;
+  lang?: string;
   testId?: string;
   value?: string;
   callback?: () => void | Promise<unknown>;
@@ -70,6 +71,9 @@ export const DropdownMenu = ({
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const blockButtonRef = useRef<HTMLDivElement>(null);
   const menuItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const isSingleSelectable = options.some(
+    (option) => option.isSelected !== undefined,
+  );
 
   const onOpenChange = useCallback(
     (isOpen: boolean) => {
@@ -109,10 +113,6 @@ export const DropdownMenu = ({
     },
     [onOpenChange],
   );
-
-  const hasSelectable =
-    selectedValues !== undefined ||
-    options.some((option) => option.isSelected !== undefined);
 
   if (disabled) {
     return children;
@@ -176,20 +176,25 @@ export const DropdownMenu = ({
           }
           const isDisabled = option.disabled !== undefined && option.disabled;
           const isFocused = index === focusedIndex;
-          const ariaChecked = hasSelectable
-            ? option.isSelected ||
-              selectedValues?.includes(option.value ?? '') ||
-              false
-            : undefined;
+          const isSelected =
+            option.isSelected === true ||
+            (selectedValues?.includes(option.value ?? '') ?? false);
+          const itemRole =
+            selectedValues !== undefined
+              ? 'menuitemcheckbox'
+              : isSingleSelectable
+                ? 'menuitemradio'
+                : 'menuitem';
+          const optionKey = option.value ?? option.testId ?? `option-${index}`;
 
           return (
-            <Fragment key={option.label}>
+            <Fragment key={optionKey}>
               <BoxButton
                 ref={(el) => {
                   menuItemRefs.current[index] = el;
                 }}
-                role={hasSelectable ? 'menuitemradio' : 'menuitem'}
-                aria-checked={ariaChecked}
+                role={itemRole}
+                aria-checked={itemRole === 'menuitem' ? undefined : isSelected}
                 data-testid={option.testId}
                 $direction="row"
                 disabled={isDisabled}
@@ -200,7 +205,6 @@ export const DropdownMenu = ({
                   triggerOption(option);
                 }}
                 onKeyDown={keyboardAction(() => triggerOption(option))}
-                key={option.label}
                 $align="center"
                 $justify="space-between"
                 $background="var(--c--contextuals--background--surface--primary)"
@@ -271,16 +275,16 @@ export const DropdownMenu = ({
                     <Box
                       $theme="neutral"
                       $variation={isDisabled ? 'tertiary' : 'primary'}
+                      aria-hidden="true"
                     >
                       {option.icon}
                     </Box>
                   )}
                   <Text $variation={isDisabled ? 'tertiary' : 'primary'}>
-                    {option.label}
+                    <span lang={option.lang}>{option.label}</span>
                   </Text>
                 </Box>
-                {(option.isSelected ||
-                  selectedValues?.includes(option.value ?? '')) && (
+                {isSelected && (
                   <Icon
                     iconName="check"
                     $size="20px"
