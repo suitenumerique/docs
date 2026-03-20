@@ -36,6 +36,7 @@ and this project adheres to
 - ♿️(frontend) fix waffle aria-label spacing for new-window links #2030
 - 🐛(backend) stop using add_sibling method to create sandbox document #2084
 - 🐛(backend) duplicate a document as last-sibling #2084
+- 🐛(backend) fix search without refresh token #2090
 
 ### Removed
 

@@ -1429,15 +1429,6 @@ class DocumentViewSet(
         if search_type == SearchType.TITLE:
             return self._title_search(request, params.validated_data, *args, **kwargs)
 
-        try:
-            request.session = refresh_access_token(request.session)
-        except AuthenticationFailed:
-            logging.warning(
-                "User unauthenticated or error while refreshing token, "
-                "falling back to title search."
-            )
-            return self._title_search(request, params.validated_data, *args, **kwargs)
-
         indexer = get_document_indexer()
         if indexer is None:
             # fallback on title search if the indexer is not configured
@@ -1447,7 +1438,7 @@ class DocumentViewSet(
             return self._search_with_indexer(
                 indexer, request, params=params, search_type=search_type
             )
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, AuthenticationFailed) as e:
             logger.error(
                 "Error while searching documents with indexer \n%s \nfall back on title search",
                 e,
@@ -1473,6 +1464,7 @@ class DocumentViewSet(
         """
         Returns a list of documents matching the query (q) according to the configured indexer.
         """
+        request.session = refresh_access_token(request.session)
         queryset = models.Document.objects.all()
 
         results = indexer.search(

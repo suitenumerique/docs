@@ -198,7 +198,7 @@ def refresh_access_token(session):
             "client_secret": settings.OIDC_RP_CLIENT_SECRET,
             "refresh_token": refresh_token,
         },
-        timeout=5,
+        timeout=settings.OIDC_TIMEOUT,
     )
     response.raise_for_status()
     token_info = response.json()

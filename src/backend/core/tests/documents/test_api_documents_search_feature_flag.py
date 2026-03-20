@@ -4,7 +4,6 @@ Tests for Find search feature flags
 
 from unittest import mock
 
-from django.contrib.sessions.backends.cache import SessionStore
 from django.http import HttpResponse
 
 import pytest

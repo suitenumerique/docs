@@ -2,7 +2,6 @@
 Tests for Documents API endpoint in impress's core app: search
 """
 
-import re
 from unittest import mock
 from unittest.mock import patch
 

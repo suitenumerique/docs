@@ -147,8 +147,8 @@ def user_token():
     return build_authorization_bearer("some_token")
 
 
-@pytest.fixture(name="oidc_settings")
-def fixture_oidc_settings(settings):
+@pytest.fixture
+def oidc_settings(settings):
     """Fixture to configure OIDC settings for the tests."""
     settings.OIDC_OP_TOKEN_ENDPOINT = "https://auth.example.com/token"
     settings.OIDC_OP_AUTHORIZATION_ENDPOINT = "https://auth.example.com/authorize"
