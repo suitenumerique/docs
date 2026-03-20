@@ -119,6 +119,50 @@ test.describe('Doc Comments', () => {
     await cleanup();
   });
 
+  test('it checks the comments style changes on interactions', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'comment-interaction', browserName, 1);
+
+    const editor = await writeInEditor({ page, text: 'Hello' });
+
+    // Write the comment
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Add comment' }).click();
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+
+    await expect(thread.getByText('This is a comment').first()).toBeHidden();
+
+    // Checks comment mark class
+    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
+
+    // Checks base styles
+    const commentMark = editor.getByText('Hello');
+    await expect(commentMark).toHaveCSS(
+      'background-color',
+      'color(srgb 0.882353 0.831373 0.717647 / 0.7)',
+    );
+    await expect(commentMark).toHaveCSS(
+      'border-bottom-color',
+      'color(srgb 0.760784 0.592157 0.180392 / 0.7)',
+    );
+
+    // Check colors changes on clicked and selected
+    await commentMark.click();
+    await expect(commentMark).toHaveClass('bn-thread-mark-selected');
+    await expect(page.locator('.bn-thread-mark')).toHaveCSS(
+      'background-color',
+      'rgb(225, 212, 183)',
+    );
+    await expect(page.locator('.bn-thread-mark')).toHaveCSS(
+      'border-bottom-color',
+      'rgb(194, 151, 46)',
+    );
+  });
+
   test('it checks the comments interactions', async ({ page, browserName }) => {
     await createDoc(page, 'comment-interaction', browserName, 1);
 
@@ -131,12 +175,8 @@ test.describe('Doc Comments', () => {
     await thread.getByRole('paragraph').first().fill('This is a comment');
     await thread.locator('[data-test="save"]').click();
     await expect(thread.getByText('This is a comment').first()).toBeHidden();
+    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
 
-    // Check background color changed
-    await expect(editor.getByText('Hello')).toHaveCSS(
-      'background-color',
-      'rgba(237, 180, 0, 0.4)',
-    );
     await editor.first().click();
     await editor.getByText('Hello').click();
 
@@ -185,6 +225,7 @@ test.describe('Doc Comments', () => {
     await thread.getByText('This is an edited comment').first().hover();
     await thread.locator('[data-test="resolve"]').click();
     await expect(thread).toBeHidden();
+
     await expect(editor.getByText('Hello')).toHaveCSS(
       'background-color',
       'rgba(0, 0, 0, 0)',
@@ -196,11 +237,8 @@ test.describe('Doc Comments', () => {
 
     await thread.getByRole('paragraph').first().fill('This is a new comment');
     await thread.locator('[data-test="save"]').click();
+    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
 
-    await expect(editor.getByText('Hello')).toHaveCSS(
-      'background-color',
-      'rgba(237, 180, 0, 0.4)',
-    );
     await editor.first().click();
     await editor.getByText('Hello').click();
 
@@ -208,10 +246,7 @@ test.describe('Doc Comments', () => {
     await thread.locator('[data-test="moreactions"]').first().click();
     await getMenuItem(thread, 'Delete comment').click();
 
-    await expect(editor.getByText('Hello')).toHaveCSS(
-      'background-color',
-      'rgba(0, 0, 0, 0)',
-    );
+    await expect(editor.getByText('Hello')).not.toHaveClass('bn-thread-mark');
   });
 
   test('it checks the comments abilities', async ({ page, browserName }) => {
@@ -263,7 +298,7 @@ test.describe('Doc Comments', () => {
 
     await expect(otherEditor.getByText('Hello')).toHaveCSS(
       'background-color',
-      'rgba(237, 180, 0, 0.4)',
+      'color(srgb 0.882353 0.831373 0.717647 / 0.7)',
     );
 
     // We change the role of the second user to reader
@@ -298,7 +333,7 @@ test.describe('Doc Comments', () => {
 
     await expect(otherEditor.getByText('Hello')).toHaveCSS(
       'background-color',
-      'rgba(237, 180, 0, 0.4)',
+      'color(srgb 0.882353 0.831373 0.717647 / 0.7)',
     );
     await otherEditor.getByText('Hello').click();
     await expect(
@@ -344,7 +379,7 @@ test.describe('Doc Comments', () => {
 
     await expect(editor1.getByText('Document One')).toHaveCSS(
       'background-color',
-      'rgba(237, 180, 0, 0.4)',
+      'color(srgb 0.882353 0.831373 0.717647 / 0.7)',
     );
 
     await editor1.getByText('Document One').click();

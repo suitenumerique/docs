@@ -8,10 +8,30 @@ export const cssComments = (
   & .--docs--main-editor .ProseMirror {
     // Comments marks in the editor
     .bn-editor {
-      .bn-thread-mark:not([data-orphan='true']),
-      .bn-thread-mark-selected:not([data-orphan='true']) {
-        background: ${canSeeComment ? '#EDB40066' : 'transparent'};
-        color: var(--c--globals--colors--gray-700);
+      // Resets blocknote comments styles
+      .bn-thread-mark,
+      .bn-thread-mark-selected {
+        background-color: transparent;
+      }
+
+      ${
+        canSeeComment &&
+        `.bn-thread-mark:not([data-orphan='true']) {
+            background-color: color-mix(in srgb, var(--c--globals--colors--yellow-150) 70%, transparent);
+            border-bottom: 2px solid color-mix(in srgb, var(--c--globals--colors--yellow-350) 70%, transparent);
+
+            mix-blend-mode: multiply;
+
+            transition: background-color var(--c--globals--transitions--duration), 
+              border-bottom-color var(--c--globals--transitions--duration);
+
+            &:has(.bn-thread-mark-selected) { 
+              background-color: var(--c--globals--colors--yellow-150); 
+              border-bottom: 2px solid var(--c--globals--colors--yellow-350);
+            }
+
+        }`
+      }
       }
 
       [data-show-selection] {
@@ -176,9 +196,9 @@ export const cssComments = (
           width: 26px;
           height: 26px;
           flex: 0 0 26px;
-          background-image: ${currentUserAvatarUrl
-            ? `url("${currentUserAvatarUrl}")`
-            : 'none'};
+          background-image: ${
+            currentUserAvatarUrl ? `url("${currentUserAvatarUrl}")` : 'none'
+          };
           background-position: center;
           background-repeat: no-repeat;
           background-size: cover;
