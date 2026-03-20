@@ -17,6 +17,7 @@ import GroupSVG from '@/assets/icons/ui-kit/group.svg';
 import HistorySVG from '@/assets/icons/ui-kit/history.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
+import MarkdownCopySVG from '@/assets/icons/ui-kit/markdown_copy.svg';
 import {
   Box,
   DropdownMenu,
@@ -193,7 +194,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     },
     {
       label: t('Copy as {{format}}', { format: 'Markdown' }),
-      icon: <ContentCopySVG width={24} height={24} />,
+      icon: <MarkdownCopySVG width={24} height={24} />,
       callback: () => {
         void copyCurrentEditorToClipboard('markdown');
       },

@@ -15,6 +15,7 @@ and this project adheres to
 - ♿️(frontend) fix search modal accessibility issues #2054
 - ♿️(frontend) add sr-only format to export download button #2088
 - ♿️(frontend) announce formatting shortcuts for screen readers #2070
+- ✨(frontend) add markdown copy icon for Copy as Markdown option #2096
 
 ### Fixed
 
