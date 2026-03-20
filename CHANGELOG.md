@@ -20,6 +20,7 @@ and this project adheres to
 ### Fixed
 
 - ♿️(frontend) fix aria-labels for table of contents #2065
+- ♿️(frontend) add aria-hidden to decorative icons in dropdown menu #2093
 
 ## [v4.8.2] - 2026-03-19
 
