@@ -1,7 +1,10 @@
 import {
   Fragment,
   PropsWithChildren,
+  ReactElement,
   ReactNode,
+  cloneElement,
+  isValidElement,
   useCallback,
   useEffect,
   useRef,
@@ -182,6 +185,18 @@ export const DropdownMenu = ({
               false
             : undefined;
 
+          const customIconElement =
+            option.icon && typeof option.icon !== 'string'
+              ? isValidElement(option.icon)
+                ? cloneElement(
+                    option.icon as ReactElement<{
+                      'aria-hidden'?: boolean;
+                    }>,
+                    { 'aria-hidden': true },
+                  )
+                : option.icon
+              : null;
+
           return (
             <Fragment key={option.label}>
               <BoxButton
@@ -267,12 +282,13 @@ export const DropdownMenu = ({
                     />
                   )}
 
-                  {option.icon && typeof option.icon !== 'string' && (
+                  {customIconElement && (
                     <Box
                       $theme="neutral"
                       $variation={isDisabled ? 'tertiary' : 'primary'}
+                      aria-hidden="true"
                     >
-                      {option.icon}
+                      {customIconElement}
                     </Box>
                   )}
                   <Text $variation={isDisabled ? 'tertiary' : 'primary'}>
