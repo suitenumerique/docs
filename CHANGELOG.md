@@ -14,6 +14,7 @@ and this project adheres to
 - ♿️(frontend) announce formatting shortcuts for screen readers #2070
 - ✨(frontend) add markdown copy icon for Copy as Markdown option #2096
 - ♻️(backend) skip saving in database a document when payload is empty #2062
+- ♻️(frontend) refacto Version modal to fit with the design system #2091
 
 ### Fixed
 
@@ -22,7 +23,7 @@ and this project adheres to
 - 💫(frontend) fix the help button to the bottom in tree #2073
 - ♿️(frontend) fix aria-labels for table of contents #2065
 - 🐛(backend) allow using search endpoint without refresh token enabled #2097
-- 🐛(frontend) fix close panel when click on subdoc
+- 🐛(frontend) fix close panel when click on subdoc #2094
 - 🐛(frontend) fix leftpanel button in doc version #9238
 
 ## [v4.8.2] - 2026-03-19

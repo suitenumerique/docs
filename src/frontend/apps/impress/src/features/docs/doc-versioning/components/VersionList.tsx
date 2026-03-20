@@ -16,7 +16,6 @@ interface VersionListStateProps {
   isLoading: boolean;
   error: APIError<unknown> | null;
   versions?: Versions[];
-  doc: Doc;
   selectedVersionId?: Versions['version_id'];
   onSelectVersion?: (versionId: Versions['version_id']) => void;
 }
@@ -24,13 +23,11 @@ interface VersionListStateProps {
 const VersionListState = ({
   onSelectVersion,
   selectedVersionId,
-
   isLoading,
   error,
   versions,
-  doc,
 }: VersionListStateProps) => {
-  const { formatDate } = useDate();
+  const { formatDateSpecial } = useDate();
 
   if (isLoading) {
     return (
@@ -41,19 +38,17 @@ const VersionListState = ({
   }
 
   return (
-    <Box $gap="10px" $padding="xs">
+    <Box $gap="xxs" $padding="xs">
       {versions?.map((version) => {
-        const formattedDate = formatDate(
+        const formattedDate = formatDateSpecial(
           version.last_modified,
-          DateTime.DATETIME_MED,
+          'dd MMMM · HH:mm',
         );
         const isSelected = version.version_id === selectedVersionId;
         return (
           <Box as="li" key={version.version_id} $css="list-style: none;">
             <VersionItem
-              versionId={version.version_id}
               text={formattedDate}
-              docId={doc.id}
               isActive={isSelected}
               onSelect={() => onSelectVersion?.(version.version_id)}
             />
@@ -142,7 +137,6 @@ export const VersionList = ({
           isLoading={isLoading}
           error={error}
           versions={versions}
-          doc={doc}
           selectedVersionId={selectedVersionId}
         />
       </InfiniteScroll>

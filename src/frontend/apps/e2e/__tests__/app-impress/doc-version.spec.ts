@@ -164,10 +164,15 @@ test.describe('Doc Version', () => {
     await expect(modal.getByText('World')).toBeHidden();
 
     await page.getByRole('button', { name: 'Restore', exact: true }).click();
-    await expect(page.getByText('Your current document will')).toBeVisible();
-    await page.getByText('If a member is editing, his').click();
+    await expect(
+      page.getByText(
+        "The current document will be replaced, but you'll still find it in the version history.",
+      ),
+    ).toBeVisible();
 
     await page.getByLabel('Restore', { exact: true }).click();
+
+    await page.waitForTimeout(500);
 
     await expect(page.getByText('Hello')).toBeVisible();
     await expect(page.getByText('World')).toBeHidden();

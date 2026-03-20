@@ -5,8 +5,8 @@ import {
   VariantType,
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
-import { useRouter } from 'next/router';
 import { useTranslation } from 'react-i18next';
+import { createGlobalStyle } from 'styled-components';
 
 import { Box, Text } from '@/components';
 import {
@@ -21,15 +21,22 @@ import { KEY_LIST_DOC_VERSIONS } from '../api/useDocVersions';
 import { Versions } from '../types';
 import { revertUpdate } from '../utils';
 
-interface ModalConfirmationVersionProps {
-  onClose: () => void;
-  docId: Doc['id'];
+const ModalStyle = createGlobalStyle`
+  .c__modal__title {
+    margin-bottom: var(--c--globals--spacings--sm);
+  }
+`;
 
+interface ModalConfirmationVersionProps {
+  docId: Doc['id'];
+  onClose: () => void;
+  onSuccess: () => void;
   versionId: Versions['version_id'];
 }
 
 export const ModalConfirmationVersion = ({
   onClose,
+  onSuccess,
   docId,
   versionId,
 }: ModalConfirmationVersionProps) => {
@@ -39,14 +46,13 @@ export const ModalConfirmationVersion = ({
   });
   const { t } = useTranslation();
   const { toast } = useToastProvider();
-  const { push } = useRouter();
   const { provider } = useProviderStore();
   const { mutate: updateDoc } = useUpdateDoc({
     listInvalidQueries: [KEY_LIST_DOC_VERSIONS],
     onSuccess: () => {
       const onDisplaySuccess = () => {
         toast(t('Version restored successfully'), VariantType.SUCCESS);
-        void push(`/docs/${docId}`);
+        onSuccess();
       };
 
       if (!provider || !version?.content) {
@@ -63,6 +69,10 @@ export const ModalConfirmationVersion = ({
       onDisplaySuccess();
     },
   });
+
+  if (!version) {
+    return null;
+  }
 
   return (
     <Modal
@@ -102,7 +112,7 @@ export const ModalConfirmationVersion = ({
           </Button>
         </>
       }
-      size={ModalSize.SMALL}
+      size={ModalSize.MEDIUM}
       title={
         <Text
           as="h1"
@@ -111,17 +121,17 @@ export const ModalConfirmationVersion = ({
           $size="h6"
           $align="flex-start"
         >
-          {t('Warning')}
+          {t('Restoring an older version')}
         </Text>
       }
     >
+      <ModalStyle />
       <Box className="--docs--modal-confirmation-version">
         <Box>
-          <Text $variation="secondary" as="p">
-            {t('Your current document will revert to this version.')}
-          </Text>
-          <Text $variation="secondary" as="p">
-            {t('If a member is editing, his works can be lost.')}
+          <Text $variation="secondary" as="p" $margin="none">
+            {t(
+              "The current document will be replaced, but you'll still find it in the version history.",
+            )}
           </Text>
         </Box>
       </Box>
