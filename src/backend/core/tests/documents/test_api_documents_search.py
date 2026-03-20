@@ -70,17 +70,20 @@ def test_api_documents_search_anonymous(search_query, indexer_settings):
 
 
 @mock.patch("core.api.viewsets.DocumentViewSet.list")
-def test_api_documents_search_fall_back_on_search_list(mock_list, indexer_settings):
+def test_api_documents_search_fall_back_on_search_list(mock_list, settings):
     """
     When indexer is not configured and no path is provided,
     should fall back on list method
     """
-    indexer_settings.SEARCH_URL = None
     assert get_document_indexer() is None
+    assert settings.OIDC_STORE_REFRESH_TOKEN is False
+    assert settings.OIDC_STORE_ACCESS_TOKEN is False
 
     user = factories.UserFactory()
     client = APIClient()
-    client.force_login(user)
+    client.force_login(
+        user, backend="core.authentication.backends.OIDCAuthenticationBackend"
+    )
 
     mocked_response = {
         "count": 0,
@@ -93,6 +96,8 @@ def test_api_documents_search_fall_back_on_search_list(mock_list, indexer_settin
     q = "alpha"
     response = client.get("/api/v1.0/documents/search/", data={"q": q})
 
+    assert response.status_code == 200
+
     assert mock_list.call_count == 1
     assert mock_list.call_args[0][0].GET.get("q") == q
     assert response.json() == mocked_response
@@ -100,18 +105,21 @@ def test_api_documents_search_fall_back_on_search_list(mock_list, indexer_settin
 
 @mock.patch("core.api.viewsets.DocumentViewSet._list_descendants")
 def test_api_documents_search_fallback_on_search_list_sub_docs(
-    mock_list_descendants, indexer_settings
+    mock_list_descendants, settings
 ):
     """
     When indexer is not configured and path parameter is provided,
     should call _list_descendants() method
     """
-    indexer_settings.SEARCH_URL = "http://find/api/v1.0/search"
-    assert get_document_indexer() is not None
+    assert get_document_indexer() is None
+    assert settings.OIDC_STORE_REFRESH_TOKEN is False
+    assert settings.OIDC_STORE_ACCESS_TOKEN is False
 
     user = factories.UserFactory()
     client = APIClient()
-    client.force_login(user)
+    client.force_login(
+        user, backend="core.authentication.backends.OIDCAuthenticationBackend"
+    )
 
     parent = factories.DocumentFactory(title="parent", users=[user])
 
@@ -128,9 +136,9 @@ def test_api_documents_search_fallback_on_search_list_sub_docs(
         "/api/v1.0/documents/search/", data={"q": q, "path": parent.path}
     )
 
-    assert mock_list_descendants.call_count == 1
-    assert mock_list_descendants.call_args[0][0].GET.get("q") == q
-    assert mock_list_descendants.call_args[0][0].GET.get("path") == parent.path
+    mock_list_descendants.assert_called_with(
+        mock.ANY, {"q": "alpha", "path": parent.path}
+    )
     assert response.json() == mocked_response
 
 
@@ -152,7 +160,9 @@ def test_api_documents_search_indexer_crashes(mock_title_search, indexer_setting
 
     user = factories.UserFactory()
     client = APIClient()
-    client.force_login(user)
+    client.force_login(
+        user, backend="core.authentication.backends.OIDCAuthenticationBackend"
+    )
 
     mocked_response = {
         "count": 0,
@@ -185,7 +195,9 @@ def test_api_documents_search_invalid_params(indexer_settings):
 
     user = factories.UserFactory()
     client = APIClient()
-    client.force_login(user)
+    client.force_login(
+        user, backend="core.authentication.backends.OIDCAuthenticationBackend"
+    )
 
     response = client.get("/api/v1.0/documents/search/")
 
