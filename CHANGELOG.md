@@ -21,6 +21,10 @@ and this project adheres to
 
 - ♿️(frontend) fix aria-labels for table of contents #2065
 
+### Fixed
+
+- 🐛(backend) allow using search endpoint without refresh token enabled #2097
+
 ## [v4.8.2] - 2026-03-19
 
 ### Added
