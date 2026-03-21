@@ -8,7 +8,7 @@
 ### Step 1: Prepare your working environment:
 
 ```bash
-mkdir keycloak
+mkdir -p keycloak/env.d
 curl -o keycloak/compose.yaml https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/docs/examples/compose/keycloak/compose.yaml
 curl -o keycloak/env.d/kc_postgresql https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/kc_postgresql
 curl -o keycloak/env.d/keycloak https://raw.githubusercontent.com/suitenumerique/docs/refs/heads/main/env.d/production.dist/keycloak
@@ -58,10 +58,10 @@ services:
 ### Step 4: Start the service
 
 ```bash
-`docker compose up -d`
+docker compose up -d
 ```
 
-Your keycloak instance is now available on https://doc.yourdomain.tld
+Your keycloak instance is now available on https://id.yourdomain.tld
 
 ## Creating an OIDC Client for Docs Application
 

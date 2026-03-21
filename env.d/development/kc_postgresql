@@ -4,8 +4,8 @@ POSTGRES_USER=impress
 POSTGRES_PASSWORD=pass
 
 # App database configuration
-DB_HOST=kc_postgresql
-DB_NAME=keycloak
-DB_USER=impress
-DB_PASSWORD=pass
-DB_PORT=5433
+KC_DB_URL_HOST=kc_postgresql
+KC_DB_URL_DATABASE=keycloak
+KC_DB_USERNAME=impress
+KC_DB_PASSWORD=pass
+KC_DB_URL_PORT=5433
