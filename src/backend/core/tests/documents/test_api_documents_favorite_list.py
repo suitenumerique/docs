@@ -114,3 +114,28 @@ def test_api_document_favorite_list_with_favorite_children():
     assert content[0]["id"] == str(children[0].id)
     assert content[1]["id"] == str(children[1].id)
     assert content[2]["id"] == str(access.document.id)
+
+def test_api_document_favorite_list_with_deleted_child():
+    """
+    Authenticated users should not see deleted documents in their favorite list.
+    """
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    root = factories.DocumentFactory(creator=user, users=[user], favorited_by=[user])
+    child1, child2 = factories.DocumentFactory.create_batch(
+        2, parent=root, favorited_by=[user]
+    )
+
+    child1.delete()
+
+    response = client.get("/api/v1.0/documents/favorite_list/")
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 2
+
+    content = response.json()["results"]
+
+    assert content[0]["id"] == str(root.id)
+    assert content[1]["id"] == str(child2.id)
