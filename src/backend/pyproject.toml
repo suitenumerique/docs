@@ -59,7 +59,7 @@ dependencies = [
     "pycrdt==0.12.47",
     "pydantic==2.12.5",
     "pydantic-ai-slim[openai,logfire,web]==1.58.0",
-    "PyJWT==2.11.0",
+    "PyJWT==2.12.0",
     "python-magic==0.4.27",
     "redis<6.0.0",
     "requests==2.32.5",
