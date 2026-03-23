@@ -2121,7 +2121,7 @@ class DocumentViewSet(
         GET /api/v1.0/documents/<resource_id>/cors-proxy
         Act like a proxy to fetch external resources and bypass CORS restrictions.
         """
-        url = request.query_params.get("url")
+        url = request.query_params.get("url").strip()
         if not url:
             return drf.response.Response(
                 {"detail": "Missing 'url' query parameter"},
