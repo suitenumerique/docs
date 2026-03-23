@@ -69,7 +69,7 @@ export const DropdownMenu = ({
   const [isOpen, setIsOpen] = useState(opened ?? false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const blockButtonRef = useRef<HTMLDivElement>(null);
-  const menuItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const menuItemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onOpenChange = useCallback(
     (isOpen: boolean) => {

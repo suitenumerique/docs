@@ -44,7 +44,10 @@ export const DocIcon = ({
   const { t } = useTranslation();
   const { addLastFocus, restoreFocus } = useFocusStore();
 
-  const iconRef = useRef<HTMLDivElement>(null);
+  // Omit ref from buttonProps: BoxType refs target HTMLDivElement but BoxButton is a button.
+  const { ref: _buttonPropsRef, ...restButtonProps } = buttonProps ?? {};
+
+  const iconRef = useRef<HTMLButtonElement>(null);
 
   const [openEmojiPicker, setOpenEmojiPicker] = useState<boolean>(false);
   const [pickerPosition, setPickerPosition] = useState<{
@@ -126,7 +129,7 @@ export const DocIcon = ({
         color="tertiary-text"
         aria-label={emojiLabel}
         title={emojiLabel}
-        {...buttonProps}
+        {...restButtonProps}
       >
         {!emoji ? (
           defaultIcon

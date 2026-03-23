@@ -96,7 +96,7 @@ export const DocSubPageItem = (props: TreeViewNodeProps<Doc>) => {
   const ariaLabel = docTitle;
   const isDisabled = !!doc.deleted_at;
   const actionsRef = useRef<HTMLDivElement>(null);
-  const buttonOptionRef = useRef<HTMLDivElement | null>(null);
+  const buttonOptionRef = useRef<HTMLButtonElement | null>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const target = e.target as HTMLElement | null;

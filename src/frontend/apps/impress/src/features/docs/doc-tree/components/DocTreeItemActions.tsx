@@ -33,7 +33,7 @@ type DocTreeItemActionsProps = {
   onOpenChange?: (isOpen: boolean) => void;
   parentId?: string | null;
   actionsRef?: React.RefObject<HTMLDivElement | null>;
-  buttonOptionRef?: React.RefObject<HTMLDivElement | null>;
+  buttonOptionRef?: React.RefObject<HTMLButtonElement | null>;
 };
 
 export const DocTreeItemActions = ({
@@ -48,7 +48,7 @@ export const DocTreeItemActions = ({
 }: DocTreeItemActionsProps) => {
   const internalActionsRef = useRef<HTMLDivElement | null>(null);
   const targetActionsRef = actionsRef ?? internalActionsRef;
-  const internalButtonRef = useRef<HTMLDivElement | null>(null);
+  const internalButtonRef = useRef<HTMLButtonElement | null>(null);
   const targetButtonRef = buttonOptionRef ?? internalButtonRef;
   const router = useRouter();
   const { t } = useTranslation();
