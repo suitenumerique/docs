@@ -48,6 +48,18 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       onDisconnect(data) {
         // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
         if ((data.event as ExtendedCloseEvent).wasClean) {
+          if (data.event.reason === 'No cookies' && data.event.code === 4001) {
+            console.error(
+              'Disconnection due to missing cookies. Not attempting to reconnect.',
+            );
+            void provider.disconnect();
+            set({
+              isReady: true,
+              isConnected: false,
+            });
+            return;
+          }
+
           void provider.connect();
         }
       },

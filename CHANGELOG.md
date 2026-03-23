@@ -25,6 +25,7 @@ and this project adheres to
 - 🐛(backend) allow using search endpoint without refresh token enabled #2097
 - 🐛(frontend) fix close panel when click on subdoc #2094
 - 🐛(frontend) fix leftpanel button in doc version #9238
+- 🐛(y-provider) fix loop when no cookies #2101
 
 ## [v4.8.2] - 2026-03-19
 
