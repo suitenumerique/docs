@@ -512,6 +512,9 @@ class DocumentViewSet(
     15. **AI Proxy**: Proxy an AI request to an external AI service.
         Example: POST /api/v1.0/documents/<resource_id>/ai-proxy
 
+    13. **Public Search**: Search within a public document and the related tree.
+        Example: GET /documents/{id}/public_search/?q=search_text
+
     ### Ordering: created_at, updated_at, is_favorite, title
 
         Example:
@@ -1528,6 +1531,43 @@ class DocumentViewSet(
 
         queryset = filterset.qs
         return self.get_response_for_queryset(queryset)
+
+    @drf.decorators.action(detail=True, methods=["get"], url_path="public_search")
+    def public_search(self, request, *args, **kwargs):
+        """
+        Returns a DRF response containing the filtered, annotated and ordered document list
+        for public search on the tree of a given public document.
+
+        Applies filtering based on request parameter 'q' from `SearchDocumentSerializer`.
+
+        The filtering is done on the model field 'title', there is no full text search.
+
+        The ordering is always by the most recent first.
+        """
+        document = self.get_object()
+
+        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params.is_valid(raise_exception=True)
+        text = params.validated_data["q"]
+
+        public_root = document.get_highest_public_ancestor()
+
+        # We limit the queryset to the current public tree, filtering out deleted documents.
+        queryset = public_root.get_descendants(include_self=True).filter(
+            ancestors_deleted_at__isnull=True
+        )
+
+        filterset = DocumentFilter({"title": text}, queryset=queryset)
+
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        queryset = filterset.filter_queryset(queryset)
+        queryset = queryset.filter(ancestors_deleted_at__isnull=True)
+
+        return self.get_response_for_queryset(
+            queryset.order_by("-updated_at"),
+        )
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):
