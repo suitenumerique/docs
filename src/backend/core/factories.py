@@ -231,9 +231,10 @@ class ReactionFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = models.Reaction
+        skip_postgeneration_save = True
 
     comment = factory.SubFactory(CommentFactory)
-    emoji = "test"
+    emoji = factory.Faker("emoji")
 
     @factory.post_generation
     def users(self, create, extracted, **kwargs):

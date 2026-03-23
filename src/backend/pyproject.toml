@@ -46,6 +46,7 @@ dependencies = [
     "drf_spectacular==0.29.0",
     "dockerflow==2026.1.26",
     "easy_thumbnails==2.10.1",
+    "emoji==2.15.0",
     "factory_boy==3.3.3",
     "gunicorn==25.1.0",
     "jsonschema==4.26.0",

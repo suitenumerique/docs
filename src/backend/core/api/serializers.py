@@ -4,6 +4,7 @@
 import binascii
 import mimetypes
 from base64 import b64decode
+from logging import getLogger
 from os.path import splitext
 
 from django.conf import settings
@@ -12,6 +13,7 @@ from django.utils.functional import lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+import emoji
 import magic
 from rest_framework import serializers
 
@@ -22,6 +24,8 @@ from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+
+logger = getLogger(__name__)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -903,6 +907,17 @@ class ReactionSerializer(serializers.ModelSerializer):
             "users",
         ]
         read_only_fields = ["id", "created_at", "users"]
+
+    def validate_emoji(self, value):
+        """Ensure the reaction is a single emoji."""
+        if not emoji.is_emoji(value):
+            logger.warning(
+                "Invalid emoji rejected: '%s' (unicode=%s)",
+                value,
+                " ".join(f"U+{ord(c):04X}" for c in value) if value else "N/A",
+            )
+            raise serializers.ValidationError("Reaction must be a single valid emoji.")
+        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
