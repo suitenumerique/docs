@@ -289,7 +289,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                     />
                   )}
                   {showMemberSection && isRootDoc && (
-                    <Box $padding={{ horizontal: 'base' }}>
+                    <Box $padding={{ horizontal: 'base', top: 'base' }}>
                       <QuickSearchGroupAccessRequest doc={doc} />
                       <QuickSearchGroupInvitation doc={doc} />
                       <QuickSearchGroupMember doc={doc} />
@@ -301,6 +301,7 @@ export const DocShareModal = ({ doc, onClose, isRootDoc = true }: Props) => {
                       searchUsersRawData={searchUsersQuery.data}
                       onSelect={onSelect}
                       userQuery={userQuery}
+                      minLength={API_USERS_SEARCH_QUERY_MIN_LENGTH}
                     />
                   )}
                 </QuickSearch>
@@ -321,14 +322,35 @@ interface QuickSearchInviteInputSectionProps {
   onSelect: (usr: User) => void;
   searchUsersRawData: User[] | undefined;
   userQuery: string;
+  minLength: number;
 }
 
 const QuickSearchInviteInputSection = ({
   onSelect,
   searchUsersRawData,
   userQuery,
+  minLength,
 }: QuickSearchInviteInputSectionProps) => {
   const { t } = useTranslation();
+  const hint = useMemo(() => {
+    if (userQuery.length < minLength) {
+      return t('Type at least {{minLength}} characters to display user names', {
+        minLength,
+      });
+    }
+    if (isValidEmail(userQuery)) {
+      return t('Choose the email');
+    }
+    if (!searchUsersRawData?.length) {
+      return t('No results. Type a full email address to invite someone.');
+    }
+
+    return t('Choose a user');
+  }, [minLength, searchUsersRawData?.length, t, userQuery]);
+
+  useEffect(() => {
+    announce(hint, 'polite');
+  }, [hint]);
 
   const searchUserData: QuickSearchData<User> = useMemo(() => {
     const users = searchUsersRawData || [];
@@ -347,7 +369,7 @@ const QuickSearchInviteInputSection = ({
     );
 
     return {
-      groupName: t('Search user result'),
+      groupName: hint,
       elements: users,
       endActions:
         isEmail && !hasEmailInUsers
@@ -359,12 +381,12 @@ const QuickSearchInviteInputSection = ({
             ]
           : undefined,
     };
-  }, [onSelect, searchUsersRawData, t, userQuery]);
+  }, [searchUsersRawData, userQuery, hint, onSelect]);
 
   return (
     <Box
       aria-label={t('List search user result card')}
-      $padding={{ horizontal: 'base', bottom: '3xs' }}
+      $padding={{ horizontal: 'base', bottom: '3xs', top: 'base' }}
     >
       <QuickSearchGroup
         group={searchUserData}

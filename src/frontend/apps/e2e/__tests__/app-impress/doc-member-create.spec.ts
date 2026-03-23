@@ -17,6 +17,41 @@ test.describe('Document create member', () => {
     await page.goto('/');
   });
 
+  test('it checks search hints', async ({ page, browserName }) => {
+    await createDoc(page, 'select-multi-users', browserName, 1);
+
+    await page.getByRole('button', { name: 'Share' }).click();
+
+    const shareModal = page.getByLabel('Share modal content');
+    await expect(shareModal.getByText('Document owner')).toBeVisible();
+
+    const inputSearch = page.getByTestId('quick-search-input');
+    await inputSearch.fill('u');
+    await expect(shareModal.getByText('Document owner')).toBeHidden();
+    await expect(
+      shareModal.getByText('Type at least 3 characters to display user names'),
+    ).toBeVisible();
+    await inputSearch.fill('user');
+    await expect(
+      shareModal.getByText('Type at least 3 characters to display user names'),
+    ).toBeHidden();
+    await expect(shareModal.getByText('Choose a user')).toBeVisible();
+    await inputSearch.fill('anything');
+    await expect(shareModal.getByText('Choose a user')).toBeHidden();
+    await expect(
+      shareModal.getByText(
+        'No results. Type a full email address to invite someone.',
+      ),
+    ).toBeVisible();
+    await inputSearch.fill('anything@test.com');
+    await expect(
+      shareModal.getByText(
+        'No results. Type a full email address to invite someone.',
+      ),
+    ).toBeHidden();
+    await expect(shareModal.getByText('Choose the email')).toBeVisible();
+  });
+
   test('it selects 2 users and 1 invitation', async ({ page, browserName }) => {
     const inputFill = 'user.test';
     const responsePromise = page.waitForResponse(

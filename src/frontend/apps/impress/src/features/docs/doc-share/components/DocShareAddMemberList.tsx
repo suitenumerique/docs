@@ -124,7 +124,8 @@ export const DocShareAddMemberList = ({
       $scope="surface"
       $theme="tertiary"
       $variation=""
-      $border="1px solid var(--c--contextuals--border--semantic--contextual--primary)"
+      $border="1px solid var(--c--contextuals--border--surface--primary)"
+      $margin={{ bottom: 'sm' }}
     >
       <Box
         $direction="row"

@@ -18,14 +18,15 @@ export const QuickSearchStyle = createGlobalStyle`
     [cmdk-input] {
       border: none;
       width: 100%;
-      font-size: 17px;
+      font-size: 16px;
       background: white;
       outline: none;
       color: var(--c--contextuals--content--semantic--neutral--primary);
       border-radius: var(--c--globals--spacings--0);
+      font-family: var(--c--globals--font--families--base);
 
       &::placeholder {
-        color: var(--c--globals--colors--gray-500);
+        color: var(--c--contextuals--content--semantic--neutral--tertiary);
       }
     }
 
