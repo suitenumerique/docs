@@ -8,11 +8,8 @@ and this project adheres to
 
 ### Changed
 
-- 💫(frontend) fix the help button to the bottom in tree #2073
 - ♿️(frontend) improve version history list accessibility #2033
-- ♿️(frontend) fix more options menu feedback for screen readers #2071
 - ♿(frontend) focus skip link on headings and skip grid dropzone #1983
-- ♿️(frontend) fix search modal accessibility issues #2054
 - ♿️(frontend) add sr-only format to export download button #2088
 - ♿️(frontend) announce formatting shortcuts for screen readers #2070
 - ✨(frontend) add markdown copy icon for Copy as Markdown option #2096
@@ -20,9 +17,12 @@ and this project adheres to
 
 ### Fixed
 
+- ♿️(frontend) fix more options menu feedback for screen readers #2071
+- ♿️(frontend) fix more options menu feedback for screen readers #2071
+- 💫(frontend) fix the help button to the bottom in tree #2073
 - ♿️(frontend) fix aria-labels for table of contents #2065
 - 🐛(backend) allow using search endpoint without refresh token enabled #2097
-
+- 🐛(frontend) fix close panel when click on subdoc
 
 ## [v4.8.2] - 2026-03-19
 

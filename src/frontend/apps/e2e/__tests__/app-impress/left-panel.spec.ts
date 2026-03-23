@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Left panel desktop', () => {
   test.beforeEach(async ({ page }) => {
@@ -119,6 +120,47 @@ test.describe('Left panel mobile', () => {
     await expect(newDocButton).toBeInViewport();
     await expect(languageButton).toBeInViewport();
     await expect(logoutButton).toBeInViewport();
+  });
+
+  test('checks panel closes when clicking on a subdoc', async ({
+    page,
+    browserName,
+  }) => {
+    const [docTitle] = await createDoc(
+      page,
+      'mobile-doc-test',
+      browserName,
+      1,
+      true,
+    );
+
+    const { name: docChild } = await createRootSubPage(
+      page,
+      browserName,
+      'mobile-doc-test-child',
+      true,
+    );
+
+    const { name: docChild2 } = await createRootSubPage(
+      page,
+      browserName,
+      'mobile-doc-test-child-2',
+      true,
+    );
+
+    const header = page.locator('header').first();
+    await header.getByLabel('Open the header menu').click();
+
+    await expect(page.getByTestId('left-panel-mobile')).toBeInViewport();
+
+    const docTree = page.getByTestId('doc-tree');
+    await expect(docTree.getByText(docTitle)).toBeVisible();
+    await expect(docTree.getByText(docChild)).toBeVisible();
+    await expect(docTree.getByText(docChild2)).toBeVisible();
+
+    await docTree.getByText(docChild).click();
+    await verifyDocName(page, docChild);
+    await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
   });
 
   test('checks resize handle is not present on mobile', async ({ page }) => {

@@ -1,3 +1,5 @@
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
@@ -23,11 +25,15 @@ const MobileLeftPanelStyle = createGlobalStyle`
 
 export const LeftPanel = () => {
   const { isDesktop } = useResponsiveStore();
-  const { t } = useTranslation();
+  if (isDesktop) {
+    return <LeftPanelDesktop />;
+  }
 
-  const { spacingsTokens } = useCunninghamTheme();
-  const { isPanelOpen, isPanelOpenMobile } = useLeftPanelStore();
-  const isPanelOpenState = isDesktop ? isPanelOpen : isPanelOpenMobile;
+  return <LeftPanelMobile />;
+};
+
+export const LeftPanelDesktop = () => {
+  const { t } = useTranslation();
   const { data: config } = useConfig();
   /**
    * The onboarding can be disable, so we need to check if it's enabled before displaying the help menu.
@@ -36,42 +42,51 @@ export const LeftPanel = () => {
    */
   const showHelpMenu = config?.theme_customization?.onboarding?.enabled;
 
-  if (isDesktop) {
-    return (
+  return (
+    <Box
+      data-testid="left-panel-desktop"
+      $css={css`
+        height: calc(100vh - ${HEADER_HEIGHT}px);
+        width: 100%;
+        overflow: hidden;
+        background-color: var(--c--contextuals--background--surface--primary);
+      `}
+      className="--docs--left-panel-desktop"
+      as="nav"
+      aria-label={t('Document sections')}
+    >
       <Box
-        data-testid="left-panel-desktop"
         $css={css`
-          height: calc(100vh - ${HEADER_HEIGHT}px);
-          width: 100%;
-          overflow: hidden;
-          background-color: var(--c--contextuals--background--surface--primary);
+          flex: 0 0 auto;
         `}
-        className="--docs--left-panel-desktop"
-        as="nav"
-        aria-label={t('Document sections')}
       >
-        <Box
-          $css={css`
-            flex: 0 0 auto;
-          `}
-        >
-          <LeftPanelHeader />
-        </Box>
-        <LeftPanelContent />
-        {showHelpMenu && (
-          <SeparatedSection showSeparator={false}>
-            <Box $padding={{ horizontal: 'sm' }} $justify="flex-start">
-              <HelpMenu />
-            </Box>
-          </SeparatedSection>
-        )}
+        <LeftPanelHeader />
       </Box>
-    );
-  }
+      <LeftPanelContent />
+      {showHelpMenu && (
+        <SeparatedSection showSeparator={false}>
+          <Box $padding={{ horizontal: 'sm' }} $justify="flex-start">
+            <HelpMenu />
+          </Box>
+        </SeparatedSection>
+      )}
+    </Box>
+  );
+};
+
+const LeftPanelMobile = () => {
+  const { t } = useTranslation();
+  const { spacingsTokens } = useCunninghamTheme();
+  const { closePanel, isPanelOpenMobile } = useLeftPanelStore();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    closePanel({ type: 'mobile' });
+  }, [pathname, closePanel]);
 
   return (
     <>
-      {isPanelOpenState && <MobileLeftPanelStyle />}
+      {isPanelOpenMobile && <MobileLeftPanelStyle />}
       <Box
         $hasTransition
         $height="100vh"
@@ -81,7 +96,7 @@ export const LeftPanel = () => {
           height: calc(100dvh - 52px);
           border-right: 1px solid var(--c--globals--colors--gray-200);
           position: fixed;
-          transform: translateX(${isPanelOpenState ? '0' : '-100dvw'});
+          transform: translateX(${isPanelOpenMobile ? '0' : '-100dvw'});
           background-color: var(--c--contextuals--background--surface--primary);
           overflow-y: auto;
           overflow-x: hidden;
