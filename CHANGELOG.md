@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- ♿️(frontend) replace ARIA grid pattern with list in docs grid #2116
+
 ## [v4.8.3] - 2026-03-23
 
 ### Changed

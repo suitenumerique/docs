@@ -1,6 +1,5 @@
 import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
 import { useSearchParams } from 'next/navigation';
-import { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -33,20 +32,13 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      (e.target as HTMLAnchorElement).click();
-    }
-  };
-
   return (
     <>
       <Box
         $direction="row"
         $width="100%"
         $align="center"
-        role="row"
+        role="listitem"
         $gap="20px"
         $padding={{ vertical: '4xs', horizontal: isDesktop ? 'base' : 'xs' }}
         $css={css`
@@ -65,7 +57,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
       >
         <Box
           $flex={flexLeft}
-          role="gridcell"
           $css={css`
             align-items: center;
             min-width: 0;
@@ -78,7 +69,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
               min-width: 0;
             `}
             href={`/docs/${doc.id}`}
-            onKeyDown={handleKeyDown}
           >
             <DocsGridItemTitle doc={doc} withTooltip={!dragMode} />
           </StyledLink>
@@ -90,7 +80,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           $align="center"
           $justify={isDesktop ? 'space-between' : 'flex-end'}
           $gap="32px"
-          role="gridcell"
         >
           <StyledLink href={`/docs/${doc.id}`} tabIndex={-1}>
             <DocsGridItemDate

@@ -19,6 +19,7 @@ export const Draggable = <T,>(props: PropsWithChildren<DraggableProps<T>>) => {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      tabIndex={-1}
       data-testid={`draggable-doc-${props.id}`}
       className="--docs--grid-draggable"
       role="none"

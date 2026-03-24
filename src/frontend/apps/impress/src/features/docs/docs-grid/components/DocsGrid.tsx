@@ -140,36 +140,30 @@ export const DocsGrid = ({
             $overflow="auto"
             $padding={{ vertical: 'sm', horizontal: isDesktop ? 'md' : 'xs' }}
           >
-            <Box role="grid" aria-label={t('Documents grid')}>
-              <Box role="rowgroup">
-                <Box
-                  $direction="row"
-                  $padding={{ horizontal: 'xs' }}
-                  $gap="10px"
-                  data-testid="docs-grid-header"
-                  role="row"
-                >
-                  <Box $flex={flexLeft} $padding="3xs" role="columnheader">
-                    <Text $size="xs" $variation="secondary" $weight="500">
-                      {t('Name')}
+            <Box aria-label={t('Documents grid')}>
+              <Box
+                $direction="row"
+                $padding={{ horizontal: 'xs' }}
+                $gap="10px"
+                data-testid="docs-grid-header"
+                aria-hidden="true"
+              >
+                <Box $flex={flexLeft} $padding="3xs">
+                  <Text $size="xs" $variation="secondary" $weight="500">
+                    {t('Name')}
+                  </Text>
+                </Box>
+                {isDesktop && (
+                  <Box $flex={flexRight} $padding={{ vertical: '3xs' }}>
+                    <Text $size="xs" $weight="500" $variation="secondary">
+                      {DocDefaultFilter.TRASHBIN === target
+                        ? t('Days remaining')
+                        : t('Updated at')}
                     </Text>
                   </Box>
-                  {isDesktop && (
-                    <Box
-                      $flex={flexRight}
-                      $padding={{ vertical: '3xs' }}
-                      role="columnheader"
-                    >
-                      <Text $size="xs" $weight="500" $variation="secondary">
-                        {DocDefaultFilter.TRASHBIN === target
-                          ? t('Days remaining')
-                          : t('Updated at')}
-                      </Text>
-                    </Box>
-                  )}
-                </Box>
+                )}
               </Box>
-              <Box role="rowgroup">
+              <Box role="list">
                 <DocGridContentList docs={docs} />
               </Box>
             </Box>
