@@ -516,7 +516,6 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
 
             document = models.Document.add_root(
                 title=validated_data["title"],
-                content=document_content,
                 creator=user,
             )
 
@@ -534,6 +533,9 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 email=email,
                 role=models.RoleChoices.OWNER,
             )
+
+        document.content = document_content
+        document.save()
 
         self._send_email_notification(document, validated_data, email, language)
         return document

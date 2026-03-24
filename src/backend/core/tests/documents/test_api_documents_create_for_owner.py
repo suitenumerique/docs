@@ -595,6 +595,44 @@ def test_api_documents_create_for_owner_with_converter_exception(
 
 
 @override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
+@pytest.mark.usefixtures("mock_convert_md")
+def test_api_documents_create_for_owner_access_before_content():
+    """
+    Accesses must exist before content is saved to object storage so the owner
+    has access to the very first version of the document.
+    """
+    user = factories.UserFactory()
+    accesses_at_save_time = []
+
+    original_save_content = Document.save_content
+
+    def capturing_save_content(self, content):
+        accesses_at_save_time.extend(
+            list(self.accesses.values_list("user__sub", "role"))
+        )
+        return original_save_content(self, content)
+
+    data = {
+        "title": "My Document",
+        "content": "Document content",
+        "sub": str(user.sub),
+        "email": user.email,
+    }
+
+    with patch.object(Document, "save_content", capturing_save_content):
+        response = APIClient().post(
+            "/api/v1.0/documents/create-for-owner/",
+            data,
+            format="json",
+            HTTP_AUTHORIZATION="Bearer DummyToken",
+        )
+
+    assert response.status_code == 201
+    # The owner access must already exist when save_content is called
+    assert (str(user.sub), "owner") in accesses_at_save_time
+
+
+@override_settings(SERVER_TO_SERVER_API_TOKENS=["DummyToken"])
 def test_api_documents_create_for_owner_with_empty_content():
     """The content should not be empty or a 400 error should be raised."""
 

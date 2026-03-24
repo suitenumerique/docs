@@ -69,6 +69,10 @@ ctrl/command/middle-mouse click #2170
 - 🐛(y-provider) destroy Y.Doc instances after each convert request #2129
 - 🐛(backend) remove deleted sub documents in favorite_list endpoint #2083
 
+### Fixed
+
+- 🐛(backend) create_for_owner: add accesses before saving doc content #2124
+
 ## [v4.8.3] - 2026-03-23
 
 ### Changed
