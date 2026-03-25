@@ -38,19 +38,19 @@ export const DocSearchFilters = ({
       $justify="space-between"
       $gap="10px"
       data-testid="doc-search-filters"
-      $margin={{ vertical: 'base' }}
+      $margin={{ vertical: 'sm' }}
     >
       <Box $direction="row" $align="center" $gap="10px">
         <FilterDropdown
           selectedValue={values?.target}
           options={[
             {
-              label: t('All docs'),
+              label: t('All documents'),
               value: DocSearchTarget.ALL,
               callback: () => handleTargetChange(DocSearchTarget.ALL),
             },
             {
-              label: t('Current doc'),
+              label: t('Current document only'),
               value: DocSearchTarget.CURRENT,
               callback: () => handleTargetChange(DocSearchTarget.CURRENT),
             },
