@@ -40,7 +40,7 @@ class Command(BaseCommand):
         batch_size = options["batch_size"]
 
         try:
-            count = indexer.index(batch_size=batch_size)
+            count = indexer.index(batch_size=batch_size, crash_safe_mode=True)
         except Exception as err:
             raise CommandError("Unable to regenerate index") from err
 
