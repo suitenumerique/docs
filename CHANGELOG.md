@@ -8,6 +8,10 @@ and this project adheres to
 
 ### Changed
 
+- ✨(backend) improve indexing command
+  - checkpoint recovery 
+  - asynchronicity 
+  - admin command trigger
 - 💄(frontend) improve comments highlights #1961
 
 ## [v4.8.3] - 2026-03-23

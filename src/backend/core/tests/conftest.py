@@ -1,6 +1,7 @@
 """Fixtures for tests in the impress core application"""
 
 import base64
+import logging
 from unittest import mock
 
 from django.core.cache import cache
@@ -20,6 +21,30 @@ VIA = [USER, TEAM]
 def clear_cache():
     """Fixture to clear the cache before each test."""
     cache.clear()
+
+
+@pytest.fixture
+def caplog_with_propagate(settings, caplog):
+    """
+    propagate=False on settings.LOGGING loggers.
+    This prevents caplog from capturing logs.
+
+    This fixture enables propagation on all configured loggers.
+    """
+    # Save original propagate state
+    original_propagate = {}
+
+    for logger_name in settings.LOGGING.get("loggers", {}):
+        logger = logging.getLogger(logger_name)
+        original_propagate[logger_name] = logger.propagate
+        logger.propagate = True
+
+    try:
+        yield caplog
+    finally:
+        # Restore original propagate states
+        for logger_name, original_value in original_propagate.items():
+            logging.getLogger(logger_name).propagate = original_value
 
 
 @pytest.fixture

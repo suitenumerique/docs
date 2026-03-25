@@ -4,7 +4,6 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Q
 
 from django_redis.cache import RedisCache
 
@@ -22,7 +21,7 @@ logger = getLogger(__file__)
 def document_indexer_task(document_id):
     """
     Celery Task: Indexes a single document by its ID.
-    
+
     Args:
         document_id: Primary key of the document to index.
     """
@@ -36,14 +35,14 @@ def document_indexer_task(document_id):
 def batch_indexer_throttle_acquire(timeout: int = 0, atomic: bool = True):
     """
     Acquire a throttle lock to prevent multiple batch indexation tasks during countdown.
-    
+
     implements a debouncing pattern: only the first call during the timeout period
     will succeed, subsequent calls are skipped until the timeout expires.
 
     Args:
         timeout (int): Lock duration in seconds (countdown period).
         atomic (bool): Use Redis locks for atomic operations if available.
-    
+
     Returns:
         bool: True if lock acquired (first call), False if already held (subsequent calls).
     """
@@ -64,31 +63,35 @@ def batch_indexer_throttle_acquire(timeout: int = 0, atomic: bool = True):
 
 
 @app.task
-def batch_document_indexer_task(timestamp):
+def batch_document_indexer_task(lower_time_bound=None, upper_time_bound=None, **kwargs):
     """
     Celery Task: Batch indexes all documents modified since timestamp.
-    
+
     Args:
-        timestamp: ISO timestamp to filter documents by updated_at, deleted_at, 
-                   or ancestors_deleted_at.
+        lower_time_bound (datetime, optional):
+            indexes documents updated or deleted after this timestamp.
+        upper_time_bound (datetime, optional):
+            indexes documents updated or deleted before this timestamp.
     """
     indexer = get_document_indexer()
 
-    if indexer:
-        queryset = models.Document.objects.filter(
-            Q(updated_at__gte=timestamp)
-            | Q(deleted_at__gte=timestamp)
-            | Q(ancestors_deleted_at__gte=timestamp)
-        )
+    if not indexer:
+        logger.warning("Indexing task triggered but no indexer configured: skipping")
+        return
 
-        count = indexer.index(queryset)
-        logger.info("Indexed %d documents", count)
+    count = indexer.index(
+        queryset=models.Document.objects.filter_updated_at(
+            lower_time_bound=lower_time_bound, upper_time_bound=upper_time_bound
+        ),
+        **kwargs,
+    )
+    logger.info("Indexed %d documents", count)
 
 
 def trigger_batch_document_indexer(document):
     """
     Trigger document indexation with optional debounce mechanism.
-    
+
     behavior depends on SEARCH_INDEXER_COUNTDOWN setting:
     - if countdown > 0 sec (async batch mode):
       * schedules a batch indexation task after countdown in seconds
@@ -97,7 +100,7 @@ def trigger_batch_document_indexer(document):
     - if countdown == 0 sec (sync mode):
       * executes indexation synchronously in the current thread
       * no batching, no throttling, no Celery task queuing
-    
+
     Args:
         document (Document): the document instance that triggered the indexation.
     """
@@ -118,7 +121,7 @@ def trigger_batch_document_indexer(document):
             )
 
             batch_document_indexer_task.apply_async(
-                args=[document.updated_at], countdown=countdown
+                kwargs={"lower_time_bound": document.updated_at}, countdown=countdown
             )
         else:
             logger.info("Skip task for batch document %s indexation", document.pk)
