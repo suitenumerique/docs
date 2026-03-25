@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - 🚸(frontend) hint min char search users #2064
+- 🌐(i18n) add Greek language support #2136
 
 ### Changed
 
