@@ -1,14 +1,53 @@
 """Admin classes and registrations for core app."""
 
 from django.contrib import admin, messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import admin as auth_admin
-from django.shortcuts import redirect
+from django.core.management import call_command
+from django.http import HttpRequest
+from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
 
 from treebeard.admin import TreeAdmin
 
 from core import models
+from core.forms import RunIndexingForm
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
+
+# Customize the default admin site's get_app_list method
+_original_get_app_list = admin.site.get_app_list
+
+
+def custom_get_app_list(_self, request, app_label=None):
+    """Add custom commands to the app list."""
+    app_list = _original_get_app_list(request, app_label)
+
+    # Add Commands app with Run Indexing command
+    commands_app = {
+        "name": _("Commands"),
+        "app_label": "commands",
+        "app_url": "#",
+        "has_module_perms": True,
+        "models": [
+            {
+                "name": _("Run indexing"),
+                "object_name": "RunIndexing",
+                "admin_url": "/admin/run-indexing/",
+                "view_only": False,
+                "add_url": None,
+                "change_url": None,
+            }
+        ],
+    }
+
+    app_list.append(commands_app)
+    return app_list
+
+
+# Monkey-patch the admin site
+admin.site.get_app_list = lambda request, app_label=None: custom_get_app_list(
+    admin.site, request, app_label
+)
 
 
 @admin.register(models.User)
@@ -227,3 +266,39 @@ class InvitationAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.issuer = request.user
         obj.save()
+
+
+@staff_member_required
+def run_indexing_view(request: HttpRequest):
+    """Custom admin view for running indexing commands."""
+    if request.method == "POST":
+        form = RunIndexingForm(request.POST)
+        if form.is_valid():
+            lower_time_bound = form.cleaned_data.get("lower_time_bound")
+            upper_time_bound = form.cleaned_data.get("upper_time_bound")
+            call_command(
+                "index",
+                batch_size=form.cleaned_data["batch_size"],
+                lower_time_bound=lower_time_bound.isoformat()
+                if lower_time_bound
+                else None,
+                upper_time_bound=upper_time_bound.isoformat()
+                if upper_time_bound
+                else None,
+                async_mode=True,
+            )
+            messages.success(request, _("Indexing triggered!"))
+            return redirect("run_indexing")
+        messages.error(request, _("Please correct the errors below."))
+    else:
+        form = RunIndexingForm()
+
+    return render(
+        request=request,
+        template_name="runindexing.html",
+        context={
+            **admin.site.each_context(request),
+            "title": "Run Indexing Command",
+            "form": form,
+        },
+    )
