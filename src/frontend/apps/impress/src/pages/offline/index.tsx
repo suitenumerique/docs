@@ -1,4 +1,5 @@
 import { Button } from '@gouvfr-lasuite/cunningham-react';
+import Head from 'next/head';
 import { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -18,25 +19,35 @@ const Page: NextPageWithLayout = () => {
   const { t } = useTranslation();
 
   return (
-    <Box $align="center" $margin="auto" $height="70vh" $gap="2rem">
-      <Icon404 aria-label="Image 404" role="img" />
+    <>
+      <Head>
+        <title>{`${t('Offline')} - ${t('Docs')}`}</title>
+        <meta
+          property="og:title"
+          content={`${t('Offline')} - ${t('Docs')}`}
+          key="title"
+        />
+      </Head>
+      <Box $align="center" $margin="auto" $height="70vh" $gap="2rem">
+        <Icon404 aria-label="Image 404" role="img" />
 
-      <Text $size="h2" $weight="700">
-        {t('Offline ?!')}
-      </Text>
+        <Text $size="h2" $weight="700">
+          {t('Offline ?!')}
+        </Text>
 
-      <Text as="p" $textAlign="center" $maxWidth="400px" $size="m">
-        {t("Can't load this page, please check your internet connection.")}
-      </Text>
+        <Text as="p" $textAlign="center" $maxWidth="400px" $size="m">
+          {t("Can't load this page, please check your internet connection.")}
+        </Text>
 
-      <Box $margin={{ top: 'large' }}>
-        <StyledLink href="/">
-          <StyledButton icon={<Icon iconName="house" $color="white" />}>
-            {t('Home')}
-          </StyledButton>
-        </StyledLink>
+        <Box $margin={{ top: 'large' }}>
+          <StyledLink href="/">
+            <StyledButton icon={<Icon iconName="house" $color="white" />}>
+              {t('Home')}
+            </StyledButton>
+          </StyledLink>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

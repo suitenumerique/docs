@@ -9,6 +9,7 @@ and this project adheres to
 ### Changed
 
 - ♿(frontend) use aria-haspopup menu on DropButton triggers #2126
+- ♿️(frontend) add contextual browser tab titles for docs routes #2120
 
 ## [v4.8.4] - 2026-03-25
 
