@@ -24,6 +24,7 @@ and this project adheres to
 - ♿️(frontend) add aria-hidden to decorative icons in dropdown menu #2093
 - 🐛(backend) move lock table closer to the insert operation targeted
 - ♿️(frontend) replace ARIA grid pattern with list in docs grid #2131
+- 🐛(backend): prevent restoring a document when an ancestor is deleted #2148
 
 ### Fixed
 
