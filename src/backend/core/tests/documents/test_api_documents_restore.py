@@ -78,8 +78,7 @@ def test_api_documents_restore_authenticated_owner_success():
 
 def test_api_documents_restore_authenticated_owner_ancestor_deleted():
     """
-    The restored document should still be marked as deleted if one of its
-    ancestors is soft deleted as well.
+    Restore should fail if one of the ancestors is soft deleted.
     """
     user = factories.UserFactory()
     client = APIClient()
@@ -100,14 +99,16 @@ def test_api_documents_restore_authenticated_owner_ancestor_deleted():
 
     response = client.post(f"/api/v1.0/documents/{document.id!s}/restore/")
 
-    assert response.status_code == 200
-    assert response.json() == {"detail": "Document has been successfully restored."}
+    # Restore should be rejected
+    assert response.status_code == 400
+    assert response.json()[0] == (
+        "Cannot restore this document because one of its ancestors is deleted."
+    )
 
+    # Ensure state is unchanged
     document.refresh_from_db()
-    assert document.deleted_at is None
-    # document is still marked as deleted
-    assert document.ancestors_deleted_at == grand_parent_deleted_at
-    assert grand_parent_deleted_at > document_deleted_at
+    assert document.deleted_at == document_deleted_at
+    assert document.ancestors_deleted_at == document_deleted_at
 
 
 def test_api_documents_restore_authenticated_owner_expired():

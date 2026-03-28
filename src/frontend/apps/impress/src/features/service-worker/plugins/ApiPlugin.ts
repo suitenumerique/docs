@@ -218,6 +218,7 @@ export class ApiPlugin implements WorkboxPlugin {
       computed_link_role: LinkRole.READER,
       ancestors_link_reach: LinkReach.RESTRICTED,
       ancestors_link_role: undefined,
+      has_deleted_ancestor: false,
     };
 
     await DocsDB.cacheResponse(

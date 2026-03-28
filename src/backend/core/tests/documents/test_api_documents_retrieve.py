@@ -86,6 +86,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": None,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -164,6 +165,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": None,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -275,6 +277,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": None,
+        "has_deleted_ancestor": False,
     }
     assert (
         models.LinkTrace.objects.filter(document=document, user=user).exists() is True
@@ -360,6 +363,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": None,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -475,6 +479,7 @@ def test_api_documents_retrieve_authenticated_related_direct():
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -560,6 +565,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": access.role,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -717,6 +723,7 @@ def test_api_documents_retrieve_authenticated_related_team_members(
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": role,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -784,6 +791,7 @@ def test_api_documents_retrieve_authenticated_related_team_administrators(
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": role,
+        "has_deleted_ancestor": False,
     }
 
 
@@ -851,6 +859,7 @@ def test_api_documents_retrieve_authenticated_related_team_owners(
         "title": document.title,
         "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
         "user_role": role,
+        "has_deleted_ancestor": False,
     }
 
 

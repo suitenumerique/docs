@@ -210,6 +210,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "updated_at",
             "user_role",
             "websocket",
+            "has_deleted_ancestor",
         ]
         read_only_fields = [
             "id",
@@ -231,6 +232,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "path",
             "updated_at",
             "user_role",
+            "has_deleted_ancestor",
         ]
 
     def get_fields(self):

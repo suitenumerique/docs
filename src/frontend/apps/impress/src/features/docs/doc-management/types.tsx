@@ -71,6 +71,7 @@ export interface Doc {
   numchild: number;
   updated_at: string;
   user_role: Role;
+  has_deleted_ancestor: boolean;
   abilities: {
     accesses_manage: boolean;
     accesses_view: boolean;
