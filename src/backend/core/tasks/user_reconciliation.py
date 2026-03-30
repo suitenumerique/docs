@@ -1,6 +1,7 @@
 """Processing tasks for user reconciliation CSV imports."""
 
 import csv
+import logging
 import traceback
 import uuid
 
@@ -13,6 +14,8 @@ from botocore.exceptions import ClientError
 from core.models import UserReconciliation, UserReconciliationCsvImport
 
 from impress.celery_app import app
+
+logger = logging.getLogger(__name__)
 
 
 def _process_row(row, job, counters):
@@ -89,8 +92,12 @@ def user_reconciliation_csv_import_job(job_id):
     Rows with errors are logged in the job logs and skipped, but do not cause
     the entire job to fail or prevent the next rows from being processed.
     """
-    # Imports the CSV file, breaks it into UserReconciliation items
-    job = UserReconciliationCsvImport.objects.get(id=job_id)
+    try:
+        job = UserReconciliationCsvImport.objects.get(id=job_id)
+    except UserReconciliationCsvImport.DoesNotExist:
+        logger.warning("CSV import job %s no longer exists; skipping.", job_id)
+        return
+
     job.status = "running"
     job.save()
 

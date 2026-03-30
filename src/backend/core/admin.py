@@ -1,7 +1,10 @@
 """Admin classes and registrations for core app."""
 
+from functools import partial
+
 from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
+from django.db import transaction
 from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 
@@ -108,7 +111,9 @@ class UserReconciliationCsvImportAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
         if not change:
-            user_reconciliation_csv_import_job.delay(obj.pk)
+            transaction.on_commit(
+                partial(user_reconciliation_csv_import_job.delay, obj.pk)
+            )
             messages.success(request, _("Import job created and queued."))
         return redirect("..")
 

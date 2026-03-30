@@ -47,7 +47,7 @@ ctrl/command/middle-mouse click #2170
 - ⚡️(frontend) add jitter to WS reconnection #2162
 - 🐛(frontend) fix tree pagination #2145
 - 🐛(nginx) add page reconciliation on nginx #2154
-
+- 🐛(backend) fix race condition in reconciliation requests CSV import #2153
 
 ## [v4.8.4] - 2026-03-25
 
