@@ -260,7 +260,7 @@ demo: ## flush db then create a demo for load testing purpose
 .PHONY: demo
 
 index: ## index all documents to remote search
-	@$(MANAGE) index
+	@$(MANAGE) index $(args)
 .PHONY: index
 
 # Nota bene: Black should come after isort just in case they don't agree...
