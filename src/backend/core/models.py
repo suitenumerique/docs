@@ -2029,17 +2029,3 @@ class Invitation(BaseModel):
             "partial_update": is_admin_or_owner,
             "retrieve": is_admin_or_owner,
         }
-
-
-class RunIndexing(models.Model):
-    """Proxy model for indexing management in admin."""
-
-    class Meta:
-        """Meta options."""
-
-        managed = False
-        verbose_name = _("Run Indexing")
-
-    def __str__(self):
-        """String representation."""
-        return self.Meta.verbose_name

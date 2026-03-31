@@ -1,0 +1,26 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    {{ block.super }}
+
+    <div class="app-commands module">
+        <table>
+            <caption>
+                <a href="#" class="section" title="{% trans 'Commands' %}">{% trans "Commands" %}</a>
+            </caption>
+            <tbody>
+                <tr class="model-document">
+                    <th scope="row">
+                        <a href="core/run-indexing/">Run indexing</a>
+                    </th>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}
