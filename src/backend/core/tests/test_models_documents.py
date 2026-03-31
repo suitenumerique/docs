@@ -5,6 +5,7 @@ Unit tests for the Document model
 
 import random
 import smtplib
+from datetime import datetime, timedelta
 from logging import Logger
 from unittest import mock
 
@@ -19,6 +20,7 @@ from django.utils import timezone
 import pytest
 
 from core import factories, models
+from core.factories import DocumentFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -1691,3 +1693,79 @@ def test_models_documents_compute_ancestors_links_paths_mapping_structure(
                 {"link_reach": sibling.link_reach, "link_role": sibling.link_role},
             ],
         }
+
+
+def test_models_documents_manager_time_filter_no_filters():
+    """Test time_filter with no filters returns all documents."""
+    factories.DocumentFactory.create_batch(3)
+
+    queryset = models.Document.objects.filter_updated_at()
+
+    assert queryset.count() == 3
+
+
+def test_models_documents_manager_time_filter_oldest_updated_at():
+    """Test filtering by oldest_updated_at includes documents updated after timestamp."""
+    lower_time_bound = datetime(2024, 2, 1)
+
+    document_too_old = DocumentFactory(updated_at=lower_time_bound - timedelta(days=30))
+    document_at_boundary = DocumentFactory(updated_at=lower_time_bound)
+    document_recent = DocumentFactory(updated_at=lower_time_bound + timedelta(days=15))
+
+    queryset = models.Document.objects.filter_updated_at(
+        lower_time_bound=lower_time_bound
+    )
+
+    assert queryset.count() == 2
+    assert document_too_old not in queryset
+    assert document_at_boundary in queryset
+    assert document_recent in queryset
+
+
+def test_models_documents_manager_time_filter_newest_updated_at():
+    """Test filtering by newest_updated_at includes documents updated before timestamp."""
+    upper_time_bound = datetime(2024, 2, 1)
+
+    document_old = DocumentFactory(updated_at=upper_time_bound - timedelta(days=30))
+    document_at_boundary = DocumentFactory(updated_at=upper_time_bound)
+    document_too_recent = DocumentFactory(
+        updated_at=upper_time_bound + timedelta(days=15)
+    )
+
+    queryset = models.Document.objects.filter_updated_at(
+        upper_time_bound=upper_time_bound
+    )
+
+    assert queryset.count() == 2
+    assert document_old in queryset
+    assert document_at_boundary in queryset
+    assert document_too_recent not in queryset
+
+
+def test_models_documents_manager_time_filter_both_bounds():
+    """Test filtering with both oldest and newest bounds."""
+    lower_time_bound = datetime(2024, 2, 1)
+    upper_time_bound = lower_time_bound + timedelta(days=30)
+
+    document_too_early = DocumentFactory(
+        updated_at=lower_time_bound - timedelta(days=10)
+    )
+    document_in_window = DocumentFactory(
+        updated_at=lower_time_bound + timedelta(days=5)
+    )
+    other_document_in_window = DocumentFactory(
+        updated_at=lower_time_bound + timedelta(days=15)
+    )
+    document_too_late = DocumentFactory(
+        updated_at=upper_time_bound + timedelta(days=10)
+    )
+
+    queryset = models.Document.objects.filter_updated_at(
+        lower_time_bound=lower_time_bound, upper_time_bound=upper_time_bound
+    )
+
+    assert queryset.count() == 2
+    assert document_too_early not in queryset
+    assert document_in_window in queryset
+    assert other_document_in_window in queryset
+    assert document_too_late not in queryset

@@ -1,14 +1,16 @@
 """Fixtures for tests in the impress core application"""
 
 import base64
+import logging
 from unittest import mock
 
+from django.conf import settings as django_settings
 from django.core.cache import cache
 
 import pytest
 import responses
 
-from core import factories, models
+from core import factories
 from core.tests.utils.urls import reload_urls
 
 USER = "user"
@@ -20,6 +22,20 @@ VIA = [USER, TEAM]
 def clear_cache():
     """Fixture to clear the cache before each test."""
     cache.clear()
+
+
+@pytest.fixture
+def caplog_with_propagate(caplog):
+    """
+    propagate=False on settings.LOGGING loggers.
+    This prevents caplog from capturing logs.
+
+    This fixture enables propagation on all configured loggers.
+    """
+    for logger_name in django_settings.LOGGING.get("loggers", {}):
+        logging.getLogger(logger_name).propagate = True
+
+    return caplog
 
 
 @pytest.fixture
@@ -143,10 +159,3 @@ def user_token():
     A fixture to create a user token for testing.
     """
     return build_authorization_bearer("some_token")
-
-
-def create_document_with_updated_at(updated_at, **kwargs):
-    """Helper to create a document with a specific updated_at, bypassing auto_now=True."""
-    document = factories.DocumentFactory(**kwargs)
-    models.Document.objects.filter(pk=document.pk).update(updated_at=updated_at)
-    return models.Document.objects.get(pk=document.pk)

@@ -11,7 +11,6 @@ from core import models
 from core.services.search_indexers import (
     get_document_indexer,
 )
-from core.utils import build_indexable_documents_queryset
 
 from impress.celery_app import app
 
@@ -81,7 +80,7 @@ def batch_document_indexer_task(lower_time_bound=None, upper_time_bound=None, **
         return
 
     count = indexer.index(
-        queryset=build_indexable_documents_queryset(
+        queryset=models.Document.objects.filter_updated_at(
             lower_time_bound=lower_time_bound, upper_time_bound=upper_time_bound
         ),
         **kwargs,

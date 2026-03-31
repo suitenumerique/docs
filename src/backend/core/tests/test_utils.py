@@ -2,7 +2,6 @@
 
 import base64
 import uuid
-from datetime import datetime, timedelta, timezone
 
 from django.core.cache import cache
 
@@ -10,7 +9,6 @@ import pycrdt
 import pytest
 
 from core import factories, utils
-from core.tests.conftest import create_document_with_updated_at
 
 pytestmark = pytest.mark.django_db
 
@@ -242,127 +240,3 @@ def test_utils_get_value_by_pattern_no_match():
     result = utils.get_value_by_pattern(data, r"^title\.")
 
     assert result == []
-
-
-def test_utils_build_indexable_documents_queryset_no_filters():
-    """Test build_indexable_documents_queryset with no filters returns all documents."""
-    factories.DocumentFactory.create_batch(3)
-
-    queryset = utils.build_indexable_documents_queryset()
-
-    assert queryset.count() == 3
-
-
-def test_utils_build_indexable_documents_queryset_oldest_updated_at():
-    """Test filtering by oldest_updated_at includes documents updated after timestamp."""
-    lower_time_bound = datetime(2024, 2, 1, tzinfo=timezone.utc)
-
-    document_too_old = create_document_with_updated_at(
-        updated_at=lower_time_bound - timedelta(days=30)
-    )
-    document_at_boundary = create_document_with_updated_at(lower_time_bound)
-    document_recent = create_document_with_updated_at(
-        updated_at=lower_time_bound + timedelta(days=15)
-    )
-
-    queryset = utils.build_indexable_documents_queryset(
-        lower_time_bound=lower_time_bound
-    )
-
-    assert queryset.count() == 2
-    assert document_too_old not in queryset
-    assert document_at_boundary in queryset
-    assert document_recent in queryset
-
-
-def test_utils_build_indexable_documents_queryset_newest_updated_at():
-    """Test filtering by newest_updated_at includes documents updated before timestamp."""
-    upper_time_bound = datetime(2024, 2, 1, tzinfo=timezone.utc)
-
-    document_old = create_document_with_updated_at(
-        updated_at=upper_time_bound - timedelta(days=30)
-    )
-    document_at_boundary = create_document_with_updated_at(upper_time_bound)
-    document_too_recent = create_document_with_updated_at(
-        updated_at=upper_time_bound + timedelta(days=15)
-    )
-
-    queryset = utils.build_indexable_documents_queryset(
-        upper_time_bound=upper_time_bound
-    )
-
-    assert queryset.count() == 2
-    assert document_old in queryset
-    assert document_at_boundary in queryset
-    assert document_too_recent not in queryset
-
-
-def test_utils_build_indexable_documents_queryset_both_bounds():
-    """Test filtering with both oldest and newest bounds."""
-    lower_time_bound = datetime(2024, 2, 1, tzinfo=timezone.utc)
-    upper_time_bound = lower_time_bound + timedelta(days=30)
-
-    document_too_early = create_document_with_updated_at(
-        updated_at=lower_time_bound - timedelta(days=10)
-    )
-    document_in_window = create_document_with_updated_at(
-        updated_at=lower_time_bound + timedelta(days=5)
-    )
-    other_document_in_window = create_document_with_updated_at(
-        updated_at=lower_time_bound + timedelta(days=15)
-    )
-    document_too_late = create_document_with_updated_at(
-        updated_at=upper_time_bound + timedelta(days=10)
-    )
-
-    queryset = utils.build_indexable_documents_queryset(
-        lower_time_bound=lower_time_bound, upper_time_bound=upper_time_bound
-    )
-
-    assert queryset.count() == 2
-    assert document_too_early not in queryset
-    assert document_in_window in queryset
-    assert other_document_in_window in queryset
-    assert document_too_late not in queryset
-
-
-def test_utils_build_indexable_documents_queryset_deleted_at():
-    """Test filtering includes documents with deleted_at in range."""
-    lower_time_bound = datetime(2024, 2, 1, tzinfo=timezone.utc)
-
-    document_deleted_in_range = create_document_with_updated_at(
-        updated_at=lower_time_bound - timedelta(days=30),
-        deleted_at=lower_time_bound + timedelta(days=15),
-    )
-    document_updated_before_range = create_document_with_updated_at(
-        updated_at=lower_time_bound - timedelta(days=30)
-    )
-
-    queryset = utils.build_indexable_documents_queryset(
-        lower_time_bound=lower_time_bound
-    )
-
-    assert queryset.count() == 1
-    assert document_deleted_in_range in queryset
-    assert document_updated_before_range not in queryset
-
-
-def test_utils_build_indexable_documents_queryset_ancestors_deleted_at():
-    """Test filtering includes documents with ancestors_deleted_at in range."""
-    lower_time_bound = datetime(2024, 2, 1, tzinfo=timezone.utc)
-
-    document_ancestor_deleted_in_range = create_document_with_updated_at(
-        updated_at=lower_time_bound - timedelta(days=30),
-        ancestors_deleted_at=lower_time_bound + timedelta(days=15),
-    )
-    document_updated_before_range = create_document_with_updated_at(
-        updated_at=lower_time_bound - timedelta(days=30)
-    )
-
-    queryset = utils.build_indexable_documents_queryset(
-        lower_time_bound=lower_time_bound
-    )
-
-    assert queryset.count() == 1
-    assert document_ancestor_deleted_in_range in queryset
-    assert document_updated_before_range not in queryset

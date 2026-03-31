@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from django.core.cache import cache
 from django.db import models as db
-from django.db.models import Q, Subquery
+from django.db.models import Subquery
 
 import pycrdt
 from bs4 import BeautifulSoup
@@ -168,47 +168,3 @@ def users_sharing_documents_with(user):
         elapsed,
     )
     return result
-
-
-def build_indexable_documents_queryset(lower_time_bound=None, upper_time_bound=None):
-    """
-    Build a queryset of documents to index filtered by timestamp range.
-
-    filters out documents that have been updated, or deleted outside the time range.
-
-    Args:
-        lower_time_bound (datetime, optional):
-            keeps documents updated or deleted after this timestamp.
-        upper_time_bound (datetime, optional):
-            keeps documents updated or deleted before this timestamp.
-
-    Returns:
-        QuerySet: Filtered Document queryset ready for indexation.
-    """
-
-    queryset = models.Document.objects.all()
-
-    conditions = Q()
-    if lower_time_bound and upper_time_bound:
-        conditions = (
-            Q(updated_at__gte=lower_time_bound, updated_at__lte=upper_time_bound)
-            | Q(deleted_at__gte=lower_time_bound, deleted_at__lte=upper_time_bound)
-            | Q(
-                ancestors_deleted_at__gte=lower_time_bound,
-                ancestors_deleted_at__lte=upper_time_bound,
-            )
-        )
-    elif lower_time_bound:
-        conditions = (
-            Q(updated_at__gte=lower_time_bound)
-            | Q(deleted_at__gte=lower_time_bound)
-            | Q(ancestors_deleted_at__gte=lower_time_bound)
-        )
-    elif upper_time_bound:
-        conditions = (
-            Q(updated_at__lte=upper_time_bound)
-            | Q(deleted_at__lte=upper_time_bound)
-            | Q(ancestors_deleted_at__lte=upper_time_bound)
-        )
-
-    return queryset.filter(conditions)

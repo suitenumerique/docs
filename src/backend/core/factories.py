@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 
 import factory.fuzzy
+from factory import post_generation
 from faker import Faker
 
 from core import models
@@ -158,6 +159,20 @@ class DocumentFactory(factory.django.DjangoModelFactory):
                 models.LinkTrace.objects.update_or_create(
                     document=self, user=item, defaults={"is_masked": True}
                 )
+
+    @post_generation
+    def updated_at(self, create, extracted, **kwargs):
+        """
+        the BaseModel.updated_at has auto_now=True.
+        This prevents setting a specific updated_at value with the factory.
+
+        This post_generation method bypasses this behavior.
+        """
+        if not create or not extracted:
+            return
+
+        self.__class__.objects.filter(pk=self.pk).update(updated_at=extracted)
+        self.refresh_from_db()
 
 
 class UserDocumentAccessFactory(factory.django.DjangoModelFactory):
