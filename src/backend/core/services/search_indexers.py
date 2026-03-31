@@ -8,7 +8,6 @@ from functools import cache
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.core.cache import cache as django_cache
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 
@@ -18,9 +17,6 @@ from core import models, utils
 from core.enums import SearchType
 
 logger = logging.getLogger(__name__)
-
-
-BULK_INDEXER_CHECKPOINT = "bulk-indexer-checkpoint"
 
 
 @cache
@@ -165,8 +161,9 @@ class BaseDocumentIndexer(ABC):
             count += len(serialized_batch)
 
             if crash_safe_mode:
-                django_cache.set(
-                    BULK_INDEXER_CHECKPOINT, serialized_batch[-1]["updated_at"]
+                logger.info(
+                    "Indexing checkpoint: %s.",
+                    serialized_batch[-1]["updated_at"],
                 )
 
         return count
