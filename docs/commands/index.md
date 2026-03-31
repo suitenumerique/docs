@@ -6,25 +6,6 @@ It sends an asynchronous task to the Celery worker.
 
 ## Usage
 
-### Command line
-
-```bash
-python manage.py index \
-  --lower-time-bound "2024-01-01T00:00:00" \
-  --upper-time-bound "2024-01-31T23:59:59" \
-  --batch-size 200 \
-  --crash-safe-mode
-```
-
-### Django Admin
-
-The command is available in the Django admin interface:
-
-1. Go to `/admin/`
-2. Click on **"Run Indexing"** in the CORE section
-3. Fill in the form with the desired parameters
-4. Click **"Run Indexing Command"**
-
 ### Make Command
 
 ```bash
@@ -32,14 +13,31 @@ The command is available in the Django admin interface:
 make index
 
 # With custom parameters
-make index batch_size=200 lower_time_bound="2024-01-01T00:00:00" crash_safe_mode=true
+make index batch_size=200 lower_time_bound="2024-01-01T00:00:00"
 
 # All parameters
 make index batch_size=200 \
   lower_time_bound="2024-01-01T00:00:00" \
   upper_time_bound="2024-01-31T23:59:59" \
-  crash_safe_mode=true
 ```
+
+### Command line
+
+```bash
+python manage.py index \
+  --lower-time-bound "2024-01-01T00:00:00" \
+  --upper-time-bound "2024-01-31T23:59:59" \
+  --batch-size 200 \
+  --async_mode
+```
+
+### Django Admin
+
+The command is available in the Django admin interface:
+
+1. Go to `/admin/core/run-indexing/`, you arrive at the "Run Indexing Command" page
+3. Fill in the form with the desired parameters
+4. Click **"Run Indexing Command"**
 
 ## Parameters
 
@@ -60,9 +58,12 @@ make index batch_size=200 \
 - **default:** `None`
 - **description:** Only documents updated before this date will be indexed.
 
-### `--crash-safe-mode`
+## `--async_mode`
 - **type:** Boolean flag
 - **default:** `False`
-- **description:** When enabled, the command orders documents by `updated_at` and stores the last indexed document's timestamp in cache. This allows resuming indexing from the last successful batch in case of a crash. However, it is more computationally expensive due to sorting.
+- **description:** Runs asynchronously is async_mode==True. 
 
+## Crash Safe Mode
 
+The command saves the updated.at of the last document of each successful batch into the `bulk-indexer-checkpoint` cache variable.
+If the process crashes, this value can be used as `lower-time-bound` to resume from the last successfully indexed document.
