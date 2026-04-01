@@ -259,16 +259,8 @@ demo: ## flush db then create a demo for load testing purpose
 	@$(MANAGE) create_demo
 .PHONY: demo
 
-index: batch_size ?=
-index: lower_time_bound ?=
-index: upper_time_bound ?=
-index: crash_safe_mode ?=
-index: ## index all documents to indexer (params: batch_size, lower_time_bound, upper_time_bound, crash_safe_mode)
-	@$(MANAGE) index \
-		$(if $(batch_size),--batch-size $(batch_size)) \
-		$(if $(lower_time_bound),--lower-time-bound "$(lower_time_bound)") \
-		$(if $(upper_time_bound),--upper-time-bound "$(upper_time_bound)") \
-		$(if $(crash_safe_mode),--crash-safe-mode)
+index: ## index all documents to remote search
+	@$(MANAGE) index $(args)
 .PHONY: index
 
 # Nota bene: Black should come after isort just in case they don't agree...

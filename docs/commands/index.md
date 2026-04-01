@@ -13,12 +13,8 @@ It sends an asynchronous task to the Celery worker.
 make index
 
 # With custom parameters
-make index batch_size=200 lower_time_bound="2024-01-01T00:00:00"
+make index args="--batch-size 100 --lower-time-bound 2024-01-01T00:00:00 --upper-time-bound 2026-01-01T00:00:00"
 
-# All parameters
-make index batch_size=200 \
-  lower_time_bound="2024-01-01T00:00:00" \
-  upper_time_bound="2024-01-31T23:59:59" \
 ```
 
 ### Command line
