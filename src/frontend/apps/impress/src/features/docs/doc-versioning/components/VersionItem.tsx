@@ -1,15 +1,21 @@
 import { useTranslation } from 'react-i18next';
 
-import { BoxButton, Text } from '@/components';
+import { Box, BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 
 interface VersionItemProps {
   text: string;
   isActive: boolean;
   onSelect?: () => void;
+  selectionLabel?: string;
 }
 
-export const VersionItem = ({ text, isActive, onSelect }: VersionItemProps) => {
+export const VersionItem = ({
+  text,
+  isActive,
+  onSelect,
+  selectionLabel,
+}: VersionItemProps) => {
   const { t } = useTranslation();
   const { spacingsTokens } = useCunninghamTheme();
 
@@ -30,9 +36,26 @@ export const VersionItem = ({ text, isActive, onSelect }: VersionItemProps) => {
       $padding={{ vertical: 'm', horizontal: 'xs' }}
       $hasTransition
     >
-      <Text $weight="bold" $size="sm" $textAlign="left">
-        {text}
-      </Text>
+      <Box $direction="row" $align="center" $gap="xs" $width="100%">
+        <Text $weight="bold" $size="sm" $textAlign="left" $css="flex: 1;">
+          {text}
+        </Text>
+        {selectionLabel && (
+          <Text
+            $weight="bold"
+            $size="xs"
+            $css={`
+              background: var(--c--contextuals--background--semantic--overlay--primary);
+              border-radius: 4px;
+              padding: 0 6px;
+              min-width: 20px;
+              text-align: center;
+            `}
+          >
+            {selectionLabel}
+          </Text>
+        )}
+      </Box>
     </BoxButton>
   );
 };

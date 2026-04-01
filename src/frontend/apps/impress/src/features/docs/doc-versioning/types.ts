@@ -19,3 +19,22 @@ export interface Version {
   last_modified: string;
   id: string;
 }
+
+export type DiffType = 'added' | 'removed' | 'modified' | 'unchanged';
+
+export type VersionSelectMode = 'view' | 'compare';
+
+export interface InlineContentDiff {
+  diffType: DiffType;
+  text: string;
+  styles?: Record<string, boolean>;
+}
+
+export interface DiffBlock {
+  diffType: DiffType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  block: any;
+  contentDiff?: InlineContentDiff[];
+  childrenDiff?: DiffBlock[];
+  propsChanged?: boolean;
+}

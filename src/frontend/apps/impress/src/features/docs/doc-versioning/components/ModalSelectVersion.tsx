@@ -5,15 +5,16 @@ import {
   useModal,
 } from '@gouvfr-lasuite/cunningham-react';
 import dynamic from 'next/dynamic';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle, css } from 'styled-components';
 
-import { Box, ButtonCloseModal, Text } from '@/components';
+import { Box, BoxButton, ButtonCloseModal, Text } from '@/components';
 import { Doc } from '@/docs/doc-management';
 
-import { Versions } from '../types';
+import { VersionSelectMode, Versions } from '../types';
 
+import { DocVersionDiffEditor } from './DocVersionDiffEditor';
 import { DocVersionEditor } from './DocVersionEditor';
 import { VersionList } from './VersionList';
 
@@ -47,10 +48,61 @@ export const ModalSelectVersion = ({
   doc,
 }: ModalSelectVersionProps) => {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<VersionSelectMode>('view');
   const [selectedVersionId, setSelectedVersionId] =
+    useState<Versions['version_id']>();
+  const [baseVersionId, setBaseVersionId] =
+    useState<Versions['version_id']>();
+  const [targetVersionId, setTargetVersionId] =
     useState<Versions['version_id']>();
   const canRestore = doc.abilities.partial_update;
   const restoreModal = useModal();
+
+  const handleSelectVersion = useCallback(
+    (versionId: Versions['version_id']) => {
+      if (mode === 'view') {
+        setSelectedVersionId(versionId);
+        return;
+      }
+
+      // Compare mode: fill base first, then target
+      if (!baseVersionId) {
+        setBaseVersionId(versionId);
+      } else if (!targetVersionId) {
+        if (versionId === baseVersionId) {
+          // Deselect base if clicked again
+          setBaseVersionId(undefined);
+        } else {
+          setTargetVersionId(versionId);
+        }
+      } else {
+        // Both selected: clicking again replaces target (or deselects)
+        if (versionId === baseVersionId) {
+          setBaseVersionId(targetVersionId);
+          setTargetVersionId(undefined);
+        } else if (versionId === targetVersionId) {
+          setTargetVersionId(undefined);
+        } else {
+          setTargetVersionId(versionId);
+        }
+      }
+    },
+    [mode, baseVersionId, targetVersionId],
+  );
+
+  const handleModeToggle = useCallback(() => {
+    if (mode === 'view') {
+      setMode('compare');
+      setBaseVersionId(undefined);
+      setTargetVersionId(undefined);
+    } else {
+      setMode('view');
+      setBaseVersionId(undefined);
+      setTargetVersionId(undefined);
+    }
+  }, [mode]);
+
+  const showDiff = mode === 'compare' && baseVersionId && targetVersionId;
 
   return (
     <>
@@ -92,16 +144,30 @@ export const ModalSelectVersion = ({
               $padding={{ horizontal: 'base', vertical: 'xl' }}
               $align="center"
             >
-              {selectedVersionId && (
+              {mode === 'view' && selectedVersionId && (
                 <DocVersionEditor
                   docId={doc.id}
                   versionId={selectedVersionId}
                 />
               )}
-              {!selectedVersionId && (
+              {mode === 'view' && !selectedVersionId && (
                 <Box $align="center" $justify="center" $height="100%">
                   <Text $size="h6" $weight="bold">
                     {t('Select a version on the right to restore')}
+                  </Text>
+                </Box>
+              )}
+              {mode === 'compare' && showDiff && (
+                <DocVersionDiffEditor
+                  docId={doc.id}
+                  baseVersionId={baseVersionId}
+                  targetVersionId={targetVersionId}
+                />
+              )}
+              {mode === 'compare' && !showDiff && (
+                <Box $align="center" $justify="center" $height="100%">
+                  <Text $size="h6" $weight="bold">
+                    {t('Select two versions to compare')}
                   </Text>
                 </Box>
               )}
@@ -147,13 +213,44 @@ export const ModalSelectVersion = ({
                 />
               </Box>
 
+              <Box
+                $padding={{ horizontal: 'xs', vertical: 'xxs' }}
+                $css={css`
+                  border-bottom: 1px solid
+                    var(--c--contextuals--border--surface--primary);
+                `}
+              >
+                <BoxButton
+                  aria-pressed={mode === 'compare'}
+                  onClick={handleModeToggle}
+                  $width="100%"
+                  $padding={{ vertical: 'xxs', horizontal: 'xs' }}
+                  $css={`
+                    background: ${mode === 'compare' ? 'var(--c--contextuals--background--semantic--overlay--primary)' : 'transparent'};
+                    border-radius: 4px;
+                    &:hover {
+                      background: var(--c--contextuals--background--semantic--overlay--primary);
+                    }
+                  `}
+                >
+                  <Text $size="xs" $weight="bold" $textAlign="center">
+                    {mode === 'view'
+                      ? t('Compare versions')
+                      : t('Back to history')}
+                  </Text>
+                </BoxButton>
+              </Box>
+
               <VersionList
                 doc={doc}
-                onSelectVersion={setSelectedVersionId}
+                onSelectVersion={handleSelectVersion}
                 selectedVersionId={selectedVersionId}
+                mode={mode}
+                baseVersionId={baseVersionId}
+                targetVersionId={targetVersionId}
               />
             </Box>
-            {canRestore && (
+            {canRestore && mode === 'view' && (
               <Box
                 $padding="xs"
                 $css={css`

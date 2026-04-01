@@ -8,7 +8,7 @@ import { Doc } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
 
 import { useDocVersionsInfiniteQuery } from '../api/useDocVersions';
-import { Versions } from '../types';
+import { VersionSelectMode, Versions } from '../types';
 
 import { VersionItem } from './VersionItem';
 
@@ -18,6 +18,9 @@ interface VersionListStateProps {
   versions?: Versions[];
   selectedVersionId?: Versions['version_id'];
   onSelectVersion?: (versionId: Versions['version_id']) => void;
+  mode: VersionSelectMode;
+  baseVersionId?: Versions['version_id'];
+  targetVersionId?: Versions['version_id'];
 }
 
 const VersionListState = ({
@@ -26,6 +29,9 @@ const VersionListState = ({
   isLoading,
   error,
   versions,
+  mode,
+  baseVersionId,
+  targetVersionId,
 }: VersionListStateProps) => {
   const { formatDateSpecial } = useDate();
 
@@ -44,13 +50,28 @@ const VersionListState = ({
           version.last_modified,
           'dd MMMM · HH:mm',
         );
-        const isSelected = version.version_id === selectedVersionId;
+        const isSelected =
+          mode === 'view'
+            ? version.version_id === selectedVersionId
+            : version.version_id === baseVersionId ||
+              version.version_id === targetVersionId;
+
+        let selectionLabel: string | undefined;
+        if (mode === 'compare') {
+          if (version.version_id === baseVersionId) {
+            selectionLabel = 'A';
+          } else if (version.version_id === targetVersionId) {
+            selectionLabel = 'B';
+          }
+        }
+
         return (
           <Box as="li" key={version.version_id} $css="list-style: none;">
             <VersionItem
               text={formattedDate}
               isActive={isSelected}
               onSelect={() => onSelectVersion?.(version.version_id)}
+              selectionLabel={selectionLabel}
             />
           </Box>
         );
@@ -78,12 +99,18 @@ interface VersionListProps {
   doc: Doc;
   onSelectVersion?: (versionId: Versions['version_id']) => void;
   selectedVersionId?: Versions['version_id'];
+  mode: VersionSelectMode;
+  baseVersionId?: Versions['version_id'];
+  targetVersionId?: Versions['version_id'];
 }
 
 export const VersionList = ({
   doc,
   onSelectVersion,
   selectedVersionId,
+  mode,
+  baseVersionId,
+  targetVersionId,
 }: VersionListProps) => {
   const { t } = useTranslation();
   const { formatDate } = useDate();
@@ -138,6 +165,9 @@ export const VersionList = ({
           error={error}
           versions={versions}
           selectedVersionId={selectedVersionId}
+          mode={mode}
+          baseVersionId={baseVersionId}
+          targetVersionId={targetVersionId}
         />
       </InfiniteScroll>
       <Text className="sr-only" aria-live="polite">
