@@ -7,6 +7,7 @@ from base64 import b64decode
 from os.path import splitext
 
 from django.conf import settings
+from django.db import connection, transaction
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.text import slugify
@@ -505,11 +506,19 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        document = models.Document.add_root(
-            title=validated_data["title"],
-            content=document_content,
-            creator=user,
-        )
+        with transaction.atomic():
+            # locks the table to ensure safe concurrent access
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
+                    "IN SHARE ROW EXCLUSIVE MODE;"
+                )
+
+            document = models.Document.add_root(
+                title=validated_data["title"],
+                content=document_content,
+                creator=user,
+            )
 
         if user:
             # Associate the document with the pre-existing user
