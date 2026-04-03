@@ -248,6 +248,7 @@ def run_indexing_view(request: HttpRequest):
                 upper_time_bound=convert_to_isoformat(
                     request.POST.get("upper_time_bound")
                 ),
+                async_mode=True,
             )
             messages.success(request, _("Indexing triggered!"))
         else:
