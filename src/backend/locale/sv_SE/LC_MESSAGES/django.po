@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lasuite-docs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-25 16:42+0000\n"
-"PO-Revision-Date: 2026-03-25 16:55\n"
+"POT-Creation-Date: 2026-04-02 09:37+0000\n"
+"PO-Revision-Date: 2026-04-08 13:28\n"
 "Last-Translator: \n"
 "Language-Team: Swedish\n"
 "Language: sv_SE\n"
@@ -62,24 +62,24 @@ msgstr ""
 msgid "Favorite"
 msgstr "Favoriter"
 
-#: build/lib/core/api/serializers.py:535 core/api/serializers.py:535
+#: build/lib/core/api/serializers.py:544 core/api/serializers.py:544
 msgid "A new document was created on your behalf!"
 msgstr "Ett nytt dokument skapades åt dig!"
 
-#: build/lib/core/api/serializers.py:539 core/api/serializers.py:539
+#: build/lib/core/api/serializers.py:548 core/api/serializers.py:548
 msgid "You have been granted ownership of a new document:"
 msgstr "Du har beviljats äganderätt till ett nytt dokument:"
 
-#: build/lib/core/api/serializers.py:575 core/api/serializers.py:575
+#: build/lib/core/api/serializers.py:584 core/api/serializers.py:584
 msgid "This field is required."
 msgstr ""
 
-#: build/lib/core/api/serializers.py:586 core/api/serializers.py:586
+#: build/lib/core/api/serializers.py:595 core/api/serializers.py:595
 #, python-format
 msgid "Link reach '%(link_reach)s' is not allowed based on parent document configuration."
 msgstr ""
 
-#: build/lib/core/api/viewsets.py:1315 core/api/viewsets.py:1315
+#: build/lib/core/api/viewsets.py:1312 core/api/viewsets.py:1312
 #, python-brace-format
 msgid "copy of {title}"
 msgstr ""
