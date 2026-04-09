@@ -252,7 +252,7 @@ def test_services_search_indexers_index_errors(indexer_settings):
     )
 
     with pytest.raises(HTTPError):
-        FindDocumentIndexer().index()
+        FindDocumentIndexer().index(models.Document.objects.all())
 
 
 @patch.object(FindDocumentIndexer, "push")
@@ -272,7 +272,7 @@ def test_services_search_indexers_batches_pass_only_batch_accesses(
         access = factories.UserDocumentAccessFactory(document=document)
         expected_user_subs[str(document.id)] = str(access.user.sub)
 
-    assert FindDocumentIndexer().index() == 5
+    assert FindDocumentIndexer().index(models.Document.objects.all()) == 5
 
     # Should be 3 batches: 2 + 2 + 1
     assert mock_push.call_count == 3
@@ -310,7 +310,7 @@ def test_services_search_indexers_batch_size_argument(mock_push):
         access = factories.UserDocumentAccessFactory(document=document)
         expected_user_subs[str(document.id)] = str(access.user.sub)
 
-    assert FindDocumentIndexer().index(batch_size=2) == 5
+    assert FindDocumentIndexer().index(models.Document.objects.all(), batch_size=2) == 5
 
     # Should be 3 batches: 2 + 2 + 1
     assert mock_push.call_count == 3
@@ -345,7 +345,7 @@ def test_services_search_indexers_ignore_empty_documents(mock_push):
     empty_title = factories.DocumentFactory(title="")
     empty_content = factories.DocumentFactory(content="")
 
-    assert FindDocumentIndexer().index() == 3
+    assert FindDocumentIndexer().index(models.Document.objects.all()) == 3
 
     assert mock_push.call_count == 1
 
@@ -373,7 +373,7 @@ def test_services_search_indexers_skip_empty_batches(mock_push, indexer_settings
     # Only empty docs
     factories.DocumentFactory.create_batch(5, content="", title="")
 
-    assert FindDocumentIndexer().index() == 1
+    assert FindDocumentIndexer().index(models.Document.objects.all()) == 1
     assert mock_push.call_count == 1
 
     results = [doc["id"] for doc in mock_push.call_args[0][0]]
@@ -391,7 +391,7 @@ def test_services_search_indexers_ancestors_link_reach(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, link_reach="public")
     document = factories.DocumentFactory(parent=parent, link_reach="restricted")
 
-    assert FindDocumentIndexer().index() == 4
+    assert FindDocumentIndexer().index(models.Document.objects.all()) == 4
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 4
@@ -411,7 +411,7 @@ def test_services_search_indexers_ancestors_users(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, users=[user_p])
     document = factories.DocumentFactory(parent=parent, users=[user_d])
 
-    assert FindDocumentIndexer().index() == 3
+    assert FindDocumentIndexer().index(models.Document.objects.all()) == 3
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3
@@ -432,7 +432,7 @@ def test_services_search_indexers_ancestors_teams(mock_push):
     parent = factories.DocumentFactory(parent=grand_parent, teams=["team_p"])
     document = factories.DocumentFactory(parent=parent, teams=["team_d"])
 
-    assert FindDocumentIndexer().index() == 3
+    assert FindDocumentIndexer().index(models.Document.objects.all()) == 3
 
     results = {doc["id"]: doc for doc in mock_push.call_args[0][0]}
     assert len(results) == 3

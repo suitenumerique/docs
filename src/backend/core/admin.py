@@ -1,13 +1,18 @@
 """Admin classes and registrations for core app."""
 
+from datetime import datetime
+
 from django.contrib import admin, messages
 from django.contrib.auth import admin as auth_admin
-from django.shortcuts import redirect
+from django.core.management import call_command
+from django.http import HttpRequest
+from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
 
 from treebeard.admin import TreeAdmin
 
 from core import models
+from core.forms import RunIndexingForm
 from core.tasks.user_reconciliation import user_reconciliation_csv_import_job
 
 
@@ -227,3 +232,43 @@ class InvitationAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.issuer = request.user
         obj.save()
+
+
+def run_indexing_view(request: HttpRequest):
+    """Custom admin view for running indexing commands."""
+    if request.method == "POST":
+        form = RunIndexingForm(request.POST)
+        if form.is_valid():
+            call_command(
+                "index",
+                batch_size=int(request.POST.get("batch_size")),
+                lower_time_bound=convert_to_isoformat(
+                    request.POST.get("lower_time_bound")
+                ),
+                upper_time_bound=convert_to_isoformat(
+                    request.POST.get("upper_time_bound")
+                ),
+                async_mode=True,
+            )
+            messages.success(request, _("Indexing triggered!"))
+        else:
+            messages.error(request, _("Please correct the errors below."))
+    else:
+        form = RunIndexingForm()
+
+    return render(
+        request=request,
+        template_name="runindexing.html",
+        context={
+            **admin.site.each_context(request),
+            "title": "Run Indexing Command",
+            "form": form,
+        },
+    )
+
+
+def convert_to_isoformat(value: str) -> str | None:
+    """Convert datetime-local input to ISO format."""
+    if value:
+        return datetime.fromisoformat(value).isoformat()
+    return None

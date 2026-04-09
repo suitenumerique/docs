@@ -12,7 +12,10 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from core.admin import run_indexing_view
+
 urlpatterns = [
+    path("admin/core/run-indexing/", run_indexing_view),
     path("admin/", admin.site.urls),
     path("", include("core.urls")),
 ]

@@ -1,5 +1,6 @@
 """Document search index management utilities and indexers"""
 
+import itertools
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -125,44 +126,45 @@ class BaseDocumentIndexer(ABC):
         if not self.search_url:
             raise ImproperlyConfigured("SEARCH_URL must be set in Django settings.")
 
-    def index(self, queryset=None, batch_size=None):
+    def index(self, queryset, batch_size=None, crash_safe_mode=False):
         """
         Fetch documents in batches, serialize them, and push to the search backend.
 
         Args:
-            queryset (optional): Document queryset
-                Defaults to all documents without filter.
+            queryset: Document queryset
             batch_size (int, optional): Number of documents per batch.
                 Defaults to settings.SEARCH_INDEXER_BATCH_SIZE.
+            crash_safe_mode (bool, optional): If True, order documents by updated_at
+                and store the last indexed document.updated_at in cache.
+                This allows resuming indexing from the last successful batch in case of a crash
+                but is more computationally expensive due to sorting.
         """
-        last_id = 0
         count = 0
-        queryset = queryset or models.Document.objects.all()
         batch_size = batch_size or self.batch_size
 
-        while True:
-            documents_batch = list(
-                queryset.filter(
-                    id__gt=last_id,
-                ).order_by("id")[:batch_size]
-            )
+        if crash_safe_mode:
+            queryset = queryset.order_by("updated_at")
 
-            if not documents_batch:
-                break
-
+        for documents_batch in itertools.batched(queryset.iterator(), batch_size):
             doc_paths = [doc.path for doc in documents_batch]
-            last_id = documents_batch[-1].id
             accesses_by_document_path = get_batch_accesses_by_users_and_teams(doc_paths)
-
             serialized_batch = [
                 self.serialize_document(document, accesses_by_document_path)
                 for document in documents_batch
                 if document.content or document.title
             ]
 
-            if serialized_batch:
-                self.push(serialized_batch)
-                count += len(serialized_batch)
+            if not serialized_batch:
+                continue
+
+            self.push(serialized_batch)
+            count += len(serialized_batch)
+
+            if crash_safe_mode:
+                logger.info(
+                    "Indexing checkpoint: %s.",
+                    serialized_batch[-1]["updated_at"],
+                )
 
         return count
 

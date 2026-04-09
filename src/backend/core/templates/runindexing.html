@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+
+<form method="POST" >
+    {% csrf_token %}
+
+    <hr style="margin-bottom: 10px;">
+
+    <p>
+        This command triggers the indexing of all documents within the specified time bound.
+    </p>
+    <p>
+        See <b>docs/commands/index.md</b> for more details.
+    </p>
+
+    <hr style="margin-bottom: 20px;">
+
+    {{ form.as_p }}
+
+    <input type="submit" value="{% translate 'Run Indexing' %}" style="margin-top: 20px;">
+</form>
+
+{% endblock %}

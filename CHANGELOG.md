@@ -73,6 +73,10 @@ ctrl/command/middle-mouse click #2170
 
 ### Changed
 
+- ✨(backend) improve indexing command
+  - checkpoint recovery 
+  - asynchronicity 
+  - admin command trigger
 - ♿️(frontend) improve version history list accessibility #2033
 - ♿(frontend) focus skip link on headings and skip grid dropzone #1983
 - ♿️(frontend) add sr-only format to export download button #2088

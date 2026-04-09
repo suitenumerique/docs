@@ -858,6 +858,31 @@ class DocumentQuerySet(MP_NodeQuerySet):
             user_roles=models.Value([], output_field=output_field),
         )
 
+    def filter_updated_at(self, lower_time_bound=None, upper_time_bound=None):
+        """
+        Filter documents by update_at.
+
+        Args:
+            lower_time_bound (datetime, optional):
+                Keep documents updated after this timestamp.
+            upper_time_bound (datetime, optional):
+                Keep documents updated before this timestamp.
+
+        Returns:
+            QuerySet: Filtered queryset ready for indexation.
+        """
+        conditions = models.Q()
+        if lower_time_bound and upper_time_bound:
+            conditions = models.Q(
+                updated_at__gte=lower_time_bound, updated_at__lte=upper_time_bound
+            )
+        elif lower_time_bound:
+            conditions = models.Q(updated_at__gte=lower_time_bound)
+        elif upper_time_bound:
+            conditions = models.Q(updated_at__lte=upper_time_bound)
+
+        return self.filter(conditions)
+
 
 class DocumentManager(MP_NodeManager.from_queryset(DocumentQuerySet)):
     """
