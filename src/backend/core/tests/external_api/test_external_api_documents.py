@@ -721,18 +721,16 @@ def test_external_api_documents_move_can_be_allowed(
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
 
-    parent = factories.DocumentFactory(
+    document = factories.DocumentFactory(
         users=[(user_specific_sub, "owner")], teams=[("lasuite", "owner")]
     )
-    # A document with no owner
-    document = factories.DocumentFactory(
-        parent=parent, users=[(user_specific_sub, "reader")]
+    target = factories.DocumentFactory(
+        users=[(user_specific_sub, "owner")], teams=[("lasuite", "owner")]
     )
-    target = factories.DocumentFactory()
 
     response = client.post(
         f"/external_api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
+        data={"target_document_id": str(target.id), "position": "first-child"},
     )
 
     assert response.status_code == 200

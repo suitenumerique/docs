@@ -28,6 +28,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -108,6 +109,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -218,6 +220,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": document.link_role == "editor",
             "ai_transform": document.link_role == "editor",
@@ -305,6 +308,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": grand_parent.link_role == "editor",
             "ai_transform": grand_parent.link_role == "editor",
@@ -505,6 +509,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": access.role in ["administrator", "owner"],
+            "accesses_update": access.role in ["administrator", "owner", "editor"],
             "accesses_view": True,
             "ai_proxy": access.role not in ["reader", "commenter"],
             "ai_transform": access.role not in ["reader", "commenter"],
