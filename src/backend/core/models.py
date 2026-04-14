@@ -1297,6 +1297,7 @@ class Document(MP_Node, BaseModel):
 
         return {
             "accesses_manage": is_owner_or_admin,
+            "accesses_update": can_update_from_access,
             "accesses_view": has_access_role,
             "ai_proxy": ai_access,
             "ai_transform": ai_access,

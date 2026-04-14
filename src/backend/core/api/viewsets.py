@@ -941,15 +941,22 @@ class DocumentViewSet(
             enums.MoveNodePositionChoices.FIRST_CHILD,
             enums.MoveNodePositionChoices.LAST_CHILD,
         ]:
-            if not target_document.get_abilities(user).get("move"):
+            if not target_document.get_abilities(user).get("accesses_update"):
                 message = (
                     "You do not have permission to move documents "
                     "as a child to this target document."
                 )
         elif target_document.is_root():
-            owner_accesses = document.get_root().accesses.filter(
-                role=models.RoleChoices.OWNER
-            )
+            if not document.is_root():
+                message = (
+                    "You cannot move a document relative to this target document "
+                    "unless as its child."
+                )
+            elif not target_document.get_abilities(user).get("move"):
+                message = (
+                    "You do not have permission to move documents "
+                    "as a sibling of this target document."
+                )
         elif not target_document.get_parent().get_abilities(user).get("move"):
             message = (
                 "You do not have permission to move documents "
