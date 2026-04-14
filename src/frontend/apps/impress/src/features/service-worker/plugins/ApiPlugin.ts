@@ -181,6 +181,7 @@ export class ApiPlugin implements WorkboxPlugin {
       updated_at: new Date().toISOString(),
       abilities: {
         accesses_manage: true,
+        accesses_update: true,
         accesses_view: true,
         ai_proxy: true,
         ai_transform: true,
@@ -191,6 +192,7 @@ export class ApiPlugin implements WorkboxPlugin {
         collaboration_auth: true,
         comment: true,
         destroy: true,
+        detach: true,
         duplicate: true,
         favorite: true,
         invite_owner: true,
