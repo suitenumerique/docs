@@ -153,6 +153,40 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
     }
   };
 
+  const insertPlainText = (plainText: string, target: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!target.contains(range.commonAncestorContainer)) {
+      target.focus();
+      range.selectNodeContents(target);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    range.deleteContents();
+    range.insertNode(document.createTextNode(plainText));
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    insertPlainText(
+      event.clipboardData.getData('text/plain'),
+      event.currentTarget,
+    );
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    insertPlainText(
+      event.dataTransfer.getData('text/plain'),
+      event.currentTarget,
+    );
+  };
+
   useEffect(() => {
     setTitleDisplay(isTopRoot ? doc.title : titleWithoutEmoji);
   }, [doc.title, isTopRoot, titleWithoutEmoji]);
@@ -181,6 +215,8 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           onBlurCapture={(event) =>
             handleTitleSubmit(event.target.textContent || '')
           }
+          onPasteCapture={handlePaste}
+          onDropCapture={handleDrop}
           $padding={{ right: 'big' }}
           $css={css`
             &[contenteditable='true']:empty:not(:focus):before {

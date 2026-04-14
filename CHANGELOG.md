@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- 🐛(frontend) sanitize pasted and dropped content in document title #2210
+
 ## [v5.0.0] - 2026-04-08
 
 ### Added

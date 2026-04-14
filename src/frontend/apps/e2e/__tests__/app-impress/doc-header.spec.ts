@@ -144,6 +144,36 @@ test.describe('Doc Header', () => {
     await cleanup();
   });
 
+  test('it pastes plain text in the title without keeping formatting', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'doc-title-paste', browserName, 1);
+
+    const docTitle = page.getByRole('textbox', { name: 'Document title' });
+    await docTitle.click();
+    await page.keyboard.press('Control+a');
+
+    await page.evaluate(() => {
+      const el = document.querySelector('[aria-label="Document title"]');
+      if (!el) {
+        return;
+      }
+
+      const dt = new DataTransfer();
+      dt.setData('text/plain', 'Pasted plain text');
+      dt.setData('text/html', '<b><em>Pasted plain text</em></b>');
+      el.dispatchEvent(
+        new ClipboardEvent('paste', { clipboardData: dt, bubbles: true }),
+      );
+    });
+
+    await docTitle.blur();
+    await expect(docTitle).toHaveText('Pasted plain text');
+    // Ensure formatting tags from text/html were not inserted.
+    await expect(docTitle.locator('b, em, strong, i')).toHaveCount(0);
+  });
+
   test('it updates the title doc adding a leading emoji', async ({
     page,
     browserName,
