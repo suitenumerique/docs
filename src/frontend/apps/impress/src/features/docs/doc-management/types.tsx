@@ -73,6 +73,7 @@ export interface Doc {
   user_role: Role;
   abilities: {
     accesses_manage: boolean;
+    accesses_update: boolean;
     accesses_view: boolean;
     ai_proxy: boolean;
     ai_transform: boolean;
