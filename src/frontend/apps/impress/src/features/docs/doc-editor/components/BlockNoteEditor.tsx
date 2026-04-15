@@ -88,6 +88,38 @@ interface BlockNoteEditorProps {
   provider: HocuspocusProvider;
 }
 
+/**
+ * Strips angle brackets wrapping URLs (e.g. `<https://example.com>` → `https://example.com`).
+ * BlockNote copies links in Markdown autolink format; pasting into the link
+ * toolbar input keeps the brackets, producing broken hrefs.
+ */
+const stripAngleBrackets = (text: string): string =>
+  text.replace(/^<(.+)>$/, '$1');
+
+const handlePasteUrlBrackets = (e: React.ClipboardEvent<HTMLDivElement>) => {
+  const target = e.target;
+  if (
+    !(target instanceof HTMLInputElement) &&
+    !(target instanceof HTMLTextAreaElement)
+  ) {
+    return;
+  }
+  const text = e.clipboardData?.getData('text/plain') ?? '';
+  const cleaned = stripAngleBrackets(text.trim());
+  if (cleaned === text) {
+    return;
+  }
+  e.preventDefault();
+  // Use the native value setter (input/textarea) so React-controlled fields pick up the pasted value change.
+  const proto =
+    target instanceof HTMLInputElement
+      ? HTMLInputElement.prototype
+      : HTMLTextAreaElement.prototype;
+  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+  setter?.call(target, cleaned);
+  target.dispatchEvent(new Event('input', { bubbles: true }));
+};
+
 export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { user } = useAuth();
   const { setEditor } = useEditorStore();
@@ -267,6 +299,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   return (
     <Box
       ref={refEditorContainer}
+      onPasteCapture={handlePasteUrlBrackets}
       $css={css`
         ${cssEditor};
         ${cssComments(showComments, currentUserAvatarUrl)}
