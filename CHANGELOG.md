@@ -18,6 +18,10 @@ and this project adheres to
 - ✨(backend) order pinned documents by last updated at #2028
 - 🛂(frontend) fix cannot manage member on small screen #2226
 
+### Changed
+
+- ♻️(frontend) centralize allowed conversion formats in ContentTypes #2215
+
 ## [v4.8.6] - 2026-04-08
 
 ### Added

@@ -14,6 +14,10 @@ interface UseImportProps {
   onDragOver: (isDragOver: boolean) => void;
 }
 
+interface AcceptedMap {
+  [mime: string]: string[];
+}
+
 export const useImport = ({ onDragOver }: UseImportProps) => {
   const { toast } = useToastProvider();
   const { data: config } = useConfig();
@@ -36,31 +40,25 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
     };
   }, [config?.CONVERSION_FILE_MAX_SIZE]);
 
-  const ACCEPT = useMemo(() => {
-    const extensions = config?.CONVERSION_FILE_EXTENSIONS_ALLOWED;
-    const accept: { [key: string]: string[] } = {};
+  const ACCEPT = useMemo((): AcceptedMap => {
+    const allowedExtensions = config?.CONVERSION_FILE_EXTENSIONS_ALLOWED?.map(
+      (ext: string) => ext.toLowerCase(),
+    ) ?? ['.docx', '.md'];
 
-    if (extensions && extensions.length > 0) {
-      extensions.forEach((ext) => {
-        switch (ext.toLowerCase()) {
-          case '.docx':
-            accept[ContentTypes.Docx] = ['.docx'];
-            break;
-          case '.md':
-          case '.markdown':
-            accept[ContentTypes.Markdown] = ['.md'];
-            break;
-          default:
-            break;
+    return Object.values(ContentTypes).reduce(
+      (acc: AcceptedMap, contentType) => {
+        const matchedExtensions = contentType.extensions.filter((ext: string) =>
+          allowedExtensions.includes(ext),
+        );
+
+        if (matchedExtensions.length > 0) {
+          acc[contentType.mime] = matchedExtensions;
         }
-      });
-    } else {
-      // Default to docx and md if no configuration is provided
-      accept[ContentTypes.Docx] = ['.docx'];
-      accept[ContentTypes.Markdown] = ['.md'];
-    }
 
-    return accept;
+        return acc;
+      },
+      {},
+    );
   }, [config?.CONVERSION_FILE_EXTENSIONS_ALLOWED]);
 
   const { getRootProps, getInputProps, open } = useDropzone({
@@ -96,11 +94,16 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
             VariantType.ERROR,
           );
         } else {
+          const allowedExtensions = Object.values(ACCEPT).flat().join(', ');
+
           toast(
             t(
-              `The document "{{documentName}}" import has failed (only .docx and .md files are allowed)`,
+              allowedExtensions
+                ? `The document "{{documentName}}" import has failed (only {{allowedExtensions}} files are allowed)`
+                : `The document "{{documentName}}" import has failed`,
               {
                 documentName: rejection.file.name,
+                allowedExtensions,
               },
             ),
             VariantType.ERROR,
