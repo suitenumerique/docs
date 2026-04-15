@@ -93,8 +93,6 @@ interface BlockNoteEditorProps {
  * BlockNote copies links in Markdown autolink format; pasting into the link
  * toolbar input keeps the brackets, producing broken hrefs.
  */
-const stripAngleBrackets = (text: string): string =>
-  text.replace(/^<(.+)>$/, '$1');
 
 const handlePasteUrlBrackets = (e: React.ClipboardEvent<HTMLDivElement>) => {
   const target = e.target;
@@ -105,18 +103,14 @@ const handlePasteUrlBrackets = (e: React.ClipboardEvent<HTMLDivElement>) => {
     return;
   }
   const text = e.clipboardData?.getData('text/plain') ?? '';
-  const cleaned = stripAngleBrackets(text.trim());
+  const cleaned = text.replace(/^\s*<([^<>]+)>\s*$/, '$1');
   if (cleaned === text) {
     return;
   }
   e.preventDefault();
-  // Use the native value setter (input/textarea) so React-controlled fields pick up the pasted value change.
-  const proto =
-    target instanceof HTMLInputElement
-      ? HTMLInputElement.prototype
-      : HTMLTextAreaElement.prototype;
-  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-  setter?.call(target, cleaned);
+  const start = target.selectionStart ?? target.value.length;
+  const end = target.selectionEnd ?? target.value.length;
+  target.setRangeText(cleaned, start, end, 'end');
   target.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
