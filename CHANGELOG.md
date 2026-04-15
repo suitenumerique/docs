@@ -96,6 +96,10 @@ and this project adheres to
 - 🔥(backend) remove deprecated descendants endpoint #2243
 - 🔥(backend) remove content in document responses #2171
 
+### Changed
+
+- ♻️(frontend) centralize allowed conversion formats in ContentTypes #2215
+
 ## [v4.8.6] - 2026-04-08
 
 ### Added
