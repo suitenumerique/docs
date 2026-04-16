@@ -61,7 +61,7 @@ type DocGridContentListProps = {
 export const DraggableDocGridContentList = ({
   docs,
 }: DocGridContentListProps) => {
-  const { mutateAsync: handleMove, isError } = useMoveDoc(true);
+  const { mutateAsync: handleMove, isError } = useMoveDoc();
   const modalConfirmation = useModal();
   const onDragData = useRef<DocDragEndData | null>(null);
   const { untitledDocument } = useTrans();

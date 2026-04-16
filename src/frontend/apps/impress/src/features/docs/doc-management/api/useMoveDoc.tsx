@@ -2,12 +2,6 @@ import { TreeViewMoveModeEnum } from '@gouvfr-lasuite/ui-kit';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import {
-  getDocAccesses,
-  getDocInvitations,
-  useDeleteDocAccess,
-  useDeleteDocInvitation,
-} from '@/docs/doc-share';
 
 import { KEY_LIST_DOC } from './useDocs';
 
@@ -37,46 +31,15 @@ export const moveDoc = async ({
   return response.json() as Promise<void>;
 };
 
-export function useMoveDoc(deleteAccessOnMove = false) {
+export function useMoveDoc() {
   const queryClient = useQueryClient();
-  const { mutate: handleDeleteInvitation } = useDeleteDocInvitation();
-  const { mutate: handleDeleteAccess } = useDeleteDocAccess();
 
   return useMutation<void, APIError, MoveDocParam>({
     mutationFn: moveDoc,
-    async onSuccess(_data, variables, _onMutateResult, _context) {
-      if (!deleteAccessOnMove) {
-        return;
-      }
-
+    onSuccess() {
       void queryClient.invalidateQueries({
         queryKey: [KEY_LIST_DOC],
       });
-      const accesses = await getDocAccesses({
-        docId: variables.sourceDocumentId,
-      });
-
-      const invitationsResponse = await getDocInvitations({
-        docId: variables.sourceDocumentId,
-        page: 1,
-      });
-
-      const invitations = invitationsResponse.results;
-
-      await Promise.all([
-        ...invitations.map((invitation) =>
-          handleDeleteInvitation({
-            docId: variables.sourceDocumentId,
-            invitationId: invitation.id,
-          }),
-        ),
-        ...accesses.map((access) =>
-          handleDeleteAccess({
-            docId: variables.sourceDocumentId,
-            accessId: access.id,
-          }),
-        ),
-      ]);
     },
   });
 }
