@@ -13,9 +13,9 @@ export const cssEditor = css`
   }
 
   /**
-  * Token Mantime
+  * Token Mantine
   */
-  & > .bn-container {
+  & > .bn-root {
     --bn-colors-editor-text: var(
       --c--contextuals--content--semantic--neutral--primary
     );
