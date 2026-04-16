@@ -1,5 +1,4 @@
 export {
-  computeKeyFingerprint,
   decryptContent,
   encryptContent,
   generateSymmetricKey,

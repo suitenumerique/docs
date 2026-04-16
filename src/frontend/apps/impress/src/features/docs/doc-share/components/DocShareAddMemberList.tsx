@@ -139,6 +139,7 @@ export const DocShareAddMemberList = ({
 
       // For encrypted docs, re-wrap the symmetric key for the new member via vault
       let memberEncryptedSymmetricKey: string | null = null;
+      let encryptionPublicKeyFingerprint: string | null = null;
 
       if (doc.is_encrypted && documentEncryptionSettings && vaultClient) {
         const userPublicKey = user.suite_user_id ? publicKeysMap[user.suite_user_id] : undefined;
@@ -153,6 +154,10 @@ export const DocShareAddMemberList = ({
           if (wrappedKey) {
             memberEncryptedSymmetricKey = toBase64(new Uint8Array(wrappedKey));
           }
+
+          // Store the recipient's public key fingerprint at share time
+          encryptionPublicKeyFingerprint =
+            await vaultClient.computeKeyFingerprint(userPublicKey);
         }
       }
 
@@ -160,6 +165,7 @@ export const DocShareAddMemberList = ({
         ...payload,
         memberId: user.id,
         memberEncryptedSymmetricKey,
+        encryptionPublicKeyFingerprint,
       });
     });
 

@@ -13,6 +13,8 @@ declare global {
     encryptWithKey(data: ArrayBuffer, encryptedSymmetricKey: ArrayBuffer): Promise<{ encryptedData: ArrayBuffer }>;
     decryptWithKey(encryptedData: ArrayBuffer, encryptedSymmetricKey: ArrayBuffer): Promise<{ data: ArrayBuffer }>;
     shareKeys(encryptedSymmetricKey: ArrayBuffer, userPublicKeys: Record<string, ArrayBuffer>): Promise<{ encryptedKeys: Record<string, ArrayBuffer> }>;
+    computeKeyFingerprint(publicKey: ArrayBuffer): Promise<string>;
+    formatFingerprint(fingerprint: string): string;
     fetchPublicKeys(userIds: string[]): Promise<{ publicKeys: Record<string, ArrayBuffer> }>;
     checkFingerprints(userFingerprints: Record<string, string>, currentUserId?: string): Promise<{ results: Array<{ userId: string; knownFingerprint: string | null; providedFingerprint: string; status: 'trusted' | 'refused' | 'unknown' }> }>;
     acceptFingerprint(userId: string, fingerprint: string): Promise<void>;

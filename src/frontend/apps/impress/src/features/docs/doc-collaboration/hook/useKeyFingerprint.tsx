@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { computeKeyFingerprint } from '../encryption';
+import { useVaultClient } from '../vault';
 
 /**
  * Computes a SHA-256 fingerprint of a base64-encoded public key.
@@ -10,25 +10,27 @@ import { computeKeyFingerprint } from '../encryption';
 export function useKeyFingerprint(
   base64Key: string | null | undefined,
 ): string | null {
+  const { client: vaultClient } = useVaultClient();
   const [fingerprint, setFingerprint] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!base64Key) {
+    if (!base64Key || !vaultClient) {
       setFingerprint(null);
       return;
     }
 
     let cancelled = false;
-    computeKeyFingerprint(base64Key).then((fp) => {
+    const raw = Uint8Array.from(atob(base64Key), (c) => c.charCodeAt(0));
+    vaultClient.computeKeyFingerprint(raw.buffer).then((fp) => {
       if (!cancelled) {
-        setFingerprint(fp);
+        setFingerprint(vaultClient.formatFingerprint(fp));
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [base64Key]);
+  }, [base64Key, vaultClient]);
 
   return fingerprint;
 }
