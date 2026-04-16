@@ -949,8 +949,8 @@ class DocumentViewSet(
                     "as a child to this target document."
                 )
         elif target_document.is_root():
-            owner_accesses = document.get_root().accesses.filter(
-                role=models.RoleChoices.OWNER
+            owner_accesses = list(
+                document.get_root().accesses.filter(role=models.RoleChoices.OWNER)
             )
         elif not target_document.get_parent().get_abilities(user).get("move"):
             message = (
@@ -971,6 +971,30 @@ class DocumentViewSet(
                 {"target_document_id": "Cannot move a document to its own descendant."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # A move changes the document's permission scope in any of these cases:
+        #   - it is currently a root (it carries its own scope),
+        #   - it is moving into a different tree (different current root than target's),
+        #   - it is being promoted to root as a sibling of its own current root.
+        # In all these cases, direct accesses and pending invitations must be wiped so
+        # the document inherits the new scope. Deletions and the move share the same
+        # atomic transaction, so a failure rolls everything back.
+        becomes_sibling_root = (
+            position
+            not in [
+                enums.MoveNodePositionChoices.FIRST_CHILD,
+                enums.MoveNodePositionChoices.LAST_CHILD,
+            ]
+            and target_document.is_root()
+        )
+        scope_changes = (
+            document.is_root()
+            or becomes_sibling_root
+            or document.get_root() != target_document.get_root()
+        )
+        if scope_changes:
+            document.accesses.all().delete()
+            document.invitations.all().delete()
 
         # Make sure we have at least one owner
         if (
