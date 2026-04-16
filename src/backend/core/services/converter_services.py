@@ -49,7 +49,7 @@ class Converter:
 
         if content_type == mime_types.DOCX and accept == mime_types.YJS:
             blocknote_data = self.docspec.convert(
-                data, mime_types.DOCX, mime_types.BLOCKNOTE
+                data, content_type, mime_types.BLOCKNOTE
             )
             return self.ydoc.convert(
                 blocknote_data, mime_types.BLOCKNOTE, mime_types.YJS
@@ -66,8 +66,11 @@ class DocSpecConverter:
 
         response = requests.post(
             url,
-            headers={"Accept": mime_types.BLOCKNOTE},
-            files={"file": ("document.docx", data, content_type)},
+            headers={
+                "Content-Type": content_type,
+                "Accept": mime_types.BLOCKNOTE,
+            },
+            data=data,
             timeout=settings.CONVERSION_API_TIMEOUT,
             verify=settings.CONVERSION_API_SECURE,
         )

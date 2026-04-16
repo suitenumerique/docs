@@ -110,8 +110,11 @@ def test_docspec_convert_success(mock_post, settings):
     # Verify the request was made correctly
     mock_post.assert_called_once_with(
         "http://docspec.test/convert",
-        headers={"Accept": mime_types.BLOCKNOTE},
-        files={"file": ("document.docx", docx_data, mime_types.DOCX)},
+        headers={
+            "Content-Type": mime_types.DOCX,
+            "Accept": mime_types.BLOCKNOTE,
+        },
+        data=docx_data,
         timeout=5,
         verify=False,
     )
