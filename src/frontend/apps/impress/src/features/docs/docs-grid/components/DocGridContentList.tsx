@@ -167,7 +167,7 @@ export const DraggableDocGridContentList = ({
 
   const overlayText = useMemo(() => {
     if (!canDrag) {
-      return t('You must be at least an administrator to move the document');
+      return t('You must be at least an administrator of the document');
     }
     if (!canDrop) {
       return t('You must be at least an editor of the target document');

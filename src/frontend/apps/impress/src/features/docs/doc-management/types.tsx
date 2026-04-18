@@ -85,6 +85,7 @@ export interface Doc {
     comment: boolean;
     destroy: boolean;
     duplicate: boolean;
+    detach: boolean;
     favorite: boolean;
     invite_owner: boolean;
     link_configuration: boolean;

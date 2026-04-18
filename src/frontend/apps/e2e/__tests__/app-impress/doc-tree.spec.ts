@@ -36,6 +36,7 @@ test.describe('Doc Tree', () => {
           id: `doc-child-${pageId}-${i}`,
           abilities: {
             accesses_manage: true,
+            accesses_update: true,
             accesses_view: true,
             ai_proxy: true,
             ai_transform: true,
@@ -51,6 +52,7 @@ test.describe('Doc Tree', () => {
             cors_proxy: true,
             descendants: true,
             destroy: true,
+            detach: true,
             duplicate: true,
             favorite: true,
             link_configuration: true,
@@ -267,7 +269,10 @@ test.describe('Doc Tree', () => {
     await expect(page.getByText(docChild)).toBeVisible();
   });
 
-  test('Only owner can detaches a document', async ({ page, browserName }) => {
+  test('At least administrator to detach a document', async ({
+    page,
+    browserName,
+  }) => {
     const [docParent] = await createDoc(
       page,
       'doc-tree-detach',
@@ -290,7 +295,7 @@ test.describe('Doc Tree', () => {
     );
     const currentUserRole = currentUser.getByTestId('doc-role-dropdown');
     await currentUserRole.click();
-    await page.getByRole('menuitemradio', { name: 'Administrator' }).click();
+    await page.getByRole('menuitemradio', { name: 'Editor' }).click();
     await list.click();
 
     await page.getByRole('button', { name: 'Ok' }).click();

@@ -22,12 +22,8 @@ export const detachDoc = async ({
   documentId,
   rootId,
 }: DetachDocParam): Promise<void> => {
-  const response = await fetchAPI(`documents/${documentId}/move/`, {
+  const response = await fetchAPI(`documents/${documentId}/detach/`, {
     method: 'POST',
-    body: JSON.stringify({
-      target_document_id: rootId,
-      position: POSITION_MOVE.LAST_SIBLING,
-    }),
   });
 
   if (!response.ok) {

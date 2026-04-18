@@ -171,7 +171,7 @@ test.describe('Doc grid move', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must be an administrator to move the document',
+      'You must be at least an administrator of the document',
     );
 
     await page.mouse.up();
