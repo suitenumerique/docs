@@ -86,6 +86,7 @@ def test_api_documents_trashbin_format():
             "comment": False,
             "content": False,
             "destroy": False,
+            "detach": False,
             "duplicate": False,
             "favorite": False,
             "invite_owner": False,
