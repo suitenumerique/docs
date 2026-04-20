@@ -153,7 +153,8 @@ test.describe('Help feature', () => {
         theme_customization: {
           onboarding: {
             enabled: true,
-            learn_more_url: 'https://example.com/learn-more',
+            learn_more_url: 'http://localhost:3000/learn-more',
+            ready_template_url: 'http://localhost:3000/ready-template',
           },
         },
       });
@@ -184,18 +185,19 @@ test.describe('Help feature', () => {
         '0',
       );
 
-      await page.getByTestId('onboarding-step-3').click();
-      await expect(page.getByTestId('onboarding-step-3')).toHaveAttribute(
-        'tabindex',
-        '0',
-      );
+      const step3 = page.getByTestId('onboarding-step-3');
+      await step3.click();
+      await expect(step3).toHaveAttribute('tabindex', '0');
+      await expect(
+        step3.getByRole('link', { name: 'ready-made template' }),
+      ).toHaveAttribute('href', 'http://localhost:3000/ready-template');
 
       const learnMoreLink = page.getByRole('link', {
         name: 'Learn more docs features',
       });
       await expect(learnMoreLink).toHaveAttribute(
         'href',
-        'https://example.com/learn-more',
+        'http://localhost:3000/learn-more',
       );
       await learnMoreLink.click();
 
@@ -241,6 +243,16 @@ test.describe('Help feature', () => {
       await expect(
         modal.getByRole('button', { name: /Suivant/i }),
       ).toBeVisible();
+      await modal
+        .getByText(/Tirez parti de la bibliothèque de contenu/)
+        .first()
+        .click();
+      await expect(
+        modal.getByText(/Commencez à partir de/).first(),
+      ).toBeVisible();
+      await expect(modal.getByRole('link')).toHaveText(
+        "modèles prêts à l'emploi",
+      );
     });
 
     test('Modal is displayed automatically on first connection', async ({

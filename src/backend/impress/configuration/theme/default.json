@@ -161,7 +161,8 @@
   },
   "onboarding": {
     "enabled": true,
-    "learn_more_url": ""
+    "learn_more_url": "",
+    "ready_template_url": ""
   },
   "help": {
     "documentation_url": ""

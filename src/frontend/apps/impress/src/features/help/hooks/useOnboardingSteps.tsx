@@ -1,7 +1,8 @@
 import { type OnboardingStep } from '@gouvfr-lasuite/ui-kit';
 import Image from 'next/image';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 
+import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 
 import DragIndicatorIcon from '../assets/drag_indicator.svg';
@@ -16,6 +17,9 @@ export interface OnboardingStepsData {
 
 export const useOnboardingSteps = () => {
   const { t } = useTranslation();
+  const { data: config } = useConfig();
+  const readyTemplateUrl =
+    config?.theme_customization?.onboarding?.ready_template_url;
   const { contextualTokens, colorsTokens } = useCunninghamTheme();
   const activeColor =
     contextualTokens.content.semantic.brand.tertiary ??
@@ -122,8 +126,21 @@ export const useOnboardingSteps = () => {
           </OnboardingStepIcon>
         ),
         title: t('Draw inspiration from the content library'),
-        description: t(
-          'Start from ready-made templates for common use cases, then customize them to match your workflow in minutes.',
+        description: (
+          <Trans
+            t={t}
+            i18nKey="Start from <Link>ready-made templates</Link> for common use cases, then customize them to match your workflow in minutes."
+            components={{
+              Link: (
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={readyTemplateUrl}
+                  aria-label={t('Ready-made templates (opens in a new tab)')}
+                />
+              ),
+            }}
+          />
         ),
         content: (
           <Image

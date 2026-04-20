@@ -1482,7 +1482,7 @@
       "Simple document icon": "Icône simple du document",
       "Something bad happens, please retry.": "Une erreur inattendue s'est produite, veuillez réessayer.",
       "Start Writing": "Commencer à écrire",
-      "Start from ready-made templates for common use cases, then customize them to match your workflow in minutes.": "Commencez à partir de modèles prêts à l'emploi pour les cas d'utilisation courants, puis personnalisez-les pour correspondre à votre flux de travail en quelques minutes.",
+      "Start from <Link>ready-made templates</Link> for common use cases, then customize them to match your workflow in minutes.": "Commencez à partir de <Link>modèles prêts à l'emploi</Link> pour les cas d'utilisation courants, puis personnalisez-les pour correspondre à votre flux de travail en quelques minutes.",
       "Stop": "Arrêter",
       "Summarize": "Résumer",
       "Summary": "Sommaire",

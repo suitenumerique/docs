@@ -28,6 +28,7 @@ interface ThemeCustomization {
   onboarding?: {
     enabled: true;
     learn_more_url?: string;
+    ready_template_url?: string;
   };
   translations?: Resource;
   waffle?: WaffleType;

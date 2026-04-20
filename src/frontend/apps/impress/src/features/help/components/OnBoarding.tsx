@@ -2,7 +2,9 @@ import {
   ModalSize,
   OnboardingModal,
   type OnboardingModalProps,
+  OnboardingStep,
 } from '@gouvfr-lasuite/ui-kit';
+import React, { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createGlobalStyle } from 'styled-components';
 
@@ -10,9 +12,29 @@ import { useConfig } from '@/core/config/api/useConfig';
 
 import { useOnboardingSteps } from '../hooks/useOnboardingSteps';
 
+/**
+ * typing was not correct on ui-kit side for the description prop of OnboardingStep,
+ * it can be a string or a ReactNode but was typed as string only, so we need to override the
+ * type here to be able to use ReactNode
+ */
+type OnboardingStepFixed = Omit<OnboardingStep, 'description'> & {
+  description?: ReactNode;
+};
+
+type OnboardingModalPropsFixed = Omit<OnboardingModalProps, 'steps'> & {
+  steps?: OnboardingStepFixed[];
+};
+
+const OnboardingModalFixed =
+  OnboardingModal as React.ComponentType<OnboardingModalPropsFixed>;
+
 const OnBoardingStyle = createGlobalStyle`
   .c__onboarding-modal__steps{
     height: auto;
+
+    & a{
+      color:inherit;
+    }
   }
   .c__onboarding-modal__content {
     height: 350px;
@@ -32,7 +54,7 @@ const OnBoardingStyle = createGlobalStyle`
     *:not(.material-icons):not(.material-icons-filled):not(
       .material-symbols-outlined
     ) {
-    font-family: Marianne, Inter, Roboto Flex Variable, sans-serif;
+    font-family: var(--c--globals--font--families--base);
   }
 
   /* Separator between content and footer actions/link */
@@ -55,6 +77,10 @@ const OnBoardingStyle = createGlobalStyle`
       height: 100vh;
       display: flex;
       flex-direction: column;
+
+      a{
+        color: inherit;
+      }
 
       & .c__onboarding-modal__body{
         justify-content: center;
@@ -81,7 +107,7 @@ export const OnBoarding = (props: OnBoardingProps) => {
   return (
     <>
       {props.isOpen ? <OnBoardingStyle /> : null}
-      <OnboardingModal
+      <OnboardingModalFixed
         size={ModalSize.LARGE}
         appName={t('Discover Docs')}
         mainTitle={t('Learn the core principles')}

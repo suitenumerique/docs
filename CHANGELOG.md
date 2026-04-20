@@ -12,6 +12,7 @@ and this project adheres to
 
 ### Fixed
 
+- 💬(frontend) add missing link in onboarding description #2233
 - 🐛(frontend) sanitize pasted and dropped content in document title #2210
 - 🐛(frontend) Emoji menu doesn't display above comment box #2229
 - 🐛(frontend) Block menu doesn't stay open on 1st line #2229 
