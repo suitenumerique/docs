@@ -18,6 +18,7 @@ and this project adheres to
 - 🐛(frontend) abort check media status unmount #2194
 - ✨(backend) order pinned documents by last updated at #2028
 - 🛂(frontend) fix cannot manage member on small screen #2226
+- 🐛(backend) load jwks url when OIDC_RS_PRIVATE_KEY_STR is set
 
 ## [v4.8.6] - 2026-04-08
 
