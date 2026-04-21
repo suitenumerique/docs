@@ -50,7 +50,7 @@ dependencies = [
     "gunicorn==25.1.0",
     "jsonschema==4.26.0",
     "langfuse==3.11.2",
-    "lxml==6.0.2",
+    "lxml==6.1.0",
     "markdown==3.10.2",
     "mozilla-django-oidc==5.0.2",
     "nested-multipart-parser==1.6.0",
