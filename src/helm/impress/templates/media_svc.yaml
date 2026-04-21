@@ -10,5 +10,14 @@ metadata:
   annotations:
     {{- toYaml $.Values.serviceMedia.annotations | nindent 4 }}
 spec:
-  type: ExternalName
-  externalName: {{ $.Values.serviceMedia.host }}
+  ports:
+    - name: http
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+  selector:
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/instance: impress
+    app.kubernetes.io/name: docs
+  sessionAffinity: None
+  type: ClusterIP

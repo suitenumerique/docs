@@ -7,6 +7,7 @@ const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  allowedDevOrigins: ['docs.127.0.0.1.nip.io'],
   trailingSlash: true,
   images: {
     unoptimized: true,

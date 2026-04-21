@@ -22,13 +22,13 @@ minio:
     hostname: docs-minio.127.0.0.1.nip.io
     tls:
       enabled: true
-      secretName: docs-tls
+      secretName: impress-docs-tls
   consoleIngress:
     enabled: true
     hostname: docs-minio-console.127.0.0.1.nip.io
     tls:
       enabled: true
-      secretName: docs-tls
+      secretName: impress-docs-tls
   username: dinum
   password: password
   bucket: docs-media-storage
@@ -44,16 +44,15 @@ keycloak:
   password: pass
   tls:
     enabled: true
-    secretName: docs-tls
+    secretName: impress-docs-tls
   db:
     username: dinum
     password: pass
     database: keycloak
     size: 1Gi
     image: postgres:16-alpine
-  realm: 
+  realm:
     name: docs
     username: docs
     password: docs
     email: docs@example.com
-
