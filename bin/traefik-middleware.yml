@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forwardauth
+  namespace: impress
+spec:
+  forwardAuth:
+    address: https://docs.127.0.0.1.nip.io/api/v1.0/documents/media-auth/
+    trustForwardHeader: true
