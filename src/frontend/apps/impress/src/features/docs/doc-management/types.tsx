@@ -7,6 +7,7 @@ export interface Access {
   max_role: Role;
   team: string;
   user: User;
+  is_pending_encryption?: boolean;
   document: {
     id: string;
     path: string;
@@ -61,6 +62,7 @@ export interface Doc {
   path: string;
   is_favorite: boolean;
   is_encrypted: boolean;
+  is_pending_encryption_for_user?: boolean;
   link_reach: LinkReach;
   link_role?: LinkRole;
   nb_accesses_direct: number;

@@ -183,11 +183,24 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
 
   const hasEncryptionKeys = !!encryptionSettings;
 
+  // Members with no public key will be written to the backend as
+  // pending (`null` wrapped key). They'll see the document in their
+  // listings but won't be able to decrypt until a validated collaborator
+  // accepts them from the share dialog. This no longer blocks
+  // encryption — only the degenerate case where NOBODY has a key does.
+  const hasAnyPublicKey =
+    accesses === undefined || accesses.length === 0
+      ? true
+      : accesses.some(
+          (a) =>
+            a.user?.suite_user_id && !!publicKeysMap[a.user.suite_user_id],
+        );
+
   const canEncrypt =
     hasEncryptionKeys &&
     isRestricted &&
     !hasPendingInvitations &&
-    membersWithoutKey.length === 0;
+    hasAnyPublicKey;
 
   const handleClose = () => {
     if (isPending) {
@@ -223,11 +236,43 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
           publicKeysMap,
         );
 
-      // Convert ArrayBuffer encrypted keys to base64 for the backend API
-      const encryptedSymmetricKeyPerUser: Record<string, string> = {};
+      // Contract with /encrypt/: every user on the access list must
+      // appear in the payload exactly once. Validated users get their
+      // base64 wrapped key; members without a public key yet get
+      // explicit null (pending onboarding — they'll be accepted later).
+      const encryptedSymmetricKeyPerUser: Record<string, string | null> = {};
 
       for (const [uid, keyBuffer] of Object.entries(encryptedKeys)) {
         encryptedSymmetricKeyPerUser[uid] = toBase64(new Uint8Array(keyBuffer));
+      }
+      for (const access of membersWithoutKey) {
+        const sub = access.user?.suite_user_id;
+        if (sub && !(sub in encryptedSymmetricKeyPerUser)) {
+          encryptedSymmetricKeyPerUser[sub] = null;
+        }
+      }
+
+      // Matched fingerprint map — same set of users, same cardinality.
+      // Stored on each DocumentAccess row so the key-mismatch panel can
+      // later show users which historical key the doc was encrypted for.
+      const encryptionPublicKeyFingerprintPerUser: Record<
+        string,
+        string | null
+      > = {};
+      for (const [uid, publicKey] of Object.entries(publicKeysMap)) {
+        try {
+          encryptionPublicKeyFingerprintPerUser[uid] =
+            await vaultClient.computeKeyFingerprint(publicKey);
+        } catch (err) {
+          console.warn('[encrypt] computeKeyFingerprint failed for', uid, err);
+          encryptionPublicKeyFingerprintPerUser[uid] = null;
+        }
+      }
+      for (const access of membersWithoutKey) {
+        const sub = access.user?.suite_user_id;
+        if (sub && !(sub in encryptionPublicKeyFingerprintPerUser)) {
+          encryptionPublicKeyFingerprintPerUser[sub] = null;
+        }
       }
 
       // Get the current user's encrypted key for attachment encryption
@@ -253,6 +298,7 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
         docId: doc.id,
         content: encryptedContent,
         encryptedSymmetricKeyPerUser,
+        encryptionPublicKeyFingerprintPerUser,
         attachmentKeyMapping,
       });
 
@@ -424,24 +470,20 @@ export const ModalEncryptDoc = ({ doc, onClose }: ModalEncryptDocProps) => {
                 <Box $direction="row" $align="center" $gap="xs">
                   <Icon
                     iconName={
-                      membersWithoutKey.length === 0 ? 'check_circle' : 'cancel'
+                      membersWithoutKey.length === 0
+                        ? 'check_circle'
+                        : 'hourglass_empty'
                     }
                     $size="sm"
                     $theme={
-                      membersWithoutKey.length === 0 ? 'success' : 'error'
+                      membersWithoutKey.length === 0 ? 'success' : 'warning'
                     }
                   />
-                  <Text
-                    $size="sm"
-                    $weight={membersWithoutKey.length === 0 ? '400' : '600'}
-                    $theme={
-                      membersWithoutKey.length === 0 ? undefined : 'error'
-                    }
-                  >
+                  <Text $size="sm">
                     {membersWithoutKey.length === 0
                       ? t('All members have encryption enabled')
                       : t(
-                          '{{count}} member(s) have not enabled encryption yet',
+                          '{{count}} member(s) haven’t completed encryption onboarding yet. They will be added as pending and won’t be able to decrypt the document until another validated collaborator accepts them from the share dialog.',
                           { count: membersWithoutKey.length },
                         )}
                   </Text>

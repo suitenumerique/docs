@@ -42,6 +42,7 @@ export interface UseCollaborationStore {
   isSynced: boolean;
   hasLostConnection: boolean;
   encryptionTransition: EncryptionTransitionType | null;
+  decryptionFailed: boolean;
   resetLostConnection: () => void;
 }
 
@@ -52,6 +53,7 @@ const defaultValues = {
   isSynced: false,
   hasLostConnection: false,
   encryptionTransition: null,
+  decryptionFailed: false,
 };
 
 function handleEncryptionSystemMessage(
@@ -108,6 +110,12 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
             set({ isReady: true, isConnected: true });
           } else {
             handleEncryptionSystemMessage(message, set, get);
+          }
+        },
+        onDecryptError: (err) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (/wrong secret key/i.test(msg)) {
+            set({ decryptionFailed: true });
           }
         },
       });

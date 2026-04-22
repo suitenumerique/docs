@@ -11,6 +11,7 @@ import { Spinner } from '@gouvfr-lasuite/ui-kit';
 import { Box, Icon, Loading, StyledLink, Text, TextErrors } from '@/components';
 import { DEFAULT_QUERY_RETRY } from '@/core';
 import { DocEditor } from '@/docs/doc-editor';
+import { KeyMismatchPanel } from '@/features/docs/doc-management/components/KeyMismatchPanel';
 import {
   Doc,
   DocPage403,
@@ -77,6 +78,7 @@ const DocPage = ({ id }: DocProps) => {
     encryptionTransition,
     clearEncryptionTransition,
     provider,
+    decryptionFailed,
   } = useProviderStore();
   const { isSkeletonVisible, setIsSkeletonVisible } = useSkeletonStore();
   const {
@@ -286,6 +288,10 @@ const DocPage = ({ id }: DocProps) => {
 
   if (!doc || encryptionLoading || documentEncryptionLoading) {
     return <Loading />;
+  }
+
+  if (doc.is_encrypted && decryptionFailed) {
+    return <KeyMismatchPanel doc={doc} />;
   }
 
   if (doc.is_encrypted && (encryptionError || documentEncryptionError)) {

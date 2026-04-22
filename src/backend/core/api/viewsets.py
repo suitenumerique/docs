@@ -2081,7 +2081,8 @@ class DocumentViewSet(
 
         # Validate that we have encrypted symmetric keys for all users with access.
         # Keys in encryptedSymmetricKeyPerUser are keyed by the user's OIDC sub (suite_user_id).
-        # The frontend already checked via fetchPublicKeys that all members have encryption enabled.
+        # Values may be a wrapped key (validated) or explicit null (pending —
+        # user hasn't completed their encryption onboarding yet).
         document_accesses = models.DocumentAccess.objects.filter(
             document=document, user__isnull=False
         ).select_related('user')
@@ -2096,7 +2097,7 @@ class DocumentViewSet(
             raise drf.exceptions.ValidationError({
                 'encryptedSymmetricKeyPerUser':
                 f'Missing encrypted keys for users with document access: {missing_users}. '
-                f'All users must have encrypted symmetric keys when encrypting a document.'
+                f'All users must have an entry (either a wrapped key or null) when encrypting.'
             })
 
         # Check for extra users that don't have access
@@ -2106,6 +2107,35 @@ class DocumentViewSet(
                 'encryptedSymmetricKeyPerUser':
                 f'Encrypted keys provided for users without document access: {extra_users}. '
                 f'Only users with access should have encrypted symmetric keys.'
+            })
+
+        # The caller is the one performing the encryption — they must
+        # hold the key. Explicit null for themselves is never legitimate.
+        caller_sub = str(request.user.sub)
+        if (
+            caller_sub in encryptedSymmetricKeyPerUser
+            and encryptedSymmetricKeyPerUser[caller_sub] is None
+        ):
+            raise drf.exceptions.ValidationError({
+                'encryptedSymmetricKeyPerUser':
+                'You cannot mark yourself as pending encryption onboarding — '
+                'provide a wrapped key for your own user.'
+            })
+
+        # Per-user fingerprint map — required, keyed on the same user
+        # subs as the wrapped-key map. Stored verbatim on the access
+        # row so clients can later tell which key each user's wrapped
+        # key was produced for.
+        fingerprint_per_user = serializer.validated_data[
+            'encryptionPublicKeyFingerprintPerUser'
+        ]
+        fingerprint_subs = set(fingerprint_per_user.keys())
+        if fingerprint_subs != provided_user_ids:
+            raise drf.exceptions.ValidationError({
+                'encryptionPublicKeyFingerprintPerUser':
+                'Must cover the same set of users as encryptedSymmetricKeyPerUser. '
+                f'Missing: {provided_user_ids - fingerprint_subs}. '
+                f'Extra: {fingerprint_subs - provided_user_ids}.'
             })
 
         # Remove old unencrypted attachment keys from the allowed list.
@@ -2136,13 +2166,18 @@ class DocumentViewSet(
 
             transaction.on_commit(_cleanup_old_attachments)
 
-        # Store the encrypted symmetric keys in DocumentAccess for each user
-        # Keys are keyed by the user's OIDC `sub`, so look up by user__sub
+        # Store the encrypted symmetric keys + fingerprints in
+        # DocumentAccess for each user. Keys are keyed by the user's
+        # OIDC `sub`, so look up by user__sub.
         for sub, encrypted_key in encryptedSymmetricKeyPerUser.items():
             try:
-                # Find the DocumentAccess record for this user and document
-                access = models.DocumentAccess.objects.get(document=document, user__sub=sub)
+                access = models.DocumentAccess.objects.get(
+                    document=document, user__sub=sub,
+                )
                 access.encrypted_document_symmetric_key_for_user = encrypted_key
+                access.encryption_public_key_fingerprint = (
+                    fingerprint_per_user.get(sub) or None
+                )
                 access.save()
             except models.DocumentAccess.DoesNotExist:
                 # This should not happen due to our validation above, but keep as safety
@@ -2371,15 +2406,30 @@ class DocumentAccessViewSet(
                 "Only owners of a document can assign other users as owners."
             )
 
-        # Handle encrypted_document_symmetric_key_for_user during creation
+        # Handle encrypted_document_symmetric_key_for_user during
+        # creation. For encrypted documents the key is OPTIONAL: if the
+        # invitee has no public key yet (pending onboarding) the caller
+        # legitimately has nothing to wrap. The access row is then
+        # created pending (key column NULL) and can be "accepted" later
+        # via PATCH /accesses/{id}/encryption-key/. Whether the invitee
+        # actually has a public key is a client-side concern — the
+        # backend only enforces "key provided ⇒ document must be encrypted".
         if 'encrypted_document_symmetric_key_for_user' in serializer.validated_data:
-            if not self.document.is_encrypted:
+            key_value = serializer.validated_data[
+                'encrypted_document_symmetric_key_for_user'
+            ]
+            if key_value and not self.document.is_encrypted:
                 raise drf.exceptions.ValidationError({
                     'encrypted_document_symmetric_key_for_user':
                     'This field can only be provided when the document is encrypted.'
                 })
-            # For encrypted documents, allow the key to be provided
-            # The key will be stored directly in the DocumentAccess record
+            # Normalise "" → None so the DB row uses NULL consistently
+            # and `is_pending_encryption` (which tests IS NULL) is
+            # reliable downstream.
+            if not key_value:
+                serializer.validated_data[
+                    'encrypted_document_symmetric_key_for_user'
+                ] = None
 
         access = serializer.save(document_id=self.kwargs["resource_id"])
 
@@ -2416,12 +2466,136 @@ class DocumentAccessViewSet(
 
     def perform_destroy(self, instance):
         """Delete an access to the document and notify the collaboration server."""
+        # Strand-prevention: on an encrypted document, removing the last
+        # access row that holds a wrapped key while other rows are
+        # pending (`encrypted_document_symmetric_key_for_user IS NULL`)
+        # would leave the document undecryptable by anyone — nobody
+        # could "accept" the pending users afterwards.
+        self._raise_if_would_strand_pending_users(instance)
+
         instance.delete()
 
         # Notify collaboration server about the access removed
         CollaborationService().reset_connections(
             str(instance.document.id), str(instance.user.id)
         )
+
+    def _raise_if_would_strand_pending_users(self, instance):
+        """Reject delete if it would leave pending users with nobody
+        able to accept them. See the docstring in `perform_destroy`.
+        """
+        document = instance.document
+        if not getattr(document, "is_encrypted", False):
+            return
+        # Removing a row that's itself pending never strands anyone.
+        if not instance.encrypted_document_symmetric_key_for_user:
+            return
+
+        other_accesses = models.DocumentAccess.objects.filter(
+            document=document
+        ).exclude(pk=instance.pk)
+        remaining_validated = (
+            other_accesses.filter(
+                encrypted_document_symmetric_key_for_user__isnull=False,
+            )
+            .exclude(encrypted_document_symmetric_key_for_user="")
+            .exists()
+        )
+        has_pending = other_accesses.filter(
+            encrypted_document_symmetric_key_for_user__isnull=True,
+        ).exists()
+
+        if has_pending and not remaining_validated:
+            raise drf.exceptions.ValidationError({
+                "detail": (
+                    "Removing this user would leave pending collaborators "
+                    "unable to decrypt the document. Either wait for them "
+                    "to finish their encryption onboarding, or remove "
+                    "encryption from the document first."
+                ),
+                "code": "would_strand_pending_users",
+            })
+
+    @drf.decorators.action(
+        detail=True, methods=["patch"], url_path="encryption-key"
+    )
+    def encryption_key(self, request, *args, **kwargs):
+        """Accept a pending collaborator by re-wrapping the document's
+        symmetric key against their public key.
+
+        Strictly pending → validated. To revoke a user, delete the access
+        row instead. The viewset-level permission already enforces that
+        the caller is a privileged user on the document (admin/owner);
+        here we additionally require the caller to currently hold a
+        wrapped key themselves — without that they have no plaintext
+        subtree key to re-wrap from.
+        """
+        access = self.get_object()
+        document = access.document
+
+        if not getattr(document, "is_encrypted", False):
+            return drf.response.Response(
+                {"detail": "Document is not encrypted."},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        if access.encrypted_document_symmetric_key_for_user:
+            return drf.response.Response(
+                {
+                    "detail": (
+                        "This access is not pending encryption onboarding. "
+                        "Delete the access row instead if you want to "
+                        "revoke it."
+                    ),
+                    "code": "access_not_pending",
+                },
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        caller_has_key = models.DocumentAccess.objects.filter(
+            document=document,
+            user=request.user,
+            encrypted_document_symmetric_key_for_user__isnull=False,
+        ).exclude(encrypted_document_symmetric_key_for_user="").exists()
+        if not caller_has_key:
+            return drf.response.Response(
+                {
+                    "detail": (
+                        "You do not currently hold a decryption key for "
+                        "this document, so you cannot accept another "
+                        "user on it."
+                    ),
+                },
+                status=drf.status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = serializers.AcceptEncryptionAccessSerializer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+
+        access.encrypted_document_symmetric_key_for_user = (
+            serializer.validated_data[
+                "encrypted_document_symmetric_key_for_user"
+            ]
+        )
+        access.encryption_public_key_fingerprint = (
+            serializer.validated_data["encryption_public_key_fingerprint"]
+        )
+        access.save(
+            update_fields=[
+                "encrypted_document_symmetric_key_for_user",
+                "encryption_public_key_fingerprint",
+            ]
+        )
+
+        CollaborationService().reset_connections(
+            str(document.id),
+            str(access.user.id) if access.user else None,
+        )
+
+        output = self.get_serializer(access)
+        return drf.response.Response(output.data)
 
 
 class InvitationViewset(

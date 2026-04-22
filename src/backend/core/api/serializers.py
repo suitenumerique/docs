@@ -77,6 +77,9 @@ class ListDocumentSerializer(serializers.ModelSerializer):
     encrypted_document_symmetric_key_for_user = serializers.SerializerMethodField(
         read_only=True
     )
+    is_pending_encryption_for_user = serializers.SerializerMethodField(
+        read_only=True
+    )
 
     class Meta:
         model = models.Document
@@ -97,6 +100,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "excerpt",
             "is_favorite",
             "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -123,6 +127,7 @@ class ListDocumentSerializer(serializers.ModelSerializer):
             "excerpt",
             "is_favorite",
             "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -197,6 +202,27 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         except models.DocumentAccess.DoesNotExist:
             return None
 
+    def get_is_pending_encryption_for_user(self, instance):
+        """True when the current user has a DocumentAccess row on this
+        encrypted document with no wrapped key — i.e. they were added
+        to the access list but haven't completed their encryption
+        onboarding yet.
+
+        Clients use this to avoid attempting to decrypt (which would
+        fail with a meaningless key error) and render a "waiting for
+        acceptance" panel directly instead.
+        """
+        if not instance.is_encrypted:
+            return False
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return models.DocumentAccess.objects.filter(
+            document=instance,
+            user=request.user,
+            encrypted_document_symmetric_key_for_user__isnull=True,
+        ).exists()
+
 
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
@@ -239,6 +265,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "file",
             "is_favorite",
             "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -264,6 +291,7 @@ class DocumentSerializer(ListDocumentSerializer):
             "encrypted_document_symmetric_key_for_user",
             "is_favorite",
             "is_encrypted",
+            "is_pending_encryption_for_user",
             "link_role",
             "link_reach",
             "nb_accesses_ancestors",
@@ -413,9 +441,11 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
     encrypted_document_symmetric_key_for_user = serializers.CharField(
         required=False, allow_blank=True, write_only=True
     )
+    # TODO: REQUIRED!!!
     encryption_public_key_fingerprint = serializers.CharField(
         required=False, allow_blank=True, max_length=16
     )
+    is_pending_encryption = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.DocumentAccess
@@ -432,6 +462,7 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "max_role",
             "encrypted_document_symmetric_key_for_user",
             "encryption_public_key_fingerprint",
+            "is_pending_encryption",
         ]
         read_only_fields = [
             "id",
@@ -439,10 +470,30 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
             "abilities",
             "max_ancestors_role",
             "max_role",
+            "is_pending_encryption",
         ]
 
+    def get_is_pending_encryption(self, instance):
+        """True when the parent document is encrypted but this access has
+        no wrapped key — the user was added before completing their
+        encryption onboarding. A validated collaborator must "accept"
+        them (re-wrap the key) before they can decrypt.
+        """
+        document = instance.document
+        return bool(
+            getattr(document, "is_encrypted", False)
+            and instance.encrypted_document_symmetric_key_for_user is None
+        )
+
     def get_fields(self):
-        """Dynamically control field availability and requirements based on document encryption status."""
+        """Dynamically adjust encryption fields based on document state.
+
+        For encrypted documents the key is OPTIONAL at serializer level:
+        the viewset decides whether omitting it is legitimate (invitee
+        has no public key yet → access created pending) or a 400 (field
+        provided against a non-encrypted document). For non-encrypted
+        documents the field is hidden entirely.
+        """
         fields = super().get_fields()
 
         # Get the document from context (if available)
@@ -450,17 +501,12 @@ class DocumentAccessSerializer(serializers.ModelSerializer):
         if "view" in self.context and hasattr(self.context["view"], "document"):
             document = self.context["view"].document
 
-        # Get the encrypted_document_symmetric_key_for_user field
-        key_field = fields.get("encrypted_document_symmetric_key_for_user")
-
-        if key_field:
-            # If document is encrypted, make the field required
-            if document and getattr(document, "is_encrypted", False):
-                key_field.required = True
-                key_field.allow_blank = False
-            # If document is not encrypted, remove the field entirely
-            elif document and not getattr(document, "is_encrypted", False):
-                fields.pop("encrypted_document_symmetric_key_for_user", None)
+        if (
+            document
+            and not getattr(document, "is_encrypted", False)
+            and "encrypted_document_symmetric_key_for_user" in fields
+        ):
+            fields.pop("encrypted_document_symmetric_key_for_user", None)
 
         return fields
 
@@ -993,7 +1039,44 @@ class EncryptDocumentSerializer(serializers.Serializer):
     """
 
     content = serializers.CharField(required=True)
-    encryptedSymmetricKeyPerUser = serializers.DictField(child=serializers.CharField(), required=True)
+    # Value is either a base64 wrapped key (validated user) or explicit
+    # null (user is on the access list but has no public key yet — access
+    # row is created pending, to be "accepted" later by another validated
+    # collaborator via PATCH /accesses/{id}/encryption-key/).
+    encryptedSymmetricKeyPerUser = serializers.DictField(
+        child=serializers.CharField(allow_null=True),
+        required=True,
+        help_text=(
+            "Mapping of user OIDC sub → wrapped symmetric key (base64), "
+            "or null to mark the user as pending their encryption "
+            "onboarding. The caller's own sub must always be a wrapped "
+            "key, never null."
+        ),
+    )
+    # Required: matched to the wrapped-key map. Every user sub present
+    # in `encryptedSymmetricKeyPerUser` must also appear here with the
+    # fingerprint of the public key used to wrap their copy (or null
+    # for pending users with no public key yet). Stored on the access
+    # row verbatim so clients can later tell which key each user's
+    # wrapped key was produced for — used by the key-mismatch panel
+    # to display "Fingerprint at the time it was shared with you".
+    #
+    # Not security-sensitive in the crypto sense — the actual wrap is
+    # the wrapped key itself. The fingerprint is a display hint; a
+    # malicious client could send wrong values but the worst it
+    # achieves is confusing the user whose client was lying.
+    encryptionPublicKeyFingerprintPerUser = serializers.DictField(
+        child=serializers.CharField(
+            allow_null=True, allow_blank=True, max_length=16
+        ),
+        required=True,
+        help_text=(
+            "Mapping of user OIDC sub → fingerprint of their public key "
+            "at encryption time. Must cover the same set of users as "
+            "`encryptedSymmetricKeyPerUser`; null is valid for pending "
+            "users."
+        ),
+    )
     attachmentKeyMapping = serializers.DictField(
         child=serializers.CharField(),
         required=False,
@@ -1001,6 +1084,30 @@ class EncryptDocumentSerializer(serializers.Serializer):
         help_text="Mapping of original attachment key to new encrypted attachment key. "
         "During encryption, existing attachments are uploaded encrypted under new keys. "
         "This mapping tells the backend to copy each new key over the original and clean up.",
+    )
+
+
+# pylint: disable=abstract-method
+class AcceptEncryptionAccessSerializer(serializers.Serializer):
+    """Payload for PATCH /accesses/{id}/encryption-key/ — "accept" a
+    pending collaborator by re-wrapping the document's symmetric key
+    against their (now-available) public key.
+    """
+
+    encrypted_document_symmetric_key_for_user = serializers.CharField(
+        required=True,
+        allow_null=False,
+        allow_blank=False,
+        help_text=(
+            "Wrapped symmetric key for the pending user, base64-encoded. "
+            "Null / empty is not allowed: this endpoint only flips "
+            "pending → validated. To revert, delete the access row."
+        ),
+    )
+    encryption_public_key_fingerprint = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        max_length=16,
     )
 
 

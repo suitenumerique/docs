@@ -12,6 +12,7 @@ export class EncryptedWebSocket extends WebSocket {
   protected readonly vaultClient!: VaultClient;
   protected readonly encryptedSymmetricKey!: ArrayBuffer;
   protected readonly onSystemMessage?: (message: string) => void;
+  protected readonly onDecryptError?: (err: unknown) => void;
 
   constructor(address: string | URL, protocols?: string | string[]) {
     super(address, protocols);
@@ -61,6 +62,7 @@ export class EncryptedWebSocket extends WebSocket {
             }
           } catch (err) {
             console.error('WebSocket decrypt error:', err);
+            this.onDecryptError?.(err);
           }
         };
 
@@ -116,10 +118,12 @@ export function createAdaptedEncryptedWebsocketClass(options: {
   vaultClient: VaultClient;
   encryptedSymmetricKey: ArrayBuffer;
   onSystemMessage?: (message: string) => void;
+  onDecryptError?: (err: unknown) => void;
 }) {
   return class extends EncryptedWebSocket {
     protected readonly vaultClient = options.vaultClient;
     protected readonly encryptedSymmetricKey = options.encryptedSymmetricKey;
     protected readonly onSystemMessage = options.onSystemMessage;
+    protected readonly onDecryptError = options.onDecryptError;
   };
 }

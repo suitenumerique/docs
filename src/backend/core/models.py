@@ -1229,12 +1229,21 @@ class DocumentAccess(BaseAccess):
         if len(set_role_to) == 1:
             set_role_to = []
 
+        # "encryption_key" gates the PATCH
+        # /accesses/{id}/encryption-key/ Accept endpoint. The viewset
+        # additionally enforces that the caller holds a wrapped key on
+        # the document (otherwise they have nothing to re-wrap), so at
+        # this layer the rule just mirrors "can manage accesses on
+        # this document" — same privileged-role check as update, minus
+        # the role-change prerequisites which aren't relevant when
+        # re-wrapping a key.
         return {
             "destroy": can_delete,
             "update": bool(set_role_to) and is_owner_or_admin,
             "partial_update": bool(set_role_to) and is_owner_or_admin,
             "retrieve": (self.user and self.user.id == user.id) or is_owner_or_admin,
             "set_role_to": set_role_to,
+            "encryption_key": is_owner_or_admin,
         }
 
 

@@ -45,6 +45,7 @@ import {
   QuickSearchGroupAccessRequest,
 } from './DocShareAccessRequest';
 import { DocShareAddMemberList } from './DocShareAddMemberList';
+import { PendingEncryptionSection } from './PendingEncryptionSection';
 import {
   DocShareModalInviteUserRow,
   QuickSearchGroupInvitation,
@@ -344,6 +345,14 @@ export const DocShareModal = ({
                   <HorizontalSeparator customPadding="12px" />
                 )}
               </Box>
+
+              {doc.is_encrypted && canShare && membersQuery && (
+                <PendingEncryptionSection
+                  doc={doc}
+                  accesses={membersQuery}
+                  documentEncryptionSettings={effectiveEncryptionSettings}
+                />
+              )}
 
               <Box data-testid="doc-share-quick-search">
                 {!canViewAccesses && (
