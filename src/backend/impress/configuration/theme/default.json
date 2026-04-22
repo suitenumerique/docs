@@ -4,7 +4,7 @@
       "logo": {
         "src": "/assets/icon-docs.svg",
         "alt": "Docs Logo",
-        "style": { "width": "54px", "height": "auto" },
+        "style": { "width": "54", "height": "auto" },
         "withTitle": true
       },
       "externalLinks": [

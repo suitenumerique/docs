@@ -11,7 +11,7 @@
     "default": {
       "logo": {
         "src": "/assets/icon-docs.svg",
-        "width": "54px",
+        "width": "54",
         "alt": "Docs Logo",
         "withTitle": true
       },
