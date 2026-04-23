@@ -1242,8 +1242,11 @@ class Document(MP_Node, BaseModel):
 
         # Characteristics that are based only on specific access
         is_owner = role == RoleChoices.OWNER
+        is_creator = self.creator == user
+
         is_deleted = self.ancestors_deleted_at
         is_owner_or_admin = (is_owner or role == RoleChoices.ADMIN) and not is_deleted
+        is_editor_creator = (role == RoleChoices.EDITOR) and is_creator
 
         # Compute access roles before adding link roles because we don't
         # want anonymous users to access versions (we wouldn't know from
@@ -1280,7 +1283,7 @@ class Document(MP_Node, BaseModel):
         can_destroy = (
             is_owner
             if self.is_root()
-            else (is_owner_or_admin or (user.is_authenticated and self.creator == user))
+            else (is_owner_or_admin or (user.is_authenticated and is_creator))
         ) and not is_deleted
 
         ai_allow_reach_from = settings.AI_ALLOW_REACH_FROM
@@ -1297,6 +1300,7 @@ class Document(MP_Node, BaseModel):
 
         return {
             "accesses_manage": is_owner_or_admin,
+            "accesses_update": can_update_from_access,
             "accesses_view": has_access_role,
             "ai_proxy": ai_access,
             "ai_transform": ai_access,
@@ -1312,6 +1316,7 @@ class Document(MP_Node, BaseModel):
             "cors_proxy": can_get,
             "descendants": can_get,
             "destroy": can_destroy,
+            "detach": (is_owner_or_admin or is_editor_creator) and not is_deleted,
             "duplicate": can_get and user.is_authenticated,
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,

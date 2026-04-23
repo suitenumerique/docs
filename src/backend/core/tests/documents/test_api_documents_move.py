@@ -133,6 +133,7 @@ def test_api_documents_move_authenticated_target_roles_mocked(
     client.force_login(user)
 
     power_roles = ["administrator", "owner"]
+    update_roles = [*power_roles, "editor"]
 
     document = factories.DocumentFactory(users=[(user, random.choice(power_roles))])
     children = factories.DocumentFactory.create_batch(3, parent=document)
@@ -153,7 +154,7 @@ def test_api_documents_move_authenticated_target_roles_mocked(
 
     if (
         position in ["first-child", "last-child"]
-        and (target_role in power_roles or target_parent_role in power_roles)
+        and (target_role in update_roles or target_parent_role in update_roles)
     ) or (
         position in ["first-sibling", "last-sibling", "left", "right"]
         and target_parent_role in power_roles
@@ -208,105 +209,64 @@ def test_api_documents_move_authenticated_target_roles_mocked(
         assert document.is_root() is True
 
 
-def test_api_documents_move_authenticated_no_owner_user_and_team():
-    """
-    Moving a document with no owner to the root of the tree should automatically declare
-    the owner of the previous root of the document as owner of the document itself.
-    """
+@pytest.mark.parametrize("position", enums.MoveNodePositionChoices.values)
+def test_api_documents_move_root_target_root(position):
+    """Moving a root document relatively to a root target document
+    should be allowed."""
+
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
 
-    parent_owner = factories.UserFactory()
-    parent = factories.DocumentFactory(
-        users=[(parent_owner, "owner")], teams=[("lasuite", "owner")]
-    )
-    # A document with no owner
-    document = factories.DocumentFactory(parent=parent, users=[(user, "administrator")])
-    child = factories.DocumentFactory(parent=document)
-    target = factories.DocumentFactory()
+    target = factories.DocumentFactory(users=[(user, "owner")])
+    document = factories.DocumentFactory(users=[(user, "owner")])
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
+        data={
+            "target_document_id": str(target.id),
+            "position": position,
+        },
     )
 
     assert response.status_code == 200
     assert response.json() == {"message": "Document moved successfully."}
-    assert list(target.get_siblings()) == [document, parent, target]
-
-    document.refresh_from_db()
-    assert list(document.get_children()) == [child]
-    assert document.accesses.count() == 3
-    assert document.accesses.get(user__isnull=False, role="owner").user == parent_owner
-    assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
-    assert document.accesses.get(role="administrator").user == user
 
 
-def test_api_documents_move_authenticated_no_owner_same_user():
-    """
-    Moving a document should not fail if the user moving a document with no owner was
-    at the same time owner of the previous root and has a role on the document being moved.
-    """
+@pytest.mark.parametrize("position", enums.MoveNodePositionChoices.values)
+def test_api_documents_move_root_target_not_child(position):
+    """Moving a document relatively to a root document should be
+    allowed only with child positions."""
+
     user = factories.UserFactory()
     client = APIClient()
     client.force_login(user)
 
-    parent = factories.DocumentFactory(
-        users=[(user, "owner")], teams=[("lasuite", "owner")]
-    )
-    # A document with no owner
-    document = factories.DocumentFactory(parent=parent, users=[(user, "reader")])
-    child = factories.DocumentFactory(parent=document)
-    target = factories.DocumentFactory()
+    root_target = factories.UserDocumentAccessFactory(user=user, role="owner").document
+    root_target_sibling = factories.UserDocumentAccessFactory(
+        user=user, role="owner"
+    ).document
+    document = factories.DocumentFactory(parent=root_target, users=[(user, "owner")])
 
     response = client.post(
         f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
+        data={
+            "target_document_id": str(root_target_sibling.id),
+            "position": position,
+        },
     )
 
-    assert response.status_code == 200
-    assert response.json() == {"message": "Document moved successfully."}
-    assert list(target.get_siblings()) == [document, parent, target]
-
-    document.refresh_from_db()
-    assert list(document.get_children()) == [child]
-    assert document.accesses.count() == 2
-    assert document.accesses.get(user__isnull=False, role="owner").user == user
-    assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
-
-
-def test_api_documents_move_authenticated_no_owner_same_team():
-    """
-    Moving a document should not fail if the team that is owner of the document root was
-    already declared on the document with a different role.
-    """
-    user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(user)
-
-    parent = factories.DocumentFactory(teams=[("lasuite", "owner")])
-    # A document with no owner but same team
-    document = factories.DocumentFactory(
-        parent=parent, users=[(user, "administrator")], teams=[("lasuite", "reader")]
-    )
-    child = factories.DocumentFactory(parent=document)
-    target = factories.DocumentFactory()
-
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/move/",
-        data={"target_document_id": str(target.id), "position": "first-sibling"},
-    )
-
-    assert response.status_code == 200
-    assert response.json() == {"message": "Document moved successfully."}
-    assert list(target.get_siblings()) == [document, parent, target]
-
-    document.refresh_from_db()
-    assert list(document.get_children()) == [child]
-    assert document.accesses.count() == 2
-    assert document.accesses.get(user__isnull=False, role="administrator").user == user
-    assert document.accesses.get(user__isnull=True, role="owner").team == "lasuite"
+    if position in [
+        enums.MoveNodePositionChoices.FIRST_CHILD,
+        enums.MoveNodePositionChoices.LAST_CHILD,
+    ]:
+        assert response.status_code == 200
+    else:
+        assert response.status_code == 400
+        assert (
+            "You cannot move a document relative to this target document"
+            in response.json()["target_document_id"]
+        )
 
 
 def test_api_documents_move_authenticated_deleted_document():

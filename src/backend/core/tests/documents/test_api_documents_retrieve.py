@@ -28,6 +28,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -42,6 +43,7 @@ def test_api_documents_retrieve_anonymous_public_standalone():
             "content": True,
             "descendants": True,
             "destroy": False,
+            "detach": False,
             "duplicate": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
@@ -108,6 +110,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -122,6 +125,7 @@ def test_api_documents_retrieve_anonymous_public_parent():
             "cors_proxy": True,
             "content": True,
             "destroy": False,
+            "detach": False,
             "duplicate": False,
             # Anonymous user can't favorite a document even with read access
             "favorite": False,
@@ -218,6 +222,7 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": document.link_role == "editor",
             "ai_transform": document.link_role == "editor",
@@ -228,10 +233,11 @@ def test_api_documents_retrieve_authenticated_unrelated_public_or_authenticated(
             "children_list": True,
             "collaboration_auth": True,
             "comment": document.link_role in ["commenter", "editor"],
-            "descendants": True,
             "cors_proxy": True,
             "content": True,
+            "descendants": True,
             "destroy": False,
+            "detach": False,
             "duplicate": True,
             "favorite": True,
             "invite_owner": False,
@@ -305,6 +311,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": grand_parent.link_role == "editor",
             "ai_transform": grand_parent.link_role == "editor",
@@ -320,6 +327,7 @@ def test_api_documents_retrieve_authenticated_public_or_authenticated_parent(rea
             "content": True,
             "destroy": False,
             "duplicate": True,
+            "detach": False,
             "favorite": True,
             "invite_owner": False,
             "link_configuration": False,
@@ -505,6 +513,7 @@ def test_api_documents_retrieve_authenticated_related_parent():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": access.role in ["administrator", "owner"],
+            "accesses_update": access.role in ["administrator", "owner", "editor"],
             "accesses_view": True,
             "ai_proxy": access.role not in ["reader", "commenter"],
             "ai_transform": access.role not in ["reader", "commenter"],
@@ -519,6 +528,8 @@ def test_api_documents_retrieve_authenticated_related_parent():
             "cors_proxy": True,
             "content": True,
             "destroy": access.role in ["administrator", "owner"],
+            "detach": access.role in ["administrator", "owner"]
+            or (access.role == "editor" and document.creator == user),
             "duplicate": True,
             "favorite": True,
             "invite_owner": access.role == "owner",

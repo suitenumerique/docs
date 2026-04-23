@@ -908,6 +908,65 @@ class DocumentViewSet(
 
     @drf.decorators.action(detail=True, methods=["post"])
     @transaction.atomic
+    def detach(self, request, *args, **kwargs):
+        """
+        Detach a subdocument from it's parent
+
+        The user must be an administrator or owner of root document or an
+        editor (on target document) and creator of the document creator
+        """
+        user = request.user
+        document = self.get_object()
+
+        if document.is_root():
+            return drf.response.Response(
+                # mettre le message dans position est valid ?
+                {"message": "You cannot detach a root document"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target_document = document.get_root()
+        if not target_document:
+            return drf.response.Response(
+                {"message": "Parent document does not exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not document.get_abilities(user).get("detach"):
+            return drf.response.Response(
+                {
+                    "message": (
+                        "You do not have permission to move documents "
+                        "as a sibling of this target document."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        owner_accesses = document.get_root().accesses.filter(
+            role=models.RoleChoices.OWNER
+        )
+
+        document.move(target_document, pos=enums.MoveNodePositionChoices.LAST_SIBLING)
+
+        if (
+            owner_accesses
+            and not document.accesses.filter(role=models.RoleChoices.OWNER).exists()
+        ):
+            for owner_access in owner_accesses:
+                models.DocumentAccess.objects.update_or_create(
+                    document=document,
+                    user=owner_access.user,
+                    team=owner_access.team,
+                    defaults={"role": models.RoleChoices.OWNER},
+                )
+
+        return drf.response.Response(
+            {"message": "Document detached successfully."}, status=status.HTTP_200_OK
+        )
+
+    @drf.decorators.action(detail=True, methods=["post"])
+    @transaction.atomic
     def move(self, request, *args, **kwargs):
         """
         Move a document to another location within the document tree.
@@ -941,15 +1000,22 @@ class DocumentViewSet(
             enums.MoveNodePositionChoices.FIRST_CHILD,
             enums.MoveNodePositionChoices.LAST_CHILD,
         ]:
-            if not target_document.get_abilities(user).get("move"):
+            if not target_document.get_abilities(user).get("accesses_update"):
                 message = (
                     "You do not have permission to move documents "
                     "as a child to this target document."
                 )
         elif target_document.is_root():
-            owner_accesses = document.get_root().accesses.filter(
-                role=models.RoleChoices.OWNER
-            )
+            if not document.is_root():
+                message = (
+                    "You cannot move a document relative to this target document "
+                    "unless as its child."
+                )
+            elif not target_document.get_abilities(user).get("move"):
+                message = (
+                    "You do not have permission to move documents "
+                    "as a sibling of this target document."
+                )
         elif not target_document.get_parent().get_abilities(user).get("move"):
             message = (
                 "You do not have permission to move documents "

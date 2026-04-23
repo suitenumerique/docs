@@ -122,7 +122,7 @@ export const DocTreeItemActions = ({
             : []),
           {
             label: t('Move to my docs'),
-            isDisabled: doc.user_role !== Role.OWNER,
+            isDisabled: !doc.abilities.detach,
             icon: (
               <Box
                 $css={css`

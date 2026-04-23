@@ -167,10 +167,10 @@ export const DraggableDocGridContentList = ({
 
   const overlayText = useMemo(() => {
     if (!canDrag) {
-      return t('You must be the owner to move the document');
+      return t('You must be at least an administrator of the document');
     }
     if (!canDrop) {
-      return t('You must be at least the administrator of the target document');
+      return t('You must be at least an editor of the target document');
     }
 
     return selectedDoc?.title || untitledDocument;
@@ -263,7 +263,7 @@ export const DraggableDocGridItem = ({
   canDrag,
   updateCanDrop,
 }: DraggableDocGridItemProps) => {
-  const canDrop = doc.abilities.move;
+  const canDrop = doc.abilities.accesses_update;
 
   return (
     <Droppable

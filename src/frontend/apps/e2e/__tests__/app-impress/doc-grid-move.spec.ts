@@ -121,7 +121,7 @@ test.describe('Doc grid move', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must be at least the administrator of the target document',
+      'You must be at least an editor of the target document',
     );
 
     await page.mouse.up();
@@ -171,7 +171,7 @@ test.describe('Doc grid move', () => {
 
     await expect(dragOverlay).toBeVisible();
     await expect(dragOverlay).toHaveText(
-      'You must be the owner to move the document',
+      'You must be at least an administrator of the document',
     );
 
     await page.mouse.up();
@@ -434,6 +434,7 @@ const data = [
     id: 'can-drop-and-drag',
     abilities: {
       accesses_manage: true,
+      accesses_update: true,
       accesses_view: true,
       ai_transform: true,
       ai_translate: true,
@@ -483,6 +484,7 @@ const data = [
     title: 'Can only drop',
     abilities: {
       accesses_manage: true,
+      accesses_update: true,
       accesses_view: true,
       ai_transform: true,
       ai_translate: true,
@@ -531,6 +533,7 @@ const data = [
     id: 'no-drop-and-no-drag',
     abilities: {
       accesses_manage: false,
+      accesses_update: false,
       accesses_view: true,
       ai_transform: false,
       ai_translate: false,

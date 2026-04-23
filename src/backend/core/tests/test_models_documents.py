@@ -154,6 +154,7 @@ def test_models_documents_get_abilities_forbidden(
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": False,
         "ai_proxy": False,
         "ai_transform": False,
@@ -167,6 +168,7 @@ def test_models_documents_get_abilities_forbidden(
         "cors_proxy": False,
         "content": False,
         "destroy": False,
+        "detach": False,
         "duplicate": False,
         "favorite": False,
         "comment": False,
@@ -221,6 +223,7 @@ def test_models_documents_get_abilities_reader(
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": False,
         "ai_proxy": False,
         "ai_transform": False,
@@ -235,6 +238,7 @@ def test_models_documents_get_abilities_reader(
         "cors_proxy": True,
         "content": True,
         "destroy": False,
+        "detach": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
         "invite_owner": False,
@@ -293,6 +297,7 @@ def test_models_documents_get_abilities_commenter(
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": False,
         "ai_proxy": False,
         "ai_transform": False,
@@ -307,6 +312,7 @@ def test_models_documents_get_abilities_commenter(
         "descendants": True,
         "cors_proxy": True,
         "destroy": False,
+        "detach": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
         "invite_owner": False,
@@ -362,6 +368,7 @@ def test_models_documents_get_abilities_editor(
     user = factories.UserFactory() if is_authenticated else AnonymousUser()
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": False,
         "ai_proxy": is_authenticated,
         "ai_transform": is_authenticated,
@@ -376,6 +383,7 @@ def test_models_documents_get_abilities_editor(
         "cors_proxy": True,
         "content": True,
         "destroy": False,
+        "detach": False,
         "duplicate": is_authenticated,
         "favorite": is_authenticated,
         "invite_owner": False,
@@ -420,6 +428,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
     document = factories.DocumentFactory(users=[(user, "owner")])
     expected_abilities = {
         "accesses_manage": True,
+        "accesses_update": True,
         "accesses_view": True,
         "ai_proxy": True,
         "ai_transform": True,
@@ -434,6 +443,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "cors_proxy": True,
         "content": True,
         "destroy": True,
+        "detach": True,
         "duplicate": True,
         "favorite": True,
         "invite_owner": True,
@@ -464,6 +474,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
     document.refresh_from_db()
     assert document.get_abilities(user) == {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": False,
         "ai_proxy": False,
         "ai_transform": False,
@@ -478,6 +489,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
         "cors_proxy": False,
         "content": False,
         "destroy": False,
+        "detach": False,
         "duplicate": False,
         "favorite": False,
         "invite_owner": False,
@@ -512,6 +524,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
     document = factories.DocumentFactory(users=[(user, "administrator")])
     expected_abilities = {
         "accesses_manage": True,
+        "accesses_update": True,
         "accesses_view": True,
         "ai_proxy": True,
         "ai_transform": True,
@@ -526,6 +539,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
         "cors_proxy": True,
         "content": True,
         "destroy": False,
+        "detach": True,
         "duplicate": True,
         "favorite": True,
         "invite_owner": False,
@@ -570,6 +584,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
     document = factories.DocumentFactory(users=[(user, "editor")])
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": True,
         "accesses_view": True,
         "ai_proxy": True,
         "ai_transform": True,
@@ -584,6 +599,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
         "cors_proxy": True,
         "content": True,
         "destroy": False,
+        "detach": False,
         "duplicate": True,
         "favorite": True,
         "invite_owner": False,
@@ -633,6 +649,7 @@ def test_models_documents_get_abilities_reader_user(
 
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": True,
         # If you get your editor rights from the link role and not your access role
         # You should not access AI if it's restricted to users with specific access
@@ -650,6 +667,7 @@ def test_models_documents_get_abilities_reader_user(
         "cors_proxy": True,
         "content": True,
         "destroy": False,
+        "detach": False,
         "duplicate": True,
         "favorite": True,
         "invite_owner": False,
@@ -701,6 +719,7 @@ def test_models_documents_get_abilities_commenter_user(
 
     expected_abilities = {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": True,
         # If you get your editor rights from the link role and not your access role
         # You should not access AI if it's restricted to users with specific access
@@ -717,6 +736,7 @@ def test_models_documents_get_abilities_commenter_user(
         "descendants": True,
         "cors_proxy": True,
         "destroy": False,
+        "detach": False,
         "duplicate": True,
         "favorite": True,
         "invite_owner": False,
@@ -766,6 +786,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
 
     assert abilities == {
         "accesses_manage": False,
+        "accesses_update": False,
         "accesses_view": True,
         "ai_proxy": False,
         "ai_transform": False,
@@ -780,6 +801,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
         "cors_proxy": True,
         "content": True,
         "destroy": False,
+        "detach": False,
         "duplicate": True,
         "favorite": True,
         "invite_owner": False,

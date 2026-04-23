@@ -73,6 +73,7 @@ export interface Doc {
   user_role: Role;
   abilities: {
     accesses_manage: boolean;
+    accesses_update: boolean;
     accesses_view: boolean;
     ai_proxy: boolean;
     ai_transform: boolean;
@@ -84,6 +85,7 @@ export interface Doc {
     comment: boolean;
     destroy: boolean;
     duplicate: boolean;
+    detach: boolean;
     favorite: boolean;
     invite_owner: boolean;
     link_configuration: boolean;

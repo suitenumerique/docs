@@ -71,6 +71,7 @@ def test_api_documents_trashbin_format():
         "id": str(document.id),
         "abilities": {
             "accesses_manage": False,
+            "accesses_update": False,
             "accesses_view": False,
             "ai_proxy": False,
             "ai_transform": False,
@@ -85,6 +86,7 @@ def test_api_documents_trashbin_format():
             "comment": False,
             "content": False,
             "destroy": False,
+            "detach": False,
             "duplicate": False,
             "favorite": False,
             "invite_owner": False,
