@@ -1752,10 +1752,13 @@ class DocumentViewSet(
 
     def _auth_get_original_url(self, request):
         """
-        Extracts and parses the original URL from the "HTTP_X_ORIGINAL_URL" header.
+        Extracts and parses the original URL from the configured parameter header.
         Raises PermissionDenied if the header is missing.
 
-        The original url is passed by nginx in the "HTTP_X_ORIGINAL_URL" header.
+        The original url is passed by reverse proxy in the header specified by the
+        MEDIA_AUTH_ORIGINAL_URL_HEADER setting.
+
+        For nginx (the default) this is set to HTTP_X_ORIGINAL_URL.
         See corresponding ingress configuration in Helm chart and read about the
         nginx.ingress.kubernetes.io/auth-url annotation to understand how the Nginx ingress
         is configured to do this.
@@ -1766,9 +1769,14 @@ class DocumentViewSet(
         reasons.
         """
         # Extract the original URL from the request header
-        original_url = request.META.get("HTTP_X_ORIGINAL_URL")
+        original_url = request.META.get(settings.MEDIA_AUTH_ORIGINAL_URL_HEADER)
         if not original_url:
-            logger.debug("Missing HTTP_X_ORIGINAL_URL header in subrequest")
+            logger.debug(
+                "Missing %s header in subrequest. "
+                "Maybe you need to set MEDIA_AUTH_ORIGINAL_URL_HEADER correctly for your ingress"
+                " proxy.",
+                settings.MEDIA_AUTH_ORIGINAL_URL_HEADER,
+            )
             raise drf.exceptions.PermissionDenied()
 
         logger.debug("Original url: '%s'", original_url)

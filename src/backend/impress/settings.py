@@ -130,6 +130,12 @@ class Base(Configuration):
         default=50, environ_name="SEARCH_INDEXER_QUERY_LIMIT", environ_prefix=None
     )
 
+    MEDIA_AUTH_ORIGINAL_URL_HEADER = values.Value(
+        default="HTTP_X_ORIGINAL_URL",
+        environ_name="MEDIA_AUTH_ORIGINAL_URL_HEADER",
+        environ_prefix=None,
+    )
+
     # Static files (CSS, JavaScript, Images)
     STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(DATA_DIR, "static")
