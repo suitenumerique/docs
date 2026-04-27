@@ -18,3 +18,6 @@ export const PORT = Number(process.env.PORT || 4444);
 export const SENTRY_DSN = process.env.SENTRY_DSN || '';
 export const COLLABORATION_BACKEND_BASE_URL =
   process.env.COLLABORATION_BACKEND_BASE_URL || 'http://app-dev:8000';
+export const COLLABORATION_INACTIVITY_TIMEOUT = Number(
+  process.env.COLLABORATION_INACTIVITY_TIMEOUT || 0,
+);
