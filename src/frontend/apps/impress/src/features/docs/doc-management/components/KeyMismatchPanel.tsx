@@ -8,20 +8,20 @@ import { useAuth } from '@/features/auth';
 import type { Doc } from '../types';
 
 /**
- * "Wrong secret key for the given ciphertext" from the vault means the
- * document was encrypted against a PREVIOUS public key of the current
- * user (reset, different device without backup restore, etc.). The
- * ciphertext itself is still valid for whoever holds the old key, but
- * this user's current key can't unwrap it. The fix is social: someone
- * with access has to re-share the doc so the symmetric key gets
- * wrapped against their CURRENT public key.
+ * True when the SDK threw a `VaultError` carrying the
+ * `WRONG_SECRET_KEY` code. In docs this means the document was
+ * encrypted against a PREVIOUS public key of the current user (reset,
+ * different device without backup restore, etc.) — the ciphertext is
+ * still valid for whoever holds the old key, but the current key
+ * can't unwrap it. The fix is social: someone with access has to
+ * re-share the doc so the symmetric key gets wrapped against the
+ * user's CURRENT public key.
  */
 export const isWrongSecretKeyError = (
   err: Error | null | undefined,
 ): boolean => {
   if (!err) return false;
-  const msg = err.message?.toLowerCase() ?? '';
-  return msg.includes('wrong secret key');
+  return (err as VaultError).code === 'WRONG_SECRET_KEY';
 };
 
 interface Props {

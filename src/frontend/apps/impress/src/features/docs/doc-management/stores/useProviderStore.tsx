@@ -113,8 +113,11 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
           }
         },
         onDecryptError: (err) => {
-          const msg = err instanceof Error ? err.message : String(err);
-          if (/wrong secret key/i.test(msg)) {
+          // Match on the stable VaultError code rather than message
+          // text — the SDK guarantees `code === 'WRONG_SECRET_KEY'`
+          // for the AEAD-verification failure branch (libsodium's
+          // "wrong secret key for the given ciphertext").
+          if ((err as VaultError | null | undefined)?.code === 'WRONG_SECRET_KEY') {
             set({ decryptionFailed: true });
           }
         },
