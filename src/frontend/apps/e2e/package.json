@@ -15,7 +15,7 @@
     "test:ui::chromium": "yarn test:ui --project=chromium"
   },
   "devDependencies": {
-    "@playwright/test": "1.58.2",
+    "@playwright/test": "1.59.1",
     "@types/node": "*",
     "@types/pdf-parse": "1.1.5",
     "eslint-plugin-docs": "*",
@@ -24,7 +24,7 @@
   "dependencies": {
     "@types/pngjs": "6.0.5",
     "convert-stream": "1.0.2",
-    "dotenv": "17.3.1",
+    "dotenv": "17.4.2",
     "pdf-parse": "2.4.5",
     "pixelmatch": "7.1.0",
     "pngjs": "7.0.0"
