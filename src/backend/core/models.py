@@ -875,19 +875,13 @@ class DocumentQuerySet(MP_NodeQuerySet):
         conditions = models.Q()
         if lower_time_bound and upper_time_bound:
             conditions = models.Q(
-                updated_at__gte=lower_time_bound, updated_at__lte=upper_time_bound
-            ) | models.Q(
-                ancestors_deleted_at__gte=lower_time_bound,
-                ancestors_deleted_at__lte=upper_time_bound,
+                updated_at__gte=lower_time_bound,
+                updated_at__lte=upper_time_bound,
             )
         elif lower_time_bound:
-            conditions = models.Q(updated_at__gte=lower_time_bound) | models.Q(
-                ancestors_deleted_at__gte=lower_time_bound
-            )
+            conditions = models.Q(updated_at__gte=lower_time_bound)
         elif upper_time_bound:
-            conditions = models.Q(updated_at__lte=upper_time_bound) | models.Q(
-                ancestors_deleted_at__lte=upper_time_bound
-            )
+            conditions = models.Q(updated_at__lte=upper_time_bound)
 
         return self.filter(conditions)
 
@@ -1491,13 +1485,16 @@ class Document(MP_Node, BaseModel):
             .first()
         )
         self.ancestors_deleted_at = ancestors_deleted_at
-        self.save(update_fields=["deleted_at", "ancestors_deleted_at"])
+        self.save(update_fields=["deleted_at", "ancestors_deleted_at", "updated_at"])
         self.invalidate_nb_accesses_cache()
 
         self.get_descendants().exclude(
             models.Q(deleted_at__isnull=False)
             | models.Q(ancestors_deleted_at__lt=current_deleted_at)
-        ).update(ancestors_deleted_at=self.ancestors_deleted_at)
+        ).update(
+            ancestors_deleted_at=self.ancestors_deleted_at,
+            updated_at=self.updated_at,
+        )
 
         if self.depth > 1:
             self._meta.model.objects.filter(pk=self.get_parent().pk).update(

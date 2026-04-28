@@ -90,7 +90,8 @@ def test_models_documents_tree_alphabet():
 
 @pytest.mark.parametrize("depth", range(5))
 def test_models_documents_soft_delete(depth):
-    """Trying to delete a document that is already deleted or is a descendant of
+    """
+    Trying to delete a document that is already deleted or is a descendant of
     a deleted document should raise an error.
     """
     documents = []
@@ -102,6 +103,8 @@ def test_models_documents_soft_delete(depth):
         )
     assert models.Document.objects.count() == depth + 1
 
+    document_pk_to_updated_at = {d.pk: d.updated_at for d in documents}
+
     # Delete any one of the documents...
     deleted_document = random.choice(documents)
     deleted_document.soft_delete()
@@ -109,19 +112,26 @@ def test_models_documents_soft_delete(depth):
     with pytest.raises(RuntimeError):
         documents[-1].soft_delete()
 
+    deleted_document.refresh_from_db()
     assert deleted_document.deleted_at is not None
     assert deleted_document.ancestors_deleted_at == deleted_document.deleted_at
+    # updated_at is updated on the deleted document
+    assert deleted_document.updated_at > document_pk_to_updated_at[deleted_document.pk]
 
     descendants = deleted_document.get_descendants()
     for child in descendants:
         assert child.deleted_at is None
         assert child.ancestors_deleted_at is not None
         assert child.ancestors_deleted_at == deleted_document.deleted_at
+        # updated_at is updated on descendants
+        assert child.updated_at > document_pk_to_updated_at[child.pk]
 
     ancestors = deleted_document.get_ancestors()
     for parent in ancestors:
         assert parent.deleted_at is None
         assert parent.ancestors_deleted_at is None
+        # updated_at is not affected on parents
+        assert parent.updated_at == document_pk_to_updated_at[parent.pk]
 
     assert len(ancestors) + len(descendants) == depth
 
@@ -1422,16 +1432,20 @@ def test_models_documents_restore_tempering_with_instance():
 def test_models_documents_restore(django_assert_num_queries):
     """The restore method should restore a soft-deleted document."""
     document = factories.DocumentFactory()
+
     document.soft_delete()
     document.refresh_from_db()
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
+    original_updated_after_delete = document.updated_at
 
     with django_assert_num_queries(10):
         document.restore()
     document.refresh_from_db()
     assert document.deleted_at is None
-    assert document.ancestors_deleted_at == document.deleted_at
+    assert document.ancestors_deleted_at is None
+    # updated_at is updated by restore
+    assert original_updated_after_delete < document.updated_at
 
 
 def test_models_documents_restore_complex(django_assert_num_queries):
@@ -1448,6 +1462,7 @@ def test_models_documents_restore_complex(django_assert_num_queries):
     document.refresh_from_db()
     child1.refresh_from_db()
     child2.refresh_from_db()
+
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
     assert child1.ancestors_deleted_at == document.deleted_at
@@ -1457,13 +1472,18 @@ def test_models_documents_restore_complex(django_assert_num_queries):
     grand_parent.soft_delete()
     grand_parent.refresh_from_db()
     parent.refresh_from_db()
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    grand_parent_updated_at = grand_parent.updated_at
+    document_updated_at = document.updated_at
+    child1_updated_at = child2.updated_at
+    child2_updated_at = child2.updated_at
+
     assert grand_parent.deleted_at is not None
     assert grand_parent.ancestors_deleted_at == grand_parent.deleted_at
     assert parent.ancestors_deleted_at == grand_parent.deleted_at
     # item, child1 and child2 should not be affected
-    document.refresh_from_db()
-    child1.refresh_from_db()
-    child2.refresh_from_db()
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
     assert child1.ancestors_deleted_at == document.deleted_at
@@ -1472,15 +1492,23 @@ def test_models_documents_restore_complex(django_assert_num_queries):
     # Restore the item
     with django_assert_num_queries(14):
         document.restore()
+
     document.refresh_from_db()
     child1.refresh_from_db()
     child2.refresh_from_db()
     grand_parent.refresh_from_db()
+
     assert document.deleted_at is None
     assert document.ancestors_deleted_at == grand_parent.deleted_at
     # child 1 and child 2 should now have the same ancestors_deleted_at as the grand parent
     assert child1.ancestors_deleted_at == grand_parent.deleted_at
     assert child2.ancestors_deleted_at == grand_parent.deleted_at
+    # updated_at is updated for document and children after restore
+    assert document.updated_at > document_updated_at
+    assert child1.updated_at > child1_updated_at
+    assert child2.updated_at > child2_updated_at
+    # grand_parent updated_at is not affected
+    assert grand_parent.updated_at == grand_parent_updated_at
 
 
 def test_models_documents_restore_complex_bis(django_assert_num_queries):
@@ -1488,31 +1516,37 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
     grand_parent = factories.DocumentFactory()
     parent = factories.DocumentFactory(parent=grand_parent)
     document = factories.DocumentFactory(parent=parent)
-
     child1 = factories.DocumentFactory(parent=document)
     child2 = factories.DocumentFactory(parent=document)
 
     # Soft delete first the document
     document.soft_delete()
+
     document.refresh_from_db()
     child1.refresh_from_db()
     child2.refresh_from_db()
+
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
     assert child1.ancestors_deleted_at == document.deleted_at
     assert child2.ancestors_deleted_at == document.deleted_at
 
-    # Soft delete the grand parent
+    # Soft delete the grand_parent
     grand_parent.soft_delete()
+
     grand_parent.refresh_from_db()
     parent.refresh_from_db()
+    document.refresh_from_db()
+    child1.refresh_from_db()
+    child2.refresh_from_db()
+    original_parent_updated_at = parent.updated_at
+    original_child1_updated_at = child1.updated_at
+    original_child2_updated_at = child2.updated_at
+
     assert grand_parent.deleted_at is not None
     assert grand_parent.ancestors_deleted_at == grand_parent.deleted_at
     assert parent.ancestors_deleted_at == grand_parent.deleted_at
     # item, child1 and child2 should not be affected
-    document.refresh_from_db()
-    child1.refresh_from_db()
-    child2.refresh_from_db()
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
     assert child1.ancestors_deleted_at == document.deleted_at
@@ -1528,14 +1562,20 @@ def test_models_documents_restore_complex_bis(django_assert_num_queries):
     document.refresh_from_db()
     child1.refresh_from_db()
     child2.refresh_from_db()
+
     assert grand_parent.deleted_at is None
     assert grand_parent.ancestors_deleted_at is None
     assert parent.deleted_at is None
     assert parent.ancestors_deleted_at is None
+    # parent should have updated_at updated (descendant of restored grand_parent)
+    assert parent.updated_at > original_parent_updated_at
     assert document.deleted_at is not None
     assert document.ancestors_deleted_at == document.deleted_at
+    # children are not restored and then there updated_at should not be affected
     assert child1.ancestors_deleted_at == document.deleted_at
+    assert child1.updated_at == original_child1_updated_at
     assert child2.ancestors_deleted_at == document.deleted_at
+    assert child2.updated_at == original_child2_updated_at
 
 
 @pytest.mark.parametrize(
@@ -1773,24 +1813,3 @@ def test_models_documents_manager_time_filter_both_bounds():
     assert document_in_window in queryset
     assert other_document_in_window in queryset
     assert document_too_late not in queryset
-
-
-def test_utils_build_indexable_documents_queryset_ancestors_deleted_at():
-    """Test filtering includes documents with ancestors_deleted_at in range."""
-    lower_time_bound = datetime(2024, 2, 1, tzinfo=base_timezone.utc)
-
-    document_ancestor_deleted_in_range = DocumentFactory(
-        updated_at=lower_time_bound - timedelta(days=30),
-        ancestors_deleted_at=lower_time_bound + timedelta(days=15),
-    )
-    document_updated_before_range = DocumentFactory(
-        updated_at=lower_time_bound - timedelta(days=30)
-    )
-
-    queryset = models.Document.objects.filter_updated_at(
-        lower_time_bound=lower_time_bound
-    )
-
-    assert queryset.count() == 1
-    assert document_ancestor_deleted_in_range in queryset
-    assert document_updated_before_range not in queryset

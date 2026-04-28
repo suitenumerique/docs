@@ -91,11 +91,15 @@ def test_api_documents_restore_authenticated_owner_ancestor_deleted():
     factories.UserDocumentAccessFactory(document=document, user=user, role="owner")
 
     document.soft_delete()
+    document.refresh_from_db()
     document_deleted_at = document.deleted_at
+    document_updated_at = document.updated_at
+
     assert document_deleted_at is not None
 
     grand_parent.soft_delete()
     grand_parent_deleted_at = grand_parent.deleted_at
+
     assert grand_parent_deleted_at is not None
 
     response = client.post(f"/api/v1.0/documents/{document.id!s}/restore/")
@@ -105,6 +109,8 @@ def test_api_documents_restore_authenticated_owner_ancestor_deleted():
 
     document.refresh_from_db()
     assert document.deleted_at is None
+    # document is updated by restore
+    assert document.updated_at > document_updated_at
     # document is still marked as deleted
     assert document.ancestors_deleted_at == grand_parent_deleted_at
     assert grand_parent_deleted_at > document_deleted_at

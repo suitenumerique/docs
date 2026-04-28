@@ -96,8 +96,9 @@ def test_api_documents_delete_authenticated_owner_of_ancestor(depth):
         )
     assert models.Document.objects.count() == depth
 
+    document_to_delete = documents[-1]
     response = client.delete(
-        f"/api/v1.0/documents/{documents[-1].id}/",
+        f"/api/v1.0/documents/{document_to_delete.id}/",
     )
 
     assert response.status_code == 204
@@ -105,7 +106,11 @@ def test_api_documents_delete_authenticated_owner_of_ancestor(depth):
     # Make sure it is only a soft delete
     assert models.Document.objects.count() == depth
     assert models.Document.objects.filter(deleted_at__isnull=True).count() == depth - 1
-    assert models.Document.objects.filter(deleted_at__isnull=False).count() == 1
+    deleted_documents = models.Document.objects.filter(deleted_at__isnull=False)
+    assert len(deleted_documents) == 1
+    deleted_document = deleted_documents[0]
+    # updated_at is updated by the soft delete
+    assert deleted_document.updated_at > document_to_delete.updated_at
 
 
 @pytest.mark.parametrize("via", VIA)
