@@ -68,8 +68,8 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
             },
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
-                "ancestors_link_reach": document.link_reach,
-                "ancestors_link_role": document.link_role,
+                "ancestors_link_reach": child1.ancestors_link_reach,
+                "ancestors_link_role": child1.ancestors_link_role,
                 "computed_link_reach": child1.computed_link_reach,
                 "computed_link_role": child1.computed_link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
@@ -91,10 +91,8 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
             },
             {
                 "abilities": grand_child.get_abilities(AnonymousUser()),
-                "ancestors_link_reach": document.link_reach,
-                "ancestors_link_role": document.link_role
-                if (child1.link_reach == "public" and child1.link_role == "editor")
-                else document.link_role,
+                "ancestors_link_reach": grand_child.ancestors_link_reach,
+                "ancestors_link_role": grand_child.ancestors_link_role,
                 "computed_link_reach": "public",
                 "computed_link_role": grand_child.computed_link_role,
                 "created_at": grand_child.created_at.isoformat().replace("+00:00", "Z"),
@@ -116,8 +114,8 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
-                "ancestors_link_reach": document.link_reach,
-                "ancestors_link_role": document.link_role,
+                "ancestors_link_reach": child2.ancestors_link_reach,
+                "ancestors_link_role": child2.ancestors_link_role,
                 "computed_link_reach": "public",
                 "computed_link_role": child2.computed_link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
@@ -180,7 +178,7 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
                 # the search should include the parent document itself
                 "abilities": document.get_abilities(AnonymousUser()),
                 "ancestors_link_reach": "public",
-                "ancestors_link_role": grand_parent.link_role,
+                "ancestors_link_role": document.ancestors_link_role,
                 "computed_link_reach": document.computed_link_reach,
                 "computed_link_role": document.computed_link_role,
                 "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
@@ -203,7 +201,7 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
                 "ancestors_link_reach": "public",
-                "ancestors_link_role": grand_parent.link_role,
+                "ancestors_link_role": child1.ancestors_link_role,
                 "computed_link_reach": child1.computed_link_reach,
                 "computed_link_role": child1.computed_link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
@@ -249,7 +247,7 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
                 "ancestors_link_reach": "public",
-                "ancestors_link_role": grand_parent.link_role,
+                "ancestors_link_role": child2.ancestors_link_role,
                 "computed_link_reach": "public",
                 "computed_link_role": child2.computed_link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
@@ -327,7 +325,7 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
             {
                 "abilities": child1.get_abilities(user),
                 "ancestors_link_reach": reach,
-                "ancestors_link_role": document.link_role,
+                "ancestors_link_role": child1.ancestors_link_role,
                 "computed_link_reach": child1.computed_link_reach,
                 "computed_link_role": child1.computed_link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
@@ -350,7 +348,7 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
             {
                 "abilities": grand_child.get_abilities(user),
                 "ancestors_link_reach": reach,
-                "ancestors_link_role": document.link_role,
+                "ancestors_link_role": grand_child.ancestors_link_role,
                 "computed_link_reach": grand_child.computed_link_reach,
                 "computed_link_role": grand_child.computed_link_role,
                 "created_at": grand_child.created_at.isoformat().replace("+00:00", "Z"),
@@ -373,7 +371,7 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
             {
                 "abilities": child2.get_abilities(user),
                 "ancestors_link_reach": reach,
-                "ancestors_link_role": document.link_role,
+                "ancestors_link_role": child2.ancestors_link_role,
                 "computed_link_reach": child2.computed_link_reach,
                 "computed_link_role": child2.computed_link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
@@ -437,7 +435,7 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
             {
                 "abilities": child1.get_abilities(user),
                 "ancestors_link_reach": reach,
-                "ancestors_link_role": grand_parent.link_role,
+                "ancestors_link_role": child1.ancestors_link_role,
                 "computed_link_reach": child1.computed_link_reach,
                 "computed_link_role": child1.computed_link_role,
                 "created_at": child1.created_at.isoformat().replace("+00:00", "Z"),
@@ -460,7 +458,7 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
             {
                 "abilities": grand_child.get_abilities(user),
                 "ancestors_link_reach": reach,
-                "ancestors_link_role": grand_parent.link_role,
+                "ancestors_link_role": grand_child.ancestors_link_role,
                 "computed_link_reach": grand_child.computed_link_reach,
                 "computed_link_role": grand_child.computed_link_role,
                 "created_at": grand_child.created_at.isoformat().replace("+00:00", "Z"),
@@ -483,7 +481,7 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
             {
                 "abilities": child2.get_abilities(user),
                 "ancestors_link_reach": reach,
-                "ancestors_link_role": grand_parent.link_role,
+                "ancestors_link_role": child2.ancestors_link_role,
                 "computed_link_reach": child2.computed_link_reach,
                 "computed_link_role": child2.computed_link_role,
                 "created_at": child2.created_at.isoformat().replace("+00:00", "Z"),
