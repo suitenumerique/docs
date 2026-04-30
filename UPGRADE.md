@@ -16,6 +16,8 @@ the following command inside your docker container:
 
 ## [Unreleased]
 
+### [5.0.0] - 2026-04-30
+
 We made several changes around document content management leading to several breaking changes in the API.
 
 - The endpoint `/api/v1.0/documents/{document_id}/content/` has been renamed in `/api/v1.0/documents/{document_id}/formatted-content/`

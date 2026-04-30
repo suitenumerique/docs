@@ -6,11 +6,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.0.0] - 2026-04-08
+
 ### Added
 
-- ✨(backend) create a dedicated endpoint to update document content 
-- ⚡️(backend) stream s3 file content with a dedicated endpoint
-- ✨(backend) allow to use new ai feature using mistral sdk
+- ✨(backend) create a dedicated endpoint to update document content #2171
+- ⚡️(backend) stream s3 file content with a dedicated endpoint #2171
+- ✨(backend) allow to use new ai feature using mistral sdk #2193
+- 🚸(frontend) allow opening "@page" links with
+  ctrl/command/middle-mouse click #2170
 
 ### Changed
 
@@ -33,18 +37,19 @@ and this project adheres to
 - 🐛(backend) load jwks url when OIDC_RS_PRIVATE_KEY_STR is set
 - 🐛(backend) Prevent moving document to its own descendant or self #2208
 - 🐛(backend) return 400 when restoring a non-deleted document #2225
+- 🐛(backend) fix race condition in reconciliation requests CSV import #2153
+- 🐛(backend) create_for_owner: add accesses before saving doc content #2124
+- 🐛(backend) enforce emoji validation for reactions #1965
 
 ### Removed
 
 - 🔥(backend) remove deprecated descendants endpoint #2243
-- 🔥(backend) remove content in document responses
+- 🔥(backend) remove content in document responses #2171
 
 ## [v4.8.6] - 2026-04-08
 
 ### Added
 
-- 🚸(frontend) allow opening "@page" links with
-  ctrl/command/middle-mouse click #2170
 - ✅ E2E - Any instance friendly #2142
 
 ### Changed
@@ -76,7 +81,6 @@ and this project adheres to
 - ⚡️(frontend) add jitter to WS reconnection #2162
 - 🐛(frontend) fix tree pagination #2145
 - 🐛(nginx) add page reconciliation on nginx #2154
-- 🐛(backend) fix race condition in reconciliation requests CSV import #2153
 
 ## [v4.8.4] - 2026-03-25
 
@@ -98,9 +102,6 @@ and this project adheres to
 - 🐛(y-provider) destroy Y.Doc instances after each convert request #2129
 - 🐛(backend) remove deleted sub documents in favorite_list endpoint #2083
 
-### Fixed
-
-- 🐛(backend) create_for_owner: add accesses before saving doc content #2124
 
 ## [v4.8.3] - 2026-03-23
 
@@ -206,7 +207,6 @@ and this project adheres to
 
 ### Fixed
 
-- 🐛(backend) enforce emoji validation for reactions #1965
 - 🐛(frontend) analytic feature flags problem #1953
 - 🐛(frontend) fix home collapsing panel #1954
 - 🐛(frontend) fix disabled color on icon Dropdown #1950
@@ -1270,7 +1270,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v4.8.6...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.0.0...main
+[v5.0.0]: https://github.com/suitenumerique/docs/releases/v5.0.0
 [v4.8.6]: https://github.com/suitenumerique/docs/releases/v4.8.6
 [v4.8.5]: https://github.com/suitenumerique/docs/releases/v4.8.5
 [v4.8.4]: https://github.com/suitenumerique/docs/releases/v4.8.4
