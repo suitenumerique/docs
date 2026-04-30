@@ -7,7 +7,7 @@ and this project adheres to
 ## [Unreleased]
 
 ### Added
-
+- ✨(backend) add limit on distinct reactions per comment #1978
 - ✨(backend) create a dedicated endpoint to update document content 
 - ⚡️(backend) stream s3 file content with a dedicated endpoint
 

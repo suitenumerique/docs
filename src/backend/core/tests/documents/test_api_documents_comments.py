@@ -934,3 +934,56 @@ def test_delete_reaction_owned_by_the_current_user():
 
     reaction.refresh_from_db()
     assert reaction.users.exists()
+
+
+def test_create_reaction_exceeds_maximum(settings):
+    """
+    Users should not be able to add more than REACTIONS_MAX_PER_COMMENT
+    (here we set it to 10) distinct emoji reactions to a comment.
+    They should, however, be able to add themselves to an existing reaction.
+    """
+    user1 = factories.UserFactory()
+    user2 = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted",
+        users=[(user1, models.RoleChoices.ADMIN), (user2, models.RoleChoices.ADMIN)],
+    )
+    thread = factories.ThreadFactory(document=document)
+    comment = factories.CommentFactory(thread=thread)
+
+    client = APIClient()
+    client.force_login(user1)
+
+    # Add max distinct reactions
+    max_reactions = settings.REACTIONS_MAX_PER_COMMENT
+    emojis = factories.ReactionFactory.generate_emojis(max_reactions + 1)
+    for emoji in emojis[:max_reactions]:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+            f"comments/{comment.id!s}/reactions/",
+            {"emoji": emoji},
+        )
+        assert response.status_code == 201
+
+    # Attempt to add another distinct reaction
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": emojis[max_reactions]},
+    )
+    assert response.status_code == 400
+    expected_message = (
+        f"A comment can have a maximum of {max_reactions} distinct reactions."
+    )
+    assert response.json() == {"emoji": [expected_message]}
+
+    # Attempt to add user2 to one of the existing reactions (should succeed)
+    client.force_login(user2)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/"
+        f"comments/{comment.id!s}/reactions/",
+        {"emoji": emojis[0]},
+    )
+    assert response.status_code == 201
+    reaction = models.Reaction.objects.get(comment=comment, emoji=emojis[0])
+    assert reaction.users.count() == 2

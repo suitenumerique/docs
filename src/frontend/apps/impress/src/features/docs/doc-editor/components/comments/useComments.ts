@@ -5,6 +5,7 @@ import { useCunninghamTheme } from '@/cunningham';
 import { User, avatarUrlFromName } from '@/features/auth';
 import { useEditorStore } from '@/features/docs/doc-editor/stores';
 import { Doc, useProviderStore } from '@/features/docs/doc-management';
+import { useConfig } from '@/core';
 
 import { DocsThreadStore } from './DocsThreadStore';
 import { DocsThreadStoreAuth } from './DocsThreadStoreAuth';
@@ -18,6 +19,7 @@ export function useComments(
   const { t } = useTranslation();
   const { themeTokens } = useCunninghamTheme();
   const { setThreadStore } = useEditorStore();
+  const { data: config } = useConfig();
 
   const threadStore = useMemo(() => {
     return new DocsThreadStore(
@@ -26,9 +28,16 @@ export function useComments(
       new DocsThreadStoreAuth(
         encodeURIComponent(user?.full_name || ''),
         canComment,
+        config?.REACTIONS_MAX_PER_COMMENT ?? 0,
       ),
     );
-  }, [docId, canComment, provider?.awareness, user?.full_name]);
+  }, [
+    docId,
+    canComment,
+    provider?.awareness,
+    user?.full_name,
+    config?.REACTIONS_MAX_PER_COMMENT,
+  ]);
 
   useEffect(() => {
     if (canComment) {

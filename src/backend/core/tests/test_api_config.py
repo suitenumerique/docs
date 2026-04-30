@@ -75,6 +75,7 @@ def test_api_config(is_authenticated):
         "LANGUAGE_CODE": "en-us",
         "MEDIA_BASE_URL": "http://testserver/",
         "POSTHOG_KEY": {"id": "132456", "host": "https://eu.i.posthog-test.com"},
+        "REACTIONS_MAX_PER_COMMENT": 15,
         "SENTRY_DSN": "https://sentry.test/123",
         "TRASHBIN_CUTOFF_DAYS": 30,
         "theme_customization": {},

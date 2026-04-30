@@ -190,6 +190,12 @@ class Base(Configuration):
         environ_prefix=None,
     )
 
+    REACTIONS_MAX_PER_COMMENT = values.IntegerValue(
+        15,
+        environ_name="REACTIONS_MAX_PER_COMMENT",
+        environ_prefix=None,
+    )
+
     DOCUMENT_UNSAFE_MIME_TYPES = [
         # Executable Files
         "application/x-msdownload",
