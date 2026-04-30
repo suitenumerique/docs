@@ -48,6 +48,7 @@ import {
   CalloutBlock,
   PdfBlock,
   UploadLoaderBlock,
+  VideoBlock,
 } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
@@ -68,6 +69,7 @@ const baseBlockNoteSchema = withPageBreak(
       image: AccessibleImageBlock(),
       pdf: PdfBlock(),
       uploadLoader: UploadLoaderBlock(),
+      video: VideoBlock(),
     },
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
