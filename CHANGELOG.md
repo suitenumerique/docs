@@ -13,8 +13,6 @@ and this project adheres to
 - ✨(backend) create a dedicated endpoint to update document content #2171
 - ⚡️(backend) stream s3 file content with a dedicated endpoint #2171
 - ✨(backend) allow to use new ai feature using mistral sdk #2193
-- 🚸(frontend) allow opening "@page" links with
-  ctrl/command/middle-mouse click #2170
 
 ### Changed
 
@@ -50,6 +48,8 @@ and this project adheres to
 
 ### Added
 
+- 🚸(frontend) allow opening "@page" links with
+  ctrl/command/middle-mouse click #2170
 - ✅ E2E - Any instance friendly #2142
 
 ### Changed
