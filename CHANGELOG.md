@@ -11,6 +11,7 @@ and this project adheres to
 - ✨(backend) create a dedicated endpoint to update document content 
 - ⚡️(backend) stream s3 file content with a dedicated endpoint
 - ✨(backend) allow to use new ai feature using mistral sdk
+- ✨(frontend) detect and embed YouTube/Vimeo/Loom in video block
 
 ### Changed
 
