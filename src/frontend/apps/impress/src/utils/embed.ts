@@ -12,8 +12,40 @@ export interface ParsedEmbed {
   src: string;
 }
 
-const YOUTUBE_RE =
-  /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&].*)?$/;
+const YOUTUBE_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+
+function getYouTubeId(input: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(input);
+  } catch {
+    return null;
+  }
+
+  const host = parsed.hostname.replace(/^www\./, '').replace(/^m\./, '');
+  const path = parsed.pathname;
+
+  if (host === 'youtu.be') {
+    const id = path.split('/').filter(Boolean)[0] ?? '';
+    return YOUTUBE_ID_RE.test(id) ? id : null;
+  }
+
+  if (host === 'youtube.com') {
+    if (path === '/watch') {
+      const id = parsed.searchParams.get('v') ?? '';
+      return YOUTUBE_ID_RE.test(id) ? id : null;
+    }
+    const prefixed = ['/embed/', '/v/', '/shorts/'].find((p) =>
+      path.startsWith(p),
+    );
+    if (prefixed) {
+      const id = path.slice(prefixed.length).split('/')[0] ?? '';
+      return YOUTUBE_ID_RE.test(id) ? id : null;
+    }
+  }
+
+  return null;
+}
 
 const VIMEO_RE =
   /^(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com|player\.vimeo\.com\/video)\/(\d+)(?:[?/].*)?$/;
@@ -39,11 +71,11 @@ export function parseEmbedUrl(url: string): ParsedEmbed {
     return { kind: 'video', src: '' };
   }
 
-  const ytMatch = trimmed.match(YOUTUBE_RE);
-  if (ytMatch) {
+  const ytId = getYouTubeId(trimmed);
+  if (ytId) {
     return {
       kind: 'iframe',
-      src: `https://www.youtube.com/embed/${ytMatch[1]}`,
+      src: `https://www.youtube.com/embed/${ytId}`,
     };
   }
 

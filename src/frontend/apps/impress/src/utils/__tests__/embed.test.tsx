@@ -13,6 +13,11 @@ describe('parseEmbedUrl', () => {
       ['https://www.youtube.com/embed/dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
       ['https://www.youtube.com/shorts/dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
       ['https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=60s', 'dQw4w9WgXcQ'],
+      ['https://www.youtube.com/watch?si=token123&v=dQw4w9WgXcQ', 'dQw4w9WgXcQ'],
+      [
+        'https://www.youtube.com/watch?feature=share&si=token&v=dQw4w9WgXcQ&t=5s',
+        'dQw4w9WgXcQ',
+      ],
     ];
 
     it.each(cases)('rewrites %s to embed iframe', (input, expectedId) => {
