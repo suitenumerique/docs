@@ -1,8 +1,13 @@
-/* eslint-disable react-hooks/rules-of-hooks */
+import {
+  PartialCustomInlineContentFromConfig,
+  StyleSchema,
+} from '@blocknote/core';
 import { createReactInlineContentSpec } from '@blocknote/react';
+import * as Sentry from '@sentry/nextjs';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { css } from 'styled-components';
+import { validate as uuidValidate } from 'uuid';
 
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
@@ -13,9 +18,6 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
   {
     type: 'interlinkingLinkInline',
     propSchema: {
-      url: {
-        default: '',
-      },
       docId: {
         default: '',
       },
@@ -26,37 +28,104 @@ export const InterlinkingLinkInlineContent = createReactInlineContentSpec(
     content: 'none',
   },
   {
-    render: ({ inlineContent, updateInlineContent }) => {
-      const { data: doc } = useDoc({ id: inlineContent.props.docId });
+    render: ({ editor, inlineContent, updateInlineContent }) => {
+      if (!inlineContent.props.docId) {
+        return null;
+      }
 
-      useEffect(() => {
-        if (doc?.title && doc.title !== inlineContent.props.title) {
-          updateInlineContent({
-            type: 'interlinkingLinkInline',
-            props: {
-              ...inlineContent.props,
-              title: doc.title,
-            },
-          });
-        }
-      }, [inlineContent.props, doc?.title, updateInlineContent]);
+      /**
+       * Should not happen
+       */
+      if (!uuidValidate(inlineContent.props.docId)) {
+        Sentry.captureException(
+          new Error(`Invalid docId: ${inlineContent.props.docId}`),
+          {
+            extra: { info: 'InterlinkingLinkInlineContent' },
+          },
+        );
 
-      return <LinkSelected {...inlineContent.props} />;
+        updateInlineContent({
+          type: 'interlinkingLinkInline',
+          props: {
+            docId: '',
+            title: '',
+          },
+        });
+
+        return null;
+      }
+
+      return (
+        <LinkSelected
+          docId={inlineContent.props.docId}
+          title={inlineContent.props.title}
+          isEditable={editor.isEditable}
+          updateInlineContent={updateInlineContent}
+        />
+      );
     },
   },
 );
 
 interface LinkSelectedProps {
-  url: string;
+  docId: string;
   title: string;
+  isEditable: boolean;
+  updateInlineContent: (
+    update: PartialCustomInlineContentFromConfig<
+      {
+        readonly type: 'interlinkingLinkInline';
+        readonly propSchema: {
+          readonly docId: {
+            readonly default: '';
+          };
+          readonly title: {
+            readonly default: '';
+          };
+        };
+        readonly content: 'none';
+      },
+      StyleSchema
+    >,
+  ) => void;
 }
-const LinkSelected = ({ url, title }: LinkSelectedProps) => {
+const LinkSelected = ({
+  docId,
+  title,
+  isEditable,
+  updateInlineContent,
+}: LinkSelectedProps) => {
+  const { data: doc } = useDoc({ id: docId });
+
+  /**
+   * Update the content title if the referenced doc title changes
+   */
+  useEffect(() => {
+    if (isEditable && doc?.title && doc.title !== title) {
+      updateInlineContent({
+        type: 'interlinkingLinkInline',
+        props: {
+          docId,
+          title: doc.title,
+        },
+      });
+    }
+
+    /**
+     * ⚠️ When doing collaborative editing, doc?.title might be out of sync
+     * causing an infinite loop of updates.
+     * To prevent this, we only run this effect when doc?.title changes,
+     * not when inlineContent.props.title changes.
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc?.title, docId, isEditable]);
+
   const { colorsTokens } = useCunninghamTheme();
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
-    router.push(url);
+    void router.push(`/docs/${docId}/`);
   };
 
   return (
