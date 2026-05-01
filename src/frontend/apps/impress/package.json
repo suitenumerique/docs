@@ -64,6 +64,7 @@
     "react-select": "5.10.2",
     "styled-components": "6.1.19",
     "use-debounce": "10.0.6",
+    "uuid": "13.0.0",
     "y-protocols": "1.0.6",
     "yjs": "*",
     "zustand": "5.0.8"
