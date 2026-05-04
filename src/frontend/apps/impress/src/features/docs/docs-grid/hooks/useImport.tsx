@@ -109,6 +109,7 @@ export const useImport = ({ onDragOver }: UseImportProps) => {
       });
     },
     noClick: true,
+    noKeyboard: true,
   });
   const { mutate: importDoc, isPending } = useImportDoc();
 
