@@ -507,6 +507,11 @@ class Base(Configuration):
         environ_name="COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
         environ_prefix=None,
     )
+    COLLABORATION_WS_INACTIVITY_TIMEOUT = values.IntegerValue(
+        None,
+        environ_name="COLLABORATION_WS_INACTIVITY_TIMEOUT",
+        environ_prefix=None,
+    )
 
     # Frontend
     FRONTEND_THEME = values.Value(
