@@ -6,4 +6,4 @@ DOCS_DIR_MAILS="${DOCS_DIR_MAILS:-../backend/core/templates/mail}/html/"
 if [ ! -d "${DOCS_DIR_MAILS}" ]; then
   mkdir -p "${DOCS_DIR_MAILS}";
 fi
-mjml mjml/*.mjml -o "${DOCS_DIR_MAILS}";
+mjml mjml/*.mjml -o "${DOCS_DIR_MAILS}" --config.allowIncludes true;

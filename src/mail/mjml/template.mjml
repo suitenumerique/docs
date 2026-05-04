@@ -2,6 +2,11 @@
   <mj-include path="./partial/header.mjml" />
 
   <mj-body mj-class="bg--blue-100">
+    <!--
+      We load django tags here so they appear in the body of the HTML output.
+      This ensures html-to-text also includes them in the plain text template.
+    -->
+    <mj-raw>{% load i18n static extra_tags %}</mj-raw>
     <mj-wrapper css-class="wrapper" padding="5px 25px 0px 25px">
       <mj-section css-class="wrapper-logo">
         <mj-column>
@@ -16,11 +21,11 @@
       </mj-section>
       <mj-section mj-class="bg--white-100" padding="0px 20px 60px 20px">
         <mj-column>
-          <mj-text align="center">
+          <mj-text align="center" font-family="Inter, sans-serif">
             <h1>{{title|capfirst}}</h1>
           </mj-text>
           <!-- Main Message -->
-          <mj-text>
+          <mj-text font-family="Inter, sans-serif">
             {{message|capfirst}}
             <a href="{{link}}">{{link_label}}</a>
           </mj-text>
@@ -29,6 +34,7 @@
             background-color="#000091"
             color="white"
             padding-bottom="30px"
+            font-family="Inter, sans-serif"
           >
             {{button_label}}
           </mj-button>
@@ -39,13 +45,13 @@
             width="30%"
             align="center"
           />
-          <mj-text>
+          <mj-text font-family="Inter, sans-serif">
             {% blocktrans %}
               Docs, your new essential tool for organizing, sharing and collaborating on your documents as a team.
             {% endblocktrans %}
           </mj-text>
           <!-- Signature -->
-          <mj-text>
+          <mj-text font-family="Inter, sans-serif">
             <p>
               {% blocktrans %}
                 Brought to you by {{brandname}}
