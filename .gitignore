@@ -82,3 +82,8 @@ db.sqlite3
 
 # Cursor rules
 .cursorrules
+
+# Claude
+CLAUDE.md
+.claude/
+openspec/
