@@ -2063,10 +2063,10 @@
   resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/integration/-/integration-1.0.3.tgz#7aca824ba61d343a7905dc90c8a8bbdbce8f9a09"
   integrity sha512-OgP28CqlPi35wQPul1Dr52SngACXAk8buLGqHYXDp23fbTOJThqarrZE/pgJHoc9Ndwiu7ngwBSO4rZ7OPyMpA==
 
-"@gouvfr-lasuite/ui-kit@0.23.1":
-  version "0.23.1"
-  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/ui-kit/-/ui-kit-0.23.1.tgz#fc82cd611ea84e5adef9869800e27cf626ca211c"
-  integrity sha512-H9+0zXxvAoCQYRLsq4wChx8KkpxcLEDrFZyIwrHNMqDDgV4YcSgeUIYE5clCRybnglrgK7ZcNGJdMqzf9sji/Q==
+"@gouvfr-lasuite/ui-kit@0.23.2":
+  version "0.23.2"
+  resolved "https://registry.yarnpkg.com/@gouvfr-lasuite/ui-kit/-/ui-kit-0.23.2.tgz#9a7531fb35821b75b786bfc3167ad53aab116c4c"
+  integrity sha512-o6bQjqJadBbWMbFiwDYwVeNKYAD/EGeU2W0/omqNgTEYWjKQCGYwgcxgeYR+SZN9GnWKCXEARs18aYgBl+oRbQ==
   dependencies:
     "@dnd-kit/core" "6.3.1"
     "@dnd-kit/modifiers" "9.0.0"

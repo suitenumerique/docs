@@ -1,9 +1,10 @@
 import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
 import {
   DropdownMenu,
-  DropdownMenuOption,
+  DropdownMenuItem,
   useTreeContext,
 } from '@gouvfr-lasuite/ui-kit';
+import { Present } from '@gouvfr-lasuite/ui-kit/icons';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -70,6 +71,14 @@ const ModalExport =
       )
     : null;
 
+const PresenterOverlay = dynamic(
+  () =>
+    import('@/docs/doc-presenter').then((mod) => ({
+      default: mod.PresenterOverlay,
+    })),
+  { ssr: false },
+);
+
 interface DocToolBoxProps {
   doc: Doc;
 }
@@ -81,11 +90,11 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { isTopRoot } = useDocUtils(doc);
   const { authenticated } = useAuth();
   const copyCurrentEditorToClipboard = useCopyCurrentEditorToClipboard();
-
   const [openDropdown, setOpenDropdown] = useState(false);
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const shareModal = useModal();
+  const [isPresenterOpen, setIsPresenterOpen] = useState(false);
   const selectHistoryModal = useModal();
 
   const { restoreFocus } = useFocusStore();
@@ -103,7 +112,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
     listInvalidQueries: [KEY_LIST_DOC, KEY_DOC, KEY_LIST_FAVORITE_DOC],
   });
 
-  const options: DropdownMenuOption[] = [
+  const options: DropdownMenuItem[] = [
     {
       label: doc.is_favorite ? t('Unpin') : t('Pin'),
       icon: doc.is_favorite ? (
@@ -120,7 +129,16 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       isHidden: !doc.abilities.favorite,
       testId: `docs-actions-${doc.is_favorite ? 'unpin' : 'pin'}-${doc.id}`,
-      showSeparator: true,
+    },
+    { type: 'separator' },
+    {
+      label: t('Present'),
+      icon: <Present width={24} height={24} aria-hidden="true" />,
+      callback: () => {
+        setIsPresenterOpen(true);
+      },
+      isHidden: Boolean(doc.deleted_at) || isMobile,
+      testId: `docs-actions-present-${doc.id}`,
     },
     {
       label: t('Copy link'),
@@ -258,6 +276,16 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
           }}
           doc={doc}
           isRootDoc={treeContext?.root?.id === doc.id}
+        />
+      )}
+
+      {isPresenterOpen && (
+        <PresenterOverlay
+          doc={doc}
+          onClose={() => {
+            setIsPresenterOpen(false);
+            restoreFocus();
+          }}
         />
       )}
     </>
