@@ -361,7 +361,7 @@
   --c--globals--font--weights--medium: 500;
   --c--globals--font--weights--bold: 600;
   --c--globals--font--weights--extrabold: 800;
-  --c--globals--font--weights--black: 900;
+  --c--globals--font--weights--black: 800;
   --c--globals--font--families--base:
     inter variable, roboto flex variable, sans-serif;
   --c--globals--font--families--accent:
@@ -849,6 +849,18 @@
   --c--components--forms-checkbox--font-size: var(
     --c--globals--font--sizes--sm
   );
+  --c--components--forms-input--border-radius: 4px;
+  --c--components--forms-input--border-radius--hover: 4px;
+  --c--components--forms-input--border-radius--focus: 4px;
+  --c--components--forms-select--border-radius: 4px;
+  --c--components--forms-select--border-radius--hover: 4px;
+  --c--components--forms-select--border-radius--focus: 4px;
+  --c--components--forms-textarea--border-radius: 4px;
+  --c--components--forms-textarea--border-radius--hover: 4px;
+  --c--components--forms-textarea--border-radius--focus: 4px;
+  --c--components--forms-datepicker--border-radius: 4px;
+  --c--components--forms-datepicker--border-radius--hover: 4px;
+  --c--components--forms-datepicker--border-radius--focus: 4px;
   --c--components--badge--font-size: var(--c--globals--font--sizes--xs);
   --c--components--badge--border-radius: 12px;
   --c--components--badge--padding-inline: var(--c--globals--spacings--xs);
@@ -1731,7 +1743,6 @@
   --c--globals--font--sizes--xs-alt: 3rem;
   --c--globals--font--weights--thin: 100;
   --c--globals--font--weights--extrabold: 800;
-  --c--globals--font--weights--black: 900;
   --c--globals--font--families--accent:
     marianne, inter variable, roboto flex variable, sans-serif;
   --c--globals--font--families--base:
@@ -2539,6 +2550,18 @@
   --c--components--forms-checkbox--font-size: var(
     --c--globals--font--sizes--sm
   );
+  --c--components--forms-input--border-radius: 4px;
+  --c--components--forms-input--border-radius--hover: 4px;
+  --c--components--forms-input--border-radius--focus: 4px;
+  --c--components--forms-select--border-radius: 4px;
+  --c--components--forms-select--border-radius--hover: 4px;
+  --c--components--forms-select--border-radius--focus: 4px;
+  --c--components--forms-textarea--border-radius: 4px;
+  --c--components--forms-textarea--border-radius--hover: 4px;
+  --c--components--forms-textarea--border-radius--focus: 4px;
+  --c--components--forms-datepicker--border-radius: 4px;
+  --c--components--forms-datepicker--border-radius--hover: 4px;
+  --c--components--forms-datepicker--border-radius--focus: 4px;
   --c--components--badge--font-size: var(--c--globals--font--sizes--xs);
   --c--components--badge--border-radius: 12px;
   --c--components--badge--padding-inline: var(--c--globals--spacings--xs);

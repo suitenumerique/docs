@@ -8,12 +8,16 @@
 body {
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 /* stylelint-disable-next-line selector-id-pattern */
 body > #__next > .c__app > div:has(> .c__loader) {
   min-height: 100vh;
   width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 * {

@@ -70,6 +70,7 @@
 
 .c__modal__title {
   padding: 0;
+  display: block;
 }
 
 .c__modal__footer {

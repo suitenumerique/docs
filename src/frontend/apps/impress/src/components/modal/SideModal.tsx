@@ -49,7 +49,7 @@ export const SideModal = ({
   return (
     <>
       <SideModalStyle width={width} side={side} $css={$css} />
-      <Modal {...modalProps} size={ModalSize.FULL}>
+      <Modal {...modalProps} size={ModalSize.FULL} variant="default">
         {children}
       </Modal>
     </>
