@@ -36,7 +36,6 @@ if (!isInitialized && !i18next.isInitialized) {
       lowerCaseLng: true,
       nsSeparator: false,
       keySeparator: false,
-      showSupportNotice: false,
     })
     .then(() => {
       if (typeof document !== 'undefined') {
