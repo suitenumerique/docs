@@ -39,7 +39,13 @@ const withMultiColumnNoDropHandler = <
   });
 };
 
-let modulesXL = undefined;
+type ModulesXL =
+  | (Omit<typeof XLMultiColumn, 'withMultiColumn'> & {
+      withMultiColumn: typeof withMultiColumnNoDropHandler;
+    })
+  | undefined;
+
+let modulesXL: ModulesXL = undefined;
 if (process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false') {
   modulesXL = {
     ...XLMultiColumn,
@@ -47,10 +53,4 @@ if (process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false') {
   };
 }
 
-type ModulesXL =
-  | (Omit<typeof XLMultiColumn, 'withMultiColumn'> & {
-      withMultiColumn: typeof withMultiColumnNoDropHandler;
-    })
-  | undefined;
-
-export default modulesXL as ModulesXL;
+export default modulesXL;

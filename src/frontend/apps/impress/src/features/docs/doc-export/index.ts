@@ -16,6 +16,4 @@ if (process.env.NEXT_PUBLIC_PUBLISH_AS_MIT === 'false') {
   };
 }
 
-type ModulesExport = typeof modulesExport;
-
-export default modulesExport as ModulesExport;
+export default modulesExport;

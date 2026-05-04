@@ -50,7 +50,7 @@ export class RequestSerializer {
 
   public static arrayBufferToString(buffer: ArrayBufferLike) {
     const decoder = new TextDecoder();
-    return decoder.decode(buffer as ArrayBuffer);
+    return decoder.decode(buffer);
   }
 
   public static arrayBufferToJson<T>(buffer: ArrayBufferLike) {

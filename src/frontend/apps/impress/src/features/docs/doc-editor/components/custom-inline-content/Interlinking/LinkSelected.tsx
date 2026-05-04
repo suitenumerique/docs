@@ -41,7 +41,7 @@ export const LinkSelected = ({
   const router = useRouter();
   const href = `/docs/${docId}/`;
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     // If ctrl or command is pressed, it opens a new tab. If shift is pressed, it opens a new window
@@ -53,7 +53,7 @@ export const LinkSelected = ({
   };
 
   // This triggers on middle-mouse click
-  const handleAuxClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleAuxClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (e.button !== 1) {
       return;
     }

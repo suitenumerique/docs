@@ -67,7 +67,7 @@ export class DocsThreadStore extends ThreadStore {
         continue;
       }
 
-      const state = states.get(clientId) as
+      const state:
         | {
             [DocsThreadStore.COMMENTS_PING]?: {
               at: number;
@@ -76,7 +76,7 @@ export class DocsThreadStore extends ThreadStore {
               threadId: string;
             };
           }
-        | undefined;
+        | undefined = states.get(clientId);
 
       const ping = state?.commentsPing;
 

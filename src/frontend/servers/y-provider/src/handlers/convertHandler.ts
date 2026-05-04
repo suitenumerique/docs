@@ -62,7 +62,7 @@ const readers: InputReader[] = [
       const ydoc = new Y.Doc();
       try {
         Y.applyUpdate(ydoc, data);
-        return editor.yDocToBlocks(ydoc, 'document-store') as PartialBlock[];
+        return editor.yDocToBlocks(ydoc, 'document-store');
       } finally {
         ydoc.destroy();
       }

@@ -244,7 +244,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
               <Icon iconName="download" $color="inherit" aria-hidden={true} />
             }
             onClick={(e) => {
-              addLastFocus(e.currentTarget as HTMLElement);
+              addLastFocus(e.currentTarget);
               setIsModalExportOpen(true);
             }}
             size={isSmallMobile ? 'small' : 'medium'}

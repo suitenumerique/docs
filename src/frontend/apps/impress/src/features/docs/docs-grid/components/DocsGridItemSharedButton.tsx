@@ -50,7 +50,7 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            addLastFocus(event.currentTarget as HTMLElement);
+            addLastFocus(event.currentTarget);
             shareModal.open();
           }}
           color="brand"

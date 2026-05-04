@@ -15,7 +15,7 @@ const mockServiceWorkerScope = {
 (global as any).self = {
   ...global,
   clients: mockServiceWorkerScope.clients,
-} as unknown as ServiceWorkerGlobalScope;
+};
 
 describe('OfflinePlugin', () => {
   afterEach(() => vi.clearAllMocks());

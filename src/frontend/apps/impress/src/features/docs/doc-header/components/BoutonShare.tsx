@@ -68,7 +68,7 @@ export const BoutonShare = ({
             />
           }
           onClick={(e) => {
-            addLastFocus(e.currentTarget as HTMLElement);
+            addLastFocus(e.currentTarget);
             open();
           }}
           size="medium"
@@ -85,7 +85,7 @@ export const BoutonShare = ({
       color="brand"
       variant="tertiary"
       onClick={(e) => {
-        addLastFocus(e.currentTarget as HTMLElement);
+        addLastFocus(e.currentTarget);
         open();
       }}
       size="medium"

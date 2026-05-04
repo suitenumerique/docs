@@ -11,7 +11,7 @@ import {
   useToastProvider,
 } from '@gouvfr-lasuite/cunningham-react';
 import { DocumentProps, pdf } from '@react-pdf/renderer';
-import jsonemoji from 'emoji-datasource-apple' assert { type: 'json' };
+import jsonemoji from 'emoji-datasource-apple' with { type: 'json' };
 import i18next from 'i18next';
 import JSZip from 'jszip';
 import { cloneElement, isValidElement, useState } from 'react';
