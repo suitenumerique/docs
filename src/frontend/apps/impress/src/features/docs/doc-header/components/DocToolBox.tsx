@@ -1,5 +1,5 @@
 import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
-import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { Present, useTreeContext } from '@gouvfr-lasuite/ui-kit';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -79,6 +79,14 @@ const ModalExport =
       )
     : null;
 
+const PresenterOverlay = dynamic(
+  () =>
+    import('@/docs/doc-presenter').then((mod) => ({
+      default: mod.PresenterOverlay,
+    })),
+  { ssr: false },
+);
+
 interface DocToolBoxProps {
   doc: Doc;
 }
@@ -93,6 +101,7 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
 
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
+  const [isPresenterOpen, setIsPresenterOpen] = useState(false);
   const selectHistoryModal = useModal();
   const modalShare = useModal();
 
@@ -175,6 +184,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
       },
       showSeparator: true,
       show: !emoji && doc.abilities.partial_update && !isTopRoot,
+    },
+    {
+      label: t('Present'),
+      icon: <Present />,
+      callback: () => {
+        setIsPresenterOpen(true);
+      },
+      show: !doc.deleted_at && !isSmallMobile,
+      testId: `docs-actions-present-${doc.id}`,
     },
     {
       label: t('Copy link'),
@@ -318,6 +336,15 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
             restoreFocus();
           }}
           doc={doc}
+        />
+      )}
+      {isPresenterOpen && (
+        <PresenterOverlay
+          doc={doc}
+          onClose={() => {
+            setIsPresenterOpen(false);
+            restoreFocus();
+          }}
         />
       )}
     </Box>
