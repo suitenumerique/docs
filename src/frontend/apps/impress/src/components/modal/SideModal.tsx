@@ -1,5 +1,9 @@
-import { Modal, ModalSize } from '@gouvfr-lasuite/cunningham-react';
-import { ComponentPropsWithRef, PropsWithChildren } from 'react';
+import {
+  Modal,
+  ModalDefaultVariantProps,
+  ModalSize,
+} from '@gouvfr-lasuite/cunningham-react';
+import { PropsWithChildren } from 'react';
 import { createGlobalStyle } from 'styled-components';
 
 interface SideModalStyleProps {
@@ -35,7 +39,7 @@ const SideModalStyle = createGlobalStyle<SideModalStyleProps>`
   }
 `;
 
-type SideModalType = Omit<ComponentPropsWithRef<typeof Modal>, 'size'>;
+type SideModalType = Omit<ModalDefaultVariantProps, 'size'>;
 
 type SideModalProps = SideModalType & Partial<SideModalStyleProps>;
 

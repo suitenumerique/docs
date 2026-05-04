@@ -2,7 +2,7 @@ import {
   Button,
   ButtonProps,
   Modal,
-  ModalProps,
+  ModalDefaultVariantProps,
   ModalSize,
 } from '@gouvfr-lasuite/cunningham-react';
 import { ReactNode, useEffect } from 'react';
@@ -20,7 +20,7 @@ export type AlertModalProps = {
   title: string;
   cancelLabel?: string;
   confirmLabel?: string;
-} & Partial<ModalProps>;
+} & Partial<ModalDefaultVariantProps>;
 
 export const AlertModal = ({
   cancelLabel,
