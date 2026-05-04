@@ -372,7 +372,7 @@ export const tokens = {
             medium: 500,
             bold: 600,
             extrabold: 800,
-            black: 900,
+            black: 800,
           },
           families: {
             base: 'Inter Variable, Roboto Flex Variable, sans-serif',
@@ -664,6 +664,26 @@ export const tokens = {
           'body--background-color-hover': '#F0F0F3',
         },
         'forms-checkbox': { 'font-size': '0.875rem' },
+        'forms-input': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
+        'forms-select': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
+        'forms-textarea': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
+        'forms-datepicker': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
         badge: {
           'font-size': '0.75rem',
           'border-radius': '12px',
@@ -1334,7 +1354,7 @@ export const tokens = {
             'sm-alt': '3.5rem',
             'xs-alt': '3rem',
           },
-          weights: { thin: 100, extrabold: 800, black: 900 },
+          weights: { thin: 100, extrabold: 800 },
           families: {
             accent:
               'Marianne, Inter Variable, Roboto Flex Variable, sans-serif',
@@ -1948,6 +1968,26 @@ export const tokens = {
           'body--background-color-hover': '#F0F0F3',
         },
         'forms-checkbox': { 'font-size': '0.875rem' },
+        'forms-input': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
+        'forms-select': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
+        'forms-textarea': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
+        'forms-datepicker': {
+          'border-radius': '4px',
+          'border-radius--hover': '4px',
+          'border-radius--focus': '4px',
+        },
         badge: {
           'font-size': '0.75rem',
           'border-radius': '12px',
