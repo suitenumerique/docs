@@ -6,9 +6,13 @@ and this project adheres to
 
 ## [Unreleased]
 
-### Changed
+### Fixed
 
 - 🐛(frontend) sanitize pasted and dropped content in document title #2210
+- 🐛(frontend) Emoji menu doesn't display above comment box #2229
+- 🐛(frontend) Block menu doesn't stay open on 1st line #2229 
+- 🐛(frontend) The "+" on the first line of a new doc doesn't work #2229
+
 
 ## [v5.0.0] - 2026-04-08
 

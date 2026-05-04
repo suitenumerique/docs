@@ -84,7 +84,7 @@ const PRINT_ONLY_CONTENT_CSS = `
 
   /* Ensure BlockNote content flows properly */
   .bn-editor,
-  .bn-container,
+  .bn-root,
   .--docs--main-editor,
   .bn-block-outer {
     height: auto !important;

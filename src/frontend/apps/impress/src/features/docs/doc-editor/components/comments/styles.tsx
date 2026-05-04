@@ -1,11 +1,11 @@
-import { css } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 
-export const cssComments = (
-  canSeeComment: boolean,
-  currentUserAvatarUrl?: string,
-) => css`
-  & .--docs--main-editor,
-  & .--docs--main-editor .ProseMirror {
+export const DocsCommentsStyle = createGlobalStyle<{
+  canSeeComment: boolean;
+  currentUserAvatarUrl?: string;
+}>`
+  .--docs--main-editor.bn-root,
+  .--docs--main-editor.bn-root .ProseMirror {
     // Comments marks in the editor
     .bn-editor {
       // Resets blocknote comments styles
@@ -14,30 +14,31 @@ export const cssComments = (
         background-color: transparent;
       }
 
-      ${canSeeComment &&
-      css`
-        .bn-thread-mark:not([data-orphan='true']) {
-          background-color: color-mix(
-            in srgb,
-            var(--c--contextuals--background--palette--yellow--tertiary) 40%,
-            transparent
-          );
-          border-bottom: 2px solid
-            var(--c--contextuals--background--palette--yellow--secondary);
-
-          mix-blend-mode: multiply;
-
-          transition:
-            background-color var(--c--globals--transitions--duration),
-            border-bottom-color var(--c--globals--transitions--duration);
-
-          &:has(.bn-thread-mark-selected) {
-            background-color: var(
-              --c--contextuals--background--palette--yellow--tertiary
+      ${({ canSeeComment }) =>
+        canSeeComment &&
+        css`
+          .bn-thread-mark:not([data-orphan='true']) {
+            background-color: color-mix(
+              in srgb,
+              var(--c--contextuals--background--palette--yellow--tertiary) 40%,
+              transparent
             );
+            border-bottom: 2px solid
+              var(--c--contextuals--background--palette--yellow--secondary);
+
+            mix-blend-mode: multiply;
+
+            transition:
+              background-color var(--c--globals--transitions--duration),
+              border-bottom-color var(--c--globals--transitions--duration);
+
+            &:has(.bn-thread-mark-selected) {
+              background-color: var(
+                --c--contextuals--background--palette--yellow--tertiary
+              );
+            }
           }
-        }
-      `}
+        `}
 
       [data-show-selection] {
         color: HighlightText;
@@ -82,6 +83,8 @@ export const cssComments = (
 
       .bn-thread-comment {
         padding: 8px;
+        flex-wrap: nowrap;
+        gap: 0px;
 
         & .bn-editor {
           padding-left: var(--c--globals--spacings--lg);
@@ -105,10 +108,14 @@ export const cssComments = (
 
         // Top bar (Name / Date / Actions) when actions displayed
         &:has(.bn-comment-actions) {
-          & > .mantine-Group-root {
-            max-width: 70%;
+          & > .mantine-Group-root:first-child {
             right: 0.3rem !important;
             top: 0.3rem !important;
+            background: linear-gradient(
+              to left,
+              #fff 90%,
+              rgba(255, 255, 255, 0) 100%
+            );
           }
 
           .bn-menu-dropdown {
@@ -124,7 +131,6 @@ export const cssComments = (
 
           // Date
           span.mantine-focus-auto {
-            display: inline-block;
           }
 
           .bn-comment-actions {
@@ -150,7 +156,8 @@ export const cssComments = (
         }
 
         // Actions button edit comment
-        .bn-container + .bn-comment-actions-wrapper {
+        .bn-root + .bn-comment-actions-wrapper {
+          margin-top: var(--c--globals--spacings--2xs);
           .bn-comment-actions {
             flex-direction: row-reverse;
             background: none;
@@ -201,9 +208,8 @@ export const cssComments = (
           width: 26px;
           height: 26px;
           flex: 0 0 26px;
-          background-image: ${currentUserAvatarUrl
-            ? `url("${currentUserAvatarUrl}")`
-            : 'none'};
+          background-image: ${({ currentUserAvatarUrl }) =>
+            currentUserAvatarUrl ? `url("${currentUserAvatarUrl}")` : 'none'};
           background-position: center;
           background-repeat: no-repeat;
           background-size: cover;
