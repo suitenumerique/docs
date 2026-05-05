@@ -12,6 +12,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) interlinking are exported correctly in print mode #2269
 - 💬(frontend) add missing link in onboarding description #2233
 - 🐛(frontend) sanitize pasted and dropped content in document title #2210
 - 🐛(frontend) Emoji menu doesn't display above comment box #2229
@@ -20,7 +21,7 @@ and this project adheres to
 
 ### Security
 
-- 🔒️(frontend) sanitize color during collaboration#2270
+- 🔒️(frontend) sanitize color during collaboration #2270
 
 
 ## [v5.0.0] - 2026-04-08

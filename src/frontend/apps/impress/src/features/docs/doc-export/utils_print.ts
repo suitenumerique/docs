@@ -28,7 +28,8 @@ const PRINT_ONLY_CONTENT_CSS = `
   [role="contentinfo"],
   div[data-is-empty-and-focused="true"],
   div[data-floating-ui-focusable],
-  .collaboration-cursor-custom__base
+  .collaboration-cursor-custom__base,
+  .c__toast__container
    {
     display: none !important;
   }
@@ -243,6 +244,50 @@ function wrapMediaWithLink() {
   };
 }
 
+/**
+ * Wraps interlink inline content with anchor tags for printing,
+ * so they appear as clickable links in the printed PDF.
+ */
+function wrapInterlinksWithAnchor() {
+  const wrappedElements: Array<{
+    el: Element;
+    anchor: HTMLAnchorElement;
+    parent: Node;
+  }> = [];
+
+  document
+    .querySelectorAll('.--docs--interlinking-link-inline-content[data-href]')
+    .forEach((el) => {
+      const href = el.getAttribute('data-href');
+      if (!href || !isSafeUrl(href)) {
+        return;
+      }
+
+      const parent = el.parentNode;
+      if (!parent) {
+        return;
+      }
+
+      const anchor = document.createElement('a');
+      anchor.href = href;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      anchor.setAttribute('data-print-link', 'true');
+
+      parent.insertBefore(anchor, el);
+      anchor.appendChild(el);
+
+      wrappedElements.push({ el, anchor, parent });
+    });
+
+  return () => {
+    wrappedElements.forEach(({ el, anchor, parent }) => {
+      parent.insertBefore(el, anchor);
+      anchor.remove();
+    });
+  };
+}
+
 export function printDocumentWithStyles() {
   if (typeof window === 'undefined') {
     return;
@@ -253,7 +298,9 @@ export function printDocumentWithStyles() {
   // Small delay to ensure styles are applied
   setTimeout(() => {
     const cleanupLinks = wrapMediaWithLink();
+    const cleanupInterlinks = wrapInterlinksWithAnchor();
     const cleanup = () => {
+      cleanupInterlinks();
       cleanupLinks();
       cleanupPrintStyles();
     };

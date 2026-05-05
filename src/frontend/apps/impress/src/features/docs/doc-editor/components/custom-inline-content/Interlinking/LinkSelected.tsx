@@ -66,6 +66,7 @@ export const LinkSelected = ({
     <BoxButton
       as="span"
       className="--docs--interlinking-link-inline-content"
+      data-href={href}
       onClick={handleClick}
       onAuxClick={handleAuxClick}
       draggable="false"
