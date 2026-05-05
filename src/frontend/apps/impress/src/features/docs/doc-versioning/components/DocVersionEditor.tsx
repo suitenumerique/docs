@@ -85,15 +85,14 @@ export const DocVersionEditor = ({
   return (
     <DocEditorContainer
       docHeader={<DocVersionHeader />}
-      docEditor={
-        <BlockNoteReader
-          initialContent={initialContent}
-          docId={version.id}
-          isMainEditor={false}
-        />
-      }
       isDeletedDoc={false}
       readOnly={true}
-    />
+    >
+      <BlockNoteReader
+        initialContent={initialContent}
+        docId={version.id}
+        isMainEditor={false}
+      />
+    </DocEditorContainer>
   );
 };

@@ -185,23 +185,23 @@ test.describe('Doc Version', () => {
 
     await page.getByLabel('Restore', { exact: true }).click();
 
-    await page.waitForTimeout(500);
+    const mainEditor = page.getByLabel('Document editor');
 
-    await expect(editor.getByText('Hello')).toBeVisible();
-    await expect(editor.getByText('World')).toBeHidden();
+    await expect(mainEditor.getByText('Hello')).toBeVisible();
+    await expect(mainEditor.getByText('World')).toBeHidden();
 
     // The old comment is not restored
-    await expect(editor.getByText('Hello')).toHaveCSS(
+    await expect(mainEditor.getByText('Hello')).toHaveCSS(
       'background-color',
       'rgba(0, 0, 0, 0)',
     );
 
     // We can add a new comment
-    await editor.getByText('Hello').selectText();
+    await mainEditor.getByText('Hello').selectText();
     await page.getByRole('button', { name: 'Add comment' }).click();
 
     await thread.getByRole('paragraph').first().fill('This is a comment');
     await thread.locator('[data-test="save"]').click();
-    await expect(editor.getByText('Hello')).toHaveClass('bn-thread-mark');
+    await expect(mainEditor.getByText('Hello')).toHaveClass('bn-thread-mark');
   });
 });

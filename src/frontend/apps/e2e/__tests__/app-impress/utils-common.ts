@@ -131,42 +131,64 @@ export const createDoc = async (
       await openHeaderMenu(page);
     }
 
+    const responsePromiseCreateDoc = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/v1.0/documents/') &&
+        response.status() === 201 &&
+        response.request().method() === 'POST',
+    );
+
     await page
       .getByRole('button', {
         name: 'New doc',
       })
       .click();
 
+    await page.waitForURL('**/docs/**', {
+      timeout: 10000,
+      waitUntil: 'networkidle',
+    });
+
+    const responseCreateDoc = await responsePromiseCreateDoc;
+    expect(responseCreateDoc.ok()).toBeTruthy();
+    const { id: docId } = (await responseCreateDoc.json()) as { id: string };
+
+    const responsePromiseUpdateDoc = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/v1.0/documents/${docId}`) &&
+        response.status() === 200 &&
+        response.request().method() === 'PATCH',
+    );
+
     const input = page.getByLabel('Document title');
     await expect(input).toBeVisible({
       timeout: 10000,
     });
-    await expect(input).toHaveText('');
+    await expect(input).toHaveText('', {
+      timeout: 10000,
+    });
 
     await input.fill(randomDocs[i]);
-    await input.blur();
+    void input.blur();
+
+    const responseUpdateDoc = await responsePromiseUpdateDoc;
+    expect(responseUpdateDoc.ok()).toBeTruthy();
   }
 
   return randomDocs;
 };
 
 export const verifyDocName = async (page: Page, docName: string) => {
-  await expect(
-    page.getByLabel('It is the card information about the document.'),
-  ).toBeVisible({
+  const card = page.getByLabel(
+    'It is the card information about the document.',
+  );
+  await expect(card).toBeVisible({
     timeout: 10000,
   });
 
-  /*replace toHaveText with toContainText to handle cases where emojis or other characters might be added*/
-  try {
-    await expect(
-      page.getByRole('textbox', { name: 'Document title' }),
-    ).toContainText(docName, {
-      timeout: 3000,
-    });
-  } catch {
-    await expect(page.getByRole('heading', { name: docName })).toBeVisible();
-  }
+  await expect(card).toHaveText(new RegExp(docName), {
+    timeout: 10000,
+  });
 };
 
 export const getGridRow = async (page: Page, title: string) => {
@@ -228,11 +250,9 @@ export const updateDocTitle = async (page: Page, title: string) => {
   const input = page.getByRole('textbox', { name: 'Document title' });
   await expect(input).toHaveText('');
   await expect(input).toBeVisible();
-  await input.click();
   await input.fill(title, {
     force: true,
   });
-  await input.click();
   await input.blur();
   await verifyDocName(page, title);
 };
@@ -248,10 +268,11 @@ export const waitForResponseCreateDoc = (page: Page) => {
 
 export const mockedDocument = async (page: Page, data: object) => {
   // document/[ID]/ or document/[ID]/tree/ routes
-  const uuid = crypto.randomUUID();
+  let uuid: string | undefined;
   await page.route(/.*\/documents\/[^/]+\/(?:$|tree\/.*)/, async (route) => {
     const request = route.request();
     if (request.method().includes('GET') && !request.url().includes('page=')) {
+      uuid = request.url().match(/\/documents\/([^/]+)\//)?.[1];
       const { abilities, ...doc } = data as unknown as {
         abilities?: Record<string, unknown>;
       };

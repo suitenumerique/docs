@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ⚡️(frontend) add skeleton on content loading #2254
+
 ### Fixed
 
 - 🐛(frontend) sanitize pasted and dropped content in document title #2210

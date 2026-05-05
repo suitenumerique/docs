@@ -104,6 +104,9 @@ test.describe('Doc Header', () => {
       browserName,
       1,
     );
+
+    await writeInEditor({ page, text: 'Hello Content' });
+
     await page.getByRole('button', { name: 'Share' }).click();
     await updateShareLink(page, 'Public', 'Editing');
 
@@ -116,7 +119,9 @@ test.describe('Doc Header', () => {
       docTitle,
     });
 
-    // Wait for other page to sync
+    await expect(otherPage.getByText('Hello Content')).toBeVisible();
+
+    // Wait for other page to broadcast sync
     await page.waitForTimeout(1000);
 
     await page.keyboard.press('Escape');
@@ -124,9 +129,8 @@ test.describe('Doc Header', () => {
     await expect(elTitle).toBeVisible();
     await elTitle.fill('Hello World');
     await elTitle.blur();
-    await verifyDocName(page, 'Hello World');
 
-    // Wait for other page to sync
+    // Wait for other page to broadcast sync
     await page.waitForTimeout(1000);
 
     // Check other user page
@@ -531,7 +535,7 @@ test.describe('Doc Header', () => {
       browserName === 'webkit',
       'navigator.clipboard is not working with webkit and playwright',
     );
-    const uuid = await mockedDocument(page, {
+    await mockedDocument(page, {
       abilities: {
         destroy: false, // Means owner
         link_configuration: true,
@@ -552,7 +556,6 @@ test.describe('Doc Header', () => {
       name: 'Share',
       exact: true,
     });
-    await expect(shareButton).toBeVisible();
 
     await shareButton.click();
     await page.getByRole('button', { name: 'Copy link' }).click();
@@ -563,8 +566,8 @@ test.describe('Doc Header', () => {
     );
     const clipboardContent = await handle.jsonValue();
 
-    const origin = await page.evaluate(() => window.location.origin);
-    expect(clipboardContent.trim()).toMatch(`${origin}/docs/${uuid}/`);
+    const url = page.url();
+    expect(clipboardContent.trim()).toMatch(url);
   });
 
   test('it pins a document', async ({ page, browserName }) => {

@@ -688,15 +688,11 @@ test.describe('Doc Editor', () => {
   test('it checks interlink feature', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-interlink', browserName, 1);
 
-    await verifyDocName(page, randomDoc);
-
     const { name: docChild1 } = await createRootSubPage(
       page,
       browserName,
       'doc-interlink-child-1',
     );
-
-    await verifyDocName(page, docChild1);
 
     const { name: docChild2 } = await createRootSubPage(
       page,
@@ -704,9 +700,11 @@ test.describe('Doc Editor', () => {
       'doc-interlink-child-2',
     );
 
-    await verifyDocName(page, docChild2);
-
     const treeRow = await getTreeRow(page, docChild2);
+
+    // To let the time for the emoji-picker to load
+    await page.waitForTimeout(500);
+
     await treeRow.locator('.--docs--doc-icon').click();
     await page.getByRole('button', { name: '😀' }).first().click();
 

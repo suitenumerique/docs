@@ -1,21 +1,24 @@
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
+import { css } from 'styled-components';
 
-import { Box, Loading } from '@/components';
+import { Box } from '@/components';
 import { DocHeader } from '@/docs/doc-header/';
 import {
   Doc,
   LinkReach,
   getDocLinkReach,
-  useCollaboration,
   useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
 import { TableContent } from '@/docs/doc-table-content/';
 import { useAuth } from '@/features/auth/';
-import { useSkeletonStore } from '@/features/skeletons';
+import { SkeletonEditorCore, useSkeletonStore } from '@/features/skeletons';
+import { useSkeletonFadeOut } from '@/features/skeletons/hooks/useFadeOut';
 import { useAnalytics } from '@/libs';
 import { useResponsiveStore } from '@/stores';
+
+import { useCollaboration } from '../hook/useCollaboration';
 
 import { BlockNoteEditor, BlockNoteReader } from './BlockNoteEditor';
 
@@ -23,17 +26,16 @@ const DOCS_EDITOR_CLASS = '--docs--doc-editor';
 
 interface DocEditorContainerProps {
   docHeader: React.ReactNode;
-  docEditor: React.ReactNode;
   isDeletedDoc: boolean;
   readOnly: boolean;
 }
 
 export const DocEditorContainer = ({
+  children,
   docHeader,
-  docEditor,
   isDeletedDoc,
   readOnly,
-}: DocEditorContainerProps) => {
+}: PropsWithChildren<DocEditorContainerProps>) => {
   const { isDesktop } = useResponsiveStore();
 
   return (
@@ -68,7 +70,7 @@ export const DocEditorContainer = ({
               })}
               $height="100%"
             >
-              {docEditor}
+              {children}
             </Box>
           </Box>
         </Box>
@@ -84,23 +86,19 @@ interface DocEditorProps {
 export const DocEditor = ({ doc }: DocEditorProps) => {
   useCollaboration(doc.id);
   const { isDesktop } = useResponsiveStore();
-  const { provider, isReady } = useProviderStore();
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
   const readOnly =
     !doc.abilities.partial_update || !isEditable || isLoading || isDeletedDoc;
-  const { setIsSkeletonVisible } = useSkeletonStore();
-  const isProviderReady = isReady && provider;
   const { trackEvent } = useAnalytics();
   const [hasTracked, setHasTracked] = useState(false);
   const { authenticated } = useAuth();
   const isPublicDoc = getDocLinkReach(doc) === LinkReach.PUBLIC;
+  const { setIsSkeletonVisible } = useSkeletonStore();
 
   useEffect(() => {
-    if (isProviderReady) {
-      setIsSkeletonVisible(false);
-    }
-  }, [isProviderReady, setIsSkeletonVisible]);
+    setIsSkeletonVisible(false);
+  }, [setIsSkeletonVisible, doc.id]);
 
   /**
    * Track doc view event only once per doc change
@@ -126,30 +124,57 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
     });
   }, [authenticated, hasTracked, isPublicDoc, trackEvent]);
 
-  if (!isProviderReady || provider?.configuration.name !== doc.id) {
-    return <Loading />;
-  }
-
   return (
     <>
       {isDesktop && <TableContent selector={`.${DOCS_EDITOR_CLASS}`} />}
       <DocEditorContainer
         docHeader={<DocHeader doc={doc} />}
-        docEditor={
-          readOnly ? (
-            <BlockNoteReader
-              initialContent={provider.document.getXmlFragment(
-                'document-store',
-              )}
-              docId={doc.id}
-            />
-          ) : (
-            <BlockNoteEditor doc={doc} provider={provider} />
-          )
-        }
         isDeletedDoc={isDeletedDoc}
         readOnly={readOnly}
-      />
+      >
+        <DocCoreEditor doc={doc} readOnly={readOnly} />
+      </DocEditorContainer>
     </>
   );
+};
+
+interface DocCoreEditorProps {
+  doc: Doc;
+  readOnly: boolean;
+}
+
+export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
+  useCollaboration(doc.id);
+  const { provider, isReady } = useProviderStore();
+  const isProviderReady = isReady && provider;
+  const showContent = !!(
+    isProviderReady && provider?.configuration.name === doc.id
+  );
+  const { skeletonVisible, isFadingOut } = useSkeletonFadeOut(showContent);
+
+  if (
+    skeletonVisible ||
+    !isProviderReady ||
+    provider?.configuration.name !== doc.id
+  ) {
+    return (
+      <SkeletonEditorCore
+        isFadingOut={isFadingOut}
+        $css={css`
+          padding-top: 0px;
+        `}
+      />
+    );
+  }
+
+  if (readOnly) {
+    return (
+      <BlockNoteReader
+        initialContent={provider.document.getXmlFragment('document-store')}
+        docId={doc.id}
+      />
+    );
+  }
+
+  return <BlockNoteEditor doc={doc} provider={provider} />;
 };

@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import { useCollaborationUrl } from '@/core/config';
+import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
 import {
   KEY_DOC_CONTENT,
   useDocContent,
@@ -10,13 +11,15 @@ import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore'
 import { useIsOffline } from '@/features/service-worker/hooks/useOffline';
 import { useBroadcastStore } from '@/stores/useBroadcastStore';
 
-import { KEY_DOC } from '../api';
-
 export const useCollaboration = (room: string) => {
   const collaborationUrl = useCollaborationUrl(room);
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
-  const { setBroadcastProvider, cleanupBroadcast } = useBroadcastStore();
+  const {
+    setBroadcastProvider,
+    cleanupBroadcast,
+    provider: broadcastProvider,
+  } = useBroadcastStore();
   const {
     provider,
     createProvider,
@@ -65,7 +68,7 @@ export const useCollaboration = (room: string) => {
    * when the document visibility changes.
    */
   useEffect(() => {
-    if (!room || !isReady) {
+    if (!room || broadcastProvider?.document?.guid !== room) {
       return;
     }
 
@@ -74,7 +77,7 @@ export const useCollaboration = (room: string) => {
         queryKey: [KEY_DOC, { id: room }],
       });
     });
-  }, [addTask, room, queryClient, isReady]);
+  }, [addTask, room, queryClient, broadcastProvider?.document?.guid]);
 
   /**
    * Set the provider when the collaboration URL and the document content are available.

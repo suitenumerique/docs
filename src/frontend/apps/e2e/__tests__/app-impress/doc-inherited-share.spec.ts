@@ -31,6 +31,8 @@ test.describe('Inherited share accesses', () => {
       .getByRole('link')
       .click();
 
+    await page.getByRole('button', { name: 'close' }).first().click();
+
     await verifyDocName(page, parentTitle);
   });
 

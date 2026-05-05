@@ -109,5 +109,7 @@ export const useBroadcastStore = create<BroadcastState>((set, get) => ({
     Object.values(get().tasks).forEach(({ task, observer }) => {
       task.unobserve(observer);
     });
+
+    set({ tasks: {}, provider: undefined });
   },
 }));
