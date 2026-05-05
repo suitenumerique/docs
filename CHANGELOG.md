@@ -18,6 +18,10 @@ and this project adheres to
 - 🐛(frontend) Block menu doesn't stay open on 1st line #2229 
 - 🐛(frontend) The "+" on the first line of a new doc doesn't work #2229
 
+### Security
+
+- 🔒️(frontend) sanitize color during collaboration#2270
+
 
 ## [v5.0.0] - 2026-04-08
 

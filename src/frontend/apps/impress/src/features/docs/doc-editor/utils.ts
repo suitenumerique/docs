@@ -1,3 +1,9 @@
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
+
+export const sanitizeColor = (color: string): string => {
+  return HEX_COLOR_REGEX.test(color) ? color : randomColor();
+};
+
 export const randomColor = () => {
   const randomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;

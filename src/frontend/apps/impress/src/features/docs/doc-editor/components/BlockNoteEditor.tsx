@@ -36,7 +36,7 @@ import {
 import { useEditorStore } from '../stores';
 import { DocsEditorStyle } from '../styles';
 import { DocsBlockNoteEditor } from '../types';
-import { randomColor } from '../utils';
+import { randomColor, sanitizeColor } from '../utils';
 
 import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
@@ -152,12 +152,13 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
          */
         renderCursor: (user: { color: string; name: string }) => {
           const cursorElement = document.createElement('span');
+          const safeColor = sanitizeColor(user.color);
 
           cursorElement.classList.add('collaboration-cursor-custom__base');
           const caretElement = document.createElement('span');
           caretElement.classList.add('collaboration-cursor-custom__caret');
           caretElement.setAttribute('spellcheck', `false`);
-          caretElement.setAttribute('style', `background-color: ${user.color}`);
+          caretElement.setAttribute('style', `background-color: ${safeColor}`);
 
           if (showCursorLabels === 'always') {
             cursorElement.setAttribute('data-active', '');
@@ -169,7 +170,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
           labelElement.setAttribute('spellcheck', `false`);
           labelElement.setAttribute(
             'style',
-            `background-color: ${user.color};border: 1px solid ${user.color};`,
+            `background-color: ${safeColor};border: 1px solid ${safeColor};`,
           );
           labelElement.insertBefore(document.createTextNode(user.name), null);
 
