@@ -19,7 +19,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import URLValidator
-from django.db import connection, transaction
+from django.db import IntegrityError, connection, transaction
 from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Greatest, Left, Length
@@ -708,18 +708,18 @@ class DocumentViewSet(
                     {"file": ["Could not convert file content"]}
                 ) from err
 
-        with transaction.atomic():
-            # locks the table to ensure safe concurrent access
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
-                    "IN SHARE ROW EXCLUSIVE MODE;"
-                )
-
-            obj = models.Document.add_root(
-                creator=self.request.user,
-                **serializer.validated_data,
-            )
+        while True:
+            try:
+                with transaction.atomic():
+                    obj = models.Document.add_root(
+                        creator=self.request.user,
+                        **serializer.validated_data,
+                    )
+                break
+            except IntegrityError as e:
+                if "impress_document_path_key" not in str(e):
+                    raise
+                logger.warning("Path key conflict when creating document, retrying...")
         serializer.instance = obj
         models.DocumentAccess.objects.create(
             document=obj,

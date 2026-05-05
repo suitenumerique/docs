@@ -10,6 +10,10 @@ and this project adheres to
 
 - ⚡️(frontend) add skeleton on content loading #2254
 
+### Changed
+
+- 🧵(backend) remove lock from db table #2272
+
 ### Fixed
 
 - 💬(frontend) add missing link in onboarding description #2233

@@ -4,10 +4,11 @@
 import binascii
 import mimetypes
 from base64 import b64decode
+from logging import getLogger
 from os.path import splitext
 
 from django.conf import settings
-from django.db import connection, transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils.functional import lazy
 from django.utils.text import slugify
@@ -24,6 +25,8 @@ from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+
+logger = getLogger(__name__)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -467,18 +470,18 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 {"content": ["Could not convert content"]}
             ) from err
 
-        with transaction.atomic():
-            # locks the table to ensure safe concurrent access
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
-                    "IN SHARE ROW EXCLUSIVE MODE;"
-                )
-
-            document = models.Document.add_root(
-                title=validated_data["title"],
-                creator=user,
-            )
+        while True:
+            try:
+                with transaction.atomic():
+                    document = models.Document.add_root(
+                        title=validated_data["title"],
+                        creator=user,
+                    )
+                break
+            except IntegrityError as e:
+                if "impress_document_path_key" not in str(e):
+                    raise
+                logger.warning("Path key conflict when creating document, retrying...")
 
         if user:
             # Associate the document with the pre-existing user

@@ -19,7 +19,7 @@ from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
-from django.db import connection, models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models.functions import Left, Length
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -277,24 +277,26 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                 )
                 return
 
-            with transaction.atomic():
-                # locks the table to ensure safe concurrent access
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        f'LOCK TABLE "{Document._meta.db_table}" '  # noqa: SLF001
-                        "IN SHARE ROW EXCLUSIVE MODE;"
+            while True:
+                try:
+                    with transaction.atomic():
+                        sandbox_document = Document.add_root(
+                            title=template_document.title,
+                            content=template_document.content,
+                            attachments=template_document.attachments,
+                            duplicated_from=template_document,
+                            creator=self,
+                        )
+                        DocumentAccess.objects.create(
+                            user=self, document=sandbox_document, role=RoleChoices.OWNER
+                        )
+                    break
+                except IntegrityError as e:
+                    if "impress_document_path_key" not in str(e):
+                        raise
+                    logger.warning(
+                        "Path key conflict when creating sandbox document, retrying..."
                     )
-                sandbox_document = Document.add_root(
-                    title=template_document.title,
-                    content=template_document.content,
-                    attachments=template_document.attachments,
-                    duplicated_from=template_document,
-                    creator=self,
-                )
-
-                DocumentAccess.objects.create(
-                    user=self, document=sandbox_document, role=RoleChoices.OWNER
-                )
 
     def _convert_valid_invitations(self):
         """
