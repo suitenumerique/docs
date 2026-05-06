@@ -11,6 +11,10 @@ and this project adheres to
 - ⚡️(frontend) add skeleton on content loading #2254
 - ⚡️(frontend) close websocket connection when user change tab #2264
 
+### Changed
+
+- 🏗️(core) migrate from pip to uv
+
 ### Fixed
 
 - 🐛(frontend) fix patch and comments #2273

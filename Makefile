@@ -72,7 +72,7 @@ data/static:
 # -- Project
 
 create-env-local-files: ## create env.local files in env.d/development
-create-env-local-files: 
+create-env-local-files:
 	@touch env.d/development/crowdin.local
 	@touch env.d/development/common.local
 	@touch env.d/development/postgresql.local
@@ -141,7 +141,7 @@ else
 	@echo "$(RESET)"
 	@echo "$(GREEN)Starting bootstrap process...$(RESET)"
 endif
-	@echo "" 
+	@echo ""
 .PHONY: pre-beautiful-bootstrap
 
 post-beautiful-bootstrap: ## Display a success message after bootstrap
@@ -235,7 +235,7 @@ run-backend: ## Start only the backend application and all needed services
 .PHONY: run-backend
 
 run: ## start the wsgi (production) and development server
-run: 
+run:
 	@$(MAKE) run-backend
 	@$(COMPOSE) up --force-recreate -d frontend-development
 .PHONY: run
@@ -322,7 +322,7 @@ superuser: ## Create an admin superuser with password "admin"
 .PHONY: superuser
 
 back-i18n-compile: ## compile the gettext files
-	@$(MANAGE) compilemessages --ignore="venv/**/*"
+	@$(MANAGE) compilemessages --ignore=".venv/**/*"
 .PHONY: back-i18n-compile
 
 back-i18n-generate: ## create the .pot files used for i18n

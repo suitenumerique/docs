@@ -1,24 +1,38 @@
 # Django impress
 
 # ---- base image to inherit from ----
-FROM python:3.13.3-alpine AS base
-
-# Upgrade pip to its latest release to speed up dependencies installation
-RUN python -m pip install --upgrade pip
+FROM python:3.13.13-alpine AS base
 
 # Upgrade system packages to install security updates
 RUN apk update && apk upgrade --no-cache
 
+# Upgrade pip to its latest release to speed up dependencies installation
+# We must do that to avoid having an outdated pip version with security issues
+RUN python -m pip install --upgrade pip
+
 # ---- Back-end builder image ----
 FROM base AS back-builder
 
-WORKDIR /builder
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-# Copy required python dependencies
-COPY ./src/backend /builder
+# Disable Python downloads, because we want to use the system interpreter
+# across both images. If using a managed Python version, it needs to be
+# copied from the build image into the final image;
+ENV UV_PYTHON_DOWNLOADS=0
 
-RUN mkdir /install && \
-  pip install --prefix=/install .
+# install uv
+COPY --from=ghcr.io/astral-sh/uv:0.11.10 /uv /uvx /bin/
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=src/backend/uv.lock,target=uv.lock \
+    --mount=type=bind,source=src/backend/pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
+COPY src/backend /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
 
 
 # ---- mails ----
@@ -41,13 +55,12 @@ RUN apk add --no-cache \
   pango \
   rdfind
 
-# Copy installed python dependencies
-COPY --from=back-builder /install /usr/local
-
-# Copy impress application (see .dockerignore)
-COPY ./src/backend /app/
+# Copy the application from the builder
+COPY --from=back-builder /app /app
 
 WORKDIR /app
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 # collectstatic
 RUN DJANGO_CONFIGURATION=Build \
@@ -84,8 +97,12 @@ COPY ./docker/files/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 # docker user (see entrypoint).
 RUN chmod g=u /etc/passwd
 
-# Copy installed python dependencies
-COPY --from=back-builder /install /usr/local
+# Copy the application from the builder
+COPY --from=back-builder /app /app
+
+WORKDIR /app
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Link certifi certificate from a static path /cert/cacert.pem to avoid issues
 # when python is upgraded and the path to the certificate changes.
@@ -94,11 +111,6 @@ RUN mkdir /cert && \
   path=`python -c 'import certifi;print (certifi.where())'` && \
   mv $path /cert/ && \
   ln -s /cert/cacert.pem $path
-
-# Copy impress application (see .dockerignore)
-COPY ./src/backend /app/
-
-WORKDIR /app
 
 # Generate compiled translation messages
 RUN DJANGO_CONFIGURATION=Build \
@@ -119,10 +131,9 @@ USER root:root
 # Install psql
 RUN apk add --no-cache postgresql-client
 
-# Uninstall impress and re-install it in editable mode along with development
-# dependencies
-RUN pip uninstall -y impress
-RUN pip install -e .[dev]
+# Install development dependencies
+RUN --mount=from=ghcr.io/astral-sh/uv:0.11.10,source=/uv,target=/bin/uv \
+  uv sync --all-extras --locked
 
 # Restore the un-privileged user running the application
 ARG DOCKER_USER
