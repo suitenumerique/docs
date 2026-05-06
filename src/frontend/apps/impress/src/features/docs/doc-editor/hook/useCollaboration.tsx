@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
-import { useCollaborationUrl } from '@/core/config';
+import { useCollaborationUrl, useConfig } from '@/core/config';
 import { KEY_DOC } from '@/docs/doc-management/api/useDoc';
 import {
   KEY_DOC_CONTENT,
@@ -15,6 +15,7 @@ export const useCollaboration = (room: string) => {
   const collaborationUrl = useCollaborationUrl(room);
   const { addTask } = useBroadcastStore();
   const queryClient = useQueryClient();
+  const { data: config } = useConfig();
   const {
     setBroadcastProvider,
     cleanupBroadcast,
@@ -28,6 +29,8 @@ export const useCollaboration = (room: string) => {
     isReady,
     hasLostConnection,
     resetLostConnection,
+    pauseForInactivity,
+    resumeFromInactivity,
   } = useProviderStore();
   const isOffline = useIsOffline((state) => state.isOffline);
   const { data: docContent } = useDocContent(
@@ -109,4 +112,43 @@ export const useCollaboration = (room: string) => {
       }
     };
   }, [destroyProvider, room, cleanupBroadcast]);
+
+  useEffect(() => {
+    if (!provider || !config?.COLLABORATION_WS_INACTIVITY_TIMEOUT) {
+      return;
+    }
+
+    const timeoutMs = config.COLLABORATION_WS_INACTIVITY_TIMEOUT * 1000;
+    let inactivityTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const startInactivityTimer = () => {
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = setTimeout(pauseForInactivity, timeoutMs);
+    };
+
+    if (document.hidden) {
+      startInactivityTimer();
+    }
+
+    const visibilityChangeHandler = () => {
+      if (document.hidden) {
+        startInactivityTimer();
+      } else {
+        clearTimeout(inactivityTimeout);
+        resumeFromInactivity();
+      }
+    };
+
+    document.addEventListener('visibilitychange', visibilityChangeHandler);
+
+    return () => {
+      document.removeEventListener('visibilitychange', visibilityChangeHandler);
+      clearTimeout(inactivityTimeout);
+    };
+  }, [
+    pauseForInactivity,
+    provider,
+    resumeFromInactivity,
+    config?.COLLABORATION_WS_INACTIVITY_TIMEOUT,
+  ]);
 };

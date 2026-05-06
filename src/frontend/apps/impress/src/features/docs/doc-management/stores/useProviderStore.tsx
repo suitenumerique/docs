@@ -13,11 +13,14 @@ export interface UseCollaborationStore {
   ) => HocuspocusProvider;
   destroyProvider: () => void;
   setReady: (value: boolean) => void;
+  pauseForInactivity: () => void;
+  resumeFromInactivity: () => void;
   provider: HocuspocusProvider | undefined;
   isConnected: boolean;
   isReady: boolean;
   isSynced: boolean;
   hasLostConnection: boolean;
+  isPausedForInactivity: boolean;
   resetLostConnection: () => void;
 }
 
@@ -27,6 +30,7 @@ const defaultValues = {
   isReady: false,
   isSynced: false,
   hasLostConnection: false,
+  isPausedForInactivity: false,
 };
 
 type ExtendedCloseEvent = CloseEvent & { wasClean: boolean };
@@ -59,6 +63,12 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
       name: storeId,
       document: doc,
       onDisconnect(data) {
+        // Skip reconnect when the disconnect was triggered by inactivity:
+        // reconnection only happens once the user becomes active again.
+        if (get().isPausedForInactivity) {
+          return;
+        }
+
         // Attempt to reconnect if the disconnection was clean (initiated by the client or server)
         if ((data.event as ExtendedCloseEvent).wasClean) {
           if (data.event.reason === 'No cookies' && data.event.code === 4001) {
@@ -99,7 +109,7 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
         }
         // If we were previously connected and now we're not,
         // we might have lost the connection
-        else if (wasConnected) {
+        else if (wasConnected && !get().isPausedForInactivity) {
           clearTimeout(lostConnectionTimeout);
           // Jitter spreading for reconnection attempts
           // Math.random() generates a random delay to avoid all clients
@@ -163,5 +173,22 @@ export const useProviderStore = create<UseCollaborationStore>((set, get) => ({
     set(defaultValues);
   },
   setReady: (value: boolean) => set({ isReady: value }),
+  pauseForInactivity: () => {
+    if (get().isPausedForInactivity) {
+      return;
+    }
+    clearTimeout(reconnectTimeout);
+    clearTimeout(lostConnectionTimeout);
+    set({ isPausedForInactivity: true, hasLostConnection: false });
+    get().provider?.disconnect();
+  },
+  resumeFromInactivity: () => {
+    if (!get().isPausedForInactivity) {
+      return;
+    }
+    clearTimeout(lostConnectionTimeout);
+    set({ isPausedForInactivity: false });
+    void get().provider?.connect();
+  },
   resetLostConnection: () => set({ hasLostConnection: false }),
 }));

@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ⚡️(frontend) add skeleton on content loading #2254
+- ⚡️(frontend) close websocket connection when user change tab #2264
 
 ### Fixed
 
