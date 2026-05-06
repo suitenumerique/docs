@@ -20,15 +20,14 @@ and this project adheres to
 - 🐛(frontend) Emoji menu doesn't display above comment box #2229
 - 🐛(frontend) Block menu doesn't stay open on 1st line #2229 
 - 🐛(frontend) The "+" on the first line of a new doc doesn't work #2229
+- 🐛(backend) manage race condition between GET and PATCH content #2271
+- 🐛(backend) replace document creation table locks with retry strategy #2274
 
 ### Security
 
 - 🔒️(frontend) sanitize color during collaboration #2270
 
 
-### Fixed
-
-- 🐛(backend) manage race condition between GET and PATCH content
 
 ## [v5.0.0] - 2026-04-08
 

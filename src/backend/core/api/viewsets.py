@@ -68,6 +68,7 @@ from core.services.search_indexers import (
 )
 from core.tasks.mail import send_ask_for_access_mail
 from core.utils.paths import filter_descendants
+from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
 from core.utils.yjs import extract_attachments
 
@@ -706,18 +707,12 @@ class DocumentViewSet(
                     {"file": ["Could not convert file content"]}
                 ) from err
 
-        with transaction.atomic():
-            # locks the table to ensure safe concurrent access
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f'LOCK TABLE "{models.Document._meta.db_table}" '  # noqa: SLF001
-                    "IN SHARE ROW EXCLUSIVE MODE;"
-                )
-
-            obj = models.Document.add_root(
+        obj = create_tree_node_with_retry(
+            lambda: models.Document.add_root(
                 creator=self.request.user,
                 **serializer.validated_data,
             )
+        )
         serializer.instance = obj
         models.DocumentAccess.objects.create(
             document=obj,
@@ -1021,16 +1016,12 @@ class DocumentViewSet(
             )
             serializer.is_valid(raise_exception=True)
 
-            with transaction.atomic():
-                # "select_for_update" locks the table to ensure safe concurrent access
-                locked_parent = models.Document.objects.select_for_update().get(
-                    pk=document.pk
-                )
-
-                child_document = locked_parent.add_child(
+            child_document = create_tree_node_with_retry(
+                lambda: document.add_child(
                     creator=request.user,
                     **serializer.validated_data,
                 )
+            )
 
             # Set the created instance to the serializer
             serializer.instance = child_document
