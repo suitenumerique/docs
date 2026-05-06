@@ -2,8 +2,8 @@
 # impress package
 #
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.11.9,<0.12"]
+build-backend = "uv_build"
 
 [project]
 name = "impress"
@@ -21,8 +21,7 @@ classifiers = [
 ]
 description = "Docs is a collaborative text editor designed to address common challenges in knowledge building and sharing."
 keywords = ["Django", "Contacts", "Templates", "RBAC"]
-license = { file = "LICENSE" }
-readme = "README.md"
+license = "MIT"
 requires-python = "~=3.13.0"
 dependencies = [
     "beautifulsoup4==4.14.3",
@@ -97,12 +96,13 @@ dev = [
     "types-requests==2.33.0.20260408",
 ]
 
-[tool.setuptools]
-packages = { find = { where = ["."], exclude = ["tests"] } }
-zip-safe = true
-
-[tool.distutils.bdist_wheel]
-universal = true
+[tool.uv.build-backend]
+module-root = ""
+source-exclude = [
+    "**/tests/**",
+    "**/test_*.py",
+    "**/tests.py",
+]
 
 [tool.ruff]
 exclude = [
