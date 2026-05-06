@@ -12,8 +12,11 @@ from django.utils.module_loading import import_string
 
 import requests
 
-from core import models, utils
+from core import models
 from core.enums import SearchType
+from core.utils.dicts import get_value_by_pattern
+from core.utils.paths import get_ancestor_to_descendants_map
+from core.utils.yjs import base64_yjs_to_text
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,7 @@ def get_batch_accesses_by_users_and_teams(paths):
     Get accesses related to a list of document paths,
     grouped by users and teams, including all ancestor paths.
     """
-    ancestor_map = utils.get_ancestor_to_descendants_map(
+    ancestor_map = get_ancestor_to_descendants_map(
         paths, steplen=models.Document.steplen
     )
     ancestor_paths = list(ancestor_map.keys())
@@ -297,7 +300,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
             >>> get_title({"id": 1})
             ""
         """
-        titles = utils.get_value_by_pattern(source, r"^title\.")
+        titles = get_value_by_pattern(source, r"^title\.")
         for title in titles:
             if title:
                 return title
@@ -318,7 +321,7 @@ class FindDocumentIndexer(BaseDocumentIndexer):
         """
         doc_path = document.path
         doc_content = document.content
-        text_content = utils.base64_yjs_to_text(doc_content) if doc_content else ""
+        text_content = base64_yjs_to_text(doc_content) if doc_content else ""
 
         return {
             "id": str(document.id),

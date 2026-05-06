@@ -9,7 +9,7 @@ from django.db import migrations, models
 from botocore.exceptions import ClientError
 
 import core.models
-from core.utils import extract_attachments
+from core.utils.yjs import extract_attachments
 
 
 def populate_attachments_on_all_documents(apps, schema_editor):

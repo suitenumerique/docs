@@ -11,7 +11,7 @@ from django.dispatch import receiver
 
 from core import models
 from core.tasks.search import trigger_batch_document_indexer
-from core.utils import get_users_sharing_documents_with_cache_key
+from core.utils.users import get_users_sharing_documents_with_cache_key
 
 
 @receiver(signals.post_save, sender=models.Document)

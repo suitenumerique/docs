@@ -67,11 +67,9 @@ from core.services.search_indexers import (
     get_visited_document_ids_of,
 )
 from core.tasks.mail import send_ask_for_access_mail
-from core.utils import (
-    extract_attachments,
-    filter_descendants,
-    users_sharing_documents_with,
-)
+from core.utils.paths import filter_descendants
+from core.utils.users import users_sharing_documents_with
+from core.utils.yjs import extract_attachments
 
 from ..enums import FeatureFlag, SearchType
 from . import permissions, serializers, utils

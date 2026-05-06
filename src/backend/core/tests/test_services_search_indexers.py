@@ -12,13 +12,14 @@ import pytest
 import responses
 from requests import HTTPError
 
-from core import factories, models, utils
+from core import factories, models
 from core.services.search_indexers import (
     BaseDocumentIndexer,
     FindDocumentIndexer,
     get_document_indexer,
     get_visited_document_ids_of,
 )
+from core.utils.yjs import base64_yjs_to_text
 
 pytestmark = pytest.mark.django_db
 
@@ -199,7 +200,7 @@ def test_services_search_indexers_serialize_document_returns_expected_json():
         "depth": 1,
         "path": document.path,
         "numchild": 1,
-        "content": utils.base64_yjs_to_text(document.content),
+        "content": base64_yjs_to_text(document.content),
         "created_at": document.created_at.isoformat(),
         "updated_at": document.updated_at.isoformat(),
         "reach": document.link_reach,
