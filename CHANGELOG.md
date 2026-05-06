@@ -12,6 +12,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🐛(frontend) fix patch and comments #2273
 - 🐛(frontend) interlinking are exported correctly in print mode #2269
 - 💬(frontend) add missing link in onboarding description #2233
 - 🐛(frontend) sanitize pasted and dropped content in document title #2210

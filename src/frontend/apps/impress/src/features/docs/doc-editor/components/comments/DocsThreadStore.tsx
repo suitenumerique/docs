@@ -1,5 +1,6 @@
 import { CommentBody, ThreadStore } from '@blocknote/core/comments';
 import type { Awareness } from 'y-protocols/awareness';
+import * as Y from 'yjs';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Doc } from '@/features/docs/doc-management';
@@ -17,6 +18,13 @@ import {
 
 type ServerThreadListResponse = ServerThread[];
 
+/**
+ * notifySubscribers generate a transaction, to distinguish
+ * the origin of the update, we use a specific origin "commentMarkUpdate"
+ * for the updates coming from the comment mark changes.
+ */
+export const COMMENT_UPDATE_ORIGIN = 'commentMarkUpdate';
+
 export class DocsThreadStore extends ThreadStore {
   protected static COMMENTS_PING = 'commentsPing';
   protected threads: Map<string, ClientThreadData> = new Map();
@@ -24,6 +32,7 @@ export class DocsThreadStore extends ThreadStore {
     (threads: Map<string, ClientThreadData>) => void
   >();
   private awareness?: Awareness;
+  private yDoc?: Y.Doc;
   private lastPingAt = 0;
   private pingTimer?: ReturnType<typeof setTimeout>;
 
@@ -31,11 +40,13 @@ export class DocsThreadStore extends ThreadStore {
     protected docId: Doc['id'],
     awareness: Awareness | undefined,
     protected docAuth: DocsThreadStoreAuth,
+    yDoc?: Y.Doc,
   ) {
     super(docAuth);
 
     if (docAuth.canSee) {
       this.awareness = awareness;
+      this.yDoc = yDoc;
       this.awareness?.on('update', this.onAwarenessUpdate);
 
       this.refreshThreads();
@@ -134,18 +145,30 @@ export class DocsThreadStore extends ThreadStore {
   }
 
   /**
-   * Notifies all subscribers about the current thread state
+   * Notifies all subscribers about the current thread state.
+   * We trigger the transaction with a specific origin so we will be able
+   * to flag that the update comes from a comment update.
+   * The inner ydoc.transact calls from y-prosemirror will see there's already
+   * an active transaction and reuse it.
    */
   private notifySubscribers() {
     // Always emit a new Map reference to help consumers detect changes
     const threads = new Map(this.threads);
-    this.subscribers.forEach((cb) => {
-      try {
-        cb(threads);
-      } catch (e) {
-        console.warn('DocsThreadStore subscriber threw', e);
-      }
-    });
+    const notify = () => {
+      this.subscribers.forEach((cb) => {
+        try {
+          cb(threads);
+        } catch (e) {
+          console.warn('DocsThreadStore subscriber threw', e);
+        }
+      });
+    };
+
+    if (this.yDoc) {
+      this.yDoc.transact(notify, COMMENT_UPDATE_ORIGIN);
+    } else {
+      notify();
+    }
   }
 
   private upsertClientThreadData(thread: ClientThreadData) {

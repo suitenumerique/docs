@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 
+import { COMMENT_UPDATE_ORIGIN } from '@/docs/doc-editor/components/comments/DocsThreadStore';
 import { useDocContentUpdate } from '@/docs/doc-management/api/useDocContentUpdate';
 import { useProviderStore } from '@/docs/doc-management/stores/useProviderStore';
 import { KEY_LIST_DOC_VERSIONS } from '@/docs/doc-versioning/api/useDocVersions';
@@ -64,6 +65,16 @@ export const useSaveDoc = (docId: string, yDoc: Y.Doc) => {
 
       const isAIChange =
         !transaction.local && transactionOrigin !== PROVIDER_ORIGIN_CONSTRUCTOR;
+
+      /**
+       * notifySubscribers generate a transaction that can be
+       * interpreted as a local change.
+       * We intercept the update with this origin to
+       * avoid marking the change as local.
+       */
+      if (transaction.origin === COMMENT_UPDATE_ORIGIN) {
+        return;
+      }
 
       setIsLocalChange(transaction.local || isAIChange);
     };

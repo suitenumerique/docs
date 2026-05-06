@@ -144,7 +144,6 @@ interface DocCoreEditorProps {
 }
 
 export const DocCoreEditor = ({ doc, readOnly }: DocCoreEditorProps) => {
-  useCollaboration(doc.id);
   const { provider, isReady } = useProviderStore();
   const isProviderReady = isReady && provider;
   const showContent = !!(
