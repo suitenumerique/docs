@@ -6,9 +6,9 @@ FROM python:3.13.13-alpine AS base
 # Upgrade system packages to install security updates
 RUN apk update && apk upgrade --no-cache
 
-# Upgrade pip to its latest release to speed up dependencies installation
-# We must do that to avoid having an outdated pip version with security issues
-RUN python -m pip install --upgrade pip
+
+# Remove pip. We don't use it.
+RUN python -m pip uninstall -y pip
 
 # ---- Back-end builder image ----
 FROM base AS back-builder

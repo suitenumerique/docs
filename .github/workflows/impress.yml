@@ -96,21 +96,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.13.3"
-          cache: "pip"
-      - name: Upgrade pip and setuptools
-        run: pip install --upgrade pip setuptools
-      - name: Install development dependencies
-        run: pip install --user .[dev]
+          python-version-file: "src/backend/pyproject.toml"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install the project
+        run: uv sync --locked --all-extras
       - name: Check code formatting with ruff
-        run: ~/.local/bin/ruff format . --diff
+        run: uv run ruff format . --diff
       - name: Lint code with ruff
-        run: ~/.local/bin/ruff check .
+        run: uv run ruff check .
       - name: Lint code with pylint
-        run: ~/.local/bin/pylint .
+        run: uv run pylint .
 
   test-back:
     runs-on: ubuntu-latest
@@ -192,14 +191,14 @@ jobs:
             mc mb impress/impress-media-storage && \
             mc version enable impress/impress-media-storage"
 
-      - name: Install Python
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.13.3"
-          cache: "pip"
-
-      - name: Install development dependencies
-        run: pip install --user .[dev]
+          python-version-file: "src/backend/pyproject.toml"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install the project
+        run: uv sync --locked --all-extras
 
       - name: Install gettext (required to compile messages) and MIME support
         run: |
@@ -208,7 +207,7 @@ jobs:
           sudo wget https://raw.githubusercontent.com/suitenumerique/django-lasuite/refs/heads/main/assets/conf/mime.types -O /etc/mime.types
 
       - name: Generate a MO file from strings extracted from the project
-        run: python manage.py compilemessages
+        run: uv run python manage.py compilemessages
 
       - name: Run tests
-        run: ~/.local/bin/pytest -n 2
+        run: uv run pytest -n 2
