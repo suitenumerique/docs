@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getCurrentConfig, verifyDocName } from './utils-common';
+import {
+  createDoc,
+  getCurrentConfig,
+  overrideConfig,
+  verifyDocName,
+} from './utils-common';
 import { writeInEditor } from './utils-editor';
 import { SignIn, expectLoginPage } from './utils-signin';
 import { createRootSubPage } from './utils-sub-pages';
@@ -144,6 +149,29 @@ test.describe('Doc Routing', () => {
       'noindex',
     );
     await expect(page).toHaveTitle(/401 Unauthorized - Docs/);
+  });
+
+  test('checks redirect if unsync version', async ({ page }) => {
+    await overrideConfig(page, {
+      RELEASE_VERSION: '0.0.0',
+    });
+
+    let counterReload = 0;
+    await page.route(/.*\/users\/me\/$/, async (route) => {
+      counterReload += 1;
+      await route.continue();
+    });
+
+    await page.waitForTimeout(1000);
+
+    // The sessionStorage guard should be set to the mismatched backend version.
+    const reloadVersion = await page.evaluate(() =>
+      sessionStorage.getItem('reload-version'),
+    );
+    expect(reloadVersion).toBe('0.0.0');
+
+    // The page should have reloaded once
+    expect(counterReload).toBe(2);
   });
 });
 

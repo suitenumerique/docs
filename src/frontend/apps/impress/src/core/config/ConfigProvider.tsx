@@ -85,6 +85,32 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
     });
   }, [conf?.CRISP_WEBSITE_ID]);
 
+  useEffect(() => {
+    const frontendVersion = process.env.NEXT_PUBLIC_APP_VERSION;
+
+    if (
+      !conf?.RELEASE_VERSION ||
+      !frontendVersion ||
+      conf.RELEASE_VERSION === frontendVersion
+    ) {
+      return;
+    }
+
+    // Avoid infinite reload loops: only reload once per backend version
+    const RELOAD_VERSION_KEY = 'reload-version';
+    try {
+      const reloadedForVersion = sessionStorage.getItem(RELOAD_VERSION_KEY);
+      if (reloadedForVersion === conf.RELEASE_VERSION) {
+        return;
+      }
+
+      sessionStorage.setItem(RELOAD_VERSION_KEY, conf.RELEASE_VERSION);
+      window.location.reload();
+    } catch {
+      console.warn('Failed to access sessionStorage for version reload logic');
+    }
+  }, [conf?.RELEASE_VERSION]);
+
   if (!conf) {
     return (
       <Box $height="100vh" $width="100vw" $align="center" $justify="center">

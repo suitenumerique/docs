@@ -57,6 +57,7 @@ export interface ConfigResponse {
   LANGUAGE_CODE: string;
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
+  RELEASE_VERSION: string;
   SENTRY_DSN?: string;
   TRASHBIN_CUTOFF_DAYS?: number;
   theme_customization?: ThemeCustomization;
@@ -94,13 +95,13 @@ export const KEY_CONFIG = 'config';
 
 export function useConfig() {
   const cachedData = getCachedTranslation();
-  const oneHour = 1000 * 60 * 60;
+  const staleTime = 1000 * 60 * 5;
 
   return useQuery<ConfigResponse, APIError, ConfigResponse>({
     queryKey: [KEY_CONFIG],
     queryFn: () => getConfig(),
     initialData: cachedData,
-    staleTime: oneHour,
-    initialDataUpdatedAt: Date.now() - oneHour, // Force initial data to be considered stale
+    staleTime,
+    initialDataUpdatedAt: Date.now() - staleTime, // Force initial data to be considered stale
   });
 }

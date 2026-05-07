@@ -2841,6 +2841,7 @@ class ConfigView(drf.views.APIView):
                 dict_settings[setting] = getattr(settings, setting)
 
         dict_settings["theme_customization"] = self._load_theme_customization()
+        dict_settings["RELEASE_VERSION"] = settings.RELEASE
 
         return drf.response.Response(dict_settings)
 

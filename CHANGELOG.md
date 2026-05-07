@@ -17,6 +17,7 @@ and this project adheres to
 
 ### Fixed
 
+- 🩺(project) reload app if front and back unsync #2276
 - 🐛(frontend) fix patch and comments #2273
 - 🐛(frontend) interlinking are exported correctly in print mode #2269
 - 💬(frontend) add missing link in onboarding description #2233

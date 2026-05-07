@@ -2,6 +2,8 @@ const crypto = require('crypto');
 
 const { InjectManifest } = require('workbox-webpack-plugin');
 
+const { version } = require('./package.json');
+
 const buildId = crypto.randomBytes(256).toString('hex').slice(0, 8);
 
 /** @type {import('next').NextConfig} */
@@ -25,6 +27,7 @@ const nextConfig = {
   generateBuildId: () => buildId,
   env: {
     NEXT_PUBLIC_BUILD_ID: buildId,
+    NEXT_PUBLIC_APP_VERSION: version,
   },
   /**
    * In dev mode, Next.js doesn't use Webpack, but Turbopack.

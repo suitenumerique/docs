@@ -4,6 +4,7 @@ import path from 'path';
 import { Locator, Page, TestInfo, expect } from '@playwright/test';
 
 import theme_customization from '../../../../../backend/impress/configuration/theme/default.json';
+import { version as packageJsonVersion } from '../../package.json';
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 export const BROWSERS: BrowserName[] = ['chromium', 'webkit', 'firefox'];
@@ -40,6 +41,7 @@ export const CONFIG = {
   ],
   LANGUAGE_CODE: 'en-us',
   POSTHOG_KEY: {},
+  RELEASE_VERSION: packageJsonVersion,
   SENTRY_DSN: null,
   TRASHBIN_CUTOFF_DAYS: 30,
   theme_customization,
