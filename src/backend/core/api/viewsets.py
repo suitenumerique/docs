@@ -1941,11 +1941,12 @@ class DocumentViewSet(
         Retrieve the raw content file from s3 and stream it.
 
         We implement a HTTP cache based on the ETag and LastModified headers.
-        We retrieve the ETag and LastModified from the S3 head operation, save them in cache to
-        reuse them in future requests.
+        The ETag and LastModified are retrieved in the S3 get_object operation to be consistent with
+        the content Body retrieved at the same time. These metadata are saved in cache for
+        future requests.
         We check in the request if the ETag is present in the If-None-Match header and if it's the
-        same as the one from the S3 head operation, we return a 304 response.
-        If the ETag is not present or not the same, we do the same check based on the LastModifed
+        same as the one from the S3 get_object, we return a 304 response.
+        If the ETag is not present or not the same, we do the same check based on the LastModified
         value if present in the If-Modified-Since header.
         """
         document = self.get_object()
@@ -1955,73 +1956,69 @@ class DocumentViewSet(
         # the web-socket re-connection burst.
         connection.close()
 
-        if not (
-            content_metadata := cache.get(
-                utils.get_content_metadata_cache_key(document.id)
+        if_none_match, if_modified_since_dt = utils.parse_http_conditional_headers(
+            request
+        )
+
+        # First check if a cache is existing to return earlier a 304 without reaching s3
+        # if etag or last_modified have not changed.
+        cache_key = utils.get_content_metadata_cache_key(document.id)
+        if content_metadata := cache.get(cache_key):
+            if (if_none_match and if_none_match == content_metadata.get("etag")) or (
+                if_modified_since_dt
+                and dt.datetime.fromisoformat(content_metadata.get("last_modified"))
+                <= if_modified_since_dt
+            ):
+                return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
+
+        # Prepare get_object S3 operation. The get_object manages ETag and last_modified
+        # headers will raise a 304 client error if one of them matches the value existing in
+        # S3.
+        get_object_kwargs = {
+            "Bucket": default_storage.bucket_name,
+            "Key": document.file_key,
+        }
+        if if_none_match:
+            get_object_kwargs["IfNoneMatch"] = if_none_match
+        if if_modified_since_dt:
+            get_object_kwargs["IfModifiedSince"] = if_modified_since_dt
+
+        try:
+            s3_response = default_storage.connection.meta.client.get_object(
+                **get_object_kwargs
             )
-        ):
-            try:
-                file_metadata = default_storage.connection.meta.client.head_object(
-                    Bucket=default_storage.bucket_name, Key=document.file_key
-                )
-            except ClientError:
-                return StreamingHttpResponse(
-                    b"", content_type="text/plain", status=status.HTTP_200_OK
-                )
-
-            last_modified = file_metadata["LastModified"]
-            etag = file_metadata["ETag"]
-            size = file_metadata["ContentLength"]
-
-            cache.set(
-                utils.get_content_metadata_cache_key(document.id),
-                {
-                    "last_modified": last_modified.isoformat(),
-                    "etag": etag,
-                    "size": size,
-                },
-                settings.CONTENT_METADATA_CACHE_TIMEOUT,
-            )
-        else:
-            last_modified = dt.datetime.fromisoformat(
-                content_metadata.get("last_modified")
-            )
-            etag = content_metadata.get("etag")
-            size = content_metadata.get("size")
-
-        # --- Check conditional headers from any client ---
-        if_none_match = request.META.get("HTTP_IF_NONE_MATCH")  # contains ETag
-        if_modified_since = request.META.get("HTTP_IF_MODIFIED_SINCE")
-
-        # Strip the W/ weak prefix. Proxies (e.g. nginx with gzip) convert strong
-        # ETags to weak ones, so a strict equality check would fail on production
-        # even when unchanged.
-        if if_none_match and if_none_match.startswith("W/"):
-            if_none_match = if_none_match.removeprefix("W/")
-
-        if if_none_match and if_none_match == etag:
-            return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
-
-        if if_modified_since:
-            try:
-                since = dt.datetime.strptime(
-                    if_modified_since, "%a, %d %b %Y %H:%M:%S %Z"
-                )
-            except ValueError:
-                pass
-            else:
-                if not since.tzinfo:
-                    since = since.replace(tzinfo=dt.timezone.utc)
-                if last_modified <= since:
+        except ClientError as exc:
+            code = exc.response["Error"]["Code"]
+            match code:
+                case "304" | "PreconditionFailed" | "NotModified":
                     return drf_response.Response(status=status.HTTP_304_NOT_MODIFIED)
+                case "NoSuchKey" | "404":
+                    return StreamingHttpResponse(
+                        b"", content_type="text/plain", status=200
+                    )
+                case _:
+                    raise
 
-        def _stream(file_key):
-            with default_storage.open(file_key, "rb") as f:
-                while chunk := f.read(8192):
-                    yield chunk
+        last_modified = s3_response["LastModified"]
+        etag = s3_response["ETag"]
+        size = s3_response["ContentLength"]
+
+        # Refresh the metadata cache
+        cache.set(
+            cache_key,
+            {
+                "last_modified": last_modified.isoformat(),
+                "etag": etag,
+            },
+            settings.CONTENT_METADATA_CACHE_TIMEOUT,
+        )
+
+        def _stream(body):
+            yield from body.iter_chunks()
+            body.close()
 
         response = StreamingHttpResponse(
-            streaming_content=_stream(document.file_key),
+            streaming_content=_stream(s3_response["Body"]),
             content_type="text/plain",
             status=status.HTTP_200_OK,
         )

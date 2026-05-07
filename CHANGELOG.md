@@ -26,6 +26,10 @@ and this project adheres to
 - 🔒️(frontend) sanitize color during collaboration #2270
 
 
+### Fixed
+
+- 🐛(backend) manage race condition between GET and PATCH content
+
 ## [v5.0.0] - 2026-04-08
 
 ### Added

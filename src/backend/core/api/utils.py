@@ -1,5 +1,6 @@
 """Util to generate S3 authorization headers for object storage access control"""
 
+import datetime as dt
 import time
 from abc import ABC, abstractmethod
 
@@ -199,3 +200,31 @@ class AIUserRateThrottle(AIBaseRateThrottle):
 def get_content_metadata_cache_key(document_id):
     """Return the cache key used to store content metadata."""
     return f"docs:content-metadata:{document_id!s}"
+
+
+def parse_http_conditional_headers(request):
+    """Extract and normalize `If-None-Match` and `If-Modified-Since`.
+
+    The `W/` weak prefix is stripped from the ETag because reverse proxies
+    (e.g. nginx with gzip) rewrite strong ETags into weak ones, which would
+    otherwise break a strict equality check in production.
+    """
+    if_none_match = request.META.get("HTTP_IF_NONE_MATCH")
+    if if_none_match and if_none_match.startswith("W/"):
+        if_none_match = if_none_match.removeprefix("W/")
+
+    if_modified_since_dt = None
+    if not (if_modified_since := request.META.get("HTTP_IF_MODIFIED_SINCE")):
+        return if_none_match, if_modified_since_dt
+
+    try:
+        if_modified_since_dt = dt.datetime.strptime(
+            if_modified_since, "%a, %d %b %Y %H:%M:%S %Z"
+        )
+    except ValueError:
+        if_modified_since_dt = None
+    else:
+        if not if_modified_since_dt.tzinfo:
+            if_modified_since_dt = if_modified_since_dt.replace(tzinfo=dt.timezone.utc)
+
+    return if_none_match, if_modified_since_dt
