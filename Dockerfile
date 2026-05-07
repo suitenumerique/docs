@@ -114,7 +114,7 @@ RUN mkdir /cert && \
 
 # Generate compiled translation messages
 RUN DJANGO_CONFIGURATION=Build \
-  python manage.py compilemessages
+  python manage.py compilemessages --ignore=".venv/**/*"
 
 
 # We wrap commands run in this container by the following entrypoint that
