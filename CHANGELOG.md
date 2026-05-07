@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [v5.1.0] - 2026-05-11
+
 ### Added
 
 - ⚡️(frontend) add skeleton on content loading #2254
@@ -34,7 +36,7 @@ and this project adheres to
 
 
 
-## [v5.0.0] - 2026-04-08
+## [v5.0.0] - 2026-05-05
 
 ### Added
 
@@ -1298,7 +1300,8 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/suitenumerique/docs/compare/v5.0.0...main
+[unreleased]: https://github.com/suitenumerique/docs/compare/v5.1.0...main
+[v5.1.0]: https://github.com/suitenumerique/docs/releases/v5.1.0
 [v5.0.0]: https://github.com/suitenumerique/docs/releases/v5.0.0
 [v4.8.6]: https://github.com/suitenumerique/docs/releases/v4.8.6
 [v4.8.5]: https://github.com/suitenumerique/docs/releases/v4.8.5
