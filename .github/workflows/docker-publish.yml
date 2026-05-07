@@ -41,23 +41,17 @@ permissions:
   contents: read
 
 jobs:
-  build-and-push:
+  meta:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
+      amd64: ${{ steps.platform-tags.outputs.amd64 }}
+      arm64: ${{ steps.platform-tags.outputs.arm64 }}
+      amd64_first: ${{ steps.platform-tags.outputs.amd64_first }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login to DockerHub
-        if: ${{ inputs.should_push }}
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
@@ -78,13 +72,23 @@ jobs:
             echo "EOF"
             echo "amd64_first=$FIRST_AMD64_TAG"
           } >> "$GITHUB_OUTPUT"
-      # - name: Run trivy scan
-      #   if: ${{ vars.TRIVY_SCAN_ENABLED }} == 'true'
-      #   uses: numerique-gouv/action-trivy-cache@main
-      #   with:
-      #     docker-build-args: "--target ${{ inputs.target }} -f ${{ inputs.file }}"
-      #     docker-image-name: "docker.io/${{ inputs.image_name }}:${{ github.sha }}"
-      #     trivyignores: ./.github/.trivyignore
+
+  build-amd64:
+    needs: meta
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to DockerHub
+        if: ${{ inputs.should_push }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Build and push (amd64)
         if: ${{ inputs.should_push }}||${{ vars.TRIVY_SCAN_ENABLED }} != 'true'
         uses: docker/build-push-action@v6
@@ -98,10 +102,33 @@ jobs:
             PUBLISH_AS_MIT=false
           push: ${{ inputs.should_push }}
           provenance: false
-          tags: ${{ steps.platform-tags.outputs.amd64 }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ needs.meta.outputs.amd64 }}
+          labels: ${{ needs.meta.outputs.labels }}
+      - name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
+
+  build-arm64:
+    needs:
+      - meta
+      - build-amd64
+    if: ${{ inputs.should_push }}
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Build and push (arm64)
-        if: ${{ inputs.should_push }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
@@ -111,17 +138,38 @@ jobs:
           build-args: |
             DOCKER_USER=${{ inputs.docker_user }}
             PUBLISH_AS_MIT=false
-            ${{ inputs.arm64_reuse_amd64_build_arg && format('{0}={1}', inputs.arm64_reuse_amd64_build_arg, steps.platform-tags.outputs.amd64_first) || '' }}
-          push: ${{ inputs.should_push }}
+            ${{ inputs.arm64_reuse_amd64_build_arg && format('{0}={1}', inputs.arm64_reuse_amd64_build_arg, needs.meta.outputs.amd64_first) || '' }}
+          push: true
           provenance: false
-          tags: ${{ steps.platform-tags.outputs.arm64 }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ needs.meta.outputs.arm64 }}
+          labels: ${{ needs.meta.outputs.labels }}
+      - name: Cleanup Docker after build
+        if: always()
+        run: |
+          docker system prune -af
+          docker volume prune -f
+
+  manifest:
+    needs:
+      - meta
+      - build-amd64
+      - build-arm64
+    if: ${{ inputs.should_push }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      digest: ${{ steps.create-manifest.outputs.digest }}
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - name: Create multi-arch manifests
-        if: ${{ inputs.should_push }}
         id: create-manifest
         run: |
-          IMAGE="${{ inputs.image_name }}"
-          readarray -t TAGS <<< "${{ steps.meta.outputs.tags }}"
+          readarray -t TAGS <<< "${{ needs.meta.outputs.tags }}"
           FIRST_TAG=""
           for tag in "${TAGS[@]}"; do
             [ -z "$tag" ] && continue
@@ -138,8 +186,3 @@ jobs:
             DIGEST="sha256:$(docker buildx imagetools inspect "$FIRST_TAG" --raw | sha256sum | awk '{print $1}')"
             echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
           fi
-      - name: Cleanup Docker after build
-        if: always()
-        run: |
-          docker system prune -af
-          docker volume prune -f
