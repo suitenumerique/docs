@@ -60,6 +60,12 @@ export function PostHogProvider({
         if (process.env.NODE_ENV === 'development') {
           posthogInstance.debug();
         }
+
+        if (process.env.NEXT_PUBLIC_APP_VERSION) {
+          posthogInstance.register({
+            app_version: process.env.NEXT_PUBLIC_APP_VERSION,
+          });
+        }
       },
       capture_pageview: false,
       capture_pageleave: true,
