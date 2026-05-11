@@ -13,6 +13,8 @@ services:
       - env.d/development/postgresql.local
     ports:
       - "15432:5432"
+    volumes:
+      - ./docker/files/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:5
