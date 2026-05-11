@@ -23,12 +23,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       # Backend i18n
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.13.3"
+          python-version: "3.14.4"
           cache: "pip"
       - name: Upgrade pip and setuptools
         run: pip install --upgrade pip setuptools
@@ -36,7 +36,7 @@ jobs:
         run: pip install --user .
         working-directory: src/backend
       - name: Restore the mail templates
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         id: mail-templates
         with:
           path: "src/backend/core/templates/mail"
@@ -52,7 +52,7 @@ jobs:
           DJANGO_CONFIGURATION=Build python manage.py makemessages -a --keep-pot
       # frontend i18n
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -62,7 +62,7 @@ jobs:
         run: yarn i18n:extract
       # crowdin workflow
       - name: crowdin action
-        uses: crowdin/github-action@v2
+        uses: crowdin/github-action@8868a33591d21088edfc398968173a3b98d51706 # v2
         with:
           config: crowdin/config.yml
           upload_sources: true
