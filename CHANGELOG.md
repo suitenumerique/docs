@@ -10,6 +10,10 @@ and this project adheres to
 
 - ✨(backend) support creating subdoc from file #1987
 
+### Fixed
+
+- 🐛(docs) run migration 0027 without superuser role
+
 
 ## [v5.1.0] - 2026-05-11
 
