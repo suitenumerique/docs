@@ -269,6 +269,31 @@ export const waitForResponseCreateDoc = (page: Page) => {
   );
 };
 
+/**
+ * Navigates back to the homepage, waits for the PATCH /content/ request
+ * triggered by the route change to complete, then navigates back to the doc.
+ *
+ * Use this instead of goToGridDoc when the test must assert on content that
+ * was just written in the editor, to avoid a race condition where the GET
+ * request fired on doc mount returns stale data because the server has not
+ * yet processed the PATCH.
+ */
+export const saveContent = async (page: Page, title: string) => {
+  const savePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes('/content/') &&
+      response.request().method() === 'PATCH',
+  );
+
+  await page.getByRole('button', { name: 'Back to homepage' }).click();
+  await expect(page.getByTestId('docs-grid')).toBeVisible();
+  await expect(page.getByTestId('grid-loader')).toBeHidden();
+
+  await savePromise;
+
+  await goToGridDoc(page, { title });
+};
+
 export const mockedDocument = async (page: Page, data: object) => {
   // document/[ID]/ or document/[ID]/tree/ routes
   let uuid: string | undefined;

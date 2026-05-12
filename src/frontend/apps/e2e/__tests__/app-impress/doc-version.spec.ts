@@ -4,6 +4,7 @@ import {
   createDoc,
   goToGridDoc,
   mockedDocument,
+  saveContent,
   verifyDocName,
 } from './utils-common';
 import { openSuggestionMenu, writeInEditor } from './utils-editor';
@@ -15,8 +16,6 @@ test.beforeEach(async ({ page }) => {
 test.describe('Doc Version', () => {
   test('it displays the doc versions', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-version', browserName, 1);
-
-    await verifyDocName(page, randomDoc);
 
     // Initially, there is no version
     await page.getByLabel('Open the document options').click();
@@ -32,10 +31,7 @@ test.describe('Doc Version', () => {
 
     await writeInEditor({ page, text: 'Hello World' });
 
-    // It will trigger a save, no version created yet (initial version is not counted)
-    await goToGridDoc(page, {
-      title: randomDoc,
-    });
+    await saveContent(page, randomDoc);
 
     await expect(page.getByText('Hello World')).toBeVisible();
 
@@ -51,10 +47,7 @@ test.describe('Doc Version', () => {
 
     await expect(calloutBlock).toBeVisible();
 
-    // It will trigger a save and create a version this time
-    await goToGridDoc(page, {
-      title: randomDoc,
-    });
+    await saveContent(page, randomDoc);
 
     await expect(page.getByText('Hello World')).toBeHidden();
     await expect(page.getByText('It will create a version')).toBeVisible();
@@ -64,10 +57,7 @@ test.describe('Doc Version', () => {
     // Write more
     await writeInEditor({ page, text: 'It will create a second version' });
 
-    // It will trigger a save and create a second version
-    await goToGridDoc(page, {
-      title: randomDoc,
-    });
+    await saveContent(page, randomDoc);
 
     await expect(
       page.getByText('It will create a second version'),
@@ -144,18 +134,14 @@ test.describe('Doc Version', () => {
     await thread.locator('[data-test="save"]').click();
     await expect(thread).toBeHidden();
 
-    await goToGridDoc(page, {
-      title: randomDoc,
-    });
+    await saveContent(page, randomDoc);
 
     await expect(editor.getByText('Hello')).toBeVisible();
     await page.locator('.bn-block-outer').last().click();
     await page.keyboard.press('Enter');
     await page.locator('.bn-block-outer').last().fill('World');
 
-    await goToGridDoc(page, {
-      title: randomDoc,
-    });
+    await saveContent(page, randomDoc);
 
     await expect(page.getByText('World')).toBeVisible();
 

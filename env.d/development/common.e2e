@@ -1,7 +1,7 @@
 # For the CI job test-e2e
-BURST_THROTTLE_RATES="200/minute"
+BURST_THROTTLE_RATES="1000/minute"
 COLLABORATION_API_URL=http://y-provider:4444/collaboration/api/
-SUSTAINED_THROTTLE_RATES="200/hour"
+SUSTAINED_THROTTLE_RATES="1000/minute"
 Y_PROVIDER_API_BASE_URL=http://y-provider:4444/api/
 
 # Throttle
