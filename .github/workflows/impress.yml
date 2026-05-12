@@ -86,7 +86,8 @@ jobs:
             --skip "**/*.po" \
             --skip "**/*.pot" \
             --skip "**/*.json" \
-            --skip "**/yarn.lock"
+            --skip "**/yarn.lock" \
+            --skip "./src/backend/uv.lock"
 
   lint-back:
     runs-on: ubuntu-latest
