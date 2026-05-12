@@ -89,8 +89,17 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - name: Run trivy scan
+        if: ${{ vars.TRIVY_SCAN_ENABLED == 'true' }}
+        uses: numerique-gouv/action-trivy-cache@main
+        env:
+          DOCKER_USER: ${{ inputs.docker_user }}
+        with:
+          docker-build-args: "--target ${{ inputs.target }} -f ${{ inputs.file }}"
+          docker-image-name: "docker.io/${{ inputs.image_name }}:${{ github.sha }}"
+          trivyignores: ./.github/.trivyignore
       - name: Build and push (amd64)
-        if: ${{ inputs.should_push }}||${{ vars.TRIVY_SCAN_ENABLED }} != 'true'
+        if: ${{ inputs.should_push || vars.TRIVY_SCAN_ENABLED != 'true' }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ inputs.context }}
