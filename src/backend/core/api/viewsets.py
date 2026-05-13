@@ -2946,9 +2946,7 @@ class ThreadViewSet(
     permission_classes = [permissions.CommentPermission]
     pagination_class = None
     serializer_class = serializers.ThreadSerializer
-    queryset = models.Thread.objects.select_related("creator", "document").filter(
-        resolved=False
-    )
+    queryset = models.Thread.objects.select_related("creator", "document")
     resource_field_name = "document"
 
     def perform_create(self, serializer):
