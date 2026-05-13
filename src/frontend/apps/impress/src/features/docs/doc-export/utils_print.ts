@@ -24,6 +24,7 @@ const PRINT_ONLY_CONTENT_CSS = `
   .--docs--table-content,
   .--docs--doc-footer,
   .--docs--footer,
+  .--docs--right-panel,
   footer,
   [role="contentinfo"],
   div[data-is-empty-and-focused="true"],
