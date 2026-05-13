@@ -6,7 +6,11 @@ import {
   getOtherBrowserName,
   verifyDocName,
 } from './utils-common';
-import { getEditor, writeInEditor } from './utils-editor';
+import {
+  getEditor,
+  tryFocusEditorContent,
+  writeInEditor,
+} from './utils-editor';
 import {
   addNewMember,
   connectOtherUserToDoc,
@@ -428,5 +432,119 @@ test.describe('Doc Comments mobile', () => {
     await editor.getByText('Hello').click();
 
     await expect(thread.getByText('This is a comment').first()).toBeVisible();
+  });
+});
+
+test.describe('Doc Comments Side Panel', () => {
+  test('it checks comments side bar interaction', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'comment-doc-panel', browserName, 1);
+
+    await expect(
+      page.getByRole('button', { name: 'Show the comments sidebar' }),
+    ).toBeHidden();
+
+    // Create comment thread
+    const editor = await writeInEditor({ page, text: 'Hello World' });
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Add comment' }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+
+    // Open comment side panel and check comment is visible in side panel
+    await page
+      .getByRole('button', { name: 'Show the comments sidebar' })
+      .click();
+
+    const elCommentsSidePanel = page.getByLabel('Comments side panel');
+    await expect(
+      elCommentsSidePanel.getByText('This is a comment'),
+    ).toBeVisible();
+
+    // Click on comment in side panel and check it scrolls to the comment in the doc
+    await tryFocusEditorContent({ page });
+    for (let i = 0; i < 20; i++) {
+      await page.keyboard.press('Enter');
+    }
+    await writeInEditor({
+      page,
+      text: 'New paragraph',
+    });
+
+    await expect(editor.getByText('New paragraph')).toBeInViewport();
+    await elCommentsSidePanel.getByText('This is a comment').click();
+
+    await expect(editor.getByText('Hello World')).toBeVisible();
+    await expect(editor.getByText('New paragraph')).not.toBeInViewport();
+    await expect(editor.getByText('Hello World')).toHaveClass(
+      'bn-thread-mark-selected',
+    );
+
+    // Add a comment in the side panel
+    await elCommentsSidePanel
+      .locator(
+        '.bn-editor[contenteditable="true"] div[data-content-type="paragraph"]',
+      )
+      .first()
+      .fill('This is another comment');
+    await elCommentsSidePanel.locator('[data-test="save"]').click();
+    await expect(
+      elCommentsSidePanel
+        .locator(
+          '.bn-editor[contenteditable="false"] div[data-content-type="paragraph"]',
+        )
+        .getByText('This is another comment'),
+    ).toBeVisible();
+
+    // Close the side panel and check the comments in the doc
+    await page
+      .getByRole('button', { name: 'Close the comments sidebar' })
+      .click();
+    await expect(elCommentsSidePanel).toBeHidden();
+    await editor.getByText('Hello World').click();
+    await expect(thread.getByText('This is another comment')).toBeVisible();
+
+    // Resolve the comment and check it disappears from the side panel and the doc
+    await thread.getByText('This is a comment').first().hover();
+    await thread.locator('[data-test="resolve"]').click();
+    await expect(thread).toBeHidden();
+    await page
+      .getByRole('button', { name: 'Show the comments sidebar' })
+      .click();
+    await expect(
+      elCommentsSidePanel.getByText('This is a comment'),
+    ).toBeHidden();
+
+    // Goto resolved part, the comment should be visible in the side panel
+    await elCommentsSidePanel
+      .getByRole('button', { name: 'Filter comments' })
+      .click();
+    await page.getByRole('menuitem', { name: 'Resolved' }).click();
+    await elCommentsSidePanel.getByText('This is a comment').click();
+    await expect(editor.getByText('Hello World')).toHaveClass(
+      'bn-thread-mark-selected',
+    );
+
+    // Unresolve the comment and check it does not appears in the side panel resolved part
+    await thread.getByText('This is a comment').first().hover();
+    await thread.locator('[data-test="re-open"]').click();
+    await expect(
+      elCommentsSidePanel.getByText('This is a comment'),
+    ).toBeHidden();
+
+    // It should be back in the side panel and in the doc
+    await page.getByRole('button', { name: 'Filter comments' }).click();
+    await page.getByRole('menuitem', { name: 'Open' }).click();
+    await expect(
+      elCommentsSidePanel.getByText('This is a comment'),
+    ).toBeVisible();
+    await elCommentsSidePanel.getByText('This is a comment').click();
+    await expect(editor.getByText('Hello World')).toHaveClass(
+      'bn-thread-mark-selected',
+    );
   });
 });

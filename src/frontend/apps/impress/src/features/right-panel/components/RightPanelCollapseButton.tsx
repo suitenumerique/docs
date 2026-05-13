@@ -1,19 +1,29 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import { css } from 'styled-components';
 
-import CommentsIcon from '@/assets/icons/ui-kit/bubble-text.svg';
 import { Card } from '@/components';
-
-import { useRightPanelStore } from './useRightPanelStore';
+import { CommentSideBarButton } from '@/features/docs/doc-editor/components/comments/CommentSideBar';
+import { useEditorStore } from '@/features/docs/doc-editor/stores/useEditorStore';
 
 export const RightPanelCollapseButton = () => {
-  const { t } = useTranslation();
-  const { isPanelOpen, togglePanel } = useRightPanelStore();
+  const { threadStore } = useEditorStore();
+  const [hasThreads, setHasThreads] = useState(
+    !!threadStore?.getThreads().size,
+  );
 
-  const ariaLabel = isPanelOpen
-    ? t('Hide the right side panel')
-    : t('Show the right side panel');
+  useEffect(() => {
+    if (!threadStore) {
+      setHasThreads(false);
+      return;
+    }
+    return threadStore.subscribe((threads) => {
+      setHasThreads(threads.size > 0);
+    });
+  }, [threadStore]);
+
+  if (!hasThreads) {
+    return null;
+  }
 
   return (
     <Card
@@ -27,16 +37,7 @@ export const RightPanelCollapseButton = () => {
         box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
       `}
     >
-      <Button
-        size="small"
-        onClick={togglePanel}
-        aria-label={ariaLabel}
-        aria-expanded={isPanelOpen}
-        color="neutral"
-        variant={isPanelOpen ? 'secondary' : 'tertiary'}
-        icon={<CommentsIcon width={24} height={24} aria-hidden="true" />}
-        data-testid="floating-bar-toggle-right-panel"
-      ></Button>
+      {hasThreads && <CommentSideBarButton />}
     </Card>
   );
 };

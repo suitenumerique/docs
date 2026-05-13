@@ -3,8 +3,21 @@
 import { Page } from '@playwright/test';
 
 export const getEditor = async ({ page }: { page: Page }) => {
-  const editor = page.locator('.ProseMirror');
+  const editor = page.locator('.--docs--editor-container .ProseMirror');
   await editor.click();
+  return editor;
+};
+
+export const tryFocusEditorContent = async ({ page }: { page: Page }) => {
+  const editor = await getEditor({ page });
+  if (
+    (await editor.locator('.bn-trailing-block.ProseMirror-widget').count()) > 0
+  ) {
+    await editor.locator('.bn-trailing-block.ProseMirror-widget').click();
+  } else {
+    await editor.click();
+  }
+
   return editor;
 };
 
@@ -15,14 +28,7 @@ export const openSuggestionMenu = async ({
   page: Page;
   suggestion?: string;
 }) => {
-  const editor = await getEditor({ page });
-  if (
-    (await editor.locator('.bn-trailing-block.ProseMirror-widget').count()) > 0
-  ) {
-    await editor.locator('.bn-trailing-block.ProseMirror-widget').click();
-  } else {
-    await editor.click();
-  }
+  const editor = await tryFocusEditorContent({ page });
   await page.keyboard.press('Enter');
   await page.keyboard.type('/');
 

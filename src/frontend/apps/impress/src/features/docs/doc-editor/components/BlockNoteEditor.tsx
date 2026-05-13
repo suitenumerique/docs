@@ -11,9 +11,15 @@ import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
+import {
+  FloatingComposerController,
+  FloatingThreadController,
+  ThreadsSidebar,
+  useCreateBlockNote,
+} from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -41,7 +47,11 @@ import { randomColor, sanitizeColor } from '../utils';
 import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { DocsCommentsStyle, useComments } from './comments/';
+import {
+  DocsCommentsStyle,
+  useCommentSidebarStore,
+  useComments,
+} from './comments/';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
@@ -82,11 +92,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { themeTokens } = useCunninghamTheme();
   const refEditorContainer = useRef<HTMLDivElement>(null);
-  const canSeeComment = doc.abilities.comment;
-  // Determine if comments should be visible in the UI
-  const showComments = canSeeComment;
-
   useSaveDoc(doc.id, provider.document);
+
   const { i18n, t } = useTranslation();
   const langLocalesBN =
     !i18n.resolvedLanguage || !(i18n.resolvedLanguage in localesBN)
@@ -118,11 +125,21 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const cursorName = collabName || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
+  // Comments
+  const canSeeComment = doc.abilities.comment;
+  const showComments = canSeeComment; // Determine if comments should be visible in the UI
   const { resolveUsers, threadStore } = useComments(
     doc.id,
     canSeeComment,
     user,
   );
+
+  // Comment sidebar
+  const {
+    threadsSidebarTarget,
+    filter: threadsSidebarFilter,
+    isSideBarOpen,
+  } = useCommentSidebarStore();
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
@@ -275,14 +292,26 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         formattingToolbar={false}
         slashMenu={false}
         theme="light"
-        comments={showComments}
+        comments={false}
         aria-label={t('Document editor')}
+        // To not clipped the floating part in the editor area
+        portalElements={{ default: null }}
       >
         {aiBlockNoteAllowed && AIMenuController && AIMenu && (
           <AIMenuController aiMenu={AIMenu} />
         )}
         <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
         <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
+        {showComments && <FloatingComposerController />}
+        {showComments && !isSideBarOpen && <FloatingThreadController />}
+        {threadsSidebarTarget &&
+          createPortal(
+            <ThreadsSidebar
+              filter={threadsSidebarFilter}
+              sort="recent-activity"
+            />,
+            threadsSidebarTarget,
+          )}
       </BlockNoteView>
     </Box>
   );
