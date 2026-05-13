@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Support question
+    url: https://matrix.to/#/#docs-official:matrix.org
+    about: If you have a question, or something was not clear from the docs, reach out for help on our Matrix Channel or email us at docs.team@la-suite.eu
