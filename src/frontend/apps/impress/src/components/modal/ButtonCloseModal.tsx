@@ -1,7 +1,6 @@
 import { Button, type ButtonProps } from '@gouvfr-lasuite/cunningham-react';
-import React from 'react';
 
-import { Icon } from '@/components';
+import CloseIcon from '@/assets/icons/ui-kit/x-mark.svg';
 
 export const ButtonCloseModal = (props: ButtonProps) => {
   return (
@@ -10,14 +9,7 @@ export const ButtonCloseModal = (props: ButtonProps) => {
       size="small"
       color="neutral"
       variant="tertiary"
-      icon={
-        <Icon
-          iconName="close"
-          className="material-icons-filled"
-          $size="24px!important"
-          $color="var(--c--contextuals--content--semantic--neutral--secondary)"
-        />
-      }
+      icon={<CloseIcon width="24" height="24" aria-hidden="true" />}
       {...props}
     />
   );

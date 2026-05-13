@@ -11,9 +11,15 @@ import '@blocknote/core/fonts/inter.css';
 import * as localesBN from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
+import {
+  FloatingComposerController,
+  FloatingThreadController,
+  ThreadsSidebar,
+  useCreateBlockNote,
+} from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -41,7 +47,11 @@ import { randomColor, sanitizeColor } from '../utils';
 import BlockNoteAI from './AI';
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { DocsCommentsStyle, useComments } from './comments/';
+import {
+  DocsCommentsStyle,
+  useCommentSidebarStore,
+  useComments,
+} from './comments/';
 import { CalloutBlock, PdfBlock, UploadLoaderBlock } from './custom-blocks';
 const AIMenu = BlockNoteAI?.AIMenu;
 const AIMenuController = BlockNoteAI?.AIMenuController;
@@ -123,6 +133,12 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     canSeeComment,
     user,
   );
+
+  const {
+    threadsSidebarTarget,
+    filter: threadsSidebarFilter,
+    isSideBarOpen,
+  } = useCommentSidebarStore();
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
@@ -275,7 +291,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         formattingToolbar={false}
         slashMenu={false}
         theme="light"
-        comments={showComments}
+        comments={false}
         aria-label={t('Document editor')}
       >
         {aiBlockNoteAllowed && AIMenuController && AIMenu && (
@@ -283,6 +299,29 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         )}
         <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
         <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
+        {showComments && <FloatingComposerController />}
+        {showComments && !isSideBarOpen && (
+          <FloatingThreadController
+            floatingUIOptions={{
+              useDismissProps: {
+                /**
+                 * When the sidebar is open, prevent the floating thread popup
+                 * from being dismissed when clicking inside the sidebar.
+                 * Without this, useDismiss fires selectThread(undefined) on any
+                 * click outside the popup — including clicks on the reply input
+                 * in the sidebar — which causes the thread to be deselected.
+                 */
+                outsidePress: (event) =>
+                  !threadsSidebarTarget?.contains(event.target as Node),
+              },
+            }}
+          />
+        )}
+        {threadsSidebarTarget &&
+          createPortal(
+            <ThreadsSidebar filter={threadsSidebarFilter} sort="position" />,
+            threadsSidebarTarget,
+          )}
       </BlockNoteView>
     </Box>
   );

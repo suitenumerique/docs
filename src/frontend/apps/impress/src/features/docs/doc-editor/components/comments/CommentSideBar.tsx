@@ -1,0 +1,135 @@
+import { Button, Tooltip } from '@gouvfr-lasuite/cunningham-react';
+import { DropdownMenu } from '@gouvfr-lasuite/ui-kit';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { css } from 'styled-components';
+
+import CommentsIcon from '@/assets/icons/ui-kit/bubble-text.svg';
+import SortingResolvedSVG from '@/assets/icons/ui-kit/filter-notification.svg';
+import SortingOpenSVG from '@/assets/icons/ui-kit/filter_list.svg';
+import { Box, ButtonCloseModal, Text } from '@/components/';
+import { useRightPanelStore } from '@/features/right-panel/components/useRightPanelStore';
+
+import { useCommentSidebarStore } from './useCommentSidebarStore';
+
+interface CommentSideBarProps {
+  onClose: () => void;
+}
+
+export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
+  const { t } = useTranslation();
+  const { setThreadsSidebarTarget, filter, setFilter } =
+    useCommentSidebarStore();
+  const portalRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (portalRef.current) {
+      setThreadsSidebarTarget(portalRef.current);
+    }
+    return () => {
+      setThreadsSidebarTarget(null);
+    };
+  }, [setThreadsSidebarTarget]);
+
+  return (
+    <Box $height="inherit">
+      <Box
+        $padding={{ vertical: 'base', horizontal: 'sm' }}
+        $css={css`
+          border-bottom: 1px solid
+            var(--c--contextuals--border--surface--primary);
+        `}
+      >
+        <Box $direction="row" $align="center" $justify="space-between">
+          <Box $direction="row" $align="center" $gap="2xs">
+            <Text $weight="bold">{t('Comments')}</Text>
+
+            <DropdownMenu
+              options={[
+                {
+                  label: t('Open'),
+                  callback: () => setFilter('open'),
+                  isChecked: filter === 'open',
+                },
+                {
+                  label: t('Resolved'),
+                  callback: () => setFilter('resolved'),
+                  isChecked: filter === 'resolved',
+                },
+              ]}
+              isOpen={open}
+              shouldCloseOnInteractOutside={() => true}
+              onOpenChange={setOpen}
+            >
+              <Tooltip content={t('Filter comments')} placement="top">
+                <Button
+                  aria-label={t('Filter comments')}
+                  size="nano"
+                  icon={
+                    filter === 'open' ? (
+                      <SortingOpenSVG
+                        width={18}
+                        height={18}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <SortingResolvedSVG
+                        width={18}
+                        height={18}
+                        aria-hidden="true"
+                      />
+                    )
+                  }
+                  color={filter === 'open' ? 'neutral' : 'brand'}
+                  variant={filter === 'open' ? 'tertiary' : 'secondary'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setOpen((o) => !o);
+                  }}
+                  tabIndex={-1}
+                />
+              </Tooltip>
+            </DropdownMenu>
+          </Box>
+          <ButtonCloseModal
+            aria-label={t('Close the comments sidebar')}
+            onClick={onClose}
+          />
+        </Box>
+      </Box>
+      <div
+        ref={portalRef}
+        className="--docs--comments-sidebar bn-root bn-mantine"
+        data-mantine-color-scheme="light"
+      />
+    </Box>
+  );
+};
+
+export const CommentSideBarButton = () => {
+  const { t } = useTranslation();
+  const { isPanelOpen, togglePanel } = useRightPanelStore();
+  const { setIsSideBarOpen } = useCommentSidebarStore();
+
+  useEffect(() => {
+    setIsSideBarOpen(isPanelOpen);
+  }, [isPanelOpen, setIsSideBarOpen]);
+
+  const ariaLabel = isPanelOpen
+    ? t('Hide the comments sidebar')
+    : t('Show the comments sidebar');
+
+  return (
+    <Button
+      size="small"
+      onClick={togglePanel}
+      aria-label={ariaLabel}
+      aria-expanded={isPanelOpen}
+      color="neutral"
+      variant={isPanelOpen ? 'secondary' : 'tertiary'}
+      icon={<CommentsIcon width={24} height={24} aria-hidden="true" />}
+    ></Button>
+  );
+};

@@ -4,6 +4,21 @@ export const DocsEditorStyle = createGlobalStyle`
   .bn-container {
     height: 100%;
   }
+  /**
+  * Token Blocknote
+  */
+  .bn-root[data-color-scheme] {
+    --bn-colors-editor-text: var(
+      --c--contextuals--content--semantic--neutral--primary
+    );
+    --bn-colors-side-menu: var(
+      --c--contextuals--content--semantic--neutral--tertiary
+    );
+  }
+  .bn-root .mantine-Chip-label {
+    --chip-color: var(--c--contextuals--content--semantic--brand--tertiary);
+  }
+
   .bn-root {
     .bn-editor {
       height: 100%;
@@ -13,16 +28,6 @@ export const DocsEditorStyle = createGlobalStyle`
     .mantine-Button-label {
       font-family: var(--c--components--button--font-family);
     }
-
-    /**
-    * Token Mantine
-    */
-    --bn-colors-editor-text: var(
-      --c--contextuals--content--semantic--neutral--primary
-    );
-    --bn-colors-side-menu: var(
-      --c--contextuals--content--semantic--neutral--tertiary
-    );
 
     /**
     * Ensure long placeholder text is truncated with ellipsis

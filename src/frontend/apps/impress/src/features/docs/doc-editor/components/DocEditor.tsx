@@ -45,6 +45,7 @@ export const DocEditorContainer = ({
         $width="100%"
         $flex="1"
         className={DOCS_EDITOR_CLASS}
+        $margin={{ horizontal: 'auto' }}
       >
         <Box
           $padding={{ horizontal: isDesktop ? '54px' : 'base' }}

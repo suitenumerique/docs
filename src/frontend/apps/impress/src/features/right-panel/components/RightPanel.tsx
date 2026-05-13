@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
 import { Box } from '@/components';
+import { CommentSideBar } from '@/features/docs/doc-editor/components/comments/CommentSideBar';
 import { useDocStore, useProviderStore } from '@/features/docs/doc-management';
 import { HEADER_HEIGHT } from '@/features/header';
 
@@ -10,7 +11,7 @@ import { useRightPanelStore } from './useRightPanelStore';
 export const RightPanel = () => {
   const { t } = useTranslation();
   const { currentDoc: doc } = useDocStore();
-  const { _, isPanelOpen } = useRightPanelStore();
+  const { setIsPanelOpen, isPanelOpen } = useRightPanelStore();
   const { provider, isReady } = useProviderStore();
   const isProviderReady =
     isReady && provider && provider?.configuration.name === doc?.id;
@@ -44,6 +45,8 @@ export const RightPanel = () => {
           width: 0;
         `}
       `}
-    ></Box>
+    >
+      <CommentSideBar onClose={() => setIsPanelOpen(false)} />
+    </Box>
   );
 };
