@@ -4,15 +4,15 @@ on:
   workflow_call:
     inputs:
       browser-name:
-        description: 'Name used for cache keys and artifact names (e.g. chromium, other-browser)'
+        description: "Name used for cache keys and artifact names (e.g. chromium, other-browser)"
         required: true
         type: string
       projects:
-        description: 'Playwright --project flags (e.g. --project=chromium)'
+        description: "Playwright --project flags (e.g. --project=chromium)"
         required: true
         type: string
       timeout-minutes:
-        description: 'Job timeout in minutes'
+        description: "Job timeout in minutes"
         required: false
         type: number
         default: 30
@@ -24,7 +24,7 @@ jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
-      node_version: '22.x'
+      node_version: "22.x"
       with-front-dependencies-installation: true
 
   prepare-e2e:
@@ -41,7 +41,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "24.x"
+          node-version: "22.x"
 
       - name: Restore the frontend cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
@@ -83,7 +83,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "24.x"
+          node-version: "22.x"
 
       - name: Restore the frontend cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
