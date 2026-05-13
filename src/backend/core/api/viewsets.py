@@ -2972,6 +2972,17 @@ class ThreadViewSet(
             thread.save(update_fields=["resolved", "resolved_at", "resolved_by"])
         return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
 
+    @drf.decorators.action(detail=True, methods=["post"], url_path="unresolve")
+    def unresolve(self, request, *args, **kwargs):
+        """Unresolve a thread."""
+        thread = self.get_object()
+        if thread.resolved:
+            thread.resolved = False
+            thread.resolved_at = None
+            thread.resolved_by = None
+            thread.save(update_fields=["resolved", "resolved_at", "resolved_by"])
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class CommentViewSet(
     CommentViewSetMixin,

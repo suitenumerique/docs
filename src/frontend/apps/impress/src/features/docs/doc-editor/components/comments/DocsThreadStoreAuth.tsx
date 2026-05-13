@@ -59,7 +59,7 @@ export class DocsThreadStoreAuth extends ThreadStoreAuth {
    * @returns
    */
   canUnresolveThread(_thread: ClientThreadData): boolean {
-    return false;
+    return true;
   }
 
   canAddReaction(comment: ClientCommentData, emoji?: string): boolean {

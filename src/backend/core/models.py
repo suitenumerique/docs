@@ -1851,6 +1851,7 @@ class Thread(BaseModel):
             "update": write_access,
             "partial_update": write_access,
             "resolve": write_access,
+            "unresolve": write_access,
             "retrieve": read_access,
         }
 
