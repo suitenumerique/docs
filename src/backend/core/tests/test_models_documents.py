@@ -17,6 +17,7 @@ from django.test.utils import override_settings
 from django.utils import timezone
 
 import pytest
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from core import factories, models
 
@@ -1453,8 +1454,8 @@ def test_models_documents_restore(django_assert_num_queries):
     assert document.ancestors_deleted_at == document.deleted_at
 
 
-def test_models_documents_restore_complex(django_assert_num_queries):
-    """The restore method should restore a soft-deleted document and its ancestors."""
+def test_models_documents_restore_complex():
+    """Restore should fail if a soft-deleted document has a deleted ancestor."""
     grand_parent = factories.DocumentFactory()
     parent = factories.DocumentFactory(parent=grand_parent)
     document = factories.DocumentFactory(parent=parent)
@@ -1488,18 +1489,19 @@ def test_models_documents_restore_complex(django_assert_num_queries):
     assert child1.ancestors_deleted_at == document.deleted_at
     assert child2.ancestors_deleted_at == document.deleted_at
 
-    # Restore the item
-    with django_assert_num_queries(14):
+    # Restore should fail because ancestor is deleted
+    with pytest.raises(DRFValidationError):
         document.restore()
     document.refresh_from_db()
     child1.refresh_from_db()
     child2.refresh_from_db()
     grand_parent.refresh_from_db()
-    assert document.deleted_at is None
-    assert document.ancestors_deleted_at == grand_parent.deleted_at
-    # child 1 and child 2 should now have the same ancestors_deleted_at as the grand parent
-    assert child1.ancestors_deleted_at == grand_parent.deleted_at
-    assert child2.ancestors_deleted_at == grand_parent.deleted_at
+
+    # State remains unchanged
+    assert document.deleted_at is not None
+    assert document.ancestors_deleted_at == document.deleted_at
+    assert child1.ancestors_deleted_at == document.deleted_at
+    assert child2.ancestors_deleted_at == document.deleted_at
 
 
 def test_models_documents_restore_complex_bis(django_assert_num_queries):

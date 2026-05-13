@@ -1227,6 +1227,11 @@ class Document(MP_Node, BaseModel):
         """Actual link role on the document."""
         return self.computed_link_definition["link_role"]
 
+    @property
+    def has_deleted_ancestor(self):
+        """Check whether any ancestor document is deleted."""
+        return self.get_ancestors().filter(deleted_at__isnull=False).exists()
+
     def get_abilities(self, user):
         """
         Compute and return abilities for a given user on the document.
@@ -1428,6 +1433,11 @@ class Document(MP_Node, BaseModel):
     @transaction.atomic
     def restore(self):
         """Cancelling a soft delete with checks."""
+        if self.has_deleted_ancestor:
+            raise ValidationError(
+                "Cannot restore this document because one of its ancestors is deleted."
+            )
+
         # This should not happen
         if self._meta.model.objects.filter(
             pk=self.pk, deleted_at__isnull=True
