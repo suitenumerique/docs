@@ -9,9 +9,11 @@ and this project adheres to
 ### Added
 
 - ✨(backend) support creating subdoc from file #1987
+- ✨(frontend) justified text alignment in the formatting toolbar
 
 ### Fixed
 
+- 🐛(frontend) DOCX export helpers map justified text to OOXML `both` for blocks using app-provided paragraph mappings (e.g. callout, quote, image caption)
 - 🐛(docs) run migration 0027 without superuser role
 
 
