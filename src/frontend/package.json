@@ -13,6 +13,7 @@
     ]
   },
   "scripts": {
+    "postinstall": "patch-package",
     "APP_IMPRESS": "yarn workspace app-impress",
     "APP_E2E": "yarn workspace app-e2e",
     "I18N": "yarn workspace packages-i18n",
@@ -46,5 +47,8 @@
     "wrap-ansi": "10.0.0",
     "yjs": "13.6.30"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "devDependencies": {
+    "patch-package": "^8.0.1"
+  }
 }

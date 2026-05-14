@@ -1,6 +1,4 @@
-export * from './blockNoteDocxBlockProps';
 export * from './calloutDocx';
-export * from './defaultBlocksDocxJustify';
 export * from './calloutODT';
 export * from './calloutPDF';
 export * from './headingPDF';

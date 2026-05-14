@@ -11,6 +11,7 @@ WORKDIR /home/frontend/
 
 COPY ./src/frontend/package.json ./package.json
 COPY ./src/frontend/yarn.lock ./yarn.lock
+COPY ./src/frontend/patches ./patches
 COPY ./src/frontend/apps/impress/package.json ./apps/impress/package.json
 COPY ./src/frontend/packages/eslint-plugin-docs/package.json ./packages/eslint-plugin-docs/package.json
 
