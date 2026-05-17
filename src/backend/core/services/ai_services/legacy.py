@@ -113,6 +113,9 @@ class LegacyAiServiceMistralClient(LegacyAiClient):
             stream=False,
         )
 
+        if not response.choices or response.choices[0].message is None:
+            raise ValueError("LLM returned empty or filtered response")
+
         if langfuse:
             langfuse.update_current_generation(
                 usage_details={
@@ -149,6 +152,8 @@ class LegacyAiServiceOpenAiClient(LegacyAiClient):
             ],
         )
 
+        if not response.choices or response.choices[0].message is None:
+            raise ValueError("LLM returned empty or filtered response")
         return response.choices[0].message.content
 
 
