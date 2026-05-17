@@ -9,6 +9,8 @@ and this project adheres to
 ### Added
 
 - ✨(backend) support creating subdoc from file #1987
+- ✨(y-provider) preserve callouts, PDFs, page breaks and interlinking
+  links on HTML/markdown export
 
 ### Fixed
 
