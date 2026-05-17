@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- ✨(y-provider) preserve callouts, PDFs, page breaks and 
+  interlinking links on HTML/markdown export #2296
+
 ### Fixed
 
 - 🐛(frontend) fix removed item in the tree #2420

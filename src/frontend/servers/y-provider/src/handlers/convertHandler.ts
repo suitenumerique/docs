@@ -1,13 +1,14 @@
-import {
-  DefaultBlockSchema,
-  DefaultInlineContentSchema,
-  DefaultStyleSchema,
-  PartialBlock,
-} from '@blocknote/core';
+import { PartialBlock } from '@blocknote/core';
 import { ServerBlockNoteEditor } from '@blocknote/server-util';
 import { Request, Response } from 'express';
 import * as Y from 'yjs';
 
+import {
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema,
+  docsBlockNoteSchema,
+} from '@/blockSpecs';
 import { logger } from '@/utils';
 
 interface ErrorResponse {
@@ -16,21 +17,27 @@ interface ErrorResponse {
 
 type ConversionResponseBody = Uint8Array | string | object | ErrorResponse;
 
+type DocsPartialBlock = PartialBlock<
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema
+>;
+
 interface InputReader {
   supportedContentTypes: string[];
-  read(data: Buffer): Promise<PartialBlock[]>;
+  read(data: Buffer): Promise<DocsPartialBlock[]>;
 }
 
 interface OutputWriter {
   supportedContentTypes: string[];
-  write(blocks: PartialBlock[]): Promise<ConversionResponseBody>;
+  write(blocks: DocsPartialBlock[]): Promise<ConversionResponseBody>;
 }
 
 const editor = ServerBlockNoteEditor.create<
-  DefaultBlockSchema,
-  DefaultInlineContentSchema,
-  DefaultStyleSchema
->();
+  DocsBlockSchema,
+  DocsInlineContentSchema,
+  DocsStyleSchema
+>({ schema: docsBlockNoteSchema });
 
 const ContentTypes = {
   XMarkdown: 'text/x-markdown',
@@ -43,7 +50,7 @@ const ContentTypes = {
   JSON: 'application/json',
 } as const;
 
-const createYDocument = (blocks: PartialBlock[]) =>
+const createYDocument = (blocks: DocsPartialBlock[]) =>
   editor.blocksToYDoc(blocks, 'document-store');
 
 const readers: InputReader[] = [
@@ -135,13 +142,7 @@ export const convertHandler = async (
     return;
   }
 
-  let blocks:
-    | PartialBlock<
-        DefaultBlockSchema,
-        DefaultInlineContentSchema,
-        DefaultStyleSchema
-      >[]
-    | null;
+  let blocks: DocsPartialBlock[] | null;
   try {
     try {
       blocks = await reader.read(req.body);

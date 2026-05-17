@@ -11,6 +11,7 @@ vi.mock('../src/env', async (importOriginal) => {
   };
 });
 
+import { docsBlockNoteSchema } from '@/blockSpecs';
 import { initApp } from '@/servers';
 
 import {
@@ -298,6 +299,314 @@ describe('Conversion Testing', () => {
     );
     expect(response.body).toBeInstanceOf(Array);
     expect(response.body).toStrictEqual(expectedBlocks);
+  });
+
+  test('POST /api/convert Yjs to HTML with callout block', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'callout' as const,
+        props: { emoji: '⚠️', backgroundColor: 'yellow' },
+        content: [{ type: 'text' as const, text: 'Be careful', styles: {} }],
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<aside');
+    expect(response.text).toContain('role="note"');
+    expect(response.text).toContain('data-emoji="⚠️"');
+    expect(response.text).toContain('data-background-color="yellow"');
+    expect(response.text).toContain('Be careful');
+    // The inner emoji span is marked so downstream parsers can drop it
+    // (the canonical emoji is on the <aside>).
+    expect(response.text).toContain(
+      '<span aria-hidden="true" data-emoji="⚠️">',
+    );
+  });
+
+  test('POST /api/convert Yjs to Markdown preserves callout content', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'callout' as const,
+        props: { emoji: '⚠️', backgroundColor: 'yellow' },
+        content: [{ type: 'text' as const, text: 'Be careful', styles: {} }],
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/markdown')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('⚠️');
+    expect(response.text).toContain('Be careful');
+  });
+
+  test('POST /api/convert Yjs to Markdown preserves interlinking link', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'paragraph' as const,
+        content: [
+          {
+            type: 'interlinkingLinkInline' as const,
+            props: {
+              docId: '00000000-0000-0000-0000-000000000123',
+              title: 'Other doc',
+              disabled: false,
+              trigger: '/' as const,
+            },
+          },
+        ],
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/markdown')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain(
+      '[Other doc](/docs/00000000-0000-0000-0000-000000000123/ "Other doc")',
+    );
+  });
+
+  test('POST /api/convert Yjs to HTML with PDF block', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'pdf' as const,
+        props: {
+          url: 'https://example.com/file.pdf',
+          name: 'Annual report',
+          showPreview: true,
+        },
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<iframe');
+    expect(response.text).toContain('src="https://example.com/file.pdf"');
+    expect(response.text).toContain('title="Annual report"');
+  });
+
+  test('POST /api/convert Yjs to HTML strips unsafe PDF URL schemes', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'pdf' as const,
+        props: {
+          url: 'javascript:alert(1)',
+          name: 'Malicious',
+          showPreview: true,
+        },
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).not.toContain('<iframe');
+    expect(response.text).not.toMatch(/(?:src|href)="javascript:/);
+  });
+
+  test('POST /api/convert Yjs to HTML with interlinking inline content', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'paragraph' as const,
+        content: [
+          {
+            type: 'interlinkingLinkInline' as const,
+            props: {
+              docId: '00000000-0000-0000-0000-000000000123',
+              title: 'Other doc',
+              disabled: false,
+              trigger: '/' as const,
+            },
+          },
+        ],
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain(
+      'href="/docs/00000000-0000-0000-0000-000000000123/"',
+    );
+    expect(response.text).toContain(
+      'data-doc-id="00000000-0000-0000-0000-000000000123"',
+    );
+    expect(response.text).toContain('title="Other doc"');
+    expect(response.text).toContain('Other doc');
+    expect(response.text).not.toContain('data-inline-content-type');
+  });
+
+  test('POST /api/convert Yjs to HTML with disabled interlinking renders no link', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'paragraph' as const,
+        content: [
+          {
+            type: 'interlinkingLinkInline' as const,
+            props: {
+              docId: '00000000-0000-0000-0000-000000000123',
+              title: 'Hidden',
+              disabled: true,
+              trigger: '/' as const,
+            },
+          },
+        ],
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    expect(response.text).not.toContain('href=');
+    expect(response.text).not.toContain('data-doc-id');
+    expect(response.text).not.toContain('Hidden');
+  });
+
+  test('POST /api/convert Yjs to BlockNote JSON preserves pageBreak block', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'paragraph' as const,
+        content: [{ type: 'text' as const, text: 'before', styles: {} }],
+      },
+      { type: 'pageBreak' as const },
+      {
+        type: 'paragraph' as const,
+        content: [{ type: 'text' as const, text: 'after', styles: {} }],
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'application/json')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    const types = (response.body as { type: string }[]).map((b) => b.type);
+    expect(types).toContain('pageBreak');
+  });
+
+  test('POST /api/convert Yjs to BlockNote JSON preserves uploadLoader block', async () => {
+    const app = initApp();
+    const editor = ServerBlockNoteEditor.create({
+      schema: docsBlockNoteSchema,
+    });
+    const blocks = [
+      {
+        type: 'uploadLoader' as const,
+        props: {
+          information: 'uploading',
+          type: 'loading' as const,
+          blockUploadName: 'doc.pdf',
+        },
+      },
+    ];
+    const yDocument = editor.blocksToYDoc(blocks, 'document-store');
+    const yjsUpdate = Y.encodeStateAsUpdate(yDocument);
+    const response = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'application/json')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(response.status).toBe(200);
+    const uploadLoader = (
+      response.body as { type: string; props: Record<string, unknown> }[]
+    ).find((b) => b.type === 'uploadLoader');
+    expect(uploadLoader).toBeDefined();
+    expect(uploadLoader?.props).toMatchObject({
+      information: 'uploading',
+      type: 'loading',
+      blockUploadName: 'doc.pdf',
+    });
   });
 
   test('POST /api/convert with invalid Yjs content returns 400', async () => {
