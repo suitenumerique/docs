@@ -164,29 +164,31 @@ jobs:
           key: mail-templates-${{ hashFiles('src/mail/mjml') }}
           fail-on-cache-miss: true
 
-      - name: Start MinIO
+      - name: Start Rustfs
         run: |
-          docker pull minio/minio
-          docker run -d --name minio \
+          docker pull rustfs/rustfs:latest
+          docker run -d --name rustfs \
             -p 9000:9000 \
-            -e "MINIO_ACCESS_KEY=impress" \
-            -e "MINIO_SECRET_KEY=password" \
+            -e "RUSTFS_ACCESS_KEY=impress" \
+            -e "RUSTFS_SECRET_KEY=password" \
+            -e "RUSTFS_ADDRESS=0.0.0.0:9000" \
+            -e "RUSTFS_CORS_ALLOWED_ORIGINS=*" \
+            -e "RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS=*" \
             -v /data/media:/data \
-            minio/minio server --console-address :9001 /data
+            rustfs/rustfs /data
 
       # Tool to wait for a service to be ready
       - name: Install Dockerize
         run: |
           curl -sSL https://github.com/jwilder/dockerize/releases/download/v0.8.0/dockerize-linux-amd64-v0.8.0.tar.gz | sudo tar -C /usr/local/bin -xzv
 
-      - name: Wait for MinIO to be ready
+      - name: Wait for Rustfs to be ready
         run: |
           dockerize -wait tcp://localhost:9000 -timeout 10s
 
-      - name: Configure MinIO
+      - name: Configure Rustfs
         run: |
-          MINIO=$(docker ps | grep minio/minio | sed -E 's/.*\s+([a-zA-Z0-9_-]+)$/\1/')
-          docker exec ${MINIO} sh -c \
+          docker exec rustfs sh -c \
             "mc alias set impress http://localhost:9000 impress password && \
             mc alias ls && \
             mc mb impress/impress-media-storage && \
