@@ -97,6 +97,11 @@ dev = [
 ]
 
 [tool.uv.build-backend]
+module-name = [
+    "core",
+    "demo",
+    "impress"
+]
 module-root = ""
 source-exclude = [
     "**/tests/**",

@@ -110,7 +110,7 @@ jobs:
       - name: Lint code with ruff
         run: uv run ruff check .
       - name: Lint code with pylint
-        run: uv run pylint .
+        run: uv run pylint impress demo core
 
   test-back:
     runs-on: ubuntu-latest
