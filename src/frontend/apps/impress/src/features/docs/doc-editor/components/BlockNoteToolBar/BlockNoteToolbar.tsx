@@ -1,6 +1,7 @@
 import {
   FormattingToolbar,
   FormattingToolbarController,
+  TextAlignButton,
   blockTypeSelectItems,
   getFormattingToolbarItems,
   useDictionary,
@@ -73,6 +74,25 @@ export const BlockNoteToolbar = ({ aiAllowed }: { aiAllowed: boolean }) => {
       }
       return true;
     });
+
+    const rightAlignIndex = toolbarItems.findIndex(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'key' in item &&
+        item.key === 'textAlignRightButton',
+    );
+
+    if (rightAlignIndex !== -1) {
+      toolbarItems.splice(
+        rightAlignIndex + 1,
+        0,
+        <TextAlignButton
+          key="textAlignJustifyButton"
+          textAlignment="justify"
+        />,
+      );
+    }
 
     return toolbarItems;
   }, [dict, t]);

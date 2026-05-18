@@ -111,7 +111,7 @@ function blockPropsToStyles(
           : props.textAlignment === 'right'
             ? 'right'
             : props.textAlignment === 'justify'
-              ? 'distribute'
+              ? 'both'
               : (() => {
                   throw new UnreachableCaseError(props.textAlignment);
                 })(),
