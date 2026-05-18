@@ -154,7 +154,8 @@ jobs:
       - name: Create writable /data
         run: |
           sudo mkdir -p /data/media && \
-          sudo mkdir -p /data/static
+          sudo mkdir -p /data/static && \
+          sudo chown -R 10001:10001 /data/media
 
       - name: Restore the mail templates
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
