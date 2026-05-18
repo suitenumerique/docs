@@ -168,7 +168,7 @@ jobs:
       - name: Start Rustfs
         run: |
           docker pull rustfs/rustfs:latest
-          docker run --name rustfs \
+          docker run -d --name rustfs \
             -p 9000:9000 \
             -e "RUSTFS_ACCESS_KEY=impress" \
             -e "RUSTFS_SECRET_KEY=password" \
