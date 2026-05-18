@@ -4,15 +4,15 @@ on:
   workflow_call:
     inputs:
       browser-name:
-        description: 'Name used for cache keys and artifact names (e.g. chromium, other-browser)'
+        description: "Name used for cache keys and artifact names (e.g. chromium, other-browser)"
         required: true
         type: string
       projects:
-        description: 'Playwright --project flags (e.g. --project=chromium)'
+        description: "Playwright --project flags (e.g. --project=chromium)"
         required: true
         type: string
       timeout-minutes:
-        description: 'Job timeout in minutes'
+        description: "Job timeout in minutes"
         required: false
         type: number
         default: 30
@@ -24,7 +24,7 @@ jobs:
   install-dependencies:
     uses: ./.github/workflows/dependencies.yml
     with:
-      node_version: '22.x'
+      node_version: "22.x"
       with-front-dependencies-installation: true
 
   prepare-e2e:
@@ -36,15 +36,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
 
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -52,7 +52,7 @@ jobs:
 
       - name: Restore Playwright browsers cache
         id: playwright-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('src/frontend/yarn.lock', 'src/frontend/apps/e2e/yarn.lock') }}
@@ -67,7 +67,7 @@ jobs:
 
       - name: Save Playwright browsers cache
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
@@ -78,15 +78,15 @@ jobs:
     timeout-minutes: ${{ inputs.timeout-minutes }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
 
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -96,7 +96,7 @@ jobs:
         run: cat env.d/development/common.e2e >> env.d/development/common.local
 
       - name: Restore Playwright browsers cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('src/frontend/yarn.lock', 'src/frontend/apps/e2e/yarn.lock') }}
@@ -111,7 +111,7 @@ jobs:
       - name: Restore last-run cache
         if: ${{ github.run_attempt > 1 }}
         id: restore-last-run
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: src/frontend/apps/e2e/test-results/.last-run.json
           key: playwright-last-run-${{ github.run_id }}-${{ inputs.browser-name }}
@@ -138,14 +138,14 @@ jobs:
 
       - name: Save last-run cache
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: src/frontend/apps/e2e/test-results/.last-run.json
           key: playwright-last-run-${{ github.run_id }}-${{ inputs.browser-name }}
 
       - name: Upload last-run artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: playwright-instance-last-run-${{ inputs.browser-name }}
           path: src/frontend/apps/e2e/test-results/.last-run.json
@@ -153,7 +153,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
           name: playwright-${{ inputs.browser-name }}-report

@@ -26,15 +26,15 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
 
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -50,14 +50,14 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -91,11 +91,11 @@ jobs:
       issues: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Detect relevant changes
         id: changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
         with:
           filters: |
             lock:
@@ -104,7 +104,7 @@ jobs:
               - 'src/frontend/apps/impress/**'
 
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
@@ -112,13 +112,13 @@ jobs:
 
       - name: Setup Node.js
         if: steps.changes.outputs.lock == 'true' || steps.changes.outputs.app == 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
 
       - name: Check bundle size changes
         if: steps.changes.outputs.lock == 'true' || steps.changes.outputs.app == 'true'
-        uses: preactjs/compressed-size-action@v2
+        uses: preactjs/compressed-size-action@66325aad6443cb7cf89c4bfcd414aea2367cda94 # v2
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           build-script: "app:build"
@@ -139,14 +139,14 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "22.x"
       - name: Restore the frontend cache
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
         with:
           path: "src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('src/frontend/**/yarn.lock') }}
