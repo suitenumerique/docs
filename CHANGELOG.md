@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - ✨(backend) support creating subdoc from file #1987
+- ✨(buildpack) add PaaS deployment support, tested with Scalingo #2293
 
 ### Fixed
 
