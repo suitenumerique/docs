@@ -27,9 +27,9 @@ IMPRESS_BASE_URL="http://localhost:8072"
 
 # Media
 STORAGES_STATICFILES_BACKEND=django.contrib.staticfiles.storage.StaticFilesStorage
-AWS_S3_ENDPOINT_URL=http://minio:9000
-AWS_S3_ACCESS_KEY_ID=impress
-AWS_S3_SECRET_ACCESS_KEY=password
+AWS_S3_ENDPOINT_URL=http://rustfs:9000
+AWS_S3_ACCESS_KEY_ID=rustfsadmin
+AWS_S3_SECRET_ACCESS_KEY=rustfsadmin
 MEDIA_BASE_URL=http://localhost:8083
 
 # OIDC
