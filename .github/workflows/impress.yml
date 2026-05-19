@@ -189,11 +189,12 @@ jobs:
 
       - name: Configure Rustfs
         run: |
-          docker run --rm minio/mc sh -c \
-            "mc alias set impress http://localhost:9000 impress password && \
-            mc alias ls && \
-            mc mb impress/impress-media-storage && \
-            mc version enable impress/impress-media-storage"
+          curl --progress-bar -L https://dl.min.io/aistor/mc/release/linux-amd64/mc -o /tmp/mc
+          chmod +x /tmp/mc
+          /tmp/mc alias set impress http://localhost:9000 impress password
+          /tmp/mc alias ls
+          /tmp/mc mb impress/impress-media-storage
+          /tmp/mc version enable impress/impress-media-storage
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
