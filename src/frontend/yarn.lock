@@ -2119,33 +2119,34 @@
   resolved "https://registry.yarnpkg.com/@handlewithcare/prosemirror-suggest-changes/-/prosemirror-suggest-changes-0.1.8.tgz#707d432376718d4618065b22aafbc55b9ce4ea5b"
   integrity sha512-ewrJl4a8dTpPJNhqYySE2ZCjTRpXulWlUmFy3sbyJgPnGtN/zx7+8tbQ1OhHfMzZWfdmA8VjP9ecy+KO4HdOpA==
 
-"@hocuspocus/common@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-4.0.0.tgz#65c642e674d341cf06838fd4dfbfe0772d32250d"
-  integrity sha512-7BE8TsKBkdiOZO6tfm3ny6bIHPbxkIZb3hsYdVn/X5xbXI8n8w9pnE6pXgEMKQhJm6zsWsa9IDRJIp/c9u+DmA==
+"@hocuspocus/common@^3.4.4":
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-3.4.4.tgz#a888fbd6dff2f0b8947c76b7841bddb89eb4d795"
+  integrity sha512-RykIJ0tsHHMP4Xk+4UCbc7SO5LgGxGUSTdbh6anJEsaALAyqinf1Nn5HYuMjLPolAmsar1v++m9zufR09NLpXA==
   dependencies:
     lib0 "^0.2.87"
 
-"@hocuspocus/provider@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-4.0.0.tgz#b0de9ec205bf532417e2ea43510caac5a097dc73"
-  integrity sha512-08gpeNZ6x2pmRD6m4XwRD52yQKnTl32a0HS9VSXZ5A1dIBVqxMz/x8Z06XbkKM2X8sp6vWEUCZCtzAGFSsofgg==
+"@hocuspocus/provider@3.4.4":
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-3.4.4.tgz#ab4ff0b55f9faf848ddbc5775956afee440a4e97"
+  integrity sha512-KbsMAfdYcIJD8eMU/5QnpXcSOvIWAcCNI33FSRSaKCIpYBFtAwkYIwWnZJmPZ8a1BMAtqQc+uvy9+UQf7GHnGQ==
   dependencies:
-    "@hocuspocus/common" "^4.0.0"
+    "@hocuspocus/common" "^3.4.4"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.87"
     ws "^8.17.1"
 
-"@hocuspocus/server@4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-4.0.0.tgz#c67342d51ef36a132058bff562a09ad5ab3f5632"
-  integrity sha512-Pgm+kVtTrVvybIJUVot5XumSzD8rPLQglUV0QAAiN6J64dkYc2wWNdGcMwJz3q3yJPV0dO+eRU9JEck+iVdgzQ==
+"@hocuspocus/server@3.4.4":
+  version "3.4.4"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-3.4.4.tgz#b44ad0aea9bdcc32d166e598278a4d5609cf03e9"
+  integrity sha512-UV+oaONAejOzeYgUygNcgsc8RdZvSokVvAxluZJIisLACpRO/VsseQ5lWKDRwLd7Fn6+rHWDH3hGuQ1fdX1Ycg==
   dependencies:
-    "@hocuspocus/common" "^4.0.0"
+    "@hocuspocus/common" "^3.4.4"
+    async-lock "^1.3.1"
     async-mutex "^0.5.0"
-    crossws "^0.4.4"
     kleur "^4.1.4"
     lib0 "^0.2.47"
+    ws "^8.5.0"
 
 "@humanfs/core@^0.19.1":
   version "0.19.1"
@@ -7871,6 +7872,11 @@ async-function@^1.0.0:
   resolved "https://registry.yarnpkg.com/async-function/-/async-function-1.0.0.tgz#509c9fca60eaf85034c6829838188e4e4c8ffb2b"
   integrity sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==
 
+async-lock@^1.3.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/async-lock/-/async-lock-1.4.1.tgz#56b8718915a9b68b10fce2f2a9a3dddf765ef53f"
+  integrity sha512-Az2ZTpuytrtqENulXwO3GGv1Bztugx6TT37NIo7imr/Qo0gsYiGtSdBa2B6fsXhTpVZDNfu1Qn3pk531e3q+nQ==
+
 async-mutex@^0.5.0:
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/async-mutex/-/async-mutex-0.5.0.tgz#353c69a0b9e75250971a64ac203b0ebfddd75482"
@@ -8728,11 +8734,6 @@ cross-spawn@^7.0.3, cross-spawn@^7.0.6:
     path-key "^3.1.0"
     shebang-command "^2.0.0"
     which "^2.0.1"
-
-crossws@^0.4.4:
-  version "0.4.5"
-  resolved "https://registry.yarnpkg.com/crossws/-/crossws-0.4.5.tgz#e300fec909cd93fe377a1cee84f6813c9c786edf"
-  integrity sha512-wUR89x/Rw7/8t+vn0CmGDYM9TD6VtARGb0LD5jq2wjtMy1vCP4M+sm6N6TigWeTYvnA8MoW29NqqXD0ep0rfBA==
 
 crypto-js@^4.2.0:
   version "4.2.0"

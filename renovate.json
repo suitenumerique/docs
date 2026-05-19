@@ -60,6 +60,8 @@
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@hocuspocus/provider",
+        "@hocuspocus/server",
         "@react-pdf/renderer",
         "fetch-mock",
         "node",
