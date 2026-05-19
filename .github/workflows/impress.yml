@@ -167,7 +167,7 @@ jobs:
 
       - name: Start Rustfs
         run: |
-          docker pull rustfs/rustfs:latest
+          docker pull rustfs/rustfs:1.0.0-alpha.83
           docker run -d --name rustfs \
             -p 9000:9000 \
             -e "RUSTFS_ACCESS_KEY=impress" \
@@ -189,7 +189,7 @@ jobs:
 
       - name: Configure Rustfs
         run: |
-          curl --progress-bar -L https://dl.min.io/aistor/mc/release/linux-amd64/mc -o /tmp/mc
+          curl -L https://dl.min.io/aistor/mc/release/linux-amd64/mc -o /tmp/mc
           chmod +x /tmp/mc
           /tmp/mc alias set impress http://localhost:9000 impress password
           /tmp/mc alias ls

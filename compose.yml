@@ -26,7 +26,7 @@ services:
 
   rustfs:
     user: ${DOCKER_USER:-1000}
-    image: rustfs/rustfs:latest
+    image: rustfs/rustfs:1.0.0-alpha.83
     environment:
       - RUSTFS_ACCESS_KEY=rustfsadmin
       - RUSTFS_SECRET_KEY=rustfsadmin
