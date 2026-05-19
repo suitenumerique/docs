@@ -8,10 +8,33 @@ export const getEditor = async ({ page }: { page: Page }) => {
   return editor;
 };
 
-export const openSuggestionMenu = async ({ page }: { page: Page }) => {
-  const editor = await writeInEditor({ page, text: '/' });
+export const openSuggestionMenu = async ({
+  page,
+  suggestion,
+}: {
+  page: Page;
+  suggestion?: string;
+}) => {
+  const editor = await getEditor({ page });
+  if (
+    (await editor.locator('.bn-trailing-block.ProseMirror-widget').count()) > 0
+  ) {
+    await editor.locator('.bn-trailing-block.ProseMirror-widget').click();
+  } else {
+    await editor.click();
+  }
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('/');
 
   const suggestionMenu = page.locator('.bn-suggestion-menu');
+
+  if (suggestion) {
+    await suggestionMenu
+      .getByText(suggestion, {
+        exact: true,
+      })
+      .click();
+  }
 
   return { editor, suggestionMenu };
 };
@@ -24,6 +47,13 @@ export const writeInEditor = async ({
   text: string;
 }) => {
   const editor = await getEditor({ page });
+  if (
+    (await editor.locator('.bn-trailing-block.ProseMirror-widget').count()) > 0
+  ) {
+    await editor.locator('.bn-trailing-block.ProseMirror-widget').click();
+  } else {
+    await editor.click();
+  }
   await editor
     .locator('.bn-block-outer:last-child')
     .last()

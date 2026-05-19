@@ -119,7 +119,9 @@ if (process.env.IS_INSTANCE !== 'true') {
       await expect(editor.getByText('Bonjour le monde')).toBeVisible();
 
       // Check Suggestion menu
-      await page.locator('.bn-block-outer').last().fill('/');
+      await openSuggestionMenu({
+        page,
+      });
       await expect(page.getByText('Write with AI')).toBeVisible();
 
       // Reload the page to check that the AI change is still there
@@ -364,7 +366,9 @@ if (process.env.IS_INSTANCE !== 'true') {
       await editor.getByText('Hello').selectText();
 
       await expect(page.getByRole('button', { name: 'Ask AI' })).toBeHidden();
-      await page.locator('.bn-block-outer').last().fill('/');
+      await openSuggestionMenu({
+        page,
+      });
       await expect(page.getByText('Write with AI')).toBeHidden();
     });
   });

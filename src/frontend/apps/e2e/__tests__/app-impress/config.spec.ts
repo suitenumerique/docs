@@ -3,6 +3,7 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { CONFIG, createDoc, overrideConfig } from './utils-common';
+import { openSuggestionMenu, writeInEditor } from './utils-editor';
 
 test.describe('Config', () => {
   if (process.env.IS_INSTANCE !== 'true') {
@@ -35,9 +36,16 @@ test.describe('Config', () => {
 
     const fileChooserPromise = page.waitForEvent('filechooser');
 
-    await page.locator('.bn-block-outer').last().fill('Anything');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await writeInEditor({
+      page,
+      text: 'Anything',
+    });
+
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
+
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;

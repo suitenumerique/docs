@@ -6,6 +6,7 @@ import {
   randomName,
   verifyDocName,
 } from './utils-common';
+import { openSuggestionMenu } from './utils-editor';
 import { connectOtherUserToDoc } from './utils-share';
 import { SignIn } from './utils-signin';
 
@@ -38,12 +39,10 @@ test.describe('Doc Create', () => {
 
     await verifyDocName(page, title);
 
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page
-      .getByText('New sub-doc', {
-        exact: true,
-      })
-      .click();
+    await openSuggestionMenu({
+      page,
+      suggestion: 'New sub-doc',
+    });
 
     const input = page.getByRole('textbox', { name: 'Document title' });
     await expect(input).toHaveText('', { timeout: 10000 });

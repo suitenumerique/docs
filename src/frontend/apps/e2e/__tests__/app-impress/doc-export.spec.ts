@@ -116,12 +116,11 @@ test.describe('Doc Export', () => {
     await verifyDocName(page, randomDoc);
 
     // Add some content and at least one image so that the ZIP contains media files.
-    await page.locator('.ProseMirror.bn-editor').click();
-    await page.locator('.ProseMirror.bn-editor').fill('Hello HTML ZIP');
-
-    await page.keyboard.press('Enter');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await writeInEditor({ page, text: 'Hello HTML ZIP' });
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
 
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.getByText('Upload image').click();
@@ -222,8 +221,10 @@ test.describe('Doc Export', () => {
 
     await expect(image).toBeVisible();
 
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
     await page.getByRole('tab', { name: 'Embed' }).click();
     await page
       .getByRole('textbox', { name: 'Enter URL' })
