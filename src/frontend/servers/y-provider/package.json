@@ -47,7 +47,7 @@
     "typescript": "*",
     "vitest": "4.1.4",
     "vitest-mock-extended": "4.0.0",
-    "ws": "8.20.0"
+    "ws": "8.20.1"
   },
   "packageManager": "yarn@1.22.22"
 }
