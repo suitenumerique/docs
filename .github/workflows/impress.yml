@@ -189,7 +189,7 @@ jobs:
 
       - name: Configure Rustfs
         run: |
-          docker exec rustfs sh -c \
+          docker run --rm -it minio/mc sh -c \
             "mc alias set impress http://localhost:9000 impress password && \
             mc alias ls && \
             mc mb impress/impress-media-storage && \
