@@ -244,7 +244,7 @@ class User(AbstractBaseUser, BaseModel, auth_models.PermissionsMixin):
                     )
                     continue
 
-                if document.link_reach == LinkReachChoices.RESTRICTED:
+                if document.computed_link_reach == LinkReachChoices.RESTRICTED:
                     logger.warning(
                         "Onboarding on a restricted document is not allowed. Must be public or "
                         "connected. Restricted document: %s",

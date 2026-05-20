@@ -14,6 +14,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(docs) run migration 0027 without superuser role
+- 🐛(backend) use computed_link_reach in handle_onboarding_document
 
 
 ## [v5.1.0] - 2026-05-11
