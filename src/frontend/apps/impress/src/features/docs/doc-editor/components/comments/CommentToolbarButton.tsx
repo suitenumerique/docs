@@ -47,16 +47,6 @@ export const CommentToolbarButton = () => {
     return !!selectedBlocks.find((block) => block.content !== undefined);
   }, [selectedBlocks]);
 
-  const focusOnInputThread = () => {
-    // Use setTimeout to ensure the DOM has been updated with the new comment
-    setTimeout(() => {
-      const threadElement = document.querySelector<HTMLElement>(
-        '.bn-thread .bn-editor',
-      );
-      threadElement?.focus();
-    }, 400);
-  };
-
   if (
     !comments ||
     !show ||
@@ -74,7 +64,6 @@ export const CommentToolbarButton = () => {
         onClick={() => {
           comments.startPendingComment();
           store.setState(false);
-          focusOnInputThread();
         }}
         aria-haspopup="dialog"
         data-test="comment-toolbar-button"

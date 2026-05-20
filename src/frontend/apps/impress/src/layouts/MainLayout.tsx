@@ -2,10 +2,11 @@ import { PropsWithChildren } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
-import { Box } from '@/components';
+import { Box, BoxProps } from '@/components';
 import { Header } from '@/features/header';
 import { HEADER_HEIGHT } from '@/features/header/conf';
 import { LeftPanel, ResizableLeftPanel } from '@/features/left-panel';
+import { RightPanel } from '@/features/right-panel/components/RightPanel';
 import { DocEditorSkeleton, Skeleton } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
@@ -43,20 +44,29 @@ export function MainLayout({
 
 export interface MainLayoutContentProps {
   backgroundColor: 'white' | 'grey';
-  enableResizablePanel?: boolean;
+  enableResizablePanel: boolean;
 }
 
 export function MainLayoutContent({
   children,
   backgroundColor,
-  enableResizablePanel = false,
+  enableResizablePanel,
 }: PropsWithChildren<MainLayoutContentProps>) {
   const { isDesktop } = useResponsiveStore();
 
   if (enableResizablePanel) {
     return (
       <ResizableLeftPanel leftPanel={<LeftPanel />}>
-        <MainContent backgroundColor={backgroundColor}>{children}</MainContent>
+        <Box $direction="row" $width="100%">
+          <MainContent
+            backgroundColor={backgroundColor}
+            $flex="auto"
+            $padding="0"
+          >
+            {children}
+          </MainContent>
+          <RightPanel />
+        </Box>
       </ResizableLeftPanel>
     );
   }
@@ -86,10 +96,15 @@ export function MainLayoutContent({
   );
 }
 
+type MainContentProps = BoxProps & {
+  backgroundColor: 'white' | 'grey';
+};
+
 const MainContent = ({
   children,
   backgroundColor,
-}: PropsWithChildren<MainLayoutContentProps>) => {
+  ...props
+}: PropsWithChildren<MainContentProps>) => {
   const { isDesktop } = useResponsiveStore();
 
   const { t } = useTranslation();
@@ -106,9 +121,7 @@ const MainContent = ({
       $width="100%"
       $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
       $position="relative"
-      $padding={{
-        all: isDesktop ? 'base' : '0',
-      }}
+      $padding={isDesktop ? 'base' : '0'}
       $background={
         currentBackgroundColor === 'white'
           ? 'var(--c--contextuals--background--surface--primary)'
@@ -118,6 +131,7 @@ const MainContent = ({
         overflow-y: auto;
         overflow-x: clip;
       `}
+      {...props}
     >
       <Skeleton>
         <DocEditorSkeleton />

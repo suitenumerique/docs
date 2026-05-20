@@ -2946,9 +2946,7 @@ class ThreadViewSet(
     permission_classes = [permissions.CommentPermission]
     pagination_class = None
     serializer_class = serializers.ThreadSerializer
-    queryset = models.Thread.objects.select_related("creator", "document").filter(
-        resolved=False
-    )
+    queryset = models.Thread.objects.select_related("creator", "document")
     resource_field_name = "document"
 
     def perform_create(self, serializer):
@@ -2971,6 +2969,17 @@ class ThreadViewSet(
             thread.resolved = True
             thread.resolved_at = timezone.now()
             thread.resolved_by = request.user
+            thread.save(update_fields=["resolved", "resolved_at", "resolved_by"])
+        return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
+
+    @drf.decorators.action(detail=True, methods=["post"], url_path="unresolve")
+    def unresolve(self, request, *args, **kwargs):
+        """Unresolve a thread."""
+        thread = self.get_object()
+        if thread.resolved:
+            thread.resolved = False
+            thread.resolved_at = None
+            thread.resolved_by = None
             thread.save(update_fields=["resolved", "resolved_at", "resolved_by"])
         return drf.response.Response(status=status.HTTP_204_NO_CONTENT)
 

@@ -534,11 +534,6 @@ export class DocsThreadStore extends ThreadStore {
     this.ping(threadId);
   };
 
-  /**
-   * Todo: Not implemented backend side
-   * @returns
-   * @throws
-   */
   public unresolveThread = async (_options: { threadId: string }) => {
     const response = await fetchAPI(
       `documents/${this.docId}/threads/${_options.threadId}/unresolve/`,
