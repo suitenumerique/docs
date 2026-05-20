@@ -13,6 +13,10 @@ and this project adheres to
 - ✨(buildpack) add PaaS deployment support, tested with Scalingo #2293
 - 🔧(backend) allow configuring settings OIDC_OP_USER_ENDPOINT_FORMAT
 
+### Changed
+
+- ♻️(backend) allow global search in sub documents
+
 ### Fixed
 
 - 🐛(docs) run migration 0027 without superuser role

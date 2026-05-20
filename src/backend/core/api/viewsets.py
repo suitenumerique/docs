@@ -1502,10 +1502,47 @@ class DocumentViewSet(
         Fallback search method when no indexer is configured.
         Only searches in the title field of documents.
         """
-        if not validated_data.get("path"):
-            return self.list(request, *args, **kwargs)
 
-        return self._list_descendants(request, validated_data)
+        if validated_data.get("path"):
+            return self._list_descendants(request, validated_data)
+
+        top_level_documents = self.get_queryset()
+        queryset = self.queryset
+        user = request.user
+
+        filterset = DocumentFilter(request.GET, queryset=queryset, request=request)
+        if not filterset.is_valid():
+            raise drf.exceptions.ValidationError(filterset.errors)
+
+        # Among the results, we may have documents that are ancestors/descendants
+        # of each other. In this case we want to keep only the highest ancestors.
+        root_paths = utils.filter_root_paths(
+            top_level_documents.order_by("path").values_list("path", flat=True),
+            skip_sorting=True,
+        )
+
+        if not root_paths:
+            return self.get_response_for_queryset(top_level_documents.none())
+
+        path_list = db.Q()
+        for top_level_document in root_paths:
+            path_list |= db.Q(path__startswith=top_level_document)
+
+        queryset = (
+            queryset.filter(path_list)
+            .filter(ancestors_deleted_at__isnull=True)
+            .annotate_user_roles(user)
+            .annotate_is_favorite(user)
+        )
+
+        queryset = filterset.filter_queryset(queryset)
+
+        # Apply ordering only now that everything is filtered and annotated
+        queryset = filters.OrderingFilter().filter_queryset(
+            self.request, queryset, self
+        )
+
+        return self._get_response_for_search_queryset(queryset)
 
     def _list_descendants(self, request, validated_data):
         """

@@ -13,6 +13,7 @@ from waffle.testutils import override_flag
 
 from core import factories
 from core.enums import FeatureFlag, SearchType
+from core.models import LinkReachChoices
 from core.services.search_indexers import get_document_indexer
 
 fake = Faker()
@@ -69,77 +70,463 @@ def test_api_documents_search_anonymous(search_query, indexer_settings):
     }
 
 
-@mock.patch("core.api.viewsets.DocumentViewSet.list")
-def test_api_documents_search_fall_back_on_search_list(mock_list, settings):
+def test_api_documents_search_simple_search_anonymous(settings):
+    """Anonymous users should not be able to use the global search."""
+    assert get_document_indexer() is None
+    assert settings.OIDC_STORE_REFRESH_TOKEN is False
+    assert settings.OIDC_STORE_ACCESS_TOKEN is False
+
+    factories.DocumentFactory(link_reach=LinkReachChoices.PUBLIC, title="alpha")
+    parent = factories.DocumentFactory(link_reach=LinkReachChoices.PUBLIC)
+    factories.DocumentFactory.create_batch(3, parent=parent, title="alpha")
+
+    client = APIClient()
+    q = "alpha"
+    response = client.get("/api/v1.0/documents/search/", data={"q": q})
+
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+
+
+def test_api_documents_search_fall_back_on_simple_search(settings):
     """
-    When indexer is not configured and no path is provided,
-    should fall back on list method
+    When indexer is not configured the search should be made in the database on the
+    title field.
     """
     assert get_document_indexer() is None
     assert settings.OIDC_STORE_REFRESH_TOKEN is False
     assert settings.OIDC_STORE_ACCESS_TOKEN is False
 
     user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(
-        user, backend="core.authentication.backends.OIDCAuthenticationBackend"
-    )
 
-    mocked_response = {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [{"title": "mocked list result"}],
-    }
-    mock_list.return_value = drf_response.Response(mocked_response)
+    document = factories.DocumentFactory(
+        creator=user, users=[(user, "owner")], title="alpha"
+    )
+    factories.DocumentFactory(creator=user, users=[(user, "owner")], title="bar")
+
+    # return a matching doc in a tree
+    parent = factories.DocumentFactory(
+        creator=user, users=[(user, "owner")], title="top parent"
+    )
+    child = factories.DocumentFactory(parent=parent, title="alpha blondy")
+    child_to_delete = factories.DocumentFactory(parent=parent, title="deleted alpha")
+    child_to_delete.soft_delete()
+
+    deleted_parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+    factories.DocumentFactory.create_batch(3, parent=deleted_parent, title="alpha")
+
+    deleted_parent.soft_delete()
+
+    # not reachable documents for the current user
+    factories.DocumentFactory(title="alpha", link_reach=LinkReachChoices.AUTHENTICATED)
+    factories.DocumentFactory(title="alpha foo", link_reach=LinkReachChoices.PUBLIC)
+
+    client = APIClient()
+    client.force_login(user)
 
     q = "alpha"
     response = client.get("/api/v1.0/documents/search/", data={"q": q})
 
     assert response.status_code == 200
 
-    assert mock_list.call_count == 1
-    assert mock_list.call_args[0][0].GET.get("q") == q
-    assert response.json() == mocked_response
+    # all `nb_access_*` should be in cache
+    with django_assert_num_queries(6):
+        response = client.get("/api/v1.0/documents/search/", data={"q": q})
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "count": 2,
+        "next": None,
+        "previous": None,
+        "results": [
+            {
+                "abilities": child.get_abilities(user),
+                "ancestors_link_reach": child.ancestors_link_reach,
+                "ancestors_link_role": child.ancestors_link_role,
+                "computed_link_reach": child.computed_link_reach,
+                "computed_link_role": child.computed_link_role,
+                "created_at": child.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(child.creator.id),
+                "deleted_at": None,
+                "depth": 2,
+                "excerpt": child.excerpt,
+                "id": str(child.id),
+                "is_favorite": False,
+                "link_reach": child.link_reach,
+                "link_role": child.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": child.nb_accesses_ancestors,
+                "nb_accesses_direct": child.nb_accesses_direct,
+                "path": child.path,
+                "title": child.title,
+                "updated_at": child.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+                "parents": [
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": "owner",
+                    },
+                ],
+            },
+            {
+                "abilities": document.get_abilities(user),
+                "ancestors_link_role": None,
+                "ancestors_link_reach": None,
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
+                "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(document.creator.id),
+                "deleted_at": None,
+                "depth": 1,
+                "excerpt": document.excerpt,
+                "id": str(document.id),
+                "is_favorite": False,
+                "link_reach": document.link_reach,
+                "link_role": document.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                "nb_accesses_direct": document.nb_accesses_direct,
+                "path": document.path,
+                "title": document.title,
+                "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+                "parents": [],
+            },
+        ],
+    }
 
 
-@mock.patch("core.api.viewsets.DocumentViewSet._list_descendants")
-def test_api_documents_search_fallback_on_search_list_sub_docs(
-    mock_list_descendants, settings
-):
-    """
-    When indexer is not configured and path parameter is provided,
-    should call _list_descendants() method
-    """
+def test_api_documents_search_simple_search_only_match_in_depth(settings):
+    """Test with results only matching documents in depth."""
     assert get_document_indexer() is None
     assert settings.OIDC_STORE_REFRESH_TOKEN is False
     assert settings.OIDC_STORE_ACCESS_TOKEN is False
 
     user = factories.UserFactory()
-    client = APIClient()
-    client.force_login(
-        user, backend="core.authentication.backends.OIDCAuthenticationBackend"
+
+    document = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+    subdocument = factories.DocumentFactory(parent=document, title="alpha")
+
+    factories.DocumentFactory(creator=user, users=[(user, "owner")], title="bar")
+
+    # return a matching doc in a tree
+    parent = factories.DocumentFactory(
+        creator=user, users=[(user, "owner")], title="top parent"
     )
+    child = factories.DocumentFactory(parent=parent, title="alpha blondy")
+    child_to_delete = factories.DocumentFactory(parent=parent, title="deleted alpha")
+    child_to_delete.soft_delete()
 
-    parent = factories.DocumentFactory(title="parent", users=[user])
+    deleted_parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+    factories.DocumentFactory.create_batch(3, parent=deleted_parent, title="alpha")
 
-    mocked_response = {
-        "count": 0,
-        "next": None,
-        "previous": None,
-        "results": [{"title": "mocked _list_descendants result"}],
-    }
-    mock_list_descendants.return_value = drf_response.Response(mocked_response)
+    deleted_parent.soft_delete()
+
+    # not reachable documents for the current user
+    factories.DocumentFactory(title="alpha", link_reach=LinkReachChoices.AUTHENTICATED)
+    factories.DocumentFactory(title="alpha foo", link_reach=LinkReachChoices.PUBLIC)
+
+    client = APIClient()
+    client.force_login(user)
 
     q = "alpha"
-    response = client.get(
-        "/api/v1.0/documents/search/", data={"q": q, "path": parent.path}
+    response = client.get("/api/v1.0/documents/search/", data={"q": q})
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "count": 2,
+        "next": None,
+        "previous": None,
+        "results": [
+            {
+                "abilities": child.get_abilities(user),
+                "ancestors_link_reach": child.ancestors_link_reach,
+                "ancestors_link_role": child.ancestors_link_role,
+                "computed_link_reach": child.computed_link_reach,
+                "computed_link_role": child.computed_link_role,
+                "created_at": child.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(child.creator.id),
+                "deleted_at": None,
+                "depth": 2,
+                "excerpt": child.excerpt,
+                "id": str(child.id),
+                "is_favorite": False,
+                "link_reach": child.link_reach,
+                "link_role": child.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": child.nb_accesses_ancestors,
+                "nb_accesses_direct": child.nb_accesses_direct,
+                "path": child.path,
+                "title": child.title,
+                "updated_at": child.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+                "parents": [
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": "owner",
+                    },
+                ],
+            },
+            {
+                "abilities": subdocument.get_abilities(user),
+                "ancestors_link_role": subdocument.ancestors_link_role,
+                "ancestors_link_reach": subdocument.ancestors_link_reach,
+                "computed_link_reach": subdocument.computed_link_reach,
+                "computed_link_role": subdocument.computed_link_role,
+                "created_at": subdocument.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(subdocument.creator.id),
+                "deleted_at": None,
+                "depth": 2,
+                "excerpt": subdocument.excerpt,
+                "id": str(subdocument.id),
+                "is_favorite": False,
+                "link_reach": subdocument.link_reach,
+                "link_role": subdocument.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": subdocument.nb_accesses_ancestors,
+                "nb_accesses_direct": subdocument.nb_accesses_direct,
+                "path": subdocument.path,
+                "title": subdocument.title,
+                "updated_at": subdocument.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": "owner",
+                    },
+                ],
+            },
+        ],
+    }
+
+
+def test_api_documents_saerch_with_title_also_matching_link_traces(settings):
+    """Test that link_traces can also be present in the search result."""
+    assert get_document_indexer() is None
+    assert settings.OIDC_STORE_REFRESH_TOKEN is False
+    assert settings.OIDC_STORE_ACCESS_TOKEN is False
+
+    user = factories.UserFactory()
+
+    document = factories.DocumentFactory(
+        creator=user, users=[(user, "owner")], title="alpha"
+    )
+    factories.DocumentFactory(creator=user, users=[(user, "owner")], title="bar")
+
+    # return a matching doc in a tree
+    parent = factories.DocumentFactory(
+        creator=user, users=[(user, "owner")], title="top parent"
+    )
+    child = factories.DocumentFactory(parent=parent, title="alpha blondy")
+    child_to_delete = factories.DocumentFactory(parent=parent, title="deleted alpha")
+    child_to_delete.soft_delete()
+
+    deleted_parent = factories.DocumentFactory(creator=user, users=[(user, "owner")])
+    factories.DocumentFactory.create_batch(3, parent=deleted_parent, title="alpha")
+
+    deleted_parent.soft_delete()
+
+    # Document reachable through link_traces
+    document_link_trace = factories.DocumentFactory(
+        link_reach=LinkReachChoices.AUTHENTICATED,
+        link_traces=[user],
+        title="too much alpha",
     )
 
-    mock_list_descendants.assert_called_with(
-        mock.ANY, {"q": "alpha", "path": parent.path}
-    )
-    assert response.json() == mocked_response
+    # not reachable documents for the current user
+    factories.DocumentFactory(title="alpha", link_reach=LinkReachChoices.AUTHENTICATED)
+    factories.DocumentFactory(title="alpha foo", link_reach=LinkReachChoices.PUBLIC)
+
+    client = APIClient()
+    client.force_login(user)
+
+    q = "alpha"
+    response = client.get("/api/v1.0/documents/search/", data={"q": q})
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "count": 3,
+        "next": None,
+        "previous": None,
+        "results": [
+            {
+                "abilities": document_link_trace.get_abilities(user),
+                "ancestors_link_role": None,
+                "ancestors_link_reach": None,
+                "computed_link_reach": document_link_trace.computed_link_reach,
+                "computed_link_role": document_link_trace.computed_link_role,
+                "created_at": document_link_trace.created_at.isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "creator": str(document_link_trace.creator.id),
+                "deleted_at": None,
+                "depth": 1,
+                "excerpt": document_link_trace.excerpt,
+                "id": str(document_link_trace.id),
+                "is_favorite": False,
+                "link_reach": document_link_trace.link_reach,
+                "link_role": document_link_trace.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": document_link_trace.nb_accesses_ancestors,
+                "nb_accesses_direct": document_link_trace.nb_accesses_direct,
+                "path": document_link_trace.path,
+                "title": document_link_trace.title,
+                "updated_at": document_link_trace.updated_at.isoformat().replace(
+                    "+00:00", "Z"
+                ),
+                "user_role": None,
+                "parents": [],
+            },
+            {
+                "abilities": child.get_abilities(user),
+                "ancestors_link_reach": child.ancestors_link_reach,
+                "ancestors_link_role": child.ancestors_link_role,
+                "computed_link_reach": child.computed_link_reach,
+                "computed_link_role": child.computed_link_role,
+                "created_at": child.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(child.creator.id),
+                "deleted_at": None,
+                "depth": 2,
+                "excerpt": child.excerpt,
+                "id": str(child.id),
+                "is_favorite": False,
+                "link_reach": child.link_reach,
+                "link_role": child.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": child.nb_accesses_ancestors,
+                "nb_accesses_direct": child.nb_accesses_direct,
+                "path": child.path,
+                "title": child.title,
+                "updated_at": child.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+                "parents": [
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": "owner",
+                    },
+                ],
+            },
+            {
+                "abilities": document.get_abilities(user),
+                "ancestors_link_role": None,
+                "ancestors_link_reach": None,
+                "computed_link_reach": document.computed_link_reach,
+                "computed_link_role": document.computed_link_role,
+                "created_at": document.created_at.isoformat().replace("+00:00", "Z"),
+                "creator": str(document.creator.id),
+                "deleted_at": None,
+                "depth": 1,
+                "excerpt": document.excerpt,
+                "id": str(document.id),
+                "is_favorite": False,
+                "link_reach": document.link_reach,
+                "link_role": document.link_role,
+                "numchild": 0,
+                "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                "nb_accesses_direct": document.nb_accesses_direct,
+                "path": document.path,
+                "title": document.title,
+                "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
+                "user_role": "owner",
+                "parents": [],
+            },
+        ],
+    }
 
 
 @mock.patch("core.api.viewsets.DocumentViewSet._search_using_database")
