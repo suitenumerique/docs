@@ -260,3 +260,4 @@ networks:
   lasuite:
     name: lasuite-network
     driver: bridge
+    external: true

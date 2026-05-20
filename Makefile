@@ -85,6 +85,7 @@ generate-secret-keys: ## generate secret keys to be stored in common.local
 .PHONY: generate-secret-keys
 
 pre-bootstrap: \
+	create-docker-network \
 	data/media \
 	data/static \
 	create-env-local-files \
