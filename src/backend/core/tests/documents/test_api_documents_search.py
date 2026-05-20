@@ -142,8 +142,10 @@ def test_api_documents_search_fallback_on_search_list_sub_docs(
     assert response.json() == mocked_response
 
 
-@mock.patch("core.api.viewsets.DocumentViewSet._title_search")
-def test_api_documents_search_indexer_crashes(mock_title_search, indexer_settings):
+@mock.patch("core.api.viewsets.DocumentViewSet._search_using_database")
+def test_api_documents_search_indexer_crashes(
+    mock_search_using_database, indexer_settings
+):
     """
     When indexer is configured but crashes -> falls back on title_search
     """
@@ -170,7 +172,7 @@ def test_api_documents_search_indexer_crashes(mock_title_search, indexer_setting
         "previous": None,
         "results": [{"title": "mocked title_search result"}],
     }
-    mock_title_search.return_value = drf_response.Response(mocked_response)
+    mock_search_using_database.return_value = drf_response.Response(mocked_response)
 
     parent = factories.DocumentFactory(title="parent", users=[user])
     q = "alpha"
@@ -181,9 +183,9 @@ def test_api_documents_search_indexer_crashes(mock_title_search, indexer_setting
     # the search endpoint did not crash
     assert response.status_code == 200
     # fallback on title_search
-    assert mock_title_search.call_count == 1
-    assert mock_title_search.call_args[0][0].GET.get("q") == q
-    assert mock_title_search.call_args[0][0].GET.get("path") == parent.path
+    assert mock_search_using_database.call_count == 1
+    assert mock_search_using_database.call_args[0][0].GET.get("q") == q
+    assert mock_search_using_database.call_args[0][0].GET.get("path") == parent.path
     assert response.json() == mocked_response
 
 

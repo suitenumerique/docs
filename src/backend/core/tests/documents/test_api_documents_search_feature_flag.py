@@ -18,13 +18,13 @@ pytestmark = pytest.mark.django_db
 
 
 @responses.activate
-@mock.patch("core.api.viewsets.DocumentViewSet._title_search")
-@mock.patch("core.api.viewsets.DocumentViewSet._search_with_indexer")
+@mock.patch("core.api.viewsets.DocumentViewSet._search_using_database")
+@mock.patch("core.api.viewsets.DocumentViewSet._search_using_indexer")
 @pytest.mark.parametrize(
     "activated_flags,"
     "expected_search_type,"
-    "expected_search_with_indexer_called,"
-    "expected_title_search_called",
+    "expected_search_using_indexer_called,"
+    "expected_search_using_database_called",
     [
         ([], SearchType.TITLE, False, True),
         ([FeatureFlag.FLAG_FIND_HYBRID_SEARCH], SearchType.HYBRID, True, False),
@@ -40,15 +40,15 @@ pytestmark = pytest.mark.django_db
         ([FeatureFlag.FLAG_FIND_FULL_TEXT_SEARCH], SearchType.FULL_TEXT, True, False),
     ],
 )
+@pytest.mark.usefixtures("indexer_settings")
 # pylint: disable=too-many-arguments, too-many-positional-arguments
 def test_api_documents_search_success(  # noqa : PLR0913
-    mock_search_with_indexer,
-    mock_title_search,
+    mock_search_using_indexer,
+    mock_search_using_database,
     activated_flags,
     expected_search_type,
-    expected_search_with_indexer_called,
-    expected_title_search_called,
-    indexer_settings,
+    expected_search_using_indexer_called,
+    expected_search_using_database_called,
 ):
     """
     Test that the API endpoint for searching documents returns a successful response
@@ -57,8 +57,8 @@ def test_api_documents_search_success(  # noqa : PLR0913
     """
     assert get_document_indexer() is not None
 
-    mock_search_with_indexer.return_value = HttpResponse()
-    mock_title_search.return_value = HttpResponse()
+    mock_search_using_indexer.return_value = HttpResponse()
+    mock_search_using_database.return_value = HttpResponse()
 
     with override_flag(
         FeatureFlag.FLAG_FIND_HYBRID_SEARCH,
@@ -74,17 +74,17 @@ def test_api_documents_search_success(  # noqa : PLR0913
 
     assert response.status_code == 200
 
-    if expected_search_with_indexer_called:
-        mock_search_with_indexer.assert_called_once()
+    if expected_search_using_indexer_called:
+        mock_search_using_indexer.assert_called_once()
         assert (
-            mock_search_with_indexer.call_args.kwargs["search_type"]
+            mock_search_using_indexer.call_args.kwargs["search_type"]
             == expected_search_type
         )
     else:
-        assert not mock_search_with_indexer.called
+        assert not mock_search_using_indexer.called
 
-    if expected_title_search_called:
+    if expected_search_using_database_called:
         assert SearchType.TITLE == expected_search_type
-        mock_title_search.assert_called_once()
+        mock_search_using_database.assert_called_once()
     else:
-        assert not mock_title_search.called
+        assert not mock_search_using_database.called
