@@ -29,6 +29,7 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
+import { useRightPanelStore } from '@/features/right-panel/components/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
 
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';
@@ -135,11 +136,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   );
 
   // Comment sidebar
-  const {
-    threadsSidebarTarget,
-    filter: threadsSidebarFilter,
-    isSideBarOpen,
-  } = useCommentSidebarStore();
+  const { threadsSidebarTarget, filter: threadsSidebarFilter } =
+    useCommentSidebarStore();
+  const { activePanel, isPanelOpen } = useRightPanelStore();
+  const isCommentSideBarOpen = isPanelOpen && activePanel === 'comments';
 
   const currentUserAvatarUrl = useMemo(() => {
     if (canSeeComment) {
@@ -303,7 +303,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         <BlockNoteSuggestionMenu aiAllowed={aiBlockNoteAllowed} />
         <BlockNoteToolbar aiAllowed={aiBlockNoteAllowed} />
         {showComments && <FloatingComposerController />}
-        {showComments && !isSideBarOpen && <FloatingThreadController />}
+        {showComments && !isCommentSideBarOpen && <FloatingThreadController />}
         {threadsSidebarTarget &&
           createPortal(
             <ThreadsSidebar

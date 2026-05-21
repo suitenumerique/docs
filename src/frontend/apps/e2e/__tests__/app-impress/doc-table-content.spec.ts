@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './utils-common';
+import { createDoc } from './utils-common';
+import { tryFocusEditorContent } from './utils-editor';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -8,40 +9,58 @@ test.beforeEach(async ({ page }) => {
 
 test.describe('Doc Table Content', () => {
   test('it checks the doc table content', async ({ page, browserName }) => {
-    const [randomDoc] = await createDoc(
-      page,
-      'doc-table-content',
-      browserName,
-      1,
-    );
-
-    await verifyDocName(page, randomDoc);
-
-    await page.locator('.ProseMirror').click();
+    await createDoc(page, 'doc-table-content', browserName, 1);
 
     await expect(
-      page.getByRole('button', { name: 'Show the table of contents' }),
+      page.getByRole('button', { name: 'Show the table of contents sidebar' }),
     ).toBeHidden();
 
-    await page.keyboard.type('# Level 1\n## Level 2\n### Level 3');
+    const editor = await tryFocusEditorContent({ page });
+    await page.keyboard.type('# Level 1');
+    for (let i = 0; i < 20; i++) {
+      await page.keyboard.press('Enter');
+    }
+    await page.keyboard.type('## Level 2');
+    for (let i = 0; i < 20; i++) {
+      await page.keyboard.press('Enter');
+    }
+    await page.keyboard.type('### Level 3');
 
-    const summaryContainer = page.locator('#summaryContainer');
-    await summaryContainer.click();
+    await page
+      .getByRole('button', { name: 'Show the table of contents sidebar' })
+      .click();
 
-    const level1 = summaryContainer.getByText('Level 1');
-    const level2 = summaryContainer.getByText('Level 2');
-    const level3 = summaryContainer.getByText('Level 3');
+    const elSidePanel = page.getByLabel('Table of contents side panel');
+
+    const level1 = elSidePanel.getByText('Level 1');
+    const editorLevel1 = editor.getByText('Level 1');
+    const level2 = elSidePanel.getByText('Level 2');
+    const editorLevel2 = editor.getByText('Level 2');
+    const level3 = elSidePanel.getByText('Level 3');
 
     await expect(level1).toBeVisible();
-    await expect(level1).toHaveCSS('padding', /4px 0px/);
-    await expect(level1).toHaveAttribute('aria-selected', 'true');
+    await expect(level1).toHaveCSS('padding', /0px 0px 0px 8px/);
+    await expect(editorLevel1).not.toBeInViewport();
+    await expect(level1).toHaveAttribute('aria-selected', 'false');
 
     await expect(level2).toBeVisible();
     await expect(level2).toHaveCSS('padding-left', /14.4px/);
-    await expect(level2).toHaveAttribute('aria-selected', 'false');
+    await expect(editorLevel2).toBeInViewport();
+    await expect(level2).toHaveAttribute('aria-selected', 'true');
 
     await expect(level3).toBeVisible();
     await expect(level3).toHaveCSS('padding-left', /24px/);
     await expect(level3).toHaveAttribute('aria-selected', 'false');
+
+    await level1.click();
+    await expect(editorLevel1).toBeInViewport();
+    await expect(level1).toHaveAttribute('aria-selected', 'true');
+    await expect(level2).toHaveAttribute('aria-selected', 'false');
+
+    await level2.click();
+    await expect(editorLevel1).not.toBeInViewport();
+    await expect(editorLevel2).toBeInViewport();
+    await expect(level2).toHaveAttribute('aria-selected', 'true');
+    await expect(level1).toHaveAttribute('aria-selected', 'false');
   });
 });

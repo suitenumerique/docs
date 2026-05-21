@@ -25,7 +25,10 @@ import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 import { NextPageWithLayout } from '@/types/next';
 
 const DocEditor = dynamic(
-  () => import('@/docs/doc-editor').then((mod) => ({ default: mod.DocEditor })),
+  () =>
+    import('@/docs/doc-editor/components/DocEditor').then((mod) => ({
+      default: mod.DocEditor,
+    })),
   {
     ssr: false,
     loading: () => <DocEditorSkeleton />,

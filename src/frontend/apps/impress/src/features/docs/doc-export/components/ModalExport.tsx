@@ -20,7 +20,7 @@ import { css } from 'styled-components';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
 import { useMediaUrl } from '@/core';
-import { useEditorStore } from '@/docs/doc-editor';
+import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { Doc, useTrans } from '@/docs/doc-management';
 import { fallbackLng } from '@/i18n/config';
 

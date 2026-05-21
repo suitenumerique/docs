@@ -22,15 +22,9 @@ export const useHeadings = (editor: DocsBlockNoteEditor) => {
       timeoutId = setTimeout(() => {
         const blocksChanges = context.getChanges();
 
-        if (!blocksChanges.length) {
-          return;
-        }
-
-        const blockChanges = blocksChanges[0];
-
         if (
-          blockChanges.type !== 'update' ||
-          blockChanges.block.type !== 'heading'
+          !blocksChanges.length ||
+          !blocksChanges.find((change) => change.block.type === 'heading')
         ) {
           return;
         }

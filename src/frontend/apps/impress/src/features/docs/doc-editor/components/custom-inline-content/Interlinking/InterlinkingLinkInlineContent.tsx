@@ -5,9 +5,9 @@ import { TFunction } from 'i18next';
 import { useEffect } from 'react';
 import { validate as uuidValidate } from 'uuid';
 
-import { DocsBlockNoteEditor } from '@/docs/doc-editor';
 import LinkPageIcon from '@/docs/doc-editor/assets/doc-link.svg';
 import AddPageIcon from '@/docs/doc-editor/assets/doc-plus.svg';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { useCreateChildDocTree, useDocStore } from '@/docs/doc-management';
 
 import { LinkSelected } from './LinkSelected';

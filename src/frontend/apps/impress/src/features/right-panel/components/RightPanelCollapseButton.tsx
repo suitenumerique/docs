@@ -4,12 +4,16 @@ import { css } from 'styled-components';
 import { Card } from '@/components';
 import { CommentSideBarButton } from '@/features/docs/doc-editor/components/comments/CommentSideBar';
 import { useEditorStore } from '@/features/docs/doc-editor/stores/useEditorStore';
+import { useHeadingStore } from '@/features/docs/doc-editor/stores/useHeadingStore';
+import { TableContentSideBarButton } from '@/features/docs/doc-table-content/components/TableContentSideBar';
 
 export const RightPanelCollapseButton = () => {
   const { threadStore } = useEditorStore();
   const [hasThreads, setHasThreads] = useState(
     !!threadStore?.getThreads().size,
   );
+  const { headings } = useHeadingStore();
+  const hasHeadings = headings.length > 0;
 
   useEffect(() => {
     if (!threadStore) {
@@ -21,7 +25,7 @@ export const RightPanelCollapseButton = () => {
     });
   }, [threadStore]);
 
-  if (!hasThreads) {
+  if (!hasThreads && !hasHeadings) {
     return null;
   }
 
@@ -37,6 +41,7 @@ export const RightPanelCollapseButton = () => {
         box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
       `}
     >
+      {hasHeadings && <TableContentSideBarButton />}
       {hasThreads && <CommentSideBarButton />}
     </Card>
   );

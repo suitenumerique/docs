@@ -11,7 +11,6 @@ import {
   useIsCollaborativeEditable,
   useProviderStore,
 } from '@/docs/doc-management';
-import { TableContent } from '@/docs/doc-table-content/';
 import { useAuth } from '@/features/auth/';
 import { SkeletonEditorCore, useSkeletonStore } from '@/features/skeletons';
 import { useSkeletonFadeOut } from '@/features/skeletons/hooks/useFadeOut';
@@ -86,7 +85,6 @@ interface DocEditorProps {
 
 export const DocEditor = ({ doc }: DocEditorProps) => {
   useCollaboration(doc.id);
-  const { isDesktop } = useResponsiveStore();
   const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
   const isDeletedDoc = !!doc.deleted_at;
   const readOnly =
@@ -126,16 +124,13 @@ export const DocEditor = ({ doc }: DocEditorProps) => {
   }, [authenticated, hasTracked, isPublicDoc, trackEvent]);
 
   return (
-    <>
-      {isDesktop && <TableContent selector={`.${DOCS_EDITOR_CLASS}`} />}
-      <DocEditorContainer
-        docHeader={<DocHeader doc={doc} />}
-        isDeletedDoc={isDeletedDoc}
-        readOnly={readOnly}
-      >
-        <DocCoreEditor doc={doc} readOnly={readOnly} />
-      </DocEditorContainer>
-    </>
+    <DocEditorContainer
+      docHeader={<DocHeader doc={doc} />}
+      isDeletedDoc={isDeletedDoc}
+      readOnly={readOnly}
+    >
+      <DocCoreEditor doc={doc} readOnly={readOnly} />
+    </DocEditorContainer>
   );
 };
 

@@ -3,13 +3,13 @@ import { css } from 'styled-components';
 
 import { BoxButton, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import { DocsBlockNoteEditor } from '@/docs/doc-editor';
+import { DocsBlockNoteEditor } from '@/docs/doc-editor/types';
 import { useResponsiveStore } from '@/stores';
 
 const leftPaddingMap: { [key: number]: string } = {
   3: '1.5rem',
   2: '0.9rem',
-  1: '0.3rem',
+  1: 'xs',
 };
 
 export type HeadingsHighlight = {
@@ -40,7 +40,9 @@ export const Heading = ({
   return (
     <BoxButton
       id={`heading-${headingId}`}
+      className="--docs--table-content-heading"
       $width="100%"
+      $height="var(--c--globals--spacings--lg)"
       onMouseOver={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
       onClick={() => {
@@ -62,9 +64,10 @@ export const Heading = ({
       $radius="var(--c--globals--spacings--st)"
       $background={
         isActive
-          ? 'var(--c--contextuals--background--semantic--neutral--secondary)'
+          ? 'var(--c--contextuals--background--semantic--overlay--primary)'
           : 'none'
       }
+      $justify="center"
       $css={css`
         text-align: left;
         &:focus-visible {
@@ -74,15 +77,14 @@ export const Heading = ({
           border-radius: var(--c--globals--spacings--st);
         }
       `}
-      className="--docs--table-content-heading"
       aria-label={text}
       aria-selected={isHighlight}
       aria-current={isHighlight ? 'true' : undefined}
     >
       <Text
-        $width="100%"
-        $padding={{ vertical: 'xtiny', left: leftPaddingMap[level] }}
-        $weight={isHighlight ? 'bold' : 'normal'}
+        $size="sm"
+        $padding={{ left: leftPaddingMap[level] }}
+        $weight={isHighlight ? '700' : '500'}
         $css="overflow-wrap: break-word;"
         $hasTransition
         aria-selected={isHighlight}

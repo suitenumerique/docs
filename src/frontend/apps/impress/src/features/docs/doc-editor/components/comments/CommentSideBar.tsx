@@ -110,25 +110,28 @@ export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
 
 export const CommentSideBarButton = () => {
   const { t } = useTranslation();
-  const { isPanelOpen, togglePanel } = useRightPanelStore();
-  const { setIsSideBarOpen } = useCommentSidebarStore();
+  const { isPanelOpen, activePanel, setActivePanel, setIsPanelOpen } =
+    useRightPanelStore();
 
-  useEffect(() => {
-    setIsSideBarOpen(isPanelOpen);
-  }, [isPanelOpen, setIsSideBarOpen]);
-
-  const ariaLabel = isPanelOpen
+  const isActive = isPanelOpen && activePanel === 'comments';
+  const ariaLabel = isActive
     ? t('Hide the comments sidebar')
     : t('Show the comments sidebar');
 
   return (
     <Button
       size="small"
-      onClick={togglePanel}
+      onClick={() => {
+        if (isActive) {
+          setIsPanelOpen(false);
+        } else {
+          setActivePanel('comments');
+        }
+      }}
       aria-label={ariaLabel}
-      aria-expanded={isPanelOpen}
+      aria-expanded={isActive}
       color="neutral"
-      variant={isPanelOpen ? 'secondary' : 'tertiary'}
+      variant={isActive ? 'secondary' : 'tertiary'}
       icon={<CommentsIcon width={24} height={24} aria-hidden="true" />}
     ></Button>
   );
