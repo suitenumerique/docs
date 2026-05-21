@@ -110,7 +110,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
 };
 
 const DocTitleInput = ({ doc }: DocTitleProps) => {
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
   const { t } = useTranslation();
   const { isTopRoot } = useDocUtils(doc);
   const { untitledDocument } = useTrans();
@@ -227,9 +227,9 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
               pointer-events: none;
               font-style: italic;
             }
-            font-size: ${isDesktop
-              ? css`var(--c--globals--font--sizes--h2)`
-              : css`var(--c--globals--font--sizes--sm)`};
+            font-size: ${isLargeScreen
+              ? 'var(--c--globals--font--sizes--h2)'
+              : 'var(--c--globals--font--sizes--sm)'};
             font-weight: 700;
             outline: none;
           `}

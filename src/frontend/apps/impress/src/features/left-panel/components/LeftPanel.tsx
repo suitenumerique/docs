@@ -24,8 +24,8 @@ const MobileLeftPanelStyle = createGlobalStyle`
 `;
 
 export const LeftPanel = () => {
-  const { isDesktop } = useResponsiveStore();
-  if (isDesktop) {
+  const { isLargeScreen } = useResponsiveStore();
+  if (isLargeScreen) {
     return <LeftPanelDesktop />;
   }
 

@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export type ScreenSize = 'small-mobile' | 'mobile' | 'tablet' | 'desktop';
 
 export interface UseResponsiveStore {
+  isLargeScreen: boolean;
   isMobile: boolean;
   isTablet: boolean;
   isSmallMobile: boolean;
@@ -10,7 +11,6 @@ export interface UseResponsiveStore {
   screenWidth: number;
   setScreenSize: (size: ScreenSize) => void;
   isDesktop: boolean;
-  isLargeScreen: boolean;
   initializeResizeListener: () => () => void;
 }
 
@@ -57,20 +57,20 @@ export const useResponsiveStore = create<UseResponsiveStore>((set) => ({
       } else if (width >= 768 && width < 1024) {
         set({
           isDesktop: false,
+          isLargeScreen: true,
           screenSize: 'tablet',
           isTablet: true,
           isMobile: false,
           isSmallMobile: false,
-          isLargeScreen: true,
         });
       } else {
         set({
           isDesktop: true,
+          isLargeScreen: true,
           screenSize: 'desktop',
           isTablet: false,
           isMobile: false,
           isSmallMobile: false,
-          isLargeScreen: true,
         });
       }
 

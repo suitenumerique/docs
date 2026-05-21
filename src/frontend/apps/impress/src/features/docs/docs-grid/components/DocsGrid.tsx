@@ -97,7 +97,7 @@ export const DocsGrid = ({
       $position="relative"
       $width="100%"
       $maxWidth="960px"
-      $maxHeight="calc(100vh - 52px - 2rem)"
+      $maxHeight={`calc(100vh - 52px - ${isDesktop ? '2rem' : '0rem'})`}
       $align="center"
       className="--docs--doc-grid"
     >

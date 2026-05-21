@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { createGlobalStyle } from 'styled-components';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { Box, ButtonCloseModal, Text } from '@/components';
@@ -19,6 +20,12 @@ import { useFocusStore, useResponsiveStore } from '@/stores';
 import EmptySearchIcon from '../assets/illustration-docs-empty.png';
 
 import { DocSearchContent } from './DocSearchContent';
+
+const ModalStyle = createGlobalStyle`
+  .c__modal__scroller {
+    overflow: inherit ;
+  }
+`;
 
 type DocSearchModalGlobalProps = {
   onClose: () => void;
@@ -43,7 +50,7 @@ const DocSearchModalGlobal = ({
   const [filters, setFilters] = useState<DocSearchFiltersValues>(
     defaultFilters ?? {},
   );
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
   const handleInputSearch = useDebouncedCallback(setSearch, 300);
 
   const handleSelect = (doc: Doc) => {
@@ -60,10 +67,11 @@ const DocSearchModalGlobal = ({
     <Modal
       {...modalProps}
       closeOnClickOutside
-      size={isDesktop ? ModalSize.LARGE : ModalSize.FULL}
+      size={isLargeScreen ? ModalSize.LARGE : ModalSize.FULL}
       hideCloseButton
       aria-describedby="doc-search-modal-title"
     >
+      <ModalStyle />
       <Box
         aria-label={t('Search modal')}
         $direction="column"
@@ -107,7 +115,7 @@ const DocSearchModalGlobal = ({
         >
           <Box
             $padding={{ horizontal: '10px', vertical: 'base' }}
-            $height={isDesktop ? '500px' : 'calc(100vh - 68px - 1rem)'}
+            $height={isLargeScreen ? '500px' : 'calc(100vh - 68px - 1rem)'}
           >
             {search.length === 0 && (
               <Box

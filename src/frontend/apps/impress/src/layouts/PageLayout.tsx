@@ -18,7 +18,7 @@ export function PageLayout({
   children,
   withFooter = true,
 }: PropsWithChildren<PageLayoutProps>) {
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
   const { t } = useTranslation();
   return (
     <Box
@@ -45,7 +45,7 @@ export function PageLayout({
         `}
         aria-label={t('Main content')}
       >
-        {!isDesktop && <LeftPanel />}
+        {!isLargeScreen && <LeftPanel />}
         {children}
       </Box>
       {withFooter && <Footer />}

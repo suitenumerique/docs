@@ -16,7 +16,7 @@ import { useResponsiveStore } from '@/stores';
  */
 export const FloatingBar = () => {
   const { spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
 
   const FLOATING_STYLES = useMemo(() => {
     const base = spacingsTokens['base'];
@@ -69,7 +69,7 @@ export const FloatingBar = () => {
       $direction="row"
       $justify="space-between"
     >
-      {isDesktop ? <LeftPanelCollapseButton /> : <Box />}
+      {isLargeScreen ? <LeftPanelCollapseButton /> : <Box />}
       <RightPanelCollapseButton />
     </Box>
   );

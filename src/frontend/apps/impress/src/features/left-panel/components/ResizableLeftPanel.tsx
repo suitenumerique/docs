@@ -51,7 +51,7 @@ export const ResizableLeftPanel = ({
   maxPanelSizePx = 450,
 }: ResizableLeftPanelProps) => {
   const { t } = useTranslation();
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
   const { isPanelOpen } = useLeftPanelStore();
   const ref = useRef<ImperativePanelHandle>(null);
   const savedWidthPxRef = useRef<number>(minPanelSizePx);
@@ -89,7 +89,7 @@ export const ResizableLeftPanel = ({
    * to either expand/collapse
    */
   useEffect(() => {
-    if (!ref.current || !isDesktop) {
+    if (!ref.current || !isLargeScreen) {
       return;
     }
     if (isPanelOpen) {
@@ -97,11 +97,11 @@ export const ResizableLeftPanel = ({
     } else {
       ref.current.collapse();
     }
-  }, [isPanelOpen, isDesktop]);
+  }, [isPanelOpen, isLargeScreen]);
 
   // Keep pixel width constant on window resize
   useEffect(() => {
-    if (!isDesktop) {
+    if (!isLargeScreen) {
       return;
     }
 
@@ -117,7 +117,7 @@ export const ResizableLeftPanel = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [isDesktop]);
+  }, [isLargeScreen]);
 
   /**
    * Workaround: NVDA does not enter focus mode for role="separator"
@@ -158,15 +158,15 @@ export const ResizableLeftPanel = ({
         }}
         order={0}
         defaultSize={
-          isDesktop
+          isLargeScreen
             ? Math.max(
                 minPanelSizePercent,
                 Math.min(panelSizePercent, maxPanelSizePercent),
               )
             : 0
         }
-        minSize={isDesktop ? minPanelSizePercent : 0}
-        maxSize={isDesktop ? maxPanelSizePercent : 0}
+        minSize={isLargeScreen ? minPanelSizePercent : 0}
+        maxSize={isLargeScreen ? maxPanelSizePercent : 0}
         onResize={handleResize}
       >
         {leftPanel}
@@ -193,7 +193,7 @@ export const ResizableLeftPanel = ({
             cursor: 'col-resize',
           }}
           onDragging={setIsDragging}
-          disabled={!isDesktop}
+          disabled={!isLargeScreen}
         />
       )}
       <Panel order={1}>{children}</Panel>

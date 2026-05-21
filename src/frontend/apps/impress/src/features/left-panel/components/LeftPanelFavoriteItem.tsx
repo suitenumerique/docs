@@ -14,7 +14,7 @@ type LeftPanelFavoriteItemProps = {
 
 export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
   const { colorsTokens, spacingsTokens } = useCunninghamTheme();
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
 
   return (
     <Box
@@ -26,7 +26,7 @@ export const LeftPanelFavoriteItem = ({ doc }: LeftPanelFavoriteItemProps) => {
         padding: ${spacingsTokens['2xs']};
         border-radius: 4px;
         .pinned-actions {
-          opacity: ${isDesktop ? 0 : 1};
+          opacity: ${isLargeScreen ? 0 : 1};
         }
         &:hover {
           background-color: var(

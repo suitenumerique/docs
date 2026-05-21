@@ -52,7 +52,7 @@ export function MainLayoutContent({
   backgroundColor,
   enableResizablePanel,
 }: PropsWithChildren<MainLayoutContentProps>) {
-  const { isDesktop } = useResponsiveStore();
+  const { isLargeScreen } = useResponsiveStore();
 
   if (enableResizablePanel) {
     return (
@@ -71,7 +71,7 @@ export function MainLayoutContent({
     );
   }
 
-  if (!isDesktop) {
+  if (!isLargeScreen) {
     return (
       <>
         <LeftPanel />

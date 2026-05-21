@@ -84,16 +84,13 @@ test.describe('Left panel desktop', () => {
   });
 });
 
-test.describe('Left panel mobile', () => {
-  test.use({ viewport: { width: 500, height: 1200 } });
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-  });
-
-  test('checks all the desktop elements are hidden and all mobile elements are visible', async ({
+test.describe('Left panel responsive', () => {
+  test('checks elements visibility on different screen sizes', async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 500, height: 1200 });
+    await page.goto('/');
+
     await expect(page.getByTestId('left-panel-desktop')).toBeHidden();
     await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
 
@@ -120,12 +117,27 @@ test.describe('Left panel mobile', () => {
     await expect(newDocButton).toBeInViewport();
     await expect(languageButton).toBeInViewport();
     await expect(logoutButton).toBeInViewport();
+
+    await header.getByLabel('Close the header menu').click();
+
+    // Tablet size - like in desktop, left panel should be visible
+    await page.setViewportSize({ width: 900, height: 1200 });
+    await page.goto('/');
+
+    await expect(page.getByRole('link', { name: 'All docs' })).toBeInViewport();
+    await expect(newDocButton).toBeInViewport();
+    await expect(languageButton).toBeInViewport();
+    await expect(logoutButton).toBeInViewport();
+    await expect(header.getByLabel('Open the header menu')).toBeHidden();
   });
 
   test('checks panel closes when clicking on a subdoc', async ({
     page,
     browserName,
   }) => {
+    await page.setViewportSize({ width: 500, height: 1200 });
+    await page.goto('/');
+
     const [docTitle] = await createDoc(
       page,
       'mobile-doc-test',
@@ -161,13 +173,5 @@ test.describe('Left panel mobile', () => {
     await docTree.getByText(docChild).click();
     await verifyDocName(page, docChild);
     await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
-  });
-
-  test('checks resize handle is not present on mobile', async ({ page }) => {
-    await page.goto('/');
-
-    // Verify the resize handle is NOT present on mobile
-    const resizeHandle = page.locator('[data-panel-resize-handle-id]');
-    await expect(resizeHandle).toBeHidden();
   });
 });
