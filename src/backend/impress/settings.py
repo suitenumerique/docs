@@ -22,6 +22,7 @@ from configurations import Configuration, values
 from corsheaders.defaults import default_headers
 from csp.constants import NONE
 from lasuite.configuration.values import SecretFileValue
+from lasuite.oidc_login.enums import OIDCUserEndpointFormat
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
@@ -613,6 +614,12 @@ class Base(Configuration):
     )
     OIDC_OP_USER_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_USER_ENDPOINT", environ_prefix=None
+    )
+    OIDC_OP_USER_ENDPOINT_FORMAT = values.Value(
+        OIDCUserEndpointFormat.AUTO.name,
+        environ_name="OIDC_OP_USER_ENDPOINT_FORMAT",
+        eviron_prefix=None,
+        choices=[e.name for e in OIDCUserEndpointFormat],
     )
     OIDC_OP_LOGOUT_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_LOGOUT_ENDPOINT", environ_prefix=None
