@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { createDoc, goToGridDoc, verifyDocName } from './utils-common';
+import { tryFocusEditorContent } from './utils-editor';
 import { createRootSubPage } from './utils-sub-pages';
 
 test.describe('Left panel desktop', () => {
@@ -173,5 +174,48 @@ test.describe('Left panel responsive', () => {
     await docTree.getByText(docChild).click();
     await verifyDocName(page, docChild);
     await expect(page.getByTestId('left-panel-mobile')).not.toBeInViewport();
+  });
+
+  test('checks panel coordination on tablet sizes', async ({
+    page,
+    browserName,
+  }) => {
+    await page.setViewportSize({ width: 900, height: 1200 });
+    await page.goto('/');
+
+    await createDoc(page, 'tablet-doc-test', browserName, 1);
+
+    const leftPanel = page.locator('.--docs--resizable-left-panel');
+    const rightPanel = page.getByLabel('Table of contents side panel');
+
+    // Initially, left panel should be visible and right panel should be hidden
+    await expect(leftPanel).toBeInViewport();
+    await expect(rightPanel).not.toBeInViewport();
+    await tryFocusEditorContent({ page });
+    await page.keyboard.type('# Level 1');
+
+    // Open right panel, the left panel should hide
+    await page
+      .getByRole('button', { name: 'Show the table of contents sidebar' })
+      .click();
+    await expect(rightPanel).toBeInViewport();
+    await expect(leftPanel).toBeHidden();
+
+    // Open left panel, the right panel should hide
+    await page.getByRole('button', { name: /Show the side panel/ }).click();
+    await expect(leftPanel).toBeInViewport();
+    await expect(rightPanel).not.toBeInViewport();
+
+    // Close the left panel, the right panel should show
+    await page.getByRole('button', { name: /Hide the side panel/ }).click();
+    await expect(leftPanel).toBeHidden();
+    await expect(rightPanel).toBeInViewport();
+
+    // Close right panel, the left panel should stay closed
+    await page
+      .getByRole('button', { name: 'Hide the table of contents sidebar' })
+      .click();
+    await expect(rightPanel).not.toBeInViewport();
+    await expect(leftPanel).toBeHidden();
   });
 });

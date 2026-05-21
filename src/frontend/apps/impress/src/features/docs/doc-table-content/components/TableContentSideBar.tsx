@@ -8,7 +8,7 @@ import { Box, ButtonCloseModal, Text } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
 import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { useHeadingStore } from '@/docs/doc-editor/stores/useHeadingStore';
-import { useRightPanelStore } from '@/features/right-panel/components/useRightPanelStore';
+import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
 
 import { Heading } from './Heading';

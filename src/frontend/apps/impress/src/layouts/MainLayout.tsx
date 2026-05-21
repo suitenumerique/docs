@@ -11,6 +11,7 @@ import { DocEditorSkeleton, Skeleton } from '@/features/skeletons';
 import { useResponsiveStore } from '@/stores';
 
 import { MAIN_LAYOUT_ID } from './conf';
+import { usePanelCoordination } from './usePanelCoordination';
 
 type MainLayoutProps = {
   backgroundColor?: 'white' | 'grey';
@@ -56,18 +57,9 @@ export function MainLayoutContent({
 
   if (enableResizablePanel) {
     return (
-      <ResizableLeftPanel leftPanel={<LeftPanel />}>
-        <Box $direction="row" $width="100%" $position="relative">
-          <MainContent
-            backgroundColor={backgroundColor}
-            $flex="auto"
-            $padding="0"
-          >
-            {children}
-          </MainContent>
-          <RightPanel />
-        </Box>
-      </ResizableLeftPanel>
+      <MainResizableLayout backgroundColor={backgroundColor}>
+        {children}
+      </MainResizableLayout>
     );
   }
 
@@ -95,6 +87,32 @@ export function MainLayoutContent({
     </>
   );
 }
+
+interface MainResizableLayoutProps {
+  backgroundColor: 'white' | 'grey';
+}
+
+const MainResizableLayout = ({
+  children,
+  backgroundColor,
+}: PropsWithChildren<MainResizableLayoutProps>) => {
+  usePanelCoordination();
+
+  return (
+    <ResizableLeftPanel leftPanel={<LeftPanel />}>
+      <Box $direction="row" $width="100%" $position="relative">
+        <MainContent
+          backgroundColor={backgroundColor}
+          $flex="auto"
+          $padding="0"
+        >
+          {children}
+        </MainContent>
+        <RightPanel />
+      </Box>
+    </ResizableLeftPanel>
+  );
+};
 
 type MainContentProps = BoxProps & {
   backgroundColor: 'white' | 'grey';

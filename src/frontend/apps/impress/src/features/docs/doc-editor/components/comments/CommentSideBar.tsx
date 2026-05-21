@@ -8,7 +8,7 @@ import CommentsIcon from '@/assets/icons/ui-kit/bubble-text.svg';
 import SortingResolvedSVG from '@/assets/icons/ui-kit/filter-notification.svg';
 import SortingOpenSVG from '@/assets/icons/ui-kit/filter_list.svg';
 import { Box, ButtonCloseModal, Text } from '@/components/';
-import { useRightPanelStore } from '@/features/right-panel/components/useRightPanelStore';
+import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 
 import { useCommentSidebarStore } from './useCommentSidebarStore';
 

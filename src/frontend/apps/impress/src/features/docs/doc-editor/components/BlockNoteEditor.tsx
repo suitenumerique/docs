@@ -29,7 +29,7 @@ import { useConfig } from '@/core';
 import { useCunninghamTheme } from '@/cunningham';
 import { Doc } from '@/docs/doc-management';
 import { avatarUrlFromName, useAuth } from '@/features/auth';
-import { useRightPanelStore } from '@/features/right-panel/components/useRightPanelStore';
+import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { useAnalytics } from '@/libs/Analytics';
 
 import { AI_FEATURE_FLAG, DEFAULT_LOCALE } from '../conf';

@@ -9,7 +9,10 @@ import { TableContentSideBar } from '@/features/docs/doc-table-content/component
 import { HEADER_HEIGHT } from '@/features/header';
 import { useResponsiveStore } from '@/stores';
 
-import { RightPanelView, useRightPanelStore } from './useRightPanelStore';
+import {
+  RightPanelView,
+  useRightPanelStore,
+} from '../stores/useRightPanelStore';
 
 export const RightPanel = () => {
   const { t } = useTranslation();
