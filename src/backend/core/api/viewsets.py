@@ -1430,7 +1430,9 @@ class DocumentViewSet(
         It depends on a search configurable Search Indexer. If no Search Indexer is configured
         or if it is not reachable, the function falls back to a basic title search.
         """
-        params = serializers.SearchDocumentSerializer(data=request.query_params)
+        params = serializers.SearchQueryParamDocumentSerializer(
+            data=request.query_params
+        )
         params.is_valid(raise_exception=True)
         search_type = self._get_search_type()
         if search_type == SearchType.TITLE:

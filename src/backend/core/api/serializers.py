@@ -982,7 +982,7 @@ class ThreadSerializer(serializers.ModelSerializer):
         return {}
 
 
-class SearchDocumentSerializer(serializers.Serializer):
+class SearchQueryParamDocumentSerializer(serializers.Serializer):
     """Serializer for fulltext search requests through Find application"""
 
     q = serializers.CharField(required=True, allow_blank=True, trim_whitespace=True)
