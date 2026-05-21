@@ -88,7 +88,9 @@ def test_api_documents_search_simple_search_anonymous(settings):
     assert response.json()["count"] == 0
 
 
-def test_api_documents_search_fall_back_on_simple_search(settings):
+def test_api_documents_search_fall_back_on_simple_search(
+    settings, django_assert_num_queries
+):
     """
     When indexer is not configured the search should be made in the database on the
     title field.
@@ -125,7 +127,8 @@ def test_api_documents_search_fall_back_on_simple_search(settings):
     client.force_login(user)
 
     q = "alpha"
-    response = client.get("/api/v1.0/documents/search/", data={"q": q})
+    with django_assert_num_queries(13):
+        response = client.get("/api/v1.0/documents/search/", data={"q": q})
 
     assert response.status_code == 200
 
@@ -371,7 +374,7 @@ def test_api_documents_search_simple_search_only_match_in_depth(settings):
     }
 
 
-def test_api_documents_saerch_with_title_also_matching_link_traces(settings):
+def test_api_documents_search_with_title_also_matching_link_traces(settings):
     """Test that link_traces can also be present in the search result."""
     assert get_document_indexer() is None
     assert settings.OIDC_STORE_REFRESH_TOKEN is False

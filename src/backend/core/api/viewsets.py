@@ -558,7 +558,7 @@ class DocumentViewSet(
     list_serializer_class = serializers.ListDocumentSerializer
     trashbin_serializer_class = serializers.ListDocumentSerializer
     tree_serializer_class = serializers.ListDocumentSerializer
-    search_serializer_class = serializers.ListDocumentSerializer
+    search_serializer_class = serializers.SearchDocumentSerializer
 
     def get_queryset(self):
         """Get queryset performing all annotation and filtering on the document tree structure."""
@@ -610,6 +610,48 @@ class DocumentViewSet(
 
         serializer = self.get_serializer(queryset, many=True, context=context)
         return drf.response.Response(serializer.data)
+
+    def _compute_parents(self, documents):
+        """
+        Compute parents for the documents by analyzing their paths and fetching missing parents.
+
+        Nota bene: current implementation may appear naive, but it has been
+        optimized to avoid n+1 database queries issue. At this time, we only
+        perform a single database request when parents are missing.
+        """
+        documents = list(documents)
+        steplen = models.Document.steplen
+
+        # Build parents dictionary and collect missing parent paths
+        parents = {document.path: document for document in documents}
+        missing_parent_paths = set()
+
+        for document in documents:
+            path = document.path
+            for i in range(steplen, len(path), steplen):
+                parent_path = path[:i]
+                if parent_path not in parents:
+                    missing_parent_paths.add(parent_path)
+
+        # Fetch missing ancestors from database
+        if missing_parent_paths:
+            for parent in (
+                models.Document.objects.annotate_user_roles(self.request.user)
+                .annotate_is_favorite(self.request.user)
+                .filter(path__in=missing_parent_paths)
+                .iterator()
+            ):
+                parents[parent.path] = parent
+
+        # Set parents for each item
+        for document in documents:
+            path = document.path
+            document_parents = []
+            for i in range(steplen, len(path), steplen):
+                document_parents.append(parents[path[:i]])
+            document.parents = document_parents
+
+        return documents
 
     def list(self, request, *args, **kwargs):
         """
@@ -1499,6 +1541,17 @@ class DocumentViewSet(
             }
         )
 
+    def _get_response_for_search_queryset(self, queryset):
+        page = self.paginate_queryset(queryset)
+        documents_queryset = page if page else queryset
+        documents = self._compute_parents(documents_queryset)
+        serializer = self.get_serializer(documents, many=True)
+
+        if page is None:
+            return drf.response.Response(serializer.data)
+
+        return self.get_paginated_response(serializer.data)
+
     def _search_using_database(self, request, validated_data, *args, **kwargs):
         """
         Fallback search method when no indexer is configured.
@@ -1581,7 +1634,7 @@ class DocumentViewSet(
             raise drf.exceptions.ValidationError(filterset.errors)
 
         queryset = filterset.qs
-        return self.get_response_for_queryset(queryset)
+        return self._get_response_for_search_queryset(queryset)
 
     @drf.decorators.action(detail=True, methods=["get"], url_path="versions")
     def versions_list(self, request, *args, **kwargs):

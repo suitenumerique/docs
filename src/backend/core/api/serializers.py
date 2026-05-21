@@ -167,6 +167,17 @@ class ListDocumentSerializer(serializers.ModelSerializer):
         return instance.ancestors_deleted_at
 
 
+class SearchDocumentSerializer(ListDocumentSerializer):
+    """Serialize items for search."""
+
+    parents = ListDocumentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = models.Document
+        fields = ListDocumentSerializer.Meta.fields + ["parents"]
+        read_only_fields = ListDocumentSerializer.Meta.read_only_fields + ["parents"]
+
+
 class DocumentLightSerializer(serializers.ModelSerializer):
     """Minial document serializer for nesting in document accesses."""
 

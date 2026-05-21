@@ -16,6 +16,7 @@ and this project adheres to
 ### Changed
 
 - ♻️(backend) allow global search in sub documents
+- ✨(backend) add a breadcrumb in the search response
 
 ### Fixed
 

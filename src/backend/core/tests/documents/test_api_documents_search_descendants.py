@@ -2,6 +2,7 @@
 Tests for search API endpoint in impress's core app when indexer is not
 available and a path param is given.
 """
+# pylint: disable=too-many-lines
 
 import random
 
@@ -65,6 +66,7 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [],
             },
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
@@ -88,6 +90,35 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": 0,
+                        "nb_accesses_direct": 0,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(AnonymousUser()),
@@ -111,6 +142,62 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": 0,
+                        "nb_accesses_direct": 0,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": child1.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": child1.ancestors_link_reach,
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 1,
+                        "nb_accesses_direct": 1,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
@@ -134,6 +221,35 @@ def test_api_documents_search_descendants_list_anonymous_public_standalone():
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_role": None,
+                        "ancestors_link_reach": None,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": 0,
+                        "nb_accesses_direct": 0,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
         ],
     }
@@ -197,6 +313,62 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
                 "title": document.title,
                 "updated_at": document.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_ancestors,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_ancestors,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": child1.get_abilities(AnonymousUser()),
@@ -220,6 +392,89 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_ancestors,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_ancestors,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": "public",
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": 0,
+                        "nb_accesses_direct": 0,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(AnonymousUser()),
@@ -243,6 +498,116 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_ancestors,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_ancestors,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": "public",
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": 0,
+                        "nb_accesses_direct": 0,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": child1.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": "public",
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 4,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 1,
+                        "nb_accesses_direct": 1,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(AnonymousUser()),
@@ -266,6 +631,89 @@ def test_api_documents_search_descendants_list_anonymous_public_parent():
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_ancestors,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_ancestors,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": document.get_abilities(AnonymousUser()),
+                        "ancestors_link_reach": "public",
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": 0,
+                        "nb_accesses_direct": 0,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
         ],
     }
@@ -344,10 +792,39 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(user),
-                "ancestors_link_reach": reach,
+                "ancestors_link_reach": grand_child.ancestors_link_reach,
                 "ancestors_link_role": grand_child.ancestors_link_role,
                 "computed_link_reach": grand_child.computed_link_reach,
                 "computed_link_role": grand_child.computed_link_role,
@@ -367,6 +844,62 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": child1.get_abilities(user),
+                        "ancestors_link_reach": child1.ancestors_link_reach,
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 1,
+                        "nb_accesses_direct": 1,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -390,6 +923,35 @@ def test_api_documents_search_descendants_list_authenticated_unrelated_public_or
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
         ],
     }
@@ -454,6 +1016,89 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(user),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_direct,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(user),
@@ -477,6 +1122,116 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(user),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_direct,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": child1.get_abilities(user),
+                        "ancestors_link_reach": reach,
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 4,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 1,
+                        "nb_accesses_direct": 1,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -500,6 +1255,89 @@ def test_api_documents_search_descendants_list_authenticated_public_or_authentic
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": None,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(user),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_direct,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": None,
+                    },
+                ],
             },
         ],
     }
@@ -584,6 +1422,35 @@ def test_api_documents_search_descendants_list_authenticated_related_direct():
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": access.role,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    }
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(user),
@@ -607,6 +1474,62 @@ def test_api_documents_search_descendants_list_authenticated_related_direct():
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": access.role,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    },
+                    {
+                        "abilities": child1.get_abilities(user),
+                        "ancestors_link_reach": child1.ancestors_link_reach,
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 3,
+                        "nb_accesses_direct": 1,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -630,6 +1553,35 @@ def test_api_documents_search_descendants_list_authenticated_related_direct():
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": access.role,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    }
+                ],
             },
         ],
     }
@@ -695,6 +1647,89 @@ def test_api_documents_search_descendants_list_authenticated_related_parent():
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": grand_parent_access.role,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(user),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_direct,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(user),
@@ -718,6 +1753,116 @@ def test_api_documents_search_descendants_list_authenticated_related_parent():
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": grand_parent_access.role,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(user),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_direct,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": child1.get_abilities(user),
+                        "ancestors_link_reach": child1.ancestors_link_reach,
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 4,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 2,
+                        "nb_accesses_direct": 1,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -741,6 +1886,89 @@ def test_api_documents_search_descendants_list_authenticated_related_parent():
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": grand_parent_access.role,
+                "parents": [
+                    {
+                        "abilities": grand_parent.get_abilities(user),
+                        "ancestors_link_reach": grand_parent.ancestors_link_reach,
+                        "ancestors_link_role": grand_parent.ancestors_link_role,
+                        "computed_link_reach": grand_parent.computed_link_reach,
+                        "computed_link_role": grand_parent.computed_link_role,
+                        "created_at": grand_parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(grand_parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": grand_parent.excerpt,
+                        "id": str(grand_parent.id),
+                        "is_favorite": False,
+                        "link_reach": grand_parent.link_reach,
+                        "link_role": grand_parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": grand_parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": grand_parent.nb_accesses_direct,
+                        "path": grand_parent.path,
+                        "title": grand_parent.title,
+                        "updated_at": grand_parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": parent.get_abilities(user),
+                        "ancestors_link_reach": parent.ancestors_link_reach,
+                        "ancestors_link_role": parent.ancestors_link_role,
+                        "computed_link_reach": parent.computed_link_reach,
+                        "computed_link_role": parent.computed_link_role,
+                        "created_at": parent.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(parent.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": parent.excerpt,
+                        "id": str(parent.id),
+                        "is_favorite": False,
+                        "link_reach": parent.link_reach,
+                        "link_role": parent.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": parent.nb_accesses_ancestors,
+                        "nb_accesses_direct": parent.nb_accesses_direct,
+                        "path": parent.path,
+                        "title": parent.title,
+                        "updated_at": parent.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 3,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": grand_parent_access.role,
+                    },
+                ],
             },
         ],
     }
@@ -853,6 +2081,35 @@ def test_api_documents_search_descendants_list_authenticated_related_team_member
                 "title": child1.title,
                 "updated_at": child1.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": access.role,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    }
+                ],
             },
             {
                 "abilities": grand_child.get_abilities(user),
@@ -876,6 +2133,62 @@ def test_api_documents_search_descendants_list_authenticated_related_team_member
                 "title": grand_child.title,
                 "updated_at": grand_child.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": access.role,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    },
+                    {
+                        "abilities": child1.get_abilities(user),
+                        "ancestors_link_reach": child1.ancestors_link_reach,
+                        "ancestors_link_role": child1.ancestors_link_role,
+                        "computed_link_reach": child1.computed_link_reach,
+                        "computed_link_role": child1.computed_link_role,
+                        "created_at": child1.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(child1.creator.id),
+                        "deleted_at": None,
+                        "depth": 2,
+                        "excerpt": child1.excerpt,
+                        "id": str(child1.id),
+                        "is_favorite": False,
+                        "link_reach": child1.link_reach,
+                        "link_role": child1.link_role,
+                        "numchild": 1,
+                        "nb_accesses_ancestors": 1,
+                        "nb_accesses_direct": 0,
+                        "path": child1.path,
+                        "title": child1.title,
+                        "updated_at": child1.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    },
+                ],
             },
             {
                 "abilities": child2.get_abilities(user),
@@ -899,6 +2212,35 @@ def test_api_documents_search_descendants_list_authenticated_related_team_member
                 "title": child2.title,
                 "updated_at": child2.updated_at.isoformat().replace("+00:00", "Z"),
                 "user_role": access.role,
+                "parents": [
+                    {
+                        "abilities": document.get_abilities(user),
+                        "ancestors_link_reach": document.ancestors_link_reach,
+                        "ancestors_link_role": document.ancestors_link_role,
+                        "computed_link_reach": document.computed_link_reach,
+                        "computed_link_role": document.computed_link_role,
+                        "created_at": document.created_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "creator": str(document.creator.id),
+                        "deleted_at": None,
+                        "depth": 1,
+                        "excerpt": document.excerpt,
+                        "id": str(document.id),
+                        "is_favorite": False,
+                        "link_reach": document.link_reach,
+                        "link_role": document.link_role,
+                        "numchild": 2,
+                        "nb_accesses_ancestors": document.nb_accesses_ancestors,
+                        "nb_accesses_direct": document.nb_accesses_direct,
+                        "path": document.path,
+                        "title": document.title,
+                        "updated_at": document.updated_at.isoformat().replace(
+                            "+00:00", "Z"
+                        ),
+                        "user_role": access.role,
+                    }
+                ],
             },
         ],
     }
