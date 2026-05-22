@@ -85,6 +85,7 @@ def test_api_documents_threads_public_document(link_role):
             "update": False,
             "partial_update": False,
             "resolve": False,
+            "unresolve": False,
             "retrieve": True,
         },
         "metadata": {},
@@ -179,6 +180,7 @@ def test_api_documents_threads_restricted_document_editor(role):
             "update": True,
             "partial_update": True,
             "resolve": True,
+            "unresolve": True,
             "retrieve": True,
         },
         "metadata": {},
@@ -289,6 +291,7 @@ def test_api_documents_threads_authenticated_document(link_role):
             "update": True,
             "partial_update": True,
             "resolve": True,
+            "unresolve": True,
             "retrieve": True,
         },
         "metadata": {},
@@ -549,6 +552,7 @@ def test_api_documents_threads_retrieve_public_document_link_role_higher_than_re
             "update": False,
             "partial_update": False,
             "resolve": False,
+            "unresolve": False,
             "retrieve": True,
         },
         "metadata": {},
@@ -652,6 +656,7 @@ def test_api_documents_threads_retrieve_authenticated_document(link_role):
             "update": False,
             "partial_update": False,
             "resolve": False,
+            "unresolve": False,
             "retrieve": True,
         },
     }
@@ -749,6 +754,7 @@ def test_api_documents_threads_retrieve_restricted_document_editor(role):
             "update": False,
             "partial_update": False,
             "resolve": False,
+            "unresolve": False,
             "retrieve": True,
         },
         "metadata": {},
@@ -808,6 +814,7 @@ def test_api_documents_threads_retrieve_restricted_document_privileged_roles(rol
             "update": True,
             "partial_update": True,
             "resolve": True,
+            "unresolve": True,
             "retrieve": True,
         },
         "metadata": {},
@@ -1019,12 +1026,13 @@ def test_api_documents_threads_destroy_restricted_document_privileged_roles(role
     assert not models.Thread.objects.filter(id=thread.id).exists()
 
 
-# Resolve
+# Resolve / Unresolve
 
 
-def test_api_documents_threads_resolve_public_document_anonymous_user():
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_unresolve_public_document_anonymous_user(action):
     """
-    Anonymous users should not be allowed to resolve threads on public documents.
+    Anonymous users should not be allowed to resolve or unresolve threads on public documents.
     """
     document = factories.DocumentFactory(
         link_reach="public",
@@ -1036,14 +1044,17 @@ def test_api_documents_threads_resolve_public_document_anonymous_user():
 
     client = APIClient()
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 401
 
 
-def test_api_documents_threads_resolve_public_document_authenticated_user():
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_unresolve_public_document_authenticated_user(
+    action,
+):
     """
-    Authenticated users should not be allowed to resolve threads on public documents.
+    Authenticated users should not be allowed to resolve or unresolve threads on public documents.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(
@@ -1057,14 +1068,18 @@ def test_api_documents_threads_resolve_public_document_authenticated_user():
     client = APIClient()
     client.force_login(user)
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 403
 
 
-def test_api_documents_threads_resolve_authenticated_document_anonymous_user():
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_unresolve_authenticated_document_anonymous_user(
+    action,
+):
     """
-    Anonymous users should not be allowed to resolve threads on authenticated documents.
+    Anonymous users should not be allowed to resolve or unresolve threads on authenticated
+    documents.
     """
     document = factories.DocumentFactory(
         link_reach="authenticated",
@@ -1076,14 +1091,17 @@ def test_api_documents_threads_resolve_authenticated_document_anonymous_user():
 
     client = APIClient()
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 401
 
 
-def test_api_documents_threads_resolve_authenticated_document_reader_role():
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_unresolve_authenticated_document_reader_role(
+    action,
+):
     """
-    Authenticated users should not be allowed to resolve threads on authenticated
+    Authenticated users should not be allowed to resolve or unresolve threads on authenticated
     documents with reader link_role.
     """
     user = factories.UserFactory()
@@ -1098,18 +1116,21 @@ def test_api_documents_threads_resolve_authenticated_document_reader_role():
     client = APIClient()
     client.force_login(user)
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 403
 
 
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
 @pytest.mark.parametrize(
     "link_role", [models.LinkRoleChoices.COMMENTER, models.LinkRoleChoices.EDITOR]
 )
-def test_api_documents_threads_resolve_authenticated_document(link_role):
+def test_api_documents_threads_resolve_unresolve_authenticated_document(
+    link_role, action
+):
     """
-    Authenticated users should not be allowed to resolve threads on authenticated documents with
-    commenter or editor link_role.
+    Authenticated users should not be allowed to resolve or unresolve threads on authenticated
+    documents with commenter or editor link_role.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(
@@ -1123,14 +1144,17 @@ def test_api_documents_threads_resolve_authenticated_document(link_role):
     client = APIClient()
     client.force_login(user)
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 403
 
 
-def test_api_documents_threads_resolve_restricted_document_anonymous_user():
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_unresolve_restricted_document_anonymous_user(
+    action,
+):
     """
-    Anonymous users should not be allowed to resolve threads on restricted documents.
+    Anonymous users should not be allowed to resolve or unresolve threads on restricted documents.
     """
     document = factories.DocumentFactory(
         link_reach="restricted",
@@ -1142,15 +1166,18 @@ def test_api_documents_threads_resolve_restricted_document_anonymous_user():
 
     client = APIClient()
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 401
 
 
-def test_api_documents_threads_resolve_restricted_document_reader_role():
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
+def test_api_documents_threads_resolve_unresolve_restricted_document_reader_role(
+    action,
+):
     """
-    Authenticated users should not be allowed to resolve threads on restricted documents with
-    reader roles.
+    Authenticated users should not be allowed to resolve or unresolve threads on restricted
+    documents with reader roles.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(
@@ -1165,18 +1192,21 @@ def test_api_documents_threads_resolve_restricted_document_reader_role():
     client = APIClient()
     client.force_login(user)
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 403
 
 
+@pytest.mark.parametrize("action", ["resolve", "unresolve"])
 @pytest.mark.parametrize(
     "role", [models.RoleChoices.COMMENTER, models.RoleChoices.EDITOR]
 )
-def test_api_documents_threads_resolve_restricted_document_editor(role):
+def test_api_documents_threads_resolve_unresolve_restricted_document_editor(
+    role, action
+):
     """
-    Authenticated users should not be allowed to resolve threads on restricted documents with
-    editor roles.
+    Authenticated users should not be allowed to resolve or unresolve threads on restricted
+    documents with commenter or editor roles.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(
@@ -1191,7 +1221,7 @@ def test_api_documents_threads_resolve_restricted_document_editor(role):
     client = APIClient()
     client.force_login(user)
     response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/resolve/",
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/{action}/",
     )
     assert response.status_code == 403
 
@@ -1219,8 +1249,36 @@ def test_api_documents_threads_resolve_restricted_document_privileged_roles(role
     )
     assert response.status_code == 204
 
-    # Verify thread is resolved
     thread.refresh_from_db()
     assert thread.resolved is True
     assert thread.resolved_at is not None
     assert thread.resolved_by == user
+
+
+@pytest.mark.parametrize("role", [models.RoleChoices.ADMIN, models.RoleChoices.OWNER])
+def test_api_documents_threads_unresolve_restricted_document_privileged_roles(role):
+    """
+    Authenticated users with privileged roles should be allowed to unresolve threads on
+    restricted documents.
+    """
+    user = factories.UserFactory()
+    document = factories.DocumentFactory(
+        link_reach="restricted",
+        link_role=models.LinkRoleChoices.EDITOR,
+        users=[(user, role)],
+    )
+
+    thread = factories.ThreadFactory(document=document, creator=None, resolved=True)
+    factories.CommentFactory(thread=thread, user=None)
+
+    client = APIClient()
+    client.force_login(user)
+    response = client.post(
+        f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/unresolve/",
+    )
+    assert response.status_code == 204
+
+    thread.refresh_from_db()
+    assert thread.resolved is False
+    assert thread.resolved_at is None
+    assert thread.resolved_by is None

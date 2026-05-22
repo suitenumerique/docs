@@ -15,6 +15,7 @@ export interface ThreadAbilities {
   partial_update: boolean;
   retrieve: boolean;
   resolve: boolean;
+  unresolve: boolean;
 }
 
 export interface ServerReaction {

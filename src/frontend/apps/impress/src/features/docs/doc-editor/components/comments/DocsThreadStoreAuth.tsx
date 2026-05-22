@@ -53,12 +53,11 @@ export class DocsThreadStoreAuth extends ThreadStoreAuth {
     return false;
   }
 
-  /**
-   * Not implemented backend side
-   * @param _thread
-   * @returns
-   */
-  canUnresolveThread(_thread: ClientThreadData): boolean {
+  canUnresolveThread(thread: ClientThreadData): boolean {
+    if (thread.metadata.abilities.unresolve) {
+      return true;
+    }
+
     return false;
   }
 
