@@ -547,4 +547,47 @@ test.describe('Doc Comments Side Panel', () => {
       'bn-thread-mark-selected',
     );
   });
+
+  test('it checks comments accessibility', async ({ page, browserName }) => {
+    await createDoc(page, 'comment-doc-panel', browserName, 1);
+
+    // Create comment thread
+    const editor = await writeInEditor({ page, text: 'Hello World' });
+    await editor.getByText('Hello').selectText();
+    await page.getByRole('button', { name: 'Add comment' }).click();
+
+    const thread = page.locator('.bn-thread');
+    await thread.getByRole('paragraph').first().fill('This is a comment');
+    await thread.locator('[data-test="save"]').click();
+
+    // Open comment side panel and check aria attributes
+    await page
+      .getByRole('button', { name: 'Show the comments sidebar' })
+      .click();
+
+    const elCommentsSidePanel = page.getByLabel('Comments side panel');
+    await expect(elCommentsSidePanel).not.toHaveAttribute('inert');
+
+    // Check panel get the focus when opening
+    await page.keyboard.press('Tab');
+    await expect(
+      elCommentsSidePanel.getByRole('button', { name: 'Filter comments' }),
+    ).toBeFocused();
+    await page.keyboard.press('Tab');
+
+    // Check the focus goes back to the button that open the side panel
+    await expect(
+      elCommentsSidePanel.getByRole('button', {
+        name: 'Close the comments sidebar',
+      }),
+    ).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(elCommentsSidePanel).toBeHidden();
+    await expect(
+      page.getByRole('complementary', { name: 'Side panel' }),
+    ).toHaveAttribute('inert');
+    await expect(
+      page.getByRole('button', { name: 'Show the comments sidebar' }),
+    ).toBeFocused();
+  });
 });

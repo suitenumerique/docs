@@ -1,5 +1,5 @@
-import { Button } from '@gouvfr-lasuite/cunningham-react';
-import { useEffect, useState } from 'react';
+import { Button, ButtonElement } from '@gouvfr-lasuite/cunningham-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -10,6 +10,7 @@ import { useEditorStore } from '@/docs/doc-editor/stores/useEditorStore';
 import { useHeadingStore } from '@/docs/doc-editor/stores/useHeadingStore';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
 import { MAIN_LAYOUT_ID } from '@/layouts/conf';
+import { useFocusStore } from '@/stores/useFocusStore';
 
 import { Heading } from './Heading';
 
@@ -94,7 +95,9 @@ export const TableContentSideBar = ({ onClose }: TableContentSideBarProps) => {
         `}
       >
         <Box $direction="row" $align="center" $justify="space-between">
-          <Text $weight="bold">{t('Table of Contents')}</Text>
+          <Text as="h2" $weight="bold" $size="16px" $margin="0">
+            {t('Table of Contents')}
+          </Text>
           <ButtonCloseModal
             aria-label={t('Close the table of contents sidebar')}
             onClick={onClose}
@@ -140,6 +143,8 @@ export const TableContentSideBarButton = () => {
   const { t } = useTranslation();
   const { isPanelOpen, activePanel, setActivePanel, setIsPanelOpen } =
     useRightPanelStore();
+  const buttonRef = useRef<ButtonElement>(null);
+  const { addLastFocus } = useFocusStore();
 
   const isActive = isPanelOpen && activePanel === 'tableContent';
   const ariaLabel = isActive
@@ -148,12 +153,14 @@ export const TableContentSideBarButton = () => {
 
   return (
     <Button
+      ref={buttonRef}
       size="small"
       onClick={() => {
         if (isActive) {
           setIsPanelOpen(false);
         } else {
           setActivePanel('tableContent');
+          addLastFocus(buttonRef.current);
         }
       }}
       aria-label={ariaLabel}

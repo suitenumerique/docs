@@ -148,6 +148,7 @@ export const ResizableLeftPanel = ({
       <Panel
         ref={ref}
         className="--docs--resizable-left-panel"
+        inert={!isPanelOpen}
         collapsible={!isPanelOpen}
         collapsedSize={0}
         style={{

@@ -310,6 +310,13 @@ export const DocsCommentsStyle = createGlobalStyle<{
     min-height: 0;
     overflow: auto;
 
+    .bn-editor[contenteditable="false"]{
+      &:focus-visible {
+        outline: 2px solid var(--c--globals--colors--brand-400);
+        outline-offset: -2px;
+      }
+    }
+
     .bn-threads-sidebar {
       gap: 0;
       border-radius: 0;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -7,7 +7,7 @@ import { CommentSideBar } from '@/features/docs/doc-editor/components/comments/C
 import { useDocStore, useProviderStore } from '@/features/docs/doc-management';
 import { TableContentSideBar } from '@/features/docs/doc-table-content/components/TableContentSideBar';
 import { HEADER_HEIGHT } from '@/features/header';
-import { useResponsiveStore } from '@/stores';
+import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import {
   RightPanelView,
@@ -22,6 +22,7 @@ export const RightPanel = () => {
   const { provider, isReady } = useProviderStore();
   const isProviderReady =
     isReady && provider && provider?.configuration.name === doc?.id;
+  const { restoreFocus } = useFocusStore();
 
   /**
    * Keep rendering the last active panel during the close animation,
@@ -40,21 +41,41 @@ export const RightPanel = () => {
     }
   }, [activePanel]);
 
+  /**
+   * Focus the panel when it opens or when the rendered panel changes,
+   * so that keyboard users are placed in the panel content immediately.
+   */
+  const panelRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (isPanelOpen) {
+      panelRef.current?.focus();
+    }
+  }, [isPanelOpen, renderedPanel]);
+
   if (!doc || !isProviderReady) {
     return null;
   }
 
-  const ariaLabel = isPanelOpen
-    ? t('Right panel, currently open')
-    : t('Right panel, currently closed');
+  const panelLabel =
+    renderedPanel === 'comments'
+      ? t('Comments side panel')
+      : renderedPanel === 'tableContent'
+        ? t('Table of contents side panel')
+        : t('Side panel');
 
-  const handleClose = () => setIsPanelOpen(false);
+  const handleClose = () => {
+    setIsPanelOpen(false);
+    restoreFocus();
+  };
 
   return (
     <Box
+      as="aside"
+      ref={panelRef}
+      tabIndex={-1}
       className="--docs--right-panel"
-      aria-label={ariaLabel}
-      aria-expanded={isPanelOpen}
+      aria-label={panelLabel}
+      inert={!isPanelOpen}
       $width="300px"
       $height={`calc(100dvh - ${HEADER_HEIGHT}px)`}
       $position={isMobile ? 'absolute' : 'sticky'}
@@ -76,6 +97,10 @@ export const RightPanel = () => {
           margin-left: 0rem;
           width: 0;
         `}
+
+        &:focus {
+          outline: none;
+        }
       `}
     >
       {renderedPanel === 'tableContent' && (

@@ -1,4 +1,8 @@
-import { Button, Tooltip } from '@gouvfr-lasuite/cunningham-react';
+import {
+  Button,
+  ButtonElement,
+  Tooltip,
+} from '@gouvfr-lasuite/cunningham-react';
 import { DropdownMenu } from '@gouvfr-lasuite/ui-kit';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +13,7 @@ import SortingResolvedSVG from '@/assets/icons/ui-kit/filter-notification.svg';
 import SortingOpenSVG from '@/assets/icons/ui-kit/filter_list.svg';
 import { Box, ButtonCloseModal, Text } from '@/components/';
 import { useRightPanelStore } from '@/features/right-panel/stores/useRightPanelStore';
+import { useFocusStore } from '@/stores';
 
 import { useCommentSidebarStore } from './useCommentSidebarStore';
 
@@ -43,7 +48,9 @@ export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
       >
         <Box $direction="row" $align="center" $justify="space-between">
           <Box $direction="row" $align="center" $gap="2xs">
-            <Text $weight="bold">{t('Comments')}</Text>
+            <Text as="h2" $weight="bold" $size="16px" $margin="0">
+              {t('Comments')}
+            </Text>
 
             <DropdownMenu
               options={[
@@ -88,7 +95,6 @@ export const CommentSideBar = ({ onClose }: CommentSideBarProps) => {
                     e.preventDefault();
                     setOpen((o) => !o);
                   }}
-                  tabIndex={-1}
                 />
               </Tooltip>
             </DropdownMenu>
@@ -112,6 +118,8 @@ export const CommentSideBarButton = () => {
   const { t } = useTranslation();
   const { isPanelOpen, activePanel, setActivePanel, setIsPanelOpen } =
     useRightPanelStore();
+  const buttonRef = useRef<ButtonElement>(null);
+  const { addLastFocus } = useFocusStore();
 
   const isActive = isPanelOpen && activePanel === 'comments';
   const ariaLabel = isActive
@@ -120,12 +128,14 @@ export const CommentSideBarButton = () => {
 
   return (
     <Button
+      ref={buttonRef}
       size="small"
       onClick={() => {
         if (isActive) {
           setIsPanelOpen(false);
         } else {
           setActivePanel('comments');
+          addLastFocus(buttonRef.current);
         }
       }}
       aria-label={ariaLabel}
