@@ -16,11 +16,13 @@ from socket import gethostbyname, gethostname
 
 from django.utils.translation import gettext_lazy as _
 
+import dj_database_url
 import sentry_sdk
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
 from csp.constants import NONE
 from lasuite.configuration.values import SecretFileValue
+from lasuite.oidc_login.enums import OIDCUserEndpointFormat
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
@@ -83,7 +85,11 @@ class Base(Configuration):
 
     # Database
     DATABASES = {
-        "default": {
+        "default": dj_database_url.config()
+        if values.DatabaseURLValue(
+            None, environ_name="DATABASE_URL", environ_prefix=None
+        )
+        else {
             "ENGINE": values.Value(
                 "django.db.backends.postgresql",
                 environ_name="DB_ENGINE",
@@ -608,6 +614,12 @@ class Base(Configuration):
     )
     OIDC_OP_USER_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_USER_ENDPOINT", environ_prefix=None
+    )
+    OIDC_OP_USER_ENDPOINT_FORMAT = values.Value(
+        OIDCUserEndpointFormat.AUTO.name,
+        environ_name="OIDC_OP_USER_ENDPOINT_FORMAT",
+        eviron_prefix=None,
+        choices=[e.name for e in OIDCUserEndpointFormat],
     )
     OIDC_OP_LOGOUT_ENDPOINT = values.Value(
         None, environ_name="OIDC_OP_LOGOUT_ENDPOINT", environ_prefix=None

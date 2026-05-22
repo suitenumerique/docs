@@ -55,9 +55,10 @@ export const overrideDocContent = async ({
   await page.waitForTimeout(1000);
 
   // Add Image SVG
-  await page.keyboard.press('Enter');
-  const { suggestionMenu } = await openSuggestionMenu({ page });
-  await suggestionMenu.getByText('Resizable image with caption').click();
+  await openSuggestionMenu({
+    page,
+    suggestion: 'Resizable image with caption',
+  });
   const fileChooserPromise = page.waitForEvent('filechooser');
   await page.getByText('Upload image').click();
   const fileChooser = await fileChooserPromise;
@@ -73,8 +74,10 @@ export const overrideDocContent = async ({
   await page.waitForTimeout(1000);
 
   // Add Image PNG
-  await openSuggestionMenu({ page });
-  await suggestionMenu.getByText('Resizable image with caption').click();
+  await openSuggestionMenu({
+    page,
+    suggestion: 'Resizable image with caption',
+  });
   const fileChooserPNGPromise = page.waitForEvent('filechooser');
   await page.getByText('Upload image').click();
   const fileChooserPNG = await fileChooserPNGPromise;

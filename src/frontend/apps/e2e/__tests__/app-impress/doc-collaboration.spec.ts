@@ -3,7 +3,7 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 
 import { createDoc, overrideConfig, verifyDocName } from './utils-common';
-import { writeInEditor } from './utils-editor';
+import { openSuggestionMenu, writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateShareLink } from './utils-share';
 import { createRootSubPage } from './utils-sub-pages';
 
@@ -101,8 +101,10 @@ test.describe('Doc Collaboration', () => {
 
     // Owner add a image
     const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.locator('.bn-block-outer').last().fill('/');
-    await page.getByText('Resizable image with caption').click();
+    await openSuggestionMenu({
+      page,
+      suggestion: 'Resizable image with caption',
+    });
     await page.getByText('Upload image').click();
 
     const fileChooser = await fileChooserPromise;

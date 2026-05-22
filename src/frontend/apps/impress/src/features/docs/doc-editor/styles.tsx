@@ -1,9 +1,10 @@
 import { createGlobalStyle } from 'styled-components';
 
 export const DocsEditorStyle = createGlobalStyle`
-  .bn-root {
+  .bn-container {
     height: 100%;
-
+  }
+  .bn-root {
     .bn-editor {
       height: 100%;
     }
@@ -193,6 +194,7 @@ export const DocsEditorStyle = createGlobalStyle`
     */
     [data-content-type='heading'] {
       --level: 1.875rem;
+      padding-top: 3px;
       &[data-level='2'] {
         --level: 1.5rem;
       }
@@ -236,7 +238,7 @@ export const DocsEditorStyle = createGlobalStyle`
     & .bn-default-styles h6 {
       font-size: 0.875rem;
     }
-    & .bn-block-outer:not(:first-child) {
+    & .bn-block-outer:not(:first-child):not(:has([data-content-type="toggleListItem"])) {
       &:has(h1) {
         margin-top: 32px;
       }

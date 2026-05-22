@@ -133,7 +133,24 @@ const CalloutComponent = ({
           />
         )}
       </Box>
-      <Box as="p" className="inline-content" ref={contentRef} />
+      <Box
+        as="p"
+        className="inline-content"
+        ref={(node: HTMLElement | null) => {
+          contentRef(node);
+
+          /**
+           * BlockNote's CSS uses `.bn-block:has(> .bn-block-content[...])` (direct child).
+           * For custom blocks, `.react-renderer` sits between `.bn-block` and `.bn-block-content`,
+           * so background/text-color selectors never match. Adding `bn-block` to the intermediate
+           * wrapper makes it the direct parent of `.bn-block-content`, fixing all those selectors.
+           * TODO: Remove this patch once BlockNote issue is resolved: https://github.com/TypeCellOS/BlockNote/issues/2732
+           */
+          node
+            ?.closest('.bn-react-node-view-renderer')
+            ?.classList.add('bn-block');
+        }}
+      />
     </Box>
   );
 };

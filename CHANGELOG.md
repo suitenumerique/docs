@@ -9,7 +9,9 @@ and this project adheres to
 ### Added
 
 - ✨(backend) support creating subdoc from file #1987
-- ✨(frontend) justified text alignment in the formatting toolbar
+- ✨(frontend) justified text alignment in the formatting toolbar #2294
+- ✨(buildpack) add PaaS deployment support, tested with Scalingo #2293
+- 🔧(backend) allow configuring settings OIDC_OP_USER_ENDPOINT_FORMAT
 
 ### Fixed
 

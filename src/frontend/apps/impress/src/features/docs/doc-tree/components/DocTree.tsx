@@ -271,6 +271,11 @@ export const DocTree = ({ currentDoc }: DocTreeProps) => {
       aria-label={t('Document tree')}
       aria-describedby="doc-tree-keyboard-instructions"
       $css={css`
+        /**
+        * TODO: When this pull request is merged (https://github.com/suitenumerique/ui-kit/pull/215), we 
+        * should remove the pointer-events manipulation.
+        * See: https://github.com/suitenumerique/docs/commit/d41e44dcd5a4111463b1bddfdab640faacbf1795
+        */
         /* Remove outline from TreeViewItem wrapper elements */
         .c__tree-view--row {
           outline: none !important;

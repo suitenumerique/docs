@@ -5,7 +5,7 @@ import {
   ModalDefaultVariantProps,
   ModalSize,
 } from '@gouvfr-lasuite/cunningham-react';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Box } from '../Box';
@@ -34,21 +34,6 @@ export const AlertModal = ({
   ...props
 }: AlertModalProps) => {
   const { t } = useTranslation();
-
-  /**
-   * TODO:
-   * Remove this effect when Cunningham will have this patch released:
-   * https://github.com/suitenumerique/cunningham/pull/377
-   */
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const contents = document.querySelectorAll('.c__modal__content');
-      contents.forEach((content) => {
-        content.setAttribute('tabindex', '-1');
-      });
-    }, 100);
-    return () => clearTimeout(timeout);
-  }, []);
 
   return (
     <Modal
