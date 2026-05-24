@@ -245,11 +245,16 @@ class DocumentSerializer(ListDocumentSerializer):
         return fields
 
     def validate_id(self, value):
-        """Ensure the provided ID does not already exist when creating a new document."""
+        """Ensure the provided ID is a valid UUID and not already taken."""
         request = self.context.get("request")
 
         # Only check this on POST (creation)
         if request and request.method == "POST":
+            if value.version not in (1, 3, 4, 5):
+                raise serializers.ValidationError(
+                    "The provided ID is not a valid UUID."
+                )
+
             if models.Document.objects.filter(id=value).exists():
                 raise serializers.ValidationError(
                     "A document with this ID already exists. You cannot override it."
