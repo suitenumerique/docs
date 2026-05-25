@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
@@ -8,7 +8,6 @@ import { useEditorStore } from '@/docs/doc-editor/stores';
 import { Doc } from '@/docs/doc-management';
 import { useFocusStore } from '@/stores';
 
-import { PRESENTER_WINDOW_RADIUS } from '../constants';
 import { useBrowserFullscreen } from '../hooks/useBrowserFullscreen';
 import { usePresenterShortcuts } from '../hooks/usePresenterShortcuts';
 import { useSlides } from '../hooks/useSlides';
@@ -38,27 +37,47 @@ const slideAreaCss = css`
   overflow: hidden;
 `;
 
-const slideFrameCss = css`
-  width: min(80%, 1800px);
+const slideFrameBaseCss = css`
   height: 100%;
   background: white;
   overflow-y: auto;
   overflow-x: hidden;
-  justify-content: center;
   align-items: center;
+  /* No \`justify-content: center\` here. The Box defaults to
+   * \`display: flex; flex-direction: column\`, so justify-content would
+   * center items along the main (vertical) axis. When a slide is taller
+   * than the frame, centering an overflowing flex item clips the top —
+   * the scroll cannot reach above position 0. Letting items start at the
+   * top is safe in both cases: the slideWrapper has \`min-height: 100%\`,
+   * so for short content it already fills the frame; long content scrolls
+   * naturally from the top. */
+`;
+
+const slideFrameCss = css`
+  ${slideFrameBaseCss};
+  width: min(80%, 1800px);
 
   @media (max-width: 1000px) {
     width: 95%;
   }
 `;
 
+const slideFrameFullscreenCss = css`
+  ${slideFrameBaseCss};
+  width: 100%;
+  max-width: none;
+`;
+
 const slideWrapperCss = css`
   width: 100%;
-  max-height: 100%;
+  min-height: 100%;
   box-sizing: border-box;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  /* No \`align-items\` / \`justify-content\` here: the centerer inside uses
+   * \`margin: auto\`, which distributes leftover space safely. When the
+   * centerer fits, the auto margins center it; when it overflows, the
+   * margins collapse to 0 instead of producing a negative offset, so the
+   * top of the content stays reachable from scrollTop=0. */
 `;
 
 export const PresenterOverlay = ({
@@ -90,6 +109,7 @@ export const PresenterOverlay = ({
 
   const slides = useSlides(snapshotBlocks as { type: string }[]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const total = slides.length;
   const clamp = useCallback(
@@ -114,8 +134,13 @@ export const PresenterOverlay = ({
   const { isFullscreen, enter, exitIfOwned, toggle } = useBrowserFullscreen();
 
   useEffect(() => {
-    void enter();
+    // Defer fullscreen until the overlay layout has committed so the slide
+    // frame has non-zero dimensions for the first useFitScale pass.
+    const rafId = requestAnimationFrame(() => {
+      // void enter();
+    });
     return () => {
+      cancelAnimationFrame(rafId);
       void exitIfOwned();
     };
   }, [enter, exitIfOwned]);
@@ -130,16 +155,6 @@ export const PresenterOverlay = ({
     isFullscreen,
   });
 
-  const mountedIndices = useMemo(() => {
-    const from = Math.max(0, currentIndex - PRESENTER_WINDOW_RADIUS);
-    const to = Math.min(total - 1, currentIndex + PRESENTER_WINDOW_RADIUS);
-    const indices: number[] = [];
-    for (let i = from; i <= to; i += 1) {
-      indices.push(i);
-    }
-    return indices;
-  }, [currentIndex, total]);
-
   if (typeof document === 'undefined') {
     return null;
   }
@@ -152,24 +167,21 @@ export const PresenterOverlay = ({
       aria-label={t('Presenter mode')}
     >
       <Box $css={slideAreaCss}>
-        <Box $css={slideFrameCss}>
-          {mountedIndices.map((i) => (
-            <Box
-              key={i}
-              $css={css`
-                ${slideWrapperCss};
-                ${i === currentIndex ? '' : 'display: none;'}
-              `}
-            >
-              <PresenterSlide
-                blocks={slides[i] as unknown[]}
-                ariaLabel={t('Slide {{current}} of {{total}}', {
-                  current: i + 1,
-                  total,
-                })}
-              />
-            </Box>
-          ))}
+        <Box
+          $css={isFullscreen ? slideFrameFullscreenCss : slideFrameCss}
+          ref={frameRef}
+        >
+          <Box key={currentIndex} $css={slideWrapperCss}>
+            <PresenterSlide
+              blocks={slides[currentIndex]}
+              frameRef={frameRef}
+              isFullscreen={isFullscreen}
+              ariaLabel={t('Slide {{current}} of {{total}}', {
+                current: currentIndex + 1,
+                total,
+              })}
+            />
+          </Box>
         </Box>
       </Box>
 

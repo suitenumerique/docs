@@ -4,7 +4,7 @@ import {
   ChevronRight,
   Maximize,
   XMark,
-} from '@gouvfr-lasuite/ui-kit';
+} from '@gouvfr-lasuite/ui-kit/icons';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 

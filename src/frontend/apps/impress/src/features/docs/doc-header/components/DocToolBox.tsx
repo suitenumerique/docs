@@ -1,5 +1,6 @@
 import { Button, useModal } from '@gouvfr-lasuite/cunningham-react';
-import { Present, useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { useTreeContext } from '@gouvfr-lasuite/ui-kit';
+import { Present } from '@gouvfr-lasuite/ui-kit/icons';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useState } from 'react';

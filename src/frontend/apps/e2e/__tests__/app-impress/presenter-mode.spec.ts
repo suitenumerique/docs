@@ -74,6 +74,34 @@ test.describe('Presenter Mode', () => {
     await expect(overlay).toBeHidden();
   });
 
+  test('sizes the first slide correctly on open without navigating away', async ({
+    page,
+    browserName,
+  }) => {
+    await createDoc(page, 'presenter-initial-layout', browserName, 1);
+    await writeMultiSlideDoc(page);
+
+    const overlay = await openPresenter(page);
+
+    await expect(overlay.getByText('1 / 3')).toBeVisible();
+    const slideText = overlay.getByText('Slide one');
+    await expect(slideText).toBeVisible();
+
+    const textBox = await slideText.boundingBox();
+    const overlayBox = await overlay.boundingBox();
+    expect(textBox).not.toBeNull();
+    expect(overlayBox).not.toBeNull();
+    if (!textBox || !overlayBox) {
+      return;
+    }
+
+    expect(textBox.height).toBeGreaterThan(20);
+    const textCenterY = textBox.y + textBox.height / 2;
+    const overlayCenterY = overlayBox.y + overlayBox.height / 2;
+    const maxOffset = overlayBox.height * 0.35;
+    expect(Math.abs(textCenterY - overlayCenterY)).toBeLessThan(maxOffset);
+  });
+
   test('navigates between slides via the floating bar buttons', async ({
     page,
     browserName,
