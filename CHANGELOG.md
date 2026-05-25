@@ -15,6 +15,7 @@ and this project adheres to
 ### Fixed
 
 - 🐛(docs) run migration 0027 without superuser role
+- 🐛(backend) prevent admins/owners from overwriting other users comments
 
 
 ## [v5.1.0] - 2026-05-11

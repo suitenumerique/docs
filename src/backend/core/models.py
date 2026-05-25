@@ -1895,14 +1895,15 @@ class Comment(BaseModel):
         doc_abilities = self.thread.document.get_abilities(user)
         read_access = doc_abilities.get("comment", False)
         can_react = read_access and user.is_authenticated
-        write_access = self.user == user or role in [
+        is_author = self.user == user
+        can_moderate = is_author or role in [
             RoleChoices.OWNER,
             RoleChoices.ADMIN,
         ]
         return {
-            "destroy": write_access,
-            "update": write_access,
-            "partial_update": write_access,
+            "destroy": can_moderate,
+            "update": is_author,
+            "partial_update": is_author,
             "reactions": can_react,
             "retrieve": read_access,
         }

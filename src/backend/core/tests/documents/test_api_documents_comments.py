@@ -438,6 +438,7 @@ def test_update_comment_authenticated_user_own_comment():
 
     comment.refresh_from_db()
     assert comment.body == "other content"
+    assert comment.user == user
 
 
 def test_update_comment_authenticated_user_not_enough_access():
@@ -479,14 +480,15 @@ def test_update_comment_authenticated_no_access():
 
 
 @pytest.mark.parametrize("role", [models.RoleChoices.ADMIN, models.RoleChoices.OWNER])
-def test_update_comment_authenticated_admin_or_owner_can_update_any_comment(role):
+def test_update_comment_authenticated_admin_or_owner_cannot_update_other_comment(role):
     """
-    Authenticated users should be able to update comments on a document they don't have access to.
+    Admins and owners can moderate (delete) but must not edit other users' comments.
     """
     user = factories.UserFactory()
     document = factories.DocumentFactory(users=[(user, role)])
     thread = factories.ThreadFactory(document=document)
-    comment = factories.CommentFactory(thread=thread, body="test")
+    original_author = factories.UserFactory()
+    comment = factories.CommentFactory(thread=thread, body="test", user=original_author)
     client = APIClient()
     client.force_login(user)
 
@@ -494,10 +496,11 @@ def test_update_comment_authenticated_admin_or_owner_can_update_any_comment(role
         f"/api/v1.0/documents/{document.id!s}/threads/{thread.id!s}/comments/{comment.id!s}/",
         {"body": "other content"},
     )
-    assert response.status_code == 200
+    assert response.status_code == 403
 
     comment.refresh_from_db()
-    assert comment.body == "other content"
+    assert comment.body == "test"
+    assert comment.user == original_author
 
 
 @pytest.mark.parametrize("role", [models.RoleChoices.ADMIN, models.RoleChoices.OWNER])
