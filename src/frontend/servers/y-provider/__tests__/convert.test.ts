@@ -315,4 +315,31 @@ describe('Conversion Testing', () => {
     expect(response.body).toStrictEqual({ error: 'Invalid content' });
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
+
+  test('POST /api/convert empty Yjs document returns 200 with empty content', async () => {
+    const app = initApp();
+    const yjsUpdate = Y.encodeStateAsUpdate(new Y.Doc());
+
+    const htmlResponse = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/html')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(htmlResponse.status).toBe(200);
+    expect(htmlResponse.text).toBe('');
+
+    const markdownResponse = await request(app)
+      .post('/api/convert')
+      .set('origin', origin)
+      .set('authorization', `Bearer ${apiKey}`)
+      .set('content-type', 'application/vnd.yjs.doc')
+      .set('accept', 'text/markdown')
+      .send(Buffer.from(yjsUpdate));
+
+    expect(markdownResponse.status).toBe(200);
+    expect(markdownResponse.text).toBe('\n');
+  });
 });

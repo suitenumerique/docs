@@ -151,15 +151,10 @@ export const convertHandler = async (
       return;
     }
 
-    if (!blocks || blocks.length === 0) {
-      res.status(500).json({ error: 'No valid blocks were generated' });
-      return;
-    }
-
     res
       .status(200)
       .setHeader('content-type', accept)
-      .send(await writer.write(blocks));
+      .send(await writer.write(blocks ?? []));
   } catch (e) {
     logger('conversion failed:', e);
     res.status(500).json({ error: 'An error occurred' });
