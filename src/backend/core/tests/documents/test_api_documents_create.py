@@ -143,3 +143,36 @@ def test_api_documents_create_force_id_existing():
     assert response.json() == {
         "id": ["A document with this ID already exists. You cannot override it."]
     }
+
+
+@pytest.mark.parametrize(
+    "forced_id",
+    [
+        # Nil UUID: every bit is zero, including the version nibble.
+        "00000000-0000-0000-0000-000000000000",
+        # Max UUID: version nibble is 0xf, not in {1, 3, 4, 5}.
+        "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        # Non-RFC-4122 variant (Microsoft GUID): `.version` returns None.
+        "f47ac10b-58cc-4372-c567-0e02b2c3d479",
+        # RFC-4122 v2 (DCE security): valid variant but version not in {1, 3, 4, 5}.
+        "f47ac10b-58cc-2372-a567-0e02b2c3d479",
+    ],
+)
+def test_api_documents_create_force_id_invalid_uuid(forced_id):
+    """Forcing an ID with a non-standard UUID (nil, wrong variant, wrong version) is refused."""
+    user = factories.UserFactory()
+    client = APIClient()
+    client.force_login(user)
+
+    response = client.post(
+        "/api/v1.0/documents/",
+        {
+            "id": forced_id,
+            "title": "my document",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"id": ["The provided ID is not a valid UUID."]}
+    assert not Document.objects.exists()
