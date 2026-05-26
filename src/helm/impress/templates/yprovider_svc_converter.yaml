@@ -1,0 +1,25 @@
+{{ if .Values.yProvider.converter.enabled -}}
+{{- $yProvider := .Values.yProvider -}}
+{{- $converter := .Values.yProvider.converter -}}
+{{- $service := mergeOverwrite (dict) (default dict $yProvider.service) (default dict $converter.service) -}}
+{{- $fullName := include "impress.yProvider.converter.fullname" . -}}
+{{- $component := "yProvider-converter" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "impress.common.labels" (list . $component) | nindent 4 }}
+  annotations:
+    {{- toYaml $service.annotations | nindent 4 }}
+spec:
+  type: {{ $service.type }}
+  ports:
+    - port: {{ $service.port }}
+      targetPort: {{ $service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "impress.common.selectorLabels" (list . $component) | nindent 4 }}
+{{ end -}}

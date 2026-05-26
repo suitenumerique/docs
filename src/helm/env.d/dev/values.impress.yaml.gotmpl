@@ -16,6 +16,7 @@ backend:
   replicas: 1
   envVars:
     COLLABORATION_SERVER_SECRET: my-secret
+    CONVERSION_UPLOAD_ENABLED: True
     DJANGO_CSRF_TRUSTED_ORIGINS: https://docs.127.0.0.1.nip.io
     DJANGO_CONFIGURATION: Feature
     DJANGO_ALLOWED_HOSTS: docs.127.0.0.1.nip.io
@@ -71,7 +72,7 @@ backend:
     STORAGES_STATICFILES_BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
     DOCSPEC_API_URL: http://impress-docs-docspec:4000/conversion
     USER_RECONCILIATION_FORM_URL: https://docs.127.0.0.1.nip.io
-    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider:443/api/
+    Y_PROVIDER_API_BASE_URL: http://impress-docs-y-provider-converter:443/api/
     Y_PROVIDER_API_KEY: my-secret
     CACHES_KEY_PREFIX: "{{ now | unixEpoch }}"
   django:
@@ -153,6 +154,11 @@ frontend:
     runAsNonRoot: false
 
 yProvider:
+
+  converter:
+    enabled: true
+    replicas: 2
+
   replicas: 1
 
   image:

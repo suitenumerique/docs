@@ -647,6 +647,77 @@ yProvider:
     pullPolicy: IfNotPresent
     tag: "latest"
 
+  converter:
+    ## @param yProvider.converter.enabled Enable the yProvider converter deployment and service
+    enabled: false
+
+    ## @param yProvider.converter.replicas Amount of yProvider replicas
+    replicas: 3
+
+    ## @param yProvider.converter.resources Resource requirements for the yProvider container
+    resources: {}
+
+    ## @param yProvider.converter.service.type yProvider converter Service type
+    ## @param yProvider.converter.service.port yProvider converter Service listening port
+    ## @param yProvider.converter.service.targetPort yProvider converter container listening port
+    ## @param yProvider.converter.service.annotations Annotations to add to the yProvider converter Service
+    service: {}
+
+    ## @param yProvider.converter.command Override the yProvider converter container command
+    command: []
+
+    ## @param yProvider.converter.args Override the yProvider converter container args
+    args: []
+
+    ## @param yProvider.converter.shareProcessNamespace Enable share process namespace between containers
+    shareProcessNamespace: false
+
+    ## @param yProvider.converter.sidecars Add sidecars containers to yProvider converter deployment
+    sidecars: []
+
+    ## @skip yProvider.converter.securityContext
+    securityContext: {}
+
+    ## @skip yProvider.converter.envVars
+    envVars: {}
+
+    ## @skip yProvider.converter.envFrom
+    envFrom: []
+
+    ## @param yProvider.converter.podAnnotations Annotations to add to the yProvider converter Pod
+    podAnnotations: {}
+
+    ## @param yProvider.converter.dpAnnotations Annotations to add to the yProvider converter Deployment
+    dpAnnotations: {}
+
+    ## @skip yProvider.converter.probes
+    probes: {}
+
+    ## @param yProvider.converter.nodeSelector Node selector for the yProvider converter Pod
+    nodeSelector: {}
+
+    ## @param yProvider.converter.tolerations Tolerations for the yProvider converter Pod
+    tolerations: []
+
+    ## @param yProvider.converter.affinity Affinity for the yProvider converter Pod
+    affinity: {}
+
+    ## @param yProvider.converter.persistence Additional volumes to create and mount on the yProvider converter
+    persistence: {}
+
+    ## @param yProvider.converter.extraVolumeMounts Additional volumes to mount on the yProvider converter
+    extraVolumeMounts: []
+
+    ## @param yProvider.converter.extraVolumes Additional volumes to mount on the yProvider converter
+    extraVolumes: []
+
+    ## @param yProvider.converter.pdb.enabled Enable pdb on yProvider converter
+    pdb:
+      enabled: true
+
+    ## @param yProvider.converter.serviceAccountName Optional service account name to use for yProvider converter pods
+    serviceAccountName: null
+
   ## @param yProvider.command Override the yProvider container command
   command: []
 

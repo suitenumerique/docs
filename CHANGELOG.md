@@ -12,6 +12,7 @@ and this project adheres to
 - ✨(frontend) comment side panel #2279
 - ✨(buildpack) add PaaS deployment support, tested with Scalingo #2293
 - 🔧(backend) allow configuring settings OIDC_OP_USER_ENDPOINT_FORMAT
+- ⚡️(helm) create a dedicated svc and deployment for yprovider converter #2368
 
 ### Changed
 

@@ -186,6 +186,15 @@ Requires top level scope
 {{ include "impress.fullname" . }}-y-provider
 {{- end }}
 
+{{/*
+Full name for the yProvider converter
+
+Requires top level scope
+*/}}
+{{- define "impress.yProvider.converter.fullname" -}}
+{{ include "impress.yProvider.fullname" . }}-converter
+{{- end }}
+
 
 {{/*
 Full name for the docSpec
