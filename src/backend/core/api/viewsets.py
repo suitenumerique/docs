@@ -3004,6 +3004,11 @@ class CommentViewSet(
         context["thread_id"] = self.kwargs["thread_id"]
         return context
 
+    def perform_create(self, serializer):
+        """Attach the request user as the comment author."""
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(user=user)
+
     @drf.decorators.action(
         detail=True,
         methods=["post", "delete"],

@@ -796,8 +796,8 @@ def test_api_documents_threads_retrieve_restricted_document_privileged_roles(rol
                 "reactions": [],
                 "abilities": {
                     "destroy": True,
-                    "update": True,
-                    "partial_update": True,
+                    "update": False,
+                    "partial_update": False,
                     "reactions": True,
                     "retrieve": True,
                 },

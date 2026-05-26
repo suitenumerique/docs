@@ -911,12 +911,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate comment data."""
-
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-
         attrs["thread_id"] = self.context["thread_id"]
-        attrs["user_id"] = user.id if user else None
         return attrs
 
     def get_abilities(self, obj):
