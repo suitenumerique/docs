@@ -21,6 +21,7 @@ export const AvatarSvg: React.FC<AvatarSvgProps> = ({
     width="24"
     height="24"
     viewBox="0 0 24 24"
+    aria-hidden="true"
     {...props}
   >
     <rect
