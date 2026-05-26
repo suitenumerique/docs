@@ -84,7 +84,7 @@ test.describe('Doc Trashbin', () => {
     await page.getByRole('link', { name: 'All docs' }).click();
     const row2Restored = await getGridRow(page, title2);
     await expect(row2Restored.getByText(title2)).toBeVisible();
-    await row2Restored.getByRole('link', { name: /Open document/ }).click();
+    await row2Restored.getByRole('link', { name: new RegExp(title2) }).click();
 
     await verifyDocName(page, title2);
     await page.getByRole('button', { name: 'Back to homepage' }).click();

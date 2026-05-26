@@ -17,6 +17,42 @@ import { DocsGridActions } from './DocsGridActions';
 import { DocsGridItemSharedButton } from './DocsGridItemSharedButton';
 import { DocsGridTrashbinActions } from './DocsGridTrashbinActions';
 
+const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
+  const { data: config } = useConfig();
+  const { t } = useTranslation();
+  const { relativeDate, calculateDaysLeft } = useDate();
+
+  let dateToDisplay = relativeDate(doc.updated_at);
+
+  if (isInTrashbin && config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
+    const daysLeft = calculateDaysLeft(
+      doc.deleted_at,
+      config.TRASHBIN_CUTOFF_DAYS,
+    );
+
+    dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
+  }
+
+  return dateToDisplay;
+};
+
+const useDocItemAriaLabel = (doc: Doc, isInTrashbin: boolean) => {
+  const { t } = useTranslation();
+  const { untitledDocument } = useTrans();
+  const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const title = doc.title || untitledDocument;
+  const participantCount = Math.max((doc.nb_accesses_direct ?? 1) - 1, 0);
+
+  return t(
+    '{{title}}, updated {{date}}, shared with {{count}} participant(s)',
+    {
+      title,
+      date: dateToDisplay,
+      count: participantCount,
+    },
+  );
+};
+
 type DocsGridItemProps = {
   doc: Doc;
   dragMode?: boolean;
@@ -26,13 +62,11 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
   const searchParams = useSearchParams();
   const target = searchParams.get('target');
   const isInTrashbin = target === 'trashbin';
-  const { untitledDocument } = useTrans();
 
-  const { t } = useTranslation();
   const { isDesktop } = useResponsiveStore();
   const { flexLeft, flexRight } = useResponsiveDocGrid();
   const { spacingsTokens } = useCunninghamTheme();
-  const dateToDisplay = useDateToDisplay(doc, isInTrashbin);
+  const docItemAriaLabel = useDocItemAriaLabel(doc, isInTrashbin);
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -60,9 +94,6 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           }
         `}
         className="--docs--doc-grid-item"
-        aria-label={t('Open document: {{title}}', {
-          title: doc.title || untitledDocument,
-        })}
       >
         <Box
           $flex={flexLeft}
@@ -79,6 +110,7 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
             `}
             href={`/docs/${doc.id}`}
             onKeyDown={handleKeyDown}
+            aria-label={docItemAriaLabel}
           >
             <DocsGridItemTitle doc={doc} withTooltip={!dragMode} />
           </StyledLink>
@@ -91,20 +123,13 @@ export const DocsGridItem = ({ doc, dragMode = false }: DocsGridItemProps) => {
           $justify={isDesktop ? 'space-between' : 'flex-end'}
           $gap="32px"
         >
-          <StyledLink
-            href={`/docs/${doc.id}`}
-            tabIndex={-1}
-            aria-label={t('{{title}}, updated {{date}}', {
-              title: doc.title || untitledDocument,
-              date: dateToDisplay,
-            })}
-          >
+          <Box aria-hidden="true">
             <DocsGridItemDate
               doc={doc}
               isDesktop={isDesktop}
               isInTrashbin={isInTrashbin}
             />
-          </StyledLink>
+          </Box>
 
           <Box $direction="row" $align="center" $gap={spacingsTokens.lg}>
             {isDesktop && (
@@ -200,25 +225,6 @@ const IconPublic = ({ isPublic }: { isPublic: boolean }) => {
       </span>
     </>
   );
-};
-
-const useDateToDisplay = (doc: Doc, isInTrashbin: boolean) => {
-  const { data: config } = useConfig();
-  const { t } = useTranslation();
-  const { relativeDate, calculateDaysLeft } = useDate();
-
-  let dateToDisplay = relativeDate(doc.updated_at);
-
-  if (isInTrashbin && config?.TRASHBIN_CUTOFF_DAYS && doc.deleted_at) {
-    const daysLeft = calculateDaysLeft(
-      doc.deleted_at,
-      config.TRASHBIN_CUTOFF_DAYS,
-    );
-
-    dateToDisplay = `${daysLeft} ${t('days', { count: daysLeft })}`;
-  }
-
-  return dateToDisplay;
 };
 
 export const DocsGridItemDate = ({
