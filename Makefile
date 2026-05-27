@@ -232,6 +232,7 @@ run-backend: ## Start only the backend application and all needed services
 	@$(COMPOSE) up --force-recreate -d docspec
 	@$(COMPOSE) up --force-recreate -d celery-dev
 	@$(COMPOSE) up --force-recreate -d y-provider-development
+	@$(COMPOSE) up --force-recreate -d y-provider-development-converter
 	@$(COMPOSE) up --force-recreate -d nginx
 .PHONY: run-backend
 
@@ -247,6 +248,7 @@ run-e2e:
 	@$(COMPOSE_E2E) stop y-provider-development
 	@$(COMPOSE_E2E) up --force-recreate -d frontend
 	@$(COMPOSE_E2E) up --force-recreate -d y-provider
+	@$(COMPOSE_E2E) up --force-recreate -d y-provider-converter
 .PHONY: run-e2e
 
 status: ## an alias for "docker compose ps"

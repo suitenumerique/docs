@@ -199,6 +199,21 @@ services:
       - /home/frontend/node_modules
       - /home/frontend/servers/y-provider/node_modules
 
+  y-provider-development-converter:
+    user: ${DOCKER_USER:-1000}
+    image: impress:y-provider-development
+    restart: unless-stopped
+    env_file:
+      - env.d/development/common
+      - env.d/development/common.local
+    volumes:
+      - ./src/frontend/:/home/frontend
+      - /home/frontend/node_modules
+      - /home/frontend/servers/y-provider/node_modules
+    depends_on:
+      y-provider-development:
+        condition: service_started
+
   kc_postgresql:
     image: postgres:14.3
     healthcheck:
