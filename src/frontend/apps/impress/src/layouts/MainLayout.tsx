@@ -101,6 +101,7 @@ const MainContent = ({
       role="main"
       aria-label={t('Main content')}
       id={MAIN_LAYOUT_ID}
+      tabIndex={-1}
       $align="center"
       $flex={1}
       $width="100%"
