@@ -1,29 +1,28 @@
 import { t } from 'i18next';
-import React from 'react';
 
+import PublicSVG from '@/assets/icons/ui-kit/public.svg';
+import ProtedtedSVG from '@/assets/icons/ui-kit/vpn_lock.svg';
 import { Text } from '@/components';
 import { useConfig } from '@/core';
 import {
   Doc,
+  LinkReach,
   Role,
+  getDocLinkReach,
   useIsCollaborativeEditable,
   useTrans,
 } from '@/docs/doc-management';
 import { useDate } from '@/hooks';
-import { useResponsiveStore } from '@/stores';
 
 interface DocHeaderInfoProps {
   doc: Doc;
 }
 
 export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
-  const { isDesktop } = useResponsiveStore();
   const { transRole } = useTrans();
   const { isEditable } = useIsCollaborativeEditable(doc);
   const { relativeDate, calculateDaysLeft } = useDate();
   const { data: config } = useConfig();
-
-  const childrenCount = doc.numchild ?? 0;
 
   const relativeOnly = relativeDate(doc.updated_at);
 
@@ -40,40 +39,45 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
     dateToDisplay = `${t('Days remaining:')} ${daysLeft} ${t('days', { count: daysLeft })}`;
   }
 
-  const hasChildren = childrenCount > 0;
+  return (
+    <>
+      <Text
+        $variation="tertiary"
+        $size="s"
+        $weight="bold"
+        $theme={isEditable ? 'neutral' : 'warning'}
+        $direction="row"
+      >
+        <VisibilityDoc doc={doc} />
+        {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
+        &nbsp;·&nbsp;
+      </Text>
+      <Text $variation="tertiary" $size="s">
+        {dateToDisplay}
+      </Text>
+    </>
+  );
+};
 
-  if (isDesktop) {
+const VisibilityDoc = ({ doc }: { doc: Doc }) => {
+  const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
+  const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
+
+  if (docIsPublic) {
     return (
       <>
-        <Text
-          $variation="tertiary"
-          $size="s"
-          $weight="bold"
-          $theme={isEditable ? 'neutral' : 'warning'}
-        >
-          {transRole(isEditable ? doc.user_role || doc.link_role : Role.READER)}
-          &nbsp;·&nbsp;
-        </Text>
-        <Text $variation="tertiary" $size="s">
-          {dateToDisplay}
-        </Text>
+        <PublicSVG aria-hidden="true" width="16" height="16" />
+        &nbsp;{t('Public')}&nbsp;·&nbsp;
       </>
     );
   }
 
-  return (
-    <>
-      <Text $variation="tertiary" $size="s">
-        {hasChildren ? relativeOnly : dateToDisplay}
-      </Text>
-      {hasChildren && (
-        <Text $variation="tertiary" $size="s">
-          &nbsp;•&nbsp;
-          {t('Contains {{count}} sub-documents', {
-            count: childrenCount,
-          })}
-        </Text>
-      )}
-    </>
-  );
+  if (docIsAuth) {
+    return (
+      <>
+        <ProtedtedSVG aria-hidden="true" width="16" height="16" />
+        &nbsp;{t('Internal')}&nbsp;·&nbsp;
+      </>
+    );
+  }
 };

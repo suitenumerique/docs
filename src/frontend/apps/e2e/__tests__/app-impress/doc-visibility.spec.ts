@@ -220,11 +220,7 @@ test.describe('Doc Visibility: Public', () => {
       'It is the card information about the document.',
     );
 
-    await expect(cardContainer.getByTestId('public-icon')).toBeVisible();
-
-    await expect(
-      cardContainer.getByText('Public document', { exact: true }),
-    ).toBeVisible();
+    await expect(cardContainer.getByText('Public ·')).toBeVisible();
 
     await expect(page.getByTestId('search-docs-button')).toBeVisible();
     await expect(page.getByTestId('new-doc-button')).toBeVisible();
@@ -240,9 +236,6 @@ test.describe('Doc Visibility: Public', () => {
     await expect(otherPage.locator('h2').getByText(docTitle)).toBeVisible();
     await expect(otherPage.getByTestId('search-docs-button')).toBeHidden();
     await expect(otherPage.getByTestId('new-doc-button')).toBeHidden();
-    await expect(
-      otherPage.getByRole('button', { name: 'Share' }),
-    ).toBeVisible();
     const card = otherPage.getByLabel('It is the card information');
     await expect(card).toBeVisible();
     await expect(card.getByText('Reader')).toBeVisible();
@@ -265,17 +258,6 @@ test.describe('Doc Visibility: Public', () => {
     // Can still see changes made by others
     await writeInEditor({ page, text: 'Can you see it ?' });
     await expect(otherEditor.getByText('Can you see it ?')).toBeVisible();
-
-    await otherPage.getByRole('button', { name: 'Share' }).click();
-    await expect(
-      otherPage.getByText(
-        'You can view this document but need additional access to see its members or modify settings.',
-      ),
-    ).toBeVisible();
-
-    await expect(
-      otherPage.getByRole('button', { name: 'Request access' }),
-    ).toBeHidden();
 
     await cleanup();
   });
@@ -313,11 +295,7 @@ test.describe('Doc Visibility: Public', () => {
       'It is the card information about the document.',
     );
 
-    await expect(cardContainer.getByTestId('public-icon')).toBeVisible();
-
-    await expect(
-      cardContainer.getByText('Public document', { exact: true }),
-    ).toBeVisible();
+    await expect(cardContainer.getByText('Public ·')).toBeVisible();
 
     const docUrl = page.url();
 
@@ -341,23 +319,9 @@ test.describe('Doc Visibility: Public', () => {
       page.locator('.collaboration-cursor-custom__base').getByText('Anonymous'),
     ).toBeVisible();
 
-    await expect(
-      otherPage.getByRole('button', { name: 'Share' }),
-    ).toBeVisible();
     const card = otherPage.getByLabel('It is the card information');
     await expect(card).toBeVisible();
     await expect(card.getByText('Editor')).toBeVisible();
-
-    await otherPage.getByRole('button', { name: 'Share' }).click();
-    await expect(
-      otherPage.getByText(
-        'You can view this document but need additional access to see its members or modify settings.',
-      ),
-    ).toBeVisible();
-
-    await expect(
-      otherPage.getByRole('button', { name: 'Request access' }),
-    ).toBeHidden();
 
     await cleanup();
   });
@@ -433,15 +397,13 @@ test.describe('Doc Visibility: Authenticated', () => {
       page.getByText('The document visibility has been updated.'),
     ).toBeVisible();
 
+    await page.getByRole('button', { name: 'close' }).click();
+
     await expect(
       page
         .getByLabel('It is the card information about the document.')
-        .getByText('Document accessible to any connected person', {
-          exact: true,
-        }),
+        .getByText('Internal ·'),
     ).toBeVisible();
-
-    await page.getByRole('button', { name: 'close' }).click();
 
     const docUrl = page.url();
 

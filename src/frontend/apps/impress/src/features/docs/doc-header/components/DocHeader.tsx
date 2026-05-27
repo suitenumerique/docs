@@ -2,16 +2,10 @@ import { useTranslation } from 'react-i18next';
 
 import { Box, HorizontalSeparator } from '@/components';
 import { useCunninghamTheme } from '@/cunningham';
-import {
-  Doc,
-  LinkReach,
-  getDocLinkReach,
-  useIsCollaborativeEditable,
-} from '@/docs/doc-management';
+import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useResponsiveStore } from '@/stores';
 
 import { AlertNetwork } from './AlertNetwork';
-import { AlertPublic } from './AlertPublic';
 import { AlertRestore } from './AlertRestore';
 import { DocHeaderInfo } from './DocHeaderInfo';
 import { DocTitle } from './DocTitle';
@@ -26,8 +20,6 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
   const { isDesktop } = useResponsiveStore();
   const { t } = useTranslation();
   const { isEditable } = useIsCollaborativeEditable(doc);
-  const docIsPublic = getDocLinkReach(doc) === LinkReach.PUBLIC;
-  const docIsAuth = getDocLinkReach(doc) === LinkReach.AUTHENTICATED;
   const isDeletedDoc = !!doc.deleted_at;
 
   return (
@@ -41,9 +33,6 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
       >
         {isDeletedDoc && <AlertRestore doc={doc} />}
         {!isEditable && <AlertNetwork />}
-        {(docIsPublic || docIsAuth) && (
-          <AlertPublic isPublicDoc={docIsPublic} />
-        )}
         <Box
           $direction="row"
           $align="center"

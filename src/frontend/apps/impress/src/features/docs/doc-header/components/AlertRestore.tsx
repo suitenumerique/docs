@@ -67,7 +67,6 @@ export const AlertRestore = ({ doc }: { doc: Doc }) => {
       >
         <Icon
           $withThemeInherited
-          data-testid="public-icon"
           iconName="delete"
           variant="symbols-outlined"
         />
