@@ -17,6 +17,9 @@ and this project adheres to
 - 🐛(docs) run migration 0027 without superuser role
 - 🐛(backend) prevent admins/owners from overwriting other users comments
 
+### Changed
+
+- ♿️(frontend) improve keyboard tab order in document list #2325
 
 ## [v5.1.0] - 2026-05-11
 
@@ -37,7 +40,7 @@ and this project adheres to
 - 💬(frontend) add missing link in onboarding description #2233
 - 🐛(frontend) sanitize pasted and dropped content in document title #2210
 - 🐛(frontend) Emoji menu doesn't display above comment box #2229
-- 🐛(frontend) Block menu doesn't stay open on 1st line #2229 
+- 🐛(frontend) Block menu doesn't stay open on 1st line #2229
 - 🐛(frontend) The "+" on the first line of a new doc doesn't work #2229
 - 🐛(backend) manage race condition between GET and PATCH content #2271
 - 🐛(backend) replace document creation table locks with retry strategy #2274
@@ -45,8 +48,6 @@ and this project adheres to
 ### Security
 
 - 🔒️(frontend) sanitize color during collaboration #2270
-
-
 
 ## [v5.0.0] - 2026-05-05
 
@@ -143,7 +144,6 @@ and this project adheres to
 
 - 🐛(y-provider) destroy Y.Doc instances after each convert request #2129
 - 🐛(backend) remove deleted sub documents in favorite_list endpoint #2083
-
 
 ## [v4.8.3] - 2026-03-23
 

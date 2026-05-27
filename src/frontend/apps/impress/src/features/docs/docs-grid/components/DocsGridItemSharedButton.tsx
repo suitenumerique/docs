@@ -44,6 +44,7 @@ export const DocsGridItemSharedButton = ({ doc, disabled }: Props) => {
           className="--docs--doc-grid-item-shared-button"
           aria-label={t('Open the sharing settings for the document')}
           data-testid={`docs-grid-item-shared-button-${doc.id}`}
+          tabIndex={-1}
           style={{
             padding: `0 var(--c--globals--spacings--xxxs) 0 var(--c--globals--spacings--xxxs)`,
           }}

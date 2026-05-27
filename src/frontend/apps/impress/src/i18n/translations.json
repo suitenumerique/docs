@@ -566,7 +566,8 @@
       "{{count}} result(s) available_one": "{{count}} Ergebnis verfügbar",
       "{{count}} result(s) available_other": "{{count}} Ergebnisse verfügbar",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} wurde zur Einladungsliste hinzugefügt. Füge mehr Mitglieder hinzu oder drücke Tab, um Rollen auszuwählen und einzuladen.",
-      "{{name}} removed from invite list": "{{name}} aus der Einladungsliste entfernt"
+      "{{name}} removed from invite list": "{{name}} aus der Einladungsliste entfernt",
+      "{{title}}, updated {{date}}, shared with {{count}} participant(s)": "{{title}}, aktualisiert {{date}}, geteilt mit {{count}} Teilnehmer(n)"
     }
   },
   "el": {
@@ -1561,7 +1562,8 @@
       "{{count}} result(s) available_other": "{{count}} résultat(s) disponible(s)",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} a été ajouté à la liste d'invitation. Ajoutez plus de membres ou appuyez sur Tab pour sélectionner le rôle et inviter.",
       "{{name}} removed from invite list": "{{name}} a été retiré de la liste d'invitation",
-      "{{title}}, updated {{date}}": "{{title}}, mise à jour {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, mise à jour {{date}}",
+      "{{title}}, updated {{date}}, shared with {{count}} participant(s)": "{{title}}, mis à jour {{date}}, partagé avec {{count}} participant(s)"
     }
   },
   "it": {
@@ -2434,7 +2436,8 @@
       "{{count}} result(s) available_other": "Результатов: {{count}}",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} добавлен(а) в список приглашённых. Добавьте других участников или нажмите Tab, чтобы выбрать роль и пригласить.",
       "{{name}} removed from invite list": "{{name}} удален(а) из списка приглашений",
-      "{{title}}, updated {{date}}": "{{title}}, обновлено {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, обновлено {{date}}",
+      "{{title}}, updated {{date}}, shared with {{count}} participant(s)": "{{title}}, обновлено {{date}}, доступ у {{count}} участник(ов)"
     }
   },
   "sl": {
@@ -2933,7 +2936,8 @@
       "{{count}} result(s) available_other": "Результатів: {{count}}",
       "{{name}} added to invite list. Add more members or press Tab to select role and invite.": "{{name}} додано до списку запрошень. Додайте більше учасників або натисніть Tab, щоб вибрати роль та надіслати запрошення.",
       "{{name}} removed from invite list": "{{name}} видалено зі списку запрошень",
-      "{{title}}, updated {{date}}": "{{title}}, оновлено {{date}}"
+      "{{title}}, updated {{date}}": "{{title}}, оновлено {{date}}",
+      "{{title}}, updated {{date}}, shared with {{count}} participant(s)": "{{title}}, оновлено {{date}}, доступ у {{count}} учасник(ів)"
     }
   },
   "zh": {

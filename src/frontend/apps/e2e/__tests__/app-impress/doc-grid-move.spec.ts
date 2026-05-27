@@ -239,9 +239,7 @@ test.describe('Doc grid move', () => {
       .click();
 
     await expect(docsGrid.getByText(titleDoc1)).toBeHidden();
-    await docsGrid
-      .getByRole('link', { name: `Open document ${titleDoc2}` })
-      .click();
+    await docsGrid.getByRole('link', { name: new RegExp(titleDoc2) }).click();
 
     await verifyDocName(page, titleDoc2);
 
@@ -383,9 +381,7 @@ test.describe('Doc grid move', () => {
     await page.keyboard.press('Enter');
 
     await expect(docsGrid.getByText(titleDoc1)).toBeHidden();
-    await docsGrid
-      .getByRole('link', { name: `Open document ${titleDoc2}` })
-      .click();
+    await docsGrid.getByRole('link', { name: new RegExp(titleDoc2) }).click();
 
     await verifyDocName(page, titleDoc2);
 
