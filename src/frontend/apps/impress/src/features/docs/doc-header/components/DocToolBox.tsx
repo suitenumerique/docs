@@ -12,7 +12,6 @@ import DeleteSVG from '@/assets/icons/ui-kit/delete.svg';
 import DownloadSVG from '@/assets/icons/ui-kit/download.svg';
 import RemoveEmojiSVG from '@/assets/icons/ui-kit/face-remove.svg';
 import AddEmojiSVG from '@/assets/icons/ui-kit/face.svg';
-import GroupSVG from '@/assets/icons/ui-kit/group.svg';
 import HistorySVG from '@/assets/icons/ui-kit/history.svg';
 import KeepSVG from '@/assets/icons/ui-kit/keep.svg';
 import KeepOffSVG from '@/assets/icons/ui-kit/keep_off.svg';
@@ -41,16 +40,6 @@ import {
 import { useFocusStore, useResponsiveStore } from '@/stores';
 
 import { useCopyCurrentEditorToClipboard } from '../hooks/useCopyCurrentEditorToClipboard';
-
-import { BoutonShare } from './BoutonShare';
-
-const DocShareModal = dynamic(
-  () =>
-    import('@/docs/doc-share/components/DocShareModal').then((mod) => ({
-      default: mod.DocShareModal,
-    })),
-  { ssr: false },
-);
 
 const ModalRemoveDoc = dynamic(
   () =>
@@ -94,7 +83,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const [isModalRemoveOpen, setIsModalRemoveOpen] = useState(false);
   const [isModalExportOpen, setIsModalExportOpen] = useState(false);
   const selectHistoryModal = useModal();
-  const modalShare = useModal();
 
   const { addLastFocus, restoreFocus } = useFocusStore();
   const { isSmallMobile, isMobile } = useResponsiveStore();
@@ -116,12 +104,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
   const { updateDocEmoji } = useDocTitleUpdate();
 
   const options: DropdownMenuOption[] = [
-    {
-      label: t('Share'),
-      icon: <GroupSVG width={24} height={24} aria-hidden="true" />,
-      callback: modalShare.open,
-      show: isSmallMobile,
-    },
     {
       label: t('Export'),
       icon: <DownloadSVG width={24} height={24} aria-hidden="true" />,
@@ -229,13 +211,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         $margin={{ left: 'auto' }}
         $gap={spacingsTokens['2xs']}
       >
-        <BoutonShare
-          doc={doc}
-          open={modalShare.open}
-          isHidden={isSmallMobile}
-          displayNbAccess={doc.abilities.accesses_view}
-        />
-
         {!isSmallMobile && ModalExport && (
           <Button
             data-testid="doc-open-modal-download-button"
@@ -267,16 +242,6 @@ export const DocToolBox = ({ doc }: DocToolBoxProps) => {
         </DropdownMenu>
       </Box>
 
-      {modalShare.isOpen && (
-        <DocShareModal
-          onClose={() => {
-            modalShare.close();
-            restoreFocus();
-          }}
-          doc={doc}
-          isRootDoc={treeContext?.root?.id === doc.id}
-        />
-      )}
       {isModalExportOpen && ModalExport && (
         <ModalExport
           onClose={() => {

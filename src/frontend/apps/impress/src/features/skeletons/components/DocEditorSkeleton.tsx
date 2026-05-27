@@ -64,8 +64,6 @@ const SkeletonEditorHeader = () => {
 
             {/* Toolbox skeleton (buttons) */}
             <Box $direction="row" $gap={spacingsTokens['t']} $align="center">
-              {/* Share button */}
-              <SkeletonLine $width="90px" $height="40px" />
               {/* Download icon */}
               <SkeletonCircle $width="40px" $height="40px" />
               {/* Menu icon */}

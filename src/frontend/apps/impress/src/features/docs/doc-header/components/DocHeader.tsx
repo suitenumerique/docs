@@ -13,7 +13,6 @@ import { useResponsiveStore } from '@/stores';
 import { AlertNetwork } from './AlertNetwork';
 import { AlertPublic } from './AlertPublic';
 import { AlertRestore } from './AlertRestore';
-import { BoutonShare } from './BoutonShare';
 import { DocHeaderInfo } from './DocHeaderInfo';
 import { DocTitle } from './DocTitle';
 import { DocToolBox } from './DocToolBox';
@@ -66,14 +65,6 @@ export const DocHeader = ({ doc }: DocHeaderProps) => {
               </Box>
             </Box>
             {!isDeletedDoc && <DocToolBox doc={doc} />}
-            {isDeletedDoc && (
-              <BoutonShare
-                doc={doc}
-                open={() => {}}
-                displayNbAccess={true}
-                isDisabled
-              />
-            )}
           </Box>
         </Box>
         <HorizontalSeparator $margin="none" />

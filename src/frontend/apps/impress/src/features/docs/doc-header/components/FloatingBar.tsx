@@ -3,7 +3,9 @@ import { css } from 'styled-components';
 
 import { Box } from '@/components';
 import { useCunninghamTheme } from '@/cunningham/useCunninghamTheme';
-import { LeftPanelCollapseButton } from '@/features/left-panel';
+import { useDocStore } from '@/docs/doc-management/stores/useDocStore';
+import { DocShareButton } from '@/features/docs/doc-share/components/DocShareButton';
+import { LeftPanelCollapseButton } from '@/features/left-panel/components/LeftPanelCollapseButton';
 import { RightPanelCollapseButton } from '@/features/right-panel/components/RightPanelCollapseButton';
 import { useResponsiveStore } from '@/stores';
 
@@ -17,6 +19,8 @@ import { useResponsiveStore } from '@/stores';
 export const FloatingBar = () => {
   const { spacingsTokens } = useCunninghamTheme();
   const { isLargeScreen } = useResponsiveStore();
+  const { currentDoc } = useDocStore();
+  const isDeletedDoc = !!currentDoc?.deleted_at;
 
   const FLOATING_STYLES = useMemo(() => {
     const base = spacingsTokens['base'];
@@ -70,7 +74,10 @@ export const FloatingBar = () => {
       $justify="space-between"
     >
       {isLargeScreen ? <LeftPanelCollapseButton /> : <Box />}
-      <RightPanelCollapseButton />
+      <Box $direction="row" $align="center" $gap="2xs">
+        {!isDeletedDoc && currentDoc && <DocShareButton doc={currentDoc} />}
+        <RightPanelCollapseButton />
+      </Box>
     </Box>
   );
 };

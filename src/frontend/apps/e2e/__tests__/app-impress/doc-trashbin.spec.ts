@@ -127,7 +127,7 @@ test.describe('Doc Trashbin', () => {
     await navigateToPageFromTree({ page, title: subDocName });
     await verifyDocName(page, subDocName);
 
-    await clickInEditorMenu(page, 'Delete sub-document');
+    await clickInEditorMenu(page, 'Delete');
     await page.getByRole('button', { name: 'Delete document' }).click();
     await verifyDocName(page, topParent);
 
@@ -152,7 +152,7 @@ test.describe('Doc Trashbin', () => {
     ).toBeVisible();
 
     await expect(page.getByLabel('Alert deleted document')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Share' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Share' })).toBeHidden();
     await expect(page.locator('.bn-editor')).toHaveAttribute(
       'contenteditable',
       'false',

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInEditorShareButton,
   createDoc,
   getGridRow,
   goToGridDoc,
@@ -733,8 +734,7 @@ test.describe('Documents Header mobile', () => {
 
     await goToGridDoc(page);
 
-    await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Share' }).click();
+    await clickInEditorShareButton(page);
 
     const shareModal = page.getByRole('dialog', {
       name: 'Share the document',

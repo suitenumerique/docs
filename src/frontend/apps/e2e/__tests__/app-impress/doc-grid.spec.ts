@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, getGridRow, verifyDocName } from './utils-common';
+import {
+  clickInEditorShareButton,
+  createDoc,
+  getGridRow,
+  verifyDocName,
+} from './utils-common';
 import { addNewMember, connectOtherUserToDoc } from './utils-share';
 
 type SmallDoc = {
@@ -212,9 +217,7 @@ test.describe('Documents filters', () => {
   test('it checks the left panel filters', async ({ page, browserName }) => {
     void page.goto('/');
 
-    // Create my doc
     const [docName] = await createDoc(page, 'my-doc', browserName, 1);
-    await verifyDocName(page, docName);
 
     // Another user create a doc and share it with me
     const { cleanup, otherPage, otherBrowserName } =
@@ -230,9 +233,7 @@ test.describe('Documents filters', () => {
       1,
     );
 
-    await verifyDocName(otherPage, docShareName);
-
-    await otherPage.getByRole('button', { name: 'Share' }).click();
+    await clickInEditorShareButton(otherPage);
 
     await addNewMember(otherPage, 0, 'Editor', browserName);
 

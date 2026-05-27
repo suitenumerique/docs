@@ -425,8 +425,18 @@ export async function waitForLanguageSwitch(
   await page.getByRole('menuitemradio', { name: lang.label }).click();
 }
 
+export const clickInEditorShareButton = async (page: Page) => {
+  await page
+    .getByTestId('floating-bar')
+    .getByRole('button', { name: 'Share' })
+    .click();
+};
+
 export const clickInEditorMenu = async (page: Page, textButton: string) => {
-  await page.getByRole('button', { name: 'Open the document options' }).click();
+  await page
+    .getByTestId('floating-bar')
+    .getByRole('button', { name: 'Open the document options' })
+    .click();
   await page.getByRole('menuitem', { name: textButton }).click();
 };
 

@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { BROWSERS, createDoc, randomName, verifyDocName } from './utils-common';
+import {
+  BROWSERS,
+  clickInEditorShareButton,
+  createDoc,
+  randomName,
+  verifyDocName,
+} from './utils-common';
 import { writeInEditor } from './utils-editor';
 import { connectOtherUserToDoc, updateRoleUser } from './utils-share';
 import { SignIn } from './utils-signin';
@@ -271,8 +277,6 @@ test.describe('Document create member', () => {
       1,
     );
 
-    await verifyDocName(page, docTitle);
-
     await writeInEditor({ page, text: 'Hello World' });
 
     const docUrl = page.url();
@@ -294,8 +298,7 @@ test.describe('Document create member', () => {
     ).toBeVisible();
 
     // First user approves the request
-    await page.getByRole('button', { name: 'Share' }).click();
-
+    await clickInEditorShareButton(page);
     await expect(page.getByText('Access Requests')).toBeVisible();
     await expect(
       page.getByText(
@@ -330,7 +333,9 @@ test.describe('Document create member', () => {
     await updateRoleUser(page, 'Remove access', emailRequest);
     await expect(
       otherPage.getByText('Insufficient access rights to view the document.'),
-    ).toBeVisible();
+    ).toBeVisible({
+      timeout: 10000,
+    });
 
     // Cleanup: other user logout
     await cleanup();

@@ -288,14 +288,9 @@ test.describe('Doc Export', () => {
     });
 
     await page
-      .getByRole('button', {
-        name: 'Exporter le document',
-      })
+      .getByRole('button', { name: 'Ouvrir les options du document' })
       .click();
-
-    await expect(
-      page.getByTestId('doc-open-modal-download-button'),
-    ).toBeVisible();
+    await page.getByRole('menuitem', { name: 'Télécharger' }).click();
 
     const downloadPromise = page.waitForEvent('download', (download) => {
       return download.suggestedFilename().includes(`${randomDocFrench}.pdf`);

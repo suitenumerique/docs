@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-import { createDoc, verifyDocName } from './utils-common';
+import {
+  clickInEditorShareButton,
+  createDoc,
+  verifyDocName,
+} from './utils-common';
 import { addNewMember } from './utils-share';
 
 test.beforeEach(async ({ page }) => {
@@ -114,14 +118,8 @@ test.describe('Document list members', () => {
       },
     );
 
-    const [docTitle] = await createDoc(
-      page,
-      'members-big-invitation-list',
-      browserName,
-      1,
-    );
-    await verifyDocName(page, docTitle);
-    await page.getByRole('button', { name: 'Share' }).click();
+    await createDoc(page, 'members-big-invitation-list', browserName, 1);
+    await clickInEditorShareButton(page);
 
     const prefix = 'doc-share-invitation';
     const elements = page.locator(`[data-testid^="${prefix}"]`);
@@ -142,11 +140,10 @@ test.describe('Document list members', () => {
   });
 
   test('it checks the role rules', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, 'Doc role rules', browserName, 1);
+    await createDoc(page, 'Doc role rules', browserName, 1);
 
-    await verifyDocName(page, docTitle);
+    await clickInEditorShareButton(page);
 
-    await page.getByRole('button', { name: 'Share' }).click();
     const list = page.getByTestId('doc-share-quick-search');
     await expect(list).toBeVisible();
     const emailRequest =
@@ -208,11 +205,9 @@ test.describe('Document list members', () => {
   });
 
   test('it checks the delete members', async ({ page, browserName }) => {
-    const [docTitle] = await createDoc(page, 'Doc role rules', browserName, 1);
+    await createDoc(page, 'Doc role rules', browserName, 1);
 
-    await verifyDocName(page, docTitle);
-
-    await page.getByRole('button', { name: 'Share' }).click();
+    await clickInEditorShareButton(page);
 
     const list = page.getByTestId('doc-share-quick-search');
 
@@ -227,7 +222,7 @@ test.describe('Document list members', () => {
     );
 
     await page.getByRole('button', { name: 'close' }).first().click();
-    await page.getByRole('button', { name: 'Share' }).first().click();
+    await clickInEditorShareButton(page);
 
     const userReaderEmail = await addNewMember(page, 0, 'Reader');
 
