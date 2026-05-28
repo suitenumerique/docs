@@ -5,6 +5,7 @@ Tests for Documents API endpoint in impress's core app: create
 # pylint: disable=W0621
 
 from concurrent.futures import ThreadPoolExecutor
+from unittest import mock
 from unittest.mock import patch
 
 from django.core import mail
@@ -18,6 +19,7 @@ from core.api.serializers import ServerCreateDocumentSerializer
 from core.models import Document, Invitation, User
 from core.services import mime_types
 from core.services.converter_services import ConversionError, YdocConverter
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -183,12 +185,13 @@ def test_api_documents_create_for_owner_existing(mock_convert_md):
         "email": "irrelevant@example.com",  # Should be ignored since the user already exists
     }
 
-    response = APIClient().post(
-        "/api/v1.0/documents/create-for-owner/",
-        data,
-        format="json",
-        HTTP_AUTHORIZATION="Bearer DummyToken",
-    )
+    with mock.patch("core.api.serializers.posthog_capture") as mock_capture:
+        response = APIClient().post(
+            "/api/v1.0/documents/create-for-owner/",
+            data,
+            format="json",
+            HTTP_AUTHORIZATION="Bearer DummyToken",
+        )
 
     assert response.status_code == 201
 
@@ -203,6 +206,13 @@ def test_api_documents_create_for_owner_existing(mock_convert_md):
     assert document.content == "Converted document content"
     assert document.creator == user
     assert document.accesses.filter(user=user, role="owner").exists()
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
 
     assert Invitation.objects.exists() is False
 
@@ -230,12 +240,13 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md):
         "email": "john.doe@example.com",  # Should be used to create a new user
     }
 
-    response = APIClient().post(
-        "/api/v1.0/documents/create-for-owner/",
-        data,
-        format="json",
-        HTTP_AUTHORIZATION="Bearer DummyToken",
-    )
+    with mock.patch("core.api.serializers.posthog_capture") as mock_capture:
+        response = APIClient().post(
+            "/api/v1.0/documents/create-for-owner/",
+            data,
+            format="json",
+            HTTP_AUTHORIZATION="Bearer DummyToken",
+        )
 
     assert response.status_code == 201
 
@@ -250,6 +261,13 @@ def test_api_documents_create_for_owner_new_user(mock_convert_md):
     assert document.content == "Converted document content"
     assert document.creator is None
     assert document.accesses.exists() is False
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        None,
+        {},
+        document=document,
+    )
 
     invitation = Invitation.objects.get()
     assert invitation.email == "john.doe@example.com"

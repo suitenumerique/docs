@@ -23,6 +23,7 @@ from core.services.converter_services import (
     ConversionError,
     Converter,
 )
+from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.treebeard import create_tree_node_with_retry
 
 
@@ -489,6 +490,8 @@ class ServerCreateDocumentSerializer(serializers.Serializer):
                 creator=user,
             )
         )
+
+        posthog_capture(PosthogEventName.DOC_CREATED, user, {}, document=document)
 
         if user:
             # Associate the document with the pre-existing user

@@ -3,6 +3,7 @@ Tests for Documents API endpoint in impress's core app: create
 """
 
 from concurrent.futures import ThreadPoolExecutor
+from unittest import mock
 from uuid import uuid4
 
 import pytest
@@ -10,6 +11,7 @@ from rest_framework.test import APIClient
 
 from core import factories
 from core.models import Document
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -37,19 +39,27 @@ def test_api_documents_create_authenticated_success():
     client = APIClient()
     client.force_login(user)
 
-    response = client.post(
-        "/api/v1.0/documents/",
-        {
-            "title": "my document",
-        },
-        format="json",
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            "/api/v1.0/documents/",
+            {
+                "title": "my document",
+            },
+            format="json",
+        )
 
     assert response.status_code == 201
     document = Document.objects.get()
     assert document.title == "my document"
     assert document.link_reach == "restricted"
     assert document.accesses.filter(role="owner", user=user).exists()
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {},
+        document=document,
+    )
 
 
 @pytest.mark.django_db(transaction=True)

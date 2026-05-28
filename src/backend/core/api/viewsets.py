@@ -67,6 +67,7 @@ from core.services.search_indexers import (
     get_visited_document_ids_of,
 )
 from core.tasks.mail import send_ask_for_access_mail
+from core.utils.analytics import PosthogEventName, posthog_capture
 from core.utils.paths import filter_descendants
 from core.utils.treebeard import create_tree_node_with_retry
 from core.utils.users import users_sharing_documents_with
@@ -778,9 +779,17 @@ class DocumentViewSet(
             role=models.RoleChoices.OWNER,
         )
 
+        posthog_capture(
+            PosthogEventName.DOC_CREATED, self.request.user, {}, document=obj
+        )
+
     def perform_destroy(self, instance):
         """Override to implement a soft delete instead of dumping the record in database."""
         instance.soft_delete()
+
+        posthog_capture(
+            PosthogEventName.DOC_DELETED, self.request.user, {}, document=instance
+        )
 
     def _can_user_edit_document(self, document_id, set_cache=False):
         """Check if the user can edit the document."""
@@ -1111,6 +1120,13 @@ class DocumentViewSet(
 
             # Set the created instance to the serializer
             serializer.instance = child_document
+
+            posthog_capture(
+                PosthogEventName.DOC_CREATED,
+                self.request.user,
+                {"document_parent": str(document.id)},
+                document=child_document,
+            )
 
             headers = self.get_success_headers(serializer.data)
             return drf.response.Response(

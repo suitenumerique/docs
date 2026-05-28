@@ -4,6 +4,7 @@ Tests for Documents API endpoint in impress's core app: children create
 
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
+from unittest import mock
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from rest_framework.test import APIClient
 from core import factories
 from core.models import Document, LinkReachChoices, LinkRoleChoices
 from core.services import mime_types
+from core.utils.analytics import PosthogEventName
 
 pytestmark = pytest.mark.django_db
 
@@ -105,12 +107,13 @@ def test_api_documents_children_create_authenticated_success(reach, role, depth)
                 parent=document, link_reach="restricted"
             )
 
-    response = client.post(
-        f"/api/v1.0/documents/{document.id!s}/children/",
-        {
-            "title": "my child",
-        },
-    )
+    with mock.patch("core.api.viewsets.posthog_capture") as mock_capture:
+        response = client.post(
+            f"/api/v1.0/documents/{document.id!s}/children/",
+            {
+                "title": "my child",
+            },
+        )
 
     assert response.status_code == 201
 
@@ -119,6 +122,13 @@ def test_api_documents_children_create_authenticated_success(reach, role, depth)
     assert child.link_reach == "restricted"
     # Access objects on the child are not necessary
     assert child.accesses.exists() is False
+
+    mock_capture.assert_called_once_with(
+        PosthogEventName.DOC_CREATED,
+        user,
+        {"document_parent": str(document.id)},
+        document=child,
+    )
 
 
 @pytest.mark.parametrize("depth", [1, 2, 3])
