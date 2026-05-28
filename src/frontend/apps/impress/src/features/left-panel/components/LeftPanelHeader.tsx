@@ -4,14 +4,16 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { PropsWithChildren, useCallback, useState } from 'react';
 
-import { Box, Icon, SeparatedSection } from '@/components';
+import HomeSVG from '@/assets/icons/ui-kit/house-rounded.svg';
+import SearchSVG from '@/assets/icons/ui-kit/zoom-rounded.svg';
+import { Box, SeparatedSection } from '@/components';
 import { useDocStore } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 import { useCmdK } from '@/hooks/useCmdK';
 
 import { useLeftPanelStore } from '../stores';
 
-import { LeftPanelHeaderButton } from './LeftPanelHeaderButton';
+import { LeftPanelHeaderNewDoc } from './LeftPanelHeaderNewDoc';
 
 const DocSearchModal = dynamic(
   () =>
@@ -60,7 +62,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
             $justify="space-between"
             $align="center"
           >
-            {authenticated && <LeftPanelHeaderButton />}
+            {authenticated && <LeftPanelHeaderNewDoc />}
             {(router.pathname !== '/' || authenticated) && (
               <Box $direction="row" $gap="2px">
                 {router.pathname !== '/' && (
@@ -71,13 +73,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                     size="medium"
                     color="brand"
                     variant="tertiary"
-                    icon={
-                      <Icon
-                        $color="inherit"
-                        iconName="house"
-                        aria-hidden="true"
-                      />
-                    }
+                    icon={<HomeSVG aria-hidden="true" width={24} height={24} />}
                   />
                 )}
                 {authenticated && (
@@ -89,11 +85,7 @@ export const LeftPanelHeader = ({ children }: PropsWithChildren) => {
                     variant="tertiary"
                     aria-label={t('Search docs')}
                     icon={
-                      <Icon
-                        $color="inherit"
-                        iconName="search"
-                        aria-hidden="true"
-                      />
+                      <SearchSVG aria-hidden="true" width={24} height={24} />
                     }
                   />
                 )}

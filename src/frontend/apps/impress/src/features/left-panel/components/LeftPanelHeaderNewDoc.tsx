@@ -3,13 +3,13 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Icon } from '@/components';
+import PlusSVG from '@/assets/icons/ui-kit/plus.svg';
 import { useCreateDoc } from '@/docs/doc-management';
 import { useSkeletonStore } from '@/features/skeletons';
 
 import { useLeftPanelStore } from '../stores';
 
-export const LeftPanelHeaderButton = () => {
+export const LeftPanelHeaderNewDoc = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { closePanel } = useLeftPanelStore();
@@ -52,7 +52,7 @@ export const LeftPanelHeaderButton = () => {
       data-testid="new-doc-button"
       color="brand"
       onClick={handleClick}
-      icon={<Icon $color="inherit" iconName="add" aria-hidden="true" />}
+      icon={<PlusSVG aria-hidden="true" width={24} height={24} />}
       disabled={isLoading}
     >
       {t('New doc')}
