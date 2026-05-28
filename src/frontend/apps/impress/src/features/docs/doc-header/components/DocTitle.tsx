@@ -1,5 +1,5 @@
 import { Tooltip } from '@gouvfr-lasuite/cunningham-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -111,6 +111,7 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
   const { isTopRoot } = useDocUtils(doc);
   const { untitledDocument } = useTrans();
   const { emoji, titleWithoutEmoji } = getEmojiAndTitle(doc.title ?? '');
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [titleDisplay, setTitleDisplay] = useState(
     isTopRoot ? doc.title : titleWithoutEmoji,
   );
@@ -196,42 +197,72 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       $minHeight="40px"
     >
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
-      <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
-        <Box
-          as="span"
-          role="textbox"
-          className="--docs--doc-title-input"
-          contentEditable
-          defaultValue={titleDisplay || undefined}
-          onKeyDownCapture={handleKeyDown}
-          suppressContentEditableWarning={true}
-          aria-label={`${t('Document title')}`}
-          aria-multiline={false}
-          onBlurCapture={(event) =>
-            handleTitleSubmit(event.target.textContent || '')
+      {/**
+       * This wrapper div is necessary to handle focus.
+       * Benefit:
+       * - The tooltip will show exactly in the middle of the title input text
+       * - When the user is click on the right side of the doc title, the title get the focus
+       *   and the cursor, which is the expected behavior when editing a title.
+       */}
+      <Box
+        ref={wrapperRef}
+        $flex="1"
+        $css={css`
+          cursor: text;
+        `}
+        onClick={() => {
+          const el = wrapperRef.current?.querySelector<HTMLElement>(
+            '.--docs--doc-title-input[contenteditable="true"]',
+          );
+          if (el && document.activeElement !== el) {
+            el.focus();
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            sel?.removeAllRanges();
+            sel?.addRange(range);
           }
-          onPasteCapture={handlePaste}
-          onDropCapture={handleDrop}
-          $css={css`
-            &[contenteditable='true']:empty:not(:focus):before {
-              content: '${untitledDocument}';
-              color: var(
-                --c--contextuals--content--semantic--neutral--tertiary
-              );
-              pointer-events: none;
-              font-style: italic;
+        }}
+        $width="100%"
+      >
+        <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
+          <Box
+            as="span"
+            role="textbox"
+            className="--docs--doc-title-input"
+            contentEditable
+            defaultValue={titleDisplay || undefined}
+            onKeyDownCapture={handleKeyDown}
+            suppressContentEditableWarning={true}
+            aria-label={`${t('Document title')}`}
+            aria-multiline={false}
+            onBlurCapture={(event) =>
+              handleTitleSubmit(event.target.textContent || '')
             }
-            font-size: ${isSmallMobile
-              ? 'var(--c--globals--font--sizes--h4)'
-              : 'var(--c--globals--font--sizes--h2)'};
-            font-weight: 700;
-            outline: none;
-            width: 100%;
-          `}
-        >
-          {titleDisplay}
-        </Box>
-      </Tooltip>
+            onPasteCapture={handlePaste}
+            onDropCapture={handleDrop}
+            $css={css`
+              &[contenteditable='true']:empty:not(:focus):before {
+                content: '${untitledDocument}';
+                color: var(
+                  --c--contextuals--content--semantic--neutral--tertiary
+                );
+                pointer-events: none;
+                font-style: italic;
+              }
+              font-size: ${isSmallMobile
+                ? 'var(--c--globals--font--sizes--h4)'
+                : 'var(--c--globals--font--sizes--h2)'};
+              font-weight: 700;
+              outline: none;
+            `}
+            $width="fit-content"
+          >
+            {titleDisplay}
+          </Box>
+        </Tooltip>
+      </Box>
     </Box>
   );
 };
