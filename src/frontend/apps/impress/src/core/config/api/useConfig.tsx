@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { Resource } from 'i18next';
+import type { Resource } from 'i18next';
 import Image from 'next/image';
-import { LinkHTMLAttributes } from 'react';
+import type { LinkHTMLAttributes } from 'react';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
-import { Theme } from '@/cunningham/';
-import { FooterType } from '@/features/footer';
-import { HeaderType, WaffleType } from '@/features/header';
-import type { PostHogConf } from '@/services';
+import type { Theme } from '@/cunningham/';
+import type { FooterType } from '@/features/footer';
+import type { HeaderType, WaffleType } from '@/features/header';
+import type { PostHogConf } from '@/services/PosthogAnalytic';
 
 type Imagetype = React.ComponentProps<typeof Image>;
 
@@ -56,7 +56,8 @@ export interface ConfigResponse {
   LANGUAGES: [string, string][];
   LANGUAGE_CODE: string;
   MEDIA_BASE_URL?: string;
-  POSTHOG_KEY?: PostHogConf;
+  POSTHOG_KEY?: PostHogConf['key'];
+  POSTHOG_HOST?: PostHogConf['host'];
   RELEASE_VERSION: string;
   SENTRY_DSN?: string;
   TRASHBIN_CUTOFF_DAYS?: number;

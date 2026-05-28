@@ -34,7 +34,7 @@ export class PostHogAnalytic extends AbstractAnalytic {
 }
 
 export interface PostHogConf {
-  id: string;
+  key: string;
   host: string;
 }
 
@@ -49,11 +49,11 @@ export function PostHogProvider({
   const isOffline = useIsOffline((state) => state.isOffline);
 
   useEffect(() => {
-    if (!conf?.id || !conf?.host || posthog.__loaded) {
+    if (!conf?.key || !conf?.host || posthog.__loaded) {
       return;
     }
 
-    posthog.init(conf.id, {
+    posthog.init(conf.key, {
       api_host: conf.host,
       person_profiles: 'always',
       loaded: (posthogInstance) => {
@@ -78,7 +78,7 @@ export function PostHogProvider({
     return () => {
       Router.events.off('routeChangeComplete', handleRouteChange);
     };
-  }, [conf?.host, conf?.id]);
+  }, [conf?.host, conf?.key]);
 
   // Disable PostHog when offline to prevent retry requests
   useEffect(() => {

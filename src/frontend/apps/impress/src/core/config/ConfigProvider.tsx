@@ -66,14 +66,16 @@ export const ConfigProvider = ({ children }: PropsWithChildren) => {
   }, [conf?.FRONTEND_THEME, setTheme]);
 
   useEffect(() => {
-    if (!conf?.POSTHOG_KEY) {
+    if (!conf?.POSTHOG_KEY || !conf?.POSTHOG_HOST) {
       return;
     }
 
+    const key = conf.POSTHOG_KEY;
+    const host = conf.POSTHOG_HOST;
     void import('@/services').then(({ PostHogAnalytic }) => {
-      new PostHogAnalytic(conf.POSTHOG_KEY);
+      new PostHogAnalytic({ key, host });
     });
-  }, [conf?.POSTHOG_KEY]);
+  }, [conf?.POSTHOG_KEY, conf?.POSTHOG_HOST]);
 
   useEffect(() => {
     if (!conf?.CRISP_WEBSITE_ID) {
