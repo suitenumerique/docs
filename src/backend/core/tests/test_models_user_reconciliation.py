@@ -472,9 +472,7 @@ def test_process_reconciliation_updates_linktraces(
     models.LinkTrace.objects.create(document=doc_both, user=user_2)
 
     doc_inactive_only = userdocs_u2[4].document
-    models.LinkTrace.objects.create(
-        document=doc_inactive_only, user=user_2, is_masked=True
-    )
+    models.LinkTrace.objects.create(document=doc_inactive_only, user=user_2)
 
     doc_active_only = userdocs_u1[4].document
     models.LinkTrace.objects.create(document=doc_active_only, user=user_1)
@@ -515,12 +513,11 @@ def test_process_reconciliation_updates_linktraces(
         is False
     )
 
-    # doc_inactive_only should now be linked to active user and preserve is_masked
+    # doc_inactive_only should now be linked to active user
     lt = models.LinkTrace.objects.filter(
         user=user_1, document=doc_inactive_only
     ).first()
     assert lt is not None
-    assert lt.is_masked is True
 
     # doc_active_only should still belong to active user
     assert models.LinkTrace.objects.filter(

@@ -1312,7 +1312,6 @@ class Document(MP_Node, BaseModel):
             "favorite": can_get and user.is_authenticated,
             "link_configuration": is_owner_or_admin,
             "invite_owner": is_owner and not is_deleted,
-            "mask": can_get and user.is_authenticated,
             "move": is_owner_or_admin and not is_deleted,
             "partial_update": can_update,
             "restore": is_owner,
@@ -1481,7 +1480,6 @@ class LinkTrace(BaseModel):
         related_name="link_traces",
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="link_traces")
-    is_masked = models.BooleanField(default=False)
 
     class Meta:
         db_table = "impress_link_trace"

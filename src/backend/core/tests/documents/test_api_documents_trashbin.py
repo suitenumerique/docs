@@ -94,7 +94,6 @@ def test_api_documents_trashbin_format():
                 "public": ["reader", "commenter", "editor"],
                 "restricted": None,
             },
-            "mask": False,
             "content_patch": False,
             "content_retrieve": True,
             "media_auth": False,

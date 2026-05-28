@@ -687,8 +687,9 @@ class DocumentViewSet(
 
         # Annotate favorite status and filter if applicable as late as possible
         queryset = queryset.annotate_is_favorite(user)
-        for field in ["is_favorite", "is_masked"]:
-            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+        queryset = filterset.filters["is_favorite"].filter(
+            queryset, filter_data["is_favorite"]
+        )
 
         # Apply ordering only now that everything is filtered and annotated
         queryset = filters.OrderingFilter().filter_queryset(
@@ -1177,8 +1178,9 @@ class DocumentViewSet(
 
         # Annotate favorite status and filter if applicable as late as possible
         queryset = queryset.annotate_is_favorite(user)
-        for field in ["is_favorite", "is_masked"]:
-            queryset = filterset.filters[field].filter(queryset, filter_data[field])
+        queryset = filterset.filters["is_favorite"].filter(
+            queryset, filter_data["is_favorite"]
+        )
 
         # Apply ordering only now that everything is filtered and annotated
         queryset = filters.OrderingFilter().filter_queryset(
@@ -1769,44 +1771,6 @@ class DocumentViewSet(
             {"detail": "Document was already not marked as favorite"},
             status=drf.status.HTTP_200_OK,
         )
-
-    @drf.decorators.action(detail=True, methods=["post", "delete"], url_path="mask")
-    def mask(self, request, *args, **kwargs):
-        """Mask or unmask the document for the logged-in user based on the HTTP method."""
-        # Check permissions first
-        document = self.get_object()
-        user = request.user
-
-        try:
-            link_trace = models.LinkTrace.objects.get(document=document, user=user)
-        except models.LinkTrace.DoesNotExist:
-            return drf.response.Response(
-                {"detail": "User never accessed this document before."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if request.method == "POST":
-            if link_trace.is_masked:
-                return drf.response.Response(
-                    {"detail": "Document was already masked"},
-                    status=drf.status.HTTP_200_OK,
-                )
-            link_trace.is_masked = True
-            link_trace.save(update_fields=["is_masked"])
-            return drf.response.Response(
-                {"detail": "Document was masked"},
-                status=drf.status.HTTP_201_CREATED,
-            )
-
-        # Handle DELETE method to unmask document
-        if not link_trace.is_masked:
-            return drf.response.Response(
-                {"detail": "Document was already not masked"},
-                status=drf.status.HTTP_200_OK,
-            )
-        link_trace.is_masked = False
-        link_trace.save(update_fields=["is_masked"])
-        return drf.response.Response(status=drf.status.HTTP_204_NO_CONTENT)
 
     @drf.decorators.action(detail=True, methods=["post"], url_path="attachment-upload")
     def attachment_upload(self, request, *args, **kwargs):
