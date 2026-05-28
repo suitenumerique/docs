@@ -18,6 +18,7 @@ and this project adheres to
 
 - ♻️(backend) allow global search in sub documents
 - ✨(backend) add a breadcrumb in the search response
+- ♻️(frontend) move doc action buttons to fix toolbar #2360
 
 ### Fixed
 

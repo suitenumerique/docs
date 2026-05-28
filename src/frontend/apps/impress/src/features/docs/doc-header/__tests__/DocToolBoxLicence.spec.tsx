@@ -9,7 +9,31 @@ vi.mock('next/router', async () => ({
   ...(await vi.importActual('next/router')),
   useRouter: () => ({
     push: vi.fn(),
+    pathname: '/docs/doc-1',
   }),
+}));
+
+vi.mock('@gouvfr-lasuite/ui-kit', async () => {
+  const actual = await vi.importActual('@gouvfr-lasuite/ui-kit');
+  return {
+    ...actual,
+    DropdownMenu: ({ options, children }: any) => (
+      <>
+        {children}
+        <ul>
+          {options
+            .filter((o: any) => !o.isHidden)
+            .map((o: any) => (
+              <li key={o.label}>{o.label}</li>
+            ))}
+        </ul>
+      </>
+    ),
+  };
+});
+
+vi.mock('../hooks/useCopyCurrentEditorToClipboard', () => ({
+  useCopyCurrentEditorToClipboard: () => vi.fn(),
 }));
 
 const doc = {
@@ -39,9 +63,7 @@ describe('DocToolBox - Licence', () => {
       wrapper: AppWrapper,
     });
 
-    expect(
-      await screen.findByLabelText('Export the document'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Download')).toBeInTheDocument();
   }, 15000);
 
   test('The export button is not rendered when MIT version is activated', async () => {
@@ -53,12 +75,6 @@ describe('DocToolBox - Licence', () => {
       wrapper: AppWrapper,
     });
 
-    expect(
-      screen.getByLabelText('Open the document options'),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByLabelText('Export the document'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Download')).not.toBeInTheDocument();
   }, 15000);
 });

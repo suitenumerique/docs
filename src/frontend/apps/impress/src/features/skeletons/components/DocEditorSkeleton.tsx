@@ -1,10 +1,9 @@
 import { css, keyframes } from 'styled-components';
 
 import { Box, BoxType } from '@/components';
-import { useCunninghamTheme } from '@/cunningham';
 import { useResponsiveStore } from '@/stores';
 
-import { SkeletonCircle, SkeletonLine } from './SkeletionUI';
+import { SkeletonLine } from './SkeletionUI';
 
 export const DocEditorSkeleton = () => {
   return (
@@ -16,6 +15,7 @@ export const DocEditorSkeleton = () => {
         $height="100%"
         className="--docs--doc-editor-skeleton"
       >
+        <SkeletonEditorFloatingBar />
         <SkeletonEditorHeader />
         <SkeletonEditorCore />
       </Box>
@@ -23,58 +23,63 @@ export const DocEditorSkeleton = () => {
   );
 };
 
+const SkeletonEditorFloatingBar = () => {
+  return (
+    <Box
+      className="--docs--doc-editor-floating-bar-skeleton"
+      $width="100%"
+      $padding={{ top: 'sm', horizontal: 'sm' }}
+      $direction="row"
+      $justify="space-between"
+    >
+      <SkeletonLine $width="42px" $height="42px" />
+      <Box $direction="row" $gap="2xs" $align="center">
+        <SkeletonLine $width="75px" $height="42px" />
+        <SkeletonLine $width="42px" $height="42px" />
+      </Box>
+    </Box>
+  );
+};
+
 const SkeletonEditorHeader = () => {
   const { isDesktop } = useResponsiveStore();
-  const { spacingsTokens } = useCunninghamTheme();
 
   return (
     <Box
-      $padding={{ horizontal: isDesktop ? '54px' : 'base' }}
+      $padding={{ horizontal: isDesktop ? '54px' : 'base', top: '55px' }}
       className="--docs--doc-editor-header-skeleton"
+      $width="100%"
+      $gap="base"
     >
       <Box
+        $direction="row"
+        $align="center"
         $width="100%"
-        $padding={{ top: isDesktop ? '65px' : 'md' }}
-        $gap={spacingsTokens['base']}
+        $padding={{ bottom: 'xs' }}
       >
         <Box
           $direction="row"
+          $justify="space-between"
+          $css="flex:1;"
+          $gap="0.5rem 1rem"
           $align="center"
-          $width="100%"
-          $padding={{ bottom: 'xs' }}
+          $maxWidth="100%"
         >
-          <Box
-            $direction="row"
-            $justify="space-between"
-            $css="flex:1;"
-            $gap="0.5rem 1rem"
-            $align="center"
-            $maxWidth="100%"
-          >
-            {/* Title and metadata skeleton */}
-            <Box $gap="0.25rem" $css="flex:1;">
-              {/* Title - "Untitled Document" style */}
-              <SkeletonLine $width="35%" $height="40px" />
+          {/* Title and metadata skeleton */}
+          <Box $gap="base" $css="flex:1;">
+            {/* Title - "Untitled Document" style */}
+            <SkeletonLine $width="255px" $height="40px" />
 
-              {/* Metadata (role and last update) */}
-              <Box $direction="row" $gap="0.5rem" $align="center">
-                <SkeletonLine $maxWidth="260px" $height="12px" />
-              </Box>
-            </Box>
-
-            {/* Toolbox skeleton (buttons) */}
-            <Box $direction="row" $gap={spacingsTokens['t']} $align="center">
-              {/* Download icon */}
-              <SkeletonCircle $width="40px" $height="40px" />
-              {/* Menu icon */}
-              <SkeletonCircle $width="40px" $height="40px" />
+            {/* Metadata (role and last update) */}
+            <Box $direction="row" $gap="0.5rem" $align="center">
+              <SkeletonLine $maxWidth="210px" $height="12px" />
             </Box>
           </Box>
         </Box>
-
-        {/* Separator */}
-        <SkeletonLine $height="1px" />
       </Box>
+
+      {/* Separator */}
+      <SkeletonLine $height="1px" />
     </Box>
   );
 };

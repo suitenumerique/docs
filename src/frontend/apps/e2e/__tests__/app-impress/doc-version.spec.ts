@@ -116,7 +116,7 @@ test.describe('Doc Version', () => {
     await page.getByLabel('Open the document options').click();
     await expect(
       page.getByRole('menuitem', { name: 'Version history' }),
-    ).toBeDisabled();
+    ).toBeHidden();
   });
 
   test('it restores the doc version', async ({ page, browserName }) => {

@@ -2,7 +2,7 @@ import { t } from 'i18next';
 
 import PublicSVG from '@/assets/icons/ui-kit/public.svg';
 import ProtedtedSVG from '@/assets/icons/ui-kit/vpn_lock.svg';
-import { Text } from '@/components';
+import { Box, Text } from '@/components';
 import { useConfig } from '@/core';
 import {
   Doc,
@@ -40,7 +40,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
   }
 
   return (
-    <>
+    <Box $direction="row">
       <Text
         $variation="tertiary"
         $size="s"
@@ -55,7 +55,7 @@ export const DocHeaderInfo = ({ doc }: DocHeaderInfoProps) => {
       <Text $variation="tertiary" $size="s">
         {dateToDisplay}
       </Text>
-    </>
+    </Box>
   );
 };
 

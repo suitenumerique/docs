@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { css } from 'styled-components';
 
-import { Box } from '@/components';
+import { Box, Card } from '@/components';
 import { useCunninghamTheme } from '@/cunningham/useCunninghamTheme';
 import { useDocStore } from '@/docs/doc-management/stores/useDocStore';
 import { DocShareButton } from '@/features/docs/doc-share/components/DocShareButton';
 import { LeftPanelCollapseButton } from '@/features/left-panel/components/LeftPanelCollapseButton';
 import { RightPanelCollapseButton } from '@/features/right-panel/components/RightPanelCollapseButton';
 import { useResponsiveStore } from '@/stores';
+
+import { DocToolBox } from './DocToolBox';
 
 /**
  * Sticky bar trick (desktop):
@@ -23,7 +25,6 @@ export const FloatingBar = () => {
   const isDeletedDoc = !!currentDoc?.deleted_at;
 
   const FLOATING_STYLES = useMemo(() => {
-    const base = spacingsTokens['base'];
     const sm = spacingsTokens['sm'];
     return css`
       position: sticky;
@@ -33,7 +34,6 @@ export const FloatingBar = () => {
       width: 100%;
       min-height: 64px;
       padding: ${sm};
-      margin-top: calc(-${base});
       z-index: 21; // Under editor select box but above other elements (e.g., doc title, suggestion menu)
       align-items: flex-start;
       isolation: isolate;
@@ -76,7 +76,20 @@ export const FloatingBar = () => {
       {isLargeScreen ? <LeftPanelCollapseButton /> : <Box />}
       <Box $direction="row" $align="center" $gap="2xs">
         {!isDeletedDoc && currentDoc && <DocShareButton doc={currentDoc} />}
-        <RightPanelCollapseButton />
+        <Card
+          className="--docs--right-panel-collapse-button"
+          $direction="row"
+          $css={css`
+            padding: var(--c--globals--spacings--xxxs);
+            align-items: center;
+            gap: var(--c--globals--spacings--xxxs);
+            border-radius: var(--c--globals--spacings--xs);
+            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+          `}
+        >
+          <RightPanelCollapseButton />
+          {!isDeletedDoc && currentDoc && <DocToolBox doc={currentDoc} />}
+        </Card>
       </Box>
     </Box>
   );

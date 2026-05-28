@@ -42,11 +42,7 @@ export const DocTitleText = () => {
 
   return (
     <Box className={CLASS_DOC_TITLE} $direction="row" $align="center">
-      <Text
-        as="h2"
-        $margin={{ all: 'none', left: 'none' }}
-        $size={isMobile ? 'h4' : 'h2'}
-      >
+      <Text as="h2" $margin="none" $size={isMobile ? 'h4' : 'h2'}>
         {currentDoc?.title || untitledDocument}
       </Text>
     </Box>
@@ -110,7 +106,7 @@ const DocTitleEmojiPicker = ({ doc }: DocTitleProps) => {
 };
 
 const DocTitleInput = ({ doc }: DocTitleProps) => {
-  const { isLargeScreen } = useResponsiveStore();
+  const { isSmallMobile } = useResponsiveStore();
   const { t } = useTranslation();
   const { isTopRoot } = useDocUtils(doc);
   const { untitledDocument } = useTrans();
@@ -200,7 +196,6 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
       $minHeight="40px"
     >
       {!isTopRoot && <DocTitleEmojiPicker doc={doc} />}
-
       <Tooltip content={t('Rename')} aria-hidden={true} placement="top">
         <Box
           as="span"
@@ -217,7 +212,6 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
           }
           onPasteCapture={handlePaste}
           onDropCapture={handleDrop}
-          $padding={{ right: 'big' }}
           $css={css`
             &[contenteditable='true']:empty:not(:focus):before {
               content: '${untitledDocument}';
@@ -227,11 +221,12 @@ const DocTitleInput = ({ doc }: DocTitleProps) => {
               pointer-events: none;
               font-style: italic;
             }
-            font-size: ${isLargeScreen
-              ? 'var(--c--globals--font--sizes--h2)'
-              : 'var(--c--globals--font--sizes--sm)'};
+            font-size: ${isSmallMobile
+              ? 'var(--c--globals--font--sizes--h4)'
+              : 'var(--c--globals--font--sizes--h2)'};
             font-weight: 700;
             outline: none;
+            width: 100%;
           `}
         >
           {titleDisplay}

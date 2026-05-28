@@ -1,4 +1,6 @@
 /// <reference types="vitest" />
+import path from 'path';
+
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
@@ -16,6 +18,12 @@ export default defineConfig({
     'process.env.NODE_ENV': 'test',
   },
   resolve: {
+    alias: [
+      {
+        find: /^.*\.svg$/,
+        replacement: path.resolve(__dirname, 'src/tests/__mocks__/svgMock.tsx'),
+      },
+    ],
     tsconfigPaths: true,
   },
 });

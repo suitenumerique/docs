@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  clickInEditorMenu,
   clickInEditorShareButton,
   createDoc,
   getGridRow,
@@ -83,15 +84,14 @@ test.describe('Doc Header', () => {
 
     await page.getByRole('button', { name: 'close' }).first().click();
 
-    await expect(card.getByText('Public document')).toBeVisible();
-
+    await expect(card.getByText('Public ·')).toBeVisible();
     await expect(card.getByText('Owner ·')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
+    await page
+      .getByRole('button', { name: 'Open the document options' })
+      .click();
     await expect(
-      page.getByRole('button', { name: 'Export the document' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: 'Open the document options' }),
+      page.getByRole('menuitem', { name: 'Download' }),
     ).toBeVisible();
   });
 
@@ -186,17 +186,15 @@ test.describe('Doc Header', () => {
     await createDoc(page, 'doc-update-emoji', browserName, 1);
 
     const emojiPicker = page.locator('.--docs--doc-title').getByRole('button');
-    const optionMenu = page.getByLabel('Open the document options');
-    const addEmojiMenuItem = page.getByRole('menuitem', { name: 'Add emoji' });
-    const removeEmojiMenuItem = page.getByRole('menuitem', {
-      name: 'Remove emoji',
+    const addEmoji = page.getByRole('button', { name: 'Add icon' });
+    const removeEmoji = page.getByRole('button', {
+      name: 'Remove icon',
     });
 
     // Top parent should not have emoji picker
     await expect(emojiPicker).toBeHidden();
-    await optionMenu.click();
-    await expect(addEmojiMenuItem).toBeHidden();
-    await expect(removeEmojiMenuItem).toBeHidden();
+    await expect(addEmoji).toBeHidden();
+    await expect(removeEmoji).toBeHidden();
     await page.keyboard.press('Escape');
 
     const { name: docChild } = await createRootSubPage(
@@ -211,9 +209,8 @@ test.describe('Doc Header', () => {
     await expect(emojiPicker).toBeHidden();
 
     // Add emoji
-    await optionMenu.click();
-    await expect(removeEmojiMenuItem).toBeHidden();
-    await addEmojiMenuItem.click();
+    await expect(removeEmoji).toBeHidden();
+    await addEmoji.click();
     // The 1 April the emoji is a fish
     await expect(emojiPicker).toHaveText(/📄|🐟/);
 
@@ -235,17 +232,15 @@ test.describe('Doc Header', () => {
     await expect(row.getByText('😀')).toBeVisible();
 
     // Remove emoji
-    await optionMenu.click();
-    await expect(addEmojiMenuItem).toBeHidden();
-    await removeEmojiMenuItem.click();
+    await expect(addEmoji).toBeHidden();
+    await removeEmoji.click();
     await expect(emojiPicker).toBeHidden();
   });
 
   test('it deletes the doc', async ({ page, browserName }) => {
     const [randomDoc] = await createDoc(page, 'doc-delete', browserName, 1);
 
-    await page.getByLabel('Open the document options').click();
-    await page.getByRole('menuitem', { name: 'Delete document' }).click();
+    await clickInEditorMenu(page, 'Delete');
 
     await expect(
       page.getByRole('heading', { name: 'Delete a doc' }),
@@ -301,15 +296,12 @@ test.describe('Doc Header', () => {
       page.getByRole('textbox', { name: 'Document title' }),
     ).toContainText('Mocked document');
 
-    await expect(
-      page.getByRole('button', { name: 'Export the document' }),
-    ).toBeVisible();
-
     await page.getByLabel('Open the document options').click();
 
     await expect(
-      page.getByRole('menuitem', { name: 'Delete document' }),
-    ).toBeDisabled();
+      page.getByRole('menuitem', { name: 'Download' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeHidden();
 
     // Click somewhere else to close the options
     await page.locator('body').click({ position: { x: 0, y: 0 } });
@@ -381,14 +373,12 @@ test.describe('Doc Header', () => {
       page.getByRole('textbox', { name: 'Document title' }),
     ).toContainText('Mocked document');
 
-    await expect(
-      page.getByRole('button', { name: 'Export the document' }),
-    ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
     await expect(
-      page.getByRole('menuitem', { name: 'Delete document' }),
-    ).toBeDisabled();
+      page.getByRole('menuitem', { name: 'Download' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeHidden();
 
     // Click somewhere else to close the options
     await page.locator('body').click({ position: { x: 0, y: 0 } });
@@ -453,14 +443,12 @@ test.describe('Doc Header', () => {
       page.getByRole('heading', { name: 'Mocked document' }),
     ).toBeVisible();
 
-    await expect(
-      page.getByRole('button', { name: 'Export the document' }),
-    ).toBeVisible();
     await page.getByLabel('Open the document options').click();
 
     await expect(
-      page.getByRole('menuitem', { name: 'Delete document' }),
-    ).toBeDisabled();
+      page.getByRole('menuitem', { name: 'Download' }),
+    ).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeHidden();
 
     // Click somewhere else to close the options
     await page.locator('body').click({ position: { x: 0, y: 0 } });
@@ -707,13 +695,18 @@ test.describe('Documents Header mobile', () => {
 
     await goToGridDoc(page);
 
-    await expect(page.getByRole('button', { name: 'Copy link' })).toBeHidden();
     await page.getByLabel('Open the document options').click();
     await expect(
       page.getByRole('menuitem', { name: 'Copy link' }),
     ).toBeVisible();
-    await page.getByRole('menuitem', { name: 'Share' }).click();
-    await expect(page.getByRole('button', { name: 'Copy link' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Share' }).click();
+    const shareModal = page.getByRole('dialog', {
+      name: 'Share the document',
+    });
+    await expect(
+      shareModal.getByRole('button', { name: 'Copy link' }),
+    ).toBeVisible();
   });
 
   test('it checks the close button on Share modal', async ({ page }) => {
