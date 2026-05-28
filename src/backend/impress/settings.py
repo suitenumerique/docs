@@ -17,6 +17,7 @@ from socket import gethostbyname, gethostname
 from django.utils.translation import gettext_lazy as _
 
 import dj_database_url
+import posthog
 import sentry_sdk
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
@@ -550,8 +551,9 @@ class Base(Configuration):
     )
 
     # Posthog
-    POSTHOG_KEY = values.DictValue(
-        None, environ_name="POSTHOG_KEY", environ_prefix=None
+    POSTHOG_KEY = SecretFileValue(None, environ_name="POSTHOG_KEY", environ_prefix=None)
+    POSTHOG_HOST = values.Value(
+        "https://eu.i.posthog.com", environ_name="POSTHOG_HOST", environ_prefix=None
     )
 
     # Crisp
@@ -1198,6 +1200,10 @@ class Base(Configuration):
             raise ValueError(
                 "Both OPENAI_SDK and MISTRAL_SDK parameters can not be set simultaneously."
             )
+
+        if cls.POSTHOG_KEY is not None:
+            posthog.api_key = cls.POSTHOG_KEY
+            posthog.host = cls.POSTHOG_HOST
 
 
 class Build(Base):
